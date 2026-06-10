@@ -174,6 +174,8 @@ export interface Settings {
   // ── Realism pack ──
   /** Dot-grid paper texture background, like a real bullet journal page. */
   paperMode: boolean
+  /** Render content inside an open-book frame (spine + page edges). */
+  bookMode: boolean
   /** Handwriting font for entries. */
   handwriting: boolean
   /** Daily reminder nudge to journal (in-app + optional browser notification). */

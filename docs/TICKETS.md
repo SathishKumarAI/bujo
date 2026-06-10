@@ -82,6 +82,11 @@ IDs are stable references for commits and PRs.
 | BUJO-65 | In-app Help guide | ✅ |
 | BUJO-66 | UI de-slop: editorial serif titles + lucide icons + accent rail | ✅ |
 | BUJO-67 | PWA install + offline app shell | ✅ |
+| BUJO-68 | Command palette (⌘/Ctrl-K): jump to view + run actions | ✅ |
+| BUJO-69 | Open-book frame (spine + page edges) — natural book flow | ✅ |
+| BUJO-70b | Custom free-form collections (create / open / add bullets) | ✅ |
+| BUJO-71b | Demo/sample data loader + `?demo=1` deep link | ✅ |
+| BUJO-72b | README landing: comparison table + "why different" | ✅ |
 
 ## Epic H — Data & privacy
 

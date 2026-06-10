@@ -33,12 +33,21 @@ Signifiers stack: `* t book the campsite #travel`.
 | Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), mood·stress·sleep chart. |
 | Fitness | `views/Fitness.tsx` | Workout log + all-time totals + history. |
 | Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
-| Collections | `views/Collections.tsx` | Future log + birthdays. |
+| Collections | `views/Collections.tsx` | Future log + birthdays + custom free-form collection pages. |
 | Insights | `views/Insights.tsx` | Streaks, completion %, correlation insights, year-in-review, index, search. |
 | Cycle | `views/Cycle.tsx` | *(opt-in)* Neutral temperature/cycle chart + flags. |
 | Streak/NoFap | `views/NoFap.tsx` | *(opt-in)* Abstinence streak, milestones, relapse log. |
 | Help | `views/Help.tsx` | In-app guide to every feature. |
 | Settings | `views/Settings.tsx` | Theme, profile/gender, units, export/import. |
+
+## Power tools
+
+- **Command palette** — `⌘K` / `Ctrl-K` opens a fuzzy launcher to jump to any
+  view or run actions (toggle theme/paper/handwriting, export JSON, load demo).
+- **Open-book frame** — Settings → Journal feel renders content inside a bound
+  notebook (center spine + stacked page edges); toggle off for a flat layout.
+- **Demo data** — Settings → Load demo data, or visit with `?demo=1`, seeds ~30
+  days of correlated sample entries, habits, moods, workouts and memories.
 
 ## Data & privacy
 

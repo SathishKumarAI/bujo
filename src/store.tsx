@@ -25,6 +25,7 @@ import { load, save, uid } from './lib/storage'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
 import { generateRecurring } from './lib/recurrence'
+import { generateDemoData } from './lib/demo'
 
 // ── Reducer ──────────────────────────────────────────────────────────────────
 
@@ -116,9 +117,14 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     document.body.classList.toggle('handwriting', data.settings.handwriting)
   }, [data.settings.paperMode, data.settings.handwriting])
 
-  // Materialise recurring tasks/events once on mount.
+  // Materialise recurring tasks/events once on mount; "?demo=1" seeds sample
+  // data into an empty journal (handy for sharing a live preview).
   useEffect(() => {
-    dispatch({ type: 'patch', fn: (d) => generateRecurring(d) })
+    const wantsDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
+    dispatch({
+      type: 'patch',
+      fn: (d) => (wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)),
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

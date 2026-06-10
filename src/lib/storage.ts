@@ -21,6 +21,7 @@ export function defaultSettings(): Settings {
     nofapEnabled: false,
     startedOn: todayISO(),
     paperMode: true,
+    bookMode: true,
     handwriting: false,
     reminderEnabled: false,
     reminderTime: '21:00',

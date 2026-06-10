@@ -10,6 +10,7 @@ import { NoFap } from './views/NoFap'
 import { Help } from './views/Help'
 import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
+import { CommandPalette } from './components/CommandPalette'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, Menu,
@@ -58,9 +59,11 @@ export default function App() {
   const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
   const items = NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
+  const book = data.settings.bookMode
 
   return (
     <div className="flex min-h-screen flex-col">
+      <CommandPalette onNavigate={(id) => setView(id as ViewId)} navItems={items.map((n) => ({ id: n.id, label: n.label }))} />
       <ReminderBanner />
       <div className="flex flex-1 flex-col md:flex-row">
       {/* Mobile top bar */}
@@ -105,9 +108,17 @@ export default function App() {
       <main className="flex-1 overflow-x-hidden p-4 sm:p-6">
         <div className="mx-auto max-w-5xl">
           <Suspense fallback={<p className="py-10 text-center text-overlay0">Loading…</p>}>
-            <div key={view} className="page-in">
-              <Current />
-            </div>
+            {book ? (
+              <div className="book">
+                <div key={view} className="book-inner page-in">
+                  <Current />
+                </div>
+              </div>
+            ) : (
+              <div key={view} className="page-in">
+                <Current />
+              </div>
+            )}
           </Suspense>
         </div>
       </main>

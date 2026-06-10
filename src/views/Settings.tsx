@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { useJournal } from '../store'
 import { Button, Card } from '../components/ui'
-import { exportJSON, exportMarkdown, importJSON } from '../lib/storage'
+import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
+import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
 import type { Gender } from '../lib/types'
 
@@ -90,6 +91,7 @@ export function Settings() {
 
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
         <div className="space-y-2">
+          <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onClick={() => setSettings({ bookMode: !s.bookMode })} />
           <Toggle label="Dot-grid paper texture" on={s.paperMode} onClick={() => setSettings({ paperMode: !s.paperMode })} />
           <Toggle label="Handwriting font" on={s.handwriting} onClick={() => setSettings({ handwriting: !s.handwriting })} />
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onClick={() => setSettings({ reflectionPrompts: !s.reflectionPrompts })} />
@@ -130,6 +132,33 @@ export function Settings() {
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
+      </Card>
+
+      <Card title="Demo & reset" subtitle="Try the app with sample data, or start fresh" className="lg:col-span-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => {
+              if (data.entries.length === 0 || confirm('Load demo data? This replaces your current journal.')) {
+                replaceAll(generateDemoData())
+              }
+            }}
+          >
+            ✨ Load demo data
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (confirm('Erase everything and start fresh? Export a backup first if unsure.')) {
+                replaceAll(emptyJournal())
+              }
+            }}
+          >
+            🗑 Clear all data
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-overlay0">
+          Demo data fills ~30 days of correlated entries, habits, moods, workouts and memories so charts and insights have something to show.
+        </p>
       </Card>
     </div>
   )

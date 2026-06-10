@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
+import { EntryRow } from '../components/EntryRow'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 
 export function Collections() {
-  const { data, addBirthday, removeBirthday } = useJournal()
+  const { data, addBirthday, removeBirthday, addCollection, removeCollection, addEntry } = useJournal()
   const [name, setName] = useState('')
   const [month, setMonth] = useState(1)
   const [day, setDay] = useState(1)
+  // Custom collections.
+  const [colName, setColName] = useState('')
+  const [colIcon, setColIcon] = useState('📚')
+  const [openCol, setOpenCol] = useState<string | null>(null)
+  const [colEntry, setColEntry] = useState('')
 
   // Future log = events/tasks dated after today.
   const today = todayISO()
@@ -60,6 +66,66 @@ export function Collections() {
               </li>
             ))}
           </ul>
+        )}
+      </Card>
+
+      <Card
+        title="Custom collections"
+        subtitle="Free-form pages — book lists, packing, projects…"
+        className="md:col-span-2"
+      >
+        <div className="mb-3 flex flex-wrap gap-2">
+          <input
+            value={colIcon}
+            onChange={(e) => setColIcon(e.target.value.slice(0, 2))}
+            aria-label="Collection icon"
+            className="w-12 rounded-lg border border-surface1 bg-base px-2 text-center text-lg text-text"
+          />
+          <Input value={colName} onChange={(e) => setColName(e.target.value)} placeholder="Collection name" className="max-w-xs" />
+          <Button variant="primary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }}>
+            New collection
+          </Button>
+        </div>
+
+        {data.collections.length === 0 ? (
+          <Empty>No collections yet. Create one above.</Empty>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {data.collections.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setOpenCol(openCol === c.id ? null : c.id)}
+                className="group flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
+                style={{ borderColor: openCol === c.id ? cat('mauve') : cat('surface1'), color: cat('subtext1') }}
+              >
+                <span>{c.icon}</span> {c.name}
+                <span
+                  onClick={(e) => { e.stopPropagation(); removeCollection(c.id); if (openCol === c.id) setOpenCol(null) }}
+                  className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"
+                >×</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {openCol && (
+          <div className="mt-4 border-t border-surface0 pt-3">
+            <form
+              className="mb-2 flex gap-2"
+              onSubmit={(e) => { e.preventDefault(); if (colEntry.trim()) { addEntry(todayISO(), colEntry, openCol); setColEntry('') } }}
+            >
+              <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
+              <Button type="submit" variant="primary">Add</Button>
+            </form>
+            <ul>
+              {data.entries.filter((e) => e.collection === openCol).map((e) => (
+                <EntryRow key={e.id} entry={e} />
+              ))}
+            </ul>
+            {data.entries.filter((e) => e.collection === openCol).length === 0 && (
+              <Empty>Empty — add your first item above.</Empty>
+            )}
+          </div>
         )}
       </Card>
     </div>

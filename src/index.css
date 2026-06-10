@@ -148,6 +148,59 @@ body.handwriting textarea {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
+/* ── Open-book frame ────────────────────────────────────────────────────── */
+/* Wraps the content so it reads like an open bullet-journal book: a paper
+   spread with a center spine, stacked page edges, and a soft cover shadow. */
+.book {
+  position: relative;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--color-mantle), var(--color-mantle)) padding-box;
+  border: 1px solid var(--color-surface0);
+  box-shadow:
+    0 24px 60px -24px rgba(0, 0, 0, 0.7),
+    0 8px 20px -12px rgba(0, 0, 0, 0.5);
+}
+/* Stacked page edges on the right + bottom (the "thickness" of the book). */
+.book::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  box-shadow:
+    3px 3px 0 -1px var(--color-mantle),
+    4px 4px 0 -1px var(--color-surface0),
+    7px 7px 0 -1px var(--color-mantle),
+    8px 8px 0 -1px var(--color-surface0);
+}
+/* Center spine: a subtle vertical crease + binding shadow on wide screens. */
+.book::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  width: 28px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--color-crust) 55%, transparent),
+    transparent
+  );
+  z-index: 1;
+}
+@media (max-width: 900px) {
+  .book::before { display: none; } /* one page on small screens */
+}
+.book-inner {
+  position: relative;
+  z-index: 2;
+  padding: clamp(16px, 3vw, 36px);
+}
+
 /* Page-turn: views fade/slide in when switched. */
 @keyframes page-in {
   from { opacity: 0; transform: translateY(8px) scale(0.995); }

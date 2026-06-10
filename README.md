@@ -6,7 +6,7 @@ minimal one-pen style. Rapid logging, monthly spreads, habit & mood tracking,
 fitness logging, and gendered wellbeing tools — all stored **only in your
 browser**. No accounts, no server, no tracking.
 
-![Today view](docs/screenshot-today.png)
+![bujo in open-book mode with demo data](docs/screenshot-book.png)
 
 ## Why
 
@@ -14,6 +14,34 @@ Most journaling apps lock your data behind a login and a subscription. `bujo`
 keeps the calm, deliberate feel of a paper bullet journal — but adds the things
 paper can't do: instant search, streaks, charts that overlay your mood against
 your sleep, and one-click backups.
+
+## Why bujo is different
+
+Most journaling apps make you pick one virtue. bujo refuses the tradeoff — it's
+**paper-minimal in feel, quantified-self in power, and zero-knowledge in
+privacy, at the same time, for free.**
+
+| | **bujo** | Day One | Notion | Journey | Paper |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Price | **Free (MIT)** | $35/yr | paid | $25/yr | notebook |
+| Account required | **No** | Yes | Yes | Yes | No |
+| Data location | **Your browser only** | their cloud | their cloud | their cloud | your bag |
+| Offline (PWA) | **Yes** | partial | poor | partial | always |
+| Bullet Journal method | **Native** | — | manual | — | yes |
+| Habit grid + mood/sleep chart | **Built-in** | — | manual | basic | by hand |
+| Auto correlations (sleep↔stress) | **Yes** | — | — | — | — |
+| Fitness log | **Yes** | — | manual | — | by hand |
+| Gendered wellbeing (cycle / NoFap) | **Opt-in** | — | — | — | — |
+| Recurring tasks + migration ritual | **Yes** | — | manual | — | yes |
+| Open-book look & feel | **Yes** | — | — | — | yes |
+| Own/export your data | **1-click JSON+MD** | locked-in | partial | partial | retype |
+
+**Six things nobody else combines:** local-first + free + no account · the real
+Ryder-Carroll method · a client-side correlation engine · gender-aware wellbeing ·
+paper *feel* (book frame, dot-grid, handwriting, stickers) with digital power
+(search, streaks, charts) · honest data ownership (Markdown export → Obsidian).
+
+> **Try the live demo:** open the app with `?demo=1` to load a month of sample data.
 
 ## Features
 

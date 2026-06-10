@@ -13,7 +13,7 @@ export function Today() {
   const { data, setMetric, setGratitude, setMemory } = useJournal()
   const [date, setDate] = useState(todayISO())
 
-  const dayEntries = data.entries.filter((e) => e.date === date)
+  const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
   const metric = data.metrics.find((m) => m.date === date)
   const gratitude = data.gratitude.find((g) => g.date === date)?.text ?? ''
   const memoryRec = data.memories.find((m) => m.date === date)

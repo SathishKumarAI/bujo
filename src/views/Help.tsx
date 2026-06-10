@@ -59,7 +59,11 @@ export function Help() {
       />
       <Section
         title="Collections"
-        body="Your Future Log lists everything dated ahead of today, and the Birthday list keeps important dates handy."
+        body="Your Future Log lists everything dated ahead of today, the Birthday list keeps important dates handy, and Custom Collections are free-form pages (book lists, packing, projects) that use the same bullets."
+      />
+      <Section
+        title="Command palette & book mode"
+        body="Press ⌘K (or Ctrl-K) anywhere to jump to a view or run an action (toggle theme, export, load demo). Turn on the open-book frame in Settings → Journal feel to make the app read like a real bound notebook. New here? Settings → Load demo data fills a month of sample entries."
       />
       <Section
         title="Insights"
