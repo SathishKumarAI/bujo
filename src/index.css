@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+/*
+  Catppuccin Mocha palette as Tailwind v4 theme tokens.
+  Usage: bg-base, text-text, border-surface1, text-mauve, etc.
+*/
+@theme {
+  --color-rosewater: #f5e0dc;
+  --color-flamingo: #f2cdcd;
+  --color-pink: #f5c2e7;
+  --color-mauve: #cba6f7;
+  --color-red: #f38ba8;
+  --color-maroon: #eba0ac;
+  --color-peach: #fab387;
+  --color-yellow: #f9e2af;
+  --color-green: #a6e3a1;
+  --color-teal: #94e2d5;
+  --color-sky: #89dceb;
+  --color-sapphire: #74c7ec;
+  --color-blue: #89b4fa;
+  --color-lavender: #b4befe;
+
+  --color-text: #cdd6f4;
+  --color-subtext1: #bac2de;
+  --color-subtext0: #a6adc8;
+  --color-overlay2: #9399b2;
+  --color-overlay1: #7f849c;
+  --color-overlay0: #6c7086;
+  --color-surface2: #585b70;
+  --color-surface1: #45475a;
+  --color-surface0: #313244;
+  --color-base: #1e1e2e;
+  --color-mantle: #181825;
+  --color-crust: #11111b;
+
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-base);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin Catppuccin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface1) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-surface1);
+  border-radius: 4px;
+}
+
+/* ── 3D depth utilities ─────────────────────────────────────────────────── */
+.card-3d {
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-surface0) 35%, transparent),
+    transparent 60%
+  );
+  box-shadow:
+    0 1px 0 0 color-mix(in srgb, var(--color-surface2) 50%, transparent) inset,
+    0 10px 22px -12px rgba(0, 0, 0, 0.55),
+    0 4px 8px -6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card-3d:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 0 color-mix(in srgb, var(--color-surface2) 60%, transparent) inset,
+    0 18px 34px -14px rgba(0, 0, 0, 0.6),
+    0 6px 12px -6px rgba(0, 0, 0, 0.45);
+}
+.press-3d {
+  box-shadow: 0 3px 0 0 color-mix(in srgb, var(--color-crust) 80%, transparent);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.press-3d:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--color-crust) 80%, transparent);
+}
+.glow-mauve {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-mauve) 40%, transparent),
+    0 8px 24px -8px color-mix(in srgb, var(--color-mauve) 45%, transparent);
+}
+
+/* Light mode override (data-theme="latte") */
+:root[data-theme='latte'] {
+  --color-text: #4c4f69;
+  --color-subtext1: #5c5f77;
+  --color-subtext0: #6c6f85;
+  --color-overlay2: #7c7f93;
+  --color-overlay1: #8c8fa1;
+  --color-overlay0: #9ca0b0;
+  --color-surface2: #acb0be;
+  --color-surface1: #bcc0cc;
+  --color-surface0: #ccd0da;
+  --color-base: #eff1f5;
+  --color-mantle: #e6e9ef;
+  --color-crust: #dce0e8;
+  --color-mauve: #8839ef;
+  --color-blue: #1e66f5;
+  --color-green: #40a02b;
+  --color-red: #d20f39;
+  --color-peach: #fe640b;
+  --color-yellow: #df8e1d;
+}
