@@ -13,6 +13,7 @@ import { monthDays, prettyMonth, todayISO, ymOf } from '../lib/date'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency } from '../lib/stats'
+import { rollingAverage } from '../lib/correlations'
 import type { Habit } from '../lib/types'
 
 const CATEGORIES: Habit['category'][] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
@@ -25,10 +26,17 @@ export function Trackers() {
   const days = monthDays(ym)
   const today = todayISO()
 
-  // Chart data for the month.
-  const chartData = days.map((d) => {
+  // Chart data for the month, with 7-day rolling-average overlays.
+  const moodAvg = rollingAverage(days.map((d) => data.metrics.find((x) => x.date === d)?.mood))
+  const stressAvg = rollingAverage(days.map((d) => data.metrics.find((x) => x.date === d)?.stress))
+  const sleepAvg = rollingAverage(days.map((d) => data.metrics.find((x) => x.date === d)?.sleep))
+  const chartData = days.map((d, i) => {
     const m = data.metrics.find((x) => x.date === d)
-    return { day: Number(d.slice(8)), mood: m?.mood, stress: m?.stress, sleep: m?.sleep }
+    return {
+      day: Number(d.slice(8)),
+      mood: m?.mood, stress: m?.stress, sleep: m?.sleep,
+      moodAvg: moodAvg[i], stressAvg: stressAvg[i], sleepAvg: sleepAvg[i],
+    }
   })
 
   function shiftMonth(delta: number) {
@@ -129,9 +137,12 @@ export function Trackers() {
                   color: '#cdd6f4',
                 }}
               />
-              <Line type="monotone" dataKey="mood" stroke={cat('green')} dot={false} connectNulls strokeWidth={2} />
-              <Line type="monotone" dataKey="stress" stroke={cat('red')} dot={false} connectNulls strokeWidth={2} />
-              <Line type="monotone" dataKey="sleep" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2} />
+              <Line type="monotone" dataKey="mood" stroke={cat('green')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
+              <Line type="monotone" dataKey="stress" stroke={cat('red')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
+              <Line type="monotone" dataKey="sleep" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
+              <Line type="monotone" dataKey="moodAvg" stroke={cat('green')} dot={false} connectNulls strokeWidth={2.5} />
+              <Line type="monotone" dataKey="stressAvg" stroke={cat('red')} dot={false} connectNulls strokeWidth={2.5} />
+              <Line type="monotone" dataKey="sleepAvg" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2.5} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -139,6 +150,7 @@ export function Trackers() {
           <span style={{ color: cat('green') }}>● Mood</span>
           <span style={{ color: cat('red') }}>● Stress</span>
           <span style={{ color: cat('blue') }}>● Sleep</span>
+          <span className="text-overlay0">faint = daily · bold = 7-day avg</span>
         </div>
       </Card>
     </div>

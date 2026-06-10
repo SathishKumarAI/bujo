@@ -8,6 +8,8 @@ JSON object persisted to `localStorage`.
 - **Vite + React 19 + TypeScript** — SPA, `vite-spa` frontend profile.
 - **Tailwind CSS v4** — theme tokens in `src/index.css` (`@theme` block).
 - **Recharts** — line charts, lazy-loaded so they're off the initial bundle.
+- **lucide-react** — line icons (tree-shaken).
+- **vite-plugin-pwa** — installable, offline app shell (service worker).
 - **Vitest + Testing Library** — unit + integration tests.
 
 ## Data flow
@@ -34,6 +36,11 @@ localStorage ("bujo:data")
   - `image.ts` — canvas downscale + JPEG re-encode for uploads.
   - `colors.ts` — Catppuccin hex map for inline styles (Tailwind can't see
     runtime-built class names).
+  - `recurrence.ts` — materialise recurring rules into entries (idempotent).
+  - `correlations.ts` — Pearson + plain-language insights + rolling average.
+  - `ics.ts` — minimal iCalendar parser for calendar import.
+  - `prompts.ts` — rotating daily reflection prompts (deterministic by day).
+  - `weather.ts` — open-meteo fetch + WMO map + reverse geocode (opt-in).
 
 ## Directory map
 

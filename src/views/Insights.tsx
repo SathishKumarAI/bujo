@@ -3,7 +3,8 @@ import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { prettyDay } from '../lib/date'
+import { insights } from '../lib/correlations'
+import { prettyDay, prettyMonth } from '../lib/date'
 
 export function Insights() {
   const { data } = useJournal()
@@ -12,6 +13,20 @@ export function Insights() {
   const best = longestStreak(data)
   const tasks = taskCompletion(data)
   const results = search(data, q)
+  const found = insights(data)
+
+  // Year-in-review aggregates.
+  const moods = data.metrics.map((m) => m.mood).filter((v): v is number => v != null)
+  const avgMood = moods.length ? Math.round((moods.reduce((a, b) => a + b, 0) / moods.length) * 10) / 10 : null
+  const workouts = data.workouts.length
+  const photos = data.memories.filter((m) => m.photo).length + data.monthly.filter((m) => m.photo).length
+
+  // Index: months that have any data + collections.
+  const months = [...new Set([
+    ...data.entries.filter((e) => e.date).map((e) => e.date.slice(0, 7)),
+    ...data.monthly.map((m) => m.ym),
+    ...data.metrics.map((m) => m.date.slice(0, 7)),
+  ])].sort().reverse()
 
   return (
     <div className="space-y-4">
@@ -20,6 +35,46 @@ export function Insights() {
         <Big label="Longest streak" value={`${best}d`} color="mauve" />
         <Big label="Tasks done" value={`${tasks.pct}%`} color="green" sub={`${tasks.done}/${tasks.total}`} />
         <Big label="Entries" value={`${data.entries.length}`} color="sky" />
+      </div>
+
+      {found.length > 0 && (
+        <Card title="Patterns" subtitle="What your data is telling you">
+          <ul className="space-y-2">
+            {found.map((ins, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm">
+                <span className="rounded px-1.5 py-0.5 text-xs" style={{ background: cat('surface0'), color: ins.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
+                  r={ins.r} · {ins.strength}
+                </span>
+                <span className="text-subtext1">{ins.text}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card title="Year in review" subtitle="Your journal so far">
+          <ul className="space-y-1 text-sm text-subtext1">
+            <li>📝 <strong>{data.entries.length}</strong> entries logged</li>
+            <li>😊 Average mood: <strong>{avgMood ?? '—'}</strong>{avgMood != null ? ' / 10' : ''}</li>
+            <li>💪 <strong>{workouts}</strong> workouts</li>
+            <li>📷 <strong>{photos}</strong> photos kept</li>
+            <li>🔥 Longest streak: <strong>{best}</strong> days</li>
+            <li>🎂 <strong>{data.birthdays.length}</strong> birthdays tracked</li>
+          </ul>
+        </Card>
+
+        <Card title="Index" subtitle="Every month with entries">
+          {months.length === 0 ? (
+            <Empty>No months logged yet.</Empty>
+          ) : (
+            <ul className="grid grid-cols-2 gap-1 text-sm">
+              {months.map((ym) => (
+                <li key={ym} className="text-subtext1">📖 {prettyMonth(ym)}</li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
       <Card title="Search" subtitle="Find anything across your journal">

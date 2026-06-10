@@ -15,13 +15,16 @@ import type {
   Habit,
   JournalData,
   MonthlyMeta,
+  Recurrence,
   Relapse,
   Settings,
+  Weather,
   Workout,
 } from './lib/types'
 import { load, save, uid } from './lib/storage'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
+import { generateRecurring } from './lib/recurrence'
 
 // ── Reducer ──────────────────────────────────────────────────────────────────
 
@@ -43,12 +46,14 @@ function reducer(state: JournalData, action: Action): JournalData {
 interface Store {
   data: JournalData
   // entries
-  addEntry: (date: string, raw: string) => void
+  addEntry: (date: string, raw: string, collection?: string) => void
   updateEntry: (id: string, patch: Partial<Entry>) => void
   cycleStatus: (id: string) => void
   toggleImportant: (id: string) => void
   deleteEntry: (id: string) => void
   migrateEntry: (id: string, toDate: string) => void
+  dropEntry: (id: string) => void
+  bulkAddEvents: (events: { date: string; summary: string }[]) => number
   // daily metrics
   setMetric: (date: string, patch: Partial<DailyMetric>) => void
   // habits
@@ -71,6 +76,17 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
+  // recurrences
+  addRecurrence: (r: Omit<Recurrence, 'id'>) => void
+  removeRecurrence: (id: string) => void
+  // collections
+  addCollection: (name: string, icon: string) => void
+  removeCollection: (id: string) => void
+  // stickers
+  addSticker: (date: string, emoji: string) => void
+  removeSticker: (date: string, emoji: string) => void
+  // weather
+  setWeather: (date: string, w: Weather) => void
   // settings
   setSettings: (patch: Partial<Settings>) => void
   // bulk
@@ -94,17 +110,29 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = data.settings.theme === 'latte' ? 'latte' : 'mocha'
   }, [data.settings.theme])
 
+  // Toggle realism body classes (paper texture + handwriting font).
+  useEffect(() => {
+    document.body.classList.toggle('paper', data.settings.paperMode)
+    document.body.classList.toggle('handwriting', data.settings.handwriting)
+  }, [data.settings.paperMode, data.settings.handwriting])
+
+  // Materialise recurring tasks/events once on mount.
+  useEffect(() => {
+    dispatch({ type: 'patch', fn: (d) => generateRecurring(d) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const patch = useCallback((fn: (d: JournalData) => JournalData) => dispatch({ type: 'patch', fn }), [])
 
   const store = useMemo<Store>(() => {
     return {
       data,
 
-      addEntry: (date, raw) =>
+      addEntry: (date, raw, collection) =>
         patch((d) => {
           const p = parseQuickCapture(raw)
           if (!p.text) return d
-          const entry: Entry = { id: uid('e'), date, createdAt: todayISO(), ...p }
+          const entry: Entry = { id: uid('e'), date, createdAt: todayISO(), collection, ...p }
           return { ...d, entries: [...d.entries, entry] }
         }),
 
@@ -136,13 +164,46 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       deleteEntry: (id) =>
         patch((d) => ({ ...d, entries: d.entries.filter((e) => e.id !== id) })),
 
+      // Real BuJo migration: mark the original ">" migrated and create a fresh
+      // open copy on the target date, threaded back via originId.
       migrateEntry: (id, toDate) =>
+        patch((d) => {
+          const orig = d.entries.find((e) => e.id === id)
+          if (!orig) return d
+          const copy: Entry = {
+            ...orig,
+            id: uid('e'),
+            date: toDate,
+            status: 'open',
+            originId: orig.originId ?? orig.id,
+            createdAt: todayISO(),
+          }
+          return {
+            ...d,
+            entries: [
+              ...d.entries.map((e) => (e.id === id ? { ...e, status: 'migrated' as const } : e)),
+              copy,
+            ],
+          }
+        }),
+
+      dropEntry: (id) =>
         patch((d) => ({
           ...d,
-          entries: d.entries.map((e) =>
-            e.id === id ? { ...e, date: toDate, status: 'open' } : e,
-          ),
+          entries: d.entries.map((e) => (e.id === id ? { ...e, status: 'dropped' as const } : e)),
         })),
+
+      bulkAddEvents: (events) => {
+        const existing = new Set(data.entries.map((e) => `${e.date}|${e.text}`))
+        const fresh: Entry[] = events
+          .filter((ev) => !existing.has(`${ev.date}|${ev.summary}`))
+          .map((ev) => ({
+            id: uid('e'), date: ev.date, type: 'event' as const, text: ev.summary,
+            status: 'open' as const, important: false, memory: false, tags: [], createdAt: todayISO(),
+          }))
+        if (fresh.length) patch((d) => ({ ...d, entries: [...d.entries, ...fresh] }))
+        return fresh.length
+      },
 
       setMetric: (date, mp) =>
         patch((d) => {
@@ -238,6 +299,47 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               relapses: [...d.nofap.relapses, relapse],
             },
           }
+        }),
+
+      addRecurrence: (r) =>
+        patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),
+
+      removeRecurrence: (id) =>
+        patch((d) => ({ ...d, recurrences: d.recurrences.filter((r) => r.id !== id) })),
+
+      addCollection: (name, icon) =>
+        patch((d) => ({
+          ...d,
+          collections: [...d.collections, { id: uid('col'), name, icon, createdAt: todayISO() }],
+        })),
+
+      removeCollection: (id) =>
+        patch((d) => ({
+          ...d,
+          collections: d.collections.filter((c) => c.id !== id),
+          entries: d.entries.filter((e) => e.collection !== id),
+        })),
+
+      addSticker: (date, emoji) =>
+        patch((d) => {
+          const cur = d.stickers[date] ?? []
+          if (cur.includes(emoji)) return d
+          return { ...d, stickers: { ...d.stickers, [date]: [...cur, emoji] } }
+        }),
+
+      removeSticker: (date, emoji) =>
+        patch((d) => ({
+          ...d,
+          stickers: { ...d.stickers, [date]: (d.stickers[date] ?? []).filter((e) => e !== emoji) },
+        })),
+
+      setWeather: (date, w) =>
+        patch((d) => {
+          const exists = d.metrics.some((m) => m.date === date)
+          const metrics = exists
+            ? d.metrics.map((m) => (m.date === date ? { ...m, weather: w } : m))
+            : [...d.metrics, { date, weather: w }]
+          return { ...d, metrics }
         }),
 
       setSettings: (sp) =>

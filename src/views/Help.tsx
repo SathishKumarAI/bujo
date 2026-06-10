@@ -50,6 +50,14 @@ export function Help() {
         body="Log workouts: activity, duration, distance, calories, RPE, and strength sets (one per line). Totals and full history are shown alongside."
       />
       <Section
+        title="Plan"
+        body="Set recurring tasks/events that auto-appear each day they apply. Run the migration flow to clear overdue open tasks — move them to today/tomorrow or drop them. Import a .ics file to bring calendar events onto your monthly."
+      />
+      <Section
+        title="Realism & reminders"
+        body="In Settings you can turn on a dot-grid paper texture, a handwriting font, and a daily reflection prompt; decorate days with stickers; opt into a daily reminder (with browser notification) and auto weather + location. Install the app to your home screen for offline use."
+      />
+      <Section
         title="Collections"
         body="Your Future Log lists everything dated ahead of today, and the Birthday list keeps important dates handy."
       />

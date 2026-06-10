@@ -32,8 +32,9 @@ Signifiers stack: `* t book the campsite #travel`.
 | Monthly | `views/Monthly.tsx` | Calendar with event dots, location, goals, photo of the month. |
 | Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), mood·stress·sleep chart. |
 | Fitness | `views/Fitness.tsx` | Workout log + all-time totals + history. |
+| Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
 | Collections | `views/Collections.tsx` | Future log + birthdays. |
-| Insights | `views/Insights.tsx` | Streaks, task completion %, full-text search. |
+| Insights | `views/Insights.tsx` | Streaks, completion %, correlation insights, year-in-review, index, search. |
 | Cycle | `views/Cycle.tsx` | *(opt-in)* Neutral temperature/cycle chart + flags. |
 | Streak/NoFap | `views/NoFap.tsx` | *(opt-in)* Abstinence streak, milestones, relapse log. |
 | Help | `views/Help.tsx` | In-app guide to every feature. |

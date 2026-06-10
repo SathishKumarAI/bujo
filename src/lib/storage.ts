@@ -20,6 +20,12 @@ export function defaultSettings(): Settings {
     cycleTrackerEnabled: false,
     nofapEnabled: false,
     startedOn: todayISO(),
+    paperMode: true,
+    handwriting: false,
+    reminderEnabled: false,
+    reminderTime: '21:00',
+    weatherEnabled: false,
+    reflectionPrompts: true,
   }
 }
 
@@ -38,6 +44,8 @@ export function emptyJournal(): JournalData {
     birthdays: [],
     monthly: [],
     collections: [],
+    recurrences: [],
+    stickers: {},
     nofap: { startedOn: todayISO(), best: 0, relapses: [] },
     settings: defaultSettings(),
   }
@@ -71,6 +79,8 @@ export function migrate(raw: unknown): JournalData {
     ...data,
     settings: { ...base.settings, ...(data.settings ?? {}) },
     habitLog: data.habitLog ?? {},
+    recurrences: data.recurrences ?? [],
+    stickers: data.stickers ?? {},
     version: SCHEMA_VERSION,
   }
 }

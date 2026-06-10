@@ -29,8 +29,12 @@ your sleep, and one-click backups.
 | **Insights** | Current & longest streaks, task-completion %, and full-text search across everything. |
 | **On this day** | Resurfaces entries and memories from the same date in past months. |
 | **Wellbeing (gendered, optional)** | A neutral cycle/temperature chart, or a NoFap abstinence streak journal with milestones and a judgement-free relapse log — toggled by profile. |
+| **Plan** | Recurring tasks (daily/weekly), end-of-month **migration** flow, **calendar (.ics) import**. |
+| **Realism** | Dot-grid **paper texture**, **handwriting** font, **taped-in** photos, page-turn animation, emoji **stickers**, rotating **reflection prompts**. |
+| **Smart** | **Correlation** insights (sleep↔stress↔mood), 7-day rolling averages, **year-in-review**, index. |
+| **Daily life** | **Reminders** + browser notifications, opt-in **weather + auto-location**, **PWA** install + offline. |
 | **Backups** | Export/import **JSON**, export **Markdown** (Obsidian/Logseq friendly). |
-| **Polish** | Catppuccin Mocha **dark** + Latte **light** themes, subtle 3D depth, fully responsive, keyboard-friendly, image uploads auto-downscaled to fit local storage. |
+| **Polish** | Editorial serif titles + clean line icons, Catppuccin Mocha **dark** + Latte **light**, subtle 3D depth, fully responsive, keyboard-friendly, image uploads auto-downscaled. |
 
 ## Tech
 
@@ -58,12 +62,23 @@ Everything is stored in your browser's `localStorage` under the key `bujo:data`.
 There is no analytics, no network calls, no account. Because local storage can
 be cleared by the browser, **export a backup regularly** (Settings → Export).
 
+## Docs
+
+- [`docs/PRD.md`](docs/PRD.md) — product requirements
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — technical architecture
+- [`docs/FRONTEND_SPEC.md`](docs/FRONTEND_SPEC.md) — frontend spec & design system
+- [`docs/SECURITY.md`](docs/SECURITY.md) — security & privacy / threat model
+- [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) — a11y status & checklist
+- [`docs/FEATURES.md`](docs/FEATURES.md) — feature reference
+- [`docs/TICKETS.md`](docs/TICKETS.md) — feature ticket list (every epic)
+- [`docs/prompts/`](docs/prompts/) — prompts to rebuild / extend / add login
+
 ## Roadmap
 
 - Optional passcode + client-side encryption (Web Crypto)
-- Multi-user accounts & cloud sync (opt-in backend) — see `docs/PRD.md`
-- PWA / offline install
+- Multi-user accounts & cloud sync (opt-in backend) — see `docs/prompts/02-add-login-and-sync.md`
 - Command palette (`Cmd/Ctrl-K`)
+- Custom free-form collections UI
 
 ## Inspiration
 

@@ -1,5 +1,39 @@
 # Worklog
 
+## 2026-06-10 — Realism pack v1.1 + UI de-slop + full docs
+
+Added 20 features to make the journal feel like real paper and fit real daily
+life, refined the UI away from a generic look, and wrote the full doc set.
+
+**Features (see `docs/TICKETS.md` epics E/F/G)**
+- Realism: dot-grid paper texture, handwriting font (Caveat), taped-in photos,
+  page-turn animation, emoji stickers, rotating reflection prompts.
+- Daily life: recurring tasks (daily/weekly), end-of-month migration flow with
+  task threading, daily reminder + browser notification, opt-in weather +
+  auto-location (open-meteo + reverse geocode), calendar (.ics) import, PWA
+  install + offline (vite-plugin-pwa).
+- Insight: correlation detection (Pearson sleep↔stress↔mood), 7-day rolling
+  averages on charts, year-in-review, index of months.
+- New `Plan` view (recurring + migration + ICS). New libs: recurrence,
+  correlations, ics, prompts, weather, image.
+
+**UI de-slop**
+- Editorial serif titles (Fraunces), lucide line icons replacing emoji nav,
+  active accent rail + `aria-current`, refined sidebar + serif wordmark.
+
+**Verification**
+- `npm run build` ✓ (80 KB gzip initial, recharts lazy) · `npm test` ✓ (44 tests)
+  · polished screenshot captured.
+
+**Docs**
+- New: SECURITY, ACCESSIBILITY, FRONTEND_SPEC, TICKETS.
+- Updated: PRD (§5b realism pack), ARCHITECTURE, FEATURES, README, Help.
+
+**Decisions**
+- All network features (weather/geocode) opt-in, off by default — preserves the
+  zero-network local-first guarantee.
+- Gender-based wellbeing tools remain opt-in.
+
 ## 2026-06-10 — Initial build (v1, local-first MVP)
 
 Built `bujo`, a minimal local-first digital bullet journal, from an empty
@@ -20,18 +54,10 @@ directory to a published public repo in one session.
 - Gender-gated wellbeing tools: neutral cycle/temperature chart (female) and
   NoFap abstinence streak journal (male) — both opt-in, off by default.
 - Image uploads (canvas-downscaled JPEG) on Today + Monthly; inline rename.
-- Responsive shell, lazy-loaded chart views (73 KB gzip initial bundle).
+- Responsive shell, lazy-loaded chart views.
 
 **Verification**
-- `npm run build` ✓ · `npm test` ✓ (33 tests) · dev server screenshot captured.
+- `npm run build` ✓ · `npm test` ✓ · dev server screenshot captured.
 
 **Docs**
-- PRD, ARCHITECTURE, FEATURES, and three replication prompts (build-from-scratch,
-  add-feature, add-login-and-sync) in `docs/`.
-
-**Decisions**
-- Local-first now; multi-user login is planned v2 (opt-in, E2E-encrypted) — see
-  `docs/prompts/02-add-login-and-sync.md`. Local-only mode must always work.
-
-**Next**
-- Optional passcode + client-side encryption; PWA install; command palette.
+- PRD, ARCHITECTURE, FEATURES, and three replication prompts.

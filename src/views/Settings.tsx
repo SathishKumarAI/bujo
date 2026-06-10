@@ -88,6 +88,35 @@ export function Settings() {
         </div>
       </Card>
 
+      <Card title="Journal feel" subtitle="Make it look & behave like real paper">
+        <div className="space-y-2">
+          <Toggle label="Dot-grid paper texture" on={s.paperMode} onClick={() => setSettings({ paperMode: !s.paperMode })} />
+          <Toggle label="Handwriting font" on={s.handwriting} onClick={() => setSettings({ handwriting: !s.handwriting })} />
+          <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onClick={() => setSettings({ reflectionPrompts: !s.reflectionPrompts })} />
+        </div>
+      </Card>
+
+      <Card title="Reminders & weather" subtitle="Opt-in — weather makes network calls">
+        <div className="space-y-3">
+          <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onClick={() => setSettings({ reminderEnabled: !s.reminderEnabled })} />
+          {s.reminderEnabled && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-subtext1">Remind me at</span>
+              <input
+                type="time"
+                value={s.reminderTime}
+                onChange={(e) => setSettings({ reminderTime: e.target.value })}
+                className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
+              />
+            </div>
+          )}
+          <div className="border-t border-surface0 pt-3">
+            <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onClick={() => setSettings({ weatherEnabled: !s.weatherEnabled })} />
+            <p className="mt-1 text-xs text-overlay0">Uses open-meteo + your browser location. Off = zero network calls.</p>
+          </div>
+        </div>
+      </Card>
+
       <Card title="Backup & data" subtitle="Your data lives only in this browser — back it up!" className="lg:col-span-2">
         {!s.lastBackup && (
           <p className="mb-3 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">

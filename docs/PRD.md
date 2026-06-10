@@ -1,6 +1,6 @@
 # bujo — Product Requirements Document
 
-**Status:** v1 shipped (local-first MVP) · **Owner:** Sathish Kumar · **Last updated:** 2026-06-10
+**Status:** v1 + Realism pack shipped (local-first) · **Owner:** Sathish Kumar · **Last updated:** 2026-06-10
 
 ## 1. Problem
 
@@ -60,6 +60,22 @@ super-powers that matter.
 10. **Settings** — dark/light theme, profile/gender, temp unit, JSON/Markdown
     export & import, backup nudge.
 11. **Help** — in-app guide explaining every feature and the bullet legend.
+
+## 5b. Realism pack (v1.1 — shipped)
+
+Added to make the app feel like real paper *and* fit real daily life. See
+`docs/TICKETS.md` epics E/F for the full list.
+
+- **Journal feel:** dot-grid paper texture, handwriting font, taped-in photos,
+  page-turn animation, emoji stickers, editorial serif titles + line icons.
+- **Real-life usefulness:** recurring tasks, end-of-month migration flow,
+  daily reminder + browser notification, opt-in weather + auto-location,
+  calendar (.ics) import, PWA install + offline.
+- **Method-complete:** task threading on migrate, index of months, future log.
+- **Insight:** correlation detection (sleep↔stress↔mood), 7-day rolling
+  averages, year-in-review, rotating reflection prompts.
+
+All network features (weather/geocode) are **opt-in and off by default**.
 
 ## 6. Design principles
 

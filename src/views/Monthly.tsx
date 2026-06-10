@@ -4,10 +4,29 @@ import { fromISODay, monthDays, prettyMonth, todayISO, WEEKDAYS, ymOf } from '..
 import { Button, Card, Input, Textarea } from '../components/ui'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
+import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
 export function Monthly() {
-  const { data, setMonthly } = useJournal()
+  const { data, setMonthly, setWeather } = useJournal()
   const [ym, setYm] = useState(ymOf(todayISO()))
+  const [geoBusy, setGeoBusy] = useState(false)
+
+  async function autoFill() {
+    setGeoBusy(true)
+    try {
+      const pos = await getPosition()
+      const [w, city] = await Promise.all([
+        fetchWeather(pos.latitude, pos.longitude),
+        reverseGeocode(pos.latitude, pos.longitude).catch(() => ''),
+      ])
+      setWeather(todayISO(), w)
+      if (city) setMonthly(ym, { location: city })
+    } catch {
+      alert('Could not get location/weather — permission denied or offline.')
+    } finally {
+      setGeoBusy(false)
+    }
+  }
   const meta = data.monthly.find((m) => m.ym === ym)
   const days = monthDays(ym)
   const firstWeekday = fromISODay(days[0]).getDay()
@@ -65,6 +84,9 @@ export function Monthly() {
                       />
                     ))}
                   </div>
+                  <div className="text-[10px] leading-none">
+                    {(data.stickers[d] ?? []).slice(0, 3).join('')}
+                  </div>
                 </div>
               )
             })}
@@ -79,6 +101,11 @@ export function Monthly() {
             onChange={(e) => setMonthly(ym, { location: e.target.value })}
             placeholder="e.g. Moab, Utah 🏜️"
           />
+          {data.settings.weatherEnabled && (
+            <Button onClick={autoFill} className="mt-2 w-full">
+              {geoBusy ? 'Locating…' : '📍 Auto-fill location & weather'}
+            </Button>
+          )}
         </Card>
         <Card title="Goals" subtitle="What matters this month">
           <Textarea

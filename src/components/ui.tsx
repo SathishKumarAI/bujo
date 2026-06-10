@@ -23,8 +23,8 @@ export function Card({
       {(title || right) && (
         <header className="mb-3 flex items-start justify-between gap-2">
           <div>
-            {title && <h2 className="text-lg font-semibold text-text">{title}</h2>}
-            {subtitle && <p className="text-sm text-subtext0">{subtitle}</p>}
+            {title && <h2 className="font-display text-xl font-medium text-text">{title}</h2>}
+            {subtitle && <p className="mt-0.5 text-sm text-subtext0">{subtitle}</p>}
           </div>
           {right}
         </header>

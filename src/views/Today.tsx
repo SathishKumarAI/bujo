@@ -5,7 +5,9 @@ import { Button, Card, Empty, Input, Slider } from '../components/ui'
 import { QuickAdd } from '../components/QuickAdd'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
+import { StickerBar } from '../components/StickerBar'
 import { onThisDay } from '../lib/stats'
+import { promptForDay } from '../lib/prompts'
 
 export function Today() {
   const { data, setMetric, setGratitude, setMemory } = useJournal()
@@ -25,7 +27,16 @@ export function Today() {
       <div className="space-y-4 lg:col-span-2">
         <Card
           title={prettyDay(date)}
-          subtitle={date === todayISO() ? 'Today' : undefined}
+          subtitle={
+            <span className="flex items-center gap-2">
+              {date === todayISO() ? 'Today' : ''}
+              {metric?.weather && (
+                <span title={metric.weather.label}>
+                  {metric.weather.icon} {metric.weather.tempC}°C
+                </span>
+              )}
+            </span>
+          }
           right={
             <div className="flex gap-1">
               <Button onClick={() => setDate(addDays(date, -1))} aria-label="Previous day">←</Button>
@@ -56,6 +67,23 @@ export function Today() {
           />
         </Card>
 
+        {data.settings.reflectionPrompts && (
+          <Card title="Reflection" subtitle={promptForDay(date)}>
+            <textarea
+              key={`reflect-${date}`}
+              defaultValue=""
+              placeholder="Write a few honest lines…"
+              onBlur={(e) =>
+                e.target.value.trim() &&
+                setMemory(date, { text: `${memory ? memory + ' — ' : ''}${e.target.value.trim()}` })
+              }
+              rows={3}
+              className="w-full rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-mauve focus-visible:ring-1 focus-visible:ring-mauve focus-visible:outline-none"
+            />
+            <p className="mt-1 text-xs text-overlay0">Saved into today's memory on blur.</p>
+          </Card>
+        )}
+
         <Card title="Daily memory" subtitle="One line to remember this day by">
           <Input
             value={memory}
@@ -67,8 +95,13 @@ export function Today() {
               value={memoryRec?.photo}
               onChange={(photo) => setMemory(date, { photo })}
               label="Add a photo of the day"
+              className={memoryRec?.photo ? 'taped' : ''}
             />
           </div>
+        </Card>
+
+        <Card title="Stickers" subtitle="Decorate the day">
+          <StickerBar date={date} />
         </Card>
       </div>
 

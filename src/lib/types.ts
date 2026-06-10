@@ -24,7 +24,25 @@ export interface Entry {
   tags: string[] // parsed #tags
   /** Optional collection id this entry belongs to (custom pages, future log). */
   collection?: string
+  /** If migrated/threaded, the id of the entry this one came from. */
+  originId?: string
+  /** If generated from a recurrence rule, that rule's id. */
+  recurringId?: string
   createdAt: string
+}
+
+/** A recurring task/event rule that auto-populates each day it applies. */
+export interface Recurrence {
+  id: string
+  text: string
+  type: BulletType
+  important: boolean
+  freq: 'daily' | 'weekly'
+  /** For weekly: 0=Sun … 6=Sat. */
+  weekdays: number[]
+  startedOn: string
+  /** Last ISO day we materialised entries up to (avoids duplicates). */
+  lastGenerated?: string
 }
 
 /** A trackable habit / stimulant / food shown in the dot-grid. */
@@ -46,6 +64,16 @@ export interface DailyMetric {
   sleep?: number // hours, 0–10+
   /** Intermittent-fast break marker: 'food' (●) or 'drink' (○) or undefined. */
   fastBreak?: 'food' | 'drink'
+  /** Auto-logged weather snapshot for the day (opt-in). */
+  weather?: Weather
+}
+
+/** A day's weather snapshot (from open-meteo, opt-in). */
+export interface Weather {
+  tempC: number
+  code: number // WMO weather code
+  label: string // human label, e.g. "Partly cloudy"
+  icon: string // emoji
 }
 
 /** A logged workout / fitness session. */
@@ -143,6 +171,18 @@ export interface Settings {
   startedOn: string
   /** Last time the user exported a backup (ISO), for the nudge. */
   lastBackup?: string
+  // ── Realism pack ──
+  /** Dot-grid paper texture background, like a real bullet journal page. */
+  paperMode: boolean
+  /** Handwriting font for entries. */
+  handwriting: boolean
+  /** Daily reminder nudge to journal (in-app + optional browser notification). */
+  reminderEnabled: boolean
+  reminderTime: string // "HH:MM"
+  /** Auto-log weather + location (makes opt-in network calls). */
+  weatherEnabled: boolean
+  /** Show a rotating reflection prompt on the Today page. */
+  reflectionPrompts: boolean
 }
 
 /** The single root object persisted to localStorage. */
@@ -159,8 +199,11 @@ export interface JournalData {
   birthdays: Birthday[]
   monthly: MonthlyMeta[]
   collections: Collection[]
+  recurrences: Recurrence[]
+  /** Per-day emoji stickers / washi decorations: ISO day -> [emoji, …]. */
+  stickers: Record<string, string[]>
   nofap: Streak
   settings: Settings
 }
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
