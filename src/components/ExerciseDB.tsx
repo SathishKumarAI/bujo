@@ -11,6 +11,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
   const [term, setTerm] = useState('')
   const [results, setResults] = useState<WgerExercise[]>([])
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [progress, setProgress] = useState(0)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
       abortRef.current = ctrl
       setState('loading')
       try {
-        setResults(await searchExercises(q, ctrl.signal))
+        setResults(await searchExercises(q, ctrl.signal, setProgress))
         setState('idle')
       } catch (e) {
         if ((e as Error).name !== 'AbortError') setState('error')
@@ -38,7 +39,11 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
   return (
     <div>
       <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search wger exercise database… (e.g. bench, squat)" />
-      {state === 'loading' && <p className="mt-2 text-sm text-overlay0">Searching…</p>}
+      {state === 'loading' && (
+        <p className="mt-2 text-sm text-overlay0">
+          {progress > 0 ? `Building exercise index (one-time)… ${progress} loaded` : 'Searching…'}
+        </p>
+      )}
       {state === 'error' && <Empty>Couldn’t reach wger (offline or blocked). The built-in exercise list still works.</Empty>}
       {state === 'idle' && term.trim().length >= 2 && results.length === 0 && <Empty>No matches.</Empty>}
 
