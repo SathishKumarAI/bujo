@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, type LucideIcon,
 } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -181,21 +181,36 @@ export function Gym() {
         </div>
       </Card>
 
-      {/* ── Exercise database (wger) ─────────────────────────── */}
-      <Card title="Exercise database" subtitle="Search wger’s library and tap to add to today’s session">
-        <ExerciseDB onPick={(name) => addRow(name)} />
-      </Card>
-
-      {/* ── Muscle map: reacts to the exercises you're logging ── */}
+      {/* ── Single-exercise anatomy ──────────────────────────── */}
       <Card
-        title="Target muscles"
-        subtitle={<span>Highlighting <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span></span>}
-        right={focusEx && <Button onClick={() => setFocusEx(null)}>Clear focus</Button>}
+        title={focusEx ? focusEx : 'Exercise anatomy'}
+        subtitle={
+          focusEx
+            ? 'Muscles worked by this exercise'
+            : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> — or look up one below</span>
+        }
+        right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
       >
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <input
+            list="exercise-library"
+            value={focusEx ?? ''}
+            onChange={(e) => setFocusEx(e.target.value || null)}
+            placeholder="Look up any exercise (e.g. Bench Press, Squat)…"
+            className="max-w-xs flex-1 rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text"
+          />
+          {focusEx && musclesForExercise(focusEx).length > 0 && (
+            <Button variant="primary" onClick={() => { addRow(focusEx); }} className="inline-flex items-center gap-1.5">
+              <Plus size={14} /> Add to session
+            </Button>
+          )}
+        </div>
+
         <MuscleMap muscles={activeMuscles} />
+
         <div className="mt-3 flex flex-wrap justify-center gap-1.5">
           {activeMuscles.length === 0 ? (
-            <span className="text-xs text-overlay0">Add an exercise or pick a split to see the worked muscles.</span>
+            <span className="text-xs text-overlay0">Type an exercise above, pick a split, or tap a set row’s target.</span>
           ) : (
             muscleNames(activeMuscles).map((m) => (
               <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
@@ -204,6 +219,11 @@ export function Gym() {
             ))
           )}
         </div>
+      </Card>
+
+      {/* ── Exercise database (wger) ─────────────────────────── */}
+      <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session">
+        <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">

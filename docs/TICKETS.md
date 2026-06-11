@@ -113,6 +113,7 @@ IDs are stable references for commits and PRs.
 | BUJO-115 | Sticky sidebar — stays static while content zooms/scrolls | ✅ |
 | BUJO-116 | Full production-grade symbol sweep (fast-break, review, milestones) | ✅ |
 | BUJO-117 | Global weight unit (kg / lb) setting, used across Gym & body metrics | ✅ |
+| BUJO-118 | Single-exercise anatomy view: look up any exercise → front/back muscle map | ✅ |
 
 ## Epic H — Data & privacy
 
