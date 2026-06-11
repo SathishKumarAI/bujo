@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs } from './fitness'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -73,5 +73,30 @@ describe('presets & meta', () => {
   })
   it('maps a split to label + color', () => {
     expect(splitMeta('legs').label).toBe('Legs')
+  })
+})
+
+describe('fitness v2 helpers', () => {
+  it('computes pace per km', () => {
+    expect(pace(10, 50, 'km')).toBe('5:00 /km')
+    expect(pace(0, 50)).toBe('')
+  })
+  it('sums weekly active minutes within the window', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-11', activity: 'Run', durationMin: 30, sets: [], notes: '' },
+      { id: '2', date: '2026-06-09', activity: 'Run', durationMin: 20, sets: [], notes: '' },
+      { id: '3', date: '2026-06-01', activity: 'Run', durationMin: 99, sets: [], notes: '' },
+    ]
+    expect(weeklyActiveMinutes(d, '2026-06-11')).toBe(50)
+  })
+  it('counts active-day streak and all-time PBs', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-11', activity: 'Run', durationMin: 30, distanceKm: 8, calories: 400, sets: [], notes: '' },
+      { id: '2', date: '2026-06-10', activity: 'Run', durationMin: 20, distanceKm: 5, calories: 250, sets: [], notes: '' },
+    ]
+    expect(activeDayStreak(d, '2026-06-11')).toBe(2)
+    expect(cardioPBs(d)).toEqual({ longestKm: 8, mostCalories: 400, mostMinutes: 30 })
   })
 })

@@ -142,3 +142,51 @@ export function epley1RM(weight: number, reps: number): number {
   if (reps <= 1) return weight
   return Math.round(weight * (1 + reps / 30) * 2) / 2
 }
+
+// ── Cardio / activity analytics (v2) ─────────────────────────────────────────
+import { addDays, dayDiff, todayISO } from './date'
+
+/** Pace as "m:ss /unit" from distance + duration. '' if not derivable. */
+export function pace(distanceKm?: number, durationMin?: number, unit: 'km' | 'mi' = 'km'): string {
+  if (!distanceKm || !durationMin || distanceKm <= 0) return ''
+  const dist = unit === 'mi' ? distanceKm / 1.60934 : distanceKm
+  if (dist <= 0) return ''
+  const minPer = durationMin / dist
+  const m = Math.floor(minPer)
+  const s = Math.round((minPer - m) * 60)
+  return `${m}:${String(s).padStart(2, '0')} /${unit}`
+}
+
+/** Total workout minutes within the last `days` (rolling week by default). */
+export function weeklyActiveMinutes(data: JournalData, today = todayISO(), days = 7): number {
+  return data.workouts
+    .filter((w) => { const diff = dayDiff(w.date, today); return diff >= 0 && diff < days })
+    .reduce((s, w) => s + (w.durationMin ?? 0), 0)
+}
+
+/** Consecutive days ending today/yesterday that have at least one workout. */
+export function activeDayStreak(data: JournalData, today = todayISO()): number {
+  const has = (d: string) => data.workouts.some((w) => w.date === d)
+  let cursor = has(today) ? today : addDays(today, -1)
+  let streak = 0
+  while (has(cursor)) { streak += 1; cursor = addDays(cursor, -1) }
+  return streak
+}
+
+export interface CardioPBs {
+  longestKm: number
+  mostCalories: number
+  mostMinutes: number
+}
+
+/** All-time cardio personal bests across logged workouts. */
+export function cardioPBs(data: JournalData): CardioPBs {
+  return data.workouts.reduce<CardioPBs>(
+    (b, w) => ({
+      longestKm: Math.max(b.longestKm, w.distanceKm ?? 0),
+      mostCalories: Math.max(b.mostCalories, w.calories ?? 0),
+      mostMinutes: Math.max(b.mostMinutes, w.durationMin ?? 0),
+    }),
+    { longestKm: 0, mostCalories: 0, mostMinutes: 0 },
+  )
+}

@@ -105,6 +105,7 @@ interface Store {
   toggleHabitSkip: (habitId: string, day: string) => void
   // workouts
   addWorkout: (w: Omit<Workout, 'id'>) => void
+  updateWorkout: (id: string, patch: Partial<Workout>) => void
   removeWorkout: (id: string) => void
   // routines
   addRoutine: (r: Omit<Routine, 'id'>) => void
@@ -349,6 +350,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       addWorkout: (w) =>
         patch((d) => ({ ...d, workouts: [...d.workouts, { id: uid('w'), ...w }] })),
+
+      updateWorkout: (id, wpatch) =>
+        patch((d) => ({ ...d, workouts: d.workouts.map((w) => (w.id === id ? { ...w, ...wpatch } : w)) })),
 
       removeWorkout: (id) =>
         patch((d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
