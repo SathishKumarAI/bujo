@@ -102,6 +102,7 @@ interface Store {
   updateHabit: (id: string, patch: Partial<Habit>) => void
   toggleHabit: (date: string, habitId: string) => void
   setHabitValue: (date: string, habitId: string, value: number) => void
+  toggleHabitSkip: (habitId: string, day: string) => void
   // workouts
   addWorkout: (w: Omit<Workout, 'id'>) => void
   removeWorkout: (id: string) => void
@@ -334,6 +335,16 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? cur.filter((x) => x !== habitId)
             : [...cur, habitId]
           return { ...d, habitLog: { ...d.habitLog, [date]: next } }
+        }),
+
+      toggleHabitSkip: (habitId, day) =>
+        patch((d) => {
+          const cur = d.habitSkips?.[habitId] ?? []
+          const next = cur.includes(day) ? cur.filter((x) => x !== day) : [...cur, day]
+          const skips = { ...(d.habitSkips ?? {}) }
+          if (next.length === 0) delete skips[habitId]
+          else skips[habitId] = next
+          return { ...d, habitSkips: skips }
         }),
 
       addWorkout: (w) =>

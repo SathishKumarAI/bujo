@@ -57,6 +57,7 @@ export function emptyJournal(): JournalData {
     nofap: { startedOn: todayISO(), best: 0, relapses: [] },
     challenges: [],
     challengeLog: {},
+    habitSkips: {},
     settings: defaultSettings(),
   }
 }

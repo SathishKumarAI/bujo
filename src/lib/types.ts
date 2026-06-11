@@ -66,6 +66,10 @@ export interface Habit {
   activeDays?: number[]
   archived?: boolean
   order?: number // manual sort within a category
+  /** Target completions per week (shows a weekly-goal meter when set). */
+  weeklyGoal?: number
+  /** Optional emoji shown beside the habit name. */
+  emoji?: string
 }
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */
@@ -298,6 +302,8 @@ export interface JournalData {
   challenges?: Challenge[]
   /** challengeId -> ISO day -> indices of rules completed that day. */
   challengeLog?: Record<string, Record<string, number[]>>
+  /** habitId -> ISO days marked as a planned skip (don't break the streak). */
+  habitSkips?: Record<string, string[]>
   settings: Settings
 }
 

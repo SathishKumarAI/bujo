@@ -79,3 +79,35 @@ describe('search', () => {
     expect(search(withEntries([entry({})]), '   ')).toEqual([])
   })
 })
+
+import { habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from './stats'
+
+describe('habit helpers (v2)', () => {
+  function withLog(log: Record<string, string[]>, skips?: Record<string, string[]>): JournalData {
+    const d = emptyJournal()
+    d.habitLog = log
+    if (skips) d.habitSkips = skips
+    return d
+  }
+
+  it('weeklyHabitCount counts completions in the rolling 7 days', () => {
+    const d = withLog({ '2026-06-11': ['h'], '2026-06-09': ['h'], '2026-06-03': ['h'] })
+    expect(weeklyHabitCount(d, 'h', '2026-06-11')).toBe(2) // 06-03 is outside 7d window
+  })
+
+  it('habitStreak bridges planned skip days', () => {
+    // done 11 & 09, 10 is a planned skip → streak counts 11 + 09 = 2, not broken by 10
+    const d = withLog({ '2026-06-11': ['h'], '2026-06-09': ['h'] }, { h: ['2026-06-10'] })
+    expect(habitStreak(d, 'h', '2026-06-11')).toBe(2)
+  })
+
+  it('habitStreak breaks on a real miss', () => {
+    const d = withLog({ '2026-06-11': ['h'], '2026-06-09': ['h'] })
+    expect(habitStreak(d, 'h', '2026-06-11')).toBe(1) // 10 missed
+  })
+
+  it('habitDayOfWeekBreakdown tallies by weekday', () => {
+    const d = withLog({ '2026-06-11': ['h'] }) // 2026-06-11 is a Thursday (idx 4)
+    expect(habitDayOfWeekBreakdown(d, 'h')[4]).toBe(1)
+  })
+})

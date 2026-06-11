@@ -68,20 +68,51 @@ export function habitConsistency(
   return possible ? Math.round((hit / possible) * 100) : 0
 }
 
-/** Current consecutive-day streak for a single habit, ending today/yesterday. */
+/**
+ * Current consecutive-day streak for a single habit, ending today/yesterday.
+ * Days in `habitSkips` are bridged: they don't break the streak but don't
+ * count toward it either (planned rest / vacation).
+ */
 export function habitStreak(
   data: JournalData,
   habitId: string,
   today = todayISO(),
 ): number {
   const done = (d: string) => (data.habitLog[d] ?? []).includes(habitId)
-  let cursor = done(today) ? today : addDays(today, -1)
+  const skipped = (d: string) => (data.habitSkips?.[habitId] ?? []).includes(d)
+  let cursor = done(today) || skipped(today) ? today : addDays(today, -1)
   let streak = 0
-  while (done(cursor)) {
-    streak += 1
+  while (done(cursor) || skipped(cursor)) {
+    if (done(cursor)) streak += 1
     cursor = addDays(cursor, -1)
   }
   return streak
+}
+
+/** Completions of a habit within the last `days` (rolling week by default). */
+export function weeklyHabitCount(
+  data: JournalData,
+  habitId: string,
+  today = todayISO(),
+  days = 7,
+): number {
+  let n = 0
+  for (let i = 0; i < days; i++) {
+    if ((data.habitLog[addDays(today, -i)] ?? []).includes(habitId)) n += 1
+  }
+  return n
+}
+
+/** Completions of a habit by weekday (index 0=Sun … 6=Sat) over its history. */
+export function habitDayOfWeekBreakdown(data: JournalData, habitId: string): number[] {
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+  for (const [day, ids] of Object.entries(data.habitLog)) {
+    if (ids.includes(habitId)) {
+      const wd = new Date(day + 'T00:00:00').getDay()
+      counts[wd] += 1
+    }
+  }
+  return counts
 }
 
 /** "On this day" — entries/memories from the same month+day in prior periods. */
