@@ -30,9 +30,10 @@ Signifiers stack: `* t book the campsite #travel`.
 |---|---|---|
 | Today | `views/Today.tsx` | Daily log, mood/stress/sleep, fast-break, gratitude, daily memory + photo, on-this-day. |
 | Monthly | `views/Monthly.tsx` | Calendar with event dots, location, goals, photo of the month. |
-| Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), mood·stress·sleep chart. |
-| Fitness | `views/Fitness.tsx` | Cardio/general workout log + totals + history + nutrition macro diary (km/mi unit). |
+| Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), today focus strip, habit presets, emoji + weekly-goal, detail drawer (streak/30-90%/best weekday/skip-day), mood·stress·sleep chart. |
+| Fitness | `views/Fitness.tsx` | Cardio/general workout log + edit + repeat-last, weekly active-minutes goal ring, 8-week trend sparkline, active-day streak, this-week/all-time totals, cardio personal bests, auto-pace, nutrition macro diary (km/mi unit). |
 | Gym | `views/Gym.tsx` | PPL split + next-day suggestion, routines, structured sets, PRs + 1RM, rest timer, body weight, muscle map, wger exercise DB + detail, single-exercise anatomy (kg/lb unit). |
+| Challenges | `views/Challenges.tsx` | Fixed-length discipline challenges — 75 Hard/Soft, 90-day, 30-day, custom; daily rule check-in, day grid, current streak, strict reset (miss → Day 1), whole-number progress. |
 | Stats | `views/Stats.tsx` | Activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, tag cloud. |
 | Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
 | Collections | `views/Collections.tsx` | Future log + birthdays + custom free-form collection pages. |

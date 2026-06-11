@@ -131,6 +131,23 @@ for the same kinds of choice.
 `ui.tsx`) for every mutually-exclusive enum (theme, units, week-start).
 *Result:* equal-height Settings cards and a predictable control language.
 
+**D-21 — Challenges are a first-class view with a separate model, placed in Health.**
+*Context:* users want fixed-length discipline challenges (75 Hard, 90-day).
+*Choice:* a `Challenge[]` + per-day `challengeLog` (additive, migrate-safe), a
+new `Challenges` view, and a nav item in the **Health** group (not a new
+top-level group — keep the nav coherent). Progress is shown in **whole numbers**
+("Day 23 of 75", integer %), never fractions. Strict challenges reset to Day 1
+on a miss; lenient ones don't.
+
+**D-22 — v2 view enhancements reuse `Page` + lightweight charts to hold the budget.**
+*Context:* Trackers/Fitness got new analytics (goal rings, sparklines, streaks).
+*Choice:* additive `Habit` fields (`weeklyGoal`, `emoji`) + `habitSkips`;
+`Settings.fitnessGoalMin`; pure helpers in `stats.ts`/`fitness.ts` (unit-tested).
+Trend visuals use inline SVG/CSS sparklines, **not** Recharts, so non-lazy views
+don't pull the chart chunk. Gym's structured-set rewrite (per-set RPE/type +
+volume/progression charts) is **scoped but deferred** to a focused session — see
+`docs/superpowers/plans/2026-06-11-v2-view-enhancements.md` Phase D.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.
