@@ -17,7 +17,7 @@ an issue and it will be corrected.
 | "EASY Minimalist BULLET JOURNAL Set Up 2025 \| HOW TO START" | https://www.youtube.com/watch?v=6_SqKVS_8pM | Minimalist monthly setup & beginner spread structure |
 | The Lazy Genius — "How to Bullet Journal" | https://www.thelazygeniuscollective.com/blog/how-to-bullet-journal | Index / future log / monthly log / signifiers / migration / threading / collections confirmation |
 | GRIT (by 8sujan6) | https://github.com/8sujan6/GRIT | Fitness feature set: fast set logging, custom routines, exercise library, personal records, body-metrics tracking, 100% offline |
-| wger | https://wger.de/en/software/features | Workout manager, exercise database, **nutrition / macro diary**, body-weight tracking, progress photos layout |
+| wger | https://wger.de/en/software/features · https://wger.de/en/exercise/overview/ | Workout manager, **exercise database (search + images)**, **anatomical muscle diagrams** (base body + per-muscle highlight SVGs), nutrition / macro diary, body-weight tracking |
 
 ## Dependencies (their own licenses)
 
@@ -47,5 +47,7 @@ an issue and it will be corrected.
 | Open-Meteo | https://open-meteo.com/ | Weather (no key) |
 | BigDataCloud reverse geocode | https://www.bigdatacloud.com/ | City label from coordinates |
 
-The muscle-map figures are an original stylised SVG drawn for this project and
-are not derived from wger's or GRIT's exercise images.
+The anatomical muscle diagrams shown in the Gym view are **wger's muscle SVG
+images** (base body + per-muscle overlays), loaded from wger's public static
+assets and used under **CC-BY-SA**. All surrounding code, layout, and the
+split→muscle mapping are original to this project.
