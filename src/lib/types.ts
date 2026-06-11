@@ -98,6 +98,17 @@ export interface Weather {
 }
 
 /** A logged workout / fitness session. */
+/** One structured strength set (Lyfta-style logging). */
+export interface WorkoutSet {
+  exercise: string
+  weight?: number
+  reps?: number
+  /** Perceived exertion 1–10. */
+  rpe?: number
+  /** warmup · working (default) · drop set. */
+  kind?: 'warmup' | 'working' | 'drop'
+}
+
 export interface Workout {
   id: string
   date: string // ISO day
@@ -107,8 +118,10 @@ export interface Workout {
   split?: Split
   durationMin?: number
   distanceKm?: number
-  /** Strength sets: each is "exercise xReps @ weight". Free-form lines. */
+  /** Strength sets: each is "exercise xReps @ weight". Free-form lines (legacy + display). */
   sets: string[]
+  /** Structured strength sets (preferred for analytics; `sets` kept for back-compat). */
+  setRows?: WorkoutSet[]
   calories?: number
   /** Perceived exertion 1–10 (RPE). */
   rpe?: number
@@ -256,6 +269,8 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
+  programDone?: string[]
   // ── Tracker (global) ──
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean

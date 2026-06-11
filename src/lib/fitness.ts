@@ -202,3 +202,43 @@ export function platesPerSide(target: number, bar = 20, plates = [25, 20, 15, 10
   }
   return out
 }
+
+// ── Structured sets (Lyfta-style) ────────────────────────────────────────────
+import type { WorkoutSet } from './types'
+
+/** The most recent logged set for an exercise (from setRows, or parsed legacy strings). */
+export function lastSetFor(data: JournalData, exercise: string, beforeDate?: string): { weight: number; reps: number; date: string } | null {
+  const ex = exercise.trim().toLowerCase()
+  if (!ex) return null
+  const sorted = [...data.workouts]
+    .filter((w) => !beforeDate || w.date < beforeDate)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+  for (const w of sorted) {
+    const rows = (w.setRows ?? []).filter((r) => r.exercise.trim().toLowerCase() === ex && r.weight != null && r.reps != null && r.kind !== 'warmup')
+    const row = rows.sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
+    if (row) return { weight: row.weight!, reps: row.reps!, date: w.date }
+    for (const line of w.sets) {
+      const p = parseSet(line)
+      if (p && p.exercise.toLowerCase() === ex) return { weight: p.weight, reps: p.reps, date: w.date }
+    }
+  }
+  return null
+}
+
+/** Total working-set volume (Σ weight × reps) for a set list. */
+export function sessionVolume(rows: WorkoutSet[]): number {
+  return rows.filter((r) => r.kind !== 'warmup').reduce((a, r) => a + (r.weight ?? 0) * (r.reps ?? 0), 0)
+}
+
+/** Best (heaviest) logged weight per day for an exercise — for a progression chart. */
+export function exerciseProgression(data: JournalData, exercise: string): { date: string; weight: number }[] {
+  const ex = exercise.trim().toLowerCase()
+  const byDay = new Map<string, number>()
+  for (const w of data.workouts) {
+    let best = 0
+    for (const r of w.setRows ?? []) if (r.exercise.trim().toLowerCase() === ex) best = Math.max(best, r.weight ?? 0)
+    for (const line of w.sets) { const p = parseSet(line); if (p && p.exercise.toLowerCase() === ex) best = Math.max(best, p.weight) }
+    if (best > 0) byDay.set(w.date, Math.max(byDay.get(w.date) ?? 0, best))
+  }
+  return [...byDay.entries()].map(([date, weight]) => ({ date: date.slice(5), weight })).sort((a, b) => (a.date < b.date ? -1 : 1))
+}

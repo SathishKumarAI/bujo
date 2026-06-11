@@ -19,6 +19,7 @@ import {
   musclesForExercise, epley1RM, platesPerSide,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
+import { PULLUP_PROGRAM } from '../lib/programs'
 import type { Routine, Split } from '../lib/types'
 
 interface SetRow {
@@ -195,6 +196,9 @@ export function Gym() {
         </div>
       </Card>
 
+      {/* ── Training program ─────────────────────────────────── */}
+      <ProgramCard onLoad={(exs) => loadRoutine(exs, 'other')} />
+
       {/* ── Single-exercise anatomy ──────────────────────────── */}
       <Card
         title={focusEx ? focusEx : 'Exercise anatomy'}
@@ -281,11 +285,80 @@ export function Gym() {
   )
 }
 
+/** Follow a built-in multi-week training program (from docs/pdf, encoded as data). */
+function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
+  const { data, setSettings } = useJournal()
+  const p = PULLUP_PROGRAM
+  const [week, setWeek] = useState(1)
+  const [day, setDay] = useState(1)
+  const done = data.settings.programDone ?? []
+  const dayKey = (w: number, d: number) => `${p.id}-w${w}d${d}`
+  const cur = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)
+  const totalDays = p.weeks.length * 5
+  const doneCount = done.filter((k) => k.startsWith(p.id)).length
+
+  function toggleDone() {
+    const k = dayKey(week, day)
+    const next = done.includes(k) ? done.filter((x) => x !== k) : [...done, k]
+    setSettings({ programDone: next })
+  }
+
+  return (
+    <Card
+      title={p.name}
+      subtitle={p.source}
+      right={<span className="text-xs text-overlay0">{doneCount}/{totalDays} days done</span>}
+    >
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-overlay0">Week</span>
+        {p.weeks.map((w) => (
+          <button key={w.week} onClick={() => setWeek(w.week)} className="grid h-7 w-7 place-items-center rounded text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
+        ))}
+      </div>
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-overlay0">Day</span>
+        {[1, 2, 3, 4, 5].map((d) => {
+          const isDone = done.includes(dayKey(week, d))
+          return (
+            <button key={d} onClick={() => setDay(d)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === d ? cat('blue') : cat('surface0'), color: day === d ? cat('crust') : cat('subtext1') }}>
+              {isDone && '✓'} {d}
+            </button>
+          )
+        })}
+      </div>
+
+      {cur && (
+        <>
+          <p className="mb-2 text-xs tracking-wide text-overlay0 uppercase">{cur.focus}</p>
+          <table className="w-full text-sm">
+            <thead><tr className="text-[10px] text-overlay0 uppercase"><th className="text-left font-normal">Exercise</th><th className="w-24 text-right font-normal">Qty</th><th className="w-12 text-right font-normal">Sets</th></tr></thead>
+            <tbody>
+              {cur.exercises.map((e, i) => (
+                <tr key={i} className="border-t border-surface0">
+                  <td className="py-1 text-subtext1">{e.name}</td>
+                  <td className="py-1 text-right text-overlay1">{e.qty}</td>
+                  <td className="py-1 text-right text-overlay1">{e.sets}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="primary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="inline-flex items-center gap-1.5"><Plus size={14} /> Load into session</Button>
+            <Button onClick={toggleDone}>{done.includes(dayKey(week, day)) ? 'Mark not done' : 'Mark day done'}</Button>
+          </div>
+        </>
+      )}
+    </Card>
+  )
+}
+
 /** Greedy plate-loading helper: target weight → plates per side. */
 function PlateCalculator({ unit }: { unit: string }) {
   const [target, setTarget] = useState('100')
   const [bar, setBar] = useState(unit === 'lb' ? '45' : '20')
-  const plates = platesPerSide(Number(target) || 0, Number(bar) || 0)
+  // Plate denominations differ by unit (kg gym plates vs lb).
+  const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
+  const plates = platesPerSide(Number(target) || 0, Number(bar) || 0, denoms)
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
   return (
     <Card title="Plate calculator" subtitle="What to load on the bar">
