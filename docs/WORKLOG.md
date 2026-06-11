@@ -1,5 +1,42 @@
 # Worklog
 
+## 2026-06-10 — Fitness/Gym, visualizations, wger, icons (BUJO-73…116)
+
+Big fitness + visualization + polish session, all local-first, all credited.
+
+**Visualizations (Stats tab)**
+- Activity heatmap (GitHub-style), weekly radar, sleep-vs-mood scatter,
+  workout-minutes bars, task-status donut, mood calendar, tag cloud.
+- 7-day rolling-average overlays on the Trackers chart.
+
+**Gym tab (GRIT + wger inspired, own code)**
+- Push/Pull/Legs split selector + next-day suggestion; PPL presets + custom
+  routines; structured set logging; personal records (parsed from sets);
+  body-weight chart; nutrition / macro diary.
+- **Muscle map**: switched from a hand-drawn SVG to **wger's anatomical muscle
+  diagrams** (base body + per-muscle overlays, CC-BY-SA). The map reacts to the
+  exercises you log (union), a per-row **focus** toggle, or a clicked PR.
+- **wger exercise database**: rebuilt the client after wger removed `/search/`
+  — now fetches `/exerciseinfo/`, caches a slim index in localStorage, searches
+  client-side. **Exercise detail modal**: large image + exact wger muscles on
+  the body map + "Add to session".
+
+**UX / polish**
+- Zoom in/out control + hover-zoom on images; **sticky sidebar** stays static
+  while content zooms.
+- **Professional lucide icons app-wide**, replacing emoji on buttons/labels
+  (image upload, settings, gym splits, PRs, routines, fast-break, year-in-review,
+  milestones, birthdays, ics import). BuJo bullet glyphs kept (method notation).
+- `?view=` and `?demo=1` deep links.
+
+**Credits**
+- `CREDITS.md` + README references list every source the user provided
+  (Ryder Carroll, two YouTube videos, Lazy Genius, GRIT, wger) and all library/
+  font/service licenses. All code original; wger muscle diagrams & exercise
+  images used under CC-BY-SA via wger's public assets/API.
+
+**Verification**: `npm run build` ✓ · `npm test` ✓ (57 tests) · screenshots.
+
 ## 2026-06-10 — Realism pack v1.1 + UI de-slop + full docs
 
 Added 20 features to make the journal feel like real paper and fit real daily

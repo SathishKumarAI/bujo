@@ -82,7 +82,7 @@ export default function App() {
 
       {/* Sidebar */}
       <nav
-        className={`${navOpen ? 'block' : 'hidden'} border-b border-surface0 bg-mantle md:block md:w-60 md:shrink-0 md:border-r md:border-b-0`}
+        className={`${navOpen ? 'block' : 'hidden'} border-b border-surface0 bg-mantle md:sticky md:top-0 md:block md:h-screen md:w-60 md:shrink-0 md:self-start md:overflow-y-auto md:border-r md:border-b-0`}
       >
         <div className="hidden px-5 pt-6 pb-4 md:block"><Brand /></div>
         <ul className="flex flex-row flex-wrap gap-0.5 p-2 md:flex-col md:px-3 md:pb-3">

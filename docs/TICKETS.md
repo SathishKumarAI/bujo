@@ -105,6 +105,14 @@ IDs are stable references for commits and PRs.
 | BUJO-107 | wger exercise database browser (search + images, public API) | ✅ |
 | BUJO-108 | Nutrition / macro diary (calories + protein/carbs/fat) | ✅ |
 | BUJO-109 | Credits + references (CREDITS.md, README references) | ✅ |
+| BUJO-110 | Fix wger search (endpoint removed) → catalogue fetch + cache | ✅ |
+| BUJO-111 | Muscle diagram reacts to logged exercises (union) + PR focus | ✅ |
+| BUJO-112 | Per-set-row focus toggle drives the muscle map (current lift) | ✅ |
+| BUJO-113 | Exercise detail modal: large image + exact wger muscles + add | ✅ |
+| BUJO-114 | Professional lucide icons app-wide (replace emoji) | ✅ |
+| BUJO-115 | Sticky sidebar — stays static while content zooms/scrolls | ✅ |
+| BUJO-116 | Full production-grade symbol sweep (fast-break, review, milestones) | ✅ |
+| BUJO-117 | Global weight unit (kg / lb) setting, used across Gym & body metrics | ✅ |
 
 ## Epic H — Data & privacy
 

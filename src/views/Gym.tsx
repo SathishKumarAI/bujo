@@ -39,6 +39,7 @@ export function Gym() {
   // Body metrics quick entry.
   const [weight, setWeight] = useState('')
   const prs = personalRecords(data)
+  const unit = data.settings.weightUnit
 
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
@@ -68,7 +69,7 @@ export function Gym() {
   function finish() {
     const sets = rows
       .filter((r) => r.exercise.trim())
-      .map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}kg`)
+      .map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
     if (sets.length === 0) return
     addWorkout({
       date: todayISO(),
@@ -162,7 +163,7 @@ export function Gym() {
                   placeholder="Exercise"
                   className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
                 />
-                <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder="kg" className="py-1.5" />
+                <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
               </div>
@@ -220,7 +221,7 @@ export function Gym() {
                     title="Show this lift on the muscle map"
                   >
                     <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
-                    <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}kg</span> · {prettyDay(pr.date)}</span>
+                    <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span> · {prettyDay(pr.date)}</span>
                   </button>
                 </li>
               ))}
@@ -255,7 +256,7 @@ export function Gym() {
       {/* ── Body metrics ─────────────────────────────────── */}
       <Card title="Body weight" subtitle="Track the trend">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Today's weight (kg)" className="max-w-[200px]" />
+          <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
             variant="primary"
             onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}

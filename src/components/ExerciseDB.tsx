@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Dumbbell } from 'lucide-react'
+import { Dumbbell, Plus, X } from 'lucide-react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
-import { Empty, Input } from './ui'
+import { MuscleMap, muscleNames } from './MuscleMap'
+import { Button, Empty, Input } from './ui'
 
 /**
  * Browse the wger exercise database (image-based grid) and pick an exercise.
@@ -13,6 +14,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
   const [results, setResults] = useState<WgerExercise[]>([])
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [progress, setProgress] = useState(0)
+  const [selected, setSelected] = useState<WgerExercise | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -53,9 +55,9 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
           {results.map((ex) => (
             <button
               key={ex.id}
-              onClick={() => onPick(ex.name)}
+              onClick={() => setSelected(ex)}
               className="group overflow-hidden rounded-xl border border-surface0 bg-base text-left transition-colors hover:border-mauve"
-              title={`Add ${ex.name}`}
+              title={`View ${ex.name}`}
             >
               <div className="grid h-24 place-items-center overflow-hidden bg-mantle">
                 {ex.image ? (
@@ -72,6 +74,47 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
       <p className="mt-2 text-[11px] text-overlay0">
         Exercise data & images from <a href="https://wger.de" className="underline" target="_blank" rel="noreferrer">wger.de</a> (CC-BY-SA).
       </p>
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[8vh]" onClick={() => setSelected(null)}>
+          <div className="card-3d w-full max-w-lg overflow-hidden rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={selected.name}>
+            <header className="flex items-center justify-between border-b border-surface0 px-4 py-3">
+              <h3 className="font-display text-lg text-text">{selected.name}</h3>
+              <button onClick={() => setSelected(null)} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></button>
+            </header>
+            <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <div className="grid place-items-center rounded-xl border border-surface0 bg-base p-2">
+                {selected.image ? (
+                  <img src={selected.image} alt={selected.name} className="max-h-56 w-full object-contain" />
+                ) : (
+                  <Dumbbell size={48} style={{ color: cat('overlay0') }} />
+                )}
+              </div>
+              <div>
+                <p className="mb-1 text-xs tracking-wide text-overlay0 uppercase">Targets</p>
+                {selected.muscles.length > 0 ? (
+                  <>
+                    <MuscleMap muscles={selected.muscles} />
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {muscleNames(selected.muscles).map((m) => (
+                        <span key={m} className="rounded-full px-2 py-0.5 text-xs" style={{ background: cat('mauve') + '33', color: cat('mauve') }}>{m}</span>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-overlay0">No muscle data for this exercise.</p>
+                )}
+              </div>
+            </div>
+            <footer className="flex justify-end gap-2 border-t border-surface0 px-4 py-3">
+              <Button onClick={() => setSelected(null)}>Close</Button>
+              <Button variant="primary" onClick={() => { onPick(selected.name); setSelected(null) }} className="inline-flex items-center gap-1.5">
+                <Plus size={15} /> Add to session
+              </Button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Utensils, CupSoda } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider } from '../components/ui'
@@ -119,14 +120,16 @@ export function Today() {
               <Button
                 variant={metric?.fastBreak === 'food' ? 'primary' : 'ghost'}
                 onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
+                className="inline-flex items-center gap-1.5"
               >
-                ● Food
+                <Utensils size={14} /> Food
               </Button>
               <Button
                 variant={metric?.fastBreak === 'drink' ? 'primary' : 'ghost'}
                 onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
+                className="inline-flex items-center gap-1.5"
               >
-                ○ Drink
+                <CupSoda size={14} /> Drink
               </Button>
             </div>
           </div>

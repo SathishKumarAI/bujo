@@ -165,6 +165,7 @@ export interface Collection {
 
 export type ThemeName = 'mocha' | 'latte'
 export type TempUnit = 'F' | 'C'
+export type WeightUnit = 'kg' | 'lb'
 export type Gender = 'female' | 'male' | 'nonbinary' | 'prefer-not'
 
 /** A relapse event for the abstinence / NoFap streak journal. */
@@ -187,6 +188,8 @@ export interface Streak {
 export interface Settings {
   theme: ThemeName
   tempUnit: TempUnit
+  /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
+  weightUnit: WeightUnit
   /** Drives which gendered wellbeing tools are surfaced (cycle vs. abstinence). */
   gender: Gender
   /** Show the neutral cycle / fertility tracker. Auto-on for female. */

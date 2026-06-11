@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -46,13 +47,13 @@ export function NoFap() {
             {milestones.map((m) => (
               <span
                 key={m}
-                className="rounded-full px-3 py-1 text-sm"
+                className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm"
                 style={{
                   background: current >= m ? cat('green') : cat('surface0'),
                   color: current >= m ? cat('surface0') : cat('overlay0'),
                 }}
               >
-                {current >= m ? '✓ ' : ''}{m}d
+                {current >= m && <Check size={13} />}{m}d
               </span>
             ))}
           </div>
@@ -60,7 +61,7 @@ export function NoFap() {
 
         <Card title="Relapse history" subtitle="No shame — patterns are data">
           {s.relapses.length === 0 ? (
-            <Empty>No relapses logged. Keep going. 💪</Empty>
+            <Empty>No relapses logged. Keep going.</Empty>
           ) : (
             <ul className="space-y-2 text-sm">
               {[...s.relapses].reverse().map((r) => (

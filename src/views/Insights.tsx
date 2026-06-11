@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -54,13 +55,13 @@ export function Insights() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card title="Year in review" subtitle="Your journal so far">
-          <ul className="space-y-1 text-sm text-subtext1">
-            <li>📝 <strong>{data.entries.length}</strong> entries logged</li>
-            <li>😊 Average mood: <strong>{avgMood ?? '—'}</strong>{avgMood != null ? ' / 10' : ''}</li>
-            <li>💪 <strong>{workouts}</strong> workouts</li>
-            <li>📷 <strong>{photos}</strong> photos kept</li>
-            <li>🔥 Longest streak: <strong>{best}</strong> days</li>
-            <li>🎂 <strong>{data.birthdays.length}</strong> birthdays tracked</li>
+          <ul className="space-y-1.5 text-sm text-subtext1">
+            <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
+            <ReviewRow icon={Smile} color="green" label={`average mood${avgMood != null ? ' / 10' : ''}`} value={avgMood ?? '—'} />
+            <ReviewRow icon={Dumbbell} color="teal" label="workouts" value={workouts} />
+            <ReviewRow icon={ImageIcon} color="mauve" label="photos kept" value={photos} />
+            <ReviewRow icon={Flame} color="peach" label="day longest streak" value={best} />
+            <ReviewRow icon={Cake} color="pink" label="birthdays tracked" value={data.birthdays.length} />
           </ul>
         </Card>
 
@@ -70,7 +71,9 @@ export function Insights() {
           ) : (
             <ul className="grid grid-cols-2 gap-1 text-sm">
               {months.map((ym) => (
-                <li key={ym} className="text-subtext1">📖 {prettyMonth(ym)}</li>
+                <li key={ym} className="inline-flex items-center gap-1.5 text-subtext1">
+                  <BookOpen size={14} style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
+                </li>
               ))}
             </ul>
           )}
@@ -98,6 +101,16 @@ export function Insights() {
         )}
       </Card>
     </div>
+  )
+}
+
+function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; color: string; label: string; value: number | string }) {
+  return (
+    <li className="flex items-center gap-2">
+      <Icon size={15} style={{ color: cat(color) }} />
+      <strong className="text-text">{value}</strong>
+      <span>{label}</span>
+    </li>
   )
 }
 

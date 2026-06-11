@@ -82,6 +82,13 @@ export function Settings() {
           <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onClick={() => setSettings({ nofapEnabled: !s.nofapEnabled })} />
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
+          <span className="text-sm text-subtext1">Weight unit</span>
+          <div className="flex gap-2">
+            <Button variant={s.weightUnit === 'kg' ? 'primary' : 'ghost'} onClick={() => setSettings({ weightUnit: 'kg' })}>kg</Button>
+            <Button variant={s.weightUnit === 'lb' ? 'primary' : 'ghost'} onClick={() => setSettings({ weightUnit: 'lb' })}>lb</Button>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
           <span className="text-sm text-subtext1">Temperature unit</span>
           <div className="flex gap-2">
             <Button variant={s.tempUnit === 'F' ? 'primary' : 'ghost'} onClick={() => setSettings({ tempUnit: 'F' })}>°F</Button>

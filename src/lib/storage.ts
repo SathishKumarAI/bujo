@@ -16,6 +16,7 @@ export function defaultSettings(): Settings {
   return {
     theme: 'mocha',
     tempUnit: 'F',
+    weightUnit: 'kg',
     gender: 'prefer-not',
     cycleTrackerEnabled: false,
     nofapEnabled: false,
