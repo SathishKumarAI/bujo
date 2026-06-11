@@ -68,6 +68,22 @@ export function habitConsistency(
   return possible ? Math.round((hit / possible) * 100) : 0
 }
 
+/** Current consecutive-day streak for a single habit, ending today/yesterday. */
+export function habitStreak(
+  data: JournalData,
+  habitId: string,
+  today = todayISO(),
+): number {
+  const done = (d: string) => (data.habitLog[d] ?? []).includes(habitId)
+  let cursor = done(today) ? today : addDays(today, -1)
+  let streak = 0
+  while (done(cursor)) {
+    streak += 1
+    cursor = addDays(cursor, -1)
+  }
+  return streak
+}
+
 /** "On this day" — entries/memories from the same month+day in prior periods. */
 export function onThisDay(data: JournalData, today = todayISO()) {
   const mmdd = today.slice(5) // "MM-DD"

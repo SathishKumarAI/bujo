@@ -106,17 +106,18 @@ export const EXERCISE_LIBRARY = [
 export interface PR {
   exercise: string
   weight: number
+  reps: number
   date: string
 }
 
 /**
- * Parse a set line like "Bench 5x5 @ 60kg" into { exercise, weight }.
+ * Parse a set line like "Bench 5x5 @ 60kg" into { exercise, reps, weight }.
  * Tolerant of `x`/`×`, optional unit, and extra spacing.
  */
-export function parseSet(line: string): { exercise: string; weight: number } | null {
-  const m = line.match(/^(.+?)\s+\d+\s*[x×]\s*\d+\s*@\s*([\d.]+)/i)
+export function parseSet(line: string): { exercise: string; reps: number; weight: number } | null {
+  const m = line.match(/^(.+?)\s+\d+\s*[x×]\s*(\d+)\s*@\s*([\d.]+)/i)
   if (!m) return null
-  return { exercise: m[1].trim(), weight: Number(m[2]) }
+  return { exercise: m[1].trim(), reps: Number(m[2]), weight: Number(m[3]) }
 }
 
 /** Personal records: heaviest logged weight per exercise across all workouts. */
@@ -129,9 +130,15 @@ export function personalRecords(data: JournalData): PR[] {
       const key = parsed.exercise.toLowerCase()
       const cur = best.get(key)
       if (!cur || parsed.weight > cur.weight) {
-        best.set(key, { exercise: parsed.exercise, weight: parsed.weight, date: w.date })
+        best.set(key, { exercise: parsed.exercise, weight: parsed.weight, reps: parsed.reps, date: w.date })
       }
     }
   }
   return [...best.values()].sort((a, b) => b.weight - a.weight)
+}
+
+/** Estimated one-rep max (Epley formula). Rounded to the nearest 0.5. */
+export function epley1RM(weight: number, reps: number): number {
+  if (reps <= 1) return weight
+  return Math.round(weight * (1 + reps / 30) * 2) / 2
 }

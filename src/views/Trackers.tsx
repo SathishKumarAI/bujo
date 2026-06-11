@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Flame, X } from 'lucide-react'
 import {
   CartesianGrid,
   Line,
@@ -12,7 +13,7 @@ import { useJournal } from '../store'
 import { monthDays, prettyMonth, todayISO, ymOf } from '../lib/date'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { cat, HABIT_COLORS } from '../lib/colors'
-import { habitConsistency } from '../lib/stats'
+import { habitConsistency, habitStreak } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
 import type { Habit } from '../lib/types'
 
@@ -91,6 +92,7 @@ export function Trackers() {
                     today={today}
                     habitLog={data.habitLog}
                     consistency={(h) => habitConsistency(data, h.id, h.startedOn)}
+                    streak={(h) => habitStreak(data, h.id)}
                     onToggle={toggleHabit}
                     onRemove={removeHabit}
                     onRename={renameHabit}
@@ -164,6 +166,7 @@ function FragmentRows({
   today,
   habitLog,
   consistency,
+  streak,
   onToggle,
   onRemove,
   onRename,
@@ -174,6 +177,7 @@ function FragmentRows({
   today: string
   habitLog: Record<string, string[]>
   consistency: (h: Habit) => number
+  streak: (h: Habit) => number
   onToggle: (date: string, id: string) => void
   onRemove: (id: string) => void
   onRename: (id: string, name: string) => void
@@ -196,12 +200,17 @@ function FragmentRows({
               title="Click to rename"
               className="w-24 rounded bg-transparent px-1 text-subtext1 hover:bg-surface0 focus:bg-surface0 focus:outline-none"
             />
+            {streak(h) > 1 && (
+              <span title={`${streak(h)}-day streak`} className="ml-1 inline-flex items-center gap-0.5 align-middle text-[10px]" style={{ color: cat('peach') }}>
+                <Flame size={11} />{streak(h)}
+              </span>
+            )}
             <button
               onClick={() => onRemove(h.id)}
               aria-label={`Remove ${h.name}`}
               className="ml-1 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"
             >
-              ×
+              <X size={13} className="inline" />
             </button>
           </td>
           {days.map((d) => {

@@ -27,27 +27,33 @@ type ViewId =
   | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'plan' | 'collections'
   | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
 
+type NavGroup = 'Journal' | 'Health' | 'Review' | 'System'
+
 interface NavItem {
   id: ViewId
   label: string
   icon: LucideIcon
+  group: NavGroup
   show?: (gated: { cycle: boolean; nofap: boolean }) => boolean
 }
 
+// Ordered as a daily pipeline: capture & organise → track health → review → system.
+const GROUP_ORDER: NavGroup[] = ['Journal', 'Health', 'Review', 'System']
+
 const NAV: NavItem[] = [
-  { id: 'today', label: 'Today', icon: Sun },
-  { id: 'monthly', label: 'Monthly', icon: CalendarDays },
-  { id: 'trackers', label: 'Trackers', icon: BarChart3 },
-  { id: 'fitness', label: 'Fitness', icon: Activity },
-  { id: 'gym', label: 'Gym', icon: Dumbbell },
-  { id: 'plan', label: 'Plan', icon: Repeat },
-  { id: 'collections', label: 'Collections', icon: BookMarked },
-  { id: 'insights', label: 'Insights', icon: Sparkles },
-  { id: 'stats', label: 'Stats', icon: PieChart },
-  { id: 'cycle', label: 'Cycle', icon: Flower2, show: (g) => g.cycle },
-  { id: 'nofap', label: 'Streak', icon: ShieldCheck, show: (g) => g.nofap },
-  { id: 'help', label: 'Help', icon: HelpCircle },
-  { id: 'settings', label: 'Settings', icon: SlidersHorizontal },
+  { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
+  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Journal' },
+  { id: 'plan', label: 'Plan', icon: Repeat, group: 'Journal' },
+  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Journal' },
+  { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Health' },
+  { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
+  { id: 'gym', label: 'Gym', icon: Dumbbell, group: 'Health' },
+  { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
+  { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
+  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
+  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
+  { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
+  { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
 ]
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
@@ -85,29 +91,42 @@ export default function App() {
         className={`${navOpen ? 'block' : 'hidden'} border-b border-surface0 bg-mantle md:sticky md:top-0 md:block md:h-screen md:w-60 md:shrink-0 md:self-start md:overflow-y-auto md:border-r md:border-b-0`}
       >
         <div className="hidden px-5 pt-6 pb-4 md:block"><Brand /></div>
-        <ul className="flex flex-row flex-wrap gap-0.5 p-2 md:flex-col md:px-3 md:pb-3">
-          {items.map((n) => {
-            const Icon = n.icon
-            const active = view === n.id
+        <div className="flex flex-row flex-wrap gap-0.5 p-2 md:flex-col md:px-3 md:pb-3">
+          {GROUP_ORDER.map((group) => {
+            const groupItems = items.filter((n) => n.group === group)
+            if (groupItems.length === 0) return null
             return (
-              <li key={n.id}>
-                <button
-                  onClick={() => { setView(n.id); setNavOpen(false) }}
-                  aria-current={active ? 'page' : undefined}
-                  className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    active ? 'bg-surface0/70 font-medium text-text' : 'text-subtext0 hover:bg-surface0/40 hover:text-subtext1'
-                  }`}
-                >
-                  {active && (
-                    <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-mauve" aria-hidden />
-                  )}
-                  <Icon size={17} className={active ? 'text-mauve' : 'text-overlay1 group-hover:text-subtext0'} aria-hidden />
-                  <span>{n.label}</span>
-                </button>
-              </li>
+              <div key={group} className="contents md:block">
+                <p className="hidden px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase md:block">
+                  {group}
+                </p>
+                <ul className="contents md:block">
+                  {groupItems.map((n) => {
+                    const Icon = n.icon
+                    const active = view === n.id
+                    return (
+                      <li key={n.id}>
+                        <button
+                          onClick={() => { setView(n.id); setNavOpen(false) }}
+                          aria-current={active ? 'page' : undefined}
+                          className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                            active ? 'bg-surface0/70 font-medium text-text' : 'text-subtext0 hover:bg-surface0/40 hover:text-subtext1'
+                          }`}
+                        >
+                          {active && (
+                            <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-mauve" aria-hidden />
+                          )}
+                          <Icon size={17} className={active ? 'text-mauve' : 'text-overlay1 group-hover:text-subtext0'} aria-hidden />
+                          <span>{n.label}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             )
           })}
-        </ul>
+        </div>
       </nav>
 
       {/* Main */}

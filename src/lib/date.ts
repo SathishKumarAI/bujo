@@ -61,6 +61,17 @@ export function monthDays(ym: string): string[] {
   return Array.from({ length: n }, (_, i) => `${ym}-${String(i + 1).padStart(2, '0')}`)
 }
 
+/** Weekday header labels ordered for a given week start (0=Sun, 1=Mon). */
+export function weekdayLabels(weekStart: 0 | 1): string[] {
+  return weekStart === 1 ? [...WEEKDAYS.slice(1), WEEKDAYS[0]] : WEEKDAYS
+}
+
+/** Grid column offset (0–6) for an ISO day given the week start. */
+export function weekColumn(iso: string, weekStart: 0 | 1): number {
+  const dow = fromISODay(iso).getDay()
+  return weekStart === 1 ? (dow + 6) % 7 : dow
+}
+
 /** Difference in whole days between two ISO days (b - a). */
 export function dayDiff(a: string, b: string): number {
   return Math.round((fromISODay(b).getTime() - fromISODay(a).getTime()) / 86_400_000)

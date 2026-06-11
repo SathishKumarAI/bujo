@@ -85,6 +85,7 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
+  resistUrge: () => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
   removeRecurrence: (id: string) => void
@@ -332,6 +333,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             },
           }
         }),
+
+      resistUrge: () =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, urgesResisted: (d.nofap.urgesResisted ?? 0) + 1 } })),
 
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),

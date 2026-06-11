@@ -166,6 +166,7 @@ export interface Collection {
 export type ThemeName = 'mocha' | 'latte'
 export type TempUnit = 'F' | 'C'
 export type WeightUnit = 'kg' | 'lb'
+export type DistanceUnit = 'km' | 'mi'
 export type Gender = 'female' | 'male' | 'nonbinary' | 'prefer-not'
 
 /** A relapse event for the abstinence / NoFap streak journal. */
@@ -183,6 +184,8 @@ export interface Streak {
   /** Personal best, in days. */
   best: number
   relapses: Relapse[]
+  /** Count of urges resisted (a positive counter). */
+  urgesResisted?: number
 }
 
 export interface Settings {
@@ -190,6 +193,10 @@ export interface Settings {
   tempUnit: TempUnit
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit
+  /** Distance unit for cardio — km (metric) or mi (US). */
+  distanceUnit: DistanceUnit
+  /** First day of the week in calendars: 0 = Sunday, 1 = Monday. */
+  weekStart: 0 | 1
   /** Drives which gendered wellbeing tools are surfaced (cycle vs. abstinence). */
   gender: Gender
   /** Show the neutral cycle / fertility tracker. Auto-on for female. */

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { fromISODay, monthDays, prettyMonth, todayISO, WEEKDAYS, ymOf } from '../lib/date'
+import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels, ymOf } from '../lib/date'
 import { Button, Card, Input, Textarea } from '../components/ui'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
@@ -29,7 +29,8 @@ export function Monthly() {
   }
   const meta = data.monthly.find((m) => m.ym === ym)
   const days = monthDays(ym)
-  const firstWeekday = fromISODay(days[0]).getDay()
+  const weekStart = data.settings.weekStart ?? 0
+  const firstWeekday = weekColumn(days[0], weekStart)
   const today = todayISO()
 
   function shift(delta: number) {
@@ -57,7 +58,7 @@ export function Monthly() {
           }
         >
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-overlay0">
-            {WEEKDAYS.map((w) => <div key={w} className="pb-1">{w}</div>)}
+            {weekdayLabels(weekStart).map((w) => <div key={w} className="pb-1">{w}</div>)}
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`pad${i}`} />)}
             {days.map((d) => {
               const events = dayEvents(d)

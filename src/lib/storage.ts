@@ -17,6 +17,8 @@ export function defaultSettings(): Settings {
     theme: 'mocha',
     tempUnit: 'F',
     weightUnit: 'kg',
+    distanceUnit: 'km',
+    weekStart: 0,
     gender: 'prefer-not',
     cycleTrackerEnabled: false,
     nofapEnabled: false,

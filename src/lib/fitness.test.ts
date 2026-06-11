@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta } from './fitness'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -9,14 +9,23 @@ const workout = (p: Partial<Workout>): Workout => ({
 })
 
 describe('parseSet', () => {
-  it('parses exercise + weight from a set line', () => {
-    expect(parseSet('Bench Press 5x5 @ 60kg')).toEqual({ exercise: 'Bench Press', weight: 60 })
+  it('parses exercise + reps + weight from a set line', () => {
+    expect(parseSet('Bench Press 5x5 @ 60kg')).toEqual({ exercise: 'Bench Press', reps: 5, weight: 60 })
   })
   it('tolerates the × glyph and decimals', () => {
-    expect(parseSet('Squat 3×8 @ 82.5kg')).toEqual({ exercise: 'Squat', weight: 82.5 })
+    expect(parseSet('Squat 3×8 @ 82.5kg')).toEqual({ exercise: 'Squat', reps: 8, weight: 82.5 })
   })
   it('returns null for non-set text', () => {
     expect(parseSet('felt strong today')).toBeNull()
+  })
+})
+
+describe('epley1RM', () => {
+  it('returns the weight for a single rep', () => {
+    expect(epley1RM(100, 1)).toBe(100)
+  })
+  it('estimates a higher 1RM for multi-rep sets', () => {
+    expect(epley1RM(100, 5)).toBeCloseTo(116.5, 1) // 100*(1+5/30)=116.67 → 116.5
   })
 })
 

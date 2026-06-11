@@ -10,7 +10,7 @@ import { dayDiff, prettyDay, todayISO } from '../lib/date'
  * with trigger + reflection. Private, local-only, judgement-free framing.
  */
 export function NoFap() {
-  const { data, logRelapse } = useJournal()
+  const { data, logRelapse, resistUrge } = useJournal()
   const [trigger, setTrigger] = useState('')
   const [note, setNote] = useState('')
   const s = data.nofap
@@ -40,6 +40,15 @@ export function NoFap() {
             </div>
           )}
           <div className="mt-2 text-xs text-overlay0">Personal best: <span style={{ color: cat('peach') }}>{best} days</span></div>
+        </Card>
+
+        <Card title="Urge surfing" subtitle="Resisted an urge? Mark the win — it passes in minutes.">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-subtext1">
+              Urges resisted: <span className="font-semibold" style={{ color: cat('green') }}>{s.urgesResisted ?? 0}</span>
+            </span>
+            <Button variant="primary" onClick={resistUrge}>I resisted an urge</Button>
+          </div>
         </Card>
 
         <Card title="Milestones">

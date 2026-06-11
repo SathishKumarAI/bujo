@@ -115,6 +115,12 @@ IDs are stable references for commits and PRs.
 | BUJO-117 | Global weight unit (kg / lb) setting, used across Gym & body metrics | ✅ |
 | BUJO-118 | Single-exercise anatomy view: look up any exercise → front/back muscle map | ✅ |
 | BUJO-119 | Exact wger muscles for focused exercise (when cached) + video clip + YouTube link | ✅ |
+| BUJO-120 | Pipeline nav: group sidebar into Journal / Health / Review / System | ✅ |
+| BUJO-121 | Today: carry-forward yesterday's open tasks + done/total chip | ✅ |
+| BUJO-122 | Trackers: per-habit current streak badge | ✅ |
+| BUJO-123 | Gym: estimated 1RM (Epley) on PRs + between-sets rest timer | ✅ |
+| BUJO-124 | Settings: distance unit (km/mi) + week start (Sun/Mon), applied to calendars | ✅ |
+| BUJO-125 | NoFap: urge-surfing "urges resisted" counter | ✅ |
 
 ## Epic H — Data & privacy
 

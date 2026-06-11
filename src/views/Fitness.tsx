@@ -17,6 +17,7 @@ export function Fitness() {
   const [sets, setSets] = useState('')
   const [notes, setNotes] = useState('')
 
+  const dist = data.settings.distanceUnit
   const workouts = [...data.workouts].sort((a, b) => (a.date < b.date ? 1 : -1))
   const totalMin = data.workouts.reduce((s, w) => s + (w.durationMin ?? 0), 0)
   const totalKm = data.workouts.reduce((s, w) => s + (w.distanceKm ?? 0), 0)
@@ -57,7 +58,7 @@ export function Fitness() {
             </label>
             <div className="grid grid-cols-2 gap-2">
               <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Min" aria-label="Duration minutes" />
-              <Input type="number" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="Km" aria-label="Distance km" />
+              <Input type="number" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder={dist === 'mi' ? 'Mi' : 'Km'} aria-label="Distance" />
               <Input type="number" value={calories} onChange={(e) => setCalories(e.target.value)} placeholder="Kcal" aria-label="Calories" />
               <Input type="number" value={rpe} onChange={(e) => setRpe(e.target.value)} placeholder="RPE 1–10" aria-label="RPE" />
             </div>
@@ -73,7 +74,7 @@ export function Fitness() {
           <div className="grid grid-cols-3 gap-3 text-center">
             <Stat label="Workouts" value={data.workouts.length} color="teal" />
             <Stat label="Minutes" value={totalMin} color="peach" />
-            <Stat label="Kilometers" value={Math.round(totalKm * 10) / 10} color="sky" />
+            <Stat label={dist === 'mi' ? 'Miles' : 'Kilometers'} value={Math.round(totalKm * 10) / 10} color="sky" />
           </div>
         </Card>
 
@@ -99,7 +100,7 @@ export function Fitness() {
                   </div>
                   <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
                     {w.durationMin != null && <span>{w.durationMin} min</span>}
-                    {w.distanceKm != null && <span>{w.distanceKm} km</span>}
+                    {w.distanceKm != null && <span>{w.distanceKm} {dist}</span>}
                     {w.calories != null && <span>{w.calories} kcal</span>}
                     {w.rpe != null && <span>RPE {w.rpe}</span>}
                   </div>

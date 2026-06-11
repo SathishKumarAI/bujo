@@ -10,11 +10,12 @@ import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
+import { RestTimer } from '../components/RestTimer'
 import { cat } from '../lib/colors'
-import { prettyDay, todayISO } from '../lib/date'
+import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise,
+  musclesForExercise, epley1RM,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import type { Split } from '../lib/types'
@@ -184,6 +185,11 @@ export function Gym() {
         </div>
       </Card>
 
+      {/* ── Rest timer ───────────────────────────────────────── */}
+      <Card title="Rest timer" subtitle="Between-sets countdown">
+        <RestTimer />
+      </Card>
+
       {/* ── Single-exercise anatomy ──────────────────────────── */}
       <Card
         title={focusEx ? focusEx : 'Exercise anatomy'}
@@ -254,7 +260,10 @@ export function Gym() {
                     title="Show this lift on the muscle map"
                   >
                     <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
-                    <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span> · {prettyDay(pr.date)}</span>
+                    <span className="text-overlay0">
+                      <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
+                      {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
+                    </span>
                   </button>
                 </li>
               ))}

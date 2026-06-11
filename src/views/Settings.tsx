@@ -89,6 +89,20 @@ export function Settings() {
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
+          <span className="text-sm text-subtext1">Distance unit</span>
+          <div className="flex gap-2">
+            <Button variant={s.distanceUnit === 'km' ? 'primary' : 'ghost'} onClick={() => setSettings({ distanceUnit: 'km' })}>km</Button>
+            <Button variant={s.distanceUnit === 'mi' ? 'primary' : 'ghost'} onClick={() => setSettings({ distanceUnit: 'mi' })}>mi</Button>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
+          <span className="text-sm text-subtext1">Week starts on</span>
+          <div className="flex gap-2">
+            <Button variant={s.weekStart === 0 ? 'primary' : 'ghost'} onClick={() => setSettings({ weekStart: 0 })}>Sunday</Button>
+            <Button variant={s.weekStart === 1 ? 'primary' : 'ghost'} onClick={() => setSettings({ weekStart: 1 })}>Monday</Button>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
           <span className="text-sm text-subtext1">Temperature unit</span>
           <div className="flex gap-2">
             <Button variant={s.tempUnit === 'F' ? 'primary' : 'ghost'} onClick={() => setSettings({ tempUnit: 'F' })}>°F</Button>

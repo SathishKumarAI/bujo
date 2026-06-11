@@ -11,10 +11,16 @@ import { onThisDay } from '../lib/stats'
 import { promptForDay } from '../lib/prompts'
 
 export function Today() {
-  const { data, setMetric, setGratitude, setMemory } = useJournal()
+  const { data, setMetric, setGratitude, setMemory, migrateEntry } = useJournal()
   const [date, setDate] = useState(todayISO())
 
   const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
+  const doneCount = dayEntries.filter((e) => e.type === 'task' && e.status === 'done').length
+  const taskCount = dayEntries.filter((e) => e.type === 'task' && e.status !== 'dropped').length
+  // Yesterday's unfinished tasks, offered to carry forward onto this day.
+  const carryover = data.entries.filter(
+    (e) => e.date === addDays(date, -1) && e.type === 'task' && e.status === 'open' && !e.collection,
+  )
   const metric = data.metrics.find((m) => m.date === date)
   const gratitude = data.gratitude.find((g) => g.date === date)?.text ?? ''
   const memoryRec = data.memories.find((m) => m.date === date)
@@ -49,14 +55,25 @@ export function Today() {
           <div className="mb-3">
             <QuickAdd date={date} />
           </div>
+          {carryover.length > 0 && (
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-surface0 bg-base px-3 py-2 text-sm">
+              <span className="text-subtext1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
+              <Button onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))}>Carry forward</Button>
+            </div>
+          )}
           {dayEntries.length === 0 ? (
             <Empty>No entries yet. Add a task, event, or note above.</Empty>
           ) : (
-            <ul>
-              {dayEntries.map((e) => (
-                <EntryRow key={e.id} entry={e} />
-              ))}
-            </ul>
+            <>
+              <ul>
+                {dayEntries.map((e) => (
+                  <EntryRow key={e.id} entry={e} />
+                ))}
+              </ul>
+              {taskCount > 0 && (
+                <p className="mt-2 text-right text-xs text-overlay0">{doneCount}/{taskCount} tasks done</p>
+              )}
+            </>
           )}
         </Card>
 
