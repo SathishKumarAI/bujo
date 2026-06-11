@@ -6,7 +6,7 @@ import { Button } from './ui'
  * Quick-capture input. Prefixes: t=task, e=event, n=note, *=important, ^=memory.
  * Default kind is task. Enter to add.
  */
-export function QuickAdd({ date }: { date: string }) {
+export function QuickAdd({ date, onAdded }: { date: string; onAdded?: () => void }) {
   const { addEntry } = useJournal()
   const [val, setVal] = useState('')
 
@@ -15,6 +15,7 @@ export function QuickAdd({ date }: { date: string }) {
     if (!val.trim()) return
     addEntry(date, val)
     setVal('')
+    onAdded?.()
   }
 
   return (

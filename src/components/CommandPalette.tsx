@@ -18,12 +18,16 @@ export interface Command {
 export function CommandPalette({
   onNavigate,
   navItems,
+  open,
+  onOpenChange,
 }: {
   onNavigate: (id: string) => void
   navItems: { id: string; label: string }[]
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const { data, setSettings, replaceAll, undo, redo, canUndo, canRedo } = useJournal()
-  const [open, setOpen] = useState(false)
+  const setOpen = onOpenChange
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,14 +37,14 @@ export function CommandPalette({
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setOpen((o) => !o)
+        onOpenChange(!open)
       } else if (e.key === 'Escape') {
-        setOpen(false)
+        onOpenChange(false)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [open, onOpenChange])
 
   useEffect(() => {
     if (open) {
