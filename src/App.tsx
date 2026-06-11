@@ -159,7 +159,7 @@ export default function App() {
             <Redo2 size={15} />
           </button>
         </div>
-        <div className="mx-auto max-w-5xl" style={{ zoom }}>
+        <div className="mx-auto max-w-[1600px]" style={{ zoom }}>
           <Suspense fallback={<p className="py-10 text-center text-overlay0">Loading…</p>}>
             {book ? (
               <div className="book">

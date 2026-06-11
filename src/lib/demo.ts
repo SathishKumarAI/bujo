@@ -124,5 +124,7 @@ export function generateDemoData(today = todayISO()): JournalData {
   j.routines = [
     { id: uid('rt'), name: 'My Push', split: 'push', exercises: ['Bench Press', 'Overhead Press', 'Lateral Raise', 'Dip'] },
   ]
+  // Demo links skip the first-run storage gate.
+  j.settings.storageMode = 'local'
   return j
 }

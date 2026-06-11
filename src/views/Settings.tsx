@@ -54,7 +54,8 @@ export function Settings() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <Card title="Appearance">
         <div className="flex items-center justify-between">
           <span className="text-sm text-subtext1">Theme</span>
@@ -143,7 +144,7 @@ export function Settings() {
         </div>
       </Card>
 
-      <Card title="Backup & data" subtitle="Your data lives only in this browser — back it up!" className="lg:col-span-2">
+      <Card title="Backup & data" subtitle="Back it up regularly">
         {!s.lastBackup && (
           <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
             <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage — export a copy.
@@ -158,10 +159,7 @@ export function Settings() {
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
       </Card>
 
-      <CloudStorage />
-      <DriveSync />
-
-      <Card title="Demo & reset" subtitle="Try the app with sample data, or start fresh" className="lg:col-span-2">
+      <Card title="Demo & reset" subtitle="Sample data, or start fresh">
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => {
@@ -189,6 +187,10 @@ export function Settings() {
           Demo data fills ~30 days of correlated entries, habits, moods, workouts and memories so charts and insights have something to show.
         </p>
       </Card>
+      </div>
+
+      <CloudStorage />
+      <DriveSync />
     </div>
   )
 }

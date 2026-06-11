@@ -32,23 +32,30 @@ import { generateDemoData } from './lib/demo'
 // ── Reducer with undo/redo history ──────────────────────────────────────────
 
 const HISTORY_CAP = 80
+const COALESCE_MS = 900 // merge same-label edits (e.g. typing) into one undo step
 
 interface HState {
   past: JournalData[]
   present: JournalData
   future: JournalData[]
+  lastLabel?: string
+  lastAt?: number
 }
 
 type Action =
   | { type: 'set'; data: JournalData } // undoable replace
-  | { type: 'patch'; fn: (d: JournalData) => JournalData } // undoable mutate
+  | { type: 'patch'; fn: (d: JournalData) => JournalData; label?: string; at?: number } // undoable mutate
   | { type: 'silent'; fn: (d: JournalData) => JournalData } // no history (mount-time)
   | { type: 'undo' }
   | { type: 'redo' }
 
-function commit(state: HState, next: JournalData): HState {
+function commit(state: HState, next: JournalData, label?: string, at = 0): HState {
   if (next === state.present) return state
-  return { past: [...state.past, state.present].slice(-HISTORY_CAP), present: next, future: [] }
+  // Coalesce consecutive same-label edits within the window (one undo step).
+  if (label && state.lastLabel === label && state.lastAt && at - state.lastAt < COALESCE_MS) {
+    return { ...state, present: next, future: [], lastAt: at }
+  }
+  return { past: [...state.past, state.present].slice(-HISTORY_CAP), present: next, future: [], lastLabel: label, lastAt: at }
 }
 
 function reducer(state: HState, action: Action): HState {
@@ -56,7 +63,7 @@ function reducer(state: HState, action: Action): HState {
     case 'set':
       return commit(state, action.data)
     case 'patch':
-      return commit(state, action.fn(state.present))
+      return commit(state, action.fn(state.present), action.label, action.at)
     case 'silent':
       return { ...state, present: action.fn(state.present) }
     case 'undo': {
@@ -173,7 +180,11 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const patch = useCallback((fn: (d: JournalData) => JournalData) => dispatch({ type: 'patch', fn }), [])
+  const patch = useCallback(
+    (fn: (d: JournalData) => JournalData, label?: string) =>
+      dispatch({ type: 'patch', fn, label, at: Date.now() }),
+    [],
+  )
 
   // Global undo/redo (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z or Ctrl+Y). Skip while a text
   // field is focused so the browser's native in-field undo keeps working.
@@ -209,7 +220,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           entries: d.entries.map((e) =>
             e.id === id ? { ...e, ...up, tags: up.text ? parseTags(up.text) : e.tags } : e,
           ),
-        })),
+        }), `entry:${id}`),
 
       cycleStatus: (id) =>
         patch((d) => ({
@@ -279,7 +290,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.metrics.map((m) => (m.date === date ? { ...m, ...mp } : m))
             : [...d.metrics, { date, ...mp }]
           return { ...d, metrics }
-        }),
+        }, `metric:${date}`),
 
       addHabit: (h) =>
         patch((d) => ({
@@ -338,7 +349,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.bodyMetrics.map((b) => (b.date === date ? { ...b, ...bp } : b))
             : [...d.bodyMetrics, { date, measurements: {}, ...bp }]
           return { ...d, bodyMetrics }
-        }),
+        }, `body:${date}`),
 
       removeBodyMetric: (date) =>
         patch((d) => ({ ...d, bodyMetrics: d.bodyMetrics.filter((b) => b.date !== date) })),
@@ -350,7 +361,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.gratitude.map((g) => (g.date === date ? { ...g, text } : g))
             : [...d.gratitude, { date, text }]
           return { ...d, gratitude }
-        }),
+        }, `grat:${date}`),
 
       setMemory: (date, mpatch) =>
         patch((d) => {
@@ -359,7 +370,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.memories.map((m) => (m.date === date ? { ...m, ...mpatch } : m))
             : [...d.memories, { date, text: '', ...mpatch }]
           return { ...d, memories }
-        }),
+        }, `mem:${date}`),
 
       addBirthday: (b) =>
         patch((d) => ({ ...d, birthdays: [...d.birthdays, { id: uid('b'), ...b }] })),
@@ -374,7 +385,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.monthly.map((m) => (m.ym === ym ? { ...m, ...mp } : m))
             : [...d.monthly, { ym, location: '', goals: '', photoCaption: '', ...mp }]
           return { ...d, monthly }
-        }),
+        }, `month:${ym}`),
 
       setCycle: (date, cp) =>
         patch((d) => {
@@ -383,7 +394,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             ? d.cycle.map((c) => (c.date === date ? { ...c, ...cp } : c))
             : [...d.cycle, { date, flags: [], ...cp }]
           return { ...d, cycle }
-        }),
+        }, `cyc:${date}`),
 
       logRelapse: (r) =>
         patch((d) => {
@@ -445,7 +456,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }),
 
       setSettings: (sp) =>
-        patch((d) => ({ ...d, settings: { ...d.settings, ...sp } })),
+        patch((d) => ({ ...d, settings: { ...d.settings, ...sp } }), 'settings'),
 
       replaceAll: (next) => dispatch({ type: 'set', data: next }),
 

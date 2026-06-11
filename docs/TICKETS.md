@@ -129,6 +129,10 @@ IDs are stable references for commits and PRs.
 | BUJO-131 | GitHub private-gist storage (back up / restore via PAT) | ✅ |
 | BUJO-132 | Global undo/redo: store history, Ctrl+Z / Ctrl+Shift+Z, floating control + palette (skips text fields for native undo) | ✅ |
 | BUJO-133 | Inline-edit entry text (double-click) | ✅ |
+| BUJO-134 | Fix: replace photo (Replace + Remove controls on ImageUpload) | ✅ |
+| BUJO-135 | Coalesce undo for rapid edits (sliders/typing → one undo step) | ✅ |
+| BUJO-136 | Full-width layout (use screen real estate) + optimized Settings grid | ✅ |
+| BUJO-137 | Demo / ?demo=1 skips the storage gate | ✅ |
 
 ## Epic H — Data & privacy
 
