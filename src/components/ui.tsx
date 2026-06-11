@@ -18,15 +18,15 @@ export function Card({
 }) {
   return (
     <section
-      className={`card-3d rounded-2xl border border-surface0 bg-mantle p-4 sm:p-5 ${className}`}
+      className={`card-3d rounded-2xl border border-surface0 bg-mantle p-5 sm:p-6 ${className}`}
     >
       {(title || right) && (
-        <header className="mb-3 flex items-start justify-between gap-2">
-          <div>
-            {title && <h2 className="font-display text-xl font-medium text-text">{title}</h2>}
-            {subtitle && <p className="mt-0.5 text-sm text-subtext0">{subtitle}</p>}
+        <header className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            {title && <h2 className="font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
+            {subtitle && <p className="mt-1 text-sm leading-snug text-subtext0">{subtitle}</p>}
           </div>
-          {right}
+          {right && <div className="shrink-0">{right}</div>}
         </header>
       )}
       {children}

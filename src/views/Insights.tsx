@@ -31,7 +31,7 @@ export function Insights() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <Big label="Current streak" value={`${streak}d`} color="peach" />
         <Big label="Longest streak" value={`${best}d`} color="mauve" />
         <Big label="Tasks done" value={`${tasks.pct}%`} color="green" sub={`${tasks.done}/${tasks.total}`} />
@@ -53,7 +53,7 @@ export function Insights() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid items-start gap-5 md:grid-cols-2">
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-sm text-subtext1">
             <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />

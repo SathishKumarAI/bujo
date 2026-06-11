@@ -49,7 +49,7 @@ export function Welcome() {
           <p className="text-subtext0">A private, local-first bullet journal. Choose where your journal lives.</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           {/* Own cloud — pick a folder */}
           <button
             onClick={chooseFolder}

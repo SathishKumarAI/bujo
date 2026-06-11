@@ -245,7 +245,7 @@ export function Gym() {
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
         {/* ── Personal records ─────────────────────────────── */}
         <Card title="Personal records" subtitle="Heaviest logged lift per exercise">
           {prs.length === 0 ? (

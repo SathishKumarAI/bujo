@@ -55,7 +55,7 @@ export function Settings() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
       <Card title="Appearance">
         <div className="flex items-center justify-between">
           <span className="text-sm text-subtext1">Theme</span>

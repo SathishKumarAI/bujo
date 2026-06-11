@@ -47,7 +47,7 @@ export function Stats() {
         <Heatmap cols={heat} />
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

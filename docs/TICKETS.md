@@ -133,6 +133,8 @@ IDs are stable references for commits and PRs.
 | BUJO-135 | Coalesce undo for rapid edits (sliders/typing → one undo step) | ✅ |
 | BUJO-136 | Full-width layout (use screen real estate) + optimized Settings grid | ✅ |
 | BUJO-137 | Demo / ?demo=1 skips the storage gate | ✅ |
+| BUJO-138 | Card grids align to top (items-start) — no stretched empty cards | ✅ |
+| BUJO-139 | Card primitive redesign: comfortable padding + header rhythm + gap-5 | ✅ |
 
 ## Epic H — Data & privacy
 

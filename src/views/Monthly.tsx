@@ -44,7 +44,7 @@ export function Monthly() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid items-start gap-5 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <Card
           title={prettyMonth(ym)}
