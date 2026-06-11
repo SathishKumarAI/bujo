@@ -41,6 +41,10 @@ localStorage ("bujo:data")
   - `ics.ts` — minimal iCalendar parser for calendar import.
   - `prompts.ts` — rotating daily reflection prompts (deterministic by day).
   - `weather.ts` — open-meteo fetch + WMO map + reverse geocode (opt-in).
+  - `fitness.ts` — PPL splits, exercise→muscle keyword map, parseSet, PRs, 1RM.
+  - `viz.ts` — heatmap, radar, scatter, weekly bars, task/tag breakdowns.
+  - `wger.ts` — wger exercise catalogue fetch + localStorage cache + search.
+  - `gdrive.ts` — optional Google Drive sync (GIS token + Drive REST), opt-in.
 
 ## Directory map
 

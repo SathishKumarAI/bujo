@@ -207,6 +207,10 @@ export interface Settings {
   startedOn: string
   /** Last time the user exported a backup (ISO), for the nudge. */
   lastBackup?: string
+  /** Google OAuth Client ID (Web) for optional Drive sync. */
+  googleClientId?: string
+  /** Last successful Drive backup/restore (ISO). */
+  lastDriveSync?: string
   // ── Realism pack ──
   /** Dot-grid paper texture background, like a real bullet journal page. */
   paperMode: boolean

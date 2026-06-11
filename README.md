@@ -99,9 +99,16 @@ be cleared by the browser, **export a backup regularly** (Settings → Export).
 - [`docs/FRONTEND_SPEC.md`](docs/FRONTEND_SPEC.md) — frontend spec & design system
 - [`docs/SECURITY.md`](docs/SECURITY.md) — security & privacy / threat model
 - [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) — a11y status & checklist
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — decision log (why it's built this way)
 - [`docs/FEATURES.md`](docs/FEATURES.md) — feature reference
 - [`docs/TICKETS.md`](docs/TICKETS.md) — feature ticket list (every epic)
-- [`docs/prompts/`](docs/prompts/) — prompts to rebuild / extend / add login
+- [`docs/GOOGLE_DRIVE.md`](docs/GOOGLE_DRIVE.md) — optional Drive sync setup
+- [`docs/prompts/`](docs/prompts/) — reusable build prompts:
+  [build from scratch](docs/prompts/00-build-from-scratch.md),
+  [add feature](docs/prompts/01-add-feature.md),
+  [add login/sync](docs/prompts/02-add-login-and-sync.md),
+  [add tracker module](docs/prompts/03-add-tracker-module.md),
+  [build this *kind* of app](docs/prompts/04-build-this-kind-of-app.md)
 
 ## Roadmap
 

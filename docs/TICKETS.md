@@ -121,6 +121,8 @@ IDs are stable references for commits and PRs.
 | BUJO-123 | Gym: estimated 1RM (Epley) on PRs + between-sets rest timer | ✅ |
 | BUJO-124 | Settings: distance unit (km/mi) + week start (Sun/Mon), applied to calendars | ✅ |
 | BUJO-125 | NoFap: urge-surfing "urges resisted" counter | ✅ |
+| BUJO-126 | Optional Google Drive sync (appDataFolder JSON) + Drive file browser | ✅ |
+| BUJO-127 | Docs: DECISIONS log, build-this-kind-of-app + tracker-module prompts, GOOGLE_DRIVE setup | ✅ |
 
 ## Epic H — Data & privacy
 
