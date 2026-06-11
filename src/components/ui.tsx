@@ -20,7 +20,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`card-3d rounded-2xl border border-surface0 bg-mantle p-5 sm:p-6 ${className}`}
+      className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${className}`}
     >
       {(title || right) && (
         <header className="mb-4 flex items-start justify-between gap-3">
@@ -72,7 +72,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-mauve focus-visible:ring-1 focus-visible:ring-mauve focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -81,7 +81,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-mauve focus-visible:ring-1 focus-visible:ring-mauve focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
