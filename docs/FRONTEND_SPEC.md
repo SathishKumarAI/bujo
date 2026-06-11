@@ -8,6 +8,8 @@ performance budgets, and conventions. Pairs with `docs/ARCHITECTURE.md`.
 - **Vite + React 19 + TypeScript**, SPA. Frontend profile: `vite-spa`
   (auth-walled-style app, desktop-primary, no SEO need).
 - **Tailwind CSS v4** via the Vite plugin; theme tokens in `src/index.css`.
+- **shadcn/ui + Radix** primitives, re-themed to Catppuccin via semantic CSS-var
+  aliases (`--primary → mauve`, …). Class-merge via `cn()` (`src/lib/cn.ts`).
 - **Recharts** for charts (lazy-loaded). **lucide-react** for icons.
 - **vite-plugin-pwa** for installable/offline app shell.
 

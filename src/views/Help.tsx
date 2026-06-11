@@ -13,6 +13,11 @@ export function Help() {
         </p>
       </Card>
 
+      <Section
+        title="Getting around — the top bar"
+        body="Every screen has a sticky bar at the top. It shows where you are, and on date screens (Today, Monthly, Trackers, Cycle) a ← date → control to move through days or months. On the right: Quick add (capture an entry from anywhere), ⌘K (jump to any view or run a command), and the ⋯ menu — that's where theme, zoom, undo/redo, and the paper/handwriting/book toggles now live."
+      />
+
       <Card title="Rapid logging — the bullets">
         <p className="mb-3 text-sm text-subtext1">
           On the <strong>Today</strong> page, type into the add bar and press Enter. Start a line with a

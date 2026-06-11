@@ -42,6 +42,17 @@ Signifiers stack: `* t book the campsite #travel`.
 | Help | `views/Help.tsx` | In-app guide to every feature. |
 | Settings | `views/Settings.tsx` | Theme, profile/gender, units, export/import. |
 
+## App shell
+
+- **Sticky top bar** — current view title + subtitle, a contextual date-nav
+  (Today/Monthly/Trackers/Cycle), a global **Quick add**, the **⌘K** trigger,
+  and an overflow menu (theme · zoom · undo/redo · paper · handwriting · book).
+  Replaces the old floating undo/redo + zoom clusters.
+- **Unified layout** — every view opts into the `Page` grid (`main` + a wrapping
+  `aside`) or a shared max-width, so there are no dead voids and lines stay
+  readable. Controls follow one rule: `Switch` for on/off, `Segmented` for enums.
+- See `docs/redesign/*.mdx` for the full redesign rationale.
+
 ## Power tools
 
 - **Command palette** — `⌘K` / `Ctrl-K` opens a fuzzy launcher to jump to any

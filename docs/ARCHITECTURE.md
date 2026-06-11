@@ -6,7 +6,11 @@ JSON object persisted to `localStorage`.
 ## Stack
 
 - **Vite + React 19 + TypeScript** — SPA, `vite-spa` frontend profile.
-- **Tailwind CSS v4** — theme tokens in `src/index.css` (`@theme` block).
+- **Tailwind CSS v4** — theme tokens in `src/index.css` (`@theme` block); shadcn
+  semantic vars (`--primary`, `--border`, …) are mapped onto Catppuccin there.
+- **shadcn/ui + Radix** — accessible primitives (button, switch, tabs, dialog,
+  dropdown-menu, tooltip, popover, …) re-themed to Catppuccin; `cn()` =
+  clsx + tailwind-merge (`src/lib/cn.ts`).
 - **Recharts** — line charts, lazy-loaded so they're off the initial bundle.
 - **lucide-react** — line icons (tree-shaken).
 - **vite-plugin-pwa** — installable, offline app shell (service worker).
@@ -50,13 +54,29 @@ localStorage ("bujo:data")
 
 ```
 src/
-├── lib/            pure logic + types (unit-tested)
-├── components/     reusable UI (ui kit, EntryRow, QuickAdd, ImageUpload)
+├── lib/            pure logic + types (unit-tested) + cn() class-merge
+├── components/
+│   ├── ui/         shadcn primitives (button, switch, dialog, …)
+│   ├── ui.tsx      bespoke kit (Card, Button, Input, Slider, Segmented) — wraps shadcn
+│   └── shell/      app shell: AppShell, Sidebar, TopBar, Page, cursor, viewChrome
 ├── views/          one file per screen (Today, Monthly, Trackers, …)
 ├── store.tsx       JournalProvider + useJournal() context
-├── App.tsx         responsive shell + sidebar nav + view routing
+├── App.tsx         view switch + shell composition (no router)
 └── main.tsx        entry; wraps <App> in <JournalProvider>
 ```
+
+## App shell (presentation layer)
+
+`components/shell/` wraps the `view` switch without adding a router:
+
+- **`AppShell`** owns the grid (sidebar + topbar/content) and the global
+  quick-add dialog.
+- **`TopBar`** renders the view title/subtitle (from `viewChrome.ts`), a
+  contextual date-nav, quick-add, ⌘K, and an overflow menu (theme/zoom/undo/
+  paper/handwriting/book). It replaces the old floating control clusters.
+- **`cursor.tsx`** is a `DateCursor` context holding shared `day`/`month` state
+  so the top bar can drive Today/Monthly/Trackers/Cycle.
+- **`Page`** is the responsive `main`/`aside` grid every view opts into.
 
 ## Key decisions
 

@@ -104,6 +104,33 @@ and their cloud client syncs it. No accounts, no OAuth, any cloud.
 *Trade-off:* Chromium-only; permission re-grant after reload. Google Drive and a
 GitHub **private gist** remain as alternative backup targets in Settings.
 
+**D-18 — Adopt shadcn/ui re-themed to Catppuccin (wrap + gradual).**
+*Context:* the 2026-06 layout redesign needed accessible, consistent primitives
+(dialog, dropdown, switch, tabs) without losing the Catppuccin look or rewriting
+13 views at once.
+*Choice:* install shadcn primitives into `components/ui/`; map shadcn's semantic
+CSS vars (`--primary`, `--border`, …) onto the existing Catppuccin tokens in
+`index.css` (Latte inherits for free). `ui.tsx` `Card`/`Button`/`Input` became
+thin wrappers, so existing imports kept working and views migrated one by one.
+*Trade-off:* +Radix/cva/tailwind-merge deps → initial JS 84.8 → ~113 KB gzip
+(still under the 200 KB budget). Charts stay lazy.
+
+**D-19 — One app shell + a `Page` grid; hoist date-nav to a sticky top bar.**
+*Context:* every view rolled its own layout (dead voids, inconsistent headers),
+and undo/redo + zoom floated over content.
+*Choice:* a `components/shell/` layer — `AppShell` + `Sidebar` + `TopBar` +
+`Page` + a shared `DateCursor`. Titles/subtitles + date-nav come from a
+`viewChrome` registry; the floating clusters became overflow-menu items.
+*Trade-off:* date views must read their day/month from the cursor instead of
+local state — a small amount of wiring for one source of truth.
+
+**D-20 — One control vocabulary: Switch for on/off, Segmented for enums.**
+*Context:* Settings mixed hand-rolled toggles, button pairs, and a `<select>`
+for the same kinds of choice.
+*Choice:* shadcn `Switch` for every boolean; a `Segmented` component (in
+`ui.tsx`) for every mutually-exclusive enum (theme, units, week-start).
+*Result:* equal-height Settings cards and a predictable control language.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

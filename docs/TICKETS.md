@@ -171,3 +171,22 @@ IDs are stable references for commits and PRs.
 | BUJO-92 | Command palette (Cmd/Ctrl-K) | 🔜 |
 | BUJO-93 | Custom free-form collections UI | 🔜 |
 | BUJO-94 | Chart text-alternatives + axe-core CI | 🔜 |
+
+## Epic R — Layout redesign (2026-06)
+
+Shell + all-views usability redesign on shadcn/ui re-themed to Catppuccin.
+Rationale in `docs/redesign/*.mdx`; spec + plan in `docs/superpowers/`.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-R1 | shadcn init + Catppuccin CSS-var mapping + `cn()` | ✅ |
+| BUJO-R2 | `ui.tsx` wraps shadcn (Button/Card/Input) — gradual migration | ✅ |
+| BUJO-R3 | App shell: AppShell + Sidebar + sticky TopBar | ✅ |
+| BUJO-R4 | Shared `DateCursor` + `viewChrome` registry (hoist date-nav) | ✅ |
+| BUJO-R5 | `Page` grid primitive (main + wrapping aside) | ✅ |
+| BUJO-R6 | Remove floating undo/redo + zoom → top-bar overflow menu | ✅ |
+| BUJO-R7 | Today dashboard reflow | ✅ |
+| BUJO-R8 | Monthly / Trackers / Cycle consume cursor + Page | ✅ |
+| BUJO-R9 | Settings: Switch + Segmented vocabulary, equal-height grid | ✅ |
+| BUJO-R10 | Remaining views adopt shared max-width container | ✅ |
+| BUJO-R11 | Docs: MDX rationale + spec/plan + FRONTEND/ARCH/FEATURES/DECISIONS | ✅ |
