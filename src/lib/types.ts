@@ -258,6 +258,20 @@ export interface Settings {
   sidebarCollapsed?: boolean
 }
 
+/** A fixed-duration discipline challenge (75 Hard, 90-day, …). */
+export interface Challenge {
+  id: string
+  name: string
+  /** Total length in days (e.g. 75, 90, 30). */
+  durationDays: number
+  startDate: string // ISO day the challenge began
+  /** Daily required tasks; a day is complete when all are checked. */
+  rules: string[]
+  /** 75-Hard rule: missing a day resets progress to Day 1. */
+  strict: boolean
+  archived?: boolean
+}
+
 /** The single root object persisted to localStorage. */
 export interface JournalData {
   version: number
@@ -280,6 +294,10 @@ export interface JournalData {
   /** Per-day emoji stickers / washi decorations: ISO day -> [emoji, …]. */
   stickers: Record<string, string[]>
   nofap: Streak
+  /** Fixed-duration discipline challenges (75 Hard, 90-day, …). */
+  challenges?: Challenge[]
+  /** challengeId -> ISO day -> indices of rules completed that day. */
+  challengeLog?: Record<string, Record<string, number[]>>
   settings: Settings
 }
 

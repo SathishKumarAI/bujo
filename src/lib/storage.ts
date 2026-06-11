@@ -55,6 +55,8 @@ export function emptyJournal(): JournalData {
     recurrences: [],
     stickers: {},
     nofap: { startedOn: todayISO(), best: 0, relapses: [] },
+    challenges: [],
+    challengeLog: {},
     settings: defaultSettings(),
   }
 }

@@ -3,6 +3,7 @@ import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
 import { Fitness } from './views/Fitness'
+import { Challenges } from './views/Challenges'
 import { Collections } from './views/Collections'
 import { Plan } from './views/Plan'
 import { Insights } from './views/Insights'
@@ -19,7 +20,7 @@ import type { NavItem } from './components/shell/Sidebar'
 import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
-  Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart,
+  Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -41,6 +42,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Health' },
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'gym', label: 'Gym', icon: Dumbbell, group: 'Health' },
+  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
@@ -51,8 +53,9 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers, fitness: Fitness,
-  gym: Gym, plan: Plan, collections: Collections, insights: Insights,
-  stats: Stats, cycle: Cycle, nofap: NoFap, help: Help, settings: Settings,
+  gym: Gym, challenges: Challenges, plan: Plan, collections: Collections,
+  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
+  settings: Settings,
 }
 
 export default function App() {

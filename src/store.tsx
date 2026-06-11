@@ -9,6 +9,7 @@ import {
 } from 'react'
 import type {
   Birthday,
+  Challenge,
   CyclePoint,
   DailyMetric,
   Entry,
@@ -123,6 +124,11 @@ interface Store {
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
   resistUrge: () => void
+  // challenges
+  addChallenge: (c: Omit<Challenge, 'id'>) => void
+  removeChallenge: (id: string) => void
+  updateChallenge: (id: string, patch: Partial<Challenge>) => void
+  toggleChallengeRule: (challengeId: string, day: string, ruleIndex: number) => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
   removeRecurrence: (id: string) => void
@@ -413,6 +419,31 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       resistUrge: () =>
         patch((d) => ({ ...d, nofap: { ...d.nofap, urgesResisted: (d.nofap.urgesResisted ?? 0) + 1 } })),
+
+      addChallenge: (c) =>
+        patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),
+
+      removeChallenge: (id) =>
+        patch((d) => {
+          const log = { ...(d.challengeLog ?? {}) }
+          delete log[id]
+          return { ...d, challenges: (d.challenges ?? []).filter((c) => c.id !== id), challengeLog: log }
+        }),
+
+      updateChallenge: (id, cpatch) =>
+        patch((d) => ({
+          ...d,
+          challenges: (d.challenges ?? []).map((c) => (c.id === id ? { ...c, ...cpatch } : c)),
+        })),
+
+      toggleChallengeRule: (challengeId, day, ruleIndex) =>
+        patch((d) => {
+          const byDay = { ...(d.challengeLog?.[challengeId] ?? {}) }
+          const cur = byDay[day] ?? []
+          byDay[day] = cur.includes(ruleIndex) ? cur.filter((i) => i !== ruleIndex) : [...cur, ruleIndex]
+          if (byDay[day].length === 0) delete byDay[day]
+          return { ...d, challengeLog: { ...(d.challengeLog ?? {}), [challengeId]: byDay } }
+        }),
 
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),
