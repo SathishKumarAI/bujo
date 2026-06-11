@@ -37,6 +37,52 @@
   --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  /* shadcn semantic colors as Tailwind utilities (bg-background, border-border…) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+}
+
+/* shadcn semantic aliases → Catppuccin (dark/Mocha defaults; Latte inherits below). */
+:root {
+  --background: var(--color-base);
+  --foreground: var(--color-text);
+  --card: var(--color-mantle);
+  --card-foreground: var(--color-text);
+  --popover: var(--color-mantle);
+  --popover-foreground: var(--color-text);
+  --primary: var(--color-mauve);
+  --primary-foreground: var(--color-crust);
+  --secondary: var(--color-surface0);
+  --secondary-foreground: var(--color-text);
+  --muted: var(--color-surface0);
+  --muted-foreground: var(--color-subtext0);
+  --accent: var(--color-surface1);
+  --accent-foreground: var(--color-text);
+  --destructive: var(--color-red);
+  --destructive-foreground: var(--color-crust);
+  --border: var(--color-surface0);
+  --input: var(--color-surface1);
+  --ring: var(--color-mauve);
+  --radius: 0.75rem;
 }
 
 /* Editorial serif for titles gives the journal an intentional, un-generic feel. */
