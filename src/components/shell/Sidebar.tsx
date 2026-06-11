@@ -1,4 +1,5 @@
 import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import type { ViewId } from './viewChrome'
 
 export interface NavItem {
@@ -68,20 +69,29 @@ export function Sidebar({
                   {groupItems.map((n) => {
                     const Icon: LucideIcon = n.icon
                     const active = view === n.id
+                    const btn = (
+                      <button
+                        onClick={() => onNavigate(n.id)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                          active ? 'bg-secondary/70 font-medium text-foreground' : 'text-subtext0 hover:bg-secondary/40 hover:text-subtext1'
+                        }`}
+                      >
+                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
+                        <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-overlay1 group-hover:text-subtext0'}`} aria-hidden />
+                        <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
+                      </button>
+                    )
                     return (
                       <li key={n.id}>
-                        <button
-                          onClick={() => onNavigate(n.id)}
-                          aria-current={active ? 'page' : undefined}
-                          title={n.label}
-                          className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                            active ? 'bg-secondary/70 font-medium text-foreground' : 'text-subtext0 hover:bg-secondary/40 hover:text-subtext1'
-                          }`}
-                        >
-                          {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
-                          <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-overlay1 group-hover:text-subtext0'}`} aria-hidden />
-                          <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
-                        </button>
+                        {collapsed ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                            <TooltipContent side="right" sideOffset={8}>{n.label}</TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          btn
+                        )}
                       </li>
                     )
                   })}

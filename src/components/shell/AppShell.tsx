@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { TooltipProvider } from '../ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
@@ -31,6 +32,7 @@ export function AppShell({
   const { day } = useCursor()
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
       <Sidebar
         items={items}
@@ -64,5 +66,6 @@ export function AppShell({
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   )
 }
