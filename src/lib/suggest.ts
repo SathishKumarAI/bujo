@@ -57,8 +57,11 @@ export function suggest(query: string, ctx: SuggestContext, limit = 6): Suggesti
     return COMMANDS.filter((c) => c.value.toLowerCase().startsWith(frag)).slice(0, limit)
   }
 
-  // recents + habits: prefix matches rank above substring matches
+  // recents + habits: prefix matches rank above substring matches.
+  // A bare 1-char query (e.g. a "t" task prefix mid-typing) is too short to be
+  // a useful search, so stay quiet rather than flooding the list.
   const ql = q.toLowerCase()
+  if (ql.length < 2) return []
   const pool: Suggestion[] = [
     ...ctx.habits.filter((h) => h.toLowerCase().includes(ql)).map((h) => ({ kind: 'habit' as const, value: h, hint: 'habit' })),
     ...ctx.recents.filter((r) => r.toLowerCase().includes(ql) && r.toLowerCase() !== ql).map((r) => ({ kind: 'recent' as const, value: r })),
