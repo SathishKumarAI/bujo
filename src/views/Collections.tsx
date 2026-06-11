@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
+import { Cake } from 'lucide-react'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { EntryRow } from '../components/EntryRow'
 import { MONTHS, todayISO } from '../lib/date'
@@ -58,9 +59,9 @@ export function Collections() {
           <ul className="space-y-1 text-sm">
             {birthdays.map((b) => (
               <li key={b.id} className="group flex items-center justify-between">
-                <span className="text-subtext1">
-                  <span style={{ color: cat('pink') }}>🎂</span> {b.name}
-                  <span className="ml-2 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
+                <span className="inline-flex items-center gap-1.5 text-subtext1">
+                  <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
+                  <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
                 </span>
                 <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
               </li>

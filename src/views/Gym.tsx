@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
+  ChevronsUp, ChevronsDown, Footprints, PersonStanding, MoveVertical, Flame,
+  Activity, Trophy, Crosshair, X, type LucideIcon,
+} from 'lucide-react'
+import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
@@ -18,6 +22,11 @@ interface SetRow {
   exercise: string
   weight: string
   reps: string
+}
+
+const SPLIT_ICONS: Record<string, LucideIcon> = {
+  push: ChevronsUp, pull: ChevronsDown, legs: Footprints,
+  upper: PersonStanding, lower: MoveVertical, full: Flame, other: Activity,
 }
 
 export function Gym() {
@@ -89,22 +98,25 @@ export function Gym() {
       {/* ── Session logger ─────────────────────────────────── */}
       <Card
         title="Today's session"
-        subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).icon} {splitMeta(suggested).label}</span></span>}
+        subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
       >
         <div className="mb-3 flex flex-wrap gap-2">
-          {SPLITS.filter((s) => s.id !== 'other').map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSplit(s.id)}
-              className="rounded-lg px-3 py-1.5 text-sm"
-              style={{
-                background: split === s.id ? cat(s.color) : cat('surface0'),
-                color: split === s.id ? cat('crust') : cat('subtext1'),
-              }}
-            >
-              {s.icon} {s.label}
-            </button>
-          ))}
+          {SPLITS.filter((s) => s.id !== 'other').map((s) => {
+            const Icon = SPLIT_ICONS[s.id] ?? Activity
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSplit(s.id)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
+                style={{
+                  background: split === s.id ? cat(s.color) : cat('surface0'),
+                  color: split === s.id ? cat('crust') : cat('subtext1'),
+                }}
+              >
+                <Icon size={15} /> {s.label}
+              </button>
+            )
+          })}
         </div>
 
         <div className="mb-2 flex flex-wrap gap-2">
@@ -126,23 +138,36 @@ export function Gym() {
         </datalist>
 
         <div className="space-y-2">
-          <div className="grid grid-cols-[1fr_70px_70px_28px] gap-2 text-xs text-overlay0">
-            <span>Exercise</span><span>Weight</span><span>Reps</span><span />
+          <div className="grid grid-cols-[28px_1fr_64px_64px_28px] gap-2 text-xs text-overlay0">
+            <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span />
           </div>
-          {rows.map((row, i) => (
-            <div key={i} className="grid grid-cols-[1fr_70px_70px_28px] gap-2">
-              <input
-                list="exercise-library"
-                value={row.exercise}
-                onChange={(e) => setRow(i, { exercise: e.target.value })}
-                placeholder="Exercise"
-                className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
-              />
-              <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder="kg" className="py-1.5" />
-              <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
-              <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-overlay0 hover:text-red">×</button>
-            </div>
-          ))}
+          {rows.map((row, i) => {
+            const focused = !!row.exercise.trim() && focusEx === row.exercise
+            return (
+              <div key={i} className="grid grid-cols-[28px_1fr_64px_64px_28px] items-center gap-2">
+                <button
+                  onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
+                  disabled={!row.exercise.trim()}
+                  aria-label="Focus muscle map on this exercise"
+                  title="Show this exercise on the muscle map"
+                  className="grid h-7 w-7 place-items-center rounded-lg disabled:opacity-30"
+                  style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? cat('crust') : cat('overlay1') }}
+                >
+                  <Crosshair size={14} />
+                </button>
+                <input
+                  list="exercise-library"
+                  value={row.exercise}
+                  onChange={(e) => setRow(i, { exercise: e.target.value })}
+                  placeholder="Exercise"
+                  className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
+                />
+                <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder="kg" className="py-1.5" />
+                <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
+                <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
+              </div>
+            )
+          })}
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -194,7 +219,7 @@ export function Gym() {
                     className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-surface0' : 'hover:bg-surface0/50'}`}
                     title="Show this lift on the muscle map"
                   >
-                    <span className="text-subtext1">🏆 {pr.exercise}</span>
+                    <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
                     <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}kg</span> · {prettyDay(pr.date)}</span>
                   </button>
                 </li>
@@ -211,11 +236,12 @@ export function Gym() {
             <ul className="space-y-1 text-sm">
               {data.routines.map((r) => {
                 const m = splitMeta(r.split)
+                const Icon = SPLIT_ICONS[r.split] ?? Activity
                 return (
                   <li key={r.id} className="group flex items-center justify-between">
-                    <span className="text-subtext1">
-                      <span style={{ color: cat(m.color) }}>{m.icon}</span> {r.name}
-                      <span className="ml-2 text-overlay0">{r.exercises.length} exercises</span>
+                    <span className="inline-flex items-center gap-1.5 text-subtext1">
+                      <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
+                      <span className="ml-1 text-overlay0">{r.exercises.length} exercises</span>
                     </span>
                     <button onClick={() => removeRoutine(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
                   </li>

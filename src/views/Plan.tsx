@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
+import { CalendarPlus } from 'lucide-react'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
@@ -112,7 +113,7 @@ export function Plan() {
       </Card>
 
       <Card title="Import calendar (.ics)" subtitle="Bring events from Google/Apple Calendar onto your monthly">
-        <Button onClick={() => fileRef.current?.click()}>📅 Choose .ics file</Button>
+        <Button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Choose .ics file</Button>
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
         <p className="mt-2 text-xs text-overlay0">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>

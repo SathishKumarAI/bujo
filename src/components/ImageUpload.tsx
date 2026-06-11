@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Camera, X } from 'lucide-react'
 import { fileToDataURL } from '../lib/image'
 import { Button } from './ui'
 
@@ -44,12 +45,12 @@ export function ImageUpload({
             aria-label="Remove photo"
             className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-crust/80 text-text opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
           >
-            ×
+            <X size={15} />
           </button>
         </div>
       ) : (
-        <Button onClick={() => ref.current?.click()} className="w-full">
-          {busy ? 'Processing…' : `📷 ${label}`}
+        <Button onClick={() => ref.current?.click()} className="flex w-full items-center justify-center gap-2">
+          <Camera size={15} /> {busy ? 'Processing…' : label}
         </Button>
       )}
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />

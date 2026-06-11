@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Moon, Sun, Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card } from '../components/ui'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
@@ -56,8 +57,8 @@ export function Settings() {
         <div className="flex items-center justify-between">
           <span className="text-sm text-subtext1">Theme</span>
           <div className="flex gap-2">
-            <Button variant={s.theme === 'mocha' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'mocha' })}>🌙 Dark</Button>
-            <Button variant={s.theme === 'latte' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'latte' })}>☀️ Light</Button>
+            <Button variant={s.theme === 'mocha' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'mocha' })} className="inline-flex items-center gap-1.5"><Moon size={14} /> Dark</Button>
+            <Button variant={s.theme === 'latte' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'latte' })} className="inline-flex items-center gap-1.5"><Sun size={14} /> Light</Button>
           </div>
         </div>
       </Card>
@@ -121,14 +122,14 @@ export function Settings() {
 
       <Card title="Backup & data" subtitle="Your data lives only in this browser — back it up!" className="lg:col-span-2">
         {!s.lastBackup && (
-          <p className="mb-3 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
-            ⚠ You haven't backed up yet. Browsers can clear local storage — export a copy.
+          <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
+            <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage — export a copy.
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={doExport}>⬇ Export JSON</Button>
-          <Button onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')}>⬇ Export Markdown</Button>
-          <Button onClick={() => fileRef.current?.click()}>⬆ Import JSON</Button>
+          <Button variant="primary" onClick={doExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export JSON</Button>
+          <Button onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><FileText size={14} /> Export Markdown</Button>
+          <Button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
@@ -142,8 +143,9 @@ export function Settings() {
                 replaceAll(generateDemoData())
               }
             }}
+            className="inline-flex items-center gap-1.5"
           >
-            ✨ Load demo data
+            <Sparkles size={14} /> Load demo data
           </Button>
           <Button
             variant="danger"
@@ -152,8 +154,9 @@ export function Settings() {
                 replaceAll(emptyJournal())
               }
             }}
+            className="inline-flex items-center gap-1.5"
           >
-            🗑 Clear all data
+            <Trash2 size={14} /> Clear all data
           </Button>
         </div>
         <p className="mt-2 text-xs text-overlay0">

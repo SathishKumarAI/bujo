@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Dumbbell } from 'lucide-react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { Empty, Input } from './ui'
@@ -60,7 +61,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
                 {ex.image ? (
                   <img src={ex.image} alt={ex.name} loading="lazy" className="h-full w-full object-contain transition-transform group-hover:scale-105" />
                 ) : (
-                  <span className="text-2xl" style={{ color: cat('overlay0') }}>🏋️</span>
+                  <Dumbbell size={26} style={{ color: cat('overlay0') }} />
                 )}
               </div>
               <div className="px-2 py-1.5 text-xs text-subtext1">{ex.name}</div>
