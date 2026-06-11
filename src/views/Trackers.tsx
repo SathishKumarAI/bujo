@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Pencil, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
@@ -8,12 +8,21 @@ import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } fr
 import { Button, Card, Empty, Input } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { cat, HABIT_COLORS } from '../lib/colors'
-import { habitConsistency, habitStreak } from '../lib/stats'
+import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory } from '../lib/types'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
+
+/** One-click habit presets (sensible defaults). */
+const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: 'count'; target?: number; unit?: string; weeklyGoal?: number }[] = [
+  { name: 'Water', emoji: '💧', category: 'food', color: 'sky', type: 'count', target: 8, unit: 'glasses' },
+  { name: 'Exercise', emoji: '🏃', category: 'movement', color: 'green', weeklyGoal: 4 },
+  { name: 'Read', emoji: '📚', category: 'wellness', color: 'peach', weeklyGoal: 7 },
+  { name: 'Meditate', emoji: '🧘', category: 'wellness', color: 'lavender', weeklyGoal: 7 },
+  { name: 'Sleep 8h', emoji: '😴', category: 'wellness', color: 'blue', weeklyGoal: 7 },
+]
 
 export function Trackers() {
   const { data, toggleHabit, setHabitValue, addHabit, setSettings } = useJournal()
@@ -62,6 +71,7 @@ export function Trackers() {
           </div>
         }
       >
+        <TodayStrip habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
         {showSettings && (
           <div className="mb-3 flex flex-wrap gap-4 rounded-lg border border-surface0 bg-base p-3 text-sm">
             <Seg label="Density" options={[['comfortable', 'Comfortable'], ['compact', 'Compact']]} value={s.trackerDensity ?? 'comfortable'} onChange={(v) => setSettings({ trackerDensity: v as 'comfortable' | 'compact' })} />
@@ -113,12 +123,26 @@ export function Trackers() {
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-surface0 pt-3">
-          <Input value={newHabit} onChange={(e) => setNewHabit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="New habit / food / stimulant…" className="max-w-xs" />
-          <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={14} /> Add habit</Button>
+        <div className="mt-4 border-t border-surface0 pt-3">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-overlay0">Quick add:</span>
+            {HABIT_PRESETS.map((p) => (
+              <button
+                key={p.name}
+                onClick={() => addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal })}
+                className="rounded-full border border-surface1 bg-base px-2.5 py-1 text-xs text-subtext1 hover:border-mauve hover:text-text"
+              >
+                {p.emoji} {p.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input value={newHabit} onChange={(e) => setNewHabit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="New habit / food / stimulant…" className="max-w-xs" />
+            <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={14} /> Add habit</Button>
+          </div>
         </div>
       </Card>
 
@@ -170,6 +194,56 @@ function Check({ label, on, onClick }: { label: string; on: boolean; onClick: ()
   )
 }
 
+// ── Today focus strip: quick daily check-in chips ────────────────────────────
+function TodayStrip({
+  habits, data, today, onToggle, onSetValue,
+}: {
+  habits: Habit[]
+  data: import('../lib/types').JournalData
+  today: string
+  onToggle: (date: string, id: string) => void
+  onSetValue: (date: string, id: string, value: number) => void
+}) {
+  const todays = habits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
+  if (todays.length === 0) return null
+  const done = todays.filter((h) =>
+    h.type === 'count' ? (data.habitValues?.[today]?.[h.id] ?? 0) >= (h.target && h.target > 0 ? h.target : 1) : (data.habitLog[today] ?? []).includes(h.id),
+  ).length
+
+  return (
+    <div className="mb-4 rounded-xl border border-surface0 bg-base p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-subtext1">Today</span>
+        <span className="text-xs text-overlay0">{done}/{todays.length} done</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {todays.map((h) => {
+          const isCount = h.type === 'count'
+          const target = h.target && h.target > 0 ? h.target : 1
+          const val = data.habitValues?.[today]?.[h.id] ?? 0
+          const on = isCount ? val >= target : (data.habitLog[today] ?? []).includes(h.id)
+          return (
+            <button
+              key={h.id}
+              onClick={() => (isCount ? onSetValue(today, h.id, val >= target ? 0 : val + 1) : onToggle(today, h.id))}
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors"
+              style={{
+                borderColor: on ? cat(h.color) : cat('surface1'),
+                background: on ? cat(h.color) + '22' : 'transparent',
+                color: on ? cat('text') : cat('subtext0'),
+              }}
+            >
+              <span>{h.emoji ?? '●'}</span>
+              {h.name}
+              {isCount && <span className="text-overlay0">{val}/{target}</span>}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── Category section of habit rows ───────────────────────────────────────────
 function CategoryRows({
   category, habits, days, today, cell, data, onToggle, onSetValue, onEdit,
@@ -194,13 +268,17 @@ function CategoryRows({
         return (
           <tr key={h.id} className="group">
             <td className="sticky left-0 z-10 bg-mantle py-0.5 pr-2 text-left whitespace-nowrap text-subtext1">
-              <span style={{ color: cat(h.color) }}>●</span>{' '}
-              <span className={h.archived ? 'text-overlay0 line-through' : ''}>{h.name}</span>
+              {h.emoji ? <span className="mr-0.5">{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}{' '}
+              <button onClick={() => onEdit(h.id)} className={`hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
               {h.unit && <span className="ml-1 text-overlay0">({h.unit})</span>}
               {habitStreak(data, h.id) > 1 && (
                 <span title={`${habitStreak(data, h.id)}-day streak`} className="ml-1 inline-flex items-center gap-0.5 align-middle text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{habitStreak(data, h.id)}</span>
               )}
-              <button onClick={() => onEdit(h.id)} aria-label={`Edit ${h.name}`} className="ml-1 align-middle text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve"><Pencil size={12} className="inline" /></button>
+              {h.weeklyGoal ? (
+                <span title={`${weeklyHabitCount(data, h.id, today)} of ${h.weeklyGoal} this week`} className="ml-1.5 align-middle text-[10px]" style={{ color: weeklyHabitCount(data, h.id, today) >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+                  {weeklyHabitCount(data, h.id, today)}/{h.weeklyGoal}wk
+                </span>
+              ) : null}
             </td>
             {days.map((d) => {
               const future = d > today
@@ -245,17 +323,34 @@ function CategoryRows({
 
 // ── Per-habit customisation modal ────────────────────────────────────────────
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
-  const { updateHabit, removeHabit } = useJournal()
+  const { updateHabit, removeHabit, toggleHabitSkip, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
+  const today = todayISO()
+  const streak = habitStreak(data, habit.id)
+  const dow = habitDayOfWeekBreakdown(data, habit.id)
+  const bestDow = dow.some((n) => n > 0) ? WEEKDAYS[dow.indexOf(Math.max(...dow))] : '—'
+  const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
-      <div className="card-3d w-full max-w-md rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
-        <header className="flex items-center justify-between border-b border-surface0 px-4 py-3">
-          <h3 className="font-display text-lg text-text">Edit habit</h3>
+      <div className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
+        <header className="sticky top-0 flex items-center justify-between border-b border-surface0 bg-mantle px-4 py-3">
+          <h3 className="font-display text-lg text-text">{habit.emoji} {habit.name}</h3>
           <button onClick={onClose} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></button>
         </header>
         <div className="space-y-3 p-4">
-          <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('peach') }}>{streak}</div><div className="text-[10px] text-overlay0">day streak</div></div>
+            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('green') }}>{habitConsistency(data, habit.id, habit.startedOn, 30)}%</div><div className="text-[10px] text-overlay0">30-day</div></div>
+            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('blue') }}>{habitConsistency(data, habit.id, habit.startedOn, 90)}%</div><div className="text-[10px] text-overlay0">90-day</div></div>
+          </div>
+          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>.</p>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
+          </div>
+          <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><Input type="number" value={habit.weeklyGoal ?? ''} onChange={(e) => set({ weeklyGoal: e.target.value ? Number(e.target.value) : undefined })} placeholder="e.g. 4" className="mt-1" /></label>
 
           <div>
             <p className="mb-1 text-sm text-subtext1">Color</p>
@@ -301,6 +396,9 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-surface0 pt-3">
+            <Button onClick={() => toggleHabitSkip(habit.id, today)} className="inline-flex items-center gap-1.5" title="A planned skip won't break your streak">
+              {skippedToday ? 'Un-skip today' : 'Skip today'}
+            </Button>
             <Button onClick={() => set({ archived: !habit.archived })} className="inline-flex items-center gap-1.5"><Archive size={14} /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
             <Button variant="danger" onClick={() => { if (confirm(`Delete "${habit.name}" and its history?`)) { removeHabit(habit.id); onClose() } }} className="inline-flex items-center gap-1.5"><Trash2 size={14} /> Delete</Button>
             <Button variant="primary" onClick={onClose} className="ml-auto">Done</Button>
