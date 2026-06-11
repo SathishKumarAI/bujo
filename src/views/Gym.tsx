@@ -99,7 +99,7 @@ export function Gym() {
     .map((b) => ({ date: b.date.slice(5), weight: b.weight }))
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
       {/* ── Session logger ─────────────────────────────────── */}
       <Card
         title="Today's session"

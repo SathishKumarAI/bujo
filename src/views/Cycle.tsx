@@ -1,17 +1,17 @@
-import { useState } from 'react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { monthDays, prettyMonth, todayISO, ymOf } from '../lib/date'
-import { Button, Card, Input } from '../components/ui'
+import { monthDays, prettyMonth } from '../lib/date'
+import { Card, Input } from '../components/ui'
+import { Page, useCursor } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 
 const FLAGS = ['period', 'spotting', 'ovulation', 'pms', 'cramps']
 
 export function Cycle() {
   const { data, setCycle } = useJournal()
-  const [ym, setYm] = useState(ymOf(todayISO()))
+  const { month: ym } = useCursor()
   const unit = data.settings.tempUnit
   const days = monthDays(ym)
 
@@ -20,11 +20,6 @@ export function Cycle() {
     return { day: Number(d.slice(8)), temp: c?.temp }
   })
 
-  function shift(delta: number) {
-    const [y, mo] = ym.split('-').map(Number)
-    setYm(ymOf(new Date(y, mo - 1 + delta, 1)))
-  }
-
   function toggleFlag(date: string, flag: string) {
     const cur = data.cycle.find((c) => c.date === date)?.flags ?? []
     const next = cur.includes(flag) ? cur.filter((f) => f !== flag) : [...cur, flag]
@@ -32,17 +27,10 @@ export function Cycle() {
   }
 
   return (
-    <div className="space-y-4">
+    <Page>
       <Card
         title="Cycle & temperature"
         subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
-        right={
-          <div className="flex gap-1">
-            <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
-            <Button onClick={() => setYm(ymOf(todayISO()))}>This month</Button>
-            <Button onClick={() => shift(1)} aria-label="Next month">→</Button>
-          </div>
-        }
       >
         <p className="mb-2 text-xs text-overlay0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
         <div className="h-56 w-full">
@@ -99,6 +87,6 @@ export function Cycle() {
           </table>
         </div>
       </Card>
-    </div>
+    </Page>
   )
 }

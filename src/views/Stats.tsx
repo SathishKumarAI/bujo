@@ -42,7 +42,7 @@ export function Stats() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
       <Card title="Activity" subtitle="Every day you showed up — last 6 months">
         <Heatmap cols={heat} />
       </Card>

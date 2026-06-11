@@ -4,7 +4,7 @@ import { cat } from '../lib/colors'
 
 export function Help() {
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
       <Card title="How to use your bullet journal" subtitle="A 2-minute guide to every feature">
         <p className="text-sm text-subtext1">
           This is a digital take on the <strong>Bullet Journal method</strong> by Ryder Carroll,

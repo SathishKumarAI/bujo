@@ -28,7 +28,7 @@ export function NoFap() {
   const nextMilestone = milestones.find((m) => m > current)
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-3">
+    <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <Card className="text-center glow-mauve">
           <div className="text-sm text-subtext0">Current streak</div>

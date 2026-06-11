@@ -38,7 +38,7 @@ export function Fitness() {
   }
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-3">
+    <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-3">
       <div className="lg:col-span-1">
         <Card title="Log a workout">
           <div className="space-y-3">

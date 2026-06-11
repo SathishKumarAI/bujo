@@ -26,7 +26,7 @@ export function Collections() {
   const birthdays = [...data.birthdays].sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-2">
+    <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-2">
       <Card title="Future log" subtitle="Tasks & events dated ahead of today">
         {future.length === 0 ? (
           <Empty>Nothing scheduled. Add a future-dated entry from any day.</Empty>

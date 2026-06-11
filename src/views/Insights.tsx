@@ -31,7 +31,7 @@ export function Insights() {
   ])].sort().reverse()
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
       <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <Big label="Current streak" value={streak} suffix="d" color="peach" />
         <Big label="Longest streak" value={best} suffix="d" color="mauve" />
