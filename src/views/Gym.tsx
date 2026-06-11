@@ -16,11 +16,11 @@ import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise, epley1RM, platesPerSide,
+  musclesForExercise, epley1RM, platesPerSide, lastSetFor,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import { PULLUP_PROGRAM } from '../lib/programs'
-import type { Routine, Split } from '../lib/types'
+import type { Routine, Split, WorkoutSet } from '../lib/types'
 
 interface SetRow {
   exercise: string
@@ -73,15 +73,22 @@ export function Gym() {
   }
 
   function finish() {
-    const sets = rows
-      .filter((r) => r.exercise.trim())
-      .map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
+    const valid = rows.filter((r) => r.exercise.trim())
+    const sets = valid.map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
     if (sets.length === 0) return
+    // Structured rows for analytics (volume / progression / previous-session).
+    const structured: WorkoutSet[] = valid.map((r) => ({
+      exercise: r.exercise.trim(),
+      weight: r.weight ? Number(r.weight) : undefined,
+      reps: r.reps ? Number(r.reps) : undefined,
+      kind: 'working',
+    }))
     addWorkout({
       date: todayISO(),
       activity: `${splitMeta(split).label} day`,
       split,
       sets,
+      setRows: structured,
       notes: '',
     })
     setRows([{ exercise: '', weight: '', reps: '' }])
@@ -159,8 +166,11 @@ export function Gym() {
           </div>
           {rows.map((row, i) => {
             const focused = !!row.exercise.trim() && focusEx === row.exercise
+            const prev = row.exercise.trim() ? lastSetFor(data, row.exercise) : null
+            const oneRM = row.weight && row.reps ? epley1RM(Number(row.weight), Number(row.reps)) : null
             return (
-              <div key={i} className="grid grid-cols-[28px_1fr_64px_64px_28px] items-center gap-2">
+              <div key={i}>
+                <div className="grid grid-cols-[28px_1fr_64px_64px_28px] items-center gap-2">
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
                   disabled={!row.exercise.trim()}
@@ -181,6 +191,13 @@ export function Gym() {
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
+                </div>
+                {(prev || oneRM) && (
+                  <div className="mt-0.5 ml-9 flex gap-3 text-[10px] text-overlay0">
+                    {prev && <span>last: {prev.weight}{unit}×{prev.reps}</span>}
+                    {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
+                  </div>
+                )}
               </div>
             )
           })}
