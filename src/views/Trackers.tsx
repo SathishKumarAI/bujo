@@ -31,6 +31,7 @@ export function Trackers() {
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   const [editing, setEditing] = useState<string | null>(null)
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
   const today = todayISO()
@@ -117,6 +118,8 @@ export function Trackers() {
                     onToggle={toggleHabit}
                     onSetValue={setHabitValue}
                     onEdit={setEditing}
+                    collapsed={collapsedCats.has(category)}
+                    onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); n.has(category) ? n.delete(category) : n.add(category); return n })}
                   />
                 ))}
               </tbody>
@@ -257,7 +260,7 @@ function TodayStrip({
 
 // ── Category section of habit rows ───────────────────────────────────────────
 function CategoryRows({
-  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit,
+  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit, collapsed, onToggleCollapse,
 }: {
   category: string
   habits: Habit[]
@@ -269,11 +272,19 @@ function CategoryRows({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
+  collapsed: boolean
+  onToggleCollapse: () => void
 }) {
   return (
     <>
-      <tr><td colSpan={days.length + 2} className="pt-3 pb-1 text-[10px] tracking-wide text-overlay0 uppercase">{category}</td></tr>
-      {habits.map((h) => {
+      <tr>
+        <td colSpan={days.length + 2} className="pt-3 pb-1">
+          <button onClick={onToggleCollapse} className="text-[10px] tracking-wide text-overlay0 uppercase hover:text-subtext1">
+            {collapsed ? '▸' : '▾'} {category} {collapsed && <span className="text-overlay1">({habits.length})</span>}
+          </button>
+        </td>
+      </tr>
+      {!collapsed && habits.map((h) => {
         const isCount = h.type === 'count'
         const target = h.target && h.target > 0 ? h.target : 1
         return (
