@@ -12,18 +12,20 @@ import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
 import { CommandPalette } from './components/CommandPalette'
 import {
-  Sun, CalendarDays, BarChart3, Dumbbell, Repeat, BookMarked,
+  Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, Menu,
-  type LucideIcon,
+  PieChart, ZoomIn, ZoomOut, type LucideIcon,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
 const Trackers = lazy(() => import('./views/Trackers').then((m) => ({ default: m.Trackers })))
 const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle })))
+const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
+const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
 
 type ViewId =
-  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'plan' | 'collections'
-  | 'insights' | 'cycle' | 'nofap' | 'help' | 'settings'
+  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'plan' | 'collections'
+  | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
 
 interface NavItem {
   id: ViewId
@@ -36,10 +38,12 @@ const NAV: NavItem[] = [
   { id: 'today', label: 'Today', icon: Sun },
   { id: 'monthly', label: 'Monthly', icon: CalendarDays },
   { id: 'trackers', label: 'Trackers', icon: BarChart3 },
-  { id: 'fitness', label: 'Fitness', icon: Dumbbell },
+  { id: 'fitness', label: 'Fitness', icon: Activity },
+  { id: 'gym', label: 'Gym', icon: Dumbbell },
   { id: 'plan', label: 'Plan', icon: Repeat },
   { id: 'collections', label: 'Collections', icon: BookMarked },
   { id: 'insights', label: 'Insights', icon: Sparkles },
+  { id: 'stats', label: 'Stats', icon: PieChart },
   { id: 'cycle', label: 'Cycle', icon: Flower2, show: (g) => g.cycle },
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, show: (g) => g.nofap },
   { id: 'help', label: 'Help', icon: HelpCircle },
@@ -48,18 +52,20 @@ const NAV: NavItem[] = [
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers, fitness: Fitness,
-  plan: Plan, collections: Collections, insights: Insights, cycle: Cycle,
-  nofap: NoFap, help: Help, settings: Settings,
+  gym: Gym, plan: Plan, collections: Collections, insights: Insights,
+  stats: Stats, cycle: Cycle, nofap: NoFap, help: Help, settings: Settings,
 }
 
 export default function App() {
-  const { data } = useJournal()
-  const [view, setView] = useState<ViewId>('today')
+  const { data, setSettings } = useJournal()
+  const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
+  const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [navOpen, setNavOpen] = useState(false)
   const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
   const items = NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
   const book = data.settings.bookMode
+  const zoom = data.settings.zoom ?? 1
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -105,8 +111,9 @@ export default function App() {
       </nav>
 
       {/* Main */}
-      <main className="flex-1 overflow-x-hidden p-4 sm:p-6">
-        <div className="mx-auto max-w-5xl">
+      <main className="relative flex-1 overflow-x-hidden p-4 sm:p-6">
+        <ZoomControl zoom={zoom} onChange={(z) => setSettings({ zoom: z })} />
+        <div className="mx-auto max-w-5xl" style={{ zoom }}>
           <Suspense fallback={<p className="py-10 text-center text-overlay0">Loading…</p>}>
             {book ? (
               <div className="book">
@@ -123,6 +130,23 @@ export default function App() {
         </div>
       </main>
       </div>
+    </div>
+  )
+}
+
+function ZoomControl({ zoom, onChange }: { zoom: number; onChange: (z: number) => void }) {
+  const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
+  return (
+    <div className="fixed right-4 bottom-4 z-40 flex items-center gap-1 rounded-full border border-surface1 bg-mantle/90 px-1.5 py-1 shadow-lg backdrop-blur">
+      <button onClick={() => onChange(clamp(zoom - 0.1))} aria-label="Zoom out" className="grid h-7 w-7 place-items-center rounded-full text-subtext1 hover:bg-surface0">
+        <ZoomOut size={15} />
+      </button>
+      <button onClick={() => onChange(1)} aria-label="Reset zoom" className="w-11 text-center text-xs text-subtext0 hover:text-text">
+        {Math.round(zoom * 100)}%
+      </button>
+      <button onClick={() => onChange(clamp(zoom + 0.1))} aria-label="Zoom in" className="grid h-7 w-7 place-items-center rounded-full text-subtext1 hover:bg-surface0">
+        <ZoomIn size={15} />
+      </button>
     </div>
   )
 }

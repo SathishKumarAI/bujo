@@ -87,6 +87,24 @@ IDs are stable references for commits and PRs.
 | BUJO-70b | Custom free-form collections (create / open / add bullets) | ✅ |
 | BUJO-71b | Demo/sample data loader + `?demo=1` deep link | ✅ |
 | BUJO-72b | README landing: comparison table + "why different" | ✅ |
+| BUJO-73 | Stats view: heatmap, radar, scatter, bars, donut, mood calendar, tag cloud | ✅ |
+| BUJO-74 | Zoom in/out control + hover-zoom on images | ✅ |
+| BUJO-75 | Deep links: `?view=` and `?demo=1` | ✅ |
+
+## Epic J — Fitness / gym (GRIT + wger inspired)
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-100 | Dedicated Gym tab (separate from cardio Fitness) | ✅ |
+| BUJO-101 | Push/Pull/Legs split selector + next-day suggestion | ✅ |
+| BUJO-102 | PPL preset routines + save/load custom routines | ✅ |
+| BUJO-103 | Structured set logging (exercise/weight/reps) | ✅ |
+| BUJO-104 | Personal records (auto from logged sets) | ✅ |
+| BUJO-105 | Body-weight tracking + chart | ✅ |
+| BUJO-106 | Muscle map: front/back figure highlighting worked muscles | ✅ |
+| BUJO-107 | wger exercise database browser (search + images, public API) | ✅ |
+| BUJO-108 | Nutrition / macro diary (calories + protein/carbs/fat) | ✅ |
+| BUJO-109 | Credits + references (CREDITS.md, README references) | ✅ |
 
 ## Epic H — Data & privacy
 

@@ -37,8 +37,8 @@ export function ImageUpload({
   return (
     <div className={className}>
       {value ? (
-        <div className="group relative overflow-hidden rounded-xl border border-surface0">
-          <img src={value} alt="" className="max-h-64 w-full object-cover" />
+        <div className="group relative rounded-xl border border-surface0">
+          <img src={value} alt="" className="hover-zoom max-h-64 w-full rounded-xl object-cover" title="Hover to zoom" />
           <button
             onClick={() => onChange(undefined)}
             aria-label="Remove photo"

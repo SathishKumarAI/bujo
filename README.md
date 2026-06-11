@@ -52,7 +52,9 @@ paper *feel* (book frame, dot-grid, handwriting, stickers) with digital power
 | **Today** | Daily log, mood/stress/sleep sliders (0–10), fast-break marker, gratitude line, daily memory **with photo**. |
 | **Monthly** | Calendar with event dots, location (for travelers), goals, and a **photo of the month**. |
 | **Trackers** | Habit/stimulant/food dot-grid with 30-day consistency %, plus a mood·stress·sleep line chart. |
-| **Fitness** | Workout log: activity, duration, distance, calories, RPE, strength sets, notes, and totals. |
+| **Fitness** | Workout log: activity, duration, distance, RPE, notes, totals, plus a **nutrition / macro diary** (calories + protein/carbs/fat). |
+| **Gym** | Push/Pull/Legs training: split selector with next-day suggestion, PPL routines, structured set logging, **personal records**, **body-weight chart**, a **muscle map** showing what each split works, and a **wger exercise database** (search + images). |
+| **Stats** | Visual dashboard: activity heatmap, weekly radar, sleep-vs-mood scatter, workout-minutes bars, task-status donut, mood calendar, tag cloud. |
 | **Collections** | Future log (everything dated ahead) and a birthday list. |
 | **Insights** | Current & longest streaks, task-completion %, and full-text search across everything. |
 | **On this day** | Resurfaces entries and memories from the same date in past months. |
@@ -108,18 +110,26 @@ be cleared by the browser, **export a backup regularly** (Settings → Export).
 - Command palette (`Cmd/Ctrl-K`)
 - Custom free-form collections UI
 
-## Inspiration
+## References & inspiration
 
-This project's spreads and minimal philosophy are inspired by two creators'
-bullet-journal videos:
+All code here was written from scratch (see [CREDITS.md](CREDITS.md) for full
+attribution and dependency licenses). These are the sources that shaped the
+features and design:
 
-- **["My Minimalist Bullet Journal" (Elsa / van-life Scamp series)](https://www.youtube.com/watch?v=DRt8j7H1GvE)**
-  — the one-pen minimal style, location-tracking monthly calendar, gratitude &
-  daily-memory pages, and the mood/stress/sleep + intake trackers.
-- **["EASY Minimalist BULLET JOURNAL Set Up 2025 | HOW TO START"](https://www.youtube.com/watch?v=6_SqKVS_8pM)**
-  — minimalist monthly setup and beginner-friendly spread structure.
+- **Bullet Journal method — Ryder Carroll** · https://bulletjournal.com/
+- **"My Minimalist Bullet Journal" (Elsa, van-life series)** · https://www.youtube.com/watch?v=DRt8j7H1GvE
+  — one-pen style, location-per-month calendar, gratitude & daily-memory pages, mood/stress/sleep + intake trackers
+- **"EASY Minimalist BULLET JOURNAL Set Up 2025 | HOW TO START"** · https://www.youtube.com/watch?v=6_SqKVS_8pM
+  — minimalist monthly setup & beginner spreads
+- **The Lazy Genius — "How to Bullet Journal"** · https://www.thelazygeniuscollective.com/blog/how-to-bullet-journal
+  — index / future log / signifiers / migration / threading / collections
+- **GRIT (by 8sujan6)** · https://github.com/8sujan6/GRIT
+  — fitness features: fast set logging, custom routines, exercise library, personal records, body-metrics, offline-first
+- **wger** · https://wger.de/en/software/features · https://wger.de/en/exercise/overview/
+  — nutrition / macro diary, body-weight tracking, and the **exercise database + images** (used via wger's public API, CC-BY-SA)
 
-The Bullet Journal method itself is by **Ryder Carroll**.
+Full credits, library licenses (React, Recharts, lucide, Tailwind, Catppuccin,
+fonts) and network-service attributions are in **[CREDITS.md](CREDITS.md)**.
 
 ## License
 

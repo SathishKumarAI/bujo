@@ -12,11 +12,13 @@ import type {
   CyclePoint,
   DailyMetric,
   Entry,
+  BodyMetric,
   Habit,
   JournalData,
   MonthlyMeta,
   Recurrence,
   Relapse,
+  Routine,
   Settings,
   Weather,
   Workout,
@@ -65,6 +67,12 @@ interface Store {
   // workouts
   addWorkout: (w: Omit<Workout, 'id'>) => void
   removeWorkout: (id: string) => void
+  // routines
+  addRoutine: (r: Omit<Routine, 'id'>) => void
+  removeRoutine: (id: string) => void
+  // body metrics
+  setBodyMetric: (date: string, patch: Partial<BodyMetric>) => void
+  removeBodyMetric: (date: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -249,6 +257,24 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeWorkout: (id) =>
         patch((d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
+
+      addRoutine: (r) =>
+        patch((d) => ({ ...d, routines: [...d.routines, { id: uid('rt'), ...r }] })),
+
+      removeRoutine: (id) =>
+        patch((d) => ({ ...d, routines: d.routines.filter((r) => r.id !== id) })),
+
+      setBodyMetric: (date, bp) =>
+        patch((d) => {
+          const exists = d.bodyMetrics.some((b) => b.date === date)
+          const bodyMetrics = exists
+            ? d.bodyMetrics.map((b) => (b.date === date ? { ...b, ...bp } : b))
+            : [...d.bodyMetrics, { date, measurements: {}, ...bp }]
+          return { ...d, bodyMetrics }
+        }),
+
+      removeBodyMetric: (date) =>
+        patch((d) => ({ ...d, bodyMetrics: d.bodyMetrics.filter((b) => b.date !== date) })),
 
       setGratitude: (date, text) =>
         patch((d) => {

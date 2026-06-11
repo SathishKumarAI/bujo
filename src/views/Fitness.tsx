@@ -77,6 +77,8 @@ export function Fitness() {
           </div>
         </Card>
 
+        <NutritionCard date={date} />
+
         <Card title="History">
           {workouts.length === 0 ? (
             <Empty>No workouts logged yet.</Empty>
@@ -114,6 +116,59 @@ export function Fitness() {
         </Card>
       </div>
     </div>
+  )
+}
+
+function NutritionCard({ date }: { date: string }) {
+  const { data, setMetric } = useJournal()
+  const m = data.metrics.find((x) => x.date === date)
+  const macros = [
+    { k: 'protein' as const, label: 'Protein', color: 'red', val: m?.protein },
+    { k: 'carbs' as const, label: 'Carbs', color: 'yellow', val: m?.carbs },
+    { k: 'fat' as const, label: 'Fat', color: 'sky', val: m?.fat },
+  ]
+  const totalG = macros.reduce((s, x) => s + (x.val ?? 0), 0)
+
+  return (
+    <Card title="Nutrition" subtitle="Calories & macros for the day">
+      <label className="mb-3 block text-sm text-subtext1">
+        Calories
+        <Input
+          type="number"
+          value={m?.calories ?? ''}
+          onChange={(e) => setMetric(date, { calories: e.target.value ? Number(e.target.value) : undefined })}
+          placeholder="kcal"
+          className="mt-1"
+        />
+      </label>
+      <div className="grid grid-cols-3 gap-2">
+        {macros.map((mac) => (
+          <label key={mac.k} className="block text-xs text-subtext1">
+            {mac.label} (g)
+            <Input
+              type="number"
+              value={mac.val ?? ''}
+              onChange={(e) => setMetric(date, { [mac.k]: e.target.value ? Number(e.target.value) : undefined })}
+              className="mt-1 py-1.5"
+            />
+          </label>
+        ))}
+      </div>
+      {totalG > 0 && (
+        <div className="mt-3">
+          <div className="flex h-3 overflow-hidden rounded-full">
+            {macros.map((mac) => (
+              <div key={mac.k} style={{ width: `${((mac.val ?? 0) / totalG) * 100}%`, background: cat(mac.color) }} />
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-xs text-overlay0">
+            {macros.map((mac) => (
+              <span key={mac.k} style={{ color: cat(mac.color) }}>● {mac.label} {mac.val ?? 0}g</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }
 

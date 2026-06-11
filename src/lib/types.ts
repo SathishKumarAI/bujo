@@ -66,6 +66,11 @@ export interface DailyMetric {
   fastBreak?: 'food' | 'drink'
   /** Auto-logged weather snapshot for the day (opt-in). */
   weather?: Weather
+  // Nutrition diary (wger-style, lightweight).
+  calories?: number
+  protein?: number // grams
+  carbs?: number // grams
+  fat?: number // grams
 }
 
 /** A day's weather snapshot (from open-meteo, opt-in). */
@@ -82,6 +87,8 @@ export interface Workout {
   date: string // ISO day
   /** e.g. "Run", "Strength", "Yoga", "Cycling", "Walk", "Swim". */
   activity: string
+  /** Training-split tag for gym sessions (push/pull/legs…). */
+  split?: Split
   durationMin?: number
   distanceKm?: number
   /** Strength sets: each is "exercise xReps @ weight". Free-form lines. */
@@ -90,6 +97,25 @@ export interface Workout {
   /** Perceived exertion 1–10 (RPE). */
   rpe?: number
   notes: string
+}
+
+/** Push/Pull/Legs (and friends) training split categories. */
+export type Split = 'push' | 'pull' | 'legs' | 'upper' | 'lower' | 'full' | 'other'
+
+/** A saved, reusable workout routine (GRIT-style), tagged by PPL split. */
+export interface Routine {
+  id: string
+  name: string
+  split: Split
+  exercises: string[] // exercise names, in order
+}
+
+/** A body-metrics snapshot: weight + free-form measurements. */
+export interface BodyMetric {
+  date: string // ISO day, primary key
+  weight?: number // kg or lb (user's unit)
+  bodyFat?: number // %
+  measurements: Record<string, number> // e.g. { chest: 100, waist: 80, arms: 38 }
 }
 
 /** Neutral cycle / basal-temperature point. */
@@ -185,6 +211,8 @@ export interface Settings {
   weatherEnabled: boolean
   /** Show a rotating reflection prompt on the Today page. */
   reflectionPrompts: boolean
+  /** Content zoom level for charts/calendars/spreads (0.7–1.5). */
+  zoom: number
 }
 
 /** The single root object persisted to localStorage. */
@@ -195,6 +223,8 @@ export interface JournalData {
   habitLog: Record<string, string[]> // ISO day -> [habitId, …]
   metrics: DailyMetric[]
   workouts: Workout[]
+  routines: Routine[]
+  bodyMetrics: BodyMetric[]
   cycle: CyclePoint[]
   gratitude: Gratitude[]
   memories: Memory[]

@@ -44,6 +44,10 @@ export function generateDemoData(today = todayISO()): JournalData {
     j.metrics.push({
       date, sleep, stress, mood,
       fastBreak: rand() > 0.5 ? 'food' : 'drink',
+      calories: 1800 + Math.floor(rand() * 700),
+      protein: 110 + Math.floor(rand() * 60),
+      carbs: 150 + Math.floor(rand() * 120),
+      fat: 50 + Math.floor(rand() * 40),
     })
 
     // 1–3 entries/day.
@@ -99,5 +103,26 @@ export function generateDemoData(today = todayISO()): JournalData {
     { id: uid('b'), name: 'Sam', month: 11, day: 27 },
   ]
   j.collections = [{ id: uid('col'), name: 'Books to read', icon: '📚', createdAt: today }]
+
+  // PPL gym sessions + progressive body weight, so Gym view has data.
+  const ppl = [
+    { split: 'push' as const, sets: ['Bench Press 5x5 @ 60kg', 'Overhead Press 5x5 @ 35kg', 'Dip 3x8 @ 0kg'] },
+    { split: 'pull' as const, sets: ['Deadlift 5x5 @ 100kg', 'Barbell Row 5x5 @ 55kg', 'Pull-up 3x8 @ 0kg'] },
+    { split: 'legs' as const, sets: ['Squat 5x5 @ 80kg', 'Romanian Deadlift 4x8 @ 60kg', 'Calf Raise 4x12 @ 40kg'] },
+  ]
+  for (let i = 0; i < 9; i++) {
+    const day = addDays(today, -i * 2 - 1)
+    const w = ppl[i % 3]
+    j.workouts.push({
+      id: uid('w'), date: day, activity: `${w.split} day`, split: w.split,
+      durationMin: 55 + Math.floor(rand() * 20), sets: w.sets, rpe: 7 + Math.floor(rand() * 3), notes: '',
+    })
+  }
+  for (let i = 29; i >= 0; i -= 3) {
+    j.bodyMetrics.push({ date: addDays(today, -i), weight: Math.round((78 - i * 0.05 + (rand() - 0.5)) * 10) / 10, measurements: {} })
+  }
+  j.routines = [
+    { id: uid('rt'), name: 'My Push', split: 'push', exercises: ['Bench Press', 'Overhead Press', 'Lateral Raise', 'Dip'] },
+  ]
   return j
 }

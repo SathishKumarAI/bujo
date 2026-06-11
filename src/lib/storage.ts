@@ -27,6 +27,7 @@ export function defaultSettings(): Settings {
     reminderTime: '21:00',
     weatherEnabled: false,
     reflectionPrompts: true,
+    zoom: 1,
   }
 }
 
@@ -39,6 +40,8 @@ export function emptyJournal(): JournalData {
     habitLog: {},
     metrics: [],
     workouts: [],
+    routines: [],
+    bodyMetrics: [],
     cycle: [],
     gratitude: [],
     memories: [],
@@ -82,6 +85,8 @@ export function migrate(raw: unknown): JournalData {
     habitLog: data.habitLog ?? {},
     recurrences: data.recurrences ?? [],
     stickers: data.stickers ?? {},
+    routines: data.routines ?? [],
+    bodyMetrics: data.bodyMetrics ?? [],
     version: SCHEMA_VERSION,
   }
 }

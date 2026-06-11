@@ -201,6 +201,21 @@ body.handwriting textarea {
   padding: clamp(16px, 3vw, 36px);
 }
 
+/* Hover-zoom: magnify an element (photo, chart) on hover. */
+.hover-zoom {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, z-index 0s;
+  cursor: zoom-in;
+}
+.hover-zoom:hover {
+  transform: scale(1.6);
+  position: relative;
+  z-index: 30;
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.75);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hover-zoom:hover { transform: none; }
+}
+
 /* Page-turn: views fade/slide in when switched. */
 @keyframes page-in {
   from { opacity: 0; transform: translateY(8px) scale(0.995); }
