@@ -4,7 +4,7 @@ import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
+import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
@@ -355,7 +355,13 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('green') }}>{habitConsistency(data, habit.id, habit.startedOn, 30)}%</div><div className="text-[10px] text-overlay0">30-day</div></div>
             <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('blue') }}>{habitConsistency(data, habit.id, habit.startedOn, 90)}%</div><div className="text-[10px] text-overlay0">90-day</div></div>
           </div>
-          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>.</p>
+          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
+
+          {/* 12-week completion heatmap */}
+          <div>
+            <p className="mb-1 text-xs text-overlay0">Last 12 weeks</p>
+            <HabitHeatmap data={data} habit={habit} today={today} />
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
@@ -416,6 +422,47 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Habit visualisation helpers (v3) ─────────────────────────────────────────
+type JData = import('../lib/types').JournalData
+function habitDoneOn(data: JData, h: Habit, d: string): boolean {
+  if (h.type === 'count') return (data.habitValues?.[d]?.[h.id] ?? 0) >= (h.target && h.target > 0 ? h.target : 1)
+  return (data.habitLog[d] ?? []).includes(h.id)
+}
+
+/** This-week vs last-week trend arrow. */
+function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: string }) {
+  const week = (end: string) => Array.from({ length: 7 }, (_, i) => addDays(end, -i)).filter((d) => habitDoneOn(data, habit, d)).length
+  const now = week(today)
+  const prev = week(addDays(today, -7))
+  if (now === prev) return <span className="text-overlay0">→ steady</span>
+  const up = now > prev
+  return <span style={{ color: cat(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
+}
+
+/** GitHub-style 12-week completion heatmap (84 days), weekday-aligned. */
+function HabitHeatmap({ data, habit, today }: { data: JData; habit: Habit; today: string }) {
+  const start = addDays(today, -83)
+  const pad = fromISODay(start).getDay() // empty cells before the first day
+  return (
+    <div className="grid grid-flow-col grid-rows-7 gap-0.5">
+      {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-3 w-3" />)}
+      {Array.from({ length: 84 }).map((_, i) => {
+        const d = addDays(start, i)
+        const done = habitDoneOn(data, habit, d)
+        const future = d > today
+        return (
+          <span
+            key={d}
+            title={`${d}${done ? ' · done' : ''}`}
+            className="h-3 w-3 rounded-[2px]"
+            style={{ background: future ? 'transparent' : done ? cat(habit.color) : cat('surface0') }}
+          />
+        )
+      })}
     </div>
   )
 }
