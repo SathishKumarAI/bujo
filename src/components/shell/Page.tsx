@@ -15,7 +15,7 @@ export function Page({
   className?: string
 }) {
   if (!aside) {
-    return <div className={cn('mx-auto w-full max-w-6xl space-y-5', className)}>{children}</div>
+    return <div className={cn('mx-auto w-full max-w-[1400px] space-y-5', className)}>{children}</div>
   }
   return (
     <div

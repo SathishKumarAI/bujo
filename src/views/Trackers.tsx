@@ -4,8 +4,9 @@ import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS, ymOf } from '../lib/date'
+import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Button, Card, Empty, Input } from '../components/ui'
+import { Page, useCursor } from '../components/shell/Page'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -16,7 +17,7 @@ const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness'
 
 export function Trackers() {
   const { data, toggleHabit, setHabitValue, addHabit, setSettings } = useJournal()
-  const [ym, setYm] = useState(ymOf(todayISO()))
+  const { month: ym } = useCursor()
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   const [editing, setEditing] = useState<string | null>(null)
@@ -43,10 +44,6 @@ export function Trackers() {
     return { day: Number(d.slice(8)), mood: m?.mood, stress: m?.stress, sleep: m?.sleep, moodAvg: moodAvg[i], stressAvg: stressAvg[i], sleepAvg: sleepAvg[i] }
   })
 
-  function shiftMonth(delta: number) {
-    const [y, mo] = ym.split('-').map(Number)
-    setYm(ymOf(new Date(y, mo - 1 + delta, 1)))
-  }
   function add() {
     if (!newHabit.trim()) return
     addHabit({ name: newHabit.trim(), category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
@@ -54,7 +51,7 @@ export function Trackers() {
   }
 
   return (
-    <div className="space-y-4">
+    <Page>
       <Card
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
@@ -62,9 +59,6 @@ export function Trackers() {
           <div className="flex gap-1">
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
-            <Button onClick={() => shiftMonth(-1)} aria-label="Previous month">←</Button>
-            <Button onClick={() => setYm(ymOf(today))}>This month</Button>
-            <Button onClick={() => shiftMonth(1)} aria-label="Next month">→</Button>
           </div>
         }
       >
@@ -95,7 +89,7 @@ export function Trackers() {
                   {days.map((d) => (
                     <th key={d} className={`p-0.5 text-center font-normal ${d === today ? 'text-mauve' : 'text-overlay0'}`}>{Number(d.slice(8))}</th>
                   ))}
-                  <th className="p-1 text-overlay0">%</th>
+                  <th className="p-1 pr-2 text-overlay0">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,7 +142,7 @@ export function Trackers() {
       </Card>
 
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
-    </div>
+    </Page>
   )
 }
 
