@@ -1,5 +1,44 @@
 # Worklog
 
+## 2026-06-11 17:06 — Layout redesign + Challenges + Trackers/Fitness v2
+
+**Summary:** Major usability redesign of the whole app on a new shadcn/ui
+substrate (re-themed to Catppuccin), then a new Challenges feature and v2
+enhancements to Trackers and Fitness. 77 tests green; initial JS 120 KB gzip
+(budget 200). Branch `feat/layout-redesign`.
+
+**Changes:**
+- `components/shell/*` — new app shell: `AppShell`, `Sidebar`, sticky `TopBar`
+  (title + hoisted date-nav + quick-add + ⌘K + overflow menu), shared
+  `DateCursor` context, `viewChrome` registry, `Page` grid primitive.
+- `components/ui/*` + `lib/cn.ts` — shadcn primitives; `index.css` maps shadcn
+  semantic vars onto Catppuccin (Latte inherits). `ui.tsx` wraps shadcn + adds `Segmented`.
+- All 13 views reflowed onto `Page`/max-width; Today is a dashboard; floating
+  undo/redo + zoom moved into the top bar.
+- Top bar: dedicated theme button + Settings gear; Help in ⋯ menu; System group
+  removed from the sidebar. Settings is now tabbed.
+- **Challenges** — new view + nav item (Health): `Challenge` model +
+  `challengeLog`, `lib/challenges.ts` (presets + whole-number progress helpers),
+  store actions, day-grid + strict reset.
+- **Trackers v2** — today focus strip, presets, emoji + weekly-goal, detail
+  drawer (streak/30-90%/day-of-week/skip). New `Habit` fields + `habitSkips`.
+- **Fitness v2** — weekly goal ring, 8-week sparkline, active streak,
+  this-week/all-time totals, cardio PBs, auto-pace, edit + repeat-last.
+- Docs: `docs/redesign/*.mdx`, spec + 2 plans under `docs/superpowers/`,
+  updated FRONTEND_SPEC/ARCHITECTURE/FEATURES/DECISIONS/TICKETS/Help.
+
+**Decisions:** shadcn wrapped gradually (no big-bang rewrite); date-nav hoisted
+via a shared cursor; one control vocabulary (Switch/Segmented); challenge &
+fitness analytics use inline SVG/CSS (no Recharts) to protect the bundle;
+challenge/streak progress shown in whole numbers, never fractions.
+
+**Follow-ups:**
+- [ ] Gym v2 (structured per-set model, volume/progression charts) — scoped,
+  deferred (plan Phase D).
+- [ ] 2026-06-11 PM backlog: dev-time tracker, command-completion input
+  suggestions, duplicate-detection badge, cross-place task sync, richer
+  tracker/challenge visualizations — see `docs/prompts/`.
+
 ## 2026-06-10 — Fitness/Gym, visualizations, wger, icons (BUJO-73…116)
 
 Big fitness + visualization + polish session, all local-first, all credited.

@@ -190,3 +190,22 @@ Rationale in `docs/redesign/*.mdx`; spec + plan in `docs/superpowers/`.
 | BUJO-R9 | Settings: Switch + Segmented vocabulary, equal-height grid | ✅ |
 | BUJO-R10 | Remaining views adopt shared max-width container | ✅ |
 | BUJO-R11 | Docs: MDX rationale + spec/plan + FRONTEND/ARCH/FEATURES/DECISIONS | ✅ |
+| BUJO-R12 | Challenges view (75 Hard/90-day/custom, whole-number progress) | ✅ |
+| BUJO-R13 | Trackers v2 (today strip, presets, emoji, weekly-goal, detail drawer) | ✅ |
+| BUJO-R14 | Fitness v2 (goal ring, sparkline, streak, PBs, auto-pace, edit) | ✅ |
+| BUJO-R15 | Collapsed sidebar = stable icon rail (no hover-overlay) | ✅ |
+| BUJO-R16 | Challenge viz: progress ring + week-grouped calendar + legend | ✅ |
+
+## Epic V3 — Smart input, dev tracker, richer viz (planned)
+
+Scoped in `docs/prompts/05-platform-v3-smart-input-dev-tracker.md`. **Keep this
+table and that doc in sync** (the cross-place task-sync rule applies to our docs).
+
+| ID | Title | Status |
+|---|---|---|
+| V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | 🔜 |
+| V3-B | Cross-place task sync (single source of truth + recurrence links) | 🔜 |
+| V3-C | Developer "Focus" tracker (coding time · work style · stress) | 🔜 |
+| V3-D | Richer tracker viz (heatmap, sparkline, radar) + finish Trackers v2 | 🔜 |
+| V3-E | Recommendations & smart defaults (dismissible suggestion notes) | 🔜 |
+| V3-F | Gym v2 (structured sets, volume/progression charts) — carried over | 🔜 |
