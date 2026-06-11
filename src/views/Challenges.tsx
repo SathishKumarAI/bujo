@@ -81,14 +81,21 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         </p>
       )}
 
-      {/* Progress meter — whole-number percent, no fractions. */}
-      <div className="mb-4">
-        <div className="mb-1 flex items-center justify-between text-xs text-overlay0">
-          <span>{pct}% complete</span>
-          <span>{completedDays(data, c, today)} of {c.durationDays} days</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-surface0">
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('mauve') }} />
+      {/* Progress — ring + bar + headline stats (whole numbers, no fractions). */}
+      <div className="mb-4 flex items-center gap-4">
+        <ProgressRing pct={pct} />
+        <div className="flex-1">
+          <div className="mb-1 flex items-center justify-between text-xs text-overlay0">
+            <span>{completedDays(data, c, today)} of {c.durationDays} days done</span>
+            <span>{Math.max(0, c.durationDays - completedDays(data, c, today))} to go</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-surface0">
+            <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
+          </div>
+          <div className="mt-2 flex gap-4 text-xs">
+            <span className="text-peach">🔥 {streak} streak</span>
+            <span className="text-subtext0">Day {day} of {c.durationDays}</span>
+          </div>
         </div>
       </div>
 
@@ -112,10 +119,17 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         </div>
       )}
 
-      {/* Day grid */}
+      {/* Calendar grid — grouped into weeks of 7 for readability. */}
       <div>
-        <p className="mb-2 text-sm font-medium text-subtext1">Progress</p>
-        <div className="flex flex-wrap gap-1">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-medium text-subtext1">Calendar</p>
+          <div className="flex items-center gap-3 text-[10px] text-overlay0">
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
+            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
+          </div>
+        </div>
+        <div className="grid w-fit grid-cols-7 gap-1">
           {Array.from({ length: c.durationDays }).map((_, i) => {
             const d = addDays(c.startDate, i)
             const complete = isDayComplete(data, c, d)
@@ -125,8 +139,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
             return (
               <span
                 key={d}
-                title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : ''}`}
-                className="grid h-6 w-6 place-items-center rounded text-[9px]"
+                title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
+                className="grid h-7 w-7 place-items-center rounded text-[9px]"
                 style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
               >
                 {i + 1}
@@ -136,6 +150,19 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         </div>
       </div>
     </Card>
+  )
+}
+
+/** Circular progress ring with a whole-number percent label. */
+function ProgressRing({ pct }: { pct: number }) {
+  const r = 26
+  const circ = 2 * Math.PI * r
+  return (
+    <svg width="68" height="68" viewBox="0 0 68 68" className="shrink-0">
+      <circle cx="34" cy="34" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
+      <circle cx="34" cy="34" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 34 34)" />
+      <text x="34" y="38" textAnchor="middle" className="fill-text font-bold" fontSize="15">{pct}%</text>
+    </svg>
   )
 }
 
