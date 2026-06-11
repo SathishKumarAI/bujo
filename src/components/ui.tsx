@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { cat } from '../lib/colors'
+import { cn } from '../lib/cn'
+import { Button as SButton } from './ui/button'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
@@ -51,21 +53,18 @@ export function Button({
   title?: string
   'aria-label'?: string
 }) {
-  const styles = {
-    primary: 'bg-mauve text-crust hover:bg-lavender',
-    ghost: 'bg-surface0 text-text hover:bg-surface1',
-    danger: 'bg-transparent text-red hover:bg-surface0',
-  }[variant]
+  const v = variant === 'primary' ? 'default' : variant === 'danger' ? 'ghost' : 'secondary'
   return (
-    <button
+    <SButton
       type={type}
       onClick={onClick}
       title={title}
       aria-label={ariaLabel}
-      className={`press-3d rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-mauve focus-visible:outline-none ${styles} ${className}`}
+      variant={v}
+      className={cn('press-3d rounded-lg', variant === 'danger' && 'text-red hover:text-red', className)}
     >
       {children}
-    </button>
+    </SButton>
   )
 }
 
