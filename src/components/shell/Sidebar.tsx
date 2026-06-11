@@ -41,13 +41,11 @@ export function Sidebar({
     >
       <div
         className={`bg-card transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-border ${
-          collapsed
-            ? 'md:w-14 md:group-hover/sb:absolute md:group-hover/sb:top-0 md:group-hover/sb:left-0 md:group-hover/sb:z-50 md:group-hover/sb:w-60 md:group-hover/sb:shadow-2xl'
-            : 'md:w-60'
+          collapsed ? 'md:w-14' : 'md:w-60'
         }`}
       >
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
-          <span className={collapsed ? 'md:hidden md:group-hover/sb:block' : ''}><Brand /></span>
+          <span className={collapsed ? 'md:hidden' : ''}><Brand /></span>
           <button
             onClick={onToggleCollapse}
             aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar'}
@@ -63,7 +61,7 @@ export function Sidebar({
             if (groupItems.length === 0) return null
             return (
               <div key={group}>
-                <p className={`px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase ${collapsed ? 'md:hidden md:group-hover/sb:block' : ''}`}>
+                <p className={`px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase ${collapsed ? 'md:hidden' : ''}`}>
                   {group}
                 </p>
                 <ul>
@@ -82,7 +80,7 @@ export function Sidebar({
                         >
                           {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
                           <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-overlay1 group-hover:text-subtext0'}`} aria-hidden />
-                          <span className={`whitespace-nowrap ${collapsed ? 'md:hidden md:group-hover/sb:inline' : ''}`}>{n.label}</span>
+                          <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
                         </button>
                       </li>
                     )
