@@ -1,35 +1,47 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Button } from './ui'
+import { SmartInput } from './SmartInput'
+import { parseTags } from '../lib/bullets'
 
 /**
  * Quick-capture input. Prefixes: t=task, e=event, n=note, *=important, ^=memory.
- * Default kind is task. Enter to add.
+ * Default kind is task. Enter to add. Now backed by SmartInput for completion
+ * (#tags, recent entries) and same-day duplicate detection.
  */
 export function QuickAdd({ date, onAdded }: { date: string; onAdded?: () => void }) {
-  const { addEntry } = useJournal()
+  const { data, addEntry } = useJournal()
   const [val, setVal] = useState('')
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!val.trim()) return
-    addEntry(date, val)
+  // Completion corpus + duplicate set (same-day, non-collection entries).
+  const tags = [...new Set(data.entries.flatMap((e) => parseTags(e.text)))]
+  const recents = data.entries.slice(-40).reverse().map((e) => e.text).filter(Boolean)
+  const habits = data.habits.map((h) => h.name)
+  const dupItems = data.entries
+    .filter((e) => e.date === date && !e.collection && e.text)
+    .map((e) => ({ id: e.id, text: e.text }))
+
+  function add(text: string) {
+    if (!text.trim()) return
+    addEntry(date, text)
     setVal('')
     onAdded?.()
   }
 
   return (
-    <form onSubmit={submit} className="flex gap-2">
-      <input
+    <div className="flex items-start gap-2">
+      <SmartInput
         value={val}
-        onChange={(e) => setVal(e.target.value)}
+        onChange={setVal}
+        onSubmit={add}
+        suggestCtx={{ tags, recents, habits }}
+        dupItems={dupItems}
         placeholder="Add… (t task · e event · n note · * important · ^ memory)"
         aria-label="Quick add entry"
-        className="flex-1 rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-mauve focus-visible:ring-1 focus-visible:ring-mauve focus-visible:outline-none"
       />
-      <Button type="submit" variant="primary">
+      <Button type="button" variant="primary" onClick={() => add(val)}>
         Add
       </Button>
-    </form>
+    </div>
   )
 }
