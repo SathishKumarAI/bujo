@@ -148,6 +148,27 @@ don't pull the chart chunk. Gym's structured-set rewrite (per-set RPE/type +
 volume/progression charts) is **scoped but deferred** to a focused session — see
 `docs/superpowers/plans/2026-06-11-v2-view-enhancements.md` Phase D.
 
+**D-23 — Smart input is a pure-logic core + a thin component.**
+*Context:* completion + duplicate detection must be testable and reusable across
+the quick-add and habit-add fields.
+*Choice:* `lib/suggest.ts` (suggestions + token-overlap duplicate scoring, unit-
+tested) feeds a `SmartInput` component that owns the popover, keyboard nav, and a
+**corner badge** for duplicates. The bullet grammar still parses in `addEntry`, so
+typing `t …`/`e …`/`* …` works unchanged; a live preview makes it discoverable.
+*Trade-off:* fuzzy-match threshold is heuristic (0.7) — tunable, non-blocking.
+
+**D-24 — Recommendations are pure + dismissible, never sensitive.**
+*Choice:* `lib/recommend.ts` returns ranked `Recommendation[]`; an app-shell bar
+shows the top 2 with a nav action and a dismiss. Cycle/NoFap are never surfaced.
+*Why:* helpful nudges without nagging or privacy leaks.
+
+**D-25 — Developer Focus tracker is its own view + model, not a habit type.**
+*Context:* coding sessions need duration + focus + stress + tags, richer than a
+habit dot.
+*Choice:* a `DevSession` model + `lib/focus.ts` (weekly minutes, streak,
+duration-weighted averages, focus↔stress Pearson) + a `Focus` view in Health.
+Charts are inline SVG/CSS (no Recharts) to hold the bundle budget.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

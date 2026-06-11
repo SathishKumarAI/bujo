@@ -203,9 +203,9 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 
 | ID | Title | Status |
 |---|---|---|
-| V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | 🔜 |
-| V3-B | Cross-place task sync (single source of truth + recurrence links) | 🔜 |
-| V3-C | Developer "Focus" tracker (coding time · work style · stress) | 🔜 |
-| V3-D | Richer tracker viz (heatmap, sparkline, radar) + finish Trackers v2 | 🔜 |
-| V3-E | Recommendations & smart defaults (dismissible suggestion notes) | 🔜 |
+| V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | ✅ |
+| V3-B | Cross-place task sync — verified single-source-by-id; recurrence-series linking deferred | ◑ |
+| V3-C | Developer "Focus" tracker (coding time · work style · stress) | ✅ |
+| V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
+| V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
 | V3-F | Gym v2 (structured sets, volume/progression charts) — carried over | 🔜 |
