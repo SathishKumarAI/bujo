@@ -7,6 +7,7 @@ import { useJournal } from '../store'
 import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
+import { SmartInput } from '../components/SmartInput'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -137,7 +138,17 @@ export function Trackers() {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Input value={newHabit} onChange={(e) => setNewHabit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="New habit / food / stimulant…" className="max-w-xs" />
+            <div className="w-full max-w-xs">
+              <SmartInput
+                value={newHabit}
+                onChange={setNewHabit}
+                onSubmit={() => add()}
+                suggestCtx={{ tags: [], recents: [], habits: data.habits.map((h) => h.name) }}
+                dupItems={data.habits.map((h) => ({ id: h.id, text: h.name }))}
+                onGoToDuplicate={(id) => { setEditing(id); setNewHabit('') }}
+                placeholder="New habit / food / stimulant…"
+              />
+            </div>
             <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
