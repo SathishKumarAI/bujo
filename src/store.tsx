@@ -63,7 +63,9 @@ interface Store {
   addHabit: (h: Omit<Habit, 'id' | 'startedOn'>) => void
   removeHabit: (id: string) => void
   renameHabit: (id: string, name: string) => void
+  updateHabit: (id: string, patch: Partial<Habit>) => void
   toggleHabit: (date: string, habitId: string) => void
+  setHabitValue: (date: string, habitId: string, value: number) => void
   // workouts
   addWorkout: (w: Omit<Workout, 'id'>) => void
   removeWorkout: (id: string) => void
@@ -243,6 +245,20 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           ...d,
           habits: d.habits.map((h) => (h.id === id ? { ...h, name } : h)),
         })),
+
+      updateHabit: (id, hpatch) =>
+        patch((d) => ({
+          ...d,
+          habits: d.habits.map((h) => (h.id === id ? { ...h, ...hpatch } : h)),
+        })),
+
+      setHabitValue: (date, habitId, value) =>
+        patch((d) => {
+          const day = { ...(d.habitValues?.[date] ?? {}) }
+          if (value <= 0) delete day[habitId]
+          else day[habitId] = value
+          return { ...d, habitValues: { ...(d.habitValues ?? {}), [date]: day } }
+        }),
 
       toggleHabit: (date, habitId) =>
         patch((d) => {

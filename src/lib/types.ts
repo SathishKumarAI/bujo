@@ -45,15 +45,27 @@ export interface Recurrence {
   lastGenerated?: string
 }
 
+export type HabitCategory = 'stimulant' | 'food' | 'movement' | 'wellness' | 'custom'
+/** check = a yes/no dot; count = a number toward a daily target. */
+export type HabitType = 'check' | 'count'
+
 /** A trackable habit / stimulant / food shown in the dot-grid. */
 export interface Habit {
   id: string
   name: string
   /** Grouping shown as a section header in the tracker. */
-  category: 'stimulant' | 'food' | 'movement' | 'wellness' | 'custom'
+  category: HabitCategory
   color: string // Catppuccin token name, e.g. "mauve"
   /** ISO day tracking began; days before this render as blank, not "missed". */
   startedOn: string
+  // ── customisation (all optional, additive) ──
+  type?: HabitType // default 'check'
+  target?: number // daily goal for count habits (e.g. 8 glasses)
+  unit?: string // e.g. "glasses", "min"
+  /** Weekdays the habit is scheduled (0=Sun…6=Sat). Empty/undefined = every day. */
+  activeDays?: number[]
+  archived?: boolean
+  order?: number // manual sort within a category
 }
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */
@@ -227,6 +239,10 @@ export interface Settings {
   reflectionPrompts: boolean
   /** Content zoom level for charts/calendars/spreads (0.7–1.5). */
   zoom: number
+  // ── Tracker (global) ──
+  trackerDensity?: 'comfortable' | 'compact'
+  trackerHideWeekends?: boolean
+  trackerShowArchived?: boolean
 }
 
 /** The single root object persisted to localStorage. */
@@ -234,7 +250,9 @@ export interface JournalData {
   version: number
   entries: Entry[]
   habits: Habit[]
-  habitLog: Record<string, string[]> // ISO day -> [habitId, …]
+  habitLog: Record<string, string[]> // ISO day -> [habitId, …] (check habits)
+  /** ISO day -> habitId -> numeric value (count habits). */
+  habitValues?: Record<string, Record<string, number>>
   metrics: DailyMetric[]
   workouts: Workout[]
   routines: Routine[]
