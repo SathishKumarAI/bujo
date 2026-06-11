@@ -47,6 +47,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
           view={view}
+          onNavigate={onNavigate}
           onQuickAdd={() => setQuickOpen(true)}
           onCommand={onCommand}
           onMenu={() => setNavOpen((o) => !o)}

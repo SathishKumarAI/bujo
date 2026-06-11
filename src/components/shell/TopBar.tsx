@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon, Settings as SettingsIcon, HelpCircle } from 'lucide-react'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -20,11 +20,13 @@ function shiftMonth(ym: string, delta: number): string {
 /** Sticky header: view title, hoisted date-nav, quick-add, ⌘K, overflow menu. */
 export function TopBar({
   view,
+  onNavigate,
   onQuickAdd,
   onCommand,
   onMenu,
 }: {
   view: ViewId
+  onNavigate: (id: ViewId) => void
   onQuickAdd: () => void
   onCommand: () => void
   onMenu: () => void
@@ -79,6 +81,16 @@ export function TopBar({
           <Plus size={15} /> <span className="hidden sm:inline">Quick add</span>
         </Button>
         <Button
+          variant={view === 'settings' ? 'secondary' : 'ghost'}
+          size="icon-sm"
+          aria-label="Settings"
+          aria-current={view === 'settings' ? 'page' : undefined}
+          title="Settings"
+          onClick={() => onNavigate('settings')}
+        >
+          <SettingsIcon size={16} />
+        </Button>
+        <Button
           variant="ghost"
           size="icon-sm"
           aria-label={data.settings.theme === 'mocha' ? 'Switch to light theme' : 'Switch to dark theme'}
@@ -97,6 +109,10 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onClick={() => onNavigate('help')}>
+              <HelpCircle size={15} /> Help &amp; guide
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom - 0.1) })}>Zoom out</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setSettings({ zoom: 1 })}>Reset zoom ({Math.round(zoom * 100)}%)</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom + 0.1) })}>Zoom in</DropdownMenuItem>

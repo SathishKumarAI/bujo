@@ -28,8 +28,10 @@ const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle
 const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
 const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
 
-// Ordered as a daily pipeline: capture & organise → track health → review → system.
-const GROUP_ORDER = ['Journal', 'Health', 'Review', 'System']
+// Daily pipeline: capture & organise → track health → review.
+// "System" (Help, Settings) is intentionally NOT here — those live in the top
+// bar (gear + overflow menu) so the sidebar stays focused on daily views.
+const GROUP_ORDER = ['Journal', 'Health', 'Review']
 
 const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
