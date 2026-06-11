@@ -38,3 +38,35 @@ describe('QuickAdd + store integration', () => {
     expect(screen.getByTestId('count').textContent).toBe('0')
   })
 })
+
+function UndoProbe() {
+  const { data, undo, redo, canUndo, canRedo } = useJournal()
+  return (
+    <div>
+      <div data-testid="count">{data.entries.length}</div>
+      <button onClick={undo} disabled={!canUndo}>undo</button>
+      <button onClick={redo} disabled={!canRedo}>redo</button>
+    </div>
+  )
+}
+
+describe('undo / redo history', () => {
+  it('undoes and redoes an entry add', async () => {
+    const user = userEvent.setup()
+    render(
+      <JournalProvider>
+        <QuickAdd date="2026-06-10" />
+        <UndoProbe />
+      </JournalProvider>,
+    )
+    await user.type(screen.getByLabelText('Quick add entry'), 'water plants')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(screen.getByTestId('count').textContent).toBe('1')
+
+    await user.click(screen.getByRole('button', { name: 'undo' }))
+    expect(screen.getByTestId('count').textContent).toBe('0')
+
+    await user.click(screen.getByRole('button', { name: 'redo' }))
+    expect(screen.getByTestId('count').textContent).toBe('1')
+  })
+})

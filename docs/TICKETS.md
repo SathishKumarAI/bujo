@@ -127,6 +127,8 @@ IDs are stable references for commits and PRs.
 | BUJO-129 | First-run login/welcome gate: choose "own cloud folder" or "this device" | ✅ |
 | BUJO-130 | Own-cloud folder sync (File System Access API) — auto-save to a synced folder | ✅ |
 | BUJO-131 | GitHub private-gist storage (back up / restore via PAT) | ✅ |
+| BUJO-132 | Global undo/redo: store history, Ctrl+Z / Ctrl+Shift+Z, floating control + palette (skips text fields for native undo) | ✅ |
+| BUJO-133 | Inline-edit entry text (double-click) | ✅ |
 
 ## Epic H — Data & privacy
 

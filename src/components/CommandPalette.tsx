@@ -22,7 +22,7 @@ export function CommandPalette({
   onNavigate: (id: string) => void
   navItems: { id: string; label: string }[]
 }) {
-  const { data, setSettings, replaceAll } = useJournal()
+  const { data, setSettings, replaceAll, undo, redo, canUndo, canRedo } = useJournal()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
@@ -64,6 +64,8 @@ export function CommandPalette({
       id: `go-${n.id}`, label: `Go to ${n.label}`, hint: 'view', run: () => onNavigate(n.id),
     }))
     const actions: Command[] = [
+      ...(canUndo ? [{ id: 'undo', label: 'Undo last change', hint: 'history', run: undo }] : []),
+      ...(canRedo ? [{ id: 'redo', label: 'Redo', hint: 'history', run: redo }] : []),
       { id: 'theme', label: `Switch to ${data.settings.theme === 'mocha' ? 'light' : 'dark'} theme`, hint: 'action', run: () => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' }) },
       { id: 'paper', label: `${data.settings.paperMode ? 'Disable' : 'Enable'} paper texture`, hint: 'action', run: () => setSettings({ paperMode: !data.settings.paperMode }) },
       { id: 'hand', label: `${data.settings.handwriting ? 'Disable' : 'Enable'} handwriting font`, hint: 'action', run: () => setSettings({ handwriting: !data.settings.handwriting }) },
@@ -71,7 +73,7 @@ export function CommandPalette({
       { id: 'demo', label: 'Load demo data', hint: 'action', run: () => { if (data.entries.length === 0 || confirm('Replace current journal with demo data?')) replaceAll(generateDemoData()) } },
     ]
     return [...nav, ...actions]
-  }, [data, navItems, onNavigate, setSettings, replaceAll])
+  }, [data, navItems, onNavigate, setSettings, replaceAll, undo, redo, canUndo, canRedo])
 
   const filtered = commands.filter((c) => c.label.toLowerCase().includes(q.toLowerCase()))
 

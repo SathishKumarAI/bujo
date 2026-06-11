@@ -29,18 +29,46 @@ import { dayDiff, todayISO } from './lib/date'
 import { generateRecurring } from './lib/recurrence'
 import { generateDemoData } from './lib/demo'
 
-// ── Reducer ──────────────────────────────────────────────────────────────────
+// ── Reducer with undo/redo history ──────────────────────────────────────────
+
+const HISTORY_CAP = 80
+
+interface HState {
+  past: JournalData[]
+  present: JournalData
+  future: JournalData[]
+}
 
 type Action =
-  | { type: 'set'; data: JournalData }
-  | { type: 'patch'; fn: (d: JournalData) => JournalData }
+  | { type: 'set'; data: JournalData } // undoable replace
+  | { type: 'patch'; fn: (d: JournalData) => JournalData } // undoable mutate
+  | { type: 'silent'; fn: (d: JournalData) => JournalData } // no history (mount-time)
+  | { type: 'undo' }
+  | { type: 'redo' }
 
-function reducer(state: JournalData, action: Action): JournalData {
+function commit(state: HState, next: JournalData): HState {
+  if (next === state.present) return state
+  return { past: [...state.past, state.present].slice(-HISTORY_CAP), present: next, future: [] }
+}
+
+function reducer(state: HState, action: Action): HState {
   switch (action.type) {
     case 'set':
-      return action.data
+      return commit(state, action.data)
     case 'patch':
-      return action.fn(state)
+      return commit(state, action.fn(state.present))
+    case 'silent':
+      return { ...state, present: action.fn(state.present) }
+    case 'undo': {
+      if (!state.past.length) return state
+      const prev = state.past[state.past.length - 1]
+      return { past: state.past.slice(0, -1), present: prev, future: [state.present, ...state.future].slice(0, HISTORY_CAP) }
+    }
+    case 'redo': {
+      if (!state.future.length) return state
+      const next = state.future[0]
+      return { past: [...state.past, state.present].slice(-HISTORY_CAP), present: next, future: state.future.slice(1) }
+    }
   }
 }
 
@@ -103,6 +131,11 @@ interface Store {
   setSettings: (patch: Partial<Settings>) => void
   // bulk
   replaceAll: (data: JournalData) => void
+  // history
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -110,7 +143,8 @@ const Ctx = createContext<Store | null>(null)
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function JournalProvider({ children }: { children: ReactNode }) {
-  const [data, dispatch] = useReducer(reducer, undefined, load)
+  const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: load(), future: [] }))
+  const data = hist.present
 
   // Persist on every change.
   useEffect(() => {
@@ -133,13 +167,29 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const wantsDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
     dispatch({
-      type: 'patch',
+      type: 'silent',
       fn: (d) => (wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const patch = useCallback((fn: (d: JournalData) => JournalData) => dispatch({ type: 'patch', fn }), [])
+
+  // Global undo/redo (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z or Ctrl+Y). Skip while a text
+  // field is focused so the browser's native in-field undo keeps working.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return
+      const el = document.activeElement as HTMLElement | null
+      const editing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      if (editing) return
+      e.preventDefault()
+      if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) dispatch({ type: 'redo' })
+      else dispatch({ type: 'undo' })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const store = useMemo<Store>(() => {
     return {
@@ -398,8 +448,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, settings: { ...d.settings, ...sp } })),
 
       replaceAll: (next) => dispatch({ type: 'set', data: next }),
+
+      undo: () => dispatch({ type: 'undo' }),
+      redo: () => dispatch({ type: 'redo' }),
+      canUndo: hist.past.length > 0,
+      canRedo: hist.future.length > 0,
     }
-  }, [data, patch])
+  }, [data, patch, hist.past.length, hist.future.length])
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }

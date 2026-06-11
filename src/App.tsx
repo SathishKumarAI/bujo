@@ -17,7 +17,7 @@ import { useEffect } from 'react'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, Menu,
-  PieChart, ZoomIn, ZoomOut, type LucideIcon,
+  PieChart, ZoomIn, ZoomOut, Undo2, Redo2, type LucideIcon,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -66,7 +66,7 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
 }
 
 export default function App() {
-  const { data, setSettings } = useJournal()
+  const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [navOpen, setNavOpen] = useState(false)
@@ -151,6 +151,14 @@ export default function App() {
       {/* Main */}
       <main className="relative flex-1 overflow-x-hidden p-4 sm:p-6">
         <ZoomControl zoom={zoom} onChange={(z) => setSettings({ zoom: z })} />
+        <div className="fixed bottom-4 left-4 z-40 flex gap-1 rounded-full border border-surface1 bg-mantle/90 px-1.5 py-1 shadow-lg backdrop-blur md:left-[15.5rem]">
+          <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" className="grid h-7 w-7 place-items-center rounded-full text-subtext1 hover:bg-surface0 disabled:opacity-30">
+            <Undo2 size={15} />
+          </button>
+          <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className="grid h-7 w-7 place-items-center rounded-full text-subtext1 hover:bg-surface0 disabled:opacity-30">
+            <Redo2 size={15} />
+          </button>
+        </div>
         <div className="mx-auto max-w-5xl" style={{ zoom }}>
           <Suspense fallback={<p className="py-10 text-center text-overlay0">Loading…</p>}>
             {book ? (
