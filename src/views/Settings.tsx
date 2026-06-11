@@ -3,6 +3,7 @@ import { Moon, Sun, Download, Upload, FileText, Sparkles, Trash2, AlertTriangle 
 import { useJournal } from '../store'
 import { Button, Card, Segmented } from '../components/ui'
 import { Switch } from '../components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
@@ -57,7 +58,16 @@ export function Settings() {
 
   return (
     <Page>
-      <div className="grid auto-rows-fr items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      <Tabs defaultValue="appearance">
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="feel">Journal feel</TabsTrigger>
+          <TabsTrigger value="reminders">Reminders</TabsTrigger>
+          <TabsTrigger value="data">Data &amp; Cloud</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="appearance" className="max-w-2xl">
       <Card title="Appearance">
         <Row label="Theme">
           <Segmented
@@ -70,7 +80,9 @@ export function Settings() {
           />
         </Row>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="profile" className="max-w-2xl">
       <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
           <select
@@ -101,7 +113,9 @@ export function Settings() {
           <Segmented value={s.tempUnit} onChange={(v) => setSettings({ tempUnit: v })} options={[{ value: 'F', label: '°F' }, { value: 'C', label: '°C' }]} />
         </Row></div>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="feel" className="max-w-2xl">
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
@@ -110,7 +124,9 @@ export function Settings() {
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
         </div>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="reminders" className="max-w-2xl">
       <Card title="Reminders & weather" subtitle="Opt-in — weather makes network calls">
         <div className="space-y-3">
           <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
@@ -130,7 +146,10 @@ export function Settings() {
           </div>
         </div>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="data">
+          <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
         {!s.lastBackup && (
           <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
@@ -174,10 +193,13 @@ export function Settings() {
           Demo data fills ~30 days of correlated entries, habits, moods, workouts and memories so charts and insights have something to show.
         </p>
       </Card>
-      </div>
-
-      <CloudStorage />
-      <DriveSync />
+          </div>
+          <div className="mt-5 space-y-5">
+            <CloudStorage />
+            <DriveSync />
+          </div>
+        </TabsContent>
+      </Tabs>
     </Page>
   )
 }
