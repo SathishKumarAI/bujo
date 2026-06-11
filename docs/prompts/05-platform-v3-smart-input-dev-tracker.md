@@ -163,8 +163,20 @@ This backlog is mirrored in `docs/TICKETS.md` (Epic V3). **If a ticket's status
 or scope changes, update both places** — the same single-source-of-truth
 principle V3-B builds for tasks. Prefer linking over duplicating.
 
-## 8. Open questions (answer before building A/C)
-1. Duplicate handling: which option(s) from V3-A's table?
-2. Dev tracker: separate "Focus" view, or fold into Trackers as a habit type?
-3. Smart-input scope: which fields get completion (quick-add only, or all)?
-4. Recommendations: ghost-text inline, or a dismissible chip row?
+## 8. Decisions & open questions
+**Decided (2026-06-11):** Duplicate handling ships **all four** strategies, with
+**A (corner badge + popover) as the always-on default** and C/D/E as configurable
+behaviours:
+- **A** — small circular badge at the field's top-right; popover → Go-to / Merge
+  / Add-anyway (the user's "small circular field at the top of the text field").
+- **C** — on submit, if a strong match, a "Possible duplicate — add anyway?"
+  confirm (a Settings toggle, off by default so it never interrupts unasked).
+- **D** — exact-text match offers "bump count on existing" (one-tap from the
+  badge popover, and auto for count-habits).
+- **E** — selecting a match in the popover scrolls-to + flashes the existing item.
+Implement A+E first (non-blocking), then D (merge action), then C (opt-in).
+
+**Still open:**
+1. Dev tracker: separate "Focus" view, or fold into Trackers as a habit type?
+2. Smart-input scope: which fields get completion (quick-add only, or all)?
+3. Recommendations: ghost-text inline, or a dismissible chip row?
