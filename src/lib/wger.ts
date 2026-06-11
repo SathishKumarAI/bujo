@@ -11,6 +11,7 @@ export interface WgerExercise {
   id: number
   name: string
   image: string | null
+  video: string | null // wger-hosted clip when available
   muscles: number[] // wger muscle ids (primary + secondary)
 }
 
@@ -48,11 +49,12 @@ async function buildCatalog(signal?: AbortSignal, onProgress?: (n: number) => vo
       const t = (r.translations ?? []).find((x: any) => x.language === 2) ?? (r.translations ?? [])[0]
       if (!t?.name) continue
       const img = (r.images ?? []).find((i: any) => i.is_main) ?? (r.images ?? [])[0]
+      const vid = (r.videos ?? [])[0]
       const muscles = [
         ...(r.muscles ?? []).map((m: any) => m.id),
         ...(r.muscles_secondary ?? []).map((m: any) => m.id),
       ]
-      items.push({ id: r.id, name: t.name, image: img?.image ?? null, muscles })
+      items.push({ id: r.id, name: t.name, image: img?.image ?? null, video: vid?.video ?? null, muscles })
     }
     onProgress?.(items.length)
     url = json.next
@@ -78,6 +80,21 @@ async function buildCatalog(signal?: AbortSignal, onProgress?: (n: number) => vo
 /** Ensure the catalogue is loaded (cached after first call). */
 export async function ensureCatalog(signal?: AbortSignal, onProgress?: (n: number) => void): Promise<WgerExercise[]> {
   return readCache() ?? (await buildCatalog(signal, onProgress))
+}
+
+/**
+ * Exact wger muscle ids for an exercise name, read ONLY from the cached
+ * catalogue (no network). Returns null when the catalogue isn't cached yet or
+ * no confident match — the caller then falls back to the keyword mapper.
+ */
+export function cachedMusclesForName(name: string): number[] | null {
+  const all = readCache()
+  if (!all) return null
+  const q = name.trim().toLowerCase()
+  if (!q) return null
+  const exact = all.find((e) => e.name.toLowerCase() === q)
+  const hit = exact ?? all.find((e) => e.name.toLowerCase().includes(q))
+  return hit && hit.muscles.length ? hit.muscles : null
 }
 
 /** Search the cached wger catalogue by name. */

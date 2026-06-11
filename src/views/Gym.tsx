@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, Video, type LucideIcon,
 } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -16,6 +16,7 @@ import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise,
 } from '../lib/fitness'
+import { cachedMusclesForName } from '../lib/wger'
 import type { Split } from '../lib/types'
 
 interface SetRow {
@@ -44,8 +45,10 @@ export function Gym() {
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
+  // For a focused exercise prefer wger's exact muscles (when the catalogue is
+  // cached from a prior search); otherwise fall back to the keyword mapper.
   const activeMuscles = focusEx
-    ? musclesForExercise(focusEx)
+    ? cachedMusclesForName(focusEx) ?? musclesForExercise(focusEx)
     : sessionMuscles.length
       ? sessionMuscles
       : musclesForSplit(split)
@@ -203,6 +206,16 @@ export function Gym() {
             <Button variant="primary" onClick={() => { addRow(focusEx); }} className="inline-flex items-center gap-1.5">
               <Plus size={14} /> Add to session
             </Button>
+          )}
+          {focusEx && (
+            <a
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(focusEx + ' exercise form')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-red hover:underline"
+            >
+              <Video size={16} /> Watch on YouTube
+            </a>
           )}
         </div>
 

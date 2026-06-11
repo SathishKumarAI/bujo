@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Dumbbell, Plus, X } from 'lucide-react'
+import { Dumbbell, Plus, X, Video } from 'lucide-react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { MuscleMap, muscleNames } from './MuscleMap'
@@ -9,7 +9,7 @@ import { Button, Empty, Input } from './ui'
  * Browse the wger exercise database (image-based grid) and pick an exercise.
  * Fetches the wger public API on demand; results are read-only.
  */
-export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
+export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number[]) => void }) {
   const [term, setTerm] = useState('')
   const [results, setResults] = useState<WgerExercise[]>([])
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -83,12 +83,24 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
               <button onClick={() => setSelected(null)} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></button>
             </header>
             <div className="grid gap-4 p-4 sm:grid-cols-2">
-              <div className="grid place-items-center rounded-xl border border-surface0 bg-base p-2">
-                {selected.image ? (
-                  <img src={selected.image} alt={selected.name} className="max-h-56 w-full object-contain" />
-                ) : (
-                  <Dumbbell size={48} style={{ color: cat('overlay0') }} />
-                )}
+              <div className="space-y-2">
+                <div className="grid place-items-center overflow-hidden rounded-xl border border-surface0 bg-base p-2">
+                  {selected.video ? (
+                    <video src={selected.video} controls playsInline muted loop className="max-h-56 w-full rounded-lg object-contain" />
+                  ) : selected.image ? (
+                    <img src={selected.image} alt={selected.name} className="max-h-56 w-full object-contain" />
+                  ) : (
+                    <Dumbbell size={48} style={{ color: cat('overlay0') }} />
+                  )}
+                </div>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selected.name + ' exercise form')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-red hover:underline"
+                >
+                  <Video size={16} /> Watch on YouTube
+                </a>
               </div>
               <div>
                 <p className="mb-1 text-xs tracking-wide text-overlay0 uppercase">Targets</p>
@@ -108,7 +120,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string) => void }) {
             </div>
             <footer className="flex justify-end gap-2 border-t border-surface0 px-4 py-3">
               <Button onClick={() => setSelected(null)}>Close</Button>
-              <Button variant="primary" onClick={() => { onPick(selected.name); setSelected(null) }} className="inline-flex items-center gap-1.5">
+              <Button variant="primary" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="inline-flex items-center gap-1.5">
                 <Plus size={15} /> Add to session
               </Button>
             </footer>
