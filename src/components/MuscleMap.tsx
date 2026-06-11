@@ -45,6 +45,17 @@ const TARGETS: Record<Split, number[]> = {
   other: [],
 }
 
+/** Muscle ids a split trains. */
+export function musclesForSplit(split: Split): number[] {
+  return TARGETS[split] ?? []
+}
+
+/** Human names for a set of muscle ids. */
+export function muscleNames(ids: number[]): string[] {
+  const set = new Set(ids)
+  return MUSCLES.filter((m) => set.has(m.id)).map((m) => m.name)
+}
+
 function Figure({ base, ids, label }: { base: string; ids: number[]; label: string }) {
   const [ok, setOk] = useState(true)
   if (!ok) {
@@ -75,15 +86,9 @@ function Figure({ base, ids, label }: { base: string; ids: number[]; label: stri
   )
 }
 
-/** The muscle names a split targets (for legend chips). */
-export function targetMuscles(split: Split): string[] {
-  const ids = new Set(TARGETS[split] ?? [])
-  return MUSCLES.filter((m) => ids.has(m.id)).map((m) => m.name)
-}
-
-/** Anatomical body map highlighting the muscles a split trains. */
-export function MuscleMap({ split }: { split: Split; color?: string }) {
-  const ids = TARGETS[split] ?? []
+/** Anatomical body map highlighting an explicit set of muscle ids. */
+export function MuscleMap({ muscles }: { muscles: number[] }) {
+  const ids = muscles ?? []
   const front = ids.filter((id) => MUSCLES.find((m) => m.id === id)?.side === 'front')
   const back = ids.filter((id) => MUSCLES.find((m) => m.id === id)?.side === 'back')
   return (

@@ -4,12 +4,13 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
-import { MuscleMap, targetMuscles } from '../components/MuscleMap'
+import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
+  musclesForExercise,
 } from '../lib/fitness'
 import type { Split } from '../lib/types'
 
@@ -29,6 +30,20 @@ export function Gym() {
   // Body metrics quick entry.
   const [weight, setWeight] = useState('')
   const prs = personalRecords(data)
+
+  // Muscle focus: a clicked PR/exercise overrides the session/split view.
+  const [focusEx, setFocusEx] = useState<string | null>(null)
+  const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
+  const activeMuscles = focusEx
+    ? musclesForExercise(focusEx)
+    : sessionMuscles.length
+      ? sessionMuscles
+      : musclesForSplit(split)
+  const focusLabel = focusEx
+    ? focusEx
+    : sessionMuscles.length
+      ? "today's exercises"
+      : `${splitMeta(split).label} split`
 
   function setRow(i: number, patch: Partial<SetRow>) {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)))
@@ -145,18 +160,19 @@ export function Gym() {
         <ExerciseDB onPick={(name) => addRow(name)} />
       </Card>
 
-      {/* ── Muscle map: where the pressure goes ──────────────── */}
+      {/* ── Muscle map: reacts to the exercises you're logging ── */}
       <Card
         title="Target muscles"
-        subtitle={<span>What today's <span style={{ color: cat(splitMeta(split).color) }}>{splitMeta(split).label}</span> session works</span>}
+        subtitle={<span>Highlighting <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span></span>}
+        right={focusEx && <Button onClick={() => setFocusEx(null)}>Clear focus</Button>}
       >
-        <MuscleMap split={split} color={splitMeta(split).color} />
+        <MuscleMap muscles={activeMuscles} />
         <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {targetMuscles(split).length === 0 ? (
-            <span className="text-xs text-overlay0">Pick a split to see the worked muscles.</span>
+          {activeMuscles.length === 0 ? (
+            <span className="text-xs text-overlay0">Add an exercise or pick a split to see the worked muscles.</span>
           ) : (
-            targetMuscles(split).map((m) => (
-              <span key={m} className="rounded-full px-2.5 py-0.5 text-xs capitalize" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
+            muscleNames(activeMuscles).map((m) => (
+              <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
                 {m}
               </span>
             ))
@@ -172,9 +188,15 @@ export function Gym() {
           ) : (
             <ul className="space-y-1 text-sm">
               {prs.map((pr) => (
-                <li key={pr.exercise} className="flex items-center justify-between">
-                  <span className="text-subtext1">🏆 {pr.exercise}</span>
-                  <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}kg</span> · {prettyDay(pr.date)}</span>
+                <li key={pr.exercise}>
+                  <button
+                    onClick={() => setFocusEx(focusEx === pr.exercise ? null : pr.exercise)}
+                    className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-surface0' : 'hover:bg-surface0/50'}`}
+                    title="Show this lift on the muscle map"
+                  >
+                    <span className="text-subtext1">🏆 {pr.exercise}</span>
+                    <span className="text-overlay0"><span style={{ color: cat('yellow') }}>{pr.weight}kg</span> · {prettyDay(pr.date)}</span>
+                  </button>
                 </li>
               ))}
             </ul>

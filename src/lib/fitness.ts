@@ -15,6 +15,68 @@ export function splitMeta(id?: Split) {
   return SPLITS.find((s) => s.id === id) ?? SPLITS[6]
 }
 
+// Map an exercise name to wger muscle ids by keyword. Specific keys first so
+// "leg curl" doesn't also match "curl". Works for our library + wger names.
+const MUSCLE_KEYWORDS: [string, number[]][] = [
+  ['leg press', [10, 8]],
+  ['leg curl', [11]],
+  ['leg extension', [10]],
+  ['hip thrust', [8, 11]],
+  ['romanian', [11, 8]],
+  ['deadlift', [11, 8, 9, 12, 10]],
+  ['bench', [4, 2, 5]],
+  ['incline', [4, 2, 5]],
+  ['chest', [4, 2, 5]],
+  ['push-up', [4, 2, 5]],
+  ['pushup', [4, 2, 5]],
+  ['dip', [4, 5, 2]],
+  ['overhead', [2, 5, 9]],
+  ['shoulder press', [2, 5, 9]],
+  ['military', [2, 5, 9]],
+  ['lateral raise', [2]],
+  ['front raise', [2]],
+  ['tricep', [5]],
+  ['pull-up', [12, 1, 9]],
+  ['pullup', [12, 1, 9]],
+  ['chin', [12, 1]],
+  ['pulldown', [12, 1]],
+  ['row', [12, 9, 1]],
+  ['face pull', [2, 9]],
+  ['bicep', [1, 13]],
+  ['curl', [1, 13]], // after leg curl
+  ['squat', [10, 8, 11]],
+  ['lunge', [10, 8, 11]],
+  ['calf', [7, 15]],
+  ['plank', [6, 14]],
+  ['crunch', [6]],
+  ['lat', [12]],
+  ['glute', [8]],
+  ['quad', [10]],
+  ['hamstring', [11]],
+  ['trap', [9]],
+  ['shrug', [9]],
+  ['delt', [2]],
+  ['shoulder', [2]],
+  ['pec', [4]],
+]
+
+/**
+ * wger muscle ids worked by an exercise name (best-effort keyword match).
+ * Keywords are ordered specific→general; a matched keyword is blanked out so a
+ * shorter substring (e.g. "curl" inside "leg curl") can't double-match.
+ */
+export function musclesForExercise(name: string): number[] {
+  let n = name.toLowerCase()
+  const ids = new Set<number>()
+  for (const [kw, m] of MUSCLE_KEYWORDS) {
+    if (n.includes(kw)) {
+      m.forEach((id) => ids.add(id))
+      n = n.split(kw).join(' ') // consume the match
+    }
+  }
+  return [...ids]
+}
+
 /** Default Push/Pull/Legs routines, ready to load. */
 export const PPL_PRESETS: Omit<Routine, 'id'>[] = [
   { name: 'Push Day', split: 'push', exercises: ['Bench Press', 'Overhead Press', 'Incline Bench', 'Lateral Raise', 'Tricep Extension', 'Dip'] },

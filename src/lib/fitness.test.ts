@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta } from './fitness'
+import { musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta } from './fitness'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -42,6 +42,19 @@ describe('nextSplit', () => {
   it('rotates push → pull → legs → push', () => {
     const d = { ...emptyJournal(), workouts: [workout({ split: 'push', date: '2026-06-10' })] }
     expect(nextSplit(d)).toBe('pull')
+  })
+})
+
+describe('musclesForExercise', () => {
+  it('maps bench press to chest/shoulders/triceps (ids 4,2,5)', () => {
+    expect(musclesForExercise('Barbell Bench Press').sort()).toEqual([2, 4, 5])
+  })
+  it('disambiguates leg curl from bicep curl', () => {
+    expect(musclesForExercise('Leg Curl')).toEqual([11]) // hamstrings, not biceps
+    expect(musclesForExercise('Bicep Curl').sort()).toEqual([1, 13])
+  })
+  it('returns empty for an unknown exercise', () => {
+    expect(musclesForExercise('Meditation')).toEqual([])
   })
 })
 
