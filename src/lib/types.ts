@@ -254,6 +254,8 @@ export interface Settings {
   reflectionPrompts: boolean
   /** Content zoom level for charts/calendars/spreads (0.7–1.5). */
   zoom: number
+  /** Weekly active-minutes goal shown on the Fitness view. */
+  fitnessGoalMin?: number
   // ── Tracker (global) ──
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
