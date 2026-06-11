@@ -1,0 +1,54 @@
+---
+title: Layout Redesign — Views
+date: 2026-06-11
+---
+
+# The views
+
+## The `Page` primitive
+
+`shell/Page.tsx` owns max-width and the responsive main/aside grid:
+
+```tsx
+<Page aside={<Wellbeing/>}>
+  <DailyLog/>
+</Page>
+```
+
+- **No `aside`** → a single centered column capped at `max-w-[1400px]` (wide
+  enough for the 31-column habit grid, narrow enough for readable text).
+- **With `aside`** → `xl:grid-cols-[minmax(0,1fr)_22rem]`; the rail sits beside
+  `main` on wide screens and **wraps under it** below `xl` — killing the
+  dead-void pattern.
+
+Structural views (Today, Monthly, Trackers, Settings, Cycle) use `Page`
+directly. Simpler views that only needed the width cap apply the same
+`mx-auto max-w-[1400px]` token on their existing root.
+
+## Per-view changes
+
+| View | Change |
+|---|---|
+| **Today** | Dashboard reflow: capture + daily log above the fold; Wellbeing + "on this day" in the aside; Gratitude / Reflection / Daily memory / Stickers in a balanced 2-col grid below. No tall scroll, no void. Date from the cursor. |
+| **Monthly** | Calendar in `main`; Location / Goals / Photo in a wrapping aside. Month-nav hoisted to the top bar. |
+| **Trackers** | Full-width habit grid; radial/settings toggles stay in-card; month-nav hoisted; `%` column gutter fixed. |
+| **Settings** | Equal-height card grid (`auto-rows-fr`); every on/off is a `Switch`, every enum a `Segmented`. |
+| **Cycle** | Chart + flag grid; month from the cursor. |
+| **Fitness · Gym · Insights · Stats · Collections · Plan · Streak · Help** | Adopt the shared max-width container; titles de-duplicated against the top bar. |
+
+## The Today reflow, concretely
+
+Before: one `lg:grid-cols-3` with a 2-col stack of six cards + a 1-col rail.
+
+After:
+
+```tsx
+<Page aside={<><Wellbeing/>{hasFlash && <OnThisDay/>}</>}>
+  <DailyLogCard/>
+  <div className="grid gap-5 sm:grid-cols-2">
+    <Gratitude/> <Reflection/> <DailyMemory/> <Stickers/>
+  </div>
+</Page>
+```
+
+Next: [before/after](./05-before-after.mdx).

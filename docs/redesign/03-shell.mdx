@@ -1,0 +1,55 @@
+---
+title: Layout Redesign — App Shell
+date: 2026-06-11
+---
+
+# The app shell
+
+A new presentation layer in `src/components/shell/` wraps the existing `view`
+switch in `App.tsx`. No router was added.
+
+```
+App.tsx
+└─ CursorProvider                 shell/cursor.tsx     shared day/month state
+   └─ AppShell                    shell/AppShell.tsx   grid owner + quick-add dialog
+      ├─ Sidebar                  shell/Sidebar.tsx    grouped, collapsible nav
+      ├─ TopBar                   shell/TopBar.tsx     title · date-nav · quick-add · ⌘K · menu
+      │  └─ VIEW_CHROME           shell/viewChrome.ts  per-view title/subtitle/date-nav
+      └─ Page                     shell/Page.tsx       main/aside grid + max-width
+         └─ <Current view />
+```
+
+## Top bar
+
+The sticky header replaces three scattered things:
+
+- **View title + subtitle** — from the `VIEW_CHROME` registry, so views no
+  longer re-implement their own headers.
+- **Contextual date-nav** — rendered only for views whose registry entry sets
+  `dateNav: 'day' | 'month'` (Today, Monthly, Trackers, Cycle). It drives the
+  shared cursor; no date logic moved, only its controls relocated.
+- **Quick add · ⌘K · overflow menu** — quick-add is now reachable from every
+  view (a global dialog), and the floating undo/redo + zoom clusters became
+  items in the overflow `DropdownMenu` (theme, zoom ±, undo/redo, paper,
+  handwriting, book frame). Keyboard shortcuts are preserved.
+
+## Shared date cursor
+
+Today/Monthly/Trackers/Cycle each used to own a local `useState` for their
+day/month. To let the top bar drive them, that state lifted into one context:
+
+```tsx
+const { day, setDay, month, setMonth } = useCursor()
+```
+
+The top bar reads the active view's `dateNav` mode and steps `day` or `month`
+accordingly; the view consumes the same cursor. One source of truth, in sync.
+
+## Sidebar
+
+Kept the grouped nav (Journal / Health / Review / System) and the `show()`
+gating for Cycle/Streak. Rebuilt on semantic tokens, collapsible to an
+icon-rail that expands on hover, with `aria-current` + an accent rail on the
+active item. On mobile it's a drawer toggled from the top bar.
+
+Next: [the views](./04-views.mdx).

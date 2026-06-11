@@ -1,0 +1,67 @@
+---
+title: Layout Redesign — Design System
+date: 2026-06-11
+---
+
+# Design system: shadcn re-themed to Catppuccin
+
+We adopted [shadcn/ui](https://ui.shadcn.com) primitives but kept the
+Catppuccin palette. The trick is a thin semantic-variable layer: shadcn's
+components reference `--primary`, `--background`, `--border`, etc., and we map
+those onto the existing Catppuccin tokens.
+
+## Variable mapping
+
+In `src/index.css`, after the Catppuccin `@theme` block:
+
+```css
+:root {
+  --background: var(--color-base);
+  --foreground: var(--color-text);
+  --card:       var(--color-mantle);
+  --primary:    var(--color-mauve);
+  --primary-foreground: var(--color-crust);
+  --border:     var(--color-surface0);
+  --input:      var(--color-surface1);
+  --ring:       var(--color-mauve);
+  --radius:     0.75rem;
+  /* …secondary, muted, accent, destructive, popover… */
+}
+```
+
+Because Latte (light mode) already overrides the Catppuccin `--color-*` tokens
+on `:root[data-theme="latte"]`, the semantic aliases inherit light values for
+free — **no second mapping block**.
+
+The aliases are also registered as Tailwind theme colors inside `@theme`
+(`--color-primary: var(--primary)`, …) so utilities like `bg-primary`,
+`border-border`, and `text-muted-foreground` exist.
+
+## Primitives adopted
+
+`button · switch · tabs · dialog · dropdown-menu · tooltip · popover ·
+separator · scroll-area · resizable · sonner`. They install into
+`src/components/ui/` and pull in `radix-ui`, `class-variance-authority`,
+`clsx`, and `tailwind-merge` (the last three behind our `cn()` helper in
+`src/lib/cn.ts`).
+
+## Control vocabulary
+
+One rule, applied everywhere:
+
+| Choice type | Control |
+|---|---|
+| On / off | shadcn `Switch` |
+| Mutually-exclusive enum (theme, units, week-start) | `Segmented` (in `ui.tsx`) |
+| Open-ended text | `Input` / `Textarea` |
+| 0–10 rating | domain `Slider` (unchanged) |
+
+## Wrap + gradual migration
+
+`ui.tsx`'s `Card`, `Button`, `Input`, `Textarea` became thin wrappers over the
+shadcn equivalents, so the ~13 views that import them kept working unchanged.
+`Button`'s old `primary | ghost | danger` API maps onto shadcn variants
+(`default | secondary | ghost`). This let us migrate view-by-view instead of in
+one risky sweep.
+
+Next: [the shell](./03-shell.mdx).

@@ -1,0 +1,44 @@
+---
+title: Layout Redesign — Audit
+date: 2026-06-11
+---
+
+# Audit: what the running app actually showed
+
+We drove the live app with the chrome-devtools MCP at 1440×900 with demo data
+(`?demo=1`), not from memory. Findings, grounded in screenshots:
+
+## Today (before)
+
+The most-used view stacked six cards in a single tall column on the left, with
+a Wellbeing rail on the right that **dead-ended halfway down**, leaving a large
+empty void. Form inputs stretched to ~900 px — awkward line lengths. Key actions
+(memory, stickers) fell below the fold.
+
+![Today before](../screenshot-today.png)
+
+## Monthly (before)
+
+Better balanced — the calendar filled the left — but the Location/Goals/Photo
+rail still ran out before the calendar bottom, repeating the dead-void pattern.
+
+## Settings (before)
+
+A 3-column card grid with **ragged heights** (a tiny Appearance card next to a
+tall Profile card) and **two control idioms for the same kind of choice**: some
+binary settings were hand-rolled toggles, others were segmented button pairs,
+and one enum was a native `<select>`.
+
+![Settings before](../screenshot-settings.png)
+
+## Cross-cutting
+
+| Symptom | Root cause |
+|---|---|
+| Each view looked different | No shared layout primitive; every view built its own grid |
+| Undo/redo + zoom floated over content | Bolted-on `position: fixed` clusters in `App.tsx` |
+| The command palette was invisible | No affordance; only discoverable via ⌘K |
+| Title + date-nav repeated per view | No app header; each view re-implemented them |
+
+These became the redesign's work-list. See
+[design system](./02-design-system.mdx).

@@ -1,0 +1,52 @@
+---
+title: Layout Redesign — Overview
+date: 2026-06-11
+status: shipped
+---
+
+# Layout Redesign — Overview
+
+A usability-first redesign of the `bujo` app shell and all 13 views. The
+Catppuccin look and every line of tested journal logic stay; what changes is
+**layout, control consistency, and the component substrate** (shadcn/ui
+primitives re-themed to Catppuccin).
+
+## Why now
+
+The app had grown to 13 views, each rolling its own layout. The result: wasted
+screen space, inconsistent controls, and a long-scroll Today page. We audited
+the running app (chrome-devtools MCP, 1440×900, demo data) and found six
+concrete problems — see [01-audit](./01-audit.mdx).
+
+## The six problems
+
+| # | Problem | Seen in |
+|---|---------|---------|
+| 1 | Dead right-side void — a rail that dead-ends, leaving a large empty area | Today, Monthly |
+| 2 | No unified layout — some views 2-col+rail, others full-width grid | all |
+| 3 | Long vertical scroll on the most-used view; key actions below the fold | Today |
+| 4 | No app header — title + date-nav lived inside each view inconsistently | all |
+| 5 | Bolted-on floating controls — undo/redo + zoom overlapping content | all |
+| 6 | Inconsistent controls — toggles vs segmented pills for the same choice | Settings |
+
+## Decisions (locked with the owner)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Scope | Shell + all 13 views | One consistent app |
+| Direction | Bigger visual restyle | Spacing scale, card system, control vocabulary |
+| Components | Adopt shadcn primitives | A11y-robust, re-themed to Catppuccin |
+| Date-nav | Hoist to a global top bar | One place, consistent across date views |
+| Migration | Wrap + gradual | `ui.tsx` wraps shadcn; current imports keep working |
+| Deps risk | Proceed, watch budget | Verify initial JS < 200 KB gzip; roll back if over |
+
+## Outcome
+
+- Sticky top bar consolidates title, date-nav, quick-add, ⌘K, and the
+  theme/zoom/undo controls that used to float.
+- One `Page` grid + a shared max-width every view opts into — no dead voids.
+- One control vocabulary: shadcn `Switch` for on/off, `Segmented` for enums.
+- Initial JS **84.8 → ~113 KB gzip** (budget 200 KB). All 64 tests stayed green.
+
+Read on: [audit](./01-audit.mdx) · [design system](./02-design-system.mdx) ·
+[shell](./03-shell.mdx) · [views](./04-views.mdx) · [before/after](./05-before-after.mdx).
