@@ -11,6 +11,7 @@ import type {
   Birthday,
   Challenge,
   CyclePoint,
+  DevSession,
   DailyMetric,
   Entry,
   BodyMetric,
@@ -131,6 +132,10 @@ interface Store {
   removeChallenge: (id: string) => void
   updateChallenge: (id: string, patch: Partial<Challenge>) => void
   toggleChallengeRule: (challengeId: string, day: string, ruleIndex: number) => void
+  // dev sessions
+  addDevSession: (s: Omit<DevSession, 'id'>) => void
+  updateDevSession: (id: string, patch: Partial<DevSession>) => void
+  removeDevSession: (id: string) => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
   removeRecurrence: (id: string) => void
@@ -459,6 +464,15 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           if (byDay[day].length === 0) delete byDay[day]
           return { ...d, challengeLog: { ...(d.challengeLog ?? {}), [challengeId]: byDay } }
         }),
+
+      addDevSession: (s) =>
+        patch((d) => ({ ...d, devSessions: [...(d.devSessions ?? []), { id: uid('dev'), ...s }] })),
+
+      updateDevSession: (id, spatch) =>
+        patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).map((s) => (s.id === id ? { ...s, ...spatch } : s)) })),
+
+      removeDevSession: (id) =>
+        patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).filter((s) => s.id !== id) })),
 
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),

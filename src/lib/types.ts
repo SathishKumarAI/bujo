@@ -278,6 +278,21 @@ export interface Challenge {
   archived?: boolean
 }
 
+/** A logged focus/coding work session (developer tracker). */
+export interface DevSession {
+  id: string
+  date: string // ISO day
+  durationMin: number
+  project?: string
+  /** Flow/focus quality 0–10. */
+  focus: number
+  /** Stress during the session 0–10. */
+  stress: number
+  interruptions?: number
+  tags?: string[] // languages / tools, e.g. ["typescript", "react"]
+  notes?: string
+}
+
 /** The single root object persisted to localStorage. */
 export interface JournalData {
   version: number
@@ -306,6 +321,8 @@ export interface JournalData {
   challengeLog?: Record<string, Record<string, number[]>>
   /** habitId -> ISO days marked as a planned skip (don't break the streak). */
   habitSkips?: Record<string, string[]>
+  /** Developer focus/coding sessions. */
+  devSessions?: DevSession[]
   settings: Settings
 }
 

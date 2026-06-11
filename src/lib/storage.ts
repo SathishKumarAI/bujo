@@ -58,6 +58,7 @@ export function emptyJournal(): JournalData {
     challenges: [],
     challengeLog: {},
     habitSkips: {},
+    devSessions: [],
     settings: defaultSettings(),
   }
 }
