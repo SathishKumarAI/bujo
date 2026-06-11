@@ -1,5 +1,35 @@
 # Worklog
 
+## 2026-06-11 19:00 — Gym redesign + training programs + structured sets + V3 epics
+
+**Summary:** Continued v3 on `feat/v3-smart-input`. Shipped smart input,
+Focus tracker, tracker viz, recommendations (PR #2), then a Gym overhaul:
+2-column dashboard, plate calc, training programs from a PDF, structured sets.
+94 tests green; 127 KB gzip.
+
+**Changes:**
+- **Gym redesign** — reflowed to a `Page` main+aside dashboard (utility cards in
+  the rail); routines click-to-load.
+- **Training programs** — `lib/programs.ts` encodes the pull-up program;
+  `ProgramCard` (week/day selector, load-into-session, day tracker). Source PDFs
+  **gitignored** (`docs/pdf/` — keeps a personal PDF + copyrighted programs out).
+- **Structured sets** — `Workout.setRows` + helpers (`lastSetFor`,
+  `sessionVolume`, `exerciseProgression`, tested); written on finish; per-row
+  previous-session + live-1RM hints.
+- **Plate calculator** — unit-aware plate denominations (kg vs lb) — bug fix.
+- **Units audit** — confirmed kg/lb · km/mi · °F/°C all read the Settings toggle
+  in Gym + Fitness; no hardcodes.
+- Earlier in the day: V3-A smart input, V3-C Focus, V3-D viz, V3-E recommendations.
+
+**Decisions:** programs as data not PDFs (D-26); additive `setRows` (D-27);
+unit-aware plates (D-28).
+
+**Follow-ups (TICKETS Epic V3):**
+- [ ] V3-G quick exercise picker (dropdown/combobox per row)
+- [ ] V3-H structured charts (volume + progression)
+- [ ] V3-I per-set RPE/type inputs
+- [ ] V3-J partial completion (per-exercise within a program day + actuals)
+
 ## 2026-06-11 17:06 — Layout redesign + Challenges + Trackers/Fitness v2
 
 **Summary:** Major usability redesign of the whole app on a new shadcn/ui

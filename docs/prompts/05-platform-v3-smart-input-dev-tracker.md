@@ -120,10 +120,28 @@ small dismissible note (the "notes that go in, VS Code-completion style").
 **Tickets.** V3-E1 `lib/recommend.ts` + tests · E2 suggestion-chip UI · E3 wire
 into habit-add, workout-log, reminders, challenges.
 
-### EPIC V3-F — Gym v2 (carried over)
-Structured per-set model (RPE/type/rest), last-session reference, live 1RM, PR
-auto-detect + toast, rest auto-start, plate calculator, volume + progression
-charts. See `docs/superpowers/plans/2026-06-11-v2-view-enhancements.md` Phase D.
+### EPIC V3-F — Gym v2 (shipped)
+2-column dashboard; structured `setRows` written on finish; plate calculator
+(unit-aware plates); previous-session reference + live 1RM per row; routines
+click-to-load; built-in **training programs** (`lib/programs.ts`, pull-up
+program with week/day selector + load-into-session + day tracker).
+
+### Gym follow-ups (scoped — not yet built)
+- **V3-G Quick exercise picker.** Replace free-typing an exercise with a
+  dropdown/popover button per set row: searchable (wger library + recents +
+  favourites), one-tap add/swap. Keep the text input as a fallback. Component:
+  a `Combobox` over the existing `EXERCISE_LIBRARY` + recent exercises.
+- **V3-H Structured charts.** Weekly training-volume bar chart (`sessionVolume`)
+  + per-exercise progression line (`exerciseProgression`) — click a PR to chart
+  it. Helpers already exist + tested; lazy-render with the existing Gym recharts.
+- **V3-I Per-set RPE + type.** Add RPE + warmup/working/drop inputs to the logger
+  grid (widen columns); persist on `WorkoutSet`.
+- **V3-J Partial completion.** Let a user log *part* of a prescribed plan:
+  check off individual exercises within a program day (not just whole-day), and
+  record **actual reps/sets achieved vs prescribed**. Generalise to: programs
+  (per-exercise done + actuals), challenges (per-rule already partial), and
+  ad-hoc workouts (log whatever was done). Model: a per-day `progressLog`
+  keyed by program-day + exercise → `{ done, actualReps?, actualSets? }`.
 
 ---
 

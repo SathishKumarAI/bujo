@@ -169,6 +169,26 @@ habit dot.
 duration-weighted averages, focus↔stress Pearson) + a `Focus` view in Health.
 Charts are inline SVG/CSS (no Recharts) to hold the bundle budget.
 
+**D-26 — Training programs are encoded as app data; source PDFs are gitignored.**
+*Context:* a user-supplied pull-up program PDF (and a personal document) sat in
+`docs/pdf/`.
+*Choice:* encode the program structure in `lib/programs.ts` and surface it as a
+Gym **ProgramCard** (week/day selector, load-into-session, day tracker). Add
+`docs/pdf/` to `.gitignore` so neither the **personal PDF (PII)** nor the
+copyrighted program PDFs are ever committed.
+*Why:* keep PII and third-party copyrighted material out of the repo; the app
+ships only the abstracted training structure.
+
+**D-27 — Structured gym sets are additive (`setRows`), legacy strings kept.**
+*Choice:* `Workout.setRows: WorkoutSet[]` (exercise/weight/reps/rpe/kind) is
+written on finish alongside the legacy `sets: string[]` for display/back-compat.
+Enables `sessionVolume` / `exerciseProgression` / `lastSetFor` (previous-session
+reference + live 1RM in the logger). Per-set RPE/type inputs + volume/progression
+charts are scoped (TICKETS V3-H/I) but not yet wired.
+
+**D-28 — Plate denominations follow the unit.** kg uses 25/20/15/10/5/2.5/1.25;
+lb uses 45/35/25/10/5/2.5. Fixes a unit bug where lb users saw kg plates.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

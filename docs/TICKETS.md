@@ -208,4 +208,8 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 | V3-C | Developer "Focus" tracker (coding time · work style · stress) | ✅ |
 | V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
 | V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
-| V3-F | Gym v2 (structured sets, volume/progression charts) — carried over | 🔜 |
+| V3-F | Gym v2 — structured `setRows` + plate calc (kg/lb) + previous-session/1RM hints + 2-col redesign + pull-up program | ✅ |
+| V3-G | Quick exercise picker — a dropdown/popover button per set row to add/swap an exercise fast (searchable library + recents), instead of free-typing | 🔜 |
+| V3-H | Gym structured charts — weekly training-volume + per-exercise progression (helpers `sessionVolume`/`exerciseProgression` ready) | 🔜 |
+| V3-I | Per-set RPE + set type (warmup/working/drop) inputs in the logger grid | 🔜 |
+| V3-J | Partial completion — check off individual exercises within a program day (not just whole-day) + record actual reps/sets achieved vs prescribed; partial logging for challenges (per-rule already supported) and workouts | 🔜 |
