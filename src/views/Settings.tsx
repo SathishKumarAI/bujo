@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Moon, Sun, Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
+import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Segmented } from '../components/ui'
 import { Switch } from '../components/ui/switch'
@@ -58,29 +58,13 @@ export function Settings() {
 
   return (
     <Page>
-      <Tabs defaultValue="appearance">
+      <Tabs defaultValue="profile">
         <TabsList className="bg-secondary">
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="feel">Journal feel</TabsTrigger>
           <TabsTrigger value="reminders">Reminders</TabsTrigger>
           <TabsTrigger value="data">Data &amp; Cloud</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="appearance" className="max-w-2xl">
-      <Card title="Appearance">
-        <Row label="Theme">
-          <Segmented
-            value={s.theme}
-            onChange={(v) => setSettings({ theme: v })}
-            options={[
-              { value: 'mocha', label: <><Moon size={14} /> Dark</> },
-              { value: 'latte', label: <><Sun size={14} /> Light</> },
-            ]}
-          />
-        </Row>
-      </Card>
-        </TabsContent>
 
         <TabsContent value="profile" className="max-w-2xl">
       <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
