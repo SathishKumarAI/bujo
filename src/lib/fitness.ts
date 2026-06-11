@@ -190,3 +190,15 @@ export function cardioPBs(data: JournalData): CardioPBs {
     { longestKm: 0, mostCalories: 0, mostMinutes: 0 },
   )
 }
+
+// ── Plate calculator (v3) ────────────────────────────────────────────────────
+/** Plates to load PER SIDE to reach `target` on a `bar`, greedily, whole reps of each. */
+export function platesPerSide(target: number, bar = 20, plates = [25, 20, 15, 10, 5, 2.5, 1.25]): number[] {
+  let perSide = (target - bar) / 2
+  if (perSide <= 0) return []
+  const out: number[] = []
+  for (const p of [...plates].sort((a, b) => b - a)) {
+    while (perSide >= p - 1e-9) { out.push(p); perSide = Math.round((perSide - p) * 100) / 100 }
+  }
+  return out
+}

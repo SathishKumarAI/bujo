@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide } from './fitness'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -98,5 +98,9 @@ describe('fitness v2 helpers', () => {
     ]
     expect(activeDayStreak(d, '2026-06-11')).toBe(2)
     expect(cardioPBs(d)).toEqual({ longestKm: 8, mostCalories: 400, mostMinutes: 30 })
+  })
+  it('computes plates per side', () => {
+    expect(platesPerSide(100, 20)).toEqual([25, 15]) // (100-20)/2 = 40 = 25+15
+    expect(platesPerSide(20, 20)).toEqual([]) // just the bar
   })
 })

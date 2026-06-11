@@ -15,7 +15,7 @@ import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise, epley1RM,
+  musclesForExercise, epley1RM, platesPerSide,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import type { Split } from '../lib/types'
@@ -190,6 +190,9 @@ export function Gym() {
         <RestTimer />
       </Card>
 
+      {/* ── Plate calculator ─────────────────────────────────── */}
+      <PlateCalculator unit={unit} />
+
       {/* ── Single-exercise anatomy ──────────────────────────── */}
       <Card
         title={focusEx ? focusEx : 'Exercise anatomy'}
@@ -323,5 +326,34 @@ export function Gym() {
         )}
       </Card>
     </div>
+  )
+}
+
+/** Greedy plate-loading helper: target weight → plates per side. */
+function PlateCalculator({ unit }: { unit: string }) {
+  const [target, setTarget] = useState('100')
+  const [bar, setBar] = useState(unit === 'lb' ? '45' : '20')
+  const plates = platesPerSide(Number(target) || 0, Number(bar) || 0)
+  const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
+  return (
+    <Card title="Plate calculator" subtitle="What to load on the bar">
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <label className="block text-sm text-subtext1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
+        <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
+      </div>
+      {plates.length === 0 ? (
+        <p className="text-sm text-overlay0">Just the bar — no plates needed.</p>
+      ) : (
+        <>
+          <p className="mb-2 text-xs text-overlay0">Per side:</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {plates.map((p, i) => (
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-bold text-crust" style={{ background: cat(['mauve', 'blue', 'green', 'peach', 'teal', 'pink'][i % 6]) }}>{p}</span>
+            ))}
+          </div>
+          {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
+        </>
+      )}
+    </Card>
   )
 }
