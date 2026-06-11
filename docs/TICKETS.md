@@ -135,6 +135,10 @@ IDs are stable references for commits and PRs.
 | BUJO-137 | Demo / ?demo=1 skips the storage gate | ✅ |
 | BUJO-138 | Card grids align to top (items-start) — no stretched empty cards | ✅ |
 | BUJO-139 | Card primitive redesign: comfortable padding + header rhythm + gap-5 | ✅ |
+| BUJO-140 | Animated stat counters: count-up numbers + progress Ring (Insights) | ✅ |
+| BUJO-141 | Circular/radial habit tracker (fan wheel) + grid↔wheel toggle, ?wheel=1 | ✅ |
+| BUJO-142 | Collapsible sidebar — icon rail that expands on hover, pin toggle | ✅ |
+| BUJO-143 | Masonry packing (Plan) to reduce scrolling | ✅ |
 
 ## Epic H — Data & privacy
 

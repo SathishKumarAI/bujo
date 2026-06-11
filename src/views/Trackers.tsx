@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Pencil, Archive, Trash2 } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Pencil, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
@@ -9,6 +9,7 @@ import { Button, Card, Empty, Input } from '../components/ui'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
+import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory } from '../lib/types'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
@@ -20,6 +21,7 @@ export function Trackers() {
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   const [editing, setEditing] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
   const today = todayISO()
 
   const s = data.settings
@@ -58,6 +60,7 @@ export function Trackers() {
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
         right={
           <div className="flex gap-1">
+            <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
             <Button onClick={() => shiftMonth(-1)} aria-label="Previous month">←</Button>
             <Button onClick={() => setYm(ymOf(today))}>This month</Button>
@@ -75,6 +78,14 @@ export function Trackers() {
 
         {visibleHabits.length === 0 ? (
           <Empty>No habits yet — add one below.</Empty>
+        ) : radial ? (
+          <RadialTracker
+            habits={visibleHabits}
+            habitLog={data.habitLog}
+            habitValues={data.habitValues}
+            days={monthDays(ym)}
+            today={today}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">

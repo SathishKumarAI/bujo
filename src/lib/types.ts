@@ -254,6 +254,8 @@ export interface Settings {
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
   trackerShowArchived?: boolean
+  /** Collapse the sidebar to an icon rail that expands on hover. */
+  sidebarCollapsed?: boolean
 }
 
 /** The single root object persisted to localStorage. */

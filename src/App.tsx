@@ -17,7 +17,8 @@ import { useEffect } from 'react'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, Menu,
-  PieChart, ZoomIn, ZoomOut, Undo2, Redo2, type LucideIcon,
+  PieChart, ZoomIn, ZoomOut, Undo2, Redo2, PanelLeftClose, PanelLeftOpen,
+  type LucideIcon,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -76,6 +77,7 @@ export default function App() {
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
   const mode = data.settings.storageMode
+  const collapsed = data.settings.sidebarCollapsed
 
   // Restore the picked folder handle on mount (silent — no permission prompt).
   useEffect(() => {
@@ -105,46 +107,63 @@ export default function App() {
         </button>
       </header>
 
-      {/* Sidebar */}
+      {/* Sidebar — desktop collapses to an icon rail that expands on hover */}
       <nav
-        className={`${navOpen ? 'block' : 'hidden'} border-b border-surface0 bg-mantle md:sticky md:top-0 md:block md:h-screen md:w-60 md:shrink-0 md:self-start md:overflow-y-auto md:border-r md:border-b-0`}
+        className={`${navOpen ? 'block' : 'hidden'} group/sb relative border-b border-surface0 bg-mantle md:sticky md:top-0 md:block md:h-screen md:shrink-0 md:self-start md:overflow-visible md:border-b-0 ${collapsed ? 'md:w-14' : 'md:w-60'}`}
       >
-        <div className="hidden px-5 pt-6 pb-4 md:block"><Brand /></div>
-        <div className="flex flex-row flex-wrap gap-0.5 p-2 md:flex-col md:px-3 md:pb-3">
-          {GROUP_ORDER.map((group) => {
-            const groupItems = items.filter((n) => n.group === group)
-            if (groupItems.length === 0) return null
-            return (
-              <div key={group} className="contents md:block">
-                <p className="hidden px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase md:block">
-                  {group}
-                </p>
-                <ul className="contents md:block">
-                  {groupItems.map((n) => {
-                    const Icon = n.icon
-                    const active = view === n.id
-                    return (
-                      <li key={n.id}>
-                        <button
-                          onClick={() => { setView(n.id); setNavOpen(false) }}
-                          aria-current={active ? 'page' : undefined}
-                          className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                            active ? 'bg-surface0/70 font-medium text-text' : 'text-subtext0 hover:bg-surface0/40 hover:text-subtext1'
-                          }`}
-                        >
-                          {active && (
-                            <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-mauve" aria-hidden />
-                          )}
-                          <Icon size={17} className={active ? 'text-mauve' : 'text-overlay1 group-hover:text-subtext0'} aria-hidden />
-                          <span>{n.label}</span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )
-          })}
+        <div
+          className={`bg-mantle transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-surface0 ${
+            collapsed
+              ? 'md:w-14 md:group-hover/sb:absolute md:group-hover/sb:top-0 md:group-hover/sb:left-0 md:group-hover/sb:z-50 md:group-hover/sb:w-60 md:group-hover/sb:shadow-2xl'
+              : 'md:w-60'
+          }`}
+        >
+          <div className="hidden items-center justify-between px-4 pt-5 pb-3 md:flex">
+            <span className={collapsed ? 'md:hidden md:group-hover/sb:block' : ''}><Brand /></span>
+            <button
+              onClick={() => setSettings({ sidebarCollapsed: !collapsed })}
+              aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar'}
+              title={collapsed ? 'Pin open' : 'Collapse'}
+              className="text-overlay1 hover:text-text"
+            >
+              {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            </button>
+          </div>
+          <div className="flex flex-row flex-wrap gap-0.5 p-2 md:flex-col md:px-2.5 md:pb-3">
+            {GROUP_ORDER.map((group) => {
+              const groupItems = items.filter((n) => n.group === group)
+              if (groupItems.length === 0) return null
+              return (
+                <div key={group} className="contents md:block">
+                  <p className={`hidden px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase md:block ${collapsed ? 'md:hidden md:group-hover/sb:block' : ''}`}>
+                    {group}
+                  </p>
+                  <ul className="contents md:block">
+                    {groupItems.map((n) => {
+                      const Icon = n.icon
+                      const active = view === n.id
+                      return (
+                        <li key={n.id}>
+                          <button
+                            onClick={() => { setView(n.id); setNavOpen(false) }}
+                            aria-current={active ? 'page' : undefined}
+                            title={n.label}
+                            className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                              active ? 'bg-surface0/70 font-medium text-text' : 'text-subtext0 hover:bg-surface0/40 hover:text-subtext1'
+                            }`}
+                          >
+                            {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-mauve" aria-hidden />}
+                            <Icon size={17} className={`shrink-0 ${active ? 'text-mauve' : 'text-overlay1 group-hover:text-subtext0'}`} aria-hidden />
+                            <span className={`whitespace-nowrap ${collapsed ? 'md:hidden md:group-hover/sb:inline' : ''}`}>{n.label}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </nav>
 

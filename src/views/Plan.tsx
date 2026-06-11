@@ -44,7 +44,7 @@ export function Plan() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card title="Migration" subtitle="Review overdue open tasks — the heart of bullet journaling">
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>

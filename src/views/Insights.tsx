@@ -5,6 +5,7 @@ import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
 import { insights } from '../lib/correlations'
+import { CountUp, Ring } from '../components/Counter'
 import { prettyDay, prettyMonth } from '../lib/date'
 
 export function Insights() {
@@ -32,10 +33,10 @@ export function Insights() {
   return (
     <div className="space-y-4">
       <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Big label="Current streak" value={`${streak}d`} color="peach" />
-        <Big label="Longest streak" value={`${best}d`} color="mauve" />
-        <Big label="Tasks done" value={`${tasks.pct}%`} color="green" sub={`${tasks.done}/${tasks.total}`} />
-        <Big label="Entries" value={`${data.entries.length}`} color="sky" />
+        <Big label="Current streak" value={streak} suffix="d" color="peach" />
+        <Big label="Longest streak" value={best} suffix="d" color="mauve" />
+        <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} />
+        <Big label="Entries" value={data.entries.length} color="sky" />
       </div>
 
       {found.length > 0 && (
@@ -114,10 +115,16 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; colo
   )
 }
 
-function Big({ label, value, color, sub }: { label: string; value: string; color: string; sub?: string }) {
+function Big({ label, value, color, sub, suffix = '', ring, max = 100 }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number }) {
   return (
-    <Card className="text-center">
-      <div className="text-4xl font-extrabold" style={{ color: cat(color) }}>{value}</div>
+    <Card className="flex flex-col items-center text-center">
+      {ring ? (
+        <Ring value={value} max={max} color={color} suffix={suffix} />
+      ) : (
+        <div className="text-4xl font-extrabold" style={{ color: cat(color) }}>
+          <CountUp value={value} suffix={suffix} />
+        </div>
+      )}
       <div className="mt-1 text-sm text-subtext0">{label}</div>
       {sub && <div className="text-xs text-overlay0">{sub}</div>}
     </Card>
