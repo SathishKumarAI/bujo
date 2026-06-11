@@ -139,6 +139,8 @@ IDs are stable references for commits and PRs.
 | BUJO-141 | Circular/radial habit tracker (fan wheel) + grid↔wheel toggle, ?wheel=1 | ✅ |
 | BUJO-142 | Collapsible sidebar — icon rail that expands on hover, pin toggle | ✅ |
 | BUJO-143 | Masonry packing (Plan) to reduce scrolling | ✅ |
+| BUJO-144 | Welcome hero redesign (frontend-design skill): aurora mesh + grain + staggered entrance | ✅ |
+| BUJO-145 | Vetted MCP installer script (shadcn, chrome-devtools, magic) | ✅ |
 
 ## Epic H — Data & privacy
 
