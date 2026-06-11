@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon } from 'lucide-react'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -78,6 +78,15 @@ export function TopBar({
         <Button variant="default" size="sm" onClick={onQuickAdd} className="gap-1.5">
           <Plus size={15} /> <span className="hidden sm:inline">Quick add</span>
         </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={data.settings.theme === 'mocha' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title="Toggle theme"
+          onClick={() => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' })}
+        >
+          {data.settings.theme === 'mocha' ? <Sun size={16} /> : <Moon size={16} />}
+        </Button>
         <Button variant="ghost" size="icon-sm" aria-label="Command palette (⌘K)" title="⌘K" onClick={onCommand}>
           <Command size={16} />
         </Button>
@@ -88,10 +97,6 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' })}>
-              {data.settings.theme === 'mocha' ? 'Light theme' : 'Dark theme'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom - 0.1) })}>Zoom out</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setSettings({ zoom: 1 })}>Reset zoom ({Math.round(zoom * 100)}%)</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom + 0.1) })}>Zoom in</DropdownMenuItem>
