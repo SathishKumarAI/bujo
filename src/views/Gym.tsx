@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
+import { Page } from '../components/shell/Page'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { RestTimer } from '../components/RestTimer'
@@ -18,7 +19,7 @@ import {
   musclesForExercise, epley1RM, platesPerSide,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
-import type { Split } from '../lib/types'
+import type { Routine, Split } from '../lib/types'
 
 interface SetRow {
   exercise: string
@@ -99,7 +100,16 @@ export function Gym() {
     .map((b) => ({ date: b.date.slice(5), weight: b.weight }))
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-5">
+    <Page
+      aside={
+        <>
+          <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
+          <PlateCalculator unit={unit} />
+          <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
+          <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
+        </>
+      }
+    >
       {/* ── Session logger ─────────────────────────────────── */}
       <Card
         title="Today's session"
@@ -185,14 +195,6 @@ export function Gym() {
         </div>
       </Card>
 
-      {/* ── Rest timer ───────────────────────────────────────── */}
-      <Card title="Rest timer" subtitle="Between-sets countdown">
-        <RestTimer />
-      </Card>
-
-      {/* ── Plate calculator ─────────────────────────────────── */}
-      <PlateCalculator unit={unit} />
-
       {/* ── Single-exercise anatomy ──────────────────────────── */}
       <Card
         title={focusEx ? focusEx : 'Exercise anatomy'}
@@ -248,56 +250,6 @@ export function Gym() {
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        {/* ── Personal records ─────────────────────────────── */}
-        <Card title="Personal records" subtitle="Heaviest logged lift per exercise">
-          {prs.length === 0 ? (
-            <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
-          ) : (
-            <ul className="space-y-1 text-sm">
-              {prs.map((pr) => (
-                <li key={pr.exercise}>
-                  <button
-                    onClick={() => setFocusEx(focusEx === pr.exercise ? null : pr.exercise)}
-                    className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-surface0' : 'hover:bg-surface0/50'}`}
-                    title="Show this lift on the muscle map"
-                  >
-                    <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
-                    <span className="text-overlay0">
-                      <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
-                      {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* ── Saved routines ───────────────────────────────── */}
-        <Card title="Saved routines">
-          {data.routines.length === 0 ? (
-            <Empty>Build a session above and “Save routine”. PPL presets are quick-loadable.</Empty>
-          ) : (
-            <ul className="space-y-1 text-sm">
-              {data.routines.map((r) => {
-                const m = splitMeta(r.split)
-                const Icon = SPLIT_ICONS[r.split] ?? Activity
-                return (
-                  <li key={r.id} className="group flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-subtext1">
-                      <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
-                      <span className="ml-1 text-overlay0">{r.exercises.length} exercises</span>
-                    </span>
-                    <button onClick={() => removeRoutine(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
-      </div>
-
       {/* ── Body metrics ─────────────────────────────────── */}
       <Card title="Body weight" subtitle="Track the trend">
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -325,7 +277,7 @@ export function Gym() {
           </div>
         )}
       </Card>
-    </div>
+    </Page>
   )
 }
 
@@ -353,6 +305,60 @@ function PlateCalculator({ unit }: { unit: string }) {
           </div>
           {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
         </>
+      )}
+    </Card>
+  )
+}
+
+function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../lib/fitness').PR[]; focusEx: string | null; setFocusEx: (e: string | null) => void; unit: string }) {
+  return (
+    <Card title="Personal records" subtitle="Heaviest logged lift per exercise">
+      {prs.length === 0 ? (
+        <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
+      ) : (
+        <ul className="space-y-1 text-sm">
+          {prs.map((pr) => (
+            <li key={pr.exercise}>
+              <button
+                onClick={() => setFocusEx(focusEx === pr.exercise ? null : pr.exercise)}
+                className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-surface0' : 'hover:bg-surface0/50'}`}
+                title="Show this lift on the muscle map"
+              >
+                <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
+                <span className="text-overlay0">
+                  <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
+                  {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
+
+function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; onRemove: (id: string) => void; onLoad: (exs: string[], split: Split) => void }) {
+  return (
+    <Card title="Saved routines">
+      {routines.length === 0 ? (
+        <Empty>Build a session and “Save routine”. PPL presets are quick-loadable.</Empty>
+      ) : (
+        <ul className="space-y-1 text-sm">
+          {routines.map((r) => {
+            const m = splitMeta(r.split)
+            const Icon = SPLIT_ICONS[r.split] ?? Activity
+            return (
+              <li key={r.id} className="group flex items-center justify-between">
+                <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-subtext1 hover:text-text" title="Load into session">
+                  <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
+                  <span className="ml-1 text-overlay0">{r.exercises.length} exercises</span>
+                </button>
+                <button onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </Card>
   )
