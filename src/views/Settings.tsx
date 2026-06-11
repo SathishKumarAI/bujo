@@ -3,6 +3,7 @@ import { Moon, Sun, Download, Upload, FileText, Sparkles, Trash2, AlertTriangle 
 import { useJournal } from '../store'
 import { Button, Card } from '../components/ui'
 import { DriveSync } from '../components/DriveSync'
+import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
@@ -157,6 +158,7 @@ export function Settings() {
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
       </Card>
 
+      <CloudStorage />
       <DriveSync />
 
       <Card title="Demo & reset" subtitle="Try the app with sample data, or start fresh" className="lg:col-span-2">

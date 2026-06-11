@@ -219,10 +219,21 @@ export interface Settings {
   startedOn: string
   /** Last time the user exported a backup (ISO), for the nudge. */
   lastBackup?: string
-  /** Google OAuth Client ID (Web) for optional Drive sync. */
+  /** Google OAuth Client ID (Web) for optional Drive sync (dev fallback to env). */
   googleClientId?: string
   /** Last successful Drive backup/restore (ISO). */
   lastDriveSync?: string
+  /** Chosen storage: undefined = show login gate; 'local' = device only;
+   *  'folder' = a cloud-synced folder the user picked (their own cloud). */
+  storageMode?: 'local' | 'folder' | 'drive'
+  /** Display name of the picked cloud folder. */
+  folderName?: string
+  /** GitHub Personal Access Token (gist scope) for gist storage. */
+  githubToken?: string
+  /** Gist id holding bujo.json. */
+  githubGistId?: string
+  /** Signed-in Google account email (display only). */
+  googleEmail?: string
   // ── Realism pack ──
   /** Dot-grid paper texture background, like a real bullet journal page. */
   paperMode: boolean

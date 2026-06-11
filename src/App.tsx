@@ -11,6 +11,9 @@ import { Help } from './views/Help'
 import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
 import { CommandPalette } from './components/CommandPalette'
+import { Welcome } from './views/Welcome'
+import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
+import { useEffect } from 'react'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, Menu,
@@ -72,6 +75,22 @@ export default function App() {
   const Current = VIEWS[view]
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
+  const mode = data.settings.storageMode
+
+  // Restore the picked folder handle on mount (silent — no permission prompt).
+  useEffect(() => {
+    if (mode === 'folder') restoreFolder(false)
+  }, [mode])
+
+  // Auto-save to the cloud folder (debounced) whenever data changes.
+  useEffect(() => {
+    if (mode !== 'folder' || !hasFolder()) return
+    const id = setTimeout(() => { saveToFolder(data).catch(() => {}) }, 1500)
+    return () => clearTimeout(id)
+  }, [data, mode])
+
+  // First run → show the login/welcome gate.
+  if (!mode) return <Welcome />
 
   return (
     <div className="flex min-h-screen flex-col">

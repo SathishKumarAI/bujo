@@ -95,6 +95,15 @@ photos, handwriting font — all toggleable; reduced-motion respected.
 *Why:* zoom is for diagrams/calendars, not navigation chrome — nav must stay
 usable at any zoom.
 
+**D-17 — "Own cloud" via a picked folder (File System Access API), not OAuth.**
+*Context:* users wanted login + their own cloud; Google Drive OAuth needs app
+verification past 100 users and a client ID.
+*Choice:* a first-run gate offers **"Use my own cloud"** → pick a folder inside
+their existing Drive/Dropbox/OneDrive sync folder; bujo writes `bujo.json` there
+and their cloud client syncs it. No accounts, no OAuth, any cloud.
+*Trade-off:* Chromium-only; permission re-grant after reload. Google Drive and a
+GitHub **private gist** remain as alternative backup targets in Settings.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

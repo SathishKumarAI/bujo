@@ -124,6 +124,9 @@ IDs are stable references for commits and PRs.
 | BUJO-126 | Optional Google Drive sync (appDataFolder JSON) + Drive file browser | ✅ |
 | BUJO-127 | Docs: DECISIONS log, build-this-kind-of-app + tracker-module prompts, GOOGLE_DRIVE setup | ✅ |
 | BUJO-128 | Tracker redesign + customization: per-habit editor (color/type/target/unit/scheduled days/archive/delete), count habits with targets, global settings (density, hide weekends, show archived) | ✅ |
+| BUJO-129 | First-run login/welcome gate: choose "own cloud folder" or "this device" | ✅ |
+| BUJO-130 | Own-cloud folder sync (File System Access API) — auto-save to a synced folder | ✅ |
+| BUJO-131 | GitHub private-gist storage (back up / restore via PAT) | ✅ |
 
 ## Epic H — Data & privacy
 
