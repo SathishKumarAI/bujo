@@ -1,7 +1,9 @@
 import { useRef } from 'react'
 import { Moon, Sun, Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card } from '../components/ui'
+import { Button, Card, Segmented } from '../components/ui'
+import { Switch } from '../components/ui/switch'
+import { Page } from '../components/shell/Page'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
@@ -54,91 +56,76 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    <Page>
+      <div className="grid auto-rows-fr items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
       <Card title="Appearance">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-subtext1">Theme</span>
-          <div className="flex gap-2">
-            <Button variant={s.theme === 'mocha' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'mocha' })} className="inline-flex items-center gap-1.5"><Moon size={14} /> Dark</Button>
-            <Button variant={s.theme === 'latte' ? 'primary' : 'ghost'} onClick={() => setSettings({ theme: 'latte' })} className="inline-flex items-center gap-1.5"><Sun size={14} /> Light</Button>
-          </div>
-        </div>
+        <Row label="Theme">
+          <Segmented
+            value={s.theme}
+            onChange={(v) => setSettings({ theme: v })}
+            options={[
+              { value: 'mocha', label: <><Moon size={14} /> Dark</> },
+              { value: 'latte', label: <><Sun size={14} /> Light</> },
+            ]}
+          />
+        </Row>
       </Card>
 
       <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-subtext1">Gender</span>
+        <Row label="Gender">
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
-            className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
+            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-text"
           >
             <option value="prefer-not">Prefer not to say</option>
             <option value="female">Female</option>
             <option value="male">Male</option>
             <option value="nonbinary">Non-binary</option>
           </select>
+        </Row>
+        <div className="mt-3 space-y-2 border-t border-border pt-3">
+          <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
+          <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
         </div>
-        <div className="mt-3 space-y-2 border-t border-surface0 pt-3">
-          <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onClick={() => setSettings({ cycleTrackerEnabled: !s.cycleTrackerEnabled })} />
-          <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onClick={() => setSettings({ nofapEnabled: !s.nofapEnabled })} />
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
-          <span className="text-sm text-subtext1">Weight unit</span>
-          <div className="flex gap-2">
-            <Button variant={s.weightUnit === 'kg' ? 'primary' : 'ghost'} onClick={() => setSettings({ weightUnit: 'kg' })}>kg</Button>
-            <Button variant={s.weightUnit === 'lb' ? 'primary' : 'ghost'} onClick={() => setSettings({ weightUnit: 'lb' })}>lb</Button>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
-          <span className="text-sm text-subtext1">Distance unit</span>
-          <div className="flex gap-2">
-            <Button variant={s.distanceUnit === 'km' ? 'primary' : 'ghost'} onClick={() => setSettings({ distanceUnit: 'km' })}>km</Button>
-            <Button variant={s.distanceUnit === 'mi' ? 'primary' : 'ghost'} onClick={() => setSettings({ distanceUnit: 'mi' })}>mi</Button>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
-          <span className="text-sm text-subtext1">Week starts on</span>
-          <div className="flex gap-2">
-            <Button variant={s.weekStart === 0 ? 'primary' : 'ghost'} onClick={() => setSettings({ weekStart: 0 })}>Sunday</Button>
-            <Button variant={s.weekStart === 1 ? 'primary' : 'ghost'} onClick={() => setSettings({ weekStart: 1 })}>Monday</Button>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-surface0 pt-3">
-          <span className="text-sm text-subtext1">Temperature unit</span>
-          <div className="flex gap-2">
-            <Button variant={s.tempUnit === 'F' ? 'primary' : 'ghost'} onClick={() => setSettings({ tempUnit: 'F' })}>°F</Button>
-            <Button variant={s.tempUnit === 'C' ? 'primary' : 'ghost'} onClick={() => setSettings({ tempUnit: 'C' })}>°C</Button>
-          </div>
-        </div>
+        <div className="mt-3 border-t border-border pt-3"><Row label="Weight unit">
+          <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
+        </Row></div>
+        <div className="mt-3 border-t border-border pt-3"><Row label="Distance unit">
+          <Segmented value={s.distanceUnit} onChange={(v) => setSettings({ distanceUnit: v })} options={[{ value: 'km', label: 'km' }, { value: 'mi', label: 'mi' }]} />
+        </Row></div>
+        <div className="mt-3 border-t border-border pt-3"><Row label="Week starts on">
+          <Segmented value={s.weekStart ?? 0} onChange={(v) => setSettings({ weekStart: v })} options={[{ value: 0, label: 'Sunday' }, { value: 1, label: 'Monday' }]} />
+        </Row></div>
+        <div className="mt-3 border-t border-border pt-3"><Row label="Temperature unit">
+          <Segmented value={s.tempUnit} onChange={(v) => setSettings({ tempUnit: v })} options={[{ value: 'F', label: '°F' }, { value: 'C', label: '°C' }]} />
+        </Row></div>
       </Card>
 
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
         <div className="space-y-2">
-          <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onClick={() => setSettings({ bookMode: !s.bookMode })} />
-          <Toggle label="Dot-grid paper texture" on={s.paperMode} onClick={() => setSettings({ paperMode: !s.paperMode })} />
-          <Toggle label="Handwriting font" on={s.handwriting} onClick={() => setSettings({ handwriting: !s.handwriting })} />
-          <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onClick={() => setSettings({ reflectionPrompts: !s.reflectionPrompts })} />
+          <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
+          <Toggle label="Dot-grid paper texture" on={s.paperMode} onChange={(v) => setSettings({ paperMode: v })} />
+          <Toggle label="Handwriting font" on={s.handwriting} onChange={(v) => setSettings({ handwriting: v })} />
+          <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
         </div>
       </Card>
 
       <Card title="Reminders & weather" subtitle="Opt-in — weather makes network calls">
         <div className="space-y-3">
-          <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onClick={() => setSettings({ reminderEnabled: !s.reminderEnabled })} />
+          <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
           {s.reminderEnabled && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-subtext1">Remind me at</span>
+            <Row label="Remind me at">
               <input
                 type="time"
                 value={s.reminderTime}
                 onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
+                className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-text"
               />
-            </div>
+            </Row>
           )}
-          <div className="border-t border-surface0 pt-3">
-            <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onClick={() => setSettings({ weatherEnabled: !s.weatherEnabled })} />
+          <div className="border-t border-border pt-3">
+            <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
             <p className="mt-1 text-xs text-overlay0">Uses open-meteo + your browser location. Off = zero network calls.</p>
           </div>
         </div>
@@ -191,17 +178,25 @@ export function Settings() {
 
       <CloudStorage />
       <DriveSync />
+    </Page>
+  )
+}
+
+/** A labeled settings row: label on the left, control on the right. */
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-subtext1">{label}</span>
+      {children}
     </div>
   )
 }
 
-function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button onClick={onClick} className="flex w-full items-center justify-between text-sm text-subtext1">
+    <label className="flex w-full cursor-pointer items-center justify-between text-sm text-subtext1">
       <span>{label}</span>
-      <span className={`relative h-5 w-9 rounded-full transition-colors ${on ? 'bg-mauve' : 'bg-surface1'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-crust transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
-      </span>
-    </button>
+      <Switch checked={on} onCheckedChange={onChange} />
+    </label>
   )
 }

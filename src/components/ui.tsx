@@ -136,3 +136,34 @@ export function Pill({ children, color }: { children: ReactNode; color?: string 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="py-6 text-center text-sm text-overlay0">{children}</p>
 }
+
+/** Segmented control for mutually-exclusive choices (theme, units, …). */
+export function Segmented<T extends string | number>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T
+  onChange: (v: T) => void
+  options: { value: T; label: ReactNode }[]
+}) {
+  return (
+    <div className="inline-flex rounded-lg bg-secondary p-0.5">
+      {options.map((o) => {
+        const active = o.value === value
+        return (
+          <button
+            key={String(o.value)}
+            onClick={() => onChange(o.value)}
+            aria-pressed={active}
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors ${
+              active ? 'bg-primary text-primary-foreground' : 'text-subtext1 hover:text-text'
+            }`}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
