@@ -196,6 +196,14 @@ a left-edge hover zone via Tailwind `peer-hover`; content goes full-width) and
 move recommendations into a top-bar **lightbulb + count badge** dropdown.
 *Why:* maximise content area without losing one-tap access to nav or suggestions.
 
+**D-30 — Passcode encryption is at-rest + a lock gate, never lossy.**
+*Choice:* `crypto.ts` (PBKDF2 → AES-GCM); when a passcode is set, `save()`
+encrypts to `bujo:enc` and drops the plaintext `bujo:data`. A `LockScreen` in
+`JournalProvider` gates the app on load; unlock decrypts into memory. A **wrong
+passcode throws and never wipes data**; removing the passcode rewrites plaintext.
+*Trade-off:* no recovery if the passcode is lost — the UI says so and nudges a
+JSON export. Local-only; pairs with future E2E cloud sync (BUJO-91).
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

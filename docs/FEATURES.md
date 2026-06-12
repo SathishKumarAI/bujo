@@ -91,7 +91,12 @@ Signifiers stack: `* t book the campsite #travel`.
 
 ## Data & privacy
 
-- Stored only in `localStorage` (`bujo:data`). No network, no accounts (core).
+- **Passcode lock + client-side encryption** (Settings → Data & Cloud) — encrypts
+  the journal at rest with AES-GCM (PBKDF2 from your passcode, Web Crypto). A lock
+  screen gates the app; the passcode never leaves the device (no recovery — keep a
+  JSON export). Off by default.
+- Stored only in `localStorage` (`bujo:data`, or `bujo:enc` when encrypted). No
+  network, no accounts (core).
 - Export JSON (full backup) or Markdown (portable). Import restores a backup.
 - **Optional Google Drive sync** (Settings → Cloud sync): store the journal in
   Drive's appDataFolder + reference Drive images/docs. Opt-in, needs your own

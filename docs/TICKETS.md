@@ -239,10 +239,10 @@ Vision + full reasoning in `docs/redesign/07-space-vision-and-backlog.mdx`.
 
 | ID | Title | Size | Status |
 |---|---|---|---|
-| R2-1 | Passcode + client-side encryption (crypto.ts done; lock gate + save path remain) | M | ◑ |
-| R2-2 | Monthly: habit-completion ribbon per day | S | 🔜 |
-| R2-3 | Insights: clickable stats → jump to source (nav context) | S | 🔜 |
-| R2-4 | Stats: date-range picker (30/90/all) | S | 🔜 |
+| R2-1 | Passcode + client-side encryption — AES-GCM/PBKDF2 at rest, lock-screen gate, encrypt-on-save | ✅ |
+| R2-2 | Monthly: habit-completion ribbon per day | S | ✅ |
+| R2-3 | Insights: clickable stats → jump to source (nav context) | S | ✅ |
+| R2-4 | Stats: activity-heatmap range picker (3/6/12mo) | S | ✅ |
 | R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | 🔜 |
 | R2-6 | Drag-and-drop: reorder habits, move calendar events | M | 🔜 |
 | R2-7 | Unified cross-view goal system | M | 🔜 |
