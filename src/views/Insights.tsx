@@ -6,10 +6,14 @@ import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
 import { insights } from '../lib/correlations'
 import { CountUp, Ring } from '../components/Counter'
+import { useNav } from '../components/shell/nav'
+import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
 
 export function Insights() {
   const { data } = useJournal()
+  const nav = useNav()
+  const { setDay, setMonth } = useCursor()
   const [q, setQ] = useState('')
   const streak = currentStreak(data)
   const best = longestStreak(data)
@@ -33,10 +37,10 @@ export function Insights() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
       <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Big label="Current streak" value={streak} suffix="d" color="peach" />
-        <Big label="Longest streak" value={best} suffix="d" color="mauve" />
-        <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} />
-        <Big label="Entries" value={data.entries.length} color="sky" />
+        <Big label="Current streak" value={streak} suffix="d" color="peach" onClick={() => nav('trackers')} />
+        <Big label="Longest streak" value={best} suffix="d" color="mauve" onClick={() => nav('trackers')} />
+        <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
+        <Big label="Entries" value={data.entries.length} color="sky" onClick={() => nav('today')} />
       </div>
 
       {found.length > 0 && (
@@ -72,8 +76,10 @@ export function Insights() {
           ) : (
             <ul className="grid grid-cols-2 gap-1 text-sm">
               {months.map((ym) => (
-                <li key={ym} className="inline-flex items-center gap-1.5 text-subtext1">
-                  <BookOpen size={14} style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
+                <li key={ym}>
+                  <button onClick={() => { setMonth(ym); nav('monthly') }} className="inline-flex w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-subtext1 hover:bg-surface0 hover:text-text">
+                    <BookOpen size={14} style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -90,10 +96,16 @@ export function Insights() {
             ) : (
               <ul className="space-y-1 text-sm">
                 {results.slice(0, 50).map((r, i) => (
-                  <li key={i} className="flex gap-2 rounded px-2 py-1 hover:bg-surface0">
-                    <span className="w-24 shrink-0 text-overlay0">{r.date ? prettyDay(r.date) : '—'}</span>
-                    <span className="w-16 shrink-0 text-xs" style={{ color: cat('sapphire') }}>{r.kind}</span>
-                    <span className="text-subtext1">{r.text}</span>
+                  <li key={i}>
+                    <button
+                      onClick={() => { if (r.date) { setDay(r.date); nav('today') } }}
+                      disabled={!r.date}
+                      className="flex w-full gap-2 rounded px-2 py-1 text-left hover:bg-surface0 disabled:cursor-default"
+                    >
+                      <span className="w-24 shrink-0 text-overlay0">{r.date ? prettyDay(r.date) : '—'}</span>
+                      <span className="w-16 shrink-0 text-xs" style={{ color: cat('sapphire') }}>{r.kind}</span>
+                      <span className="text-subtext1">{r.text}</span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -115,9 +127,9 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; colo
   )
 }
 
-function Big({ label, value, color, sub, suffix = '', ring, max = 100 }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number }) {
+function Big({ label, value, color, sub, suffix = '', ring, max = 100, onClick }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number; onClick?: () => void }) {
   return (
-    <Card className="flex flex-col items-center text-center">
+    <Card className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
       {ring ? (
         <Ring value={value} max={max} color={color} suffix={suffix} />
       ) : (
