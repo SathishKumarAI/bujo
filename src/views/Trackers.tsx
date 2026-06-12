@@ -283,7 +283,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
 
   return (
     <div className="grid items-start gap-5 lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks — greener = more habits done that day" className="lg:col-span-2">
+      <Card title="Completion heatmap" subtitle="Last 13 weeks — greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"

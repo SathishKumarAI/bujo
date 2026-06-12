@@ -63,7 +63,7 @@ export function Today() {
           </Card>
 
           {hasFlash && !hidden.includes('onThisDay') && (
-            <Card title="On this day" subtitle="From earlier in your journal">
+            <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
               <ul className="space-y-2 text-sm">
                 {flashbacks.memories.map((m) => (
                   <li key={m.date} className="text-subtext1">

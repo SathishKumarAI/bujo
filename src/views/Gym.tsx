@@ -323,7 +323,7 @@ export function Gym() {
       <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
 
       {/* ── Exercise database (wger) ─────────────────────────── */}
-      <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session">
+      <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session" collapsible defaultCollapsed>
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
