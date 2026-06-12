@@ -32,6 +32,7 @@ export function Monthly() {
     }
   }
   const meta = data.monthly.find((m) => m.ym === ym)
+  const totalHabits = data.habits.filter((h) => !h.archived).length
   const days = monthDays(ym)
   const weekStart = data.settings.weekStart ?? 0
   const firstWeekday = weekColumn(days[0], weekStart)
@@ -82,7 +83,7 @@ export function Monthly() {
                   key={d}
                   onClick={() => { setDay(d); nav('today') }}
                   title={`Open ${d}`}
-                  className="min-h-[5.5rem] rounded-lg border p-1.5 text-left transition-colors hover:border-mauve sm:min-h-24"
+                  className="relative min-h-[5.5rem] rounded-lg border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
                   style={{
                     borderColor: isToday ? cat('mauve') : cat('surface0'),
                     background: isToday ? cat('surface0') : moodTint ?? 'transparent',
@@ -104,6 +105,11 @@ export function Monthly() {
                   <div className="mt-0.5 text-sm leading-tight">
                     {(data.stickers[d] ?? []).slice(0, 4).join('')}
                   </div>
+                  {totalHabits > 0 && d <= today && (
+                    <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-surface0" title={`${(data.habitLog[d] ?? []).length}/${totalHabits} habits`}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, ((data.habitLog[d] ?? []).length / totalHabits) * 100)}%`, background: cat('green') }} />
+                    </div>
+                  )}
                 </button>
               )
             })}
