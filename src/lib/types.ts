@@ -312,6 +312,8 @@ export interface Settings {
   sidebarAutoHide?: boolean
   /** Saved quick-add snippets, inserted with one tap on the capture field. */
   quickTemplates?: string[]
+  /** Optional Today cards the user has hidden (keys: penalty, coverage, onThisDay). */
+  hideToday?: string[]
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */

@@ -28,6 +28,7 @@ export function Today() {
   const memoryRec = data.memories.find((m) => m.date === date)
   const memory = memoryRec?.text ?? ''
   const flashbacks = onThisDay(data, date)
+  const hidden = data.settings.hideToday ?? []
   const hasFlash = flashbacks.entries.length + flashbacks.memories.length > 0
 
   return (
@@ -61,7 +62,7 @@ export function Today() {
             </div>
           </Card>
 
-          {hasFlash && (
+          {hasFlash && !hidden.includes('onThisDay') && (
             <Card title="On this day" subtitle="From earlier in your journal">
               <ul className="space-y-2 text-sm">
                 {flashbacks.memories.map((m) => (
@@ -81,10 +82,10 @@ export function Today() {
       }
     >
       {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
-      {date === todayISO() && <PenaltyCard />}
+      {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
 
       {/* ── Daily coverage: what you covered yesterday + the week ── */}
-      {date === todayISO() && <CoverageCard />}
+      {date === todayISO() && !hidden.includes('coverage') && <CoverageCard />}
 
       {/* ── Daily log (primary, above the fold) ─────────────────── */}
       <Card

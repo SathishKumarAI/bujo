@@ -112,6 +112,22 @@ export function Settings() {
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
         </div>
         <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-2 text-sm text-subtext1">Today dashboard cards</p>
+          <div className="space-y-2">
+            {([['penalty', 'Training penalty'], ['coverage', 'Daily coverage'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
+              const hidden = s.hideToday ?? []
+              return (
+                <Toggle
+                  key={key}
+                  label={label}
+                  on={!hidden.includes(key)}
+                  onChange={(v) => setSettings({ hideToday: v ? hidden.filter((k) => k !== key) : [...hidden, key] })}
+                />
+              )
+            })}
+          </div>
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-sm text-subtext1">Accent color</p>
           <div className="flex flex-wrap gap-2">
             {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
