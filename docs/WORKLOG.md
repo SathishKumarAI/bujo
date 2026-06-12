@@ -1,5 +1,20 @@
 # Worklog
 
+## 2026-06-11 21:30 — Finished V3 backlog (RPE/type · task sync · actuals)
+
+**Summary:** Cleared the last three deferred tickets on `feat/v3-smart-input`.
+94 tests green.
+
+**Changes:**
+- **V3-I** — per-set RPE input + set-type toggle (warmup/working/drop) in the Gym
+  logger; persisted on `WorkoutSet`. Body-weight & training-volume charts now
+  side by side.
+- **V3-B** — `updateRecurrence` propagates text/type/important to a rule's future
+  open occurrences; removing a rule clears its future instances; EntryRow shows a
+  ↻ badge; Plan view can edit a rule inline.
+- **V3-J** — program days get per-exercise checkboxes **and** an "actual" field
+  (`programActuals`) to record reps/sets achieved vs prescribed.
+
 ## 2026-06-11 20:30 — Gym v3 build-out + space UX + PDF programs
 
 **Summary:** Implemented the Gym backlog + space-saving shell changes on

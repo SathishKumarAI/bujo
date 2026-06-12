@@ -204,15 +204,15 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 | ID | Title | Status |
 |---|---|---|
 | V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | ✅ |
-| V3-B | Cross-place task sync — verified single-source-by-id; recurrence-series linking deferred | ◑ |
+| V3-B | Cross-place task sync — recurrence-instance linking + edit propagates to future occurrences (+ ↻ badge, Plan edit) | ✅ |
 | V3-C | Developer "Focus" tracker (coding time · work style · stress) | ✅ |
 | V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
 | V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
 | V3-F | Gym v2 — structured `setRows` + plate calc (kg/lb) + previous-session/1RM hints + 2-col redesign + pull-up program | ✅ |
 | V3-G | Quick exercise picker — searchable dropdown (recents + library + custom) on set rows + anatomy lookup | ✅ |
 | V3-H | Gym structured charts — weekly training-volume bars + per-exercise progression line | ✅ |
-| V3-I | Per-set RPE + set type (warmup/working/drop) inputs in the logger grid | 🔜 |
-| V3-J | Partial completion — per-exercise checkboxes in a program day (auto-completes the day); actual-reps-vs-prescribed still to add | ◑ |
+| V3-I | Per-set RPE + set type (warmup/working/drop) inputs in the logger grid | ✅ |
+| V3-J | Partial completion — per-exercise checkboxes + actual-reps-vs-prescribed field in a program day | ✅ |
 | V3-K | Training programs from PDF — pull-up program (week/day, load-into-session, day tracker) + ability/training-set calculator + exercises in library | ✅ |
 | V3-L | Space UX — auto-hide sidebar (edge-hover reveal) + recommendations as a top-bar lightbulb badge | ✅ |
 | V3-M | Plate calculator — unit-aware plates (kg/lb) + remount on unit change | ✅ |
