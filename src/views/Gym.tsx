@@ -122,10 +122,15 @@ export function Gym() {
   }
 
   // Body-weight chart.
-  const weightSeries = [...data.bodyMetrics]
+  const weightRaw = [...data.bodyMetrics]
     .filter((b) => b.weight != null)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .map((b) => ({ date: b.date.slice(5), weight: b.weight }))
+  // 7-point trailing moving average smooths daily fluctuation.
+  const weightSeries = weightRaw.map((b, i) => {
+    const win = weightRaw.slice(Math.max(0, i - 6), i + 1)
+    const avg = win.reduce((s, x) => s + (x.weight ?? 0), 0) / win.length
+    return { date: b.date.slice(5), weight: b.weight, avg: Math.round(avg * 10) / 10 }
+  })
 
   // Anatomy lookup — lives in the right rail (aside) so it stays visible while logging.
   const anatomyCard = (
@@ -308,7 +313,7 @@ export function Gym() {
 
       {/* ── Body weight + training volume, side by side ──────── */}
       <div className="grid items-start gap-5 lg:grid-cols-2">
-      <Card title="Body weight" subtitle="Track the trend">
+      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -328,7 +333,8 @@ export function Gym() {
                 <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
                 <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-                <Line type="monotone" dataKey="weight" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+                <Line type="monotone" dataKey="weight" stroke={cat('overlay1')} dot={{ r: 1.5 }} strokeWidth={1} opacity={0.5} />
+                <Line type="monotone" dataKey="avg" stroke={cat('mauve')} dot={false} strokeWidth={2.5} />
               </LineChart>
             </ResponsiveContainer>
           </div>
