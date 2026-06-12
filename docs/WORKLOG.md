@@ -396,3 +396,28 @@ D-38 (gym route is a Fitness alias). Docs append-only throughout.
 **Follow-ups:**
 - [ ] Path A gap #2: cloud-load conflict prompt; extend IndexedDB to memory/monthly photos.
 - [ ] Optionally run full graphify semantic extraction via the skill.
+
+## 2026-06-12 20:30 — Pickleball deepening + autonomous feature sprint (appended)
+
+**Summary:** Built the Pickleball tracker out (more viz + a weekly goal + full
+activity-system integration) and ran an autonomous sprint of cross-cutting
+quality features.
+
+**Changes:**
+- `lib/pickleball.ts` — `formatStats`, `cumulativeGames`, `gamesByDay` (+tests);
+  Pickleball view gains win%-by-format, cumulative line, 13-week play heatmap,
+  and a weekly-games goal meter. Goals roll-up + Stats split + Fitness minutes +
+  active streak + coverage all count pickleball now.
+- `TodayPlanCard` — proactive streak-at-risk banner.
+- `TodayHabits` — quick-check strip + Mark all.
+- System theme (`store.tsx` matchMedia effect, theme menu).
+- Insights — Personal records card.
+
+**Decisions:** "Check online" → this is an offline-first SPA, so I prioritised
+local-first-appropriate features (online/social ones need a backend, out of
+scope). Everything stays in the single `JournalData` store, so each addition is
+auto-synced/exported with no extra plumbing.
+
+**Follow-ups:**
+- [ ] Optional: pickleball CSV export; partner win-rate breakdown.
+- [ ] Path A gap #2 (cloud-load conflict prompt) still open.

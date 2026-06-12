@@ -170,3 +170,18 @@ localStorage (`bujo:data`, or encrypted `bujo:enc`). Every feature — including
 Pickleball, Friends, progress photos — is a field on that object, so cloud sync
 (own folder / Drive / gist) and JSON export carry all of it automatically; there
 is no second database to keep in step.
+
+## Autonomous sprint additions (appended)
+
+- **Pickleball visualizations** — beyond win-rate/W-L/games-per-week: **win % by
+  format** (singles vs doubles), **cumulative games** line, a **13-week play
+  heatmap**, and a **weekly games goal** (meter on Pickleball + a row in the Goals
+  roll-up). Pickleball also feeds Fitness active-minutes, the active-day streak,
+  daily coverage, Today's-plan, and the Stats workout-split donut.
+- **Streak-at-risk nudge** — Today's-plan warns *before* a ≥3-day habit streak
+  breaks (scheduled today, not yet done) and links to Trackers.
+- **Today's habits** quick-check — tick today's habits from Today, with a
+  **Mark all** one-tap.
+- **System theme** — follows the OS light/dark preference live.
+- **Personal records** (Insights) — longest streak, best mood day, longest
+  workout, best pickleball session, busiest day.
