@@ -1,0 +1,149 @@
+import { Target, Dumbbell, Activity, Flame, ArrowUpToLine } from 'lucide-react'
+import { useJournal } from '../store'
+import { Card, Empty } from '../components/ui'
+import { Page } from '../components/shell/Page'
+import { useNav } from '../components/shell/nav'
+import { cat } from '../lib/colors'
+import { todayISO, dayDiff } from '../lib/date'
+import { weeklyActiveMinutes } from '../lib/fitness'
+import { weeklyHabitCount } from '../lib/stats'
+import { PROGRAMS } from '../lib/programs'
+import type { ViewId } from '../components/shell/viewChrome'
+
+interface Goal {
+  label: string
+  detail: string
+  value: number
+  target: number
+  color: string
+  icon: typeof Target
+  to: ViewId
+}
+
+/**
+ * One cross-view roll-up of every active goal: weekly habit goals, the fitness
+ * active-minutes target, running challenges, training-program completion, and
+ * the abstinence streak. Whole-number progress; tap any row to jump to its home.
+ */
+export function Goals() {
+  const { data } = useJournal()
+  const navigate = useNav()
+  const today = todayISO()
+  const goals: Goal[] = []
+
+  // Per-habit weekly goals.
+  for (const h of data.habits) {
+    if (h.archived || !h.weeklyGoal) continue
+    goals.push({
+      label: `${h.emoji ? h.emoji + ' ' : ''}${h.name}`,
+      detail: 'this week',
+      value: weeklyHabitCount(data, h.id, today),
+      target: h.weeklyGoal,
+      color: h.color,
+      icon: Target,
+      to: 'trackers',
+    })
+  }
+
+  // Fitness weekly active minutes.
+  const fitGoal = data.settings.fitnessGoalMin ?? 150
+  goals.push({
+    label: 'Active minutes',
+    detail: 'this week',
+    value: weeklyActiveMinutes(data, today),
+    target: fitGoal,
+    color: 'teal',
+    icon: Activity,
+    to: 'fitness',
+  })
+
+  // Active challenges.
+  for (const c of data.challenges ?? []) {
+    if (c.archived) continue
+    const elapsed = Math.min(c.durationDays, dayDiff(c.startDate, today) + 1)
+    if (elapsed < 1) continue
+    const completed = Object.entries(data.challengeLog?.[c.id] ?? {}).filter(
+      ([, idx]) => idx.length >= c.rules.length,
+    ).length
+    goals.push({
+      label: c.name,
+      detail: `${c.durationDays}-day challenge`,
+      value: completed,
+      target: c.durationDays,
+      color: 'mauve',
+      icon: Flame,
+      to: 'challenges',
+    })
+  }
+
+  // Training-program completion.
+  const done = data.settings.programDone ?? []
+  for (const p of PROGRAMS) {
+    const totalDays = p.weeks.reduce((a, w) => a + w.days.length, 0)
+    const dayDone = p.weeks.reduce(
+      (a, w) => a + w.days.filter((d) => d.exercises.length > 0 && d.exercises.every((_, i) => done.includes(`${p.id}-w${w.week}d${d.day}-e${i}`))).length,
+      0,
+    )
+    if (dayDone === 0) continue
+    goals.push({
+      label: p.name,
+      detail: 'program days',
+      value: dayDone,
+      target: totalDays,
+      color: 'green',
+      icon: p.id === 'pullup-zero' ? ArrowUpToLine : Dumbbell,
+      to: p.id === 'pullup-zero' ? 'pullups' : 'gym',
+    })
+  }
+
+  // Abstinence streak vs personal best.
+  if (data.settings.nofapEnabled && data.nofap.best > 0) {
+    const cur = Math.max(0, dayDiff(data.nofap.startedOn, today))
+    goals.push({
+      label: 'Streak vs. best',
+      detail: `${cur} of ${data.nofap.best} days`,
+      value: cur,
+      target: data.nofap.best,
+      color: 'peach',
+      icon: Flame,
+      to: 'nofap',
+    })
+  }
+
+  const hit = goals.filter((g) => g.value >= g.target).length
+
+  return (
+    <Page>
+      <Card title="Goals" subtitle={goals.length ? `${hit} of ${goals.length} on track` : 'Your active targets, all in one place'}>
+        {goals.length === 0 ? (
+          <Empty>No goals yet — set a habit weekly goal, start a challenge, or follow a program.</Empty>
+        ) : (
+          <ul className="space-y-3">
+            {goals.map((g, i) => {
+              const pct = Math.min(100, Math.round((g.value / g.target) * 100))
+              const reached = g.value >= g.target
+              const Icon = g.icon
+              return (
+                <li key={i}>
+                  <button onClick={() => navigate(g.to)} className="press-3d w-full text-left">
+                    <div className="mb-1 flex items-center gap-2 text-sm">
+                      <Icon size={15} style={{ color: cat(g.color) }} />
+                      <span className="font-medium text-text">{g.label}</span>
+                      <span className="text-xs text-overlay0">{g.detail}</span>
+                      <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
+                        {g.value}/{g.target}{reached ? ' ✓' : ''}
+                      </span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-surface0">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
+                    </div>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
+    </Page>
+  )
+}

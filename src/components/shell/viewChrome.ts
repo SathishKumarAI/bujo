@@ -1,6 +1,6 @@
 export type ViewId =
   | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'pullups' | 'challenges' | 'focus'
-  | 'plan' | 'collections' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
+  | 'plan' | 'collections' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
 
 export interface ViewChrome {
   title: string
@@ -20,6 +20,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   focus: { title: 'Focus', subtitle: 'Coding time · flow · stress' },
   plan: { title: 'Plan', subtitle: 'Recurring tasks & routines' },
   collections: { title: 'Collections', subtitle: 'Future log & lists' },
+  goals: { title: 'Goals', subtitle: 'Every active target in one place' },
   insights: { title: 'Insights', subtitle: 'Streaks, search & reflection' },
   stats: { title: 'Stats', subtitle: 'Charts at a glance' },
   cycle: { title: 'Cycle', subtitle: 'Temperature & phase', dateNav: 'month' },

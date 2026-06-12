@@ -7,6 +7,7 @@ import { Challenges } from './views/Challenges'
 import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
 import { Plan } from './views/Plan'
+import { Goals } from './views/Goals'
 import { Insights } from './views/Insights'
 import { NoFap } from './views/NoFap'
 import { Help } from './views/Help'
@@ -51,6 +52,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
+  { id: 'goals', label: 'Goals', icon: Target, group: 'Review' },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
   { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
@@ -59,7 +61,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers, fitness: Fitness,
-  gym: Gym, pullups: Pullups, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections,
+  gym: Gym, pullups: Pullups, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
   settings: Settings,
 }
