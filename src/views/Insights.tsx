@@ -16,10 +16,13 @@ export function Insights() {
   const nav = useNav()
   const { setDay, setMonth } = useCursor()
   const [q, setQ] = useState('')
+  const [kind, setKind] = useState('all')
   const streak = currentStreak(data)
   const best = longestStreak(data)
   const tasks = taskCompletion(data)
-  const results = search(data, q)
+  const allResults = search(data, q)
+  const kinds = ['all', ...new Set(allResults.map((r) => r.kind))]
+  const results = kind === 'all' ? allResults : allResults.filter((r) => r.kind === kind)
   const found = insights(data)
 
   // Year-in-review aggregates.
@@ -90,6 +93,20 @@ export function Insights() {
 
       <Card title="Search" subtitle="Find anything across your journal">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries, memories, gratitude, workouts…" autoFocus />
+        {q && kinds.length > 2 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {kinds.map((k) => (
+              <button
+                key={k}
+                onClick={() => setKind(k)}
+                className="rounded-full px-2.5 py-0.5 text-xs capitalize"
+                style={{ background: kind === k ? cat('mauve') : cat('surface0'), color: kind === k ? cat('crust') : cat('subtext1') }}
+              >
+                {k}{k !== 'all' ? ` (${allResults.filter((r) => r.kind === k).length})` : ''}
+              </button>
+            ))}
+          </div>
+        )}
         {q && (
           <div className="mt-3">
             {results.length === 0 ? (
