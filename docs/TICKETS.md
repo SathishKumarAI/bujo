@@ -260,3 +260,34 @@ end-of-marathon patch):
 - **R2-10** — accounts + E2E cloud sync **needs a backend**; out of the
   local-first scope. R2-1's at-rest crypto is the client half of this.
 - **R2-11 tail** — full chart sweep + `axe-core` CI job (needs CI wiring).
+
+## Epic PDF/UX — coaching content + mobile + hosting (shipped)
+
+Driven by the user's workout PDFs + a stream of UX asks. All ✅ on `main`
+(mobile on `feat/mobile-view`).
+
+| # | What | Status |
+|---|---|---|
+| P-01 | Encode 12-week hypertrophy program (generic) + pull-up workout library + progression library | ✅ |
+| P-02 | Move exercise anatomy to the right rail | ✅ |
+| P-03 | Progress-photo tracker (dated upload, gallery, first-vs-latest compare) | ✅ |
+| P-04 | Settings: denser unit grid + "Your data at a glance" | ✅ |
+| P-05 | Stats: clearer mood calendar (purpose, legend, avg/best) | ✅ |
+| P-06 | Anime-style training penalties (300-drill tiered catalogue, severity from skips) | ✅ |
+| P-07 | Fitness: compact 6-tile metrics + history on the right | ✅ |
+| P-08 | Dedicated Pull-ups view; pull-up cards & program moved out of Gym | ✅ |
+| P-09 | Plan: migration sort (Date/Priority), 2-col grid, priority star | ✅ |
+| P-10 | Nutrition: American+Indian food DB → macro auto-sum, sample day, online lookup | ✅ |
+| P-11 | Voice input (Web Speech) on quick-add | ✅ |
+| P-12 | Trainer/physio form-cue + injury-watch per exercise | ✅ |
+| P-13 | GitHub-pages `prose-doc` readable typography + expanded Help | ✅ |
+| P-14 | Shared `StatTile`/`ChartCard`/`ProgramTracker` primitives (de-dup) | ✅ |
+| P-15 | Merge all work → `main`; GitHub Pages deploy workflow + `DATA_MODEL.md` | ✅ |
+| P-16 | Mobile bottom tab bar (`feat/mobile-view`) | ✅ |
+
+**Notes / still open:**
+- GitHub Pages must be enabled once: *Repo → Settings → Pages → Build and
+  deployment: GitHub Actions*.
+- A true server-backed account/sync (R2-10) remains out of local-first scope.
+- "Use the web to calculate" nutrition is a search-link + offline DB; a live
+  USDA/FoodData API integration would need an API key (future).

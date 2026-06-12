@@ -31,8 +31,9 @@ Signifiers stack: `* t book the campsite #travel`.
 | Today | `views/Today.tsx` | Daily log, mood/stress/sleep, fast-break, gratitude, daily memory + photo, on-this-day. |
 | Monthly | `views/Monthly.tsx` | Calendar with event dots, location, goals, photo of the month. |
 | Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), today focus strip, habit presets, emoji + weekly-goal, detail drawer (streak/30-90%/best weekday/skip-day), mood·stress·sleep chart. |
-| Fitness | `views/Fitness.tsx` | Cardio/general workout log + edit + repeat-last, weekly active-minutes goal ring, 8-week trend sparkline, active-day streak, this-week/all-time totals, cardio personal bests, auto-pace, nutrition macro diary (km/mi unit). |
-| Gym | `views/Gym.tsx` | 2-column dashboard. **Quick exercise picker** (searchable dropdown) on rows + anatomy. PPL split + next-day suggestion, routines (click-to-load), **structured `setRows`** with **previous-session + live-1RM hints**, **training-volume + per-exercise progression charts**, PRs + 1RM, rest timer, **plate calculator (unit-aware kg/lb)**, body weight, muscle map, wger DB, **training programs** (pull-up program: week/day selector, **per-exercise check-off** for partial days, load-into-session) + a **pull-up ability/training-set calculator**. Units honour the kg/lb Settings toggle. |
+| Fitness | `views/Fitness.tsx` | Cardio/general workout log + edit + repeat-last (form **and** history on the right rail), weekly active-minutes goal ring, 8-week trend, active-day streak, **compact 6-tile at-a-glance metrics** (totals + bests, no scroll), auto-pace, and a **nutrition diary** with an American+Indian **food picker** that auto-sums macros (`lib/foods.ts`) plus a sample-day fill. |
+| Gym | `views/Gym.tsx` | Dashboard with the anatomy lookup pinned to the **right rail**. **Quick exercise picker** (searchable). PPL split + next-day suggestion, routines, **structured `setRows`** with **previous-session + live-1RM hints**, **training-volume + per-exercise progression charts**, PRs + 1RM, rest timer, **plate calculator (unit-aware kg/lb)**, body weight, muscle map with **per-exercise form-cue + injury-watch guidance** (`lib/exerciseInfo.ts`), wger DB, the **12-week hypertrophy program tracker** (`ProgramTracker only="hyper12"`), and **progress photos** (dated upload, gallery, first-vs-latest compare). Units honour the kg/lb toggle. |
+| Pull-ups | `views/Pullups.tsx` | Dedicated pull-up hub: the **"Starting From Zero" program tracker** (day-by-day check-off, load-into-session), an **ability/training-set calculator** (max → set, ladder & pyramid), the **ability ladder**, a **workout-format library** (Ladders, Pyramids, EMOMs, Elevators…), and **progression exercises** with why/how form cues. Data in `lib/programs.ts`. |
 | Challenges | `views/Challenges.tsx` | Fixed-length discipline challenges — 75 Hard/Soft, 90-day, 30-day, custom; daily rule check-in, progress ring + week-grouped calendar, current streak, strict reset (miss → Day 1), whole-number progress. |
 | Focus | `views/Focus.tsx` | Developer work tracker — log coding sessions (time/project/focus/stress/interruptions/tags), weekly hours + streak, 14-day minutes chart, language bars, focus↔stress insight. |
 | Stats | `views/Stats.tsx` | Activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, tag cloud. |
@@ -70,6 +71,19 @@ Signifiers stack: `* t book the campsite #travel`.
   or an existing habit); its popover offers *Go to · Add anyway*.
 - **Recommendations** — dismissible "smart default" chips above the page suggest
   backups, reminders, weekly goals, or turning a streak into a challenge.
+
+## Motivation & capture
+
+- **Training penalties** (`lib/penalties.ts`, `PenaltyCard`) — skip a habit streak,
+  an overdue task, or a challenge day and Today surfaces an **anime-style penalty**
+  scaled to the slip (light → legendary, from a 300-drill catalogue). Re-roll or
+  dismiss for the day.
+- **Voice input** (`lib/speech.ts`, `MicButton`) — dictate entry text via the Web
+  Speech API; a mic button on quick-add appends each phrase. No-ops where unsupported.
+- **Accent colour** — Settings → Journal feel; overrides `--primary` app-wide.
+- **Progress photos** — physique tracking with a first-vs-latest compare (Gym).
+- **Mobile** (`feat/mobile-view` branch) — a thumb-friendly **bottom tab bar** +
+  quick-add FAB on phones; the app shell already stacks responsively.
 
 ## Power tools
 

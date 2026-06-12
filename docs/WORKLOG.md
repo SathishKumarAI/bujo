@@ -1,5 +1,46 @@
 # Worklog
 
+## 2026-06-12 13:56 — PDF coaching content + mobile + hosting (16 features)
+
+**Summary:** Read the four workout PDFs and turned them into trackable app
+content, then cleared a long stream of UX asks — all merged to `main`, with the
+mobile view on its own branch and a GitHub Pages deploy wired up.
+
+**Changes:**
+- `lib/programs.ts` — encoded a generic 12-week/3-phase hypertrophy program, the
+  pull-up workout-format library, and progression exercises (PDF stays gitignored;
+  no personal data).
+- New **Pull-ups** view (`views/Pullups.tsx`, nav + viewChrome) — program tracker,
+  ability calculator/ladder, workout library, progressions. Pull-up cards moved
+  out of Gym; `ProgramTracker` extracted (`only` scope prop) so Gym keeps hypertrophy.
+- `components/ProgressPhotos.tsx` + `ProgressPhoto` type/store actions — dated
+  physique photos with first-vs-latest compare.
+- `lib/penalties.ts` (+test) + `PenaltyCard` — 300-drill anime-style penalty
+  catalogue, severity from skipped habits/tasks/challenges, on Today.
+- `lib/foods.ts` (+test) — American+Indian food DB → macro auto-sum in the
+  Nutrition card, sample-day fill, online-lookup link.
+- `lib/exerciseInfo.ts` (+test) — form-cue + injury-watch per exercise in the Gym
+  anatomy card.
+- `lib/speech.ts` + `MicButton` — Web Speech dictation on quick-add.
+- Fitness compact 6-tile metrics + history on the right; Settings denser unit grid
+  + data-summary; Stats clearer mood calendar; Plan migration sort + priority star.
+- `components/ui.tsx` — shared `StatTile` (compact variant) + `ChartCard`; chart
+  a11y labels; accent picker (earlier).
+- `index.css` — `prose-doc` GitHub-pages typography; Help expanded.
+- `shell/BottomNav.tsx` (branch `feat/mobile-view`) — mobile bottom tab bar + FAB.
+- `.github/workflows/deploy.yml`, `docs/DATA_MODEL.md` — static hosting + schema map.
+
+**Decisions:** Personal coaching PDF encoded as *generic* training structure only
+(no name/coach/stats); PDF gitignored. Pull-up program lives in the Pull-ups view,
+hypertrophy in the Gym, via one shared `ProgramTracker` scoped by `only`. Merged
+the 88-commit stack to `main` by fast-forward; mobile kept on its own branch per
+request. Nutrition "web calc" = offline DB + search link (a live USDA API needs a key).
+
+**Follow-ups:**
+- [ ] Enable GitHub Pages: Repo → Settings → Pages → GitHub Actions.
+- [ ] Open/merge the `feat/mobile-view` PR when ready.
+- [ ] Optional: live food-macro API; server-backed sync (R2-10) still out of scope.
+
 ## 2026-06-12 02:14 — R2 backlog autonomous run (7 of 11 shipped)
 
 **Summary:** Worked the R2 roadmap end-to-end without checkpoints, per the
