@@ -5,6 +5,8 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
+  useState,
   type ReactNode,
 } from 'react'
 import type {
@@ -25,7 +27,9 @@ import type {
   Weather,
   Workout,
 } from './lib/types'
-import { load, save, uid } from './lib/storage'
+import { load, save, uid, emptyJournal, migrate, hasEncrypted, readEncryptedRaw, writeEncrypted, clearEncrypted } from './lib/storage'
+import { encryptString, decryptString } from './lib/crypto'
+import { LockScreen } from './components/LockScreen'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
 import { generateRecurring } from './lib/recurrence'
@@ -152,6 +156,9 @@ interface Store {
   setSettings: (patch: Partial<Settings>) => void
   // bulk
   replaceAll: (data: JournalData) => void
+  // passcode / encryption
+  setPasscode: (passcode: string | null) => void
+  encrypted: boolean
   // history
   undo: () => void
   redo: () => void
@@ -164,13 +171,24 @@ const Ctx = createContext<Store | null>(null)
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function JournalProvider({ children }: { children: ReactNode }) {
-  const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: load(), future: [] }))
+  // If the journal is encrypted, start locked with an empty journal until unlock.
+  const startsEncrypted = hasEncrypted()
+  const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: startsEncrypted ? emptyJournal() : load(), future: [] }))
   const data = hist.present
+  const [unlocked, setUnlocked] = useState(!startsEncrypted)
+  const passcodeRef = useRef<string | null>(null)
 
-  // Persist on every change.
+  // Persist on every change — encrypted if a passcode is active, else plaintext.
+  // Never write while still locked (would clobber the encrypted blob with empty).
   useEffect(() => {
-    save(data)
-  }, [data])
+    if (!unlocked) return
+    const pc = passcodeRef.current
+    if (pc) {
+      encryptString(JSON.stringify(data), pc).then(writeEncrypted).catch((e) => console.error('bujo: encrypt failed', e))
+    } else {
+      save(data)
+    }
+  }, [data, unlocked])
 
   // Keep the <html data-theme> in sync.
   useEffect(() => {
@@ -551,12 +569,40 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       replaceAll: (next) => dispatch({ type: 'set', data: next }),
 
+      // Enable (passcode string) → encrypt + drop plaintext. Disable (null) →
+      // write plaintext + drop the encrypted blob. Data in memory is untouched.
+      setPasscode: (pc) => {
+        passcodeRef.current = pc
+        if (pc) {
+          encryptString(JSON.stringify(data), pc).then(writeEncrypted).catch((e) => console.error('bujo: encrypt failed', e))
+        } else {
+          clearEncrypted()
+          save(data)
+        }
+        // Re-render so `encrypted` flag updates.
+        setUnlocked((u) => u)
+      },
+      encrypted: passcodeRef.current != null,
+
       undo: () => dispatch({ type: 'undo' }),
       redo: () => dispatch({ type: 'redo' }),
       canUndo: hist.past.length > 0,
       canRedo: hist.future.length > 0,
     }
   }, [data, patch, hist.past.length, hist.future.length])
+
+  // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
+  async function unlock(pc: string) {
+    const blob = readEncryptedRaw()
+    if (!blob) { setUnlocked(true); return }
+    const json = await decryptString(blob, pc) // throws → LockScreen shows error
+    const decrypted = migrate(JSON.parse(json))
+    passcodeRef.current = pc
+    dispatch({ type: 'silent', fn: () => decrypted })
+    setUnlocked(true)
+  }
+
+  if (!unlocked) return <LockScreen onUnlock={unlock} />
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }
