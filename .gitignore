@@ -25,3 +25,8 @@ dist-ssr
 
 # Local reference PDFs — never commit (may contain personal info / copyrighted programs)
 docs/pdf/
+
+# graphify — generated knowledge-graph state (machine-local, rebuildable)
+.graphify/
+# Personal per-machine Claude Code settings (not the shared project config)
+.claude/settings.local.json
