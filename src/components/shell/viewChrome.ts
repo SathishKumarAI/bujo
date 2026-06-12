@@ -13,7 +13,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   today: { title: 'Today', subtitle: 'Your daily log', dateNav: 'day' },
   monthly: { title: 'Monthly', subtitle: 'Events show as dots', dateNav: 'month' },
   trackers: { title: 'Trackers', subtitle: 'Tap a cell to mark the day', dateNav: 'month' },
-  fitness: { title: 'Fitness', subtitle: 'Workout log & totals' },
+  fitness: { title: 'Fitness', subtitle: 'Cardio & strength' },
   gym: { title: 'Gym', subtitle: 'Sessions & exercises' },
   pullups: { title: 'Pull-ups', subtitle: 'Ability, workouts & progressions' },
   challenges: { title: 'Challenges', subtitle: '75 Hard, 90-day & custom challenges' },

@@ -5,7 +5,7 @@ import type { ViewId } from './viewChrome'
 
 // The handful of views worth a thumb-tap on a phone. The rest stay in the
 // hamburger drawer. Center slot is a quick-add FAB.
-const PRIMARY: ViewId[] = ['today', 'monthly', 'trackers', 'gym']
+const PRIMARY: ViewId[] = ['today', 'monthly', 'trackers', 'fitness']
 
 /**
  * Mobile-only bottom tab bar (hidden ≥ md). Four primary destinations plus a
