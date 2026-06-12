@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon, Settings as SettingsIcon, HelpCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon, Settings as SettingsIcon, HelpCircle, Lightbulb, PanelLeft } from 'lucide-react'
+import { recommendations } from '../../lib/recommend'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -34,6 +35,7 @@ export function TopBar({
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const { day, setDay, month, setMonth } = useCursor()
   const chrome = VIEW_CHROME[view]
+  const recs = recommendations(data)
   const zoom = data.settings.zoom ?? 1
   const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
 
@@ -80,6 +82,26 @@ export function TopBar({
         <Button variant="default" size="sm" onClick={onQuickAdd} className="gap-1.5">
           <Plus size={15} /> <span className="hidden sm:inline">Quick add</span>
         </Button>
+
+        {/* Recommendations — small icon + count badge, no wasted vertical space. */}
+        {recs.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={`${recs.length} suggestions`} title="Suggestions" className="relative">
+                <Lightbulb size={16} className="text-yellow" />
+                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-yellow px-0.5 text-[9px] font-bold text-crust">{recs.length}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              {recs.map((r) => (
+                <DropdownMenuItem key={r.id} onClick={() => r.action && onNavigate(r.action.view)} className="flex-col items-start gap-1 py-2">
+                  <span className="text-sm text-subtext1">{r.text}</span>
+                  {r.action && <span className="text-xs text-blue">→ {r.action.label}</span>}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <Button
           variant={view === 'settings' ? 'secondary' : 'ghost'}
           size="icon-sm"
@@ -109,6 +131,14 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
+            <div className="px-2 py-1.5 text-[10px] tracking-wider text-overlay0 uppercase">Theme</div>
+            {(['mocha', 'latte', 'neon'] as const).map((th) => (
+              <DropdownMenuItem key={th} onClick={() => setSettings({ theme: th })}>
+                <span className={data.settings.theme === th ? 'text-mauve' : ''}>{data.settings.theme === th ? '● ' : '○ '}</span>
+                {th === 'mocha' ? 'Dark' : th === 'latte' ? 'Light' : 'Neon ✦'}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('help')}>
               <HelpCircle size={15} /> Help &amp; guide
             </DropdownMenuItem>
@@ -119,6 +149,10 @@ export function TopBar({
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled={!canUndo} onClick={undo}>Undo</DropdownMenuItem>
             <DropdownMenuItem disabled={!canRedo} onClick={redo}>Redo</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setSettings({ sidebarAutoHide: !data.settings.sidebarAutoHide })}>
+              <PanelLeft size={15} /> {data.settings.sidebarAutoHide ? 'Pin sidebar' : 'Auto-hide sidebar'}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ paperMode: !data.settings.paperMode })}>Toggle paper</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setSettings({ handwriting: !data.settings.handwriting })}>Toggle handwriting</DropdownMenuItem>

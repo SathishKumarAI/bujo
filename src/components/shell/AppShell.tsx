@@ -13,6 +13,7 @@ export function AppShell({
   groupOrder,
   view,
   collapsed,
+  autoHide,
   onNavigate,
   onToggleCollapse,
   onCommand,
@@ -22,6 +23,7 @@ export function AppShell({
   groupOrder: string[]
   view: ViewId
   collapsed: boolean
+  autoHide: boolean
   onNavigate: (id: ViewId) => void
   onToggleCollapse: () => void
   onCommand: () => void
@@ -38,8 +40,9 @@ export function AppShell({
         items={items}
         groupOrder={groupOrder}
         view={view}
-        collapsed={collapsed}
+        collapsed={autoHide ? false : collapsed}
         navOpen={navOpen}
+        autoHide={autoHide}
         onNavigate={(id) => {
           onNavigate(id)
           setNavOpen(false)

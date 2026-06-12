@@ -98,6 +98,17 @@ export interface Weather {
 }
 
 /** A logged workout / fitness session. */
+/** One structured strength set (Lyfta-style logging). */
+export interface WorkoutSet {
+  exercise: string
+  weight?: number
+  reps?: number
+  /** Perceived exertion 1–10. */
+  rpe?: number
+  /** warmup · working (default) · drop set. */
+  kind?: 'warmup' | 'working' | 'drop'
+}
+
 export interface Workout {
   id: string
   date: string // ISO day
@@ -107,8 +118,10 @@ export interface Workout {
   split?: Split
   durationMin?: number
   distanceKm?: number
-  /** Strength sets: each is "exercise xReps @ weight". Free-form lines. */
+  /** Strength sets: each is "exercise xReps @ weight". Free-form lines (legacy + display). */
   sets: string[]
+  /** Structured strength sets (preferred for analytics; `sets` kept for back-compat). */
+  setRows?: WorkoutSet[]
   calories?: number
   /** Perceived exertion 1–10 (RPE). */
   rpe?: number
@@ -179,7 +192,7 @@ export interface Collection {
   createdAt: string
 }
 
-export type ThemeName = 'mocha' | 'latte'
+export type ThemeName = 'mocha' | 'latte' | 'neon'
 export type TempUnit = 'F' | 'C'
 export type WeightUnit = 'kg' | 'lb'
 export type DistanceUnit = 'km' | 'mi'
@@ -206,6 +219,8 @@ export interface Streak {
 
 export interface Settings {
   theme: ThemeName
+  /** Optional accent override (Catppuccin token name); defaults to mauve. */
+  accent?: string
   tempUnit: TempUnit
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit
@@ -256,12 +271,18 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
+  programDone?: string[]
+  /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
+  programActuals?: Record<string, string>
   // ── Tracker (global) ──
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
   trackerShowArchived?: boolean
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
+  /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
+  sidebarAutoHide?: boolean
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */
@@ -276,6 +297,21 @@ export interface Challenge {
   /** 75-Hard rule: missing a day resets progress to Day 1. */
   strict: boolean
   archived?: boolean
+}
+
+/** A logged focus/coding work session (developer tracker). */
+export interface DevSession {
+  id: string
+  date: string // ISO day
+  durationMin: number
+  project?: string
+  /** Flow/focus quality 0–10. */
+  focus: number
+  /** Stress during the session 0–10. */
+  stress: number
+  interruptions?: number
+  tags?: string[] // languages / tools, e.g. ["typescript", "react"]
+  notes?: string
 }
 
 /** The single root object persisted to localStorage. */
@@ -306,6 +342,8 @@ export interface JournalData {
   challengeLog?: Record<string, Record<string, number[]>>
   /** habitId -> ISO days marked as a planned skip (don't break the streak). */
   habitSkips?: Record<string, string[]>
+  /** Developer focus/coding sessions. */
+  devSessions?: DevSession[]
   settings: Settings
 }
 

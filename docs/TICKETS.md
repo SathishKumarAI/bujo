@@ -168,7 +168,7 @@ IDs are stable references for commits and PRs.
 |---|---|---|
 | BUJO-90 | Passcode lock + client-side encryption (Web Crypto) | 🔜 |
 | BUJO-91 | Opt-in accounts + E2E-encrypted cloud sync | 🔜 |
-| BUJO-92 | Command palette (Cmd/Ctrl-K) | 🔜 |
+| BUJO-92 | Command palette (Cmd/Ctrl-K) | ✅ |
 | BUJO-93 | Custom free-form collections UI | 🔜 |
 | BUJO-94 | Chart text-alternatives + axe-core CI | 🔜 |
 
@@ -203,9 +203,60 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 
 | ID | Title | Status |
 |---|---|---|
-| V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | 🔜 |
-| V3-B | Cross-place task sync (single source of truth + recurrence links) | 🔜 |
-| V3-C | Developer "Focus" tracker (coding time · work style · stress) | 🔜 |
-| V3-D | Richer tracker viz (heatmap, sparkline, radar) + finish Trackers v2 | 🔜 |
-| V3-E | Recommendations & smart defaults (dismissible suggestion notes) | 🔜 |
-| V3-F | Gym v2 (structured sets, volume/progression charts) — carried over | 🔜 |
+| V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | ✅ |
+| V3-B | Cross-place task sync — recurrence-instance linking + edit propagates to future occurrences (+ ↻ badge, Plan edit) | ✅ |
+| V3-C | Developer "Focus" tracker (coding time · work style · stress) | ✅ |
+| V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
+| V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
+| V3-F | Gym v2 — structured `setRows` + plate calc (kg/lb) + previous-session/1RM hints + 2-col redesign + pull-up program | ✅ |
+| V3-G | Quick exercise picker — searchable dropdown (recents + library + custom) on set rows + anatomy lookup | ✅ |
+| V3-H | Gym structured charts — weekly training-volume bars + per-exercise progression line | ✅ |
+| V3-I | Per-set RPE + set type (warmup/working/drop) inputs in the logger grid | ✅ |
+| V3-J | Partial completion — per-exercise checkboxes + actual-reps-vs-prescribed field in a program day | ✅ |
+| V3-K | Training programs from PDF — pull-up program (week/day, load-into-session, day tracker) + ability/training-set calculator + exercises in library | ✅ |
+| V3-L | Space UX — auto-hide sidebar (edge-hover reveal) + recommendations as a top-bar lightbulb badge | ✅ |
+| V3-M | Plate calculator — unit-aware plates (kg/lb) + remount on unit change | ✅ |
+
+## Epic P — Polish: scroll, analytics, cloud (2026-06-12)
+
+Page-by-page enhancement pass. Full audit in `docs/redesign/06-app-audit-and-enhancements.mdx`.
+
+| ID | Title | Status |
+|---|---|---|
+| P-1 | Challenges 2-grid (rules+stats / calendar) + best-streak/days-left stats | ✅ |
+| P-2 | Fitness compact one-line history (recent/all toggle) | ✅ |
+| P-3 | Trackers Day/Week/Month view toggle | ✅ |
+| P-4 | Side-by-side cards to cut scrolling (Fitness Totals+PBs, Focus stats+chart) | ✅ |
+| P-5 | Cloud storage — verified: own-folder / Google Drive / GitHub gist (Settings → Data & Cloud) | ✅ |
+| P-6 | Trackers category radar chart | 🔜 |
+| P-7 | Custom-collections UI (BUJO-93) | 🔜 |
+| P-8 | Passcode + client-side encryption (BUJO-90) | 🔜 |
+| P-9 | Accounts + E2E cloud sync (BUJO-91, needs backend) | 🔜 |
+
+## Epic R2 — Roadmap (scoped 2026-06-12)
+
+Vision + full reasoning in `docs/redesign/07-space-vision-and-backlog.mdx`.
+
+| ID | Title | Size | Status |
+|---|---|---|---|
+| R2-1 | Passcode + client-side encryption — AES-GCM/PBKDF2 at rest, lock-screen gate, encrypt-on-save | ✅ |
+| R2-2 | Monthly: habit-completion ribbon per day | S | ✅ |
+| R2-3 | Insights: clickable stats → jump to source (nav context) | S | ✅ |
+| R2-4 | Stats: activity-heatmap range picker (3/6/12mo) | S | ✅ |
+| R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | 🔜 |
+| R2-6 | Drag-and-drop: **reorder habits** (native DnD on a grip) | M | ✅ |
+| R2-7 | Unified cross-view goal system | M | 🔜 |
+| R2-8 | Smarter notifications (streak-at-risk, challenge day) | M | ✅ |
+| R2-9 | Accent-color picker (Settings → Journal feel) | M | ✅ |
+| R2-10 | Accounts + E2E-encrypted cloud sync (needs backend) | L | 🔜 |
+| R2-11 | Chart a11y text-alternatives (key charts) — axe-core CI deferred | M | ◑ |
+
+**Still open after this run** (each merits its own focused session, not a rushed
+end-of-marathon patch):
+- **R2-5** — extract `StatTile`/`ChartCard` from the ~dozen ad-hoc stat/chart
+  blocks. Pure refactor; touches many files, so do it deliberately.
+- **R2-7** — a unified goal model (one `Goal` type spanning habits, challenges,
+  fitness, focus) with a cross-view roll-up. Genuine feature design needed.
+- **R2-10** — accounts + E2E cloud sync **needs a backend**; out of the
+  local-first scope. R2-1's at-rest crypto is the client half of this.
+- **R2-11 tail** — full chart sweep + `axe-core` CI job (needs CI wiring).

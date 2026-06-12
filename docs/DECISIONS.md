@@ -148,6 +148,62 @@ don't pull the chart chunk. Gym's structured-set rewrite (per-set RPE/type +
 volume/progression charts) is **scoped but deferred** to a focused session — see
 `docs/superpowers/plans/2026-06-11-v2-view-enhancements.md` Phase D.
 
+**D-23 — Smart input is a pure-logic core + a thin component.**
+*Context:* completion + duplicate detection must be testable and reusable across
+the quick-add and habit-add fields.
+*Choice:* `lib/suggest.ts` (suggestions + token-overlap duplicate scoring, unit-
+tested) feeds a `SmartInput` component that owns the popover, keyboard nav, and a
+**corner badge** for duplicates. The bullet grammar still parses in `addEntry`, so
+typing `t …`/`e …`/`* …` works unchanged; a live preview makes it discoverable.
+*Trade-off:* fuzzy-match threshold is heuristic (0.7) — tunable, non-blocking.
+
+**D-24 — Recommendations are pure + dismissible, never sensitive.**
+*Choice:* `lib/recommend.ts` returns ranked `Recommendation[]`; an app-shell bar
+shows the top 2 with a nav action and a dismiss. Cycle/NoFap are never surfaced.
+*Why:* helpful nudges without nagging or privacy leaks.
+
+**D-25 — Developer Focus tracker is its own view + model, not a habit type.**
+*Context:* coding sessions need duration + focus + stress + tags, richer than a
+habit dot.
+*Choice:* a `DevSession` model + `lib/focus.ts` (weekly minutes, streak,
+duration-weighted averages, focus↔stress Pearson) + a `Focus` view in Health.
+Charts are inline SVG/CSS (no Recharts) to hold the bundle budget.
+
+**D-26 — Training programs are encoded as app data; source PDFs are gitignored.**
+*Context:* a user-supplied pull-up program PDF (and a personal document) sat in
+`docs/pdf/`.
+*Choice:* encode the program structure in `lib/programs.ts` and surface it as a
+Gym **ProgramCard** (week/day selector, load-into-session, day tracker). Add
+`docs/pdf/` to `.gitignore` so neither the **personal PDF (PII)** nor the
+copyrighted program PDFs are ever committed.
+*Why:* keep PII and third-party copyrighted material out of the repo; the app
+ships only the abstracted training structure.
+
+**D-27 — Structured gym sets are additive (`setRows`), legacy strings kept.**
+*Choice:* `Workout.setRows: WorkoutSet[]` (exercise/weight/reps/rpe/kind) is
+written on finish alongside the legacy `sets: string[]` for display/back-compat.
+Enables `sessionVolume` / `exerciseProgression` / `lastSetFor` (previous-session
+reference + live 1RM in the logger). Per-set RPE/type inputs + volume/progression
+charts are scoped (TICKETS V3-H/I) but not yet wired.
+
+**D-28 — Plate denominations follow the unit.** kg uses 25/20/15/10/5/2.5/1.25;
+lb uses 45/35/25/10/5/2.5. Fixes a unit bug where lb users saw kg plates.
+
+**D-29 — Reclaim screen space: auto-hide sidebar + recommendations as an icon.**
+*Context:* the sidebar + a recommendations banner ate horizontal and vertical space.
+*Choice:* an opt-in **auto-hide** mode (sidebar becomes a fixed overlay revealed by
+a left-edge hover zone via Tailwind `peer-hover`; content goes full-width) and
+move recommendations into a top-bar **lightbulb + count badge** dropdown.
+*Why:* maximise content area without losing one-tap access to nav or suggestions.
+
+**D-30 — Passcode encryption is at-rest + a lock gate, never lossy.**
+*Choice:* `crypto.ts` (PBKDF2 → AES-GCM); when a passcode is set, `save()`
+encrypts to `bujo:enc` and drops the plaintext `bujo:data`. A `LockScreen` in
+`JournalProvider` gates the app on load; unlock decrypts into memory. A **wrong
+passcode throws and never wipes data**; removing the passcode rewrites plaintext.
+*Trade-off:* no recovery if the passcode is lost — the UI says so and nudges a
+JSON export. Local-only; pairs with future E2E cloud sync (BUJO-91).
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

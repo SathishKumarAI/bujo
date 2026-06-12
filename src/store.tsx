@@ -5,12 +5,15 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
+  useState,
   type ReactNode,
 } from 'react'
 import type {
   Birthday,
   Challenge,
   CyclePoint,
+  DevSession,
   DailyMetric,
   Entry,
   BodyMetric,
@@ -24,7 +27,9 @@ import type {
   Weather,
   Workout,
 } from './lib/types'
-import { load, save, uid } from './lib/storage'
+import { load, save, uid, emptyJournal, migrate, hasEncrypted, readEncryptedRaw, writeEncrypted, clearEncrypted } from './lib/storage'
+import { encryptString, decryptString } from './lib/crypto'
+import { LockScreen } from './components/LockScreen'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
 import { generateRecurring } from './lib/recurrence'
@@ -131,8 +136,13 @@ interface Store {
   removeChallenge: (id: string) => void
   updateChallenge: (id: string, patch: Partial<Challenge>) => void
   toggleChallengeRule: (challengeId: string, day: string, ruleIndex: number) => void
+  // dev sessions
+  addDevSession: (s: Omit<DevSession, 'id'>) => void
+  updateDevSession: (id: string, patch: Partial<DevSession>) => void
+  removeDevSession: (id: string) => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
+  updateRecurrence: (id: string, patch: Partial<Recurrence>) => void
   removeRecurrence: (id: string) => void
   // collections
   addCollection: (name: string, icon: string) => void
@@ -146,6 +156,9 @@ interface Store {
   setSettings: (patch: Partial<Settings>) => void
   // bulk
   replaceAll: (data: JournalData) => void
+  // passcode / encryption
+  setPasscode: (passcode: string | null) => void
+  encrypted: boolean
   // history
   undo: () => void
   redo: () => void
@@ -158,18 +171,36 @@ const Ctx = createContext<Store | null>(null)
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function JournalProvider({ children }: { children: ReactNode }) {
-  const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: load(), future: [] }))
+  // If the journal is encrypted, start locked with an empty journal until unlock.
+  const startsEncrypted = hasEncrypted()
+  const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: startsEncrypted ? emptyJournal() : load(), future: [] }))
   const data = hist.present
+  const [unlocked, setUnlocked] = useState(!startsEncrypted)
+  const passcodeRef = useRef<string | null>(null)
 
-  // Persist on every change.
+  // Persist on every change — encrypted if a passcode is active, else plaintext.
+  // Never write while still locked (would clobber the encrypted blob with empty).
   useEffect(() => {
-    save(data)
-  }, [data])
+    if (!unlocked) return
+    const pc = passcodeRef.current
+    if (pc) {
+      encryptString(JSON.stringify(data), pc).then(writeEncrypted).catch((e) => console.error('bujo: encrypt failed', e))
+    } else {
+      save(data)
+    }
+  }, [data, unlocked])
 
   // Keep the <html data-theme> in sync.
   useEffect(() => {
-    document.documentElement.dataset.theme = data.settings.theme === 'latte' ? 'latte' : 'mocha'
+    document.documentElement.dataset.theme = data.settings.theme
   }, [data.settings.theme])
+
+  // Optional accent override → drives every `--primary`/`bg-primary` use.
+  useEffect(() => {
+    const root = document.documentElement
+    if (data.settings.accent) root.style.setProperty('--primary', `var(--color-${data.settings.accent})`)
+    else root.style.removeProperty('--primary')
+  }, [data.settings.accent, data.settings.theme])
 
   // Toggle realism body classes (paper texture + handwriting font).
   useEffect(() => {
@@ -460,11 +491,50 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           return { ...d, challengeLog: { ...(d.challengeLog ?? {}), [challengeId]: byDay } }
         }),
 
+      addDevSession: (s) =>
+        patch((d) => ({ ...d, devSessions: [...(d.devSessions ?? []), { id: uid('dev'), ...s }] })),
+
+      updateDevSession: (id, spatch) =>
+        patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).map((s) => (s.id === id ? { ...s, ...spatch } : s)) })),
+
+      removeDevSession: (id) =>
+        patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).filter((s) => s.id !== id) })),
+
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),
 
+      // Edit a rule and propagate text/type/important to its FUTURE open
+      // instances (single source of truth across the rule and its occurrences).
+      updateRecurrence: (id, rpatch) =>
+        patch((d) => {
+          const t = todayISO()
+          return {
+            ...d,
+            recurrences: d.recurrences.map((r) => (r.id === id ? { ...r, ...rpatch } : r)),
+            entries: d.entries.map((e) =>
+              e.recurringId === id && e.status === 'open' && e.date >= t
+                ? {
+                    ...e,
+                    ...(rpatch.text != null ? { text: rpatch.text } : {}),
+                    ...(rpatch.type != null ? { type: rpatch.type } : {}),
+                    ...(rpatch.important != null ? { important: rpatch.important } : {}),
+                  }
+                : e,
+            ),
+          }
+        }),
+
+      // Removing a rule also clears its not-yet-done future instances; past and
+      // completed occurrences stay as history.
       removeRecurrence: (id) =>
-        patch((d) => ({ ...d, recurrences: d.recurrences.filter((r) => r.id !== id) })),
+        patch((d) => {
+          const t = todayISO()
+          return {
+            ...d,
+            recurrences: d.recurrences.filter((r) => r.id !== id),
+            entries: d.entries.filter((e) => !(e.recurringId === id && e.status === 'open' && e.date >= t)),
+          }
+        }),
 
       addCollection: (name, icon) =>
         patch((d) => ({
@@ -506,12 +576,40 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       replaceAll: (next) => dispatch({ type: 'set', data: next }),
 
+      // Enable (passcode string) → encrypt + drop plaintext. Disable (null) →
+      // write plaintext + drop the encrypted blob. Data in memory is untouched.
+      setPasscode: (pc) => {
+        passcodeRef.current = pc
+        if (pc) {
+          encryptString(JSON.stringify(data), pc).then(writeEncrypted).catch((e) => console.error('bujo: encrypt failed', e))
+        } else {
+          clearEncrypted()
+          save(data)
+        }
+        // Re-render so `encrypted` flag updates.
+        setUnlocked((u) => u)
+      },
+      encrypted: passcodeRef.current != null,
+
       undo: () => dispatch({ type: 'undo' }),
       redo: () => dispatch({ type: 'redo' }),
       canUndo: hist.past.length > 0,
       canRedo: hist.future.length > 0,
     }
   }, [data, patch, hist.past.length, hist.future.length])
+
+  // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
+  async function unlock(pc: string) {
+    const blob = readEncryptedRaw()
+    if (!blob) { setUnlocked(true); return }
+    const json = await decryptString(blob, pc) // throws → LockScreen shows error
+    const decrypted = migrate(JSON.parse(json))
+    passcodeRef.current = pc
+    dispatch({ type: 'silent', fn: () => decrypted })
+    setUnlocked(true)
+  }
+
+  if (!unlocked) return <LockScreen onUnlock={unlock} />
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }

@@ -11,15 +11,18 @@ export function Card({
   right,
   children,
   className = '',
+  onClick,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
   right?: ReactNode
   children: ReactNode
   className?: string
+  onClick?: () => void
 }) {
   return (
     <section
+      onClick={onClick}
       className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${className}`}
     >
       {(title || right) && (

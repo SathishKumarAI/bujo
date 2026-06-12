@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
+import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
+import { SmartInput } from '../components/SmartInput'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -25,13 +27,27 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
 ]
 
 export function Trackers() {
-  const { data, toggleHabit, setHabitValue, addHabit, setSettings } = useJournal()
+  const { data, toggleHabit, setHabitValue, addHabit, setSettings, updateHabit } = useJournal()
+
+  /** Drag-reorder within a category: rewrite `order` to the new sequence. */
+  function reorderHabits(category: HabitCategory, dragId: string, dropId: string) {
+    if (dragId === dropId) return
+    const list = data.habits.filter((h) => h.category === category).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const from = list.findIndex((h) => h.id === dragId)
+    const to = list.findIndex((h) => h.id === dropId)
+    if (from < 0 || to < 0) return
+    const [moved] = list.splice(from, 1)
+    list.splice(to, 0, moved)
+    list.forEach((h, i) => { if ((h.order ?? 0) !== i) updateHabit(h.id, { order: i }) })
+  }
   const { month: ym } = useCursor()
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   const [editing, setEditing] = useState<string | null>(null)
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
   const today = todayISO()
 
   const s = data.settings
@@ -40,6 +56,15 @@ export function Trackers() {
   const weekStart = s.weekStart ?? 0
   let days = monthDays(ym)
   if (s.trackerHideWeekends) days = days.filter((d) => { const c = weekColumn(d, weekStart); return weekStart === 1 ? c < 5 : c > 0 && c < 6 })
+  // Day/Week/Month focus: narrow the visible columns.
+  if (viewMode === 'day') {
+    days = [today]
+  } else if (viewMode === 'week') {
+    const col = weekColumn(today, weekStart)
+    const start = addDays(today, -col)
+    days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
+    if (s.trackerHideWeekends) days = days.filter((d) => { const c = weekColumn(d, weekStart); return weekStart === 1 ? c < 5 : c > 0 && c < 6 })
+  }
 
   const visibleHabits = data.habits.filter((h) => s.trackerShowArchived || !h.archived)
 
@@ -65,7 +90,8 @@ export function Trackers() {
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
         right={
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1.5">
+            {!radial && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
           </div>
@@ -116,6 +142,9 @@ export function Trackers() {
                     onToggle={toggleHabit}
                     onSetValue={setHabitValue}
                     onEdit={setEditing}
+                    onReorder={reorderHabits}
+                    collapsed={collapsedCats.has(category)}
+                    onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); n.has(category) ? n.delete(category) : n.add(category); return n })}
                   />
                 ))}
               </tbody>
@@ -137,7 +166,17 @@ export function Trackers() {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Input value={newHabit} onChange={(e) => setNewHabit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="New habit / food / stimulant…" className="max-w-xs" />
+            <div className="w-full max-w-xs">
+              <SmartInput
+                value={newHabit}
+                onChange={setNewHabit}
+                onSubmit={() => add()}
+                suggestCtx={{ tags: [], recents: [], habits: data.habits.map((h) => h.name) }}
+                dupItems={data.habits.map((h) => ({ id: h.id, text: h.name }))}
+                onGoToDuplicate={(id) => { setEditing(id); setNewHabit('') }}
+                placeholder="New habit / food / stimulant…"
+              />
+            </div>
             <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -146,8 +185,9 @@ export function Trackers() {
         </div>
       </Card>
 
-      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`}>
-        <div className="h-64 w-full">
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
+        <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -164,6 +204,24 @@ export function Trackers() {
           </ResponsiveContainer>
         </div>
       </Card>
+
+      <Card title="Category consistency" subtitle="30-day avg per category">
+        <div className="h-56 w-full" role="img" aria-label="Radar chart of 30-day habit consistency averaged per category">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={CATEGORIES.filter((category) => visibleHabits.some((h) => h.category === category)).map((category) => {
+              const hs = visibleHabits.filter((h) => h.category === category)
+              const avg = hs.length ? Math.round(hs.reduce((a, h) => a + habitConsistency(data, h.id, h.startedOn), 0) / hs.length) : 0
+              return { category, value: avg }
+            })}>
+              <PolarGrid stroke={cat('surface1')} />
+              <PolarAngleAxis dataKey="category" tick={{ fill: cat('overlay1'), fontSize: 10 }} />
+              <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
+              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+      </div>
 
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
     </Page>
@@ -246,7 +304,7 @@ function TodayStrip({
 
 // ── Category section of habit rows ───────────────────────────────────────────
 function CategoryRows({
-  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit,
+  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit, onReorder, collapsed, onToggleCollapse,
 }: {
   category: string
   habits: Habit[]
@@ -258,16 +316,39 @@ function CategoryRows({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
+  onReorder: (category: HabitCategory, dragId: string, dropId: string) => void
+  collapsed: boolean
+  onToggleCollapse: () => void
 }) {
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   return (
     <>
-      <tr><td colSpan={days.length + 2} className="pt-3 pb-1 text-[10px] tracking-wide text-overlay0 uppercase">{category}</td></tr>
-      {habits.map((h) => {
+      <tr>
+        <td colSpan={days.length + 2} className="pt-3 pb-1">
+          <button onClick={onToggleCollapse} className="text-[10px] tracking-wide text-overlay0 uppercase hover:text-subtext1">
+            {collapsed ? '▸' : '▾'} {category} {collapsed && <span className="text-overlay1">({habits.length})</span>}
+          </button>
+        </td>
+      </tr>
+      {!collapsed && habits.map((h) => {
         const isCount = h.type === 'count'
         const target = h.target && h.target > 0 ? h.target : 1
         return (
-          <tr key={h.id} className="group">
+          <tr
+            key={h.id}
+            className={`group ${overId === h.id && dragId !== h.id ? 'outline-dashed outline-1 outline-mauve' : ''} ${dragId === h.id ? 'opacity-40' : ''}`}
+            onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverId(h.id) } }}
+            onDrop={(e) => { e.preventDefault(); if (dragId) onReorder(category as HabitCategory, dragId, h.id); setDragId(null); setOverId(null) }}
+          >
             <td className="sticky left-0 z-10 bg-mantle py-0.5 pr-2 text-left whitespace-nowrap text-subtext1">
+              <span
+                draggable
+                onDragStart={() => setDragId(h.id)}
+                onDragEnd={() => { setDragId(null); setOverId(null) }}
+                title="Drag to reorder"
+                className="mr-0.5 inline-block cursor-grab align-middle text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+              ><GripVertical size={11} /></span>
               {h.emoji ? <span className="mr-0.5">{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}{' '}
               <button onClick={() => onEdit(h.id)} className={`hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
               {h.unit && <span className="ml-1 text-overlay0">({h.unit})</span>}
@@ -344,7 +425,13 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('green') }}>{habitConsistency(data, habit.id, habit.startedOn, 30)}%</div><div className="text-[10px] text-overlay0">30-day</div></div>
             <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('blue') }}>{habitConsistency(data, habit.id, habit.startedOn, 90)}%</div><div className="text-[10px] text-overlay0">90-day</div></div>
           </div>
-          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>.</p>
+          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
+
+          {/* 12-week completion heatmap */}
+          <div>
+            <p className="mb-1 text-xs text-overlay0">Last 12 weeks</p>
+            <HabitHeatmap data={data} habit={habit} today={today} />
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
@@ -405,6 +492,47 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Habit visualisation helpers (v3) ─────────────────────────────────────────
+type JData = import('../lib/types').JournalData
+function habitDoneOn(data: JData, h: Habit, d: string): boolean {
+  if (h.type === 'count') return (data.habitValues?.[d]?.[h.id] ?? 0) >= (h.target && h.target > 0 ? h.target : 1)
+  return (data.habitLog[d] ?? []).includes(h.id)
+}
+
+/** This-week vs last-week trend arrow. */
+function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: string }) {
+  const week = (end: string) => Array.from({ length: 7 }, (_, i) => addDays(end, -i)).filter((d) => habitDoneOn(data, habit, d)).length
+  const now = week(today)
+  const prev = week(addDays(today, -7))
+  if (now === prev) return <span className="text-overlay0">→ steady</span>
+  const up = now > prev
+  return <span style={{ color: cat(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
+}
+
+/** GitHub-style 12-week completion heatmap (84 days), weekday-aligned. */
+function HabitHeatmap({ data, habit, today }: { data: JData; habit: Habit; today: string }) {
+  const start = addDays(today, -83)
+  const pad = fromISODay(start).getDay() // empty cells before the first day
+  return (
+    <div className="grid grid-flow-col grid-rows-7 gap-0.5">
+      {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-3 w-3" />)}
+      {Array.from({ length: 84 }).map((_, i) => {
+        const d = addDays(start, i)
+        const done = habitDoneOn(data, habit, d)
+        const future = d > today
+        return (
+          <span
+            key={d}
+            title={`${d}${done ? ' · done' : ''}`}
+            className="h-3 w-3 rounded-[2px]"
+            style={{ background: future ? 'transparent' : done ? cat(habit.color) : cat('surface0') }}
+          />
+        )
+      })}
     </div>
   )
 }

@@ -1,5 +1,112 @@
 # Worklog
 
+## 2026-06-12 02:14 — R2 backlog autonomous run (7 of 11 shipped)
+
+**Summary:** Worked the R2 roadmap end-to-end without checkpoints, per the
+"do all, don't wait" directive. Shipped 7 items, scoped 1 partial, and left 3
+honestly flagged as too large/infra-dependent to rush.
+
+**Changes:**
+- R2-1 — `lib/crypto.ts` (PBKDF2→AES-GCM), `LockScreen.tsx`, `store.tsx`
+  encrypt-on-save + unlock gate, Settings passcode card. Wrong passcode throws,
+  never wipes (verified in-browser round-trip).
+- R2-2 — Monthly per-day habit-completion ribbon on calendar cells.
+- R2-3 — Insights stat cards / Index / search results now nav to their source
+  (`useNav` + cursor); `Card` gained `onClick`.
+- R2-4 — Stats activity-heatmap range picker (3/6/12 mo).
+- R2-6 — Drag-to-reorder habits within a category (native HTML5 DnD on a hover
+  grip, rewrites the `order` field).
+- R2-8 — `reminderMessage()` picker (streak-at-risk › challenge-day › plain
+  nudge) drives the banner + one OS notification/day; 4 unit tests.
+- R2-9 — Accent-color picker (Settings → Journal feel) overrides `--primary`
+  app-wide via a store effect + `settings.accent`.
+- R2-11 — ◑ partial: `role="img"` + `aria-label` text alternatives on the key
+  Stats/Trackers/Focus/Fitness chart figures.
+- Docs — TICKETS/DECISIONS/FEATURES updated; 99 tests green, build ~360ms.
+
+**Decisions:** Stopped short of half-building the big ones. R2-5 (StatTile/
+ChartCard extraction) is a wide refactor better done deliberately; R2-7 (unified
+goal model) needs real design; R2-10 (accounts + E2E cloud sync) needs a backend
+and is out of local-first scope — R2-1's at-rest crypto is its client half.
+axe-core CI deferred (needs CI wiring).
+
+**Follow-ups:**
+- [ ] R2-5 — extract shared `StatTile`/`ChartCard` primitives.
+- [ ] R2-7 — design + build the cross-view `Goal` system.
+- [ ] R2-10 — decide if a sync backend is in scope; if so, spec it.
+- [ ] R2-11 tail — full chart a11y sweep + axe-core CI job.
+
+## 2026-06-11 21:30 — Finished V3 backlog (RPE/type · task sync · actuals)
+
+**Summary:** Cleared the last three deferred tickets on `feat/v3-smart-input`.
+94 tests green.
+
+**Changes:**
+- **V3-I** — per-set RPE input + set-type toggle (warmup/working/drop) in the Gym
+  logger; persisted on `WorkoutSet`. Body-weight & training-volume charts now
+  side by side.
+- **V3-B** — `updateRecurrence` propagates text/type/important to a rule's future
+  open occurrences; removing a rule clears its future instances; EntryRow shows a
+  ↻ badge; Plan view can edit a rule inline.
+- **V3-J** — program days get per-exercise checkboxes **and** an "actual" field
+  (`programActuals`) to record reps/sets achieved vs prescribed.
+
+## 2026-06-11 20:30 — Gym v3 build-out + space UX + PDF programs
+
+**Summary:** Implemented the Gym backlog + space-saving shell changes on
+`feat/v3-smart-input`. 94 tests green.
+
+**Changes:**
+- **Quick exercise picker** (V3-G) — searchable dropdown (recents + library +
+  custom) on set rows AND the anatomy lookup.
+- **Volume + progression charts** (V3-H) — weekly training-volume bars +
+  per-exercise progression line (`workoutVolume`/`weeklyVolumeSeries`/
+  `exerciseProgression`).
+- **Partial completion** (V3-J) — per-exercise checkboxes in a program day;
+  the day auto-completes when all are checked.
+- **Training programs from the PDFs** (V3-K) — `lib/programs.ts` pull-up program
+  + **ability/training-set calculator** (max pull-ups → group, ladder/pyramid,
+  daily/weekly volume); program exercises added to the library. Source PDFs
+  gitignored (PII + copyright).
+- **Space UX** (V3-L) — auto-hide sidebar (edge-hover reveal, full-width content)
+  + recommendations as a top-bar lightbulb badge.
+- **Plate calculator** (V3-M) — unit-aware plates + remount on unit change
+  (fixed the stale-kg bug).
+- Deleted the personal PDF from disk (user-authorised; was already gitignored).
+
+**Follow-ups:** V3-I (per-set RPE/type inputs); V3-J actuals (reps achieved vs
+prescribed).
+
+## 2026-06-11 19:00 — Gym redesign + training programs + structured sets + V3 epics
+
+**Summary:** Continued v3 on `feat/v3-smart-input`. Shipped smart input,
+Focus tracker, tracker viz, recommendations (PR #2), then a Gym overhaul:
+2-column dashboard, plate calc, training programs from a PDF, structured sets.
+94 tests green; 127 KB gzip.
+
+**Changes:**
+- **Gym redesign** — reflowed to a `Page` main+aside dashboard (utility cards in
+  the rail); routines click-to-load.
+- **Training programs** — `lib/programs.ts` encodes the pull-up program;
+  `ProgramCard` (week/day selector, load-into-session, day tracker). Source PDFs
+  **gitignored** (`docs/pdf/` — keeps a personal PDF + copyrighted programs out).
+- **Structured sets** — `Workout.setRows` + helpers (`lastSetFor`,
+  `sessionVolume`, `exerciseProgression`, tested); written on finish; per-row
+  previous-session + live-1RM hints.
+- **Plate calculator** — unit-aware plate denominations (kg vs lb) — bug fix.
+- **Units audit** — confirmed kg/lb · km/mi · °F/°C all read the Settings toggle
+  in Gym + Fitness; no hardcodes.
+- Earlier in the day: V3-A smart input, V3-C Focus, V3-D viz, V3-E recommendations.
+
+**Decisions:** programs as data not PDFs (D-26); additive `setRows` (D-27);
+unit-aware plates (D-28).
+
+**Follow-ups (TICKETS Epic V3):**
+- [ ] V3-G quick exercise picker (dropdown/combobox per row)
+- [ ] V3-H structured charts (volume + progression)
+- [ ] V3-I per-set RPE/type inputs
+- [ ] V3-J partial completion (per-exercise within a program day + actuals)
+
 ## 2026-06-11 17:06 — Layout redesign + Challenges + Trackers/Fitness v2
 
 **Summary:** Major usability redesign of the whole app on a new shadcn/ui

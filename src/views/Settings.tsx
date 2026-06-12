@@ -1,7 +1,8 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Segmented } from '../components/ui'
+import { Button, Card, Input, Segmented } from '../components/ui'
+import { cat } from '../lib/colors'
 import { Switch } from '../components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
@@ -107,6 +108,17 @@ export function Settings() {
           <Toggle label="Handwriting font" on={s.handwriting} onChange={(v) => setSettings({ handwriting: v })} />
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
         </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-2 text-sm text-subtext1">Accent color</p>
+          <div className="flex flex-wrap gap-2">
+            {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
+              const active = (s.accent ?? 'mauve') === c
+              return (
+                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-full transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+              )
+            })}
+          </div>
+        </div>
       </Card>
         </TabsContent>
 
@@ -179,6 +191,7 @@ export function Settings() {
       </Card>
           </div>
           <div className="mt-5 space-y-5">
+            <PasscodeCard />
             <CloudStorage />
             <DriveSync />
           </div>
@@ -204,5 +217,38 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span>{label}</span>
       <Switch checked={on} onCheckedChange={onChange} />
     </label>
+  )
+}
+
+/** Encrypt the journal at rest behind a passcode (Web Crypto, local-only). */
+function PasscodeCard() {
+  const { setPasscode, encrypted } = useJournal()
+  const [pc, setPc] = useState('')
+  const [pc2, setPc2] = useState('')
+  const [err, setErr] = useState('')
+  function enable() {
+    if (pc.length < 4) { setErr('Use at least 4 characters.'); return }
+    if (pc !== pc2) { setErr('Passcodes don’t match.'); return }
+    setPasscode(pc); setPc(''); setPc2(''); setErr('')
+  }
+  return (
+    <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto · stays on this device)">
+      {encrypted ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-sm text-green">🔒 Journal is encrypted</span>
+          <Button variant="danger" onClick={() => { if (confirm('Remove the passcode and store the journal unencrypted?')) setPasscode(null) }}>Remove passcode</Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input type="password" value={pc} onChange={(e) => setPc(e.target.value)} placeholder="New passcode" aria-label="New passcode" />
+            <Input type="password" value={pc2} onChange={(e) => setPc2(e.target.value)} placeholder="Confirm passcode" aria-label="Confirm passcode" />
+          </div>
+          {err && <p className="text-xs text-red">{err}</p>}
+          <Button variant="primary" onClick={enable}>Encrypt journal</Button>
+          <p className="text-xs text-overlay0">There’s no recovery — if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
+        </div>
+      )}
+    </Card>
   )
 }

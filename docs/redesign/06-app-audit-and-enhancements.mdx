@@ -1,0 +1,62 @@
+---
+title: App Audit & Enhancements (every page)
+date: 2026-06-12
+---
+
+# App audit & enhancements
+
+A page-by-page review of bujo after the redesign + v3 work: what each screen
+does, its analytics/visualisation, and what was added or is queued. Whole-number
+progress everywhere; charts inline-SVG or lazy Recharts; Catppuccin + shadcn.
+
+## Shell
+
+| Area | State |
+|---|---|
+| Sidebar | Grouped Journal/Health/Review · **collapse to icon rail** (hover tooltips) · **auto-hide** (edge-hover reveal, full-width content) |
+| Top bar | View title + contextual date-nav · Quick add · ⌘K · **theme** · **Settings gear** · **recommendations lightbulb + badge** · overflow (zoom/undo/paper/handwriting/book/auto-hide) |
+| Layout | One `Page` grid (main + wrapping aside); cards paired side-by-side to cut scrolling |
+
+## Pages
+
+| Page | Analytics / visualisation | This session |
+|---|---|---|
+| **Today** | dashboard; mood/stress/sleep sliders; on-this-day | — |
+| **Monthly** | calendar w/ event dots + stickers | — |
+| **Trackers** | habit grid · **12-week heatmap** · momentum · per-habit weekly goal · today strip · **Day/Week/Month toggle** · mood·stress·sleep chart | + view toggle |
+| **Fitness** | weekly goal ring · 8-week sparkline · streak · **Totals + Personal-bests side-by-side** · auto-pace · **compact one-line history (recent/all)** | + side-by-side, + simple history |
+| **Gym** | 2-col dashboard · **volume + per-exercise progression charts** · structured sets (RPE/type) · previous-session + live-1RM · plate calc (kg/lb) · muscle map · wger DB · **training programs** + **ability calculator** · quick exercise picker · body-weight + volume **side-by-side** | + charts, programs, picker, RPE/type |
+| **Challenges** | **2-grid (rules+stats / calendar)** · progress ring · current+**best streak** · days-left · per-rule check-in | + 2-grid, + best-streak |
+| **Focus** (dev) | weekly hrs + streak · **This-week + coding-minutes side-by-side** · language bars · focus↔stress insight | + side-by-side |
+| **Plan** | recurring rules (**edit propagates to future** + ↻ badge) · overdue migration · .ics import | + rule edit/sync |
+| **Collections** | future log · birthdays | (custom-collections UI queued) |
+| **Insights** | streaks · completion % · correlations · year-in-review · index · search | — |
+| **Stats** | activity heatmap · weekly radar · sleep↔mood scatter · workout bars · task donut · mood calendar · tag cloud | — |
+| **Cycle / Streak** | temperature chart / abstinence streak + milestones | — |
+| **Settings** | tabbed (Profile/Feel/Reminders/Data & Cloud) | — |
+| **Help** | full guide incl. top-bar + grammar | — |
+
+## Cloud storage (already shipped)
+
+Three local-first options in **Settings → Data & Cloud** — no backend, no account:
+
+- **Own folder** (`lib/fscloud.ts`, File System Access API) — pick a folder inside
+  your Drive/Dropbox/OneDrive sync; bujo auto-saves `bujo.json` there.
+- **Google Drive** (`lib/gdrive.ts`) — opt-in, your own OAuth client.
+- **GitHub gist** (`lib/github.ts`) — private-gist backup.
+
+Plus JSON/Markdown export-import. The only deferred piece is **accounts +
+E2E-encrypted multi-device sync** (needs a thin backend — out of the local-first
+default; tracked as BUJO-91).
+
+## Queued (roadmap)
+
+| Ticket | Why deferred |
+|---|---|
+| Trackers category **radar** | nice-to-have viz; toggle shipped |
+| **Custom-collections UI** (BUJO-93) | bounded, not yet built |
+| **Passcode + client-side encryption** (BUJO-90) | Web-Crypto, local, bounded |
+| **Accounts + E2E cloud sync** (BUJO-91) | needs backend infra |
+| Chart **text-alternatives + axe-CI** (BUJO-94) | a11y hardening |
+| "Futuristic" restyle pass | the app already has aurora/glow utilities; a broad
+  restyle is high-risk on a shipped codebase — do it as a scoped theme, not ad-hoc |

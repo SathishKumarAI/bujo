@@ -58,6 +58,7 @@ export function emptyJournal(): JournalData {
     challenges: [],
     challengeLog: {},
     habitSkips: {},
+    devSessions: [],
     settings: defaultSettings(),
   }
 }
@@ -116,6 +117,32 @@ export function save(data: JournalData): void {
     // Quota or privacy-mode failure — surfaced by the UI's backup nudge.
     console.error('bujo: failed to persist', e)
   }
+}
+
+// ── Passcode encryption (at-rest) ────────────────────────────────────────────
+export const STORAGE_ENC_KEY = 'bujo:enc'
+
+/** Is the journal stored encrypted (passcode-protected)? */
+export function hasEncrypted(): boolean {
+  return typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_ENC_KEY) != null
+}
+/** The raw encrypted blob, or null. */
+export function readEncryptedRaw(): import('./crypto').EncryptedBlob | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_ENC_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+/** Write the encrypted blob and clear the plaintext copy. */
+export function writeEncrypted(blob: import('./crypto').EncryptedBlob): void {
+  localStorage.setItem(STORAGE_ENC_KEY, JSON.stringify(blob))
+  localStorage.removeItem(STORAGE_KEY)
+}
+/** Stop storing encrypted (the caller writes plaintext separately). */
+export function clearEncrypted(): void {
+  localStorage.removeItem(STORAGE_ENC_KEY)
 }
 
 // ── Export / import ──────────────────────────────────────────────────────────

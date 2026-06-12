@@ -324,3 +324,41 @@ body.handwriting textarea {
   --color-peach: #fe640b;
   --color-yellow: #df8e1d;
 }
+
+/* Futuristic "Neon" theme (data-theme="neon") — deep space + electric accents */
+:root[data-theme='neon'] {
+  --color-text: #e6e6ff;
+  --color-subtext1: #c4c4e8;
+  --color-subtext0: #9d9dce;
+  --color-overlay2: #8585b8;
+  --color-overlay1: #6f6fa0;
+  --color-overlay0: #585883;
+  --color-surface2: #2e2e52;
+  --color-surface1: #20203c;
+  --color-surface0: #15152a;
+  --color-base: #0a0a16;
+  --color-mantle: #0c0c1c;
+  --color-crust: #050509;
+  --color-mauve: #c77dff;
+  --color-lavender: #a78bfa;
+  --color-blue: #4cc9f0;
+  --color-sapphire: #36c5f0;
+  --color-sky: #7df9ff;
+  --color-teal: #2ee6c8;
+  --color-green: #5dff9d;
+  --color-red: #ff5d8f;
+  --color-maroon: #ff7eb6;
+  --color-peach: #ffb86c;
+  --color-yellow: #ffe66d;
+  --color-pink: #ff8ad8;
+}
+/* Neon: accent buttons + active rails get a soft glow. */
+:root[data-theme='neon'] .bg-primary {
+  box-shadow: 0 0 16px -2px color-mix(in srgb, var(--color-mauve) 65%, transparent);
+}
+:root[data-theme='neon'] .card-3d {
+  box-shadow:
+    0 1px 0 0 color-mix(in srgb, var(--color-mauve) 18%, transparent) inset,
+    0 10px 30px -16px color-mix(in srgb, var(--color-blue) 35%, transparent),
+    0 4px 10px -6px rgba(0, 0, 0, 0.6);
+}

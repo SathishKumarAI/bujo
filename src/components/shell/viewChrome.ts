@@ -1,6 +1,6 @@
 export type ViewId =
-  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'challenges' | 'plan'
-  | 'collections' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
+  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'challenges' | 'focus'
+  | 'plan' | 'collections' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
 
 export interface ViewChrome {
   title: string
@@ -16,6 +16,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   fitness: { title: 'Fitness', subtitle: 'Workout log & totals' },
   gym: { title: 'Gym', subtitle: 'Sessions & exercises' },
   challenges: { title: 'Challenges', subtitle: '75 Hard, 90-day & custom challenges' },
+  focus: { title: 'Focus', subtitle: 'Coding time · flow · stress' },
   plan: { title: 'Plan', subtitle: 'Recurring tasks & routines' },
   collections: { title: 'Collections', subtitle: 'Future log & lists' },
   insights: { title: 'Insights', subtitle: 'Streaks, search & reflection' },
