@@ -39,6 +39,79 @@ export function Card({
   )
 }
 
+/**
+ * A bordered metric tile: a big colored number/value over a small label.
+ * Replaces the ad-hoc `Stat` blocks scattered across Fitness/Focus/Trackers.
+ * Becomes a button (with press affordance) when `onClick` is given.
+ */
+export function StatTile({
+  label,
+  value,
+  color = 'text',
+  icon,
+  onClick,
+  title,
+  className = '',
+}: {
+  label: ReactNode
+  value: ReactNode
+  color?: string
+  icon?: ReactNode
+  onClick?: () => void
+  title?: string
+  className?: string
+}) {
+  const Tag = onClick ? 'button' : 'div'
+  return (
+    <Tag
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'rounded-xl border border-surface0 bg-base py-3 text-center',
+        onClick && 'press-3d cursor-pointer transition-colors hover:border-surface2',
+        className,
+      )}
+    >
+      <div className="flex items-center justify-center gap-1 text-xl font-bold sm:text-2xl" style={{ color: cat(color) }}>
+        {icon}
+        {value}
+      </div>
+      <div className="mt-0.5 text-xs text-overlay0">{label}</div>
+    </Tag>
+  )
+}
+
+/**
+ * A `Card` whose body is a fixed-height, screen-reader-labelled chart figure.
+ * `label` is the text alternative (role="img"); pass the chart as children
+ * (usually a recharts `ResponsiveContainer`).
+ */
+export function ChartCard({
+  title,
+  subtitle,
+  right,
+  label,
+  height = 'h-56',
+  className = '',
+  children,
+}: {
+  title?: ReactNode
+  subtitle?: ReactNode
+  right?: ReactNode
+  label: string
+  height?: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <Card title={title} subtitle={subtitle} right={right} className={className}>
+      <div className={`${height} w-full`} role="img" aria-label={label}>
+        {children}
+      </div>
+    </Card>
+  )
+}
+
 export function Button({
   children,
   onClick,

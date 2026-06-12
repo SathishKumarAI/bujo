@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Pencil, Repeat, Trash2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
-import { Button, Card, Empty, Input, Segmented, Textarea } from '../components/ui'
+import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
@@ -284,10 +284,5 @@ function NutritionCard({ date }: { date: string }) {
 }
 
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="rounded-xl border border-surface0 bg-base py-3">
-      <div className="text-2xl font-bold" style={{ color: cat(color) }}>{value}</div>
-      <div className="text-xs text-overlay0">{label}</div>
-    </div>
-  )
+  return <StatTile label={label} value={value} color={color} />
 }

@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Button, Card, Empty, Input, Segmented } from '../components/ui'
+import { Button, Card, Empty, Input, Segmented, StatTile } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { cat, HABIT_COLORS } from '../lib/colors'
@@ -420,10 +420,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
         </header>
         <div className="space-y-3 p-4">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('peach') }}>{streak}</div><div className="text-[10px] text-overlay0">day streak</div></div>
-            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('green') }}>{habitConsistency(data, habit.id, habit.startedOn, 30)}%</div><div className="text-[10px] text-overlay0">30-day</div></div>
-            <div className="rounded-lg border border-surface0 bg-base py-2"><div className="text-lg font-bold" style={{ color: cat('blue') }}>{habitConsistency(data, habit.id, habit.startedOn, 90)}%</div><div className="text-[10px] text-overlay0">90-day</div></div>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile label="day streak" value={streak} color="peach" />
+            <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} color="green" />
+            <StatTile label="90-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 90)}%`} color="blue" />
           </div>
           <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
 

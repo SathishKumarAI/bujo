@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Code2, Flame } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Slider } from '../components/ui'
+import { Button, Card, Empty, Input, Slider, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import {
@@ -131,10 +131,5 @@ export function Focus() {
 }
 
 function Stat({ label, value, color, icon }: { label: string; value: string; color: string; icon?: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-surface0 bg-base py-3">
-      <div className="flex items-center justify-center gap-1 text-xl font-bold" style={{ color: cat(color) }}>{icon}{value}</div>
-      <div className="text-xs text-overlay0">{label}</div>
-    </div>
-  )
+  return <StatTile label={label} value={value} color={color} icon={icon} />
 }
