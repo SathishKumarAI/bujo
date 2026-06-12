@@ -3,7 +3,7 @@ import { emptyJournal } from './storage'
 import type { Challenge, JournalData } from './types'
 import {
   CHALLENGE_PRESETS, isDayComplete, elapsedDay, completedDays,
-  streakBeforeToday, progressDay, percentComplete, isFinished,
+  streakBeforeToday, progressDay, percentComplete, isFinished, longestStreak,
 } from './challenges'
 
 function withChallenge(c: Challenge, log: Record<string, number[]>): JournalData {
@@ -66,6 +66,12 @@ describe('strict progress (75-Hard reset rule)', () => {
     // a gap: nothing logged on 06-03, so on 06-04 the streak is broken to 0
     expect(streakBeforeToday(d, S, '2026-06-04')).toBe(0)
     expect(progressDay(d, S, '2026-06-04')).toBe(1) // reset to day 1
+  })
+  it('tracks the longest streak across gaps', () => {
+    // 01,02 done, 03 missed, 04,05 done → longest run = 2
+    const log = { '2026-06-01': [0, 1], '2026-06-02': [0, 1], '2026-06-04': [0, 1], '2026-06-05': [0, 1] }
+    const d = withChallenge(C, log)
+    expect(longestStreak(d, C, '2026-06-05')).toBe(2)
   })
   it('marks finished when the strict streak reaches the duration', () => {
     const full: Record<string, number[]> = {}

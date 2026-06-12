@@ -9,7 +9,7 @@ import { cat } from '../lib/colors'
 import type { Challenge } from '../lib/types'
 import {
   CHALLENGE_PRESETS, isDayComplete, progressDay, percentComplete,
-  streakBeforeToday, completedDays, isFinished, rulesDoneOn,
+  streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
 } from '../lib/challenges'
 
 export function Challenges() {
@@ -99,57 +99,79 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         </div>
       </div>
 
-      {/* Today's check-in */}
-      {!notStarted && !finished && (
-        <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules</p>
-          <ul className="space-y-1.5">
-            {c.rules.map((rule, i) => {
-              const done = todayDone.includes(i)
-              return (
-                <li key={i}>
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <span className={done ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
-                    <Switch checked={done} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
-                  </label>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
+      {/* Two-grid: check-in + stats (left) · calendar (right) */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="space-y-4">
+          {/* Today's check-in */}
+          {!notStarted && !finished && (
+            <div>
+              <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-overlay0">({todayDone.length}/{c.rules.length})</span></p>
+              <ul className="space-y-1.5">
+                {c.rules.map((rule, i) => {
+                  const ruleDone = todayDone.includes(i)
+                  return (
+                    <li key={i}>
+                      <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                        <span className={ruleDone ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
+                        <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
+                      </label>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
-      {/* Calendar grid — grouped into weeks of 7 for readability. */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-medium text-subtext1">Calendar</p>
-          <div className="flex items-center gap-3 text-[10px] text-overlay0">
-            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
-            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
-            <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
+          {/* Stats block */}
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <Stat label="Current streak" value={`${streak}`} icon="🔥" color="peach" />
+            <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="🏅" color="yellow" />
+            <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
+            <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
           </div>
         </div>
-        <div className="grid w-fit grid-cols-7 gap-1">
-          {Array.from({ length: c.durationDays }).map((_, i) => {
-            const d = addDays(c.startDate, i)
-            const complete = isDayComplete(data, c, d)
-            const isToday = d === today
-            const past = dayDiff(d, today) > 0
-            const bg = complete ? cat('green') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
-            return (
-              <span
-                key={d}
-                title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
-                className="grid h-7 w-7 place-items-center rounded text-[9px]"
-                style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
-              >
-                {i + 1}
-              </span>
-            )
-          })}
+
+        {/* Calendar grid — grouped into weeks of 7 for readability. */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-subtext1">Calendar</p>
+            <div className="flex items-center gap-3 text-[10px] text-overlay0">
+              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
+              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
+              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
+            </div>
+          </div>
+          <div className="grid w-fit grid-cols-7 gap-1">
+            {Array.from({ length: c.durationDays }).map((_, i) => {
+              const d = addDays(c.startDate, i)
+              const complete = isDayComplete(data, c, d)
+              const isToday = d === today
+              const past = dayDiff(d, today) > 0
+              const bg = complete ? cat('green') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
+              return (
+                <span
+                  key={d}
+                  title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
+                  className="grid h-7 w-7 place-items-center rounded text-[9px]"
+                  style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
+                >
+                  {i + 1}
+                </span>
+              )
+            })}
+          </div>
         </div>
       </div>
     </Card>
+  )
+}
+
+function Stat({ label, value, icon, color }: { label: string; value: string; icon?: string; color: string }) {
+  return (
+    <div className="rounded-lg border border-surface0 bg-background py-2">
+      <div className="text-lg font-bold" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
+      <div className="text-[10px] text-overlay0">{label}</div>
+    </div>
   )
 }
 

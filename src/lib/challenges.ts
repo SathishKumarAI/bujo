@@ -1,5 +1,5 @@
 import type { Challenge, JournalData } from './types'
-import { addDays, dayDiff } from './date'
+import { addDays, dayDiff, todayISO } from './date'
 
 /** Built-in challenge presets. `rules` are the daily required tasks. */
 export interface ChallengePreset {
@@ -105,6 +105,17 @@ export function progressDay(data: JournalData, c: Challenge, today: string): num
 export function percentComplete(data: JournalData, c: Challenge, today: string): number {
   const day = c.strict ? streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0) : completedDays(data, c, today)
   return Math.round((day / c.durationDays) * 100)
+}
+
+/** Longest run of consecutive complete days so far (best streak). */
+export function longestStreak(data: JournalData, c: Challenge, today = todayISO()): number {
+  const upto = elapsedDay(c, today)
+  let best = 0
+  let run = 0
+  for (let i = 0; i < upto; i++) {
+    if (isDayComplete(data, c, addDays(c.startDate, i))) { run += 1; best = Math.max(best, run) } else run = 0
+  }
+  return best
 }
 
 /** True once the whole challenge has been completed. */
