@@ -46,7 +46,16 @@ export function Sidebar({
     <>
     {autoHide && <div className="peer fixed top-0 left-0 z-40 hidden h-screen w-2.5 md:block" aria-hidden />}
     <nav
-      className={`${navOpen ? 'block' : 'hidden'} group/sb relative border-b border-border bg-card md:block ${deskClass}`}
+      className={[
+        // Mobile: an iOS-style slide-in drawer (fixed overlay, off-canvas until open).
+        'group/sb fixed inset-y-0 left-0 z-50 w-72 max-w-[82%] border-r border-border bg-card shadow-2xl',
+        'transition-transform duration-300 ease-out will-change-transform',
+        navOpen ? 'translate-x-0' : '-translate-x-full',
+        // Desktop: dock it back into the layout (the auto-hide variant manages its own transform).
+        autoHide ? '' : 'md:static md:z-auto md:w-auto md:max-w-none md:translate-x-0 md:border-r-0 md:shadow-none',
+        'md:block',
+        deskClass,
+      ].join(' ')}
     >
       <div
         className={`bg-card transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-border ${

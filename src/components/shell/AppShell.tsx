@@ -37,6 +37,14 @@ export function AppShell({
   return (
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
+      {/* Dim scrim behind the mobile drawer — tap to close (iOS-style). */}
+      <div
+        onClick={() => setNavOpen(false)}
+        aria-hidden
+        className={`fixed inset-0 z-40 bg-crust/55 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          navOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      />
       <Sidebar
         items={items}
         groupOrder={groupOrder}
