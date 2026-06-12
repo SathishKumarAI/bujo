@@ -25,6 +25,7 @@ export function Sidebar({
   view,
   collapsed,
   navOpen,
+  autoHide = false,
   onNavigate,
   onToggleCollapse,
 }: {
@@ -33,12 +34,19 @@ export function Sidebar({
   view: ViewId
   collapsed: boolean
   navOpen: boolean
+  autoHide?: boolean
   onNavigate: (id: ViewId) => void
   onToggleCollapse: () => void
 }) {
+  // Auto-hide: a thin left-edge zone reveals the sidebar as a fixed overlay.
+  const deskClass = autoHide
+    ? 'md:fixed md:top-0 md:left-0 md:z-50 md:h-screen md:w-60 md:-translate-x-full md:border-r md:border-border md:shadow-2xl md:transition-transform md:duration-200 md:ease-out md:peer-hover:translate-x-0 md:hover:translate-x-0'
+    : `md:sticky md:top-0 md:h-screen md:shrink-0 md:self-start md:overflow-visible md:border-b-0 ${collapsed ? 'md:w-14' : 'md:w-60'}`
   return (
+    <>
+    {autoHide && <div className="peer fixed top-0 left-0 z-40 hidden h-screen w-2.5 md:block" aria-hidden />}
     <nav
-      className={`${navOpen ? 'block' : 'hidden'} group/sb relative border-b border-border bg-card md:sticky md:top-0 md:block md:h-screen md:shrink-0 md:self-start md:overflow-visible md:border-b-0 ${collapsed ? 'md:w-14' : 'md:w-60'}`}
+      className={`${navOpen ? 'block' : 'hidden'} group/sb relative border-b border-border bg-card md:block ${deskClass}`}
     >
       <div
         className={`bg-card transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-border ${
@@ -102,5 +110,6 @@ export function Sidebar({
         </div>
       </div>
     </nav>
+    </>
   )
 }

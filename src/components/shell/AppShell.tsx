@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
 import { QuickAdd } from '../QuickAdd'
-import { Recommendations } from '../Recommendations'
 import { useCursor } from './cursor'
 import type { ViewId } from './viewChrome'
 
@@ -14,6 +13,7 @@ export function AppShell({
   groupOrder,
   view,
   collapsed,
+  autoHide,
   onNavigate,
   onToggleCollapse,
   onCommand,
@@ -23,6 +23,7 @@ export function AppShell({
   groupOrder: string[]
   view: ViewId
   collapsed: boolean
+  autoHide: boolean
   onNavigate: (id: ViewId) => void
   onToggleCollapse: () => void
   onCommand: () => void
@@ -39,8 +40,9 @@ export function AppShell({
         items={items}
         groupOrder={groupOrder}
         view={view}
-        collapsed={collapsed}
+        collapsed={autoHide ? false : collapsed}
         navOpen={navOpen}
+        autoHide={autoHide}
         onNavigate={(id) => {
           onNavigate(id)
           setNavOpen(false)
@@ -55,10 +57,7 @@ export function AppShell({
           onCommand={onCommand}
           onMenu={() => setNavOpen((o) => !o)}
         />
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">
-          <Recommendations onNavigate={onNavigate} />
-          {children}
-        </main>
+        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
       </div>
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>

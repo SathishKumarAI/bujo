@@ -102,6 +102,7 @@ export default function App() {
         groupOrder={GROUP_ORDER}
         view={view}
         collapsed={collapsed}
+        autoHide={!!data.settings.sidebarAutoHide}
         onNavigate={setView}
         onToggleCollapse={() => setSettings({ sidebarCollapsed: !collapsed })}
         onCommand={() => setPaletteOpen(true)}

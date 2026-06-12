@@ -277,6 +277,8 @@ export interface Settings {
   trackerShowArchived?: boolean
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
+  /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
+  sidebarAutoHide?: boolean
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */
