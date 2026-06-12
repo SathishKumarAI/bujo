@@ -138,6 +138,7 @@ interface Store {
   removeDevSession: (id: string) => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
+  updateRecurrence: (id: string, patch: Partial<Recurrence>) => void
   removeRecurrence: (id: string) => void
   // collections
   addCollection: (name: string, icon: string) => void
@@ -477,8 +478,38 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),
 
+      // Edit a rule and propagate text/type/important to its FUTURE open
+      // instances (single source of truth across the rule and its occurrences).
+      updateRecurrence: (id, rpatch) =>
+        patch((d) => {
+          const t = todayISO()
+          return {
+            ...d,
+            recurrences: d.recurrences.map((r) => (r.id === id ? { ...r, ...rpatch } : r)),
+            entries: d.entries.map((e) =>
+              e.recurringId === id && e.status === 'open' && e.date >= t
+                ? {
+                    ...e,
+                    ...(rpatch.text != null ? { text: rpatch.text } : {}),
+                    ...(rpatch.type != null ? { type: rpatch.type } : {}),
+                    ...(rpatch.important != null ? { important: rpatch.important } : {}),
+                  }
+                : e,
+            ),
+          }
+        }),
+
+      // Removing a rule also clears its not-yet-done future instances; past and
+      // completed occurrences stay as history.
       removeRecurrence: (id) =>
-        patch((d) => ({ ...d, recurrences: d.recurrences.filter((r) => r.id !== id) })),
+        patch((d) => {
+          const t = todayISO()
+          return {
+            ...d,
+            recurrences: d.recurrences.filter((r) => r.id !== id),
+            entries: d.entries.filter((e) => !(e.recurringId === id && e.status === 'open' && e.date >= t)),
+          }
+        }),
 
       addCollection: (name, icon) =>
         patch((d) => ({

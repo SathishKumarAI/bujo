@@ -8,7 +8,7 @@ import { parseICS } from '../lib/ics'
 import type { BulletType } from '../lib/types'
 
 export function Plan() {
-  const { data, addRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents } = useJournal()
+  const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents } = useJournal()
   const today = todayISO()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -104,7 +104,14 @@ export function Plan() {
                       {r.freq === 'daily' ? 'every day' : r.weekdays.map((d) => WEEKDAYS[d]).join(' ')}
                     </span>
                   </span>
-                  <button onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => { const t = prompt('Edit recurring task (updates every future occurrence):', r.text); if (t && t.trim()) updateRecurrence(r.id, { text: t.trim() }) }}
+                      aria-label="Edit rule"
+                      className="text-overlay0 hover:text-mauve"
+                    >✎</button>
+                    <button onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-overlay0 hover:text-red">×</button>
+                  </div>
                 </li>
               ))}
             </ul>

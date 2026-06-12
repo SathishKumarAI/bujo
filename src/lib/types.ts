@@ -271,6 +271,8 @@ export interface Settings {
   fitnessGoalMin?: number
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
+  /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
+  programActuals?: Record<string, string>
   // ── Tracker (global) ──
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean

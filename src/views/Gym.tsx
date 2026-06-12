@@ -364,7 +364,14 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
   const [week, setWeek] = useState(1)
   const [day, setDay] = useState(1)
   const done = data.settings.programDone ?? []
+  const actuals = data.settings.programActuals ?? {}
   const exKey = (w: number, d: number, i: number) => `${p.id}-w${w}d${d}-e${i}`
+  function setActual(i: number, val: string) {
+    const k = exKey(week, day, i)
+    const next = { ...actuals }
+    if (val.trim()) next[k] = val; else delete next[k]
+    setSettings({ programActuals: next })
+  }
   const cur = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)
   const totalDays = p.weeks.length * 5
   // A day is complete when every one of its exercises is checked (partial OK).
@@ -416,14 +423,21 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
           <ul className="space-y-0.5">
             {cur.exercises.map((e, i) => {
               const checked = done.includes(exKey(week, day, i))
+              const actual = actuals[exKey(week, day, i)] ?? ''
               return (
-                <li key={i}>
-                  <label className="flex cursor-pointer items-center gap-2 border-t border-surface0 py-1.5 text-sm">
-                    <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-mauve" />
+                <li key={i} className="border-t border-surface0 py-1.5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-mauve" aria-label={`Did ${e.name}`} />
                     <span className={`flex-1 ${checked ? 'text-overlay1 line-through' : 'text-subtext1'}`}>{e.name}</span>
                     <span className="text-overlay1">{e.qty}</span>
                     <span className="w-8 text-right text-overlay1">×{e.sets}</span>
-                  </label>
+                  </div>
+                  <input
+                    value={actual}
+                    onChange={(ev) => setActual(i, ev.target.value)}
+                    placeholder={`actual (target: ${e.qty} ×${e.sets})`}
+                    className="mt-1 ml-6 w-[calc(100%-1.5rem)] rounded border border-surface1 bg-base px-2 py-1 text-xs text-text placeholder:text-overlay0 focus:border-mauve focus:outline-none"
+                  />
                 </li>
               )
             })}
