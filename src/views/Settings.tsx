@@ -156,6 +156,29 @@ export function Settings() {
               <StatTile compact label="Photos" value={(data.progressPhotos?.length ?? 0) + data.memories.filter((m) => m.photo).length} color="pink" />
               <StatTile compact label="KB stored" value={Math.round((JSON.stringify(data).length / 1024))} color="teal" />
             </div>
+            {(() => {
+              // localStorage budget is ~5 MB; photos are the main consumer.
+              const bytes = JSON.stringify(data).length
+              const budget = 5 * 1024 * 1024
+              const pct = Math.min(100, Math.round((bytes / budget) * 100))
+              const warn = pct >= 80
+              return (
+                <div className="mt-3">
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="text-overlay0">Browser storage used</span>
+                    <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
+                  </div>
+                  {warn && (
+                    <p className="mt-1.5 text-xs text-peach">
+                      Getting full — photos use the most space. Export a backup, and remove old progress photos if needed.
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
           </Card>
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
