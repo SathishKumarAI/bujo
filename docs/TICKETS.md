@@ -329,3 +329,20 @@ Features:
 18. Tag manager (rename/merge tags).
 19. Data import from CSV.
 20. Configurable dashboard (pick which cards show on Today).
+
+### Epic ADV-2 — progress log (appended; do not overwrite)
+
+Charts shipped: ✅ calorie trend, ✅ macro rings, ✅ body-weight moving avg,
+✅ mood-by-weekday, ✅ workout-split donut, ✅ focus cumulative hours,
+✅ year-in-pixels, ✅ RPE effort trend (8/10).
+Charts deferred as already-covered: per-habit year heatmap (drawer has 12-week),
+PR timeline (Personal records card exists).
+
+Features shipped: ✅ CSV export per section (entries/habits/metrics/workouts).
+Also shipped beyond the list: ✅ Daily coverage summary (yesterday + week),
+✅ storage-quota meter/guard, ✅ PRODUCT_GAPS.md (Path A roadmap).
+
+Features still open (medium/large — benefit from a steer):
+print/PDF view · Insights filters · habit-archive browser · friend-birthday →
+Future-Log · weekly-review wizard · quick-add templates · tag manager ·
+CSV import · configurable Today dashboard.

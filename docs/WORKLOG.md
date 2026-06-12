@@ -315,3 +315,26 @@ directory to a published public repo in one session.
 
 **Docs**
 - PRD, ARCHITECTURE, FEATURES, and three replication prompts.
+
+## 2026-06-12 16:40 — ADV-2 charts + coverage + CSV + Path-A start (appended)
+
+**Summary:** Built 8 of 10 planned advanced charts, the daily-coverage summary,
+per-section CSV export, and the first Path-A item (storage-quota guard + gaps doc).
+
+**Changes:**
+- Stats — mood-by-weekday, workout-split donut, year-in-pixels (helpers
+  `moodByWeekday`/`workoutSplitCounts`, tested).
+- Focus — cumulative coding-hours line (inline SVG). Gym — body-weight 7-day
+  moving average, session RPE trend. Nutrition — 14-day calorie trend + macro rings.
+- `lib/coverage.ts` + `CoverageCard` — yesterday done/missed + 7-day status (tested).
+- `lib/csv.ts` + Settings buttons — entries/habits/metrics/workouts CSV (tested).
+- `docs/PRODUCT_GAPS.md` — Path A roadmap; Settings storage-quota meter/guard.
+
+**Decisions:** Path A (local-first + own-cloud) chosen over a backend. Per-habit
+year heatmap and PR timeline deferred (existing drawer heatmap + PR card cover them).
+Docs are append-only going forward (saved to memory).
+
+**Follow-ups:**
+- [ ] ADV-2 features: print/PDF, Insights filters, weekly-review wizard,
+  configurable Today dashboard, tag manager, quick-add templates, CSV import.
+- [ ] Path A: IndexedDB photo store; `updatedAt` + cloud-load conflict prompt; onboarding.
