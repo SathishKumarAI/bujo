@@ -249,3 +249,20 @@ export function exerciseProgression(data: JournalData, exercise: string): { date
   }
   return [...byDay.entries()].map(([date, weight]) => ({ date: date.slice(5), weight })).sort((a, b) => (a.date < b.date ? -1 : 1))
 }
+
+/** Working-set volume for a whole workout (uses structured rows, else parses strings). */
+export function workoutVolume(w: import('./types').Workout): number {
+  if (w.setRows?.length) return sessionVolume(w.setRows)
+  return w.sets.reduce((a, line) => { const p = parseSet(line); return a + (p ? p.weight * p.reps : 0) }, 0)
+}
+
+/** Weekly training volume for the last `weeks` (oldest→newest, whole numbers). */
+export function weeklyVolumeSeries(data: JournalData, today = todayISO(), weeks = 8): { label: string; volume: number }[] {
+  return Array.from({ length: weeks }, (_, i) => {
+    const end = addDays(today, -7 * (weeks - 1 - i))
+    const volume = data.workouts
+      .filter((w) => { const d = dayDiff(w.date, end); return d >= 0 && d < 7 })
+      .reduce((a, w) => a + workoutVolume(w), 0)
+    return { label: end.slice(5), volume: Math.round(volume) }
+  })
+}

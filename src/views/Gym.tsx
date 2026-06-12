@@ -4,7 +4,7 @@ import {
   Activity, Trophy, Crosshair, X, Plus, Video, type LucideIcon,
 } from 'lucide-react'
 import {
-  CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
@@ -18,6 +18,7 @@ import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, lastSetFor, parseSet,
+  weeklyVolumeSeries, exerciseProgression,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import { PULLUP_PROGRAM, pullupAbility, ladder, pyramid } from '../lib/programs'
@@ -56,8 +57,11 @@ export function Gym() {
     return [...new Set(names)].slice(0, 12)
   }, [data.workouts])
 
+  const volumeSeries = useMemo(() => weeklyVolumeSeries(data), [data])
+
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
+  const progression = focusEx ? exerciseProgression(data, focusEx) : []
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
   // cached from a prior search); otherwise fall back to the keyword mapper.
@@ -305,6 +309,35 @@ export function Gym() {
                 <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
                 <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
                 <Line type="monotone" dataKey="weight" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
+
+      {/* ── Training volume + per-exercise progression ───────── */}
+      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx} progression` : 'Weekly working-set volume (weight × reps)'}>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+              <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+              <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
+              <YAxis stroke={cat('overlay0')} fontSize={11} />
+              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+              <Bar dataKey="volume" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {focusEx && progression.length > 1 && (
+          <div className="mt-4 h-40 border-t border-surface0 pt-3">
+            <p className="mb-1 text-xs text-overlay0">{focusEx} — heaviest set per day ({unit})</p>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                <Line type="monotone" dataKey="weight" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
