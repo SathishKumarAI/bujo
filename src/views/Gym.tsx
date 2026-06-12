@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  ChevronsUp, ChevronsDown, Footprints, PersonStanding, MoveVertical, Flame,
+  ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
   Activity, Trophy, Crosshair, X, Plus, Video, type LucideIcon,
 } from 'lucide-react'
 import {
@@ -65,6 +65,8 @@ export function Gym() {
 
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
+  // Collapse the session logger by default on phones to keep the view compact.
+  const [sessionOpen, setSessionOpen] = useState(typeof window === 'undefined' || window.innerWidth >= 640)
   const progression = focusEx ? exerciseProgression(data, focusEx) : []
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
@@ -215,7 +217,13 @@ export function Gym() {
       <Card
         title="Today's session"
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
+        right={
+          <button onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-overlay0 hover:text-text">
+            {sessionOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+        }
       >
+        {sessionOpen && (<>
         <div className="mb-3 flex flex-wrap gap-2">
           {SPLITS.filter((s) => s.id !== 'other').map((s) => {
             const Icon = SPLIT_ICONS[s.id] ?? Activity
@@ -308,6 +316,7 @@ export function Gym() {
             <Button onClick={saveAsRoutine}>Save routine</Button>
           </div>
         </div>
+        </>)}
       </Card>
 
       {/* ── Training program ─────────────────────────────────── */}
