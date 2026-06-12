@@ -1,16 +1,18 @@
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { CalendarPlus } from 'lucide-react'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Star } from 'lucide-react'
+import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
 import type { BulletType } from '../lib/types'
 
 export function Plan() {
-  const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents } = useJournal()
+  const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents, toggleImportant } = useJournal()
   const today = todayISO()
   const fileRef = useRef<HTMLInputElement>(null)
+  const [sortBy, setSortBy] = useState<'date' | 'priority'>('date')
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -27,7 +29,11 @@ export function Plan() {
   // ── Migration: open tasks dated before today ──
   const overdue = data.entries
     .filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date < today)
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .sort((a, b) =>
+      sortBy === 'priority'
+        ? Number(b.important) - Number(a.important) || (a.date < b.date ? -1 : 1)
+        : (a.date < b.date ? -1 : 1),
+    )
 
   // ── ICS import ──
   function onIcs(e: React.ChangeEvent<HTMLInputElement>) {
@@ -45,18 +51,37 @@ export function Plan() {
 
   return (
     <div className="mx-auto max-w-[1400px] columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
-      <Card title="Migration" subtitle="Review overdue open tasks — the heart of bullet journaling">
+      <Card
+        title="Migration"
+        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'} — the heart of bullet journaling`}
+        right={overdue.length > 1 ? (
+          <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
+        ) : undefined}
+      >
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid gap-2 sm:grid-cols-2">
             {overdue.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-surface0 bg-base p-2 text-sm">
-                <span className="text-overlay0">{prettyDay(e.date)}</span>
-                <span className="flex-1 text-text">· {e.text}</span>
-                <Button onClick={() => migrateEntry(e.id, today)} title="Move to today">→ Today</Button>
-                <Button onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow">→ Tomorrow</Button>
-                <Button variant="danger" onClick={() => dropEntry(e.id)} title="Drop it">drop</Button>
+              <li key={e.id} className="flex flex-col gap-1.5 rounded-lg border border-surface0 bg-base p-2 text-sm" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
+                <div className="flex items-start gap-1.5">
+                  <button
+                    onClick={() => toggleImportant(e.id)}
+                    aria-label={e.important ? 'Unset priority' : 'Mark high priority'}
+                    title={e.important ? 'High priority' : 'Mark high priority'}
+                    className="mt-0.5 shrink-0"
+                    style={{ color: e.important ? cat('yellow') : cat('overlay0') }}
+                  >
+                    <Star size={14} fill={e.important ? cat('yellow') : 'none'} />
+                  </button>
+                  <span className="flex-1 text-text">{e.text}</span>
+                  <span className="shrink-0 text-xs text-overlay0">{prettyDay(e.date)}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button onClick={() => migrateEntry(e.id, today)} title="Move to today">→ Today</Button>
+                  <Button onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow">→ Tomorrow</Button>
+                  <Button variant="danger" onClick={() => dropEntry(e.id)} title="Drop it">drop</Button>
+                </div>
               </li>
             ))}
           </ul>
