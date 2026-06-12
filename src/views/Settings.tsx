@@ -10,6 +10,7 @@ import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv } from '../lib/csv'
 import { todayISO } from '../lib/date'
 import type { Gender } from '../lib/types'
 
@@ -194,6 +195,15 @@ export function Settings() {
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-2 text-xs text-overlay0">Export a section as CSV (for spreadsheets):</p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
+            <Button onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
+            <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
+            <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+          </div>
+        </div>
       </Card>
 
       <Card title="Demo & reset" subtitle="Sample data, or start fresh">
