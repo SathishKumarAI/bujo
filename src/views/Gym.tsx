@@ -11,12 +11,13 @@ import { Button, Card, Empty, Input } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
+import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise, epley1RM, platesPerSide, lastSetFor,
+  musclesForExercise, epley1RM, platesPerSide, lastSetFor, parseSet,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import { PULLUP_PROGRAM } from '../lib/programs'
@@ -44,6 +45,16 @@ export function Gym() {
   const [weight, setWeight] = useState('')
   const prs = personalRecords(data)
   const unit = data.settings.weightUnit
+
+  // Recently-logged exercise names (newest first) for the quick picker.
+  const recentExercises = useMemo(() => {
+    const names: string[] = []
+    for (const w of [...data.workouts].sort((a, b) => (a.date < b.date ? 1 : -1))) {
+      for (const r of w.setRows ?? []) if (r.exercise) names.push(r.exercise)
+      for (const line of w.sets) { const p = parseSet(line); if (p) names.push(p.exercise) }
+    }
+    return [...new Set(names)].slice(0, 12)
+  }, [data.workouts])
 
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
@@ -181,12 +192,11 @@ export function Gym() {
                 >
                   <Crosshair size={14} />
                 </button>
-                <input
-                  list="exercise-library"
+                <ExercisePicker
                   value={row.exercise}
-                  onChange={(e) => setRow(i, { exercise: e.target.value })}
-                  placeholder="Exercise"
-                  className="rounded-lg border border-surface1 bg-base px-2 py-1.5 text-sm text-text"
+                  onPick={(name) => setRow(i, { exercise: name })}
+                  library={EXERCISE_LIBRARY}
+                  recents={recentExercises}
                 />
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
