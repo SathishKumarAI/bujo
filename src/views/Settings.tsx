@@ -141,7 +141,7 @@ export function Settings() {
         <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-sm text-subtext1">Today dashboard cards</p>
           <div className="space-y-2">
-            {([['plan', "Today's plan"], ['penalty', 'Training penalty'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
+            {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Training penalty'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
               const hidden = s.hideToday ?? []
               return (
                 <Toggle

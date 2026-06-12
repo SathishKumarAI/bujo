@@ -219,7 +219,7 @@ export interface Collection {
   createdAt: string
 }
 
-export type ThemeName = 'mocha' | 'latte' | 'neon'
+export type ThemeName = 'mocha' | 'latte' | 'neon' | 'system'
 export type TempUnit = 'F' | 'C'
 export type WeightUnit = 'kg' | 'lb'
 export type DistanceUnit = 'km' | 'mi'

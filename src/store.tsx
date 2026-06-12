@@ -199,9 +199,19 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     }
   }, [data, unlocked])
 
-  // Keep the <html data-theme> in sync.
+  // Keep the <html data-theme> in sync. 'system' follows the OS light/dark
+  // preference live (mocha ↔ latte).
   useEffect(() => {
-    document.documentElement.dataset.theme = data.settings.theme
+    const theme = data.settings.theme
+    if (theme !== 'system') {
+      document.documentElement.dataset.theme = theme
+      return
+    }
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const apply = () => { document.documentElement.dataset.theme = mq.matches ? 'latte' : 'mocha' }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [data.settings.theme])
 
   // Optional accent override → drives every `--primary`/`bg-primary` use.

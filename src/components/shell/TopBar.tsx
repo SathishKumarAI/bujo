@@ -153,10 +153,10 @@ export function TopBar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <div className="px-2 py-1.5 text-[10px] tracking-wider text-overlay0 uppercase">Theme</div>
-            {(['mocha', 'latte', 'neon'] as const).map((th) => (
+            {(['mocha', 'latte', 'neon', 'system'] as const).map((th) => (
               <DropdownMenuItem key={th} onClick={() => setSettings({ theme: th })}>
                 <span className={data.settings.theme === th ? 'text-mauve' : ''}>{data.settings.theme === th ? '● ' : '○ '}</span>
-                {th === 'mocha' ? 'Dark' : th === 'latte' ? 'Light' : 'Neon ✦'}
+                {th === 'mocha' ? 'Dark' : th === 'latte' ? 'Light' : th === 'neon' ? 'Neon ✦' : 'System'}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />

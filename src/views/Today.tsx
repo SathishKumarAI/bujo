@@ -8,6 +8,7 @@ import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
 import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
+import { TodayHabits } from '../components/TodayHabits'
 import { StickerBar } from '../components/StickerBar'
 import { onThisDay } from '../lib/stats'
 import { promptForDay } from '../lib/prompts'
@@ -87,6 +88,9 @@ export function Today() {
       {/* ── Daily coverage: what you covered yesterday + the week ── */}
       {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
       {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
+
+      {/* ── Quick-check today's habits without leaving Today ──── */}
+      {date === todayISO() && !hidden.includes('habits') && <TodayHabits />}
 
       {/* ── Daily log (primary, above the fold) ─────────────────── */}
       <Card
