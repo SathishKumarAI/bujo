@@ -7,6 +7,7 @@ import { QuickAdd } from '../components/QuickAdd'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
 import { PenaltyCard } from '../components/PenaltyCard'
+import { CoverageCard } from '../components/CoverageCard'
 import { StickerBar } from '../components/StickerBar'
 import { onThisDay } from '../lib/stats'
 import { promptForDay } from '../lib/prompts'
@@ -81,6 +82,9 @@ export function Today() {
     >
       {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
       {date === todayISO() && <PenaltyCard />}
+
+      {/* ── Daily coverage: what you covered yesterday + the week ── */}
+      {date === todayISO() && <CoverageCard />}
 
       {/* ── Daily log (primary, above the fold) ─────────────────── */}
       <Card
