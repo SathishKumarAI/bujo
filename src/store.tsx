@@ -123,6 +123,9 @@ interface Store {
   // progress photos
   addProgressPhoto: (p: Omit<import('./lib/types').ProgressPhoto, 'id'>) => void
   removeProgressPhoto: (id: string) => void
+  // pickleball
+  addPickleball: (p: Omit<import('./lib/types').PickleballSession, 'id'>) => void
+  removePickleball: (id: string) => void
   // friends / contacts
   addFriend: (f: Omit<import('./lib/types').Friend, 'id' | 'createdAt'>) => void
   updateFriend: (id: string, patch: Partial<import('./lib/types').Friend>) => void
@@ -446,6 +449,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeProgressPhoto: (id) =>
         patch((d) => ({ ...d, progressPhotos: (d.progressPhotos ?? []).filter((p) => p.id !== id) })),
+
+      addPickleball: (p) =>
+        patch((d) => ({ ...d, pickleball: [...(d.pickleball ?? []), { id: uid('pk'), ...p }] })),
+
+      removePickleball: (id) =>
+        patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).filter((p) => p.id !== id) })),
 
       addFriend: (f) =>
         patch((d) => ({ ...d, friends: [...(d.friends ?? []), { id: uid('fr'), createdAt: todayISO(), ...f }] })),

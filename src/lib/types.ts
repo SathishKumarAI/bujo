@@ -332,6 +332,20 @@ export interface Challenge {
   archived?: boolean
 }
 
+/** A logged pickleball play session (games won/lost + context). */
+export interface PickleballSession {
+  id: string
+  date: string // ISO day
+  format: 'singles' | 'doubles'
+  gamesWon: number
+  gamesLost: number
+  durationMin?: number
+  partner?: string // doubles partner
+  /** Perceived exertion 1–10. */
+  rpe?: number
+  notes?: string
+}
+
 /** A logged focus/coding work session (developer tracker). */
 export interface DevSession {
   id: string
@@ -377,6 +391,8 @@ export interface JournalData {
   habitSkips?: Record<string, string[]>
   /** Developer focus/coding sessions. */
   devSessions?: DevSession[]
+  /** Pickleball play sessions. */
+  pickleball?: PickleballSession[]
   /** Physique / progress photos for week-to-week comparison. */
   progressPhotos?: ProgressPhoto[]
   /** Friends / contacts (manual, with optional opt-in GitHub enrichment). */

@@ -1,5 +1,5 @@
 export type ViewId =
-  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'pullups' | 'challenges' | 'focus'
+  | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'pullups' | 'pickleball' | 'challenges' | 'focus'
   | 'plan' | 'collections' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
 
 export interface ViewChrome {
@@ -18,6 +18,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   fitness: { title: 'Fitness', subtitle: 'Cardio & strength', help: 'One home for training, in two tabs. Cardio logs general sessions with totals, history, and a nutrition macro diary (American + Indian foods). Strength is structured lifting with programs, anatomy, plate calculator, body weight, and progress photos.' },
   gym: { title: 'Fitness', subtitle: 'Strength', help: 'The Strength tab of Fitness: searchable exercise picker, per-set weight/reps/RPE/type, 1RM hints, the 12-week program tracker, training-volume charts, plate calculator, muscle map with form/injury cues, and progress photos.' },
   pullups: { title: 'Pull-ups', subtitle: 'Ability, workouts & progressions', help: 'A dedicated pull-up hub: the "Starting From Zero" program with day-by-day check-off, an ability calculator (your max → training set, ladder & pyramid), a workout-format library, and progression exercises with form cues.' },
+  pickleball: { title: 'Pickleball', subtitle: 'Games, win-rate & play-safe tips', help: 'Log pickleball sessions (singles/doubles, games won/lost, duration, RPE). See your record — sessions, games, win %, day streak — plus a win-rate trend, win/loss split, games-per-week, and physio/trainer injury-prevention notes.' },
   challenges: { title: 'Challenges', subtitle: '75 Hard, 90-day & custom challenges', help: 'Fixed-length disciplines (75 Hard/Soft, 90-day, custom). Check in against each day’s rules; a progress ring and week calendar track you. Strict mode resets to Day 1 on a miss.' },
   focus: { title: 'Focus', subtitle: 'Coding time · flow · stress', help: 'A developer work tracker. Log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a streak, a minutes chart, cumulative hours, language bars, and a focus↔stress insight.' },
   plan: { title: 'Plan', subtitle: 'Recurring tasks & routines', help: 'The migration workhorse: clear overdue open tasks (sort by date/priority, star the important ones, move or drop them). Define recurring daily/weekly tasks, and import .ics calendar events onto your Monthly.' },
