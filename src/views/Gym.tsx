@@ -20,7 +20,7 @@ import {
   musclesForExercise, epley1RM, platesPerSide, lastSetFor, parseSet,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
-import { PULLUP_PROGRAM } from '../lib/programs'
+import { PULLUP_PROGRAM, pullupAbility, ladder, pyramid } from '../lib/programs'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
 interface SetRow {
@@ -125,6 +125,7 @@ export function Gym() {
           <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
           <PlateCalculator unit={unit} />
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
+          <PullupGuideCard />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
         </>
       }
@@ -237,13 +238,14 @@ export function Gym() {
         right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <input
-            list="exercise-library"
-            value={focusEx ?? ''}
-            onChange={(e) => setFocusEx(e.target.value || null)}
-            placeholder="Look up any exercise (e.g. Bench Press, Squat)…"
-            className="max-w-xs flex-1 rounded-lg border border-surface1 bg-base px-3 py-2 text-sm text-text"
-          />
+          <div className="w-full max-w-xs">
+            <ExercisePicker
+              value={focusEx ?? ''}
+              onPick={(name) => setFocusEx(name || null)}
+              library={EXERCISE_LIBRARY}
+              recents={recentExercises}
+            />
+          </div>
           {focusEx && musclesForExercise(focusEx).length > 0 && (
             <Button variant="primary" onClick={() => { addRow(focusEx); }} className="inline-flex items-center gap-1.5">
               <Plus size={14} /> Add to session
@@ -375,6 +377,30 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
           </div>
         </>
       )}
+    </Card>
+  )
+}
+
+/** Pull-up training guide: your max → ability group, training set & rep schemes. */
+function PullupGuideCard() {
+  const [max, setMax] = useState('5')
+  const n = Number(max) || 0
+  const a = pullupAbility(n)
+  const set = a.trainingSet
+  return (
+    <Card title="Pull-up training set" subtitle="From your max strict pull-ups">
+      <label className="mb-3 flex items-center justify-between text-sm text-subtext1">
+        Max strict pull-ups
+        <Input type="number" value={max} onChange={(e) => setMax(e.target.value)} className="w-20 py-1 text-right" />
+      </label>
+      <div className="space-y-1.5 text-sm">
+        <div className="flex justify-between"><span className="text-overlay0">Ability</span><span className="text-subtext1">{a.group} ({a.range})</span></div>
+        <div className="flex justify-between"><span className="text-overlay0">Training set</span><span style={{ color: cat('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></div>
+        <div className="flex justify-between"><span className="text-overlay0">Ladder</span><span className="font-mono text-subtext1">{ladder(set).join(', ')}</span></div>
+        <div className="flex justify-between"><span className="text-overlay0">Pyramid</span><span className="font-mono text-subtext1">{pyramid(set).join(', ')}</span></div>
+        <div className="flex justify-between border-t border-surface0 pt-1.5"><span className="text-overlay0">Daily</span><span className="text-subtext1">{a.daily}</span></div>
+        <div className="flex justify-between"><span className="text-overlay0">Weekly</span><span className="text-subtext1">{a.weekly}</span></div>
+      </div>
     </Card>
   )
 }

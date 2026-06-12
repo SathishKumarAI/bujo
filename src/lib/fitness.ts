@@ -101,6 +101,13 @@ export const EXERCISE_LIBRARY = [
   'Pull-up', 'Chin-up', 'Dip', 'Lat Pulldown', 'Bicep Curl', 'Tricep Extension',
   'Leg Press', 'Lunge', 'Romanian Deadlift', 'Hip Thrust', 'Calf Raise',
   'Plank', 'Push-up', 'Face Pull', 'Lateral Raise', 'Incline Bench', 'Leg Curl',
+  // Pull-up program & progressions (from the training PDFs)
+  'Pull-up assessment', 'Jumping pull-ups', 'Partner assisted pull-ups',
+  'Body-weight negatives', 'Jumping negatives', 'Weighted negatives',
+  'Partial ROM pull-ups (bottom)', 'Partial ROM pull-ups (top)',
+  'Dead hangs', 'Scapular retractions', 'Hollow Rocks', 'Modified L-Sits',
+  'Hanging leg raises', 'Toes-to-bar', 'Burpees', 'Air squats',
+  'Jump rope', 'Sprints', 'Mountain climbers', 'Hollow hold',
 ]
 
 export interface PR {

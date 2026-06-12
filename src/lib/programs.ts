@@ -54,3 +54,43 @@ export const PULLUP_PROGRAM: Program = {
 }
 
 export const PROGRAMS: Program[] = [PULLUP_PROGRAM]
+
+// ── Pull-up Training Guide: ability groups → training set + volume targets ────
+export interface PullupAbility {
+  group: string
+  range: string // max strict pull-ups, e.g. "1-5"
+  trainingSet: number // reps per working set
+  daily: string // recommended daily volume
+  weekly: string // recommended weekly volume
+}
+
+export const PULLUP_ABILITY: PullupAbility[] = [
+  { group: 'Beginner', range: '<1', trainingSet: 3, daily: '25–50 progression reps', weekly: '75–150 progression reps' },
+  { group: 'Novice', range: '1–5', trainingSet: 1, daily: '30–60 reps', weekly: '90–180 reps' },
+  { group: 'Intermediate', range: '6–8', trainingSet: 2, daily: '40–70 pull-ups', weekly: '120–210 pull-ups' },
+  { group: 'Intermediate+', range: '9–12', trainingSet: 3, daily: '50–80 pull-ups', weekly: '150–240 pull-ups' },
+  { group: 'Advanced', range: '13–16', trainingSet: 4, daily: '60–90 pull-ups', weekly: '180–270 pull-ups' },
+  { group: 'Expert', range: '17–20', trainingSet: 5, daily: '75–120 pull-ups', weekly: '225–360 pull-ups' },
+  { group: 'Elite', range: '21–24', trainingSet: 6, daily: '100–175 pull-ups', weekly: '300–525 pull-ups' },
+]
+
+/** Your ability group from a max strict-pull-up count. */
+export function pullupAbility(max: number): PullupAbility {
+  if (max < 1) return PULLUP_ABILITY[0]
+  if (max <= 5) return PULLUP_ABILITY[1]
+  if (max <= 8) return PULLUP_ABILITY[2]
+  if (max <= 12) return PULLUP_ABILITY[3]
+  if (max <= 16) return PULLUP_ABILITY[4]
+  if (max <= 20) return PULLUP_ABILITY[5]
+  return PULLUP_ABILITY[6]
+}
+
+/** Ladder rep scheme: 1,2,…,n. */
+export function ladder(n: number): number[] {
+  return Array.from({ length: Math.max(1, n) }, (_, i) => i + 1)
+}
+/** Pyramid rep scheme: 1,2,…,n,…,2,1. */
+export function pyramid(n: number): number[] {
+  const up = ladder(n)
+  return [...up, ...up.slice(0, -1).reverse()]
+}
