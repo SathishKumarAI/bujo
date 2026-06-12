@@ -31,7 +31,6 @@ import {
 const Trackers = lazy(() => import('./views/Trackers').then((m) => ({ default: m.Trackers })))
 const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle })))
 const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
-const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
 const Pullups = lazy(() => import('./views/Pullups').then((m) => ({ default: m.Pullups })))
 
 // Daily pipeline: capture & organise → track health → review.
@@ -60,7 +59,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: FitnessHub, gym: Gym, pullups: Pullups, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
+  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
   settings: Settings,
 }

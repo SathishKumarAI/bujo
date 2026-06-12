@@ -11,8 +11,8 @@ const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
  * tabs over a shared workout store — no more "which view do I open?" and one
  * fewer nav item. Pull-ups keeps its own dedicated view.
  */
-export function FitnessHub() {
-  const [tab, setTab] = useState<'cardio' | 'strength'>('cardio')
+export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 'strength' }) {
+  const [tab, setTab] = useState<'cardio' | 'strength'>(initialTab)
   return (
     <div className="space-y-4">
       <div className="mx-auto flex w-full max-w-[1400px] gap-1 rounded-xl bg-secondary p-1">
