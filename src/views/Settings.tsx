@@ -11,6 +11,7 @@ import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv } from '../lib/csv'
+import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender } from '../lib/types'
 
@@ -38,8 +39,10 @@ export function Settings() {
     })
   }
 
-  function doExport() {
-    download(`bujo-backup-${todayISO()}.json`, exportJSON(data))
+  async function doExport() {
+    // Inline IndexedDB-stored photos so the backup is self-contained.
+    const full = await inlineImages(data)
+    download(`bujo-backup-${todayISO()}.json`, exportJSON(full))
     setSettings({ lastBackup: todayISO() })
   }
 
