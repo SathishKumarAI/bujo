@@ -129,6 +129,16 @@ export function Settings() {
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
         </div>
         <div className="mt-3 border-t border-border pt-3">
+          <Row label="Penalty difficulty">
+            <Segmented
+              value={s.penaltyLevel ?? 'beginner'}
+              onChange={(v) => setSettings({ penaltyLevel: v })}
+              options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Inter' }, { value: 'hard', label: 'Hard' }]}
+            />
+          </Row>
+          <p className="mt-1 text-xs text-overlay0">Scales the training-penalty drills to a doable level.</p>
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-sm text-subtext1">Today dashboard cards</p>
           <div className="space-y-2">
             {([['plan', "Today's plan"], ['penalty', 'Training penalty'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {

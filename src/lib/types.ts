@@ -314,6 +314,8 @@ export interface Settings {
   quickTemplates?: string[]
   /** Optional Today cards the user has hidden (keys: penalty, coverage, onThisDay). */
   hideToday?: string[]
+  /** Difficulty of the training-penalty drills: beginner (default) · intermediate · hard. */
+  penaltyLevel?: 'beginner' | 'intermediate' | 'hard'
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */

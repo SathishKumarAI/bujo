@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PENALTIES, missesFor, penaltyFor } from './penalties'
+import { PENALTIES, missesFor, penaltyFor, scaleTask } from './penalties'
 import { emptyJournal } from './storage'
 import type { Habit } from './types'
 
@@ -28,6 +28,13 @@ describe('penalties', () => {
     const r = missesFor(d, '2026-06-12')
     expect(r.items.some((i) => i.includes('streak'))).toBe(true)
     expect(r.tier).toBe('heavy')
+  })
+
+  it('scaleTask reduces the leading count for easier levels', () => {
+    expect(scaleTask('30 burpees', 'hard')).toBe('30 burpees')
+    expect(scaleTask('30 burpees', 'beginner')).toBe('12 burpees')
+    expect(scaleTask('45-second plank hold', 'beginner')).toBe('18-second plank hold')
+    expect(scaleTask('1 km run', 'beginner')).toBe('1 km run') // never below 1
   })
 
   it('penaltyFor returns a stable entry of the asked tier', () => {

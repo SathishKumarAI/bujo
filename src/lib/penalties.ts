@@ -124,6 +124,18 @@ export function missesFor(data: JournalData, today = todayISO()): MissReport {
   return { items, tier }
 }
 
+export type PenaltyLevel = 'beginner' | 'intermediate' | 'hard'
+
+// The catalogue is sized for "hard"; lower levels scale the rep/time counts down
+// so the toll is doable for normal humans (beginner ≈ 40%).
+const LEVEL_FACTOR: Record<PenaltyLevel, number> = { beginner: 0.4, intermediate: 0.7, hard: 1 }
+
+/** Scale a drill's leading count by the user's level (min 1). e.g. "30 burpees" → "12 burpees". */
+export function scaleTask(task: string, level: PenaltyLevel = 'beginner'): string {
+  const f = LEVEL_FACTOR[level] ?? 1
+  return task.replace(/^(\d+)/, (n) => String(Math.max(1, Math.round(Number(n) * f))))
+}
+
 /** A stable daily pick from a tier (changes each day, not on every render). */
 export function penaltyFor(tier: PenaltyTier, today = todayISO()): Penalty {
   const pool = PENALTIES.filter((p) => p.tier === tier)
