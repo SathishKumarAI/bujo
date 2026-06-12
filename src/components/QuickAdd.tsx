@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Button } from './ui'
 import { SmartInput } from './SmartInput'
+import { MicButton } from './MicButton'
 import { parseTags, parseQuickCapture } from '../lib/bullets'
 import { cat } from '../lib/colors'
 
@@ -43,6 +44,7 @@ export function QuickAdd({ date, onAdded }: { date: string; onAdded?: () => void
           placeholder="Add… (t task · e event · n note · * important · ^ memory)"
           aria-label="Quick add entry"
         />
+        <MicButton onText={(t) => setVal((v) => (v ? `${v} ${t}` : t))} />
         <Button type="button" variant="primary" onClick={() => add(val)}>
           Add
         </Button>
