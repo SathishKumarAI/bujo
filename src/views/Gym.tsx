@@ -125,6 +125,13 @@ export function Gym() {
   const weightRaw = [...data.bodyMetrics]
     .filter((b) => b.weight != null)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
+  // Session RPE over time (perceived exertion trend).
+  const rpeSeries = [...data.workouts]
+    .filter((w) => w.rpe != null)
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .slice(-20)
+    .map((w) => ({ date: w.date.slice(5), rpe: w.rpe }))
+
   // 7-point trailing moving average smooths daily fluctuation.
   const weightSeries = weightRaw.map((b, i) => {
     const win = weightRaw.slice(Math.max(0, i - 6), i + 1)
@@ -370,6 +377,22 @@ export function Gym() {
         )}
       </Card>
       </div>
+
+      {rpeSeries.length >= 2 && (
+        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session — watch for over-reaching">
+          <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       {/* ── Progress photos ──────────────────────────────────── */}
       <ProgressPhotos />
