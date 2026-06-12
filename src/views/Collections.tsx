@@ -3,6 +3,7 @@ import { useJournal } from '../store'
 import { Cake } from 'lucide-react'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { EntryRow } from '../components/EntryRow'
+import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 
@@ -43,6 +44,8 @@ export function Collections() {
           </ul>
         )}
       </Card>
+
+      <FriendsCard />
 
       <Card title="Birthdays" subtitle="Never miss one">
         <div className="mb-3 flex flex-wrap gap-2">

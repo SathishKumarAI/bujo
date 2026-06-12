@@ -177,6 +177,24 @@ export interface ProgressPhoto {
   weight?: number // optional body weight at capture (user's unit)
 }
 
+/**
+ * A friend/contact in the Friends collection. All fields are manual except the
+ * optional GitHub enrichment, which the user opts into per-contact by entering a
+ * username — we then store the PUBLIC profile fields from GitHub's official API.
+ */
+export interface Friend {
+  id: string
+  name: string
+  birthday?: string // ISO "MM-DD" or "YYYY-MM-DD"
+  notes?: string
+  links?: string[] // public URLs the user pastes
+  github?: string // username (opt-in enrichment)
+  avatar?: string // github avatar_url
+  bio?: string // github bio
+  company?: string // github company
+  createdAt: string
+}
+
 export interface Birthday {
   id: string
   name: string
@@ -355,6 +373,8 @@ export interface JournalData {
   devSessions?: DevSession[]
   /** Physique / progress photos for week-to-week comparison. */
   progressPhotos?: ProgressPhoto[]
+  /** Friends / contacts (manual, with optional opt-in GitHub enrichment). */
+  friends?: Friend[]
   settings: Settings
 }
 

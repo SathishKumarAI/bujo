@@ -121,6 +121,10 @@ interface Store {
   // progress photos
   addProgressPhoto: (p: Omit<import('./lib/types').ProgressPhoto, 'id'>) => void
   removeProgressPhoto: (id: string) => void
+  // friends / contacts
+  addFriend: (f: Omit<import('./lib/types').Friend, 'id' | 'createdAt'>) => void
+  updateFriend: (id: string, patch: Partial<import('./lib/types').Friend>) => void
+  removeFriend: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -414,6 +418,15 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeProgressPhoto: (id) =>
         patch((d) => ({ ...d, progressPhotos: (d.progressPhotos ?? []).filter((p) => p.id !== id) })),
+
+      addFriend: (f) =>
+        patch((d) => ({ ...d, friends: [...(d.friends ?? []), { id: uid('fr'), createdAt: todayISO(), ...f }] })),
+
+      updateFriend: (id, fpatch) =>
+        patch((d) => ({ ...d, friends: (d.friends ?? []).map((f) => (f.id === id ? { ...f, ...fpatch } : f)) })),
+
+      removeFriend: (id) =>
+        patch((d) => ({ ...d, friends: (d.friends ?? []).filter((f) => f.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {
