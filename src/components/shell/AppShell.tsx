@@ -3,6 +3,7 @@ import { TooltipProvider } from '../ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
+import { BottomNav } from './BottomNav'
 import { QuickAdd } from '../QuickAdd'
 import { useCursor } from './cursor'
 import type { ViewId } from './viewChrome'
@@ -57,8 +58,11 @@ export function AppShell({
           onCommand={onCommand}
           onMenu={() => setNavOpen((o) => !o)}
         />
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
+        {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
+        <main className="flex-1 overflow-x-hidden p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
       </div>
+
+      <BottomNav items={items} view={view} onNavigate={onNavigate} onQuickAdd={() => setQuickOpen(true)} />
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>
