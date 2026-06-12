@@ -8,10 +8,14 @@ import { cn } from '../../lib/cn'
 export function Page({
   children,
   aside,
+  asideFirst = false,
   className = '',
 }: {
   children: ReactNode
   aside?: ReactNode
+  /** On phones/tablets (< xl), render the aside ABOVE main — keeps data-entry
+   *  forms (which live in the rail) above charts on mobile. Desktop unchanged. */
+  asideFirst?: boolean
   className?: string
 }) {
   if (!aside) {
@@ -24,8 +28,8 @@ export function Page({
         className,
       )}
     >
-      <div className="page-enter min-w-0 space-y-5">{children}</div>
-      <aside className="space-y-5">{aside}</aside>
+      <div className={cn('page-enter min-w-0 space-y-5', asideFirst && 'order-last xl:order-none')}>{children}</div>
+      <aside className={cn('space-y-5', asideFirst && 'order-first xl:order-none')}>{aside}</aside>
     </div>
   )
 }

@@ -45,6 +45,7 @@ export function Focus() {
 
   return (
     <Page
+      asideFirst
       aside={
         <Card title="Log a session" subtitle="Coding / deep-work time">
           <div className="space-y-3">

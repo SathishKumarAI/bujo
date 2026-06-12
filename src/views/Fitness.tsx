@@ -74,6 +74,7 @@ export function Fitness() {
 
   return (
     <Page
+      asideFirst
       aside={
         <>
         <Card title="Log a workout" right={workouts.length > 0 ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat last</Button> : undefined}>

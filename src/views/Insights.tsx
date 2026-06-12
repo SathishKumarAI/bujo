@@ -41,7 +41,7 @@ export function Insights() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
-      <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 items-start gap-3 sm:gap-5 lg:grid-cols-4">
         <Big label="Current streak" value={streak} suffix="d" color="peach" onClick={() => nav('trackers')} />
         <Big label="Longest streak" value={best} suffix="d" color="mauve" onClick={() => nav('trackers')} />
         <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
