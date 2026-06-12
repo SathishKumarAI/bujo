@@ -243,3 +243,15 @@ risks doing nothing well; more coupling.
 pull-up Day 3") rather than re-rendering those UIs. Read-only, reuses the
 coverage/goals logic — the daily hub without the bloat or duplication.
 *Status:* analysis recorded; build pending user go-ahead.
+
+**D-35 — Card order within a view = action-first, analytics-last.**
+*Principle:* order each view's cards by usability/frequency — (1) primary
+capture/action, (2) today's status, (3) secondary entry, (4) reference/lookup,
+(5) charts/analytics. The same vertical order serves web and mobile; the only
+web/mobile split is rail placement, handled by `Page asideFirst` (forms above
+charts on phones for Fitness/Focus). *Applied:* Today (plan→log→detail), Trackers
+(grid→presets→charts→viz→archived), Gym (logger→program→DB→charts→photos),
+Fitness/Focus (form-first on mobile), Insights (Weekly-Review hoisted above the
+read-only analytics). Most views were already action-first by construction;
+Insights was the main reorder. *Why:* a phone user opens a view to *do*, not to
+read charts — reduce scroll-to-action.

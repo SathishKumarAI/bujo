@@ -48,6 +48,9 @@ export function Insights() {
         <Big label="Entries" value={data.entries.length} color="sky" onClick={() => nav('today')} />
       </div>
 
+      {/* Actions first: the weekly ritual + search sit above the read-only analytics. */}
+      <WeeklyReview />
+
       {found.length > 0 && (
         <Card title="Patterns" subtitle="What your data is telling you">
           <ul className="space-y-2">
@@ -132,8 +135,6 @@ export function Insights() {
           </div>
         )}
       </Card>
-
-      <WeeklyReview />
 
       <TagManager />
     </div>
