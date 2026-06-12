@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { cat, HABIT_COLORS } from '../lib/colors'
@@ -34,6 +34,7 @@ export function Trackers() {
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
   const today = todayISO()
 
   const s = data.settings
@@ -42,6 +43,15 @@ export function Trackers() {
   const weekStart = s.weekStart ?? 0
   let days = monthDays(ym)
   if (s.trackerHideWeekends) days = days.filter((d) => { const c = weekColumn(d, weekStart); return weekStart === 1 ? c < 5 : c > 0 && c < 6 })
+  // Day/Week/Month focus: narrow the visible columns.
+  if (viewMode === 'day') {
+    days = [today]
+  } else if (viewMode === 'week') {
+    const col = weekColumn(today, weekStart)
+    const start = addDays(today, -col)
+    days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
+    if (s.trackerHideWeekends) days = days.filter((d) => { const c = weekColumn(d, weekStart); return weekStart === 1 ? c < 5 : c > 0 && c < 6 })
+  }
 
   const visibleHabits = data.habits.filter((h) => s.trackerShowArchived || !h.archived)
 
@@ -67,7 +77,8 @@ export function Trackers() {
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
         right={
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1.5">
+            {!radial && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
           </div>
