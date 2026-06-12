@@ -348,6 +348,24 @@ function NutritionCard({ date }: { date: string }) {
           </div>
         </div>
       )}
+      {/* Macro-target rings vs a balanced default (protein 120 · carbs 200 · fat 60 g). */}
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-surface0 pt-3">
+        {macros.map((mac) => {
+          const target = mac.k === 'protein' ? 120 : mac.k === 'carbs' ? 200 : 60
+          const pct = Math.min(100, Math.round(((mac.val ?? 0) / target) * 100))
+          const r = 20, circ = 2 * Math.PI * r
+          return (
+            <div key={mac.k} className="flex flex-col items-center" title={`${mac.val ?? 0} of ${target}g ${mac.label}`}>
+              <svg width="56" height="56" viewBox="0 0 56 56" role="img" aria-label={`${mac.label}: ${pct}% of ${target} grams`}>
+                <circle cx="28" cy="28" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
+                <circle cx="28" cy="28" r={r} fill="none" stroke={cat(mac.color)} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 28 28)" />
+                <text x="28" y="32" textAnchor="middle" className="fill-text text-[11px] font-bold">{pct}%</text>
+              </svg>
+              <span className="text-[10px] text-overlay0">{mac.label}</span>
+            </div>
+          )
+        })}
+      </div>
     </Card>
   )
 }
