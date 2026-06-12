@@ -184,13 +184,15 @@ export function moodByWeekday(data: JournalData): (number | null)[] {
   return sum.map((s, i) => (count[i] ? s / count[i] : null))
 }
 
-/** Count of workouts per training split (push/pull/legs/…), for a distribution. */
+/** Count of activities by type (push/pull/legs/cardio/pickleball/…), for a distribution. */
 export function workoutSplitCounts(data: JournalData): { split: string; count: number }[] {
   const tally: Record<string, number> = {}
   for (const w of data.workouts) {
     const key = w.split ?? (w.activity ? w.activity.toLowerCase() : 'other')
     tally[key] = (tally[key] ?? 0) + 1
   }
+  const pickle = (data.pickleball ?? []).length
+  if (pickle) tally['pickleball'] = (tally['pickleball'] ?? 0) + pickle
   return Object.entries(tally).map(([split, count]) => ({ split, count })).sort((a, b) => b.count - a.count)
 }
 
