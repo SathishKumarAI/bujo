@@ -111,3 +111,40 @@ describe('habit helpers (v2)', () => {
     expect(habitDayOfWeekBreakdown(d, 'h')[4]).toBe(1)
   })
 })
+
+import { reminderMessage } from './stats'
+import type { Habit } from './types'
+
+describe('reminderMessage (R2-8 smarter notifications)', () => {
+  const habit = (id: string): Habit => ({
+    id, name: id, category: 'wellness', color: 'mauve', startedOn: '2026-01-01',
+  })
+
+  it('returns null when nothing is at risk', () => {
+    expect(reminderMessage(emptyJournal(), '2026-06-11')).toBeNull()
+  })
+
+  it('warns when a ≥3-day habit streak would break today', () => {
+    const d = emptyJournal()
+    d.habits = [habit('h')]
+    // done 08,09,10 → 3-day streak; not done 11 → at risk
+    d.habitLog = { '2026-06-08': ['h'], '2026-06-09': ['h'], '2026-06-10': ['h'] }
+    const m = reminderMessage(d, '2026-06-11')
+    expect(m?.title).toContain('3-day')
+  })
+
+  it('does not warn once the habit is logged today', () => {
+    const d = emptyJournal()
+    d.habits = [habit('h')]
+    d.habitLog = { '2026-06-08': ['h'], '2026-06-09': ['h'], '2026-06-10': ['h'], '2026-06-11': ['h'] }
+    expect(reminderMessage(d, '2026-06-11')).toBeNull()
+  })
+
+  it('nudges an unfinished active challenge day', () => {
+    const d = emptyJournal()
+    d.challenges = [{ id: 'c', name: '75 Hard', durationDays: 75, startDate: '2026-06-10', rules: ['a', 'b'], strict: true }]
+    const m = reminderMessage(d, '2026-06-11')
+    expect(m?.title).toContain('Day 2')
+    expect(m?.body).toContain('2 of 2')
+  })
+})

@@ -89,6 +89,53 @@ export function habitStreak(
   return streak
 }
 
+/**
+ * The single most-urgent reminder for today, or null when nothing's at risk.
+ * Priority: a long habit streak about to break › an active challenge's
+ * unfinished day › the plain "log today" nudge. Pure — drives the banner + OS
+ * notification (R2-8 smarter notifications).
+ */
+export function reminderMessage(
+  data: JournalData,
+  today = todayISO(),
+): { title: string; body: string } | null {
+  const dow = new Date(today + 'T00:00').getDay()
+
+  // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
+  let risk: { name: string; streak: number } | null = null
+  for (const h of data.habits) {
+    if (h.archived) continue
+    const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
+    if (!scheduled) continue
+    const doneToday = (data.habitLog[today] ?? []).includes(h.id)
+    const skippedToday = (data.habitSkips?.[h.id] ?? []).includes(today)
+    if (doneToday || skippedToday) continue
+    const streak = habitStreak(data, h.id, addDays(today, -1))
+    if (streak >= 3 && (!risk || streak > risk.streak)) risk = { name: h.name, streak }
+  }
+  if (risk) {
+    return {
+      title: `🔥 ${risk.streak}-day ${risk.name} streak at risk`,
+      body: `Log ${risk.name} today to keep your ${risk.streak}-day streak alive.`,
+    }
+  }
+
+  // 2. Active challenge with an unfinished day.
+  for (const c of data.challenges ?? []) {
+    if (c.archived) continue
+    const day = dayDiff(c.startDate, today) + 1
+    if (day < 1 || day > c.durationDays) continue
+    const done = (data.challengeLog?.[c.id]?.[today] ?? []).length
+    if (done >= c.rules.length) continue
+    return {
+      title: `💪 ${c.name}: Day ${day}`,
+      body: `${c.rules.length - done} of ${c.rules.length} rules left today — don't break the chain.`,
+    }
+  }
+
+  return null
+}
+
 /** Completions of a habit within the last `days` (rolling week by default). */
 export function weeklyHabitCount(
   data: JournalData,
