@@ -534,6 +534,7 @@ function CategoryRows({
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const { updateHabit, removeHabit, toggleHabitSkip, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
+  const [heatYear, setHeatYear] = useState(false)
   const today = todayISO()
   const streak = habitStreak(data, habit.id)
   const dow = habitDayOfWeekBreakdown(data, habit.id)
@@ -555,10 +556,13 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
           <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
 
-          {/* 12-week completion heatmap */}
+          {/* Completion heatmap — 12 weeks or a full year */}
           <div>
-            <p className="mb-1 text-xs text-overlay0">Last 12 weeks</p>
-            <HabitHeatmap data={data} habit={habit} today={today} />
+            <div className="mb-1 flex items-center justify-between">
+              <p className="text-xs text-overlay0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
+              <button onClick={() => setHeatYear((v) => !v)} className="text-xs text-mauve hover:underline">{heatYear ? '12 weeks' : 'Full year'}</button>
+            </div>
+            <HabitHeatmap data={data} habit={habit} today={today} weeks={heatYear ? 53 : 12} />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -641,26 +645,30 @@ function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: st
   return <span style={{ color: cat(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
 }
 
-/** GitHub-style 12-week completion heatmap (84 days), weekday-aligned. */
-function HabitHeatmap({ data, habit, today }: { data: JData; habit: Habit; today: string }) {
-  const start = addDays(today, -83)
+/** GitHub-style weekday-aligned completion heatmap (12 weeks or a full year). */
+function HabitHeatmap({ data, habit, today, weeks = 12 }: { data: JData; habit: Habit; today: string; weeks?: number }) {
+  const days = weeks * 7
+  const start = addDays(today, -(days - 1))
   const pad = fromISODay(start).getDay() // empty cells before the first day
+  const cell = weeks > 20 ? 'h-2 w-2' : 'h-3 w-3'
   return (
-    <div className="grid grid-flow-col grid-rows-7 gap-0.5">
-      {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-3 w-3" />)}
-      {Array.from({ length: 84 }).map((_, i) => {
-        const d = addDays(start, i)
-        const done = habitDoneOn(data, habit, d)
-        const future = d > today
-        return (
-          <span
-            key={d}
-            title={`${d}${done ? ' · done' : ''}`}
-            className="h-3 w-3 rounded-[2px]"
-            style={{ background: future ? 'transparent' : done ? cat(habit.color) : cat('surface0') }}
-          />
-        )
-      })}
+    <div className="overflow-x-auto">
+      <div className="grid grid-flow-col grid-rows-7 gap-0.5">
+        {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className={cell} />)}
+        {Array.from({ length: days }).map((_, i) => {
+          const d = addDays(start, i)
+          const done = habitDoneOn(data, habit, d)
+          const future = d > today
+          return (
+            <span
+              key={d}
+              title={`${d}${done ? ' · done' : ''}`}
+              className={`${cell} rounded-[2px]`}
+              style={{ background: future ? 'transparent' : done ? cat(habit.color) : cat('surface0') }}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
