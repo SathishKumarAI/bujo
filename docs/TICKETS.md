@@ -346,3 +346,16 @@ Features still open (medium/large — benefit from a steer):
 print/PDF view · Insights filters · habit-archive browser · friend-birthday →
 Future-Log · weekly-review wizard · quick-add templates · tag manager ·
 CSV import · configurable Today dashboard.
+
+### Epic ADV-2 — progress log #2 (appended)
+
+Features shipped: ✅ tag manager (rename/merge), ✅ print/Save-as-PDF,
+✅ quick-add templates, ✅ archived-habits browser, ✅ friend birthdays + countdown,
+✅ Insights search type-filters, ✅ configurable Today dashboard, ✅ guided weekly review.
+Deferred: CSV import (⊘ — JSON import already restores; generic CSV is schema-ambiguous).
+
+Structural: ✅ **Merged Fitness + Gym** into one tabbed hub (Cardio | Strength),
+dropping a duplicate nav item; Gym lazy-loads per tab and stays deep-linkable.
+Also: ✅ comprehensive `docs/FEATURE_GUIDE.md` (every view/sub-feature, 5+ lines).
+
+ADV-2 tally: 8/10 charts (2 covered by existing UI), 9/10 features (1 deferred).

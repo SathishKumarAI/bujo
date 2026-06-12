@@ -320,3 +320,15 @@ public profile later.
   the Web Speech API (it simply hides where it doesn't).
 - **Recommendations**: dismissible smart-default chips suggest backups, reminders,
   weekly goals, or turning a streak into a challenge.
+
+---
+
+## Update — Fitness & Gym are now one view
+
+Fitness and Gym have been combined into a single **Fitness** nav entry with two
+tabs — **Cardio** (general sessions, totals, history, nutrition) and **Strength**
+(structured lifting, programs, anatomy, body weight, progress photos). They share
+the same workout store, so there's one place to log and one shared history; the
+Strength tab loads on demand. Pull-ups remains its own dedicated view. Read the
+Fitness (§3.3), Nutrition (§3.4) and Gym (§3.5) sections above as the two tabs of
+this single hub.
