@@ -95,6 +95,8 @@ interface Store {
   cycleStatus: (id: string) => void
   toggleImportant: (id: string) => void
   deleteEntry: (id: string) => void
+  /** Rename/merge a #tag across every entry (case-insensitive). */
+  renameTag: (oldTag: string, newTag: string) => void
   migrateEntry: (id: string, toDate: string) => void
   dropEntry: (id: string) => void
   bulkAddEvents: (events: { date: string; summary: string }[]) => number
@@ -267,6 +269,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             e.id === id ? { ...e, ...up, tags: up.text ? parseTags(up.text) : e.tags } : e,
           ),
         }), `entry:${id}`),
+
+      renameTag: (oldTag, newTag) =>
+        patch((d) => {
+          const from = oldTag.replace(/^#/, '').toLowerCase()
+          const to = newTag.replace(/^#/, '').trim().toLowerCase()
+          if (!from || !to || from === to) return d
+          const re = new RegExp(`#${from}\\b`, 'gi')
+          return {
+            ...d,
+            entries: d.entries.map((e) => {
+              if (!e.tags.includes(from)) return e
+              const text = e.text.replace(re, `#${to}`)
+              return { ...e, text, tags: parseTags(text) }
+            }),
+          }
+        }),
 
       cycleStatus: (id) =>
         patch((d) => ({

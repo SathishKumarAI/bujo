@@ -9,6 +9,7 @@ import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
+import { TagManager } from '../components/TagManager'
 
 export function Insights() {
   const { data } = useJournal()
@@ -113,6 +114,8 @@ export function Insights() {
           </div>
         )}
       </Card>
+
+      <TagManager />
     </div>
   )
 }
