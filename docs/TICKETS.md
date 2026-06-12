@@ -209,7 +209,10 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 | V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
 | V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
 | V3-F | Gym v2 — structured `setRows` + plate calc (kg/lb) + previous-session/1RM hints + 2-col redesign + pull-up program | ✅ |
-| V3-G | Quick exercise picker — a dropdown/popover button per set row to add/swap an exercise fast (searchable library + recents), instead of free-typing | 🔜 |
-| V3-H | Gym structured charts — weekly training-volume + per-exercise progression (helpers `sessionVolume`/`exerciseProgression` ready) | 🔜 |
+| V3-G | Quick exercise picker — searchable dropdown (recents + library + custom) on set rows + anatomy lookup | ✅ |
+| V3-H | Gym structured charts — weekly training-volume bars + per-exercise progression line | ✅ |
 | V3-I | Per-set RPE + set type (warmup/working/drop) inputs in the logger grid | 🔜 |
-| V3-J | Partial completion — check off individual exercises within a program day (not just whole-day) + record actual reps/sets achieved vs prescribed; partial logging for challenges (per-rule already supported) and workouts | 🔜 |
+| V3-J | Partial completion — per-exercise checkboxes in a program day (auto-completes the day); actual-reps-vs-prescribed still to add | ◑ |
+| V3-K | Training programs from PDF — pull-up program (week/day, load-into-session, day tracker) + ability/training-set calculator + exercises in library | ✅ |
+| V3-L | Space UX — auto-hide sidebar (edge-hover reveal) + recommendations as a top-bar lightbulb badge | ✅ |
+| V3-M | Plate calculator — unit-aware plates (kg/lb) + remount on unit change | ✅ |

@@ -189,6 +189,13 @@ charts are scoped (TICKETS V3-H/I) but not yet wired.
 **D-28 — Plate denominations follow the unit.** kg uses 25/20/15/10/5/2.5/1.25;
 lb uses 45/35/25/10/5/2.5. Fixes a unit bug where lb users saw kg plates.
 
+**D-29 — Reclaim screen space: auto-hide sidebar + recommendations as an icon.**
+*Context:* the sidebar + a recommendations banner ate horizontal and vertical space.
+*Choice:* an opt-in **auto-hide** mode (sidebar becomes a fixed overlay revealed by
+a left-edge hover zone via Tailwind `peer-hover`; content goes full-width) and
+move recommendations into a top-bar **lightbulb + count badge** dropdown.
+*Why:* maximise content area without losing one-tap access to nav or suggestions.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

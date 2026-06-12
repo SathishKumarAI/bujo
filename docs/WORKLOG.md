@@ -1,5 +1,31 @@
 # Worklog
 
+## 2026-06-11 20:30 — Gym v3 build-out + space UX + PDF programs
+
+**Summary:** Implemented the Gym backlog + space-saving shell changes on
+`feat/v3-smart-input`. 94 tests green.
+
+**Changes:**
+- **Quick exercise picker** (V3-G) — searchable dropdown (recents + library +
+  custom) on set rows AND the anatomy lookup.
+- **Volume + progression charts** (V3-H) — weekly training-volume bars +
+  per-exercise progression line (`workoutVolume`/`weeklyVolumeSeries`/
+  `exerciseProgression`).
+- **Partial completion** (V3-J) — per-exercise checkboxes in a program day;
+  the day auto-completes when all are checked.
+- **Training programs from the PDFs** (V3-K) — `lib/programs.ts` pull-up program
+  + **ability/training-set calculator** (max pull-ups → group, ladder/pyramid,
+  daily/weekly volume); program exercises added to the library. Source PDFs
+  gitignored (PII + copyright).
+- **Space UX** (V3-L) — auto-hide sidebar (edge-hover reveal, full-width content)
+  + recommendations as a top-bar lightbulb badge.
+- **Plate calculator** (V3-M) — unit-aware plates + remount on unit change
+  (fixed the stale-kg bug).
+- Deleted the personal PDF from disk (user-authorised; was already gitignored).
+
+**Follow-ups:** V3-I (per-set RPE/type inputs); V3-J actuals (reps achieved vs
+prescribed).
+
 ## 2026-06-11 19:00 — Gym redesign + training programs + structured sets + V3 epics
 
 **Summary:** Continued v3 on `feat/v3-smart-input`. Shipped smart input,
