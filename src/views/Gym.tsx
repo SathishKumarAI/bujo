@@ -22,7 +22,7 @@ import {
   weeklyVolumeSeries, exerciseProgression,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
-import { PROGRAMS, pullupAbility, ladder, pyramid, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS } from '../lib/programs'
+import { PROGRAMS } from '../lib/programs'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
 interface SetRow {
@@ -187,7 +187,6 @@ export function Gym() {
           <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
           <PlateCalculator key={unit} unit={unit} />
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
-          <PullupGuideCard />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
         </>
       }
@@ -293,12 +292,6 @@ export function Gym() {
 
       {/* ── Training program ─────────────────────────────────── */}
       <ProgramCard onLoad={(exs) => loadRoutine(exs, 'other')} />
-
-      {/* ── Pull-up workout library + progressions ───────────── */}
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <PullupWorkoutsCard />
-        <ProgressionsCard />
-      </div>
 
       {/* ── Exercise database (wger) ─────────────────────────── */}
       <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session">
@@ -477,76 +470,6 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
           </div>
         </>
       )}
-    </Card>
-  )
-}
-
-/** Library of pull-up workout formats (Ladders, Pyramids, EMOMs, …). */
-function PullupWorkoutsCard() {
-  const [open, setOpen] = useState<string | null>(PULLUP_WORKOUTS[0].name)
-  return (
-    <Card title="Pull-up workouts" subtitle="Session formats — tap one for how to run it">
-      <ul className="space-y-1">
-        {PULLUP_WORKOUTS.map((w) => {
-          const isOpen = open === w.name
-          return (
-            <li key={w.name} className="border-t border-surface0 first:border-t-0">
-              <button onClick={() => setOpen(isOpen ? null : w.name)} className="flex w-full items-center justify-between py-1.5 text-left text-sm">
-                <span className={isOpen ? 'text-text' : 'text-subtext1'}>{w.name}</span>
-                <span className="text-[10px] text-overlay0">{isOpen ? '▾' : '▸'}</span>
-              </button>
-              {isOpen && (
-                <div className="pb-2 text-xs text-subtext0">
-                  <p className="text-overlay1">{w.profile}</p>
-                  <p className="mt-1">{w.how}</p>
-                  <p className="mt-1"><span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}</p>
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </Card>
-  )
-}
-
-/** How to build toward a first pull-up — progression exercises with form cues. */
-function ProgressionsCard() {
-  return (
-    <Card title="Pull-up progressions" subtitle="Build the first rep safely — why & how for each">
-      <ul className="space-y-2">
-        {PULLUP_PROGRESSIONS.map((p) => (
-          <li key={p.name} className="border-t border-surface0 pt-2 first:border-t-0 first:pt-0">
-            <p className="text-sm text-subtext1">{p.name}</p>
-            <p className="text-xs text-overlay1"><span className="text-mauve">Why:</span> {p.why}</p>
-            <p className="text-xs text-subtext0"><span className="text-green">How:</span> {p.how}</p>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  )
-}
-
-/** Pull-up training guide: your max → ability group, training set & rep schemes. */
-function PullupGuideCard() {
-  const [max, setMax] = useState('5')
-  const n = Number(max) || 0
-  const a = pullupAbility(n)
-  const set = a.trainingSet
-  return (
-    <Card title="Pull-up training set" subtitle="From your max strict pull-ups">
-      <label className="mb-3 flex items-center justify-between text-sm text-subtext1">
-        Max strict pull-ups
-        <Input type="number" value={max} onChange={(e) => setMax(e.target.value)} className="w-20 py-1 text-right" />
-      </label>
-      <div className="space-y-1.5 text-sm">
-        <div className="flex justify-between"><span className="text-overlay0">Ability</span><span className="text-subtext1">{a.group} ({a.range})</span></div>
-        <div className="flex justify-between"><span className="text-overlay0">Training set</span><span style={{ color: cat('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></div>
-        <div className="flex justify-between"><span className="text-overlay0">Ladder</span><span className="font-mono text-subtext1">{ladder(set).join(', ')}</span></div>
-        <div className="flex justify-between"><span className="text-overlay0">Pyramid</span><span className="font-mono text-subtext1">{pyramid(set).join(', ')}</span></div>
-        <div className="flex justify-between border-t border-surface0 pt-1.5"><span className="text-overlay0">Daily</span><span className="text-subtext1">{a.daily}</span></div>
-        <div className="flex justify-between"><span className="text-overlay0">Weekly</span><span className="text-subtext1">{a.weekly}</span></div>
-      </div>
     </Card>
   )
 }

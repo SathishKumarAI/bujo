@@ -23,6 +23,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Dumbbell, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
+  ArrowUpToLine,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -30,6 +31,7 @@ const Trackers = lazy(() => import('./views/Trackers').then((m) => ({ default: m
 const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle })))
 const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
 const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
+const Pullups = lazy(() => import('./views/Pullups').then((m) => ({ default: m.Pullups })))
 
 // Daily pipeline: capture & organise → track health → review.
 // "System" (Help, Settings) is intentionally NOT here — those live in the top
@@ -44,6 +46,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Health' },
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'gym', label: 'Gym', icon: Dumbbell, group: 'Health' },
+  { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
@@ -56,7 +59,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers, fitness: Fitness,
-  gym: Gym, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections,
+  gym: Gym, pullups: Pullups, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
   settings: Settings,
 }
