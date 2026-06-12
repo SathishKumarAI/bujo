@@ -51,3 +51,23 @@ app is served statically; each user's data syncs to *their own* Drive/gist/folde
 - ⏳ **Gap #2 (sync conflict)**: still open — add an `updatedAt` stamp and a
   newer/older prompt on silent cloud-folder load (currently only the first-run
   folder pick prompts). Touches the App boot path; do deliberately.
+
+## Mobile audit + entry-first pass (appended)
+
+Audited every view at a 390×844 phone viewport in real Chrome (devtools MCP).
+**Finding: no broken/invisible views** — the responsive shell works; sidebar →
+bottom-nav, calendars/charts/tables all adapt (wide grids scroll horizontally).
+Real issue was *ordering*: forms living in the right rail stacked **below** the
+charts on phones.
+
+Changes (one responsive codebase, per decision):
+- `Page` gained `asideFirst` — on < xl it renders the rail (log forms) **above**
+  main, so Fitness/Focus open to data-entry, not charts ("charts down" on mobile).
+- Insights stat cards go 2-up on phones (were full-width, too tall).
+- Bottom-nav FAB now opens a **quick-action sheet** (Quick add · Log workout ·
+  Habits · Goals) — frequent actions one thumb-tap away.
+- IndexedDB image store reload verified: no console errors.
+
+Still cosmetic / optional: Gym set-row is tight at 390px; Trackers title wraps.
+Not blocking. To open on a real phone: enable GitHub Pages, or run
+`npm run dev -- --host` and hit the LAN URL.
