@@ -50,6 +50,25 @@ export function TopBar({
         {chrome.subtitle && <p className="truncate text-xs text-muted-foreground">{chrome.subtitle}</p>}
       </div>
 
+      {/* Contextual help — what this page does, pulled from the view registry. */}
+      {chrome.help && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-overlay0 hover:text-foreground">
+              <HelpCircle size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-80">
+            <div className="px-2 py-1.5">
+              <p className="mb-1 font-display text-sm font-semibold text-foreground">{chrome.title}</p>
+              <p className="text-xs leading-relaxed text-subtext0">{chrome.help}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onNavigate('help')} className="text-xs text-blue">Open the full guide →</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
       {chrome.dateNav && (
         <div className="ml-2 flex items-center gap-1">
           <Button
