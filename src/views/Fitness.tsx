@@ -166,6 +166,7 @@ export function Fitness() {
       </Card>
 
       <NutritionCard date={f.date} />
+      <CalorieTrendCard today={today} />
 
       <WorkoutEditDialog workout={editing} onClose={() => setEditing(null)} />
     </Page>
@@ -225,6 +226,31 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
       <circle cx="38" cy="38" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="7" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 38 38)" />
       <text x="38" y="42" textAnchor="middle" className="fill-text font-bold" fontSize="16">{pct}%</text>
     </svg>
+  )
+}
+
+/** 14-day calorie trend with a 7-day average line — momentum, not just today. */
+function CalorieTrendCard({ today }: { today: string }) {
+  const { data } = useJournal()
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const date = addDays(today, -(13 - i))
+    return { date, kcal: data.metrics.find((x) => x.date === date)?.calories ?? 0 }
+  })
+  if (days.every((d) => d.kcal === 0)) return null
+  const logged = days.filter((d) => d.kcal > 0)
+  const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
+  const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
+  return (
+    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`}>
+      <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
+        {days.map((d) => (
+          <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
+            <div className="rounded-t" style={{ height: `${Math.max(2, (d.kcal / max) * 100)}%`, background: d.date === today ? cat('peach') : cat('surface2') }} />
+          </div>
+        ))}
+      </div>
+      <p className="mt-1 text-center text-[10px] text-overlay0">peach = today</p>
+    </Card>
   )
 }
 
