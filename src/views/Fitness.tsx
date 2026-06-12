@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs } from '../lib/fitness'
+import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
 
 const ACTIVITIES = ['Run', 'Walk', 'Strength', 'Cycling', 'Yoga', 'Swim', 'HIIT', 'Sport', 'Other']
@@ -237,8 +238,53 @@ function NutritionCard({ date }: { date: string }) {
   ]
   const totalG = macros.reduce((s, x) => s + (x.val ?? 0), 0)
 
+  // Add a food's macros to the running day total.
+  function addFood(food: Food) {
+    setMetric(date, {
+      calories: (m?.calories ?? 0) + food.kcal,
+      protein: (m?.protein ?? 0) + food.protein,
+      carbs: (m?.carbs ?? 0) + food.carbs,
+      fat: (m?.fat ?? 0) + food.fat,
+    })
+  }
+  function fillSample() {
+    const t = sumFoods(SAMPLE_DAY)
+    setMetric(date, t)
+  }
+
   return (
-    <Card title="Nutrition" subtitle="Calories & macros for the day">
+    <Card
+      title="Nutrition"
+      subtitle="Calories & macros — add foods or type your own"
+      right={<Button onClick={fillSample} title="Fill a typical ~1800 kcal day">Sample day</Button>}
+    >
+      {/* Quick-add from the food DB (American + Indian staples). */}
+      <div className="mb-3">
+        <select
+          value=""
+          onChange={(e) => { const f = FOODS.find((x) => x.name === e.target.value); if (f) addFood(f) }}
+          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text"
+          aria-label="Add a food"
+        >
+          <option value="">+ Add a food…</option>
+          <optgroup label="Indian">
+            {FOODS.filter((f) => f.cuisine === 'indian').map((f) => (
+              <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
+            ))}
+          </optgroup>
+          <optgroup label="American">
+            {FOODS.filter((f) => f.cuisine === 'american').map((f) => (
+              <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
+            ))}
+          </optgroup>
+        </select>
+        <a
+          href="https://www.google.com/search?q=calories+macros+"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 inline-block text-xs text-overlay0 hover:text-mauve"
+        >Food not listed? Look it up online ↗</a>
+      </div>
       <label className="mb-3 block text-sm text-subtext1">
         Calories
         <Input
