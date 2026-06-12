@@ -359,3 +359,15 @@ dropping a duplicate nav item; Gym lazy-loads per tab and stays deep-linkable.
 Also: ✅ comprehensive `docs/FEATURE_GUIDE.md` (every view/sub-feature, 5+ lines).
 
 ADV-2 tally: 8/10 charts (2 covered by existing UI), 9/10 features (1 deferred).
+
+### Epic ADV-2 — closeout (appended)
+
+Charts 9/10: ✅ calorie trend · macro rings · body-weight avg · mood-by-weekday ·
+workout-split · focus cumulative · year-in-pixels · RPE trend · per-habit year
+heatmap. PR timeline = covered by the Personal-Records card (not rebuilt).
+Features 10/10: ✅ tag manager · print/PDF · quick-add templates · archive browser ·
+friend birthdays · Insights filters · configurable Today dashboard · weekly review ·
+CSV export · **CSV import**.
+Plus beyond-list: Today's-plan hub, dedup (birthdays/Fitness+Gym/dead code),
+5-tab bottom nav, iOS drawer, contextual help, card-ordering pass (D-35),
+IndexedDB photos, onboarding, graphify install. **Task #40 closed.**
