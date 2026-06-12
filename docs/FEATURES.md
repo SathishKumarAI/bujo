@@ -150,3 +150,23 @@ Signifiers stack: `* t book the campsite #travel`.
 - **graphify** (`@sentropic/graphify`, per-project devDependency + `.claude`
   skill/hooks) — turns the codebase into a queryable knowledge graph ("memory"
   for AI assistants). Generated `.graphify/` state is gitignored.
+
+## Pickleball & more (appended)
+
+- **Pickleball** (`views/Pickleball.tsx`, `lib/pickleball.ts`) — log sessions
+  (singles/doubles, games won/lost, duration, RPE, partner). Record: sessions,
+  games, win %, day streak; win-rate trend, win/loss donut, games-per-week; a
+  collapsible **physio/trainer play-safe** card (ankle/shoulder/elbow/Achilles
+  injury prevention). Stored in `JournalData.pickleball`.
+- **Today's habits** (`TodayHabits`) — tick today's scheduled check-habits from
+  Today as chips, no need to open Trackers (same store; collapsible).
+- **System theme** — Theme menu adds *System*, following the OS light/dark
+  preference live (mocha ↔ latte).
+
+## Data model note
+
+Everything is **one source of truth**: the single `JournalData` object in
+localStorage (`bujo:data`, or encrypted `bujo:enc`). Every feature — including
+Pickleball, Friends, progress photos — is a field on that object, so cloud sync
+(own folder / Drive / gist) and JSON export carry all of it automatically; there
+is no second database to keep in step.
