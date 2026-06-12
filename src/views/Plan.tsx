@@ -13,6 +13,7 @@ export function Plan() {
   const today = todayISO()
   const fileRef = useRef<HTMLInputElement>(null)
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date')
+  const [showAllOverdue, setShowAllOverdue] = useState(false)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -62,7 +63,7 @@ export function Plan() {
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
-            {overdue.map((e) => (
+            {(showAllOverdue ? overdue : overdue.slice(0, 5)).map((e) => (
               <li key={e.id} className="flex flex-col gap-1.5 rounded-lg border border-surface0 bg-base p-2 text-sm" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
                 <div className="flex items-start gap-1.5">
                   <button
@@ -85,6 +86,11 @@ export function Plan() {
               </li>
             ))}
           </ul>
+        )}
+        {overdue.length > 5 && (
+          <button onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 text-sm text-mauve hover:underline">
+            {showAllOverdue ? 'Show less' : `Show all ${overdue.length}`}
+          </button>
         )}
       </Card>
 
