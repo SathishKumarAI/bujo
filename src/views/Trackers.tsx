@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -27,7 +27,19 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
 ]
 
 export function Trackers() {
-  const { data, toggleHabit, setHabitValue, addHabit, setSettings } = useJournal()
+  const { data, toggleHabit, setHabitValue, addHabit, setSettings, updateHabit } = useJournal()
+
+  /** Drag-reorder within a category: rewrite `order` to the new sequence. */
+  function reorderHabits(category: HabitCategory, dragId: string, dropId: string) {
+    if (dragId === dropId) return
+    const list = data.habits.filter((h) => h.category === category).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const from = list.findIndex((h) => h.id === dragId)
+    const to = list.findIndex((h) => h.id === dropId)
+    if (from < 0 || to < 0) return
+    const [moved] = list.splice(from, 1)
+    list.splice(to, 0, moved)
+    list.forEach((h, i) => { if ((h.order ?? 0) !== i) updateHabit(h.id, { order: i }) })
+  }
   const { month: ym } = useCursor()
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
@@ -130,6 +142,7 @@ export function Trackers() {
                     onToggle={toggleHabit}
                     onSetValue={setHabitValue}
                     onEdit={setEditing}
+                    onReorder={reorderHabits}
                     collapsed={collapsedCats.has(category)}
                     onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); n.has(category) ? n.delete(category) : n.add(category); return n })}
                   />
@@ -291,7 +304,7 @@ function TodayStrip({
 
 // ── Category section of habit rows ───────────────────────────────────────────
 function CategoryRows({
-  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit, collapsed, onToggleCollapse,
+  category, habits, days, today, cell, data, onToggle, onSetValue, onEdit, onReorder, collapsed, onToggleCollapse,
 }: {
   category: string
   habits: Habit[]
@@ -303,9 +316,12 @@ function CategoryRows({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
+  onReorder: (category: HabitCategory, dragId: string, dropId: string) => void
   collapsed: boolean
   onToggleCollapse: () => void
 }) {
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   return (
     <>
       <tr>
@@ -319,8 +335,20 @@ function CategoryRows({
         const isCount = h.type === 'count'
         const target = h.target && h.target > 0 ? h.target : 1
         return (
-          <tr key={h.id} className="group">
+          <tr
+            key={h.id}
+            className={`group ${overId === h.id && dragId !== h.id ? 'outline-dashed outline-1 outline-mauve' : ''} ${dragId === h.id ? 'opacity-40' : ''}`}
+            onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverId(h.id) } }}
+            onDrop={(e) => { e.preventDefault(); if (dragId) onReorder(category as HabitCategory, dragId, h.id); setDragId(null); setOverId(null) }}
+          >
             <td className="sticky left-0 z-10 bg-mantle py-0.5 pr-2 text-left whitespace-nowrap text-subtext1">
+              <span
+                draggable
+                onDragStart={() => setDragId(h.id)}
+                onDragEnd={() => { setDragId(null); setOverId(null) }}
+                title="Drag to reorder"
+                className="mr-0.5 inline-block cursor-grab align-middle text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+              ><GripVertical size={11} /></span>
               {h.emoji ? <span className="mr-0.5">{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}{' '}
               <button onClick={() => onEdit(h.id)} className={`hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
               {h.unit && <span className="ml-1 text-overlay0">({h.unit})</span>}
