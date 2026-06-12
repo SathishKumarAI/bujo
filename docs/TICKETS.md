@@ -307,12 +307,12 @@ Driven by the user's workout PDFs + a stream of UX asks. All ✅ on `main`
 ### Planned next — 20 advanced features/charts (backlog for Epic ADV-2)
 
 Charts (data already present, recharts/inline-SVG):
-1. Nutrition weekly calories + macro-trend chart.
+1. ✅ Nutrition 14-day calorie trend (avg line).
 2. Macro-target rings (protein/carbs/fat vs goal).
 3. Body-weight moving average + goal line.
-4. Mood-by-weekday bars.
-5. Workout split distribution (push/pull/legs) pie.
-6. Focus cumulative coding-hours line.
+4. ✅ Mood-by-weekday bars.
+5. ✅ Workout split distribution (push/pull/legs) donut.
+6. ✅ Focus cumulative coding-hours line.
 7. Year-in-pixels mood grid.
 8. Per-habit GitHub-style year heatmap.
 9. RPE trend (gym) line.
