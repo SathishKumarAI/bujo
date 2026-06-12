@@ -174,7 +174,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
   // Keep the <html data-theme> in sync.
   useEffect(() => {
-    document.documentElement.dataset.theme = data.settings.theme === 'latte' ? 'latte' : 'mocha'
+    document.documentElement.dataset.theme = data.settings.theme
   }, [data.settings.theme])
 
   // Toggle realism body classes (paper texture + handwriting font).
