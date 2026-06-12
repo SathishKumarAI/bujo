@@ -310,6 +310,8 @@ export interface Settings {
   sidebarCollapsed?: boolean
   /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
   sidebarAutoHide?: boolean
+  /** Saved quick-add snippets, inserted with one tap on the capture field. */
+  quickTemplates?: string[]
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */

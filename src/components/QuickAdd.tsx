@@ -12,8 +12,18 @@ import { cat } from '../lib/colors'
  * (#tags, recent entries) and same-day duplicate detection.
  */
 export function QuickAdd({ date, onAdded }: { date: string; onAdded?: () => void }) {
-  const { data, addEntry } = useJournal()
+  const { data, addEntry, setSettings } = useJournal()
   const [val, setVal] = useState('')
+  const templates = data.settings.quickTemplates ?? []
+
+  function saveTemplate() {
+    const t = val.trim()
+    if (!t || templates.includes(t)) return
+    setSettings({ quickTemplates: [...templates, t].slice(-12) })
+  }
+  function removeTemplate(t: string) {
+    setSettings({ quickTemplates: templates.filter((x) => x !== t) })
+  }
 
   // Completion corpus + duplicate set (same-day, non-collection entries).
   const tags = [...new Set(data.entries.flatMap((e) => parseTags(e.text)))]
@@ -49,6 +59,21 @@ export function QuickAdd({ date, onAdded }: { date: string; onAdded?: () => void
           Add
         </Button>
       </div>
+
+      {/* Saved templates — tap to insert; ✕ to forget. */}
+      {(templates.length > 0 || val.trim()) && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {templates.map((t) => (
+            <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-surface0 px-2 py-0.5 text-xs text-subtext1">
+              <button onClick={() => setVal(t)} className="hover:text-text">{t}</button>
+              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+            </span>
+          ))}
+          {val.trim() && !templates.includes(val.trim()) && (
+            <button onClick={saveTemplate} className="rounded-full border border-dashed border-surface2 px-2 py-0.5 text-xs text-overlay1 hover:text-mauve">+ save as template</button>
+          )}
+        </div>
+      )}
 
       {/* Live preview: shows exactly what the grammar will create. */}
       {preview && (
