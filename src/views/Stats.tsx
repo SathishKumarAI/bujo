@@ -12,7 +12,7 @@ import {
   buildHeatmap, moodByDay, sleepMoodScatter, tagCounts, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
 } from '../lib/viz'
-import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS } from '../lib/date'
+import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
 import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
@@ -170,6 +170,35 @@ export function Stats() {
           {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
           <span>great</span>
         </div>
+      </Card>
+
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`} className="lg:col-span-2">
+        {(() => {
+          const year = ym.slice(0, 4)
+          const moodOn = new Map(data.metrics.filter((m) => m.mood != null && m.date.startsWith(year)).map((m) => [m.date, m.mood!]))
+          if (moodOn.size === 0) return <Empty>Log mood through the year to fill this in.</Empty>
+          return (
+            <div className="overflow-x-auto" role="img" aria-label={`Year-in-pixels grid of daily mood for ${year}`}>
+              <div className="min-w-[520px]">
+                {Array.from({ length: 12 }, (_, mi) => {
+                  const mm = String(mi + 1).padStart(2, '0')
+                  return (
+                    <div key={mi} className="flex items-center gap-1">
+                      <span className="w-7 shrink-0 text-[10px] text-overlay0">{MONTHS[mi].slice(0, 3)}</span>
+                      <div className="flex gap-[2px]">
+                        {Array.from({ length: 31 }, (_, di) => {
+                          const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
+                          const v = moodOn.get(date)
+                          return <span key={di} className="h-2.5 w-2.5 rounded-[2px]" title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
       </Card>
 
       <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)">
