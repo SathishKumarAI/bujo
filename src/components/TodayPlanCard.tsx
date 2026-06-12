@@ -2,8 +2,9 @@ import { CheckSquare, Dumbbell, ListTodo, ArrowUpToLine } from 'lucide-react'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat } from '../lib/colors'
-import { todayISO } from '../lib/date'
+import { todayISO, prettyDay, WEEKDAYS } from '../lib/date'
 import { dayCompletion } from '../lib/stats'
+import { weekCoverage } from '../lib/coverage'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
 
@@ -42,8 +43,13 @@ export function TodayPlanCard() {
   ]
   if (pullDone > 0 && pullDone < pullTotal) chips.push({ label: `Pull-ups ${pullDone}/${pullTotal}`, color: 'peach', icon: ArrowUpToLine, to: 'pullups', done: false })
 
+  // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
+  // summary card — avoids the "crowded Today" con from DECISIONS D-34).
+  const week = weekCoverage(data, today, 7)
+  const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
+
   return (
-    <Card title="Today’s plan" subtitle="Your whole day at a glance — tap to jump in">
+    <Card title="Today’s plan" subtitle="Your whole day at a glance — tap to jump in" right={<span className="text-xs text-overlay0">week {weekScore}%</span>}>
       <div className="flex flex-wrap gap-2">
         {chips.map((c) => {
           const Icon = c.icon
@@ -58,6 +64,14 @@ export function TodayPlanCard() {
             </button>
           )
         })}
+      </div>
+      <div className="mt-3 flex gap-1.5 border-t border-surface0 pt-3">
+        {week.map((d) => (
+          <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${Math.round(d.score * 100)}% covered`}>
+            <div className="h-6 w-full rounded" style={{ background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'), outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }} />
+            <span className="text-[10px] text-overlay0">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
+          </div>
+        ))}
       </div>
     </Card>
   )
