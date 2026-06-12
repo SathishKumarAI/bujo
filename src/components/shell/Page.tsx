@@ -15,7 +15,7 @@ export function Page({
   className?: string
 }) {
   if (!aside) {
-    return <div className={cn('mx-auto w-full max-w-[1400px] space-y-5', className)}>{children}</div>
+    return <div className={cn('page-enter mx-auto w-full max-w-[1400px] space-y-5', className)}>{children}</div>
   }
   return (
     <div
@@ -24,7 +24,7 @@ export function Page({
         className,
       )}
     >
-      <div className="min-w-0 space-y-5">{children}</div>
+      <div className="page-enter min-w-0 space-y-5">{children}</div>
       <aside className="space-y-5">{aside}</aside>
     </div>
   )
