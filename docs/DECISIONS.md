@@ -255,3 +255,25 @@ Fitness/Focus (form-first on mobile), Insights (Weekly-Review hoisted above the
 read-only analytics). Most views were already action-first by construction;
 Insights was the main reorder. *Why:* a phone user opens a view to *do*, not to
 read charts — reduce scroll-to-action.
+
+**D-36 — Reusable collapsible Card = the compacting pattern.**
+*Choice:* the shared `Card` takes `collapsible` / `defaultCollapsed`; a header
+chevron hides the body. One prop compacts any card — no bespoke collapse code.
+*Applied default-collapsed:* Training penalty, Gym "Today's session" (phones),
+Stickers, On-this-day, Exercise database. *Collapsible (open):* Completion
+heatmap. *Why:* phones need entry-first, low scroll; secondary/heavy cards
+shouldn't push the primary action down. Same behaviour web + mobile.
+
+**D-37 — Penalty difficulty is user-set; Beginner is the default.**
+*Context:* the 300-drill catalogue is sized for "hard" (e.g. 6 km run) — not
+realistic for most users. *Choice:* a `penaltyLevel` setting (beginner ·
+intermediate · hard); `scaleTask()` scales the leading rep/time count
+(beginner ≈ 40%, min 1). Default **beginner**. *Why:* the penalty is a gentle
+nudge, not a boot-camp; it must stay doable or it gets ignored/dismissed.
+
+**D-38 — Fitness+Gym fully merged; the `gym` route is an alias, not a view.**
+*Context:* after merging into the tabbed Fitness hub, "Gym" still leaked via the
+Goals link and old `?view=gym` bookmarks (rendered the un-tabbed Gym titled
+"Gym"). *Choice:* `gym` now routes to `FitnessHub initialTab="strength"` and its
+chrome title is "Fitness". No standalone "Gym" view is reachable in-app. *Why:*
+one home for training; the word "Gym" only survives as a tab-less deep-link alias.

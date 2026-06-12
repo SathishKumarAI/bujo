@@ -124,3 +124,29 @@ Signifiers stack: `* t book the campsite #travel`.
 - Uploaded images are downscaled to ≤1024px JPEG before storage.
 - Cycle and NoFap tools are off by default; enable in Settings (auto-suggested
   by the profile/gender field).
+
+## Compacting & mobile (appended)
+
+- **Collapsible cards** — the shared `Card` supports `collapsible`/`defaultCollapsed`
+  (header chevron). Default-collapsed: Training penalty, Gym "Today's session"
+  (phones), Stickers, On-this-day, Exercise database; the Completion heatmap is
+  collapsible. Keeps the primary action above the fold on phones.
+- **Today's plan** (`TodayPlanCard`) — one daily command-centre on Today: habits
+  left · workout status · tasks due · pull-up day, plus a 7-day coverage strip;
+  summary-and-link (no duplicate UIs). Replaced the separate coverage card.
+- **Penalty difficulty** — Settings → Journal feel sets Beginner (default) /
+  Intermediate / Hard; drills scale to a doable level.
+- **5-tab bottom nav** (phones) — Today · Trackers · Fitness · Plan · Pull-ups,
+  no FAB (quick-add lives in the top bar). Top bar hides keyboard-only ⌘K + the
+  theme toggle on phones to avoid overflow. iOS-style slide-in nav drawer.
+- **Entry-first on phones** — `Page asideFirst` puts the log forms (Fitness,
+  Focus) above the charts; charts sink to the bottom on mobile.
+- **Plan migration** — top 5 overdue by default with Show all / Show less.
+- **Contextual help** — a `?` per view shows that page's blurb (from the view
+  registry) with a link to the full guide.
+
+## Tooling (appended)
+
+- **graphify** (`@sentropic/graphify`, per-project devDependency + `.claude`
+  skill/hooks) — turns the codebase into a queryable knowledge graph ("memory"
+  for AI assistants). Generated `.graphify/` state is gitignored.

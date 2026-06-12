@@ -362,3 +362,37 @@ mobile in Chrome via the devtools MCP (no console errors).
 **Follow-ups:**
 - [ ] Path A gap #2: `updatedAt` + cloud-load conflict prompt.
 - [ ] Extend IndexedDB offload to memory/monthly photos.
+
+## 2026-06-12 19:40 — Mobile polish, compacting pattern, Fitness/Gym merge cleanup (appended)
+
+**Summary:** A long mobile-first pass — fixed top-bar overflow, made the bottom
+nav 5 tabs (no FAB), entry-first ordering, a reusable collapsible-card pattern,
+penalty difficulty levels, the Today's-plan hub, finished the ADV-2 backlog, and
+fully sealed the Fitness+Gym merge. Installed graphify per-project.
+
+**Changes:**
+- Mobile: top-bar hides ⌘K + theme below `sm` (fixed right-cluster overflow,
+  verified 0 overflow across pages); 5-tab bottom nav (Today·Trackers·Fitness·
+  Plan·Pull-ups, no FAB); iOS-style slide-in drawer; `Page asideFirst` (forms
+  above charts on phones); Insights stat cards 2-up.
+- Compacting: shared `Card` gains `collapsible`/`defaultCollapsed`. Default-
+  collapsed: Penalty, Gym session (phones), Stickers, On-this-day, Exercise DB;
+  Completion heatmap collapsible. Plan migration → top-5 + show all/less.
+- Penalty: `penaltyLevel` (Beginner default / Inter / Hard) + `scaleTask()`;
+  card collapsible & compact.
+- Today: `TodayPlanCard` command-centre (chips + week strip) — consolidated the
+  separate CoverageCard away (one summary card, not three).
+- Dedup: unified birthdays (Birthdays card lists friends'), removed dead
+  Recommendations.tsx; `gym` route now opens Fitness→Strength (no standalone Gym).
+- ADV-2 finished: CSV import (`parseMetricsCsv`), per-habit year heatmap; #40 closed.
+- Tooling: `@sentropic/graphify` per-project (devDep + `.claude` skill/hooks +
+  project CLAUDE.md); `.graphify/` gitignored.
+- Card-ordering principle D-35; contextual help "?" per view.
+
+**Decisions:** D-34 (Today hub = summarize+link), D-35 (action-first card order),
+D-36 (collapsible Card pattern), D-37 (penalty difficulty, Beginner default),
+D-38 (gym route is a Fitness alias). Docs append-only throughout.
+
+**Follow-ups:**
+- [ ] Path A gap #2: cloud-load conflict prompt; extend IndexedDB to memory/monthly photos.
+- [ ] Optionally run full graphify semantic extraction via the skill.
