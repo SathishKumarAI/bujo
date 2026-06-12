@@ -338,3 +338,27 @@ Docs are append-only going forward (saved to memory).
 - [ ] ADV-2 features: print/PDF, Insights filters, weekly-review wizard,
   configurable Today dashboard, tag manager, quick-add templates, CSV import.
 - [ ] Path A: IndexedDB photo store; `updatedAt` + cloud-load conflict prompt; onboarding.
+
+## 2026-06-12 18:30 — ADV-2 finish + Fitness/Gym merge + Path-A start (appended)
+
+**Summary:** Finished the ADV-2 feature backlog, merged Fitness+Gym into one
+tabbed hub, verified the mobile view in Chrome, and started Path A (IndexedDB
+image store + onboarding).
+
+**Changes:**
+- Features — tag manager, print/PDF, quick-add templates, archived-habits browser,
+  friend birthdays, Insights search filters, configurable Today dashboard, guided
+  weekly review (CSV import deferred).
+- `views/FitnessHub.tsx` — Cardio | Strength tabs over the shared workout store;
+  dropped the duplicate Gym nav item (Gym lazy-loads per tab, still deep-linkable).
+- `lib/imageStore.ts` + ProgressPhotos — IndexedDB photo offload (back-compat),
+  export inlines images. `views/Welcome.tsx` — sample-journal onboarding path.
+- Docs — `FEATURE_GUIDE.md` (full manual), PRODUCT_GAPS progress, append-only.
+
+**Decisions:** Merged Fitness+Gym (tabs) per user pick. Photos → IndexedDB to lift
+the localStorage ceiling; kept inline-on-export for portable backups. Verified
+mobile in Chrome via the devtools MCP (no console errors).
+
+**Follow-ups:**
+- [ ] Path A gap #2: `updatedAt` + cloud-load conflict prompt.
+- [ ] Extend IndexedDB offload to memory/monthly photos.

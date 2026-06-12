@@ -38,3 +38,16 @@ app is served statically; each user's data syncs to *their own* Drive/gist/folde
 2. IndexedDB image store (migrate progress/memory/monthly photos).
 3. `updatedAt` stamp + cloud-load conflict prompt.
 4. Guided onboarding on first run.
+
+## Path A — progress (appended)
+
+- ✅ **Gap #1 (storage ceiling)**: `lib/imageStore.ts` — IndexedDB image store;
+  progress photos now reference an `img:` id instead of inlining the data-URL in
+  the JSON journal (back-compat: legacy inline `data:` URLs still render). JSON
+  **export inlines images** (`inlineImages`) so backups stay portable. Memory /
+  monthly photos can follow the same pattern next.
+- ✅ **Gap #3 (onboarding)**: first-run "Load a sample journal" path + a ⌘K/Help
+  tip on the Welcome gate, so the app isn't empty on day one.
+- ⏳ **Gap #2 (sync conflict)**: still open — add an `updatedAt` stamp and a
+  newer/older prompt on silent cloud-folder load (currently only the first-run
+  folder pick prompts). Touches the App boot path; do deliberately.
