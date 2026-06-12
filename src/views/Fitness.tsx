@@ -118,21 +118,23 @@ export function Fitness() {
         <p className="mt-1 text-center text-[10px] text-overlay0">last 8 weeks · green = goal hit</p>
       </Card>
 
-      <Card title="Totals" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'This week' }, { value: 'all', label: 'All time' }]} />}>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <Stat label="Workouts" value={inRange.length} color="teal" />
-          <Stat label="Minutes" value={totalMin} color="peach" />
-          <Stat label={dist === 'mi' ? 'Miles' : 'Kilometers'} value={Math.round(totalKm * 10) / 10} color="sky" />
-        </div>
-      </Card>
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <Card title="Totals" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <Stat label="Workouts" value={inRange.length} color="teal" />
+            <Stat label="Minutes" value={totalMin} color="peach" />
+            <Stat label={dist === 'mi' ? 'Miles' : 'Kilometers'} value={Math.round(totalKm * 10) / 10} color="sky" />
+          </div>
+        </Card>
 
-      <Card title="Personal bests" subtitle="All-time cardio">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <Stat label={dist === 'mi' ? 'Longest (mi)' : 'Longest (km)'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
-          <Stat label="Most kcal" value={pbs.mostCalories} color="red" />
-          <Stat label="Longest (min)" value={pbs.mostMinutes} color="peach" />
-        </div>
-      </Card>
+        <Card title="Personal bests" subtitle="All-time cardio">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <Stat label={dist === 'mi' ? 'Longest (mi)' : 'Longest (km)'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
+            <Stat label="Most kcal" value={pbs.mostCalories} color="red" />
+            <Stat label="Longest (min)" value={pbs.mostMinutes} color="peach" />
+          </div>
+        </Card>
+      </div>
 
       <NutritionCard date={f.date} />
 

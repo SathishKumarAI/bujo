@@ -64,6 +64,7 @@ export function Focus() {
         </Card>
       }
     >
+      <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
           <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Code2 size={14} />} />
@@ -83,6 +84,7 @@ export function Focus() {
           ))}
         </div>
       </Card>
+      </div>
 
       {tags.length > 0 && (
         <Card title="Languages & tools" subtitle="By time logged">
