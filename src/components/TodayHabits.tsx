@@ -18,9 +18,20 @@ export function TodayHabits() {
   if (habits.length === 0) return null
   const log = data.habitLog[today] ?? []
   const done = habits.filter((h) => log.includes(h.id)).length
+  const allDone = done === habits.length
 
   return (
-    <Card title="Today’s habits" subtitle="Tap to check off — no need to open Trackers" right={<span className="text-xs text-overlay0">{done}/{habits.length}</span>} collapsible>
+    <Card
+      title="Today’s habits"
+      subtitle="Tap to check off — no need to open Trackers"
+      right={
+        <span className="inline-flex items-center gap-2 text-xs">
+          {!allDone && <button onClick={() => habits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-mauve hover:underline">Mark all</button>}
+          <span className="text-overlay0">{done}/{habits.length}</span>
+        </span>
+      }
+      collapsible
+    >
       {habits.length === 0 ? (
         <Empty>No habits scheduled today.</Empty>
       ) : (
