@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis,
 } from 'recharts'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
@@ -171,7 +172,8 @@ export function Trackers() {
         </div>
       </Card>
 
-      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`}>
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -189,6 +191,24 @@ export function Trackers() {
           </ResponsiveContainer>
         </div>
       </Card>
+
+      <Card title="Category consistency" subtitle="30-day avg per category">
+        <div className="h-56 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={CATEGORIES.filter((category) => visibleHabits.some((h) => h.category === category)).map((category) => {
+              const hs = visibleHabits.filter((h) => h.category === category)
+              const avg = hs.length ? Math.round(hs.reduce((a, h) => a + habitConsistency(data, h.id, h.startedOn), 0) / hs.length) : 0
+              return { category, value: avg }
+            })}>
+              <PolarGrid stroke={cat('surface1')} />
+              <PolarAngleAxis dataKey="category" tick={{ fill: cat('overlay1'), fontSize: 10 }} />
+              <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
+              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+      </div>
 
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
     </Page>
