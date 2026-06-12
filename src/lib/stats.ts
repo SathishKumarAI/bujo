@@ -136,6 +136,71 @@ export function reminderMessage(
   return null
 }
 
+/**
+ * Overall habit completion for one day: of the check-habits scheduled that day
+ * (active weekday + already started + not archived), how many were done.
+ * `ratio` is 0–1, or null when nothing was scheduled (renders blank, not "missed").
+ */
+export function dayCompletion(data: JournalData, date: string): { done: number; total: number; ratio: number | null } {
+  const dow = new Date(date + 'T00:00').getDay()
+  const scheduled = data.habits.filter((h) =>
+    !h.archived &&
+    (h.type ?? 'check') === 'check' &&
+    date >= h.startedOn &&
+    (!h.activeDays?.length || h.activeDays.includes(dow)),
+  )
+  if (scheduled.length === 0) return { done: 0, total: 0, ratio: null }
+  const log = data.habitLog[date] ?? []
+  const done = scheduled.filter((h) => log.includes(h.id)).length
+  return { done, total: scheduled.length, ratio: done / scheduled.length }
+}
+
+/** Average completion ratio (0–1) per weekday (0=Sun…6=Sat) over a window. */
+export function weekdayConsistency(data: JournalData, window = 90, today = todayISO()): number[] {
+  const sum = Array(7).fill(0)
+  const count = Array(7).fill(0)
+  for (let i = 0; i < window; i++) {
+    const day = addDays(today, -i)
+    const c = dayCompletion(data, day)
+    if (c.ratio == null) continue
+    const dow = new Date(day + 'T00:00').getDay()
+    sum[dow] += c.ratio
+    count[dow] += 1
+  }
+  return sum.map((s, i) => (count[i] ? s / count[i] : 0))
+}
+
+/** Average completion ratio (0–1) per calendar month for the last `months`. */
+export function monthlyCompletion(data: JournalData, months = 6, today = todayISO()): { ym: string; ratio: number }[] {
+  const [y0, m0] = today.split('-').map(Number)
+  const out: { ym: string; ratio: number }[] = []
+  for (let k = months - 1; k >= 0; k--) {
+    const d = new Date(y0, m0 - 1 - k, 1)
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    let sum = 0
+    let n = 0
+    for (const day of monthDaysUpTo(ym, today)) {
+      const c = dayCompletion(data, day)
+      if (c.ratio == null) continue
+      sum += c.ratio
+      n += 1
+    }
+    out.push({ ym, ratio: n ? sum / n : 0 })
+  }
+  return out
+}
+
+function monthDaysUpTo(ym: string, today: string): string[] {
+  const [y, m] = ym.split('-').map(Number)
+  const last = new Date(y, m, 0).getDate()
+  const days: string[] = []
+  for (let d = 1; d <= last; d++) {
+    const iso = `${ym}-${String(d).padStart(2, '0')}`
+    if (iso <= today) days.push(iso)
+  }
+  return days
+}
+
 /** Completions of a habit within the last `days` (rolling week by default). */
 export function weeklyHabitCount(
   data: JournalData,
