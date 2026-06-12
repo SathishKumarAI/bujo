@@ -6,6 +6,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { QuickAdd } from '../components/QuickAdd'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
+import { PenaltyCard } from '../components/PenaltyCard'
 import { StickerBar } from '../components/StickerBar'
 import { onThisDay } from '../lib/stats'
 import { promptForDay } from '../lib/prompts'
@@ -78,6 +79,9 @@ export function Today() {
         </>
       }
     >
+      {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
+      {date === todayISO() && <PenaltyCard />}
+
       {/* ── Daily log (primary, above the fold) ─────────────────── */}
       <Card
         title={prettyDay(date)}
