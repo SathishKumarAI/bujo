@@ -24,7 +24,17 @@ export function Collections() {
     .filter((e) => e.date > today)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
 
-  const birthdays = [...data.birthdays].sort((a, b) => a.month - b.month || a.day - b.day)
+  // One unified birthday list: manually-added birthdays + friends who have one.
+  const friendBirthdays = (data.friends ?? [])
+    .filter((f) => f.birthday)
+    .map((f) => {
+      const md = f.birthday!.length === 5 ? f.birthday! : f.birthday!.slice(5)
+      const [m, d] = md.split('-').map(Number)
+      return { id: `friend:${f.id}`, name: f.name, month: m, day: d, fromFriend: true }
+    })
+    .filter((b) => b.month && b.day)
+  const birthdays = [...data.birthdays.map((b) => ({ ...b, fromFriend: false })), ...friendBirthdays]
+    .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
     <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-2">
@@ -65,8 +75,9 @@ export function Collections() {
                 <span className="inline-flex items-center gap-1.5 text-subtext1">
                   <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
                   <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
+                  {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
                 </span>
-                <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                {!b.fromFriend && <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>}
               </li>
             ))}
           </ul>
