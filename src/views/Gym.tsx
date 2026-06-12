@@ -15,6 +15,7 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { ProgramTracker } from '../components/ProgramTracker'
+import { exerciseInfo } from '../lib/exerciseInfo'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
@@ -164,6 +165,13 @@ export function Gym() {
       </div>
 
       <MuscleMap muscles={activeMuscles} />
+
+      {focusEx && exerciseInfo(focusEx) && (
+        <div className="mt-3 space-y-1 rounded-lg border border-surface0 bg-base p-2.5 text-xs">
+          <p className="text-subtext0"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
+          <p className="text-subtext0"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap justify-center gap-1.5">
         {activeMuscles.length === 0 ? (
