@@ -33,7 +33,7 @@ export function Cycle() {
         subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
       >
         <p className="mb-2 text-xs text-overlay0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
-        <div className="h-56 w-full">
+        <div className="h-56 w-full" role="img" aria-label={`Line chart of basal temperature across ${prettyMonth(ym)} (°${unit})`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />

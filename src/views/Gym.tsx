@@ -321,7 +321,7 @@ export function Gym() {
         {weightSeries.length < 2 ? (
           <Empty>Log your weight on a couple of days to see the trend.</Empty>
         ) : (
-          <div className="h-56">
+          <div className="h-56" role="img" aria-label={`Line chart of body weight over ${weightSeries.length} logged days (${unit})`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weightSeries} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -337,7 +337,7 @@ export function Gym() {
 
       {/* ── Training volume + per-exercise progression ───────── */}
       <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'}>
-        <div className="h-48">
+        <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -349,7 +349,7 @@ export function Gym() {
           </ResponsiveContainer>
         </div>
         {focusEx && progression.length > 1 && (
-          <div className="mt-4 h-40 border-t border-surface0 pt-3">
+          <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
             <p className="mb-1 text-xs text-overlay0">{focusEx} — heaviest set per day ({unit})</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
