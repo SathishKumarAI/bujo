@@ -225,8 +225,31 @@ export function Trackers() {
 
       <TrackerVisuals data={data} today={today} />
 
+      <ArchivedHabits />
+
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
     </Page>
+  )
+}
+
+/** Browser for archived habits — restore or delete for good. */
+function ArchivedHabits() {
+  const { data, updateHabit, removeHabit } = useJournal()
+  const archived = data.habits.filter((h) => h.archived)
+  if (archived.length === 0) return null
+  return (
+    <Card title="Archived habits" subtitle="Out of the grid — restore any time">
+      <ul className="flex flex-wrap gap-2">
+        {archived.map((h) => (
+          <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">
+            <span style={{ color: cat(h.color) }}>●</span>
+            <span className="text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+            <button onClick={() => updateHabit(h.id, { archived: false })} className="text-xs text-green hover:underline">restore</button>
+            <button onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-overlay0 hover:text-red">×</button>
+          </li>
+        ))}
+      </ul>
+    </Card>
   )
 }
 
