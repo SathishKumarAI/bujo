@@ -219,6 +219,8 @@ export interface Streak {
 
 export interface Settings {
   theme: ThemeName
+  /** Optional accent override (Catppuccin token name); defaults to mauve. */
+  accent?: string
   tempUnit: TempUnit
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit

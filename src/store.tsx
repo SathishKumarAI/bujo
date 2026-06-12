@@ -195,6 +195,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = data.settings.theme
   }, [data.settings.theme])
 
+  // Optional accent override → drives every `--primary`/`bg-primary` use.
+  useEffect(() => {
+    const root = document.documentElement
+    if (data.settings.accent) root.style.setProperty('--primary', `var(--color-${data.settings.accent})`)
+    else root.style.removeProperty('--primary')
+  }, [data.settings.accent, data.settings.theme])
+
   // Toggle realism body classes (paper texture + handwriting font).
   useEffect(() => {
     document.body.classList.toggle('paper', data.settings.paperMode)
