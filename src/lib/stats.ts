@@ -170,6 +170,29 @@ export function weekdayConsistency(data: JournalData, window = 90, today = today
   return sum.map((s, i) => (count[i] ? s / count[i] : 0))
 }
 
+/** Average logged mood (0–10) per weekday (0=Sun…6=Sat); null where none. */
+export function moodByWeekday(data: JournalData): (number | null)[] {
+  const sum = Array(7).fill(0)
+  const count = Array(7).fill(0)
+  for (const m of data.metrics) {
+    if (m.mood == null) continue
+    const dow = new Date(m.date + 'T00:00').getDay()
+    sum[dow] += m.mood
+    count[dow] += 1
+  }
+  return sum.map((s, i) => (count[i] ? s / count[i] : null))
+}
+
+/** Count of workouts per training split (push/pull/legs/…), for a distribution. */
+export function workoutSplitCounts(data: JournalData): { split: string; count: number }[] {
+  const tally: Record<string, number> = {}
+  for (const w of data.workouts) {
+    const key = w.split ?? (w.activity ? w.activity.toLowerCase() : 'other')
+    tally[key] = (tally[key] ?? 0) + 1
+  }
+  return Object.entries(tally).map(([split, count]) => ({ split, count })).sort((a, b) => b.count - a.count)
+}
+
 /** Average completion ratio (0–1) per calendar month for the last `months`. */
 export function monthlyCompletion(data: JournalData, months = 6, today = todayISO()): { ym: string; ratio: number }[] {
   const [y0, m0] = today.split('-').map(Number)

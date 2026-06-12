@@ -13,6 +13,7 @@ import {
   weeklyRadar, weeklyWorkoutMinutes,
 } from '../lib/viz'
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS } from '../lib/date'
+import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
@@ -29,6 +30,9 @@ export function Stats() {
   const tags = tagCounts(data)
   const maxTag = tags[0]?.count ?? 1
   const moods = moodByDay(data)
+  const moodWd = moodByWeekday(data)
+  const splits = workoutSplitCounts(data)
+  const SPLIT_COLORS = ['mauve', 'blue', 'green', 'peach', 'teal', 'pink', 'yellow', 'sky']
 
   function shift(d: number) {
     const [y, m] = ym.split('-').map(Number)
@@ -166,6 +170,44 @@ export function Stats() {
           {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
           <span>great</span>
         </div>
+      </Card>
+
+      <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)">
+        {moodWd.every((v) => v == null) ? (
+          <Empty>Log mood on a few days to see your weekly rhythm.</Empty>
+        ) : (
+          <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label="Bar chart of average mood by weekday, 0 to 10">
+            {moodWd.map((v, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                <span className="text-[10px] tabular-nums text-subtext0">{v == null ? '–' : Math.round(v * 10) / 10}</span>
+                <div className="flex w-full flex-1 items-end">
+                  <div className="w-full rounded-t" style={{ height: `${v == null ? 2 : (v / 10) * 100}%`, background: moodColor(v == null ? undefined : Math.round(v)) }} title={v == null ? 'no data' : `${Math.round(v * 10) / 10}/10`} />
+                </div>
+                <span className="text-[10px] text-overlay0">{WEEKDAYS[i]}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title="Workout split" subtitle="Distribution of your logged sessions">
+        {splits.length === 0 ? (
+          <Empty>No workouts logged yet.</Empty>
+        ) : (
+          <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+                  {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
+                </Pie>
+                <Tooltip contentStyle={tip} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap justify-center gap-2 text-xs">
+              {splits.map((s, i) => <span key={s.split} style={{ color: cat(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card title="Tags" subtitle="What you write about most">
