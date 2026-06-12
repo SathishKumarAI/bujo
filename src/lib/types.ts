@@ -168,6 +168,15 @@ export interface Memory {
   photo?: string // downscaled JPEG data-URL
 }
 
+/** A physique / progress photo, tagged by date (for week-to-week comparison). */
+export interface ProgressPhoto {
+  id: string
+  date: string // ISO day
+  photo: string // downscaled JPEG data-URL
+  note?: string
+  weight?: number // optional body weight at capture (user's unit)
+}
+
 export interface Birthday {
   id: string
   name: string
@@ -344,6 +353,8 @@ export interface JournalData {
   habitSkips?: Record<string, string[]>
   /** Developer focus/coding sessions. */
   devSessions?: DevSession[]
+  /** Physique / progress photos for week-to-week comparison. */
+  progressPhotos?: ProgressPhoto[]
   settings: Settings
 }
 

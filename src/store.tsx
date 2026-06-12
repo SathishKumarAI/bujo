@@ -118,6 +118,9 @@ interface Store {
   // body metrics
   setBodyMetric: (date: string, patch: Partial<BodyMetric>) => void
   removeBodyMetric: (date: string) => void
+  // progress photos
+  addProgressPhoto: (p: Omit<import('./lib/types').ProgressPhoto, 'id'>) => void
+  removeProgressPhoto: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -405,6 +408,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeBodyMetric: (date) =>
         patch((d) => ({ ...d, bodyMetrics: d.bodyMetrics.filter((b) => b.date !== date) })),
+
+      addProgressPhoto: (p) =>
+        patch((d) => ({ ...d, progressPhotos: [...(d.progressPhotos ?? []), { id: uid('pp'), ...p }] })),
+
+      removeProgressPhoto: (id) =>
+        patch((d) => ({ ...d, progressPhotos: (d.progressPhotos ?? []).filter((p) => p.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {

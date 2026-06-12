@@ -13,6 +13,7 @@ import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
+import { ProgressPhotos } from '../components/ProgressPhotos'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
@@ -362,6 +363,9 @@ export function Gym() {
         )}
       </Card>
       </div>
+
+      {/* ── Progress photos ──────────────────────────────────── */}
+      <ProgressPhotos />
     </Page>
   )
 }
