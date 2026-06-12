@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Button, Card, Empty } from '../components/ui'
+import { Button, Card, Empty, Segmented } from '../components/ui'
 import { Heatmap } from '../components/Heatmap'
 import { cat } from '../lib/colors'
 import {
@@ -19,8 +19,9 @@ const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 
 export function Stats() {
   const { data } = useJournal()
   const [ym, setYm] = useState(ymOf(todayISO()))
+  const [heatWeeks, setHeatWeeks] = useState(26)
 
-  const heat = buildHeatmap(data, 26)
+  const heat = buildHeatmap(data, heatWeeks)
   const radar = weeklyRadar(data)
   const scatter = sleepMoodScatter(data)
   const workout = weeklyWorkoutMinutes(data)
@@ -43,7 +44,7 @@ export function Stats() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
-      <Card title="Activity" subtitle="Every day you showed up — last 6 months">
+      <Card title="Activity" subtitle="Every day you showed up" right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
 
