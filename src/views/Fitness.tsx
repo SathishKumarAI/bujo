@@ -33,6 +33,7 @@ export function Fitness() {
   const [f, setF] = useState(emptyForm)
   const [editing, setEditing] = useState<Workout | null>(null)
   const [range, setRange] = useState<'week' | 'all'>('all')
+  const [showAll, setShowAll] = useState(false)
   const set = (p: Partial<Form>) => setF((cur) => ({ ...cur, ...p }))
 
   const dist = data.settings.distanceUnit
@@ -135,31 +136,30 @@ export function Fitness() {
 
       <NutritionCard date={f.date} />
 
-      <Card title="History">
+      <Card
+        title="History"
+        subtitle="Tap a workout to edit"
+        right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show recent' : `Show all (${workouts.length})`}</Button> : undefined}
+      >
         {workouts.length === 0 ? (
           <Empty>No workouts logged yet.</Empty>
         ) : (
-          <ul className="space-y-2">
-            {workouts.map((w) => {
+          <ul className="divide-y divide-surface0">
+            {(showAll ? workouts : workouts.slice(0, 6)).map((w) => {
               const p = pace(w.distanceKm, w.durationMin, dist)
               return (
-                <li key={w.id} className="group rounded-lg border border-border bg-background p-3">
-                  <div className="flex items-center justify-between">
-                    <button onClick={() => setEditing(w)} className="text-left font-medium text-text hover:text-mauve">{w.activity}<span className="ml-2 text-xs text-overlay0">{prettyDay(w.date)}</span></button>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100">
-                      <button onClick={() => setEditing(w)} aria-label="Edit workout" className="text-overlay0 hover:text-mauve"><Pencil size={14} /></button>
-                      <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 hover:text-red">×</button>
-                    </div>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
-                    {w.durationMin != null && <span>{w.durationMin} min</span>}
-                    {w.distanceKm != null && <span>{w.distanceKm} {dist}</span>}
+                <li key={w.id} className="group flex items-center justify-between gap-3 py-2">
+                  <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+                    <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
+                    <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-2.5 text-xs text-subtext0">
+                    {w.durationMin != null && <span>{w.durationMin}m</span>}
+                    {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
                     {p && <span className="text-sky">{p}</span>}
-                    {w.calories != null && <span>{w.calories} kcal</span>}
-                    {w.rpe != null && <span>RPE {w.rpe}</span>}
+                    <button onClick={() => setEditing(w)} aria-label="Edit workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve"><Pencil size={13} /></button>
+                    <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
                   </div>
-                  {w.sets.length > 0 && <ul className="mt-1 text-xs text-subtext1">{w.sets.map((s, i) => <li key={i}>• {s}</li>)}</ul>}
-                  {w.notes && <p className="mt-1 text-xs text-overlay1 italic">{w.notes}</p>}
                 </li>
               )
             })}
