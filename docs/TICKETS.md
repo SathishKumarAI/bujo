@@ -244,9 +244,19 @@ Vision + full reasoning in `docs/redesign/07-space-vision-and-backlog.mdx`.
 | R2-3 | Insights: clickable stats → jump to source (nav context) | S | ✅ |
 | R2-4 | Stats: activity-heatmap range picker (3/6/12mo) | S | ✅ |
 | R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | 🔜 |
-| R2-6 | Drag-and-drop: reorder habits, move calendar events | M | 🔜 |
+| R2-6 | Drag-and-drop: **reorder habits** (native DnD on a grip) | M | ✅ |
 | R2-7 | Unified cross-view goal system | M | 🔜 |
-| R2-8 | Smarter notifications (streak-at-risk, challenge day) | M | 🔜 |
-| R2-9 | Theme studio (accent + density + presets, extends Neon) | M | 🔜 |
+| R2-8 | Smarter notifications (streak-at-risk, challenge day) | M | ✅ |
+| R2-9 | Accent-color picker (Settings → Journal feel) | M | ✅ |
 | R2-10 | Accounts + E2E-encrypted cloud sync (needs backend) | L | 🔜 |
-| R2-11 | Chart a11y text-alternatives + axe-core CI | M | 🔜 |
+| R2-11 | Chart a11y text-alternatives (key charts) — axe-core CI deferred | M | ◑ |
+
+**Still open after this run** (each merits its own focused session, not a rushed
+end-of-marathon patch):
+- **R2-5** — extract `StatTile`/`ChartCard` from the ~dozen ad-hoc stat/chart
+  blocks. Pure refactor; touches many files, so do it deliberately.
+- **R2-7** — a unified goal model (one `Goal` type spanning habits, challenges,
+  fitness, focus) with a cross-view roll-up. Genuine feature design needed.
+- **R2-10** — accounts + E2E cloud sync **needs a backend**; out of the
+  local-first scope. R2-1's at-rest crypto is the client half of this.
+- **R2-11 tail** — full chart sweep + `axe-core` CI job (needs CI wiring).

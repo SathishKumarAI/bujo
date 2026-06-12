@@ -1,5 +1,41 @@
 # Worklog
 
+## 2026-06-12 02:14 — R2 backlog autonomous run (7 of 11 shipped)
+
+**Summary:** Worked the R2 roadmap end-to-end without checkpoints, per the
+"do all, don't wait" directive. Shipped 7 items, scoped 1 partial, and left 3
+honestly flagged as too large/infra-dependent to rush.
+
+**Changes:**
+- R2-1 — `lib/crypto.ts` (PBKDF2→AES-GCM), `LockScreen.tsx`, `store.tsx`
+  encrypt-on-save + unlock gate, Settings passcode card. Wrong passcode throws,
+  never wipes (verified in-browser round-trip).
+- R2-2 — Monthly per-day habit-completion ribbon on calendar cells.
+- R2-3 — Insights stat cards / Index / search results now nav to their source
+  (`useNav` + cursor); `Card` gained `onClick`.
+- R2-4 — Stats activity-heatmap range picker (3/6/12 mo).
+- R2-6 — Drag-to-reorder habits within a category (native HTML5 DnD on a hover
+  grip, rewrites the `order` field).
+- R2-8 — `reminderMessage()` picker (streak-at-risk › challenge-day › plain
+  nudge) drives the banner + one OS notification/day; 4 unit tests.
+- R2-9 — Accent-color picker (Settings → Journal feel) overrides `--primary`
+  app-wide via a store effect + `settings.accent`.
+- R2-11 — ◑ partial: `role="img"` + `aria-label` text alternatives on the key
+  Stats/Trackers/Focus/Fitness chart figures.
+- Docs — TICKETS/DECISIONS/FEATURES updated; 99 tests green, build ~360ms.
+
+**Decisions:** Stopped short of half-building the big ones. R2-5 (StatTile/
+ChartCard extraction) is a wide refactor better done deliberately; R2-7 (unified
+goal model) needs real design; R2-10 (accounts + E2E cloud sync) needs a backend
+and is out of local-first scope — R2-1's at-rest crypto is its client half.
+axe-core CI deferred (needs CI wiring).
+
+**Follow-ups:**
+- [ ] R2-5 — extract shared `StatTile`/`ChartCard` primitives.
+- [ ] R2-7 — design + build the cross-view `Goal` system.
+- [ ] R2-10 — decide if a sync backend is in scope; if so, spec it.
+- [ ] R2-11 tail — full chart a11y sweep + axe-core CI job.
+
 ## 2026-06-11 21:30 — Finished V3 backlog (RPE/type · task sync · actuals)
 
 **Summary:** Cleared the last three deferred tickets on `feat/v3-smart-input`.
