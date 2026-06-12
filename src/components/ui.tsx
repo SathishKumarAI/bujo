@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { Button as SButton } from './ui/button'
@@ -12,6 +13,8 @@ export function Card({
   children,
   className = '',
   onClick,
+  collapsible = false,
+  defaultCollapsed = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -19,22 +22,33 @@ export function Card({
   children: ReactNode
   className?: string
   onClick?: () => void
+  /** Add a header chevron that collapses the body (reusable compacting pattern). */
+  collapsible?: boolean
+  defaultCollapsed?: boolean
 }) {
+  const [open, setOpen] = useState(!defaultCollapsed)
   return (
     <section
       onClick={onClick}
       className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${className}`}
     >
-      {(title || right) && (
-        <header className="mb-4 flex items-start justify-between gap-3">
+      {(title || right || collapsible) && (
+        <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>
           <div className="min-w-0">
             {title && <h2 className="font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
             {subtitle && <p className="mt-1 text-sm leading-snug text-subtext0">{subtitle}</p>}
           </div>
-          {right && <div className="shrink-0">{right}</div>}
+          <div className="flex shrink-0 items-center gap-2">
+            {right}
+            {collapsible && (
+              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-overlay0 hover:text-text">
+                {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
+            )}
+          </div>
         </header>
       )}
-      {children}
+      {(!collapsible || open) && children}
     </section>
   )
 }

@@ -170,7 +170,7 @@ export function Today() {
           </div>
         </Card>
 
-        <Card title="Stickers" subtitle="Decorate the day">
+        <Card title="Stickers" subtitle="Decorate the day" collapsible defaultCollapsed>
           <StickerBar date={date} />
         </Card>
       </div>
