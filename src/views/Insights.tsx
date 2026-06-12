@@ -32,6 +32,19 @@ export function Insights() {
   const workouts = data.workouts.length
   const photos = data.memories.filter((m) => m.photo).length + data.monthly.filter((m) => m.photo).length
 
+  // Personal records — bests across domains.
+  const bestMood = [...data.metrics].filter((m) => m.mood != null).sort((a, b) => (b.mood! - a.mood!))[0]
+  const bigWorkout = [...data.workouts].filter((w) => w.durationMin).sort((a, b) => (b.durationMin! - a.durationMin!))[0]
+  const pickBest = [...(data.pickleball ?? [])].sort((a, b) => b.gamesWon - a.gamesWon)[0]
+  const entriesByDay = data.entries.reduce<Record<string, number>>((m, e) => { if (e.date) m[e.date] = (m[e.date] ?? 0) + 1; return m }, {})
+  const busiest = Object.entries(entriesByDay).sort((a, b) => b[1] - a[1])[0]
+  const records: { label: string; value: string }[] = []
+  if (best > 0) records.push({ label: 'Longest streak', value: `${best} days` })
+  if (bestMood?.mood != null) records.push({ label: 'Best mood', value: `${bestMood.mood}/10 · ${prettyDay(bestMood.date)}` })
+  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${bigWorkout.activity}` })
+  if (pickBest) records.push({ label: 'Best pickleball', value: `${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}` })
+  if (busiest) records.push({ label: 'Busiest day', value: `${busiest[1]} entries · ${prettyDay(busiest[0])}` })
+
   // Index: months that have any data + collections.
   const months = [...new Set([
     ...data.entries.filter((e) => e.date).map((e) => e.date.slice(0, 7)),
@@ -94,6 +107,19 @@ export function Insights() {
           )}
         </Card>
       </div>
+
+      {records.length > 0 && (
+        <Card title="Personal records" subtitle="Your bests so far">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {records.map((r) => (
+              <div key={r.label} className="rounded-xl border border-surface0 bg-base p-3">
+                <p className="text-sm font-semibold text-text">{r.value}</p>
+                <p className="text-xs text-overlay0">{r.label}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card title="Search" subtitle="Find anything across your journal">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries, memories, gratitude, workouts…" autoFocus />
