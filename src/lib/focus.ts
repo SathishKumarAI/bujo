@@ -44,6 +44,15 @@ export function dailyCodingMinutes(data: JournalData, today = todayISO(), days =
   })
 }
 
+/** Running cumulative coding hours over every logged day (ascending). */
+export function cumulativeHours(data: JournalData): { date: string; hours: number }[] {
+  const byDay = new Map<string, number>()
+  for (const s of sessions(data)) byDay.set(s.date, (byDay.get(s.date) ?? 0) + (s.durationMin || 0))
+  const days = [...byDay.keys()].sort()
+  let run = 0
+  return days.map((date) => { run += byDay.get(date)!; return { date, hours: Math.round((run / 60) * 10) / 10 } })
+}
+
 /** Top languages/tools by total minutes. */
 export function topTags(data: JournalData, limit = 5): { tag: string; min: number }[] {
   const totals = new Map<string, number>()

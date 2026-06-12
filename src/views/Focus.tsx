@@ -6,7 +6,7 @@ import { Button, Card, Empty, Input, Slider, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import {
-  weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight,
+  weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours,
 } from '../lib/focus'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
@@ -85,6 +85,24 @@ export function Focus() {
         </div>
       </Card>
       </div>
+
+      {(() => {
+        const cum = cumulativeHours(data)
+        if (cum.length < 2) return null
+        const max = cum[cum.length - 1].hours || 1
+        const W = 600, H = 120
+        const pts = cum.map((c, i) => `${(i / (cum.length - 1)) * W},${H - (c.hours / max) * H}`).join(' ')
+        return (
+          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time — momentum over ${cum.length} days`}>
+            <div className="w-full" role="img" aria-label={`Line chart of cumulative coding hours, reaching ${cum[cum.length - 1].hours} hours`}>
+              <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
+                <polyline points={`0,${H} ${pts} ${W},${H}`} fill={cat('mauve') + '22'} stroke="none" />
+                <polyline points={pts} fill="none" stroke={cat('mauve')} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+              </svg>
+            </div>
+          </Card>
+        )
+      })()}
 
       {tags.length > 0 && (
         <Card title="Languages & tools" subtitle="By time logged">
