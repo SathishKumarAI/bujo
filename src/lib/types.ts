@@ -298,6 +298,8 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /** Weekly pickleball-games goal (shown on Pickleball + Goals). */
+  pickleballGoalGames?: number
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
   /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */

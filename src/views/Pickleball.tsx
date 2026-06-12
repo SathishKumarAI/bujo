@@ -5,8 +5,8 @@ import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
-import { todayISO, prettyDay } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak } from '../lib/pickleball'
+import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay } from '../lib/pickleball'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '' }
@@ -21,7 +21,7 @@ const TIPS = [
 ]
 
 export function Pickleball() {
-  const { data, addPickleball, removePickleball } = useJournal()
+  const { data, addPickleball, removePickleball, setSettings } = useJournal()
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
   const today = todayISO()
@@ -54,6 +54,15 @@ export function Pickleball() {
   }
 
   const wl = [{ name: 'Won', value: all.gamesWon, color: 'green' }, { name: 'Lost', value: all.gamesLost, color: 'red' }]
+  const formats = formatStats(data)
+  const cum = cumulativeGames(data)
+  const byDay = gamesByDay(data)
+  const goal = data.settings.pickleballGoalGames ?? 0
+  // 13-week play-frequency heatmap.
+  const WEEKS = 13
+  const hStart = addDays(today, -(WEEKS * 7 - 1))
+  const hPad = fromISODay(hStart).getDay()
+  const maxDay = Math.max(1, ...byDay.values())
 
   return (
     <Page
@@ -106,7 +115,21 @@ export function Pickleball() {
           <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Trophy size={14} />} />
           <StatTile compact label="Day streak" value={streak} color="peach" />
         </div>
-        <p className="mt-3 text-sm text-subtext0">This week: <span className="text-text">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <span className="text-subtext0">This week: <span className="text-text">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
+          <label className="ml-auto inline-flex items-center gap-1.5 text-subtext1">Weekly goal
+            <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
+            <span className="text-xs text-overlay0">games</span>
+          </label>
+        </div>
+        {goal > 0 && (
+          <div className="mt-2">
+            <div className="h-2.5 overflow-hidden rounded-full bg-surface0">
+              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
+            </div>
+            <p className="mt-1 text-xs text-overlay0">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
+          </div>
+        )}
       </Card>
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -157,6 +180,56 @@ export function Pickleball() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </Card>
+
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <Card title="By format" subtitle="Singles vs doubles — games & win %">
+          {formats.length === 0 ? <Empty>No games yet.</Empty> : (
+            <ul className="space-y-3">
+              {formats.map((fm) => (
+                <li key={fm.format}>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="capitalize text-subtext1">{fm.format}</span>
+                    <span className="text-overlay1">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
+                    <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card title="Cumulative games" subtitle={`${all.games} played all-time`}>
+          {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
+            <div className="h-44" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={cum} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={tip} />
+                  <Line type="monotone" dataKey="games" stroke={cat('blue')} dot={false} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games that day">
+        <div className="overflow-x-auto">
+          <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
+            {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
+            {Array.from({ length: WEEKS * 7 }).map((_, i) => {
+              const d = addDays(hStart, i)
+              const g = byDay.get(d) ?? 0
+              return <span key={d} title={`${d}: ${g} games`} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: g === 0 ? cat('surface0') : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})` }} />
+            })}
+          </div>
+        </div>
+        <div className="mt-1 text-center text-[10px] text-overlay0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
       </Card>
 
       <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe — physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>

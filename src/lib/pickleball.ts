@@ -48,6 +48,31 @@ export function weeklyGames(data: JournalData, weeks = 8, today = todayISO()): n
   })
 }
 
+/** Games + win% split by format (singles vs doubles). */
+export function formatStats(data: JournalData): { format: 'singles' | 'doubles'; games: number; winPct: number }[] {
+  return (['doubles', 'singles'] as const).map((format) => {
+    const rows = sessions(data).filter((s) => s.format === format)
+    const won = rows.reduce((a, s) => a + s.gamesWon, 0)
+    const games = rows.reduce((a, s) => a + s.gamesWon + s.gamesLost, 0)
+    return { format, games, winPct: games ? Math.round((won / games) * 100) : 0 }
+  }).filter((x) => x.games > 0)
+}
+
+/** Running cumulative games played over every session day (ascending). */
+export function cumulativeGames(data: JournalData): { date: string; games: number }[] {
+  const byDay = new Map<string, number>()
+  for (const s of sessions(data)) byDay.set(s.date, (byDay.get(s.date) ?? 0) + s.gamesWon + s.gamesLost)
+  let run = 0
+  return [...byDay.keys()].sort().map((date) => { run += byDay.get(date)!; return { date: date.slice(5), games: run } })
+}
+
+/** Games played per day, for a play-frequency heatmap. */
+export function gamesByDay(data: JournalData): Map<string, number> {
+  const m = new Map<string, number>()
+  for (const s of sessions(data)) m.set(s.date, (m.get(s.date) ?? 0) + s.gamesWon + s.gamesLost)
+  return m
+}
+
 /** Consecutive-day play streak ending today/yesterday. */
 export function playStreak(data: JournalData, today = todayISO()): number {
   const days = new Set(sessions(data).map((s) => s.date))

@@ -1,4 +1,4 @@
-import { Target, Dumbbell, Activity, Flame, ArrowUpToLine } from 'lucide-react'
+import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty } from '../components/ui'
 import { Page } from '../components/shell/Page'
@@ -6,6 +6,7 @@ import { useNav } from '../components/shell/nav'
 import { cat } from '../lib/colors'
 import { todayISO, dayDiff } from '../lib/date'
 import { weeklyActiveMinutes } from '../lib/fitness'
+import { pickleTotals } from '../lib/pickleball'
 import { weeklyHabitCount } from '../lib/stats'
 import { PROGRAMS } from '../lib/programs'
 import type { ViewId } from '../components/shell/viewChrome'
@@ -56,6 +57,19 @@ export function Goals() {
     icon: Activity,
     to: 'fitness',
   })
+
+  // Weekly pickleball games.
+  if (data.settings.pickleballGoalGames) {
+    goals.push({
+      label: 'Pickleball games',
+      detail: 'this week',
+      value: pickleTotals(data, 7, today).games,
+      target: data.settings.pickleballGoalGames,
+      color: 'teal',
+      icon: Trophy,
+      to: 'pickleball',
+    })
+  }
 
   // Active challenges.
   for (const c of data.challenges ?? []) {
