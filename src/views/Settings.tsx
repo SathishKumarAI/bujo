@@ -203,6 +203,7 @@ export function Settings() {
             <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
             <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
           </div>
+          <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> — the app chrome is hidden automatically.</p>
         </div>
       </Card>
 

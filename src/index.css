@@ -425,3 +425,16 @@ body.handwriting textarea {
   .press-3d { transition: transform 0.1s ease; }
   .press-3d:active { transform: translateY(1px) scale(0.985); }
 }
+
+/* ── Print / Save-as-PDF: drop the app chrome, lay cards out cleanly ───────── */
+@media print {
+  header, nav { display: none !important; }
+  main { padding: 0 !important; overflow: visible !important; }
+  .card-3d {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+  .page-enter > * { animation: none !important; }
+  body { background: #fff !important; }
+}
