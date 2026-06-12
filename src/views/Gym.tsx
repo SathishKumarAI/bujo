@@ -28,6 +28,8 @@ interface SetRow {
   exercise: string
   weight: string
   reps: string
+  rpe?: string
+  kind?: 'warmup' | 'working' | 'drop'
 }
 
 const SPLIT_ICONS: Record<string, LucideIcon> = {
@@ -96,7 +98,8 @@ export function Gym() {
       exercise: r.exercise.trim(),
       weight: r.weight ? Number(r.weight) : undefined,
       reps: r.reps ? Number(r.reps) : undefined,
-      kind: 'working',
+      rpe: r.rpe ? Number(r.rpe) : undefined,
+      kind: r.kind ?? 'working',
     }))
     addWorkout({
       date: todayISO(),
@@ -177,16 +180,19 @@ export function Gym() {
         </datalist>
 
         <div className="space-y-2">
-          <div className="grid grid-cols-[28px_1fr_64px_64px_28px] gap-2 text-xs text-overlay0">
-            <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span />
+          <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] gap-2 text-xs text-overlay0">
+            <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span>RPE</span><span>Type</span><span />
           </div>
           {rows.map((row, i) => {
             const focused = !!row.exercise.trim() && focusEx === row.exercise
             const prev = row.exercise.trim() ? lastSetFor(data, row.exercise) : null
             const oneRM = row.weight && row.reps ? epley1RM(Number(row.weight), Number(row.reps)) : null
+            const kind = row.kind ?? 'working'
+            const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'peach', title: 'Drop set' } }[kind]
+            const nextKind = { working: 'warmup', warmup: 'drop', drop: 'working' }[kind] as SetRow['kind']
             return (
               <div key={i}>
-                <div className="grid grid-cols-[28px_1fr_64px_64px_28px] items-center gap-2">
+                <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] items-center gap-2">
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
                   disabled={!row.exercise.trim()}
@@ -205,6 +211,8 @@ export function Gym() {
                 />
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
+                <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-xs font-bold" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
                 <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
                 </div>
                 {(prev || oneRM) && (
@@ -287,7 +295,8 @@ export function Gym() {
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
-      {/* ── Body metrics ─────────────────────────────────── */}
+      {/* ── Body weight + training volume, side by side ──────── */}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card title="Body weight" subtitle="Track the trend">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
@@ -316,7 +325,7 @@ export function Gym() {
       </Card>
 
       {/* ── Training volume + per-exercise progression ───────── */}
-      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx} progression` : 'Weekly working-set volume (weight × reps)'}>
+      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'}>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -343,6 +352,7 @@ export function Gym() {
           </div>
         )}
       </Card>
+      </div>
     </Page>
   )
 }
