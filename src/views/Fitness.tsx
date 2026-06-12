@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Repeat, Trash2 } from 'lucide-react'
+import { Repeat, Trash2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -69,9 +69,12 @@ export function Fitness() {
     setF({ ...workoutToForm(last), date: today, rpe: '', notes: '' })
   }
 
+  const shown = showAll ? workouts : workouts.slice(0, 6)
+
   return (
     <Page
       aside={
+        <>
         <Card title="Log a workout" right={workouts.length > 0 ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat last</Button> : undefined}>
           <div className="space-y-3">
             <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
@@ -92,6 +95,37 @@ export function Fitness() {
             <Button variant="primary" onClick={submit} className="w-full">Log workout</Button>
           </div>
         </Card>
+
+        <Card
+          title="History"
+          subtitle="Tap a workout to edit"
+          right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
+        >
+          {workouts.length === 0 ? (
+            <Empty>No workouts logged yet.</Empty>
+          ) : (
+            <ul className="divide-y divide-surface0">
+              {shown.map((w) => {
+                const p = pace(w.distanceKm, w.durationMin, dist)
+                return (
+                  <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
+                    <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+                      <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
+                      <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
+                    </button>
+                    <div className="flex shrink-0 items-center gap-2 text-xs text-subtext0">
+                      {w.durationMin != null && <span>{w.durationMin}m</span>}
+                      {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
+                      {p && <span className="text-sky">{p}</span>}
+                      <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Card>
+        </>
       }
     >
       <Card title="This week" subtitle="Active-minutes goal">
@@ -118,56 +152,19 @@ export function Fitness() {
         <p className="mt-1 text-center text-[10px] text-overlay0">last 8 weeks · green = goal hit</p>
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="Totals" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <Stat label="Workouts" value={inRange.length} color="teal" />
-            <Stat label="Minutes" value={totalMin} color="peach" />
-            <Stat label={dist === 'mi' ? 'Miles' : 'Kilometers'} value={Math.round(totalKm * 10) / 10} color="sky" />
-          </div>
-        </Card>
-
-        <Card title="Personal bests" subtitle="All-time cardio">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <Stat label={dist === 'mi' ? 'Longest (mi)' : 'Longest (km)'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
-            <Stat label="Most kcal" value={pbs.mostCalories} color="red" />
-            <Stat label="Longest (min)" value={pbs.mostMinutes} color="peach" />
-          </div>
-        </Card>
-      </div>
+      {/* Totals + bests in one compact 6-tile card — no scrolling to read them. */}
+      <Card title="At a glance" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          <Stat label="Workouts" value={inRange.length} color="teal" />
+          <Stat label="Minutes" value={totalMin} color="peach" />
+          <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={Math.round(totalKm * 10) / 10} color="sky" />
+          <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
+          <Stat label="Best kcal" value={pbs.mostCalories} color="red" />
+          <Stat label="Best min" value={pbs.mostMinutes} color="lavender" />
+        </div>
+      </Card>
 
       <NutritionCard date={f.date} />
-
-      <Card
-        title="History"
-        subtitle="Tap a workout to edit"
-        right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show recent' : `Show all (${workouts.length})`}</Button> : undefined}
-      >
-        {workouts.length === 0 ? (
-          <Empty>No workouts logged yet.</Empty>
-        ) : (
-          <ul className="divide-y divide-surface0">
-            {(showAll ? workouts : workouts.slice(0, 6)).map((w) => {
-              const p = pace(w.distanceKm, w.durationMin, dist)
-              return (
-                <li key={w.id} className="group flex items-center justify-between gap-3 py-2">
-                  <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                    <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
-                    <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
-                  </button>
-                  <div className="flex shrink-0 items-center gap-2.5 text-xs text-subtext0">
-                    {w.durationMin != null && <span>{w.durationMin}m</span>}
-                    {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
-                    {p && <span className="text-sky">{p}</span>}
-                    <button onClick={() => setEditing(w)} aria-label="Edit workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve"><Pencil size={13} /></button>
-                    <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Card>
 
       <WorkoutEditDialog workout={editing} onClose={() => setEditing(null)} />
     </Page>
@@ -284,5 +281,5 @@ function NutritionCard({ date }: { date: string }) {
 }
 
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return <StatTile label={label} value={value} color={color} />
+  return <StatTile label={label} value={value} color={color} compact />
 }

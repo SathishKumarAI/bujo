@@ -51,6 +51,7 @@ export function StatTile({
   icon,
   onClick,
   title,
+  compact = false,
   className = '',
 }: {
   label: ReactNode
@@ -59,6 +60,7 @@ export function StatTile({
   icon?: ReactNode
   onClick?: () => void
   title?: string
+  compact?: boolean
   className?: string
 }) {
   const Tag = onClick ? 'button' : 'div'
@@ -67,16 +69,20 @@ export function StatTile({
       onClick={onClick}
       title={title}
       className={cn(
-        'rounded-xl border border-surface0 bg-base py-3 text-center',
+        'rounded-xl border border-surface0 bg-base text-center',
+        compact ? 'py-1.5' : 'py-3',
         onClick && 'press-3d cursor-pointer transition-colors hover:border-surface2',
         className,
       )}
     >
-      <div className="flex items-center justify-center gap-1 text-xl font-bold sm:text-2xl" style={{ color: cat(color) }}>
+      <div
+        className={cn('flex items-center justify-center gap-1 font-bold', compact ? 'text-lg' : 'text-xl sm:text-2xl')}
+        style={{ color: cat(color) }}
+      >
         {icon}
         {value}
       </div>
-      <div className="mt-0.5 text-xs text-overlay0">{label}</div>
+      <div className={cn('text-overlay0', compact ? 'text-[10px]' : 'mt-0.5 text-xs')}>{label}</div>
     </Tag>
   )
 }
