@@ -137,10 +137,12 @@ export function TopBar({
           aria-label={data.settings.theme === 'mocha' ? 'Switch to light theme' : 'Switch to dark theme'}
           title="Toggle theme"
           onClick={() => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' })}
+          className="hidden sm:inline-flex"
         >
           {data.settings.theme === 'mocha' ? <Sun size={16} /> : <Moon size={16} />}
         </Button>
-        <Button variant="ghost" size="icon-sm" aria-label="Command palette (⌘K)" title="⌘K" onClick={onCommand}>
+        {/* ⌘K is keyboard-only — hide on phones to keep the bar from overflowing. */}
+        <Button variant="ghost" size="icon-sm" aria-label="Command palette (⌘K)" title="⌘K" onClick={onCommand} className="hidden sm:inline-flex">
           <Command size={16} />
         </Button>
         <DropdownMenu>
