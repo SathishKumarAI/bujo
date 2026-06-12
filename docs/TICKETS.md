@@ -216,3 +216,19 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 | V3-K | Training programs from PDF — pull-up program (week/day, load-into-session, day tracker) + ability/training-set calculator + exercises in library | ✅ |
 | V3-L | Space UX — auto-hide sidebar (edge-hover reveal) + recommendations as a top-bar lightbulb badge | ✅ |
 | V3-M | Plate calculator — unit-aware plates (kg/lb) + remount on unit change | ✅ |
+
+## Epic P — Polish: scroll, analytics, cloud (2026-06-12)
+
+Page-by-page enhancement pass. Full audit in `docs/redesign/06-app-audit-and-enhancements.mdx`.
+
+| ID | Title | Status |
+|---|---|---|
+| P-1 | Challenges 2-grid (rules+stats / calendar) + best-streak/days-left stats | ✅ |
+| P-2 | Fitness compact one-line history (recent/all toggle) | ✅ |
+| P-3 | Trackers Day/Week/Month view toggle | ✅ |
+| P-4 | Side-by-side cards to cut scrolling (Fitness Totals+PBs, Focus stats+chart) | ✅ |
+| P-5 | Cloud storage — verified: own-folder / Google Drive / GitHub gist (Settings → Data & Cloud) | ✅ |
+| P-6 | Trackers category radar chart | 🔜 |
+| P-7 | Custom-collections UI (BUJO-93) | 🔜 |
+| P-8 | Passcode + client-side encryption (BUJO-90) | 🔜 |
+| P-9 | Accounts + E2E cloud sync (BUJO-91, needs backend) | 🔜 |
