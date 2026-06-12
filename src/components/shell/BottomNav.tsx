@@ -47,8 +47,9 @@ export function BottomNav({
         onClick={() => onNavigate(n.id)}
         aria-label={n.label}
         aria-current={active ? 'page' : undefined}
-        className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${active ? 'text-primary' : 'text-overlay1'}`}
+        className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${active ? 'text-primary' : 'text-overlay1'}`}
       >
+        {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
         <Icon size={20} aria-hidden />
         {n.label}
       </button>
@@ -62,7 +63,7 @@ export function BottomNav({
         <div className="fixed inset-0 z-30 md:hidden" onClick={() => setMenu(false)}>
           <div className="absolute inset-0 bg-crust/50" />
           <div
-            className="absolute right-3 bottom-[4.5rem] left-3 rounded-2xl border border-border bg-card p-2 shadow-xl"
+            className="sheet-up absolute right-3 bottom-[4.5rem] left-3 rounded-2xl border border-border bg-card p-2 shadow-xl"
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
             onClick={(e) => e.stopPropagation()}
           >
