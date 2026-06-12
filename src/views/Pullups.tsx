@@ -1,57 +1,57 @@
 import { useState } from 'react'
 import { Card, Input } from '../components/ui'
 import { Page } from '../components/shell/Page'
-import { useNav } from '../components/shell/nav'
+import { ProgramTracker } from '../components/ProgramTracker'
 import { cat } from '../lib/colors'
 import {
   pullupAbility, ladder, pyramid, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_ABILITY,
 } from '../lib/programs'
 
 /**
- * Dedicated pull-up hub: your ability/training-set calculator, the workout-format
- * library, and the progression exercises. The trackable multi-week pull-up program
- * lives in the Gym's program tracker (logging happens there).
+ * Dedicated pull-up hub: the "Starting From Zero" program tracker, your
+ * ability/training-set calculator (right rail), the ability ladder, the
+ * workout-format library, and the progression exercises — laid out to minimise
+ * scrolling, with the data-entry calculator pinned on the right.
  */
 export function Pullups() {
-  const navigate = useNav()
   return (
-    <Page aside={<PullupGuideCard />}>
-      <Card title="Pull-up ability ladder" subtitle="Where you stand → what to train (max strict pull-ups)">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-overlay0">
-                <th className="py-1 pr-3 font-normal">Group</th>
-                <th className="py-1 pr-3 font-normal">Max</th>
-                <th className="py-1 pr-3 font-normal">Set</th>
-                <th className="py-1 pr-3 font-normal">Daily</th>
-                <th className="py-1 font-normal">Weekly</th>
-              </tr>
-            </thead>
-            <tbody>
-              {PULLUP_ABILITY.map((a) => (
-                <tr key={a.group} className="border-t border-surface0">
-                  <td className="py-1.5 pr-3 text-subtext1">{a.group}</td>
-                  <td className="py-1.5 pr-3 text-overlay1">{a.range}</td>
-                  <td className="py-1.5 pr-3" style={{ color: cat('mauve') }}>{a.trainingSet}</td>
-                  <td className="py-1.5 pr-3 text-overlay1">{a.daily}</td>
-                  <td className="py-1.5 text-overlay1">{a.weekly}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs text-overlay0">
-          Want the structured 6-week program with day-by-day check-off?{' '}
-          <button onClick={() => navigate('gym')} className="text-mauve hover:underline">Open it in the Gym tracker →</button>
-        </p>
-      </Card>
+    <Page aside={<><PullupGuideCard /><AbilityLadderCard /></>}>
+      {/* The trackable program is the headline — check off days right here. */}
+      <ProgramTracker only="pullup-zero" />
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <PullupWorkoutsCard />
         <ProgressionsCard />
       </div>
     </Page>
+  )
+}
+
+/** Reference: ability group → training set + daily/weekly volume targets. */
+function AbilityLadderCard() {
+  return (
+    <Card title="Ability ladder" subtitle="Max strict pull-ups → what to train">
+      <table className="w-full text-left text-xs">
+        <thead>
+          <tr className="text-overlay0">
+            <th className="py-1 pr-2 font-normal">Group</th>
+            <th className="py-1 pr-2 font-normal">Max</th>
+            <th className="py-1 pr-2 font-normal">Set</th>
+            <th className="py-1 font-normal">Weekly</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PULLUP_ABILITY.map((a) => (
+            <tr key={a.group} className="border-t border-surface0">
+              <td className="py-1 pr-2 text-subtext1">{a.group}</td>
+              <td className="py-1 pr-2 text-overlay1">{a.range}</td>
+              <td className="py-1 pr-2" style={{ color: cat('mauve') }}>{a.trainingSet}</td>
+              <td className="py-1 text-overlay1">{a.weekly}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
   )
 }
 
