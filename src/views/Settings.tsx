@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Input, Segmented } from '../components/ui'
+import { Button, Card, Input, Segmented, StatTile } from '../components/ui'
 import { cat } from '../lib/colors'
 import { Switch } from '../components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
@@ -85,18 +85,20 @@ export function Settings() {
           <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
           <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
         </div>
-        <div className="mt-3 border-t border-border pt-3"><Row label="Weight unit">
-          <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
-        </Row></div>
-        <div className="mt-3 border-t border-border pt-3"><Row label="Distance unit">
-          <Segmented value={s.distanceUnit} onChange={(v) => setSettings({ distanceUnit: v })} options={[{ value: 'km', label: 'km' }, { value: 'mi', label: 'mi' }]} />
-        </Row></div>
-        <div className="mt-3 border-t border-border pt-3"><Row label="Week starts on">
-          <Segmented value={s.weekStart ?? 0} onChange={(v) => setSettings({ weekStart: v })} options={[{ value: 0, label: 'Sunday' }, { value: 1, label: 'Monday' }]} />
-        </Row></div>
-        <div className="mt-3 border-t border-border pt-3"><Row label="Temperature unit">
-          <Segmented value={s.tempUnit} onChange={(v) => setSettings({ tempUnit: v })} options={[{ value: 'F', label: '°F' }, { value: 'C', label: '°C' }]} />
-        </Row></div>
+        <div className="mt-3 grid gap-x-6 gap-y-2 border-t border-border pt-3 sm:grid-cols-2">
+          <Row label="Weight">
+            <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
+          </Row>
+          <Row label="Distance">
+            <Segmented value={s.distanceUnit} onChange={(v) => setSettings({ distanceUnit: v })} options={[{ value: 'km', label: 'km' }, { value: 'mi', label: 'mi' }]} />
+          </Row>
+          <Row label="Week starts">
+            <Segmented value={s.weekStart ?? 0} onChange={(v) => setSettings({ weekStart: v })} options={[{ value: 0, label: 'Sun' }, { value: 1, label: 'Mon' }]} />
+          </Row>
+          <Row label="Temperature">
+            <Segmented value={s.tempUnit} onChange={(v) => setSettings({ tempUnit: v })} options={[{ value: 'F', label: '°F' }, { value: 'C', label: '°C' }]} />
+          </Row>
+        </div>
       </Card>
         </TabsContent>
 
@@ -145,6 +147,16 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="data">
+          <Card title="Your data at a glance" subtitle="Everything stored on this device" className="mb-5">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+              <StatTile compact label="Entries" value={data.entries.length} color="mauve" />
+              <StatTile compact label="Habits" value={data.habits.filter((h) => !h.archived).length} color="green" />
+              <StatTile compact label="Workouts" value={data.workouts.length} color="peach" />
+              <StatTile compact label="Memories" value={data.memories.length} color="sky" />
+              <StatTile compact label="Photos" value={(data.progressPhotos?.length ?? 0) + data.memories.filter((m) => m.photo).length} color="pink" />
+              <StatTile compact label="KB stored" value={Math.round((JSON.stringify(data).length / 1024))} color="teal" />
+            </div>
+          </Card>
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
         {!s.lastBackup && (
