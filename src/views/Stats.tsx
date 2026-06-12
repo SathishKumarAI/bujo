@@ -12,7 +12,7 @@ import {
   buildHeatmap, moodByDay, sleepMoodScatter, tagCounts, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
 } from '../lib/viz'
-import { monthDays, prettyMonth, todayISO, ymOf, fromISODay } from '../lib/date'
+import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS } from '../lib/date'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
@@ -118,7 +118,7 @@ export function Stats() {
 
       <Card
         title="Mood calendar"
-        subtitle={`${prettyMonth(ym)} — greener is better`}
+        subtitle="Each day tinted by your mood (0–10) — spot streaks, dips, and weekday patterns at a glance"
         right={
           <div className="flex gap-1">
             <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
@@ -127,11 +127,28 @@ export function Stats() {
           </div>
         }
       >
+        {(() => {
+          const rated = monthDays(ym).map((d) => moods.get(d)).filter((m): m is number => m != null)
+          const avg = rated.length ? Math.round((rated.reduce((a, b) => a + b, 0) / rated.length) * 10) / 10 : null
+          let best: string | null = null
+          for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
+          return (
+            <p className="mb-3 text-sm text-subtext0">
+              {prettyMonth(ym)} ·{' '}
+              {avg == null ? <span className="text-overlay0">no mood logged yet</span> : (
+                <>avg mood <span className="font-semibold" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
+              )}
+            </p>
+          )
+        })()}
+        <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] text-overlay0">
+          {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
+        </div>
         <div className="grid grid-cols-7 gap-1">
           {monthDays(ym).map((d, i) => (
             <div
               key={d}
-              title={moods.has(d) ? `${d}: mood ${moods.get(d)}` : d}
+              title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
               className="grid aspect-square place-items-center rounded-md text-xs"
               style={{
                 background: moodColor(moods.get(d)),
@@ -142,6 +159,12 @@ export function Stats() {
               {Number(d.slice(8))}
             </div>
           ))}
+        </div>
+        {/* Legend */}
+        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-overlay0">
+          <span>low</span>
+          {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
+          <span>great</span>
         </div>
       </Card>
 
