@@ -187,7 +187,7 @@ export function Trackers() {
 
       <div className="grid items-start gap-5 lg:grid-cols-3">
       <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
-        <div className="h-64 w-full">
+        <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -206,7 +206,7 @@ export function Trackers() {
       </Card>
 
       <Card title="Category consistency" subtitle="30-day avg per category">
-        <div className="h-56 w-full">
+        <div className="h-56 w-full" role="img" aria-label="Radar chart of 30-day habit consistency averaged per category">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={CATEGORIES.filter((category) => visibleHabits.some((h) => h.category === category)).map((category) => {
               const hs = visibleHabits.filter((h) => h.category === category)

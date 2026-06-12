@@ -50,7 +50,7 @@ export function Stats() {
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10">
-          <div className="h-64">
+          <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radar} outerRadius="72%">
                 <PolarGrid stroke={cat('surface1')} />
@@ -66,7 +66,7 @@ export function Stats() {
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
-            <div className="h-64">
+            <div className="h-64" role="img" aria-label={`Scatter plot of sleep hours versus mood for ${scatter.length} days, showing their correlation`}>
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 8, right: 8, bottom: 4, left: -20 }}>
                   <CartesianGrid stroke={cat('surface0')} />
@@ -82,7 +82,7 @@ export function Stats() {
         </Card>
 
         <Card title="Workout minutes" subtitle="Per week, last 8 weeks">
-          <div className="h-56">
+          <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
                 <CartesianGrid stroke={cat('surface0')} vertical={false} />
@@ -99,7 +99,7 @@ export function Stats() {
           {tasks.length === 0 ? (
             <Empty>No tasks yet.</Empty>
           ) : (
-            <div className="h-56">
+            <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>

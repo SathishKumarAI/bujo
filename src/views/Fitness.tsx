@@ -222,7 +222,7 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
   const r = 30
   const circ = 2 * Math.PI * r
   return (
-    <svg width="76" height="76" viewBox="0 0 76 76" className="shrink-0">
+    <svg width="76" height="76" viewBox="0 0 76 76" className="shrink-0" role="img" aria-label={`Weekly active-minutes goal: ${pct}% complete`}>
       <circle cx="38" cy="38" r={r} fill="none" stroke={cat('surface0')} strokeWidth="7" />
       <circle cx="38" cy="38" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="7" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 38 38)" />
       <text x="38" y="42" textAnchor="middle" className="fill-text font-bold" fontSize="16">{pct}%</text>

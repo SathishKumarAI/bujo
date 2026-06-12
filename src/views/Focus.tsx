@@ -76,7 +76,7 @@ export function Focus() {
       </Card>
 
       <Card title="Coding minutes" subtitle="Last 14 days">
-        <div className="flex items-end gap-1" style={{ height: 80 }}>
+        <div className="flex items-end gap-1" style={{ height: 80 }} role="img" aria-label={`Bar chart of coding minutes per day over the last 14 days: ${series.map((s) => `${s.min}m`).join(', ')}`}>
           {series.map((s) => (
             <div key={s.date} className="group relative flex-1" title={`${s.date}: ${s.min}m`}>
               <div className="rounded-t" style={{ height: `${Math.max(2, (s.min / maxDay) * 100)}%`, background: s.date === today ? cat('mauve') : cat('surface2') }} />
