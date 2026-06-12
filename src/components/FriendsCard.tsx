@@ -16,7 +16,20 @@ export function FriendsCard() {
   const friends = [...(data.friends ?? [])].sort((a, b) => a.name.localeCompare(b.name))
   const [name, setName] = useState('')
   const [gh, setGh] = useState('')
+  const [bday, setBday] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // Days until a friend's next birthday (from "MM-DD" or "YYYY-MM-DD").
+  function daysToBirthday(b?: string): number | null {
+    if (!b) return null
+    const md = b.length === 5 ? b : b.slice(5)
+    const [mm, dd] = md.split('-').map(Number)
+    if (!mm || !dd) return null
+    const now = new Date()
+    let next = new Date(now.getFullYear(), mm - 1, dd)
+    if (next < new Date(now.getFullYear(), now.getMonth(), now.getDate())) next = new Date(now.getFullYear() + 1, mm - 1, dd)
+    return Math.round((next.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86_400_000)
+  }
 
   async function add() {
     if (!name.trim()) return
@@ -28,8 +41,8 @@ export function FriendsCard() {
         if (p) enrich = { avatar: p.avatar, bio: p.bio, company: p.company, links: p.htmlUrl ? [p.htmlUrl] : undefined }
         else alert('Could not find that public GitHub profile (or rate-limited). Added without it.')
       }
-      addFriend({ name: name.trim(), github: gh.trim() || undefined, ...enrich })
-      setName(''); setGh('')
+      addFriend({ name: name.trim(), github: gh.trim() || undefined, birthday: bday || undefined, ...enrich })
+      setName(''); setGh(''); setBday('')
     } finally {
       setBusy(false)
     }
@@ -54,6 +67,7 @@ export function FriendsCard() {
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>
+        <label className="flex items-center gap-2 text-xs text-overlay0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
         <p className="text-[11px] text-overlay0">GitHub pull uses the official public API — only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
@@ -67,7 +81,14 @@ export function FriendsCard() {
                 ? <img src={f.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full" />
                 : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ background: cat('surface1'), color: cat('subtext0') }}>{f.name.slice(0, 1).toUpperCase()}</span>}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-text">{f.name}</p>
+                <p className="truncate text-sm font-medium text-text">
+                  {f.name}
+                  {(() => {
+                    const d = daysToBirthday(f.birthday)
+                    if (d == null) return null
+                    return <span className="ml-1.5 text-xs" style={{ color: d <= 14 ? cat('pink') : cat('overlay0') }}>🎂 {d === 0 ? 'today!' : `${d}d`}</span>
+                  })()}
+                </p>
                 {f.bio && <p className="truncate text-xs text-subtext0">{f.bio}</p>}
                 {f.company && <p className="truncate text-xs text-overlay0">{f.company}</p>}
                 <div className="mt-0.5 flex flex-wrap gap-2 text-xs">
