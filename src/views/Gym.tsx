@@ -123,7 +123,7 @@ export function Gym() {
       aside={
         <>
           <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
-          <PlateCalculator unit={unit} />
+          <PlateCalculator key={unit} unit={unit} />
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
           <PullupGuideCard />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
@@ -321,15 +321,26 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
   const [week, setWeek] = useState(1)
   const [day, setDay] = useState(1)
   const done = data.settings.programDone ?? []
-  const dayKey = (w: number, d: number) => `${p.id}-w${w}d${d}`
+  const exKey = (w: number, d: number, i: number) => `${p.id}-w${w}d${d}-e${i}`
   const cur = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)
   const totalDays = p.weeks.length * 5
-  const doneCount = done.filter((k) => k.startsWith(p.id)).length
+  // A day is complete when every one of its exercises is checked (partial OK).
+  const dayComplete = (w: number, d: number) => {
+    const ex = p.weeks.find((x) => x.week === w)?.days.find((x) => x.day === d)?.exercises ?? []
+    return ex.length > 0 && ex.every((_, i) => done.includes(exKey(w, d, i)))
+  }
+  const doneCount = p.weeks.reduce((acc, w) => acc + w.days.filter((d) => dayComplete(w.week, d.day)).length, 0)
+  const curDoneCount = cur ? cur.exercises.filter((_, i) => done.includes(exKey(week, day, i))).length : 0
 
-  function toggleDone() {
-    const k = dayKey(week, day)
-    const next = done.includes(k) ? done.filter((x) => x !== k) : [...done, k]
-    setSettings({ programDone: next })
+  function toggleEx(i: number) {
+    const k = exKey(week, day, i)
+    setSettings({ programDone: done.includes(k) ? done.filter((x) => x !== k) : [...done, k] })
+  }
+  function toggleAll() {
+    if (!cur) return
+    const keys = cur.exercises.map((_, i) => exKey(week, day, i))
+    const allDone = keys.every((k) => done.includes(k))
+    setSettings({ programDone: allDone ? done.filter((k) => !keys.includes(k)) : [...new Set([...done, ...keys])] })
   }
 
   return (
@@ -346,34 +357,37 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-overlay0">Day</span>
-        {[1, 2, 3, 4, 5].map((d) => {
-          const isDone = done.includes(dayKey(week, d))
-          return (
-            <button key={d} onClick={() => setDay(d)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === d ? cat('blue') : cat('surface0'), color: day === d ? cat('crust') : cat('subtext1') }}>
-              {isDone && '✓'} {d}
-            </button>
-          )
-        })}
+        {[1, 2, 3, 4, 5].map((d) => (
+          <button key={d} onClick={() => setDay(d)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === d ? cat('blue') : cat('surface0'), color: day === d ? cat('crust') : cat('subtext1') }}>
+            {dayComplete(week, d) && '✓'} {d}
+          </button>
+        ))}
       </div>
 
       {cur && (
         <>
-          <p className="mb-2 text-xs tracking-wide text-overlay0 uppercase">{cur.focus}</p>
-          <table className="w-full text-sm">
-            <thead><tr className="text-[10px] text-overlay0 uppercase"><th className="text-left font-normal">Exercise</th><th className="w-24 text-right font-normal">Qty</th><th className="w-12 text-right font-normal">Sets</th></tr></thead>
-            <tbody>
-              {cur.exercises.map((e, i) => (
-                <tr key={i} className="border-t border-surface0">
-                  <td className="py-1 text-subtext1">{e.name}</td>
-                  <td className="py-1 text-right text-overlay1">{e.qty}</td>
-                  <td className="py-1 text-right text-overlay1">{e.sets}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs tracking-wide text-overlay0 uppercase">{cur.focus}</p>
+            <span className="text-xs text-overlay0">{curDoneCount}/{cur.exercises.length} done</span>
+          </div>
+          <ul className="space-y-0.5">
+            {cur.exercises.map((e, i) => {
+              const checked = done.includes(exKey(week, day, i))
+              return (
+                <li key={i}>
+                  <label className="flex cursor-pointer items-center gap-2 border-t border-surface0 py-1.5 text-sm">
+                    <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-mauve" />
+                    <span className={`flex-1 ${checked ? 'text-overlay1 line-through' : 'text-subtext1'}`}>{e.name}</span>
+                    <span className="text-overlay1">{e.qty}</span>
+                    <span className="w-8 text-right text-overlay1">×{e.sets}</span>
+                  </label>
+                </li>
+              )
+            })}
+          </ul>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="primary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="inline-flex items-center gap-1.5"><Plus size={14} /> Load into session</Button>
-            <Button onClick={toggleDone}>{done.includes(dayKey(week, day)) ? 'Mark not done' : 'Mark day done'}</Button>
+            <Button onClick={toggleAll}>{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
           </div>
         </>
       )}
