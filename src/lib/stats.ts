@@ -9,6 +9,7 @@ export function activeDays(data: JournalData): Set<string> {
   data.gratitude.forEach((g) => g.text && days.add(g.date))
   data.memories.forEach((m) => m.text && days.add(m.date))
   data.workouts.forEach((w) => days.add(w.date))
+  ;(data.pickleball ?? []).forEach((p) => days.add(p.date))
   Object.entries(data.habitLog).forEach(([d, ids]) => ids.length && days.add(d))
   return days
 }

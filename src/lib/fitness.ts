@@ -164,16 +164,17 @@ export function pace(distanceKm?: number, durationMin?: number, unit: 'km' | 'mi
   return `${m}:${String(s).padStart(2, '0')} /${unit}`
 }
 
-/** Total workout minutes within the last `days` (rolling week by default). */
+/** Active minutes within the last `days` — workouts + pickleball sessions count. */
 export function weeklyActiveMinutes(data: JournalData, today = todayISO(), days = 7): number {
-  return data.workouts
-    .filter((w) => { const diff = dayDiff(w.date, today); return diff >= 0 && diff < days })
-    .reduce((s, w) => s + (w.durationMin ?? 0), 0)
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const workout = data.workouts.filter((w) => inWindow(w.date)).reduce((s, w) => s + (w.durationMin ?? 0), 0)
+  const pickle = (data.pickleball ?? []).filter((p) => inWindow(p.date)).reduce((s, p) => s + (p.durationMin ?? 0), 0)
+  return workout + pickle
 }
 
-/** Consecutive days ending today/yesterday that have at least one workout. */
+/** Consecutive days ending today/yesterday with at least one workout or pickleball session. */
 export function activeDayStreak(data: JournalData, today = todayISO()): number {
-  const has = (d: string) => data.workouts.some((w) => w.date === d)
+  const has = (d: string) => data.workouts.some((w) => w.date === d) || (data.pickleball ?? []).some((p) => p.date === d)
   let cursor = has(today) ? today : addDays(today, -1)
   let streak = 0
   while (has(cursor)) { streak += 1; cursor = addDays(cursor, -1) }

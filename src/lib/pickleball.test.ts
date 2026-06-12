@@ -34,4 +34,12 @@ describe('pickleball', () => {
     d.pickleball = [s('2026-06-11', 1, 0), s('2026-06-12', 1, 0)]
     expect(playStreak(d, '2026-06-12')).toBe(2)
   })
+
+  it('pickleball minutes count toward Fitness active minutes', () => {
+    const d = emptyJournal()
+    d.pickleball = [{ ...s('2026-06-12', 2, 1), durationMin: 60 }]
+    expect(weeklyActiveMinutes(d, '2026-06-12')).toBe(60)
+  })
 })
+
+import { weeklyActiveMinutes } from './fitness'

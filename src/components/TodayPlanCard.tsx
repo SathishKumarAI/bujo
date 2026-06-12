@@ -22,7 +22,7 @@ export function TodayPlanCard() {
   const cov = dayCompletion(data, today)
   const habitsLeft = cov.total - cov.done
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= today).length
-  const workedOut = data.workouts.some((w) => w.date === today)
+  const workedOut = data.workouts.some((w) => w.date === today) || (data.pickleball ?? []).some((p) => p.date === today)
 
   // Pull-up program progress (days fully checked off).
   const done = data.settings.programDone ?? []

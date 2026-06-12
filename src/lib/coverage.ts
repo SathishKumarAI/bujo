@@ -38,7 +38,7 @@ export function dayCoverage(data: JournalData, date: string): DayCoverage {
   const c = dayCompletion(data, date)
   const journaled = didJournal(data, date)
   const moodLogged = data.metrics.some((m) => m.date === date && m.mood != null)
-  const workout = data.workouts.some((w) => w.date === date)
+  const workout = data.workouts.some((w) => w.date === date) || (data.pickleball ?? []).some((p) => p.date === date)
 
   // Score: habit ratio (when habits scheduled) + journaling + mood, each 0–1.
   // Workout is a bonus, not a daily requirement (don't penalise rest days).
