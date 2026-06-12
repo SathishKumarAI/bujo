@@ -38,6 +38,31 @@ export function metricsCsv(data: JournalData): string {
   )
 }
 
+/** Parse a metrics CSV (the format `metricsCsv` exports) into partial day rows. */
+export function parseMetricsCsv(text: string): { date: string; patch: Record<string, number> }[] {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim())
+  if (lines.length < 2) return []
+  const header = lines[0].split(',').map((h) => h.trim())
+  const di = header.indexOf('date')
+  if (di < 0) return []
+  const numCols = ['mood', 'stress', 'sleep', 'calories', 'protein', 'carbs', 'fat']
+  const out: { date: string; patch: Record<string, number> }[] = []
+  for (const line of lines.slice(1)) {
+    const cells = line.split(',')
+    const date = (cells[di] ?? '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+    const patch: Record<string, number> = {}
+    for (const key of numCols) {
+      const ci = header.indexOf(key)
+      if (ci < 0) continue
+      const v = Number((cells[ci] ?? '').trim())
+      if (Number.isFinite(v) && (cells[ci] ?? '').trim() !== '') patch[key] = v
+    }
+    if (Object.keys(patch).length) out.push({ date, patch })
+  }
+  return out
+}
+
 export function workoutsCsv(data: JournalData): string {
   return toCsv(
     ['date', 'activity', 'split', 'durationMin', 'distanceKm', 'calories', 'rpe', 'sets'],

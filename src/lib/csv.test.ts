@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv } from './csv'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from './csv'
 import { emptyJournal } from './storage'
 
 describe('csv export', () => {
@@ -22,5 +22,18 @@ describe('csv export', () => {
   it('metrics and workouts export with headers on an empty journal', () => {
     expect(metricsCsv(emptyJournal()).startsWith('date,mood,stress,sleep')).toBe(true)
     expect(workoutsCsv(emptyJournal()).startsWith('date,activity,split')).toBe(true)
+  })
+
+  it('parseMetricsCsv round-trips an exported metrics CSV', () => {
+    const d = emptyJournal()
+    d.metrics = [{ date: '2026-06-11', mood: 7, sleep: 8 }]
+    const rows = parseMetricsCsv(metricsCsv(d))
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ date: '2026-06-11', patch: { mood: 7, sleep: 8 } })
+  })
+
+  it('parseMetricsCsv skips malformed dates and empty cells', () => {
+    const rows = parseMetricsCsv('date,mood\nnot-a-date,5\n2026-06-12,\n2026-06-13,9')
+    expect(rows).toEqual([{ date: '2026-06-13', patch: { mood: 9 } }])
   })
 })

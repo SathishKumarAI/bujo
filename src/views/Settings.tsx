@@ -10,7 +10,7 @@ import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv } from '../lib/csv'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from '../lib/csv'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender } from '../lib/types'
@@ -26,8 +26,22 @@ function download(filename: string, text: string, mime = 'application/json') {
 }
 
 export function Settings() {
-  const { data, setSettings, replaceAll } = useJournal()
+  const { data, setSettings, replaceAll, setMetric } = useJournal()
   const fileRef = useRef<HTMLInputElement>(null)
+  const csvRef = useRef<HTMLInputElement>(null)
+
+  function onMetricsCsv(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const rows = parseMetricsCsv(String(reader.result))
+      rows.forEach((r) => setMetric(r.date, r.patch))
+      alert(`Imported metrics for ${rows.length} day${rows.length === 1 ? '' : 's'}.`)
+    }
+    reader.readAsText(file)
+    if (csvRef.current) csvRef.current.value = ''
+  }
   const s = data.settings
 
   function setGender(gender: Gender) {
@@ -221,6 +235,10 @@ export function Settings() {
             <Button onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
             <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
             <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+          </div>
+          <div className="mt-2">
+            <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
+            <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
           </div>
           <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> — the app chrome is hidden automatically.</p>
         </div>
