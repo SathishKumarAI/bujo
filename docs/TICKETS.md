@@ -168,7 +168,7 @@ IDs are stable references for commits and PRs.
 |---|---|---|
 | BUJO-90 | Passcode lock + client-side encryption (Web Crypto) | 🔜 |
 | BUJO-91 | Opt-in accounts + E2E-encrypted cloud sync | 🔜 |
-| BUJO-92 | Command palette (Cmd/Ctrl-K) | 🔜 |
+| BUJO-92 | Command palette (Cmd/Ctrl-K) | ✅ |
 | BUJO-93 | Custom free-form collections UI | 🔜 |
 | BUJO-94 | Chart text-alternatives + axe-core CI | 🔜 |
 
