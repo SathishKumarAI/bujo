@@ -2,8 +2,8 @@ import { CheckSquare, Dumbbell, ListTodo, ArrowUpToLine } from 'lucide-react'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat } from '../lib/colors'
-import { todayISO, prettyDay, WEEKDAYS } from '../lib/date'
-import { dayCompletion } from '../lib/stats'
+import { todayISO, prettyDay, WEEKDAYS, addDays } from '../lib/date'
+import { dayCompletion, habitStreak } from '../lib/stats'
 import { weekCoverage } from '../lib/coverage'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
@@ -21,6 +21,16 @@ export function TodayPlanCard() {
 
   const cov = dayCompletion(data, today)
   const habitsLeft = cov.total - cov.done
+
+  // Streaks at risk today: scheduled, not yet done, with a ≥3-day run going.
+  const dow = new Date(today + 'T00:00').getDay()
+  const log = data.habitLog[today] ?? []
+  const atRisk = data.habits.filter((h) => {
+    if (h.archived || (h.type ?? 'check') !== 'check') return false
+    const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
+    if (!scheduled || log.includes(h.id)) return false
+    return habitStreak(data, h.id, addDays(today, -1)) >= 3
+  })
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= today).length
   const workedOut = data.workouts.some((w) => w.date === today) || (data.pickleball ?? []).some((p) => p.date === today)
 
@@ -50,6 +60,11 @@ export function TodayPlanCard() {
 
   return (
     <Card title="Today’s plan" subtitle="Your whole day at a glance — tap to jump in" right={<span className="text-xs text-overlay0">week {weekScore}%</span>}>
+      {atRisk.length > 0 && (
+        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
+          🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} — tap to keep them alive
+        </button>
+      )}
       <div className="flex flex-wrap gap-2">
         {chips.map((c) => {
           const Icon = c.icon
