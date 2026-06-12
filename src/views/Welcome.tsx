@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 // (Welcome uses native buttons)
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
+import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
 
 /**
@@ -94,7 +95,18 @@ export function Welcome() {
           </button>
         </div>
 
-        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '340ms' }}>
+        {/* Explore path — seeds a sample month so the app isn't empty on day one. */}
+        <div className="rise mt-5 text-center" style={{ animationDelay: '320ms' }}>
+          <button
+            onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local' }) }}
+            className="text-sm text-subtext0 underline-offset-2 hover:text-mauve hover:underline"
+          >
+            Just exploring? Load a sample journal →
+          </button>
+          <p className="mt-2 text-xs text-overlay0">Tip: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> anytime to jump anywhere · the <strong>Help</strong> tab explains every feature.</p>
+        </div>
+
+        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '360ms' }}>
           <ShieldCheck size={13} /> No servers, no tracking. Your data is yours.
         </p>
       </div>
