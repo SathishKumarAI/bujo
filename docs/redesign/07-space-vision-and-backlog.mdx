@@ -1,0 +1,72 @@
+---
+title: Space Vision & Scoped Backlog
+date: 2026-06-12
+---
+
+# What I'd do with the space (if I were you) + the full backlog
+
+## 1. Space-utilization principles
+
+The redesign goal isn't "fill every pixel" — it's **no dead voids, no needless
+scrolling, density that matches the data**. Rules I apply across every view:
+
+1. **No rail voids.** If an aside would be much shorter than `main`, don't use an
+   aside — make it a full-width stat bar (what we just did on Monthly). Asides are
+   for content that's genuinely as tall as the main column (Today's Wellbeing).
+2. **Pair related cards side-by-side** to cut scrolling: Totals + Personal-bests,
+   This-week + Coding-minutes, Body-weight + Volume, Location + Goals.
+3. **Density where it's data, breathing room where it's input.** Charts/stats go
+   tight and multi-column; forms stay single-column and roomy.
+4. **Above-the-fold = the daily action.** Today's capture, Gym's session, a
+   challenge's check-in must be reachable without scrolling.
+5. **Make read-only things interactive.** A calendar day should open that day; a
+   PR should chart its progression; a habit name should open its drawer.
+6. **Collapse, don't crowd, on mobile.** Side-by-side → stacked under `lg`.
+
+### Applied to Monthly (this section)
+Big day trays · clickable days → that day's log · mood tints · full-width
+**This-month** stat bar · **Location + Goals side-by-side** · Photo at the bottom.
+Next ideas: a habit-completion ribbon under each day, drag an event to another day,
+and a "month in review" recap card.
+
+## 2. Scoped backlog (pending → future)
+
+### In progress
+- **Passcode + client-side encryption** — `lib/crypto.ts` done (AES-GCM/PBKDF2).
+  Remaining: a lock gate in `JournalProvider` (async unlock), encrypt-on-save when
+  a passcode is set, Settings toggle. *Risk: must never lock the user out — wrong
+  passcode retries, removing the passcode restores plaintext, data is never wiped.*
+
+### Near-term (bounded, low risk)
+| Item | Notes |
+|---|---|
+| Monthly: habit-completion ribbon per day | tiny bars under the day number |
+| Insights: make every stat clickable (jump to source) | reuse the nav context |
+| Stats: date-range picker (30/90/all) | currently fixed windows |
+| Plan: "this week's recurring load" mini-summary | |
+| Global: a `StatTile` + `ChartCard` primitive | de-dup the repeated stat/chart markup |
+| Per-set rest timer auto-start on Gym set log | RestTimer exists |
+
+### Medium (new surface or model)
+| Item | Notes |
+|---|---|
+| Drag-and-drop: reorder habits, move calendar events | HTML5 DnD |
+| Goal system: cross-view goals (weekly/monthly targets) unified | one model |
+| Notifications: smarter reminders (streak-at-risk, challenge day) | builds on reminders |
+| Theme studio: pick accent + density + a couple more presets | extends Neon |
+| Insights v2: weekly digest + anomaly callouts | reuse correlations |
+
+### Large (needs infra or careful design)
+| Item | Notes |
+|---|---|
+| Accounts + **E2E-encrypted cloud sync** | thin backend; pairs with `crypto.ts` |
+| Real-time multi-device | conflict resolution / CRDT |
+| Chart **a11y**: text alternatives + axe-core in CI | BUJO-94 |
+| Mobile app shell (Capacitor/PWA polish) | |
+
+## 3. How to pick next
+Default order: finish **passcode encryption** (privacy is foundational) → the
+**near-term bounded** wins (fast, visible) → one **medium** surface at a time.
+Leave the **large/infra** items until the local-first experience is fully polished.
+Each item ships behind a commit + screenshot + a TICKETS row; charts stay lazy and
+the bundle stays < 200 KB gzip.

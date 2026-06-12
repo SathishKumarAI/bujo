@@ -232,3 +232,21 @@ Page-by-page enhancement pass. Full audit in `docs/redesign/06-app-audit-and-enh
 | P-7 | Custom-collections UI (BUJO-93) | 🔜 |
 | P-8 | Passcode + client-side encryption (BUJO-90) | 🔜 |
 | P-9 | Accounts + E2E cloud sync (BUJO-91, needs backend) | 🔜 |
+
+## Epic R2 — Roadmap (scoped 2026-06-12)
+
+Vision + full reasoning in `docs/redesign/07-space-vision-and-backlog.mdx`.
+
+| ID | Title | Size | Status |
+|---|---|---|---|
+| R2-1 | Passcode + client-side encryption (crypto.ts done; lock gate + save path remain) | M | ◑ |
+| R2-2 | Monthly: habit-completion ribbon per day | S | 🔜 |
+| R2-3 | Insights: clickable stats → jump to source (nav context) | S | 🔜 |
+| R2-4 | Stats: date-range picker (30/90/all) | S | 🔜 |
+| R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | 🔜 |
+| R2-6 | Drag-and-drop: reorder habits, move calendar events | M | 🔜 |
+| R2-7 | Unified cross-view goal system | M | 🔜 |
+| R2-8 | Smarter notifications (streak-at-risk, challenge day) | M | 🔜 |
+| R2-9 | Theme studio (accent + density + presets, extends Neon) | M | 🔜 |
+| R2-10 | Accounts + E2E-encrypted cloud sync (needs backend) | L | 🔜 |
+| R2-11 | Chart a11y text-alternatives + axe-core CI | M | 🔜 |
