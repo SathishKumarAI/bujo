@@ -204,6 +204,25 @@ passcode throws and never wipes data**; removing the passcode rewrites plaintext
 *Trade-off:* no recovery if the passcode is lost — the UI says so and nudges a
 JSON export. Local-only; pairs with future E2E cloud sync (BUJO-91).
 
+**D-31 — Contact enrichment is consent-based, never scraping.**
+*Choice:* the Friends collection is manual; the only network call is an opt-in
+GitHub lookup (`lib/enrich.ts`) hitting the **official public API** for data the
+person chose to publish. *Rejected:* searching the open web / people-search /
+scraping LinkedIn/Instagram — against site ToS, often wrong, a privacy hazard,
+and impossible from a CORS-bound local-first SPA anyway. Enrichment degrades to
+null on any failure (offline, rate-limit, unknown user).
+
+**D-32 — Goals is a read-only roll-up, not a new goal store.**
+*Choice:* `views/Goals.tsx` aggregates targets that already live elsewhere
+(habit `weeklyGoal`, `fitnessGoalMin`, challenges, `programDone`, the streak) —
+no new schema. *Why:* one "am I on track?" screen without duplicating state; it
+stays empty until targets exist (zero clutter).
+
+**D-33 — Motion is opt-out via the OS, not an app setting.**
+*Choice:* entrance/hover/press animations live entirely inside a
+`@media (prefers-reduced-motion: no-preference)` block, so the OS accessibility
+preference governs them — no toggle to maintain.
+
 ## What was deliberately deferred
 
 - Accounts + cloud sync (opt-in, E2E-encrypted) — see `prompts/02`.

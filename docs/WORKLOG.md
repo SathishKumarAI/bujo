@@ -1,5 +1,35 @@
 # Worklog
 
+## 2026-06-12 15:20 — Advanced views: Goals, tracker viz, motion, Friends
+
+**Summary:** Added a cross-view Goals roll-up, four new Trackers visualizations,
+page motion, and a privacy-safe Friends/contacts collection with opt-in GitHub
+enrichment — then a full docs + prompt-template pass. All on `main`, 113 tests green.
+
+**Changes:**
+- `views/Goals.tsx` (+nav/chrome) — read-only roll-up of habit weekly goals,
+  fitness minutes, challenges, program days, streak; tap to jump.
+- `views/Trackers.tsx` + `lib/stats.ts` (`dayCompletion`, `weekdayConsistency`,
+  `monthlyCompletion`, tested) — 13-week completion heatmap, streak leaderboard,
+  weekday-consistency and monthly-trend charts.
+- `lib/exerciseInfo.ts` (earlier), Gym/Cycle chart aria-labels (R2-11 complete).
+- `index.css` + `shell/Page.tsx` — `.page-enter` staggered entrance + 3D hover/press,
+  all behind `prefers-reduced-motion`.
+- `components/FriendsCard.tsx`, `lib/enrich.ts`, `Friend` type + store actions —
+  manual contacts with opt-in GitHub public-profile pull (official API).
+- Mobile bottom-nav merged to `main` (PR #3).
+- Docs — FEATURES/DECISIONS (D-31..33)/DATA_MODEL/TICKETS (Epic ADV + 20-item
+  plan) updated; new prompt `docs/prompts/06-add-visualization.md`.
+
+**Decisions:** Contact enrichment is consent-based only (official GitHub public
+API) — explicitly rejected web-scraping/people-search (ToS, privacy, CORS).
+Goals is a derived roll-up (no new schema). Motion is OS-controlled, not an app toggle.
+
+**Follow-ups:**
+- [ ] Epic ADV-2: the documented 20 advanced features/charts (nutrition trends,
+  macro rings, year-in-pixels, CSV export, weekly-review wizard, …).
+- [ ] Enable GitHub Pages (Settings → Pages → GitHub Actions).
+
 ## 2026-06-12 13:56 — PDF coaching content + mobile + hosting (16 features)
 
 **Summary:** Read the four workout PDFs and turned them into trackable app

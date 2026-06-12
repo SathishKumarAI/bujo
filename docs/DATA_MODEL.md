@@ -35,6 +35,7 @@ One object, versioned by `SCHEMA_VERSION`, migrated forward on load by
 | `routines` | `Routine[]` | Saved reusable workout routines |
 | `bodyMetrics` | `BodyMetric[]` | Weight + measurements over time |
 | `progressPhotos` | `ProgressPhoto[]` | Physique photos (downscaled data-URLs) |
+| `friends` | `Friend[]` | Contacts (manual + opt-in GitHub public-profile fields) |
 | `cycle` | `CyclePoint[]` | Opt-in cycle/temperature points |
 | `gratitude` | `Gratitude[]` | One gratitude line per day |
 | `memories` | `Memory[]` | One daily memory (+ optional photo) |
@@ -59,6 +60,20 @@ Encoded as code, shipped with the app, never written to storage:
 - `lib/programs.ts` — the pull-up novice program, the 12-week hypertrophy block,
   the pull-up workout-format library, progression exercises, ability table.
 - `lib/penalties.ts` — the 300-entry penalty catalogue.
+- `lib/foods.ts` — the American + Indian food macro database.
+- `lib/exerciseInfo.ts` — per-exercise form cue + injury watch.
+
+## Outbound network (all opt-in, no analytics)
+
+The app makes **no** network calls by default. Opt-in calls, each user-triggered:
+
+| Call | When | Endpoint |
+|---|---|---|
+| Weather | "Auto-log weather" on | open-meteo + browser geolocation |
+| Cloud sync | a storage mode chosen | Google Drive / GitHub gist / local folder |
+| Friend enrich | a GitHub username entered | `api.github.com/users/{u}` (public, official) |
+
+No third-party trackers, ad networks, or people-search services are ever contacted.
 
 ## Persistence, export, sync
 

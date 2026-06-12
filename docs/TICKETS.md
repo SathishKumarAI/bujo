@@ -291,3 +291,41 @@ Driven by the user's workout PDFs + a stream of UX asks. All ✅ on `main`
 - A true server-backed account/sync (R2-10) remains out of local-first scope.
 - "Use the web to calculate" nutrition is a search-link + offline DB; a live
   USDA/FoodData API integration would need an API key (future).
+
+## Epic ADV — advanced views, viz, contacts (shipped)
+
+| # | What | Status |
+|---|---|---|
+| A-01 | R2-11 tail: aria-labels on remaining Gym/Cycle charts | ✅ |
+| A-02 | Unified **Goals** roll-up view (R2-7) | ✅ |
+| A-03 | Merge mobile bottom-nav → `main` | ✅ |
+| A-04 | Tracker visualizations: 13-week heatmap, streak board, weekday, monthly trend | ✅ |
+| A-05 | Motion: staggered entrance + 3D hover/press (reduced-motion-aware) | ✅ |
+| A-06 | **Friends/contacts** collection + opt-in GitHub public-profile enrich | ✅ |
+| A-07 | Docs/prompts pass (FEATURES/DECISIONS/DATA_MODEL/WORKLOG + prompt template) | ✅ |
+
+### Planned next — 20 advanced features/charts (backlog for Epic ADV-2)
+
+Charts (data already present, recharts/inline-SVG):
+1. Nutrition weekly calories + macro-trend chart.
+2. Macro-target rings (protein/carbs/fat vs goal).
+3. Body-weight moving average + goal line.
+4. Mood-by-weekday bars.
+5. Workout split distribution (push/pull/legs) pie.
+6. Focus cumulative coding-hours line.
+7. Year-in-pixels mood grid.
+8. Per-habit GitHub-style year heatmap.
+9. RPE trend (gym) line.
+10. Personal-records timeline.
+
+Features:
+11. CSV export per section.
+12. Print / PDF-friendly day & month view.
+13. Insights filters (date range, tag, habit).
+14. Habit archive browser.
+15. Per-friend birthday → auto Future-Log entry.
+16. Weekly review wizard (guided migration + reflection).
+17. Quick-add templates / snippets.
+18. Tag manager (rename/merge tags).
+19. Data import from CSV.
+20. Configurable dashboard (pick which cards show on Today).

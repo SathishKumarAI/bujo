@@ -30,7 +30,7 @@ Signifiers stack: `* t book the campsite #travel`.
 |---|---|---|
 | Today | `views/Today.tsx` | Daily log, mood/stress/sleep, fast-break, gratitude, daily memory + photo, on-this-day. |
 | Monthly | `views/Monthly.tsx` | Calendar with event dots, location, goals, photo of the month. |
-| Trackers | `views/Trackers.tsx` | Habit dot-grid (rename/remove, 30-day %), today focus strip, habit presets, emoji + weekly-goal, detail drawer (streak/30-90%/best weekday/skip-day), mood·stress·sleep chart. |
+| Trackers | `views/Trackers.tsx` | Habit dot-grid (drag-reorder, rename/remove, 30-day %), today focus strip, presets, emoji + weekly-goal, detail drawer (streak/30-90%/best weekday/skip-day), mood·stress·sleep chart + category radar, and a **visualizations row**: 13-week completion heatmap, streak leaderboard, weekday consistency, monthly trend. |
 | Fitness | `views/Fitness.tsx` | Cardio/general workout log + edit + repeat-last (form **and** history on the right rail), weekly active-minutes goal ring, 8-week trend, active-day streak, **compact 6-tile at-a-glance metrics** (totals + bests, no scroll), auto-pace, and a **nutrition diary** with an American+Indian **food picker** that auto-sums macros (`lib/foods.ts`) plus a sample-day fill. |
 | Gym | `views/Gym.tsx` | Dashboard with the anatomy lookup pinned to the **right rail**. **Quick exercise picker** (searchable). PPL split + next-day suggestion, routines, **structured `setRows`** with **previous-session + live-1RM hints**, **training-volume + per-exercise progression charts**, PRs + 1RM, rest timer, **plate calculator (unit-aware kg/lb)**, body weight, muscle map with **per-exercise form-cue + injury-watch guidance** (`lib/exerciseInfo.ts`), wger DB, the **12-week hypertrophy program tracker** (`ProgramTracker only="hyper12"`), and **progress photos** (dated upload, gallery, first-vs-latest compare). Units honour the kg/lb toggle. |
 | Pull-ups | `views/Pullups.tsx` | Dedicated pull-up hub: the **"Starting From Zero" program tracker** (day-by-day check-off, load-into-session), an **ability/training-set calculator** (max → set, ladder & pyramid), the **ability ladder**, a **workout-format library** (Ladders, Pyramids, EMOMs, Elevators…), and **progression exercises** with why/how form cues. Data in `lib/programs.ts`. |
@@ -38,7 +38,8 @@ Signifiers stack: `* t book the campsite #travel`.
 | Focus | `views/Focus.tsx` | Developer work tracker — log coding sessions (time/project/focus/stress/interruptions/tags), weekly hours + streak, 14-day minutes chart, language bars, focus↔stress insight. |
 | Stats | `views/Stats.tsx` | Activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, tag cloud. |
 | Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
-| Collections | `views/Collections.tsx` | Future log + birthdays + custom free-form collection pages. |
+| Collections | `views/Collections.tsx` | Future log, birthdays, **Friends/contacts** (manual cards + opt-in GitHub public-profile enrich), and custom free-form collection pages. |
+| Goals | `views/Goals.tsx` | **Cross-view roll-up** of every active target — per-habit weekly goals, fitness active-minutes, challenges, training-program days, abstinence streak — as whole-number progress bars; tap a row to jump to its home view. |
 | Insights | `views/Insights.tsx` | Streaks, completion %, correlation insights, year-in-review, index, search. |
 | Cycle | `views/Cycle.tsx` | *(opt-in)* Neutral temperature/cycle chart + flags. |
 | Streak/NoFap | `views/NoFap.tsx` | *(opt-in)* Abstinence streak, milestones, relapse log. |
@@ -82,8 +83,13 @@ Signifiers stack: `* t book the campsite #travel`.
   Speech API; a mic button on quick-add appends each phrase. No-ops where unsupported.
 - **Accent colour** — Settings → Journal feel; overrides `--primary` app-wide.
 - **Progress photos** — physique tracking with a first-vs-latest compare (Gym).
-- **Mobile** (`feat/mobile-view` branch) — a thumb-friendly **bottom tab bar** +
-  quick-add FAB on phones; the app shell already stacks responsively.
+- **Mobile** — a thumb-friendly **bottom tab bar** + quick-add FAB on phones
+  (`shell/BottomNav.tsx`); the app shell already stacks responsively.
+- **Motion** — staggered card entrance + subtle 3D hover-lift / press-dip, all
+  gated behind `prefers-reduced-motion` (`.page-enter`, `index.css`).
+- **Friends enrichment** — opt-in only: type a GitHub username to pull that
+  person's **public** profile via the official API (`lib/enrich.ts`). No scraping,
+  no people-search, no third-party calls.
 
 ## Power tools
 
