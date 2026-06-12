@@ -17,6 +17,7 @@ import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider } from './components/shell/cursor'
+import { NavProvider } from './components/shell/nav'
 import type { NavItem } from './components/shell/Sidebar'
 import type { ViewId } from './components/shell/viewChrome'
 import {
@@ -90,6 +91,7 @@ export default function App() {
 
   return (
     <CursorProvider>
+      <NavProvider navigate={setView}>
       <CommandPalette
         onNavigate={(id) => setView(id as ViewId)}
         navItems={items.map((n) => ({ id: n.id, label: n.label }))}
@@ -123,6 +125,7 @@ export default function App() {
           </Suspense>
         </div>
       </AppShell>
+      </NavProvider>
     </CursorProvider>
   )
 }

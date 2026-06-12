@@ -3,13 +3,16 @@ import { useJournal } from '../store'
 import { monthDays, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Button, Card, Input, Textarea } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
+import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
+import { parseTags } from '../lib/bullets'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
 export function Monthly() {
   const { data, setMonthly, setWeather } = useJournal()
-  const { month: ym } = useCursor()
+  const { month: ym, setDay } = useCursor()
+  const nav = useNav()
   const [geoBusy, setGeoBusy] = useState(false)
 
   async function autoFill() {
@@ -39,10 +42,39 @@ export function Monthly() {
     return data.entries.filter((e) => e.date === d)
   }
 
+  // ── This-month summary ──────────────────────────────────────────────
+  const monthEntries = data.entries.filter((e) => e.date.startsWith(ym) && !e.collection)
+  const tasks = monthEntries.filter((e) => e.type === 'task' && e.status !== 'dropped')
+  const tasksDone = tasks.filter((e) => e.status === 'done').length
+  const monthMetrics = data.metrics.filter((m) => m.date.startsWith(ym))
+  const journaledDays = new Set([...monthEntries.map((e) => e.date), ...monthMetrics.map((m) => m.date)]).size
+  const moods = monthMetrics.map((m) => m.mood).filter((v): v is number => v != null)
+  const moodAvg = moods.length ? Math.round(moods.reduce((a, b) => a + b, 0) / moods.length) : null
+  const tagCounts = monthEntries.reduce<Record<string, number>>((acc, e) => {
+    for (const t of e.tags.length ? e.tags : parseTags(e.text)) acc[t] = (acc[t] ?? 0) + 1
+    return acc
+  }, {})
+  const topTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
   return (
     <Page
       aside={
         <>
+          <Card title="This month" subtitle="At a glance">
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <Mini label="Entries" value={`${monthEntries.length}`} color="mauve" />
+              <Mini label="Tasks done" value={`${tasksDone}/${tasks.length}`} color="green" />
+              <Mini label="Days journaled" value={`${journaledDays}`} color="blue" />
+              <Mini label="Avg mood" value={moodAvg == null ? '—' : `${moodAvg}/10`} color="peach" />
+            </div>
+            {topTags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
+                {topTags.map(([t, n]) => (
+                  <span key={t} className="rounded-full px-2 py-0.5 text-xs" style={{ background: cat('sapphire') + '22', color: cat('sapphire') }}>#{t} {n}</span>
+                ))}
+              </div>
+            )}
+          </Card>
           <Card title="Location" subtitle="Where are you this month?">
             <Input
               value={meta?.location ?? ''}
@@ -86,13 +118,17 @@ export function Monthly() {
             {days.map((d) => {
               const events = dayEvents(d)
               const isToday = d === today
+              const mood = data.metrics.find((m) => m.date === d)?.mood
+              const moodTint = mood == null ? undefined : `${cat(mood >= 7 ? 'green' : mood >= 4 ? 'yellow' : 'red')}22`
               return (
-                <div
+                <button
                   key={d}
-                  className="aspect-square rounded-lg border p-1 text-left"
+                  onClick={() => { setDay(d); nav('today') }}
+                  title={`Open ${d}`}
+                  className="aspect-square rounded-lg border p-1 text-left transition-colors hover:border-mauve"
                   style={{
                     borderColor: isToday ? cat('mauve') : cat('surface0'),
-                    background: isToday ? cat('surface0') : 'transparent',
+                    background: isToday ? cat('surface0') : moodTint ?? 'transparent',
                   }}
                 >
                   <div className={`text-[11px] ${isToday ? 'font-bold text-mauve' : 'text-subtext1'}`}>
@@ -111,11 +147,20 @@ export function Monthly() {
                   <div className="text-[10px] leading-none">
                     {(data.stickers[d] ?? []).slice(0, 3).join('')}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
         </Card>
     </Page>
+  )
+}
+
+function Mini({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="rounded-lg border border-surface0 bg-background py-2">
+      <div className="text-lg font-bold" style={{ color: cat(color) }}>{value}</div>
+      <div className="text-[10px] text-overlay0">{label}</div>
+    </div>
   )
 }
