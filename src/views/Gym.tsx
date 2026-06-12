@@ -7,7 +7,7 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
@@ -21,7 +21,7 @@ import {
   weeklyVolumeSeries, exerciseProgression,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
-import { PULLUP_PROGRAM, pullupAbility, ladder, pyramid } from '../lib/programs'
+import { PROGRAMS, pullupAbility, ladder, pyramid, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS } from '../lib/programs'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
 interface SetRow {
@@ -125,10 +125,64 @@ export function Gym() {
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .map((b) => ({ date: b.date.slice(5), weight: b.weight }))
 
+  // Anatomy lookup — lives in the right rail (aside) so it stays visible while logging.
+  const anatomyCard = (
+    <Card
+      title={focusEx ? focusEx : 'Exercise anatomy'}
+      subtitle={
+        focusEx
+          ? 'Muscles worked by this exercise'
+          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> — or look one up</span>
+      }
+      right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
+    >
+      <div className="mb-3 space-y-2">
+        <ExercisePicker
+          value={focusEx ?? ''}
+          onPick={(name) => setFocusEx(name || null)}
+          library={EXERCISE_LIBRARY}
+          recents={recentExercises}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          {focusEx && musclesForExercise(focusEx).length > 0 && (
+            <Button variant="primary" onClick={() => { addRow(focusEx) }} className="inline-flex items-center gap-1.5">
+              <Plus size={14} /> Add to session
+            </Button>
+          )}
+          {focusEx && (
+            <a
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(focusEx + ' exercise form')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-red hover:underline"
+            >
+              <Video size={16} /> YouTube
+            </a>
+          )}
+        </div>
+      </div>
+
+      <MuscleMap muscles={activeMuscles} />
+
+      <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+        {activeMuscles.length === 0 ? (
+          <span className="text-xs text-overlay0">Type an exercise, pick a split, or tap a set row’s target.</span>
+        ) : (
+          muscleNames(activeMuscles).map((m) => (
+            <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
+              {m}
+            </span>
+          ))
+        )}
+      </div>
+    </Card>
+  )
+
   return (
     <Page
       aside={
         <>
+          {anatomyCard}
           <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
           <PlateCalculator key={unit} unit={unit} />
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
@@ -239,56 +293,11 @@ export function Gym() {
       {/* ── Training program ─────────────────────────────────── */}
       <ProgramCard onLoad={(exs) => loadRoutine(exs, 'other')} />
 
-      {/* ── Single-exercise anatomy ──────────────────────────── */}
-      <Card
-        title={focusEx ? focusEx : 'Exercise anatomy'}
-        subtitle={
-          focusEx
-            ? 'Muscles worked by this exercise'
-            : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> — or look up one below</span>
-        }
-        right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
-      >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="w-full max-w-xs">
-            <ExercisePicker
-              value={focusEx ?? ''}
-              onPick={(name) => setFocusEx(name || null)}
-              library={EXERCISE_LIBRARY}
-              recents={recentExercises}
-            />
-          </div>
-          {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="primary" onClick={() => { addRow(focusEx); }} className="inline-flex items-center gap-1.5">
-              <Plus size={14} /> Add to session
-            </Button>
-          )}
-          {focusEx && (
-            <a
-              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(focusEx + ' exercise form')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-red hover:underline"
-            >
-              <Video size={16} /> Watch on YouTube
-            </a>
-          )}
-        </div>
-
-        <MuscleMap muscles={activeMuscles} />
-
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {activeMuscles.length === 0 ? (
-            <span className="text-xs text-overlay0">Type an exercise above, pick a split, or tap a set row’s target.</span>
-          ) : (
-            muscleNames(activeMuscles).map((m) => (
-              <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
-                {m}
-              </span>
-            ))
-          )}
-        </div>
-      </Card>
+      {/* ── Pull-up workout library + progressions ───────────── */}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <PullupWorkoutsCard />
+        <ProgressionsCard />
+      </div>
 
       {/* ── Exercise database (wger) ─────────────────────────── */}
       <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session">
@@ -360,35 +369,44 @@ export function Gym() {
 /** Follow a built-in multi-week training program (from docs/pdf, encoded as data). */
 function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
   const { data, setSettings } = useJournal()
-  const p = PULLUP_PROGRAM
+  const [pid, setPid] = useState(PROGRAMS[0].id)
+  const p = PROGRAMS.find((x) => x.id === pid) ?? PROGRAMS[0]
   const [week, setWeek] = useState(1)
   const [day, setDay] = useState(1)
   const done = data.settings.programDone ?? []
   const actuals = data.settings.programActuals ?? {}
-  const exKey = (w: number, d: number, i: number) => `${p.id}-w${w}d${d}-e${i}`
+  const exKey = (w: number, dy: number, i: number) => `${p.id}-w${w}d${dy}-e${i}`
   function setActual(i: number, val: string) {
     const k = exKey(week, day, i)
     const next = { ...actuals }
     if (val.trim()) next[k] = val; else delete next[k]
     setSettings({ programActuals: next })
   }
-  const cur = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)
-  const totalDays = p.weeks.length * 5
+  const curWeek = p.weeks.find((w) => w.week === week) ?? p.weeks[0]
+  const dayNums = curWeek.days.map((x) => x.day)
+  const cur = curWeek.days.find((x) => x.day === day) ?? curWeek.days[0]
+  const totalDays = p.weeks.reduce((acc, w) => acc + w.days.length, 0)
   // A day is complete when every one of its exercises is checked (partial OK).
-  const dayComplete = (w: number, d: number) => {
-    const ex = p.weeks.find((x) => x.week === w)?.days.find((x) => x.day === d)?.exercises ?? []
-    return ex.length > 0 && ex.every((_, i) => done.includes(exKey(w, d, i)))
+  const dayComplete = (w: number, dy: number) => {
+    const exs = p.weeks.find((x) => x.week === w)?.days.find((x) => x.day === dy)?.exercises ?? []
+    return exs.length > 0 && exs.every((_, i) => done.includes(exKey(w, dy, i)))
   }
-  const doneCount = p.weeks.reduce((acc, w) => acc + w.days.filter((d) => dayComplete(w.week, d.day)).length, 0)
-  const curDoneCount = cur ? cur.exercises.filter((_, i) => done.includes(exKey(week, day, i))).length : 0
+  const doneCount = p.weeks.reduce((acc, w) => acc + w.days.filter((x) => dayComplete(w.week, x.day)).length, 0)
+  const curDoneCount = cur ? cur.exercises.filter((_, i) => done.includes(exKey(week, cur.day, i))).length : 0
 
+  function pickProgram(id: string) {
+    setPid(id)
+    const first = (PROGRAMS.find((x) => x.id === id) ?? PROGRAMS[0]).weeks[0]
+    setWeek(first.week)
+    setDay(first.days[0].day)
+  }
   function toggleEx(i: number) {
-    const k = exKey(week, day, i)
+    const k = exKey(week, cur!.day, i)
     setSettings({ programDone: done.includes(k) ? done.filter((x) => x !== k) : [...done, k] })
   }
   function toggleAll() {
     if (!cur) return
-    const keys = cur.exercises.map((_, i) => exKey(week, day, i))
+    const keys = cur.exercises.map((_, i) => exKey(week, cur.day, i))
     const allDone = keys.every((k) => done.includes(k))
     setSettings({ programDone: allDone ? done.filter((k) => !keys.includes(k)) : [...new Set([...done, ...keys])] })
   }
@@ -399,20 +417,27 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
       subtitle={p.source}
       right={<span className="text-xs text-overlay0">{doneCount}/{totalDays} days done</span>}
     >
+      {PROGRAMS.length > 1 && (
+        <div className="mb-3">
+          <Segmented value={pid} onChange={pickProgram} options={PROGRAMS.map((x) => ({ value: x.id, label: x.id === 'pullup-zero' ? 'Pull-up' : 'Hypertrophy' }))} />
+        </div>
+      )}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-overlay0">Week</span>
+        <span className="text-xs text-overlay0">{curWeek.label ? 'Block' : 'Week'}</span>
         {p.weeks.map((w) => (
-          <button key={w.week} onClick={() => setWeek(w.week)} className="grid h-7 w-7 place-items-center rounded text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
+          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-7 min-w-7 place-items-center rounded px-2 text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
         ))}
+        {curWeek.label && <span className="text-xs text-subtext0">{curWeek.label}</span>}
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-overlay0">Day</span>
-        {[1, 2, 3, 4, 5].map((d) => (
-          <button key={d} onClick={() => setDay(d)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === d ? cat('blue') : cat('surface0'), color: day === d ? cat('crust') : cat('subtext1') }}>
-            {dayComplete(week, d) && '✓'} {d}
+        {dayNums.map((dn) => (
+          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
+            {dayComplete(week, dn) && '✓'} {dn}
           </button>
         ))}
       </div>
+      {p.note && <p className="mb-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-xs text-overlay1">{p.note}</p>}
 
       {cur && (
         <>
@@ -448,6 +473,52 @@ function ProgramCard({ onLoad }: { onLoad: (exercises: string[]) => void }) {
           </div>
         </>
       )}
+    </Card>
+  )
+}
+
+/** Library of pull-up workout formats (Ladders, Pyramids, EMOMs, …). */
+function PullupWorkoutsCard() {
+  const [open, setOpen] = useState<string | null>(PULLUP_WORKOUTS[0].name)
+  return (
+    <Card title="Pull-up workouts" subtitle="Session formats — tap one for how to run it">
+      <ul className="space-y-1">
+        {PULLUP_WORKOUTS.map((w) => {
+          const isOpen = open === w.name
+          return (
+            <li key={w.name} className="border-t border-surface0 first:border-t-0">
+              <button onClick={() => setOpen(isOpen ? null : w.name)} className="flex w-full items-center justify-between py-1.5 text-left text-sm">
+                <span className={isOpen ? 'text-text' : 'text-subtext1'}>{w.name}</span>
+                <span className="text-[10px] text-overlay0">{isOpen ? '▾' : '▸'}</span>
+              </button>
+              {isOpen && (
+                <div className="pb-2 text-xs text-subtext0">
+                  <p className="text-overlay1">{w.profile}</p>
+                  <p className="mt-1">{w.how}</p>
+                  <p className="mt-1"><span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}</p>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
+
+/** How to build toward a first pull-up — progression exercises with form cues. */
+function ProgressionsCard() {
+  return (
+    <Card title="Pull-up progressions" subtitle="Build the first rep safely — why & how for each">
+      <ul className="space-y-2">
+        {PULLUP_PROGRESSIONS.map((p) => (
+          <li key={p.name} className="border-t border-surface0 pt-2 first:border-t-0 first:pt-0">
+            <p className="text-sm text-subtext1">{p.name}</p>
+            <p className="text-xs text-overlay1"><span className="text-mauve">Why:</span> {p.why}</p>
+            <p className="text-xs text-subtext0"><span className="text-green">How:</span> {p.how}</p>
+          </li>
+        ))}
+      </ul>
     </Card>
   )
 }
