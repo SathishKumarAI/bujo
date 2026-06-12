@@ -229,3 +229,17 @@ preference governs them — no toggle to maintain.
 - Passcode + client-side encryption of the blob.
 - Embedded video players (use YouTube search links instead).
 - A full nutrition food database (kept a lightweight macro diary).
+
+**D-34 — "Today as a daily command-center": summarize-and-link, don't duplicate.**
+*Idea (user):* surface Fitness, Plan, Pull-ups and Trackers on Today so the whole
+day is actionable from one screen (a mobile-first "what do I do today?" hub).
+*Pros:* one-glance daily hub, less navigation, higher adherence, fits the
+entry-first mobile direction and the existing coverage/penalty cards.
+*Cons:* Today grows long (scroll fatigue); **re-embedding habits/workout/program
+re-creates the cross-view duplication we just merged**; an "everything dashboard"
+risks doing nothing well; more coupling.
+*Decision:* build a **compact, collapsible "Today's plan" summary card** that
+*links* into each view ("3 habits left · suggested Pull day · 2 tasks due ·
+pull-up Day 3") rather than re-rendering those UIs. Read-only, reuses the
+coverage/goals logic — the daily hub without the bloat or duplication.
+*Status:* analysis recorded; build pending user go-ahead.
