@@ -58,21 +58,15 @@ export function Monthly() {
 
   return (
     <Page>
-      <Card title="This month" subtitle="At a glance">
-        <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-          <Mini label="Entries" value={`${monthEntries.length}`} color="mauve" />
-          <Mini label="Tasks done" value={`${tasksDone}/${tasks.length}`} color="green" />
-          <Mini label="Days journaled" value={`${journaledDays}`} color="blue" />
-          <Mini label="Avg mood" value={moodAvg == null ? '—' : `${moodAvg}/10`} color="peach" />
-        </div>
-        {topTags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
-            {topTags.map(([t, n]) => (
-              <span key={t} className="rounded-full px-2 py-0.5 text-xs" style={{ background: cat('sapphire') + '22', color: cat('sapphire') }}>#{t} {n}</span>
-            ))}
-          </div>
-        )}
-      </Card>
+      {/* Compact "this month" summary — a single thin bar. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card/60 px-3 py-1.5 text-xs text-subtext0">
+        <span className="font-medium text-subtext1">This month</span>
+        <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
+        <span><b style={{ color: cat('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
+        <span><b style={{ color: cat('blue') }}>{journaledDays}</b> days</span>
+        <span>mood <b style={{ color: cat('peach') }}>{moodAvg == null ? '—' : `${moodAvg}/10`}</b></span>
+        {topTags.slice(0, 3).map(([t, n]) => <span key={t} style={{ color: cat('sapphire') }}>#{t} {n}</span>)}
+      </div>
 
       <Card>
         <div className="grid grid-cols-7 gap-1 text-center text-xs text-overlay0">
@@ -158,11 +152,3 @@ export function Monthly() {
   )
 }
 
-function Mini({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-lg border border-surface0 bg-background py-2">
-      <div className="text-lg font-bold" style={{ color: cat(color) }}>{value}</div>
-      <div className="text-[10px] text-overlay0">{label}</div>
-    </div>
-  )
-}
