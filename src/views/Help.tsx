@@ -6,11 +6,13 @@ export function Help() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
       <Card title="How to use your bullet journal" subtitle="A 2-minute guide to every feature">
-        <p className="text-sm text-subtext1">
-          This is a digital take on the <strong>Bullet Journal method</strong> by Ryder Carroll,
-          in the minimal one-pen style. Everything you write is saved automatically in this browser
-          only — nobody else can see it, and there are no accounts. Below is what each section does.
-        </p>
+        <div className="prose-doc text-sm">
+          <p>
+            This is a digital take on the <strong>Bullet Journal method</strong> by Ryder Carroll,
+            in the minimal one-pen style. Everything you write is saved automatically in this browser
+            only — nobody else can see it, and there are no accounts. Below is what each section does.
+          </p>
+        </div>
       </Card>
 
       <Section
@@ -52,7 +54,23 @@ export function Help() {
       />
       <Section
         title="Fitness"
-        body="Log workouts: activity, duration, distance, calories, RPE, and strength sets (one per line). Totals and full history are shown alongside."
+        body="Log workouts: activity, duration, distance, calories, RPE, and strength sets (one per line). Compact totals + personal-bests sit up top; the full history (with show-all/less) is on the right. The Nutrition card lets you add American & Indian foods to auto-sum macros, or fill a sample day."
+      />
+      <Section
+        title="Gym"
+        body="Structured strength logging with a searchable exercise picker, per-set RPE/type, previous-session + live-1RM hints, a plate calculator (kg/lb), muscle map with form-cue + injury-watch guidance, training-volume charts, the 12-week hypertrophy program tracker, and progress photos (with first-vs-latest compare)."
+      />
+      <Section
+        title="Pull-ups"
+        body="A dedicated hub: the 'Starting From Zero' program with day-by-day check-off, an ability calculator (your max → training set, ladder & pyramid schemes), the ability ladder, a library of workout formats (Ladders, Pyramids, EMOMs…), and progression exercises with why/how form cues."
+      />
+      <Section
+        title="Challenges & Focus"
+        body="Challenges runs fixed-length disciplines (75 Hard, 90-day, custom) with a progress ring and streak. Focus is a developer work tracker — log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a minutes chart and a focus↔stress insight."
+      />
+      <Section
+        title="Training penalties"
+        body="Skip a habit streak, an overdue task, or a challenge day and the Today page surfaces an anime-style 'training penalty' scaled to how badly you slipped — a fun, dismissible nudge to keep the chain alive. Re-roll for a different drill."
       />
       <Section
         title="Plan"
@@ -89,7 +107,7 @@ export function Help() {
 function Section({ title, body }: { title: string; body: string }) {
   return (
     <Card title={title}>
-      <p className="text-sm text-subtext1">{body}</p>
+      <div className="prose-doc text-sm"><p>{body}</p></div>
     </Card>
   )
 }

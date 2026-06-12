@@ -362,3 +362,41 @@ body.handwriting textarea {
     0 10px 30px -16px color-mix(in srgb, var(--color-blue) 35%, transparent),
     0 4px 10px -6px rgba(0, 0, 0, 0.6);
 }
+
+/* Readable long-form "doc" typography — GitHub-pages-style prose for Help and
+   other content pages. Comfortable measure, generous line-height, styled
+   headings/lists/code/links, all on Catppuccin tokens. */
+.prose-doc {
+  max-width: 72ch;
+  line-height: 1.7;
+  color: var(--color-subtext1);
+}
+.prose-doc h1, .prose-doc h2, .prose-doc h3 {
+  color: var(--color-text);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+}
+.prose-doc h1 { font-size: 1.6rem; }
+.prose-doc h2 { font-size: 1.3rem; border-bottom: 1px solid var(--color-surface0); padding-bottom: 0.25em; }
+.prose-doc h3 { font-size: 1.1rem; }
+.prose-doc p, .prose-doc ul, .prose-doc ol { margin: 0.75em 0; }
+.prose-doc ul, .prose-doc ol { padding-left: 1.4em; }
+.prose-doc li { margin: 0.3em 0; }
+.prose-doc ul > li { list-style: disc; }
+.prose-doc ol > li { list-style: decimal; }
+.prose-doc a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 2px; }
+.prose-doc code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  background: var(--color-surface0);
+  color: var(--color-peach);
+  padding: 0.1em 0.4em;
+  border-radius: 0.3em;
+}
+.prose-doc blockquote {
+  border-left: 3px solid var(--color-mauve);
+  padding-left: 1em;
+  color: var(--color-subtext0);
+  margin: 1em 0;
+}
