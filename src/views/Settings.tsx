@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
-import { emptyJournal, exportJSON, exportMarkdown, importJSON } from '../lib/storage'
+import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
+import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from '../lib/csv'
 import { inlineImages } from '../lib/imageStore'
@@ -284,6 +285,7 @@ export function Settings() {
       </Card>
           </div>
           <div className="mt-5 space-y-5">
+            <BujoCloudCard />
             <PasscodeCard />
             <CloudStorage />
             <DriveSync />
@@ -310,6 +312,44 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span>{label}</span>
       <Switch checked={on} onCheckedChange={onChange} />
     </label>
+  )
+}
+
+/** One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync). */
+function BujoCloudCard() {
+  const { data, replaceAll } = useJournal()
+  const [pass, setPass] = useState('')
+  const [busy, setBusy] = useState('')
+  const [msg, setMsg] = useState('')
+
+  async function push() {
+    if (pass.length < 6) { setMsg('Use a passphrase of at least 6 characters.'); return }
+    setBusy('push'); setMsg('')
+    try { await pushCloud(pass, data); setMsg('✓ Pushed to cloud.') }
+    catch (e) { setMsg((e as Error).message) }
+    finally { setBusy('') }
+  }
+  async function pull() {
+    if (pass.length < 6) { setMsg('Enter your passphrase first.'); return }
+    setBusy('pull'); setMsg('')
+    try {
+      const remote = await pullCloud(pass)
+      if (!remote) { setMsg('Nothing stored for that passphrase yet.'); return }
+      if (confirm('Replace this device’s data with the cloud copy?')) { replaceAll(migrate(remote)); setMsg('✓ Pulled from cloud.') }
+    } catch (e) { setMsg(/wrong|decrypt|operation/i.test((e as Error).message) ? 'Wrong passphrase, or corrupt data.' : (e as Error).message) }
+    finally { setBusy('') }
+  }
+
+  return (
+    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted — sync across devices">
+      <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="primary" onClick={push} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
+        <Button onClick={pull} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
+      </div>
+      {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
+      <p className="mt-2 text-xs text-overlay0">Your journal is encrypted in this browser before upload — the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
+    </Card>
   )
 }
 
