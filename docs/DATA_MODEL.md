@@ -131,3 +131,19 @@ their own private journal in their own browser — no accounts, no shared data, 
 backend. Each user enables their own cloud sync (Drive/gist/folder) for
 multi-device, and exports JSON backups. A server-side multi-account system would
 require a backend (Vercel Blob/KV + auth) and is out of the local-first scope.
+
+### Cloud sync (Vercel Blob, E2E-encrypted) — WORKING
+
+Settings → Data & Cloud → **Cloud sync**: enter one **passphrase**, then
+**Push**/**Pull**. How it works (`api/sync.ts` + `lib/bujocloud.ts`):
+- The journal is **encrypted in the browser** (PBKDF2→AES-GCM, `crypto.ts`) before
+  upload — the server only ever stores **ciphertext**.
+- The storage path is `sync/<sha256(passphrase)>.json` — a hash of the passphrase,
+  never the key — so the path is unguessable and reveals nothing.
+- Backed by a **public Vercel Blob store** + a serverless function (`/api/sync`,
+  Node runtime). Free tier covers a personal user easily. No accounts.
+- Same passphrase on another device → your data. **Lost passphrase = no recovery.**
+
+Verified live: `POST /api/sync` → `{ok:true}`; `GET /api/sync?code=…` round-trips.
+Note: the SPA rewrite in `vercel.json` excludes `/api/` so functions aren't
+swallowed by the index.html fallback.
