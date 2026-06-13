@@ -10,7 +10,7 @@ import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
 import { pushCloud, pullCloud } from '../lib/bujocloud'
-import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal } from '../lib/supabase'
+import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from '../lib/csv'
 import { inlineImages } from '../lib/imageStore'
@@ -326,8 +326,15 @@ function AccountCard() {
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const [recovery, setRecovery] = useState(false)
+  const [newPw, setNewPw] = useState('')
   useEffect(() => { if (supabaseEnabled()) currentUser().then(setUser) }, [])
+  useEffect(() => onPasswordRecovery(() => setRecovery(true)), [])
   if (!supabaseEnabled()) return null
+
+  function share() {
+    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('✓ App link copied — share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
+  }
 
   async function run(fn: () => Promise<void>, ok: string) {
     setBusy(true); setMsg('')
@@ -339,7 +346,14 @@ function AccountCard() {
   const signedIn = !!user && !guest
 
   return (
-    <Card title="Account" subtitle="Sign in to sync across devices — guest works too">
+    <Card title="Account" subtitle="Sign in to sync across devices — guest works too" right={<Button onClick={share}>Share app</Button>}>
+      {recovery && (
+        <div className="mb-3 rounded-lg border border-mauve/40 bg-base p-3">
+          <p className="mb-2 text-sm text-subtext1">Set a new password:</p>
+          <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
+          <Button variant="primary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, '✓ Password updated.')}>Update password</Button>
+        </div>
+      )}
       <p className="mb-3 text-sm text-subtext1">
         {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span></> : guest ? 'Using a guest account on this device.' : 'Not signed in.'}
       </p>
@@ -348,9 +362,10 @@ function AccountCard() {
           {!user && <Button onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
           <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="primary" onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed — your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
             <Button onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
+            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent — check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
           </div>
         </div>
       )}
@@ -362,7 +377,7 @@ function AccountCard() {
         </div>
       )}
       {msg && <p className="mt-2 text-xs text-subtext1">{busy ? '…' : msg}</p>}
-      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read.</p>
+      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link — each friend signs up for their own journal.</p>
     </Card>
   )
 }

@@ -47,6 +47,25 @@ export async function signOut(): Promise<void> {
   await client().auth.signOut()
 }
 
+/** Email a password-reset link (lands back on the app with a recovery session). */
+export async function resetPassword(email: string): Promise<void> {
+  const { error } = await client().auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  if (error) throw error
+}
+
+/** Set a new password (used after a recovery link, or to change it). */
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await client().auth.updateUser({ password })
+  if (error) throw error
+}
+
+/** Fire `cb` when the user arrives via a password-recovery link. */
+export function onPasswordRecovery(cb: () => void): () => void {
+  if (!supabase) return () => {}
+  const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') cb() })
+  return () => data.subscription.unsubscribe()
+}
+
 export async function currentUser(): Promise<User | null> {
   if (!supabase) return null
   const { data } = await supabase.auth.getUser()
