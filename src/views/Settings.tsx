@@ -319,7 +319,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 
 /** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync. */
 function AccountCard() {
-  const { data, replaceAll } = useJournal()
+  const { data, replaceAll, setSettings } = useJournal()
   const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null)
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
@@ -344,6 +344,15 @@ function AccountCard() {
   }
   const guest = !!user?.is_anonymous
   const signedIn = !!user && !guest
+  // Return to the first-run gate (keeps local data; lets them switch/log in).
+  async function leave() {
+    if (!confirm('Log out and return to the start screen? Your data stays on this device — sign in afterward to save it to an account.')) return
+    setBusy(true)
+    try { if (user) await import('../lib/supabase').then((m) => m.signOut()) } catch { /* ignore */ }
+    localStorage.removeItem('bujo:sync')
+    setSettings({ storageMode: undefined })
+    setBusy(false)
+  }
 
   return (
     <Card title="Account" subtitle="Sign in to sync across devices — guest works too" right={<Button onClick={share}>Share app</Button>}>
@@ -354,9 +363,12 @@ function AccountCard() {
           <Button variant="primary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, '✓ Password updated.')}>Update password</Button>
         </div>
       )}
-      <p className="mb-3 text-sm text-subtext1">
-        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span></> : guest ? 'Using a guest account on this device.' : 'Not signed in.'}
+      <p className="mb-1 text-sm text-subtext1">
+        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span> — synced to your account.</>
+          : guest ? <span className="text-peach">Guest — data is on <strong>this device only</strong>, not in any account.</span>
+            : <span className="text-peach">On this device only — <strong>no account</strong>, nothing is stored online.</span>}
       </p>
+      {!signedIn && <p className="mb-3 text-xs text-overlay0">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
       {!signedIn && (
         <div className="space-y-2">
           {!user && <Button onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
@@ -366,6 +378,7 @@ function AccountCard() {
             <Button variant="primary" onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed — your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
             <Button onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
             <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent — check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
+            <button onClick={leave} className="ml-auto text-xs text-overlay0 hover:text-red">Log out / switch</button>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate } from './lib/storage'
 import { pushCloud, pullCloud } from './lib/bujocloud'
-import { supabaseEnabled, currentUser, pullJournal, pushJournal } from './lib/supabase'
+import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
@@ -98,11 +98,26 @@ export default function App() {
       if (u) return pullJournal().then((r) => { if (r) replaceAll(migrate(r)) }).catch(() => {})
     }).finally(() => { sbReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const lastSync = useRef('')
   useEffect(() => {
     if (!supabaseEnabled() || !sbReady.current || !sbAuthed.current) return
-    const id = setTimeout(() => { pushJournal(data).catch(() => {}) }, 4000)
+    const snapshot = JSON.stringify(data)
+    if (snapshot === lastSync.current) return // nothing new (e.g. just applied a remote change)
+    const id = setTimeout(() => { lastSync.current = snapshot; pushJournal(data).catch(() => {}) }, 4000)
     return () => clearTimeout(id)
   }, [data])
+  // Realtime: apply changes pushed from another device/session (live multi-device).
+  useEffect(() => {
+    if (!supabaseEnabled() || !sbAuthed.current) return
+    let off = () => {}
+    subscribeJournal((remote) => {
+      const snap = JSON.stringify(remote)
+      if (snap === lastSync.current) return // our own write echoing back
+      lastSync.current = snap
+      replaceAll(migrate(remote))
+    }).then((fn) => { off = fn })
+    return () => off()
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)

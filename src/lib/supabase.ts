@@ -82,6 +82,21 @@ export async function pullJournal(): Promise<JournalData | null> {
   return (data?.data as JournalData) ?? null
 }
 
+/** Live-subscribe to this user's journal row; calls `onRemote` on every change
+ *  pushed from another device/session. Returns an unsubscribe function. */
+export async function subscribeJournal(onRemote: (data: JournalData) => void): Promise<() => void> {
+  const sb = supabase
+  if (!sb) return () => {}
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return () => {}
+  const channel = sb
+    .channel(`journal:${user.id}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'journals', filter: `user_id=eq.${user.id}` },
+      (payload) => { const row = payload.new as { data?: JournalData }; if (row?.data) onRemote(row.data) })
+    .subscribe()
+  return () => { sb.removeChannel(channel) }
+}
+
 /** Upsert this user's journal row (RLS restricts it to their own id). */
 export async function pushJournal(journal: JournalData): Promise<void> {
   const sb = client()
