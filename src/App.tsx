@@ -1,4 +1,6 @@
-import { lazy, Suspense, useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
+import { migrate } from './lib/storage'
+import { pushCloud, pullCloud } from './lib/bujocloud'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
@@ -67,7 +69,23 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
 }
 
 export default function App() {
-  const { data, setSettings } = useJournal()
+  const { data, setSettings, replaceAll } = useJournal()
+  const syncReady = useRef(false)
+  // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
+  useEffect(() => {
+    const pass = localStorage.getItem('bujo:sync')
+    if (!pass) { syncReady.current = true; return }
+    pullCloud(pass)
+      .then((remote) => { if (remote) replaceAll(migrate(remote)) })
+      .catch(() => {})
+      .finally(() => { syncReady.current = true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const pass = localStorage.getItem('bujo:sync')
+    if (!pass || !syncReady.current) return
+    const id = setTimeout(() => { pushCloud(pass, data).catch(() => {}) }, 4000)
+    return () => clearTimeout(id)
+  }, [data])
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)

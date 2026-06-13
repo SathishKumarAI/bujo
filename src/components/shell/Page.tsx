@@ -19,7 +19,7 @@ export function Page({
   className?: string
 }) {
   if (!aside) {
-    return <div className={cn('page-enter mx-auto w-full max-w-[1400px] space-y-5', className)}>{children}</div>
+    return <div className={cn('page-enter mx-auto flex w-full max-w-[1400px] flex-col gap-5', className)}>{children}</div>
   }
   return (
     <div
@@ -28,8 +28,8 @@ export function Page({
         className,
       )}
     >
-      <div className={cn('page-enter min-w-0 space-y-5', asideFirst && 'order-last xl:order-none')}>{children}</div>
-      <aside className={cn('space-y-5', asideFirst && 'order-first xl:order-none')}>{aside}</aside>
+      <div className={cn('page-enter flex min-w-0 flex-col gap-5', asideFirst && 'order-last xl:order-none')}>{children}</div>
+      <aside className={cn('flex flex-col gap-5', asideFirst && 'order-first xl:order-none')}>{aside}</aside>
     </div>
   )
 }

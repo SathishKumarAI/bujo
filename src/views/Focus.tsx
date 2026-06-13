@@ -76,7 +76,7 @@ export function Focus() {
         {insight && <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">💡 {insight}</p>}
       </Card>
 
-      <Card title="Coding minutes" subtitle="Last 14 days">
+      <Card title="Coding minutes" subtitle="Last 14 days" defer>
         <div className="flex items-end gap-1" style={{ height: 80 }} role="img" aria-label={`Bar chart of coding minutes per day over the last 14 days: ${series.map((s) => `${s.min}m`).join(', ')}`}>
           {series.map((s) => (
             <div key={s.date} className="group relative flex-1" title={`${s.date}: ${s.min}m`}>

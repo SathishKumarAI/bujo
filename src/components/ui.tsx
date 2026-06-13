@@ -15,6 +15,7 @@ export function Card({
   onClick,
   collapsible = false,
   defaultCollapsed = false,
+  defer = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -25,12 +26,14 @@ export function Card({
   /** Add a header chevron that collapses the body (reusable compacting pattern). */
   collapsible?: boolean
   defaultCollapsed?: boolean
+  /** On phones, sink this card to the bottom of its column (charts below content). */
+  defer?: boolean
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
   return (
     <section
       onClick={onClick}
-      className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${className}`}
+      className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
         <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>

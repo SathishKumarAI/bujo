@@ -340,6 +340,14 @@ function BujoCloudCard() {
     finally { setBusy('') }
   }
 
+  const [auto, setAuto] = useState(() => !!localStorage.getItem('bujo:sync'))
+  function toggleAuto(on: boolean) {
+    if (on) {
+      if (pass.length < 6) { setMsg('Enter a passphrase first, then enable auto-sync.'); return }
+      localStorage.setItem('bujo:sync', pass); setAuto(true); push()
+    } else { localStorage.removeItem('bujo:sync'); setAuto(false); setMsg('Auto-sync off.') }
+  }
+
   return (
     <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted — sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
@@ -347,6 +355,10 @@ function BujoCloudCard() {
         <Button variant="primary" onClick={push} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
         <Button onClick={pull} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
       </div>
+      <label className="mt-3 flex cursor-pointer items-center justify-between text-sm text-subtext1">
+        <span>Auto-sync on this device <span className="text-xs text-overlay0">(pull on open · push on change)</span></span>
+        <Switch checked={auto} onCheckedChange={toggleAuto} />
+      </label>
       {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
       <p className="mt-2 text-xs text-overlay0">Your journal is encrypted in this browser before upload — the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
     </Card>
