@@ -119,3 +119,15 @@ cloud): add **Vercel Blob or KV** + one serverless function that saves/loads the
 `JournalData` JSON behind a passphrase. That's a small backend (a Vercel Function
 + a token); optional, and it makes us a data processor — keep the at-rest
 encryption (passcode) on if you go this way. Not needed for the local-first plan.
+
+### Live deployment
+
+Production: **https://bujo-journal.vercel.app** (Vercel, project `bujo`).
+Deployment Protection is **off** so it's publicly reachable; privacy is handled
+client-side (optional passcode + at-rest encryption).
+
+**Sharing with others:** send the link. Local-first means every visitor gets
+their own private journal in their own browser — no accounts, no shared data, no
+backend. Each user enables their own cloud sync (Drive/gist/folder) for
+multi-device, and exports JSON backups. A server-side multi-account system would
+require a backend (Vercel Blob/KV + auth) and is out of the local-first scope.
