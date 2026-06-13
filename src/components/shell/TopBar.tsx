@@ -12,6 +12,7 @@ import { useJournal } from '../../store'
 import { useCursor } from './cursor'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 import { addDays, prettyDay, prettyMonth, todayISO, ymOf } from '../../lib/date'
+import { AccountMenu } from './AccountMenu'
 
 function shiftMonth(ym: string, delta: number): string {
   const [y, mo] = ym.split('-').map(Number)
@@ -121,6 +122,7 @@ export function TopBar({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+        <AccountMenu onNavigate={onNavigate} />
         <Button
           variant={view === 'settings' ? 'secondary' : 'ghost'}
           size="icon-sm"
