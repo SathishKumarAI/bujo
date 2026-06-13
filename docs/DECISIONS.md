@@ -277,3 +277,20 @@ Goals link and old `?view=gym` bookmarks (rendered the un-tabbed Gym titled
 "Gym"). *Choice:* `gym` now routes to `FitnessHub initialTab="strength"` and its
 chrome title is "Fitness". No standalone "Gym" view is reachable in-app. *Why:*
 one home for training; the word "Gym" only survives as a tab-less deep-link alias.
+
+**D-39 — recharts must be one chunk (prod-only crash fix).**
+*Symptom:* every lazy chart view went blank in production with
+`TypeError: r is not a function` from a split `RadarChart-*.js` chunk (dev was
+fine). *Cause:* Rollup split recharts/its d3 deps across lazy chunks; a
+cross-chunk init reference resolved to undefined. *Fix:* `vite.config.ts`
+`build.rollupOptions.output.manualChunks` forces `recharts|react-smooth|
+victory-vendor|d3-*|internmap|recharts-scale` into a single `recharts` chunk.
+*Lesson:* verify chart views on the **deployed build**, not just dev — minified
+chunking bugs don't show in `npm run dev`.
+
+**D-40 — Cloud sync: one passphrase, E2E, Vercel Blob; charts defer on mobile.**
+Cloud sync (`api/sync.ts` + `lib/bujocloud.ts`) stores ciphertext at a hashed
+path on a public Vercel Blob store; an opt-in auto-sync (pull-on-open,
+push-on-change) lives in Settings. The SPA rewrite in `vercel.json` must exclude
+`/api/`. Card `defer` (Page is flex-col) sinks chart cards below content on
+phones — entry-first.
