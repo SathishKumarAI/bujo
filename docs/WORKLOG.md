@@ -421,3 +421,26 @@ auto-synced/exported with no extra plumbing.
 **Follow-ups:**
 - [ ] Optional: pickleball CSV export; partner win-rate breakdown.
 - [ ] Path A gap #2 (cloud-load conflict prompt) still open.
+
+## 2026-06-13 00:30 — Vercel hosting + cloud sync (Blob + Supabase) + prod fixes (appended)
+
+**Summary:** Deployed to Vercel (public, clean URL), fixed a prod-only chart
+crash, and shipped TWO cloud-sync paths: an E2E passphrase sync (Vercel Blob) and
+full Supabase accounts (guest + email) with per-user RLS storage.
+
+**Changes:**
+- Hosting: `vercel.json`, deployed to `bujo-journal.vercel.app` (protection off).
+- Fix: recharts `manualChunks` (D-39) — resolved blank chart views in prod.
+- Vercel Blob sync (`api/sync.ts`, `lib/bujocloud.ts`) — one-passphrase E2E,
+  push/pull + auto-sync + a sync-status pill. SPA rewrite excludes `/api/`.
+- Supabase (`lib/supabase.ts`, Account card, `docs/supabase.sql`) — guest+email
+  auth, `journals` table + RLS, auto pull/push. Provisioned table/RLS/auth via
+  the Management API; live round-trip verified.
+- Mobile: charts deferred to the bottom on phones (`Card defer`, flex-col Page).
+
+**Decisions:** D-39 (recharts one chunk), D-40 (Blob sync/chart-defer),
+D-41 (optional Supabase, disabled-by-default).
+
+**Follow-ups:**
+- [ ] Pick a primary sync path in onboarding (passphrase vs account) to avoid two.
+- [ ] Optional: realtime sync via Supabase channels; conflict UI.

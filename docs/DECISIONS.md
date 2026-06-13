@@ -294,3 +294,13 @@ path on a public Vercel Blob store; an opt-in auto-sync (pull-on-open,
 push-on-change) lives in Settings. The SPA rewrite in `vercel.json` must exclude
 `/api/`. Card `defer` (Page is flex-col) sinks chart cards below content on
 phones — entry-first.
+
+**D-41 — Optional Supabase backend, additive and disabled-by-default.**
+*Context:* user wanted real login + guest accounts + a per-user database, on top
+of the local-first app. *Choice:* `lib/supabase.ts` with a **null client unless
+`VITE_SUPABASE_*` env vars are present** — so adding accounts never changes the
+local-first behaviour for anyone who doesn't configure it. Anonymous (guest) auth
+is the default entry; email sign-up *links* the guest to keep their data; one
+`journals` jsonb row per user, **RLS** the only access control. *Trade-off:*
+with accounts, data lives on a server (a data-controller duty) — accepted as an
+opt-in path; the passphrase E2E sync stays for the privacy-max path.

@@ -147,3 +147,22 @@ Settings → Data & Cloud → **Cloud sync**: enter one **passphrase**, then
 Verified live: `POST /api/sync` → `{ok:true}`; `GET /api/sync?code=…` round-trips.
 Note: the SPA rewrite in `vercel.json` excludes `/api/` so functions aren't
 swallowed by the index.html fallback.
+
+### Supabase accounts + per-user sync (LIVE)
+
+A second, account-based sync alongside the passphrase one. Settings → Data &
+Cloud → **Account**.
+- **Guest (anonymous) auth** by default — "Continue as guest" → instant private
+  account; data syncs to the user's own row.
+- **Email sign-up/login**; a guest can **"Save to an account"** (account linking)
+  to keep their data + gain recovery.
+- Storage: one row per user in `public.journals` (`user_id` PK, `data` jsonb),
+  **row-level security** scopes every read/write to `auth.uid()` (schema in
+  `docs/supabase.sql`). Auto-sync: pull on load, push on change (`App.tsx`).
+- Config: `lib/supabase.ts`; client is **null/disabled** unless
+  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set, so the local-first app
+  is unaffected when unconfigured. Project: `ueahhgqxshfvkjgcwtnh` (anon key is
+  public; the service token was used once for setup and revoked).
+
+**Two sync options ship together:** Supabase accounts (login, recovery, guest)
+*or* the Vercel-Blob passphrase E2E sync (no-account, max privacy). User picks.
