@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Input, Segmented, StatTile } from '../components/ui'
@@ -10,6 +10,7 @@ import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
 import { pushCloud, pullCloud } from '../lib/bujocloud'
+import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from '../lib/csv'
 import { inlineImages } from '../lib/imageStore'
@@ -285,6 +286,7 @@ export function Settings() {
       </Card>
           </div>
           <div className="mt-5 space-y-5">
+            <AccountCard />
             <BujoCloudCard />
             <PasscodeCard />
             <CloudStorage />
@@ -312,6 +314,56 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span>{label}</span>
       <Switch checked={on} onCheckedChange={onChange} />
     </label>
+  )
+}
+
+/** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync. */
+function AccountCard() {
+  const { data, replaceAll } = useJournal()
+  const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null)
+  const [email, setEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => { if (supabaseEnabled()) currentUser().then(setUser) }, [])
+  if (!supabaseEnabled()) return null
+
+  async function run(fn: () => Promise<void>, ok: string) {
+    setBusy(true); setMsg('')
+    try { await fn(); setUser(await currentUser()); setMsg(ok) }
+    catch (e) { setMsg((e as Error).message) }
+    finally { setBusy(false) }
+  }
+  const guest = !!user?.is_anonymous
+  const signedIn = !!user && !guest
+
+  return (
+    <Card title="Account" subtitle="Sign in to sync across devices — guest works too">
+      <p className="mb-3 text-sm text-subtext1">
+        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span></> : guest ? 'Using a guest account on this device.' : 'Not signed in.'}
+      </p>
+      {!signedIn && (
+        <div className="space-y-2">
+          {!user && <Button onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
+          <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed — your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
+            <Button onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
+          </div>
+        </div>
+      )}
+      {signedIn && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => run(async () => { await pushJournal(data) }, '✓ Saved to your account.')}>Save now</Button>
+          <Button onClick={() => run(async () => { const r = await pullJournal(); if (r && confirm('Replace this device with your cloud data?')) replaceAll(migrate(r)) }, '✓ Loaded.')}>Load</Button>
+          <Button variant="danger" onClick={() => run(async () => { await signOut() }, 'Signed out.')}>Sign out</Button>
+        </div>
+      )}
+      {msg && <p className="mt-2 text-xs text-subtext1">{busy ? '…' : msg}</p>}
+      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read.</p>
+    </Card>
   )
 }
 

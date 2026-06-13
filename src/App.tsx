@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate } from './lib/storage'
 import { pushCloud, pullCloud } from './lib/bujocloud'
+import { supabaseEnabled, currentUser, pullJournal, pushJournal } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
@@ -85,6 +86,21 @@ export default function App() {
     const pass = localStorage.getItem('bujo:sync')
     if (!pass || !syncReady.current) return
     const id = setTimeout(() => { pushCloud(pass, data).catch(() => {}) }, 4000)
+    return () => clearTimeout(id)
+  }, [data])
+  // Supabase account sync (when configured + signed in): pull on load, push on change.
+  const sbReady = useRef(false)
+  const sbAuthed = useRef(false)
+  useEffect(() => {
+    if (!supabaseEnabled()) { sbReady.current = true; return }
+    currentUser().then((u) => {
+      sbAuthed.current = !!u
+      if (u) return pullJournal().then((r) => { if (r) replaceAll(migrate(r)) }).catch(() => {})
+    }).finally(() => { sbReady.current = true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!supabaseEnabled() || !sbReady.current || !sbAuthed.current) return
+    const id = setTimeout(() => { pushJournal(data).catch(() => {}) }, 4000)
     return () => clearTimeout(id)
   }, [data])
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
