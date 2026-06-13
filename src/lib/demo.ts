@@ -124,6 +124,63 @@ export function generateDemoData(today = todayISO()): JournalData {
   j.routines = [
     { id: uid('rt'), name: 'My Push', split: 'push', exercises: ['Bench Press', 'Overhead Press', 'Lateral Raise', 'Dip'] },
   ]
+  // ── Pickleball sessions (last ~30 days) ──
+  for (let i = 1; i <= 30; i += 3) {
+    if (rand() > 0.35) {
+      const won = 1 + Math.floor(rand() * 4)
+      const lost = Math.floor(rand() * 3)
+      j.pickleball = j.pickleball ?? []
+      j.pickleball.push({
+        id: uid('pk'), date: addDays(today, -i), format: rand() > 0.3 ? 'doubles' : 'singles',
+        gamesWon: won, gamesLost: lost, durationMin: 45 + Math.floor(rand() * 45),
+        partner: rand() > 0.5 ? 'Sam' : 'Mara', rpe: 5 + Math.floor(rand() * 4), notes: '',
+      })
+    }
+  }
+  j.settings.pickleballGoalGames = 12
+
+  // ── Developer focus sessions (Focus view) ──
+  const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
+  const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]
+  for (let i = 0; i <= 18; i += 2) {
+    if (rand() > 0.3) {
+      const li = Math.floor(rand() * langs.length)
+      j.devSessions = j.devSessions ?? []
+      j.devSessions.push({
+        id: uid('dv'), date: addDays(today, -i), durationMin: 60 + Math.floor(rand() * 180),
+        project: projects[li], focus: 5 + Math.floor(rand() * 5), stress: 2 + Math.floor(rand() * 5),
+        interruptions: Math.floor(rand() * 4), tags: langs[li], notes: '',
+      })
+    }
+  }
+
+  // ── An active 75-day challenge with a week of check-ins ──
+  const chId = uid('ch')
+  j.challenges = [{ id: chId, name: '75 Hard', durationDays: 75, startDate: addDays(today, -8), rules: ['Workout 1', 'Workout 2', 'Diet', 'Read 10pp', 'Water 1gal'], strict: true }]
+  j.challengeLog = { [chId]: {} }
+  for (let i = 8; i >= 0; i--) {
+    const day = addDays(today, -i)
+    const doneCount = rand() > 0.25 ? 5 : 3 // mostly full days
+    j.challengeLog[chId][day] = Array.from({ length: doneCount }, (_, k) => k)
+  }
+
+  // ── Friends (Collections) ──
+  j.friends = [
+    { id: uid('fr'), name: 'Sam', birthday: '11-27', notes: 'pickleball partner', createdAt: today },
+    { id: uid('fr'), name: 'Mara', birthday: addDays(today, 9).slice(5), links: ['https://example.com'], createdAt: today },
+  ]
+
+  // ── #tags on a sample of entries so the tag cloud / manager have data ──
+  const TAGGED = ['#travel walk the rim', '#health meal prep', '#travel pack the van', '#work ship the release', '#health 8h sleep', '#read finish chapter 4']
+  for (let i = 0; i < TAGGED.length; i++) {
+    const text = TAGGED[i]
+    j.entries.push({ id: uid('e'), date: addDays(today, -i * 2), type: 'note', text, status: 'open', important: false, memory: false, tags: text.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? [], createdAt: today })
+  }
+
+  // ── Give a couple habits weekly goals so the Goals roll-up populates ──
+  j.habits.slice(0, 2).forEach((h, i) => { h.weeklyGoal = i === 0 ? 5 : 7 })
+  j.settings.fitnessGoalMin = 150
+
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
   return j
