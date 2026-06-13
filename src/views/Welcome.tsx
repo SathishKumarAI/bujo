@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { CloudCog, HardDrive, FolderOpen, ShieldCheck, Check } from 'lucide-react'
+import { CloudCog, HardDrive, FolderOpen, ShieldCheck, Check, UserCircle2, LogIn } from 'lucide-react'
 import { useJournal } from '../store'
 // (Welcome uses native buttons)
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
+import { supabaseEnabled, signInGuest, signUpEmail, signInEmail, pullJournal, pushJournal } from '../lib/supabase'
 
 /**
  * First-run gate. The app is local-first; here the user chooses where their
@@ -39,6 +40,26 @@ export function Welcome() {
     }
   }
 
+  // ── Account onboarding (when Supabase is configured) ──
+  const [email, setEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [showLogin, setShowLogin] = useState(false)
+  const [err, setErr] = useState('')
+  async function guest() {
+    setBusy(true); setErr('')
+    try { await signInGuest(); setSettings({ storageMode: 'local' }) }
+    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+  }
+  async function account(mode: 'signup' | 'login') {
+    if (!email || pw.length < 6) { setErr('Enter an email and a 6+ char password.'); return }
+    setBusy(true); setErr('')
+    try {
+      if (mode === 'signup') { await signUpEmail(email, pw); await pushJournal(data) }
+      else { await signInEmail(email, pw); const r = await pullJournal(); if (r) replaceAll(migrate(r)) }
+      setSettings({ storageMode: 'local' })
+    } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+  }
+
   return (
     <div className="aurora grid min-h-screen place-items-center p-6">
       <div className="relative z-10 w-full max-w-2xl">
@@ -47,8 +68,36 @@ export function Welcome() {
             <span className="font-display text-5xl font-semibold tracking-tight text-text">bujo</span>
             <span className="text-2xl text-mauve">✦</span>
           </div>
-          <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private, local-first bullet journal. Choose where your journal lives.</p>
+          <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync everywhere, or stay on this device.</p>
         </div>
+
+        {/* Account — recommended when configured: guest now, or log in to sync. */}
+        {supabaseEnabled() && (
+          <div className="rise mb-5 rounded-2xl border border-surface0 bg-mantle/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
+            <div className="mb-3 flex items-center gap-2">
+              <UserCircle2 size={22} style={{ color: cat('mauve') }} />
+              <h2 className="font-display text-xl text-text">Sync with an account</h2>
+            </div>
+            {!showLogin ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <button onClick={guest} disabled={busy} className="press-3d rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue as guest'}</button>
+                <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Log in / Sign up</button>
+                <span className="text-xs text-overlay0">Guest is instant & private; add an email anytime to keep it.</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
+                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => account('login')} disabled={busy} className="press-3d rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">Log in</button>
+                  <button onClick={() => account('signup')} disabled={busy} className="rounded-lg border border-surface1 px-4 py-2 text-sm text-subtext1">Sign up</button>
+                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-sm text-overlay0">Back</button>
+                </div>
+              </div>
+            )}
+            {err && <p className="mt-2 text-xs text-red">{err}</p>}
+          </div>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           {/* Own cloud — pick a folder */}
