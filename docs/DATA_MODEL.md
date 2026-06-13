@@ -100,3 +100,22 @@ query-param based (`?view=`), so no SPA rewrite rules are needed.
 Because there is no backend, hosting never sees user data — it only serves the
 app shell. A true multi-device account/sync backend is intentionally out of
 scope (see `TICKETS.md` R2-10); the at-rest encryption is the client half of it.
+
+## Hosting on Vercel (single user)
+
+`vercel.json` configures a static Vite deploy (build → `dist`, SPA rewrite, asset
+caching). Two ways to ship:
+- **Git integration** — import the repo at vercel.com; auto-deploys on push.
+- **CLI** — `npx vercel` (preview) / `npx vercel --prod` (production).
+
+**Where the data lives (single user):** the app is **local-first** — Vercel only
+serves the static app shell; **your journal stays in *your* browser**
+(localStorage + IndexedDB for photos). Vercel never sees your data. For
+multi-device, turn on the built-in own-cloud sync (Drive / GitHub gist / folder)
+in Settings → Data & Cloud. Zero backend, zero per-user cost, fully private.
+
+**If you want the data stored server-side** (so it follows you without bringing a
+cloud): add **Vercel Blob or KV** + one serverless function that saves/loads the
+`JournalData` JSON behind a passphrase. That's a small backend (a Vercel Function
++ a token); optional, and it makes us a data processor — keep the at-rest
+encryption (passcode) on if you go this way. Not needed for the local-first plan.
