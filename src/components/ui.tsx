@@ -33,7 +33,7 @@ export function Card({
   return (
     <section
       onClick={onClick}
-      className={`card-3d rounded-2xl border border-border bg-card p-5 sm:p-6 ${defer ? 'order-last xl:order-none' : ''} ${className}`}
+      className={`card-3d min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6 ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
         <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>
