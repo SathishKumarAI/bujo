@@ -41,6 +41,20 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep recharts + its d3/victory deps in ONE chunk — splitting them
+        // across lazy chunks causes a prod-only cross-chunk init crash
+        // ("r is not a function" from RadarChart).
+        manualChunks(id) {
+          if (/node_modules\/(recharts|react-smooth|victory-vendor|d3-|internmap|recharts-scale)/.test(id)) {
+            return 'recharts'
+          }
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
