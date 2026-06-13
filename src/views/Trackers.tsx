@@ -185,7 +185,7 @@ export function Trackers() {
         </div>
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-3">
+      <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-3">
       <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
         <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
           <ResponsiveContainer width="100%" height="100%">
@@ -282,7 +282,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
   const wd = weekdayConsistency(data, 90, today)
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-2">
+    <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
       <Card title="Completion heatmap" subtitle="Last 13 weeks — greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div

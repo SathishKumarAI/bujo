@@ -15,6 +15,7 @@ import { NoFap } from './views/NoFap'
 import { Help } from './views/Help'
 import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
+import { SyncIndicator } from './components/SyncIndicator'
 import { CommandPalette } from './components/CommandPalette'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
@@ -122,6 +123,7 @@ export default function App() {
         onOpenChange={setPaletteOpen}
       />
       <ReminderBanner />
+      <SyncIndicator />
       <AppShell
         items={items}
         groupOrder={GROUP_ORDER}

@@ -5,6 +5,11 @@
 import { encryptString, decryptString } from './crypto'
 import type { JournalData } from './types'
 
+export type SyncState = 'syncing' | 'synced' | 'error'
+function emit(state: SyncState) {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('bujo:sync', { detail: state }))
+}
+
 /** SHA-256 of the passphrase → the storage path code (never the key itself). */
 async function pathCode(passphrase: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('bujo-sync:' + passphrase))
@@ -13,14 +18,18 @@ async function pathCode(passphrase: string): Promise<string> {
 
 /** Encrypt + upload the journal under the passphrase. */
 export async function pushCloud(passphrase: string, data: JournalData): Promise<void> {
-  const code = await pathCode(passphrase)
-  const blob = await encryptString(JSON.stringify(data), passphrase)
-  const res = await fetch('/api/sync', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, payload: JSON.stringify(blob) }),
-  })
-  if (!res.ok) throw new Error(`Cloud push failed (${res.status})`)
+  emit('syncing')
+  try {
+    const code = await pathCode(passphrase)
+    const blob = await encryptString(JSON.stringify(data), passphrase)
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, payload: JSON.stringify(blob) }),
+    })
+    if (!res.ok) throw new Error(`Cloud push failed (${res.status})`)
+    emit('synced')
+  } catch (e) { emit('error'); throw e }
 }
 
 /** Download + decrypt the journal for the passphrase, or null if none stored. */

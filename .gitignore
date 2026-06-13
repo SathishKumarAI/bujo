@@ -30,3 +30,5 @@ docs/pdf/
 .graphify/
 # Personal per-machine Claude Code settings (not the shared project config)
 .claude/settings.local.json
+.vercel
+.env*

@@ -132,7 +132,7 @@ export function Pickleball() {
         )}
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
         <Card title="Win-rate trend" subtitle="Win % per session">
           {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
             <div className="h-52" role="img" aria-label="Line chart of win percentage per session over time">
@@ -168,7 +168,7 @@ export function Pickleball() {
         </Card>
       </div>
 
-      <Card title="Games per week" subtitle="Last 8 weeks">
+      <Card title="Games per week" subtitle="Last 8 weeks" defer>
         <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeks.map((g, i) => ({ wk: `w${i + 1}`, games: g }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -182,7 +182,7 @@ export function Pickleball() {
         </div>
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
         <Card title="By format" subtitle="Singles vs doubles — games & win %">
           {formats.length === 0 ? <Empty>No games yet.</Empty> : (
             <ul className="space-y-3">
@@ -218,7 +218,7 @@ export function Pickleball() {
         </Card>
       </div>
 
-      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games that day">
+      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games that day" defer>
         <div className="overflow-x-auto">
           <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
             {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
