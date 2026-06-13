@@ -144,15 +144,19 @@ export function Welcome() {
           </button>
         </div>
 
-        {/* Explore path — seeds a sample month so the app isn't empty on day one. */}
-        <div className="rise mt-5 text-center" style={{ animationDelay: '320ms' }}>
+        {/* Try & learn — seed a sample month so new users explore + learn by doing. */}
+        <div className="rise mt-5 rounded-xl border border-dashed border-surface1 p-4 text-center" style={{ animationDelay: '320ms' }}>
+          <p className="mb-2 text-sm text-subtext1">New here? <strong className="text-text">Try it with sample data</strong> — explore every feature, no commitment.</p>
           <button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local' }) }}
-            className="text-sm text-subtext0 underline-offset-2 hover:text-mauve hover:underline"
+            className="press-3d rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-text hover:text-mauve"
           >
-            Just exploring? Load a sample journal →
+            Load a sample journal & take a look →
           </button>
-          <p className="mt-2 text-xs text-overlay0">Tip: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> anytime to jump anywhere · the <strong>Help</strong> tab explains every feature.</p>
+          <p className="mt-2 text-xs text-overlay0">
+            Learn as you go: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
+            <br />Changed your mind? Reset or wipe the sample anytime in <strong>Settings → Data &amp; Cloud</strong>.
+          </p>
         </div>
 
         <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '360ms' }}>

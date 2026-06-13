@@ -332,3 +332,28 @@ the same workout store, so there's one place to log and one shared history; the
 Strength tab loads on demand. Pull-ups remains its own dedicated view. Read the
 Fitness (§3.3), Nutrition (§3.4) and Gym (§3.5) sections above as the two tabs of
 this single hub.
+
+## Onboarding & reset (appended)
+
+**First run** offers, top to bottom: **Sync with an account** (guest or email
+login), **Use my own cloud** (folder), **This device only**, and a highlighted
+**"Try it with sample data"** box — load a demo month and learn by doing
+(press ⌘K to jump anywhere, tap the **?** on any page, or open **Help**).
+
+**Resetting / opting out** — anytime in **Settings → Data & Cloud**:
+- **Back to start screen** — keeps your data, returns to the first-run gate so
+  you can re-pick guest / account / device.
+- **Clear all data** — wipes everything (export a backup first).
+- **Account → Log out / switch** / **Sign out** — leaves the account; local data stays.
+
+## How & where data is stored (appended)
+
+- **In the app (always):** one JSON object `JournalData` in the browser's
+  `localStorage` under `bujo:data` (or `bujo:enc` when a passcode is set). When
+  signed in, the Supabase session token sits in `sb-<ref>-auth-token`.
+- **In Supabase (when signed in):** one row per user in `public.journals`
+  (`user_id uuid` PK · `data jsonb` · `updated_at`). **Row-level security**
+  scopes every read/write to `auth.uid()` — a user can only ever touch their own
+  row. Auto-sync upserts on change, pulls on load, and updates live (realtime).
+- **In Vercel Blob (passphrase sync):** ciphertext only, at `sync/<hash>.json` —
+  the server never sees plaintext or the key.

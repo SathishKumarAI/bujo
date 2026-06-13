@@ -279,9 +279,15 @@ export function Settings() {
           >
             <Trash2 size={14} /> Clear all data
           </Button>
+          <Button
+            onClick={() => { if (confirm('Return to the start screen? Your data is kept — you can pick guest / account / device again.')) setSettings({ storageMode: undefined }) }}
+            className="inline-flex items-center gap-1.5"
+          >
+            Back to start screen
+          </Button>
         </div>
         <p className="mt-2 text-xs text-overlay0">
-          Demo data fills ~30 days of correlated entries, habits, moods, workouts and memories so charts and insights have something to show.
+          Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
         </p>
       </Card>
           </div>
