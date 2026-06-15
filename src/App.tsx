@@ -7,6 +7,7 @@ import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
 import { FitnessHub } from './views/FitnessHub'
+import { HomeWorkout } from './views/HomeWorkout'
 import { Challenges } from './views/Challenges'
 import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
@@ -30,7 +31,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy,
+  ArrowUpToLine, Trophy, Dumbbell,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -54,6 +55,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
+  { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
@@ -67,7 +69,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
+  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
   settings: Settings,
 }
