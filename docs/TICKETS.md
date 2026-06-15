@@ -395,3 +395,11 @@ layouts. Pre-existing stats fns (`habitStreak`, `habitConsistency`, `weeklyHabit
 Audit (3 reviewers): fixed timer-cycle skipping non-divisible targets (was making such
 habits permanently incompletable), numeric-habit blind spots in reminders + weekday
 breakdown, triple-duplicated step logic, and a11y labels on the activity strip/stars/toggle.
+
+## Epic UX-2 — session 2026-06-15 cont. (appended)
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-153 | Pickleball: "Practice today" card — daily drill + how-to-improve + warm-up + resource links | ✅ (PR #7) |
+| BUJO-154 | Home Workout tab — curated bodyweight library, YouTube pro-demo + search links, session logging saved as Workout(activity='Home') → DB/sync/stats | ✅ |
+| BUJO-152 | Google sign-in + guest=explore / account-to-use gate | ✅ partial (PR #6; needs Supabase Google provider) |
