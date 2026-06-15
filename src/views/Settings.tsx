@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle } from 'lucide-react'
+import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, SlidersHorizontal, UserRound, Palette, Bell, Database } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Input, Segmented, StatTile } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -77,16 +77,30 @@ export function Settings() {
     reader.readAsText(file)
   }
 
+  const tabClass = 'gap-1.5 whitespace-nowrap lg:w-full lg:justify-start lg:py-2'
   return (
     <Page>
-      <Tabs defaultValue="profile">
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="feel">Journal feel</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders</TabsTrigger>
-          <TabsTrigger value="data">Data &amp; Cloud</TabsTrigger>
+      {/* Designed header — sets the page apart from a plain card stack. */}
+      <div className="mb-6 flex items-center gap-3 border-b border-surface0 pb-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
+          <SlidersHorizontal size={20} />
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl text-text">Settings</h1>
+          <p className="text-sm text-overlay0">Profile, appearance, reminders, and your data — organised in one place.</p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="profile" className="lg:flex lg:items-start lg:gap-6">
+        {/* Sidebar rail on desktop; a scrollable row on mobile. */}
+        <TabsList className="mb-5 flex h-auto w-full justify-start gap-1 overflow-x-auto bg-secondary lg:sticky lg:top-4 lg:mb-0 lg:w-52 lg:shrink-0 lg:flex-col lg:items-stretch lg:gap-1 lg:bg-transparent lg:p-0">
+          <TabsTrigger value="profile" className={tabClass}><UserRound size={15} /> Profile</TabsTrigger>
+          <TabsTrigger value="feel" className={tabClass}><Palette size={15} /> Journal feel</TabsTrigger>
+          <TabsTrigger value="reminders" className={tabClass}><Bell size={15} /> Reminders</TabsTrigger>
+          <TabsTrigger value="data" className={tabClass}><Database size={15} /> Data &amp; Cloud</TabsTrigger>
         </TabsList>
 
+        <div className="min-w-0 flex-1">
         <TabsContent value="profile" className="max-w-2xl">
       <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
@@ -291,14 +305,18 @@ export function Settings() {
         </p>
       </Card>
           </div>
-          <div className="mt-5 space-y-5">
-            <AccountCard />
-            <BujoCloudCard />
-            <PasscodeCard />
-            <CloudStorage />
-            <DriveSync />
+          <div className="mt-6">
+            <p className="mb-3 text-xs font-medium tracking-wide text-overlay0 uppercase">Account, sync & privacy</p>
+            <div className="space-y-5">
+              <AccountCard />
+              <BujoCloudCard />
+              <PasscodeCard />
+              <CloudStorage />
+              <DriveSync />
+            </div>
           </div>
         </TabsContent>
+        </div>
       </Tabs>
     </Page>
   )

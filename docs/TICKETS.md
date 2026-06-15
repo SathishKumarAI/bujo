@@ -403,3 +403,4 @@ breakdown, triple-duplicated step logic, and a11y labels on the activity strip/s
 | BUJO-153 | Pickleball: "Practice today" card — daily drill + how-to-improve + warm-up + resource links | ✅ (PR #7) |
 | BUJO-154 | Home Workout tab — curated bodyweight library, YouTube pro-demo + search links, session logging saved as Workout(activity='Home') → DB/sync/stats | ✅ |
 | BUJO-152 | Google sign-in + guest=explore / account-to-use gate | ✅ partial (PR #6; needs Supabase Google provider) |
+| BUJO-155 | Settings layout redesign — designed header + sticky icon sidebar rail (desktop) / scroll row (mobile) + grouped account/sync/privacy section | ✅ |
