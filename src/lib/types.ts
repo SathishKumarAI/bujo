@@ -47,7 +47,7 @@ export interface Recurrence {
 
 export type HabitCategory = 'stimulant' | 'food' | 'movement' | 'wellness' | 'custom'
 /** check = a yes/no dot; count = a number toward a daily target. */
-export type HabitType = 'check' | 'count'
+export type HabitType = 'check' | 'count' | 'timer' | 'rating'
 
 /** A trackable habit / stimulant / food shown in the dot-grid. */
 export interface Habit {
@@ -308,6 +308,8 @@ export interface Settings {
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
   trackerShowArchived?: boolean
+  /** Habit tracker layout: classic month-grid vs activity-heatmap rows. */
+  trackerLayout?: 'classic' | 'activity'
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
   /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */

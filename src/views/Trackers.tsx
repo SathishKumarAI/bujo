@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -10,20 +10,32 @@ import { Button, Card, Empty, Input, Segmented, StatTile } from '../components/u
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { cat, HABIT_COLORS } from '../lib/colors'
-import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion } from '../lib/stats'
+import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
-import type { Habit, HabitCategory } from '../lib/types'
+import type { Habit, HabitCategory, HabitType } from '../lib/types'
+import { ActivityLayout } from '../components/ActivityLayout'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
 /** One-click habit presets (sensible defaults). */
-const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: 'count'; target?: number; unit?: string; weeklyGoal?: number }[] = [
+const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: HabitType; target?: number; unit?: string; weeklyGoal?: number }[] = [
   { name: 'Water', emoji: '💧', category: 'food', color: 'sky', type: 'count', target: 8, unit: 'glasses' },
   { name: 'Exercise', emoji: '🏃', category: 'movement', color: 'green', weeklyGoal: 4 },
   { name: 'Read', emoji: '📚', category: 'wellness', color: 'peach', weeklyGoal: 7 },
   { name: 'Meditate', emoji: '🧘', category: 'wellness', color: 'lavender', weeklyGoal: 7 },
   { name: 'Sleep 8h', emoji: '😴', category: 'wellness', color: 'blue', weeklyGoal: 7 },
+  // ── new types: timer (minutes) + rating (1–5) ──
+  { name: 'Run', emoji: '🏃', category: 'movement', color: 'green', type: 'timer', target: 30, unit: 'min' },
+  { name: 'Stretch', emoji: '🤸', category: 'movement', color: 'teal', type: 'timer', target: 10, unit: 'min' },
+  { name: 'Focus', emoji: '🎯', category: 'wellness', color: 'mauve', type: 'timer', target: 90, unit: 'min' },
+  { name: 'Mood', emoji: '😊', category: 'wellness', color: 'yellow', type: 'rating' },
+  { name: 'Energy', emoji: '⚡', category: 'wellness', color: 'peach', type: 'rating' },
+  { name: 'Steps', emoji: '👟', category: 'movement', color: 'sapphire', type: 'count', target: 10000, unit: 'steps' },
+  { name: 'Coffee', emoji: '☕', category: 'stimulant', color: 'rosewater', type: 'count', target: 2, unit: 'cups' },
+  { name: 'Vitamins', emoji: '💊', category: 'food', color: 'flamingo' },
+  { name: 'Journal', emoji: '✍️', category: 'wellness', color: 'lavender' },
+  { name: 'No sugar', emoji: '🚫', category: 'food', color: 'red' },
 ]
 
 export function Trackers() {
@@ -48,6 +60,7 @@ export function Trackers() {
   const [showSettings, setShowSettings] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
+  const layout = data.settings.trackerLayout ?? 'classic'
   const today = todayISO()
 
   const s = data.settings
@@ -91,7 +104,14 @@ export function Trackers() {
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
         right={
           <div className="flex items-center gap-1.5">
-            {!radial && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
+            {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
+            {!radial && (
+              <Button
+                onClick={() => setSettings({ trackerLayout: layout === 'activity' ? 'classic' : 'activity' })}
+                aria-label={layout === 'activity' ? 'Switch to classic grid' : 'Switch to activity view'}
+                title={layout === 'activity' ? 'Classic grid' : 'Activity view'}
+              >{layout === 'activity' ? <LayoutGrid size={15} /> : <Activity size={15} />}</Button>
+            )}
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
           </div>
@@ -115,6 +135,15 @@ export function Trackers() {
             habitValues={data.habitValues}
             days={monthDays(ym)}
             today={today}
+          />
+        ) : layout === 'activity' ? (
+          <ActivityLayout
+            habits={visibleHabits}
+            data={data}
+            today={today}
+            onToggle={toggleHabit}
+            onSetValue={setHabitValue}
+            onEdit={setEditing}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -144,7 +173,7 @@ export function Trackers() {
                     onEdit={setEditing}
                     onReorder={reorderHabits}
                     collapsed={collapsedCats.has(category)}
-                    onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); n.has(category) ? n.delete(category) : n.add(category); return n })}
+                    onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); if (n.has(category)) n.delete(category); else n.add(category); return n })}
                   />
                 ))}
               </tbody>
@@ -392,9 +421,7 @@ function TodayStrip({
 }) {
   const todays = habits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
   if (todays.length === 0) return null
-  const done = todays.filter((h) =>
-    h.type === 'count' ? (data.habitValues?.[today]?.[h.id] ?? 0) >= (h.target && h.target > 0 ? h.target : 1) : (data.habitLog[today] ?? []).includes(h.id),
-  ).length
+  const done = todays.filter((h) => habitDoneOn(data, h, today)).length
 
   return (
     <div className="mb-4 rounded-xl border border-surface0 bg-base p-3">
@@ -404,14 +431,16 @@ function TodayStrip({
       </div>
       <div className="flex flex-wrap gap-1.5">
         {todays.map((h) => {
-          const isCount = h.type === 'count'
-          const target = h.target && h.target > 0 ? h.target : 1
-          const val = data.habitValues?.[today]?.[h.id] ?? 0
-          const on = isCount ? val >= target : (data.habitLog[today] ?? []).includes(h.id)
+          const type = h.type ?? 'check'
+          const numeric = type === 'count' || type === 'timer' || type === 'rating'
+          const target = habitTarget(h)
+          const val = habitValueOn(data, h, today)
+          const on = habitDoneOn(data, h, today)
+          const next = nextHabitValue(type, target, val)
           return (
             <button
               key={h.id}
-              onClick={() => (isCount ? onSetValue(today, h.id, val >= target ? 0 : val + 1) : onToggle(today, h.id))}
+              onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors"
               style={{
                 borderColor: on ? cat(h.color) : cat('surface1'),
@@ -421,7 +450,7 @@ function TodayStrip({
             >
               <span>{h.emoji ?? '●'}</span>
               {h.name}
-              {isCount && <span className="text-overlay0">{val}/{target}</span>}
+              {numeric && <span className="text-overlay0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
             </button>
           )
         })}
@@ -460,8 +489,11 @@ function CategoryRows({
         </td>
       </tr>
       {!collapsed && habits.map((h) => {
-        const isCount = h.type === 'count'
-        const target = h.target && h.target > 0 ? h.target : 1
+        const type = h.type ?? 'check'
+        const numeric = type === 'count' || type === 'timer' || type === 'rating'
+        const target = habitTarget(h)
+        const streak = habitStreak(data, h.id)
+        const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
         return (
           <tr
             key={h.id}
@@ -480,12 +512,12 @@ function CategoryRows({
               {h.emoji ? <span className="mr-0.5">{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}{' '}
               <button onClick={() => onEdit(h.id)} className={`hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
               {h.unit && <span className="ml-1 text-overlay0">({h.unit})</span>}
-              {habitStreak(data, h.id) > 1 && (
-                <span title={`${habitStreak(data, h.id)}-day streak`} className="ml-1 inline-flex items-center gap-0.5 align-middle text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{habitStreak(data, h.id)}</span>
+              {streak > 1 && (
+                <span title={`${streak}-day streak`} className="ml-1 inline-flex items-center gap-0.5 align-middle text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
               )}
               {h.weeklyGoal ? (
-                <span title={`${weeklyHabitCount(data, h.id, today)} of ${h.weeklyGoal} this week`} className="ml-1.5 align-middle text-[10px]" style={{ color: weeklyHabitCount(data, h.id, today) >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
-                  {weeklyHabitCount(data, h.id, today)}/{h.weeklyGoal}wk
+                <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="ml-1.5 align-middle text-[10px]" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+                  {weekCount}/{h.weeklyGoal}wk
                 </span>
               ) : null}
             </td>
@@ -494,13 +526,13 @@ function CategoryRows({
               const before = d < h.startedOn
               const scheduled = !h.activeDays?.length || h.activeDays.includes(fromISODay(d).getDay())
               const disabled = future || before || !scheduled
-              if (isCount) {
+              if (numeric) {
                 const val = data.habitValues?.[d]?.[h.id] ?? 0
                 return (
                   <td key={d} className="p-0.5 text-center">
                     <button
                       disabled={disabled}
-                      onClick={() => onSetValue(d, h.id, val >= target ? 0 : val + 1)}
+                      onClick={() => onSetValue(d, h.id, nextHabitValue(type, target, val))}
                       title={`${val}/${target}`}
                       aria-label={`${h.name} ${d}: ${val} of ${target}`}
                       className={`grid ${cell} place-items-center rounded text-[8px] disabled:opacity-20`}
@@ -589,17 +621,22 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-subtext1">Type</span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-end gap-1.5">
               <Button variant={(habit.type ?? 'check') === 'check' ? 'primary' : 'ghost'} onClick={() => set({ type: 'check' })}>Yes / no</Button>
               <Button variant={habit.type === 'count' ? 'primary' : 'ghost'} onClick={() => set({ type: 'count' })}>Count</Button>
+              <Button variant={habit.type === 'timer' ? 'primary' : 'ghost'} onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
+              <Button variant={habit.type === 'rating' ? 'primary' : 'ghost'} onClick={() => set({ type: 'rating' })}>Rating</Button>
             </div>
           </div>
 
-          {habit.type === 'count' && (
+          {(habit.type === 'count' || habit.type === 'timer') && (
             <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm text-subtext1">Daily target<Input type="number" value={habit.target ?? ''} onChange={(e) => set({ target: e.target.value ? Number(e.target.value) : undefined })} placeholder="e.g. 8" className="mt-1" /></label>
-              <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder="glasses" className="mt-1" /></label>
+              <label className="block text-sm text-subtext1">Daily target<Input type="number" value={habit.target ?? ''} onChange={(e) => set({ target: e.target.value ? Number(e.target.value) : undefined })} placeholder={habit.type === 'timer' ? 'e.g. 30' : 'e.g. 8'} className="mt-1" /></label>
+              <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} className="mt-1" /></label>
             </div>
+          )}
+          {habit.type === 'rating' && (
+            <p className="text-xs text-overlay0">Logs a 1–5 rating per day (tap the stars in the activity view or today strip).</p>
           )}
 
           <div>
@@ -630,10 +667,6 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
 
 // ── Habit visualisation helpers (v3) ─────────────────────────────────────────
 type JData = import('../lib/types').JournalData
-function habitDoneOn(data: JData, h: Habit, d: string): boolean {
-  if (h.type === 'count') return (data.habitValues?.[d]?.[h.id] ?? 0) >= (h.target && h.target > 0 ? h.target : 1)
-  return (data.habitLog[d] ?? []).includes(h.id)
-}
 
 /** This-week vs last-week trend arrow. */
 function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: string }) {

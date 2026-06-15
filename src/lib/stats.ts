@@ -1,5 +1,64 @@
-import type { JournalData } from './types'
+import type { Habit, HabitType, JournalData } from './types'
 import { addDays, dayDiff, todayISO } from './date'
+
+// ── Habit completion (single source of truth across all layouts) ─────────────
+
+/** Daily target for count/timer habits (≥1); rating habits are scored out of 5. */
+export function habitTarget(h: Habit): number {
+  if ((h.type ?? 'check') === 'rating') return 5
+  return h.target && h.target > 0 ? h.target : 1
+}
+
+/** Raw logged value for a habit on a day. check → 1/0; others → habitValues. */
+export function habitValueOn(data: JournalData, h: Habit, day: string): number {
+  if ((h.type ?? 'check') === 'check') return (data.habitLog[day] ?? []).includes(h.id) ? 1 : 0
+  return data.habitValues?.[day]?.[h.id] ?? 0
+}
+
+/** Did the habit hit its bar that day? check/rating → any value; count/timer → ≥ target. */
+export function habitDoneOn(data: JournalData, h: Habit, day: string): boolean {
+  const type = h.type ?? 'check'
+  const v = habitValueOn(data, h, day)
+  if (type === 'check' || type === 'rating') return v > 0
+  return v >= habitTarget(h)
+}
+
+/**
+ * Map a habit's value to a 0–4 heatmap intensity level. Pure; unit-tested.
+ * check → on/off; count/timer → fraction of target in thirds; rating → value/5.
+ */
+export function habitIntensity(type: HabitType, value: number, target: number): 0 | 1 | 2 | 3 | 4 {
+  if (type === 'check') return value > 0 ? 4 : 0
+  if (value <= 0) return 0
+  if (type === 'rating') {
+    if (value <= 1) return 1
+    if (value <= 2) return 2
+    if (value <= 3) return 3
+    return 4
+  }
+  const r = value / (target > 0 ? target : 1)
+  if (r < 0.34) return 1
+  if (r < 0.67) return 2
+  if (r < 1) return 3
+  return 4
+}
+
+/** Look up a habit by id (helper for the id-keyed stats fns below). */
+function habitById(data: JournalData, habitId: string): Habit | undefined {
+  return data.habits.find((h) => h.id === habitId)
+}
+
+/**
+ * Next value for a numeric quick-toggle: steps up (timer in 5s once the goal is
+ * ≥20 min, else by 1) and clamps to the target so a non-divisible target is
+ * still reachable; once at the target, the next tap wraps back to 0. Single
+ * source of truth for TodayStrip, the classic grid, and the activity view.
+ */
+export function nextHabitValue(type: HabitType, target: number, current: number): number {
+  if (current >= target) return 0
+  const step = type === 'timer' ? (target >= 20 ? 5 : 1) : 1
+  return Math.min(current + step, target)
+}
 
 /** Days that have ANY activity (entry, metric, gratitude, memory, workout, habit). */
 export function activeDays(data: JournalData): Set<string> {
@@ -58,13 +117,14 @@ export function habitConsistency(
   window = 30,
   today = todayISO(),
 ): number {
+  const h = habitById(data, habitId)
   let hit = 0
   let possible = 0
   for (let i = 0; i < window; i++) {
     const day = addDays(today, -i)
     if (dayDiff(startedOn, day) < 0) continue // before tracking began
     possible += 1
-    if ((data.habitLog[day] ?? []).includes(habitId)) hit += 1
+    if (h ? habitDoneOn(data, h, day) : (data.habitLog[day] ?? []).includes(habitId)) hit += 1
   }
   return possible ? Math.round((hit / possible) * 100) : 0
 }
@@ -79,7 +139,8 @@ export function habitStreak(
   habitId: string,
   today = todayISO(),
 ): number {
-  const done = (d: string) => (data.habitLog[d] ?? []).includes(habitId)
+  const h = habitById(data, habitId)
+  const done = (d: string) => (h ? habitDoneOn(data, h, d) : (data.habitLog[d] ?? []).includes(habitId))
   const skipped = (d: string) => (data.habitSkips?.[habitId] ?? []).includes(d)
   let cursor = done(today) || skipped(today) ? today : addDays(today, -1)
   let streak = 0
@@ -108,7 +169,7 @@ export function reminderMessage(
     if (h.archived) continue
     const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
     if (!scheduled) continue
-    const doneToday = (data.habitLog[today] ?? []).includes(h.id)
+    const doneToday = habitDoneOn(data, h, today)
     const skippedToday = (data.habitSkips?.[h.id] ?? []).includes(today)
     if (doneToday || skippedToday) continue
     const streak = habitStreak(data, h.id, addDays(today, -1))
@@ -234,9 +295,11 @@ export function weeklyHabitCount(
   today = todayISO(),
   days = 7,
 ): number {
+  const h = habitById(data, habitId)
   let n = 0
   for (let i = 0; i < days; i++) {
-    if ((data.habitLog[addDays(today, -i)] ?? []).includes(habitId)) n += 1
+    const d = addDays(today, -i)
+    if (h ? habitDoneOn(data, h, d) : (data.habitLog[d] ?? []).includes(habitId)) n += 1
   }
   return n
 }
@@ -244,6 +307,14 @@ export function weeklyHabitCount(
 /** Completions of a habit by weekday (index 0=Sun … 6=Sat) over its history. */
 export function habitDayOfWeekBreakdown(data: JournalData, habitId: string): number[] {
   const counts = [0, 0, 0, 0, 0, 0, 0]
+  const h = habitById(data, habitId)
+  // Numeric habits (count/timer/rating) log to habitValues, not habitLog.
+  if (h && (h.type ?? 'check') !== 'check') {
+    for (const day of Object.keys(data.habitValues ?? {})) {
+      if (habitDoneOn(data, h, day)) counts[new Date(day + 'T00:00:00').getDay()] += 1
+    }
+    return counts
+  }
   for (const [day, ids] of Object.entries(data.habitLog)) {
     if (ids.includes(habitId)) {
       const wd = new Date(day + 'T00:00:00').getDay()

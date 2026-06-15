@@ -371,3 +371,27 @@ CSV export · **CSV import**.
 Plus beyond-list: Today's-plan hub, dedup (birthdays/Fitness+Gym/dead code),
 5-tab bottom nav, iOS drawer, contextual help, card-ordering pass (D-35),
 IndexedDB photos, onboarding, graphify install. **Task #40 closed.**
+
+## Epic SYNC-FB-HABIT — session 2026-06-15 (appended)
+
+Three features shipped in one working session, plus follow-ups queued.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-146 | Cloud-sync conflict resolution — prompt before clobbering unsynced local edits (`resolveIncoming` + `updatedAt` stamp) | ✅ |
+| BUJO-147 | In-app feedback widget → files a GitHub issue (anonymous serverless `/api/feedback`, honeypot + rate limit) | ✅ |
+| BUJO-148 | Habit metric types: `timer` (minutes) + `rating` (1–5), additive to `check`/`count` | ✅ |
+| BUJO-149 | Habit **activity-heatmap** layout + classic/activity switcher (persisted in `Settings.trackerLayout`) | ✅ |
+| BUJO-150 | Expanded habit presets (timer/rating examples: Run, Stretch, Focus, Mood, Energy, Steps, Coffee, Vitamins, Journal, No sugar) | ✅ |
+| BUJO-151 | Drag-to-reorder in the activity view (classic-grid only today; rows honor saved `order`) | 🔜 |
+| BUJO-152 | Guest (view-only) + Google sign-in (secure storage) auth split, with per-page data security model | 🔜 |
+
+Shared internals: `habitDoneOn` / `habitValueOn` / `habitIntensity` / `habitTarget` /
+`nextHabitValue` extracted to `stats.ts` as the single source of truth so completion,
+streaks, consistency, weekday-breakdown, and the activity heatmap all agree across
+layouts. Pre-existing stats fns (`habitStreak`, `habitConsistency`, `weeklyHabitCount`,
+`habitDayOfWeekBreakdown`, `reminderMessage`) rewired to honor numeric types.
+
+Audit (3 reviewers): fixed timer-cycle skipping non-divisible targets (was making such
+habits permanently incompletable), numeric-habit blind spots in reminders + weekday
+breakdown, triple-duplicated step logic, and a11y labels on the activity strip/stars/toggle.
