@@ -68,8 +68,14 @@ function reducer(state: HState, action: Action): HState {
   switch (action.type) {
     case 'set':
       return commit(state, action.data)
-    case 'patch':
-      return commit(state, action.fn(state.present), action.label, action.at)
+    case 'patch': {
+      const next = action.fn(state.present)
+      if (next === state.present) return state // no-op fn → don't bump updatedAt
+      // Stamp genuine user edits only. 'set' (remote-apply/import) keeps the
+      // incoming stamp byte-stable so the realtime echo-guard isn't tripped.
+      const stamped = { ...next, updatedAt: new Date(action.at ?? Date.now()).toISOString() }
+      return commit(state, stamped, action.label, action.at)
+    }
     case 'silent':
       return { ...state, present: action.fn(state.present) }
     case 'undo': {
@@ -188,6 +194,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   const [hist, dispatch] = useReducer(reducer, undefined, () => ({ past: [], present: startsEncrypted ? emptyJournal() : load(), future: [] }))
   const data = hist.present
   const [unlocked, setUnlocked] = useState(!startsEncrypted)
+  const [encrypted, setEncrypted] = useState(startsEncrypted)
   const passcodeRef = useRef<string | null>(null)
 
   // Persist on every change — encrypted if a passcode is active, else plaintext.
@@ -238,7 +245,6 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       type: 'silent',
       fn: (d) => (wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)),
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const patch = useCallback(
@@ -645,17 +651,16 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           clearEncrypted()
           save(data)
         }
-        // Re-render so `encrypted` flag updates.
-        setUnlocked((u) => u)
+        setEncrypted(pc != null)
       },
-      encrypted: passcodeRef.current != null,
+      encrypted,
 
       undo: () => dispatch({ type: 'undo' }),
       redo: () => dispatch({ type: 'redo' }),
       canUndo: hist.past.length > 0,
       canRedo: hist.future.length > 0,
     }
-  }, [data, patch, hist.past.length, hist.future.length])
+  }, [data, patch, hist.past.length, hist.future.length, encrypted])
 
   // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
   async function unlock(pc: string) {
@@ -664,6 +669,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     const json = await decryptString(blob, pc) // throws → LockScreen shows error
     const decrypted = migrate(JSON.parse(json))
     passcodeRef.current = pc
+    setEncrypted(true)
     dispatch({ type: 'silent', fn: () => decrypted })
     setUnlocked(true)
   }
@@ -673,6 +679,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }
 
+// Hook co-located with its provider by design; splitting would ripple imports
+// across every view. Fast-refresh only affects dev HMR, not runtime.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useJournal(): Store {
   const ctx = useContext(Ctx)
   if (!ctx) throw new Error('useJournal must be used inside <JournalProvider>')

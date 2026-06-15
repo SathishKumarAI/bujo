@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate } from './lib/storage'
+import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal } from './lib/supabase'
 import { useJournal } from './store'
@@ -72,13 +73,17 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
 
 export default function App() {
   const { data, setSettings, replaceAll } = useJournal()
+  // Live mirror of `data` so once-on-mount sync handlers compare against the
+  // current journal (not the stale mount snapshot) for conflict resolution.
+  const dataRef = useRef(data)
+  dataRef.current = data
   const syncReady = useRef(false)
   // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
   useEffect(() => {
     const pass = localStorage.getItem('bujo:sync')
     if (!pass) { syncReady.current = true; return }
     pullCloud(pass)
-      .then((remote) => { if (remote) replaceAll(migrate(remote)) })
+      .then((remote) => { if (remote) { const next = resolveIncoming(dataRef.current, migrate(remote)); if (next) replaceAll(next) } })
       .catch(() => {})
       .finally(() => { syncReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,7 +100,7 @@ export default function App() {
     if (!supabaseEnabled()) { sbReady.current = true; return }
     currentUser().then((u) => {
       sbAuthed.current = !!u
-      if (u) return pullJournal().then((r) => { if (r) replaceAll(migrate(r)) }).catch(() => {})
+      if (u) return pullJournal().then((r) => { if (r) { const next = resolveIncoming(dataRef.current, migrate(r)); if (next) replaceAll(next) } }).catch(() => {})
     }).finally(() => { sbReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const lastSync = useRef('')
@@ -114,7 +119,8 @@ export default function App() {
       const snap = JSON.stringify(remote)
       if (snap === lastSync.current) return // our own write echoing back
       lastSync.current = snap
-      replaceAll(migrate(remote))
+      const next = resolveIncoming(dataRef.current, migrate(remote))
+      if (next) replaceAll(next) // null = keep local; it re-pushes on next change
     }).then((fn) => { off = fn })
     return () => off()
   }, [])  // eslint-disable-line react-hooks/exhaustive-deps

@@ -366,6 +366,8 @@ export interface DevSession {
 /** The single root object persisted to localStorage. */
 export interface JournalData {
   version: number
+  /** ISO timestamp of the last local edit. Drives cloud-sync conflict resolution. */
+  updatedAt?: string
   entries: Entry[]
   habits: Habit[]
   habitLog: Record<string, string[]> // ISO day -> [habitId, …] (check habits)

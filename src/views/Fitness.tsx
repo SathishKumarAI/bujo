@@ -146,7 +146,7 @@ export function Fitness() {
           </div>
         </div>
         {/* 8-week sparkline (whole-number minutes) */}
-        <div className="mt-4 flex items-end gap-1" style={{ height: 56 }} title="Active minutes per week (last 8 weeks)">
+        <div className="mt-4 flex items-end gap-1" style={{ height: 56 }} title="Active minutes per week (last 8 weeks)" role="img" aria-label={`Bar chart of active minutes per week over the last 8 weeks, against a ${goal}-minute weekly goal: ${weeks.map((m) => `${m}m`).join(', ')}`}>
           {weeks.map((m, i) => (
             <div key={i} className="flex-1 rounded-t" style={{ height: `${Math.max(2, (m / maxWeek) * 100)}%`, background: m >= goal ? cat('green') : cat('surface2') }} />
           ))}
