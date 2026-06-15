@@ -6,6 +6,7 @@ import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { QuickAdd } from '../QuickAdd'
 import { useCursor } from './cursor'
+import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
@@ -33,18 +34,21 @@ export function AppShell({
   const [quickOpen, setQuickOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
   const { day } = useCursor()
+  const isMobile = useDevice() === 'mobile'
 
   return (
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Dim scrim behind the mobile drawer — tap to close (iOS-style). */}
-      <div
-        onClick={() => setNavOpen(false)}
-        aria-hidden
-        className={`fixed inset-0 z-40 bg-crust/55 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          navOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-      />
+      {isMobile && (
+        <div
+          onClick={() => setNavOpen(false)}
+          aria-hidden
+          className={`fixed inset-0 z-40 bg-crust/55 backdrop-blur-sm transition-opacity duration-300 ${
+            navOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+        />
+      )}
       <Sidebar
         items={items}
         groupOrder={groupOrder}
@@ -67,10 +71,10 @@ export function AppShell({
           onMenu={() => setNavOpen((o) => !o)}
         />
         {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
-        <main className="flex-1 overflow-x-hidden p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
+        <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
 
-      <BottomNav items={items} view={view} onNavigate={onNavigate} onQuickAdd={() => setQuickOpen(true)} />
+      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} onQuickAdd={() => setQuickOpen(true)} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>

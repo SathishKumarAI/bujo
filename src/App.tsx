@@ -23,6 +23,7 @@ import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider } from './components/shell/cursor'
+import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
 import type { NavItem } from './components/shell/Sidebar'
 import type { ViewId } from './components/shell/viewChrome'
@@ -76,7 +77,7 @@ export default function App() {
   // Live mirror of `data` so once-on-mount sync handlers compare against the
   // current journal (not the stale mount snapshot) for conflict resolution.
   const dataRef = useRef(data)
-  dataRef.current = data
+  useEffect(() => { dataRef.current = data }, [data])
   const syncReady = useRef(false)
   // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
   useEffect(() => {
@@ -151,6 +152,7 @@ export default function App() {
   if (!mode) return <Welcome />
 
   return (
+    <DeviceProvider>
     <CursorProvider>
       <NavProvider navigate={setView}>
       <CommandPalette
@@ -189,5 +191,6 @@ export default function App() {
       </AppShell>
       </NavProvider>
     </CursorProvider>
+    </DeviceProvider>
   )
 }
