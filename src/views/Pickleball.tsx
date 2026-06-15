@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -20,11 +20,39 @@ const TIPS = [
   { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
 ]
 
+/** Quick pre-match warm-up — done before logging a session keeps injuries down. */
+const WARMUP = [
+  '5 min brisk walk or light jog to raise the heart rate',
+  'Leg swings ×10/side · ankle circles ×10 · hip openers',
+  'Arm circles, shoulder rolls, wrist mobility',
+  'Side shuffles + split-steps to prime lateral movement',
+  '2–3 min of easy dinks and soft volleys at the kitchen line',
+]
+
+/** Rotating practice focus — one surfaces per day so you always have a goal. */
+const DRILLS = [
+  { name: 'Dink consistency', focus: 'Soft game', how: 'Cross-court dinks for 5 min with no pop-ups. Land in the kitchen, paddle out front, relaxed grip.' },
+  { name: 'Third-shot drops', focus: 'Transition', how: 'Drop from the baseline into the kitchen. Track success — hit 7/10 before you speed anything up.' },
+  { name: 'Reset volleys', focus: 'Defense', how: 'Partner feeds hard at your feet; soft-block into the kitchen. Absorb pace, don’t swing.' },
+  { name: 'Serve depth & spin', focus: 'Serve', how: '20 serves to the back third for depth; add topspin only once depth is reliable.' },
+  { name: 'Footwork & split-step', focus: 'Movement', how: 'Split-step on every shot, shuffle (never cross feet) at the line. 3×30s ladder.' },
+  { name: 'Stacking & poaching', focus: 'Doubles strategy', how: 'Signals + switches with your partner; cover the middle, call “mine / yours”.' },
+  { name: 'Lob & overhead', focus: 'Court coverage', how: 'Alternate defensive lobs and putaway overheads. Agree who takes the lob.' },
+]
+
+/** Reputable external coaching / rules resources (open in a new tab). */
+const RESOURCES = [
+  { name: 'USA Pickleball — official rules & how-to', url: 'https://usapickleball.org' },
+  { name: 'The Dink — drills, strategy & news', url: 'https://www.thedinkpickleball.com' },
+]
+
 export function Pickleball() {
   const { data, addPickleball, removePickleball, setSettings } = useJournal()
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
   const today = todayISO()
+  // Deterministic daily rotation so the practice focus is stable for the day.
+  const drill = DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % DRILLS.length]
 
   const all = pickleTotals(data)
   const week = pickleTotals(data, 7, today)
@@ -230,6 +258,38 @@ export function Pickleball() {
           </div>
         </div>
         <div className="mt-1 text-center text-[10px] text-overlay0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+      </Card>
+
+      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right">
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Today's rotating practice focus */}
+          <div className="rounded-lg border border-surface0 bg-base p-3">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-sm font-medium text-text">{drill.name}</span>
+              <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
+            </div>
+            <p className="text-xs text-overlay1">{drill.how}</p>
+            <p className="mt-2 text-[11px] text-overlay0">New focus each day — log a session below after you drill it.</p>
+          </div>
+          {/* Warm-up checklist */}
+          <div className="rounded-lg border border-surface0 bg-base p-3">
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-text"><Dumbbell size={14} className="text-green" /> Warm up first</p>
+            <ul className="space-y-1">
+              {WARMUP.map((w) => (
+                <li key={w} className="flex gap-1.5 text-xs text-overlay1"><span className="text-green">•</span> {w}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {/* External resources */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-surface0 pt-3">
+          <span className="text-xs text-overlay0">Learn more:</span>
+          {RESOURCES.map((r) => (
+            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue hover:underline">
+              {r.name} <ExternalLink size={11} />
+            </a>
+          ))}
+        </div>
       </Card>
 
       <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe — physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
