@@ -274,6 +274,8 @@ export interface Settings {
   storageMode?: 'local' | 'folder' | 'drive'
   /** Display name of the picked cloud folder. */
   folderName?: string
+  /** Exploring sample data (guest demo). Prompts to sign up to keep a real journal. */
+  explore?: boolean
   /** GitHub Personal Access Token (gist scope) for gist storage. */
   githubToken?: string
   /** Gist id holding bujo.json. */

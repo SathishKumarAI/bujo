@@ -6,7 +6,7 @@ import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
-import { supabaseEnabled, signInGuest, signUpEmail, signInEmail, pullJournal, pushJournal } from '../lib/supabase'
+import { supabaseEnabled, signInGoogle, signUpEmail, signInEmail, pullJournal, pushJournal } from '../lib/supabase'
 
 /**
  * First-run gate. The app is local-first; here the user chooses where their
@@ -45,10 +45,10 @@ export function Welcome() {
   const [pw, setPw] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [err, setErr] = useState('')
-  async function guest() {
+  async function google() {
     setBusy(true); setErr('')
-    try { await signInGuest(); setSettings({ storageMode: 'local' }) }
-    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+    try { await signInGoogle() } // redirects out to Google, returns to the app signed in
+    catch (e) { setErr((e as Error).message); setBusy(false) }
   }
   async function account(mode: 'signup' | 'login') {
     if (!email || pw.length < 6) { setErr('Enter an email and a 6+ char password.'); return }
@@ -80,9 +80,9 @@ export function Welcome() {
             </div>
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
-                <button onClick={guest} disabled={busy} className="press-3d rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue as guest'}</button>
-                <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Log in / Sign up</button>
-                <span className="text-xs text-overlay0">Guest is instant & private; add an email anytime to keep it.</span>
+                <button onClick={google} disabled={busy} className="press-3d inline-flex items-center gap-2 rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue with Google'}</button>
+                <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Use email</button>
+                <span className="text-xs text-overlay0">Sign in to create your journal and sync it across devices.</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -146,12 +146,12 @@ export function Welcome() {
 
         {/* Try & learn — seed a sample month so new users explore + learn by doing. */}
         <div className="rise mt-5 rounded-xl border border-dashed border-surface1 p-4 text-center" style={{ animationDelay: '320ms' }}>
-          <p className="mb-2 text-sm text-subtext1">New here? <strong className="text-text">Try it with sample data</strong> — explore every feature, no commitment.</p>
+          <p className="mb-2 text-sm text-subtext1">Just looking? <strong className="text-text">Explore with sample data</strong> — see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
           <button
-            onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local' }) }}
+            onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}
             className="press-3d rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-text hover:text-mauve"
           >
-            Load a sample journal & take a look →
+            Explore the demo →
           </button>
           <p className="mt-2 text-xs text-overlay0">
             Learn as you go: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
