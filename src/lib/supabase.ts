@@ -43,6 +43,24 @@ export async function signInEmail(email: string, password: string): Promise<void
   if (error) throw error
 }
 
+/**
+ * Sign in / sign up with Google (OAuth redirect, returns to the app origin).
+ * If the current session is an anonymous guest, links Google to the *same* user
+ * so their explore-session id is preserved; otherwise a normal OAuth sign-in.
+ */
+export async function signInGoogle(): Promise<void> {
+  const sb = client()
+  const redirectTo = window.location.origin
+  const { data: sess } = await sb.auth.getSession()
+  if (sess.session?.user?.is_anonymous) {
+    const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo } })
+    if (error) throw error
+    return
+  }
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+  if (error) throw error
+}
+
 export async function signOut(): Promise<void> {
   await client().auth.signOut()
 }

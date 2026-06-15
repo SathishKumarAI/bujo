@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
-import { migrate } from './lib/storage'
+import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal } from './lib/supabase'
@@ -19,6 +19,7 @@ import { Help } from './views/Help'
 import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
+import { ExploreBanner } from './components/ExploreBanner'
 import { CommandPalette } from './components/CommandPalette'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
@@ -103,7 +104,20 @@ export default function App() {
     if (!supabaseEnabled()) { sbReady.current = true; return }
     currentUser().then((u) => {
       sbAuthed.current = !!u
-      if (u) return pullJournal().then((r) => { if (r) { const next = resolveIncoming(dataRef.current, migrate(r)); if (next) replaceAll(next) } }).catch(() => {})
+      if (!u) return
+      // Leaving explore: a real (non-anonymous) account just took over the
+      // sample-data session → adopt their cloud journal (or start clean) and
+      // drop the demo, rather than merging sample data into the new account.
+      const leavingExplore = !u.is_anonymous && dataRef.current.settings.explore
+      return pullJournal().then((r) => {
+        if (r) {
+          const next = leavingExplore ? migrate(r) : resolveIncoming(dataRef.current, migrate(r))
+          if (next) replaceAll(next)
+        } else if (leavingExplore) {
+          replaceAll(emptyJournal())
+        }
+        if (leavingExplore) setSettings({ explore: false })
+      }).catch(() => {})
     }).finally(() => { sbReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const lastSync = useRef('')
@@ -163,6 +177,7 @@ export default function App() {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
+      <ExploreBanner />
       <ReminderBanner />
       <SyncIndicator />
       <AppShell
