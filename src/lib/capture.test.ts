@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCapture, normalizeExercise, type CaptureCtx, type CaptureResult } from './capture'
+import { parseCapture, normalizeExercise, normalizeSpoken, type CaptureCtx, type CaptureResult } from './capture'
 
 const ctx: CaptureCtx = {
   exercises: ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Lat Pulldown'],
@@ -98,6 +98,43 @@ describe('parseCapture — bullet fallback', () => {
   })
   it('empty input is a zero-confidence bullet', () => {
     expect(parseCapture('   ', ctx)).toMatchObject({ kind: 'bullet', confidence: 0 })
+  })
+})
+
+describe('normalizeSpoken', () => {
+  it('combines tens and ones', () => {
+    expect(normalizeSpoken('eighty five')).toBe('85')
+    expect(normalizeSpoken('twenty two')).toBe('22')
+  })
+  it('maps units and connectors', () => {
+    expect(normalizeSpoken('eighty kilos by five')).toBe('80 kg x 5')
+  })
+  it('handles hundreds', () => {
+    expect(normalizeSpoken('two hundred')).toBe('200')
+    expect(normalizeSpoken('hundred')).toBe('100')
+  })
+  it('leaves non-number words alone', () => {
+    expect(normalizeSpoken('call the dentist')).toBe('call the dentist')
+  })
+})
+
+describe('parseCapture — dictated (voice) input', () => {
+  it('"bench eighty by five" → gym 80x5', () => {
+    expect(parseCapture('bench eighty by five', ctx)).toMatchObject({ kind: 'gym', exercise: 'Bench Press', weight: 80, reps: 5 })
+  })
+  it('"squat hundred by five rpe eight" → gym 100x5 @8', () => {
+    expect(parseCapture('squat hundred by five rpe eight', ctx)).toMatchObject({ kind: 'gym', weight: 100, reps: 5, rpe: 8 })
+  })
+  it('"ran five k" → cardio 5km', () => {
+    expect(parseCapture('ran five k', ctx)).toMatchObject({ kind: 'cardio', activity: 'Run', distanceKm: 5 })
+  })
+  it('"mood seven" → metric mood 7', () => {
+    expect(parseCapture('mood seven', ctx)).toMatchObject({ kind: 'metric', mood: 7 })
+  })
+  it('keeps original words for journal bullets', () => {
+    const r = parseCapture('call John at five', ctx)
+    expect(r.kind).toBe('bullet')
+    expect(r.raw).toBe('call John at five')
   })
 })
 

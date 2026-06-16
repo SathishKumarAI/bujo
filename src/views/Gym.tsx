@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, Video, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -300,7 +300,16 @@ export function Gym() {
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
                   <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-overlay0">
-                    {prev && <span>last: {prev.weight}{unit}×{prev.reps}</span>}
+                    {prev && (
+                      <button
+                        type="button"
+                        onClick={() => setRow(i, { weight: String(prev.weight ?? ''), reps: String(prev.reps ?? '') })}
+                        title="Repeat last set — fill weight & reps"
+                        className="inline-flex items-center gap-1 hover:text-mauve"
+                      >
+                        <RotateCcw size={10} /> last: {prev.weight}{unit}×{prev.reps}
+                      </button>
+                    )}
                     {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
                     {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-[10px]" />}
                   </div>
