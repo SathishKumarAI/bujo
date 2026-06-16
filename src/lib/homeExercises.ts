@@ -1,7 +1,8 @@
 // Curated no-equipment / bodyweight exercise library for the Home Workout view.
-// Each exercise links to a professional YouTube demo. We don't hardcode a video
-// id (those rot); instead `demoUrl()` opens a targeted YouTube search that
-// surfaces proper-form videos. Pin a specific clip later by setting `yt`.
+// Each exercise links to a professional YouTube demo via the shared video
+// helpers (see `./video`); pin a specific clip by setting `yt`.
+
+import { videoUrl, videoSearchUrl } from './video'
 
 export type Muscle = 'chest' | 'legs' | 'glutes' | 'core' | 'back' | 'shoulders' | 'arms' | 'full body' | 'cardio'
 
@@ -20,13 +21,12 @@ export interface HomeExercise {
 
 /** Professional demo link — a pinned clip if set, else a proper-form search. */
 export function demoUrl(ex: HomeExercise): string {
-  if (ex.yt) return `https://www.youtube.com/watch?v=${ex.yt}`
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.name + ' proper form technique')}`
+  return videoUrl(ex.name, ex.yt)
 }
 
 /** Always-available "find more" search link (the fallback the user asked for). */
 export function searchUrl(ex: HomeExercise): string {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent('how to ' + ex.name + ' exercise')}`
+  return videoSearchUrl(ex.name)
 }
 
 export const HOME_EXERCISES: HomeExercise[] = [

@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { PROGRAMS } from '../lib/programs'
 import { Button, Card, Segmented } from './ui'
+import { VideoLink } from './VideoLink'
 
 /**
  * Follow a built-in multi-week training program (encoded in `lib/programs.ts`):
@@ -101,6 +102,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
                   <div className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-mauve" aria-label={`Did ${e.name}`} />
                     <span className={`flex-1 ${checked ? 'text-overlay1 line-through' : 'text-subtext1'}`}>{e.name}</span>
+                    <VideoLink name={e.name} label="" size={13} className="text-overlay0 hover:text-red" />
                     <span className="text-overlay1">{e.qty}</span>
                     <span className="w-8 text-right text-overlay1">×{e.sets}</span>
                   </div>
