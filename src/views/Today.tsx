@@ -3,7 +3,7 @@ import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
-import { QuickAdd } from '../components/QuickAdd'
+import { CaptureBar } from '../components/CaptureBar'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
 import { PenaltyCard } from '../components/PenaltyCard'
@@ -107,7 +107,7 @@ export function Today() {
         }
       >
         <div className="mb-3">
-          <QuickAdd date={date} />
+          <CaptureBar date={date} />
         </div>
         {carryover.length > 0 && (
           <div className="mb-3 flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
