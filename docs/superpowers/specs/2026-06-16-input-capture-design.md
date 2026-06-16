@@ -69,3 +69,11 @@ Weight-x-reps convention follows the Gym row: first number = weight, second = re
 ## Testing
 
 Parser is pure → table-driven `vitest` (mirrors `suggest.test.ts`): each matcher gets hit / miss / ambiguous cases; the fallback proves no input is ever dropped.
+
+---
+
+## Progress
+
+- **Phase 1** — ✅ PR #12 (merged): `lib/capture.ts` parser + `<CaptureBar>` in Today + app-wide quick-add modal.
+- **Phase 2** — ✅ field controls `components/fields/{Stepper,EmojiScale}` + capture-bar "edit fields" expansion (tap-adjust the parse, no typing); Gym rows gained one-tap **repeat-last-set**. Remaining for a later pass: stepper-ize Trackers/Fitness inputs directly.
+- **Phase 3** — ✅ `normalizeSpoken` in the parser: number words → digits, unit/connector words mapped, so dictation ("bench eighty by five") parses like typed shorthand. Journal bullets keep the user's original words.

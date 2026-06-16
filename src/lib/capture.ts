@@ -64,6 +64,46 @@ export interface CaptureCtx {
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n))
 
+const NUM_WORDS: Record<string, number> = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+  seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50,
+  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+}
+
+/**
+ * Turn dictated phrasing into the compact grammar the matchers expect, so voice
+ * input parses like typed input: number words → digits ("eighty five" → 85),
+ * unit words → suffixes ("kilos" → kg), connectors → operators ("by" → x).
+ * Used only for the structured matchers — the journal-bullet fallback keeps the
+ * user's original words untouched.
+ */
+export function normalizeSpoken(text: string): string {
+  const tokens = text.toLowerCase().split(/\s+/)
+  const out: string[] = []
+  for (let i = 0; i < tokens.length; i++) {
+    const w = tokens[i].replace(/[.,!?]+$/, '')
+    if (['kilos', 'kilo', 'kgs', 'kilogram', 'kilograms'].includes(w)) { out.push('kg'); continue }
+    if (['pounds', 'pound', 'lbs'].includes(w)) { out.push('lb'); continue }
+    if (w === 'by' || w === 'times') { out.push('x'); continue }
+    if (w in NUM_WORDS) {
+      let val = NUM_WORDS[w]
+      const next = (tokens[i + 1] ?? '').replace(/[.,!?]+$/, '')
+      // tens + ones: "eighty five" → 85
+      if (val >= 20 && val % 10 === 0 && next in NUM_WORDS && NUM_WORDS[next] < 10) {
+        val += NUM_WORDS[next]; i++
+      }
+      // "two hundred" → 200, "hundred" alone → 100
+      if ((tokens[i + 1] ?? '').replace(/[.,!?]+$/, '') === 'hundred') { val *= 100; i++ }
+      out.push(String(val))
+      continue
+    }
+    if (w === 'hundred') { out.push('100'); continue }
+    out.push(tokens[i])
+  }
+  return out.join(' ')
+}
+
 function titleCase(s: string): string {
   return s.trim().replace(/\b\w/g, (c) => c.toUpperCase())
 }
@@ -208,15 +248,21 @@ function matchBullet(text: string): BulletCapture {
 
 // ── entry point ──────────────────────────────────────────────────────────────
 
-/** Parse one line of free input into a routed, editable result. */
+/**
+ * Parse one line of free input into a routed, editable result.
+ *
+ * Structured matchers run against a spoken-normalized copy (so dictation parses
+ * like typed shorthand); the bullet fallback keeps the user's original words.
+ */
 export function parseCapture(input: string, ctx: CaptureCtx): CaptureResult {
   const text = input.trim()
   if (!text) return { kind: 'bullet', raw: '', confidence: 0 }
+  const norm = normalizeSpoken(text)
   return (
-    matchGym(text, ctx) ??
-    matchCardio(text) ??
-    matchMetric(text) ??
-    matchHabit(text, ctx.habits) ??
+    matchGym(norm, ctx) ??
+    matchCardio(norm) ??
+    matchMetric(norm) ??
+    matchHabit(norm, ctx.habits) ??
     matchBullet(text)
   )
 }
