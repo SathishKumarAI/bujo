@@ -2,7 +2,8 @@ import { Flame, Star } from 'lucide-react'
 import type { Habit, HabitCategory, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
-import { habitStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
+import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
+import { Ban, ShieldCheck } from 'lucide-react'
 
 const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 // Habit-colored intensity per level (0 = empty); mirrors Heatmap's opacity ramp.
@@ -61,20 +62,29 @@ function ActivityRow({
 }) {
   const type = h.type ?? 'check'
   const target = habitTarget(h)
-  const streak = habitStreak(data, h.id)
+  const avoid = !!h.avoid
+  const accent = avoid ? cat('red') : cat(h.color)
+  const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
   const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
   const days = WEEKS * 7
+  // Click a heatmap cell to log that day (check → toggle, count/timer → cycle),
+  // matching the classic grid. Rating cells stay display-only (use the control).
+  const logDay = (d: string) => {
+    if (type === 'rating') return
+    if (type === 'count' || type === 'timer') onSetValue(d, h.id, nextHabitValue(type, target, habitValueOn(data, h, d)))
+    else onToggle(d, h.id)
+  }
   const start = addDays(today, -(days - 1))
   const pad = fromISODay(start).getDay() // align first column to weekday
 
   return (
     <div className="flex items-center gap-3">
       <div className="flex w-32 shrink-0 items-center gap-1 truncate">
-        <span>{h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
+        <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+        <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} — habit to avoid` : undefined} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
       </div>
-      <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? cat('peach') : cat('overlay0') }}>
-        {streak > 0 ? <span className="inline-flex items-center gap-0.5"><Flame size={10} />{streak}</span> : '—'}
+      <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
+        {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}
       </span>
       {h.weeklyGoal ? (
         <span className="w-10 shrink-0 text-[10px] tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
@@ -94,12 +104,16 @@ function ActivityRow({
             const future = d > today
             const before = d < h.startedOn
             const level = habitIntensity(type, habitValueOn(data, h, d), target)
+            const editable = !future && !before && type !== 'rating'
             return (
-              <span
+              <button
                 key={d}
-                title={`${d}${level ? ' · done' : ''}`}
-                className="h-2.5 w-2.5 rounded-[2px]"
-                style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : cat(h.color), opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
+                disabled={!editable}
+                onClick={() => logDay(d)}
+                aria-label={`${h.name} ${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                className="h-2.5 w-2.5 rounded-[2px] disabled:cursor-default enabled:hover:ring-1 enabled:hover:ring-overlay0"
+                style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
               />
             )
           })}
@@ -124,6 +138,7 @@ function TodayControl({
   onSetValue: (date: string, id: string, value: number) => void
   today: string
 }) {
+  const accent = h.avoid ? cat('red') : cat(h.color)
   if (type === 'rating') {
     return (
       <div className="inline-flex gap-0.5">
@@ -142,7 +157,7 @@ function TodayControl({
         onClick={() => onSetValue(today, h.id, next)}
         aria-label={`${h.name}: ${value} of ${target}${h.unit ? ' ' + h.unit : ''}, tap to add`}
         className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
-        style={{ borderColor: value > 0 ? cat(h.color) : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
+        style={{ borderColor: value > 0 ? accent : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
         title={`Tap to log${h.unit ? ' (' + h.unit + ')' : ''}`}
       >
         {value}/{target}{h.unit ? <span className="text-overlay0">{h.unit === 'min' ? 'm' : ''}</span> : null}
@@ -153,9 +168,10 @@ function TodayControl({
   return (
     <button
       onClick={() => onToggle(today, h.id)}
-      aria-label="Toggle today"
+      aria-label={h.avoid ? (on ? 'Slipped today' : 'Clean today') : 'Toggle today'}
+      title={h.avoid ? (on ? 'Slipped today' : 'Clean today') : undefined}
       className="inline-grid h-6 w-6 place-items-center rounded-full border"
-      style={{ borderColor: on ? cat(h.color) : cat('surface1'), background: on ? cat(h.color) : 'transparent' }}
+      style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
       {on && <span className="text-[10px]" style={{ color: cat('crust') }}>✓</span>}
     </button>

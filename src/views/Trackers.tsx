@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -11,7 +11,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { cat, HABIT_COLORS } from '../lib/colors'
-import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
+import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory, HabitType } from '../lib/types'
@@ -20,7 +20,7 @@ import { ActivityLayout } from '../components/ActivityLayout'
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
 /** One-click habit presets (sensible defaults). */
-const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: HabitType; target?: number; unit?: string; weeklyGoal?: number }[] = [
+const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: HabitType; target?: number; unit?: string; weeklyGoal?: number; avoid?: boolean }[] = [
   { name: 'Water', emoji: '💧', category: 'food', color: 'sky', type: 'count', target: 8, unit: 'glasses' },
   { name: 'Exercise', emoji: '🏃', category: 'movement', color: 'green', weeklyGoal: 4 },
   { name: 'Read', emoji: '📚', category: 'wellness', color: 'peach', weeklyGoal: 7 },
@@ -36,7 +36,11 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
   { name: 'Coffee', emoji: '☕', category: 'stimulant', color: 'rosewater', type: 'count', target: 2, unit: 'cups' },
   { name: 'Vitamins', emoji: '💊', category: 'food', color: 'flamingo' },
   { name: 'Journal', emoji: '✍️', category: 'wellness', color: 'lavender' },
-  { name: 'No sugar', emoji: '🚫', category: 'food', color: 'red' },
+  // ── habits to avoid / quit (logging a day = a slip) ──
+  { name: 'No sugar', emoji: '🍬', category: 'food', color: 'red', avoid: true },
+  { name: 'Alcohol-free', emoji: '🍺', category: 'stimulant', color: 'red', avoid: true },
+  { name: 'Smoke-free', emoji: '🚬', category: 'stimulant', color: 'red', avoid: true },
+  { name: 'No doomscroll', emoji: '📱', category: 'wellness', color: 'red', avoid: true },
 ]
 
 export function Trackers() {
@@ -92,9 +96,15 @@ export function Trackers() {
     return { day: Number(d.slice(8)), mood: m?.mood, stress: m?.stress, sleep: m?.sleep, moodAvg: moodAvg[i], stressAvg: stressAvg[i], sleepAvg: sleepAvg[i] }
   })
 
+  /** True when a habit by this name already exists (case-insensitive) — used to
+   *  prevent duplicate trackers from manual add or preset taps. */
+  const habitExists = (name: string) => data.habits.some((h) => h.name.trim().toLowerCase() === name.trim().toLowerCase())
+
   function add() {
-    if (!newHabit.trim()) return
-    addHabit({ name: newHabit.trim(), category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
+    const name = newHabit.trim()
+    if (!name) return
+    if (habitExists(name)) { setNewHabit(''); return } // no duplicates
+    addHabit({ name, category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
     setNewHabit('')
   }
 
@@ -188,8 +198,10 @@ export function Trackers() {
             {HABIT_PRESETS.map((p) => (
               <button
                 key={p.name}
-                onClick={() => addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal })}
-                className="rounded-full border border-surface1 bg-base px-2.5 py-1 text-xs text-subtext1 hover:border-mauve hover:text-text"
+                disabled={habitExists(p.name)}
+                title={habitExists(p.name) ? 'Already added' : undefined}
+                onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
+                className="rounded-full border border-surface1 bg-base px-2.5 py-1 text-xs text-subtext1 hover:border-mauve hover:text-text disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-surface1 disabled:hover:text-subtext1"
               >
                 {p.emoji} {p.name}
               </button>
@@ -443,15 +455,17 @@ function TodayStrip({
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors"
+              title={h.avoid ? (on ? 'Slipped today — tap to clear' : 'Clean today') : undefined}
               style={{
-                borderColor: on ? cat(h.color) : cat('surface1'),
-                background: on ? cat(h.color) + '22' : 'transparent',
+                borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
+                background: on ? (h.avoid ? cat('red') : cat(h.color)) + '22' : 'transparent',
                 color: on ? cat('text') : cat('subtext0'),
               }}
             >
-              <span>{h.emoji ?? '●'}</span>
+              <span>{h.avoid ? '🚫' : (h.emoji ?? '●')}</span>
               {h.name}
-              {numeric && <span className="text-overlay0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+              {h.avoid && <span className="text-[10px]" style={{ color: on ? cat('red') : cat('green') }}>{on ? 'slip' : 'clean'}</span>}
+              {numeric && !h.avoid && <span className="text-overlay0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
             </button>
           )
         })}
@@ -493,7 +507,9 @@ function CategoryRows({
         const type = h.type ?? 'check'
         const numeric = type === 'count' || type === 'timer' || type === 'rating'
         const target = habitTarget(h)
-        const streak = habitStreak(data, h.id)
+        const avoid = !!h.avoid
+        const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
+        const slipColor = avoid ? cat('red') : cat(h.color)
         const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
         return (
           <tr
@@ -513,11 +529,15 @@ function CategoryRows({
                   title="Drag to reorder"
                   className="shrink-0 cursor-grab text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
                 ><GripVertical size={11} /></span>
-                {h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
-                <button onClick={() => onEdit(h.id)} title={h.name} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
+                {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
+                  : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
+                {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
+                <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} — habit to avoid` : h.name} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
                 {streak > 1 && (
-                  <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
+                  avoid
+                    ? <span title={`${streak} days clean`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('green') }}><ShieldCheck size={11} />{streak}d clean</span>
+                    : <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
                 )}
                 {h.weeklyGoal ? (
                   <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-[10px]" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
@@ -541,7 +561,7 @@ function CategoryRows({
                       title={`${val}/${target}`}
                       aria-label={`${h.name} ${d}: ${val} of ${target}`}
                       className={`grid ${cell} place-items-center rounded text-[8px] disabled:opacity-20`}
-                      style={{ background: val > 0 ? cat(h.color) : 'transparent', border: `1px solid ${cat('surface1')}`, opacity: val > 0 ? Math.max(0.35, val / target) : 1, color: cat('crust') }}
+                      style={{ background: val > 0 ? slipColor : 'transparent', border: `1px solid ${cat('surface1')}`, opacity: val > 0 ? Math.max(0.35, val / target) : 1, color: cat('crust') }}
                     >{val > 0 ? val : ''}</button>
                   </td>
                 )
@@ -552,9 +572,10 @@ function CategoryRows({
                   <button
                     disabled={disabled}
                     onClick={() => onToggle(d, h.id)}
-                    aria-label={`${h.name} on ${d}`}
+                    aria-label={avoid ? `${h.name} slip on ${d}` : `${h.name} on ${d}`}
+                    title={avoid ? (on ? 'Slipped' : 'Clean') : undefined}
                     className={`grid ${cell} place-items-center rounded-full border disabled:opacity-20`}
-                    style={{ borderColor: cat('surface1'), background: on ? cat(h.color) : 'transparent' }}
+                    style={{ borderColor: avoid && on ? cat('red') : cat('surface1'), background: on ? slipColor : 'transparent' }}
                   />
                 </td>
               )
@@ -606,6 +627,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
             <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
+          <label className="flex items-center justify-between rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
+            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit — a logged day counts as a slip)</span></span>
+            <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
+          </label>
           <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
 
           <div>

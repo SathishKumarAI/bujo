@@ -70,6 +70,12 @@ export interface Habit {
   weeklyGoal?: number
   /** Optional emoji shown beside the habit name. */
   emoji?: string
+  /**
+   * Polarity. When true this is a habit to QUIT/avoid (alcohol, smoking,
+   * doomscrolling): logging a day = a slip (bad), success = staying clean, and
+   * the streak counts clean days. Default/undefined = a normal "build" habit.
+   */
+  avoid?: boolean
 }
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */

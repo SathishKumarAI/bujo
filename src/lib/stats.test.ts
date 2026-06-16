@@ -80,7 +80,7 @@ describe('search', () => {
   })
 })
 
-import { habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from './stats'
+import { habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown } from './stats'
 
 describe('habit helpers (v2)', () => {
   function withLog(log: Record<string, string[]>, skips?: Record<string, string[]>): JournalData {
@@ -104,6 +104,23 @@ describe('habit helpers (v2)', () => {
   it('habitStreak breaks on a real miss', () => {
     const d = withLog({ '2026-06-11': ['h'], '2026-06-09': ['h'] })
     expect(habitStreak(d, 'h', '2026-06-11')).toBe(1) // 10 missed
+  })
+
+  // Register an "avoid" habit with a start date so the walk is bounded like prod.
+  function withAvoidHabit(log: Record<string, string[]>, startedOn: string): JournalData {
+    const d = withLog(log)
+    d.habits = [{ id: 'h', name: 'Booze', category: 'stimulant', color: 'red', startedOn, avoid: true }]
+    return d
+  }
+
+  it('cleanStreak counts consecutive un-slipped days back to startedOn', () => {
+    const d = withAvoidHabit({}, '2026-06-08') // clean every day since the 8th
+    expect(cleanStreak(d, 'h', '2026-06-11')).toBe(4) // 08,09,10,11
+  })
+
+  it('cleanStreak is 0 on a slip today, and counts clean days since the last slip', () => {
+    expect(cleanStreak(withAvoidHabit({ '2026-06-11': ['h'] }, '2026-06-01'), 'h', '2026-06-11')).toBe(0) // slipped today
+    expect(cleanStreak(withAvoidHabit({ '2026-06-09': ['h'] }, '2026-06-01'), 'h', '2026-06-11')).toBe(2) // clean 10 & 11
   })
 
   it('habitDayOfWeekBreakdown tallies by weekday', () => {
