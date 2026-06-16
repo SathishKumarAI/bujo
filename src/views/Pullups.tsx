@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Input } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { ProgramTracker } from '../components/ProgramTracker'
+import { VideoLink } from '../components/VideoLink'
 import { cat } from '../lib/colors'
 import {
   pullupAbility, ladder, pyramid, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_ABILITY,
@@ -91,7 +92,10 @@ function ProgressionsCard() {
       <ul className="space-y-2">
         {PULLUP_PROGRESSIONS.map((p) => (
           <li key={p.name} className="border-t border-surface0 pt-2 first:border-t-0 first:pt-0">
-            <p className="text-sm text-subtext1">{p.name}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-subtext1">{p.name}</p>
+              <VideoLink name={p.name} size={10} />
+            </div>
             <p className="text-xs text-overlay1"><span className="text-mauve">Why:</span> {p.why}</p>
             <p className="text-xs text-subtext0"><span className="text-green">How:</span> {p.how}</p>
           </li>

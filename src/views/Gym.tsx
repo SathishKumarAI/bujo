@@ -15,6 +15,7 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { ProgramTracker } from '../components/ProgramTracker'
+import { VideoLink } from '../components/VideoLink'
 import { exerciseInfo } from '../lib/exerciseInfo'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
@@ -297,10 +298,11 @@ export function Gym() {
                 <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-xs font-bold" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
                 <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
                 </div>
-                {(prev || oneRM) && (
-                  <div className="mt-0.5 ml-9 flex gap-3 text-[10px] text-overlay0">
+                {(prev || oneRM || row.exercise.trim()) && (
+                  <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-overlay0">
                     {prev && <span>last: {prev.weight}{unit}×{prev.reps}</span>}
                     {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
+                    {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-[10px]" />}
                   </div>
                 )}
               </div>
