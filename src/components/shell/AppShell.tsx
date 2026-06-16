@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
-import { QuickAdd } from '../QuickAdd'
+import { CaptureBar } from '../CaptureBar'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
@@ -81,7 +81,7 @@ export function AppShell({
           <DialogHeader>
             <DialogTitle>Quick add</DialogTitle>
           </DialogHeader>
-          <QuickAdd date={day} onAdded={() => setQuickOpen(false)} />
+          <CaptureBar date={day} onAdded={() => setQuickOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
