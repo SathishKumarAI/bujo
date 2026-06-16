@@ -82,6 +82,10 @@ describe('parseCapture — habits', () => {
   it('falls through to bullet when no habit matches', () => {
     expect(parseCapture('xyzzy', ctx).kind).toBe('bullet')
   })
+  it('does not match a habit when extra (non-count) words follow', () => {
+    // "water plants" is a task, not a log against the Water habit.
+    expect(parseCapture('water plants', ctx).kind).toBe('bullet')
+  })
 })
 
 describe('parseCapture — bullet fallback', () => {
