@@ -152,6 +152,28 @@ export function habitStreak(
 }
 
 /**
+ * Clean-day streak for an "avoid" habit: consecutive days up to today with NO
+ * slip (the habit was not logged), not counting days before it started. This is
+ * the positive counterpart of {@link habitStreak} — for quit habits, staying
+ * clean is the win.
+ */
+export function cleanStreak(
+  data: JournalData,
+  habitId: string,
+  today = todayISO(),
+): number {
+  const h = habitById(data, habitId)
+  const slipped = (d: string) => (h ? habitDoneOn(data, h, d) : (data.habitLog[d] ?? []).includes(habitId))
+  let cursor = today
+  let streak = 0
+  while (!(h && cursor < h.startedOn) && !slipped(cursor)) {
+    streak += 1
+    cursor = addDays(cursor, -1)
+  }
+  return streak
+}
+
+/**
  * The single most-urgent reminder for today, or null when nothing's at risk.
  * Priority: a long habit streak about to break › an active challenge's
  * unfinished day › the plain "log today" nudge. Pure — drives the banner + OS
