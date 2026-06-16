@@ -226,9 +226,12 @@ function matchHabit(text: string, habits: string[]): HabitCapture | null {
   const countM = text.match(/^(.*?)\s+(\d+)\s*$/)
   const namePart = (countM ? countM[1] : text).toLowerCase().trim()
   if (!namePart) return null
+  // Match the habit name exactly, or as a prefix the user is still typing —
+  // but NOT when extra words follow it ("water plants" is a task, not the
+  // Water habit). A trailing count is already split off above.
   const habit = habits.find((h) => {
     const hl = h.toLowerCase()
-    return hl === namePart || hl.startsWith(namePart) || namePart.startsWith(hl)
+    return hl === namePart || hl.startsWith(namePart)
   })
   if (!habit) return null
   return {
