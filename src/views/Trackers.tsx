@@ -9,6 +9,7 @@ import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEK
 import { Button, Card, Empty, Input, Segmented, StatTile } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
+import { Stepper } from '../components/fields/Stepper'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -601,7 +602,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-sm text-subtext1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
             <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
-          <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><Input type="number" value={habit.weeklyGoal ?? ''} onChange={(e) => set({ weeklyGoal: e.target.value ? Number(e.target.value) : undefined })} placeholder="e.g. 4" className="mt-1" /></label>
+          <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
 
           <div>
             <p className="mb-1 text-sm text-subtext1">Color</p>
@@ -631,7 +632,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
 
           {(habit.type === 'count' || habit.type === 'timer') && (
             <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm text-subtext1">Daily target<Input type="number" value={habit.target ?? ''} onChange={(e) => set({ target: e.target.value ? Number(e.target.value) : undefined })} placeholder={habit.type === 'timer' ? 'e.g. 30' : 'e.g. 8'} className="mt-1" /></label>
+              <label className="block text-sm text-subtext1">Daily target<div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
               <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} className="mt-1" /></label>
             </div>
           )}

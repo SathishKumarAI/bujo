@@ -5,6 +5,7 @@ import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Page } from '../components/shell/Page'
+import { Stepper } from '../components/fields/Stepper'
 import { cat } from '../lib/colors'
 import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs } from '../lib/fitness'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
@@ -13,6 +14,22 @@ import type { Workout } from '../lib/types'
 const ACTIVITIES = ['Run', 'Walk', 'Strength', 'Cycling', 'Yoga', 'Swim', 'HIIT', 'Sport', 'Other']
 type Form = { date: string; activity: string; duration: string; distance: string; calories: string; rpe: string; sets: string; notes: string }
 const emptyForm: Form = { date: todayISO(), activity: 'Run', duration: '', distance: '', calories: '', rpe: '', sets: '', notes: '' }
+
+// Form fields are strings (free-typing kept); these bridge to the numeric Stepper.
+const numOf = (s: string) => (s ? Number(s) : undefined)
+const strOf = (v: number | undefined) => (v != null ? String(v) : '')
+
+/** The four tap-to-adjust workout numbers, shared by the log + edit forms. */
+function MetricFields({ f, set, distUnit = 'km' }: { f: Form; set: (p: Partial<Form>) => void; distUnit?: string }) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Stepper label="Duration" suffix="min" step={5} min={0} value={numOf(f.duration)} onChange={(v) => set({ duration: strOf(v) })} aria-label="Duration minutes" />
+      <Stepper label="Distance" suffix={distUnit} step={0.5} min={0} value={numOf(f.distance)} onChange={(v) => set({ distance: strOf(v) })} aria-label="Distance" />
+      <Stepper label="Calories" suffix="kcal" step={50} min={0} value={numOf(f.calories)} onChange={(v) => set({ calories: strOf(v) })} aria-label="Calories" />
+      <Stepper label="RPE" step={1} min={1} max={10} value={numOf(f.rpe)} onChange={(v) => set({ rpe: strOf(v) })} aria-label="RPE" />
+    </div>
+  )
+}
 const formToPayload = (f: Form): Omit<Workout, 'id'> => ({
   date: f.date, activity: f.activity,
   durationMin: f.duration ? Number(f.duration) : undefined,
@@ -85,12 +102,7 @@ export function Fitness() {
                 {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
               </select>
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input type="number" value={f.duration} onChange={(e) => set({ duration: e.target.value })} placeholder="Min" aria-label="Duration minutes" />
-              <Input type="number" value={f.distance} onChange={(e) => set({ distance: e.target.value })} placeholder={dist === 'mi' ? 'Mi' : 'Km'} aria-label="Distance" />
-              <Input type="number" value={f.calories} onChange={(e) => set({ calories: e.target.value })} placeholder="Kcal" aria-label="Calories" />
-              <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
-            </div>
+            <MetricFields f={f} set={set} distUnit={dist} />
             {f.distance && f.duration && <p className="text-xs text-overlay0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
             <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
             <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
@@ -137,7 +149,7 @@ export function Fitness() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-subtext1">Weekly goal</span>
               <span className="inline-flex items-center gap-1">
-                <Input type="number" value={goal} onChange={(e) => setSettings({ fitnessGoalMin: e.target.value ? Number(e.target.value) : undefined })} className="w-20 py-1 text-right" />
+                <Stepper value={goal} onChange={(v) => setSettings({ fitnessGoalMin: v })} step={30} min={0} aria-label="Weekly goal minutes" />
                 <span className="text-xs text-overlay0">min</span>
               </span>
             </div>
@@ -200,12 +212,7 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
           </select>
         </label>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Input type="number" value={f.duration} onChange={(e) => set({ duration: e.target.value })} placeholder="Min" aria-label="Duration minutes" />
-        <Input type="number" value={f.distance} onChange={(e) => set({ distance: e.target.value })} placeholder="Distance" aria-label="Distance" />
-        <Input type="number" value={f.calories} onChange={(e) => set({ calories: e.target.value })} placeholder="Kcal" aria-label="Calories" />
-        <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
-      </div>
+      <MetricFields f={f} set={set} />
       <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
@@ -314,24 +321,13 @@ function NutritionCard({ date }: { date: string }) {
       </div>
       <label className="mb-3 block text-sm text-subtext1">
         Calories
-        <Input
-          type="number"
-          value={m?.calories ?? ''}
-          onChange={(e) => setMetric(date, { calories: e.target.value ? Number(e.target.value) : undefined })}
-          placeholder="kcal"
-          className="mt-1"
-        />
+        <div className="mt-1"><Stepper value={m?.calories ?? undefined} onChange={(v) => setMetric(date, { calories: v })} step={50} min={0} suffix="kcal" aria-label="Calories" /></div>
       </label>
       <div className="grid grid-cols-3 gap-2">
         {macros.map((mac) => (
           <label key={mac.k} className="block text-xs text-subtext1">
             {mac.label} (g)
-            <Input
-              type="number"
-              value={mac.val ?? ''}
-              onChange={(e) => setMetric(date, { [mac.k]: e.target.value ? Number(e.target.value) : undefined })}
-              className="mt-1 py-1.5"
-            />
+            <div className="mt-1"><Stepper value={mac.val ?? undefined} onChange={(v) => setMetric(date, { [mac.k]: v })} step={5} min={0} aria-label={`${mac.label} grams`} /></div>
           </label>
         ))}
       </div>
