@@ -502,25 +502,29 @@ function CategoryRows({
             onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverId(h.id) } }}
             onDrop={(e) => { e.preventDefault(); if (dragId) onReorder(category as HabitCategory, dragId, h.id); setDragId(null); setOverId(null) }}
           >
-            <td className="sticky left-0 z-10 bg-mantle py-0.5 pr-2 text-left whitespace-nowrap text-subtext1">
-              <span
-                draggable
-                onDragStart={() => setDragId(h.id)}
-                onDragEnd={() => { setDragId(null); setOverId(null) }}
-                title="Drag to reorder"
-                className="mr-0.5 inline-block cursor-grab align-middle text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
-              ><GripVertical size={11} /></span>
-              {h.emoji ? <span className="mr-0.5">{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}{' '}
-              <button onClick={() => onEdit(h.id)} className={`hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
-              {h.unit && <span className="ml-1 text-overlay0">({h.unit})</span>}
-              {streak > 1 && (
-                <span title={`${streak}-day streak`} className="ml-1 inline-flex items-center gap-0.5 align-middle text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
-              )}
-              {h.weeklyGoal ? (
-                <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="ml-1.5 align-middle text-[10px]" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
-                  {weekCount}/{h.weeklyGoal}wk
-                </span>
-              ) : null}
+            <td className="sticky left-0 z-10 bg-mantle py-0.5 pr-2 text-left text-subtext1">
+              {/* Cap the sticky name column so long habit names truncate instead
+                  of widening the column and overlapping the day cells on mobile. */}
+              <div className="flex max-w-[44vw] items-center gap-0.5 sm:max-w-[220px]">
+                <span
+                  draggable
+                  onDragStart={() => setDragId(h.id)}
+                  onDragEnd={() => { setDragId(null); setOverId(null) }}
+                  title="Drag to reorder"
+                  className="shrink-0 cursor-grab text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+                ><GripVertical size={11} /></span>
+                {h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
+                <button onClick={() => onEdit(h.id)} title={h.name} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
+                {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
+                {streak > 1 && (
+                  <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
+                )}
+                {h.weeklyGoal ? (
+                  <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-[10px]" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+                    {weekCount}/{h.weeklyGoal}wk
+                  </span>
+                ) : null}
+              </div>
             </td>
             {days.map((d) => {
               const future = d > today
