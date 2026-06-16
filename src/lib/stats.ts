@@ -166,7 +166,9 @@ export function cleanStreak(
   const slipped = (d: string) => (h ? habitDoneOn(data, h, d) : (data.habitLog[d] ?? []).includes(habitId))
   let cursor = today
   let streak = 0
-  while (!(h && cursor < h.startedOn) && !slipped(cursor)) {
+  // Bounded by startedOn in practice; the cap is a guard for habits with no
+  // start date so an all-clean history can't loop forever.
+  while (streak < 3660 && !(h && cursor < h.startedOn) && !slipped(cursor)) {
     streak += 1
     cursor = addDays(cursor, -1)
   }
