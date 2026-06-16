@@ -17,8 +17,11 @@ export function TodayHabits() {
   )
   if (habits.length === 0) return null
   const log = data.habitLog[today] ?? []
-  const done = habits.filter((h) => log.includes(h.id)).length
-  const allDone = done === habits.length
+  // "Avoid" habits log slips, not wins — exclude them from done/all-done and
+  // never auto-"Mark all" them.
+  const buildHabits = habits.filter((h) => !h.avoid)
+  const done = buildHabits.filter((h) => log.includes(h.id)).length
+  const allDone = done === buildHabits.length
 
   return (
     <Card
@@ -26,8 +29,8 @@ export function TodayHabits() {
       subtitle="Tap to check off — no need to open Trackers"
       right={
         <span className="inline-flex items-center gap-2 text-xs">
-          {!allDone && <button onClick={() => habits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-mauve hover:underline">Mark all</button>}
-          <span className="text-overlay0">{done}/{habits.length}</span>
+          {!allDone && <button onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-mauve hover:underline">Mark all</button>}
+          <span className="text-overlay0">{done}/{buildHabits.length}</span>
         </span>
       }
       collapsible
@@ -38,16 +41,18 @@ export function TodayHabits() {
         <div className="flex flex-wrap gap-2">
           {habits.map((h) => {
             const on = log.includes(h.id)
+            const accent = h.avoid ? cat('red') : cat(h.color)
             return (
               <button
                 key={h.id}
                 onClick={() => toggleHabit(today, h.id)}
                 aria-pressed={on}
+                title={h.avoid ? (on ? 'Slipped today — tap to clear' : 'Clean today') : undefined}
                 className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors"
-                style={{ borderColor: on ? cat(h.color) : cat('surface1'), background: on ? cat(h.color) + '22' : 'transparent', color: on ? cat(h.color) : cat('subtext1') }}
+                style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
               >
-                {h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
-                {h.name}{on ? ' ✓' : ''}
+                {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
+                {h.name}{h.avoid ? (on ? ' — slip' : ' — clean') : (on ? ' ✓' : '')}
               </button>
             )
           })}
