@@ -592,6 +592,9 @@ function CategoryRows({
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const { updateHabit, removeHabit, toggleHabitSkip, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
+  // Reuse units already in use so trackers share consistent units (e.g. always
+  // "min", not a mix of "min"/"minute"/"mins").
+  const knownUnits = [...new Set(data.habits.map((h) => h.unit).filter((u): u is string => !!u))].sort()
   const [heatYear, setHeatYear] = useState(false)
   const today = todayISO()
   const streak = habitStreak(data, habit.id)
@@ -662,7 +665,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {(habit.type === 'count' || habit.type === 'timer') && (
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm text-subtext1">Daily target<div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
-              <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} className="mt-1" /></label>
+              <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} list="habit-units" className="mt-1" /><datalist id="habit-units">{knownUnits.map((u) => <option key={u} value={u} />)}</datalist></label>
             </div>
           )}
           {habit.type === 'rating' && (
