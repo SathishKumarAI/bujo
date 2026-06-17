@@ -1,0 +1,160 @@
+---
+title: bujo — system UML diagrams
+description: Architecture, components, data model, and sync flows as Mermaid diagrams (render on GitHub / any MDX viewer).
+---
+
+# System UML
+
+All diagrams are [Mermaid](https://mermaid.js.org/) — they render on GitHub and in MDX. Keep them in sync with the code (see `docs/RULES.md`).
+
+## 1. Deployment / system context
+
+```mermaid
+flowchart TB
+  user([User browser / PWA])
+
+  subgraph Vercel["Vercel (web prod)"]
+    spa["bujo SPA (Vite/React)\nbujo-journal.vercel.app"]
+    fn["/api/feedback (serverless)"]
+  end
+
+  subgraph SelfHost["Self-host (docker compose)"]
+    web["web — nginx + SPA :8080"]
+    api["api — PostgREST :3000"]
+    db[("db — Postgres :5432")]
+    adminer["adminer :8081"]
+  end
+
+  supa[("Supabase\n(optional account sync)")]
+  gist[("GitHub Gist\n(optional backup)")]
+  folder[("Local cloud folder\n(File System Access)")]
+
+  user --> spa
+  user --> web
+  spa -. account .-> supa
+  spa -. gist token .-> gist
+  spa -. folder .-> folder
+  web --> api --> db
+  adminer --> db
+  spa -. self-host URL .-> api
+
+  classDef store fill:#313244,stroke:#cba6f7,color:#cdd6f4;
+  class db,supa,gist,folder store;
+```
+
+bujo is **local-first**: the source of truth is the in-browser `JournalData`. Every backend (Vercel, Supabase, self-host PostgREST, gist, folder) is an *optional* sync target. With E2E, those targets hold ciphertext.
+
+## 2. Frontend component structure
+
+```mermaid
+flowchart TD
+  App[App.tsx\nNAV + view routing] --> Shell[AppShell]
+  Shell --> Sidebar
+  Shell --> TopBar
+  Shell --> BottomNav
+  Shell --> Main[(active view)]
+  Shell --> MilestoneToast
+  Shell --> ServerSync
+
+  Main --> Today
+  Main --> Trackers
+  Main --> FitnessHub --> Fitness & Gym
+  Main --> Stats
+  Main --> Focus --> PomodoroCard
+  Main --> NoFap
+  Main --> Others[Monthly · Plan · Collections · Goals · Insights · Challenges · Pull-ups · Pickleball · HomeWorkout · Settings · Help]
+
+  subgraph State
+    store["store.tsx (useJournal)\npatch + undo/redo + persist"]
+  end
+  subgraph Lib["lib/*"]
+    s1[stats] & s2[fasting] & s3[checkin] & s4[achievements]
+    s5[milestones] & s6[timeofday] & s7[capture] & s8[serverSync]
+    s9[storage/migrate] & s10[supabase/github/gdrive/fscloud]
+  end
+
+  Today & Trackers & Stats & Focus & NoFap --> store
+  store --> s9
+  store -. sync .-> s8 & s10
+  Stats --> s3 & s4
+  Today --> s2
+```
+
+## 3. Data model (class diagram)
+
+```mermaid
+classDiagram
+  class JournalData {
+    +int version
+    +string updatedAt
+    +Entry[] entries
+    +Habit[] habits
+    +Record habitLog
+    +Record habitValues
+    +Record habitTimes
+    +Record habitNotes
+    +DailyMetric[] metrics
+    +Workout[] workouts
+    +Fast[] fasts
+    +Streak nofap
+    +Settings settings
+  }
+  class Entry { +id +date +type +text +status +tags }
+  class Habit { +id +name +type +category +color +avoid +timeOfDay +cue +startedOn }
+  class DailyMetric { +date +mood +stress +sleep +energy +calories }
+  class Workout { +id +date +activity +setRows +durationMin +rpe }
+  class Fast { +id +start +end }
+  class Streak { +startedOn +best +Relapse[] relapses +urgesResisted }
+  class Relapse { +id +date +trigger +note }
+  class Settings { +gender +weightUnit +distanceUnit +tempUnit +storageMode +selfHostUrl +fastTargetHours }
+
+  JournalData "1" *-- "many" Entry
+  JournalData "1" *-- "many" Habit
+  JournalData "1" *-- "many" DailyMetric
+  JournalData "1" *-- "many" Workout
+  JournalData "1" *-- "many" Fast
+  JournalData "1" *-- "1" Streak
+  Streak "1" *-- "many" Relapse
+  JournalData "1" *-- "1" Settings
+```
+
+## 4. Sync sequence (save → persist → flush on close)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant V as View
+  participant S as store (useJournal)
+  participant LS as localStorage
+  participant SS as ServerSync
+  participant API as PostgREST /journals
+
+  U->>V: tap (e.g. check a habit)
+  V->>S: patch(data)
+  S->>LS: write JournalData (immediate)
+  S-->>SS: data changed
+  SS->>SS: debounce 2.5s
+  SS->>API: POST /journals (upsert blob)
+  API-->>SS: 201
+  Note over U,SS: on tab close
+  U->>SS: pagehide / visibilitychange=hidden
+  SS->>API: POST /journals (keepalive flush)
+```
+
+## 5. Habit check-in state (one habit / day)
+
+```mermaid
+stateDiagram-v2
+  [*] --> Unlogged
+  Unlogged --> Done: toggle (records habitTimes)
+  Done --> Unlogged: toggle off
+  Unlogged --> Skipped: planned skip (streak-safe)
+  Skipped --> Unlogged
+  note right of Done
+    avoid habit → Done means SLIP (red);
+    streak = clean days (cleanStreak)
+  end note
+```
+
+## Regenerating
+These are hand-maintained from the code. When the data model, component tree, or sync paths change, update the relevant diagram in the **same PR** — `docs/RULES.md` makes this a checklist item, and `.github/workflows/docs-guard.yml` flags code-only PRs.
