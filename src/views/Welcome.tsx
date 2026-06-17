@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CloudCog, HardDrive, FolderOpen, ShieldCheck, Check, UserCircle2, LogIn } from 'lucide-react'
 import { useJournal } from '../store'
 // (Welcome uses native buttons)
@@ -6,7 +6,7 @@ import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
-import { supabaseEnabled, signInGoogle, signUpEmail, signInEmail, pullJournal, pushJournal } from '../lib/supabase'
+import { supabaseEnabled, providerEnabled, signInGoogle, signUpEmail, signInEmail, pullJournal, pushJournal } from '../lib/supabase'
 
 /**
  * First-run gate. The app is local-first; here the user chooses where their
@@ -45,6 +45,10 @@ export function Welcome() {
   const [pw, setPw] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [err, setErr] = useState('')
+  // Only offer Google once we've confirmed the provider is enabled on Supabase —
+  // otherwise the OAuth redirect dead-ends on a raw "provider not enabled" error.
+  const [googleOk, setGoogleOk] = useState(false)
+  useEffect(() => { providerEnabled('google').then(setGoogleOk) }, [])
   async function google() {
     setBusy(true); setErr('')
     try { await signInGoogle() } // redirects out to Google, returns to the app signed in
@@ -80,8 +84,10 @@ export function Welcome() {
             </div>
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
-                <button onClick={google} disabled={busy} className="press-3d inline-flex items-center gap-2 rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue with Google'}</button>
-                <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Use email</button>
+                {googleOk && (
+                  <button onClick={google} disabled={busy} className="press-3d inline-flex items-center gap-2 rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue with Google'}</button>
+                )}
+                <button onClick={() => { setShowLogin(true); setErr('') }} className={`inline-flex items-center gap-1.5 text-sm ${googleOk ? 'text-mauve hover:underline' : 'press-3d rounded-lg bg-mauve px-4 py-2 font-medium text-crust'}`}><LogIn size={14} /> {googleOk ? 'Use email' : 'Sign in with email'}</button>
                 <span className="text-xs text-overlay0">Sign in to create your journal and sync it across devices.</span>
               </div>
             ) : (

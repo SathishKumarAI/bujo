@@ -12,6 +12,24 @@ export const supabase: SupabaseClient | null =
 
 export const supabaseEnabled = () => supabase != null
 
+/**
+ * Whether an OAuth provider is actually enabled on the Supabase project. The
+ * `/auth/v1/settings` endpoint is public (anon key). Used to hide a sign-in
+ * button when its provider isn't configured, so users don't get redirected to
+ * a raw "provider is not enabled" error page.
+ */
+export async function providerEnabled(provider: string): Promise<boolean> {
+  if (!URL || !ANON) return false
+  try {
+    const r = await fetch(`${URL}/auth/v1/settings`, { headers: { apikey: ANON } })
+    if (!r.ok) return false
+    const j = await r.json()
+    return !!j?.external?.[provider]
+  } catch {
+    return false
+  }
+}
+
 function client(): SupabaseClient {
   if (!supabase) throw new Error('Cloud account is not configured.')
   return supabase
