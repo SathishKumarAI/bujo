@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { Button as SButton } from './ui/button'
@@ -30,6 +30,9 @@ export function Card({
   defer?: boolean
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
+  // On phones, long subtitle/description text is hidden to save space; the ⓘ
+  // toggle reveals it on tap. On sm+ the subtitle always shows.
+  const [infoOpen, setInfoOpen] = useState(false)
   return (
     <section
       onClick={onClick}
@@ -38,8 +41,21 @@ export function Card({
       {(title || right || collapsible) && (
         <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>
           <div className="min-w-0">
-            {title && <h2 className="font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
-            {subtitle && <p className="mt-1 text-sm leading-snug text-subtext0">{subtitle}</p>}
+            <div className="flex items-center gap-1.5">
+              {title && <h2 className="min-w-0 truncate font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
+              {subtitle && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setInfoOpen((v) => !v) }}
+                  aria-label={infoOpen ? 'Hide details' : 'Show details'}
+                  aria-expanded={infoOpen}
+                  className="shrink-0 text-overlay0 hover:text-text sm:hidden"
+                >
+                  <Info size={14} />
+                </button>
+              )}
+            </div>
+            {subtitle && <p className={cn('mt-1 text-sm leading-snug text-subtext0', infoOpen ? '' : 'hidden sm:block')}>{subtitle}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}
