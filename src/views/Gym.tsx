@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -273,8 +273,10 @@ export function Gym() {
             const kind = row.kind ?? 'working'
             const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'peach', title: 'Drop set' } }[kind]
             const nextKind = { working: 'warmup', warmup: 'drop', drop: 'working' }[kind] as SetRow['kind']
+            // Strong-style "completed set" — a filled weight+reps row reads as done (green accent).
+            const complete = !!(row.weight.trim() && row.reps.trim())
             return (
-              <div key={i}>
+              <div key={i} className={`-ml-2 rounded-lg border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
                 <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] items-center gap-2">
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
@@ -311,6 +313,7 @@ export function Gym() {
                       </button>
                     )}
                     {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
+                    {complete && <span className="inline-flex items-center gap-0.5" style={{ color: cat('green') }}><Check size={11} /> logged</span>}
                     {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-[10px]" />}
                   </div>
                 )}
@@ -318,6 +321,20 @@ export function Gym() {
             )
           })}
         </div>
+
+        {(() => {
+          // Strong-style live session tally: sets completed + total volume.
+          const done = rows.filter((r) => r.weight.trim() && r.reps.trim())
+          if (!done.length) return null
+          const vol = Math.round(done.reduce((s, r) => s + Number(r.weight) * Number(r.reps), 0))
+          return (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><Check size={12} /> {done.length} set{done.length === 1 ? '' : 's'}</span>
+              <span className="text-overlay0">·</span>
+              <span className="text-subtext1">{vol.toLocaleString()}{unit} volume</span>
+            </div>
+          )
+        })()}
 
         <div className="mt-3 flex flex-wrap gap-2">
           <Button onClick={() => addRow()}>+ Add set</Button>
