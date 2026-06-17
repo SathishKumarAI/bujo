@@ -1,0 +1,150 @@
+---
+title: bujo data engineering — schemas, pipelines & scaling (10 → 10M users)
+description: How bujo's data is modelled, stored, retrieved, and how it scales from a handful of users to ten million, written from a senior-data-engineer lens.
+---
+
+# Data engineering: schema, pipelines & scaling
+
+> **The constraint that shapes everything:** bujo's locked architecture is **local-first + BYO/E2E-encrypted**. The client owns the data; the server (when present) is a **sync + blob** layer that should ideally never see plaintext. That single decision *simplifies* the backend at scale — read it in [§6](#6-the-e2e-constraint) before designing tables.
+
+## 0. Current state (today)
+
+- **Source of truth:** a single `JournalData` JSON object in the browser (`localStorage`, key `bujo:data`), forward-migrated by `migrate()`.
+- **Optional sync:** one row per user in Supabase (the whole journal as one JSON blob), or a file in the user's own cloud folder (File System Access API), or a GitHub gist. Conflict resolution is last-writer-wins on `data.updatedAt` (`resolveIncoming`).
+- **Analytics:** 100% client-side — streaks, heatmaps, `completionByHour`, correlations are pure functions over the in-memory object.
+
+This is correct for **10 users** and **10,000**. The blob-per-user model only strains when you need *cross-row* queries (leaderboards, cohort analytics) or the blob gets large. Below is the path that keeps the local-first contract while scaling the server.
+
+## 1. Logical data model
+
+The client `JournalData` is a document; the *logical* model behind it is a clean star of per-user, time-stamped facts. Entities (with the in-app source):
+
+| Entity | Grain | Key fields | App source |
+|---|---|---|---|
+| `users` | 1/user | `id`, `created_at`, settings | `Settings` |
+| `entries` | 1/bullet | `id`, `user_id`, `date`, `type`, `text`, `status`, `tags[]` | `Entry` |
+| `habits` | 1/habit | `id`, `user_id`, `name`, `type`, `color`, `time_of_day`, `avoid` | `Habit` |
+| `habit_log` | 1/(habit,day) | `user_id`, `habit_id`, `day`, `value`, `checked_at` | `habitLog`/`habitValues`/`habitTimes` |
+| `metrics` | 1/(user,day) | `user_id`, `day`, `mood`, `stress`, `sleep`, macros | `DailyMetric` |
+| `workouts` | 1/session | `id`, `user_id`, `date`, `activity`, `set_rows` jsonb | `Workout` |
+| `fasts` | 1/fast | `id`, `user_id`, `start_ts`, `end_ts` | `Fast` |
+| `media` | 1/photo | `id`, `user_id`, `kind`, `blob_url`, `taken_on` | `ProgressPhoto`/images |
+
+Everything is **append-mostly, user-scoped, and time-indexed** — the friendliest shape there is for partitioning and caching.
+
+## 2. Storage tiers by scale
+
+### 10 users — blob per user (today)
+```sql
+create table journals (
+  user_id    uuid primary key references auth.users,
+  data       jsonb not null,           -- the whole JournalData
+  updated_at timestamptz not null,
+  version    int not null
+);
+alter table journals enable row level security;
+create policy own_row on journals using (auth.uid() = user_id);
+```
+One point-read, one upsert. Zero joins. Ship it. (This is essentially what Supabase gives bujo now.)
+
+### 10K–100K users — normalize the hot entities
+Keep the blob for cold/rare data, but promote the entities you *query across time* into real tables so reads don't deserialize a megabyte to render Today:
+```sql
+create table habit_log (
+  user_id   uuid    not null,
+  habit_id  uuid    not null,
+  day       date    not null,
+  value     real,                       -- null = simple check
+  checked_at timestamptz,               -- timestamp-based input
+  primary key (user_id, habit_id, day)
+);
+create index on habit_log (user_id, day);          -- Today / month grid
+create index on entries  (user_id, date);
+create index on workouts (user_id, date);
+```
+- **Media → object storage** (S3 / Supabase Storage / R2), DB stores only the URL. Never put images in Postgres.
+- RLS (`user_id = auth.uid()`) is the isolation boundary.
+
+### 10M users — partition, replicate, cache, precompute
+At 10M users × years of daily rows, `habit_log` alone is billions of rows. Four moves:
+
+1. **Partition** the big append tables. By **`user_id` hash** (even distribution, all of one user's data co-located → fast per-user reads) for `habit_log`/`entries`/`workouts`; optionally sub-partition by **year** for cheap archival/drop. Citus (or Postgres native hash partitioning + a sharding key) does this.
+2. **Read replicas + a pooler** (PgBouncer / Supavisor). The workload is read-heavy (open app → render dashboard); writes are small and bursty (tap a habit).
+3. **Cache the dashboard** in Redis: `today:{user_id}` and precomputed counters (current streak, today's %, peak hour) with short TTL + write-through on mutation. The Today view should be ~1 cache GET.
+4. **Precompute aggregates.** Streaks, heatmaps, `completionByHour`, correlations are expensive over raw rows. Don't compute them on the read path at 10M users — materialize them (see §3 analytics pipeline) into `user_summary` and serve from there.
+
+```sql
+-- precomputed, refreshed by the analytics pipeline; one tiny row per user
+create table user_summary (
+  user_id        uuid primary key,
+  current_streak int, longest_streak int,
+  habit_heatmap  jsonb,       -- last-365 compressed
+  checkin_by_hour smallint[24],
+  refreshed_at   timestamptz
+);
+```
+
+## 3. Data pipelines
+
+### Write path (ingestion)
+```
+client (offline-first, optimistic)
+  → batched, idempotent mutations (op log w/ client-generated ids)
+  → API (validates, applies LWW on updated_at)        ── primary Postgres (partitioned)
+  → emits change events ───────────────────────────────► event stream (Kafka / Kinesis / PG logical replication)
+```
+- **Idempotency:** client generates row ids (uuid) and an op id; the API upserts → safe retries on flaky mobile networks.
+- **Conflict resolution:** already LWW on `updated_at` at the document level; at row grain it becomes per-entity LWW (or CRDT counters for additive things like count-habits) — a clean upgrade of today's `resolveIncoming`.
+
+### Sync path (offline-first delta)
+- Client keeps a local **oplog** + a `last_synced_cursor`. On reconnect: push unsynced ops, pull `changes since cursor`. This is a delta sync, not a whole-blob PUT — bandwidth scales with *changes*, not journal size. (Today's whole-blob sync is fine to ~MBs; delta is the 10M-user upgrade.)
+
+### Analytics pipeline (read-optimized)
+```
+event stream → ClickHouse / BigQuery (columnar, append-only facts)
+            → dbt models (streaks, heatmaps, cohort retention, time-of-day)
+            → materialize → user_summary (Postgres) + product dashboards
+```
+- Heavy aggregates run **off the transactional DB**, on a columnar warehouse built for `GROUP BY user, day`.
+- Output flows back to `user_summary` (per-user, served fast) and to internal cohort/retention dashboards (the cross-user queries the blob model could never do).
+
+### Retention / archival
+- Partition by year → **drop or cold-tier old partitions** instead of `DELETE` (instant, no bloat).
+- Media lifecycle → infrequent-access → glacier tiers on the object store.
+
+## 4. Retrieval — map every view to its query
+
+| View | Pattern | Served from |
+|---|---|---|
+| Today | point read, `(user_id, day=today)` | Redis `today:{uid}`, miss → partition-pruned index scan |
+| Monthly grid | range `(user_id, day in month)` | index `(user_id, day)`; replica |
+| Streaks / today % | precomputed | `user_summary` / Redis |
+| Stats heatmap, check-in-by-hour | precomputed | `user_summary` (from warehouse) |
+| Search | per-user full-text | Postgres `tsvector` (10K) → per-user index / OpenSearch (10M) |
+| Leaderboards / cohorts | cross-user aggregate | warehouse only (never the OLTP DB) |
+
+## 5. Capacity math (back-of-envelope, 10M users)
+
+- **Writes:** assume 20 logged actions/active-user/day, 30% DAU → ~60M writes/day ≈ **700 writes/s** avg, ~5–10× peak. A single partitioned Postgres primary handles this comfortably; the event stream absorbs spikes.
+- **Reads:** app-open dominated. With the Today cache, the hot path is Redis (≫100k GET/s on one cluster); Postgres only serves cache misses + history scrolls.
+- **Storage:** ~a few KB/user/day of facts → ~10M × ~1–5 MB/year ≈ **10–50 TB/year** of rows (partitioned, compressible), plus media in object storage (the real bulk → CDN-fronted, lifecycle-tiered).
+- The design degrades gracefully: precompute + cache means user count scales the *cheap* tier (Redis/replicas/object store), not the expensive primary.
+
+## 6. The E2E constraint (the important part)
+
+bujo is **BYO + E2E**: the client encrypts before sync, the server stores ciphertext. This **forbids server-side analytics** on user content — you cannot `GROUP BY mood` on data you can't read. Three honest options:
+
+1. **Keep analytics client-side (recommended, matches the locked architecture).** The server becomes a **dumb encrypted-blob + delta-sync + media store**. Then *most of §2–§3's heavy machinery isn't needed* at all: no warehouse over user content, no per-user aggregate tables — the browser already computes streaks/heatmaps/check-in-times (it does today). Scaling to 10M is then a **CDN + object store + a thin sync API with idempotent writes** — cheap and boring. This is the elegant answer for bujo.
+2. **Opt-in plaintext analytics tier.** Users who want cross-device server insights opt out of E2E for *derived metrics only* (store aggregates, not raw text). Two storage classes; clear consent.
+3. **Encrypted aggregation** (client computes summaries, encrypts, server stores blobs it can't read; cross-user analytics via privacy-preserving aggregation / DP). Powerful, complex — only if cohort analytics become a product requirement.
+
+**Recommendation:** ship **(1)**. The local-first + E2E choice means scale is mostly *delivery* (CDN, object store, a stateless sync API behind a pooler), not a data-warehouse build-out. Reserve §2–§5's normalized/partitioned/warehouse stack for the **opt-in, non-E2E** metrics path if and when product needs server-side cohort analytics.
+
+## 7. Migration path (incremental, no big-bang)
+
+1. **Now:** blob-per-user in Supabase + client analytics. ✅
+2. **+sync robustness:** row-grain LWW / oplog delta sync (replace whole-blob PUT). Backward-compatible.
+3. **+media:** move images to object storage + CDN (already IndexedDB-backed locally).
+4. **If/when non-E2E metrics ship:** stand up the event stream + warehouse + `user_summary` for the opt-in cohort, leaving the E2E core untouched.
+
+Each step is independently shippable and reversible — the same discipline as the rest of the codebase.
