@@ -24,6 +24,7 @@ export function HomeWorkout() {
   const [items, setItems] = useState<SessionItem[]>([])
   const [dur, setDur] = useState('')
   const [notes, setNotes] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
 
   const lib = filter === 'all' ? HOME_EXERCISES : HOME_EXERCISES.filter((e) => e.muscle === filter)
   const sessions = (data.workouts ?? []).filter((w) => w.activity === 'Home').sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -72,20 +73,32 @@ export function HomeWorkout() {
             )}
           </Card>
 
-          <Card title="Recent home workouts" subtitle="Saved to your account">
+          <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
             {sessions.length === 0 ? (
               <Empty>No home workouts logged yet.</Empty>
             ) : (
               <ul className="divide-y divide-surface0">
-                {sessions.slice(0, 8).map((w) => (
-                  <li key={w.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
-                    <span className="min-w-0">
-                      <span className="text-subtext1">{prettyDay(w.date)}</span>
-                      <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                    </span>
-                    <button onClick={() => removeWorkout(w.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                  </li>
-                ))}
+                {sessions.slice(0, 12).map((w) => {
+                  const open = openId === w.id
+                  return (
+                    <li key={w.id} className="group py-2 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-text">
+                          <span className="text-subtext1">{prettyDay(w.date)}</span>
+                          <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
+                          <span className="ml-1 text-[10px] text-overlay0">{open ? '▾' : '▸'}</span>
+                        </button>
+                        <button onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                      </div>
+                      {open && (
+                        <ul className="mt-1.5 ml-1 space-y-0.5">
+                          {w.sets.map((s, i) => <li key={i} className="text-xs text-subtext0">• {s}</li>)}
+                          {w.notes && <li className="mt-1 text-xs text-overlay0 italic">“{w.notes}”</li>}
+                        </ul>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </Card>
