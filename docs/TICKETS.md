@@ -404,3 +404,34 @@ breakdown, triple-duplicated step logic, and a11y labels on the activity strip/s
 | BUJO-154 | Home Workout tab — curated bodyweight library, YouTube pro-demo + search links, session logging saved as Workout(activity='Home') → DB/sync/stats | ✅ |
 | BUJO-152 | Google sign-in + guest=explore / account-to-use gate | ✅ partial (PR #6; needs Supabase Google provider) |
 | BUJO-155 | Settings layout redesign — designed header + sticky icon sidebar rail (desktop) / scroll row (mobile) + grouped account/sync/privacy section | ✅ |
+
+## Epic CAPTURE-UX — session 2026-06-16 (appended)
+
+Input-capture program + habit polarity + a mobile/nav overhaul. PRs #10–#24 (+ doc #16) merged to `main` and deployed to bujo-journal.vercel.app. Prompt dump: `docs/sessions/2026-06-16-prompts.md`.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-156 | Enforce CSP (Report-Only → enforced) — verified 0 violations | ✅ (#10) |
+| BUJO-157 | YouTube demo link on every exercise (shared `lib/video.ts` + `<VideoLink>`) | ✅ (#11) |
+| BUJO-158 | Smart **capture bar** — one local parser (`lib/capture.ts`) routes a line to gym/cardio/metric/habit/journal; reuses SmartInput+MicButton | ✅ (#12) |
+| BUJO-159 | Capture Phase 2 field controls (`Stepper`/`EmojiScale`) + "edit fields" + Gym repeat-last-set | ✅ (#13) |
+| BUJO-160 | Capture Phase 3 — spoken-number normalization ("eighty by five" → 80x5) | ✅ (#13) |
+| BUJO-161 | Stepper-ize Trackers + Fitness number inputs | ✅ (#14) |
+| BUJO-162 | Retire QuickAdd (superseded by CaptureBar) + tighten habit matcher | ✅ (#15) |
+| BUJO-163 | Google OAuth setup runbook | ✅ doc (#16) |
+| BUJO-164 | Mobile Trackers sticky habit-name column overflow/overlap fix | ✅ (#17) |
+| BUJO-165 | **Habit polarity** — build vs avoid/quit (alcohol/smoking/sugar): slip/clean semantics, `cleanStreak`, red/Ban UI in all surfaces; dedup guard | ✅ (#18) |
+| BUJO-166 | Activity "cube" cells made interactive (were read-only → looked broken for check habits) | ✅ (#18) |
+| BUJO-167 | Reuse existing units (same-unit consistency datalist) | ✅ (#19) |
+| BUJO-168 | Layout-space + nav-cleanup across all 19 views; de-dup Goals/Challenges icon | ✅ (#20) |
+| BUJO-169 | TopBar mobile viewport overflow (481px→390) — icon trim | ✅ (#21) |
+| BUJO-170 | Nav regroup (Journal / Health / Insights & Stats) + `overflow-x-clip` + hosting MDX docs | ✅ (#22) |
+| BUJO-171 | Collapse card subtitles on mobile (ⓘ tap to reveal) | ✅ (#23) |
+| BUJO-172 | Hide Google sign-in until provider enabled (fixes "provider not enabled" error page) | ✅ (#23) |
+| BUJO-173 | Auto-updating README screenshots (`npm run shots` + CI workflow) | ✅ (#24) |
+| BUJO-174 | Mobile bottom nav: Plan → Pickleball | ✅ (#24) |
+| BUJO-175 | Drag-to-reorder habits in activity view (BUJO-151 tail) | 🔜 |
+| BUJO-176 | "Same-unit tracker" combined totals/compare (if that was the intent) | 🔜 |
+
+**External switches (user-only):** enable Google provider in Supabase (button auto-reappears); delete smoke-test account `bujo-smoketest-260616@example.com`.
+**Cosmetic:** card title truncates ("M…") when it has both a long title + right controls (Stats monthly-mood).

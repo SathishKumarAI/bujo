@@ -444,3 +444,25 @@ D-41 (optional Supabase, disabled-by-default).
 **Follow-ups:**
 - [ ] Pick a primary sync path in onboarding (passphrase vs account) to avoid two.
 - [ ] Optional: realtime sync via Supabase channels; conflict UI.
+
+---
+
+## 2026-06-16 — input-capture program, habit polarity, mobile-overflow & nav overhaul
+
+Big multi-feature day. PRs #10–#24 merged + deployed to bujo-journal.vercel.app.
+
+**Shipped:**
+- **Input capture** (#12–#15): one local deterministic parser (`lib/capture.ts`) → smart `CaptureBar` (type/say → gym/cardio/metric/habit/journal), field-control steppers, voice number parsing, QuickAdd retired.
+- **Fitness/UX**: per-exercise YouTube demo links (#11); stepper number inputs (#14); unit-reuse datalist (#19).
+- **Habit polarity** (#18): build vs avoid/quit habits (alcohol, smoking…) — slip/clean semantics, `cleanStreak`, red/Ban UI everywhere; activity "cube" cells made interactive (were read-only → looked broken for check habits); duplicate-habit guard.
+- **Mobile** (#17, #21, #22, #23, #24): killed horizontal overflow (TopBar trim + `overflow-x-clip`); collapse card subtitles behind ⓘ; bottom nav Plan→Pickleball.
+- **Nav** (#20, #22): groups Journal / Health / Insights & Stats; de-duped icons.
+- **Security/auth**: CSP enforced (#10); Google sign-in button hidden until provider enabled (#23); OAuth setup doc (#16).
+- **Infra/docs**: README screenshots + auto-update workflow (#24); hosting options in `docs/hosting/*.mdx`; mobile/layout audits in `docs/qa/`; full prompt dump in `docs/sessions/2026-06-16-prompts.md`.
+
+**Verified:** 181 tests green; every view 390px-clean on mobile (Playwright); email auth works live.
+
+**Follow-ups (external switches — user-only):**
+- [ ] Enable Google provider in Supabase (Auth → Providers → Google); button auto-reappears.
+- [ ] Delete smoke-test account `bujo-smoketest-260616@example.com`.
+- [ ] (cosmetic) card title truncates to "M…" when it has both a long title + right controls (Stats monthly-mood).
