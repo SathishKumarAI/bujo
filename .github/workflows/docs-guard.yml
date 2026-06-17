@@ -1,0 +1,29 @@
+name: Docs guard
+
+# Non-blocking nudge: if a PR changes src/ or docker/ but touches no docs, tests,
+# or TICKETS, warn so docs don't drift. See docs/RULES.md.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  docs-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check docs accompany code changes
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          FILES=$(git diff --name-only "$BASE" "$HEAD")
+          echo "Changed files:"; echo "$FILES"
+          CODE=$(echo "$FILES" | grep -E '^(src/|docker/|docker-compose|Dockerfile)' || true)
+          DOCS=$(echo "$FILES" | grep -E '(^docs/|\.test\.|TICKETS\.md|WORKLOG\.md|uml\.mdx)' || true)
+          if [ -n "$CODE" ] && [ -z "$DOCS" ]; then
+            echo "::warning::Code changed but no docs/tests/TICKETS updated — see docs/RULES.md. Add a ticket, a test, or a diagram update."
+          else
+            echo "Docs guard OK."
+          fi
