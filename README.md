@@ -8,6 +8,31 @@ browser**. No accounts, no server, no tracking.
 
 ![bujo in open-book mode with demo data](docs/screenshot-book.png)
 
+## Screenshots
+
+**▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to try it instantly, no account.
+
+| Today | Trackers | Stats |
+|---|---|---|
+| ![Today](docs/screenshots/today-desktop.png) | ![Trackers](docs/screenshots/trackers-desktop.png) | ![Stats](docs/screenshots/stats-desktop.png) |
+
+| Fitness | Pickleball | Goals |
+|---|---|---|
+| ![Fitness](docs/screenshots/fitness-desktop.png) | ![Pickleball](docs/screenshots/pickleball-desktop.png) | ![Goals](docs/screenshots/goals-desktop.png) |
+
+**On a phone** — Today · Trackers · Fitness:
+
+<p>
+  <img src="docs/screenshots/today-mobile.png" alt="Today (mobile)" width="220">
+  <img src="docs/screenshots/trackers-mobile.png" alt="Trackers (mobile)" width="220">
+  <img src="docs/screenshots/fitness-mobile.png" alt="Fitness (mobile)" width="220">
+</p>
+
+> These shots **auto-refresh after every deploy** — a GitHub Action
+> (`.github/workflows/screenshots.yml`) rebuilds the app on each push to `main`
+> and re-runs `npm run shots` (Playwright → `docs/screenshots/`). Regenerate
+> locally with `npm run build && npm run preview` then `npm run shots`.
+
 ## Why
 
 Most journaling apps lock your data behind a login and a subscription. `bujo`

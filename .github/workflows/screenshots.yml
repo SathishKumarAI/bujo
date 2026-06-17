@@ -1,0 +1,57 @@
+name: Update README screenshots
+
+# Runs after every merge to main (each deploy). Rebuilds the app, screenshots it
+# with Playwright against a local preview, and commits any changes to
+# docs/screenshots/. The paths-ignore guard stops the screenshot commit from
+# re-triggering this workflow (no infinite loop).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/screenshots/**'
+      - 'README.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright (Chromium)
+        run: |
+          npm i -D --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - run: npm run build
+
+      - name: Capture screenshots against a local preview
+        run: |
+          npm run preview -- --port 4173 &
+          npx wait-on http://localhost:4173 -t 60000 || sleep 8
+          BUJO_URL=http://localhost:4173 npm run shots
+
+      - name: Commit updated screenshots
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          if git diff --staged --quiet; then
+            echo "No screenshot changes."
+          else
+            git commit -m "docs(screenshots): refresh after deploy [skip ci]"
+            git push
+          fi
