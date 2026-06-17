@@ -1,4 +1,4 @@
-import { CheckSquare, Dumbbell, ListTodo, ArrowUpToLine } from 'lucide-react'
+import { CheckSquare, Dumbbell, ListTodo, ArrowUpToLine, Timer } from 'lucide-react'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat } from '../lib/colors'
@@ -33,6 +33,7 @@ export function TodayPlanCard() {
   })
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= today).length
   const workedOut = data.workouts.some((w) => w.date === today) || (data.pickleball ?? []).some((p) => p.date === today)
+  const focusMin = (data.devSessions ?? []).filter((s) => s.date === today).reduce((a, s) => a + s.durationMin, 0)
 
   // Pull-up program progress (days fully checked off).
   const done = data.settings.programDone ?? []
@@ -52,6 +53,7 @@ export function TodayPlanCard() {
     { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListTodo, to: 'plan', done: tasksDue === 0 },
   ]
   if (pullDone > 0 && pullDone < pullTotal) chips.push({ label: `Pull-ups ${pullDone}/${pullTotal}`, color: 'peach', icon: ArrowUpToLine, to: 'pullups', done: false })
+  if (focusMin > 0) chips.push({ label: `${focusMin}m focused`, color: 'lavender', icon: Timer, to: 'focus', done: true })
 
   // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
   // summary card — avoids the "crowded Today" con from DECISIONS D-34).

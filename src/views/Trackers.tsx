@@ -680,6 +680,27 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <Textarea value={data.habitNotes?.[today]?.[habit.id] ?? ''} onChange={(e) => setHabitNote(today, habit.id, e.target.value)} placeholder="How did it go today?" rows={2} className="mt-1" />
           </label>
 
+          {(() => {
+            const recent = Object.entries(data.habitNotes ?? {})
+              .map(([day, m]) => ({ day, text: m[habit.id] }))
+              .filter((x) => x.text && x.day !== today)
+              .sort((a, b) => (a.day < b.day ? 1 : -1))
+              .slice(0, 6)
+            if (!recent.length) return null
+            return (
+              <div>
+                <p className="mb-1 text-sm text-overlay0">Recent notes</p>
+                <ul className="space-y-1">
+                  {recent.map((n) => (
+                    <li key={n.day} className="rounded-lg border border-surface0 bg-base px-2.5 py-1.5 text-xs">
+                      <span className="text-overlay0">{n.day}</span> · <span className="text-subtext1">{n.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })()}
+
           {(habit.type === 'count' || habit.type === 'timer') && (
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm text-subtext1">Daily target<div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
