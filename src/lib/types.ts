@@ -115,6 +115,15 @@ export interface WorkoutSet {
   kind?: 'warmup' | 'working' | 'drop'
 }
 
+/** An intermittent-fasting window: when eating stopped → when it resumed. */
+export interface Fast {
+  id: string
+  /** ISO datetime the fast began (last food). */
+  start: string
+  /** ISO datetime the fast ended (first food). */
+  end: string
+}
+
 export interface Workout {
   id: string
   date: string // ISO day
@@ -267,6 +276,10 @@ export interface Settings {
   cycleTrackerEnabled: boolean
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
+  /** Intermittent-fasting target window in hours (e.g. 16 for 16:8). */
+  fastTargetHours?: number
+  /** ISO datetime of an in-progress fast's start (set while fasting). */
+  fastActiveStart?: string
   /** Day the journal "owner" started, for streak math. */
   startedOn: string
   /** Last time the user exported a backup (ISO), for the nudge. */
@@ -385,6 +398,8 @@ export interface JournalData {
   habitValues?: Record<string, Record<string, number>>
   metrics: DailyMetric[]
   workouts: Workout[]
+  /** Completed intermittent-fasting windows. */
+  fasts?: Fast[]
   routines: Routine[]
   bodyMetrics: BodyMetric[]
   cycle: CyclePoint[]
