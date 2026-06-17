@@ -1,0 +1,64 @@
+---
+title: Self-host (Docker + nginx)
+description: Run bujo on your own box — static SPA via nginx.
+---
+
+# Self-host with Docker + nginx
+
+Full control, no third party. nginx serves the static build; you handle TLS (e.g. Caddy/Traefik or certbot) and the optional API yourself.
+
+## Dockerfile
+```dockerfile
+# build
+FROM node:24-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# build-time env (sync is optional)
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+RUN npm run build
+
+# serve
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+## nginx.conf — SPA fallback + cache + CSP
+```nginx
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+
+  # hashed assets: cache forever
+  location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; }
+  # never cache the shell or the service worker, so updates land
+  location = /index.html { add_header Cache-Control "no-cache"; }
+  location = /sw.js      { add_header Cache-Control "no-cache"; }
+
+  # security headers — mirror vercel.json (CSP is enforced there)
+  add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; ..." always;
+  add_header X-Content-Type-Options "nosniff" always;
+
+  # SPA fallback
+  location / { try_files $uri $uri/ /index.html; }
+}
+```
+
+## Build & run
+```bash
+docker build \
+  --build-arg VITE_SUPABASE_URL=... \
+  --build-arg VITE_SUPABASE_ANON_KEY=... \
+  -t bujo .
+docker run -p 8080:80 bujo
+```
+
+## The optional feedback API
+nginx is static only. If you want in-app feedback, run a tiny sidecar (Node/Express implementing the `api/feedback.ts` logic) and `proxy_pass /api/ → http://feedback:3000/`. Otherwise the feature degrades gracefully (returns 503) and the rest of the app is unaffected.
+
+## Trade-off
+Maximum control and privacy; you own TLS, CDN, updates, and uptime. No preview deploys.

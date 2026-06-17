@@ -1,0 +1,38 @@
+---
+title: Host on Vercel (current)
+description: Zero-config static + serverless hosting for bujo.
+---
+
+# Vercel (current setup)
+
+The project is already linked (`.vercel/project.json` → project `bujo`). Vercel detects Vite, builds `dist/`, serves the SPA, and runs `api/*` as serverless functions automatically.
+
+## Deploy
+```bash
+# preview
+vercel
+# production
+vercel --prod --yes
+```
+Git integration also auto-builds on push. **Note:** the human-facing alias `bujo-journal.vercel.app` does NOT auto-follow new prod deploys — re-point it each time:
+```bash
+vercel alias set <new-deploy>.vercel.app bujo-journal.vercel.app
+```
+
+## What Vercel handles for you
+- **SPA fallback** — framework preset rewrites unknown routes to `index.html`.
+- **Serverless** — `api/feedback.ts` runs on Fluid Compute, no config.
+- **Headers/CSP** — from `vercel.json` (CSP is enforced).
+- **Preview URLs** — one per PR/branch.
+
+## Env vars
+Set the optional sync keys (build-time, inlined):
+```bash
+vercel env add VITE_SUPABASE_URL production
+vercel env add VITE_SUPABASE_ANON_KEY production
+```
+For the feedback function (runtime): `GITHUB_TOKEN` (+ optional `GITHUB_REPO`).
+
+## Gotchas
+- A stale PWA service worker can mask an update — hard-refresh (`Ctrl/Cmd+Shift+R`) to verify a deploy.
+- `VITE_*` changes require a **rebuild** to take effect (not a runtime restart).
