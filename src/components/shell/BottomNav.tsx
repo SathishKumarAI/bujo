@@ -22,7 +22,7 @@ function useHideOnScroll(): boolean {
 
 // The five views worth a thumb-tap on a phone (all also live in the sidebar).
 // No FAB — quick-add stays in the top bar. Order matches the daily/training flow.
-const PRIMARY: ViewId[] = ['today', 'trackers', 'fitness', 'plan', 'pullups']
+const PRIMARY: ViewId[] = ['today', 'trackers', 'fitness', 'pickleball', 'pullups']
 
 /**
  * Mobile-only bottom tab bar (hidden ≥ md): five primary destinations, equal
