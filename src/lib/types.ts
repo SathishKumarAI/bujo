@@ -88,6 +88,7 @@ export interface DailyMetric {
   mood?: number // 0 bad … 10 great
   stress?: number // 0 low … 10 high
   sleep?: number // hours, 0–10+
+  energy?: number // 0 drained … 10 energized (Bearable-style)
   /** Intermittent-fast break marker: 'food' (●) or 'drink' (○) or undefined. */
   fastBreak?: 'food' | 'drink'
   /** Auto-logged weather snapshot for the day (opt-in). */
