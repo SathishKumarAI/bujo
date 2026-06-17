@@ -90,3 +90,23 @@ create table user_summary (
 
 -- a row so the stack has something to show on first boot
 insert into users (email, settings) values ('demo@bujo.local', '{"storageMode":"local"}');
+
+-- ── Whole-journal blob store, exposed over REST by PostgREST ──────────────────
+-- The client upserts its entire JournalData here on save / tab-close. One row
+-- per device/user id. (E2E: store ciphertext — PostgREST never needs plaintext.)
+create table journals (
+  id         text primary key,
+  data       jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+-- PostgREST auth: `authenticator` logs in and switches into `web_anon`, which is
+-- the only role with grants. For PUBLIC exposure, add a JWT secret (PGRST_JWT_SECRET)
+-- + RLS on journals so each token only touches its own row; on localhost the
+-- anon role is scoped to just this table.
+create role web_anon nologin;
+grant usage on schema public to web_anon;
+grant select, insert, update on journals to web_anon;
+
+create role authenticator login password 'bujo' noinherit;
+grant web_anon to authenticator;

@@ -36,6 +36,23 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # REST API over Postgres (the sync endpoint the app saves to).
+  api:
+    image: postgrest/postgrest:v12.2.3
+    container_name: bujo-api
+    environment:
+      PGRST_DB_URI: postgres://authenticator:bujo@db:5432/bujo
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: web_anon
+      # Set a 32+ char secret to require JWTs (public exposure). Empty = open on localhost.
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET:-}
+      PGRST_SERVER_CORS_ALLOWED_ORIGINS: "*"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    restart: unless-stopped
+
   adminer:
     image: adminer:4
     container_name: bujo-adminer
