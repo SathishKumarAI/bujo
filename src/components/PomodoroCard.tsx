@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react'
 import { Card, Button } from './ui'
+import { useJournal } from '../store'
+import { todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 
 // ADHD-friendly defaults: start gentle, scale up. Pomodoro work/break in minutes.
@@ -18,6 +20,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
  * blocks finished this sitting.
  */
 export function PomodoroCard() {
+  const { addDevSession } = useJournal()
   const [preset, setPreset] = useState(PRESETS[1])
   const [mode, setMode] = useState<'work' | 'break'>('work')
   const [left, setLeft] = useState(PRESETS[1].w * 60)
@@ -40,7 +43,11 @@ export function PomodoroCard() {
     if (left > 0 || !running) return
     queueMicrotask(() => {
       const nextMode = mode === 'work' ? 'break' : 'work'
-      if (mode === 'work') setBlocks((b) => b + 1)
+      if (mode === 'work') {
+        setBlocks((b) => b + 1)
+        // A finished work block auto-logs a focus session into the Focus history.
+        addDevSession({ date: todayISO(), durationMin: preset.w, project: 'Focus timer', focus: 8, stress: 2, tags: ['focus'] })
+      }
       setMode(nextMode)
       setLeft(minsFor(nextMode))
     })

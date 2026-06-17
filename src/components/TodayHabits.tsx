@@ -1,7 +1,9 @@
+import { useState } from 'react'
+import { StickyNote } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
-import { Card } from './ui'
+import { Card, Textarea } from './ui'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
 import type { Habit } from '../lib/types'
 
@@ -11,8 +13,10 @@ import type { Habit } from '../lib/types'
  * current slot surfaced first, and a completion ring shows the day's progress.
  */
 export function TodayHabits() {
-  const { data, toggleHabit } = useJournal()
+  const { data, toggleHabit, setHabitNote } = useJournal()
   const today = todayISO()
+  const [noteFor, setNoteFor] = useState<string | null>(null)
+  const notes = data.habitNotes?.[today] ?? {}
   const now = new Date(today + 'T00:00')
   const dow = now.getDay()
   const habits = data.habits.filter(
@@ -38,18 +42,29 @@ export function TodayHabits() {
   function chip(h: Habit) {
     const on = log.includes(h.id)
     const accent = h.avoid ? cat('red') : cat(h.color)
+    const hasNote = !!notes[h.id]
     return (
-      <button
-        key={h.id}
-        onClick={() => toggleHabit(today, h.id)}
-        aria-pressed={on}
-        title={h.avoid ? (on ? 'Slipped today — tap to clear' : 'Clean today') : undefined}
-        className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors active:scale-95"
-        style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
-      >
-        {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
-        {h.name}{h.avoid ? (on ? ' — slip' : ' — clean') : (on ? ' ✓' : '')}
-      </button>
+      <span key={h.id} className="inline-flex items-center gap-1">
+        <button
+          onClick={() => toggleHabit(today, h.id)}
+          aria-pressed={on}
+          title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
+          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors active:scale-95"
+          style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
+        >
+          {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
+          {h.name}{h.avoid ? (on ? ' — slip' : ' — clean') : (on ? ' ✓' : '')}
+        </button>
+        <button
+          onClick={() => setNoteFor((v) => (v === h.id ? null : h.id))}
+          aria-label={`Note for ${h.name}`}
+          title={hasNote ? notes[h.id] : 'Add a note'}
+          className="shrink-0 hover:text-mauve"
+          style={{ color: hasNote ? cat('mauve') : cat('overlay0') }}
+        >
+          <StickyNote size={13} />
+        </button>
+      </span>
     )
   }
 
@@ -93,6 +108,13 @@ export function TodayHabits() {
           )
         })}
       </div>
+
+      {noteFor && (
+        <div className="mt-3 border-t border-surface0 pt-3">
+          <p className="mb-1 inline-flex items-center gap-1 text-xs text-overlay0"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+          <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
+        </div>
+      )}
     </Card>
   )
 }
