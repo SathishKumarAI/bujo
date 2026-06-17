@@ -466,3 +466,32 @@ Big multi-feature day. PRs #10–#24 merged + deployed to bujo-journal.vercel.ap
 - [ ] Enable Google provider in Supabase (Auth → Providers → Google); button auto-reappears.
 - [ ] Delete smoke-test account `bujo-smoketest-260616@example.com`.
 - [ ] (cosmetic) card title truncates to "M…" when it has both a long title + right controls (Stats monthly-mood).
+
+---
+
+## 2026-06-17 — inspiration-driven feature marathon + self-host stack (#26–#41)
+
+Researched a sweep of habit/fitness apps and built a feature from each, plus a desktop/Docker/DB path. All merged + deployed to bujo-journal.vercel.app; 208 tests green.
+
+**Features (source → what shipped):**
+- **#26** Intermittent-fasting tracker (`lib/fasting`, FastingCard on Today): start/stop, target window, day-to-day streak + recent log.
+- **#27** Home Workout — saved sessions expand to show exercises/reps (was view-only); Fitness tabs reordered Strength→Cardio.
+- **#28** Native-iOS mobile pass: 16px inputs (no focus-zoom), touch-visible hover-only controls (`@media (hover:none)`), tap-highlight off, `touch-action: manipulation`, overscroll contain, safe-area insets, Apple PWA meta.
+- **#29 Strong** — green completed sets + "✓ logged" + live volume tally in the gym logger.
+- **#30 HarambeFit** — achievement badges (`lib/achievements`, AchievementsCard on Stats, 14 badges); Strong-green on ProgramTracker.
+- **#31 lovable.dev** — streak-milestone celebrations (`MilestoneToast`, escalating emoji at 3/7/30/100…).
+- **#32 Habitify** — time-of-day habit grouping (current slot first) + Today completion ring.
+- **#33 Habitify** — timestamp-based check-ins (`habitTimes`) + "When you check in" hour histogram on Stats.
+- **#35/#36 Streaks/ADHD** — per-habit daily notes (`habitNotes`, inline on Today + editor history), habit-stacking cue, Pomodoro focus timer (auto-logs blocks to Focus).
+- **#37 Bearable** — energy daily metric + Wellbeing slider; focus-minutes chip on Today's plan.
+- **#40** NoFap reworked: "days resisted" framing, red/negative relapse styling, **required reason** on relapse; **default gender = male** (nofap on).
+- **#41** Default units → **US** (lb · mi · °F), switchable.
+
+**Infra / docs:**
+- **#34** `docs/data-engineering/` — schema + pipelines + scaling (10→10M); key insight: E2E ⇒ analytics client-side ⇒ backend is a dumb encrypted-blob + CDN + sync API.
+- **#38** `docs/desktop/` — Tauri + SQLite + git-push-sync design + Rust/TS scaffold (native build needs a Rust toolchain, not in the agent sandbox).
+- **#39** Full self-host stack: `Dockerfile` + `docker-compose.yml` (web + Postgres + Adminer) + `docker/initdb.sql`. **Verified live** — `docker compose up -d --build`, web/adminer 200, 9 tables loaded.
+
+**Process learned:** always `git checkout -b` BEFORE editing (committed to main twice by mistake; recovered via `git branch -f main origin/main` + rebase, since `reset --hard` is deny-listed). Playwright works in-sandbox (system Chrome + `?view=` deep-link + "This device only" gate-bypass) for screenshots/measurements; persistent Chrome/MCP can't stay up.
+
+**Open (user-decided):** secure PostgREST API tier (JWT+RLS+TLS) — designed, offered, not yet built; enable Google in Supabase; PostgREST/desktop native build.

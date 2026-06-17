@@ -435,3 +435,29 @@ Input-capture program + habit polarity + a mobile/nav overhaul. PRs #10–#24 (+
 
 **External switches (user-only):** enable Google provider in Supabase (button auto-reappears); delete smoke-test account `bujo-smoketest-260616@example.com`.
 **Cosmetic:** card title truncates ("M…") when it has both a long title + right controls (Stats monthly-mood).
+
+## Epic INSPO-2 — app-research feature run + self-host stack (session 2026-06-17, appended)
+
+Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADHD-focus guide; built a feature from each, plus desktop/Docker/DB. PRs #26–#41, merged + deployed.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-177 | Intermittent-fasting tracker (window, target, day-to-day streak) | ✅ (#26) |
+| BUJO-178 | Home-workout saved-session detail; Fitness tab order Strength→Cardio | ✅ (#27) |
+| BUJO-179 | Native-iOS mobile pass (16px inputs, touch-visible controls, safe areas) | ✅ (#28) |
+| BUJO-180 | Strong green completed sets + live volume tally (gym) | ✅ (#29) |
+| BUJO-181 | HarambeFit achievement badges (14, Stats); Strong green on ProgramTracker | ✅ (#30) |
+| BUJO-182 | lovable.dev streak-milestone celebrations (MilestoneToast) | ✅ (#31) |
+| BUJO-183 | Habitify time-of-day grouping + Today completion ring | ✅ (#32) |
+| BUJO-184 | Timestamp check-ins + "when you check in" hour histogram | ✅ (#33) |
+| BUJO-185 | Data-engineering schema/pipelines/scaling design (10→10M) | ✅ doc (#34) |
+| BUJO-186 | Per-habit notes (inline Today + editor history) + stacking cue + Pomodoro timer | ✅ (#35/#36) |
+| BUJO-187 | Pomodoro auto-logs focus blocks to Focus | ✅ (#36) |
+| BUJO-188 | Bearable energy metric + slider; focus-minutes chip on Today | ✅ (#37) |
+| BUJO-189 | Docker self-host + desktop (Tauri/SQLite/git-sync) design + scaffold | ✅ (#38) |
+| BUJO-190 | Full self-host stack — web + Postgres + Adminer (verified) | ✅ (#39) |
+| BUJO-191 | NoFap — days-resisted, red relapses, required reason; default gender male | ✅ (#40) |
+| BUJO-192 | Default to US units (lb · mi · °F), switchable | ✅ (#41) |
+| BUJO-193 | Secure PostgREST API tier (JWT + RLS + TLS) | 🔜 designed/offered |
+| BUJO-194 | Wire app to self-host Postgres (PostgREST backend) | 🔜 |
+| BUJO-195 | Scaffold real Tauri `src-tauri/` + store adapter | 🔜 (needs Rust toolchain) |
