@@ -5,6 +5,7 @@ import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
+import { MilestoneToast } from '../MilestoneToast'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
@@ -84,6 +85,7 @@ export function AppShell({
           <CaptureBar date={day} onAdded={() => setQuickOpen(false)} />
         </DialogContent>
       </Dialog>
+      <MilestoneToast />
     </div>
     </TooltipProvider>
   )
