@@ -8,6 +8,7 @@ import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
+import { CheckinTimesCard } from '../components/CheckinTimesCard'
 import { cat } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, tagCounts, taskBreakdown,
@@ -54,6 +55,8 @@ export function Stats() {
       </Card>
 
       <AchievementsCard />
+
+      <CheckinTimesCard />
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10">

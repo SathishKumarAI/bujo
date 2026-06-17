@@ -398,6 +398,8 @@ export interface JournalData {
   habitLog: Record<string, string[]> // ISO day -> [habitId, …] (check habits)
   /** ISO day -> habitId -> numeric value (count habits). */
   habitValues?: Record<string, Record<string, number>>
+  /** ISO day -> habitId -> ISO timestamp the habit was checked (time-of-day analysis). */
+  habitTimes?: Record<string, Record<string, string>>
   metrics: DailyMetric[]
   workouts: Workout[]
   /** Completed intermittent-fasting windows. */

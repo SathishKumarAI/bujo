@@ -411,10 +411,18 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       toggleHabit: (date, habitId) =>
         patch((d) => {
           const cur = d.habitLog[date] ?? []
-          const next = cur.includes(habitId)
-            ? cur.filter((x) => x !== habitId)
-            : [...cur, habitId]
-          return { ...d, habitLog: { ...d.habitLog, [date]: next } }
+          const adding = !cur.includes(habitId)
+          const next = adding ? [...cur, habitId] : cur.filter((x) => x !== habitId)
+          // Timestamp-based input: record WHEN the habit was checked, for the
+          // time-of-day check-in analysis. Cleared when un-checked.
+          const dayTimes = { ...(d.habitTimes?.[date] ?? {}) }
+          if (adding) dayTimes[habitId] = new Date().toISOString()
+          else delete dayTimes[habitId]
+          return {
+            ...d,
+            habitLog: { ...d.habitLog, [date]: next },
+            habitTimes: { ...(d.habitTimes ?? {}), [date]: dayTimes },
+          }
         }),
 
       toggleHabitSkip: (habitId, day) =>
