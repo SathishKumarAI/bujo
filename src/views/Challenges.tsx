@@ -35,7 +35,11 @@ export function Challenges() {
         )}
       </Card>
 
-      {active.map((c) => <ChallengeCard key={c.id} challenge={c} />)}
+      {active.length > 0 && (
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          {active.map((c) => <ChallengeCard key={c.id} challenge={c} />)}
+        </div>
+      )}
 
       {archived.length > 0 && (
         <Card title="Completed & archived" subtitle="Your past challenges">

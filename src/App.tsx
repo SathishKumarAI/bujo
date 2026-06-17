@@ -32,7 +32,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell,
+  ArrowUpToLine, Trophy, Dumbbell, Flag,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -57,11 +57,11 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
   { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
-  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
-  { id: 'goals', label: 'Goals', icon: Target, group: 'Review' },
+  { id: 'goals', label: 'Goals', icon: Flag, group: 'Review' },
+  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Review' },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
   { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
