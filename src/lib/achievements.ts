@@ -5,6 +5,10 @@ import type { JournalData } from './types'
 import { longestStreak } from './stats'
 import { personalRecords } from './fitness'
 import { fastHours } from './fasting'
+import { dayDiff, todayISO } from './date'
+
+/** Live abstinence streak in days (since nofap.startedOn) — not the relapse-only `best`. */
+const cleanDays = (d: JournalData) => Math.max(0, dayDiff(d.nofap.startedOn, todayISO()))
 
 export interface Achievement {
   id: string
@@ -36,7 +40,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first-fast', label: 'Fasted', emoji: '⏳', color: 'blue', desc: 'Complete your first fast', earned: (d) => fasts(d).length >= 1 },
   { id: 'fast-16', label: '16:8', emoji: '🕗', color: 'sky', desc: 'Complete a 16-hour fast', earned: (d) => fasts(d).some((f) => fastHours(f) >= 16) },
   { id: 'photos-2', label: 'Progress', emoji: '📸', color: 'pink', desc: 'Keep two progress photos', earned: (d) => (d.progressPhotos ?? []).length >= 2 },
-  { id: 'clean-7', label: '7 days clean', emoji: '🛡️', color: 'green', desc: 'A 7-day abstinence best', earned: (d) => d.nofap.best >= 7 },
+  { id: 'clean-7', label: '7 days clean', emoji: '🛡️', color: 'green', desc: 'A 7-day abstinence streak', earned: (d) => Math.max(d.nofap.best, cleanDays(d)) >= 7 },
 ]
 
 /** The badges currently earned, in catalogue order. */

@@ -31,11 +31,16 @@ export function EntryRow({ entry }: { entry: Entry }) {
       </button>
 
       {entry.memory && <span title="Memory" style={{ color: cat('teal') }}>▲</span>}
-      {entry.important && (
-        <button onClick={() => toggleImportant(entry.id)} title="Important" style={{ color: cat('yellow') }}>
-          !
-        </button>
-      )}
+      <button
+        onClick={() => toggleImportant(entry.id)}
+        title={entry.important ? 'Important — tap to clear' : 'Mark important'}
+        aria-pressed={entry.important}
+        aria-label="Toggle important"
+        className="font-bold"
+        style={{ color: entry.important ? cat('yellow') : cat('overlay0'), opacity: entry.important ? 1 : 0.45 }}
+      >
+        !
+      </button>
 
       {editing ? (
         <input

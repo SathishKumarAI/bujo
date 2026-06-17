@@ -107,18 +107,20 @@ export function Collections() {
         ) : (
           <div className="flex flex-wrap gap-2">
             {data.collections.map((c) => (
-              <button
+              <span
                 key={c.id}
-                onClick={() => setOpenCol(openCol === c.id ? null : c.id)}
-                className="group flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
-                style={{ borderColor: openCol === c.id ? cat('mauve') : cat('surface1'), color: cat('subtext1') }}
+                className="group inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
+                style={{ borderColor: openCol === c.id ? cat('mauve') : cat('surface1') }}
               >
-                <span>{c.icon}</span> {c.name}
-                <span
-                  onClick={(e) => { e.stopPropagation(); removeCollection(c.id); if (openCol === c.id) setOpenCol(null) }}
+                <button onClick={() => setOpenCol(openCol === c.id ? null : c.id)} className="inline-flex items-center gap-2" style={{ color: cat('subtext1') }}>
+                  <span>{c.icon}</span> {c.name}
+                </button>
+                <button
+                  onClick={() => { removeCollection(c.id); if (openCol === c.id) setOpenCol(null) }}
+                  aria-label={`Delete ${c.name}`}
                   className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"
-                >×</span>
-              </button>
+                >×</button>
+              </span>
             ))}
           </div>
         )}

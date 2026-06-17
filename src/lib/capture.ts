@@ -245,7 +245,7 @@ function matchHabit(text: string, habits: string[]): HabitCapture | null {
 
 /** Always matches — lossless fallback. Explicit bullet signifiers raise confidence. */
 function matchBullet(text: string): BulletCapture {
-  const explicit = /^(?:[ten]\s+|[*!^]\s+)/i.test(text)
+  const explicit = /^(?:[ten]|[*!^])\s+/i.test(text)
   return { kind: 'bullet', raw: text, confidence: explicit ? 0.5 : 0.3 }
 }
 

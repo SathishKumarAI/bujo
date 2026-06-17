@@ -97,7 +97,7 @@ paper *feel* (book frame, dot-grid, handwriting, stickers) with digital power
 - **Tailwind CSS v4** (Catppuccin Mocha/Latte theme tokens)
 - **Recharts** for the line charts (lazy-loaded)
 - **localStorage** persistence — zero backend
-- **Vitest + Testing Library** (33 tests)
+- **Vitest + Testing Library** (200+ tests)
 
 ## Getting started
 

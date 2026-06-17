@@ -49,7 +49,7 @@ create index on entries using gin (tags);
 create table habits (
   id uuid not null, user_id uuid not null,
   name text not null, type text not null default 'check',
-  color text, category text, time_of_day text, avoid boolean not null default false,
+  color text, category text, time_of_day text, cue text, avoid boolean not null default false,
   target real, unit text, weekly_goal int, active_days int[], archived boolean default false,
   started_on date not null,
   primary key (user_id, id)
@@ -61,13 +61,14 @@ create table habit_log (
   day       date not null,
   value     real,                         -- null = simple yes/no check
   checked_at timestamptz,                 -- timestamp-based input (time-of-day analysis)
+  note      text,                         -- per-day reflective note (habitNotes)
   primary key (user_id, habit_id, day)
 );
 create index on habit_log (user_id, day);
 
 create table metrics (
   user_id uuid not null, day date not null,
-  mood smallint, stress smallint, sleep real,
+  mood smallint, stress smallint, sleep real, energy smallint,
   calories int, protein int, carbs int, fat int,
   primary key (user_id, day)
 );

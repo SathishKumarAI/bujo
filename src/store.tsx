@@ -415,9 +415,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           const adding = !cur.includes(habitId)
           const next = adding ? [...cur, habitId] : cur.filter((x) => x !== habitId)
           // Timestamp-based input: record WHEN the habit was checked, for the
-          // time-of-day check-in analysis. Cleared when un-checked.
+          // time-of-day check-in analysis. Cleared when un-checked. Skip "avoid"
+          // habits — logging them is a slip, not a positive check-in, so it
+          // shouldn't pollute the "when you check in" chart.
+          const avoid = d.habits.find((h) => h.id === habitId)?.avoid
           const dayTimes = { ...(d.habitTimes?.[date] ?? {}) }
-          if (adding) dayTimes[habitId] = new Date().toISOString()
+          if (adding && !avoid) dayTimes[habitId] = new Date().toISOString()
           else delete dayTimes[habitId]
           return {
             ...d,
