@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
+import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours,
@@ -47,6 +48,8 @@ export function Focus() {
     <Page
       asideFirst
       aside={
+        <>
+        <PomodoroCard />
         <Card title="Log a session" subtitle="Coding / deep-work time">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
@@ -63,6 +66,7 @@ export function Focus() {
             <Button variant="primary" onClick={log} className="w-full">Log session</Button>
           </div>
         </Card>
+        </>
       }
     >
       <div className="grid items-start gap-5 lg:grid-cols-2">

@@ -115,6 +115,7 @@ interface Store {
   updateHabit: (id: string, patch: Partial<Habit>) => void
   toggleHabit: (date: string, habitId: string) => void
   setHabitValue: (date: string, habitId: string, value: number) => void
+  setHabitNote: (date: string, habitId: string, text: string) => void
   toggleHabitSkip: (habitId: string, day: string) => void
   // workouts
   addWorkout: (w: Omit<Workout, 'id'>) => void
@@ -423,6 +424,14 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             habitLog: { ...d.habitLog, [date]: next },
             habitTimes: { ...(d.habitTimes ?? {}), [date]: dayTimes },
           }
+        }),
+
+      setHabitNote: (date, habitId, text) =>
+        patch((d) => {
+          const day = { ...(d.habitNotes?.[date] ?? {}) }
+          if (text.trim()) day[habitId] = text
+          else delete day[habitId]
+          return { ...d, habitNotes: { ...(d.habitNotes ?? {}), [date]: day } }
         }),
 
       toggleHabitSkip: (habitId, day) =>

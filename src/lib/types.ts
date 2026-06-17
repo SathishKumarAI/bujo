@@ -78,6 +78,8 @@ export interface Habit {
   avoid?: boolean
   /** Part of day this habit belongs to (Habitify-style). Default = anytime. */
   timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'anytime'
+  /** Habit-stacking cue / implementation intention, e.g. "After morning coffee". */
+  cue?: string
 }
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */
@@ -400,6 +402,8 @@ export interface JournalData {
   habitValues?: Record<string, Record<string, number>>
   /** ISO day -> habitId -> ISO timestamp the habit was checked (time-of-day analysis). */
   habitTimes?: Record<string, Record<string, string>>
+  /** ISO day -> habitId -> reflective note for that day (Habitify-style). */
+  habitNotes?: Record<string, Record<string, string>>
   metrics: DailyMetric[]
   workouts: Workout[]
   /** Completed intermittent-fasting windows. */

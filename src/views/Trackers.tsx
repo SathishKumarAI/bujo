@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Button, Card, Empty, Input, Segmented, StatTile } from '../components/ui'
+import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
@@ -533,7 +533,7 @@ function CategoryRows({
                 {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} — habit to avoid` : h.name} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
+                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} — habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
                 {streak > 1 && (
                   avoid
@@ -591,7 +591,7 @@ function CategoryRows({
 
 // ── Per-habit customisation modal ────────────────────────────────────────────
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
-  const { updateHabit, removeHabit, toggleHabitSkip, data } = useJournal()
+  const { updateHabit, removeHabit, toggleHabitSkip, setHabitNote, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
   // Reuse units already in use so trackers share consistent units (e.g. always
   // "min", not a mix of "min"/"minute"/"mins").
@@ -671,6 +671,14 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               ))}
             </div>
           </div>
+
+          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking — after what?)</span>
+            <Input value={habit.cue ?? ''} onChange={(e) => set({ cue: e.target.value || undefined })} placeholder="e.g. After morning coffee" className="mt-1" />
+          </label>
+
+          <label className="block text-sm text-subtext1">Today’s note
+            <Textarea value={data.habitNotes?.[today]?.[habit.id] ?? ''} onChange={(e) => setHabitNote(today, habit.id, e.target.value)} placeholder="How did it go today?" rows={2} className="mt-1" />
+          </label>
 
           {(habit.type === 'count' || habit.type === 'timer') && (
             <div className="grid grid-cols-2 gap-2">
