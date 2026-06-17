@@ -1,0 +1,36 @@
+---
+title: Hosting bujo — options & comparison
+description: Ways to host this Vite + React PWA, with trade-offs and a recommendation.
+---
+
+# Hosting bujo
+
+bujo is a **client-rendered Vite + React SPA** that builds to static files (`dist/`), ships a **PWA service worker**, and is **local-first** — it works fully offline with no backend. Two optional pieces shape your hosting choice:
+
+1. **Optional sync backend** — Supabase (external, not something you host). Configured via build-time env `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. If unset, the app runs device-only.
+2. **Optional serverless API** — `api/feedback.ts` (a Vercel Function) powers in-app feedback → GitHub issues. Only needed if you want that feature; needs a runtime that supports serverless functions.
+
+So the host must do: **serve static files + SPA fallback rewrite** (all routes → `index.html`), and *optionally* **run one serverless function**.
+
+## Options at a glance
+
+| Host | Static | Serverless (`/api`) | SPA rewrite | Cost (hobby) | Best when |
+|------|:--:|:--:|:--:|------|------|
+| **[Vercel](./vercel.mdx)** (current) | ✅ | ✅ native | ✅ auto (framework) | Free | Zero-config, want the feedback API, preview deploys |
+| **[Netlify](./netlify.mdx)** | ✅ | ✅ Functions | ✅ `_redirects` | Free | Same as Vercel, alternative ecosystem |
+| **[Cloudflare Pages](./cloudflare-pages.mdx)** | ✅ | ✅ Pages Functions | ✅ `_redirects` | Free | Cheapest at scale, fastest edge, Workers |
+| **[Static CDN / AWS](./static-cdn-aws.mdx)** | ✅ | ⚠️ separate (Lambda) | ⚠️ manual | ~$0–1/mo | Full control, already on AWS |
+| **[Self-host (Docker/nginx)](./self-host-docker.mdx)** | ✅ | ⚠️ bring your own | ⚠️ nginx `try_files` | VPS cost | Air-gapped, own the box, no third party |
+| **GitHub Pages** | ✅ | ❌ none | ⚠️ 404-hack | Free | Pure static demo; **feedback API won't work** |
+
+## Recommendation
+
+- **Stay on Vercel** unless you have a reason to move — it serves the static build *and* the one serverless function with zero config, gives preview URLs per PR, and the project is already wired (`.vercel/project.json`). See [vercel.mdx](./vercel.mdx).
+- **Cloudflare Pages** is the strongest alternative if you want the cheapest global edge and don't mind porting `api/feedback.ts` to a Pages Function.
+- **Self-host** only if you need the app fully under your control (no external platform) — you give up preview deploys and managed TLS/CDN.
+
+## Things every host must get right
+- **SPA fallback** — unknown paths must serve `index.html`, or deep links / refreshes 404.
+- **PWA caching** — the service worker (`dist/sw.js`) caches aggressively; ship correct cache headers (hashed assets immutable, `sw.js` + `index.html` no-cache) so updates land. A stale SW is the usual cause of "it didn't update."
+- **Env at build time** — `VITE_*` vars are inlined during `npm run build`; set them in the host's build env, not at runtime.
+- **Security headers / CSP** — bujo enforces a CSP (`vercel.json`); replicate the headers on whatever host you use.

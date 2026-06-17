@@ -1,0 +1,42 @@
+---
+title: Host on Netlify
+description: Static + Functions hosting for bujo.
+---
+
+# Netlify
+
+Equivalent to Vercel: static hosting + serverless Functions + branch previews.
+
+## Config — `netlify.toml`
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# SPA fallback — every route serves index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Replicate the CSP / security headers from vercel.json here:
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; ..."  # copy from vercel.json
+```
+
+## Serverless
+Port `api/feedback.ts` to `netlify/functions/feedback.ts` (Netlify's handler signature differs slightly from Vercel's `(req, res)`). The app calls `/api/feedback`, so add a redirect `/api/* → /.netlify/functions/:splat` or rename the call site.
+
+## Deploy
+```bash
+npm i -g netlify-cli
+netlify deploy --build           # preview
+netlify deploy --build --prod    # production
+```
+Set `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in **Site settings → Build & deploy → Environment** (build-time).
+
+## Trade-off
+Same DX as Vercel; the only real work is adapting the one function to Netlify's handler shape.

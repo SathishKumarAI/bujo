@@ -45,25 +45,25 @@ const Pickleball = lazy(() => import('./views/Pickleball').then((m) => ({ defaul
 // Daily pipeline: capture & organise → track health → review.
 // "System" (Help, Settings) is intentionally NOT here — those live in the top
 // bar (gear + overflow menu) so the sidebar stays focused on daily views.
-const GROUP_ORDER = ['Journal', 'Health', 'Review']
+const GROUP_ORDER = ['Journal', 'Health', 'Insights & Stats']
 
 const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
-  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Journal' },
   { id: 'plan', label: 'Plan', icon: Repeat, group: 'Journal' },
-  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Journal' },
   { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Health' },
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
   { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
+  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
-  { id: 'goals', label: 'Goals', icon: Flag, group: 'Review' },
-  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Review' },
-  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
-  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
+  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Insights & Stats' },
+  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
+  { id: 'goals', label: 'Goals', icon: Flag, group: 'Insights & Stats' },
+  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Insights & Stats' },
+  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Insights & Stats' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
   { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
 ]

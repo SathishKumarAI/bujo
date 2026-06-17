@@ -1,0 +1,28 @@
+---
+title: Static CDN — AWS S3 + CloudFront (and friends)
+description: Host bujo's static build on any object-store + CDN.
+---
+
+# Static CDN (AWS S3 + CloudFront)
+
+Because the build is just static files, any object store behind a CDN works (AWS S3+CloudFront, GCS+Cloud CDN, Azure Static Web Apps, Bunny, etc.). Cheapest possible, but you wire SPA fallback and the optional API yourself. (A deeper AWS cost/architecture analysis already lives in `docs/` from an earlier pass.)
+
+## AWS S3 + CloudFront
+1. **Build:** `npm run build` (set `VITE_*` env first).
+2. **Upload:** `aws s3 sync dist/ s3://your-bucket --delete`
+3. **CloudFront distribution** in front of the bucket (OAC, not public bucket).
+4. **SPA fallback** — add a CloudFront *custom error response*: map **403** and **404** → `/index.html` with response code **200**. Without this, deep links 404.
+5. **Cache** — `/assets/*` long-lived & immutable; set `index.html` and `sw.js` to `no-cache` (so PWA updates land). Invalidate on deploy: `aws cloudfront create-invalidation --paths '/index.html' '/sw.js'`.
+6. **Headers/CSP** — attach a CloudFront *response-headers policy* mirroring `vercel.json`'s CSP + security headers.
+
+## Azure Static Web Apps
+Closest AWS-free equivalent with **built-in SPA fallback + managed Functions** (so the feedback API works without separate infra). Config via `staticwebapp.config.json`:
+```json
+{ "navigationFallback": { "rewrite": "/index.html" } }
+```
+
+## The optional feedback API
+S3/CloudFront is static-only — run `api/feedback.ts` as a separate **Lambda + API Gateway** (or Lambda@Edge) and route `/api/*` to it. Skip it and the feature degrades gracefully.
+
+## Trade-off
+Lowest cost and full control of the CDN, but you assemble SPA fallback, cache headers, invalidations, and any serverless yourself — the most setup of all the options.

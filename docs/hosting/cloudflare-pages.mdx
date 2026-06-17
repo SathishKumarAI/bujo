@@ -1,0 +1,44 @@
+---
+title: Host on Cloudflare Pages
+description: Cheapest global-edge static + Functions hosting for bujo.
+---
+
+# Cloudflare Pages
+
+Fastest global edge and the cheapest at scale. Static build + **Pages Functions** for the API.
+
+## Build settings
+- **Build command:** `npm run build`
+- **Output dir:** `dist`
+- **Env vars:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (build-time).
+
+## SPA fallback — `public/_redirects`
+```
+/*  /index.html  200
+```
+(Cloudflare also serves `dist/index.html` for unmatched routes if you enable the SPA option, but `_redirects` is explicit.)
+
+## Serverless — Pages Functions
+Move the feedback handler to `functions/api/feedback.ts` using the Workers handler signature:
+```ts
+export async function onRequestPost({ request, env }) {
+  // env.GITHUB_TOKEN ; parse await request.json() ; return new Response(...)
+}
+```
+This is the biggest porting effort vs Vercel — Workers use the Fetch API (`Request`/`Response`), not Node `req/res`.
+
+## Headers / CSP — `public/_headers`
+```
+/*
+  Content-Security-Policy: default-src 'self'; ...   # copy from vercel.json
+  X-Content-Type-Options: nosniff
+```
+
+## Deploy
+```bash
+npm i -g wrangler
+wrangler pages deploy dist --project-name bujo
+```
+
+## Trade-off
+Cheapest + fastest, but the function port to the Workers runtime is the most work of the managed options.
