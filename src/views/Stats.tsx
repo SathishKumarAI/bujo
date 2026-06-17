@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
 import { Heatmap } from '../components/Heatmap'
+import { AchievementsCard } from '../components/AchievementsCard'
 import { cat } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, tagCounts, taskBreakdown,
@@ -51,6 +52,8 @@ export function Stats() {
       <Card title="Activity" subtitle="Every day you showed up" right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
+
+      <AchievementsCard />
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10">
