@@ -10,6 +10,7 @@ import { Button, Card, Empty, Input, Segmented, StatTile } from '../components/u
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
+import { TIME_SLOTS } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -659,6 +660,15 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               <Button variant={habit.type === 'count' ? 'primary' : 'ghost'} onClick={() => set({ type: 'count' })}>Count</Button>
               <Button variant={habit.type === 'timer' ? 'primary' : 'ghost'} onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
               <Button variant={habit.type === 'rating' ? 'primary' : 'ghost'} onClick={() => set({ type: 'rating' })}>Rating</Button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-subtext1">Time of day</span>
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {TIME_SLOTS.map((s) => (
+                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'primary' : 'ghost'} onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
+              ))}
             </div>
           </div>
 
