@@ -120,6 +120,10 @@ interface Store {
   addWorkout: (w: Omit<Workout, 'id'>) => void
   updateWorkout: (id: string, patch: Partial<Workout>) => void
   removeWorkout: (id: string) => void
+  // intermittent fasting
+  startFast: () => void
+  endFast: () => void
+  removeFast: (id: string) => void
   // routines
   addRoutine: (r: Omit<Routine, 'id'>) => void
   removeRoutine: (id: string) => void
@@ -431,6 +435,20 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeWorkout: (id) =>
         patch((d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
+
+      startFast: () =>
+        patch((d) => ({ ...d, settings: { ...d.settings, fastActiveStart: new Date().toISOString() } })),
+
+      endFast: () =>
+        patch((d) => {
+          const start = d.settings.fastActiveStart
+          if (!start) return d
+          const fast = { id: uid('f'), start, end: new Date().toISOString() }
+          return { ...d, fasts: [...(d.fasts ?? []), fast], settings: { ...d.settings, fastActiveStart: undefined } }
+        }),
+
+      removeFast: (id) =>
+        patch((d) => ({ ...d, fasts: (d.fasts ?? []).filter((f) => f.id !== id) })),
 
       addRoutine: (r) =>
         patch((d) => ({ ...d, routines: [...d.routines, { id: uid('rt'), ...r }] })),

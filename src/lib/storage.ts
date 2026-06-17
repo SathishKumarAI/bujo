@@ -44,6 +44,7 @@ export function emptyJournal(): JournalData {
     habitValues: {},
     metrics: [],
     workouts: [],
+    fasts: [],
     routines: [],
     bodyMetrics: [],
     cycle: [],

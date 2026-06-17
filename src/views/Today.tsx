@@ -4,6 +4,7 @@ import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { CaptureBar } from '../components/CaptureBar'
+import { FastingCard } from '../components/FastingCard'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
 import { PenaltyCard } from '../components/PenaltyCard'
@@ -62,6 +63,8 @@ export function Today() {
               </div>
             </div>
           </Card>
+
+          <FastingCard />
 
           {hasFlash && !hidden.includes('onThisDay') && (
             <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
