@@ -1,0 +1,139 @@
+---
+title: bujo desktop — Tauri app, SQLite storage & git-push sync
+description: How to package bujo as a desktop app that stores data in a local database and pushes it to a GitHub repo on every sync. Desktop-only; the web build is unchanged.
+---
+
+# Desktop app: Tauri + SQLite + git-push sync
+
+> **Scope:** the web app is unchanged. This adds a **desktop target** that (a) stores the journal in a **local SQLite database** and (b) **commits + pushes** it to a GitHub repo on each sync. All of it is gated behind a desktop runtime check, so the same codebase still ships to the web.
+>
+> **Why this is a design + scaffold, not a built binary:** compiling a desktop app needs a **Rust/Tauri toolchain** (cargo, platform SDKs) that isn't available in the agent's build sandbox. Everything below is concrete and ready to run on a dev machine with `rustup` + Node; the web build it wraps is already green.
+
+## Why Tauri (not Electron)
+- Wraps the **existing Vite build** (`dist/`) — zero UI rewrite, just a native shell around the same SPA.
+- ~3–10 MB binaries vs Electron's ~100 MB (no bundled Chromium; uses the OS webview).
+- First-class **SQLite** (`tauri-plugin-sql`) and a Rust backend for git, secure by default (explicit command allow-list).
+
+## 1. Add the desktop target
+```bash
+npm i -D @tauri-apps/cli
+npm i @tauri-apps/api @tauri-apps/plugin-sql
+npx tauri init           # creates src-tauri/ (Rust), points frontendDist at dist/
+```
+`src-tauri/tauri.conf.json` (key bits):
+```json
+{
+  "build": { "frontendDist": "../dist", "beforeBuildCommand": "npm run build" },
+  "app": { "windows": [{ "title": "bujo", "width": 1100, "height": 820 }] },
+  "bundle": { "active": true, "targets": "all" }
+}
+```
+Scripts: `"tauri:dev": "tauri dev"`, `"tauri:build": "tauri build"`.
+
+## 2. Storage adapter — slot into the existing pattern
+bujo already abstracts persistence by `settings.storageMode` (`local` | `folder` | `drive` | gist). Add a **`desktop`** mode whose adapter talks to the Rust side. Detect the runtime so the web build never imports it:
+
+```ts
+// src/lib/desktop.ts  — no-ops on web; real on the Tauri runtime
+export const isDesktop = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+export async function desktopLoad(): Promise<unknown | null> {
+  if (!isDesktop()) return null
+  const { invoke } = await import('@tauri-apps/api/core')
+  return invoke('load_journal')               // → JSON string parsed by the store
+}
+export async function desktopSave(data: unknown): Promise<void> {
+  if (!isDesktop()) return
+  const { invoke } = await import('@tauri-apps/api/core')
+  await invoke('save_journal', { json: JSON.stringify(data) })
+}
+/** Commit + push the journal to the configured GitHub repo. */
+export async function desktopGitSync(): Promise<string> {
+  const { invoke } = await import('@tauri-apps/api/core')
+  return invoke('git_sync')                    // → short commit sha
+}
+```
+Wire `desktopSave` into the store's existing debounced persist (alongside the localStorage write) and `desktopLoad` into hydration — same place `folder`/`drive` adapters already hook.
+
+## 3. SQLite persistence (Rust)
+Start with a **single-row blob** (the whole `JournalData`) — simplest, matches the web's document model and the normalized schema in `docs/data-engineering/`. Promote to tables later if you want SQL queries.
+
+```rust
+// src-tauri/src/journal.rs
+use rusqlite::{Connection, params};
+
+fn db() -> rusqlite::Result<Connection> {
+    let dir = tauri::api::path::app_data_dir(&Default::default()).unwrap();
+    std::fs::create_dir_all(&dir).ok();
+    let conn = Connection::open(dir.join("bujo.sqlite"))?;
+    conn.execute("CREATE TABLE IF NOT EXISTS journal (id INTEGER PRIMARY KEY CHECK (id=1), data TEXT, updated_at TEXT)", [])?;
+    Ok(conn)
+}
+
+#[tauri::command]
+fn save_journal(json: String) -> Result<(), String> {
+    let c = db().map_err(|e| e.to_string())?;
+    c.execute("INSERT INTO journal (id,data,updated_at) VALUES (1,?1,datetime('now'))
+               ON CONFLICT(id) DO UPDATE SET data=?1, updated_at=datetime('now')",
+              params![json]).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn load_journal() -> Result<Option<String>, String> {
+    let c = db().map_err(|e| e.to_string())?;
+    c.query_row("SELECT data FROM journal WHERE id=1", [], |r| r.get::<_,String>(0))
+     .map(Some).or(Ok(None))
+}
+```
+
+## 4. Git-push on sync (Rust, `git2`)
+On each sync: dump the journal to `bujo.json` inside a local repo dir the user configured (with their GitHub repo as `origin`), then commit + push. Token comes from the existing GitHub-token setting (bujo already stores one for gist sync) or the OS keychain.
+
+```rust
+// src-tauri/src/gitsync.rs  (uses the git2 crate)
+#[tauri::command]
+fn git_sync(repo_dir: String, token: String, json: String) -> Result<String, String> {
+    use git2::{Repository, IndexAddOption, Signature, Cred, RemoteCallbacks, PushOptions};
+    std::fs::write(format!("{repo_dir}/bujo.json"), &json).map_err(|e| e.to_string())?;
+    let repo = Repository::open(&repo_dir).map_err(|e| e.to_string())?;
+    let mut idx = repo.index().unwrap();
+    idx.add_all(["bujo.json"], IndexAddOption::DEFAULT, None).unwrap();
+    idx.write().unwrap();
+    let tree = repo.find_tree(idx.write_tree().unwrap()).unwrap();
+    let sig = Signature::now("bujo", "bujo@local").unwrap();
+    let parent = repo.head().ok().and_then(|h| h.target()).and_then(|o| repo.find_commit(o).ok());
+    let parents: Vec<_> = parent.iter().collect();
+    let oid = repo.commit(Some("HEAD"), &sig, &sig, "sync: journal", &tree, &parents).map_err(|e| e.to_string())?;
+    // push with token auth
+    let mut cbs = RemoteCallbacks::new();
+    cbs.credentials(move |_u,_un,_a| Cred::userpass_plaintext("x-access-token", &token));
+    let mut po = PushOptions::new(); po.remote_callbacks(cbs);
+    repo.find_remote("origin").unwrap()
+        .push(&["refs/heads/main:refs/heads/main"], Some(&mut po)).map_err(|e| e.to_string())?;
+    Ok(oid.to_string()[..7].to_string())
+}
+```
+Register the commands in `main.rs` (`.invoke_handler(tauri::generate_handler![save_journal, load_journal, git_sync])`). Trigger `desktopGitSync()` from the existing "Sync now" action **only when `isDesktop()`** — so on web, gist/folder sync stays as-is.
+
+> **E2E note:** to keep bujo's encrypt-at-rest contract, encrypt `json` client-side (the `lib/crypto.ts` AES-GCM path) **before** `save_journal`/`git_sync`. The repo then holds ciphertext; SQLite holds ciphertext. Plaintext never leaves the process.
+
+## 5. Build & run
+```bash
+# dev (hot-reload the SPA inside the native window)
+npm run tauri:dev
+# release binaries (.app / .msi / .deb / .AppImage)
+npm run tauri:build
+```
+Prereqs: Rust (`rustup`), and the platform webview deps (WebKitGTK on Linux, WebView2 on Windows, built-in on macOS).
+
+## 6. Desktop-only guarantees
+- All `desktop.ts` calls early-return on web (`isDesktop()` false) and the Tauri packages are **dynamically imported**, so they're tree-shaken out of the web bundle.
+- A `storageMode: 'desktop'` row in Settings surfaces the SQLite + git-repo options **only** when running in the desktop shell.
+
+## 7. Containerised (the Docker ask, for the *web/self-host* target)
+Desktop binaries aren't containerised (Docker runs servers, not GUIs). The Docker artifacts at the repo root — `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf` — self-host the **web** build:
+```bash
+docker compose up -d         # → http://localhost:8080
+```
+Use the desktop app for the local-DB + git-push-sync experience; use the container to self-host the web app on your own box. Both read the same `JournalData`.

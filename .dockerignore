@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+.vercel
+.graphify
+docs
+coverage
+*.log
+.DS_Store
+.env
+.env.*
+.obsidian

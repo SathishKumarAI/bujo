@@ -1,0 +1,13 @@
+# Self-host bujo: `docker compose up -d` → http://localhost:8080
+services:
+  bujo:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+    image: bujo:latest
+    container_name: bujo
+    ports:
+      - "8080:80"
+    restart: unless-stopped
