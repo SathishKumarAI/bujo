@@ -304,6 +304,10 @@ export interface Settings {
   githubToken?: string
   /** Gist id holding bujo.json. */
   githubGistId?: string
+  /** Self-host PostgREST sync endpoint (the Docker stack's /journals API). */
+  selfHostUrl?: string
+  /** Optional bearer token (JWT) for the self-host API. */
+  selfHostToken?: string
   /** Signed-in Google account email (display only). */
   googleEmail?: string
   // ── Realism pack ──

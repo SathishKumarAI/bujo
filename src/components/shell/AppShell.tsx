@@ -6,6 +6,7 @@ import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
+import { ServerSync } from '../ServerSync'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
@@ -86,6 +87,7 @@ export function AppShell({
         </DialogContent>
       </Dialog>
       <MilestoneToast />
+      <ServerSync />
     </div>
     </TooltipProvider>
   )
