@@ -16,8 +16,8 @@ export function defaultSettings(): Settings {
   return {
     theme: 'mocha',
     tempUnit: 'F',
-    weightUnit: 'kg',
-    distanceUnit: 'km',
+    weightUnit: 'lb',
+    distanceUnit: 'mi',
     weekStart: 0,
     gender: 'male',
     cycleTrackerEnabled: false,
