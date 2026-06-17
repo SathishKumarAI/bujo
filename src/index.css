@@ -447,3 +447,46 @@ body.handwriting textarea {
   }
   .sheet-up { animation: sheet-up 0.18s cubic-bezier(0.22, 1, 0.36, 1) both; }
 }
+
+/* ── Native-app feel on touch / iOS ───────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  -webkit-tap-highlight-color: transparent; /* no grey flash on tap */
+  overscroll-behavior-y: contain;            /* no rubber-band on the whole page */
+  -webkit-font-smoothing: antialiased;
+}
+main {
+  -webkit-overflow-scrolling: touch; /* momentum scroll */
+}
+/* Remove the 300ms tap delay on interactive elements (no double-tap zoom). */
+button, a, [role='button'], label, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* iOS auto-zooms a form field on focus when its text is < 16px. Force 16px on
+   phones so focusing an input never triggers that jarring page zoom. */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Touch devices have no hover, so hover-only controls (the ×/remove buttons that
+   are opacity-0 until group-hover) would be permanently invisible. Reveal them. */
+@media (hover: none) {
+  .group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+}
+
+/* Keep the sticky header and bottom nav clear of the notch / home indicator. */
+@supports (padding: env(safe-area-inset-top)) {
+  .app-header {
+    padding-top: max(0.625rem, env(safe-area-inset-top));
+  }
+}

@@ -42,7 +42,7 @@ export function TopBar({
   const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-card/80 px-4 py-2.5 backdrop-blur">
+    <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-card/80 px-4 py-2.5 backdrop-blur">
       <button onClick={onMenu} aria-label="Toggle menu" className="text-foreground md:hidden">
         <Menu size={20} />
       </button>
