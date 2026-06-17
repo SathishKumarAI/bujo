@@ -1,8 +1,12 @@
 // Intermittent-fasting math. Pure + framework-free so it's trivially testable;
 // the UI (FastingCard) and store own the data, these just compute over it.
 import type { Fast } from './types'
+import { todayISO } from './date'
 
 export const DEFAULT_FAST_TARGET = 16
+
+/** The LOCAL calendar day a timestamp falls on (not the UTC slice). */
+const dayOf = (iso: string) => todayISO(new Date(iso))
 
 /** Length of a completed fast, in hours. */
 export function fastHours(f: { start: string; end: string }): number {
@@ -24,7 +28,7 @@ export function fmtDuration(hours: number): string {
 
 /** A fast counts toward the day it ENDED (the day you broke it). */
 export function fastsOnDay(fasts: Fast[], day: string): Fast[] {
-  return fasts.filter((f) => f.end.slice(0, 10) === day)
+  return fasts.filter((f) => dayOf(f.end) === day)
 }
 
 /** Longest fast that ended on the given day (0 if none). */
@@ -38,7 +42,7 @@ export function dayFastHours(fasts: Fast[], day: string): number {
  */
 export function fastingStreak(fasts: Fast[], targetHours: number, today: string): number {
   const byDay = new Set(
-    fasts.filter((f) => fastHours(f) + 1e-9 >= targetHours).map((f) => f.end.slice(0, 10)),
+    fasts.filter((f) => fastHours(f) + 1e-9 >= targetHours).map((f) => dayOf(f.end)),
   )
   let streak = 0
   let cursor = today
@@ -46,7 +50,7 @@ export function fastingStreak(fasts: Fast[], targetHours: number, today: string)
     streak += 1
     const d = new Date(cursor + 'T00:00')
     d.setDate(d.getDate() - 1)
-    cursor = d.toISOString().slice(0, 10)
+    cursor = todayISO(d)
   }
   return streak
 }
