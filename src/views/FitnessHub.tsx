@@ -16,7 +16,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4">
       <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
-        {([['cardio', 'Cardio', Activity], ['strength', 'Strength', Dumbbell]] as const).map(([id, label, Icon]) => (
+        {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
