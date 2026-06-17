@@ -14,8 +14,8 @@ const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
 export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 'strength' }) {
   const [tab, setTab] = useState<'cardio' | 'strength'>(initialTab)
   return (
-    <div className="space-y-4">
-      <div className="mx-auto flex w-full max-w-[1400px] gap-1 rounded-xl bg-secondary p-1">
+    <div className="mx-auto max-w-[1400px] space-y-4">
+      <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
         {([['cardio', 'Cardio', Activity], ['strength', 'Strength', Dumbbell]] as const).map(([id, label, Icon]) => (
           <button
             key={id}

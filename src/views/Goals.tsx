@@ -132,7 +132,7 @@ export function Goals() {
         {goals.length === 0 ? (
           <Empty>No goals yet — set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
-          <ul className="space-y-3">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {goals.map((g, i) => {
               const pct = Math.min(100, Math.round((g.value / g.target) * 100))
               const reached = g.value >= g.target
