@@ -22,7 +22,7 @@ import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
 import { CommandPalette } from './components/CommandPalette'
 import { Welcome } from './views/Welcome'
-import { hasFolder, restoreFolder, saveToFolder } from './lib/fscloud'
+import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider } from './components/shell/cursor'
 import { DeviceProvider } from './components/shell/device'
@@ -91,10 +91,30 @@ export default function App() {
       .catch(() => {})
       .finally(() => { syncReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const cloudLastSync = useRef('')
   useEffect(() => {
     const pass = localStorage.getItem('bujo:sync')
     if (!pass || !syncReady.current) return
-    const id = setTimeout(() => { pushCloud(pass, data).catch(() => {}) }, 4000)
+    const snapshot = JSON.stringify(data)
+    if (snapshot === cloudLastSync.current) return // echo-guard: we just applied a remote change
+    const id = setTimeout(async () => {
+      try {
+        // Guard against clobbering a newer remote (two devices, same passphrase):
+        // pull first; if the remote copy is newer, ADOPT it instead of overwriting.
+        const remote = await pullCloud(pass)
+        if (remote) {
+          const rm = migrate(remote)
+          if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
+            cloudLastSync.current = JSON.stringify(rm)
+            replaceAll(rm)
+            return // adopted remote; do NOT push over it
+          }
+        }
+        // Local is newer (or nothing remote) → safe to push.
+        cloudLastSync.current = JSON.stringify(dataRef.current)
+        await pushCloud(pass, dataRef.current)
+      } catch { /* offline — try again on the next change */ }
+    }, 4000)
     return () => clearTimeout(id)
   }, [data])
   // Supabase account sync (when configured + signed in): pull on load, push on change.
@@ -157,12 +177,31 @@ export default function App() {
     if (mode === 'folder') restoreFolder(false)
   }, [mode])
 
-  // Auto-save to the cloud folder (debounced) whenever data changes.
+  // Auto-save to the cloud folder (debounced) whenever data changes. Same
+  // adopt-newer-remote guard as the cloud paths, so a second device syncing the
+  // same folder can't be silently overwritten with an older copy.
+  const folderLastSync = useRef('')
   useEffect(() => {
     if (mode !== 'folder' || !hasFolder()) return
-    const id = setTimeout(() => { saveToFolder(data).catch(() => {}) }, 1500)
+    const snapshot = JSON.stringify(data)
+    if (snapshot === folderLastSync.current) return
+    const id = setTimeout(async () => {
+      try {
+        const remote = await loadFromFolder()
+        if (remote) {
+          const rm = migrate(remote)
+          if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
+            folderLastSync.current = JSON.stringify(rm)
+            replaceAll(rm)
+            return // folder copy is newer → adopt, don't overwrite
+          }
+        }
+        folderLastSync.current = JSON.stringify(dataRef.current)
+        await saveToFolder(dataRef.current)
+      } catch { /* permission revoked / offline */ }
+    }, 1500)
     return () => clearTimeout(id)
-  }, [data, mode])
+  }, [data, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // First run → show the login/welcome gate.
   if (!mode) return <Welcome />
