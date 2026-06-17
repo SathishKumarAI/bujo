@@ -123,8 +123,11 @@ export function TopBar({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        <FeedbackButton />
+        {/* Feedback is secondary — keep it off phones so the bar fits. */}
+        <span className="hidden sm:inline-flex"><FeedbackButton /></span>
         <AccountMenu onNavigate={onNavigate} />
+        {/* Settings gear hidden on phones (it's in the ⋯ menu there) to keep the
+            header within the viewport. */}
         <Button
           variant={view === 'settings' ? 'secondary' : 'ghost'}
           size="icon-sm"
@@ -132,6 +135,7 @@ export function TopBar({
           aria-current={view === 'settings' ? 'page' : undefined}
           title="Settings"
           onClick={() => onNavigate('settings')}
+          className="hidden sm:inline-flex"
         >
           <SettingsIcon size={16} />
         </Button>
@@ -164,6 +168,9 @@ export function TopBar({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onNavigate('settings')} className="sm:hidden">
+              <SettingsIcon size={15} /> Settings
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onNavigate('help')}>
               <HelpCircle size={15} /> Help &amp; guide
             </DropdownMenuItem>
