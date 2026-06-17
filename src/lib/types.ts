@@ -76,6 +76,8 @@ export interface Habit {
    * the streak counts clean days. Default/undefined = a normal "build" habit.
    */
   avoid?: boolean
+  /** Part of day this habit belongs to (Habitify-style). Default = anytime. */
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'anytime'
 }
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */
