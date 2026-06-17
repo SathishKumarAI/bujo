@@ -98,9 +98,9 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
               const checked = done.includes(exKey(week, day, i))
               const actual = actuals[exKey(week, day, i)] ?? ''
               return (
-                <li key={i} className="border-t border-surface0 py-1.5">
+                <li key={i} className={`border-t border-surface0 py-1.5 transition-colors ${checked ? '-ml-2 rounded-r bg-green/5 pl-2' : ''}`} style={checked ? { boxShadow: `inset 2px 0 0 ${cat('green')}` } : undefined}>
                   <div className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-mauve" aria-label={`Did ${e.name}`} />
+                    <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-green" aria-label={`Did ${e.name}`} />
                     <span className={`flex-1 ${checked ? 'text-overlay1 line-through' : 'text-subtext1'}`}>{e.name}</span>
                     <VideoLink name={e.name} label="" size={13} className="text-overlay0 hover:text-red" />
                     <span className="text-overlay1">{e.qty}</span>
