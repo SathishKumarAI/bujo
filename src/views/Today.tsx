@@ -10,6 +10,7 @@ import { ImageUpload } from '../components/ImageUpload'
 import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
 import { TodayHabits } from '../components/TodayHabits'
+import { CoachCard } from '../components/CoachCard'
 import { StickerBar } from '../components/StickerBar'
 import { onThisDay } from '../lib/stats'
 import { promptForDay } from '../lib/prompts'
@@ -86,6 +87,9 @@ export function Today() {
         </>
       }
     >
+      {/* ── Coach: proactive "do this next" prompts from your data ── */}
+      {date === todayISO() && <CoachCard />}
+
       {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
       {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
 

@@ -6,6 +6,23 @@ import { Button as SButton } from './ui/button'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
+/**
+ * CARD — the single source of truth for card chrome across the whole app.
+ * Every <Card> (and <ChartCard>) reads its classes from here, so changing a
+ * card's look or the enlarge-modal sizing in ONE place restyles every card
+ * everywhere. Tweak these tokens instead of editing individual views.
+ */
+// eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
+export const CARD = {
+  /** The card container (border, radius, background, padding, 3-D press). */
+  container: 'card-3d min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6',
+  /** Enlarge-modal backdrop + panel. */
+  modalBackdrop: 'fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
+  modalPanel: 'relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl',
+  /** Force chart plot areas (role="img") tall in the enlarge modal. */
+  modalChartHeight: '[&_[role=img]]:!h-[64vh]',
+} as const
+
 export function Card({
   title,
   subtitle,
@@ -42,7 +59,7 @@ export function Card({
   return (
     <section
       onClick={onClick}
-      className={`card-3d min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6 ${defer ? 'order-last xl:order-none' : ''} ${className}`}
+      className={`${CARD.container} ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
         <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>
@@ -80,8 +97,8 @@ export function Card({
       )}
       {(!collapsible || open) && children}
       {large && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setLarge(false)} role="dialog" aria-modal="true">
-          <div className="relative max-h-[92vh] w-full max-w-5xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className={CARD.modalBackdrop} onClick={() => setLarge(false)} role="dialog" aria-modal="true">
+          <div className={CARD.modalPanel} onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 {title && <h2 className="truncate font-display text-xl font-medium text-text">{title}</h2>}
@@ -89,13 +106,16 @@ export function Card({
               </div>
               <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-overlay1 hover:text-text"><X size={20} /></button>
             </div>
-            <div className="text-base">{children}</div>
+            {/* Charts mark their plot area with role="img"; CARD.modalChartHeight
+                forces it tall so the chart genuinely enlarges, not just widens. */}
+            <div className={`text-base ${CARD.modalChartHeight}`}>{children}</div>
           </div>
         </div>
       )}
     </section>
   )
 }
+
 
 /**
  * A bordered metric tile: a big colored number/value over a small label.
@@ -167,8 +187,11 @@ export function ChartCard({
   className?: string
   children: ReactNode
 }) {
+  // Enlargeable by definition: every ChartCard gets the ⛶ → large-modal
+  // behaviour from one place. CARD.modalChartHeight grows the role="img" plot
+  // area in the modal so the chart truly enlarges.
   return (
-    <Card title={title} subtitle={subtitle} right={right} className={className}>
+    <Card title={title} subtitle={subtitle} right={right} className={className} enlargeable>
       <div className={`${height} w-full`} role="img" aria-label={label}>
         {children}
       </div>
