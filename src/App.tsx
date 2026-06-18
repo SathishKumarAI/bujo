@@ -23,6 +23,7 @@ import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
 import { CommandPalette } from './components/CommandPalette'
+import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
@@ -167,6 +168,8 @@ export default function App() {
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
+  const [showTour, setShowTour] = useState(() => !onboarded())
   // Session presence (real account OR guest) — drives the full-screen auth gate
   // so the signed-out sign in / sign up page can't reach the rest of the app.
   const [hasSession, setHasSession] = useState(false)
@@ -238,6 +241,7 @@ export default function App() {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
+      {showTour && !data.settings.explore && <Onboarding onClose={() => setShowTour(false)} />}
       <ExploreBanner />
       <ReminderBanner />
       <SyncIndicator />

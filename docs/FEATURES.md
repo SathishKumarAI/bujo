@@ -222,3 +222,13 @@ is no second database to keep in step.
   by **time of day** (morning → evening → anytime) as a "run your day" timeline
   with cues, streaks, and a "now" marker. Toggle in the tracker's layout switch
   (grid / activity / routine); set a habit's time of day in its detail panel.
+- **Onboarding tour**: a one-time, dismissable first-run guide (4 steps:
+  capture → track → coach → ⌘K) shown after you pick a storage mode; never nags
+  again (`bujo:onboarded`).
+- **Fitness charts to the bottom**: calorie trend (cardio) and body-weight /
+  training-volume / effort-trend (strength) now `defer` below the logging tools
+  and are ⛶-enlargeable.
+- **Per-habit daily notes** on the routine lens: tap the 📝 on any habit row to
+  jot a note for today (stored in `habitNotes`).
+- **Stats layout toggle**: switch the mood-calendar / year-in-pixels pair between
+  side-by-side and full-width stacked (persisted) — resize the dashboard to taste.

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -507,6 +507,8 @@ function RoutineTimeline({
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
 }) {
+  const { setHabitNote } = useJournal()
+  const [noting, setNoting] = useState<string | null>(null)
   const hour = new Date().getHours()
   const now = currentSlot(hour)
   const dow = fromISODay(today).getDay()
@@ -542,23 +544,38 @@ function RoutineTimeline({
                 const next = nextHabitValue(type, target, val)
                 const dueToday = !h.activeDays?.length || h.activeDays.includes(dow)
                 const streak = h.avoid ? cleanStreak(data, h.id, today) : habitStreak(data, h.id, today)
+                const note = data.habitNotes?.[today]?.[h.id] ?? ''
+                const open = noting === h.id
                 return (
-                  <li key={h.id} className={`flex items-center gap-3 rounded-xl border border-surface0 bg-base p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
-                    <button
-                      onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
-                      aria-label={`Mark ${h.name}`}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm transition-colors"
-                      style={{
-                        borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
-                        background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
-                      }}
-                    >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
-                    <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
-                      <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
-                      {h.cue && <span className="block truncate text-[11px] text-overlay0">{h.cue}</span>}
-                    </button>
-                    {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
-                    {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
+                  <li key={h.id} className={`rounded-xl border border-surface0 bg-base p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
+                        aria-label={`Mark ${h.name}`}
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm transition-colors"
+                        style={{
+                          borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
+                          background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
+                        }}
+                      >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
+                      <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
+                        <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
+                        {h.cue && <span className="block truncate text-[11px] text-overlay0">{h.cue}</span>}
+                      </button>
+                      {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
+                      <button onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-overlay0 hover:text-subtext1'}`}><StickyNote size={14} /></button>
+                    </div>
+                    {(open || note) && (
+                      <input
+                        value={note}
+                        onChange={(e) => setHabitNote(today, h.id, e.target.value)}
+                        onBlur={() => setNoting(null)}
+                        autoFocus={open}
+                        placeholder="Jot a note for today…"
+                        className="mt-2 w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground"
+                      />
+                    )}
                   </li>
                 )
               })}

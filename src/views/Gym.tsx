@@ -357,7 +357,7 @@ export function Gym() {
 
       {/* ── Body weight + training volume, side by side ──────── */}
       <div className="grid items-start gap-5 lg:grid-cols-2">
-      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average">
+      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average" defer enlargeable>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -386,7 +386,7 @@ export function Gym() {
       </Card>
 
       {/* ── Training volume + per-exercise progression ───────── */}
-      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'}>
+      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
         <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -416,7 +416,7 @@ export function Gym() {
       </div>
 
       {rpeSeries.length >= 2 && (
-        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session — watch for over-reaching">
+        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session — watch for over-reaching" defer enlargeable>
           <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>

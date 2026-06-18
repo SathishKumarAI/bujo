@@ -249,7 +249,7 @@ function CalorieTrendCard({ today }: { today: string }) {
   const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
   const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
   return (
-    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`} defer>
+    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`} defer enlargeable>
       <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
         {days.map((d) => (
           <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>

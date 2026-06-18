@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, ZAxis,
 } from 'recharts'
 import { useState } from 'react'
-import { Maximize2, X } from 'lucide-react'
+import { Maximize2, X, Columns2, Rows2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
 import { Heatmap } from '../components/Heatmap'
@@ -21,7 +21,8 @@ import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
 export function Stats() {
-  const { data } = useJournal()
+  const { data, setSettings } = useJournal()
+  const pairStacked = data.settings.statsPairLayout === 'stacked'
   const [ym, setYm] = useState(ymOf(todayISO()))
   const [heatWeeks, setHeatWeeks] = useState(26)
 
@@ -177,7 +178,13 @@ export function Stats() {
         </Card>
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="flex items-center justify-end">
+        <Button onClick={() => setSettings({ statsPairLayout: pairStacked ? 'split' : 'stacked' })}
+          aria-label={pairStacked ? 'Show side by side' : 'Stack full width'} title={pairStacked ? 'Side by side' : 'Stack full width'}>
+          {pairStacked ? <Columns2 size={14} /> : <Rows2 size={14} />}
+        </Button>
+      </div>
+      <div className={`grid items-start gap-5 ${pairStacked ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
       <Card
         enlargeable={false}
         title="Mood calendar"

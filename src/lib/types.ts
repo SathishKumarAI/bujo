@@ -378,6 +378,8 @@ export interface Settings {
   readingGoalBooks?: number
   /** ISO day the 75-day pickleball 3.5→4.0 plan was started (drives day/phase). */
   pickleballPlanStart?: string
+  /** Stats mood/year pair: side-by-side ('split', default) or full-width 'stacked'. */
+  statsPairLayout?: 'split' | 'stacked'
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
   /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
