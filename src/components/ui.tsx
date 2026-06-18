@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { ChevronDown, ChevronUp, Info, Maximize2, X } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { Button as SButton } from './ui/button'
@@ -16,6 +16,7 @@ export function Card({
   collapsible = false,
   defaultCollapsed = false,
   defer = false,
+  enlargeable = true,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -28,8 +29,13 @@ export function Card({
   defaultCollapsed?: boolean
   /** On phones, sink this card to the bottom of its column (charts below content). */
   defer?: boolean
+  /** Show a ⛶ button that opens the card content in a large modal. */
+  enlargeable?: boolean
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
+  const [large, setLarge] = useState(false)
+  // Enlarge affordance: any titled, non-clickable card (charts, calendars…).
+  const showEnlarge = enlargeable && !!title && !onClick
   // On phones, long subtitle/description text is hidden to save space; the ⓘ
   // toggle reveals it on tap. On sm+ the subtitle always shows.
   const [infoOpen, setInfoOpen] = useState(false)
@@ -59,6 +65,11 @@ export function Card({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}
+            {showEnlarge && (
+              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge" className="text-overlay0 hover:text-text">
+                <Maximize2 size={15} />
+              </button>
+            )}
             {collapsible && (
               <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-overlay0 hover:text-text">
                 {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -68,6 +79,20 @@ export function Card({
         </header>
       )}
       {(!collapsible || open) && children}
+      {large && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setLarge(false)} role="dialog" aria-modal="true">
+          <div className="relative max-h-[92vh] w-full max-w-5xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                {title && <h2 className="truncate font-display text-xl font-medium text-text">{title}</h2>}
+                {subtitle && <p className="mt-0.5 text-sm text-subtext0">{subtitle}</p>}
+              </div>
+              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-overlay1 hover:text-text"><X size={20} /></button>
+            </div>
+            <div className="text-base">{children}</div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

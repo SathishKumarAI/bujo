@@ -179,6 +179,7 @@ export function Stats() {
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card
+        enlargeable={false}
         title="Mood calendar"
         subtitle="Each day tinted by your mood (0–10) — tap ⛶ to enlarge"
         right={
@@ -213,7 +214,7 @@ export function Stats() {
         </div>
       </Card>
 
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`}
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`} enlargeable={false}
         right={<Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>}>
         {yearPixels(false)}
       </Card>
