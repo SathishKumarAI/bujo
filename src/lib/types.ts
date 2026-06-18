@@ -200,8 +200,22 @@ export interface Book {
   finishedOn?: string
   /** Short review / notes. */
   notes?: string
+  /** Optional link — buy page, author site, summary, etc. */
+  link?: string
+  /** Dated reflections: what you learned from the book that day. */
+  learnings?: { date: string; text: string }[]
   /** Catppuccin token for the spine colour. */
   color?: string
+  createdAt: string
+}
+
+/** A saved online link to read later (article, summary, book page). */
+export interface ReadLink {
+  id: string
+  url: string
+  title?: string
+  note?: string
+  done?: boolean
   createdAt: string
 }
 
@@ -512,6 +526,8 @@ export interface JournalData {
   friends?: Friend[]
   /** Reading log — want-to-read / reading / finished shelves. */
   books?: Book[]
+  /** Saved online links to read later. */
+  readLinks?: ReadLink[]
   settings: Settings
 }
 

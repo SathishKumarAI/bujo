@@ -190,9 +190,19 @@ export function generateDemoData(today = todayISO()): JournalData {
 
   // ── Reading log: one of each shelf so the view + stats demo nicely ──
   j.books = [
-    { id: uid('bk'), title: 'Atomic Habits', author: 'James Clear', status: 'finished', totalPages: 320, currentPage: 320, rating: 5, startedOn: addDays(today, -40), finishedOn: addDays(today, -12), createdAt: addDays(today, -40), color: 'green' },
-    { id: uid('bk'), title: 'Deep Work', author: 'Cal Newport', status: 'reading', totalPages: 296, currentPage: 120, startedOn: addDays(today, -6), createdAt: addDays(today, -6), color: 'mauve' },
+    { id: uid('bk'), title: 'Atomic Habits', author: 'James Clear', status: 'finished', totalPages: 320, currentPage: 320, rating: 5, startedOn: addDays(today, -40), finishedOn: addDays(today, -12), createdAt: addDays(today, -40), color: 'green',
+      link: 'https://jamesclear.com/atomic-habits', notes: 'Systems > goals. The 1% better idea reframed how I plan.',
+      learnings: [
+        { date: addDays(today, -20), text: 'Habit stacking: attach a new habit to an existing one.' },
+        { date: addDays(today, -14), text: 'Make it obvious, attractive, easy, satisfying — the 4 laws.' },
+      ] },
+    { id: uid('bk'), title: 'Deep Work', author: 'Cal Newport', status: 'reading', totalPages: 296, currentPage: 120, startedOn: addDays(today, -6), createdAt: addDays(today, -6), color: 'mauve',
+      learnings: [{ date: addDays(today, -2), text: 'Schedule deep blocks; treat shallow work as the exception.' }] },
     { id: uid('bk'), title: 'The Pragmatic Programmer', author: 'Hunt & Thomas', status: 'want', createdAt: addDays(today, -2), color: 'sky' },
+  ]
+  j.readLinks = [
+    { id: uid('rl'), url: 'https://www.thedinkpickleball.com/third-shot-drop/', title: 'The third-shot drop, explained', createdAt: addDays(today, -3) },
+    { id: uid('rl'), url: 'https://jamesclear.com/articles', title: 'James Clear — article archive', done: true, createdAt: addDays(today, -9) },
   ]
   j.settings.readingGoalBooks = 12
 

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target } from 'lucide-react'
+import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
-import { todayISO } from '../lib/date'
+import { todayISO, prettyDay } from '../lib/date'
 import { shelf, progressPct, readingSummary } from '../lib/reading'
 import type { Book, BookStatus } from '../lib/types'
 
@@ -91,6 +91,58 @@ export function Reading() {
           )
         })}
       </div>
+
+      <ReadLater />
+    </div>
+  )
+}
+
+function ReadLater() {
+  const { data } = useJournal()
+  const store = useJournal()
+  const links = [...(data.readLinks ?? [])].sort((a, b) => Number(a.done) - Number(b.done) || b.createdAt.localeCompare(a.createdAt))
+  const [url, setUrl] = useState('')
+  const [title, setTitle] = useState('')
+
+  function add() {
+    const u = url.trim()
+    if (!u) return
+    store.addReadLink({ url: /^https?:\/\//.test(u) ? u : `https://${u}`, title: title.trim() || undefined })
+    setUrl(''); setTitle('')
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+        <Bookmark size={16} className="text-sky" /> Read later — saved links
+        <span className="text-overlay0">({links.filter((l) => !l.done).length} to read)</span>
+      </h3>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Paste a link to read later"
+          className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Title (optional)"
+          className="min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+        <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust"><Plus size={15} /> Save</button>
+      </div>
+      {links.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No saved links yet — paste an article or book page to read later.</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {links.map((l) => (
+            <li key={l.id} className="group flex items-center gap-2 py-2 text-sm">
+              <button onClick={() => store.updateReadLink(l.id, { done: !l.done })} aria-label={l.done ? 'Mark unread' : 'Mark read'}
+                className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${l.done ? 'border-green bg-green text-crust' : 'border-overlay0'}`}>
+                {l.done && <Check size={11} />}
+              </button>
+              <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 truncate ${l.done ? 'text-overlay0 line-through' : 'text-subtext1 hover:text-foreground'}`}>
+                {l.title || l.url}
+              </a>
+              <ExternalLink size={12} className="shrink-0 text-overlay0" />
+              <button onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -107,6 +159,16 @@ function Stat({ label, value, color }: { label: string; value: number | string; 
 function BookCard({ book }: { book: Book }) {
   const store = useJournal()
   const pct = progressPct(book)
+  const [open, setOpen] = useState(false)
+  const [learn, setLearn] = useState('')
+  const learnings = book.learnings ?? []
+
+  function addLearning() {
+    const t = learn.trim()
+    if (!t) return
+    store.addBookLearning(book.id, t, todayISO())
+    setLearn('')
+  }
 
   function move(status: BookStatus) {
     const patch: Partial<Book> = { status }
@@ -154,11 +216,49 @@ function BookCard({ book }: { book: Book }) {
       )}
 
       {/* Shelf controls */}
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
         {book.status !== 'want' && <Move label="Want" onClick={() => move('want')} />}
         {book.status !== 'reading' && <Move label="Reading" onClick={() => move('reading')} />}
         {book.status !== 'finished' && <Move label="Finished" onClick={() => move('finished')} />}
+        <button onClick={() => setOpen((v) => !v)} className="ml-auto inline-flex items-center gap-1 text-[11px] text-overlay1 hover:text-foreground">
+          <NotebookPen size={12} /> Notes{learnings.length ? ` (${learnings.length})` : ''} <ChevronDown size={12} className={open ? 'rotate-180 transition' : 'transition'} />
+        </button>
       </div>
+
+      {open && (
+        <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
+          {/* Link */}
+          <div className="flex items-center gap-1.5">
+            <Link2 size={13} className="shrink-0 text-overlay1" />
+            <input value={book.link ?? ''} onChange={(e) => store.updateBook(book.id, { link: e.target.value || undefined })} placeholder="Link (summary, buy page, author…)"
+              className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
+            {book.link && <a href={book.link} target="_blank" rel="noreferrer" className="text-mauve"><ExternalLink size={13} /></a>}
+          </div>
+          {/* Review */}
+          <textarea value={book.notes ?? ''} onChange={(e) => store.updateBook(book.id, { notes: e.target.value || undefined })} placeholder="Your review / overall takeaways…" rows={2}
+            className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
+          {/* What I learned — dated log */}
+          <div>
+            <p className="mb-1 text-[11px] font-medium text-subtext1">What I learned</p>
+            {learnings.length > 0 && (
+              <ul className="mb-1.5 space-y-1">
+                {learnings.map((l, i) => (
+                  <li key={i} className="group flex items-start gap-1.5 text-xs text-overlay1">
+                    <span className="shrink-0 text-overlay0">{prettyDay(l.date)}:</span>
+                    <span className="flex-1">{l.text}</span>
+                    <button onClick={() => store.removeBookLearning(book.id, i)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-1.5">
+              <input value={learn} onChange={(e) => setLearn(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLearning()} placeholder="What did you learn today?"
+                className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
+              <button onClick={addLearning} className="shrink-0 rounded-md bg-primary px-2 text-xs font-medium text-crust">Add</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

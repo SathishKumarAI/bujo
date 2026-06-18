@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, ZAxis,
 } from 'recharts'
 import { useState } from 'react'
+import { Maximize2, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
 import { Heatmap } from '../components/Heatmap'
@@ -46,6 +47,56 @@ export function Stats() {
     // red (low) → yellow → green (high)
     const hue = (v / 10) * 120
     return `hsl(${hue} 45% 55%)`
+  }
+
+  // Click-to-enlarge: which widget is shown big in the modal.
+  const [enlarged, setEnlarged] = useState<null | 'mood' | 'year'>(null)
+
+  // Mood-calendar grid; `large` scales the cells up for the enlarge modal.
+  const moodCalGrid = (large = false) => (
+    <div className={large ? 'mx-auto max-w-xl' : 'mx-auto max-w-xs'}>
+      <div className={`mb-1 grid grid-cols-7 text-center text-overlay0 ${large ? 'gap-1.5 text-xs' : 'gap-0.5 text-[9px]'}`}>
+        {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
+      </div>
+      <div className={`grid grid-cols-7 ${large ? 'gap-1.5' : 'gap-0.5'}`}>
+        {monthDays(ym).map((d, i) => (
+          <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
+            className={`grid aspect-square place-items-center rounded ${large ? 'text-base' : 'text-[10px]'}`}
+            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? '#11111b' : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
+            {Number(d.slice(8))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  // Year-in-pixels grid; `large` bumps the square size for the modal.
+  const yearPixels = (large = false) => {
+    const year = ym.slice(0, 4)
+    const moodOn = new Map(data.metrics.filter((m) => m.mood != null && m.date.startsWith(year)).map((m) => [m.date, m.mood!]))
+    if (moodOn.size === 0) return <Empty>Log mood through the year to fill this in.</Empty>
+    const sq = large ? 'h-4 w-4' : 'h-2.5 w-2.5'
+    return (
+      <div className="overflow-x-auto" role="img" aria-label={`Year-in-pixels grid of daily mood for ${year}`}>
+        <div className={large ? 'min-w-[720px]' : 'min-w-[520px]'}>
+          {Array.from({ length: 12 }, (_, mi) => {
+            const mm = String(mi + 1).padStart(2, '0')
+            return (
+              <div key={mi} className="flex items-center gap-1">
+                <span className={`shrink-0 text-overlay0 ${large ? 'w-9 text-xs' : 'w-7 text-[10px]'}`}>{MONTHS[mi].slice(0, 3)}</span>
+                <div className="flex gap-[2px]">
+                  {Array.from({ length: 31 }, (_, di) => {
+                    const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
+                    const v = moodOn.get(date)
+                    return <span key={di} className={`${sq} rounded-[2px]`} title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -126,14 +177,16 @@ export function Stats() {
         </Card>
       </div>
 
+      <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card
         title="Mood calendar"
-        subtitle="Each day tinted by your mood (0–10) — spot streaks, dips, and weekday patterns at a glance"
+        subtitle="Each day tinted by your mood (0–10) — tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
             <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
             <Button onClick={() => setYm(ymOf(todayISO()))}>This month</Button>
             <Button onClick={() => shift(1)} aria-label="Next month">→</Button>
+            <Button onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge"><Maximize2 size={14} /></Button>
           </div>
         }
       >
@@ -151,25 +204,7 @@ export function Stats() {
             </p>
           )
         })()}
-        <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] text-overlay0">
-          {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {monthDays(ym).map((d, i) => (
-            <div
-              key={d}
-              title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
-              className="grid aspect-square place-items-center rounded-md text-xs"
-              style={{
-                background: moodColor(moods.get(d)),
-                color: moods.has(d) ? '#11111b' : cat('overlay0'),
-                gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined,
-              }}
-            >
-              {Number(d.slice(8))}
-            </div>
-          ))}
-        </div>
+        {moodCalGrid(false)}
         {/* Legend */}
         <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-overlay0">
           <span>low</span>
@@ -178,34 +213,11 @@ export function Stats() {
         </div>
       </Card>
 
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`} className="lg:col-span-2">
-        {(() => {
-          const year = ym.slice(0, 4)
-          const moodOn = new Map(data.metrics.filter((m) => m.mood != null && m.date.startsWith(year)).map((m) => [m.date, m.mood!]))
-          if (moodOn.size === 0) return <Empty>Log mood through the year to fill this in.</Empty>
-          return (
-            <div className="overflow-x-auto" role="img" aria-label={`Year-in-pixels grid of daily mood for ${year}`}>
-              <div className="min-w-[520px]">
-                {Array.from({ length: 12 }, (_, mi) => {
-                  const mm = String(mi + 1).padStart(2, '0')
-                  return (
-                    <div key={mi} className="flex items-center gap-1">
-                      <span className="w-7 shrink-0 text-[10px] text-overlay0">{MONTHS[mi].slice(0, 3)}</span>
-                      <div className="flex gap-[2px]">
-                        {Array.from({ length: 31 }, (_, di) => {
-                          const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
-                          const v = moodOn.get(date)
-                          return <span key={di} className="h-2.5 w-2.5 rounded-[2px]" title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`}
+        right={<Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>}>
+        {yearPixels(false)}
       </Card>
+      </div>
 
       <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)">
         {moodWd.every((v) => v == null) ? (
@@ -259,6 +271,19 @@ export function Stats() {
           </div>
         )}
       </Card>
+
+      {/* Click-to-enlarge modal */}
+      {enlarged && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
+              <button onClick={() => setEnlarged(null)} aria-label="Close" className="text-overlay1 hover:text-foreground"><X size={20} /></button>
+            </div>
+            {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

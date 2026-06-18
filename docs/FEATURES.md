@@ -202,3 +202,16 @@ is no second database to keep in step.
 - **Email validation** (`src/lib/validate.ts`) — format check + "Did you mean
   gmail.com?" typo suggestions before every auth submit (server still confirms
   deliverability via the email link).
+
+## Reading depth + Stats layout (appended 2026-06-18)
+
+- **Reading — read later & learnings:** save online links to read later (a
+  checkable list), a per-book review, a book link, and a dated **"what I learned"**
+  log you can add to each day you read.
+- **Stats — compact & enlargeable:** the mood calendar is compact and sits
+  **side by side** with year-in-pixels; tap **⛶** on either to open a large
+  click-to-enlarge modal.
+- **Pickleball (competitive):** leagues & tournaments tracker (8 formats),
+  richer per-game logging (opponent/location/level/points/scoring), and a
+  research-backed **75-day 3.5→4.0 plan**. See
+  `docs/features/pickleball-competitive.md`.

@@ -146,6 +146,13 @@ interface Store {
   addBook: (b: Omit<Book, 'id' | 'createdAt'>) => void
   updateBook: (id: string, patch: Partial<Book>) => void
   removeBook: (id: string) => void
+  /** Append a dated "what I learned" reflection to a book. */
+  addBookLearning: (id: string, text: string, date: string) => void
+  removeBookLearning: (id: string, index: number) => void
+  // read-later links
+  addReadLink: (l: Omit<import('./lib/types').ReadLink, 'id' | 'createdAt'>) => void
+  updateReadLink: (id: string, patch: Partial<import('./lib/types').ReadLink>) => void
+  removeReadLink: (id: string) => void
   // pickleball leagues / tournaments
   addPickleEvent: (e: Omit<import('./lib/types').PickleballEvent, 'id'>) => void
   removePickleEvent: (id: string) => void
@@ -525,6 +532,31 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeBook: (id) =>
         patch((d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
+
+      addBookLearning: (id, text, date) =>
+        patch((d) => ({
+          ...d,
+          books: (d.books ?? []).map((b) =>
+            b.id === id ? { ...b, learnings: [...(b.learnings ?? []), { date, text }] } : b,
+          ),
+        })),
+
+      removeBookLearning: (id, index) =>
+        patch((d) => ({
+          ...d,
+          books: (d.books ?? []).map((b) =>
+            b.id === id ? { ...b, learnings: (b.learnings ?? []).filter((_, i) => i !== index) } : b,
+          ),
+        })),
+
+      addReadLink: (l) =>
+        patch((d) => ({ ...d, readLinks: [...(d.readLinks ?? []), { id: uid('rl'), createdAt: todayISO(), ...l }] })),
+
+      updateReadLink: (id, lpatch) =>
+        patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).map((l) => (l.id === id ? { ...l, ...lpatch } : l)) })),
+
+      removeReadLink: (id) =>
+        patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).filter((l) => l.id !== id) })),
 
       addPickleEvent: (e) =>
         patch((d) => ({ ...d, pickleballEvents: [...(d.pickleballEvents ?? []), { id: uid('pke'), ...e }] })),
