@@ -146,6 +146,9 @@ interface Store {
   addBook: (b: Omit<Book, 'id' | 'createdAt'>) => void
   updateBook: (id: string, patch: Partial<Book>) => void
   removeBook: (id: string) => void
+  // pickleball leagues / tournaments
+  addPickleEvent: (e: Omit<import('./lib/types').PickleballEvent, 'id'>) => void
+  removePickleEvent: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -522,6 +525,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeBook: (id) =>
         patch((d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
+
+      addPickleEvent: (e) =>
+        patch((d) => ({ ...d, pickleballEvents: [...(d.pickleballEvents ?? []), { id: uid('pke'), ...e }] })),
+
+      removePickleEvent: (id) =>
+        patch((d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).filter((e) => e.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {

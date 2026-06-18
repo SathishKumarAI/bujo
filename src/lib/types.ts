@@ -362,6 +362,8 @@ export interface Settings {
   pickleballGoalGames?: number
   /** Yearly reading goal in books (shown on Reading + Goals). */
   readingGoalBooks?: number
+  /** ISO day the 75-day pickleball 3.5→4.0 plan was started (drives day/phase). */
+  pickleballPlanStart?: string
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
   /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
@@ -409,6 +411,41 @@ export interface PickleballSession {
   partner?: string // doubles partner
   /** Perceived exertion 1–10. */
   rpe?: number
+  notes?: string
+  // ── richer per-game logging (all optional, additive) ──
+  /** Opponent(s) name/handle. */
+  opponent?: string
+  /** Where you played (court / club / city). */
+  location?: string
+  /** Self/opponent skill level for the session, e.g. "3.5". */
+  level?: string
+  /** Total points you scored across games (for point-differential). */
+  pointsFor?: number
+  /** Total points conceded across games. */
+  pointsAgainst?: number
+  /** Scoring used: 11/15/21 side-out, or rally-to-21. */
+  scoring?: '11' | '15' | '21' | 'rally21'
+}
+
+/** Bracket/league format for a competitive pickleball event. */
+export type PickleballFormat =
+  | 'round-robin' | 'single-elim' | 'double-elim' | 'pool-play'
+  | 'ladder' | 'box' | 'swiss' | 'king-of-court'
+
+/** A league or tournament the player entered (separate from casual sessions). */
+export interface PickleballEvent {
+  id: string
+  date: string // ISO day (start date)
+  name: string
+  kind: 'league' | 'tournament'
+  format: PickleballFormat
+  /** Division entered, e.g. "3.5 Mixed Doubles". */
+  division?: string
+  wins?: number
+  losses?: number
+  /** Final placement / medal, e.g. "Gold", "2nd of 8", "5th". */
+  placement?: string
+  partner?: string
   notes?: string
 }
 
@@ -467,6 +504,8 @@ export interface JournalData {
   devSessions?: DevSession[]
   /** Pickleball play sessions. */
   pickleball?: PickleballSession[]
+  /** Pickleball leagues & tournaments entered. */
+  pickleballEvents?: PickleballEvent[]
   /** Physique / progress photos for week-to-week comparison. */
   progressPhotos?: ProgressPhoto[]
   /** Friends / contacts (manual, with optional opt-in GitHub enrichment). */

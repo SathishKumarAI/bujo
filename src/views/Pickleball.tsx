@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
-import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
+import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay } from '../lib/pickleball'
+import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
+import type { PickleballFormat } from '../lib/types'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
-const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '' }
+const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
+const evtBlank = { date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' }
 
 /** Physio / trainer / doctor guidance for pickleball — injury-prevention basics. */
 const TIPS = [
@@ -47,9 +50,11 @@ const RESOURCES = [
 ]
 
 export function Pickleball() {
-  const { data, addPickleball, removePickleball, setSettings } = useJournal()
+  const { data, addPickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings } = useJournal()
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
+  const [ev, setEv] = useState(evtBlank)
+  const setE = (p: Partial<typeof evtBlank>) => setEv((c) => ({ ...c, ...p }))
   const today = todayISO()
   // Deterministic daily rotation so the practice focus is stable for the day.
   const drill = DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % DRILLS.length]
@@ -73,12 +78,34 @@ export function Pickleball() {
       partner: f.partner.trim() || undefined,
       rpe: f.rpe ? Number(f.rpe) : undefined,
       notes: f.notes.trim() || undefined,
+      opponent: f.opponent.trim() || undefined,
+      location: f.location.trim() || undefined,
+      level: f.level.trim() || undefined,
+      pointsFor: f.pointsFor ? Number(f.pointsFor) : undefined,
+      pointsAgainst: f.pointsAgainst ? Number(f.pointsAgainst) : undefined,
+      scoring: f.scoring || undefined,
     })
     setF({ ...blank })
   }
+  function logEvent() {
+    if (!ev.name.trim()) return
+    addPickleEvent({
+      date: ev.date,
+      name: ev.name.trim(),
+      kind: ev.kind,
+      format: ev.format,
+      division: ev.division.trim() || undefined,
+      wins: ev.wins ? Number(ev.wins) : undefined,
+      losses: ev.losses ? Number(ev.losses) : undefined,
+      placement: ev.placement.trim() || undefined,
+      partner: ev.partner.trim() || undefined,
+      notes: ev.notes.trim() || undefined,
+    })
+    setEv({ ...evtBlank })
+  }
   function repeatLast() {
     const last = sessions[0]
-    if (last) setF({ date: today, format: last.format, gamesWon: '', gamesLost: '', durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', rpe: '', notes: '' })
+    if (last) setF({ ...blank, date: today, format: last.format, durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', location: last.location ?? '', level: last.level ?? '', scoring: last.scoring ?? '' })
   }
 
   const wl = [{ name: 'Won', value: all.gamesWon, color: 'green' }, { name: 'Lost', value: all.gamesLost, color: 'red' }]
@@ -91,6 +118,18 @@ export function Pickleball() {
   const hStart = addDays(today, -(WEEKS * 7 - 1))
   const hPad = fromISODay(hStart).getDay()
   const maxDay = Math.max(1, ...byDay.values())
+
+  // ── Leagues & tournaments ──
+  const events = [...(data.pickleballEvents ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const evWins = events.reduce((s, e) => s + (e.wins ?? 0), 0)
+  const evLosses = events.reduce((s, e) => s + (e.losses ?? 0), 0)
+  const medals = events.filter((e) => /gold|silver|bronze|1st|2nd|3rd/i.test(e.placement ?? '')).length
+
+  // ── 75-day 3.5→4.0 plan ──
+  const planStart = data.settings.pickleballPlanStart
+  const planDay = planStart ? Math.min(PLAN_TOTAL_DAYS, Math.max(1, dayDiff(planStart, today) + 1)) : 0
+  const PHASE_END = [18, 36, 54, 72, 75]
+  const activePhaseIdx = planDay > 0 ? PHASE_END.findIndex((end) => planDay <= end) : -1
 
   return (
     <Page
@@ -110,6 +149,22 @@ export function Pickleball() {
                 <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
               </div>
               {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
+              <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
+              <div className="grid grid-cols-2 gap-2">
+                <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
+                <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
+                <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts agst" aria-label="Points against" />
+                <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 text-sm text-foreground">
+                  <option value="">Scoring</option>
+                  <option value="11">to 11</option>
+                  <option value="15">to 15</option>
+                  <option value="21">to 21</option>
+                  <option value="rally21">rally 21</option>
+                </select>
+              </div>
               <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} />
               <Button variant="primary" onClick={log} className="w-full">Log session</Button>
             </div>
@@ -301,6 +356,112 @@ export function Pickleball() {
             </li>
           ))}
         </ul>
+      </Card>
+
+      {/* ── Leagues & tournaments ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events — separate from casual sessions">
+        <div className="mb-4 grid grid-cols-3 gap-2">
+          <StatTile compact label="Events" value={events.length} color="mauve" />
+          <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
+          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Trophy size={14} />} />
+        </div>
+        {/* log an event */}
+        <div className="grid gap-2 rounded-lg border border-surface0 bg-base p-3 sm:grid-cols-2">
+          <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
+          <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
+          <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
+          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
+            {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
+          </select>
+          <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
+          <Input value={ev.placement} onChange={(e) => setE({ placement: e.target.value })} placeholder="Placement e.g. Gold / 2nd of 8" aria-label="Placement" />
+          <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
+          <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
+          <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
+          <Button variant="primary" onClick={logEvent} className="sm:col-span-2">Log event</Button>
+        </div>
+        {/* event list */}
+        {events.length > 0 && (
+          <ul className="mt-3 divide-y divide-surface0">
+            {events.map((e) => (
+              <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0">
+                  <span className="text-subtext1">{e.name}</span>
+                  <span className="text-overlay0"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  {e.placement && <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
+                  {(e.wins != null || e.losses != null) && <span className="text-overlay1">{e.wins ?? 0}–{e.losses ?? 0}</span>}
+                  <button onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {/* ── Format playbook ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><ListChecks size={18} className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {PICKLE_FORMATS.map((fm) => (
+            <li key={fm.id} className="rounded-lg border border-surface0 bg-base p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-text">{fm.label}</span>
+                <span className="text-[10px] text-overlay0">{fm.size}</span>
+              </div>
+              <p className="text-xs text-overlay1">{fm.how}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      {/* ── 75-day 3.5 → 4.0 plan ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Flame size={18} className="text-peach" /> 75-day plan · 3.5 → 4.0</span>} subtitle="A structured drill plan to hit 4.0-level benchmarks">
+        {planDay === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-surface1 p-4">
+            <p className="text-sm text-subtext0">Commit to 75 days. ~8–12 hrs/week, ~65% drilling. Five phases: soft game → third-shot drop → transitions → net battles → assessment.</p>
+            <Button variant="primary" onClick={() => setSettings({ pickleballPlanStart: today })}>Start the 75-day plan</Button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex-1">
+                <div className="mb-1 flex justify-between text-xs text-overlay0"><span>Day {planDay} of {PLAN_TOTAL_DAYS}</span><span>{Math.round((planDay / PLAN_TOTAL_DAYS) * 100)}%</span></div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full" style={{ width: `${(planDay / PLAN_TOTAL_DAYS) * 100}%`, background: cat('peach') }} /></div>
+              </div>
+              <button onClick={() => setSettings({ pickleballPlanStart: undefined })} className="text-xs text-overlay0 hover:text-red">Reset</button>
+            </div>
+          </>
+        )}
+        <div className="mt-3 space-y-2">
+          {PICKLE_PLAN.map((p, i) => {
+            const active = i === activePhaseIdx
+            const done = planDay > 0 && i < activePhaseIdx
+            return (
+              <div key={p.phase} className={`rounded-lg border p-3 ${active ? 'border-peach bg-peach/5' : 'border-surface0 bg-base'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-medium" style={{ background: done ? cat('green') : active ? cat('peach') : cat('surface1'), color: cat('crust') }}>{done ? '✓' : p.phase}</span>
+                  <span className="text-sm font-medium text-text">{p.title}</span>
+                  <span className="text-[10px] text-overlay0">{p.days}</span>
+                  {active && <span className="ml-auto rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('peach') + '22', color: cat('peach') }}>You’re here</span>}
+                </div>
+                <p className="mt-1.5 text-xs text-overlay1">{p.focus}</p>
+                <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                  {p.drills.map((d) => (
+                    <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-overlay0">— {d.how}</span></li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[11px]" style={{ color: cat('green') }}>🎯 {p.goal}</p>
+              </div>
+            )
+          })}
+        </div>
+        <details className="mt-3 rounded-lg border border-surface0 bg-base p-3">
+          <summary className="cursor-pointer text-sm font-medium text-text">What separates a 3.5 from a 4.0</summary>
+          <ul className="mt-2 space-y-1">
+            {SKILLS_35_TO_40.map((s) => <li key={s} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {s}</li>)}
+          </ul>
+        </details>
       </Card>
     </Page>
   )

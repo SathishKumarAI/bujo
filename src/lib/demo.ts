@@ -139,6 +139,13 @@ export function generateDemoData(today = todayISO()): JournalData {
   }
   j.settings.pickleballGoalGames = 12
 
+  // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──
+  j.pickleballEvents = [
+    { id: uid('pke'), date: addDays(today, -21), name: 'Spring Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', wins: 4, losses: 2, placement: 'Bronze', partner: 'Maya' },
+    { id: uid('pke'), date: addDays(today, -7), name: 'Tuesday Night Ladder', kind: 'league', format: 'ladder', division: '3.5–4.0', wins: 3, losses: 1, placement: '2nd of 8' },
+  ]
+  j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
+
   // ── Developer focus sessions (Focus view) ──
   const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
   const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]

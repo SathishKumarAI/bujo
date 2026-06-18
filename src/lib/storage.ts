@@ -61,6 +61,7 @@ export function emptyJournal(): JournalData {
     habitSkips: {},
     devSessions: [],
     books: [],
+    pickleballEvents: [],
     settings: defaultSettings(),
   }
 }
