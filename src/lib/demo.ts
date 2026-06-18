@@ -186,6 +186,16 @@ export function generateDemoData(today = todayISO()): JournalData {
 
   // ── Give a couple habits weekly goals so the Goals roll-up populates ──
   j.habits.slice(0, 2).forEach((h, i) => { h.weeklyGoal = i === 0 ? 5 : 7 })
+  // Assign times of day + cues so the routine-timeline lens demos well.
+  const SLOT: Record<string, { t: 'morning' | 'afternoon' | 'evening' | 'anytime'; cue?: string }> = {
+    Caffeine: { t: 'morning', cue: 'With breakfast' },
+    Vitamins: { t: 'morning', cue: 'After coffee' },
+    Exercise: { t: 'morning', cue: 'Before the workday' },
+    Vegetables: { t: 'afternoon', cue: 'At lunch' },
+    'Water 2L': { t: 'anytime' },
+    Read: { t: 'evening', cue: 'Before bed' },
+  }
+  j.habits.forEach((h) => { const m = SLOT[h.name]; if (m) { h.timeOfDay = m.t; h.cue = m.cue } })
   j.settings.fitnessGoalMin = 150
 
   // ── Reading log: one of each shelf so the view + stats demo nicely ──

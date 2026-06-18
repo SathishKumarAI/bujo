@@ -386,8 +386,9 @@ export interface Settings {
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
   trackerShowArchived?: boolean
-  /** Habit tracker layout: classic month-grid vs activity-heatmap rows. */
-  trackerLayout?: 'classic' | 'activity'
+  /** Habit tracker layout: classic month-grid, activity-heatmap rows, or a
+   *  time-of-day routine timeline ("run your day"). */
+  trackerLayout?: 'classic' | 'activity' | 'routine'
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
   /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */

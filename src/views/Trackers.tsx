@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -10,7 +10,7 @@ import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../co
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
-import { TIME_SLOTS } from '../lib/timeofday'
+import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -118,11 +118,23 @@ export function Trackers() {
           <div className="flex items-center gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             {!radial && (
-              <Button
-                onClick={() => setSettings({ trackerLayout: layout === 'activity' ? 'classic' : 'activity' })}
-                aria-label={layout === 'activity' ? 'Switch to classic grid' : 'Switch to activity view'}
-                title={layout === 'activity' ? 'Classic grid' : 'Activity view'}
-              >{layout === 'activity' ? <LayoutGrid size={15} /> : <Activity size={15} />}</Button>
+              <div className="inline-flex overflow-hidden rounded-lg border border-surface1">
+                {([
+                  { id: 'classic', icon: <LayoutGrid size={15} />, title: 'Grid' },
+                  { id: 'activity', icon: <Activity size={15} />, title: 'Activity' },
+                  { id: 'routine', icon: <Clock size={15} />, title: 'Routine (by time of day)' },
+                ] as const).map((o) => (
+                  <button
+                    key={o.id}
+                    onClick={() => setSettings({ trackerLayout: o.id })}
+                    aria-label={`${o.title} layout`}
+                    aria-pressed={layout === o.id}
+                    title={o.title}
+                    className="px-2 py-1.5"
+                    style={{ background: layout === o.id ? cat('mauve') : 'transparent', color: layout === o.id ? cat('crust') : cat('subtext1') }}
+                  >{o.icon}</button>
+                ))}
+              </div>
             )}
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
@@ -147,6 +159,15 @@ export function Trackers() {
             habitValues={data.habitValues}
             days={monthDays(ym)}
             today={today}
+          />
+        ) : layout === 'routine' ? (
+          <RoutineTimeline
+            habits={visibleHabits}
+            data={data}
+            today={today}
+            onToggle={toggleHabit}
+            onSetValue={setHabitValue}
+            onEdit={setEditing}
           />
         ) : layout === 'activity' ? (
           <ActivityLayout
@@ -471,6 +492,80 @@ function TodayStrip({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ── Routine timeline: habits grouped by time of day (run your day) ───────────
+function RoutineTimeline({
+  habits, data, today, onToggle, onSetValue, onEdit,
+}: {
+  habits: Habit[]
+  data: import('../lib/types').JournalData
+  today: string
+  onToggle: (date: string, id: string) => void
+  onSetValue: (date: string, id: string, value: number) => void
+  onEdit: (id: string) => void
+}) {
+  const hour = new Date().getHours()
+  const now = currentSlot(hour)
+  const dow = fromISODay(today).getDay()
+
+  const sections = orderedSlots(hour)
+    .map((slot) => ({ slot, list: habits.filter((h) => (h.timeOfDay ?? 'anytime') === slot) }))
+    .filter((s) => s.list.length > 0)
+
+  if (sections.length === 0) {
+    return <Empty>Assign habits a time of day (open a habit → “Time of day”) to build your daily routine.</Empty>
+  }
+
+  return (
+    <div className="space-y-4">
+      {sections.map(({ slot, list }) => {
+        const meta = slotMeta(slot)
+        const scheduled = list.filter((h) => !h.activeDays?.length || h.activeDays.includes(dow))
+        const done = scheduled.filter((h) => habitDoneOn(data, h, today)).length
+        return (
+          <div key={slot}>
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="text-sm font-medium text-subtext1">{meta.emoji} {meta.label}</span>
+              {slot === now && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>now</span>}
+              <span className="ml-auto text-xs text-overlay0">{done}/{scheduled.length || list.length}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {list.map((h) => {
+                const type = h.type ?? 'check'
+                const numeric = type === 'count' || type === 'timer' || type === 'rating'
+                const target = habitTarget(h)
+                const val = habitValueOn(data, h, today)
+                const on = habitDoneOn(data, h, today)
+                const next = nextHabitValue(type, target, val)
+                const dueToday = !h.activeDays?.length || h.activeDays.includes(dow)
+                const streak = h.avoid ? cleanStreak(data, h.id, today) : habitStreak(data, h.id, today)
+                return (
+                  <li key={h.id} className={`flex items-center gap-3 rounded-xl border border-surface0 bg-base p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
+                    <button
+                      onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
+                      aria-label={`Mark ${h.name}`}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm transition-colors"
+                      style={{
+                        borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
+                        background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
+                      }}
+                    >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
+                    <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
+                      <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
+                      {h.cue && <span className="block truncate text-[11px] text-overlay0">{h.cue}</span>}
+                    </button>
+                    {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+                    {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )
+      })}
     </div>
   )
 }

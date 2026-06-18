@@ -215,3 +215,10 @@ is no second database to keep in step.
   richer per-game logging (opponent/location/level/points/scoring), and a
   research-backed **75-day 3.5→4.0 plan**. See
   `docs/features/pickleball-competitive.md`.
+- **Coach** (Today): proactive "do this next" prompts derived from your data —
+  check-in, behind-pace habit, movement goal, pickleball plan. See
+  `docs/features/coach-and-card-system.md`.
+- **Tracker routine-timeline lens**: a third tracker layout (⏰) grouping habits
+  by **time of day** (morning → evening → anytime) as a "run your day" timeline
+  with cues, streaks, and a "now" marker. Toggle in the tracker's layout switch
+  (grid / activity / routine); set a habit's time of day in its detail panel.
