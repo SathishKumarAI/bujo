@@ -181,6 +181,14 @@ export function generateDemoData(today = todayISO()): JournalData {
   j.habits.slice(0, 2).forEach((h, i) => { h.weeklyGoal = i === 0 ? 5 : 7 })
   j.settings.fitnessGoalMin = 150
 
+  // ── Reading log: one of each shelf so the view + stats demo nicely ──
+  j.books = [
+    { id: uid('bk'), title: 'Atomic Habits', author: 'James Clear', status: 'finished', totalPages: 320, currentPage: 320, rating: 5, startedOn: addDays(today, -40), finishedOn: addDays(today, -12), createdAt: addDays(today, -40), color: 'green' },
+    { id: uid('bk'), title: 'Deep Work', author: 'Cal Newport', status: 'reading', totalPages: 296, currentPage: 120, startedOn: addDays(today, -6), createdAt: addDays(today, -6), color: 'mauve' },
+    { id: uid('bk'), title: 'The Pragmatic Programmer', author: 'Hunt & Thomas', status: 'want', createdAt: addDays(today, -2), color: 'sky' },
+  ]
+  j.settings.readingGoalBooks = 12
+
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
   return j

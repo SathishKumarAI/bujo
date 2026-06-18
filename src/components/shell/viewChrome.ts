@@ -1,6 +1,6 @@
 export type ViewId =
   | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'pullups' | 'pickleball' | 'homeworkout' | 'challenges' | 'focus'
-  | 'plan' | 'collections' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'help' | 'settings'
+  | 'plan' | 'collections' | 'reading' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'account' | 'help' | 'settings'
 
 export interface ViewChrome {
   title: string
@@ -24,11 +24,13 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   focus: { title: 'Focus', subtitle: 'Coding time · flow · stress', help: 'A developer work tracker. Log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a streak, a minutes chart, cumulative hours, language bars, and a focus↔stress insight.' },
   plan: { title: 'Plan', subtitle: 'Recurring tasks & routines', help: 'The migration workhorse: clear overdue open tasks (sort by date/priority, star the important ones, move or drop them). Define recurring daily/weekly tasks, and import .ics calendar events onto your Monthly.' },
   collections: { title: 'Collections', subtitle: 'Future log & lists', help: 'Free-form pages and lists: the Future Log (everything dated ahead), Friends/contacts (manual + opt-in GitHub enrich), Birthdays, and custom collection pages using the same bullets.' },
+  reading: { title: 'Reading', subtitle: 'Want · reading · finished', help: 'Your reading log as three shelves — want-to-read, currently-reading (with a page-progress bar), and finished (with a 1–5 star rating). Set a yearly book goal; pages read and books finished this year roll up into Insights and Goals.' },
   goals: { title: 'Goals', subtitle: 'Every active target in one place', help: 'A cross-view rollup of every active target — habit weekly goals, fitness minutes, challenges, training-program days, and your streak — as progress bars. Tap a row to jump to its home view.' },
   insights: { title: 'Insights', subtitle: 'Streaks, search & reflection', help: 'Reflection hub: streaks, task completion, correlation patterns, a month index, and full-text search (filter by type). The Weekly Review walks you through migrate → review → reflect; the Tag manager renames/merges #tags.' },
   stats: { title: 'Stats', subtitle: 'Charts at a glance', help: 'Your analytics wall: activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, mood-by-weekday, workout-split, year-in-pixels, and a tag cloud.' },
   cycle: { title: 'Cycle', subtitle: 'Temperature & phase', dateNav: 'month', help: 'An opt-in, private basal-temperature and cycle chart with free-form flags. Honours your °F/°C unit. Nothing is shared or predicted — just a calm record.' },
   nofap: { title: 'Streak', subtitle: 'Abstinence journal', help: 'An opt-in abstinence streak: current streak, personal best, milestones, an urge-surfing counter, and a judgement-free relapse log. Stays entirely on your device.' },
+  account: { title: 'Account', subtitle: 'Sign in, sign up & sync', help: 'Your account home: sign in or create an account (email or Google), explore as a guest, sign out, and push a manual save to the cloud. When configured, signing in syncs your journal across devices in real time.' },
   help: { title: 'Help', subtitle: 'Guide & bullet legend', help: 'The in-app guide to every feature, written in plain language — a lighter companion to the full Feature Guide in the docs.' },
   settings: { title: 'Settings', subtitle: 'Theme, profile, data', help: 'Profile/units, journal feel (paper, handwriting, accent, Today-dashboard cards), reminders, and Data & Cloud — storage meter, JSON/Markdown/CSV export, print, passcode encryption, and cloud sync.' },
 }

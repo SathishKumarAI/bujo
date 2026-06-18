@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type {
   Birthday,
+  Book,
   Challenge,
   CyclePoint,
   DevSession,
@@ -141,6 +142,10 @@ interface Store {
   addFriend: (f: Omit<import('./lib/types').Friend, 'id' | 'createdAt'>) => void
   updateFriend: (id: string, patch: Partial<import('./lib/types').Friend>) => void
   removeFriend: (id: string) => void
+  // reading log
+  addBook: (b: Omit<Book, 'id' | 'createdAt'>) => void
+  updateBook: (id: string, patch: Partial<Book>) => void
+  removeBook: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -508,6 +513,15 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeFriend: (id) =>
         patch((d) => ({ ...d, friends: (d.friends ?? []).filter((f) => f.id !== id) })),
+
+      addBook: (b) =>
+        patch((d) => ({ ...d, books: [...(d.books ?? []), { id: uid('bk'), createdAt: todayISO(), ...b }] })),
+
+      updateBook: (id, bpatch) =>
+        patch((d) => ({ ...d, books: (d.books ?? []).map((b) => (b.id === id ? { ...b, ...bpatch } : b)) }), `book:${id}`),
+
+      removeBook: (id) =>
+        patch((d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {

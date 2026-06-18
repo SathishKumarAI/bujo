@@ -175,6 +175,36 @@ export interface CyclePoint {
   flags: string[] // free tags e.g. "period", "spotting"
 }
 
+/** Where a book sits on the reading shelf. */
+export type BookStatus = 'want' | 'reading' | 'finished'
+
+/**
+ * A book on the reading log. The shelf has three columns — want-to-read,
+ * currently-reading (with a page-progress bar), and finished (with a rating).
+ * Classic bullet-journal "reading list", but trackable.
+ */
+export interface Book {
+  id: string
+  title: string
+  author?: string
+  status: BookStatus
+  /** Total pages, if known — drives the progress bar while reading. */
+  totalPages?: number
+  /** Pages read so far (current-reading progress). */
+  currentPage?: number
+  /** 1–5 star rating, set when finished. */
+  rating?: number
+  /** ISO day reading started (status → reading). */
+  startedOn?: string
+  /** ISO day finished (status → finished); powers the "books this year" stat. */
+  finishedOn?: string
+  /** Short review / notes. */
+  notes?: string
+  /** Catppuccin token for the spine colour. */
+  color?: string
+  createdAt: string
+}
+
 /** One gratitude line per day. */
 export interface Gratitude {
   date: string
@@ -330,6 +360,8 @@ export interface Settings {
   fitnessGoalMin?: number
   /** Weekly pickleball-games goal (shown on Pickleball + Goals). */
   pickleballGoalGames?: number
+  /** Yearly reading goal in books (shown on Reading + Goals). */
+  readingGoalBooks?: number
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
   /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
@@ -439,6 +471,8 @@ export interface JournalData {
   progressPhotos?: ProgressPhoto[]
   /** Friends / contacts (manual, with optional opt-in GitHub enrichment). */
   friends?: Friend[]
+  /** Reading log — want-to-read / reading / finished shelves. */
+  books?: Book[]
   settings: Settings
 }
 

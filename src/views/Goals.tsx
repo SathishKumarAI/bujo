@@ -1,4 +1,4 @@
-import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy } from 'lucide-react'
+import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty } from '../components/ui'
 import { Page } from '../components/shell/Page'
@@ -7,6 +7,7 @@ import { cat } from '../lib/colors'
 import { todayISO, dayDiff } from '../lib/date'
 import { weeklyActiveMinutes } from '../lib/fitness'
 import { pickleTotals } from '../lib/pickleball'
+import { finishedThisYear } from '../lib/reading'
 import { weeklyHabitCount } from '../lib/stats'
 import { PROGRAMS } from '../lib/programs'
 import type { ViewId } from '../components/shell/viewChrome'
@@ -107,6 +108,19 @@ export function Goals() {
       color: 'green',
       icon: p.id === 'pullup-zero' ? ArrowUpToLine : Dumbbell,
       to: p.id === 'pullup-zero' ? 'pullups' : 'gym',
+    })
+  }
+
+  // Yearly reading goal (books finished this year).
+  if (data.settings.readingGoalBooks) {
+    goals.push({
+      label: 'Books read',
+      detail: 'this year',
+      value: finishedThisYear(data.books ?? [], today),
+      target: data.settings.readingGoalBooks,
+      color: 'sky',
+      icon: BookOpen,
+      to: 'reading',
     })
   }
 

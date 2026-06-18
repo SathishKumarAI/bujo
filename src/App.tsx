@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
-import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal } from './lib/supabase'
+import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
@@ -11,6 +11,8 @@ import { HomeWorkout } from './views/HomeWorkout'
 import { Challenges } from './views/Challenges'
 import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
+import { Reading } from './views/Reading'
+import { Account } from './views/Account'
 import { Plan } from './views/Plan'
 import { Goals } from './views/Goals'
 import { Insights } from './views/Insights'
@@ -32,7 +34,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell, Flag,
+  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -61,6 +63,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
   { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Insights & Stats' },
   { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
+  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Insights & Stats' },
   { id: 'goals', label: 'Goals', icon: Flag, group: 'Insights & Stats' },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Insights & Stats' },
   { id: 'stats', label: 'Stats', icon: PieChart, group: 'Insights & Stats' },
@@ -70,8 +73,8 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
-  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
+  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
+  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, account: Account, help: Help,
   settings: Settings,
 }
 
@@ -164,6 +167,10 @@ export default function App() {
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  // Session presence (real account OR guest) — drives the full-screen auth gate
+  // so the signed-out sign in / sign up page can't reach the rest of the app.
+  const [hasSession, setHasSession] = useState(false)
+  useEffect(() => onAuthChange(setHasSession), [])
   const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
   const items = NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
@@ -205,6 +212,21 @@ export default function App() {
 
   // First run → show the login/welcome gate.
   if (!mode) return <Welcome />
+
+  // Auth gate: on the Account page while signed out (and a backend exists), take
+  // over the whole screen — no sidebar/top bar — so sign in / sign up can't
+  // navigate into the rest of the app until the user is signed in.
+  if (view === 'account' && supabaseEnabled() && !hasSession) {
+    return (
+      <DeviceProvider>
+      <CursorProvider>
+        <NavProvider navigate={setView}>
+          <Account />
+        </NavProvider>
+      </CursorProvider>
+      </DeviceProvider>
+    )
+  }
 
   return (
     <DeviceProvider>

@@ -185,3 +185,20 @@ is no second database to keep in step.
 - **System theme** — follows the OS light/dark preference live.
 - **Personal records** (Insights) — longest streak, best mood day, longest
   workout, best pickleball session, busiest day.
+
+## Reading + account/login (appended 2026-06-18)
+
+- **Reading log** (`reading` view) — three shelves (want / reading / finished)
+  with a page-progress bar, 1–5 star ratings, a yearly book goal, and a stats
+  strip (reading now, finished this year, pages read, avg rating). Books-read
+  also appears in the **Goals** roll-up. Full detail:
+  `docs/features/reading-and-login-gate.md`.
+- **Real login page** (`account` view) — the top-bar account menu now opens a
+  dedicated, branded sign in / sign up screen (Google + email, show/hide
+  password, forgot-password, guest), not the buried Settings form.
+- **Auth gate** — while signed out on the login page (Supabase configured), the
+  app goes full-screen with no sidebar/top bar, so other pages aren't reachable
+  until you sign in, start a guest session, or choose "continue on this device".
+- **Email validation** (`src/lib/validate.ts`) — format check + "Did you mean
+  gmail.com?" typo suggestions before every auth submit (server still confirms
+  deliverability via the email link).
