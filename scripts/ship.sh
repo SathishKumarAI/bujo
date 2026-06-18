@@ -82,7 +82,26 @@ if [ "$DO_DEPLOY" = 1 ]; then
     URL=$(npx vercel deploy --prebuilt --yes | grep -oE 'https://[a-z0-9-]+\.vercel\.app' | head -1)
     ok "preview: $URL"
   else
-    step "Build (production)"; npx vercel build --prod
+    # The prod Supabase vars are SENSITIVE, so `vercel pull` writes them EMPTY
+    # into .vercel/.env.production.local, which then overrides .env.local and
+    # strips the keys from the build (breaking login). Re-inject the real public
+    # values (anon key is public by design) from .env.local before building.
+    step "Build (production)"
+    npx vercel pull --environment=production --yes >/dev/null 2>&1 || true
+    if [ -f .env.local ] && [ -f .vercel/.env.production.local ]; then
+      python3 - <<'PY' || true
+import re, pathlib
+loc = pathlib.Path('.env.local').read_text()
+def val(k):
+    m = re.search(rf'{k}="?([^"\n]+)"?', loc); return m.group(1) if m else None
+url, key = val('VITE_SUPABASE_URL'), val('VITE_SUPABASE_ANON_KEY')
+f = pathlib.Path('.vercel/.env.production.local'); t = f.read_text()
+if url: t = re.sub(r'^VITE_SUPABASE_URL=.*$', f'VITE_SUPABASE_URL="{url}"', t, flags=re.M)
+if key: t = re.sub(r'^VITE_SUPABASE_ANON_KEY=.*$', f'VITE_SUPABASE_ANON_KEY="{key}"', t, flags=re.M)
+f.write_text(t)
+PY
+    fi
+    npx vercel build --prod
     # Sanity: the public Supabase URL must be inlined or login breaks on deploy.
     if ! grep -rlq "supabase.co" .vercel/output/static/assets 2>/dev/null; then
       echo "⚠ WARNING: Supabase env not found in build — login may be disabled." >&2
