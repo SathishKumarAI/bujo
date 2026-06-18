@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Info, Maximize2, X } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { Button as SButton } from './ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
@@ -34,6 +35,7 @@ export function Card({
   defaultCollapsed = false,
   defer = false,
   enlargeable = false,
+  help,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -48,14 +50,16 @@ export function Card({
   defer?: boolean
   /** Show a ⛶ button that opens the card content in a large modal. */
   enlargeable?: boolean
+  /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
+  help?: ReactNode
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
   const [large, setLarge] = useState(false)
   // Enlarge affordance: any titled, non-clickable card (charts, calendars…).
   const showEnlarge = enlargeable && !!title && !onClick
-  // On phones, long subtitle/description text is hidden to save space; the ⓘ
-  // toggle reveals it on tap. On sm+ the subtitle always shows.
-  const [infoOpen, setInfoOpen] = useState(false)
+  // Every titled card gets an always-visible ⓘ that explains what it is
+  // (self-documenting UI). Uses `help` if given, else the subtitle text.
+  const info = help ?? subtitle
   return (
     <section
       onClick={onClick}
@@ -66,19 +70,18 @@ export function Card({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
-              {subtitle && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setInfoOpen((v) => !v) }}
-                  aria-label={infoOpen ? 'Hide details' : 'Show details'}
-                  aria-expanded={infoOpen}
-                  className="shrink-0 text-overlay0 hover:text-text sm:hidden"
-                >
-                  <Info size={14} />
-                </button>
+              {title && info && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-overlay0 hover:text-text">
+                      <Info size={14} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="max-w-xs text-sm leading-snug text-subtext1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
+                </Popover>
               )}
             </div>
-            {subtitle && <p className={cn('mt-1 text-sm leading-snug text-subtext0', infoOpen ? '' : 'hidden sm:block')}>{subtitle}</p>}
+            {subtitle && <p className="mt-1 hidden text-sm leading-snug text-subtext0 sm:block">{subtitle}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}

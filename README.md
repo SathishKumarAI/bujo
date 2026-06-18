@@ -119,6 +119,7 @@ be cleared by the browser, **export a backup regularly** (Settings → Export).
 
 ## Docs
 
+- [`docs/engineering/`](docs/engineering/README.md) — **engineering views**: the app through 5 lenses (user · architecture · backend · data-eng · ML) + [UML](docs/engineering/uml.md)
 - [`docs/WHY.md`](docs/WHY.md) — **why bujo: research, taste-direction, critical thinking & options** (incl. tracker-redesign directions)
 - [`docs/PIPELINE.md`](docs/PIPELINE.md) — one-command ship pipeline (`scripts/ship.sh`) + CI
 - [`docs/features/daily-use-guide.md`](docs/features/daily-use-guide.md) — feature guide & day-to-day use
