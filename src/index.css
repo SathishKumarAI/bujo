@@ -303,6 +303,18 @@ body.handwriting textarea {
   .page-in { animation: none; }
 }
 
+/* Enlarge-modal motion: backdrop fades, panel scales up (used by every viz card). */
+@keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-backdrop-in { animation: modal-backdrop-in 0.16s ease both; }
+.modal-panel-in { animation: modal-panel-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop-in, .modal-panel-in { animation: none; }
+}
+
 /* Light mode override (data-theme="latte") */
 :root[data-theme='latte'] {
   --color-text: #4c4f69;

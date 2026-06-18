@@ -62,7 +62,7 @@ export function Stats() {
       <div className={`grid grid-cols-7 ${large ? 'gap-1.5' : 'gap-0.5'}`}>
         {monthDays(ym).map((d, i) => (
           <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
-            className={`grid aspect-square place-items-center rounded ${large ? 'text-base' : 'text-[10px]'}`}
+            className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-base' : 'text-[10px]'}`}
             style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? '#11111b' : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
             {Number(d.slice(8))}
           </div>
@@ -89,7 +89,7 @@ export function Stats() {
                   {Array.from({ length: 31 }, (_, di) => {
                     const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
                     const v = moodOn.get(date)
-                    return <span key={di} className={`${sq} rounded-[2px]`} title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
+                    return <span key={di} className={`${sq} rounded-[2px] transition-transform duration-150 hover:scale-[1.6]`} title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
                   })}
                 </div>
               </div>
@@ -282,8 +282,8 @@ export function Stats() {
 
       {/* Click-to-enlarge modal */}
       {enlarged && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
+          <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
               <button onClick={() => setEnlarged(null)} aria-label="Close" className="text-overlay1 hover:text-foreground"><X size={20} /></button>

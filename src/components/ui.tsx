@@ -15,11 +15,11 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
  */
 // eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
 export const CARD = {
-  /** The card container (border, radius, background, padding, 3-D press). */
-  container: 'card-3d min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6',
-  /** Enlarge-modal backdrop + panel. */
-  modalBackdrop: 'fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
-  modalPanel: 'relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl',
+  /** The card container (border, radius, background, padding, 3-D press, hover group). */
+  container: 'card-3d group/card min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6',
+  /** Enlarge-modal backdrop + panel (with entrance motion). */
+  modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
+  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
 } as const
@@ -86,7 +86,8 @@ export function Card({
           <div className="flex shrink-0 items-center gap-2">
             {right}
             {showEnlarge && (
-              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge" className="text-overlay0 hover:text-text">
+              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
+                className="text-overlay0 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
                 <Maximize2 size={15} />
               </button>
             )}
