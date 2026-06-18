@@ -101,7 +101,7 @@ export function Stats() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
-      <Card title="Activity" subtitle="Every day you showed up" right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
+      <Card title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
 
@@ -110,7 +110,7 @@ export function Stats() {
       <CheckinTimesCard />
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="This week at a glance" subtitle="7-day averages, 0–10">
+        <Card title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radar} outerRadius="72%">
@@ -123,7 +123,7 @@ export function Stats() {
           </div>
         </Card>
 
-        <Card title="Sleep vs mood" subtitle="Each dot is a day — see the trend">
+        <Card title="Sleep vs mood" subtitle="Each dot is a day — see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
@@ -142,7 +142,7 @@ export function Stats() {
           )}
         </Card>
 
-        <Card title="Workout minutes" subtitle="Per week, last 8 weeks">
+        <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -156,7 +156,7 @@ export function Stats() {
           </div>
         </Card>
 
-        <Card title="Task breakdown" subtitle="Where your tasks land">
+        <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
           {tasks.length === 0 ? (
             <Empty>No tasks yet.</Empty>
           ) : (
@@ -220,7 +220,7 @@ export function Stats() {
       </Card>
       </div>
 
-      <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)">
+      <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)" enlargeable>
         {moodWd.every((v) => v == null) ? (
           <Empty>Log mood on a few days to see your weekly rhythm.</Empty>
         ) : (
@@ -238,7 +238,7 @@ export function Stats() {
         )}
       </Card>
 
-      <Card title="Workout split" subtitle="Distribution of your logged sessions">
+      <Card title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
         {splits.length === 0 ? (
           <Empty>No workouts logged yet.</Empty>
         ) : (

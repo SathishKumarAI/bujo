@@ -131,65 +131,107 @@ export function Pickleball() {
   const PHASE_END = [18, 36, 54, 72, 75]
   const activePhaseIdx = planDay > 0 ? PHASE_END.findIndex((end) => planDay <= end) : -1
 
+  // Charts live in the right rail (compact, enlargeable) so the main column
+  // stays focused on logging + actionable coaching content, not chart noise.
+  const charts = (
+    <>
+      <p className="px-1 text-[11px] font-medium tracking-wider text-overlay0 uppercase">Visualizations · tap ⛶ to enlarge</p>
+      <Card title="Win-rate trend" subtitle="Win % per session" enlargeable>
+        {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
+          <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis domain={[0, 100]} stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={tip} />
+                <Line type="monotone" dataKey="winPct" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
+      <Card title="Win / loss" subtitle="All games played" enlargeable>
+        {all.games === 0 ? <Empty>No games yet.</Empty> : (
+          <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={wl} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+                  {wl.map((x) => <Cell key={x.name} fill={cat(x.color)} />)}
+                </Pie>
+                <Tooltip contentStyle={tip} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-3 text-xs">
+              {wl.map((x) => <span key={x.name} style={{ color: cat(x.color) }}>● {x.name} {x.value}</span>)}
+            </div>
+          </div>
+        )}
+      </Card>
+      <Card title="Games per week" subtitle="Last 8 weeks" enlargeable>
+        <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeks.map((g, i) => ({ wk: `w${i + 1}`, games: g }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+              <CartesianGrid stroke={cat('surface0')} vertical={false} />
+              <XAxis dataKey="wk" stroke={cat('overlay0')} fontSize={11} />
+              <YAxis stroke={cat('overlay0')} fontSize={11} />
+              <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
+              <Bar dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+      <Card title="By format" subtitle="Singles vs doubles — games & win %" enlargeable>
+        {formats.length === 0 ? <Empty>No games yet.</Empty> : (
+          <ul className="space-y-3">
+            {formats.map((fm) => (
+              <li key={fm.format}>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="capitalize text-subtext1">{fm.format}</span>
+                  <span className="text-overlay1">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
+                  <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+      <Card title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
+        {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
+          <div className="h-40" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={cum} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={tip} />
+                <Line type="monotone" dataKey="games" stroke={cat('blue')} dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
+      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games" enlargeable>
+        <div className="overflow-x-auto">
+          <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
+            {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
+            {Array.from({ length: WEEKS * 7 }).map((_, i) => {
+              const d = addDays(hStart, i)
+              const g = byDay.get(d) ?? 0
+              return <span key={d} title={`${d}: ${g} games`} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: g === 0 ? cat('surface0') : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})` }} />
+            })}
+          </div>
+        </div>
+        <div className="mt-1 text-center text-[10px] text-overlay0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+      </Card>
+    </>
+  )
+
   return (
     <Page
-      asideFirst
-      aside={
-        <>
-          <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
-            <div className="space-y-3">
-              <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-              <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="block text-sm text-subtext1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
-                <label className="block text-sm text-subtext1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
-                <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
-              </div>
-              {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
-              <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
-              <div className="grid grid-cols-2 gap-2">
-                <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
-                <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
-                <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts agst" aria-label="Points against" />
-                <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 text-sm text-foreground">
-                  <option value="">Scoring</option>
-                  <option value="11">to 11</option>
-                  <option value="15">to 15</option>
-                  <option value="21">to 21</option>
-                  <option value="rally21">rally 21</option>
-                </select>
-              </div>
-              <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} />
-              <Button variant="primary" onClick={log} className="w-full">Log session</Button>
-            </div>
-          </Card>
-
-          <Card title="History" subtitle="Tap × to remove">
-            {sessions.length === 0 ? (
-              <Empty>No sessions logged yet.</Empty>
-            ) : (
-              <ul className="divide-y divide-surface0">
-                {(showAll ? sessions : sessions.slice(0, 6)).map((p) => (
-                  <li key={p.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
-                    <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}</span></span>
-                    <span className="flex items-center gap-2">
-                      <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-                      <button onClick={() => removePickleball(p.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {sessions.length > 6 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
-          </Card>
-        </>
-      }
+      aside={charts}
     >
       <Card title="At a glance" subtitle="Your pickleball record">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -215,107 +257,52 @@ export function Pickleball() {
         )}
       </Card>
 
-      <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-        <Card title="Win-rate trend" subtitle="Win % per session">
-          {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
-            <div className="h-52" role="img" aria-label="Line chart of win percentage per session over time">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis domain={[0, 100]} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip} />
-                  <Line type="monotone" dataKey="winPct" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-
-        <Card title="Win / loss" subtitle="All games played">
-          {all.games === 0 ? <Empty>No games yet.</Empty> : (
-            <div className="h-52" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={wl} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                    {wl.map((x) => <Cell key={x.name} fill={cat(x.color)} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tip} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-3 text-xs">
-                {wl.map((x) => <span key={x.name} style={{ color: cat(x.color) }}>● {x.name} {x.value}</span>)}
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <Card title="Games per week" subtitle="Last 8 weeks" defer>
-        <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeks.map((g, i) => ({ wk: `w${i + 1}`, games: g }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-              <CartesianGrid stroke={cat('surface0')} vertical={false} />
-              <XAxis dataKey="wk" stroke={cat('overlay0')} fontSize={11} />
-              <YAxis stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
-              <Bar dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+          <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
+          <label className="block text-sm text-subtext1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <label className="block text-sm text-subtext1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
+          <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
+          {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
+          <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
+          <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
+          <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
+          <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
+          <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
+            <option value="">Scoring</option>
+            <option value="11">to 11</option>
+            <option value="15">to 15</option>
+            <option value="21">to 21</option>
+            <option value="rally21">rally 21</option>
+          </select>
         </div>
+        <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
+        <Button variant="primary" onClick={log} className="mt-3 w-full">Log session</Button>
       </Card>
 
-      <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-        <Card title="By format" subtitle="Singles vs doubles — games & win %">
-          {formats.length === 0 ? <Empty>No games yet.</Empty> : (
-            <ul className="space-y-3">
-              {formats.map((fm) => (
-                <li key={fm.format}>
-                  <div className="mb-1 flex justify-between text-sm">
-                    <span className="capitalize text-subtext1">{fm.format}</span>
-                    <span className="text-overlay1">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
-                    <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Cumulative games" subtitle={`${all.games} played all-time`}>
-          {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
-            <div className="h-44" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={cum} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip} />
-                  <Line type="monotone" dataKey="games" stroke={cat('blue')} dot={false} strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games that day" defer>
-        <div className="overflow-x-auto">
-          <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
-            {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
-            {Array.from({ length: WEEKS * 7 }).map((_, i) => {
-              const d = addDays(hStart, i)
-              const g = byDay.get(d) ?? 0
-              return <span key={d} title={`${d}: ${g} games`} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: g === 0 ? cat('surface0') : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})` }} />
-            })}
-          </div>
-        </div>
-        <div className="mt-1 text-center text-[10px] text-overlay0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+      <Card title="History" subtitle="Tap × to remove" collapsible>
+        {sessions.length === 0 ? (
+          <Empty>No sessions logged yet.</Empty>
+        ) : (
+          <ul className="divide-y divide-surface0">
+            {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
+              <li key={p.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+                <span className="flex items-center gap-2">
+                  <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
+                  <button onClick={() => removePickleball(p.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right">
+      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" enlargeable={false}>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
           <div className="rounded-lg border border-surface0 bg-base p-3">

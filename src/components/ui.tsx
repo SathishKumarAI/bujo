@@ -16,7 +16,7 @@ export function Card({
   collapsible = false,
   defaultCollapsed = false,
   defer = false,
-  enlargeable = true,
+  enlargeable = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
