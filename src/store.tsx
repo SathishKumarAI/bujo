@@ -172,6 +172,10 @@ interface Store {
   removeUrge: (id: string) => void
   addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
   removeTriggerPlan: (id: string) => void
+  // custom goals
+  addCustomGoal: (g: Omit<import('./lib/types').CustomGoal, 'id' | 'createdAt'>) => void
+  updateCustomGoal: (id: string, patch: Partial<import('./lib/types').CustomGoal>) => void
+  removeCustomGoal: (id: string) => void
   // challenges
   addChallenge: (c: Omit<Challenge, 'id'>) => void
   removeChallenge: (id: string) => void
@@ -644,6 +648,15 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeTriggerPlan: (id) =>
         patch((d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
+
+      addCustomGoal: (g) =>
+        patch((d) => ({ ...d, customGoals: [...(d.customGoals ?? []), { id: uid('cg'), createdAt: todayISO(), ...g }] })),
+
+      updateCustomGoal: (id, gpatch) =>
+        patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).map((g) => (g.id === id ? { ...g, ...gpatch } : g)) }), `cgoal:${id}`),
+
+      removeCustomGoal: (id) =>
+        patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).filter((g) => g.id !== id) })),
 
       addChallenge: (c) =>
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),

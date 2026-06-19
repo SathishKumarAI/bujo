@@ -219,6 +219,17 @@ export interface ReadLink {
   createdAt: string
 }
 
+/** A user-defined goal not derived from another view (e.g. "Save $500"). */
+export interface CustomGoal {
+  id: string
+  label: string
+  target: number
+  value: number
+  unit?: string
+  color?: string // Catppuccin token
+  createdAt: string
+}
+
 /** One gratitude line per day. */
 export interface Gratitude {
   date: string
@@ -557,6 +568,8 @@ export interface JournalData {
   books?: Book[]
   /** Saved online links to read later. */
   readLinks?: ReadLink[]
+  /** User-defined custom goals (manual progress). */
+  customGoals?: CustomGoal[]
   settings: Settings
 }
 

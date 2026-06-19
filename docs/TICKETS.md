@@ -465,3 +465,6 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-197 | **Light mode redesign** — user dislikes current Latte light theme; build a more **modern, Chrome-style** light theme (cleaner neutrals, softer surfaces, crisp borders). Think + build, then document. | 🔜 requested |
 | BUJO-198 | Recovery — addiction **trigger plans** (if-then per trigger point) + per-addiction urge chart | ✅ |
 | BUJO-199 | **Per-addiction streaks** — today the ring/ladder track one main streak; make each addiction its own streak + ladder + best (multi-streak data model). Clarified in UI for now. | 🔜 requested |
+| BUJO-200 | **Custom goals** — user-defined targets with manual progress in the Goals view (`CustomGoal`) | ✅ |
+| BUJO-201 | Edit logged **Pickleball / Focus sessions** in place (currently delete-and-re-log) | 🔜 (from QA pass) |
+| BUJO-202 | Feature QA pass — 20+ user questions, answers, gaps → `docs/qa/feature-questions.md` | ✅ |
