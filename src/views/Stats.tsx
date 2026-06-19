@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, ZAxis,
 } from 'recharts'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Maximize2, X, Columns2, Rows2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
@@ -280,8 +281,9 @@ export function Stats() {
         )}
       </Card>
 
-      {/* Click-to-enlarge modal */}
-      {enlarged && (
+      {/* Click-to-enlarge modal — portalled to <body> so it centres on the
+          viewport, not inside transformed ancestors (book mode / zoom). */}
+      {enlarged && createPortal(
         <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
           <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
@@ -290,7 +292,8 @@ export function Stats() {
             </div>
             {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, Info, Maximize2, X } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
@@ -100,7 +101,11 @@ export function Card({
         </header>
       )}
       {(!collapsible || open) && children}
-      {large && (
+      {/* Portal to <body>: cards live inside transformed ancestors (book mode,
+          zoom, page-in animation) which would otherwise make `position:fixed`
+          relative to the card, not the screen — so the modal must escape them
+          to truly centre on the viewport. */}
+      {large && createPortal(
         <div className={CARD.modalBackdrop} onClick={() => setLarge(false)} role="dialog" aria-modal="true">
           <div className={CARD.modalPanel} onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -114,7 +119,8 @@ export function Card({
                 forces it tall so the chart genuinely enlarges, not just widens. */}
             <div className={`text-base ${CARD.modalChartHeight}`}>{children}</div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </section>
   )
