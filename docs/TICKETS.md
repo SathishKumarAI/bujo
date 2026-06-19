@@ -461,3 +461,7 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-193 | Secure PostgREST API tier (JWT + RLS + TLS) | 🔜 designed/offered |
 | BUJO-194 | Wire app to self-host Postgres (PostgREST backend) | 🔜 |
 | BUJO-195 | Scaffold real Tauri `src-tauri/` + store adapter | 🔜 (needs Rust toolchain) |
+| BUJO-196 | Streak redesign — progress-ring hero, lifetime total-clean days, recovery-benefits ladder, trigger patterns, dated **urge log** (quick-pick presets + custom), slip-but-continue reframe | ✅ |
+| BUJO-197 | **Light mode redesign** — user dislikes current Latte light theme; build a more **modern, Chrome-style** light theme (cleaner neutrals, softer surfaces, crisp borders). Think + build, then document. | 🔜 requested |
+| BUJO-198 | Recovery — addiction **trigger plans** (if-then per trigger point) + per-addiction urge chart | ✅ |
+| BUJO-199 | **Per-addiction streaks** — today the ring/ladder track one main streak; make each addiction its own streak + ladder + best (multi-streak data model). Clarified in UI for now. | 🔜 requested |

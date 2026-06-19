@@ -61,7 +61,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
-  { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
+  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
   { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Insights & Stats' },
   { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
   { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Insights & Stats' },

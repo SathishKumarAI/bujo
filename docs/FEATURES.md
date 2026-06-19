@@ -232,3 +232,17 @@ is no second database to keep in step.
   jot a note for today (stored in `habitNotes`).
 - **Stats layout toggle**: switch the mood-calendar / year-in-pixels pair between
   side-by-side and full-width stacked (persisted) — resize the dashboard to taste.
+
+## Cards, charts & Recovery (appended 2026-06-18)
+
+- **Card ⓘ help**: every titled card has an always-visible ⓘ popover ("what is
+  this?"); views keep their top-bar `?` help. New optional `Card help` prop.
+- **Enlarge like the mood tracker**: every visualization card's ⛶ opens a
+  **screen-centred** large modal (portalled to `<body>` to escape transformed
+  ancestors) with a scale-up entrance; the ⛶ reveals/brightens on card hover, and
+  mood/year cells pop on hover. Charts fill 64vh. One place: `CARD` tokens +
+  `ChartCard` in `src/components/ui.tsx`.
+- **Recovery tab** (renamed from *Streak*): progress-ring hero, lifetime
+  total-clean days, recovery-benefits ladder, trigger patterns, a dated **urge
+  log** with addiction quick-pick presets + custom, a **per-addiction bar chart**,
+  and a slip-but-continue reframe. See `docs/features/streak-redesign.md`.

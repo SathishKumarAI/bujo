@@ -297,6 +297,28 @@ export interface Relapse {
   note: string // reflection
 }
 
+/** A resisted-urge win — logged with when and (optionally) what it was. */
+export interface UrgeWin {
+  id: string
+  date: string // ISO day
+  /** ISO timestamp it was logged (for time-of-day patterns). */
+  at?: string
+  /** What the urge was / what triggered it (optional). */
+  trigger?: string
+  note?: string
+}
+
+/** An if-then plan: a known trigger point for an addiction + how to respond. */
+export interface TriggerPlan {
+  id: string
+  /** Which addiction/urge this is for (e.g. "Smoking"). */
+  addiction: string
+  /** The trigger point / situation (e.g. "after meals", "stress at work"). */
+  trigger: string
+  /** The coping response (the "then" — e.g. "chew gum, 10-min walk"). */
+  coping?: string
+}
+
 /** Abstinence / NoFap streak tracker state. */
 export interface Streak {
   /** ISO day the current streak started (reset on relapse). */
@@ -304,8 +326,12 @@ export interface Streak {
   /** Personal best, in days. */
   best: number
   relapses: Relapse[]
-  /** Count of urges resisted (a positive counter). */
+  /** Legacy count of urges resisted (pre-log). Kept so old data still totals. */
   urgesResisted?: number
+  /** Dated log of resisted urges (when + what). */
+  urgeLog?: UrgeWin[]
+  /** If-then plans for each addiction's trigger points. */
+  plans?: TriggerPlan[]
 }
 
 export interface Settings {

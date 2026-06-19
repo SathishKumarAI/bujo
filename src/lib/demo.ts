@@ -146,6 +146,27 @@ export function generateDemoData(today = todayISO()): JournalData {
   ]
   j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
 
+  // ── Streak (abstinence) demo: a 16-day live run with prior resets + urges ──
+  j.nofap = {
+    startedOn: addDays(today, -16),
+    best: 24,
+    urgesResisted: 5,
+    urgeLog: [
+      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling' },
+      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking' },
+      { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn' },
+    ],
+    plans: [
+      { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },
+      { id: uid('tp'), addiction: 'Doomscrolling', trigger: 'in bed at night', coping: 'Phone charges in another room; read instead' },
+    ],
+    relapses: [
+      { id: uid('r'), date: addDays(today, -58), trigger: 'Stress', note: 'Rough day at work — defaulted to the old pattern.' },
+      { id: uid('r'), date: addDays(today, -40), trigger: 'Boredom', note: 'Late night, nothing to do.' },
+      { id: uid('r'), date: addDays(today, -16), trigger: 'Stress', note: 'Need an if-then plan for stressful evenings.' },
+    ],
+  }
+
   // ── Developer focus sessions (Focus view) ──
   const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
   const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]

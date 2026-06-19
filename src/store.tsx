@@ -168,7 +168,10 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: () => void
+  resistUrge: (entry?: { trigger?: string; note?: string }) => void
+  removeUrge: (id: string) => void
+  addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
+  removeTriggerPlan: (id: string) => void
   // challenges
   addChallenge: (c: Omit<Challenge, 'id'>) => void
   removeChallenge: (id: string) => void
@@ -621,8 +624,26 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           }
         }),
 
-      resistUrge: () =>
-        patch((d) => ({ ...d, nofap: { ...d.nofap, urgesResisted: (d.nofap.urgesResisted ?? 0) + 1 } })),
+      resistUrge: (entry) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            urgeLog: [...(d.nofap.urgeLog ?? []), {
+              id: uid('u'), date: todayISO(), at: new Date().toISOString(),
+              trigger: entry?.trigger?.trim() || undefined, note: entry?.note?.trim() || undefined,
+            }],
+          },
+        })),
+
+      removeUrge: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, urgeLog: (d.nofap.urgeLog ?? []).filter((u) => u.id !== id) } })),
+
+      addTriggerPlan: (p) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, plans: [...(d.nofap.plans ?? []), { id: uid('tp'), ...p }] } })),
+
+      removeTriggerPlan: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
 
       addChallenge: (c) =>
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),
