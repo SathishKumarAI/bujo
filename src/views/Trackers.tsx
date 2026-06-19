@@ -97,7 +97,7 @@ export function Trackers() {
     return { day: Number(d.slice(8)), mood: m?.mood, stress: m?.stress, sleep: m?.sleep, moodAvg: moodAvg[i], stressAvg: stressAvg[i], sleepAvg: sleepAvg[i] }
   })
 
-  /** True when a habit by this name already exists (case-insensitive) — used to
+  /** True when a habit by this name already exists (case-insensitive) · used to
    *  prevent duplicate trackers from manual add or preset taps. */
   const habitExists = (name: string) => data.habits.some((h) => h.name.trim().toLowerCase() === name.trim().toLowerCase())
 
@@ -151,7 +151,7 @@ export function Trackers() {
         )}
 
         {visibleHabits.length === 0 ? (
-          <Empty>No habits yet — add one below.</Empty>
+          <Empty>No habits yet · add one below.</Empty>
         ) : radial ? (
           <RadialTracker
             habits={visibleHabits}
@@ -250,7 +250,7 @@ export function Trackers() {
       </Card>
 
       <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-3">
-      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
+      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} · faint = daily · bold = 7-day avg`} className="lg:col-span-2">
         <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -296,13 +296,13 @@ export function Trackers() {
   )
 }
 
-/** Browser for archived habits — restore or delete for good. */
+/** Browser for archived habits · restore or delete for good. */
 function ArchivedHabits() {
   const { data, updateHabit, removeHabit } = useJournal()
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
   return (
-    <Card title="Archived habits" subtitle="Out of the grid — restore any time">
+    <Card title="Archived habits" subtitle="Out of the grid · restore any time">
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">
@@ -347,7 +347,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
 
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks — greener = more habits done that day" className="lg:col-span-2" collapsible>
+      <Card title="Completion heatmap" subtitle="Last 13 weeks · greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
@@ -385,7 +385,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
         )}
       </Card>
 
-      <Card title="Monthly trend" subtitle="Avg completion per month — is it climbing?">
+      <Card title="Monthly trend" subtitle="Avg completion per month · is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
           return (
@@ -477,7 +477,7 @@ function TodayStrip({
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors"
-              title={h.avoid ? (on ? 'Slipped today — tap to clear' : 'Clean today') : undefined}
+              title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
               style={{
                 borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                 background: on ? (h.avoid ? cat('red') : cat(h.color)) + '22' : 'transparent',
@@ -645,7 +645,7 @@ function CategoryRows({
                 {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} — habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
+                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
                 {streak > 1 && (
                   avoid
@@ -730,7 +730,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
           <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
 
-          {/* Completion heatmap — 12 weeks or a full year */}
+          {/* Completion heatmap · 12 weeks or a full year */}
           <div>
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs text-overlay0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
@@ -744,7 +744,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
           <label className="flex items-center justify-between rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
-            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit — a logged day counts as a slip)</span></span>
+            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
           <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
@@ -784,7 +784,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             </div>
           </div>
 
-          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking — after what?)</span>
+          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking · after what?)</span>
             <Input value={habit.cue ?? ''} onChange={(e) => set({ cue: e.target.value || undefined })} placeholder="e.g. After morning coffee" className="mt-1" />
           </label>
 

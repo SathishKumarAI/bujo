@@ -9,7 +9,7 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
 /**
- * CARD — the single source of truth for card chrome across the whole app.
+ * CARD · the single source of truth for card chrome across the whole app.
  * Every <Card> (and <ChartCard>) reads its classes from here, so changing a
  * card's look or the enlarge-modal sizing in ONE place restyles every card
  * everywhere. Tweak these tokens instead of editing individual views.
@@ -103,7 +103,7 @@ export function Card({
       {(!collapsible || open) && children}
       {/* Portal to <body>: cards live inside transformed ancestors (book mode,
           zoom, page-in animation) which would otherwise make `position:fixed`
-          relative to the card, not the screen — so the modal must escape them
+          relative to the card, not the screen · so the modal must escape them
           to truly centre on the viewport. */}
       {large && createPortal(
         <div className={CARD.modalBackdrop} onClick={() => setLarge(false)} role="dialog" aria-modal="true">

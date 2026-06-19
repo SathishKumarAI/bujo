@@ -4,7 +4,7 @@ import { pushJournalToServer } from '../lib/serverSync'
 
 /**
  * When a self-host sync URL is configured (Settings → self-host), push the whole
- * journal to the PostgREST endpoint — debounced on every change, and flushed once
+ * journal to the PostgREST endpoint · debounced on every change, and flushed once
  * more on tab close (keepalive fetch). No-op when unconfigured.
  */
 export function ServerSync() {

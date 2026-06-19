@@ -22,7 +22,7 @@ export function Challenges() {
     <Page>
       <Card
         title="Challenges"
-        subtitle="Fixed-length discipline challenges — 75 Hard, 90-day & more"
+        subtitle="Fixed-length discipline challenges · 75 Hard, 90-day & more"
         right={
           <Button variant="primary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
             {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
@@ -31,7 +31,7 @@ export function Challenges() {
       >
         {creating && <NewChallengeForm onCreate={(c) => { addChallenge(c); setCreating(false) }} />}
         {!creating && active.length === 0 && (
-          <Empty>No active challenge. Start one — pick 75 Hard, 90-day, or build your own.</Empty>
+          <Empty>No active challenge. Start one · pick 75 Hard, 90-day, or build your own.</Empty>
         )}
       </Card>
 
@@ -81,11 +81,11 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
     >
       {finished && (
         <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-2 text-sm text-green">
-          <Trophy size={15} /> Challenge complete — {c.durationDays} days done. Archive it to celebrate.
+          <Trophy size={15} /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
         </p>
       )}
 
-      {/* Progress — ring + bar + headline stats (whole numbers, no fractions). */}
+      {/* Progress · ring + bar + headline stats (whole numbers, no fractions). */}
       <div className="mb-4 flex items-center gap-4">
         <ProgressRing pct={pct} />
         <div className="flex-1">
@@ -135,7 +135,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           </div>
         </div>
 
-        {/* Calendar grid — grouped into weeks of 7 for readability. */}
+        {/* Calendar grid · grouped into weeks of 7 for readability. */}
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-medium text-subtext1">Calendar</p>
@@ -242,7 +242,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
         />
       </label>
       <label className="flex cursor-pointer items-center justify-between text-sm text-subtext1">
-        <span>Strict — missing a day resets to Day 1 (75 Hard rule)</span>
+        <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
       <Button variant="primary" onClick={submit} className="w-full">Start challenge</Button>

@@ -90,10 +90,29 @@ export function migrate(raw: unknown): JournalData {
   const base = emptyJournal()
   if (!raw || typeof raw !== 'object') return base
   const data = raw as Partial<JournalData>
+  // Drop any keys that are present-but-null/undefined so they can't overwrite
+  // the empty-journal defaults below (a corrupt/partial payload otherwise sets
+  // e.g. metrics:null and every `.map`/`.some` over it throws).
+  const clean: Partial<JournalData> = {}
+  for (const [k, v] of Object.entries(data)) if (v != null) (clean as Record<string, unknown>)[k] = v
   return {
     ...base,
-    ...data,
+    ...clean,
     settings: { ...base.settings, ...(data.settings ?? {}) },
+    // nofap is nested state — deep-merge so a malformed/partial nofap can't
+    // break logRelapse/streakStats (missing best/relapses/startedOn).
+    nofap: { ...base.nofap, ...(data.nofap ?? {}) },
+    // Core collections the UI iterates — always arrays/objects, never undefined.
+    entries: data.entries ?? [],
+    habits: data.habits ?? [],
+    metrics: data.metrics ?? [],
+    workouts: data.workouts ?? [],
+    gratitude: data.gratitude ?? [],
+    memories: data.memories ?? [],
+    birthdays: data.birthdays ?? [],
+    monthly: data.monthly ?? [],
+    collections: data.collections ?? [],
+    cycle: data.cycle ?? [],
     habitLog: data.habitLog ?? {},
     habitValues: data.habitValues ?? {},
     recurrences: data.recurrences ?? [],

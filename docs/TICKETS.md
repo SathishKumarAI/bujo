@@ -467,4 +467,16 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-199 | **Per-addiction streaks** — today the ring/ladder track one main streak; make each addiction its own streak + ladder + best (multi-streak data model). Clarified in UI for now. | 🔜 requested |
 | BUJO-200 | **Custom goals** — user-defined targets with manual progress in the Goals view (`CustomGoal`) | ✅ |
 | BUJO-201 | Edit logged **Pickleball / Focus sessions** in place (currently delete-and-re-log) | 🔜 (from QA pass) |
-| BUJO-202 | Feature QA pass — 20+ user questions, answers, gaps → `docs/qa/feature-questions.md` | ✅ |
+| BUJO-202 | Feature QA pass · 20+ user questions, answers, gaps → `docs/qa/feature-questions.md` | ✅ |
+| BUJO-203 | Sync robustness · Supabase realtime subscribe after auth resolves; stamp updatedAt on silent/mount changes; pull-before-push guard | 🔜 (from audit) |
+| BUJO-204 | Per-collection merge in `resolveIncoming`; re-stamp on import; distinguish explore-fail from empty account | 🔜 (from audit) |
+| BUJO-205 | crypto b64 chunking; bulkAddEvents dedupe in reducer; unlock empty-blob guard; undo coalesce reset | 🔜 (from audit) |
+| BUJO-206 | Smart-capture routing · count-habit via setHabitValue; weight-only/reps-only gym; exact habit-name match | 🔜 (from audit) |
+| BUJO-207 | Numeric habits in Monthly/Today progress (use habitDoneOn, not habitLog.length) | 🔜 (from audit) |
+| BUJO-208 | Recurrence backfill cap drops old occurrences while advancing lastGenerated | 🔜 (from audit) |
+| BUJO-209 | Challenges strict %/day vs completedDays text disagree; zero-rule challenge trap | 🔜 (from audit) |
+| BUJO-210 | streak.best ignores long completed past streak; avgGap mishandles unsorted/dup dates | 🔜 (from audit) |
+| BUJO-211 | Gym legacy set-string rep slot; "Repeat last" = heaviest not latest; plate calc bar>target warning | 🔜 (from audit) |
+| BUJO-212 | Polish · custom-goal cap; Goals streak-vs-best on first streak; reading pagesRead unknown-total; Stats empty-state for workout bars | 🔜 (from audit) |
+| BUJO-213 | Fixed this pass · migrate hardening, radar calm/adherence, program 100%, search filter reset, birthday validation, pickleball future-plan, readability (em-dash→·), Recovery urge tips + viz-to-rail | ✅ |
+| BUJO-214 | 50+ logical-gaps audit → `docs/qa/logical-gaps-audit.md` | ✅ |

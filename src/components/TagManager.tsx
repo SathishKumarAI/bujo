@@ -27,7 +27,7 @@ export function TagManager() {
   return (
     <Card title="Tags" subtitle="Rename or merge your #tags across every entry">
       {tags.length === 0 ? (
-        <Empty>No #tags yet — add them inline in any entry, e.g. “#travel”.</Empty>
+        <Empty>No #tags yet · add them inline in any entry, e.g. “#travel”.</Empty>
       ) : (
         <ul className="flex flex-wrap gap-2">
           {tags.map(([tag, n]) => (

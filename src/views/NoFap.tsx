@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { streakStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
 
 /**
- * Streak (abstinence) hub — a progress-ring hero to the next milestone, lifetime
+ * Streak (abstinence) hub · a progress-ring hero to the next milestone, lifetime
  * stats, the recovery-benefits ladder, trigger patterns, urge-surfing, and a
  * judgement-free reset log. Private, local-only.
  */
@@ -42,7 +42,7 @@ export function NoFap() {
   const nextBenefit = stats.next
 
   function relapse() {
-    if (!trigger.trim()) { setErr('Add the reason behind it first — patterns are data.'); return }
+    if (!trigger.trim()) { setErr('Add the reason behind it first · patterns are data.'); return }
     logRelapse({ date: today, trigger: trigger.trim(), note: note.trim() })
     setTrigger(''); setNote(''); setErr('')
   }
@@ -74,8 +74,8 @@ export function NoFap() {
               <p className="mt-0.5 text-xs text-overlay0">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
               {relapsedToday && (
                 <div className="mt-1.5 rounded-lg p-2 text-left text-xs" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
-                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset today — and that’s okay.</span>
-                  <p className="mt-0.5 text-subtext1">You didn’t lose everything: your <strong style={{ color: cat('green') }}>{stats.totalClean} total clean days</strong> and <strong style={{ color: cat('peach') }}>{stats.best}-day best</strong> are kept. One slip is a stumble, not a restart — log the reason below and keep going.</p>
+                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset today · and that’s okay.</span>
+                  <p className="mt-0.5 text-subtext1">You didn’t lose everything: your <strong style={{ color: cat('green') }}>{stats.totalClean} total clean days</strong> and <strong style={{ color: cat('peach') }}>{stats.best}-day best</strong> are kept. One slip is a stumble, not a restart · log the reason below and keep going.</p>
                 </div>
               )}
               {nextBenefit ? (
@@ -103,8 +103,8 @@ export function NoFap() {
           <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
         </div>
 
-        {/* Urge surfing — pick what it was, log the win with date + time */}
-        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win — it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when — and spot your high-risk hours.">
+        {/* Urge surfing · pick what it was, log the win with date + time */}
+        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win · it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
               <button key={u} onClick={() => setUrge(u)}
@@ -137,26 +137,7 @@ export function NoFap() {
           {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-xs text-overlay0">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
         </Card>
 
-        {/* Per-addiction visualization */}
-        {byType.length > 0 && (
-          <Card title="Urges by addiction" subtitle="What you resist most — each type its own bar" enlargeable help="Every logged urge counted by type. Tall bars are your battleground habits; a steady count means you're catching and surfing them, not giving in.">
-            <div className="h-56 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
-                  <CartesianGrid stroke={cat('surface0')} horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis type="category" dataKey="type" width={92} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        )}
-
-        {/* Trigger plans — if-then for each addiction's trigger points */}
+        {/* Trigger plans · if-then for each addiction's trigger points */}
         <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response" help="Pre-deciding what to do beats willpower in the moment. For each addiction, add a trigger (the situation) and a coping response. When the urge hits, you already have the plan.">
           <div className="grid gap-2 rounded-lg border border-surface0 bg-base p-3 sm:grid-cols-2">
             <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
@@ -206,7 +187,7 @@ export function NoFap() {
 
         {/* Trigger patterns */}
         {stats.topTriggers.length > 0 && (
-          <Card title="Trigger patterns" subtitle="Your most common reasons — name them to beat them" help="Aggregated from your reset reasons. The biggest bars are where to build a plan: an if-then for your top trigger removes most relapses.">
+          <Card title="Trigger patterns" subtitle="Your most common reasons · name them to beat them" help="Aggregated from your reset reasons. The biggest bars are where to build a plan: an if-then for your top trigger removes most relapses.">
             <ul className="space-y-2">
               {stats.topTriggers.map((t) => {
                 const pct = Math.round((t.count / stats.relapseCount) * 100)
@@ -221,12 +202,12 @@ export function NoFap() {
                 )
               })}
             </ul>
-            {stats.avgGap > 0 && <p className="mt-3 text-xs text-overlay0">Average <span style={{ color: cat('teal') }}>{stats.avgGap} days</span> between resets — aim to stretch it.</p>}
+            {stats.avgGap > 0 && <p className="mt-3 text-xs text-overlay0">Average <span style={{ color: cat('teal') }}>{stats.avgGap} days</span> between resets · aim to stretch it.</p>}
           </Card>
         )}
 
         {/* Relapse log */}
-        <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} — no shame, patterns are data` : 'No shame — patterns are data'} collapsible defaultCollapsed={s.relapses.length > 4}>
+        <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'} collapsible defaultCollapsed={s.relapses.length > 4}>
           {s.relapses.length === 0 ? (
             <Empty>No resets logged. Keep going.</Empty>
           ) : (
@@ -243,8 +224,25 @@ export function NoFap() {
         </Card>
       </div>
 
-      {/* Reset form + a reframe */}
+      {/* Right rail: the visualization (fits here) + actions + tips */}
       <div className="space-y-4">
+        {byType.length > 0 && (
+          <Card title="Urges by addiction" subtitle="What you resist most" enlargeable help="Every logged urge counted by type. Tall bars are your battleground habits; a steady count means you're catching and surfing them, not giving in.">
+            <div className="h-52 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
+                  <CartesianGrid stroke={cat('surface0')} horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis type="category" dataKey="type" width={84} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                    {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        )}
         <Card title="Log a reset" subtitle="Reflect, learn, restart the counter">
           <div className="space-y-3">
             <label className="block text-sm text-subtext1">
@@ -261,13 +259,22 @@ export function NoFap() {
           </div>
         </Card>
 
-        <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Riding an urge?</span>}>
-          <ul className="space-y-2 text-sm text-subtext1">
-            <li className="flex gap-2"><span className="text-teal">1.</span> Name it: “this is an urge, it will pass.”</li>
-            <li className="flex gap-2"><span className="text-teal">2.</span> Delay 10 minutes — move, cold water, walk.</li>
-            <li className="flex gap-2"><span className="text-teal">3.</span> Tap <strong>I resisted an urge</strong> above and log the win.</li>
-          </ul>
-          {nextBenefit && <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-secondary/50 p-2 text-xs text-subtext0"><AlertTriangle size={13} className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade it for 10 minutes.</p>}
+        <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques · an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
+          <ol className="space-y-2 text-sm text-subtext1">
+            <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">HALT check</span> · Hungry? Angry? Lonely? Tired? Fix the real need instead.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">Play it forward</span> · picture how you’ll feel 1 hour after giving in vs. resisting.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">Remove the cue</span> · leave the room, phone in another room, block the site.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">Reach out</span> · text someone; saying it out loud drains the urge’s power.</li>
+            <li className="flex gap-2"><span className="font-medium text-teal">Log the win</span> · tap <strong>I resisted it</strong> above; evidence beats willpower.</li>
+          </ol>
+          {plans.length > 0 && (
+            <div className="mt-3 rounded-lg bg-secondary/50 p-2 text-xs text-subtext0">
+              <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(' · ')}
+            </div>
+          )}
+          {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-peach/10 p-2 text-xs text-subtext0"><AlertTriangle size={13} className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
         </Card>
       </div>
     </div>

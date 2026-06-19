@@ -14,16 +14,16 @@ const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 
 const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
 const evtBlank = { date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' }
 
-/** Physio / trainer / doctor guidance for pickleball — injury-prevention basics. */
+/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
 const TIPS = [
   { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
-  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal — turn and run.' },
+  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
   { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
   { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
   { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
 ]
 
-/** Quick pre-match warm-up — done before logging a session keeps injuries down. */
+/** Quick pre-match warm-up · done before logging a session keeps injuries down. */
 const WARMUP = [
   '5 min brisk walk or light jog to raise the heart rate',
   'Leg swings ×10/side · ankle circles ×10 · hip openers',
@@ -32,10 +32,10 @@ const WARMUP = [
   '2–3 min of easy dinks and soft volleys at the kitchen line',
 ]
 
-/** Rotating practice focus — one surfaces per day so you always have a goal. */
+/** Rotating practice focus · one surfaces per day so you always have a goal. */
 const DRILLS = [
   { name: 'Dink consistency', focus: 'Soft game', how: 'Cross-court dinks for 5 min with no pop-ups. Land in the kitchen, paddle out front, relaxed grip.' },
-  { name: 'Third-shot drops', focus: 'Transition', how: 'Drop from the baseline into the kitchen. Track success — hit 7/10 before you speed anything up.' },
+  { name: 'Third-shot drops', focus: 'Transition', how: 'Drop from the baseline into the kitchen. Track success · hit 7/10 before you speed anything up.' },
   { name: 'Reset volleys', focus: 'Defense', how: 'Partner feeds hard at your feet; soft-block into the kitchen. Absorb pace, don’t swing.' },
   { name: 'Serve depth & spin', focus: 'Serve', how: '20 serves to the back third for depth; add topspin only once depth is reliable.' },
   { name: 'Footwork & split-step', focus: 'Movement', how: 'Split-step on every shot, shuffle (never cross feet) at the line. 3×30s ladder.' },
@@ -45,8 +45,8 @@ const DRILLS = [
 
 /** Reputable external coaching / rules resources (open in a new tab). */
 const RESOURCES = [
-  { name: 'USA Pickleball — official rules & how-to', url: 'https://usapickleball.org' },
-  { name: 'The Dink — drills, strategy & news', url: 'https://www.thedinkpickleball.com' },
+  { name: 'USA Pickleball · official rules & how-to', url: 'https://usapickleball.org' },
+  { name: 'The Dink · drills, strategy & news', url: 'https://www.thedinkpickleball.com' },
 ]
 
 export function Pickleball() {
@@ -127,7 +127,8 @@ export function Pickleball() {
 
   // ── 75-day 3.5→4.0 plan ──
   const planStart = data.settings.pickleballPlanStart
-  const planDay = planStart ? Math.min(PLAN_TOTAL_DAYS, Math.max(1, dayDiff(planStart, today) + 1)) : 0
+  // A future-dated start means "not started yet" (0), not Day 1.
+  const planDay = planStart ? Math.min(PLAN_TOTAL_DAYS, Math.max(0, dayDiff(planStart, today) + 1)) : 0
   const PHASE_END = [18, 36, 54, 72, 75]
   const activePhaseIdx = planDay > 0 ? PHASE_END.findIndex((end) => planDay <= end) : -1
 
@@ -181,7 +182,7 @@ export function Pickleball() {
           </ResponsiveContainer>
         </div>
       </Card>
-      <Card title="By format" subtitle="Singles vs doubles — games & win %" enlargeable>
+      <Card title="By format" subtitle="Singles vs doubles · games & win %" enlargeable>
         {formats.length === 0 ? <Empty>No games yet.</Empty> : (
           <ul className="space-y-3">
             {formats.map((fm) => (
@@ -213,7 +214,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card title="Play heatmap" subtitle="Last 13 weeks — darker = more games" enlargeable>
+      <Card title="Play heatmap" subtitle="Last 13 weeks · darker = more games" enlargeable>
         <div className="overflow-x-auto">
           <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
             {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
@@ -311,7 +312,7 @@ export function Pickleball() {
               <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
             </div>
             <p className="text-xs text-overlay1">{drill.how}</p>
-            <p className="mt-2 text-[11px] text-overlay0">New focus each day — log a session below after you drill it.</p>
+            <p className="mt-2 text-[11px] text-overlay0">New focus each day · log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
           <div className="rounded-lg border border-surface0 bg-base p-3">
@@ -334,7 +335,7 @@ export function Pickleball() {
         </div>
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe — physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-surface0 pt-2 text-sm first:border-t-0 first:pt-0">
@@ -346,7 +347,7 @@ export function Pickleball() {
       </Card>
 
       {/* ── Leagues & tournaments ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events — separate from casual sessions">
+      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events · separate from casual sessions">
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
@@ -435,7 +436,7 @@ export function Pickleball() {
                 <p className="mt-1.5 text-xs text-overlay1">{p.focus}</p>
                 <ul className="mt-2 grid gap-1 sm:grid-cols-2">
                   {p.drills.map((d) => (
-                    <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-overlay0">— {d.how}</span></li>
+                    <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-overlay0">· {d.how}</span></li>
                   ))}
                 </ul>
                 <p className="mt-2 text-[11px]" style={{ color: cat('green') }}>🎯 {p.goal}</p>

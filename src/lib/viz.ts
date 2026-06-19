@@ -60,16 +60,19 @@ export function weeklyRadar(data: JournalData, today = todayISO()): RadarPoint[]
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0
   }
   const mood = avg(recent.map((m) => m.mood))
-  const calm = 10 - avg(recent.map((m) => m.stress))
+  const stressVals = recent.map((m) => m.stress).filter((x): x is number => x != null)
+  // No stress data → 0 (not a false "perfectly calm" 10 from 10 − 0).
+  const calm = stressVals.length ? 10 - avg(stressVals) : 0
   const sleep = avg(recent.map((m) => m.sleep))
-  // Habit adherence over the week, normalised 0–10.
+  // Habit adherence over the week, normalised 0–10. Active habits only.
+  const activeHabits = data.habits.filter((h) => !h.archived)
   let hits = 0
   let slots = 0
   for (const day of last7) {
-    slots += data.habits.length
-    hits += (data.habitLog[day] ?? []).length
+    slots += activeHabits.length
+    hits += (data.habitLog[day] ?? []).filter((id) => activeHabits.some((h) => h.id === id)).length
   }
-  const habits = slots ? (hits / slots) * 10 : 0
+  const habits = slots ? Math.min(10, (hits / slots) * 10) : 0
   // Activity: days logged this week, normalised 0–10.
   const logged = [...activeDays(data)].filter((d) => last7.has(d)).length
   const consistency = (logged / 7) * 10

@@ -2,13 +2,13 @@ import { lazy, Suspense, useState } from 'react'
 import { Activity, Dumbbell } from 'lucide-react'
 import { Fitness } from './Fitness'
 
-// Gym is recharts-heavy — load it only when the Strength tab is opened.
+// Gym is recharts-heavy · load it only when the Strength tab is opened.
 const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
 
 /**
  * One home for training. Cardio (general sessions, totals, history, nutrition)
  * and Strength (structured lifting, programs, anatomy, body, photos) live as
- * tabs over a shared workout store — no more "which view do I open?" and one
+ * tabs over a shared workout store · no more "which view do I open?" and one
  * fewer nav item. Pull-ups keeps its own dedicated view.
  */
 export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 'strength' }) {

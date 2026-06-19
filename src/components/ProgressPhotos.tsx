@@ -56,7 +56,7 @@ export function ProgressPhotos() {
   return (
     <Card
       title="Progress photos"
-      subtitle="Weekly physique check — private, on-device"
+      subtitle="Weekly physique check · private, on-device"
       right={
         photos.length >= 2 && (
           <Button onClick={() => setCompare((c) => !c)} className="inline-flex items-center gap-1.5">
@@ -71,7 +71,7 @@ export function ProgressPhotos() {
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />
 
       {photos.length === 0 ? (
-        <Empty>No photos yet — add one to start tracking your progress.</Empty>
+        <Empty>No photos yet · add one to start tracking your progress.</Empty>
       ) : compare && oldest && newest ? (
         <div className="grid grid-cols-2 gap-2">
           {[oldest, newest].map((p, i) => (

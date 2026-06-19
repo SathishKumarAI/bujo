@@ -9,7 +9,7 @@ interface Celebration { habit: string; streak: number }
 
 /**
  * Mounts globally (in the shell) and celebrates the moment any habit's streak
- * crosses a milestone (7, 30, 100… days) — the lovable.dev "milestone
+ * crosses a milestone (7, 30, 100… days) · the lovable.dev "milestone
  * celebration" mechanic. Watches streaks across renders via a ref so it fires
  * once, on the crossing, regardless of which view logged the habit.
  */

@@ -10,17 +10,17 @@ export function Help() {
           <p>
             This is a digital take on the <strong>Bullet Journal method</strong> by Ryder Carroll,
             in the minimal one-pen style. Everything you write is saved automatically in this browser
-            only — nobody else can see it, and there are no accounts. Below is what each section does.
+            only · nobody else can see it, and there are no accounts. Below is what each section does.
           </p>
         </div>
       </Card>
 
       <Section
-        title="Getting around — the top bar"
-        body="Every screen has a sticky bar at the top. It shows where you are, and on date screens (Today, Monthly, Trackers, Cycle) a ← date → control to move through days or months. On the right: Quick add (capture an entry from anywhere), ⌘K (jump to any view or run a command), and the ⋯ menu — that's where theme, zoom, undo/redo, and the paper/handwriting/book toggles now live."
+        title="Getting around · the top bar"
+        body="Every screen has a sticky bar at the top. It shows where you are, and on date screens (Today, Monthly, Trackers, Cycle) a ← date → control to move through days or months. On the right: Quick add (capture an entry from anywhere), ⌘K (jump to any view or run a command), and the ⋯ menu · that's where theme, zoom, undo/redo, and the paper/handwriting/book toggles now live."
       />
 
-      <Card title="Rapid logging — the bullets">
+      <Card title="Rapid logging · the bullets">
         <p className="mb-3 text-sm text-subtext1">
           On the <strong>Today</strong> page, type into the add bar and press Enter. Start a line with a
           letter to choose the kind, and click the glyph on any task to cycle its status.
@@ -66,15 +66,15 @@ export function Help() {
       />
       <Section
         title="Challenges & Focus"
-        body="Challenges runs fixed-length disciplines (75 Hard, 90-day, custom) with a progress ring and streak. Focus is a developer work tracker — log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a minutes chart and a focus↔stress insight."
+        body="Challenges runs fixed-length disciplines (75 Hard, 90-day, custom) with a progress ring and streak. Focus is a developer work tracker · log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a minutes chart and a focus↔stress insight."
       />
       <Section
         title="Training penalties"
-        body="Skip a habit streak, an overdue task, or a challenge day and the Today page surfaces an anime-style 'training penalty' scaled to how badly you slipped — a fun, dismissible nudge to keep the chain alive. Re-roll for a different drill."
+        body="Skip a habit streak, an overdue task, or a challenge day and the Today page surfaces an anime-style 'training penalty' scaled to how badly you slipped · a fun, dismissible nudge to keep the chain alive. Re-roll for a different drill."
       />
       <Section
         title="Plan"
-        body="Set recurring tasks/events that auto-appear each day they apply. Run the migration flow to clear overdue open tasks — move them to today/tomorrow or drop them. Import a .ics file to bring calendar events onto your monthly."
+        body="Set recurring tasks/events that auto-appear each day they apply. Run the migration flow to clear overdue open tasks · move them to today/tomorrow or drop them. Import a .ics file to bring calendar events onto your monthly."
       />
       <Section
         title="Realism & reminders"
@@ -98,7 +98,7 @@ export function Help() {
       />
       <Section
         title="Settings & backups"
-        body="Switch between dark (Mocha) and light (Latte) themes, set your profile, and — importantly — export a JSON or Markdown backup. Because data lives only in your browser, export regularly so you never lose it. Import restores a backup on any device."
+        body="Switch between dark (Mocha) and light (Latte) themes, set your profile, and · importantly · export a JSON or Markdown backup. Because data lives only in your browser, export regularly so you never lose it. Import restores a backup on any device."
       />
     </div>
   )

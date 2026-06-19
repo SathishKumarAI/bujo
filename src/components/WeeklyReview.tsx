@@ -9,7 +9,7 @@ import { Button, Card, Textarea } from './ui'
 
 /**
  * Guided weekly review, top to bottom: (1) migrate overdue tasks, (2) read the
- * week's coverage + what slipped, (3) reflect — saved as a #review note on today.
+ * week's coverage + what slipped, (3) reflect · saved as a #review note on today.
  * Collapsed by default so it doesn't crowd Insights until you want to sit down
  * for a review.
  */
@@ -46,15 +46,15 @@ export function WeeklyReview() {
         <p className="text-sm text-subtext0">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>
       ) : (
         <div className="space-y-4">
-          {/* Step 1 — migrate */}
+          {/* Step 1 · migrate */}
           <div>
             <p className="mb-1 text-xs font-medium tracking-wide text-overlay0 uppercase">1 · Clear the backlog</p>
             {overdue === 0
-              ? <p className="text-sm text-green">Nothing overdue — clean slate. 🎉</p>
+              ? <p className="text-sm text-green">Nothing overdue · clean slate. 🎉</p>
               : <p className="text-sm text-subtext1">{overdue} overdue task{overdue === 1 ? '' : 's'} waiting. <button onClick={() => navigate('plan')} className="text-mauve hover:underline">Migrate them →</button></p>}
           </div>
 
-          {/* Step 2 — review */}
+          {/* Step 2 · review */}
           <div className="border-t border-surface0 pt-3">
             <p className="mb-2 text-xs font-medium tracking-wide text-overlay0 uppercase">2 · How the week went</p>
             <div className="mb-2 flex gap-1.5">
@@ -70,7 +70,7 @@ export function WeeklyReview() {
               : <p className="text-xs text-green">No habits missed this week.</p>}
           </div>
 
-          {/* Step 3 — reflect */}
+          {/* Step 3 · reflect */}
           <div className="border-t border-surface0 pt-3">
             <p className="mb-2 text-xs font-medium tracking-wide text-overlay0 uppercase">3 · Reflect</p>
             <Textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="What went well? What will you change next week?" rows={3} />

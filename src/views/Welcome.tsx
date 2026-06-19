@@ -69,7 +69,7 @@ export function Welcome() {
   async function forgot() {
     if (!isValidEmail(email)) { setErr('Enter a valid email above, then tap “Forgot password”.'); return }
     setBusy(true); setErr(''); setNotice('')
-    try { await resetPassword(email); setNotice('Password-reset link sent — check your inbox.') }
+    try { await resetPassword(email); setNotice('Password-reset link sent · check your inbox.') }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
 
@@ -84,7 +84,7 @@ export function Welcome() {
           <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync everywhere, or stay on this device.</p>
         </div>
 
-        {/* Account — recommended when configured: guest now, or log in to sync. */}
+        {/* Account · recommended when configured: guest now, or log in to sync. */}
         {supabaseEnabled() && (
           <div className="rise mb-5 rounded-2xl border border-surface0 bg-mantle/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
             <div className="mb-3 flex items-center gap-2">
@@ -117,7 +117,7 @@ export function Welcome() {
         )}
 
         <div className="grid gap-5 sm:grid-cols-2">
-          {/* Own cloud — pick a folder */}
+          {/* Own cloud · pick a folder */}
           <button
             onClick={chooseFolder}
             disabled={!supported || busy}
@@ -161,9 +161,9 @@ export function Welcome() {
           </button>
         </div>
 
-        {/* Try & learn — seed a sample month so new users explore + learn by doing. */}
+        {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
         <div className="rise mt-5 rounded-xl border border-dashed border-surface1 p-4 text-center" style={{ animationDelay: '320ms' }}>
-          <p className="mb-2 text-sm text-subtext1">Just looking? <strong className="text-text">Explore with sample data</strong> — see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
+          <p className="mb-2 text-sm text-subtext1">Just looking? <strong className="text-text">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
           <button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}
             className="press-3d rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-text hover:text-mauve"

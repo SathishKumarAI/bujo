@@ -125,7 +125,7 @@ export function Stats() {
           </div>
         </Card>
 
-        <Card title="Sleep vs mood" subtitle="Each dot is a day — see the trend" enlargeable>
+        <Card title="Sleep vs mood" subtitle="Each dot is a day · see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
@@ -189,7 +189,7 @@ export function Stats() {
       <Card
         enlargeable={false}
         title="Mood calendar"
-        subtitle="Each day tinted by your mood (0–10) — tap ⛶ to enlarge"
+        subtitle="Each day tinted by your mood (0–10) · tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
             <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
@@ -222,7 +222,7 @@ export function Stats() {
         </div>
       </Card>
 
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} — one square per day, tinted by mood`} enlargeable={false}
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} · one square per day, tinted by mood`} enlargeable={false}
         right={<Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>}>
         {yearPixels(false)}
       </Card>
@@ -268,7 +268,7 @@ export function Stats() {
 
       <Card title="Tags" subtitle="What you write about most">
         {tags.length === 0 ? (
-          <Empty>No #tags yet — add them in any entry.</Empty>
+          <Empty>No #tags yet · add them in any entry.</Empty>
         ) : (
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             {tags.map((t) => (
@@ -281,7 +281,7 @@ export function Stats() {
         )}
       </Card>
 
-      {/* Click-to-enlarge modal — portalled to <body> so it centres on the
+      {/* Click-to-enlarge modal · portalled to <body> so it centres on the
           viewport, not inside transformed ancestors (book mode / zoom). */}
       {enlarged && createPortal(
         <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">

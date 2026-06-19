@@ -73,7 +73,7 @@ export function DriveSync() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><Cloud size={18} /> Cloud sync — Google Drive</span>}
+      title={<span className="inline-flex items-center gap-2"><Cloud size={18} /> Cloud sync · Google Drive</span>}
       subtitle="Optional. Store your journal in Drive and reference images/docs from it."
       className="lg:col-span-2"
     >

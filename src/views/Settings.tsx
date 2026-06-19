@@ -72,7 +72,7 @@ export function Settings() {
         replaceAll(importJSON(String(reader.result)))
         alert('Backup imported successfully.')
       } catch {
-        alert('Could not read that file — is it a valid bujo backup?')
+        alert('Could not read that file · is it a valid bujo backup?')
       }
     }
     reader.readAsText(file)
@@ -81,14 +81,14 @@ export function Settings() {
   const tabClass = 'gap-1.5 whitespace-nowrap lg:w-full lg:justify-start lg:py-2'
   return (
     <Page>
-      {/* Designed header — sets the page apart from a plain card stack. */}
+      {/* Designed header · sets the page apart from a plain card stack. */}
       <div className="mb-6 flex items-center gap-3 border-b border-surface0 pb-4">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
           <SlidersHorizontal size={20} />
         </span>
         <div className="min-w-0">
           <h1 className="font-display text-2xl text-text">Settings</h1>
-          <p className="text-sm text-overlay0">Profile, appearance, reminders, and your data — organised in one place.</p>
+          <p className="text-sm text-overlay0">Profile, appearance, reminders, and your data · organised in one place.</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="reminders" className="max-w-2xl">
-      <Card title="Reminders & weather" subtitle="Opt-in — weather makes network calls">
+      <Card title="Reminders & weather" subtitle="Opt-in · weather makes network calls">
         <div className="space-y-3">
           <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
           {s.reminderEnabled && (
@@ -234,7 +234,7 @@ export function Settings() {
                   </div>
                   {warn && (
                     <p className="mt-1.5 text-xs text-peach">
-                      Getting full — photos use the most space. Export a backup, and remove old progress photos if needed.
+                      Getting full · photos use the most space. Export a backup, and remove old progress photos if needed.
                     </p>
                   )}
                 </div>
@@ -245,7 +245,7 @@ export function Settings() {
       <Card title="Backup & data" subtitle="Back it up regularly">
         {!s.lastBackup && (
           <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
-            <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage — export a copy.
+            <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage · export a copy.
           </p>
         )}
         <div className="flex flex-wrap gap-2">
@@ -267,7 +267,7 @@ export function Settings() {
             <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
             <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
           </div>
-          <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> — the app chrome is hidden automatically.</p>
+          <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
 
@@ -295,7 +295,7 @@ export function Settings() {
             <Trash2 size={14} /> Clear all data
           </Button>
           <Button
-            onClick={() => { if (confirm('Return to the start screen? Your data is kept — you can pick guest / account / device again.')) setSettings({ storageMode: undefined }) }}
+            onClick={() => { if (confirm('Return to the start screen? Your data is kept · you can pick guest / account / device again.')) setSettings({ storageMode: undefined }) }}
             className="inline-flex items-center gap-1.5"
           >
             Back to start screen
@@ -359,7 +359,7 @@ function AccountCard() {
   if (!supabaseEnabled()) return null
 
   function share() {
-    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('✓ App link copied — share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
+    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('✓ App link copied · share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
   }
 
   async function run(fn: () => Promise<void>, ok: string) {
@@ -372,7 +372,7 @@ function AccountCard() {
   const signedIn = !!user && !guest
   // Return to the first-run gate (keeps local data; lets them switch/log in).
   async function leave() {
-    if (!confirm('Log out and return to the start screen? Your data stays on this device — sign in afterward to save it to an account.')) return
+    if (!confirm('Log out and return to the start screen? Your data stays on this device · sign in afterward to save it to an account.')) return
     setBusy(true)
     try { if (user) await import('../lib/supabase').then((m) => m.signOut()) } catch { /* ignore */ }
     localStorage.removeItem('bujo:sync')
@@ -381,7 +381,7 @@ function AccountCard() {
   }
 
   return (
-    <Card title="Account" subtitle="Sign in to sync across devices — guest works too" right={<Button onClick={share}>Share app</Button>}>
+    <Card title="Account" subtitle="Sign in to sync across devices · guest works too" right={<Button onClick={share}>Share app</Button>}>
       {recovery && (
         <div className="mb-3 rounded-lg border border-mauve/40 bg-base p-3">
           <p className="mb-2 text-sm text-subtext1">Set a new password:</p>
@@ -390,9 +390,9 @@ function AccountCard() {
         </div>
       )}
       <p className="mb-1 text-sm text-subtext1">
-        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span> — synced to your account.</>
-          : guest ? <span className="text-peach">Guest — data is on <strong>this device only</strong>, not in any account.</span>
-            : <span className="text-peach">On this device only — <strong>no account</strong>, nothing is stored online.</span>}
+        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span> · synced to your account.</>
+          : guest ? <span className="text-peach">Guest · data is on <strong>this device only</strong>, not in any account.</span>
+            : <span className="text-peach">On this device only · <strong>no account</strong>, nothing is stored online.</span>}
       </p>
       {!signedIn && <p className="mb-3 text-xs text-overlay0">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
       {!signedIn && (
@@ -401,9 +401,9 @@ function AccountCard() {
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
           <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="primary" onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed — your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
+            <Button variant="primary" onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
             <Button onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
-            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent — check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
+            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
             <button onClick={leave} className="ml-auto text-xs text-overlay0 hover:text-red">Log out / switch</button>
           </div>
         </div>
@@ -416,7 +416,7 @@ function AccountCard() {
         </div>
       )}
       {msg && <p className="mt-2 text-xs text-subtext1">{busy ? '…' : msg}</p>}
-      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link — each friend signs up for their own journal.</p>
+      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
     </Card>
   )
 }
@@ -455,7 +455,7 @@ function BujoCloudCard() {
   }
 
   return (
-    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted — sync across devices">
+    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted · sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="primary" onClick={push} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
@@ -466,7 +466,7 @@ function BujoCloudCard() {
         <Switch checked={auto} onCheckedChange={toggleAuto} />
       </label>
       {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
-      <p className="mt-2 text-xs text-overlay0">Your journal is encrypted in this browser before upload — the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
+      <p className="mt-2 text-xs text-overlay0">Your journal is encrypted in this browser before upload · the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
     </Card>
   )
 }
@@ -497,7 +497,7 @@ function PasscodeCard() {
           </div>
           {err && <p className="text-xs text-red">{err}</p>}
           <Button variant="primary" onClick={enable}>Encrypt journal</Button>
-          <p className="text-xs text-overlay0">There’s no recovery — if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
+          <p className="text-xs text-overlay0">There’s no recovery · if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
         </div>
       )}
     </Card>

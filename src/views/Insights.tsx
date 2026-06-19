@@ -32,7 +32,7 @@ export function Insights() {
   const workouts = data.workouts.length
   const photos = data.memories.filter((m) => m.photo).length + data.monthly.filter((m) => m.photo).length
 
-  // Personal records — bests across domains.
+  // Personal records · bests across domains.
   const bestMood = [...data.metrics].filter((m) => m.mood != null).sort((a, b) => (b.mood! - a.mood!))[0]
   const bigWorkout = [...data.workouts].filter((w) => w.durationMin).sort((a, b) => (b.durationMin! - a.durationMin!))[0]
   const pickBest = [...(data.pickleball ?? [])].sort((a, b) => b.gamesWon - a.gamesWon)[0]
@@ -122,7 +122,7 @@ export function Insights() {
       )}
 
       <Card title="Search" subtitle="Find anything across your journal">
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries, memories, gratitude, workouts…" autoFocus />
+        <Input value={q} onChange={(e) => { setQ(e.target.value); setKind('all') }} placeholder="Search entries, memories, gratitude, workouts…" autoFocus />
         {q && kinds.length > 2 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {kinds.map((k) => (

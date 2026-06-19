@@ -12,15 +12,15 @@ export function onboarded(): boolean {
 }
 
 const STEPS: { icon: typeof Sun; title: string; body: string; to?: ViewId }[] = [
-  { icon: Sun, title: 'Capture in Today', body: 'Type one line per thought — t task · e event · n note · #tag. The smart bar also understands plain sentences like “ran 5k” and files them for you.', to: 'today' },
+  { icon: Sun, title: 'Capture in Today', body: 'Type one line per thought · t task · e event · n note · #tag. The smart bar also understands plain sentences like “ran 5k” and files them for you.', to: 'today' },
   { icon: BarChart3, title: 'Track your day', body: 'Tick habits, drag the mood/sleep sliders, log a workout. Try the Trackers “routine” lens (⏰) to run your day by time of day.', to: 'trackers' },
-  { icon: Compass, title: 'Let the coach guide you', body: 'Today shows a few “do this next” prompts from your own data — what’s behind pace, what to drill, what to celebrate.', to: 'today' },
+  { icon: Compass, title: 'Let the coach guide you', body: 'Today shows a few “do this next” prompts from your own data · what’s behind pace, what to drill, what to celebrate.', to: 'today' },
   { icon: Command, title: 'Jump anywhere', body: 'Press ⌘K / Ctrl+K for the command palette, or tap the ? on any page for help. Charts have a ⛶ to enlarge.' },
 ]
 
 /**
  * First-run tour: a short, dismissable guide shown once after the user picks a
- * storage mode. Saves the missing onboarding lever without nagging — it never
+ * storage mode. Saves the missing onboarding lever without nagging · it never
  * shows again once dismissed.
  */
 export function Onboarding({ onClose }: { onClose: () => void }) {

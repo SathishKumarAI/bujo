@@ -114,7 +114,7 @@ function ReadLater() {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-        <Bookmark size={16} className="text-sky" /> Read later — saved links
+        <Bookmark size={16} className="text-sky" /> Read later · saved links
         <span className="text-overlay0">({links.filter((l) => !l.done).length} to read)</span>
       </h3>
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -125,7 +125,7 @@ function ReadLater() {
         <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust"><Plus size={15} /> Save</button>
       </div>
       {links.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No saved links yet — paste an article or book page to read later.</p>
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No saved links yet · paste an article or book page to read later.</p>
       ) : (
         <ul className="divide-y divide-border">
           {links.map((l) => (
@@ -237,7 +237,7 @@ function BookCard({ book }: { book: Book }) {
           {/* Review */}
           <textarea value={book.notes ?? ''} onChange={(e) => store.updateBook(book.id, { notes: e.target.value || undefined })} placeholder="Your review / overall takeaways…" rows={2}
             className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
-          {/* What I learned — dated log */}
+          {/* What I learned · dated log */}
           <div>
             <p className="mb-1 text-[11px] font-medium text-subtext1">What I learned</p>
             {learnings.length > 0 && (

@@ -73,12 +73,12 @@ export function Today() {
               <ul className="space-y-2 text-sm">
                 {flashbacks.memories.map((m) => (
                   <li key={m.date} className="text-subtext1">
-                    <span className="text-overlay0">{m.date}</span> — ▲ {m.text}
+                    <span className="text-overlay0">{m.date}</span> · ▲ {m.text}
                   </li>
                 ))}
                 {flashbacks.entries.slice(0, 5).map((e) => (
                   <li key={e.id} className="text-subtext1">
-                    <span className="text-overlay0">{e.date}</span> — {e.text}
+                    <span className="text-overlay0">{e.date}</span> · {e.text}
                   </li>
                 ))}
               </ul>
@@ -157,7 +157,7 @@ export function Today() {
               placeholder="Write a few honest lines…"
               onBlur={(e) =>
                 e.target.value.trim() &&
-                setMemory(date, { text: `${memory ? memory + ' — ' : ''}${e.target.value.trim()}` })
+                setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
               }
               rows={3}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"

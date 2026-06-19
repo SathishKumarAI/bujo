@@ -53,7 +53,7 @@ export function SmartInput({
 
   function submit() {
     if (!value.trim()) return
-    if (confirmOnDuplicate && dupes.length && !confirm('Possible duplicate — add anyway?')) return
+    if (confirmOnDuplicate && dupes.length && !confirm('Possible duplicate · add anyway?')) return
     onSubmit(value)
     setOpen(false)
   }

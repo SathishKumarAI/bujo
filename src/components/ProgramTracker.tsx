@@ -12,7 +12,7 @@ import { VideoLink } from './VideoLink'
  * load the day's lifts into a session. Progress persists in `settings.programDone`
  * / `programActuals`, so the tracker can appear in more than one view.
  *
- * `only` restricts it to a single program id (hides the program picker) — used to
+ * `only` restricts it to a single program id (hides the program picker) · used to
  * keep the pull-up program in the Pull-ups view and hypertrophy in the Gym.
  */
 export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]) => void; only?: string }) {

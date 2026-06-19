@@ -142,14 +142,14 @@ export function Gym() {
     return { date: b.date.slice(5), weight: b.weight, avg: Math.round(avg * 10) / 10 }
   })
 
-  // Anatomy lookup — lives in the right rail (aside) so it stays visible while logging.
+  // Anatomy lookup · lives in the right rail (aside) so it stays visible while logging.
   const anatomyCard = (
     <Card
       title={focusEx ? focusEx : 'Exercise anatomy'}
       subtitle={
         focusEx
           ? 'Muscles worked by this exercise'
-          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> — or look one up</span>
+          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
       right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
     >
@@ -273,7 +273,7 @@ export function Gym() {
             const kind = row.kind ?? 'working'
             const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'peach', title: 'Drop set' } }[kind]
             const nextKind = { working: 'warmup', warmup: 'drop', drop: 'working' }[kind] as SetRow['kind']
-            // Strong-style "completed set" — a filled weight+reps row reads as done (green accent).
+            // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
             const complete = !!(row.weight.trim() && row.reps.trim())
             return (
               <div key={i} className={`-ml-2 rounded-lg border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
@@ -306,7 +306,7 @@ export function Gym() {
                       <button
                         type="button"
                         onClick={() => setRow(i, { weight: String(prev.weight ?? ''), reps: String(prev.reps ?? '') })}
-                        title="Repeat last set — fill weight & reps"
+                        title="Repeat last set · fill weight & reps"
                         className="inline-flex items-center gap-1 hover:text-mauve"
                       >
                         <RotateCcw size={10} /> last: {prev.weight}{unit}×{prev.reps}
@@ -351,7 +351,7 @@ export function Gym() {
       <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
 
       {/* ── Exercise database (wger) ─────────────────────────── */}
-      <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session" collapsible defaultCollapsed>
+      <Card title="Exercise database" subtitle="Search wger’s library · tap a card to view it, then add to your session" collapsible defaultCollapsed>
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
@@ -400,7 +400,7 @@ export function Gym() {
         </div>
         {focusEx && progression.length > 1 && (
           <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-            <p className="mb-1 text-xs text-overlay0">{focusEx} — heaviest set per day ({unit})</p>
+            <p className="mb-1 text-xs text-overlay0">{focusEx} · heaviest set per day ({unit})</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -416,7 +416,7 @@ export function Gym() {
       </div>
 
       {rpeSeries.length >= 2 && (
-        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session — watch for over-reaching" defer enlargeable>
+        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
           <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -452,7 +452,7 @@ function PlateCalculator({ unit }: { unit: string }) {
         <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
       </div>
       {plates.length === 0 ? (
-        <p className="text-sm text-overlay0">Just the bar — no plates needed.</p>
+        <p className="text-sm text-overlay0">Just the bar · no plates needed.</p>
       ) : (
         <>
           <p className="mb-2 text-xs text-overlay0">Per side:</p>

@@ -96,7 +96,9 @@ export function Goals() {
   // Training-program completion.
   const done = data.settings.programDone ?? []
   for (const p of PROGRAMS) {
-    const totalDays = p.weeks.reduce((a, w) => a + w.days.length, 0)
+    // Only count days that actually have exercises · rest/empty days can never
+    // be "done", so including them in the target made 100% unreachable.
+    const totalDays = p.weeks.reduce((a, w) => a + w.days.filter((d) => d.exercises.length > 0).length, 0)
     const dayDone = p.weeks.reduce(
       (a, w) => a + w.days.filter((d) => d.exercises.length > 0 && d.exercises.every((_, i) => done.includes(`${p.id}-w${w.week}d${d.day}-e${i}`))).length,
       0,
@@ -156,7 +158,7 @@ export function Goals() {
     <Page>
       <Card title="Goals" subtitle={goals.length ? `${hit} of ${goals.length} on track` : 'Your active targets, all in one place'}>
         {goals.length === 0 ? (
-          <Empty>No goals yet — set a habit weekly goal, start a challenge, or follow a program.</Empty>
+          <Empty>No goals yet · set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {goals.map((g, i) => {
@@ -185,7 +187,7 @@ export function Goals() {
         )}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets — track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
+      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets · track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
         <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-surface0 bg-base p-3">
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
@@ -193,7 +195,7 @@ export function Goals() {
           <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
         </div>
         {customGoals.length === 0 ? (
-          <Empty>No custom goals yet — add one above to track anything.</Empty>
+          <Empty>No custom goals yet · add one above to track anything.</Empty>
         ) : (
           <ul className="space-y-3">
             {customGoals.map((g) => {

@@ -12,7 +12,7 @@ import {
 import type { User } from '@supabase/supabase-js'
 
 /**
- * Dedicated, real-login-page-style account screen — a centred, branded auth
+ * Dedicated, real-login-page-style account screen · a centred, branded auth
  * card (not the buried Settings form). Reached from the top-bar account menu.
  */
 export function Account() {
@@ -45,7 +45,7 @@ export function Account() {
     try {
       if (mode === 'signup') {
         await signUpEmail(email, pw); await pushJournal(data)
-        setMsg('Account created — check your inbox to confirm your email, then sign in.')
+        setMsg('Account created · check your inbox to confirm your email, then sign in.')
       } else {
         await signInEmail(email, pw)
         const r = await pullJournal(); if (r) replaceAll(migrate(r))
@@ -59,7 +59,7 @@ export function Account() {
   async function forgot() {
     if (!isValidEmail(email)) { setErr('Enter a valid email first, then tap “Forgot password”.'); return }
     setBusy(true); setErr(''); setMsg('')
-    try { await resetPassword(email); setMsg('Password-reset link sent — check your inbox.') }
+    try { await resetPassword(email); setMsg('Password-reset link sent · check your inbox.') }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
   async function guest() {
@@ -99,7 +99,7 @@ export function Account() {
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-lg text-foreground">{signedIn ? user!.email : 'Guest session'}</p>
-            <p className="text-xs text-overlay0">{signedIn ? 'Synced across your devices' : 'On this device — not yet synced'}</p>
+            <p className="text-xs text-overlay0">{signedIn ? 'Synced across your devices' : 'On this device · not yet synced'}</p>
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export function Account() {
 
       <div className="mt-5 space-y-2 border-t border-border pt-4 text-center">
         <button onClick={guest} disabled={busy} className="inline-flex items-center gap-1.5 text-xs text-subtext0 hover:text-foreground disabled:opacity-50">
-          <Check size={13} className="text-green" /> Just explore as a guest — no email needed
+          <Check size={13} className="text-green" /> Just explore as a guest · no email needed
         </button>
         <div>
           <button onClick={() => { setSettings({ storageMode: 'local' }); nav('today') }} className="text-xs text-overlay0 hover:text-subtext1">
@@ -187,7 +187,7 @@ export function Account() {
   )
 }
 
-/** Full-height, centred, branded auth shell — the "real login page" frame. */
+/** Full-height, centred, branded auth shell · the "real login page" frame. */
 function Hero({ children }: { children: React.ReactNode }) {
   return (
     <div className="aurora grid min-h-[calc(100vh-9rem)] place-items-center px-4 py-8">

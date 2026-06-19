@@ -26,7 +26,7 @@ export function Monthly() {
       setWeather(todayISO(), w)
       if (city) setMonthly(ym, { location: city })
     } catch {
-      alert('Could not get location/weather — permission denied or offline.')
+      alert('Could not get location/weather · permission denied or offline.')
     } finally {
       setGeoBusy(false)
     }
@@ -59,7 +59,7 @@ export function Monthly() {
 
   return (
     <Page>
-      {/* Compact "this month" summary — a single thin bar. */}
+      {/* Compact "this month" summary · a single thin bar. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card/60 px-3 py-1.5 text-xs text-subtext0">
         <span className="font-medium text-subtext1">This month</span>
         <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
@@ -116,7 +116,7 @@ export function Monthly() {
           </div>
         </Card>
 
-      {/* Location · Goals · Photo — 3 across, below the calendar */}
+      {/* Location · Goals · Photo · 3 across, below the calendar */}
       <div className="grid items-start gap-5 lg:grid-cols-3">
         <Card title="Location" subtitle="Where are you this month?">
           <Input
