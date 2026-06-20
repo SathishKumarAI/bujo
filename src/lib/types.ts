@@ -415,6 +415,10 @@ export interface Settings {
   readingGoalBooks?: number
   /** ISO day the 75-day pickleball 3.5→4.0 plan was started (drives day/phase). */
   pickleballPlanStart?: string
+  /** ISO day the 12-week Coaching Academy program was started. */
+  coachingStart?: string
+  /** Completed Coaching Academy week numbers (1–12). */
+  coachingWeeksDone?: number[]
   /** Stats mood/year pair: side-by-side ('split', default) or full-width 'stacked'. */
   statsPairLayout?: 'split' | 'stacked'
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */

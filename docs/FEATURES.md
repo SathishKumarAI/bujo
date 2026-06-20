@@ -233,6 +233,16 @@ is no second database to keep in step.
 - **Stats layout toggle**: switch the mood-calendar / year-in-pixels pair between
   side-by-side and full-width stacked (persisted) — resize the dashboard to taste.
 
+## Coaching academy (appended 2026-06-20)
+
+- **Coaching tab** (`coaching` view) — a pickleball curriculum, not just tracking:
+  a **12-week beginner→4.0 program** (start it to track your week, tap weeks done),
+  **today's session** from a weekly split + a 45–60 min template, a **skill ladder**
+  (DUPR 2.0→4.5+ with the skills to master in order), a **drill library** grouped
+  by skill, and a **mental-game** track (16 mindset principles). Content researched
+  from USAP/DUPR/coaching sources → `docs/research/pickleball-coaching-curriculum.md`.
+  Data in `src/lib/pickleballAcademy.ts`.
+
 ## Cards, charts & Recovery (appended 2026-06-18)
 
 - **Card ⓘ help**: every titled card has an always-visible ⓘ popover ("what is

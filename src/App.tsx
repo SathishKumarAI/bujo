@@ -12,6 +12,7 @@ import { Challenges } from './views/Challenges'
 import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
 import { Reading } from './views/Reading'
+import { Coaching } from './views/Coaching'
 import { Account } from './views/Account'
 import { Plan } from './views/Plan'
 import { Goals } from './views/Goals'
@@ -35,7 +36,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen,
+  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -57,6 +58,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
+  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Health' },
   { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
@@ -75,7 +77,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
-  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, account: Account, help: Help,
+  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, account: Account, help: Help,
   settings: Settings,
 }
 
