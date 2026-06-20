@@ -180,6 +180,119 @@ export const TWELVE_WEEK: AcademyWeek[] = [
 
 export const ACADEMY_TOTAL_WEEKS = 12
 
+// ── Technique guide (the "how") ──────────────────────────────────────────────
+// Step-by-step so the app is the only place you need.
+
+export interface Technique {
+  name: string
+  group: string
+  what: string
+  how: string[]
+  cues: string[]
+  mistakes: string[]
+}
+
+export const TECHNIQUES: Technique[] = [
+  {
+    name: 'Continental grip', group: 'Foundations',
+    what: 'The one grip for almost everything — like holding a hammer to chop.',
+    how: ['Shake hands with the paddle; the V of thumb+index sits on the top edge.', 'Same grip for forehand, backhand, volleys, dinks — no switching.', 'Hold firm but relaxed (4/10 pressure); tighten only at contact.'],
+    cues: ['"Hammer grip"', 'Relaxed hands = soft touch'],
+    mistakes: ['Death-gripping (kills touch + pops dinks up)', 'Switching grips mid-rally (too slow at the net)'],
+  },
+  {
+    name: 'Ready position', group: 'Foundations',
+    what: 'The athletic stance you return to between every shot.',
+    how: ['Feet wider than shoulders, knees bent, weight on the balls of your feet.', 'Paddle up at chest height, out in front, tip pointing up.', 'Slight forward lean; stay light, ready to split-step.'],
+    cues: ['"Paddle up, knees bent"', 'Nose over toes'],
+    mistakes: ['Paddle hanging low (no time to react up high)', 'Standing tall/flat-footed'],
+  },
+  {
+    name: 'Split-step', group: 'Footwork',
+    what: 'A small hop that loads your legs just as the opponent strikes, so you can move any direction.',
+    how: ['As they’re about to contact the ball, do a tiny hop and land on the balls of both feet.', 'Land balanced and slightly wide; then push off toward the ball.', 'Do it before EVERY shot — serve return, at the kitchen, in transition.'],
+    cues: ['"Hop as they hit"', 'Land light, then explode'],
+    mistakes: ['Moving while they strike (caught flat)', 'A big jump (too slow to land)'],
+  },
+  {
+    name: 'Serve (underhand)', group: 'Serve & return',
+    what: 'Start the point: a deep, legal underhand serve.',
+    how: ['Stand behind the baseline; ball in non-paddle hand.', 'Contact below the waist with an upward, low-to-high swing.', 'Hit deep and cross-court into the service box; aim 1–2 ft inside the baseline.', 'Once deep is reliable, add pace/spin and target the backhand.'],
+    cues: ['"Low to high"', 'Deep first, fancy later'],
+    mistakes: ['Contacting above the waist (illegal)', 'Aiming for lines (errors > the tiny edge gained)'],
+  },
+  {
+    name: 'Return of serve', group: 'Serve & return',
+    what: 'Return deep, then sprint to the kitchen — the returning team’s biggest advantage.',
+    how: ['Take it after the bounce (two-bounce rule) with a compact stroke.', 'Hit it high and DEEP to pin the server back.', 'Immediately move forward to the kitchen line as the ball travels.', 'Split-step as your partner-side opponent contacts the third shot.'],
+    cues: ['"Deep, then run"', 'Height buys you time to get up'],
+    mistakes: ['Short returns (lets them attack)', 'Admiring the return instead of moving up'],
+  },
+  {
+    name: 'Dink', group: 'Soft game',
+    what: 'A soft shot that arcs just over the net into the kitchen, too low to attack.',
+    how: ['Continental grip, paddle out in front, knees bent.', 'Push/lift the ball with the shoulder — no wrist flick, almost no backswing.', 'Contact out in front and below the net; let the legs do the lifting.', 'Aim low over the net; vary cross-court vs down-the-line.'],
+    cues: ['"Lift with the legs"', 'Contact in front, soft hands'],
+    mistakes: ['Wristy swings (pop-ups)', 'Standing tall (you’ll hit down into the net)', 'Too high (gets attacked)'],
+  },
+  {
+    name: 'Third-shot drop', group: 'Soft game',
+    what: 'From the baseline, a soft arc that lands unattackable in the kitchen so you can advance. The skill that unlocks 3.5.',
+    how: ['Drop or let the ball come to you; low-to-high lift, minimal backswing.', 'Aim for the peak of the arc to be on YOUR side, falling into the kitchen.', 'If you net it, swing HIGHER and softer — not harder.', 'After the drop, take two steps in and split-step.'],
+    cues: ['"Arc it, don’t hit it"', 'Net it? aim higher'],
+    mistakes: ['Driving it flat (sits up to be smashed)', 'Not moving up after a good drop'],
+  },
+  {
+    name: 'Reset', group: 'Transition',
+    what: 'Absorbing a hard ball softly into the kitchen when you’re caught in the transition zone.',
+    how: ['Get low, paddle out front, loose grip — like catching an egg.', 'No swing: let the ball hit a soft, slightly-open paddle and die short.', 'Stay balanced; reset 3–5 in a row before advancing again.'],
+    cues: ['"Catch it, don’t hit it"', 'Soft hands, low base'],
+    mistakes: ['Swinging at it (pops up)', 'Backing up instead of resetting'],
+  },
+  {
+    name: 'Volley / punch volley', group: 'Net play',
+    what: 'Hitting out of the air at the kitchen line — controlled, not wild.',
+    how: ['Paddle up, contact in front, short punch — no big swing.', 'Punch deep at the opponent’s feet or hip (the "chicken wing").', 'Only attack balls contacted ABOVE net height; below = dink/reset.'],
+    cues: ['"Punch, don’t swing"', 'Above the net = go, below = soft'],
+    mistakes: ['Swinging hard (errors)', 'Attacking low balls'],
+  },
+  {
+    name: 'Speed-up & counter', group: 'Net play',
+    what: 'Accelerating an attackable ball to start a hands battle — then countering theirs.',
+    how: ['Pick a ball at/above net height when you’re balanced.', 'Compact flick from the shoulder/elbow; aim at the body or the dominant shoulder.', 'Expect the counter: reset your paddle to the middle immediately.', 'Counter blocks: short paddle, tip up, redirect — don’t wind up.'],
+    cues: ['"Attack high, balanced"', 'Reset paddle after every speed-up'],
+    mistakes: ['Speeding up low/off-balance', 'Winding up in a hands battle (too slow)'],
+  },
+  {
+    name: 'Stacking', group: 'Strategy',
+    what: 'Lining up so your stronger (usually forehand) side stays in the middle.',
+    how: ['Both partners start on the same side; after the serve/return, switch to your preferred sides.', 'Use a hand signal behind the back to confirm who covers where.', 'Communicate every point; switch back when the situation resets.'],
+    cues: ['"Forehands in the middle"', 'Signal + call it'],
+    mistakes: ['Stacking without communicating (open court)', 'Forgetting to switch back'],
+  },
+  {
+    name: 'Erne', group: 'Specialty',
+    what: 'Jumping around the kitchen (outside the sideline) to volley a cross-court dink early — an advanced poach.',
+    how: ['Read a predictable cross-court dink heading to your sideline.', 'Either jump over the corner of the kitchen or step around it, landing outside the line.', 'Volley the ball before it crosses — into the open court or at feet.'],
+    cues: ['"Bait the cross-court, then pounce"', 'Land outside the kitchen line'],
+    mistakes: ['Going too early (telegraphed)', 'Touching the kitchen (fault)'],
+  },
+  {
+    name: 'ATP (around the post)', group: 'Specialty',
+    what: 'Returning a wide ball around the outside of the net post — it can land below net height.',
+    how: ['On a sharply angled ball pulling you wide, let it travel past the sideline.', 'Track it low and hit around (not over) the post into the open court.', 'No height requirement — the net isn’t in the way.'],
+    cues: ['"Let it pull you wide, then go around"', 'Low and flat is fine'],
+    mistakes: ['Trying to go over the net instead of around', 'Rushing — let the angle develop'],
+  },
+  {
+    name: 'Defensive lob', group: 'Specialty',
+    what: 'A high, deep ball over the net players to buy time or flip pressure.',
+    how: ['From a dink or under pressure, lift the ball high and DEEP toward the baseline.', 'Aim over the backhand shoulder; depth matters more than height.', 'Use sparingly and with the wind/sun in your favour.'],
+    cues: ['"High and deep, over the backhand"', 'Surprise, not staple'],
+    mistakes: ['Short lobs (free smash)', 'Overusing it (becomes predictable)'],
+  },
+]
+
 // ── Knee rehab / prehab (ACL & MCL) ──────────────────────────────────────────
 // General educational content — NOT medical advice. After an injury, follow a
 // physio's plan; don't push through sharp pain.

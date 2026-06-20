@@ -480,3 +480,6 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-212 | Polish · custom-goal cap; Goals streak-vs-best on first streak; reading pagesRead unknown-total; Stats empty-state for workout bars | 🔜 (from audit) |
 | BUJO-213 | Fixed this pass · migrate hardening, radar calm/adherence, program 100%, search filter reset, birthday validation, pickleball future-plan, readability (em-dash→·), Recovery urge tips + viz-to-rail | ✅ |
 | BUJO-214 | 50+ logical-gaps audit → `docs/qa/logical-gaps-audit.md` | ✅ |
+| BUJO-215 | Coaching Academy tab · 12-week program + per-week detail, skill ladder, drill library, mental game, knee ACL/MCL rehab+prehab; research dumped to `docs/research/` | ✅ |
+| BUJO-216 | Coaching · full technique guide (how-to + cues + mistakes for every shot) so the app is self-contained | ✅ |
+| BUJO-217 | **Mindset tab** · app-wide interactive thinking-style tool — pick principles to focus on + journal a note each (`MindsetFocus`, lib/mindset.ts) | ✅ |

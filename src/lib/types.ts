@@ -230,6 +230,16 @@ export interface CustomGoal {
   createdAt: string
 }
 
+/** A mindset principle the user is actively working on, with a personal note. */
+export interface MindsetFocus {
+  id: string
+  /** Id into MINDSET_LIBRARY. */
+  principleId: string
+  /** The user's own reminder / how they'll apply it. */
+  note?: string
+  createdAt: string
+}
+
 /** One gratitude line per day. */
 export interface Gratitude {
   date: string
@@ -574,6 +584,8 @@ export interface JournalData {
   readLinks?: ReadLink[]
   /** User-defined custom goals (manual progress). */
   customGoals?: CustomGoal[]
+  /** Mindset principles the user is actively working on. */
+  mindsetFocus?: MindsetFocus[]
   settings: Settings
 }
 

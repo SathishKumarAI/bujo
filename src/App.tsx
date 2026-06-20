@@ -13,6 +13,7 @@ import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
 import { Reading } from './views/Reading'
 import { Coaching } from './views/Coaching'
+import { Mindset } from './views/Mindset'
 import { Account } from './views/Account'
 import { Plan } from './views/Plan'
 import { Goals } from './views/Goals'
@@ -36,7 +37,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap,
+  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap, Brain,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -68,6 +69,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
   { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Insights & Stats' },
   { id: 'goals', label: 'Goals', icon: Flag, group: 'Insights & Stats' },
+  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Insights & Stats' },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Insights & Stats' },
   { id: 'stats', label: 'Stats', icon: PieChart, group: 'Insights & Stats' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
@@ -77,7 +79,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
-  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, account: Account, help: Help,
+  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
   settings: Settings,
 }
 

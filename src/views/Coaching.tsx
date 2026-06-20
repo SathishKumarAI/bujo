@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GraduationCap, Check, Dumbbell, Brain, CalendarDays, Trophy, ListChecks, Target, HeartPulse, ShieldAlert } from 'lucide-react'
+import { GraduationCap, Check, Dumbbell, Brain, CalendarDays, Trophy, ListChecks, Target, HeartPulse, ShieldAlert, BookOpen } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
@@ -7,7 +7,7 @@ import { cat } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
-  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, type RehabEquip,
+  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, type RehabEquip, TECHNIQUES,
 } from '../lib/pickleballAcademy'
 
 /**
@@ -32,6 +32,7 @@ export function Coaching() {
   const drillSkills = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
   const [openSkill, setOpenSkill] = useState<string | null>(drillSkills[0])
   const [openWeek, setOpenWeek] = useState<number | null>(start ? week : 1)
+  const [openTech, setOpenTech] = useState<string | null>(null)
   const [equip, setEquip] = useState<RehabEquip | 'all'>('all')
   const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
   const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
@@ -134,6 +135,51 @@ export function Coaching() {
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* Technique guide — the HOW for every shot */}
+      <Card title={<span className="inline-flex items-center gap-2"><BookOpen size={18} className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible defaultCollapsed help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
+        {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
+          <div key={group} className="mb-2">
+            <p className="mb-1 text-[11px] font-medium tracking-wider text-overlay0 uppercase">{group}</p>
+            <ul className="space-y-1.5">
+              {TECHNIQUES.filter((t) => t.group === group).map((t) => {
+                const open = openTech === t.name
+                return (
+                  <li key={t.name} className="rounded-lg border border-surface0 bg-base">
+                    <button onClick={() => setOpenTech(open ? null : t.name)} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
+                      <span className="min-w-0">
+                        <span className="text-sm font-medium text-text">{t.name}</span>
+                        <span className="block truncate text-xs text-overlay1">{t.what}</span>
+                      </span>
+                      <span className="shrink-0 text-overlay0">{open ? '▴' : '▾'}</span>
+                    </button>
+                    {open && (
+                      <div className="space-y-2.5 border-t border-surface0 px-3 py-2.5">
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-subtext1">How to do it</p>
+                          <ol className="space-y-1">
+                            {t.how.map((step, i) => <li key={i} className="flex gap-2 text-xs text-overlay1"><span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {step}</li>)}
+                          </ol>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div>
+                            <p className="mb-1 text-xs font-medium" style={{ color: cat('green') }}>✓ Key cues</p>
+                            <ul className="space-y-0.5">{t.cues.map((c) => <li key={c} className="text-xs text-overlay1">{c}</li>)}</ul>
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-medium" style={{ color: cat('red') }}>✗ Common mistakes</p>
+                            <ul className="space-y-0.5">{t.mistakes.map((m) => <li key={m} className="text-xs text-overlay1">{m}</li>)}</ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
       </Card>
 
       {/* Drill library */}

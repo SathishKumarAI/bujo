@@ -62,6 +62,8 @@ export function emptyJournal(): JournalData {
     devSessions: [],
     books: [],
     readLinks: [],
+    customGoals: [],
+    mindsetFocus: [],
     pickleballEvents: [],
     settings: defaultSettings(),
   }

@@ -237,6 +237,12 @@ export function generateDemoData(today = todayISO()): JournalData {
   ]
   j.settings.readingGoalBooks = 12
 
+  // ── Mindset: a couple of principles in focus with notes ──
+  j.mindsetFocus = [
+    { id: uid('mf'), principleId: 'short-memory', note: 'Deep breath + paddle tap after every miss. Next point only.', createdAt: addDays(today, -5) },
+    { id: uid('mf'), principleId: 'process', note: 'Grade myself on shot selection, not the scoreboard.', createdAt: addDays(today, -2) },
+  ]
+
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
   return j

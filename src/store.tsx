@@ -176,6 +176,10 @@ interface Store {
   addCustomGoal: (g: Omit<import('./lib/types').CustomGoal, 'id' | 'createdAt'>) => void
   updateCustomGoal: (id: string, patch: Partial<import('./lib/types').CustomGoal>) => void
   removeCustomGoal: (id: string) => void
+  // mindset focus
+  addMindsetFocus: (principleId: string) => void
+  setMindsetNote: (id: string, note: string) => void
+  removeMindsetFocus: (id: string) => void
   // challenges
   addChallenge: (c: Omit<Challenge, 'id'>) => void
   removeChallenge: (id: string) => void
@@ -657,6 +661,18 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeCustomGoal: (id) =>
         patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).filter((g) => g.id !== id) })),
+
+      addMindsetFocus: (principleId) =>
+        patch((d) => {
+          if ((d.mindsetFocus ?? []).some((m) => m.principleId === principleId)) return d // no dupes
+          return { ...d, mindsetFocus: [...(d.mindsetFocus ?? []), { id: uid('mf'), principleId, createdAt: todayISO() }] }
+        }),
+
+      setMindsetNote: (id, note) =>
+        patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).map((m) => (m.id === id ? { ...m, note: note.trim() || undefined } : m)) }), `mind:${id}`),
+
+      removeMindsetFocus: (id) =>
+        patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).filter((m) => m.id !== id) })),
 
       addChallenge: (c) =>
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),

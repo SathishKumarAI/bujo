@@ -35,3 +35,17 @@ a long bug list. Verified + handled:
 
 No data-loss or crash paths found in the feature. Broader app-wide logical gaps
 are tracked in `docs/qa/logical-gaps-audit.md` (BUJO-201..214).
+
+## Technique guide (the "how")
+`TECHNIQUES` in the lib + the "How to play every shot" card: every core shot
+(grip, ready, split-step, serve, return, dink, third-shot drop, reset, volley,
+speed-up, stacking, Erne, ATP, lob) opens to **what it is · step-by-step how-to ·
+key cues · common mistakes** — so you never need to leave the app to learn a shot.
+
+## Mindset tab (app-wide) — `src/views/Mindset.tsx`, `src/lib/mindset.ts`
+An interactive thinking-style tool (not just pickleball): a library of 26
+principles across 7 themes (focus, resilience, growth, composure, confidence,
+discipline, connection). Tap **+** to add a principle to **Your focus** (left
+rail) and journal a note on how you’ll apply it. Stored in
+`JournalData.mindsetFocus` (`addMindsetFocus` / `setMindsetNote` /
+`removeMindsetFocus`; de-dupes). Keep it to 1–3 active — focus beats breadth.

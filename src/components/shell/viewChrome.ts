@@ -1,6 +1,6 @@
 export type ViewId =
   | 'today' | 'monthly' | 'trackers' | 'fitness' | 'gym' | 'pullups' | 'pickleball' | 'homeworkout' | 'challenges' | 'focus'
-  | 'plan' | 'collections' | 'reading' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'coaching' | 'account' | 'help' | 'settings'
+  | 'plan' | 'collections' | 'reading' | 'goals' | 'insights' | 'stats' | 'cycle' | 'nofap' | 'coaching' | 'mindset' | 'account' | 'help' | 'settings'
 
 export interface ViewChrome {
   title: string
@@ -30,6 +30,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   stats: { title: 'Stats', subtitle: 'Charts at a glance', help: 'Your analytics wall: activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, mood-by-weekday, workout-split, year-in-pixels, and a tag cloud.' },
   cycle: { title: 'Cycle', subtitle: 'Temperature & phase', dateNav: 'month', help: 'An opt-in, private basal-temperature and cycle chart with free-form flags. Honours your °F/°C unit. Nothing is shared or predicted · just a calm record.' },
   nofap: { title: 'Recovery', subtitle: 'Streak, urges & resilience', help: 'An opt-in abstinence streak: current streak, personal best, milestones, an urge-surfing counter, and a judgement-free relapse log. Stays entirely on your device.' },
+  mindset: { title: 'Mindset', subtitle: 'Train your thinking style', help: 'A toolkit for your mental game and thinking style, app-wide (not just sport). Browse principles across focus, resilience, growth, composure, confidence, discipline and connection; pick a few to actively work on and jot how you’ll apply each. Build the habit of thinking well.' },
   coaching: { title: 'Coaching', subtitle: 'Pickleball academy · beginner to pro', help: 'A full pickleball coaching curriculum, not just tracking: a 12-week beginner→4.0 program with a day-by-day practice schedule, a skill ladder (2.0→4.5+), a drill library by skill, and a mental-game track to build the right mindset. Start the program to track your week.' },
   account: { title: 'Account', subtitle: 'Sign in, sign up & sync', help: 'Your account home: sign in or create an account (email or Google), explore as a guest, sign out, and push a manual save to the cloud. When configured, signing in syncs your journal across devices in real time.' },
   help: { title: 'Help', subtitle: 'Guide & bullet legend', help: 'The in-app guide to every feature, written in plain language · a lighter companion to the full Feature Guide in the docs.' },
