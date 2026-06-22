@@ -128,10 +128,14 @@ export default function App() {
   // Supabase account sync (when configured + signed in): pull on load, push on change.
   const sbReady = useRef(false)
   const sbAuthed = useRef(false)
+  // Mirror auth in state so the realtime effect re-subscribes once auth resolves.
+  // The ref alone is false at mount, so a []-dep effect never activated until reload.
+  const [sbAuthedState, setSbAuthedState] = useState(false)
   useEffect(() => {
     if (!supabaseEnabled()) { sbReady.current = true; return }
     currentUser().then((u) => {
       sbAuthed.current = !!u
+      setSbAuthedState(!!u)
       if (!u) return
       // Leaving explore: a real (non-anonymous) account just took over the
       // sample-data session → adopt their cloud journal (or start clean) and
@@ -153,12 +157,30 @@ export default function App() {
     if (!supabaseEnabled() || !sbReady.current || !sbAuthed.current) return
     const snapshot = JSON.stringify(data)
     if (snapshot === lastSync.current) return // nothing new (e.g. just applied a remote change)
-    const id = setTimeout(() => { lastSync.current = snapshot; pushJournal(data).catch(() => {}) }, 4000)
+    const id = setTimeout(async () => {
+      try {
+        // Pull-first guard (two devices, one account): adopt+merge a newer remote
+        // instead of clobbering it, mirroring the blob/folder paths.
+        const remote = await pullJournal()
+        if (remote) {
+          const rm = migrate(remote)
+          if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
+            const merged = resolveIncoming(dataRef.current, rm)
+            if (merged) { lastSync.current = JSON.stringify(merged); replaceAll(merged) }
+            else lastSync.current = JSON.stringify(rm)
+            return // adopted remote; do NOT push over it
+          }
+        }
+        lastSync.current = JSON.stringify(dataRef.current)
+        await pushJournal(dataRef.current)
+      } catch { /* offline — retry on the next change */ }
+    }, 4000)
     return () => clearTimeout(id)
   }, [data])
   // Realtime: apply changes pushed from another device/session (live multi-device).
+  // Keyed on sbAuthedState so it (re)subscribes once auth resolves, not just at mount.
   useEffect(() => {
-    if (!supabaseEnabled() || !sbAuthed.current) return
+    if (!supabaseEnabled() || !sbAuthedState) return
     let off = () => {}
     subscribeJournal((remote) => {
       const snap = JSON.stringify(remote)
@@ -168,7 +190,7 @@ export default function App() {
       if (next) replaceAll(next) // null = keep local; it re-pushes on next change
     }).then((fn) => { off = fn })
     return () => off()
-  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)

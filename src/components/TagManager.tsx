@@ -43,7 +43,7 @@ export function TagManager() {
                     className="w-24 bg-transparent text-sm text-text focus:outline-none"
                     aria-label={`Rename tag ${tag}`}
                   />
-                  <button onClick={() => commit(tag)} aria-label="Save"><Check size={13} className="text-green" /></button>
+                  <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Check size={13} className="text-green" /></button>
                   <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-overlay0" /></button>
                 </span>
               ) : (

@@ -50,7 +50,7 @@ interface HState {
 }
 
 type Action =
-  | { type: 'set'; data: JournalData } // undoable replace
+  | { type: 'set'; data: JournalData; stamp?: boolean } // undoable replace; stamp=re-date (import)
   | { type: 'patch'; fn: (d: JournalData) => JournalData; label?: string; at?: number } // undoable mutate
   | { type: 'silent'; fn: (d: JournalData) => JournalData } // no history (mount-time)
   | { type: 'undo' }
@@ -68,7 +68,9 @@ function commit(state: HState, next: JournalData, label?: string, at = 0): HStat
 function reducer(state: HState, action: Action): HState {
   switch (action.type) {
     case 'set':
-      return commit(state, action.data)
+      // Sync-apply keeps the incoming stamp byte-stable (echo-guard). Import
+      // re-stamps so a freshly restored backup wins over a stale remote.
+      return commit(state, action.stamp ? { ...action.data, updatedAt: new Date().toISOString() } : action.data)
     case 'patch': {
       const next = action.fn(state.present)
       if (next === state.present) return state // no-op fn → don't bump updatedAt
@@ -78,7 +80,9 @@ function reducer(state: HState, action: Action): HState {
       return commit(state, stamped, action.label, action.at)
     }
     case 'silent':
-      return { ...state, present: action.fn(state.present) }
+      // Reset coalesce keys: a remote/mount-time apply must not let a later
+      // user edit merge into a pre-silent undo step under a reused label.
+      return { ...state, present: action.fn(state.present), lastLabel: undefined, lastAt: undefined }
     case 'undo': {
       if (!state.past.length) return state
       const prev = state.past[state.past.length - 1]
@@ -204,7 +208,7 @@ interface Store {
   // settings
   setSettings: (patch: Partial<Settings>) => void
   // bulk
-  replaceAll: (data: JournalData) => void
+  replaceAll: (data: JournalData, opts?: { stamp?: boolean }) => void
   // passcode / encryption
   setPasscode: (passcode: string | null) => void
   encrypted: boolean
@@ -274,7 +278,14 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     const wantsDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
     dispatch({
       type: 'silent',
-      fn: (d) => (wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)),
+      fn: (d) => {
+        const next = wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)
+        if (next === d) return d
+        // Materialised new recurring occurrences → stamp updatedAt so they survive
+        // a sync against a stale remote (silent normally leaves the stamp alone).
+        if (next.entries.length !== d.entries.length) return { ...next, updatedAt: new Date().toISOString() }
+        return next
+      },
     })
   }, [])
 
@@ -387,14 +398,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       bulkAddEvents: (events) => {
         const existing = new Set(data.entries.map((e) => `${e.date}|${e.text}`))
-        const fresh: Entry[] = events
-          .filter((ev) => !existing.has(`${ev.date}|${ev.summary}`))
-          .map((ev) => ({
-            id: uid('e'), date: ev.date, type: 'event' as const, text: ev.summary,
-            status: 'open' as const, important: false, memory: false, tags: [], createdAt: todayISO(),
-          }))
-        if (fresh.length) patch((d) => ({ ...d, entries: [...d.entries, ...fresh] }))
-        return fresh.length
+        const candidates = events.filter((ev) => !existing.has(`${ev.date}|${ev.summary}`))
+        if (!candidates.length) return 0
+        // Authoritative dedupe happens INSIDE the reducer against the live `d`,
+        // not the closed-over `data`, so a stale snapshot can't double-insert.
+        patch((d) => {
+          const have = new Set(d.entries.map((e) => `${e.date}|${e.text}`))
+          const fresh: Entry[] = candidates
+            .filter((ev) => !have.has(`${ev.date}|${ev.summary}`))
+            .map((ev) => ({
+              id: uid('e'), date: ev.date, type: 'event' as const, text: ev.summary,
+              status: 'open' as const, important: false, memory: false, tags: [], createdAt: todayISO(),
+            }))
+          if (!fresh.length) return d
+          return { ...d, entries: [...d.entries, ...fresh] }
+        })
+        return candidates.length
       },
 
       setMetric: (date, mp) =>
@@ -782,7 +801,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       setSettings: (sp) =>
         patch((d) => ({ ...d, settings: { ...d.settings, ...sp } }), 'settings'),
 
-      replaceAll: (next) => dispatch({ type: 'set', data: next }),
+      replaceAll: (next, opts) => dispatch({ type: 'set', data: next, stamp: opts?.stamp }),
 
       // Enable (passcode string) → encrypt + drop plaintext. Disable (null) →
       // write plaintext + drop the encrypted blob. Data in memory is untouched.
@@ -808,7 +827,10 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
   async function unlock(pc: string) {
     const blob = readEncryptedRaw()
-    if (!blob) { setUnlocked(true); return }
+    // No encrypted blob despite a locked start = inconsistent state. Recover any
+    // plaintext journal instead of unlocking onto the empty mount journal, which
+    // would persist blank over real data on the next save effect.
+    if (!blob) { dispatch({ type: 'silent', fn: () => load() }); setUnlocked(true); return }
     const json = await decryptString(blob, pc) // throws → LockScreen shows error
     const decrypted = migrate(JSON.parse(json))
     passcodeRef.current = pc

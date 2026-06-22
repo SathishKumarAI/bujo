@@ -73,14 +73,14 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-overlay0">{curWeek.label ? 'Block' : 'Week'}</span>
         {p.weeks.map((w) => (
-          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-7 min-w-7 place-items-center rounded px-2 text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
+          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-8 min-w-8 place-items-center rounded px-2 text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
         ))}
         {curWeek.label && <span className="text-xs text-subtext0">{curWeek.label}</span>}
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-overlay0">Day</span>
         {dayNums.map((dn) => (
-          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
+          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
             {dayComplete(week, dn) && '✓'} {dn}
           </button>
         ))}
@@ -109,6 +109,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
                   <input
                     value={actual}
                     onChange={(ev) => setActual(i, ev.target.value)}
+                    aria-label={`Actual for ${e.name} (target: ${e.qty} ×${e.sets})`}
                     placeholder={`actual (target: ${e.qty} ×${e.sets})`}
                     className="mt-1 ml-6 w-[calc(100%-1.5rem)] rounded border border-surface1 bg-base px-2 py-1 text-xs text-text placeholder:text-overlay0 focus:border-mauve focus:outline-none"
                   />

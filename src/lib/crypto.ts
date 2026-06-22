@@ -5,7 +5,15 @@ const enc = new TextEncoder()
 const dec = new TextDecoder()
 
 function b64(buf: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+  // Chunk the byte→char conversion: spreading a large Uint8Array into
+  // String.fromCharCode(...) overflows the call stack on image-heavy journals.
+  const bytes = new Uint8Array(buf)
+  const CHUNK = 0x8000
+  let s = ''
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    s += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+  }
+  return btoa(s)
 }
 function unb64(s: string): Uint8Array {
   return Uint8Array.from(atob(s), (c) => c.charCodeAt(0))

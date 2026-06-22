@@ -32,3 +32,7 @@ docs/pdf/
 .claude/settings.local.json
 .vercel
 .env*
+
+# BUJO-193 self-host API TLS certs (do not commit)
+docker/certs/
+.env

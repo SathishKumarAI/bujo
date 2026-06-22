@@ -31,12 +31,14 @@ your accent colour. Opt-in views (Cycle, Streak) only appear when enabled in
 Settings, keeping the rail focused on what you actually use.
 
 ### 1.3 Bottom tab bar (mobile)
-On phones the sidebar is replaced by a thumb-friendly bottom bar with the four
-most-used destinations — **Today · Monthly · Trackers · Gym** — plus a raised
-**+ quick-add** button in the middle. It is hidden on tablets and desktops (≥ md
-width). Content gets extra bottom padding so the fixed bar never covers anything,
-and it respects the phone's safe-area inset (notches / home indicators). Every
-other view is still reachable from the hamburger drawer.
+On phones the sidebar is replaced by a thumb-friendly bottom bar with the five
+most-used destinations — **Today · Trackers · Fitness · Pickleball · Pull-ups** —
+spread equal-width across the bar. There is **no centre FAB**: quick-add lives in
+the top bar, so the bottom bar is purely for navigation. It is hidden on tablets
+and desktops (≥ md width) and **auto-hides on scroll-down** (re-appears on
+scroll-up). Content gets extra bottom padding so the fixed bar never covers
+anything, and it respects the phone's safe-area inset (notches / home indicators).
+Every other view is still reachable from the hamburger drawer.
 
 ### 1.4 Command palette (⌘K / Ctrl-K)
 A fuzzy launcher you can open from anywhere with the keyboard. Start typing to
@@ -179,7 +181,17 @@ Remove any photo on hover. Everything stays on your device — these never leave
 browser. It's built for the "share a weekly physique update" habit from coaching
 plans, minus the sharing.
 
-### 3.7 Pull-ups
+### 3.7 Home Workout
+No-equipment, bodyweight training for days you can't get to a gym. Log a
+**home/bodyweight session** (the exercises you did, duration, notes) and it's
+saved as a normal workout under the hood — it reuses the same **`Workout` type**
+as Fitness/Gym with `activity = 'Home'`, so home sessions roll into your overall
+totals, active-minutes goal, and history rather than living in a silo. Tap a
+**saved session** to open its detail and review/edit what you logged. It lives in
+the **Fitness area** of the Health group (its own nav entry, "Home Workout"), and
+suits travel days, rest-day mobility, or anyone training without weights.
+
+### 3.8 Pull-ups
 A dedicated pull-up hub. The headline is the **"Starting From Zero" program
 tracker** — pick a week and day, check off each exercise (partial days are fine),
 and load the day's work. A right-rail **calculator** turns your max strict
@@ -189,7 +201,7 @@ round it out: **workout formats** (Ladders, Pyramids, EMOMs, Elevators, Sally…
 and **progression exercises** (negatives, partials, dead-hangs…) each with why/how
 form cues.
 
-### 3.8 Challenges
+### 3.9 Challenges
 Fixed-length discipline challenges — 75 Hard/Soft, 90-day, 30-day, or custom. Each
 challenge lists daily rules you check in against; a **progress ring** and a
 **week-grouped calendar** show how far you've come, with the current streak. In
@@ -197,7 +209,7 @@ challenge lists daily rules you check in against; a **progress ring** and a
 whole-number and a challenge surfaces in Goals and in the penalty/coverage
 summaries so a missed day is impossible to ignore.
 
-### 3.9 Focus (developer work tracker)
+### 3.10 Focus (developer work tracker)
 Log deep-work / coding sessions: duration, project, **flow** (0–10), **stress**
 (0–10), interruptions, and language/tool tags. The view summarises **weekly
 hours** and a day streak, a **14-day minutes** bar chart, a **cumulative
@@ -206,14 +218,14 @@ focus↔stress **insight** line that tells you which conditions produce your bes
 work. It's aimed at engineers who want the same habit rigour applied to their
 craft time.
 
-### 3.10 Cycle *(opt-in)*
+### 3.11 Cycle *(opt-in)*
 A neutral, private basal-temperature and cycle chart with free-form flags
 (period, spotting, etc.). It's off by default and auto-suggested by the profile
 gender field; enable it in Settings. The chart honours your °F/°C unit. Nothing
 here is shared or analysed beyond your own view — it's a calm, judgement-free
 record, not a prediction engine.
 
-### 3.11 Streak / NoFap *(opt-in)*
+### 3.12 Streak / NoFap *(opt-in)*
 An abstinence streak journal: current streak, personal best, milestone markers,
 and a judgement-free **relapse log** (date, trigger, reflection). It also has an
 **urge-surfing** counter so resisting an urge is itself a logged win. Off by

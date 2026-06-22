@@ -69,7 +69,7 @@ export function Settings() {
     const reader = new FileReader()
     reader.onload = () => {
       try {
-        replaceAll(importJSON(String(reader.result)))
+        replaceAll(importJSON(String(reader.result)), { stamp: true })
         alert('Backup imported successfully.')
       } catch {
         alert('Could not read that file · is it a valid bujo backup?')
