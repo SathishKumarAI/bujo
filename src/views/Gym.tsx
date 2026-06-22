@@ -21,7 +21,7 @@ import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise, epley1RM, platesPerSide, lastSetFor, parseSet,
+  musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
   weeklyVolumeSeries, exerciseProgression,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
@@ -96,7 +96,10 @@ export function Gym() {
 
   function finish() {
     const valid = rows.filter((r) => r.exercise.trim())
-    const sets = valid.map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
+    // Legacy "NxM @ w" set-string: parseSet() reads M (the number after `x`)
+    // as reps. One row = one set, so N = 1 (set count) and M = actual reps —
+    // previously N held the loop index, leaving the rep slot wrong.
+    const sets = valid.map((r) => `${r.exercise.trim()} 1x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
     if (sets.length === 0) return
     // Structured rows for analytics (volume / progression / previous-session).
     const structured: WorkoutSet[] = valid.map((r) => ({
@@ -445,13 +448,16 @@ function PlateCalculator({ unit }: { unit: string }) {
   const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
   const plates = platesPerSide(Number(target) || 0, Number(bar) || 0, denoms)
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
+  const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
   return (
     <Card title="Plate calculator" subtitle="What to load on the bar">
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <label className="block text-sm text-subtext1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
         <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
       </div>
-      {plates.length === 0 ? (
+      {barOverTarget ? (
+        <p className="text-sm text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
+      ) : plates.length === 0 ? (
         <p className="text-sm text-overlay0">Just the bar · no plates needed.</p>
       ) : (
         <>

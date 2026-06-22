@@ -50,16 +50,39 @@ export interface StreakStats {
 export function streakStats(data: JournalData, today = todayISO()): StreakStats {
   const s = data.nofap
   const current = Math.max(0, dayDiff(s.startedOn, today))
-  const best = Math.max(s.best, current)
+
+  // Normalise relapse dates for gap maths: ignore anything before tracking began
+  // (the user's original start day — relapses can't predate it), then sort
+  // ascending and drop duplicates so out-of-order / repeated logs don't skew gaps.
+  const start = s.startedOn
+  const sorted = s.relapses
+    .map((r) => r.date)
+    .filter((d) => dayDiff(start, d) <= 0) // on/before the current start day
+    .sort()
+  const dates: string[] = []
+  for (const d of sorted) {
+    if (dates[dates.length - 1] === d) continue // duplicate
+    dates.push(d)
+  }
 
   // Lifetime clean days: the current run + each completed streak (the gap
   // between consecutive relapses, since a relapse resets the start to that day).
-  const dates = [...s.relapses].map((r) => r.date).sort()
+  // Also track the longest completed gap so a long PAST streak counts toward best.
   let completed = 0
-  for (let i = 1; i < dates.length; i++) completed += Math.max(0, dayDiff(dates[i - 1], dates[i]))
+  let longestGap = 0
+  for (let i = 1; i < dates.length; i++) {
+    const gap = Math.max(0, dayDiff(dates[i - 1], dates[i]))
+    completed += gap
+    longestGap = Math.max(longestGap, gap)
+  }
   const totalClean = current + completed
 
-  const avgGap = dates.length >= 2 ? Math.round(completed / (dates.length - 1)) : 0
+  // Best = the longest streak ever: the stored best, the live run, OR the
+  // longest historical gap between relapses (which the stored best may predate).
+  const best = Math.max(s.best, current, longestGap)
+
+  const gaps = dates.length - 1
+  const avgGap = gaps >= 1 ? Math.round(completed / gaps) : 0
 
   const next = STREAK_MILESTONES.find((m) => m.day > current)
   const prevDay = [...STREAK_MILESTONES].reverse().find((m) => m.day <= current)?.day ?? 0

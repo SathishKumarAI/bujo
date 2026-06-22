@@ -19,10 +19,13 @@ export function generateRecurring(data: JournalData, today = todayISO()): Journa
   const newEntries: Entry[] = []
   const existing = new Set(data.entries.filter((e) => e.recurringId).map((e) => `${e.recurringId}@${e.date}`))
 
+  const capStart = addDays(today, -60)
+
   const recurrences = data.recurrences.map((rule) => {
     // Start from the day after lastGenerated, or the rule start, capped to 60d back.
     const from = rule.lastGenerated ? addDays(rule.lastGenerated, 1) : rule.startedOn
-    let cursor = from < addDays(today, -60) ? addDays(today, -60) : from
+    const clamped = from < capStart
+    let cursor = clamped ? capStart : from
     while (cursor <= today) {
       if (appliesOn(rule, cursor) && !existing.has(`${rule.id}@${cursor}`)) {
         newEntries.push({
@@ -40,7 +43,14 @@ export function generateRecurring(data: JournalData, today = todayISO()): Journa
       }
       cursor = addDays(cursor, 1)
     }
-    return { ...rule, lastGenerated: today }
+    // When the window was clamped to the 60-day cap, we only generated as far
+    // back as `capStart`. Advancing lastGenerated to `today` would silently
+    // strip every occurrence between the original `from` and `capStart`. Instead
+    // park lastGenerated just before the cap boundary so the skipped days fall
+    // back into range on the next run (as the rolling cap moves forward),
+    // letting them generate over subsequent runs instead of being lost forever.
+    const lastGenerated = clamped ? addDays(capStart, -1) : today
+    return { ...rule, lastGenerated }
   })
 
   if (newEntries.length === 0) return { ...data, recurrences }

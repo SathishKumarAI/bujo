@@ -42,6 +42,15 @@ describe('reading', () => {
     expect(pagesRead(books)).toBe(340)
   })
 
+  it('pagesRead ignores in-progress currentPage when total is unknown', () => {
+    const books = [
+      mk({ status: 'reading', currentPage: 120 }),
+      mk({ status: 'reading', currentPage: 120, totalPages: 0 }),
+      mk({ status: 'reading', currentPage: 30, totalPages: 200 }),
+    ]
+    expect(pagesRead(books)).toBe(30)
+  })
+
   it('averageRating ignores unrated / unfinished', () => {
     const books = [
       mk({ status: 'finished', rating: 5 }),

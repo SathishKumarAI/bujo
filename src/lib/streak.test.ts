@@ -25,6 +25,29 @@ describe('streak', () => {
     expect(s.relapseCount).toBe(3)
   })
 
+  it('best reflects a long PAST streak that beats the stored best', () => {
+    const d = emptyJournal()
+    // a 40-day gap between the first two relapses dwarfs stored best (5) and the
+    // current live run (5 days since the last reset on 2026-06-13).
+    d.nofap = { startedOn: '2026-06-13', best: 5, relapses: [rel('2026-04-04'), rel('2026-05-14'), rel('2026-06-13')] }
+    const s = streakStats(d, '2026-06-18')
+    expect(s.best).toBe(40) // longest historical gap, not the stored best
+  })
+
+  it('avgGap sorts, dedupes, and ignores out-of-range relapse dates', () => {
+    const d = emptyJournal()
+    // unsorted + a duplicate ('2026-06-03' twice) + one stray date AFTER the
+    // current start day ('2026-09-01' can't be a real past relapse → dropped).
+    d.nofap = {
+      startedOn: '2026-06-13', best: 0,
+      relapses: [rel('2026-06-03'), rel('2026-05-24'), rel('2026-06-13'), rel('2026-06-03'), rel('2026-09-01')],
+    }
+    const s = streakStats(d, '2026-06-18')
+    // kept (sorted/deduped): 5-24, 6-03, 6-13. gaps: 10 + 10 = 20 over 2 → avg 10.
+    expect(s.avgGap).toBe(10)
+    expect(s.relapseCount).toBe(5) // raw count untouched; only gap maths normalised
+  })
+
   it('milestone progress points at the next rung', () => {
     const d = emptyJournal()
     d.nofap = { startedOn: '2026-06-08', best: 0, relapses: [] } // current 10 → next is 14

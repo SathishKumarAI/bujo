@@ -115,7 +115,12 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       case 'habit': {
         const h = data.habits.find((x) => x.name === r.habit)
         if (h) {
+          // Numeric habits (count/timer/rating) are scored from habitValues, so
+          // toggleHabit (which writes habitLog) would never register them as done.
+          // Route them through setHabitValue; only plain 'check' habits toggle.
+          const numeric = h.type === 'count' || h.type === 'timer' || h.type === 'rating'
           if (r.value != null) setHabitValue(date, h.id, r.value)
+          else if (numeric) setHabitValue(date, h.id, h.target ?? 1)
           else toggleHabit(date, h.id)
         }
         break

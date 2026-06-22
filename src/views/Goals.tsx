@@ -128,14 +128,16 @@ export function Goals() {
     })
   }
 
-  // Abstinence streak vs personal best.
-  if (data.settings.nofapEnabled && data.nofap.best > 0) {
+  // Abstinence streak vs personal best. On a first streak best may be 0, so
+  // treat the effective best as max(best, cur) — the current run becomes the bar.
+  if (data.settings.nofapEnabled) {
     const cur = Math.max(0, dayDiff(data.nofap.startedOn, today))
+    const best = Math.max(data.nofap.best, cur)
     goals.push({
       label: 'Streak vs. best',
-      detail: `${cur} of ${data.nofap.best} days`,
+      detail: `${cur} of ${best} days`,
       value: cur,
-      target: data.nofap.best,
+      target: best,
       color: 'peach',
       icon: Flame,
       to: 'nofap',
@@ -162,7 +164,7 @@ export function Goals() {
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {goals.map((g, i) => {
-              const pct = Math.min(100, Math.round((g.value / g.target) * 100))
+              const pct = g.target > 0 ? Math.min(100, Math.round((g.value / g.target) * 100)) : 0
               const reached = g.value >= g.target
               const Icon = g.icon
               return (
@@ -201,11 +203,12 @@ export function Goals() {
             {customGoals.map((g) => {
               const pct = Math.min(100, Math.round((g.value / g.target) * 100))
               const reached = g.value >= g.target
+              const shown = Math.min(g.value, g.target)
               return (
                 <li key={g.id} className="group rounded-lg border border-surface0 bg-base p-3">
                   <div className="mb-1.5 flex items-center gap-2 text-sm">
                     <span className="font-medium text-text">{g.label}</span>
-                    <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{g.value}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
+                    <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
                     <button onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></button>
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>

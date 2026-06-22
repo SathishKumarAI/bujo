@@ -20,12 +20,14 @@ export function finishedThisYear(books: Book[], today: string): number {
 
 /**
  * Total pages read: finished books count their full length; in-progress books
- * count pages read so far. Books with unknown length contribute nothing.
+ * count pages read so far, but only when their total length is known.
+ * Books with unknown length contribute nothing.
  */
 export function pagesRead(books: Book[]): number {
   return books.reduce((sum, b) => {
     if (b.status === 'finished') return sum + (b.totalPages ?? 0)
-    if (b.status === 'reading') return sum + Math.min(b.currentPage ?? 0, b.totalPages ?? Infinity)
+    if (b.status === 'reading' && b.totalPages && b.totalPages > 0)
+      return sum + Math.min(b.currentPage ?? 0, b.totalPages)
     return sum
   }, 0)
 }

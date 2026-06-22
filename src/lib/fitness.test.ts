@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, lastSetFor, sessionVolume, exerciseProgression } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, exerciseProgression } from './fitness'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -103,6 +103,11 @@ describe('fitness v2 helpers', () => {
     expect(platesPerSide(100, 20)).toEqual([25, 15]) // (100-20)/2 = 40 = 25+15
     expect(platesPerSide(20, 20)).toEqual([]) // just the bar
   })
+  it('flags when the bar alone exceeds the target (BUJO-211)', () => {
+    expect(barExceedsTarget(15, 20)).toBe(true) // 20kg bar > 15kg target → warn
+    expect(barExceedsTarget(20, 20)).toBe(false) // bar == target, loads exactly
+    expect(barExceedsTarget(100, 20)).toBe(false) // room for plates
+  })
   it('finds the last set + computes volume + progression', () => {
     const d = emptyJournal()
     d.workouts = [
@@ -112,5 +117,27 @@ describe('fitness v2 helpers', () => {
     expect(lastSetFor(d, 'bench press')).toEqual({ weight: 65, reps: 5, date: '2026-06-08' })
     expect(sessionVolume(d.workouts[1].setRows!)).toBe(325) // 65*5; warmup excluded
     expect(exerciseProgression(d, 'Bench Press')).toEqual([{ date: '06-01', weight: 60 }, { date: '06-08', weight: 65 }])
+  })
+  it('lastSetFor returns the latest set, not the heaviest (BUJO-211)', () => {
+    const d = emptyJournal()
+    // Same day: heaviest is the FIRST working set (80), but the last logged
+    // working set is the back-off at 70. "Repeat last" must return 70, not 80.
+    d.workouts = [
+      { id: '1', date: '2026-06-08', activity: 'Push day', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 80, reps: 3, kind: 'working' },
+        { exercise: 'Bench Press', weight: 70, reps: 8, kind: 'working' },
+      ], notes: '' },
+    ]
+    expect(lastSetFor(d, 'bench press')).toEqual({ weight: 70, reps: 8, date: '2026-06-08' })
+  })
+  it('lastSetFor falls back to the last matching legacy string (BUJO-211)', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-08', activity: 'Push day', sets: [
+        'Bench Press 1x5 @ 80kg', 'Bench Press 1x8 @ 70kg',
+      ], notes: '' },
+    ]
+    // Last legacy line wins → 70, parseSet reads reps from the post-`x` number.
+    expect(lastSetFor(d, 'bench press')).toEqual({ weight: 70, reps: 8, date: '2026-06-08' })
   })
 })

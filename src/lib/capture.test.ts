@@ -21,6 +21,41 @@ describe('parseCapture — gym sets', () => {
     expect(r.confidence).toBeGreaterThanOrEqual(0.7)
   })
 
+  it('weight-only form: "bench 80kg" → 80kg, no reps', () => {
+    const r = parseCapture('bench 80kg', ctx)
+    expect(r.kind).toBe('gym')
+    if (r.kind === 'gym') {
+      expect(r.exercise).toBe('Bench Press')
+      expect(r.weight).toBe(80)
+      expect(r.unit).toBe('kg')
+      expect(r.reps).toBeUndefined()
+    }
+  })
+
+  it('weight-only form (no unit): "bench 80" → 80kg weight', () => {
+    const r = parseCapture('bench 80', ctx)
+    expect(r.kind).toBe('gym')
+    if (r.kind === 'gym') {
+      expect(r.weight).toBe(80)
+      expect(r.reps).toBeUndefined()
+    }
+  })
+
+  it('reps-only form: "pullups 12" → 12 reps, no weight', () => {
+    const r = parseCapture('pullups 12', ctx)
+    expect(r.kind).toBe('gym')
+    if (r.kind === 'gym') {
+      expect(r.exercise).toBe('Pull-up')
+      expect(r.reps).toBe(12)
+      expect(r.weight).toBeUndefined()
+    }
+  })
+
+  it('single-number form requires a known exercise (else not gym)', () => {
+    // unknown name + bare number must NOT be claimed as a gym set
+    expect(parseCapture('foobar 50', ctx).kind).not.toBe('gym')
+  })
+
   it('still parses an unknown exercise name, with lower confidence', () => {
     const r = parseCapture('facepull 25x15', ctx)
     expect(r.kind).toBe('gym')
@@ -81,6 +116,13 @@ describe('parseCapture — habits', () => {
   })
   it('falls through to bullet when no habit matches', () => {
     expect(parseCapture('xyzzy', ctx).kind).toBe('bullet')
+  })
+  it('does NOT toggle a habit on a mere prefix ("med" ≠ Meditate)', () => {
+    const r = parseCapture('med', ctx)
+    expect(r.kind).not.toBe('habit')
+  })
+  it('requires an exact habit-name match (case-insensitive)', () => {
+    expect(parseCapture('MEDITATE', ctx)).toMatchObject({ kind: 'habit', habit: 'Meditate' })
   })
   it('does not match a habit when extra (non-count) words follow', () => {
     // "water plants" is a task, not a log against the Water habit.

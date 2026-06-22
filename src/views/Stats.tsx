@@ -145,17 +145,21 @@ export function Stats() {
         </Card>
 
         <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
-          <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
-                <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {workout.every((w) => !w.minutes) ? (
+            <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
+          ) : (
+            <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                  <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
+                  <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Card>
 
         <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
