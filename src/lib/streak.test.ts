@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, unlockedBenefits, STREAK_MILESTONES } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, STREAK_MILESTONES } from './streak'
 import { emptyJournal } from './storage'
 import type { Relapse } from './types'
 
@@ -69,5 +69,14 @@ describe('streak', () => {
     expect(unlockedBenefits(0)).toHaveLength(0)
     expect(unlockedBenefits(7).at(-1)?.day).toBe(7)
     expect(unlockedBenefits(999)).toHaveLength(STREAK_MILESTONES.length)
+  })
+
+  it('addictionStats computes an independent per-addiction streak (BUJO-199)', () => {
+    const a = { id: 'a1', name: 'Sugar', startedOn: '2026-06-10', best: 4, relapses: [rel('2026-06-10'), rel('2026-06-05')] }
+    const s = addictionStats(a, '2026-06-18')
+    expect(s.current).toBe(8) // days since startedOn
+    expect(s.best).toBe(8) // live run beats stored best 4
+    expect(s.relapseCount).toBe(2)
+    expect(s.urges).toBe(0) // per-addiction streaks share the global urge log
   })
 })

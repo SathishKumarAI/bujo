@@ -1,4 +1,4 @@
-import type { JournalData } from './types'
+import type { JournalData, Relapse, AddictionStreak } from './types'
 import { dayDiff, todayISO } from './date'
 
 /**
@@ -49,15 +49,30 @@ export interface StreakStats {
 
 export function streakStats(data: JournalData, today = todayISO()): StreakStats {
   const s = data.nofap
-  const current = Math.max(0, dayDiff(s.startedOn, today))
+  return streakStatsFor(s.startedOn, s.best, s.relapses, today, (s.urgesResisted ?? 0) + (s.urgeLog?.length ?? 0))
+}
+
+/**
+ * Pure streak analytics for ANY single streak (the main one or a per-addiction
+ * one, BUJO-199). Pass its startedOn / stored best / relapses; `urges` is the
+ * resisted-urge total to surface (0 for per-addiction streaks that share the
+ * global urge log).
+ */
+export function streakStatsFor(
+  startedOn: string,
+  storedBest: number,
+  relapses: Relapse[],
+  today = todayISO(),
+  urges = 0,
+): StreakStats {
+  const current = Math.max(0, dayDiff(startedOn, today))
 
   // Normalise relapse dates for gap maths: ignore anything before tracking began
   // (the user's original start day — relapses can't predate it), then sort
   // ascending and drop duplicates so out-of-order / repeated logs don't skew gaps.
-  const start = s.startedOn
-  const sorted = s.relapses
+  const sorted = relapses
     .map((r) => r.date)
-    .filter((d) => dayDiff(start, d) <= 0) // on/before the current start day
+    .filter((d) => dayDiff(startedOn, d) <= 0) // on/before the current start day
     .sort()
   const dates: string[] = []
   for (const d of sorted) {
@@ -79,7 +94,7 @@ export function streakStats(data: JournalData, today = todayISO()): StreakStats 
 
   // Best = the longest streak ever: the stored best, the live run, OR the
   // longest historical gap between relapses (which the stored best may predate).
-  const best = Math.max(s.best, current, longestGap)
+  const best = Math.max(storedBest, current, longestGap)
 
   const gaps = dates.length - 1
   const avgGap = gaps >= 1 ? Math.round(completed / gaps) : 0
@@ -91,7 +106,7 @@ export function streakStats(data: JournalData, today = todayISO()): StreakStats 
   const daysToNext = next ? next.day - current : 0
 
   const counts = new Map<string, number>()
-  for (const r of s.relapses) {
+  for (const r of relapses) {
     const t = (r.trigger || '').trim().toLowerCase()
     if (t) counts.set(t, (counts.get(t) ?? 0) + 1)
   }
@@ -100,8 +115,12 @@ export function streakStats(data: JournalData, today = todayISO()): StreakStats 
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
 
-  const urges = (s.urgesResisted ?? 0) + (s.urgeLog?.length ?? 0)
-  return { current, best, totalClean, relapseCount: s.relapses.length, urges, next, prevDay, progressPct, daysToNext, avgGap, topTriggers }
+  return { current, best, totalClean, relapseCount: relapses.length, urges, next, prevDay, progressPct, daysToNext, avgGap, topTriggers }
+}
+
+/** Per-addiction streak stats (BUJO-199). Shares the global urge log, so urges=0 here. */
+export function addictionStats(a: AddictionStreak, today = todayISO()): StreakStats {
+  return streakStatsFor(a.startedOn, a.best, a.relapses, today, 0)
 }
 
 /** Milestones already reached at `current` days. */

@@ -340,9 +340,21 @@ export interface TriggerPlan {
   coping?: string
 }
 
+/** An independently-tracked addiction with its own streak + best + resets (BUJO-199). */
+export interface AddictionStreak {
+  id: string
+  /** Display name, e.g. "Smoking", "Sugar". */
+  name: string
+  /** ISO day this addiction's current streak started (reset on its own relapse). */
+  startedOn: string
+  /** Personal best for this addiction, in days. */
+  best: number
+  relapses: Relapse[]
+}
+
 /** Abstinence / NoFap streak tracker state. */
 export interface Streak {
-  /** ISO day the current streak started (reset on relapse). */
+  /** ISO day the current (primary) streak started (reset on relapse). */
   startedOn: string
   /** Personal best, in days. */
   best: number
@@ -353,6 +365,9 @@ export interface Streak {
   urgeLog?: UrgeWin[]
   /** If-then plans for each addiction's trigger points. */
   plans?: TriggerPlan[]
+  /** Additional addictions, each tracked as its own streak (BUJO-199). The
+   *  fields above remain the primary/default streak for backward compatibility. */
+  addictions?: AddictionStreak[]
 }
 
 export interface Settings {

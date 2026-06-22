@@ -50,7 +50,7 @@ const RESOURCES = [
 ]
 
 export function Pickleball() {
-  const { data, addPickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings } = useJournal()
+  const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings } = useJournal()
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
   const [ev, setEv] = useState(evtBlank)
@@ -284,19 +284,13 @@ export function Pickleball() {
         <Button variant="primary" onClick={log} className="mt-3 w-full">Log session</Button>
       </Card>
 
-      <Card title="History" subtitle="Tap × to remove" collapsible>
+      <Card title="History" subtitle="Tap Edit to fix a score · × to remove" collapsible>
         {sessions.length === 0 ? (
           <Empty>No sessions logged yet.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
-              <li key={p.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
-                <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
-                <span className="flex items-center gap-2">
-                  <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-                  <button onClick={() => removePickleball(p.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                </span>
-              </li>
+              <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
             ))}
           </ul>
         )}
@@ -452,5 +446,53 @@ export function Pickleball() {
         </details>
       </Card>
     </Page>
+  )
+}
+
+// History row with in-place editing (BUJO-201): correct a mistyped score/format/
+// duration without delete-and-re-log.
+function PickleRow({ p, onSave, onDelete }: {
+  p: import('../lib/types').PickleballSession
+  onSave: (patch: Partial<import('../lib/types').PickleballSession>) => void
+  onDelete: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [d, setD] = useState({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' })
+  function save() {
+    onSave({
+      format: d.format,
+      gamesWon: Number(d.gamesWon) || 0,
+      gamesLost: Number(d.gamesLost) || 0,
+      durationMin: d.durationMin ? Number(d.durationMin) : undefined,
+      notes: d.notes.trim() || undefined,
+    })
+    setEditing(false)
+  }
+  if (editing) {
+    return (
+      <li className="space-y-2 py-2.5">
+        <Segmented value={d.format} onChange={(v) => setD((c) => ({ ...c, format: v }))} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} />
+        <div className="grid grid-cols-3 gap-2">
+          <label className="block text-xs text-subtext1">Won<Input type="number" value={d.gamesWon} onChange={(e) => setD((c) => ({ ...c, gamesWon: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-xs text-subtext1">Lost<Input type="number" value={d.gamesLost} onChange={(e) => setD((c) => ({ ...c, gamesLost: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-xs text-subtext1">Min<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
+        </div>
+        <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
+        <div className="flex gap-2">
+          <Button variant="primary" onClick={save} className="flex-1">Save</Button>
+          <Button onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+        </div>
+      </li>
+    )
+  }
+  return (
+    <li className="group flex items-center justify-between gap-2 py-2 text-sm">
+      <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+      <span className="flex items-center gap-2">
+        <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
+        <button onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-xs text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</button>
+        <button onClick={onDelete} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+      </span>
+    </li>
   )
 }

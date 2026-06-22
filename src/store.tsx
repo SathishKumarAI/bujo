@@ -141,6 +141,7 @@ interface Store {
   removeProgressPhoto: (id: string) => void
   // pickleball
   addPickleball: (p: Omit<import('./lib/types').PickleballSession, 'id'>) => void
+  updatePickleball: (id: string, patch: Partial<import('./lib/types').PickleballSession>) => void
   removePickleball: (id: string) => void
   // friends / contacts
   addFriend: (f: Omit<import('./lib/types').Friend, 'id' | 'createdAt'>) => void
@@ -176,6 +177,10 @@ interface Store {
   removeUrge: (id: string) => void
   addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
   removeTriggerPlan: (id: string) => void
+  // per-addiction streaks (BUJO-199)
+  addAddiction: (name: string) => void
+  removeAddiction: (id: string) => void
+  relapseAddiction: (id: string, r: Omit<Relapse, 'id'>) => void
   // custom goals
   addCustomGoal: (g: Omit<import('./lib/types').CustomGoal, 'id' | 'createdAt'>) => void
   updateCustomGoal: (id: string, patch: Partial<import('./lib/types').CustomGoal>) => void
@@ -542,6 +547,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       addPickleball: (p) =>
         patch((d) => ({ ...d, pickleball: [...(d.pickleball ?? []), { id: uid('pk'), ...p }] })),
 
+      updatePickleball: (id, ppatch) =>
+        patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).map((p) => (p.id === id ? { ...p, ...ppatch } : p)) }), `pk:${id}`),
+
       removePickleball: (id) =>
         patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).filter((p) => p.id !== id) })),
 
@@ -671,6 +679,29 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeTriggerPlan: (id) =>
         patch((d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
+
+      addAddiction: (name) =>
+        patch((d) => {
+          const n = name.trim()
+          if (!n || (d.nofap.addictions ?? []).some((a) => a.name.toLowerCase() === n.toLowerCase())) return d
+          return { ...d, nofap: { ...d.nofap, addictions: [...(d.nofap.addictions ?? []), { id: uid('ad'), name: n, startedOn: todayISO(), best: 0, relapses: [] }] } }
+        }),
+
+      removeAddiction: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).filter((a) => a.id !== id) } })),
+
+      relapseAddiction: (id, r) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            addictions: (d.nofap.addictions ?? []).map((a) => {
+              if (a.id !== id) return a
+              const len = Math.max(0, dayDiff(a.startedOn, r.date)) // streak length just before reset
+              return { ...a, startedOn: r.date, best: Math.max(a.best, len), relapses: [...a.relapses, { id: uid('r'), ...r }] }
+            }),
+          },
+        })),
 
       addCustomGoal: (g) =>
         patch((d) => ({ ...d, customGoals: [...(d.customGoals ?? []), { id: uid('cg'), createdAt: todayISO(), ...g }] })),

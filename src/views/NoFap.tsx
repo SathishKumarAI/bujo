@@ -5,7 +5,7 @@ import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { streakStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
+import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
 
 /**
  * Streak (abstinence) hub · a progress-ring hero to the next milestone, lifetime
@@ -15,7 +15,8 @@ import { streakStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../li
 const URGE_COLORS = ['mauve', 'teal', 'peach', 'sky', 'green', 'pink', 'yellow', 'lavender', 'sapphire', 'flamingo']
 
 export function NoFap() {
-  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan } = useJournal()
+  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction } = useJournal()
+  const [newAddiction, setNewAddiction] = useState('')
   const [trigger, setTrigger] = useState('')
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')
@@ -102,6 +103,38 @@ export function NoFap() {
           <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<CalendarCheck size={14} />} />
           <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
         </div>
+
+        {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
+        <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
+            <Button variant="primary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
+          </div>
+          {(data.nofap.addictions ?? []).length === 0 ? (
+            <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
+          ) : (
+            <ul className="space-y-2">
+              {(data.nofap.addictions ?? []).map((a) => {
+                const st = addictionStats(a, today)
+                const reset = a.relapses.some((r) => r.date === today)
+                return (
+                  <li key={a.id} className="group flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2.5">
+                    <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="truncate font-medium text-text">{a.name}</span>
+                        <span className="text-xs text-overlay0">best {st.best}d</span>
+                      </div>
+                      <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
+                    </div>
+                    <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
+                    <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Card>
 
         {/* Urge surfing · pick what it was, log the win with date + time */}
         <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win · it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">

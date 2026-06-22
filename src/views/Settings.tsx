@@ -9,7 +9,7 @@ import { Page } from '../components/shell/Page'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
-import { pushJournalToServer, pullJournalFromServer } from '../lib/serverSync'
+import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '../lib/serverSync'
 import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
@@ -504,38 +504,44 @@ function PasscodeCard() {
   )
 }
 
-/** Self-host sync: point at the Docker stack's PostgREST API. The journal is
- *  pushed there on every change + on tab close (see ServerSync). */
+/** Self-host sync: point at the Docker stack's now-SECURED PostgREST API. The
+ *  journal is pulled on load and pushed on every change + on tab close (see
+ *  ServerSync). The API requires HTTPS + a Bearer JWT (role=bujo_user,
+ *  sub=<this device id>); mint one with the helper in
+ *  docs/security/postgrest-hardening.md. */
 function SelfHostCard() {
   const { data, setSettings, replaceAll } = useJournal()
   const s = data.settings
   const [msg, setMsg] = useState('')
+  const configured = serverConfigured(s.selfHostUrl, s.selfHostToken)
 
   async function test() {
+    if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }
     const ok = await pushJournalToServer(s.selfHostUrl ?? '', data, s.selfHostToken)
-    setMsg(ok ? '✓ Pushed to the server.' : '✗ Could not reach the server.')
+    setMsg(ok ? '✓ Pushed to the server.' : '✗ Could not reach the server (check URL, token, and TLS cert).')
   }
   async function pull() {
+    if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }
     const r = await pullJournalFromServer(s.selfHostUrl ?? '', s.selfHostToken)
     if (r && confirm('Load the server copy onto this device? (replaces current data)')) { replaceAll(migrate(r)); setMsg('✓ Loaded from server.') }
-    else setMsg(r ? 'Cancelled.' : 'Nothing on the server yet.')
+    else setMsg(r ? 'Cancelled.' : 'Nothing on the server yet (or auth failed).')
   }
 
   return (
-    <Card title="Self-host sync" subtitle="Push your journal to your own PostgREST API (the Docker stack)">
+    <Card title="Self-host sync" subtitle="Sync your journal with your own secured PostgREST API (the Docker stack)">
       <div className="space-y-2">
         <label className="block text-sm text-subtext1">API URL
-          <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="http://localhost:3000" className="mt-1" />
+          <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="https://localhost:8443" className="mt-1" />
         </label>
-        <label className="block text-sm text-subtext1">Token <span className="text-overlay0">(optional JWT)</span>
-          <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="for public/secured endpoints" className="mt-1" />
+        <label className="block text-sm text-subtext1">Bearer token <span className="text-overlay0">(HS256 JWT · required)</span>
+          <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="paste your minted JWT (role=bujo_user, sub=device id)" className="mt-1" />
         </label>
         <div className="flex gap-2">
-          <Button variant="primary" onClick={test}>Push now</Button>
+          <Button variant="primary" onClick={test}>Test / Push now</Button>
           <Button onClick={pull}>Pull from server</Button>
         </div>
         {msg && <p className="text-xs text-overlay0">{msg}</p>}
-        <p className="text-xs text-overlay0">Once set, the journal auto-syncs on change and on tab close. Run the stack with <code>docker compose up -d</code>.</p>
+        <p className="text-xs text-overlay0">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
       </div>
     </Card>
   )

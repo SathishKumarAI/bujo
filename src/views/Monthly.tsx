@@ -7,6 +7,7 @@ import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
 import { parseTags } from '../lib/bullets'
+import { habitDoneOn } from '../lib/stats'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
 export function Monthly() {
@@ -32,7 +33,6 @@ export function Monthly() {
     }
   }
   const meta = data.monthly.find((m) => m.ym === ym)
-  const totalHabits = data.habits.filter((h) => !h.archived).length
   const days = monthDays(ym)
   const weekStart = data.settings.weekStart ?? 0
   const firstWeekday = weekColumn(days[0], weekStart)
@@ -41,6 +41,18 @@ export function Monthly() {
   // Map each day → its entries (events shown on the calendar).
   function dayEvents(d: string) {
     return data.entries.filter((e) => e.date === d)
+  }
+
+  // Habit progress for a day: done / scheduled, using the shared habitDoneOn
+  // helper so numeric (count/timer/rating) habits — which log to habitValues,
+  // not habitLog — count toward completion and can reach 100% (BUJO-207).
+  function habitProgress(d: string): { done: number; total: number } {
+    const dow = new Date(d + 'T00:00').getDay()
+    const scheduled = data.habits.filter(
+      (h) => !h.archived && d >= h.startedOn && (!h.activeDays?.length || h.activeDays.includes(dow)),
+    )
+    const done = scheduled.filter((h) => habitDoneOn(data, h, d)).length
+    return { done, total: scheduled.length }
   }
 
   // ── This-month summary ──────────────────────────────────────────────
@@ -105,11 +117,15 @@ export function Monthly() {
                   <div className="mt-0.5 text-sm leading-tight">
                     {(data.stickers[d] ?? []).slice(0, 4).join('')}
                   </div>
-                  {totalHabits > 0 && d <= today && (
-                    <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-surface0" title={`${(data.habitLog[d] ?? []).length}/${totalHabits} habits`}>
-                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, ((data.habitLog[d] ?? []).length / totalHabits) * 100)}%`, background: cat('green') }} />
-                    </div>
-                  )}
+                  {(() => {
+                    const { done, total } = habitProgress(d)
+                    if (total === 0 || d > today) return null
+                    return (
+                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-surface0" title={`${done}/${total} habits`}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
+                      </div>
+                    )
+                  })()}
                 </button>
               )
             })}
