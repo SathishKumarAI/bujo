@@ -1,5 +1,31 @@
 # Worklog
 
+## 2026-06-22 15:10 — Cleared the entire open-ticket board (BUJO-193…220)
+
+**Summary:** Closed all 16 open `🔜` tickets plus the deferred audit LOW items in one pass — security hardening, a desktop scaffold, a light-theme redesign, sync-robustness, per-addiction streaks, in-place session editing, and the remaining lib bug-fixes — orchestrated across parallel/background subagents and verified live in a real browser.
+
+**Changes:**
+- **Lib bug-fixes (210/208/209/211/206/212):** `streak.ts` (best counts past streaks; avgGap sort/dedupe), `recurrence.ts` (backfill cap no longer skips occurrences), `challenges.ts` (ring% = completedDays; zero-rule day), `fitness.ts`/`Gym.tsx` (set-string reps, lastSetFor latest, plate>target warn), `capture.ts`/`CaptureBar.tsx` (numeric→setHabitValue, weight/reps-only gym, exact habit match), `reading.ts`/`Goals.tsx`/`Stats.tsx` (pagesRead guard, stepper cap, streak-vs-best, workout empty-state).
+- **Sync (203/204/205):** `App.tsx` realtime re-subscribes on auth + push pull-guard; `conflict.ts` `mergeJournals` unions remote∪local; `store.tsx` import re-stamp, reducer dedupe, unlock guard, coalesce reset, mount-materialise stamp; `crypto.ts` chunked b64.
+- **Security (193):** `docker/02-security.sql` (JWT roles + RLS), `docker/api-nginx.conf` (TLS proxy), `.env.example`, `docs/security/postgrest-hardening.md` — verified anon→401 / authed→201 / RLS isolation live.
+- **Desktop (195):** real Tauri v2 `src-tauri/` + scripts + `docs/desktop/TAURI.md`.
+- **UI (197):** Chrome-style light theme in `index.css` + `docs/redesign/light-theme.md`.
+- **Recovery (199):** `AddictionStreak` model + per-addiction card in `NoFap.tsx`.
+- **Sessions (201):** inline editors in `Focus.tsx`/`Pickleball.tsx` + `updatePickleball`.
+- **Client wire (194):** `serverSync.ts`/`ServerSync.tsx`/`Settings.tsx` → Bearer JWT, pull+merge on load.
+- **a11y/dead-prop/docs (218/219/220):** aria/contrast/touch-target fixes, removed `BottomNav.onQuickAdd`, expanded `uml.mdx`, fixed `FEATURE_GUIDE.md` nav + HomeWorkout.
+- **Docs:** `TICKETS.md` all closed; `docs/sessions/2026-06-22-prompts.md`; `docs/prompts/07-secure-self-host-and-desktop.md`; `docs/screenshots/2026-06-22-*`.
+
+**Decisions:** Parallelise only disjoint files; serialise everything touching `store.tsx`/`App.tsx` (a light-theme agent briefly contended on the theme effect there). Sync merge biases additions over deletions (re-seeing a deleted item beats losing a fresh one) — documented in `conflict.ts`. bujocloud/folder adopt-newer paths still replace wholesale; merge landed on the supabase + initial-pull paths.
+
+**Verification:** `tsc -b` clean · `vitest` 209 → 253 · `npm run build` clean · chrome-devtools MCP walked light theme, per-addiction card, session inline-edit, Monthly progress — no console errors. Commits 1625257, 347093e, 88708a6, 85e22e9 on `feat/auth-ux-trackers-insights`.
+
+**Follow-ups:**
+- [ ] User: set `PGRST_JWT_SECRET` + certs and `docker compose up -d` to apply the hardened API; paste API URL + JWT in Settings → Self-host.
+- [ ] User: install Tauri Linux deps (webkit2gtk/libsoup via sudo `.sh`) + `npx @tauri-apps/cli icon` before `npm run tauri:build`.
+- [ ] Optional: extend `mergeJournals` union to the bujocloud/folder adopt-newer paths.
+- [ ] Still external: enable Google in Supabase; delete smoke-test account.
+
 ## 2026-06-12 15:20 — Advanced views: Goals, tracker viz, motion, Friends
 
 **Summary:** Added a cross-view Goals roll-up, four new Trackers visualizations,
