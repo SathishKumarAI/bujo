@@ -1,5 +1,38 @@
 # Worklog
 
+## 2026-06-23 12:35 — Data-model backlog batch: 5 interactive features (PR #52)
+
+**Summary:** Serial single-owner build of the high-value backlog features that
+need store/type changes (can't be parallelized). One data-layer-owning agent hit
+a mid-run API 500 after building most of it; I confirmed the partial work
+compiled clean, finished verification, and shipped PR #52. +15 tests (465 total).
+
+**Changes (5 features):**
+- Count-habit −/+ steppers on Today ("Count habits" card) + Trackers via existing
+  `setHabitValue` (clamped at 0; timer step 5).
+- At-risk streak warning on Today (`atRiskHabits`): scheduled-today build habits
+  with streak ≥2 not yet logged.
+- Weekly-goal progress ring on Today (`weeklyGoalProgress`).
+- HALT quick-check on urge: `UrgeWin.halt` field + chips + tally in NoFap.
+- DUPR rating tracker: `Settings.duprLog` + `logDupr` action + log form/trend in
+  Pickleball.
+- (Full JSON backup export/import already existed in Settings — not rebuilt.)
+
+**Decisions:** All new type fields optional + back-compat (`migrate()` loads old
+data). Single-owner serial build keeps reducer/type edits conflict-free.
+Recovered from the agent's API-500 by verifying the working tree (tsc clean,
+tests pass) rather than re-running and risking duplicate edits. Note: vitest
+parallel workers flake under heavy system load — use `--no-file-parallelism` for
+a definitive run.
+
+**Verify:** tsc 0 · vitest 465/465 (serial) · eslint clean (touched) · vite build OK.
+
+**Running total:** ~73 backlog features built across PRs #48, #50, #51, #52.
+
+**Follow-ups:**
+- [ ] Continue batches. Remaining are mostly value-3 niche or items needing a
+  real backend / Tauri-native plugins / new deps (held, not forced).
+
 ## 2026-06-22 23:45 — Backlog batch 2: built 32 features (PR #51)
 
 **Summary:** Second backlog batch — 8 disjoint-file agents shipped 32 more
