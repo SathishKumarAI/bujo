@@ -60,6 +60,25 @@ export function topTags(data: JournalData, limit = 5): { tag: string; min: numbe
   return [...totals.entries()].map(([tag, min]) => ({ tag, min })).sort((a, b) => b.min - a.min).slice(0, limit)
 }
 
+/**
+ * Projected total coding minutes for the current rolling 7-day week, from the
+ * pace logged so far. Extrapolates minutes-so-far across the remaining days of
+ * the window: e.g. 200m over the first 4 days → ~350m projected for all 7.
+ * Returns null when the week is fully elapsed (nothing left to project) or no
+ * minutes have been logged yet.
+ */
+export function projectedWeeklyMinutes(data: JournalData, today = todayISO(), days = 7): number | null {
+  const soFar = weeklyCodingMinutes(data, today, days)
+  if (soFar <= 0) return null
+  // Days observed = from the oldest logged day in the window through today,
+  // but at least 1 and at most `days`.
+  const ss = sessions(data).filter((s) => { const d = dayDiff(s.date, today); return d >= 0 && d < days })
+  const oldest = Math.max(...ss.map((s) => dayDiff(s.date, today)))
+  const observed = Math.min(days, Math.max(1, oldest + 1))
+  if (observed >= days) return null
+  return Math.round((soFar / observed) * days)
+}
+
 /** A plain-language read on the focus↔stress relationship. */
 export function focusInsight(data: JournalData): string | null {
   const r = focusStressCorrelation(data)

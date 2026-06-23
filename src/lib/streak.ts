@@ -1,6 +1,8 @@
-import type { JournalData, Relapse, AddictionStreak } from './types'
-import { dayDiff, todayISO } from './date'
+import type { Habit, JournalData, Relapse, AddictionStreak } from './types'
+import { addDays, dayDiff, todayISO } from './date'
 import { STREAK_MILESTONES as MILESTONE_DAYS } from './milestones'
+import { habitDoneOn } from './stats'
+import { isScheduledOn } from './habitStats'
 
 /**
  * Streak (abstinence) analytics — pure + testable. Goes beyond "days since the
@@ -135,6 +137,63 @@ export function nextHabitMilestone(streak: number): { day: number; daysToGo: num
   const day = (MILESTONE_DAYS as readonly number[]).find((m) => m > streak)
   if (day === undefined) return null
   return { day, daysToGo: day - streak }
+}
+
+/**
+ * Comeback streak (BUJO trackers): how a build-habit is doing AFTER a lapse.
+ * Walks the habit's scheduled days back from `today`; the *current run* is the
+ * unbroken tail of done scheduled days, and a "comeback" is any time the user
+ * resumes (a done scheduled day immediately preceded by a missed scheduled one).
+ * `comebackCount` is the lifetime number of such restarts; `recovering` flags
+ * the encouraging "back on track — Nd" state: there's a current run AND at least
+ * one earlier break, so the user has genuinely bounced back (not a clean run from
+ * day one). Pure + unit-tested. Only meaningful for build habits — quit/avoid
+ * habits already have their own clean-streak logic, so callers pass those by
+ * choice. `window` bounds the lookback (365 days by default).
+ */
+export interface HabitComeback {
+  /** Consecutive done scheduled days ending today (or the last scheduled day). */
+  current: number
+  /** Lifetime count of restarts after a missed scheduled day. */
+  comebackCount: number
+  /** True when there's a live run AND a prior break — show "back on track". */
+  recovering: boolean
+}
+
+export function habitComeback(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  window = 365,
+): HabitComeback {
+  // Collect scheduled days oldest→newest within the window (cap at startedOn).
+  const sched: { day: string; done: boolean }[] = []
+  for (let i = window - 1; i >= 0; i--) {
+    const day = addDays(today, -i)
+    if (day < habit.startedOn) continue
+    if (!isScheduledOn(habit, day)) continue
+    sched.push({ day, done: habitDoneOn(data, habit, day) })
+  }
+
+  // Current run: unbroken tail of done days.
+  let current = 0
+  for (let i = sched.length - 1; i >= 0; i--) {
+    if (!sched[i].done) break
+    current += 1
+  }
+
+  // Comebacks: a done day whose previous scheduled day was missed.
+  let comebackCount = 0
+  let sawMiss = false
+  for (const s of sched) {
+    if (!s.done) { sawMiss = true; continue }
+    if (sawMiss) { comebackCount += 1; sawMiss = false }
+  }
+
+  // "Recovering" = there is a live run and at least one earlier break, i.e. the
+  // run doesn't reach the very first scheduled day.
+  const recovering = current > 0 && current < sched.length && sched.some((s) => !s.done)
+  return { current, comebackCount, recovering }
 }
 
 /** Milestones already reached at `current` days. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -39,6 +39,51 @@ describe('pickleball', () => {
     const d = emptyJournal()
     d.pickleball = [{ ...s('2026-06-12', 2, 1), durationMin: 60 }]
     expect(weeklyActiveMinutes(d, '2026-06-12')).toBe(60)
+  })
+
+  it('partnerStats aggregates per partner, ignores untrimmed/missing, sorts by games', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-10', 3, 1), partner: 'Ana' },
+      { ...s('2026-06-11', 1, 1), partner: 'Ana' },
+      { ...s('2026-06-12', 2, 0), partner: ' Bo ' }, // trimmed to "Bo"
+      { ...s('2026-06-13', 1, 1) }, // no partner → ignored
+    ]
+    const ps = partnerStats(d)
+    expect(ps.map((p) => p.partner)).toEqual(['Ana', 'Bo'])
+    expect(ps[0]).toMatchObject({ partner: 'Ana', sessions: 2, games: 6, gamesWon: 4, gamesLost: 2, winPct: 67 })
+    expect(ps[1]).toMatchObject({ partner: 'Bo', games: 2, winPct: 100 })
+  })
+
+  it('venueStats aggregates per location and computes win %', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-10', 4, 0), location: 'Park Courts' },
+      { ...s('2026-06-11', 1, 3), location: 'Park Courts' },
+      { ...s('2026-06-12', 2, 2), location: 'Rec Center' },
+    ]
+    const vs = venueStats(d)
+    expect(vs[0]).toMatchObject({ location: 'Park Courts', sessions: 2, games: 8, gamesWon: 5, winPct: 63 })
+    expect(vs.find((v) => v.location === 'Rec Center')).toMatchObject({ winPct: 50 })
+  })
+
+  it('opponentRecords builds head-to-head with net diff', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-10', 3, 1), opponent: 'Rivals' },
+      { ...s('2026-06-11', 0, 2), opponent: 'Rivals' },
+      { ...s('2026-06-12', 1, 1), opponent: 'Nemesis' },
+    ]
+    const or = opponentRecords(d)
+    expect(or[0]).toMatchObject({ opponent: 'Rivals', games: 6, gamesWon: 3, gamesLost: 3, winPct: 50, diff: 0 })
+    expect(or.find((o) => o.opponent === 'Nemesis')).toMatchObject({ diff: 0, games: 2 })
+  })
+
+  it('partner/venue/opponent aggregates are empty for an empty journal', () => {
+    const d = emptyJournal()
+    expect(partnerStats(d)).toEqual([])
+    expect(venueStats(d)).toEqual([])
+    expect(opponentRecords(d)).toEqual([])
   })
 })
 

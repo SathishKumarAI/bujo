@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, exerciseProgression, isNewPR, bodyweightSeries } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
@@ -214,6 +214,75 @@ describe('plateColor map (F3)', () => {
   it('falls back for an unknown denomination', () => {
     expect(typeof plateColor(99)).toBe('string')
     expect(plateColor(99).startsWith('#')).toBe(true)
+  })
+})
+
+describe('sessionSummary (post-finish rollup)', () => {
+  it('sums working volume, counts working sets, and finds the top set', () => {
+    const rows: import('./types').WorkoutSet[] = [
+      { exercise: 'Bench Press', weight: 40, reps: 10, kind: 'warmup' }, // excluded
+      { exercise: 'Bench Press', weight: 80, reps: 5, kind: 'working' },
+      { exercise: 'Bench Press', weight: 70, reps: 8, kind: 'working' },
+    ]
+    expect(sessionSummary(rows)).toEqual({
+      volume: 80 * 5 + 70 * 8, // 960
+      sets: 2,
+      topSet: { exercise: 'Bench Press', weight: 80, reps: 5 },
+    })
+  })
+  it('breaks a top-set weight tie by reps', () => {
+    const rows: import('./types').WorkoutSet[] = [
+      { exercise: 'Squat', weight: 100, reps: 3 },
+      { exercise: 'Squat', weight: 100, reps: 5 },
+    ]
+    expect(sessionSummary(rows).topSet).toEqual({ exercise: 'Squat', weight: 100, reps: 5 })
+  })
+  it('ignores rows missing weight or reps and returns a null top set when empty', () => {
+    expect(sessionSummary([{ exercise: 'Plank', reps: 60 }])).toEqual({ volume: 0, sets: 0, topSet: null })
+    expect(sessionSummary([])).toEqual({ volume: 0, sets: 0, topSet: null })
+  })
+})
+
+describe('warmupRamp (auto warm-up generator)', () => {
+  it('produces a bar + 40/60/80% ramp under the working weight', () => {
+    // 100kg @ 20kg bar → bar(20), 40(40), 60(60), 80(80→ equals? 80<100 keep)
+    expect(warmupRamp(100, 20)).toEqual([
+      { pct: 0, weight: 20 },
+      { pct: 40, weight: 40 },
+      { pct: 60, weight: 60 },
+      { pct: 80, weight: 80 },
+    ])
+  })
+  it('rounds rungs to the nearest loadable step (2.5kg)', () => {
+    // 70kg: 40%→28→27.5, 60%→42→42.5, 80%→56→55
+    expect(warmupRamp(70, 20)).toEqual([
+      { pct: 0, weight: 20 },
+      { pct: 40, weight: 27.5 },
+      { pct: 60, weight: 42.5 },
+      { pct: 80, weight: 55 },
+    ])
+  })
+  it('is strictly ascending and never meets or exceeds the work weight', () => {
+    const ramp = warmupRamp(70, 20)
+    for (let i = 1; i < ramp.length; i++) expect(ramp[i].weight).toBeGreaterThan(ramp[i - 1].weight)
+    expect(ramp.every((r) => r.weight < 70)).toBe(true)
+  })
+  it('collapses rungs that round to the same load (light working weight)', () => {
+    // 30kg @ 20kg bar: bar 20, 40%→12→20(=bar dup, dropped), 60%→18→20(dup), 80%→24>... 24<30 keep
+    const ramp = warmupRamp(30, 20)
+    const weights = ramp.map((r) => r.weight)
+    expect(new Set(weights).size).toBe(weights.length) // no duplicate loads
+    expect(weights[0]).toBe(20)
+  })
+  it('returns [] when the target is not above the bar', () => {
+    expect(warmupRamp(20, 20)).toEqual([])
+    expect(warmupRamp(15, 20)).toEqual([])
+  })
+  it('honours a custom bar and step (lb)', () => {
+    const ramp = warmupRamp(225, 45, 5)
+    expect(ramp[0]).toEqual({ pct: 0, weight: 45 })
+    expect(ramp.every((r) => r.weight < 225)).toBe(true)
+    expect(ramp.every((r) => r.weight % 5 === 0 || r.weight === 45)).toBe(true)
   })
 })
 

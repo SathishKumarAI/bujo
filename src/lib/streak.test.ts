@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback } from './streak'
 import { emptyJournal } from './storage'
-import type { Relapse } from './types'
+import type { Habit, JournalData, Relapse } from './types'
 
 const rel = (date: string, trigger = ''): Relapse => ({ id: date, date, trigger, note: '' })
 
@@ -87,5 +87,61 @@ describe('streak', () => {
     expect(s.best).toBe(8) // live run beats stored best 4
     expect(s.relapseCount).toBe(2)
     expect(s.urges).toBe(0) // per-addiction streaks share the global urge log
+  })
+})
+
+describe('habitComeback', () => {
+  const TODAY = '2026-06-18'
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', ...p }
+  }
+  /** Mark a check habit done on the given ISO days. */
+  function withDone(h: Habit, days: string[]): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    for (const day of days) d.habitLog[day] = [h.id]
+    return d
+  }
+
+  it('clean run from the start is NOT a comeback (no break to recover from)', () => {
+    const h = hb({ startedOn: '2026-06-15' }) // 15,16,17,18 all scheduled
+    const c = habitComeback(withDone(h, ['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18']), h, TODAY)
+    expect(c.current).toBe(4)
+    expect(c.comebackCount).toBe(0)
+    expect(c.recovering).toBe(false)
+  })
+
+  it('counts the current run and flags recovering after a break', () => {
+    const h = hb({ startedOn: '2026-06-14' }) // 14..18 scheduled
+    // done 14, MISS 15+16, back on 17+18 → current run 2, one comeback, recovering
+    const c = habitComeback(withDone(h, ['2026-06-14', '2026-06-17', '2026-06-18']), h, TODAY)
+    expect(c.current).toBe(2)
+    expect(c.comebackCount).toBe(1)
+    expect(c.recovering).toBe(true)
+  })
+
+  it('counts multiple comebacks over time', () => {
+    const h = hb({ startedOn: '2026-06-12' }) // 12..18 scheduled
+    // done 12, miss 13, back 14, miss 15, back 16, miss 17, back 18 → 3 comebacks
+    const c = habitComeback(withDone(h, ['2026-06-12', '2026-06-14', '2026-06-16', '2026-06-18']), h, TODAY)
+    expect(c.comebackCount).toBe(3)
+    expect(c.current).toBe(1) // only today is the unbroken tail
+    expect(c.recovering).toBe(true)
+  })
+
+  it('a current break (today missed) → no live run, not recovering', () => {
+    const h = hb({ startedOn: '2026-06-16' }) // 16,17,18 scheduled
+    const c = habitComeback(withDone(h, ['2026-06-16']), h, TODAY) // missed 17,18
+    expect(c.current).toBe(0)
+    expect(c.recovering).toBe(false)
+  })
+
+  it('respects activeDays scheduling (off-days are not breaks)', () => {
+    const h = hb({ startedOn: '2026-06-15', activeDays: [1, 3] }) // Mon/Wed only
+    // scheduled within window: Mon 15, Wed 17. Done both → clean run, no comeback.
+    const c = habitComeback(withDone(h, ['2026-06-15', '2026-06-17']), h, TODAY)
+    expect(c.current).toBe(2)
+    expect(c.comebackCount).toBe(0)
+    expect(c.recovering).toBe(false)
   })
 })

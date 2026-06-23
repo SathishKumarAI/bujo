@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Button, Card, Empty, Input, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
@@ -22,7 +22,7 @@ import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
-  weeklyVolumeSeries, exerciseProgression, isNewPR,
+  weeklyVolumeSeries, exerciseProgression, isNewPR, warmupRamp, sessionSummary,
 } from '../lib/fitness'
 import { PlateStack, plateColor } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
@@ -49,11 +49,16 @@ export function Gym() {
   const [routineName, setRoutineName] = useState('')
   // Ephemeral PR celebration after a set is saved (local state, auto-dismisses).
   const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
+  // Post-finish session rollup (volume · sets · top set), shown until the next edit.
+  const [summary, setSummary] = useState<ReturnType<typeof sessionSummary> | null>(null)
 
   // Body metrics quick entry.
   const [weight, setWeight] = useState('')
   const prs = personalRecords(data)
   const unit = data.settings.weightUnit
+  // Bar + smallest-plate step default per unit, for the auto warm-up generator.
+  const defaultBar = unit === 'lb' ? 45 : 20
+  const warmStep = unit === 'lb' ? 5 : 2.5
 
   // Recently-logged exercise names (newest first) for the quick picker.
   const recentExercises = useMemo(() => {
@@ -94,6 +99,7 @@ export function Gym() {
   }, [prParty])
 
   function setRow(i: number, patch: Partial<SetRow>) {
+    setSummary(null) // editing a new session dismisses the previous rollup
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)))
   }
   function addRow(exercise = '') {
@@ -140,6 +146,7 @@ export function Gym() {
       setRows: structured,
       notes: '',
     })
+    setSummary(sessionSummary(structured))
     setRows([{ exercise: '', weight: '', reps: '' }])
     if (pr) setPrParty(pr)
   }
@@ -254,6 +261,23 @@ export function Gym() {
         </div>
       )}
 
+      {/* ── Last session rollup · shown after Finish, until the next edit ── */}
+      {summary && summary.sets > 0 && (
+        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<button onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-overlay0 hover:text-text"><X size={16} /></button>}>
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile icon={<Dumbbell size={16} />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
+            <StatTile icon={<Layers size={16} />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
+            <StatTile
+              icon={<Trophy size={16} />}
+              color="yellow"
+              value={summary.topSet ? `${summary.topSet.weight}${unit}` : '—'}
+              label={summary.topSet ? `top · ${summary.topSet.exercise}` : 'top set'}
+              title={summary.topSet ? `${summary.topSet.exercise} ${summary.topSet.weight}${unit}×${summary.topSet.reps}` : undefined}
+            />
+          </div>
+        </Card>
+      )}
+
       {/* ── Session logger ─────────────────────────────────── */}
       <Card
         title="Today's session"
@@ -357,6 +381,36 @@ export function Gym() {
                     {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-[10px]" />}
                   </div>
                 )}
+                {/* Auto warm-up ramp · bar/40/60/80% of a working weight. Tap a rung to insert it as a warm-up set. */}
+                {kind === 'working' && (() => {
+                  const ramp = warmupRamp(Number(row.weight) || 0, defaultBar, warmStep)
+                  if (!ramp.length) return null
+                  return (
+                    <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-[10px] text-overlay0">
+                      <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
+                        <Layers size={11} style={{ color: cat('blue') }} /> Warm-up:
+                      </span>
+                      {ramp.map((r, ri) => (
+                        <button
+                          key={ri}
+                          type="button"
+                          onClick={() =>
+                            setRows((rs) => {
+                              const next = [...rs]
+                              next.splice(i, 0, { exercise: row.exercise, weight: String(r.weight), reps: '', kind: 'warmup' })
+                              return next
+                            })
+                          }
+                          title={`Add ${r.weight}${unit} warm-up set`}
+                          className="rounded-full px-2 py-0.5 transition-colors hover:text-text"
+                          style={{ background: cat('blue') + '22', color: cat('blue') }}
+                        >
+                          {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
             )
           })}

@@ -13,9 +13,10 @@ import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
-import { nextHabitMilestone } from '../lib/streak'
+import { nextHabitMilestone, habitComeback } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30 } from '../lib/habitStats'
+import { completionRate30, habitCellFill } from '../lib/habitStats'
+import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory, HabitType } from '../lib/types'
@@ -630,6 +631,9 @@ function CategoryRows({
         // H4: nearest clean-day milestone for avoid habits. H5: 30-day completion %.
         const milestone = avoid ? nextHabitMilestone(streak) : null
         const rate30 = avoid ? null : completionRate30(data, h, today)
+        // Comeback tracking: after a lapse, surface "back on track — Nd" so a
+        // missed day doesn't read as failure. Only for build habits.
+        const comeback = avoid ? null : habitComeback(data, h, today)
         return (
           <tr
             key={h.id}
@@ -669,6 +673,10 @@ function CategoryRows({
                     {rate30 && rate30.scheduled > 0 && (
                       <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-[10px]" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('yellow') : cat('overlay1') }}>{rate30.pct}%30d</span>
                     )}
+                    {/* Comeback chip: encourage after a lapse + show lifetime restarts. */}
+                    {comeback?.recovering && (
+                      <span title={`Back on track — ${comeback.current} ${comeback.current === 1 ? 'day' : 'days'}${comeback.comebackCount > 1 ? ` · ${comeback.comebackCount} comebacks` : ''}`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('teal') }}>↺ back {comeback.current}d{comeback.comebackCount > 1 ? ` ·${comeback.comebackCount}` : ''}</span>
+                    )}
                   </>
                 )}
                 {h.weeklyGoal ? (
@@ -685,16 +693,27 @@ function CategoryRows({
               const disabled = future || before || !scheduled
               if (numeric) {
                 const val = data.habitValues?.[d]?.[h.id] ?? 0
+                // Met = solid full-strength fill; partial = ring with a proportional
+                // inner fill so "hit the target" reads differently from "almost".
+                const fill = habitCellFill(data, h, d)
+                const met = fill.state === 'met'
+                const partial = fill.state === 'partial'
                 return (
                   <td key={d} className="p-0.5 text-center">
                     <button
                       disabled={disabled}
                       onClick={() => onSetValue(d, h.id, nextHabitValue(type, target, val))}
-                      title={`${val}/${target}`}
-                      aria-label={`${h.name} ${d}: ${val} of ${target}`}
-                      className={`grid ${cell} place-items-center rounded text-[8px] disabled:opacity-20`}
-                      style={{ background: val > 0 ? slipColor : 'transparent', border: `1px solid ${cat('surface1')}`, opacity: val > 0 ? Math.max(0.35, val / target) : 1, color: cat('crust') }}
-                    >{val > 0 ? val : ''}</button>
+                      title={`${val}/${target}${met ? ' · met' : partial ? ' · partial' : ''}`}
+                      aria-label={`${h.name} ${d}: ${val} of ${target}${met ? ', target met' : partial ? ', partial' : ''}`}
+                      className={`relative grid ${cell} place-items-center overflow-hidden rounded text-[8px] disabled:opacity-20`}
+                      style={{ background: met ? slipColor : 'transparent', border: `1px solid ${met ? slipColor : partial ? slipColor : cat('surface1')}`, color: met ? cat('crust') : cat('subtext1') }}
+                    >
+                      {/* Partial: a bottom-up fill bar sized to the target ratio. */}
+                      {partial && (
+                        <span aria-hidden className="absolute inset-x-0 bottom-0" style={{ height: `${Math.round(fill.ratio * 100)}%`, background: slipColor, opacity: 0.4 }} />
+                      )}
+                      <span className="relative">{val > 0 ? val : ''}</span>
+                    </button>
                   </td>
                 )
               }
@@ -893,14 +912,17 @@ function HabitHeatmap({ data, habit, today, weeks = 12 }: { data: JData; habit: 
         {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className={cell} />)}
         {Array.from({ length: days }).map((_, i) => {
           const d = addDays(start, i)
-          const done = habitDoneOn(data, habit, d)
           const future = d > today
+          // Shade by 0–4 intensity so partial count/timer/rating days show graded
+          // colour, not just full/empty. Level 0 = the empty surface tone.
+          const level = future ? 0 : dayIntensity(data, habit, d)
+          const op = intensityOpacity(level)
           return (
             <span
               key={d}
-              title={`${d}${done ? ' · done' : ''}`}
+              title={`${d}${level === 4 ? ' · done' : level > 0 ? ' · partial' : ''}`}
               className={`${cell} rounded-[2px]`}
-              style={{ background: future ? 'transparent' : done ? cat(habit.color) : cat('surface0') }}
+              style={{ background: future ? 'transparent' : level === 0 ? cat('surface0') : cat(habit.color), opacity: level === 0 ? 1 : op }}
             />
           )
         })}

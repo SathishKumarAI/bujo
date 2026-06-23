@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, type LucideIcon } from 'lucide-react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, type PeriodTrend } from '../lib/correlations'
+import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
@@ -26,6 +27,9 @@ export function Insights() {
   const results = kind === 'all' ? allResults : allResults.filter((r) => r.kind === kind)
   const found = insights(data)
   const moodImpact = moodImpactRanking(data)
+  const digest = weeklyDigest(data)
+  const habitTrend = weeklyHabitTrend(data)
+  const coach = coachDigest(data)
 
   // Year-in-review aggregates.
   const moods = data.metrics.map((m) => m.mood).filter((v): v is number => v != null)
@@ -56,7 +60,7 @@ export function Insights() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
       <div className="grid grid-cols-2 items-start gap-3 sm:gap-5 lg:grid-cols-4">
-        <Big label="Current streak" value={streak} suffix="d" color="peach" onClick={() => nav('trackers')} />
+        <Big label="Current streak" value={streak} suffix="d" color="peach" trend={habitTrend} trendLabel="habits vs last week" onClick={() => nav('trackers')} />
         <Big label="Longest streak" value={best} suffix="d" color="mauve" onClick={() => nav('trackers')} />
         <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
         <Big label="Entries" value={data.entries.length} color="sky" onClick={() => nav('today')} />
@@ -64,6 +68,65 @@ export function Insights() {
 
       {/* Actions first: the weekly ritual + search sit above the read-only analytics. */}
       <WeeklyReview />
+
+      <div className="grid items-start gap-5 md:grid-cols-2">
+        <Card title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
+          <ul className="space-y-1.5 text-sm">
+            {digest.lines.map((l) => (
+              <li key={l.label} className="flex items-center justify-between gap-2">
+                <span className="text-subtext0">{l.label}</span>
+                <strong className="text-text">{l.value}</strong>
+              </li>
+            ))}
+          </ul>
+          {(digest.win || digest.slip) && (
+            <div className="mt-3 space-y-1.5 border-t border-surface0 pt-3 text-sm">
+              {digest.win && (
+                <p className="flex items-center gap-2">
+                  <Trophy size={14} style={{ color: cat('green') }} />
+                  <span className="text-subtext1">{digest.win}</span>
+                </p>
+              )}
+              {digest.slip && (
+                <p className="flex items-center gap-2">
+                  <AlertTriangle size={14} style={{ color: cat('peach') }} />
+                  <span className="text-subtext1">{digest.slip}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+
+        <Card title="Coach digest" subtitle="What to focus on next">
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
+            <Sparkles size={15} style={{ color: cat('mauve') }} />
+            {coach.headline}
+          </p>
+          {coach.tips.length > 0 && (
+            <ul className="space-y-2 text-sm">
+              {coach.tips.map((t) => (
+                <li key={t.id}>
+                  <button
+                    onClick={() => nav(t.to as Parameters<typeof nav>[0])}
+                    className="w-full rounded-lg border border-surface0 bg-base px-3 py-2 text-left hover:border-mauve"
+                  >
+                    <span className="font-medium text-text">{t.title}</span>
+                    <span className="block text-xs text-overlay0">{t.detail}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {coach.insight && (
+            <p className="mt-3 border-t border-surface0 pt-3 text-sm text-subtext1">
+              <span className="mr-1.5 rounded px-1.5 py-0.5 text-xs" style={{ background: cat('surface0'), color: coach.insight.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
+                r={coach.insight.r}
+              </span>
+              {coach.insight.text}
+            </p>
+          )}
+        </Card>
+      </div>
 
       {found.length > 0 && (
         <Card title="Patterns" subtitle="What your data is telling you">
@@ -199,7 +262,9 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; colo
   )
 }
 
-function Big({ label, value, color, sub, suffix = '', ring, max = 100, onClick }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number; onClick?: () => void }) {
+function Big({ label, value, color, sub, suffix = '', ring, max = 100, trend, trendLabel, onClick }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number; trend?: PeriodTrend; trendLabel?: string; onClick?: () => void }) {
+  const TrendIcon = trend?.dir === 'up' ? TrendingUp : trend?.dir === 'down' ? TrendingDown : Minus
+  const trendColor = trend?.dir === 'up' ? 'green' : trend?.dir === 'down' ? 'red' : 'overlay0'
   return (
     <Card className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
       {ring ? (
@@ -211,6 +276,12 @@ function Big({ label, value, color, sub, suffix = '', ring, max = 100, onClick }
       )}
       <div className="mt-1 text-sm text-subtext0">{label}</div>
       {sub && <div className="text-xs text-overlay0">{sub}</div>}
+      {trend && (
+        <div className="mt-1 flex items-center gap-1 text-xs" style={{ color: cat(trendColor) }} title={trendLabel}>
+          <TrendIcon size={13} />
+          <span>{trend.dir === 'flat' ? 'flat' : `${trend.pct > 0 ? '+' : ''}${trend.pct}%`}</span>
+        </div>
+      )}
     </Card>
   )
 }

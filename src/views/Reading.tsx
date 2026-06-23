@@ -3,7 +3,7 @@ import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, Chevron
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
-import { shelf, progressPct, readingSummary } from '../lib/reading'
+import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish } from '../lib/reading'
 import { StatTile } from '../components/ui'
 import type { Book, BookStatus } from '../lib/types'
 
@@ -20,6 +20,7 @@ export function Reading() {
   const today = todayISO()
   const sum = readingSummary(books, today)
   const goal = data.settings.readingGoalBooks ?? 0
+  const projected = projectedBooksThisYear(books, today)
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -57,7 +58,14 @@ export function Reading() {
             <div className="h-2 overflow-hidden rounded-full bg-secondary">
               <div className="h-full rounded-full bg-green transition-[width]" style={{ width: `${Math.min(100, Math.round((sum.finishedThisYear / goal) * 100))}%` }} />
             </div>
-            <p className="mt-1 text-xs text-overlay0">{sum.finishedThisYear} of {goal} finished this year</p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 text-xs text-overlay0">
+              <span>{sum.finishedThisYear} of {goal} finished this year</span>
+              {projected != null && (
+                <span style={{ color: cat(projected >= goal ? 'green' : 'peach') }}>
+                  On pace for {projected} {projected >= goal ? '· ahead of goal' : '· behind goal'}
+                </span>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -151,6 +159,7 @@ function ReadLater() {
 function BookCard({ book }: { book: Book }) {
   const store = useJournal()
   const pct = progressPct(book)
+  const est = estimatedFinish(book, todayISO())
   const [open, setOpen] = useState(false)
   const [learn, setLearn] = useState('')
   const learnings = book.learnings ?? []
@@ -194,6 +203,11 @@ function BookCard({ book }: { book: Book }) {
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
             <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
           </div>
+          {est && (
+            <p className="mt-1 text-[11px] text-overlay0">
+              At this pace, done by <span className="text-subtext0">{prettyDay(est.iso)}</span> · ~{est.daysLeft}d left
+            </p>
+          )}
         </div>
       )}
 

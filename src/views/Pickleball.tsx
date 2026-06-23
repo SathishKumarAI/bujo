@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 
@@ -112,6 +112,10 @@ export function Pickleball() {
   const formats = formatStats(data)
   const cum = cumulativeGames(data)
   const byDay = gamesByDay(data)
+  // Read-only rivalry / chemistry / venue aggregates over logged sessions.
+  const partners = partnerStats(data)
+  const venues = venueStats(data)
+  const opponents = opponentRecords(data)
   const goal = data.settings.pickleballGoalGames ?? 0
   // 13-week play-frequency heatmap.
   const WEEKS = 13
@@ -296,6 +300,64 @@ export function Pickleball() {
         )}
         {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
+
+      {/* ── Partner chemistry ── */}
+      {partners.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Users size={18} className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner · most-played first" collapsible>
+          <ul className="space-y-3">
+            {partners.map((p) => (
+              <li key={p.partner}>
+                <div className="mb-1 flex items-baseline justify-between text-sm">
+                  <span className="min-w-0 truncate text-subtext1">{p.partner}</span>
+                  <span className="shrink-0 text-overlay1">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: cat('green') }}>{p.winPct}%</span></span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
+                  <div className="h-full rounded-full" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[11px] text-overlay0">Add a partner when logging a doubles session to track your chemistry.</p>
+        </Card>
+      )}
+
+      {/* ── Court / venue log ── */}
+      {venues.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><MapPin size={18} className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
+          <ul className="divide-y divide-surface0">
+            {venues.map((v) => (
+              <li key={v.location} className="flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0 truncate text-subtext1">{v.location}</span>
+                <span className="flex shrink-0 items-center gap-2 text-overlay1">
+                  {v.sessions} {v.sessions === 1 ? 'visit' : 'visits'} · {v.games} games
+                  <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('teal') + '22', color: cat('teal') }}>{v.winPct}%</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[11px] text-overlay0">Set a Location when logging to see your home-court advantage.</p>
+        </Card>
+      )}
+
+      {/* ── Opponent rivalry record book ── */}
+      {opponents.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Swords size={18} className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
+          <ul className="divide-y divide-surface0">
+            {opponents.map((o) => (
+              <li key={o.opponent} className="flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0 truncate text-subtext1">vs {o.opponent} <span className="text-overlay0">· {o.sessions} {o.sessions === 1 ? 'meeting' : 'meetings'}</span></span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span><span style={{ color: cat('green') }}>{o.gamesWon}</span>–<span style={{ color: cat('red') }}>{o.gamesLost}</span></span>
+                  <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') + '22', color: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') }}>
+                    {o.diff > 0 ? `+${o.diff}` : o.diff}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[11px] text-overlay0">Name your Opponent(s) when logging to build a head-to-head book.</p>
+        </Card>
+      )}
 
       <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" enlargeable={false}>
         <div className="grid gap-4 md:grid-cols-2">

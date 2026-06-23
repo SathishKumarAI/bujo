@@ -1,6 +1,6 @@
 import type { Habit, JournalData } from './types'
 import { addDays, fromISODay, todayISO } from './date'
-import { habitDoneOn } from './stats'
+import { habitDoneOn, habitTarget, habitValueOn } from './stats'
 
 /**
  * Per-habit completion analytics that respect a habit's scheduling. A habit is
@@ -46,4 +46,27 @@ export function completionRate30(
     if (habitDoneOn(data, habit, day)) done += 1
   }
   return { scheduled, done, pct: scheduled ? Math.round((done / scheduled) * 100) : 0 }
+}
+
+/**
+ * How "full" a habit's day is, for the grid's met-vs-partial distinction:
+ *   - 'empty'   — nothing logged
+ *   - 'partial' — some progress toward a numeric target but not there yet
+ *   - 'met'     — target reached (check/rating: any value; count/timer: ≥ target)
+ * `ratio` is the 0–1 fraction of the target (clamped to 1) for sizing a fill.
+ * Pure; lets the grid render a solid dot when met vs a ring/half-fill when
+ * partial, instead of a single opacity ramp that blurs the "did I hit it?" line.
+ */
+export interface CellFill {
+  state: 'empty' | 'partial' | 'met'
+  ratio: number
+}
+
+export function habitCellFill(data: JournalData, habit: Habit, day: string): CellFill {
+  const value = habitValueOn(data, habit, day)
+  if (value <= 0) return { state: 'empty', ratio: 0 }
+  if (habitDoneOn(data, habit, day)) return { state: 'met', ratio: 1 }
+  const target = habitTarget(habit)
+  const ratio = Math.min(1, target > 0 ? value / target : 1)
+  return { state: 'partial', ratio }
 }

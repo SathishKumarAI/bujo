@@ -1,5 +1,5 @@
 import {
-  Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, PolarAngleAxis, PolarGrid,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, PolarAngleAxis, PolarGrid,
   Radar, RadarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
   XAxis, YAxis, ZAxis,
 } from 'recharts'
@@ -18,6 +18,7 @@ import {
 } from '../lib/viz'
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
 import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
+import { sleepDebt } from '../lib/correlations'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
@@ -38,6 +39,9 @@ export function Stats() {
   const moodWd = moodByWeekday(data)
   const splits = workoutSplitCounts(data)
   const SPLIT_COLORS = ['mauve', 'blue', 'green', 'peach', 'teal', 'pink', 'yellow', 'sky']
+  const debt = sleepDebt(data)
+  const hasSleep = debt.some((d) => d.sleep != null)
+  const peakDebt = debt.reduce((m, d) => Math.max(m, d.debt), 0)
 
   function shift(d: number) {
     const [y, m] = ym.split('-').map(Number)
@@ -139,6 +143,24 @@ export function Stats() {
                   <Tooltip contentStyle={tip} cursor={{ strokeDasharray: '3 3' }} />
                   <Scatter data={scatter} fill={cat('sky')} />
                 </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        <Card title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
+          {!hasSleep ? (
+            <Empty>Log a few nights of sleep to track your running debt.</Empty>
+          ) : (
+            <div className="h-56" role="img" aria-label={`Area chart of cumulative sleep debt in hours over the last 14 days, versus an 8-hour target${peakDebt > 0 ? `, peaking at ${peakDebt} hours` : ''}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={debt} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}h`, 'debt'] as [string, string]} />
+                  <Area type="monotone" dataKey="debt" stroke={cat('peach')} fill={cat('peach')} fillOpacity={0.25} />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           )}

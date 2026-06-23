@@ -1,12 +1,13 @@
-import { useState } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
-import { techniqueRanking, matchPlanForTrigger } from '../lib/urge'
+import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus } from '../lib/urge'
+import type { TriggerPlan } from '../lib/types'
 
 const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
   { id: 'surf', label: 'Surf it' },
@@ -25,6 +26,97 @@ const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
  */
 const URGE_COLORS = ['mauve', 'teal', 'peach', 'sky', 'green', 'pink', 'yellow', 'lavender', 'sapphire', 'flamingo']
 
+const SOS_SECONDS = 10 * 60 // 10-minute "ride it out" timer
+// 4-7-8 style breathing pacer: inhale 4s · hold 7s · exhale 8s (one 19s cycle).
+const BREATH_PHASES = [
+  { label: 'Breathe in', secs: 4, scale: 1.35, color: 'teal' as const },
+  { label: 'Hold', secs: 7, scale: 1.35, color: 'mauve' as const },
+  { label: 'Breathe out', secs: 8, scale: 0.8, color: 'sky' as const },
+]
+const BREATH_CYCLE = BREATH_PHASES.reduce((n, p) => n + p.secs, 0)
+
+/** Phase of the breathing pacer at `elapsed` seconds into the SOS session. */
+function breathPhase(elapsed: number) {
+  let t = elapsed % BREATH_CYCLE
+  for (const p of BREATH_PHASES) {
+    if (t < p.secs) return p
+    t -= p.secs
+  }
+  return BREATH_PHASES[0]
+}
+
+/**
+ * Panic / SOS overlay — a full-screen "ride it out" companion: a 10-minute
+ * countdown (urges peak and pass in ~15 min), a 4-7-8 breathing pacer, and the
+ * user's own coping line for the matching trigger plan. All local state.
+ */
+function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => void }) {
+  const [elapsed, setElapsed] = useState(0)
+  const [trigger, setTrigger] = useState('')
+  const startRef = useRef<number | null>(null)
+  const matched = matchPlanForTrigger(plans, trigger)
+
+  useEffect(() => {
+    startRef.current = Date.now()
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000))
+    }, 250)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => { clearInterval(id); window.removeEventListener('keydown', onKey) }
+  }, [onClose])
+
+  const remaining = Math.max(0, SOS_SECONDS - elapsed)
+  const mm = String(Math.floor(remaining / 60)).padStart(2, '0')
+  const ss = String(remaining % 60).padStart(2, '0')
+  const done = remaining === 0
+  const phase = breathPhase(elapsed)
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Urge SOS"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6"
+      style={{ background: cat('crust') + 'f2', backdropFilter: 'blur(6px)' }}>
+      <button onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full p-2 text-overlay0 hover:text-text" style={{ background: cat('surface0') }}><X size={20} /></button>
+
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 text-sm" style={{ color: cat('peach') }}><LifeBuoy size={16} /> Ride it out · this is a wave, not a command</div>
+        <div className="mt-1 font-mono text-6xl font-extrabold tabular-nums" style={{ color: done ? cat('green') : cat('text') }}>{mm}:{ss}</div>
+        <p className="mt-1 text-xs text-overlay0">{done ? 'The peak has passed. You made it.' : 'Stay until the timer ends · the urge will crest and fall.'}</p>
+      </div>
+
+      {/* Breathing pacer */}
+      <div className="grid h-44 w-44 place-items-center">
+        <div className="grid h-32 w-32 place-items-center rounded-full text-center text-sm font-medium"
+          aria-live="polite"
+          style={{
+            background: cat(phase.color) + '22',
+            border: `2px solid ${cat(phase.color)}`,
+            color: cat(phase.color),
+            transform: `scale(${phase.scale})`,
+            transition: `transform ${phase.secs}s ease-in-out`,
+          }}>
+          {phase.label}
+        </div>
+      </div>
+
+      {/* Coping line from the matching trigger plan */}
+      <div className="w-full max-w-md">
+        <Input value={trigger} onChange={(e) => setTrigger(e.target.value)} placeholder="What's triggering it? (finds your plan)" aria-label="Current trigger" />
+        {matched ? (
+          <div className="mt-2 rounded-lg p-3 text-sm" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
+            <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matched.trigger}”:</span>{' '}
+            <span className="text-subtext0">{matched.coping || 'name it and let it pass.'}</span>
+          </div>
+        ) : (
+          <p className="mt-2 text-center text-xs text-overlay0">No matching plan yet · try “Surf it”: name the urge and watch it pass without acting.</p>
+        )}
+      </div>
+
+      <Button variant="primary" onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
+    </div>
+  )
+}
+
 export function NoFap() {
   const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction } = useJournal()
   const [newAddiction, setNewAddiction] = useState('')
@@ -35,6 +127,7 @@ export function NoFap() {
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
   const [plan, setPlan] = useState({ addiction: '', trigger: '', coping: '' })
+  const [sosOpen, setSosOpen] = useState(false)
   const plans = data.nofap.plans ?? []
   const matchedPlan = matchPlanForTrigger(plans, urge)
   const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
@@ -53,6 +146,8 @@ export function NoFap() {
   const s = data.nofap
   const today = todayISO()
   const stats = streakStats(data, today)
+  const vsBest = streakVsBest(stats.current, stats.best)
+  const comeback = comebackStatus(s.relapses, s.startedOn, today)
   const byType = urgesByType(data)
   const relapsedToday = s.relapses.some((r) => r.date === today)
   const nextBenefit = stats.next
@@ -69,6 +164,14 @@ export function NoFap() {
 
   return (
     <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-3">
+      {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
+      <button onClick={() => setSosOpen(true)} aria-label="Panic · open urge SOS"
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-105"
+        style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
+        <LifeBuoy size={18} /> SOS
+      </button>
+      {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
+
       <div className="space-y-4 lg:col-span-2">
         {/* Hero: progress ring to next milestone */}
         <Card className="glow-mauve">
@@ -118,6 +221,27 @@ export function NoFap() {
           <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<CalendarCheck size={14} />} />
           <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
         </div>
+
+        {/* Streak vs personal best · ghost bar (current overlaid on best) */}
+        <Card title="Current vs your best" subtitle={vsBest.isRecord ? 'You’re writing a new record right now' : `${vsBest.daysToBeat} day${vsBest.daysToBeat === 1 ? '' : 's'} to match your best`} help="The faint bar is your longest streak ever; the solid bar is your current run climbing toward it. Once it fills, you’re in record territory.">
+          <div className="relative h-4 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
+            {/* ghost = personal best (full width reference) */}
+            <div className="absolute inset-0 rounded-full" style={{ background: cat('peach') + '2e' }} />
+            {/* solid = current run, proportional to best */}
+            <div className="relative h-full rounded-full transition-[width] duration-500"
+              style={{ width: `${vsBest.pct}%`, background: vsBest.isRecord ? cat('green') : cat('mauve') }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs">
+            <span style={{ color: vsBest.isRecord ? cat('green') : cat('mauve') }}><span className="font-semibold">{vsBest.current}</span>d now</span>
+            <span className="text-overlay1 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
+          </div>
+          {comeback.isComeback && (
+            <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-sm" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
+              <RotateCcw size={16} style={{ color: cat('green') }} className="shrink-0" />
+              <span className="text-subtext0"><span className="font-semibold" style={{ color: cat('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: cat('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
+            </div>
+          )}
+        </Card>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">

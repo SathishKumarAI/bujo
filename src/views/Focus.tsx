@@ -7,7 +7,7 @@ import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
 import {
-  weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours,
+  weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
 } from '../lib/focus'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
@@ -20,6 +20,7 @@ export function Focus() {
 
   const sessions = [...(data.devSessions ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
   const weekMin = weeklyCodingMinutes(data, today)
+  const projWeekMin = projectedWeeklyMinutes(data, today)
   const streak = focusStreak(data, today)
   const series = dailyCodingMinutes(data, today, 14)
   const maxDay = Math.max(60, ...series.map((s) => s.min))
@@ -77,6 +78,11 @@ export function Focus() {
           <Stat label="Avg focus" value={`${avgWeighted(data, 'focus')}/10`} color="green" />
           <Stat label="Avg stress" value={`${avgWeighted(data, 'stress')}/10`} color="red" />
         </div>
+        {projWeekMin != null && projWeekMin > weekMin && (
+          <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
+            📈 At this pace, you're on track for <span className="font-medium text-mauve">{hrs(projWeekMin)}</span> this week.
+          </p>
+        )}
         {insight && <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">💡 {insight}</p>}
       </Card>
 

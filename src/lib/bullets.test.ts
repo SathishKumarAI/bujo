@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { glyphFor, nextStatus, parseQuickCapture, parseTags } from './bullets'
+import { glyphFor, inboxEntries, nextStatus, parseQuickCapture, parseTags, tagIndex } from './bullets'
+import type { Entry } from './types'
+
+function entry(over: Partial<Entry> = {}): Entry {
+  return {
+    id: Math.random().toString(36).slice(2),
+    date: '2026-06-10',
+    type: 'task',
+    text: 'thing',
+    status: 'open',
+    important: false,
+    memory: false,
+    tags: [],
+    createdAt: '2026-06-10T08:00:00.000Z',
+    ...over,
+  }
+}
 
 describe('glyphFor', () => {
   it('renders task lifecycle glyphs', () => {
@@ -54,5 +70,62 @@ describe('parseQuickCapture', () => {
   })
   it('parses a memory marker', () => {
     expect(parseQuickCapture('^ saw a shooting star').memory).toBe(true)
+  })
+})
+
+describe('tagIndex', () => {
+  it('groups entries by tag, sorted by frequency then name', () => {
+    const idx = tagIndex([
+      entry({ tags: ['camp', 'gear'] }),
+      entry({ tags: ['camp'] }),
+      entry({ tags: ['gear'] }),
+      entry({ tags: ['camp'] }),
+    ])
+    expect(idx.map((g) => g.tag)).toEqual(['camp', 'gear'])
+    expect(idx[0].entries).toHaveLength(3)
+    expect(idx[1].entries).toHaveLength(2)
+  })
+  it('breaks frequency ties alphabetically', () => {
+    const idx = tagIndex([entry({ tags: ['zebra'] }), entry({ tags: ['apple'] })])
+    expect(idx.map((g) => g.tag)).toEqual(['apple', 'zebra'])
+  })
+  it('falls back to parsing tags from text for legacy entries', () => {
+    const idx = tagIndex([entry({ tags: [], text: 'buy #lamb food' })])
+    expect(idx).toHaveLength(1)
+    expect(idx[0].tag).toBe('lamb')
+  })
+  it('counts an entry once per distinct tag even if repeated', () => {
+    const idx = tagIndex([entry({ tags: ['camp', 'camp'] })])
+    expect(idx).toHaveLength(1)
+    expect(idx[0].entries).toHaveLength(1)
+  })
+  it('returns empty for no tags', () => {
+    expect(tagIndex([entry({ tags: [], text: 'plain' })])).toEqual([])
+  })
+})
+
+describe('inboxEntries', () => {
+  it('keeps dateless, uncollected open entries', () => {
+    const out = inboxEntries([
+      entry({ date: '', text: 'triage me' }),
+      entry({ date: '2026-06-10', text: 'has a day' }),
+    ])
+    expect(out.map((e) => e.text)).toEqual(['triage me'])
+  })
+  it('excludes collection-filed dateless entries', () => {
+    expect(inboxEntries([entry({ date: '', collection: 'books' })])).toEqual([])
+  })
+  it('excludes done and dropped entries', () => {
+    expect(inboxEntries([
+      entry({ date: '', status: 'done' }),
+      entry({ date: '', status: 'dropped' }),
+    ])).toEqual([])
+  })
+  it('sorts newest-created first', () => {
+    const out = inboxEntries([
+      entry({ date: '', text: 'old', createdAt: '2026-06-01T00:00:00Z' }),
+      entry({ date: '', text: 'new', createdAt: '2026-06-09T00:00:00Z' }),
+    ])
+    expect(out.map((e) => e.text)).toEqual(['new', 'old'])
   })
 })
