@@ -81,3 +81,97 @@ export function playStreak(data: JournalData, today = todayISO()): number {
   while (days.has(cursor)) { streak++; cursor = addDays(cursor, -1) }
   return streak
 }
+
+export interface PartnerStat {
+  partner: string
+  sessions: number
+  games: number
+  gamesWon: number
+  gamesLost: number
+  winPct: number // whole number 0–100
+}
+
+/**
+ * Win% + games per doubles partner (chemistry). Only doubles sessions that name a
+ * partner count. Sorted by games desc, then win% desc, so your most-played
+ * partners surface first.
+ */
+export function partnerStats(data: JournalData): PartnerStat[] {
+  const by = new Map<string, PartnerStat>()
+  for (const s of sessions(data)) {
+    const name = s.partner?.trim()
+    if (!name) continue
+    const cur = by.get(name) ?? { partner: name, sessions: 0, games: 0, gamesWon: 0, gamesLost: 0, winPct: 0 }
+    cur.sessions += 1
+    cur.gamesWon += s.gamesWon
+    cur.gamesLost += s.gamesLost
+    cur.games += s.gamesWon + s.gamesLost
+    by.set(name, cur)
+  }
+  return [...by.values()]
+    .map((p) => ({ ...p, winPct: p.games ? Math.round((p.gamesWon / p.games) * 100) : 0 }))
+    .sort((a, b) => b.games - a.games || b.winPct - a.winPct || (a.partner < b.partner ? -1 : 1))
+}
+
+export interface VenueStat {
+  location: string
+  sessions: number
+  games: number
+  gamesWon: number
+  gamesLost: number
+  winPct: number // whole number 0–100
+}
+
+/**
+ * Games + win% aggregated by venue/location. Only sessions with a location count.
+ * Sorted by games desc, then win% desc.
+ */
+export function venueStats(data: JournalData): VenueStat[] {
+  const by = new Map<string, VenueStat>()
+  for (const s of sessions(data)) {
+    const loc = s.location?.trim()
+    if (!loc) continue
+    const cur = by.get(loc) ?? { location: loc, sessions: 0, games: 0, gamesWon: 0, gamesLost: 0, winPct: 0 }
+    cur.sessions += 1
+    cur.gamesWon += s.gamesWon
+    cur.gamesLost += s.gamesLost
+    cur.games += s.gamesWon + s.gamesLost
+    by.set(loc, cur)
+  }
+  return [...by.values()]
+    .map((v) => ({ ...v, winPct: v.games ? Math.round((v.gamesWon / v.games) * 100) : 0 }))
+    .sort((a, b) => b.games - a.games || b.winPct - a.winPct || (a.location < b.location ? -1 : 1))
+}
+
+export interface OpponentRecord {
+  opponent: string
+  sessions: number
+  games: number
+  gamesWon: number
+  gamesLost: number
+  winPct: number // whole number 0–100
+  /** Net game differential vs this opponent (won − lost): >0 you lead the rivalry. */
+  diff: number
+}
+
+/**
+ * Head-to-head record book per opponent (your wins/losses against them). Only
+ * sessions naming an opponent count. Sorted by games played desc, then by your
+ * lead (diff) desc.
+ */
+export function opponentRecords(data: JournalData): OpponentRecord[] {
+  const by = new Map<string, OpponentRecord>()
+  for (const s of sessions(data)) {
+    const opp = s.opponent?.trim()
+    if (!opp) continue
+    const cur = by.get(opp) ?? { opponent: opp, sessions: 0, games: 0, gamesWon: 0, gamesLost: 0, winPct: 0, diff: 0 }
+    cur.sessions += 1
+    cur.gamesWon += s.gamesWon
+    cur.gamesLost += s.gamesLost
+    cur.games += s.gamesWon + s.gamesLost
+    by.set(opp, cur)
+  }
+  return [...by.values()]
+    .map((o) => ({ ...o, winPct: o.games ? Math.round((o.gamesWon / o.games) * 100) : 0, diff: o.gamesWon - o.gamesLost }))
+    .sort((a, b) => b.games - a.games || b.diff - a.diff || (a.opponent < b.opponent ? -1 : 1))
+}

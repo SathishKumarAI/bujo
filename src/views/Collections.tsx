@@ -6,6 +6,7 @@ import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
+import { inboxEntries, tagIndex } from '../lib/bullets'
 
 export function Collections() {
   const { data, addBirthday, removeBirthday, addCollection, removeCollection, addEntry } = useJournal()
@@ -17,6 +18,15 @@ export function Collections() {
   const [colIcon, setColIcon] = useState('📚')
   const [openCol, setOpenCol] = useState<string | null>(null)
   const [colEntry, setColEntry] = useState('')
+  // Tag pages (auto-collections): one filtered page per #tag.
+  const [openTag, setOpenTag] = useState<string | null>(null)
+
+  // Auto-collections: every #tag across the journal, most-used first.
+  const tags = tagIndex(data.entries)
+  const openTagEntries = openTag ? (tags.find((t) => t.tag === openTag)?.entries ?? []) : []
+
+  // Brain-dump inbox: dateless, unfiled entries waiting to be triaged.
+  const inbox = inboxEntries(data.entries)
 
   // Future log = events/tasks dated after today.
   const today = todayISO()
@@ -144,6 +154,72 @@ export function Collections() {
               <Empty>Empty · add your first item above.</Empty>
             )}
           </div>
+        )}
+      </Card>
+
+      <Card
+        title="Tags"
+        subtitle="Auto-collections · every #tag, tap to open its page"
+        className="md:col-span-2"
+        help="Tag pages are built automatically from the #tags in your entries — no setup. Tap a tag to see every entry that mentions it, across days and collections."
+      >
+        {tags.length === 0 ? (
+          <Empty>No tags yet. Add a #tag to any entry and it shows up here.</Empty>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {tags.map(({ tag, entries }) => (
+              <button
+                key={tag}
+                onClick={() => setOpenTag(openTag === tag ? null : tag)}
+                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
+                style={{
+                  borderColor: openTag === tag ? cat('sapphire') : cat('surface1'),
+                  color: cat('sapphire'),
+                }}
+              >
+                #{tag}
+                <span className="text-xs text-overlay0">{entries.length}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {openTag && (
+          <div className="mt-4 border-t border-surface0 pt-3">
+            <div className="mb-1 text-sm text-subtext1">
+              <span style={{ color: cat('sapphire') }}>#{openTag}</span>
+              <span className="ml-2 text-overlay0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
+            </div>
+            {openTagEntries.length === 0 ? (
+              <Empty>No entries with this tag.</Empty>
+            ) : (
+              <ul>
+                {openTagEntries
+                  .slice()
+                  .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+                  .map((e) => (
+                    <EntryRow key={e.id} entry={e} />
+                  ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </Card>
+
+      <Card
+        title="Brain-dump inbox"
+        subtitle={`${inbox.length} dateless item${inbox.length === 1 ? '' : 's'} to triage`}
+        className="md:col-span-2"
+        help="Rapid-captured entries with no day and no collection land here. Triage them: give one a day (edit it on Today) or check it off when it's handled."
+      >
+        {inbox.length === 0 ? (
+          <Empty>Inbox zero. Nothing dateless waiting to be sorted. ✨</Empty>
+        ) : (
+          <ul>
+            {inbox.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
         )}
       </Card>
     </div>

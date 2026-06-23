@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary } from './reading'
+import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish } from './reading'
 import type { Book } from './types'
 
 const mk = (p: Partial<Book>): Book => ({
@@ -70,5 +70,36 @@ describe('reading', () => {
     ]
     const s = readingSummary(books, '2026-06-18')
     expect(s).toMatchObject({ want: 1, reading: 1, finished: 1, finishedThisYear: 1, pages: 260, avgRating: 4 })
+  })
+
+  it('projectedBooksThisYear extrapolates year-to-date pace', () => {
+    // 3 books finished by day 90 (Mar 31) → 3/90*365 ≈ 12
+    const books = [
+      mk({ status: 'finished', finishedOn: '2026-01-15' }),
+      mk({ status: 'finished', finishedOn: '2026-02-15' }),
+      mk({ status: 'finished', finishedOn: '2026-03-15' }),
+    ]
+    expect(projectedBooksThisYear(books, '2026-03-31')).toBe(12)
+  })
+
+  it('projectedBooksThisYear is 0 when nothing finished', () => {
+    expect(projectedBooksThisYear([], '2026-06-30')).toBe(0)
+  })
+
+  it('estimatedFinish projects from pages-per-day pace', () => {
+    // 100 pages over 10 days = 10 pg/day; 100 remaining → 10 days left
+    const book = mk({ status: 'reading', startedOn: '2026-06-01', currentPage: 100, totalPages: 200 })
+    const est = estimatedFinish(book, '2026-06-11')
+    expect(est).toEqual({ iso: '2026-06-21', daysLeft: 10 })
+  })
+
+  it('estimatedFinish returns null when not enough data', () => {
+    expect(estimatedFinish(mk({ status: 'want', totalPages: 200, startedOn: '2026-06-01', currentPage: 50 }), '2026-06-11')).toBeNull()
+    expect(estimatedFinish(mk({ status: 'reading', currentPage: 50, startedOn: '2026-06-01' }), '2026-06-11')).toBeNull()
+    expect(estimatedFinish(mk({ status: 'reading', totalPages: 200, currentPage: 50 }), '2026-06-11')).toBeNull()
+    // already at/past the end → nothing to project
+    expect(estimatedFinish(mk({ status: 'reading', totalPages: 200, currentPage: 200, startedOn: '2026-06-01' }), '2026-06-11')).toBeNull()
+    // no pages read yet → no pace
+    expect(estimatedFinish(mk({ status: 'reading', totalPages: 200, currentPage: 0, startedOn: '2026-06-01' }), '2026-06-11')).toBeNull()
   })
 })

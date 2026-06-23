@@ -69,3 +69,38 @@ export function workoutsCsv(data: JournalData): string {
     [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1)).map((w) => [w.date, w.activity, w.split ?? '', w.durationMin, w.distanceKm, w.calories, w.rpe, w.sets.join(' | ')]),
   )
 }
+
+// ── Backup hygiene helpers ────────────────────────────────────────────────────
+
+/** Settings keys that are device-/account-specific secrets. Stripped from a
+ *  shared/exported backup by default so a copy you hand off can't leak a sync
+ *  token, gist PAT, or OAuth client id. */
+export const SYNC_SECRET_KEYS = [
+  'selfHostToken',
+  'selfHostUrl',
+  'githubToken',
+  'githubGistId',
+  'googleClientId',
+  'googleEmail',
+] as const
+
+/**
+ * Return a copy of the journal with sync secrets removed from its settings.
+ * Pure — does not mutate the input. Use before sharing/exporting a backup so
+ * the file is portable and can't expose another device's credentials.
+ */
+export function stripSyncSecrets<T extends JournalData>(data: T): T {
+  const settings = { ...data.settings }
+  for (const k of SYNC_SECRET_KEYS) delete (settings as Record<string, unknown>)[k]
+  return { ...data, settings }
+}
+
+/** Whole days from an ISO `lastBackup` day to `today` (both "YYYY-MM-DD").
+ *  Returns null if `lastBackup` is missing/unparseable. Never negative. */
+export function daysSinceBackup(lastBackup: string | undefined, today: string): number | null {
+  if (!lastBackup || !/^\d{4}-\d{2}-\d{2}/.test(lastBackup)) return null
+  const a = Date.parse(lastBackup.slice(0, 10) + 'T00:00:00')
+  const b = Date.parse(today.slice(0, 10) + 'T00:00:00')
+  if (Number.isNaN(a) || Number.isNaN(b)) return null
+  return Math.max(0, Math.round((b - a) / 86_400_000))
+}

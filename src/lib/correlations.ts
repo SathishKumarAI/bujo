@@ -1,5 +1,6 @@
 import type { JournalData } from './types'
-import { habitDoneOn } from './stats'
+import { habitDoneOn, currentStreak, taskCompletion } from './stats'
+import { addDays, prettyDay, todayISO } from './date'
 
 /** Pearson correlation of two equal-length numeric arrays. */
 export function pearson(xs: number[], ys: number[]): number {
@@ -114,6 +115,186 @@ export function moodImpactRanking(data: JournalData, minDays = 3): MoodImpact[] 
     })
   }
   return out.sort((a, b) => b.lift - a.lift)
+}
+
+/** Mean of a metric over the [from, to] inclusive ISO-day window, or null. */
+function metricMean(data: JournalData, key: 'mood' | 'sleep' | 'stress', from: string, to: string): number | null {
+  const vals: number[] = []
+  for (const m of data.metrics) {
+    if (m.date < from || m.date > to) continue
+    const v = m[key]
+    if (v != null) vals.push(v)
+  }
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+}
+
+/** Habit completions across all habits within [from, to] inclusive. */
+function habitDoneCount(data: JournalData, from: string, to: string): number {
+  let n = 0
+  for (const h of data.habits) {
+    if (h.archived) continue
+    let day = from
+    while (day <= to) {
+      if (day >= h.startedOn && habitDoneOn(data, h, day)) n += 1
+      day = addDays(day, 1)
+    }
+  }
+  return n
+}
+
+export interface DigestLine {
+  /** Short label, e.g. "Streak". */
+  label: string
+  /** Human value, e.g. "12 days". */
+  value: string
+}
+
+export interface WeeklyDigest {
+  /** ISO day range covered (last 7 days ending today). */
+  from: string
+  to: string
+  lines: DigestLine[]
+  /** Biggest win this week (most-done habit), or null. */
+  win: string | null
+  /** Biggest slip — a habit that fell off vs. the prior week, or null. */
+  slip: string | null
+  /** Mood trend versus the previous 7 days: 'up' | 'down' | 'flat' | null. */
+  moodTrend: 'up' | 'down' | 'flat' | null
+}
+
+/**
+ * Plain-text recap of the last 7 days: logging streak, task completion, mood
+ * trend vs. the prior week, and the biggest habit win/slip. Pure + deterministic
+ * so the card renders the same all day and is unit-testable.
+ */
+export function weeklyDigest(data: JournalData, today = todayISO()): WeeklyDigest {
+  const to = today
+  const from = addDays(today, -6)
+  const prevTo = addDays(from, -1)
+  const prevFrom = addDays(prevTo, -6)
+
+  const lines: DigestLine[] = []
+
+  const streak = currentStreak(data, today)
+  lines.push({ label: 'Logging streak', value: streak === 1 ? '1 day' : `${streak} days` })
+
+  const tasks = taskCompletion(data)
+  lines.push({ label: 'Tasks done', value: `${tasks.pct}% (${tasks.done}/${tasks.total})` })
+
+  // Mood trend vs. prior week.
+  const moodNow = metricMean(data, 'mood', from, to)
+  const moodPrev = metricMean(data, 'mood', prevFrom, prevTo)
+  let moodTrend: WeeklyDigest['moodTrend'] = null
+  if (moodNow != null) {
+    if (moodPrev == null) {
+      lines.push({ label: 'Avg mood', value: `${Math.round(moodNow * 10) / 10}/10` })
+      moodTrend = 'flat'
+    } else {
+      const delta = moodNow - moodPrev
+      moodTrend = Math.abs(delta) < 0.25 ? 'flat' : delta > 0 ? 'up' : 'down'
+      const arrow = moodTrend === 'up' ? '↑' : moodTrend === 'down' ? '↓' : '→'
+      lines.push({ label: 'Avg mood', value: `${Math.round(moodNow * 10) / 10}/10 ${arrow} from ${Math.round(moodPrev * 10) / 10}` })
+    }
+  }
+
+  // Biggest win / slip — per-habit completion counts this week vs. last.
+  let win: string | null = null
+  let slip: string | null = null
+  let bestCount = 0
+  let worstDrop = 0
+  for (const h of data.habits) {
+    if (h.archived || h.avoid) continue
+    let now = 0
+    let prev = 0
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(to, -i)
+      if (d >= h.startedOn && habitDoneOn(data, h, d)) now += 1
+      const pd = addDays(prevTo, -i)
+      if (pd >= h.startedOn && habitDoneOn(data, h, pd)) prev += 1
+    }
+    if (now > bestCount) {
+      bestCount = now
+      win = `${h.emoji ? h.emoji + ' ' : ''}${h.name} — ${now}× this week`
+    }
+    const drop = prev - now
+    if (prev >= 3 && drop > worstDrop) {
+      worstDrop = drop
+      slip = `${h.emoji ? h.emoji + ' ' : ''}${h.name} — down ${drop} from last week`
+    }
+  }
+
+  return { from, to, lines, win, slip, moodTrend }
+}
+
+export interface SleepDebtPoint {
+  date: string
+  /** Hours slept that night (null if not logged). */
+  sleep: number | null
+  /** Cumulative deficit vs. target in hours (positive = behind). Clamped at 0. */
+  debt: number
+}
+
+/**
+ * Running sleep-debt series over the last `days`: each night's shortfall vs.
+ * `target` hours accrues; a night above target pays debt back. Debt is clamped
+ * at 0 (you can't bank surplus indefinitely). Nights with no logged sleep are
+ * treated as neutral (no accrual) so a gap doesn't fake a deficit. Pure.
+ */
+export function sleepDebt(data: JournalData, target = 8, days = 14, today = todayISO()): SleepDebtPoint[] {
+  const byDay = new Map<string, number>()
+  for (const m of data.metrics) {
+    if (m.sleep != null) byDay.set(m.date, m.sleep)
+  }
+  const out: SleepDebtPoint[] = []
+  let debt = 0
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(today, -i)
+    const sleep = byDay.has(date) ? byDay.get(date)! : null
+    if (sleep != null) {
+      debt = Math.max(0, debt + (target - sleep))
+    }
+    out.push({ date, sleep, debt: Math.round(debt * 10) / 10 })
+  }
+  return out
+}
+
+export interface PeriodTrend {
+  /** Percentage change vs. the prior equal-length period, rounded. */
+  pct: number
+  dir: 'up' | 'down' | 'flat'
+}
+
+/**
+ * Compare a value now against a prior baseline and produce a signed % change +
+ * direction for a trend arrow. `flat` when the rounded change is 0 (or the
+ * baseline is 0 and there's no current value). Pure.
+ */
+export function periodTrend(current: number, prior: number): PeriodTrend {
+  if (prior === 0) {
+    if (current === 0) return { pct: 0, dir: 'flat' }
+    return { pct: 100, dir: 'up' }
+  }
+  const pct = Math.round(((current - prior) / prior) * 100)
+  return { pct, dir: pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat' }
+}
+
+/**
+ * Habit-completion trend for the last 7 days vs. the previous 7, as a % change.
+ * Drives the arrow on the "Current streak"/activity tiles. Pure.
+ */
+export function weeklyHabitTrend(data: JournalData, today = todayISO()): PeriodTrend {
+  const to = today
+  const from = addDays(today, -6)
+  const prevTo = addDays(from, -1)
+  const prevFrom = addDays(prevTo, -6)
+  const now = habitDoneCount(data, from, to)
+  const prev = habitDoneCount(data, prevFrom, prevTo)
+  return periodTrend(now, prev)
+}
+
+/** Pretty "Jun 1 – Jun 7" label for the digest range. */
+export function digestRangeLabel(from: string, to: string): string {
+  return `${prettyDay(from)} – ${prettyDay(to)}`
 }
 
 /** Simple trailing moving average over a numeric series (nulls skipped). */

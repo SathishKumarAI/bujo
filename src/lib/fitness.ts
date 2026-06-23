@@ -250,6 +250,54 @@ export function sessionVolume(rows: WorkoutSet[]): number {
   return rows.filter((r) => r.kind !== 'warmup').reduce((a, r) => a + (r.weight ?? 0) * (r.reps ?? 0), 0)
 }
 
+export interface SessionSummary {
+  /** Total working-set volume (Σ weight × reps; warm-ups excluded). */
+  volume: number
+  /** Count of working sets that have both a weight and reps logged. */
+  sets: number
+  /** Heaviest single working set (by weight, ties broken by reps), or null. */
+  topSet: { exercise: string; weight: number; reps: number } | null
+}
+
+/**
+ * Post-session rollup for a finished workout: total working volume, working-set
+ * count, and the heaviest single set. Warm-ups are excluded throughout so the
+ * numbers reflect the actual training stimulus. Pure — derives only from rows.
+ */
+export function sessionSummary(rows: WorkoutSet[]): SessionSummary {
+  const working = rows.filter((r) => r.kind !== 'warmup' && (r.weight ?? 0) > 0 && (r.reps ?? 0) > 0)
+  let topSet: SessionSummary['topSet'] = null
+  for (const r of working) {
+    const w = r.weight!, reps = r.reps!
+    if (!topSet || w > topSet.weight || (w === topSet.weight && reps > topSet.reps)) {
+      topSet = { exercise: r.exercise.trim(), weight: w, reps }
+    }
+  }
+  return { volume: sessionVolume(rows), sets: working.length, topSet }
+}
+
+/**
+ * Auto warm-up ramp for a working weight: a bare-bar set plus 40/60/80% steps,
+ * each rounded to the nearest loadable `step` (defaults to 2.5 — the smallest
+ * common plate pair). The bare bar and any duplicate/over-target rungs are
+ * dropped so the ramp is strictly ascending and never meets or exceeds the
+ * working weight. Returns [] when the target isn't above the bar. Pure.
+ */
+export function warmupRamp(working: number, bar = 20, step = 2.5): { pct: number; weight: number }[] {
+  if (!(working > bar)) return []
+  const round = (w: number) => Math.max(bar, Math.round(w / step) * step)
+  const out: { pct: number; weight: number }[] = []
+  const seen = new Set<number>()
+  for (const pct of [0, 40, 60, 80]) {
+    const weight = pct === 0 ? bar : round(working * (pct / 100))
+    if (weight >= working) continue // never ramp to or past the work set
+    if (seen.has(weight)) continue // collapse rungs that round to the same load
+    seen.add(weight)
+    out.push({ pct, weight })
+  }
+  return out
+}
+
 /** Best (heaviest) logged weight per day for an exercise — for a progression chart. */
 export function exerciseProgression(data: JournalData, exercise: string): { date: string; weight: number }[] {
   const ex = exercise.trim().toLowerCase()

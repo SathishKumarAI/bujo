@@ -13,7 +13,9 @@ import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '..
 import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv } from '../lib/csv'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup } from '../lib/csv'
+import { journalToICS } from '../lib/ics'
+import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender } from '../lib/types'
@@ -57,9 +59,10 @@ export function Settings() {
   }
 
   async function doExport() {
-    // Inline IndexedDB-stored photos so the backup is self-contained.
+    // Inline IndexedDB-stored photos so the backup is self-contained, then strip
+    // device-/account-specific sync secrets so the file is safe to share/move.
     const full = await inlineImages(data)
-    download(`bujo-backup-${todayISO()}.json`, exportJSON(full))
+    download(`bujo-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
     setSettings({ lastBackup: todayISO() })
   }
 
@@ -243,17 +246,32 @@ export function Settings() {
           </Card>
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
-        {!s.lastBackup && (
-          <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
-            <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage · export a copy.
-          </p>
-        )}
+        {(() => {
+          const stale = daysSinceBackup(s.lastBackup, todayISO())
+          if (stale == null) {
+            return (
+              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
+                <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage · export a copy.
+              </p>
+            )
+          }
+          if (stale >= 7) {
+            return (
+              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
+                <AlertTriangle size={14} /> Not backed up in {stale} day{stale === 1 ? '' : 's'} · export a fresh copy to be safe.
+              </p>
+            )
+          }
+          return null
+        })()}
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={doExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export JSON</Button>
           <Button onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><FileText size={14} /> Export Markdown</Button>
+          <Button onClick={() => download(`bujo-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Export calendar</Button>
           <Button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
+        <p className="mt-1.5 text-xs text-overlay0">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
         <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-xs text-overlay0">Export a section as CSV (for spreadsheets):</p>

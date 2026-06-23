@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { completionRate30, isScheduledOn } from './habitStats'
+import { completionRate30, habitCellFill, isScheduledOn } from './habitStats'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
 
@@ -99,5 +99,38 @@ describe('completionRate30', () => {
     const r = completionRate30(emptyJournal(), h, '2026-06-18', 3) // Thu/Wed/Tue — no Sunday
     expect(r.scheduled).toBe(0)
     expect(r.pct).toBe(0)
+  })
+})
+
+describe('habitCellFill', () => {
+  /** Journal with a count value logged for the habit on a day. */
+  function withValue(h: Habit, day: string, value: number): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    d.habitValues = { [day]: { [h.id]: value } }
+    return d
+  }
+
+  it('check habit: empty when off, met when on', () => {
+    const h = habit({ type: 'check' })
+    const d = emptyJournal(); d.habits = [h]; d.habitLog['2026-06-18'] = [h.id]
+    expect(habitCellFill(emptyJournal(), h, '2026-06-18').state).toBe('empty')
+    expect(habitCellFill(d, h, '2026-06-18')).toEqual({ state: 'met', ratio: 1 })
+  })
+
+  it('count habit: partial below target with the ratio, met at/above', () => {
+    const h = habit({ type: 'count', target: 8 })
+    expect(habitCellFill(withValue(h, '2026-06-18', 0), h, '2026-06-18')).toEqual({ state: 'empty', ratio: 0 })
+    expect(habitCellFill(withValue(h, '2026-06-18', 4), h, '2026-06-18')).toEqual({ state: 'partial', ratio: 0.5 })
+    expect(habitCellFill(withValue(h, '2026-06-18', 8), h, '2026-06-18')).toEqual({ state: 'met', ratio: 1 })
+    expect(habitCellFill(withValue(h, '2026-06-18', 12), h, '2026-06-18')).toEqual({ state: 'met', ratio: 1 })
+  })
+
+  it('ratio is clamped to 1 and partial never reaches met', () => {
+    const h = habit({ type: 'timer', target: 30 })
+    const f = habitCellFill(withValue(h, '2026-06-18', 29), h, '2026-06-18')
+    expect(f.state).toBe('partial')
+    expect(f.ratio).toBeCloseTo(29 / 30)
+    expect(f.ratio).toBeLessThan(1)
   })
 })

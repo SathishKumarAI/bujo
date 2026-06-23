@@ -1,5 +1,6 @@
-// Minimal .ics (iCalendar) parser — extracts VEVENT summary + start date.
-// Handles line folding and both DATE and DATE-TIME DTSTART forms.
+// Minimal .ics (iCalendar) parser + exporter — round-trips VEVENT summary +
+// start date. Handles line folding and both DATE and DATE-TIME DTSTART forms.
+import type { JournalData } from './types'
 
 export interface IcsEvent {
   date: string // ISO day
@@ -43,4 +44,61 @@ export function parseICS(text: string): IcsEvent[] {
     }
   }
   return events
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+/** Escape a value for an iCalendar text field (RFC 5545 §3.3.11). */
+function escText(v: string): string {
+  return v.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n')
+}
+
+/** "2026-06-10" → "20260610" (all-day DATE value). Non-ISO input is dropped. */
+function toIcsDate(iso: string): string | null {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return m ? `${m[1]}${m[2]}${m[3]}` : null
+}
+
+/** Wrap a built list of VEVENT bodies in a VCALENDAR envelope. */
+function calendar(events: string[]): string {
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//bujo//journal//EN',
+    'CALSCALE:GREGORIAN',
+    ...events,
+    'END:VCALENDAR',
+  ].join('\r\n')
+}
+
+function vevent(uid: string, date: string, summary: string): string | null {
+  const d = toIcsDate(date)
+  if (!d) return null
+  return [
+    'BEGIN:VEVENT',
+    `UID:${escText(uid)}`,
+    `DTSTART;VALUE=DATE:${d}`,
+    `SUMMARY:${escText(summary)}`,
+    'END:VEVENT',
+  ].join('\r\n')
+}
+
+/**
+ * Export dated journal items as an all-day iCalendar (.ics) feed importable into
+ * Google/Apple Calendar: `event`-type entries, plus this year's birthdays.
+ * Pure; pass `year` for deterministic birthday dates (defaults to current year).
+ */
+export function journalToICS(data: JournalData, year = new Date().getFullYear()): string {
+  const events: string[] = []
+  for (const e of data.entries) {
+    if (e.type !== 'event' || !e.date) continue
+    const v = vevent(`bujo-entry-${e.id}`, e.date, e.text)
+    if (v) events.push(v)
+  }
+  for (const b of data.birthdays) {
+    const iso = `${year}-${String(b.month).padStart(2, '0')}-${String(b.day).padStart(2, '0')}`
+    const v = vevent(`bujo-bday-${b.id}-${year}`, iso, `🎂 ${b.name}`)
+    if (v) events.push(v)
+  }
+  return calendar(events)
 }

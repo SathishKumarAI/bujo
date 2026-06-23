@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { habitIntensity, nextHabitValue } from './stats'
+import { dayIntensity, intensityOpacity } from './habitIntensity'
+import { emptyJournal } from './storage'
+import type { Habit, JournalData } from './types'
 
 describe('habitIntensity', () => {
   it('check: binary on/off', () => {
@@ -67,5 +70,44 @@ describe('nextHabitValue', () => {
   it('rating: steps by 1 up to 5', () => {
     expect(nextHabitValue('rating', 5, 4)).toBe(5)
     expect(nextHabitValue('rating', 5, 5)).toBe(0)
+  })
+})
+
+describe('dayIntensity', () => {
+  const DAY = '2026-06-18'
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Water', category: 'wellness', color: 'sky', startedOn: '2026-06-01', ...p }
+  }
+  function withValue(h: Habit, value: number): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    d.habitValues = { [DAY]: { [h.id]: value } }
+    return d
+  }
+
+  it('check habit: 0 when unlogged, 4 when done', () => {
+    const h = hb({ type: 'check' })
+    const done = emptyJournal(); done.habits = [h]; done.habitLog[DAY] = [h.id]
+    expect(dayIntensity(emptyJournal(), h, DAY)).toBe(0)
+    expect(dayIntensity(done, h, DAY)).toBe(4)
+  })
+
+  it('count habit: graded by fraction of target', () => {
+    const h = hb({ type: 'count', target: 8 })
+    expect(dayIntensity(withValue(h, 0), h, DAY)).toBe(0)
+    expect(dayIntensity(withValue(h, 2), h, DAY)).toBe(1)
+    expect(dayIntensity(withValue(h, 4), h, DAY)).toBe(2)
+    expect(dayIntensity(withValue(h, 6), h, DAY)).toBe(3)
+    expect(dayIntensity(withValue(h, 8), h, DAY)).toBe(4)
+  })
+})
+
+describe('intensityOpacity', () => {
+  it('level 0 is transparent; levels ramp up to 1 at level 4', () => {
+    expect(intensityOpacity(0)).toBe(0)
+    expect(intensityOpacity(4)).toBe(1)
+    expect(intensityOpacity(1)).toBeGreaterThan(0)
+    expect(intensityOpacity(1)).toBeLessThan(intensityOpacity(2))
+    expect(intensityOpacity(2)).toBeLessThan(intensityOpacity(3))
   })
 })

@@ -47,6 +47,39 @@ export function parseTags(text: string): string[] {
 }
 
 /**
+ * Build a tag → entries index across the journal (auto-collections / tag pages).
+ * Tags come from each entry's parsed `tags`, falling back to re-parsing the text
+ * for older entries that predate tag storage. Collection-only entries (empty
+ * date) are still included — a #tag is a #tag wherever it lives.
+ * Returns tags sorted by frequency (desc), then alphabetically.
+ */
+export function tagIndex(entries: Entry[]): { tag: string; entries: Entry[] }[] {
+  const map = new Map<string, Entry[]>()
+  for (const e of entries) {
+    const tags = e.tags.length ? e.tags : parseTags(e.text)
+    for (const t of new Set(tags)) {
+      const list = map.get(t)
+      if (list) list.push(e)
+      else map.set(t, [e])
+    }
+  }
+  return [...map.entries()]
+    .map(([tag, es]) => ({ tag, entries: es }))
+    .sort((a, b) => b.entries.length - a.entries.length || (a.tag < b.tag ? -1 : 1))
+}
+
+/**
+ * Entries waiting in the brain-dump inbox: dateless (rapid-captured but not yet
+ * scheduled) and not filed into a collection, excluding anything already done or
+ * dropped. These are the items to triage — give them a day or a home.
+ */
+export function inboxEntries(entries: Entry[]): Entry[] {
+  return entries
+    .filter((e) => !e.date && !e.collection && e.status !== 'done' && e.status !== 'dropped')
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+}
+
+/**
  * Parse a quick-capture line into a partial entry.
  * Prefixes: "t " task, "e " event, "n " note, "* " important, "^ " memory.
  * Examples: "t buy lamb food #camp", "e ecstatic dance", "* eliminate dairy".

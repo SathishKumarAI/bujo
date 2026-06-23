@@ -3,6 +3,7 @@ import { todayISO, dayDiff, addDays } from './date'
 import { weeklyHabitCount, habitDoneOn } from './stats'
 import { weeklyActiveMinutes } from './fitness'
 import { PICKLE_PLAN } from './pickleballPlan'
+import { insights, type Insight } from './correlations'
 
 /**
  * The coach turns logged data into a few proactive "what to do next" prompts —
@@ -110,4 +111,40 @@ export function coachTips(data: JournalData, today = todayISO()): CoachTip[] {
   }
 
   return tips.slice(0, 4)
+}
+
+export interface CoachDigest {
+  /** Top actionable tips (a trimmed slice of coachTips). */
+  tips: CoachTip[]
+  /** A single strongest data insight to pair with the tips, or null. */
+  insight: Insight | null
+  /** One-line headline summarising what to focus on, derived from the tips. */
+  headline: string
+}
+
+/**
+ * A compact "what to focus on" bundle for the Insights view: the top couple of
+ * coach tips plus the single strongest correlation insight, with a derived
+ * headline. Pairs the forward-looking coach (do this next) with the backward
+ * pattern read (here's why) in one card. Pure + deterministic.
+ */
+export function coachDigest(data: JournalData, today = todayISO()): CoachDigest {
+  const allTips = coachTips(data, today)
+  const tips = allTips.slice(0, 2)
+
+  // Strongest insight = highest |r|.
+  const found = insights(data)
+  const insight = found.length
+    ? [...found].sort((a, b) => Math.abs(b.r) - Math.abs(a.r))[0]
+    : null
+
+  // Headline: prefer an urgent "do" tip, else celebrate a win, else neutral.
+  let headline: string
+  const doTip = allTips.find((t) => t.tone === 'do')
+  const winTip = allTips.find((t) => t.tone === 'win')
+  if (doTip) headline = `Next up: ${doTip.title}`
+  else if (winTip) headline = `Nice — ${winTip.title.toLowerCase()}`
+  else headline = 'You’re on track — keep the momentum.'
+
+  return { tips, insight, headline }
 }
