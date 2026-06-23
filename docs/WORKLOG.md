@@ -1,5 +1,25 @@
 # Worklog
 
+## 2026-06-22 23:20 — Account change-password + feature-prompt template (PR #49)
+
+**Summary:** Audited the whole auth/login surface — found it already complete
+(email sign-in/up, Google OAuth, guest, forgot-password, validation). The one
+genuine in-app gap was that `updatePassword()` existed in `supabase.ts` but had
+no UI; wired a change-password form into the signed-in Account view. Added a
+reusable per-feature prompt template. Merged PR #49.
+
+**Changes:**
+- `src/views/Account.tsx` — collapsible change-password form for signed-in users
+  (reuses `passwordError`, Enter-to-submit, show/hide).
+- `docs/prompts/feature-prompt-template.md` (new).
+
+**Decisions:** Out of code scope (user/dashboard actions): enabling Google
+provider in Supabase; hard account deletion (needs backend — app is local-first).
+
+**Follow-ups:**
+- [ ] Building the rest of `docs/FEATURE-BACKLOG-500.md` in verified batches
+  (buildable-now only; backend/dep/large-refactor items skipped).
+
 ## 2026-06-22 23:05 — 572-feature backlog + built top 10 (multi-agent), merged 2 PRs
 
 **Summary:** Merged the pending PR #47, finished the deferred R2-5 refactor, then
