@@ -480,6 +480,32 @@ function TodayStrip({
           const val = habitValueOn(data, h, today)
           const on = habitDoneOn(data, h, today)
           const next = nextHabitValue(type, target, val)
+          // Count/timer habits get explicit −/+ steppers so you can both add and
+          // subtract (and overshoot the target) without cycling back to 0.
+          if ((type === 'count' || type === 'timer') && !h.avoid) {
+            const step = type === 'timer' ? (target >= 20 ? 5 : 1) : 1
+            return (
+              <span
+                key={h.id}
+                className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs"
+                style={{ borderColor: on ? cat(h.color) : cat('surface1'), background: on ? cat(h.color) + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}
+              >
+                <span className="pl-1">{h.emoji ?? '●'} {h.name}</span>
+                <button
+                  onClick={() => onSetValue(today, h.id, Math.max(0, val - step))}
+                  disabled={val <= 0}
+                  aria-label={`Decrease ${h.name}`}
+                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-overlay1 transition-colors hover:text-text disabled:opacity-30"
+                >−</button>
+                <span className="min-w-[2.5rem] text-center tabular-nums text-overlay1">{val}/{target}{type === 'timer' ? 'm' : ''}</span>
+                <button
+                  onClick={() => onSetValue(today, h.id, val + step)}
+                  aria-label={`Increase ${h.name}`}
+                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-overlay1 transition-colors hover:text-text"
+                >+</button>
+              </span>
+            )
+          }
           return (
             <button
               key={h.id}

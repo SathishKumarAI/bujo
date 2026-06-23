@@ -6,7 +6,7 @@ import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../co
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 
@@ -50,7 +50,15 @@ const RESOURCES = [
 ]
 
 export function Pickleball() {
-  const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings } = useJournal()
+  const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings, logDupr, removeDupr } = useJournal()
+  const [dupr, setDupr] = useState({ date: todayISO(), rating: '' })
+  const duprStats = duprTrend(data.settings)
+  function saveDupr() {
+    const r = Number(dupr.rating)
+    if (!dupr.rating || Number.isNaN(r) || r <= 0) return
+    logDupr(dupr.date, r)
+    setDupr({ date: todayISO(), rating: '' })
+  }
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
   const [ev, setEv] = useState(evtBlank)
@@ -266,6 +274,50 @@ export function Pickleball() {
             </div>
             <p className="mt-1 text-xs text-overlay0">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
           </div>
+        )}
+      </Card>
+
+      {/* ── DUPR rating tracker ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time · watch the trend climb" collapsible>
+        <div className="mb-3 flex flex-wrap items-end gap-2">
+          <label className="block text-xs text-subtext1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-xs text-subtext1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
+          <Button variant="primary" onClick={saveDupr}>Log rating</Button>
+        </div>
+        {duprStats.points.length === 0 ? (
+          <Empty>No DUPR ratings logged yet · add one above to start the trend.</Empty>
+        ) : (
+          <>
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              <StatTile compact label="Latest" value={duprStats.latest ?? '—'} color="mauve" />
+              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Trophy size={14} />} />
+              <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} color={duprStats.direction === 'up' ? 'green' : duprStats.direction === 'down' ? 'red' : 'overlay0'} />
+            </div>
+            {duprStats.points.length >= 2 && (
+              <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                    <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                    <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                    <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
+                    <Tooltip contentStyle={tip} />
+                    <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            <ul className="mt-3 divide-y divide-surface0">
+              {[...duprStats.points].reverse().slice(0, 8).map((p) => (
+                <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span className="text-subtext1">{prettyDay(p.date)}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium tabular-nums" style={{ color: cat('mauve') }}>{p.rating}</span>
+                    <button onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </Card>
 

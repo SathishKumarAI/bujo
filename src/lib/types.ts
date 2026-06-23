@@ -331,6 +331,9 @@ export interface UrgeWin {
   intensity?: 1 | 2 | 3 | 4 | 5
   /** Which coping technique was used to surf it. */
   technique?: 'surf' | 'delay' | 'halt' | 'reach-out'
+  /** HALT self-check: which unmet needs accompanied the urge (Hungry/Angry/
+   *  Lonely/Tired). Surfacing these reveals the real driver behind cravings. */
+  halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]
 }
 
 /** An if-then plan: a known trigger point for an addiction + how to respond. */
@@ -444,6 +447,8 @@ export interface Settings {
   readingGoalBooks?: number
   /** ISO day the 75-day pickleball 3.5→4.0 plan was started (drives day/phase). */
   pickleballPlanStart?: string
+  /** Dated DUPR rating history (manual log), for the rating-trend sparkline. */
+  duprLog?: { date: string; rating: number }[]
   /** ISO day the 12-week Coaching Academy program was started. */
   coachingStart?: string
   /** Completed Coaching Academy week numbers (1–12). */

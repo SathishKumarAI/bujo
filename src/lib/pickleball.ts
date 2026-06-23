@@ -1,4 +1,4 @@
-import type { JournalData, PickleballSession } from './types'
+import type { JournalData, PickleballSession, Settings } from './types'
 import { todayISO, addDays, dayDiff, fromISODay, WEEKDAYS } from './date'
 
 const sessions = (data: JournalData): PickleballSession[] => data.pickleball ?? []
@@ -339,4 +339,39 @@ export function weekdayPerformance(data: JournalData): { day: string; games: num
     acc[dow].gamesWon += s.gamesWon
   }
   return acc.map((d) => ({ ...d, winPct: d.games ? Math.round((d.gamesWon / d.games) * 100) : 0 }))
+}
+
+export interface DuprTrend {
+  /** Chronologically-sorted points (date asc), deduped to one per day (last wins). */
+  points: { date: string; rating: number }[]
+  /** Most recent rating, or null when nothing is logged. */
+  latest: number | null
+  /** Earliest rating, or null when nothing is logged. */
+  first: number | null
+  /** latest − first, rounded to 2dp (0 when fewer than 2 points). */
+  change: number
+  /** Highest logged rating. */
+  best: number | null
+  /** 'up' | 'down' | 'flat' over the logged span (flat when < 2 points). */
+  direction: 'up' | 'down' | 'flat'
+}
+
+/**
+ * DUPR rating trend from the manual log (settings.duprLog). Sorts points by
+ * date, dedupes to one entry per day (keeping the last logged that day), and
+ * summarises the change/best/direction for a sparkline + delta badge. Pure.
+ */
+export function duprTrend(settings: Settings): DuprTrend {
+  const byDay = new Map<string, number>()
+  for (const e of settings.duprLog ?? []) byDay.set(e.date, e.rating)
+  const points = [...byDay.entries()]
+    .map(([date, rating]) => ({ date, rating }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+  if (points.length === 0) return { points, latest: null, first: null, change: 0, best: null, direction: 'flat' }
+  const first = points[0].rating
+  const latest = points[points.length - 1].rating
+  const best = Math.max(...points.map((p) => p.rating))
+  const change = points.length < 2 ? 0 : Math.round((latest - first) * 100) / 100
+  const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
+  return { points, latest, first, change, best, direction }
 }

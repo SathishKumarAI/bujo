@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -167,6 +167,57 @@ describe('pickleball', () => {
     expect(wp).toHaveLength(7)
     expect(wp[0].day).toBe('Sun')
     expect(wp[1]).toMatchObject({ day: 'Mon', games: 4, gamesWon: 3, winPct: 75 })
+  })
+})
+
+describe('duprTrend', () => {
+  it('empty log → all-null, flat', () => {
+    const t = duprTrend(emptyJournal().settings)
+    expect(t.points).toEqual([])
+    expect(t.latest).toBeNull()
+    expect(t.first).toBeNull()
+    expect(t.best).toBeNull()
+    expect(t.change).toBe(0)
+    expect(t.direction).toBe('flat')
+  })
+
+  it('sorts by date, dedupes same-day (last wins), and summarises an upward trend', () => {
+    const settings = {
+      ...emptyJournal().settings,
+      duprLog: [
+        { date: '2026-06-10', rating: 3.5 },
+        { date: '2026-06-01', rating: 3.2 },
+        { date: '2026-06-10', rating: 3.6 }, // same day → replaces 3.5
+        { date: '2026-06-20', rating: 3.8 },
+      ],
+    }
+    const t = duprTrend(settings)
+    expect(t.points).toEqual([
+      { date: '2026-06-01', rating: 3.2 },
+      { date: '2026-06-10', rating: 3.6 },
+      { date: '2026-06-20', rating: 3.8 },
+    ])
+    expect(t.first).toBe(3.2)
+    expect(t.latest).toBe(3.8)
+    expect(t.best).toBe(3.8)
+    expect(t.change).toBe(0.6)
+    expect(t.direction).toBe('up')
+  })
+
+  it('detects a downward trend', () => {
+    const settings = { ...emptyJournal().settings, duprLog: [{ date: '2026-06-01', rating: 4.0 }, { date: '2026-06-10', rating: 3.7 }] }
+    const t = duprTrend(settings)
+    expect(t.change).toBe(-0.3)
+    expect(t.direction).toBe('down')
+    expect(t.best).toBe(4.0)
+  })
+
+  it('single point → change 0, flat', () => {
+    const settings = { ...emptyJournal().settings, duprLog: [{ date: '2026-06-01', rating: 3.5 }] }
+    const t = duprTrend(settings)
+    expect(t.change).toBe(0)
+    expect(t.direction).toBe('flat')
+    expect(t.latest).toBe(3.5)
   })
 })
 
