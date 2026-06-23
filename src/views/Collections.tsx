@@ -6,7 +6,7 @@ import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
-import { inboxEntries, tagIndex } from '../lib/bullets'
+import { collectionProgress, inboxEntries, tagIndex } from '../lib/bullets'
 
 export function Collections() {
   const { data, addBirthday, removeBirthday, addCollection, removeCollection, addEntry } = useJournal()
@@ -212,6 +212,22 @@ export function Collections() {
               <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
               <Button type="submit" variant="primary">Add</Button>
             </form>
+            {(() => {
+              const p = collectionProgress(data.entries, openCol)
+              if (p.total === 0) return null
+              const pct = Math.round(p.rate * 100)
+              return (
+                <div className="mb-3" title={`${p.done} of ${p.total} tasks done`}>
+                  <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                    <span>Checklist</span>
+                    <span><b style={{ color: cat('green') }}>{p.done}/{p.total}</b> · {pct}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('green') }} />
+                  </div>
+                </div>
+              )
+            })()}
             <ul>
               {data.entries.filter((e) => e.collection === openCol).map((e) => (
                 <EntryRow key={e.id} entry={e} />

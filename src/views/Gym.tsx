@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell, type LucideIcon,
+  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell,
+  Scale, TrendingDown, AlertTriangle, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -18,12 +19,13 @@ import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'
 import { exerciseInfo } from '../lib/exerciseInfo'
 import { cat } from '../lib/colors'
-import { todayISO } from '../lib/date'
+import { todayISO, prettyDay } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
   weeklyVolumeSeries, exerciseProgression, isNewPR, warmupRamp, sessionSummary,
   weeklySetsPerMuscle, e1rmProgression, MUSCLE_SET_LANDMARK,
+  bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts,
 } from '../lib/fitness'
 import { PlateStack, plateColor } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
@@ -82,6 +84,11 @@ export function Gym() {
   const e1rmProg = focusEx ? e1rmProgression(data, focusEx) : []
   // Weekly hard-sets per muscle — hypertrophy volume balance (read-only).
   const muscleSets = useMemo(() => weeklySetsPerMuscle(data), [data])
+  // Strength snapshots (all read-only, derived from logged PRs / bodyweight).
+  const bigThree = useMemo(() => bigThreeTotal(data), [data])
+  const relStrength = useMemo(() => relativeStrength(data), [data])
+  const neglected = useMemo(() => neglectedMuscles(data), [data])
+  const stalled = useMemo(() => stalledLifts(data), [data])
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
   // cached from a prior search); otherwise fall back to the keyword mapper.
@@ -531,6 +538,16 @@ export function Gym() {
       {/* ── Weekly volume balance · hard sets per muscle vs hypertrophy landmark ── */}
       <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
 
+      {/* ── Strength snapshots · big-three total + relative strength ── */}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <BigThreeCard total={bigThree} unit={unit} setFocusEx={setFocusEx} />
+        <RelativeStrengthCard rows={relStrength} unit={unit} setFocusEx={setFocusEx} />
+      </div>
+
+      {/* ── Neglected-muscle alert + stalled-lift detector ── */}
+      <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
+      <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
+
       {rpeSeries.length >= 2 && (
         <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
           <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
@@ -637,6 +654,143 @@ function MuscleVolumeBalance({ counts, setFocusEx }: { counts: import('../lib/fi
           <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>
         </p>
       )}
+    </Card>
+  )
+}
+
+/**
+ * Big-three powerlifting total: best squat + bench + deadlift, with each lift's
+ * PR and the running sum. Missing lifts show a dash and a hint to log them.
+ * Read-only — derived from logged PRs via bigThreeTotal.
+ */
+function BigThreeCard({ total, unit, setFocusEx }: { total: import('../lib/fitness').BigThreeTotal; unit: string; setFocusEx: (e: string | null) => void }) {
+  const liftColor: Record<string, string> = { Squat: 'green', Bench: 'red', Deadlift: 'blue' }
+  return (
+    <Card title="Big-three total" subtitle="Squat + bench + deadlift · your powerlifting number" defer>
+      {total.total === 0 ? (
+        <Empty>Log a squat, bench, and deadlift to build your total.</Empty>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {total.lifts.map((l) => (
+              <button
+                key={l.lift}
+                onClick={() => l.weight > 0 && setFocusEx(l.lift)}
+                disabled={l.weight === 0}
+                className="rounded-xl border border-surface0 bg-base px-3 py-2.5 text-left disabled:cursor-default"
+                title={l.weight > 0 ? `Best ${l.lift}: ${l.weight}${unit}${l.date ? ` on ${l.date}` : ''}` : `No ${l.lift} logged yet`}
+              >
+                <p className="text-xs text-subtext1">{l.lift}</p>
+                <p className="text-lg font-bold" style={{ color: l.weight > 0 ? cat(liftColor[l.lift]) : cat('overlay0') }}>
+                  {l.weight > 0 ? `${l.weight}${unit}` : '—'}
+                </p>
+                {l.date && <p className="text-[10px] text-overlay0">{prettyDay(l.date)}</p>}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex items-baseline justify-between border-t border-surface0 pt-3">
+            <span className="inline-flex items-center gap-1.5 text-sm text-subtext1"><Trophy size={15} style={{ color: cat('yellow') }} /> Total</span>
+            <span className="text-2xl font-bold" style={{ color: cat('yellow') }}>{total.total}{unit}</span>
+          </div>
+          {!total.complete && <p className="mt-1 text-[11px] text-overlay0">Log all three for your true total.</p>}
+        </>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * Relative strength: each PR as a multiple of the latest logged bodyweight, with
+ * a strength-standard band. Hidden until a bodyweight is logged. Read-only.
+ */
+function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: import('../lib/fitness').RelativeStrength[]; unit: string; setFocusEx: (e: string | null) => void }) {
+  const bandColor: Record<string, string> = { Elite: 'mauve', Advanced: 'blue', Intermediate: 'green', Novice: 'yellow', Beginner: 'overlay0' }
+  return (
+    <Card title="Relative strength" subtitle="Best lift ÷ bodyweight · with strength standard" defer>
+      {rows.length === 0 ? (
+        <Empty>Log your bodyweight and some PRs to see strength-to-weight ratios.</Empty>
+      ) : (
+        <ul className="space-y-1.5 text-sm">
+          {rows.slice(0, 8).map((r) => (
+            <li key={r.exercise}>
+              <button
+                onClick={() => setFocusEx(r.exercise)}
+                className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left hover:bg-surface0/50"
+                title={`${r.exercise}: ${r.weight}${unit} = ${r.ratio}× bodyweight`}
+              >
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
+                  <Scale size={14} style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
+                </span>
+                <span className="shrink-0 text-overlay0">
+                  <span className="font-semibold" style={{ color: cat('text') }}>{r.ratio}×</span>
+                  <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat(bandColor[r.band] ?? 'overlay0') + '22', color: cat(bandColor[r.band] ?? 'overlay0') }}>{r.band}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * Neglected-muscle alert: groups with zero working sets in the last 10 days, so
+ * the user can rebalance. Shows days since each was last trained. Read-only.
+ */
+function NeglectedMuscles({ muscles, setFocusEx }: { muscles: import('../lib/fitness').NeglectedMuscle[]; setFocusEx: (e: string | null) => void }) {
+  const named = muscles
+    .map((m) => ({ ...m, name: muscleNames([m.muscle])[0] }))
+    .filter((m) => m.name)
+  if (named.length === 0) return null // every muscle trained recently → nothing to nudge
+  return (
+    <Card title="Needs attention" subtitle="No hard sets in the last 10 days · tap to focus the map" defer>
+      <div className="flex flex-wrap gap-1.5">
+        {named.map((m) => (
+          <button
+            key={m.muscle}
+            onClick={() => setFocusEx(m.name)}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
+            style={{ background: cat('peach') + '22', color: cat('peach') }}
+            title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
+          >
+            <AlertTriangle size={12} /> {m.name}
+            <span className="text-[10px] text-overlay0">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+/**
+ * Stalled-lift detector: exercises whose top weight hasn't improved across the
+ * last few sessions, with the plateau length, nudging a deload/variation.
+ * Read-only — derived from exercise progression.
+ */
+function StalledLifts({ lifts, unit, setFocusEx }: { lifts: import('../lib/fitness').StalledLift[]; unit: string; setFocusEx: (e: string | null) => void }) {
+  if (lifts.length === 0) return null // nothing plateaued → hide
+  return (
+    <Card title="Stalled lifts" subtitle="No new top set in the last 3+ sessions · time for a reset or variation" defer>
+      <ul className="space-y-1.5 text-sm">
+        {lifts.slice(0, 6).map((l) => (
+          <li key={l.exercise}>
+            <button
+              onClick={() => setFocusEx(l.exercise)}
+              className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left hover:bg-surface0/50"
+              title={`${l.exercise} stuck at ${l.top}${unit} across ${l.sessions} sessions (last ${l.lastDate})`}
+            >
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
+                <TrendingDown size={14} style={{ color: cat('red') }} /> <span className="truncate">{l.exercise}</span>
+              </span>
+              <span className="shrink-0 text-overlay0">
+                <span className="font-semibold" style={{ color: cat('peach') }}>{l.top}{unit}</span>
+                <span className="ml-1.5 text-[10px]">{l.sessions} sessions</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </Card>
   )
 }

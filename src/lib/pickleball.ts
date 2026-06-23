@@ -1,5 +1,5 @@
 import type { JournalData, PickleballSession, Settings } from './types'
-import { todayISO, addDays, dayDiff, fromISODay, WEEKDAYS } from './date'
+import { todayISO, addDays, dayDiff, fromISODay, ymOf, prettyMonth, WEEKDAYS } from './date'
 
 const sessions = (data: JournalData): PickleballSession[] => data.pickleball ?? []
 
@@ -374,4 +374,157 @@ export function duprTrend(settings: Settings): DuprTrend {
   const change = points.length < 2 ? 0 : Math.round((latest - first) * 100) / 100
   const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
   return { points, latest, first, change, best, direction }
+}
+
+export interface MonthGames {
+  /** "YYYY-MM" key. */
+  ym: string
+  /** "June 2026" label. */
+  label: string
+  sessions: number
+  games: number
+  gamesWon: number
+  winPct: number
+}
+
+/**
+ * Games + win% per calendar month (#monthly games played). Returns the most
+ * recent `months` calendar months ending at `today`, oldest → newest, so empty
+ * months still appear as zero bars. Pure.
+ */
+export function monthlyGames(data: JournalData, months = 6, today = todayISO()): MonthGames[] {
+  // Build the trailing window of month keys ending at today's month.
+  const base = fromISODay(today)
+  const keys: string[] = []
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(base.getFullYear(), base.getMonth() - i, 1)
+    keys.push(ymOf(d))
+  }
+  const acc = new Map<string, { sessions: number; games: number; won: number }>()
+  for (const k of keys) acc.set(k, { sessions: 0, games: 0, won: 0 })
+  for (const s of sessions(data)) {
+    const k = ymOf(s.date)
+    const cur = acc.get(k)
+    if (!cur) continue // outside the window
+    cur.sessions += 1
+    cur.games += s.gamesWon + s.gamesLost
+    cur.won += s.gamesWon
+  }
+  return keys.map((ym) => {
+    const a = acc.get(ym)!
+    return { ym, label: prettyMonth(ym), sessions: a.sessions, games: a.games, gamesWon: a.won, winPct: a.games ? Math.round((a.won / a.games) * 100) : 0 }
+  })
+}
+
+export interface WinRateForecast {
+  /** Whether there's enough data (≥4 decisive sessions) to project. */
+  ready: boolean
+  /** Current win% over all games (whole number). */
+  current: number
+  /** Per-session win% slope from a least-squares fit (points/session). */
+  slope: number
+  /** Projected win% `ahead` sessions out, clamped 0–100 (null when not ready). */
+  projected: number | null
+  /** 'up' | 'down' | 'flat' read of the slope. */
+  direction: 'up' | 'down' | 'flat'
+  /** Rating-readiness label from the projected/current win%. */
+  readiness: 'building' | 'consolidating' | 'ready'
+}
+
+/**
+ * Win-rate trend forecast & rating-readiness (#133). Fits a least-squares line
+ * to each session's win% (oldest → newest) and projects `ahead` sessions out.
+ * Readiness reads the projected level: a sustained ≥60% win rate signals you're
+ * winning enough to move up. Pure; needs ≥4 decisive sessions to project.
+ */
+export function winRateForecast(data: JournalData, ahead = 5): WinRateForecast {
+  const ys = [...sessions(data)]
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map((s) => { const g = s.gamesWon + s.gamesLost; return g ? (s.gamesWon / g) * 100 : null })
+    .filter((v): v is number => v != null)
+  const current = pickleTotals(data).winPct
+  const n = ys.length
+  if (n < 4) {
+    return { ready: false, current, slope: 0, projected: null, direction: 'flat', readiness: current >= 60 ? 'ready' : current >= 45 ? 'consolidating' : 'building' }
+  }
+  // Least-squares slope/intercept over x = 0..n-1.
+  const meanX = (n - 1) / 2
+  const meanY = ys.reduce((a, v) => a + v, 0) / n
+  let num = 0, den = 0
+  ys.forEach((v, i) => { num += (i - meanX) * (v - meanY); den += (i - meanX) ** 2 })
+  const slope = den ? num / den : 0
+  const intercept = meanY - slope * meanX
+  const raw = intercept + slope * (n - 1 + ahead)
+  const projected = Math.max(0, Math.min(100, Math.round(raw)))
+  const direction = slope > 0.5 ? 'up' : slope < -0.5 ? 'down' : 'flat'
+  const gauge = Math.max(projected, current)
+  const readiness = gauge >= 60 ? 'ready' : gauge >= 45 ? 'consolidating' : 'building'
+  return { ready: true, current, slope: Math.round(slope * 10) / 10, projected, direction, readiness }
+}
+
+export interface RpeLoad {
+  /** Sessions that logged an RPE. */
+  sessions: number
+  /** Average RPE across logged sessions, one decimal (0 when none). */
+  avg: number
+  /** Hardest single logged session's RPE (0 when none). */
+  hardest: number
+  /** RPE-weighted training load over the last `days` (Σ rpe·duration-or-1 proxy). */
+  weekLoad: number
+  /** Plain-language read of the average effort. */
+  label: 'easy' | 'moderate' | 'hard' | 'very hard'
+}
+
+/**
+ * Session intensity / training-load from logged RPE (#566 conditioning). Uses
+ * session.rpe; sessions without it are ignored. weekLoad is an RPE×games proxy
+ * over the last `days` (a session-RPE load like training monotony, no duration
+ * required). Pure & empty-safe.
+ */
+export function rpeLoad(data: JournalData, days = 7, today = todayISO()): RpeLoad {
+  const withRpe = sessions(data).filter((s) => s.rpe != null && s.rpe > 0)
+  const n = withRpe.length
+  const avg = n ? Math.round((withRpe.reduce((a, s) => a + (s.rpe ?? 0), 0) / n) * 10) / 10 : 0
+  const hardest = n ? Math.max(...withRpe.map((s) => s.rpe ?? 0)) : 0
+  let weekLoad = 0
+  for (const s of withRpe) {
+    const d = dayDiff(s.date, today)
+    if (d >= 0 && d < days) weekLoad += (s.rpe ?? 0) * Math.max(1, s.gamesWon + s.gamesLost)
+  }
+  const label: RpeLoad['label'] = avg >= 8 ? 'very hard' : avg >= 6 ? 'hard' : avg >= 4 ? 'moderate' : 'easy'
+  return { sessions: n, avg, hardest, weekLoad, label }
+}
+
+export interface PickleMilestone {
+  /** Stable id. */
+  id: string
+  label: string
+  /** The target value to reach. */
+  target: number
+  /** Current progress toward the target. */
+  current: number
+  done: boolean
+}
+
+/**
+ * Pickleball milestone badges (#161) derived purely from logged sessions:
+ * sessions logged, total games won, and the longest winning-session streak.
+ * Each metric has a fixed achievement ladder; the milestone shown per metric is
+ * the next unmet one, or the top tier once all are cleared. Pure.
+ */
+export function pickleMilestones(data: JournalData): PickleMilestone[] {
+  const rows = sessions(data)
+  const sessionCount = rows.length
+  const gamesWon = rows.reduce((a, s) => a + s.gamesWon, 0)
+  const { longest } = winStreaks(data)
+  const ladder = (prefix: string, name: string, current: number, tiers: number[]): PickleMilestone => {
+    const next = tiers.find((t) => current < t)
+    const target = next ?? tiers[tiers.length - 1]
+    return { id: `${prefix}-${target}`, label: `${name}: ${target}`, target, current, done: next == null }
+  }
+  return [
+    ladder('sessions', 'Sessions logged', sessionCount, [10, 25, 50, 100, 250]),
+    ladder('wins', 'Games won', gamesWon, [25, 100, 250, 500, 1000]),
+    ladder('streak', 'Win streak', longest, [3, 5, 10, 20]),
+  ]
 }

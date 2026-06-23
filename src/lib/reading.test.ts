@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks } from './reading'
+import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks } from './reading'
 import type { Book } from './types'
 
 const mk = (p: Partial<Book>): Book => ({
@@ -157,5 +157,45 @@ describe('reading', () => {
 
   it('yearInBooks is null when nothing finished this year', () => {
     expect(yearInBooks([mk({ status: 'finished', finishedOn: '2025-01-01' })], '2026-06-18')).toBeNull()
+  })
+
+  it('finishedByMonth buckets finished books into the 12 months of the year', () => {
+    const books = [
+      mk({ status: 'finished', finishedOn: '2026-01-10' }),
+      mk({ status: 'finished', finishedOn: '2026-01-28' }),
+      mk({ status: 'finished', finishedOn: '2026-05-02' }),
+      mk({ status: 'finished', finishedOn: '2025-05-02' }), // last year → ignored
+      mk({ status: 'reading' }), // not finished → ignored
+    ]
+    const by = finishedByMonth(books, '2026-06-18')
+    expect(by.length).toBe(12)
+    expect(by[0]).toEqual({ month: 1, label: 'Jan', count: 2 })
+    expect(by[4]).toEqual({ month: 5, label: 'May', count: 1 })
+    expect(by.reduce((a, m) => a + m.count, 0)).toBe(3)
+  })
+
+  it('staleBooks flags idle in-progress books, most stale first', () => {
+    const books = [
+      // last activity 2026-06-01, 17 days idle by the 18th → stale
+      mk({ id: 'a', status: 'reading', totalPages: 300, currentPage: 40, startedOn: '2026-05-20', learnings: [{ date: '2026-06-01', text: 'x' }] }),
+      // started long ago, 28 days idle → stale, more idle than 'a'
+      mk({ id: 'b', status: 'reading', totalPages: 200, currentPage: 10, startedOn: '2026-05-21' }),
+      // recent activity → not stale
+      mk({ id: 'c', status: 'reading', totalPages: 200, currentPage: 90, startedOn: '2026-06-15' }),
+      // finished-by-page → excluded
+      mk({ id: 'd', status: 'reading', totalPages: 100, currentPage: 100, startedOn: '2026-01-01' }),
+      // not reading → excluded
+      mk({ id: 'e', status: 'want', startedOn: '2026-01-01' }),
+    ]
+    const stale = staleBooks(books, '2026-06-18')
+    expect(stale.map((s) => s.book.id)).toEqual(['b', 'a'])
+    expect(stale[1].idleDays).toBe(17)
+  })
+
+  it('staleBooks ignores books with no dated activity and respects the threshold', () => {
+    const books = [mk({ id: 'a', status: 'reading', totalPages: 300, currentPage: 40 })] // no startedOn / learnings
+    expect(staleBooks(books, '2026-06-18')).toEqual([])
+    const recent = [mk({ id: 'b', status: 'reading', totalPages: 300, currentPage: 40, startedOn: '2026-06-10' })]
+    expect(staleBooks(recent, '2026-06-18', 14)).toEqual([]) // only 8 days idle
   })
 })

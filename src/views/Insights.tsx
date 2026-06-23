@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, type LucideIcon } from 'lucide-react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, Sun, Activity, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, type PeriodTrend } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
@@ -30,6 +30,12 @@ export function Insights() {
   const digest = weeklyDigest(data)
   const habitTrend = weeklyHabitTrend(data)
   const coach = coachDigest(data)
+
+  // Cross-domain mood/metric reads.
+  const moodWd = bestWorstWeekday(data, 'mood')
+  const split = weekdayWeekendSplit(data)
+  const moodVol = metricVolatility(data, 'mood')
+  const momentum = momentumIndicator(data)
 
   // Habit deep-dives — anchored to your hottest build habit (top of the
   // streak leaderboard) so the weekday/consistency/month cards always have a
@@ -152,6 +158,80 @@ export function Insights() {
             ))}
           </ul>
         </Card>
+      )}
+
+      {momentum.length > 0 && (
+        <Card title="Momentum" subtitle="Where each metric is trending vs. the week before">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {momentum.map((m) => {
+              // Stress is inverted: a drop is good. Everything else: up is good.
+              const good = m.key === 'stress' ? m.dir === 'down' : m.dir === 'up'
+              const Icon = m.dir === 'up' ? TrendingUp : m.dir === 'down' ? TrendingDown : Minus
+              const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
+              return (
+                <li key={m.key} className="rounded-xl border border-surface0 bg-base p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-subtext0">{m.label}</span>
+                    <Icon size={14} style={{ color: cat(color) }} />
+                  </div>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-text">{m.recent}<span className="text-xs text-overlay0">/10</span></p>
+                  <p className="text-xs" style={{ color: cat(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
+                    {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
+                  </p>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
+      )}
+
+      {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
+        <div className="grid items-start gap-5 md:grid-cols-2">
+          {moodWd.best && moodWd.worst && (
+            <Card title="Best & worst day" subtitle="When your mood runs brightest">
+              <div className="mb-3 flex items-center gap-2 text-sm">
+                <Sun size={15} style={{ color: cat('yellow') }} />
+                <span className="text-subtext1">
+                  Brightest on <strong className="text-text">{moodWd.best.label}</strong> ({moodWd.best.avg}/10),
+                  dimmest on <strong className="text-text">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
+                {moodWd.rows.map((r) => (
+                  <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
+                    <span className="text-[10px] tabular-nums text-subtext0">{r.avg == null ? '–' : r.avg}</span>
+                    <div className="flex w-full flex-1 items-end">
+                      <div className="w-full rounded-t" style={{ height: `${r.avg == null ? 2 : Math.max(2, (r.avg / 10) * 100)}%`, background: r.avg == null ? cat('surface0') : r.weekday === moodWd.best!.weekday ? cat('green') : r.weekday === moodWd.worst!.weekday ? cat('peach') : cat('surface1') }} title={r.days ? `${r.avg}/10 over ${r.days}d` : 'no data'} />
+                    </div>
+                    <span className="text-[10px] text-overlay0">{r.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {(split.habitWeekday != null || split.moodWeekday != null) && (
+            <Card title="Weekday vs weekend" subtitle="How your week splits in two">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <SplitCol label="Weekdays" habit={split.habitWeekday} mood={split.moodWeekday} days={split.weekdayDays} />
+                <SplitCol label="Weekends" habit={split.habitWeekend} mood={split.moodWeekend} days={split.weekendDays} />
+              </div>
+            </Card>
+          )}
+
+          {moodVol.band && (
+            <Card title="Mood stability" subtitle={`Last ${moodVol.days} logged days · how steady you've felt`}>
+              <p className="text-4xl font-extrabold" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
+                {moodVol.stability}<span className="text-lg text-overlay0">/100</span>
+              </p>
+              <p className="mt-1 text-sm capitalize text-subtext1">
+                <span className="mr-1.5 rounded px-1.5 py-0.5 text-xs" style={{ background: cat('surface0'), color: moodVol.band === 'steady' ? cat('green') : moodVol.band === 'volatile' ? cat('peach') : cat('subtext0') }}>{moodVol.band}</span>
+                avg {moodVol.mean}/10 · swing ±{moodVol.sd}
+              </p>
+              <p className="mt-2 text-xs text-overlay0">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
+            </Card>
+          )}
+        </div>
       )}
 
       {moodImpact.length > 0 && (
@@ -333,6 +413,25 @@ export function Insights() {
       </Card>
 
       <TagManager />
+    </div>
+  )
+}
+
+function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
+  return (
+    <div className="rounded-xl border border-surface0 bg-base p-3">
+      <p className="mb-2 text-xs font-semibold text-subtext0">{label}</p>
+      <p className="flex items-center gap-1.5 text-text">
+        <Activity size={14} style={{ color: cat('mauve') }} />
+        <strong className="tabular-nums">{habit == null ? '—' : Math.round(habit * 100) + '%'}</strong>
+        <span className="text-xs text-overlay0">habits</span>
+      </p>
+      <p className="mt-1 flex items-center gap-1.5 text-text">
+        <Smile size={14} style={{ color: cat('green') }} />
+        <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
+        <span className="text-xs text-overlay0">mood</span>
+      </p>
+      {days > 0 && <p className="mt-1 text-[10px] text-overlay0">{days} scheduled day{days === 1 ? '' : 's'}</p>}
     </div>
   )
 }

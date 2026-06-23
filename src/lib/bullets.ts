@@ -1,5 +1,5 @@
 import type { BulletType, Entry, EntryStatus } from './types'
-import { addDays } from './date'
+import { addDays, dayDiff, WEEKDAYS } from './date'
 
 // ── Rapid-logging signifiers (Ryder Carroll method + Elsa's additions) ───────
 
@@ -170,6 +170,109 @@ export function entriesPerDay(
     d = addDays(d, 1)
   }
   return out
+}
+
+/**
+ * Logging rhythm by weekday: how many dated entries fall on each day of the
+ * week (Sun..Sat), so a user can see whether they journal more on weekends than
+ * weekdays. Dropped entries still count (they happened); dateless entries are
+ * skipped. Returns exactly 7 buckets in calendar order (index 0 = Sunday).
+ */
+export function weekdayActivity(
+  entries: Entry[],
+): { weekday: number; label: string; count: number }[] {
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+  for (const e of entries) {
+    if (!e.date) continue
+    // ISO day at local midnight; getDay() → 0..6 (Sun..Sat).
+    const dow = new Date(e.date + 'T00:00').getDay()
+    counts[dow]++
+  }
+  return counts.map((count, weekday) => ({ weekday, label: WEEKDAYS[weekday], count }))
+}
+
+/**
+ * Longest run of consecutive days on which at least one dated entry was logged,
+ * plus the current (still-running, counting back from `today`) streak. A day
+ * "counts" if any entry — of any type or status — lives on it. Dropped entries
+ * still count: showing up to the journal is the point. Pure; `today` lets the
+ * caller decide the reference day (and keeps tests deterministic).
+ */
+export function journalingStreak(
+  entries: Entry[],
+  today: string,
+): { longest: number; current: number } {
+  const days = [...new Set(entries.filter((e) => e.date).map((e) => e.date))].sort()
+  if (days.length === 0) return { longest: 0, current: 0 }
+
+  let longest = 1
+  let run = 1
+  for (let i = 1; i < days.length; i++) {
+    if (dayDiff(days[i - 1], days[i]) === 1) run++
+    else run = 1
+    if (run > longest) longest = run
+  }
+
+  // Current streak: walk backward from `today` (or yesterday) while days exist.
+  const have = new Set(days)
+  let current = 0
+  // The streak is only "current" if it includes today or yesterday — otherwise
+  // it's already broken. Anchor on whichever of those two is present.
+  let cursor = have.has(today) ? today : dayDiff(addDays(today, -1), today) === 1 && have.has(addDays(today, -1)) ? addDays(today, -1) : null
+  while (cursor && have.has(cursor)) {
+    current++
+    cursor = addDays(cursor, -1)
+  }
+  return { longest, current }
+}
+
+/**
+ * Progress of task-type entries filed into a collection (collection-item
+ * checkboxes / progress bar, #258). Counts done vs total live tasks (dropped
+ * excluded) for the given collection id. `rate` is 0–1; 0 when the collection
+ * holds no live tasks. Non-task entries (notes/events) are ignored — only
+ * checkable items contribute to the bar.
+ */
+export function collectionProgress(
+  entries: Entry[],
+  collection: string,
+): { done: number; total: number; rate: number } {
+  const tasks = entries.filter(
+    (e) => e.collection === collection && e.type === 'task' && e.status !== 'dropped',
+  )
+  const done = tasks.filter((e) => e.status === 'done').length
+  return { done, total: tasks.length, rate: tasks.length ? done / tasks.length : 0 }
+}
+
+/**
+ * Bucket overdue open tasks by staleness relative to `today`, so the Migration
+ * view can show *how* late things are, not just that they're late. Only open
+ * tasks with a date strictly before today are considered. Buckets:
+ *   recent  — 1–2 days overdue
+ *   week    — 3–7 days
+ *   stale   — 8–30 days
+ *   ancient — 30+ days (the "do it or drop it" pile)
+ * Returns counts plus the oldest entry's age in days (0 if none).
+ */
+export function overdueBuckets(
+  entries: Entry[],
+  today: string,
+): { recent: number; week: number; stale: number; ancient: number; total: number; oldestDays: number } {
+  let recent = 0
+  let week = 0
+  let stale = 0
+  let ancient = 0
+  let oldestDays = 0
+  for (const e of entries) {
+    if (e.type !== 'task' || e.status !== 'open' || !e.date || e.date >= today) continue
+    const age = dayDiff(e.date, today)
+    if (age <= 2) recent++
+    else if (age <= 7) week++
+    else if (age <= 30) stale++
+    else ancient++
+    if (age > oldestDays) oldestDays = age
+  }
+  return { recent, week, stale, ancient, total: recent + week + stale + ancient, oldestDays }
 }
 
 /**

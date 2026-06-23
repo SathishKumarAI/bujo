@@ -518,3 +518,245 @@ export function rollingAverage(values: (number | undefined)[], window = 7): (num
     return Math.round((slice.reduce((a, b) => a + b, 0) / slice.length) * 10) / 10
   })
 }
+
+export type MetricKey = 'mood' | 'sleep' | 'stress' | 'energy'
+
+export interface WeekdayMetric {
+  weekday: number
+  label: string
+  /** Average of the metric on that weekday, or null if never logged. */
+  avg: number | null
+  /** Days that fed the average (for a confidence read). */
+  days: number
+}
+
+export interface BestWorstWeekday {
+  rows: WeekdayMetric[]
+  /** Brightest weekday (highest avg, needs ≥1 logged day), or null. */
+  best: WeekdayMetric | null
+  /** Dimmest weekday (lowest avg), or null. Distinct from best. */
+  worst: WeekdayMetric | null
+}
+
+/**
+ * Average a daily metric (mood/sleep/energy/…) per weekday across ALL logged
+ * history, then surface the single best and worst day — "your Saturdays run
+ * bright, your Mondays drag". Unlike a same-week snapshot this pools every
+ * occurrence of each weekday, so it reflects a durable rhythm rather than this
+ * week's noise. best/worst require at least two rated weekdays whose averages
+ * actually differ (else both null — no signal). Pure + deterministic.
+ */
+export function bestWorstWeekday(data: JournalData, key: MetricKey = 'mood'): BestWorstWeekday {
+  const sums = [0, 0, 0, 0, 0, 0, 0]
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+  for (const m of data.metrics) {
+    const v = m[key]
+    if (v == null) continue
+    const wd = new Date(m.date + 'T00:00:00').getDay()
+    sums[wd] += v
+    counts[wd] += 1
+  }
+  const rows: WeekdayMetric[] = counts.map((c, wd) => ({
+    weekday: wd,
+    label: WEEKDAYS[wd],
+    avg: c ? Math.round((sums[wd] / c) * 10) / 10 : null,
+    days: c,
+  }))
+  const rated = rows.filter((r) => r.avg != null)
+  let best: WeekdayMetric | null = null
+  let worst: WeekdayMetric | null = null
+  if (rated.length >= 2) {
+    const sorted = [...rated].sort((a, b) => b.avg! - a.avg!)
+    if (sorted[0].avg !== sorted[sorted.length - 1].avg) {
+      best = sorted[0]
+      worst = sorted[sorted.length - 1]
+    }
+  }
+  return { rows, best, worst }
+}
+
+export interface WeekdayWeekendSplit {
+  /** Habit completion rate (done / scheduled) on weekdays, 0–1 or null. */
+  habitWeekday: number | null
+  /** Habit completion rate on weekends. */
+  habitWeekend: number | null
+  /** Average mood on weekdays, or null. */
+  moodWeekday: number | null
+  /** Average mood on weekends. */
+  moodWeekend: number | null
+  /** Scheduled habit-days behind the weekday/weekend rates (confidence). */
+  weekdayDays: number
+  weekendDays: number
+}
+
+/**
+ * Contrast how you run on weekdays vs. weekends across two axes: habit
+ * completion rate (done ÷ scheduled, respecting activeDays + startedOn) and
+ * average mood. Weekend = Sat/Sun. Surfaces the common "I fall off on weekends"
+ * (or the reverse) pattern in one card. Rates are null when nothing was
+ * scheduled / logged on that side. Pure + deterministic.
+ */
+export function weekdayWeekendSplit(data: JournalData, today = todayISO()): WeekdayWeekendSplit {
+  let wdDone = 0
+  let wdSched = 0
+  let weDone = 0
+  let weSched = 0
+  for (const h of data.habits) {
+    if (h.archived || h.avoid) continue
+    const span = dayDiff(h.startedOn, today)
+    for (let i = 0; i <= span; i++) {
+      const day = addDays(h.startedOn, i)
+      const wd = new Date(day + 'T00:00:00').getDay()
+      if (h.activeDays?.length && !h.activeDays.includes(wd)) continue
+      const weekend = wd === 0 || wd === 6
+      const done = habitDoneOn(data, h, day)
+      if (weekend) {
+        weSched += 1
+        if (done) weDone += 1
+      } else {
+        wdSched += 1
+        if (done) wdDone += 1
+      }
+    }
+  }
+  let moodWdSum = 0
+  let moodWdN = 0
+  let moodWeSum = 0
+  let moodWeN = 0
+  for (const m of data.metrics) {
+    if (m.mood == null) continue
+    const wd = new Date(m.date + 'T00:00:00').getDay()
+    if (wd === 0 || wd === 6) {
+      moodWeSum += m.mood
+      moodWeN += 1
+    } else {
+      moodWdSum += m.mood
+      moodWdN += 1
+    }
+  }
+  return {
+    habitWeekday: wdSched ? Math.round((wdDone / wdSched) * 100) / 100 : null,
+    habitWeekend: weSched ? Math.round((weDone / weSched) * 100) / 100 : null,
+    moodWeekday: moodWdN ? Math.round((moodWdSum / moodWdN) * 10) / 10 : null,
+    moodWeekend: moodWeN ? Math.round((moodWeSum / moodWeN) * 10) / 10 : null,
+    weekdayDays: wdSched,
+    weekendDays: weSched,
+  }
+}
+
+export interface VolatilityReport {
+  /** Population standard deviation of the metric over the window, or null. */
+  sd: number | null
+  /** Mean of the metric over the window (context for the SD), or null. */
+  mean: number | null
+  /** Stability score 0–100: 100 = rock-steady, lower = more swingy. */
+  stability: number | null
+  /** Days that fed the calculation. */
+  days: number
+  /** 'steady' | 'variable' | 'volatile' label, or null when too sparse. */
+  band: 'steady' | 'variable' | 'volatile' | null
+}
+
+/**
+ * Mood (or any metric) VOLATILITY over the trailing `window` days: the standard
+ * deviation captures how much your days swing, independent of the average — two
+ * people can average 6/10 yet one is a flat line and the other a rollercoaster.
+ * We map SD onto a 0–100 stability score (SD 0 → 100, SD 3 → 0 on the 0–10
+ * scale) so higher is calmer, and band it for plain-language display. Needs at
+ * least 3 logged days. Pure + deterministic.
+ */
+export function metricVolatility(
+  data: JournalData,
+  key: MetricKey = 'mood',
+  window = 30,
+  today = todayISO(),
+): VolatilityReport {
+  const from = addDays(today, -(window - 1))
+  const vals: number[] = []
+  for (const m of data.metrics) {
+    if (m.date < from || m.date > today) continue
+    const v = m[key]
+    if (v != null) vals.push(v)
+  }
+  if (vals.length < 3) return { sd: null, mean: null, stability: null, days: vals.length, band: null }
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length
+  const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length
+  const sd = Math.sqrt(variance)
+  // SD on a 0–10 metric: clamp to [0,3] then invert to a 0–100 calmness score.
+  const stability = Math.round(Math.max(0, 1 - Math.min(sd, 3) / 3) * 100)
+  const band: VolatilityReport['band'] = sd < 1 ? 'steady' : sd < 2 ? 'variable' : 'volatile'
+  return {
+    sd: Math.round(sd * 100) / 100,
+    mean: Math.round(mean * 10) / 10,
+    stability,
+    days: vals.length,
+    band,
+  }
+}
+
+export interface Momentum {
+  key: MetricKey
+  label: string
+  /** Recent-window mean minus the prior-window mean (signed). */
+  delta: number
+  dir: 'up' | 'down' | 'flat'
+  /** Recent-window mean (the current level). */
+  recent: number
+  /** Sample days behind the recent figure (confidence). */
+  recentDays: number
+}
+
+const METRIC_LABELS: Record<MetricKey, string> = {
+  mood: 'Mood',
+  sleep: 'Sleep',
+  stress: 'Stress',
+  energy: 'Energy',
+}
+
+/**
+ * Per-metric MOMENTUM: is each tracked metric trending up, down or flat right
+ * now? Compares the mean of the recent `window` days against the immediately
+ * prior `window` days and reports the signed delta + direction. A small dead
+ * zone (`flatBand`) keeps trivial wobble from reading as a trend. Only metrics
+ * with enough data on BOTH windows are returned, strongest move first (by
+ * |delta|). Note `stress` is left as-is — the view decides whether up is good.
+ * Pure + deterministic.
+ */
+export function momentumIndicator(
+  data: JournalData,
+  window = 7,
+  today = todayISO(),
+  flatBand = 0.25,
+): Momentum[] {
+  const recentTo = today
+  const recentFrom = addDays(today, -(window - 1))
+  const priorTo = addDays(recentFrom, -1)
+  const priorFrom = addDays(priorTo, -(window - 1))
+
+  const out: Momentum[] = []
+  const keys: MetricKey[] = ['mood', 'sleep', 'energy', 'stress']
+  for (const key of keys) {
+    const recentVals: number[] = []
+    const priorVals: number[] = []
+    for (const m of data.metrics) {
+      const v = m[key]
+      if (v == null) continue
+      if (m.date >= recentFrom && m.date <= recentTo) recentVals.push(v)
+      else if (m.date >= priorFrom && m.date <= priorTo) priorVals.push(v)
+    }
+    if (recentVals.length < 2 || priorVals.length < 2) continue
+    const recent = recentVals.reduce((a, b) => a + b, 0) / recentVals.length
+    const prior = priorVals.reduce((a, b) => a + b, 0) / priorVals.length
+    const delta = Math.round((recent - prior) * 10) / 10
+    const dir: Momentum['dir'] = Math.abs(delta) < flatBand ? 'flat' : delta > 0 ? 'up' : 'down'
+    out.push({
+      key,
+      label: METRIC_LABELS[key],
+      delta,
+      dir,
+      recent: Math.round(recent * 10) / 10,
+      recentDays: recentVals.length,
+    })
+  }
+  return out.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -218,6 +218,122 @@ describe('duprTrend', () => {
     expect(t.change).toBe(0)
     expect(t.direction).toBe('flat')
     expect(t.latest).toBe(3.5)
+  })
+})
+
+describe('monthlyGames', () => {
+  it('returns the trailing window of months, oldest → newest, with zero-filled gaps', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      s('2026-04-10', 2, 0), // April
+      s('2026-06-05', 1, 3), // June
+      s('2026-06-20', 3, 1), // June
+    ]
+    const m = monthlyGames(d, 3, '2026-06-23')
+    expect(m.map((x) => x.ym)).toEqual(['2026-04', '2026-05', '2026-06'])
+    expect(m[0]).toMatchObject({ ym: '2026-04', sessions: 1, games: 2, gamesWon: 2, winPct: 100 })
+    expect(m[1]).toMatchObject({ ym: '2026-05', sessions: 0, games: 0, winPct: 0 }) // empty month
+    expect(m[2]).toMatchObject({ ym: '2026-06', sessions: 2, games: 8, gamesWon: 4, winPct: 50 })
+    expect(m[2].label).toBe('June 2026')
+  })
+
+  it('ignores sessions outside the window', () => {
+    const d = emptyJournal()
+    d.pickleball = [s('2026-01-01', 5, 0)] // far before the window
+    const m = monthlyGames(d, 3, '2026-06-23')
+    expect(m.reduce((a, x) => a + x.games, 0)).toBe(0)
+  })
+})
+
+describe('winRateForecast', () => {
+  it('not ready below 4 decisive sessions; readiness reads current win%', () => {
+    const d = emptyJournal()
+    d.pickleball = [s('2026-06-01', 3, 1), s('2026-06-02', 1, 1)]
+    const f = winRateForecast(d)
+    expect(f.ready).toBe(false)
+    expect(f.projected).toBeNull()
+  })
+
+  it('projects upward when win% climbs and flags readiness', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      s('2026-06-01', 0, 4), // 0%
+      s('2026-06-02', 1, 3), // 25%
+      s('2026-06-03', 3, 1), // 75%
+      s('2026-06-04', 4, 0), // 100%
+    ]
+    const f = winRateForecast(d)
+    expect(f.ready).toBe(true)
+    expect(f.slope).toBeGreaterThan(0)
+    expect(f.direction).toBe('up')
+    expect(f.projected).toBe(100) // clamped
+    expect(f.readiness).toBe('ready')
+  })
+
+  it('detects a downward slope', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      s('2026-06-01', 4, 0), s('2026-06-02', 3, 1),
+      s('2026-06-03', 1, 3), s('2026-06-04', 0, 4),
+    ]
+    const f = winRateForecast(d)
+    expect(f.direction).toBe('down')
+    expect(f.projected).toBe(0)
+  })
+})
+
+describe('rpeLoad', () => {
+  it('averages logged RPE, finds the hardest, and sums a recent load', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-20', 2, 1), rpe: 8 }, // 3 games · in window
+      { ...s('2026-06-22', 1, 1), rpe: 4 }, // 2 games · in window
+      { ...s('2026-06-01', 2, 0), rpe: 6 }, // outside the 7-day window
+      s('2026-06-21', 1, 0), // no rpe → ignored everywhere
+    ]
+    const r = rpeLoad(d, 7, '2026-06-23')
+    expect(r.sessions).toBe(3)
+    expect(r.avg).toBe(6) // (8+4+6)/3
+    expect(r.hardest).toBe(8)
+    expect(r.weekLoad).toBe(8 * 3 + 4 * 2) // only in-window sessions
+    expect(r.label).toBe('hard')
+  })
+
+  it('is empty-safe', () => {
+    expect(rpeLoad(emptyJournal())).toMatchObject({ sessions: 0, avg: 0, hardest: 0, weekLoad: 0, label: 'easy' })
+  })
+})
+
+describe('pickleMilestones', () => {
+  it('surfaces the next unmet tier per metric', () => {
+    const d = emptyJournal()
+    // 12 sessions; longest winning-session streak is the trailing 4 (a loss breaks it)
+    d.pickleball = [
+      s('2026-06-01', 2, 0), s('2026-06-02', 2, 0), s('2026-06-03', 2, 0), // 3-win streak
+      s('2026-06-05', 0, 2), // break
+      ...Array.from({ length: 4 }, (_, i) => s(`2026-06-${10 + i}`, 3, 1)), // 4 wins
+      s('2026-06-15', 1, 1), // draw breaks it
+      ...Array.from({ length: 4 }, (_, i) => s(`2026-06-${20 + i}`, 2, 1)), // 4 wins
+    ]
+    const ms = pickleMilestones(d)
+    const sess = ms.find((m) => m.id.startsWith('sessions'))!
+    expect(sess).toMatchObject({ current: 13, target: 25, done: false })
+    const streak = ms.find((m) => m.id.startsWith('streak'))!
+    expect(streak).toMatchObject({ current: 4, target: 5, done: false })
+  })
+
+  it('marks a metric done once the top tier is cleared', () => {
+    const d = emptyJournal()
+    d.pickleball = Array.from({ length: 30 }, (_, i) => s(`2026-0${1 + Math.floor(i / 28)}-${String((i % 28) + 1).padStart(2, '0')}`, 1, 0))
+    const streak = pickleMilestones(d).find((m) => m.id.startsWith('streak'))!
+    expect(streak.done).toBe(true) // 30-win streak clears the 20 top tier
+    expect(streak.target).toBe(20)
+  })
+
+  it('is empty-safe (all next-tier, none done)', () => {
+    const ms = pickleMilestones(emptyJournal())
+    expect(ms).toHaveLength(3)
+    expect(ms.every((m) => m.current === 0 && !m.done)).toBe(true)
   })
 })
 

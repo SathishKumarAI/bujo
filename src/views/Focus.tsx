@@ -8,7 +8,7 @@ import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
-  minutesByWeekday, longestSession,
+  minutesByWeekday, longestSession, minutesByProject, interruptionsTrend,
 } from '../lib/focus'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
@@ -31,6 +31,10 @@ export function Focus() {
   const byWeekday = minutesByWeekday(data)
   const maxWd = Math.max(1, ...byWeekday.map((w) => w.min))
   const longest = longestSession(data)
+  const byProject = minutesByProject(data)
+  const maxProj = Math.max(1, ...byProject.map((p) => p.min))
+  const intTrend = interruptionsTrend(data, today, 14)
+  const maxInt = Math.max(1, ...intTrend.map((d) => d.avg))
 
   function log() {
     if (!f.durationMin) return
@@ -135,6 +139,35 @@ export function Focus() {
                   <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {byProject.length > 0 && (
+        <Card title="Focus by project" subtitle="Total deep-work minutes per project">
+          <div className="space-y-1.5">
+            {byProject.map((p) => (
+              <div key={p.project} className="flex items-center gap-2 text-sm">
+                <span className="w-24 shrink-0 truncate text-subtext1">{p.project}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(p.min)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {intTrend.some((d) => d.count > 0) && (
+        <Card title="Interruptions trend" subtitle="Avg interruptions per session · last 14 days">
+          <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
+            aria-label={`Average interruptions per session over the last 14 days: ${intTrend.map((d) => `${d.date} ${d.avg}`).join(', ')}`}>
+            {intTrend.map((d) => (
+              <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.count ? `${d.avg} avg` : 'no session'}`}>
+                <div className="rounded-t" style={{ height: `${d.count ? Math.max(4, (d.avg / maxInt) * 100) : 0}%`, background: d.date === today ? cat('peach') : cat('surface2') }} />
               </div>
             ))}
           </div>

@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
   bulletTypeBreakdown,
+  collectionProgress,
   entriesPerDay,
   glyphFor,
   inboxEntries,
+  journalingStreak,
   migrationCounts,
   nextStatus,
+  overdueBuckets,
   parseQuickCapture,
   parseTags,
   tagIndex,
   taskCompletion,
+  weekdayActivity,
 } from './bullets'
 import type { Entry } from './types'
 
@@ -237,5 +241,130 @@ describe('entriesPerDay', () => {
       '2026-06-01',
     )
     expect(out).toEqual([{ date: '2026-06-01', count: 1 }])
+  })
+})
+
+describe('weekdayActivity', () => {
+  it('returns 7 buckets in Sun..Sat order', () => {
+    const out = weekdayActivity([])
+    expect(out.map((b) => b.label)).toEqual(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
+    expect(out.every((b) => b.count === 0)).toBe(true)
+  })
+  it('counts dated entries on their weekday', () => {
+    // 2026-06-07 is a Sunday, 2026-06-08 a Monday.
+    const out = weekdayActivity([
+      entry({ date: '2026-06-07' }),
+      entry({ date: '2026-06-07' }),
+      entry({ date: '2026-06-08' }),
+    ])
+    expect(out[0].count).toBe(2) // Sunday
+    expect(out[1].count).toBe(1) // Monday
+  })
+  it('skips dateless entries and counts dropped ones', () => {
+    const out = weekdayActivity([entry({ date: '' }), entry({ date: '2026-06-08', status: 'dropped' })])
+    expect(out.reduce((a, b) => a + b.count, 0)).toBe(1)
+    expect(out[1].count).toBe(1)
+  })
+})
+
+describe('journalingStreak', () => {
+  it('returns zero for no dated entries', () => {
+    expect(journalingStreak([entry({ date: '' })], '2026-06-10')).toEqual({ longest: 0, current: 0 })
+  })
+  it('finds the longest consecutive run', () => {
+    const out = journalingStreak(
+      [
+        entry({ date: '2026-06-01' }),
+        entry({ date: '2026-06-02' }),
+        entry({ date: '2026-06-03' }),
+        entry({ date: '2026-06-05' }), // gap breaks the run
+      ],
+      '2026-06-05',
+    )
+    expect(out.longest).toBe(3)
+  })
+  it('dedupes multiple entries on the same day', () => {
+    const out = journalingStreak(
+      [entry({ date: '2026-06-01' }), entry({ date: '2026-06-01' }), entry({ date: '2026-06-02' })],
+      '2026-06-02',
+    )
+    expect(out.longest).toBe(2)
+  })
+  it('counts the current streak ending today', () => {
+    const out = journalingStreak(
+      [entry({ date: '2026-06-08' }), entry({ date: '2026-06-09' }), entry({ date: '2026-06-10' })],
+      '2026-06-10',
+    )
+    expect(out.current).toBe(3)
+  })
+  it('counts a current streak ending yesterday', () => {
+    const out = journalingStreak(
+      [entry({ date: '2026-06-08' }), entry({ date: '2026-06-09' })],
+      '2026-06-10',
+    )
+    expect(out.current).toBe(2)
+  })
+  it('reports current 0 when the latest day is stale', () => {
+    const out = journalingStreak([entry({ date: '2026-06-01' })], '2026-06-10')
+    expect(out.current).toBe(0)
+    expect(out.longest).toBe(1)
+  })
+})
+
+describe('collectionProgress', () => {
+  it('counts done vs live tasks in a collection', () => {
+    const out = collectionProgress(
+      [
+        entry({ collection: 'pack', type: 'task', status: 'done' }),
+        entry({ collection: 'pack', type: 'task', status: 'open' }),
+        entry({ collection: 'pack', type: 'note' }), // ignored
+        entry({ collection: 'other', type: 'task', status: 'done' }), // other collection
+      ],
+      'pack',
+    )
+    expect(out).toEqual({ done: 1, total: 2, rate: 0.5 })
+  })
+  it('excludes dropped tasks', () => {
+    const out = collectionProgress(
+      [
+        entry({ collection: 'pack', type: 'task', status: 'done' }),
+        entry({ collection: 'pack', type: 'task', status: 'dropped' }),
+      ],
+      'pack',
+    )
+    expect(out).toEqual({ done: 1, total: 1, rate: 1 })
+  })
+  it('returns rate 0 for an empty collection', () => {
+    expect(collectionProgress([], 'pack')).toEqual({ done: 0, total: 0, rate: 0 })
+  })
+})
+
+describe('overdueBuckets', () => {
+  const today = '2026-06-30'
+  it('buckets open overdue tasks by staleness', () => {
+    const out = overdueBuckets(
+      [
+        entry({ type: 'task', status: 'open', date: '2026-06-29' }), // 1d → recent
+        entry({ type: 'task', status: 'open', date: '2026-06-25' }), // 5d → week
+        entry({ type: 'task', status: 'open', date: '2026-06-10' }), // 20d → stale
+        entry({ type: 'task', status: 'open', date: '2026-05-01' }), // 60d → ancient
+      ],
+      today,
+    )
+    expect(out).toEqual({ recent: 1, week: 1, stale: 1, ancient: 1, total: 4, oldestDays: 60 })
+  })
+  it('ignores done, dropped, future, dateless, and non-task entries', () => {
+    const out = overdueBuckets(
+      [
+        entry({ type: 'task', status: 'done', date: '2026-06-01' }),
+        entry({ type: 'task', status: 'open', date: '2026-07-05' }), // future
+        entry({ type: 'task', status: 'open', date: '' }),
+        entry({ type: 'event', date: '2026-06-01' }),
+        entry({ type: 'task', status: 'open', date: '2026-06-30' }), // today, not overdue
+      ],
+      today,
+    )
+    expect(out.total).toBe(0)
+    expect(out.oldestDays).toBe(0)
   })
 })

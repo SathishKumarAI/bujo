@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles } from 'lucide-react'
+import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles, CalendarDays, AlarmClock } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
-import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks } from '../lib/reading'
+import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks } from '../lib/reading'
 import { StatTile } from '../components/ui'
 import type { Book, BookStatus } from '../lib/types'
 
@@ -24,6 +24,9 @@ export function Reading() {
   const streak = readingStreak(books, today)
   const avgDays = averageDaysToFinish(books)
   const wrapped = yearInBooks(books, today)
+  const byMonth = finishedByMonth(books, today)
+  const maxMonth = Math.max(1, ...byMonth.map((m) => m.count))
+  const stale = staleBooks(books, today)
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -74,6 +77,47 @@ export function Reading() {
           </>
         )}
       </div>
+
+      {/* Books finished per month · paces the yearly goal visibly */}
+      {byMonth.some((m) => m.count > 0) && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            <CalendarDays size={16} className="text-green" /> Finished by month · {today.slice(0, 4)}
+          </h3>
+          <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
+            aria-label={`Books finished per month: ${byMonth.map((m) => `${m.label} ${m.count}`).join(', ')}`}>
+            {byMonth.map((m) => (
+              <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
+                <div className="flex w-full flex-1 items-end">
+                  <div className="w-full rounded-t" title={`${m.label}: ${m.count}`}
+                    style={{ height: `${m.count ? Math.max(8, (m.count / maxMonth) * 100) : 0}%`, background: m.count ? cat('green') : cat('surface1') }} />
+                </div>
+                <span className="text-[9px] text-overlay0">{m.label[0]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Stalled books nudge · pick back up or shelve */}
+      {stale.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+            <AlarmClock size={16} className="text-peach" /> Stalled books
+            <span className="text-overlay0">({stale.length})</span>
+          </h3>
+          <ul className="space-y-1.5 text-xs">
+            {stale.map(({ book, idleDays }) => (
+              <li key={book.id} className="flex items-center gap-2">
+                <BookOpen size={12} className="shrink-0 text-overlay0" />
+                <span className="min-w-0 flex-1 truncate text-subtext0">{book.title}</span>
+                <span className="shrink-0 text-overlay0">{progressPct(book)}%</span>
+                <span className="shrink-0 tabular-nums" style={{ color: cat('peach') }}>idle {idleDays}d</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Year in books · wrapped-style recap */}
       {wrapped && (

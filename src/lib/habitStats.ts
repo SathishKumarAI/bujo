@@ -1,6 +1,7 @@
-import type { Habit, JournalData } from './types'
+import type { Habit, HabitCategory, JournalData } from './types'
 import { addDays, fromISODay, todayISO } from './date'
 import { habitDoneOn, habitTarget, habitValueOn } from './stats'
+import { dayIntensity } from './habitIntensity'
 
 /**
  * Per-habit completion analytics that respect a habit's scheduling. A habit is
@@ -144,4 +145,175 @@ export function bestWeekday(
     if (worst == null || r < (rates[worst] as number)) worst = i
   }
   return { rates, best, worst }
+}
+
+export interface CategoryRollup {
+  category: HabitCategory
+  /** Non-archived habits in this category (build + avoid). */
+  habits: number
+  /** Total scheduled habit-days across the category in the window. */
+  scheduled: number
+  /** Of those, how many were done (a slip counts as "done" for avoid habits). */
+  done: number
+  /** 0–100 completion rate; 0 when nothing was scheduled (never NaN). */
+  pct: number
+}
+
+/**
+ * Per-category completion roll-up over the last `window` days (30 by default),
+ * summing scheduled-vs-done habit-days across every non-archived habit in each
+ * category (BUJO trackers · category roll-up stats). Each habit contributes its
+ * own scheduled days (respecting activeDays/startedOn), so a category's pct is
+ * the share of all its scheduled habit-days that were completed — a single
+ * glanceable health number per group. Avoid habits are excluded from the
+ * completion maths (a logged day is a *slip*, not a win, so counting them would
+ * invert the metric); they still count toward `habits`. Categories with no
+ * habits are dropped. Pure; sorted by pct descending then category name.
+ */
+export function categoryRollup(
+  data: JournalData,
+  today = todayISO(),
+  window = 30,
+): CategoryRollup[] {
+  const groups = new Map<HabitCategory, { habits: number; scheduled: number; done: number }>()
+  for (const h of data.habits) {
+    if (h.archived) continue
+    const g = groups.get(h.category) ?? { habits: 0, scheduled: 0, done: 0 }
+    g.habits += 1
+    if (!h.avoid) {
+      for (let i = 0; i < window; i++) {
+        const day = addDays(today, -i)
+        if (!isScheduledOn(h, day)) continue
+        g.scheduled += 1
+        if (habitDoneOn(data, h, day)) g.done += 1
+      }
+    }
+    groups.set(h.category, g)
+  }
+  return [...groups.entries()]
+    .map(([category, g]) => ({
+      category,
+      habits: g.habits,
+      scheduled: g.scheduled,
+      done: g.done,
+      pct: g.scheduled ? Math.round((g.done / g.scheduled) * 100) : 0,
+    }))
+    .sort((a, b) => b.pct - a.pct || a.category.localeCompare(b.category))
+}
+
+/**
+ * Count of fully-complete weeks for a build habit (BUJO #322 · week rollup):
+ * calendar weeks in which EVERY scheduled day was done. Walks back `weeks`
+ * (12 by default) Sunday-start weeks from the week containing `today`; the
+ * current (in-progress) week is excluded so a half-finished week never counts
+ * as a miss. A week with no scheduled days (e.g. a Mon/Wed habit that started
+ * mid-week, or an off-week) is skipped entirely — it's neither perfect nor
+ * broken. Pure; rewards sustained windows rather than single days. Only
+ * meaningful for build habits — avoid habits have their own clean-day logic.
+ */
+export function perfectWeeks(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  weeks = 12,
+): number {
+  const dow = fromISODay(today).getDay() // 0=Sun
+  // Sunday that starts the current (in-progress) week.
+  const curWeekStart = addDays(today, -dow)
+  let count = 0
+  for (let w = 1; w <= weeks; w++) {
+    const weekStart = addDays(curWeekStart, -7 * w)
+    let scheduled = 0
+    let done = 0
+    for (let d = 0; d < 7; d++) {
+      const day = addDays(weekStart, d)
+      if (!isScheduledOn(habit, day)) continue
+      scheduled += 1
+      if (habitDoneOn(data, habit, day)) done += 1
+    }
+    if (scheduled > 0 && done === scheduled) count += 1
+  }
+  return count
+}
+
+export interface PerfectDayStats {
+  /** Days in the window where every scheduled check habit was done. */
+  total: number
+  /** Consecutive perfect days ending today (or the last scheduled day). */
+  streak: number
+}
+
+/**
+ * "Perfect day" analytics across all build (non-avoid) check habits (BUJO
+ * trackers · perfect-day consistency). A day is *perfect* when at least one
+ * check habit was scheduled AND every scheduled check habit was done that day.
+ * `total` counts such days over the last `window` days; `streak` is the
+ * unbroken run of perfect days ending today — but an as-yet-unlogged today with
+ * habits still pending does NOT break the streak (we only count today if it's
+ * already perfect, otherwise we start the run from yesterday). Days with nothing
+ * scheduled are neutral: they neither count nor break the streak. Pure; powers
+ * an all-habits "you nailed everything" tile. Mirrors dayCompletion's
+ * check-habit, non-archived scheduling rules.
+ */
+export function perfectDayStats(
+  data: JournalData,
+  today = todayISO(),
+  window = 90,
+): PerfectDayStats {
+  const checks = data.habits.filter((h) => !h.archived && !h.avoid && (h.type ?? 'check') === 'check')
+  const isPerfect = (day: string): boolean | null => {
+    const sched = checks.filter((h) => isScheduledOn(h, day))
+    if (sched.length === 0) return null // nothing scheduled → neutral
+    return sched.every((h) => habitDoneOn(data, h, day))
+  }
+
+  let total = 0
+  for (let i = 0; i < window; i++) {
+    if (isPerfect(addDays(today, -i)) === true) total += 1
+  }
+
+  // Streak: walk back from today. A neutral day is skipped (doesn't break),
+  // a perfect day extends, a non-perfect day stops. Today only breaks the run
+  // if it has scheduled habits AND isn't perfect yet — but we forgive it by
+  // starting from yesterday when today isn't perfect, so a mid-day check-in
+  // doesn't read as a broken streak.
+  let streak = 0
+  let start = 0
+  if (isPerfect(today) !== true) start = 1 // forgive an unfinished today
+  for (let i = start; i < window; i++) {
+    const p = isPerfect(addDays(today, -i))
+    if (p === null) continue // neutral
+    if (p) streak += 1
+    else break
+  }
+  return { total, streak }
+}
+
+/**
+ * Last-7-day intensity strip for a habit (BUJO trackers · weekly heat row).
+ * Returns 7 cells oldest→newest ending `today`, each with its ISO day, whether
+ * the habit was scheduled, and a 0–4 intensity level (graded for count/timer/
+ * rating habits, on/off for checks). Off-schedule days carry level 0 and
+ * scheduled=false so the row can dim them. Pure; lets the grid show a glanceable
+ * "how's this week going" sparkline beside each habit without re-deriving cells.
+ */
+export interface HeatCell {
+  day: string
+  scheduled: boolean
+  level: 0 | 1 | 2 | 3 | 4
+}
+
+export function weeklyHeatRow(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+): HeatCell[] {
+  const out: HeatCell[] = []
+  for (let i = 6; i >= 0; i--) {
+    const day = addDays(today, -i)
+    const scheduled = isScheduledOn(habit, day)
+    const level = scheduled ? dayIntensity(data, habit, day) : 0
+    out.push({ day, scheduled, level })
+  }
+  return out
 }

@@ -142,6 +142,47 @@ export function yearInBooks(books: Book[], today: string): {
   }
 }
 
+/**
+ * Books finished in each calendar month of the given year, Jan→Dec (length 12).
+ * Paces the yearly goal visibly across months. `month` is 1-based for labels;
+ * `label` is the three-letter month name.
+ */
+export function finishedByMonth(books: Book[], today: string): { month: number; label: string; count: number }[] {
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const year = today.slice(0, 4)
+  const counts = new Array(12).fill(0)
+  for (const b of books) {
+    if (b.status !== 'finished' || !b.finishedOn) continue
+    if (b.finishedOn.slice(0, 4) !== year) continue
+    const m = Number(b.finishedOn.slice(5, 7)) // 1..12
+    if (m >= 1 && m <= 12) counts[m - 1] += 1
+  }
+  return labels.map((label, i) => ({ month: i + 1, label, count: counts[i] }))
+}
+
+/**
+ * In-progress books that look stalled: reading, with a known total and a
+ * recorded start, where the last dated activity (a learning, else startedOn)
+ * is `staleDays`+ days before today. Sorted most-stale first. Helps surface
+ * books to either pick back up or shelve. Books already at/over their last
+ * page are not flagged (effectively done).
+ */
+export function staleBooks(books: Book[], today: string, staleDays = 14): { book: Book; idleDays: number }[] {
+  const out: { book: Book; idleDays: number }[] = []
+  for (const b of books) {
+    if (b.status !== 'reading') continue
+    if (b.totalPages && b.totalPages > 0 && (b.currentPage ?? 0) >= b.totalPages) continue
+    const dates: string[] = []
+    if (b.startedOn) dates.push(b.startedOn)
+    for (const l of b.learnings ?? []) dates.push(l.date)
+    if (!dates.length) continue
+    const last = dates.sort().at(-1)!
+    const idle = dayDiff(last, today)
+    if (idle >= staleDays) out.push({ book: b, idleDays: idle })
+  }
+  return out.sort((a, b) => b.idleDays - a.idleDays)
+}
+
 /** A compact summary for the Insights / Goals rollups. */
 export function readingSummary(books: Book[], today: string) {
   return {

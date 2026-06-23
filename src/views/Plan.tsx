@@ -6,7 +6,7 @@ import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
-import { migrationCounts } from '../lib/bullets'
+import { migrationCounts, overdueBuckets } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
 
 export function Plan() {
@@ -40,6 +40,15 @@ export function Plan() {
   // ── Migration analytics (#406): chronically-deferred tasks ──
   const deferred = migrationCounts(data.entries).filter((t) => t.current.status !== 'done')
 
+  // ── Overdue aging: bucket overdue open tasks by staleness ──
+  const aging = overdueBuckets(data.entries, today)
+  const agingBuckets = [
+    { key: 'recent', label: '1–2d', n: aging.recent, color: 'yellow' as const },
+    { key: 'week', label: '3–7d', n: aging.week, color: 'peach' as const },
+    { key: 'stale', label: '1–4wk', n: aging.stale, color: 'maroon' as const },
+    { key: 'ancient', label: '30d+', n: aging.ancient, color: 'red' as const },
+  ].filter((b) => b.n > 0)
+
   // ── ICS import ──
   function onIcs(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -63,6 +72,27 @@ export function Plan() {
           <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
         ) : undefined}
       >
+        {agingBuckets.length > 0 && (
+          <div className="mb-3" title={`Oldest overdue task: ${aging.oldestDays} days`}>
+            <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+              <span>Aging</span>
+              <span>oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
+            </div>
+            <div className="flex h-2 overflow-hidden rounded-full bg-surface0">
+              {agingBuckets.map((b) => (
+                <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
+              ))}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-overlay0">
+              {agingBuckets.map((b) => (
+                <span key={b.key} className="inline-flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat(b.color) }} />
+                  {b.label} <b style={{ color: cat(b.color) }}>{b.n}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (

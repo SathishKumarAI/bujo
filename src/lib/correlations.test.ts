@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend, habitWeekdayPerformance, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas } from './correlations'
+import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend, habitWeekdayPerformance, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator } from './correlations'
 import { emptyJournal } from './storage'
 import type { JournalData } from './types'
 
@@ -252,5 +252,152 @@ describe('habitMonthlyDeltas', () => {
     expect(pts[0]).toMatchObject({ done: 0, delta: 0 })
     expect(pts[1]).toMatchObject({ done: 2, delta: 2 })
     expect(pts[2]).toMatchObject({ done: 3, delta: 1 })
+  })
+})
+
+describe('bestWorstWeekday', () => {
+  it('finds the brightest and dimmest weekday by average mood', () => {
+    const d = emptyJournal()
+    // Mondays high, Sundays low.
+    d.metrics.push({ date: '2026-06-01', mood: 9 }) // Mon
+    d.metrics.push({ date: '2026-06-08', mood: 8 }) // Mon
+    d.metrics.push({ date: '2026-06-07', mood: 2 }) // Sun
+    d.metrics.push({ date: '2026-06-14', mood: 3 }) // Sun
+    const r = bestWorstWeekday(d, 'mood')
+    expect(r.best?.label).toBe('Mon')
+    expect(r.best?.avg).toBe(8.5)
+    expect(r.best?.days).toBe(2)
+    expect(r.worst?.label).toBe('Sun')
+    expect(r.worst?.avg).toBe(2.5)
+  })
+
+  it('returns null best/worst when there is only one rated weekday', () => {
+    const d = emptyJournal()
+    d.metrics.push({ date: '2026-06-01', mood: 7 })
+    d.metrics.push({ date: '2026-06-08', mood: 6 })
+    const r = bestWorstWeekday(d, 'mood')
+    expect(r.best).toBeNull()
+    expect(r.worst).toBeNull()
+  })
+
+  it('works on other metric keys', () => {
+    const d = emptyJournal()
+    d.metrics.push({ date: '2026-06-06', sleep: 9 }) // Sat
+    d.metrics.push({ date: '2026-06-01', sleep: 5 }) // Mon
+    const r = bestWorstWeekday(d, 'sleep')
+    expect(r.best?.label).toBe('Sat')
+    expect(r.worst?.label).toBe('Mon')
+  })
+})
+
+describe('weekdayWeekendSplit', () => {
+  it('splits habit completion and mood by weekday vs weekend', () => {
+    const d = emptyJournal()
+    const today = '2026-06-14' // Sun
+    d.habits.push({ id: 'h', name: 'Read', category: 'wellness', color: 'sky', startedOn: '2026-06-08' })
+    // Window 2026-06-08 (Mon) .. 2026-06-14 (Sun): 5 weekdays, 2 weekend days.
+    // Do it every weekday, skip every weekend.
+    logHabit(d, 'h', '2026-06-08')
+    logHabit(d, 'h', '2026-06-09')
+    logHabit(d, 'h', '2026-06-10')
+    logHabit(d, 'h', '2026-06-11')
+    logHabit(d, 'h', '2026-06-12')
+    // Mood: weekdays bright, weekends low.
+    d.metrics.push({ date: '2026-06-08', mood: 8 })
+    d.metrics.push({ date: '2026-06-13', mood: 4 }) // Sat
+    d.metrics.push({ date: '2026-06-14', mood: 2 }) // Sun
+    const r = weekdayWeekendSplit(d, today)
+    expect(r.habitWeekday).toBe(1) // 5/5
+    expect(r.habitWeekend).toBe(0) // 0/2
+    expect(r.weekdayDays).toBe(5)
+    expect(r.weekendDays).toBe(2)
+    expect(r.moodWeekday).toBe(8)
+    expect(r.moodWeekend).toBe(3) // (4+2)/2
+  })
+
+  it('returns null rates when nothing is scheduled or logged on a side', () => {
+    const d = emptyJournal()
+    const r = weekdayWeekendSplit(d, '2026-06-14')
+    expect(r.habitWeekday).toBeNull()
+    expect(r.habitWeekend).toBeNull()
+    expect(r.moodWeekday).toBeNull()
+    expect(r.moodWeekend).toBeNull()
+  })
+})
+
+describe('metricVolatility', () => {
+  it('scores a steady series high and a swingy series low', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    // Flat mood = zero SD = max stability.
+    for (let i = 0; i < 6; i++) d.metrics.push({ date: addDays(today, -i), mood: 7 })
+    const steady = metricVolatility(d, 'mood', 30, today)
+    expect(steady.sd).toBe(0)
+    expect(steady.stability).toBe(100)
+    expect(steady.band).toBe('steady')
+
+    const d2 = emptyJournal()
+    // Big swings between 1 and 9.
+    const vals = [1, 9, 2, 8, 1, 9]
+    vals.forEach((v, i) => d2.metrics.push({ date: addDays(today, -i), mood: v }))
+    const volatile = metricVolatility(d2, 'mood', 30, today)
+    expect(volatile.sd).toBeGreaterThan(3)
+    expect(volatile.stability).toBe(0)
+    expect(volatile.band).toBe('volatile')
+  })
+
+  it('returns nulls when fewer than 3 days are logged', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    d.metrics.push({ date: today, mood: 5 })
+    d.metrics.push({ date: addDays(today, -1), mood: 6 })
+    const r = metricVolatility(d, 'mood', 30, today)
+    expect(r.sd).toBeNull()
+    expect(r.stability).toBeNull()
+    expect(r.band).toBeNull()
+    expect(r.days).toBe(2)
+  })
+
+  it('only counts days inside the window', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    d.metrics.push({ date: today, mood: 5 })
+    d.metrics.push({ date: addDays(today, -1), mood: 5 })
+    d.metrics.push({ date: addDays(today, -2), mood: 5 })
+    d.metrics.push({ date: addDays(today, -40), mood: 1 }) // outside 30d window
+    const r = metricVolatility(d, 'mood', 30, today)
+    expect(r.days).toBe(3)
+    expect(r.sd).toBe(0)
+  })
+})
+
+describe('momentumIndicator', () => {
+  it('flags rising and falling metrics with signed deltas', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    // Recent week (0..-6) mood ~8, prior week (-7..-13) mood ~4 → up.
+    for (let i = 0; i < 7; i++) d.metrics.push({ date: addDays(today, -i), mood: 8, sleep: 6 })
+    for (let i = 7; i < 14; i++) d.metrics.push({ date: addDays(today, -i), mood: 4, sleep: 6 })
+    const m = momentumIndicator(d, 7, today)
+    const mood = m.find((x) => x.key === 'mood')!
+    expect(mood.dir).toBe('up')
+    expect(mood.delta).toBe(4)
+    expect(mood.recent).toBe(8)
+    expect(mood.recentDays).toBe(7)
+    // Sleep flat → present but flat.
+    const sleep = m.find((x) => x.key === 'sleep')!
+    expect(sleep.dir).toBe('flat')
+    expect(sleep.delta).toBe(0)
+    // Strongest move (mood) sorts first.
+    expect(m[0].key).toBe('mood')
+  })
+
+  it('omits metrics without enough data on both windows', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    // Only recent-window mood, nothing prior → excluded.
+    for (let i = 0; i < 3; i++) d.metrics.push({ date: addDays(today, -i), mood: 7 })
+    const m = momentumIndicator(d, 7, today)
+    expect(m.find((x) => x.key === 'mood')).toBeUndefined()
   })
 })

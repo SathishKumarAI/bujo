@@ -1,6 +1,7 @@
 // Plain-CSV exporters for spreadsheet/analysis use. Each returns a CSV string;
 // the caller downloads it. Kept dependency-free and defensive about commas/quotes.
 import type { JournalData } from './types'
+import { personalRecords, cardioPBs, epley1RM } from './fitness'
 
 function esc(v: unknown): string {
   const s = v == null ? '' : String(v)
@@ -147,6 +148,42 @@ export function recoveryCsv(data: JournalData): string {
   return toCsv(['kind', 'addiction', 'date', 'trigger', 'technique', 'intensity', 'note'], rows)
 }
 
+/**
+ * Personal-record leaderboard CSV (BUJO-536): the best working set per exercise
+ * (weight × reps) plus its Epley estimated 1RM, followed by the three cardio PBs
+ * (longest distance, most calories, most minutes). One sheet so a lifter can share
+ * or track records in a spreadsheet. `kind` tags strength vs cardio rows. Pure;
+ * header-only on a journal with no workouts.
+ */
+export function personalRecordsCsv(data: JournalData): string {
+  const rows: (string | number)[][] = []
+  const prs = [...personalRecords(data)].sort((a, b) =>
+    a.exercise < b.exercise ? -1 : a.exercise > b.exercise ? 1 : 0,
+  )
+  for (const pr of prs) {
+    rows.push(['strength', pr.exercise, pr.weight, pr.reps, epley1RM(pr.weight, pr.reps)])
+  }
+  const c = cardioPBs(data)
+  if (c.longestKm > 0) rows.push(['cardio', 'Longest distance (km)', c.longestKm, '', ''])
+  if (c.mostCalories > 0) rows.push(['cardio', 'Most calories', c.mostCalories, '', ''])
+  if (c.mostMinutes > 0) rows.push(['cardio', 'Most minutes', c.mostMinutes, '', ''])
+  return toCsv(['kind', 'metric', 'value', 'reps', 'est1RM'], rows)
+}
+
+/**
+ * Single-collection entries CSV (BUJO-515): export just the entries filed under
+ * one collection page (e.g. a project task list) rather than the whole journal.
+ * Pure; header-only when the collection has no entries. Sorted by date then
+ * creation order so it reads like the page does.
+ */
+export function collectionCsv(data: JournalData, collectionId: string): string {
+  const rows = data.entries
+    .filter((e) => e.collection === collectionId)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.createdAt < b.createdAt ? -1 : 1))
+    .map((e) => [e.date, e.type, e.status, e.important ? 'yes' : '', e.text, e.tags.join(' ')])
+  return toCsv(['date', 'type', 'status', 'important', 'text', 'tags'], rows)
+}
+
 // ── Backup hygiene helpers ────────────────────────────────────────────────────
 
 /** Settings keys that are device-/account-specific secrets. Stripped from a
@@ -170,6 +207,26 @@ export function stripSyncSecrets<T extends JournalData>(data: T): T {
   const settings = { ...data.settings }
   for (const k of SYNC_SECRET_KEYS) delete (settings as Record<string, unknown>)[k]
   return { ...data, settings }
+}
+
+/**
+ * Privacy / redaction export filter (BUJO-308): return a copy of the journal with
+ * the most sensitive domains stripped so a shared backup omits them. Drops the
+ * Recovery (NoFap) data and Cycle data entirely, and blanks the free-text on
+ * journal entries (keeping their type/status/date so charts still have shape).
+ * Pure — does not mutate the input. Layer over `stripSyncSecrets` for a fully
+ * sanitised share copy.
+ */
+export function redactSensitive<T extends JournalData>(data: T): T {
+  return {
+    ...data,
+    // Reset the abstinence journal to an empty primary streak.
+    nofap: { startedOn: data.nofap.startedOn, best: 0, relapses: [] },
+    // Drop cycle/fertility points.
+    cycle: [],
+    // Blank free-text + tags on entries but keep their type/status/date for shape.
+    entries: data.entries.map((e) => ({ ...e, text: '', tags: [] })),
+  }
 }
 
 /** Whole days from an ISO `lastBackup` day to `today` (both "YYYY-MM-DD").
