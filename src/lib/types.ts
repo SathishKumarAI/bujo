@@ -61,6 +61,9 @@ export interface Habit {
   // ── customisation (all optional, additive) ──
   type?: HabitType // default 'check'
   target?: number // daily goal for count habits (e.g. 8 glasses)
+  /** Minimum "showed up" threshold for count/timer habits (< target). A day that
+   *  meets the floor but not the target reads as "met floor", a partial win. */
+  floor?: number
   unit?: string // e.g. "glasses", "min"
   /** Weekdays the habit is scheduled (0=Sun…6=Sat). Empty/undefined = every day. */
   activeDays?: number[]
@@ -227,6 +230,9 @@ export interface CustomGoal {
   value: number
   unit?: string
   color?: string // Catppuccin token
+  /** Optional deadline (ISO day) — drives a "X/day needed" pace + ahead/behind
+   *  indicator (#95/#261). Undefined = no deadline, no pace shown. */
+  due?: string
   createdAt: string
 }
 
@@ -357,6 +363,9 @@ export interface AddictionStreak {
   /** Personal best for this addiction, in days. */
   best: number
   relapses: Relapse[]
+  /** Optional money this addiction cost per day (#123) — drives a "money saved"
+   *  tile = cleanDays × costPerDay. */
+  costPerDay?: number
 }
 
 /** Abstinence / NoFap streak tracker state. */
@@ -375,6 +384,11 @@ export interface Streak {
   /** Additional addictions, each tracked as its own streak (BUJO-199). The
    *  fields above remain the primary/default streak for backward compatibility. */
   addictions?: AddictionStreak[]
+  /** Optional money the primary addiction cost per day (#123) — drives a
+   *  "money saved" tile = cleanDays × costPerDay. */
+  costPerDay?: number
+  /** Personal commitment / quit-date contract for the primary streak (#316). */
+  commitment?: { quitDate?: string; reason?: string }
 }
 
 export interface Settings {
@@ -386,6 +400,8 @@ export interface Settings {
   weightUnit: WeightUnit
   /** Distance unit for cardio — km (metric) or mi (US). */
   distanceUnit: DistanceUnit
+  /** Currency symbol for money-saved counters (#123). Defaults to "$" when unset. */
+  currencySymbol?: string
   /** First day of the week in calendars: 0 = Sunday, 1 = Monday. */
   weekStart: 0 | 1
   /** Drives which gendered wellbeing tools are surfaced (cycle vs. abstinence). */

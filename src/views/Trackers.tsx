@@ -13,7 +13,7 @@ import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
-import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss } from '../lib/streak'
+import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
 import { completionRate30, habitCellFill, consistencyScore, bestWeekday, categoryRollup, perfectDayStats, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
@@ -807,16 +807,21 @@ function CategoryRows({
                 // inner fill so "hit the target" reads differently from "almost".
                 const fill = habitCellFill(data, h, d)
                 const met = fill.state === 'met'
-                const partial = fill.state === 'partial'
+                // #280: a count/timer day that clears the floor but not the
+                // stretch target gets a distinct "met floor" look (a tinted,
+                // outlined cell) — between a faint partial and a solid hit.
+                const tier = (type === 'count' || type === 'timer') ? goalTier(val, h.floor, target) : (met ? 'target' : 'none')
+                const atFloor = tier === 'floor'
+                const partial = fill.state === 'partial' && !atFloor
                 return (
                   <td key={d} className="p-0.5 text-center">
                     <button
                       disabled={disabled}
                       onClick={() => onSetValue(d, h.id, nextHabitValue(type, target, val))}
-                      title={`${val}/${target}${met ? ' · met' : partial ? ' · partial' : ''}`}
-                      aria-label={`${h.name} ${d}: ${val} of ${target}${met ? ', target met' : partial ? ', partial' : ''}`}
+                      title={`${val}/${target}${h.floor ? ` (floor ${h.floor})` : ''}${met ? ' · stretch met' : atFloor ? ' · met floor' : partial ? ' · partial' : ''}`}
+                      aria-label={`${h.name} ${d}: ${val} of ${target}${met ? ', stretch target met' : atFloor ? ', met floor' : partial ? ', partial' : ''}`}
                       className={`relative grid ${cell} place-items-center overflow-hidden rounded text-[8px] disabled:opacity-20`}
-                      style={{ background: met ? slipColor : 'transparent', border: `1px solid ${met ? slipColor : partial ? slipColor : cat('surface1')}`, color: met ? cat('crust') : cat('subtext1') }}
+                      style={{ background: met ? slipColor : atFloor ? slipColor + '44' : 'transparent', border: `1px solid ${met || atFloor || partial ? slipColor : cat('surface1')}`, color: met ? cat('crust') : cat('subtext1') }}
                     >
                       {/* Partial: a bottom-up fill bar sized to the target ratio. */}
                       {partial && (
@@ -1033,10 +1038,21 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           })()}
 
           {(habit.type === 'count' || habit.type === 'timer') && (
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm text-subtext1">Daily target<div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
-              <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} list="habit-units" className="mt-1" /><datalist id="habit-units">{knownUnits.map((u) => <option key={u} value={u} />)}</datalist></label>
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-sm text-subtext1">Daily target <span className="text-overlay0">(stretch)</span><div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
+                <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} list="habit-units" className="mt-1" /><datalist id="habit-units">{knownUnits.map((u) => <option key={u} value={u} />)}</datalist></label>
+              </div>
+              {/* #280: optional floor — a minimum "showed up" threshold below the
+                  stretch target. A day that clears it but not the target reads as
+                  a partial win on the grid. */}
+              <label className="block text-sm text-subtext1">Floor <span className="text-overlay0">(min “showed up”, optional · below the target)</span>
+                <div className="mt-1"><Stepper value={habit.floor ?? undefined} onChange={(v) => set({ floor: v && v > 0 ? v : undefined })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Floor threshold" /></div>
+                {habit.floor != null && habit.floor >= habitTarget(habit) && (
+                  <span className="mt-1 block text-[11px]" style={{ color: cat('peach') }}>Floor should be below the target ({habitTarget(habit)}) to show a “met floor” state.</span>
+                )}
+              </label>
+            </>
           )}
           {habit.type === 'rating' && (
             <p className="text-xs text-overlay0">Logs a 1–5 rating per day (tap the stars in the activity view or today strip).</p>

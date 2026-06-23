@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen, Plus, Trash2, Sparkles } from 'lucide-react'
+import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen, Plus, Trash2, Sparkles, CalendarClock } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { Stepper } from '../components/fields/Stepper'
 import { Page } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { cat } from '../lib/colors'
-import { todayISO, dayDiff } from '../lib/date'
+import { todayISO, dayDiff, prettyDay } from '../lib/date'
+import { goalPace } from '../lib/goals'
 import { weeklyActiveMinutes } from '../lib/fitness'
 import { pickleTotals } from '../lib/pickleball'
 import { finishedThisYear } from '../lib/reading'
@@ -226,6 +227,8 @@ export function Goals() {
               const pct = Math.min(100, Math.round((g.value / g.target) * 100))
               const reached = g.value >= g.target
               const shown = Math.min(g.value, g.target)
+              // #95/#261: deadline pace + ahead/behind indicator (null when no due).
+              const pace = goalPace(g.value, g.target, g.createdAt, g.due, today)
               return (
                 <li key={g.id} className="group rounded-lg border border-surface0 bg-base p-3">
                   <div className="mb-1.5 flex items-center gap-2 text-sm">
@@ -235,6 +238,36 @@ export function Goals() {
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />
+                  {/* Deadline + pace (#95/#261) */}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <label className="inline-flex items-center gap-1.5 text-overlay0">
+                      <CalendarClock size={13} /> Deadline
+                      <input
+                        type="date"
+                        value={g.due ?? ''}
+                        onChange={(e) => updateCustomGoal(g.id, { due: e.target.value || undefined })}
+                        className="rounded-md border border-surface1 bg-card px-2 py-1 text-foreground"
+                        aria-label={`Deadline for ${g.label}`}
+                      />
+                    </label>
+                    {pace && !reached && (
+                      pace.pastDue ? (
+                        <span className="inline-flex items-center gap-1" style={{ color: cat('red') }}>
+                          Past due ({prettyDay(g.due!)}) · {pace.remaining}{g.unit ? ` ${g.unit}` : ''} short
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="text-subtext1">{pace.perDayNeeded}{g.unit ? ` ${g.unit}` : ''}/day to finish by {prettyDay(g.due!)}</span>
+                          <span className="rounded-full px-1.5 py-0.5 font-medium" style={{ background: cat(pace.onTrack ? 'green' : 'peach') + '22', color: cat(pace.onTrack ? 'green' : 'peach') }}>
+                            {pace.onTrack ? 'on track' : 'behind'}
+                          </span>
+                        </span>
+                      )
+                    )}
+                    {pace && reached && g.due && (
+                      <span className="inline-flex items-center gap-1" style={{ color: cat('green') }}>Done ✓ (due {prettyDay(g.due)})</span>
+                    )}
+                  </div>
                 </li>
               )
             })}
