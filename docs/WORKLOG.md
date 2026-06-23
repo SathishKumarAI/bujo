@@ -1,5 +1,32 @@
 # Worklog
 
+## 2026-06-22 23:45 — Backlog batch 2: built 32 features (PR #51)
+
+**Summary:** Second backlog batch — 8 disjoint-file agents shipped 32 more
+additive/read-only features with tests. Verified + merged PR #51. +92 unit tests
+(now 450 total).
+
+**Changes (32 features):**
+- Trackers — consistency score, best/worst weekday, longest-streak-ever, days-since-last-miss.
+- Fitness — sets-per-muscle balance, e1RM progression, workout heatmap calendar, cardio PB badges.
+- Pickleball — rolling form & momentum, win streaks, skill-level matchup win%, weekday performance, point differential.
+- Recovery — high-risk-hour heatmap, day-of-week relapse pattern, urge→relapse self-efficacy, pace-to-record.
+- Reading/Goals — reading streak, avg days-to-finish, Year-in-Books recap, focus by weekday + longest session.
+- Insights — best/worst weekday, longest-streak leaderboard, consistency score, month-over-month deltas.
+- Data — per-domain CSV exports (habits/pickleball/recovery), habit reminders .ics.
+- Journaling — migration analytics, entries-per-day sparkline + bullet-type breakdown, index/ToC.
+
+**Verify:** tsc 0 · vitest 450/450 · eslint clean (touched) · vite build OK.
+
+**Running total:** ~68 backlog features built (PRs #48, #50, #51 + change-pw).
+
+**Follow-ups:**
+- [ ] More batches; buildable pool shrinking. Some metrics now surface in both
+  Trackers and Insights (intentional, different views).
+- [ ] Serial data-model batch for deferred features needing types.ts/store.tsx
+  (count +/- buttons, DUPR tracker, per-game scores, HALT toggles, shot-quality
+  scorecard, full JSON import, etc.).
+
 ## 2026-06-22 23:35 — Backlog batch 1: built 25 features (PR #50)
 
 **Summary:** First batch of the 572-feature backlog build. 8 disjoint-file
