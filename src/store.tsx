@@ -173,7 +173,7 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out' }) => void
+  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[] }) => void
   removeUrge: (id: string) => void
   addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
   removeTriggerPlan: (id: string) => void
@@ -212,6 +212,9 @@ interface Store {
   setWeather: (date: string, w: Weather) => void
   // settings
   setSettings: (patch: Partial<Settings>) => void
+  /** Append (or replace same-day) a dated DUPR rating in settings.duprLog. */
+  logDupr: (date: string, rating: number) => void
+  removeDupr: (date: string) => void
   // bulk
   replaceAll: (data: JournalData, opts?: { stamp?: boolean }) => void
   // passcode / encryption
@@ -668,6 +671,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               id: uid('u'), date: todayISO(), at: new Date().toISOString(),
               trigger: entry?.trigger?.trim() || undefined, note: entry?.note?.trim() || undefined,
               intensity: entry?.intensity, technique: entry?.technique,
+              halt: entry?.halt?.length ? entry.halt : undefined,
             }],
           },
         })),
@@ -832,6 +836,16 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       setSettings: (sp) =>
         patch((d) => ({ ...d, settings: { ...d.settings, ...sp } }), 'settings'),
+
+      logDupr: (date, rating) =>
+        patch((d) => {
+          const log = (d.settings.duprLog ?? []).filter((e) => e.date !== date)
+          const next = [...log, { date, rating }].sort((a, b) => (a.date < b.date ? -1 : 1))
+          return { ...d, settings: { ...d.settings, duprLog: next } }
+        }),
+
+      removeDupr: (date) =>
+        patch((d) => ({ ...d, settings: { ...d.settings, duprLog: (d.settings.duprLog ?? []).filter((e) => e.date !== date) } })),
 
       replaceAll: (next, opts) => dispatch({ type: 'set', data: next, stamp: opts?.stamp }),
 

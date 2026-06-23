@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData, Relapse } from './types'
 
@@ -233,5 +233,126 @@ describe('daysSinceLastMiss', () => {
     d.habitSkips = { h1: [] }
     // No missed scheduled day → null.
     expect(daysSinceLastMiss(d, h, TODAY)).toBeNull()
+  })
+})
+
+describe('atRiskHabits', () => {
+  const TODAY = '2026-06-18' // Thursday
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', ...p }
+  }
+  function withDone(habits: Habit[], log: Record<string, string[]>): JournalData {
+    const d = emptyJournal()
+    d.habits = habits
+    d.habitLog = log
+    return d
+  }
+
+  it('flags a live streak (>=2) scheduled today but not yet done', () => {
+    const h = hb()
+    // done 16+17, today (18) NOT done → streak ending yesterday is 2 → at risk
+    const d = withDone([h], { '2026-06-16': ['h1'], '2026-06-17': ['h1'] })
+    const r = atRiskHabits(d, TODAY)
+    expect(r).toHaveLength(1)
+    expect(r[0].habit.id).toBe('h1')
+    expect(r[0].streak).toBe(2)
+  })
+
+  it('excludes a habit already done today', () => {
+    const h = hb()
+    const d = withDone([h], { '2026-06-16': ['h1'], '2026-06-17': ['h1'], '2026-06-18': ['h1'] })
+    expect(atRiskHabits(d, TODAY)).toHaveLength(0)
+  })
+
+  it('excludes a streak shorter than 2', () => {
+    const h = hb()
+    const d = withDone([h], { '2026-06-17': ['h1'] }) // only yesterday → streak 1
+    expect(atRiskHabits(d, TODAY)).toHaveLength(0)
+  })
+
+  it('excludes habits not scheduled today', () => {
+    const h = hb({ activeDays: [1, 3] }) // Mon/Wed; 18 is Thu → not scheduled
+    const d = withDone([h], { '2026-06-15': ['h1'], '2026-06-17': ['h1'] })
+    expect(atRiskHabits(d, TODAY)).toHaveLength(0)
+  })
+
+  it('excludes archived and avoid habits', () => {
+    const arch = hb({ id: 'a', archived: true })
+    const avoid = hb({ id: 'b', avoid: true })
+    const d = withDone([arch, avoid], {
+      '2026-06-16': ['a', 'b'], '2026-06-17': ['a', 'b'],
+    })
+    expect(atRiskHabits(d, TODAY)).toHaveLength(0)
+  })
+})
+
+describe('weeklyGoalProgress', () => {
+  const TODAY = '2026-06-18' // Thursday; Sunday-week starts 2026-06-14
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', weeklyGoal: 4, ...p }
+  }
+  function withDone(h: Habit, days: string[]): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    for (const day of days) d.habitLog[day] = [h.id]
+    return d
+  }
+
+  it('counts done days in the current (Sunday-start) week up to today', () => {
+    const h = hb()
+    // week = 14..18 so far. Done 14,16,18 (3); a done day LAST week (13) ignored.
+    const d = withDone(h, ['2026-06-13', '2026-06-14', '2026-06-16', '2026-06-18'])
+    const p = weeklyGoalProgress(d, h, TODAY)
+    expect(p.done).toBe(3)
+    expect(p.goal).toBe(4)
+    expect(p.pct).toBe(75)
+  })
+
+  it('caps pct at 100 once the goal is met', () => {
+    const h = hb({ weeklyGoal: 2 })
+    const d = withDone(h, ['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18'])
+    const p = weeklyGoalProgress(d, h, TODAY)
+    expect(p.done).toBe(4)
+    expect(p.pct).toBe(100)
+  })
+
+  it('respects a Monday week start', () => {
+    const h = hb({ weeklyGoal: 5 })
+    // Monday-week containing Thu 18 starts Mon 15. Done on Sun 14 (prev week)
+    // must NOT count; done 15,16,18 = 3.
+    const d = withDone(h, ['2026-06-14', '2026-06-15', '2026-06-16', '2026-06-18'])
+    const p = weeklyGoalProgress(d, h, TODAY, 1)
+    expect(p.done).toBe(3)
+  })
+
+  it('defaults goal to 1 for a habit without a weeklyGoal', () => {
+    const h = hb({ weeklyGoal: undefined })
+    const d = withDone(h, ['2026-06-16'])
+    const p = weeklyGoalProgress(d, h, TODAY)
+    expect(p.goal).toBe(1)
+    expect(p.pct).toBe(100)
+  })
+})
+
+describe('haltTally', () => {
+  it('counts HALT states across urges, most-frequent first', () => {
+    const d = emptyJournal()
+    d.nofap.urgeLog = [
+      { id: '1', date: '2026-06-18', halt: ['tired', 'hungry'] },
+      { id: '2', date: '2026-06-18', halt: ['tired'] },
+      { id: '3', date: '2026-06-18', halt: ['lonely', 'tired'] },
+      { id: '4', date: '2026-06-18' }, // no halt → ignored
+    ]
+    const r = haltTally(d)
+    expect(r[0]).toEqual({ state: 'tired', label: 'Tired', count: 3 })
+    // hungry + lonely both 1; angry never flagged → dropped
+    expect(r.map((x) => x.state).sort()).toEqual(['hungry', 'lonely', 'tired'])
+    expect(r.find((x) => x.state === 'angry')).toBeUndefined()
+  })
+
+  it('returns empty when no urge logs HALT', () => {
+    const d = emptyJournal()
+    d.nofap.urgeLog = [{ id: '1', date: '2026-06-18' }]
+    expect(haltTally(d)).toEqual([])
   })
 })

@@ -5,7 +5,7 @@ import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
+import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 
@@ -126,6 +126,7 @@ export function NoFap() {
   const [urge, setUrge] = useState('')
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
+  const [halt, setHalt] = useState<HaltState[]>([])
   const [plan, setPlan] = useState({ addiction: '', trigger: '', coping: '' })
   const [sosOpen, setSosOpen] = useState(false)
   const plans = data.nofap.plans ?? []
@@ -139,9 +140,10 @@ export function NoFap() {
   const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
 
   function logUrge() {
-    resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique })
-    setUrge(''); setIntensity(3); setTechnique(undefined)
+    resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique, halt: halt.length ? halt : undefined })
+    setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([])
   }
+  const haltRank = haltTally(data)
   const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
   const s = data.nofap
   const today = todayISO()
@@ -387,6 +389,23 @@ export function NoFap() {
               </button>
             ))}
           </div>
+          {/* HALT quick-check · which unmet need is driving the urge? */}
+          <div className="mt-2">
+            <p className="mb-1 text-xs text-overlay0">HALT check · tap any that fit</p>
+            <div className="flex flex-wrap gap-1.5">
+              {HALT_STATES.map((hs) => {
+                const on = halt.includes(hs.id)
+                return (
+                  <button key={hs.id} onClick={() => setHalt((cur) => cur.includes(hs.id) ? cur.filter((x) => x !== hs.id) : [...cur, hs.id])}
+                    aria-pressed={on}
+                    className="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                    style={{ borderColor: on ? cat('peach') : cat('surface1'), background: on ? cat('peach') + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}>
+                    {hs.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <div className="mt-3 flex justify-end">
             <Button variant="primary" onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
           </div>
@@ -400,6 +419,17 @@ export function NoFap() {
               <div className="flex flex-wrap gap-1.5">
                 {techRank.map((t) => (
                   <span key={t.technique} className="rounded-full px-2 py-0.5" style={{ background: cat('surface0'), color: cat('subtext0') }}>{TECH_LABEL[t.technique]} {t.count}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* HALT pattern tally · which unmet need accompanies urges most */}
+          {haltRank.length > 0 && (
+            <div className="mt-2 rounded-lg border border-surface0 bg-base p-2.5 text-xs">
+              <div className="mb-1 text-subtext1">HALT pattern: <span className="font-medium" style={{ color: cat('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
+              <div className="flex flex-wrap gap-1.5">
+                {haltRank.map((h) => (
+                  <span key={h.state} className="rounded-full px-2 py-0.5" style={{ background: cat('surface0'), color: cat('subtext0') }}>{h.label} {h.count}</span>
                 ))}
               </div>
             </div>

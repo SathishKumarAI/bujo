@@ -1,4 +1,4 @@
-import { Utensils, CupSoda } from 'lucide-react'
+import { Utensils, CupSoda, Flame } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider } from '../components/ui'
@@ -12,7 +12,10 @@ import { TodayPlanCard } from '../components/TodayPlanCard'
 import { TodayHabits } from '../components/TodayHabits'
 import { CoachCard } from '../components/CoachCard'
 import { StickerBar } from '../components/StickerBar'
-import { onThisDay } from '../lib/stats'
+import { onThisDay, habitTarget, habitValueOn, habitDoneOn } from '../lib/stats'
+import { isScheduledOn } from '../lib/habitStats'
+import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
+import { cat } from '../lib/colors'
 import { promptForDay } from '../lib/prompts'
 
 export function Today() {
@@ -99,6 +102,15 @@ export function Today() {
 
       {/* ── Quick-check today's habits without leaving Today ──── */}
       {date === todayISO() && !hidden.includes('habits') && <TodayHabits />}
+
+      {/* ── Count/timer habits: +/- quick adjust ──────────────── */}
+      {date === todayISO() && !hidden.includes('habits') && <TodayCountHabits date={date} />}
+
+      {/* ── At-risk streak nudge: don't break a live streak ───── */}
+      {date === todayISO() && <AtRiskNudge date={date} />}
+
+      {/* ── Weekly-goal progress rings ────────────────────────── */}
+      {date === todayISO() && <WeeklyGoalRings date={date} />}
 
       {/* ── Daily log (primary, above the fold) ─────────────────── */}
       <Card
@@ -187,5 +199,122 @@ export function Today() {
         </Card>
       </div>
     </Page>
+  )
+}
+
+/**
+ * Count/timer habits scheduled today, each with −/+ steppers (and a quick +step)
+ * so you can log progress without leaving Today. Reuses the existing
+ * setHabitValue store action; values are clamped at 0.
+ */
+function TodayCountHabits({ date }: { date: string }) {
+  const { data, setHabitValue } = useJournal()
+  const habits = data.habits.filter(
+    (h) => !h.archived && !h.avoid && (h.type === 'count' || h.type === 'timer') && isScheduledOn(h, date),
+  )
+  if (habits.length === 0) return null
+  return (
+    <Card title="Count habits" subtitle="Tap −/+ to log your tally for today">
+      <ul className="space-y-2">
+        {habits.map((h) => {
+          const target = habitTarget(h)
+          const val = habitValueOn(data, h, date)
+          const met = habitDoneOn(data, h, date)
+          const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
+          return (
+            <li key={h.id} className="flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-sm text-subtext1">
+                {h.emoji ? `${h.emoji} ` : ''}{h.name}
+                {h.unit && <span className="text-overlay0"> ({h.unit})</span>}
+              </span>
+              <span className="text-xs tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
+                {val}/{target}{h.type === 'timer' ? 'm' : ''}{met ? ' ✓' : ''}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
+                  disabled={val <= 0}
+                  aria-label={`Decrease ${h.name}`}
+                  className="grid h-7 w-7 place-items-center rounded-full border border-surface1 text-subtext1 transition-colors hover:text-text disabled:opacity-30"
+                >−</button>
+                <button
+                  onClick={() => setHabitValue(date, h.id, val + step)}
+                  aria-label={`Increase ${h.name}`}
+                  className="grid h-7 w-7 place-items-center rounded-full border text-text transition-colors"
+                  style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
+                >+</button>
+                {step > 1 && (
+                  <button
+                    onClick={() => setHabitValue(date, h.id, val + step)}
+                    aria-label={`Add ${step} to ${h.name}`}
+                    className="rounded-full border border-surface1 px-2 py-0.5 text-[11px] text-subtext1 transition-colors hover:text-text"
+                  >+{step}</button>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
+
+/** A small "keep your N-day streak — not logged yet" nudge for build habits. */
+function AtRiskNudge({ date }: { date: string }) {
+  const { data } = useJournal()
+  const atRisk = atRiskHabits(data, date)
+  if (atRisk.length === 0) return null
+  return (
+    <Card title="Keep your streaks" subtitle="Scheduled today · streak alive · not logged yet">
+      <ul className="flex flex-wrap gap-2">
+        {atRisk.map(({ habit, streak }) => (
+          <li
+            key={habit.id}
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+            style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
+          >
+            <Flame size={12} style={{ color: cat('peach') }} />
+            {habit.emoji ? `${habit.emoji} ` : ''}{habit.name}
+            <span style={{ color: cat('peach') }}>· keep your {streak}-day streak</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
+/** Weekly-goal completion rings for habits that set a weeklyGoal. */
+function WeeklyGoalRings({ date }: { date: string }) {
+  const { data } = useJournal()
+  const habits = data.habits.filter((h) => !h.archived && h.weeklyGoal && h.weeklyGoal > 0)
+  if (habits.length === 0) return null
+  const R = 16
+  const C = 2 * Math.PI * R
+  return (
+    <Card title="Weekly goals" subtitle="This week's completions vs your goal">
+      <div className="flex flex-wrap gap-4">
+        {habits.map((h) => {
+          const { done, goal, pct } = weeklyGoalProgress(data, h, date, data.settings.weekStart ?? 0)
+          const hit = done >= goal
+          return (
+            <div key={h.id} className="flex flex-col items-center gap-1" style={{ width: 64 }}>
+              <span className="relative grid h-12 w-12 place-items-center">
+                <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden>
+                  <circle cx="24" cy="24" r={R} fill="none" stroke={cat('surface1')} strokeWidth="4" />
+                  <circle
+                    cx="24" cy="24" r={R} fill="none"
+                    stroke={cat(hit ? 'green' : h.color)} strokeWidth="4" strokeLinecap="round"
+                    strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)}
+                    transform="rotate(-90 24 24)" style={{ transition: 'stroke-dashoffset 0.3s' }}
+                  />
+                </svg>
+                <span className="absolute text-[11px] font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
+              </span>
+              <span className="max-w-full truncate text-center text-[11px] text-overlay1" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }

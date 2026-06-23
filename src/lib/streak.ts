@@ -1,7 +1,7 @@
 import type { Habit, JournalData, Relapse, AddictionStreak } from './types'
-import { addDays, dayDiff, todayISO } from './date'
+import { addDays, dayDiff, fromISODay, todayISO } from './date'
 import { STREAK_MILESTONES as MILESTONE_DAYS } from './milestones'
-import { habitDoneOn } from './stats'
+import { habitDoneOn, habitStreak } from './stats'
 import { isScheduledOn } from './habitStats'
 
 /**
@@ -255,6 +255,65 @@ export function daysSinceLastMiss(
   return null
 }
 
+/**
+ * Build habits scheduled today whose streak is still alive (>= 2 days, ending
+ * yesterday) but which haven't been logged yet today (BUJO at-risk nudge). These
+ * are the ones a single missed day would break, so they're worth surfacing.
+ * Skips archived + avoid habits (quit habits have their own clean-streak logic)
+ * and anything already done today. Pure; sorted by streak descending.
+ */
+export function atRiskHabits(
+  data: JournalData,
+  today = todayISO(),
+): { habit: Habit; streak: number }[] {
+  const out: { habit: Habit; streak: number }[] = []
+  for (const h of data.habits) {
+    if (h.archived || h.avoid) continue
+    if (!isScheduledOn(h, today)) continue
+    if (habitDoneOn(data, h, today)) continue // already logged → not at risk
+    // habitStreak with today unlogged returns the run ending yesterday.
+    const streak = habitStreak(data, h.id, today)
+    if (streak >= 2) out.push({ habit: h, streak })
+  }
+  return out.sort((a, b) => b.streak - a.streak)
+}
+
+export interface WeeklyGoalProgress {
+  /** Done days within the current calendar week (up to and including today). */
+  done: number
+  /** The habit's weeklyGoal (>= 1; falls back to 1 if unset/0). */
+  goal: number
+  /** 0–100 progress toward the goal, capped at 100. */
+  pct: number
+}
+
+/**
+ * This-week completions vs a habit's weeklyGoal (BUJO weekly-goal ring). Counts
+ * the done days from the start of the current week (Sunday, weekStart=0) through
+ * `today` — future days in the week aren't counted yet. Off-schedule days simply
+ * never get done, so they don't inflate the count. Pure; returns pct=100 when the
+ * goal is met. If the habit has no weeklyGoal, goal defaults to 1 so callers that
+ * pass such a habit still get a sane (non-NaN) result.
+ */
+export function weeklyGoalProgress(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  weekStart: 0 | 1 = 0,
+): WeeklyGoalProgress {
+  const goal = habit.weeklyGoal && habit.weeklyGoal > 0 ? habit.weeklyGoal : 1
+  // Offset back to the first day of the week containing `today`.
+  const dow = fromISODay(today).getDay()
+  const offset = weekStart === 1 ? (dow + 6) % 7 : dow
+  let done = 0
+  for (let i = 0; i <= offset; i++) {
+    const day = addDays(today, -i)
+    if (habitDoneOn(data, habit, day)) done += 1
+  }
+  const pct = Math.min(100, Math.round((done / goal) * 100))
+  return { done, goal, pct }
+}
+
 /** Milestones already reached at `current` days. */
 export function unlockedBenefits(current: number): Milestone[] {
   return STREAK_MILESTONES.filter((m) => current >= m.day)
@@ -273,5 +332,32 @@ export function urgesByType(data: JournalData): { type: string; count: number }[
   }
   return [...counts.entries()]
     .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+/** HALT states in display order with a friendly label. */
+export const HALT_STATES = [
+  { id: 'hungry', label: 'Hungry' },
+  { id: 'angry', label: 'Angry' },
+  { id: 'lonely', label: 'Lonely' },
+  { id: 'tired', label: 'Tired' },
+] as const
+
+export type HaltState = (typeof HALT_STATES)[number]['id']
+
+/**
+ * How often each HALT state (Hungry / Angry / Lonely / Tired) accompanied a
+ * logged urge, most-frequent first. A single urge can flag several states. Pure;
+ * powers the "which unmet need drives your urges" tally. States with zero counts
+ * are dropped.
+ */
+export function haltTally(data: JournalData): { state: HaltState; label: string; count: number }[] {
+  const counts = new Map<HaltState, number>()
+  for (const u of data.nofap.urgeLog ?? []) {
+    for (const h of u.halt ?? []) counts.set(h, (counts.get(h) ?? 0) + 1)
+  }
+  return HALT_STATES
+    .map((s) => ({ state: s.id, label: s.label, count: counts.get(s.id) ?? 0 }))
+    .filter((x) => x.count > 0)
     .sort((a, b) => b.count - a.count)
 }
