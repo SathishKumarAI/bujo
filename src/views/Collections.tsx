@@ -28,6 +28,25 @@ export function Collections() {
   // Brain-dump inbox: dateless, unfiled entries waiting to be triaged.
   const inbox = inboxEntries(data.entries)
 
+  // ── Index / table of contents (#402): every collection + tag page in one list.
+  const collectionIndex = data.collections
+    .map((c) => ({
+      id: c.id,
+      icon: c.icon,
+      name: c.name,
+      count: data.entries.filter((e) => e.collection === c.id).length,
+    }))
+    .sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
+
+  function jumpToCollection(id: string) {
+    setOpenCol(id)
+    document.getElementById('bujo-collections')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  function jumpToTag(tag: string) {
+    setOpenTag(tag)
+    document.getElementById('bujo-tags')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   // Future log = events/tasks dated after today.
   const today = todayISO()
   const future = data.entries
@@ -49,6 +68,53 @@ export function Collections() {
 
   return (
     <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-2">
+      {(collectionIndex.length > 0 || tags.length > 0) && (
+        <Card
+          title="Index"
+          subtitle="The journal's table of contents · jump to any page"
+          className="md:col-span-2"
+          help="A classic bullet-journal Index: every custom collection and every #tag page in one place, with how many entries each holds. Tap a row to open it below."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Collections</div>
+              {collectionIndex.length === 0 ? (
+                <Empty>No collections yet.</Empty>
+              ) : (
+                <ul className="space-y-0.5 text-sm">
+                  {collectionIndex.map((c) => (
+                    <li key={c.id}>
+                      <button onClick={() => jumpToCollection(c.id)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
+                        <span>{c.icon}</span>
+                        <span className="flex-1 truncate text-subtext1">{c.name}</span>
+                        <span className="text-overlay0">{c.count}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Tag pages</div>
+              {tags.length === 0 ? (
+                <Empty>No tags yet.</Empty>
+              ) : (
+                <ul className="space-y-0.5 text-sm">
+                  {tags.slice(0, 20).map(({ tag, entries }) => (
+                    <li key={tag}>
+                      <button onClick={() => jumpToTag(tag)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
+                        <span className="flex-1 truncate" style={{ color: cat('sapphire') }}>#{tag}</span>
+                        <span className="text-overlay0">{entries.length}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card title="Future log" subtitle="Tasks & events dated ahead of today">
         {future.length === 0 ? (
           <Empty>Nothing scheduled. Add a future-dated entry from any day.</Empty>
@@ -95,6 +161,7 @@ export function Collections() {
         )}
       </Card>
 
+      <span id="bujo-collections" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
       <Card
         title="Custom collections"
         subtitle="Free-form pages · book lists, packing, projects…"
@@ -157,6 +224,7 @@ export function Collections() {
         )}
       </Card>
 
+      <span id="bujo-tags" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
       <Card
         title="Tags"
         subtitle="Auto-collections · every #tag, tap to open its page"

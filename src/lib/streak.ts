@@ -196,6 +196,65 @@ export function habitComeback(
   return { current, comebackCount, recovering }
 }
 
+/**
+ * All-time longest done-streak for a build habit (BUJO #290), scanning its
+ * scheduled days back from `today` within `window`. Walks oldest→newest counting
+ * the longest run of consecutive *done* scheduled days; a missed scheduled day
+ * resets the run (planned skips are treated as neutral — they neither extend nor
+ * break the run, mirroring habitStreak's skip handling). Pure; pairs with the
+ * live `habitStreak` so the leaderboard can show "current vs best ever".
+ */
+export function longestStreakEver(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  window = 365,
+): number {
+  const skips = data.habitSkips?.[habit.id] ?? []
+  let best = 0
+  let run = 0
+  for (let i = window - 1; i >= 0; i--) {
+    const day = addDays(today, -i)
+    if (day < habit.startedOn) continue
+    if (!isScheduledOn(habit, day)) continue
+    if (skips.includes(day)) continue // planned skip: neutral
+    if (habitDoneOn(data, habit, day)) {
+      run += 1
+      if (run > best) best = run
+    } else {
+      run = 0
+    }
+  }
+  return best
+}
+
+/**
+ * Calendar days since the habit was last *missed* on a scheduled day (BUJO
+ * trackers · "days since last miss"). Distinct from the streak: it counts real
+ * calendar days from the most recent scheduled-but-not-done day to `today`,
+ * ignoring off-schedule days and planned skips. Returns null when there is no
+ * miss on record within `window` (a clean run from the start, or brand-new).
+ * `today` itself is excluded — an unlogged today isn't yet a "miss". Pure.
+ */
+export function daysSinceLastMiss(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  window = 365,
+): number | null {
+  const skips = data.habitSkips?.[habit.id] ?? []
+  // Walk newest→oldest starting yesterday; the first missed scheduled day is the
+  // most recent miss, and its distance to today is the answer.
+  for (let i = 1; i < window; i++) {
+    const day = addDays(today, -i)
+    if (day < habit.startedOn) break
+    if (!isScheduledOn(habit, day)) continue
+    if (skips.includes(day)) continue
+    if (!habitDoneOn(data, habit, day)) return i
+  }
+  return null
+}
+
 /** Milestones already reached at `current` days. */
 export function unlockedBenefits(current: number): Milestone[] {
   return STREAK_MILESTONES.filter((m) => current >= m.day)

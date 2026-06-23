@@ -75,6 +75,73 @@ export function estimatedFinish(book: Book, today: string): { iso: string; daysL
   return { iso: addDays(today, daysLeft), daysLeft }
 }
 
+/**
+ * Consecutive-day reading streak ending today (or yesterday), mirroring the
+ * focusStreak mechanic. A day "counts" when it has dated reading activity:
+ * a book was finished that day, or a dated learning was logged that day.
+ * Returns 0 when there's no activity on today or yesterday.
+ */
+export function readingStreak(books: Book[], today: string): number {
+  const active = new Set<string>()
+  for (const b of books) {
+    if (b.finishedOn) active.add(b.finishedOn)
+    for (const l of b.learnings ?? []) active.add(l.date)
+  }
+  let cursor = active.has(today) ? today : addDays(today, -1)
+  let n = 0
+  while (active.has(cursor)) { n += 1; cursor = addDays(cursor, -1) }
+  return n
+}
+
+/**
+ * Mean number of days between startedOn and finishedOn across finished books
+ * that have both dates. Same-day finishes count as 1 day. Returns null when no
+ * finished book has both a start and finish date.
+ */
+export function averageDaysToFinish(books: Book[]): number | null {
+  const spans = books
+    .filter((b) => b.status === 'finished' && b.startedOn && b.finishedOn)
+    .map((b) => Math.max(1, dayDiff(b.startedOn!, b.finishedOn!)))
+  if (!spans.length) return null
+  return Math.round(spans.reduce((a, d) => a + d, 0) / spans.length)
+}
+
+/**
+ * Year-in-books recap for a given calendar year (defaults via `today`): the
+ * Spotify-Wrapped-style summary over books finished that year. Returns null
+ * when no book was finished in the year. Pages count a book's totalPages (0 if
+ * unknown); top-rated/longest pick the best finished book by rating/pages.
+ */
+export function yearInBooks(books: Book[], today: string): {
+  year: string
+  count: number
+  pages: number
+  avgRating: number
+  topRated: Book | null
+  longest: Book | null
+} | null {
+  const year = today.slice(0, 4)
+  const finished = books.filter((b) => b.status === 'finished' && b.finishedOn?.slice(0, 4) === year)
+  if (!finished.length) return null
+  const rated = finished.filter((b) => b.rating && b.rating > 0)
+  const avgRating = rated.length ? rated.reduce((s, b) => s + (b.rating ?? 0), 0) / rated.length : 0
+  const topRated = rated.length
+    ? rated.reduce((best, b) => ((b.rating ?? 0) > (best.rating ?? 0) ? b : best))
+    : null
+  const withPages = finished.filter((b) => b.totalPages && b.totalPages > 0)
+  const longest = withPages.length
+    ? withPages.reduce((best, b) => ((b.totalPages ?? 0) > (best.totalPages ?? 0) ? b : best))
+    : null
+  return {
+    year,
+    count: finished.length,
+    pages: finished.reduce((s, b) => s + (b.totalPages ?? 0), 0),
+    avgRating,
+    topRated,
+    longest,
+  }
+}
+
 /** A compact summary for the Insights / Goals rollups. */
 export function readingSummary(books: Book[], today: string) {
   return {

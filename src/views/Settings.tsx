@@ -13,8 +13,8 @@ import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '..
 import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup } from '../lib/csv'
-import { journalToICS } from '../lib/ics'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv } from '../lib/csv'
+import { journalToICS, habitRemindersToICS } from '../lib/ics'
 import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
@@ -278,8 +278,15 @@ export function Settings() {
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
             <Button onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
+            <Button onClick={() => download(`bujo-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
             <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
             <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+            <Button onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
+            {s.nofapEnabled && <Button onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
+          </div>
+          <div className="mt-2">
+            <Button onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
+            <p className="mt-1 text-xs text-overlay0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
           </div>
           <div className="mt-2">
             <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>

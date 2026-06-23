@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish } from './reading'
+import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks } from './reading'
 import type { Book } from './types'
 
 const mk = (p: Partial<Book>): Book => ({
@@ -101,5 +101,61 @@ describe('reading', () => {
     expect(estimatedFinish(mk({ status: 'reading', totalPages: 200, currentPage: 200, startedOn: '2026-06-01' }), '2026-06-11')).toBeNull()
     // no pages read yet → no pace
     expect(estimatedFinish(mk({ status: 'reading', totalPages: 200, currentPage: 0, startedOn: '2026-06-01' }), '2026-06-11')).toBeNull()
+  })
+
+  it('readingStreak counts consecutive days of dated reading activity', () => {
+    const books = [
+      mk({ status: 'finished', finishedOn: '2026-06-18' }),
+      mk({ status: 'reading', learnings: [{ date: '2026-06-17', text: 'a' }, { date: '2026-06-16', text: 'b' }] }),
+    ]
+    // today (18) + 17 + 16 all active → 3
+    expect(readingStreak(books, '2026-06-18')).toBe(3)
+  })
+
+  it('readingStreak counts from yesterday when today has no activity', () => {
+    const books = [mk({ status: 'reading', learnings: [{ date: '2026-06-17', text: 'a' }] })]
+    expect(readingStreak(books, '2026-06-18')).toBe(1)
+  })
+
+  it('readingStreak is 0 with a gap before today/yesterday', () => {
+    const books = [mk({ status: 'finished', finishedOn: '2026-06-10' })]
+    expect(readingStreak(books, '2026-06-18')).toBe(0)
+    expect(readingStreak([], '2026-06-18')).toBe(0)
+  })
+
+  it('averageDaysToFinish averages startedOn→finishedOn spans', () => {
+    const books = [
+      mk({ status: 'finished', startedOn: '2026-01-01', finishedOn: '2026-01-11' }), // 10
+      mk({ status: 'finished', startedOn: '2026-02-01', finishedOn: '2026-02-21' }), // 20
+      mk({ status: 'finished', startedOn: '2026-03-01', finishedOn: '2026-03-01' }), // same day → 1
+      mk({ status: 'finished', finishedOn: '2026-04-01' }), // no start → ignored
+      mk({ status: 'reading', startedOn: '2026-01-01' }), // not finished → ignored
+    ]
+    expect(averageDaysToFinish(books)).toBe(Math.round((10 + 20 + 1) / 3))
+  })
+
+  it('averageDaysToFinish is null when no finished book has both dates', () => {
+    expect(averageDaysToFinish([mk({ status: 'finished', finishedOn: '2026-04-01' })])).toBeNull()
+    expect(averageDaysToFinish([])).toBeNull()
+  })
+
+  it('yearInBooks recaps the year, picking top-rated and longest', () => {
+    const books = [
+      mk({ id: 'a', status: 'finished', finishedOn: '2026-02-01', totalPages: 300, rating: 4 }),
+      mk({ id: 'b', status: 'finished', finishedOn: '2026-05-01', totalPages: 500, rating: 5 }),
+      mk({ id: 'c', status: 'finished', finishedOn: '2025-12-31', totalPages: 999, rating: 5 }), // last year
+      mk({ id: 'd', status: 'reading' }),
+    ]
+    const w = yearInBooks(books, '2026-06-18')!
+    expect(w.year).toBe('2026')
+    expect(w.count).toBe(2)
+    expect(w.pages).toBe(800)
+    expect(w.avgRating).toBe(4.5)
+    expect(w.topRated?.id).toBe('b')
+    expect(w.longest?.id).toBe('b')
+  })
+
+  it('yearInBooks is null when nothing finished this year', () => {
+    expect(yearInBooks([mk({ status: 'finished', finishedOn: '2025-01-01' })], '2026-06-18')).toBeNull()
   })
 })

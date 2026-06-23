@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw } from 'lucide-react'
+import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
-import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus } from '../lib/urge'
+import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 
 const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
@@ -151,6 +151,13 @@ export function NoFap() {
   const byType = urgesByType(data)
   const relapsedToday = s.relapses.some((r) => r.date === today)
   const nextBenefit = stats.next
+  // #114 high-risk hour heatmap · #263 weekday relapse pattern · #76 conversion · #298 pace
+  const hourHist = urgeHourHistogram(s.urgeLog ?? [])
+  const peakHour = peakUrgeHour(s.urgeLog ?? [])
+  const weekdayPattern = relapseWeekdayPattern(s.relapses)
+  const peakWeekday = peakRelapseWeekday(s.relapses)
+  const conversion = urgeConversion(s.urgeLog ?? [], s.relapses, s.urgesResisted ?? 0)
+  const pace = paceToRecord(stats.current, stats.best, today)
 
   function relapse() {
     if (!trigger.trim()) { setErr('Add the reason behind it first · patterns are data.'); return }
@@ -241,7 +248,70 @@ export function NoFap() {
               <span className="text-subtext0"><span className="font-semibold" style={{ color: cat('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: cat('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
             </div>
           )}
+          {/* Pace-to-record projection (#298) · concrete calendar target */}
+          {!pace.alreadyRecord && pace.matchDate && (
+            <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: cat('mauve') + '12', border: `1px solid ${cat('mauve')}33` }}>
+              <Target size={15} style={{ color: cat('mauve') }} className="shrink-0" />
+              <span className="text-subtext0">Stay clean and you’ll <strong style={{ color: cat('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong> · a new record the very next day ({pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
+            </div>
+          )}
         </Card>
+
+        {/* Urge-to-relapse conversion (#76) · self-efficacy from the urge log */}
+        {conversion.total > 0 && (
+          <Card title="Self-efficacy" subtitle={`${conversion.resistRate}% of urge moments ended in a win, not a reset`} help="Every logged urge you surfed is a win; every reset is the rare miss. This is how often, when an urge showed up, you chose your streak — a direct measure of growing self-control.">
+            <div className="grid grid-cols-3 gap-3">
+              <StatTile compact label="Resisted" value={conversion.resisted} color="green" icon={<ShieldCheck size={14} />} />
+              <StatTile compact label="Resets" value={conversion.relapses} color="red" icon={<X size={14} />} />
+              <StatTile compact label="Win rate" value={`${conversion.resistRate}%`} color="teal" icon={<HandMetal size={14} />} />
+            </div>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full" style={{ background: cat('red') + '33' }}>
+              <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${conversion.resistRate}%`, background: cat('green') }} />
+            </div>
+            <p className="mt-2 text-xs text-overlay0">Each resisted urge is a streak you protected. Keep the green bar climbing.</p>
+          </Card>
+        )}
+
+        {/* High-risk hour heatmap (#114) · 24h clock from urge timestamps */}
+        {peakHour && (
+          <Card title={<span className="inline-flex items-center gap-2"><Clock size={16} className="text-peach" /> High-risk hours</span>} subtitle={`Urges cluster around ${peakHour.label} · pre-plan a defense`} help="Each cell is an hour of the day, shaded by how many urges you logged then (from their timestamps). Your peak hours are when to remove cues and have your plan ready before the craving hits.">
+            <div className="grid grid-cols-12 gap-1" role="img" aria-label={`Hour-of-day urge heatmap; peak at ${peakHour.label} with ${peakHour.count} urges`}>
+              {hourHist.map((h) => (
+                <div key={h.hour} title={`${h.count} urge${h.count === 1 ? '' : 's'} around ${((h.hour % 12) === 0 ? 12 : h.hour % 12)}${h.hour < 12 ? 'am' : 'pm'}`}
+                  className="grid aspect-square place-items-center rounded text-[9px]"
+                  style={{
+                    background: h.count > 0 ? cat('peach') + Math.round(38 + h.heat * 217).toString(16).padStart(2, '0') : cat('surface0'),
+                    color: h.heat > 0.5 ? cat('crust') : cat('overlay0'),
+                  }}>
+                  {h.hour % 6 === 0 ? h.hour : ''}
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 flex justify-between text-[10px] text-overlay0"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+            <p className="mt-1.5 text-xs text-overlay0">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
+          </Card>
+        )}
+
+        {/* Day-of-week relapse pattern (#263) · weekday bar chart from reset dates */}
+        {peakWeekday && (
+          <Card title={<span className="inline-flex items-center gap-2"><CalendarX size={16} className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`} help="Resets counted by day of the week. A tall bar means that day repeatedly trips you up — a weekend, a routine, a recurring trigger. Spot it, then build a plan for that day.">
+            <div className="h-44 w-full" role="img" aria-label={`Relapses by weekday: ${weekdayPattern.map((w) => `${w.count} on ${w.label}`).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weekdayPattern} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                  <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} tickLine={false} />
+                  <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }}
+                    formatter={(v) => [`${v} reset${v === 1 ? '' : 's'}`, 'Resets'] as [string, string]} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {weekdayPattern.map((w) => <Cell key={w.day} fill={w.day === peakWeekday.day ? cat('red') : cat('surface1')} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-1.5 text-xs text-overlay0">Most resets land on <span className="font-medium" style={{ color: cat('red') }}>{peakWeekday.label}</span> · plan extra support there.</p>
+          </Card>
+        )}
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">

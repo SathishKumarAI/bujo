@@ -83,6 +83,51 @@ function vevent(uid: string, date: string, summary: string): string | null {
   ].join('\r\n')
 }
 
+/** ISO "2026-06-10" + "HH:MM" → "20260610T090000" (local floating DATE-TIME). */
+function toIcsDateTime(iso: string, time: string): string | null {
+  const d = toIcsDate(iso)
+  const m = /^(\d{2}):(\d{2})$/.exec(time)
+  if (!d || !m) return null
+  return `${d}T${m[1]}${m[2]}00`
+}
+
+/** RFC 5545 weekday tokens, indexed 0=Sun … 6=Sat. */
+const ICS_DAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const
+
+/**
+ * Habit reminders as recurring all-day-of timed VEVENTs (BUJO-397): one event per
+ * active (non-archived) habit, repeating daily — or weekly on its `activeDays` —
+ * at the journal's `reminderTime` (default "09:00"), starting from each habit's
+ * `startedOn`. Importable into Google/Apple Calendar so reminders fire on your
+ * own calendar. Pure; returns a full VCALENDAR.
+ */
+export function habitRemindersToICS(data: JournalData): string {
+  const time = data.settings.reminderTime || '09:00'
+  const events: string[] = []
+  for (const h of data.habits) {
+    if (h.archived) continue
+    const dt = toIcsDateTime(h.startedOn, time)
+    if (!dt) continue
+    const days = h.activeDays && h.activeDays.length > 0 && h.activeDays.length < 7
+    const rrule = days
+      ? `RRULE:FREQ=WEEKLY;BYDAY=${[...h.activeDays!].sort((a, b) => a - b).map((d) => ICS_DAYS[d]).filter(Boolean).join(',')}`
+      : 'RRULE:FREQ=DAILY'
+    const summary = `${h.emoji ? `${h.emoji} ` : ''}${h.name}${h.target ? ` (${h.target}${h.unit ? ` ${h.unit}` : ''})` : ''}`
+    events.push(
+      [
+        'BEGIN:VEVENT',
+        `UID:${escText(`bujo-habit-${h.id}`)}`,
+        `DTSTART:${dt}`,
+        'DURATION:PT15M',
+        rrule,
+        `SUMMARY:${escText(summary)}`,
+        'END:VEVENT',
+      ].join('\r\n'),
+    )
+  }
+  return calendar(events)
+}
+
 /**
  * Export dated journal items as an all-day iCalendar (.ics) feed importable into
  * Google/Apple Calendar: `event`-type entries, plus this year's birthdays.

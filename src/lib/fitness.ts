@@ -365,3 +365,133 @@ export function bodyweightSeries(
     ...(goal != null ? { goal } : {}),
   }))
 }
+
+// ── Weekly hard-sets per muscle (F: #158) ────────────────────────────────────
+/** Hypertrophy landmark: a productive weekly hard-set range per muscle group. */
+export const MUSCLE_SET_LANDMARK = { min: 10, max: 20 } as const
+
+export interface MuscleSetCount {
+  /** wger muscle id. */
+  muscle: number
+  /** Count of working sets hitting this muscle in the window. */
+  sets: number
+}
+
+/**
+ * Hard (working) sets per muscle group over the last `days`, attributing every
+ * non-warm-up logged set to each muscle its exercise trains (via
+ * musclesForExercise). A set that works three muscles counts once toward each —
+ * the standard "sets per muscle" volume convention. Sorted by set count desc,
+ * then muscle id for stable ties. Reads structured setRows first, falling back
+ * to parsed legacy `sets` strings so older sessions still count. Pure.
+ */
+export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days = 7): MuscleSetCount[] {
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const counts = new Map<number, number>()
+  const add = (exercise: string) => {
+    for (const id of musclesForExercise(exercise)) counts.set(id, (counts.get(id) ?? 0) + 1)
+  }
+  for (const w of data.workouts) {
+    if (!inWindow(w.date)) continue
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) if (r.kind !== 'warmup' && r.exercise.trim()) add(r.exercise)
+    } else {
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise) }
+    }
+  }
+  return [...counts.entries()]
+    .map(([muscle, sets]) => ({ muscle, sets }))
+    .sort((a, b) => (b.sets - a.sets) || (a.muscle - b.muscle))
+}
+
+// ── Estimated-1RM progression (F: #101) ──────────────────────────────────────
+/**
+ * Best estimated 1-rep max per day for an exercise (Epley over every logged
+ * working set that day), ascending by date — a strength-trend line that credits
+ * rep PRs, not just heaviest weight. Warm-ups are excluded; legacy `sets`
+ * strings are parsed as a fallback. Returns `{ date: 'MM-DD', e1rm }[]`. Pure.
+ */
+export function e1rmProgression(data: JournalData, exercise: string): { date: string; e1rm: number }[] {
+  const ex = exercise.trim().toLowerCase()
+  if (!ex) return []
+  const byDay = new Map<string, number>()
+  for (const w of data.workouts) {
+    let best = 0
+    for (const r of w.setRows ?? []) {
+      if (r.kind === 'warmup') continue
+      if (r.exercise.trim().toLowerCase() !== ex) continue
+      if ((r.weight ?? 0) > 0 && (r.reps ?? 0) > 0) best = Math.max(best, epley1RM(r.weight!, r.reps!))
+    }
+    if (!(w.setRows ?? []).length) {
+      for (const line of w.sets) { const p = parseSet(line); if (p && p.exercise.toLowerCase() === ex) best = Math.max(best, epley1RM(p.weight, p.reps)) }
+    }
+    if (best > 0) byDay.set(w.date, Math.max(byDay.get(w.date) ?? 0, best))
+  }
+  return [...byDay.entries()]
+    .map(([date, e1rm]) => ({ date: date.slice(5), e1rm }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+}
+
+// ── Training-day heatmap (F: #162) ───────────────────────────────────────────
+export interface HeatCell {
+  /** ISO day. */
+  date: string
+  /** Working-set volume trained that day (0 = rest day). */
+  volume: number
+  /** Quantised intensity 0–4 for a GitHub-style colour ramp (0 = no training). */
+  level: 0 | 1 | 2 | 3 | 4
+}
+
+/**
+ * A contiguous day-by-day heatmap of training volume for the last `days`
+ * (oldest→newest, today last), each cell carrying its workout volume and a 0–4
+ * intensity level. Levels are relative to the busiest day in the window so the
+ * ramp always spans 1–4 (any trained day is ≥1). Rest days are level 0. Volume
+ * sums workoutVolume across all sessions that day. Pure.
+ */
+export function trainingHeatmap(data: JournalData, today = todayISO(), days = 119): HeatCell[] {
+  const vol = new Map<string, number>()
+  for (const w of data.workouts) vol.set(w.date, (vol.get(w.date) ?? 0) + workoutVolume(w))
+  const cells: { date: string; volume: number }[] = []
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(today, -i)
+    cells.push({ date, volume: Math.round(vol.get(date) ?? 0) })
+  }
+  const peak = Math.max(0, ...cells.map((c) => c.volume))
+  return cells.map((c) => ({
+    ...c,
+    level: (c.volume <= 0 ? 0 : peak <= 0 ? 1 : Math.min(4, Math.ceil((c.volume / peak) * 4))) as HeatCell['level'],
+  }))
+}
+
+// ── Cardio PB badges with the date earned (F: #251) ──────────────────────────
+export interface CardioBadge {
+  key: 'longestKm' | 'mostMinutes' | 'mostCalories'
+  label: string
+  value: number
+  /** ISO day the best was set, or null if no qualifying session exists. */
+  date: string | null
+}
+
+/**
+ * Cardio personal bests (longest distance, most minutes, most calories) each
+ * paired with the date it was first achieved. The earliest session reaching a
+ * value wins the date so a later equal effort doesn't "steal" the badge. Bests
+ * of 0 (never logged) carry a null date so the UI can hide or grey them. Pure.
+ */
+export function cardioBadges(data: JournalData): CardioBadge[] {
+  const pbs = cardioPBs(data)
+  const earliestFor = (pick: (w: import('./types').Workout) => number, target: number): string | null => {
+    if (target <= 0) return null
+    return data.workouts
+      .filter((w) => pick(w) === target)
+      .map((w) => w.date)
+      .sort()[0] ?? null
+  }
+  return [
+    { key: 'longestKm', label: 'Longest distance', value: pbs.longestKm, date: earliestFor((w) => w.distanceKm ?? 0, pbs.longestKm) },
+    { key: 'mostMinutes', label: 'Longest session', value: pbs.mostMinutes, date: earliestFor((w) => w.durationMin ?? 0, pbs.mostMinutes) },
+    { key: 'mostCalories', label: 'Most calories', value: pbs.mostCalories, date: earliestFor((w) => w.calories ?? 0, pbs.mostCalories) },
+  ]
+}

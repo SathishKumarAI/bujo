@@ -8,6 +8,7 @@ import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
+  minutesByWeekday, longestSession,
 } from '../lib/focus'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
@@ -27,6 +28,9 @@ export function Focus() {
   const tags = topTags(data)
   const maxTag = Math.max(1, ...tags.map((t) => t.min))
   const insight = focusInsight(data)
+  const byWeekday = minutesByWeekday(data)
+  const maxWd = Math.max(1, ...byWeekday.map((w) => w.min))
+  const longest = longestSession(data)
 
   function log() {
     if (!f.durationMin) return
@@ -83,6 +87,12 @@ export function Focus() {
             📈 At this pace, you're on track for <span className="font-medium text-mauve">{hrs(projWeekMin)}</span> this week.
           </p>
         )}
+        {longest && (
+          <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
+            🏆 Longest session: <span className="font-medium text-peach">{hrs(longest.durationMin)}</span>
+            {longest.project ? <> on <span className="text-text">{longest.project}</span></> : null} · {prettyDay(longest.date)}
+          </p>
+        )}
         {insight && <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">💡 {insight}</p>}
       </Card>
 
@@ -114,6 +124,22 @@ export function Focus() {
           </Card>
         )
       })()}
+
+      {byWeekday.some((w) => w.min > 0) && (
+        <Card title="Focus by weekday" subtitle="Total deep-work minutes by day of week">
+          <div className="space-y-1.5">
+            {byWeekday.map((w) => (
+              <div key={w.day} className="flex items-center gap-2 text-sm">
+                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {tags.length > 0 && (
         <Card title="Languages & tools" subtitle="By time logged">

@@ -1,6 +1,6 @@
 // ── Recovery: urge-log analytics + trigger-plan matching ─────────────────────
 import type { UrgeWin, TriggerPlan, Relapse } from './types'
-import { dayDiff, todayISO } from './date'
+import { dayDiff, todayISO, addDays, fromISODay, WEEKDAYS } from './date'
 
 /** The coping techniques an urge can be tagged with. */
 export type UrgeTechnique = NonNullable<UrgeWin['technique']>
@@ -124,4 +124,179 @@ export function comebackStatus(
 
   const isComeback = prevStreak > 0 && current > prevStreak
   return { isComeback, prevStreak, by: isComeback ? current - prevStreak : 0 }
+}
+
+// ── #114 High-risk hour heatmap ──────────────────────────────────────────────
+
+/** One hour bucket of the 24-hour urge clock. */
+export interface UrgeHour {
+  /** Hour of day, 0–23 (local time of the `at` timestamp). */
+  hour: number
+  /** How many urges were logged in this hour. */
+  count: number
+  /** 0–1 share of this hour relative to the busiest hour, for heat shading. */
+  heat: number
+}
+
+/** The peak (riskiest) hour pulled out of the 24-hour distribution. */
+export interface PeakHour {
+  hour: number
+  count: number
+  /** 12-hour label, e.g. "9 PM" or "12 AM". */
+  label: string
+}
+
+/** Format an hour 0–23 as a 12-hour clock label ("12 AM", "1 PM"…). */
+export function hourLabel(hour: number): string {
+  const h = ((hour % 24) + 24) % 24
+  const ampm = h < 12 ? 'AM' : 'PM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12} ${ampm}`
+}
+
+/**
+ * Bucket urge logs by hour-of-day from their `at` ISO timestamp, returning a
+ * full 24-slot array (0…23) so a clock/heatmap can render every hour. Logs
+ * without an `at` (older, day-only entries) are skipped. `heat` is each hour's
+ * count normalised to the busiest hour (1.0), or 0 when there are no timestamped
+ * urges. Pure.
+ */
+export function urgeHourHistogram(urgeLog: UrgeWin[] = []): UrgeHour[] {
+  const counts = new Array<number>(24).fill(0)
+  for (const u of urgeLog) {
+    if (!u || !u.at) continue
+    const d = new Date(u.at)
+    if (Number.isNaN(d.getTime())) continue
+    counts[d.getHours()]++
+  }
+  const max = Math.max(0, ...counts)
+  return counts.map((count, hour) => ({
+    hour,
+    count,
+    heat: max > 0 ? count / max : 0,
+  }))
+}
+
+/**
+ * The single riskiest hour (highest urge count) from the histogram, or
+ * undefined when no timestamped urges exist. Ties resolve to the earliest hour.
+ */
+export function peakUrgeHour(urgeLog: UrgeWin[] = []): PeakHour | undefined {
+  const hist = urgeHourHistogram(urgeLog)
+  let best: UrgeHour | undefined
+  for (const h of hist) {
+    if (h.count > 0 && (!best || h.count > best.count)) best = h
+  }
+  if (!best) return undefined
+  return { hour: best.hour, count: best.count, label: hourLabel(best.hour) }
+}
+
+// ── #263 Day-of-week relapse pattern ─────────────────────────────────────────
+
+/** One weekday bucket of the relapse-by-weekday pattern. */
+export interface WeekdayRelapse {
+  /** Day index, 0=Sun … 6=Sat. */
+  day: number
+  /** Short label "Sun"…"Sat". */
+  label: string
+  /** Resets logged on this weekday. */
+  count: number
+}
+
+/**
+ * Count relapses by weekday (Sun…Sat) from their ISO dates, returning a full
+ * 7-slot array so a weekday bar chart always renders every day. Duplicate dates
+ * are counted once (a day can only be reset once). Pure.
+ */
+export function relapseWeekdayPattern(relapses: Relapse[] = []): WeekdayRelapse[] {
+  const counts = new Array<number>(7).fill(0)
+  const seen = new Set<string>()
+  for (const r of relapses) {
+    if (!r || !r.date || seen.has(r.date)) continue
+    seen.add(r.date)
+    const d = fromISODay(r.date)
+    if (Number.isNaN(d.getTime())) continue
+    counts[d.getDay()]++
+  }
+  return counts.map((count, day) => ({ day, label: WEEKDAYS[day], count }))
+}
+
+/** The riskiest weekday (most resets), or undefined when there are no resets. */
+export function peakRelapseWeekday(relapses: Relapse[] = []): WeekdayRelapse | undefined {
+  let best: WeekdayRelapse | undefined
+  for (const w of relapseWeekdayPattern(relapses)) {
+    if (w.count > 0 && (!best || w.count > best.count)) best = w
+  }
+  return best
+}
+
+// ── #76 Urge-to-relapse conversion rate ──────────────────────────────────────
+
+/** Self-efficacy metric: how often urges were resisted vs. ended in a reset. */
+export interface UrgeConversion {
+  /** Urges logged as resisted wins. */
+  resisted: number
+  /** Resets logged (relapses). */
+  relapses: number
+  /** resisted + relapses — the total "urge events" we have evidence for. */
+  total: number
+  /** 0–100: percent of urge events that were resisted (self-efficacy). 100 when
+   *  there are resisted wins and no resets; 0 when there's no data at all. */
+  resistRate: number
+}
+
+/**
+ * Urge-to-relapse conversion: of all logged urge events (resisted wins + resets),
+ * what share were resisted. A high rate is a self-efficacy signal. `resisted`
+ * combines the dated urge log with any pre-dated `urgesResisted` tally so the
+ * metric reflects total wins. Pure; returns resistRate 0 when there's no data.
+ */
+export function urgeConversion(
+  urgeLog: UrgeWin[] = [],
+  relapses: Relapse[] = [],
+  priorResisted = 0,
+): UrgeConversion {
+  const resisted = (urgeLog?.length ?? 0) + Math.max(0, priorResisted)
+  const relapseCount = relapses?.length ?? 0
+  const total = resisted + relapseCount
+  const resistRate = total > 0 ? Math.round((resisted / total) * 100) : 0
+  return { resisted, relapses: relapseCount, total, resistRate }
+}
+
+// ── #298 Pace-to-record projection ───────────────────────────────────────────
+
+/** Projection of when the current run will match / break the personal best. */
+export interface RecordPace {
+  /** True once the current run already equals or beats the best (already there). */
+  alreadyRecord: boolean
+  /** Whole days still needed to MATCH the best (0 when already at/over it). */
+  daysToMatch: number
+  /** ISO day the current run equals the best, undefined when already a record. */
+  matchDate?: string
+  /** ISO day the current run beats the best by 1 (a new record), undefined when
+   *  already a record. */
+  beatDate?: string
+}
+
+/**
+ * Project the calendar dates the live streak will match and then beat the
+ * personal best, assuming it stays unbroken. `current` and `best` come straight
+ * from streakStats (best already includes the live run, so current===best means
+ * the run IS the record). Pure; dates are computed off `today`.
+ */
+export function paceToRecord(
+  current: number,
+  best: number,
+  today = todayISO(),
+): RecordPace {
+  const cur = Math.max(0, current)
+  const bst = Math.max(0, best)
+  if (cur >= bst) return { alreadyRecord: true, daysToMatch: 0 }
+  const daysToMatch = bst - cur
+  return {
+    alreadyRecord: false,
+    daysToMatch,
+    matchDate: addDays(today, daysToMatch),
+    beatDate: addDays(today, daysToMatch + 1),
+  }
 }

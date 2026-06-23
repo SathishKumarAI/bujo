@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData, Relapse } from './types'
 
@@ -143,5 +143,95 @@ describe('habitComeback', () => {
     expect(c.current).toBe(2)
     expect(c.comebackCount).toBe(0)
     expect(c.recovering).toBe(false)
+  })
+})
+
+describe('longestStreakEver', () => {
+  const TODAY = '2026-06-18'
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', ...p }
+  }
+  function withDone(h: Habit, days: string[]): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    for (const day of days) d.habitLog[day] = [h.id]
+    return d
+  }
+
+  it('finds the longest run, even when it is in the past (not the current run)', () => {
+    const h = hb({ startedOn: '2026-06-10' }) // 10..18 scheduled
+    // 4-run (10,11,12,13), MISS 14, then 2-run (15,16), MISS 17, 1 (18)
+    const d = withDone(h, ['2026-06-10', '2026-06-11', '2026-06-12', '2026-06-13', '2026-06-15', '2026-06-16', '2026-06-18'])
+    expect(longestStreakEver(d, h, TODAY)).toBe(4)
+  })
+
+  it('0 when never done', () => {
+    const h = hb({ startedOn: '2026-06-10' })
+    expect(longestStreakEver(emptyJournal(), h, TODAY)).toBe(0)
+  })
+
+  it('planned skips are neutral — they do not break the best run', () => {
+    const h = hb({ startedOn: '2026-06-14' }) // 14..18 scheduled
+    const d = withDone(h, ['2026-06-14', '2026-06-15', '2026-06-17', '2026-06-18']) // missing 16
+    d.habitSkips = { h1: ['2026-06-16'] } // 16 is a planned skip, not a miss
+    // 14,15,[skip 16],17,18 → an unbroken 4-day done run across the skip
+    expect(longestStreakEver(d, h, TODAY)).toBe(4)
+  })
+
+  it('only counts scheduled weekdays (activeDays)', () => {
+    const h = hb({ startedOn: '2026-06-01', activeDays: [1, 3, 5] }) // Mon/Wed/Fri
+    // Do every scheduled day in range → run length = number of scheduled days.
+    const days: string[] = []
+    for (let i = 0; i < 18; i++) {
+      const dt = new Date('2026-06-18T00:00'); dt.setDate(dt.getDate() - i)
+      const iso = dt.toISOString().slice(0, 10)
+      if (iso >= '2026-06-01' && [1, 3, 5].includes(dt.getDay())) days.push(iso)
+    }
+    const best = longestStreakEver(withDone(h, days), h, TODAY)
+    expect(best).toBe(days.length)
+    expect(best).toBeGreaterThan(0)
+  })
+})
+
+describe('daysSinceLastMiss', () => {
+  const TODAY = '2026-06-18'
+  function hb(p: Partial<Habit> = {}): Habit {
+    return { id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', ...p }
+  }
+  function withDone(h: Habit, days: string[]): JournalData {
+    const d = emptyJournal()
+    d.habits = [h]
+    for (const day of days) d.habitLog[day] = [h.id]
+    return d
+  }
+
+  it('calendar days from today to the most recent scheduled miss', () => {
+    const h = hb({ startedOn: '2026-06-10' })
+    // done 14..18, MISS 13 → last miss was 5 days before today
+    const d = withDone(h, ['2026-06-14', '2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18'])
+    expect(daysSinceLastMiss(d, h, TODAY)).toBe(5)
+  })
+
+  it('an unlogged today does NOT count as a miss', () => {
+    const h = hb({ startedOn: '2026-06-15' }) // 15..18 scheduled
+    // done all PAST scheduled days (15,16,17); today (18) unlogged → no miss yet
+    const d = withDone(h, ['2026-06-15', '2026-06-16', '2026-06-17'])
+    expect(daysSinceLastMiss(d, h, TODAY)).toBeNull()
+  })
+
+  it('null for a clean run from the start', () => {
+    const h = hb({ startedOn: '2026-06-15' })
+    const d = withDone(h, ['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18'])
+    expect(daysSinceLastMiss(d, h, TODAY)).toBeNull()
+  })
+
+  it('skips and off-schedule days are not misses', () => {
+    const h = hb({ startedOn: '2026-06-14', activeDays: [1, 3, 5] }) // Mon/Wed/Fri
+    // Within range the scheduled days are Fri 12?, Mon 15, Wed 17. (14 Sun not scheduled.)
+    // Done Mon 15 + Wed 17; today 18 is Thu (off-schedule). A planned skip too.
+    const d = withDone(h, ['2026-06-15', '2026-06-17'])
+    d.habitSkips = { h1: [] }
+    // No missed scheduled day → null.
+    expect(daysSinceLastMiss(d, h, TODAY)).toBeNull()
   })
 })
