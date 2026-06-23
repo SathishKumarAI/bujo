@@ -1,5 +1,35 @@
 # Worklog
 
+## 2026-06-22 23:35 — Backlog batch 1: built 25 features (PR #50)
+
+**Summary:** First batch of the 572-feature backlog build. 8 disjoint-file
+category agents (Workflow) each shipped 3-5 additive, read-only-over-existing-data
+features with tests. All verified and merged as PR #50. ~70 new unit tests.
+
+**Changes (25 features):**
+- Trackers — comeback-streak chip, target-met vs partial grid fill, per-habit intensity heatmap.
+- Fitness — auto warm-up ramp, session-volume summary card, active-minutes weekly ring, next-split banner.
+- Pickleball — partner chemistry, court/venue log, opponent rivalry record book.
+- Recovery — panic/SOS overlay (timer+breathing+coping), streak-vs-best ghost bar, comeback badge.
+- Reading/Goals — books-read pace, per-book estimated finish, projected weekly coding minutes.
+- Insights/Stats — weekly digest, coach digest card, sleep-debt tracker, trend arrows on tiles.
+- Data — sync-settings export exclusion, auto-backup nudge, calendar .ics export.
+- Journaling — tag pages/auto-collections, brain-dump inbox.
+
+**Decisions:** Parallel-safe via exclusive file ownership per agent; shared
+hotspots (`types.ts`/`store.tsx`/`storage.ts`/`Today.tsx`/`Settings.tsx`) forbidden
+so features needing a data-model/store change were deferred to a later serial
+batch. Fixed a recharts v4 Tooltip formatter type error in Stats.tsx during
+integration (agent self-check missed it; caught by my full `tsc -b`).
+
+**Verify:** tsc 0 · vitest 358/358 · eslint clean (touched) · vite build OK.
+
+**Follow-ups:**
+- [ ] Continue backlog batches; ~370 buildable-now features remain.
+- [ ] Serial batch for deferred features that need `types.ts`/`store.tsx`/`Today.tsx`
+  (count-habit +/- buttons, weekly-goal ring, at-risk warning, DUPR tracker,
+  academy checklist, HALT toggles, replacement-activity menu, full JSON import, etc.).
+
 ## 2026-06-22 23:20 — Account change-password + feature-prompt template (PR #49)
 
 **Summary:** Audited the whole auth/login surface — found it already complete
