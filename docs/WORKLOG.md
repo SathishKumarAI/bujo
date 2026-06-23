@@ -1,5 +1,44 @@
 # Worklog
 
+## 2026-06-22 23:05 — 572-feature backlog + built top 10 (multi-agent), merged 2 PRs
+
+**Summary:** Merged the pending PR #47, finished the deferred R2-5 refactor, then
+ran two background Workflows: a 10-agent fan-out that generated a ranked
+572-feature backlog, and a 4-agent disjoint-file build of the top 10 selected
+features. All verified (tsc/vitest/eslint/build) and shipped as PR #48 (merged).
+
+**Changes:**
+- `docs/FEATURE-BACKLOG-500.md` (new) — 572 ranked features (value/effort/risk),
+  category counts, top-10 build table; pointer appended to `docs/FEATURES.md`.
+- Fitness — `isNewPR()` + ephemeral PR-celebration banner; `PlateStack.tsx`
+  per-side plate visualizer; `bodyweightSeries()` + bodyweight chart; `lastSetFor`
+  ghost-prefill tests.
+- Habits — `nextHabitMilestone()` clean-day + milestone badge on avoid habits;
+  `habitStats.completionRate30()` 30-day completion-% badge.
+- Recovery — `UrgeWin.intensity/technique`; slider + technique chips +
+  `techniqueRanking()`; `matchPlanForTrigger()` inline coping line (`lib/urge.ts`).
+- Insights/Coach — `moodImpactRanking()` card; declining-habit early-warning tip.
+- `src/views/Reading.tsx` — R2-5: local `Stat` → shared `StatTile`.
+- `docs/prompts/08-backlog-fanout-and-build.md` (new) + workspace copy in
+  `Dotfiles/docs/templates/prompts/` — reusable playbook for this run.
+- 39 new unit tests (288 total green).
+
+**Decisions:**
+- Multi-agent build partitioned by **disjoint file ownership** so 4 agents run in
+  parallel with zero merge conflicts; overlapping helpers pushed into new lib files.
+- Verified every gate myself rather than trusting agent self-reports.
+- Did NOT use the `sonner` scaffold (unmounted, needs next-themes) — PR
+  celebration reuses the local ephemeral `MilestoneToast` pattern.
+- R2-5 was ~90% pre-done (StatTile/ChartCard already extracted); only the Reading
+  straggler remained.
+
+**Follow-ups:**
+- [ ] Add `goalWeight?: number` to Settings + a UI control to light up the
+  bodyweight-chart goal line (reads defensively until then).
+- [ ] 561 backlog features remain unbuilt — pick the next batch from
+  `docs/FEATURE-BACKLOG-500.md` when ready.
+- [ ] Still-deferred: R2-7 (unified `Goal` model), R2-10 (server-backed sync).
+
 ## 2026-06-22 15:10 — Cleared the entire open-ticket board (BUJO-193…220)
 
 **Summary:** Closed all 16 open `🔜` tickets plus the deferred audit LOW items in one pass — security hardening, a desktop scaffold, a light-theme redesign, sync-robustness, per-addiction streaks, in-place session editing, and the remaining lib bug-fixes — orchestrated across parallel/background subagents and verified live in a real browser.
