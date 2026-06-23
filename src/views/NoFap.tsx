@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target, TrendingDown, TrendingUp, Activity, CalendarRange, Hourglass, ListOrdered, Wind } from 'lucide-react'
+import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target, TrendingDown, TrendingUp, Activity, CalendarRange, Hourglass, ListOrdered, Wind, PiggyBank, Heart } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
-import { prettyDay, todayISO } from '../lib/date'
+import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts'
-import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, type HaltState } from '../lib/streak'
+import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 
@@ -118,7 +118,8 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
 }
 
 export function NoFap() {
-  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction } = useJournal()
+  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction, setStreakCost, setAddictionCost, setCommitment } = useJournal()
+  const currency = data.settings.currencySymbol || '$'
   const [newAddiction, setNewAddiction] = useState('')
   const [trigger, setTrigger] = useState('')
   const [note, setNote] = useState('')
@@ -130,6 +131,7 @@ export function NoFap() {
   const [plan, setPlan] = useState({ addiction: '', trigger: '', coping: '' })
   const [sosOpen, setSosOpen] = useState(false)
   const [hoursPerDay, setHoursPerDay] = useState(1) // #344 reclaimed-time rate (view-local)
+  const [editingCommit, setEditingCommit] = useState(false) // #316 commitment editor toggle
   const plans = data.nofap.plans ?? []
   const matchedPlan = matchPlanForTrigger(plans, urge)
   const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
@@ -182,6 +184,13 @@ export function NoFap() {
     edge: { color: 'red', text: `One day from your record. Whatever the urge offers, it isn't worth your best streak ever. Ride it out.` },
   }
   const approachCopy = APPROACH_COPY[approach.tier]
+  // #123 money saved · clean days × the primary streak's cost/day
+  const savedMoney = moneySaved(stats.totalClean, s.costPerDay)
+  // #316 commitment contract · quit date + personal reason, shown prominently
+  const commitment = s.commitment
+  const hasCommitment = !!(commitment?.quitDate || commitment?.reason)
+  // Days since the quit date (clamped at 0; future quit dates read as 0 so far).
+  const daysSinceQuit = commitment?.quitDate ? Math.max(0, dayDiff(commitment.quitDate, today)) : null
 
   function relapse() {
     if (!trigger.trim()) { setErr('Add the reason behind it first · patterns are data.'); return }
@@ -243,6 +252,39 @@ export function NoFap() {
               )}
             </div>
           </div>
+        </Card>
+
+        {/* My commitment (#316) · quit-date contract + personal "why" */}
+        <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
+          subtitle="Your quit-date contract · the reason you’re doing this"
+          help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
+          right={hasCommitment && !editingCommit ? <Button onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
+          {hasCommitment && !editingCommit ? (
+            <div>
+              {commitment?.reason && (
+                <blockquote className="border-l-2 pl-3 text-lg font-medium italic" style={{ borderColor: cat('mauve'), color: cat('text') }}>
+                  “{commitment.reason}”
+                </blockquote>
+              )}
+              {commitment?.quitDate && (
+                <p className="mt-3 text-sm text-subtext0">
+                  Committed on <span className="font-medium text-text">{prettyDay(commitment.quitDate)}</span>
+                  {daysSinceQuit != null && daysSinceQuit > 0 && <> · <span className="font-semibold" style={{ color: cat('mauve') }}>{daysSinceQuit}</span> day{daysSinceQuit === 1 ? '' : 's'} ago</>}
+                  {daysSinceQuit === 0 && <> · <span style={{ color: cat('mauve') }}>today</span></>}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <label className="block text-sm text-subtext1">Quit date
+                <Input type="date" value={commitment?.quitDate ?? ''} max={today} onChange={(e) => setCommitment({ quitDate: e.target.value })} className="mt-1" aria-label="Quit date" />
+              </label>
+              <label className="block text-sm text-subtext1">Why I quit
+                <Textarea value={commitment?.reason ?? ''} onChange={(e) => setCommitment({ reason: e.target.value })} placeholder="The reason that matters most to you…" rows={2} className="mt-1" aria-label="Reason for quitting" />
+              </label>
+              {editingCommit && <div className="flex justify-end"><Button variant="primary" onClick={() => setEditingCommit(false)}>Done</Button></div>}
+            </div>
+          )}
         </Card>
 
         {/* Lifetime stats */}
@@ -342,6 +384,36 @@ export function NoFap() {
             </div>
           </Card>
         )}
+
+        {/* Money saved (#123) · clean days × cost/day · editable per-day rate */}
+        <Card title={<span className="inline-flex items-center gap-2"><PiggyBank size={16} className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket" help="Set what the habit used to cost you per day; this multiplies it across your lifetime clean days. A concrete tally of money you didn't spend.">
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
+              <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">saved</div>
+            </div>
+            <p className="flex-1 text-sm text-subtext0">
+              {s.costPerDay
+                ? <>Across <strong>{stats.totalClean}</strong> clean day{stats.totalClean === 1 ? '' : 's'} at {currency}{s.costPerDay}/day.</>
+                : <>Set a daily cost to see what you’ve saved across <strong>{stats.totalClean}</strong> clean day{stats.totalClean === 1 ? '' : 's'}.</>}
+            </p>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <label htmlFor="streak-cost" className="text-sm text-subtext1">Cost per day</label>
+            <span className="text-subtext1">{currency}</span>
+            <Input
+              id="streak-cost"
+              type="number"
+              min={0}
+              step="0.5"
+              value={s.costPerDay ?? ''}
+              onChange={(e) => setStreakCost(e.target.value === '' ? undefined : Number(e.target.value))}
+              placeholder="0"
+              className="w-24"
+              aria-label="Cost per day for the main streak"
+            />
+          </div>
+        </Card>
 
         {/* Urge-quiet stretch · days since even a craving showed up */}
         {!quiet.empty && quiet.days >= 1 && (
@@ -498,18 +570,36 @@ export function NoFap() {
               {(data.nofap.addictions ?? []).map((a) => {
                 const st = addictionStats(a, today)
                 const reset = a.relapses.some((r) => r.date === today)
+                const aSaved = moneySaved(st.totalClean, a.costPerDay)
                 return (
-                  <li key={a.id} className="group flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2.5">
-                    <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="truncate font-medium text-text">{a.name}</span>
-                        <span className="text-xs text-overlay0">best {st.best}d</span>
+                  <li key={a.id} className="group rounded-lg border border-surface0 bg-base px-3 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="truncate font-medium text-text">{a.name}</span>
+                          <span className="text-xs text-overlay0">best {st.best}d</span>
+                          {a.costPerDay && aSaved > 0 && <span className="text-xs" style={{ color: cat('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
+                        </div>
+                        <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
-                      <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
+                      <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
+                      <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
                     </div>
-                    <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
-                    <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    {/* #123 per-addiction cost/day → money saved */}
+                    <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-overlay1">
+                      <span>{currency}/day</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        value={a.costPerDay ?? ''}
+                        onChange={(e) => setAddictionCost(a.id, e.target.value === '' ? undefined : Number(e.target.value))}
+                        placeholder="0"
+                        className="w-20 !py-1 text-xs"
+                        aria-label={`Cost per day for ${a.name}`}
+                      />
+                    </div>
                   </li>
                 )
               })}

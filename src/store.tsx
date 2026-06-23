@@ -181,6 +181,12 @@ interface Store {
   addAddiction: (name: string) => void
   removeAddiction: (id: string) => void
   relapseAddiction: (id: string, r: Omit<Relapse, 'id'>) => void
+  /** Set the per-day money cost of the primary streak (#123). */
+  setStreakCost: (costPerDay: number | undefined) => void
+  /** Set the per-day money cost of a tracked addiction (#123). */
+  setAddictionCost: (id: string, costPerDay: number | undefined) => void
+  /** Set the primary streak's quit-date commitment contract (#316). */
+  setCommitment: (patch: { quitDate?: string; reason?: string }) => void
   // custom goals
   addCustomGoal: (g: Omit<import('./lib/types').CustomGoal, 'id' | 'createdAt'>) => void
   updateCustomGoal: (id: string, patch: Partial<import('./lib/types').CustomGoal>) => void
@@ -707,6 +713,30 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             }),
           },
         })),
+
+      setStreakCost: (costPerDay) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, costPerDay: costPerDay && costPerDay > 0 ? costPerDay : undefined } }), 'streakCost'),
+
+      setAddictionCost: (id, costPerDay) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            addictions: (d.nofap.addictions ?? []).map((a) =>
+              a.id === id ? { ...a, costPerDay: costPerDay && costPerDay > 0 ? costPerDay : undefined } : a,
+            ),
+          },
+        }), `addictionCost:${id}`),
+
+      setCommitment: (cp) =>
+        patch((d) => {
+          const next = { ...(d.nofap.commitment ?? {}), ...cp }
+          // Trim empties so a cleared field doesn't linger as "".
+          const quitDate = next.quitDate?.trim() || undefined
+          const reason = next.reason?.trim() || undefined
+          const commitment = quitDate || reason ? { quitDate, reason } : undefined
+          return { ...d, nofap: { ...d.nofap, commitment } }
+        }, 'commitment'),
 
       addCustomGoal: (g) =>
         patch((d) => ({ ...d, customGoals: [...(d.customGoals ?? []), { id: uid('cg'), createdAt: todayISO(), ...g }] })),

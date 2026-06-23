@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally, goalTier, moneySaved } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData, Relapse } from './types'
 
@@ -87,6 +87,46 @@ describe('streak', () => {
     expect(s.best).toBe(8) // live run beats stored best 4
     expect(s.relapseCount).toBe(2)
     expect(s.urges).toBe(0) // per-addiction streaks share the global urge log
+  })
+})
+
+describe('goalTier', () => {
+  it('hits target when value >= target', () => {
+    expect(goalTier(8, 4, 8)).toBe('target')
+    expect(goalTier(10, 4, 8)).toBe('target') // overshoot still target
+  })
+  it('meets floor when between floor and target', () => {
+    expect(goalTier(4, 4, 8)).toBe('floor')
+    expect(goalTier(5, 4, 8)).toBe('floor')
+    expect(goalTier(7, 4, 8)).toBe('floor')
+  })
+  it('none below the floor', () => {
+    expect(goalTier(3, 4, 8)).toBe('none')
+    expect(goalTier(0, 4, 8)).toBe('none')
+  })
+  it('back-compat: no floor → only none/target (today\'s behaviour)', () => {
+    expect(goalTier(0, undefined, 8)).toBe('none')
+    expect(goalTier(5, undefined, 8)).toBe('none')
+    expect(goalTier(8, undefined, 8)).toBe('target')
+  })
+  it('ignores a nonsensical floor (>= target or <= 0)', () => {
+    expect(goalTier(5, 8, 8)).toBe('none') // floor == target → no floor band
+    expect(goalTier(5, 9, 8)).toBe('none') // floor > target
+    expect(goalTier(5, 0, 8)).toBe('none') // floor 0
+  })
+})
+
+describe('moneySaved', () => {
+  it('multiplies clean days by cost/day and rounds', () => {
+    expect(moneySaved(10, 5)).toBe(50)
+    expect(moneySaved(7, 2.5)).toBe(18) // 17.5 → 18
+  })
+  it('returns 0 for missing/zero/negative rate or non-positive days', () => {
+    expect(moneySaved(10, undefined)).toBe(0)
+    expect(moneySaved(10, 0)).toBe(0)
+    expect(moneySaved(10, -3)).toBe(0)
+    expect(moneySaved(0, 5)).toBe(0)
+    expect(moneySaved(-5, 5)).toBe(0)
   })
 })
 

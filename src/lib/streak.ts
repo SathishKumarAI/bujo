@@ -17,6 +17,36 @@ export const URGE_PRESETS = [
   'Junk food', 'Sugar', 'Doomscrolling', 'Gaming', 'Caffeine',
 ]
 
+/**
+ * Tier a numeric habit day falls into (BUJO #280): a count/timer habit can have
+ * an optional `floor` (a minimum "showed up" threshold) below its stretch
+ * `target`. A day's `value` is then:
+ *   - 'none'   — below the floor (or no progress)
+ *   - 'floor'  — met the floor but not the full target
+ *   - 'target' — hit the stretch target
+ * Pure. `floor` undefined (or ≥ target, or ≤ 0) collapses to today's behaviour:
+ * only 'none' / 'target' are ever returned, so back-compat is exact.
+ */
+export function goalTier(
+  value: number,
+  floor: number | undefined,
+  target: number,
+): 'none' | 'floor' | 'target' {
+  if (target > 0 && value >= target) return 'target'
+  if (floor != null && floor > 0 && floor < target && value >= floor) return 'floor'
+  return 'none'
+}
+
+/**
+ * Money saved by abstaining (#123): clean days × cost/day, rounded to whole
+ * currency units. Pure. Returns 0 for a missing/zero/negative rate or non-
+ * positive clean days, so callers can render unconditionally without NaN.
+ */
+export function moneySaved(cleanDays: number, costPerDay: number | undefined): number {
+  if (!costPerDay || costPerDay <= 0 || cleanDays <= 0) return 0
+  return Math.round(cleanDays * costPerDay)
+}
+
 export interface Milestone { day: number; label: string; benefit: string }
 
 /** Milestone ladder with a short "what improves" note (educational, motivating). */
