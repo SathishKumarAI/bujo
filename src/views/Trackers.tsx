@@ -15,7 +15,7 @@ import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30, habitCellFill, consistencyScore, bestWeekday } from '../lib/habitStats'
+import { completionRate30, habitCellFill, consistencyScore, bestWeekday, categoryRollup, perfectDayStats, perfectWeeks, weeklyHeatRow } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
@@ -349,6 +349,11 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
   // Weekday consistency (avg completion per weekday, 90d).
   const wd = weekdayConsistency(data, 90, today)
 
+  // Category roll-up: 30-day completion share per category (build habits).
+  const rollup = categoryRollup(data, today).filter((r) => r.scheduled > 0)
+  // Perfect-day analytics across all build check habits (90d window).
+  const perfect = perfectDayStats(data, today)
+
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
       <Card title="Completion heatmap" subtitle="Last 13 weeks · greener = more habits done that day" className="lg:col-span-2" collapsible>
@@ -423,6 +428,40 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* Category roll-up: which groups are you keeping up with? (30-day share). */}
+      <Card title="Category roll-up" subtitle="30-day completion share per category">
+        {rollup.length === 0 ? (
+          <Empty>No scheduled build habits yet.</Empty>
+        ) : (
+          <ul className="space-y-2">
+            {rollup.map((r) => (
+              <li key={r.category} className="flex items-center gap-2 text-sm">
+                <span className="w-20 shrink-0 truncate capitalize text-subtext1">{r.category}</span>
+                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: r.pct >= 80 ? cat('green') : r.pct >= 50 ? cat('yellow') : cat('peach') }} />
+                </div>
+                <span className="w-20 shrink-0 text-right tabular-nums text-overlay1" title={`${r.done} of ${r.scheduled} scheduled habit-days · ${r.habits} ${r.habits === 1 ? 'habit' : 'habits'}`}>
+                  <span style={{ color: r.pct >= 80 ? cat('green') : r.pct >= 50 ? cat('yellow') : cat('peach') }}>{r.pct}%</span> · {r.habits}h
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {/* Perfect days: every scheduled build habit done. Rewards full days, not single habits. */}
+      <Card title="Perfect days" subtitle="Days you completed every scheduled habit (90 days)">
+        <div className="grid grid-cols-2 gap-2">
+          <StatTile label="perfect days" value={perfect.total} color="green" />
+          <StatTile label="current streak" value={perfect.streak} color="peach" />
+        </div>
+        <p className="mt-2 text-xs text-overlay0">
+          {perfect.streak > 0
+            ? `You're on a ${perfect.streak}-day run of nailing everything scheduled. Keep it rolling.`
+            : 'A perfect day = every scheduled habit done. Clear today to start a streak.'}
+        </p>
       </Card>
     </div>
   )
@@ -796,6 +835,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const wd = bestWeekday(data, habit, today)
   const bestDow = wd.best != null ? WEEKDAYS[wd.best] : '—'
   const worstDow = wd.worst != null && wd.worst !== wd.best ? WEEKDAYS[wd.worst] : null
+  // #322: fully-complete weeks (every scheduled day done) over the last 12.
+  const perfectWk = habit.avoid ? 0 : perfectWeeks(data, habit, today)
+  // Last-7-day intensity strip — a glanceable "how's this week going".
+  const week = weeklyHeatRow(data, habit, today)
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
@@ -813,7 +856,26 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
           <p className="text-xs text-overlay0">
             Strongest on <span className="text-subtext1">{bestDow}</span>{worstDow && <> · weakest on <span className="text-subtext1">{worstDow}</span></>}. <Momentum data={data} habit={habit} today={today} />
+            {!habit.avoid && perfectWk > 0 && <> · <span style={{ color: cat('green') }}>{perfectWk}</span> perfect {perfectWk === 1 ? 'week' : 'weeks'} (12)</>}
           </p>
+
+          {/* Last-7-day intensity strip — this week at a glance. */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-overlay0">This week</span>
+            <div className="flex gap-1" role="img" aria-label="This week's completion, one cell per day">
+              {week.map((c) => (
+                <span
+                  key={c.day}
+                  title={`${c.day}${!c.scheduled ? ' · off-schedule' : c.level === 4 ? ' · done' : c.level > 0 ? ' · partial' : ' · missed'}`}
+                  className={`h-4 w-4 rounded-[3px] ${c.day === today ? 'ring-1 ring-mauve' : ''}`}
+                  style={{
+                    background: !c.scheduled || c.level === 0 ? cat('surface0') : cat(habit.color),
+                    opacity: c.scheduled && c.level > 0 ? intensityOpacity(c.level) : c.scheduled ? 1 : 0.4,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
 
           {/* Completion heatmap · 12 weeks or a full year */}
           <div>

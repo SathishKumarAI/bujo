@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { emptyJournal } from './storage'
 import type { DevSession } from './types'
-import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession } from './focus'
+import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession, minutesByProject, interruptionsTrend } from './focus'
 
 function withSessions(ss: DevSession[]) {
   const d = emptyJournal()
@@ -63,5 +63,33 @@ describe('focus helpers', () => {
     const d = withSessions([S({ id: 'a', durationMin: 30 }), S({ id: 'b', durationMin: 120 }), S({ id: 'c', durationMin: 90 })])
     expect(longestSession(d)?.id).toBe('b')
     expect(longestSession(withSessions([]))).toBeNull()
+  })
+  it('groups minutes by project, highest first, bucketing blanks', () => {
+    const d = withSessions([
+      S({ project: 'bujo', durationMin: 60 }),
+      S({ project: 'bujo', durationMin: 30 }),
+      S({ project: 'work', durationMin: 120 }),
+      S({ project: '  ', durationMin: 15 }),
+    ])
+    expect(minutesByProject(d)).toEqual([
+      { project: 'work', min: 120 },
+      { project: 'bujo', min: 90 },
+      { project: '(no project)', min: 15 },
+    ])
+    expect(minutesByProject(d, 1)).toEqual([{ project: 'work', min: 120 }])
+    expect(minutesByProject(withSessions([]))).toEqual([])
+  })
+  it('builds an interruptions trend averaging per day, ignoring null', () => {
+    const d = withSessions([
+      S({ date: '2026-06-11', interruptions: 2 }),
+      S({ date: '2026-06-11', interruptions: 4 }),
+      S({ date: '2026-06-10', interruptions: 1 }),
+      S({ date: '2026-06-09' }), // no interruptions field → not counted
+    ])
+    const t = interruptionsTrend(d, '2026-06-11', 3)
+    expect(t.length).toBe(3)
+    expect(t[0]).toEqual({ date: '2026-06-09', avg: 0, count: 0 })
+    expect(t[1]).toEqual({ date: '2026-06-10', avg: 1, count: 1 })
+    expect(t[2]).toEqual({ date: '2026-06-11', avg: 3, count: 2 })
   })
 })

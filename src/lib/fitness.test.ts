@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
@@ -424,5 +424,133 @@ describe('cardioBadges (#251 PB badges with date earned)', () => {
   it('carries a null date for bests that were never logged', () => {
     const badges = cardioBadges(emptyJournal())
     expect(badges.every((b) => b.value === 0 && b.date === null)).toBe(true)
+  })
+})
+
+describe('bigThreeTotal (#359 powerlifting total)', () => {
+  it('sums best squat/bench/deadlift and matches lift variants by keyword', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      workout({ id: 'a', date: '2026-06-01', sets: ['Back Squat 5x5 @ 140kg', 'Barbell Bench Press 5x5 @ 100kg'] }),
+      workout({ id: 'b', date: '2026-06-08', sets: ['Conventional Deadlift 1x1 @ 180kg', 'Back Squat 3x3 @ 150kg'] }),
+    ]
+    const t = bigThreeTotal(d)
+    expect(t.lifts.find((l) => l.lift === 'Squat')).toEqual({ lift: 'Squat', weight: 150, date: '2026-06-08' })
+    expect(t.lifts.find((l) => l.lift === 'Bench')).toEqual({ lift: 'Bench', weight: 100, date: '2026-06-01' })
+    expect(t.lifts.find((l) => l.lift === 'Deadlift')).toEqual({ lift: 'Deadlift', weight: 180, date: '2026-06-08' })
+    expect(t.total).toBe(430)
+    expect(t.complete).toBe(true)
+  })
+  it('excludes Romanian/stiff-leg deadlifts from the deadlift figure', () => {
+    const d = emptyJournal()
+    d.workouts = [workout({ sets: ['Romanian Deadlift 5x5 @ 120kg', 'Conventional Deadlift 1x1 @ 200kg'] })]
+    expect(bigThreeTotal(d).lifts.find((l) => l.lift === 'Deadlift')?.weight).toBe(200)
+  })
+  it('counts missing lifts as 0 and reports incomplete', () => {
+    const d = emptyJournal()
+    d.workouts = [workout({ sets: ['Bench Press 5x5 @ 80kg'] })]
+    const t = bigThreeTotal(d)
+    expect(t.total).toBe(80)
+    expect(t.complete).toBe(false)
+    expect(t.lifts.find((l) => l.lift === 'Squat')).toEqual({ lift: 'Squat', weight: 0, date: null })
+  })
+  it('returns a zero total for an empty journal', () => {
+    expect(bigThreeTotal(emptyJournal()).total).toBe(0)
+  })
+})
+
+describe('relativeStrength (#360 strength-to-bodyweight)', () => {
+  const seeded = (): JournalData => {
+    const d = emptyJournal()
+    d.bodyMetrics = [
+      { date: '2026-06-01', weight: 80, measurements: {} },
+      { date: '2026-06-09', weight: 100, measurements: {} }, // latest wins as divisor
+    ]
+    d.workouts = [workout({ sets: ['Deadlift 1x1 @ 200kg', 'Bench Press 5x5 @ 100kg'] })]
+    return d
+  }
+  it('uses the most recent logged bodyweight as the divisor', () => {
+    expect(latestBodyweight(seeded())).toBe(100)
+  })
+  it('computes PR ÷ bodyweight ratios, sorted strongest first', () => {
+    const rows = relativeStrength(seeded())
+    expect(rows[0]).toMatchObject({ exercise: 'Deadlift', weight: 200, ratio: 2, band: 'Elite' })
+    expect(rows[1]).toMatchObject({ exercise: 'Bench Press', weight: 100, ratio: 1, band: 'Intermediate' })
+  })
+  it('returns [] when no bodyweight is logged', () => {
+    const d = emptyJournal()
+    d.workouts = [workout({ sets: ['Bench Press 5x5 @ 100kg'] })]
+    expect(relativeStrength(d)).toEqual([])
+    expect(latestBodyweight(d)).toBeNull()
+  })
+  it('bands ratios into strength standards', () => {
+    expect(strengthBand(2.5)).toBe('Elite')
+    expect(strengthBand(1.5)).toBe('Advanced')
+    expect(strengthBand(1)).toBe('Intermediate')
+    expect(strengthBand(0.7)).toBe('Novice')
+    expect(strengthBand(0.2)).toBe('Beginner')
+  })
+})
+
+describe('neglectedMuscles (#297 alert)', () => {
+  it('flags library muscles with no working sets in the window', () => {
+    const d = emptyJournal()
+    // Only a push session this week → pull/leg muscles are neglected.
+    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+      { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // 4,2,5
+    ], notes: '' }]
+    const neglected = neglectedMuscles(d, '2026-06-11', 10).map((n) => n.muscle)
+    expect(neglected).not.toContain(4) // chest trained
+    expect(neglected).not.toContain(2)
+    expect(neglected).not.toContain(5)
+    expect(neglected).toContain(11) // hamstrings untrained
+    expect(neglected).toContain(12) // lats untrained
+  })
+  it('excludes warm-up-only work and reports daysSince for prior training', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-04', activity: 'Pull', sets: [], setRows: [
+        { exercise: 'Barbell Row', weight: 60, reps: 5, kind: 'working' }, // 12,9,1
+      ], notes: '' },
+      { id: '2', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
+      ], notes: '' },
+    ]
+    const lats = neglectedMuscles(d, '2026-06-11', 5).find((n) => n.muscle === 12)
+    expect(lats).toBeDefined() // last trained 7 days ago, outside the 5-day window
+    expect(lats!.daysSince).toBe(7)
+  })
+  it('carries null daysSince for a never-trained muscle', () => {
+    const all = neglectedMuscles(emptyJournal(), '2026-06-11', 10)
+    expect(all.every((n) => n.daysSince === null)).toBe(true)
+    expect(all.length).toBeGreaterThan(0) // every library muscle is neglected
+  })
+})
+
+describe('stalledLifts (#479 plateau detector)', () => {
+  const rowDay = (date: string, weight: number): Workout => ({
+    id: date, date, activity: 'Push', sets: [],
+    setRows: [{ exercise: 'Bench Press', weight, reps: 5, kind: 'working' }], notes: '',
+  })
+  it('flags a lift with no new top weight across the last N sessions', () => {
+    const d = emptyJournal()
+    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 65), rowDay('2026-06-15', 65), rowDay('2026-06-22', 65)]
+    const stalled = stalledLifts(d, 3)
+    const bench = stalled.find((s) => s.exercise === 'Bench Press')
+    expect(bench).toBeDefined()
+    expect(bench!.top).toBe(65)
+    // Plateau run = trailing sessions at or below the current top. The opening
+    // 60 also sits below 65, so all four sessions are part of the no-PR streak.
+    expect(bench!.sessions).toBe(4)
+  })
+  it('does NOT flag a lift that just set a new high', () => {
+    const d = emptyJournal()
+    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 62.5), rowDay('2026-06-15', 65)]
+    expect(stalledLifts(d, 3)).toEqual([])
+  })
+  it('needs at least N logged sessions before it can stall', () => {
+    const d = emptyJournal()
+    d.workouts = [rowDay('2026-06-08', 65), rowDay('2026-06-15', 65)]
+    expect(stalledLifts(d, 3)).toEqual([])
   })
 })

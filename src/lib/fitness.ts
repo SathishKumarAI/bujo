@@ -495,3 +495,199 @@ export function cardioBadges(data: JournalData): CardioBadge[] {
     { key: 'mostCalories', label: 'Most calories', value: pbs.mostCalories, date: earliestFor((w) => w.calories ?? 0, pbs.mostCalories) },
   ]
 }
+
+// ── Big-three powerlifting total (F: #359) ───────────────────────────────────
+export interface BigThreeLift {
+  /** Canonical lift label (Squat / Bench / Deadlift). */
+  lift: 'Squat' | 'Bench' | 'Deadlift'
+  /** Heaviest matching PR weight, or 0 if never logged. */
+  weight: number
+  /** Date that PR was set, or null. */
+  date: string | null
+}
+
+export interface BigThreeTotal {
+  lifts: BigThreeLift[]
+  /** Σ of the three best weights (lifts not yet logged count as 0). */
+  total: number
+  /** True once all three lifts have at least one logged set. */
+  complete: boolean
+}
+
+/**
+ * The classic powerlifting total: best squat + bench + deadlift. Matches each
+ * lift against personalRecords() by keyword (so "Barbell Bench Press",
+ * "Back Squat", "Conventional Deadlift" all map correctly), taking the heaviest
+ * qualifying PR per lift. Missing lifts contribute 0 and carry a null date so the
+ * UI can prompt the user to log them. `complete` is true only when all three
+ * have a PR. Pure — derived from logged PRs.
+ */
+export function bigThreeTotal(data: JournalData): BigThreeTotal {
+  const prs = personalRecords(data)
+  const find = (match: (name: string) => boolean): { weight: number; date: string | null } => {
+    let best = { weight: 0, date: null as string | null }
+    for (const p of prs) {
+      if (match(p.exercise.toLowerCase()) && p.weight > best.weight) best = { weight: p.weight, date: p.date }
+    }
+    return best
+  }
+  const squat = find((n) => n.includes('squat'))
+  // Exclude Romanian/stiff-leg variants from the competition deadlift figure.
+  const dead = find((n) => n.includes('deadlift') && !n.includes('romanian') && !n.includes('stiff'))
+  const bench = find((n) => n.includes('bench'))
+  const lifts: BigThreeLift[] = [
+    { lift: 'Squat', weight: squat.weight, date: squat.date },
+    { lift: 'Bench', weight: bench.weight, date: bench.date },
+    { lift: 'Deadlift', weight: dead.weight, date: dead.date },
+  ]
+  return {
+    lifts,
+    total: Math.round((squat.weight + bench.weight + dead.weight) * 10) / 10,
+    complete: lifts.every((l) => l.weight > 0),
+  }
+}
+
+// ── Relative strength: PR ÷ bodyweight (F: #360) ─────────────────────────────
+/** Common strength-standard bands by bodyweight multiple (barbell, rough). */
+const STRENGTH_BANDS: { min: number; label: string }[] = [
+  { min: 2, label: 'Elite' },
+  { min: 1.5, label: 'Advanced' },
+  { min: 1, label: 'Intermediate' },
+  { min: 0.5, label: 'Novice' },
+  { min: 0, label: 'Beginner' },
+]
+
+/** The strength-standard band for a bodyweight multiple. */
+export function strengthBand(ratio: number): string {
+  return (STRENGTH_BANDS.find((b) => ratio >= b.min) ?? STRENGTH_BANDS[STRENGTH_BANDS.length - 1]).label
+}
+
+export interface RelativeStrength {
+  exercise: string
+  weight: number
+  /** Heaviest-PR weight ÷ latest logged bodyweight, rounded to 2dp. */
+  ratio: number
+  /** Strength-standard band label for that ratio. */
+  band: string
+}
+
+/** Latest logged bodyweight (most recent BodyMetric with a weight), or null. */
+export function latestBodyweight(data: JournalData): number | null {
+  const rows = data.bodyMetrics.filter((b) => b.weight != null).sort((a, b) => (a.date < b.date ? 1 : -1))
+  return rows[0]?.weight ?? null
+}
+
+/**
+ * Strength-to-bodyweight ratios for every lift with a PR, using the most recent
+ * logged bodyweight as the divisor. Each row carries the raw PR weight, the ratio
+ * (PR ÷ bodyweight), and a coarse strength-standard band. Sorted by ratio desc so
+ * the strongest relative lifts lead. Returns [] when no bodyweight is logged (the
+ * ratio is undefined without it). Pure.
+ */
+export function relativeStrength(data: JournalData): RelativeStrength[] {
+  const bw = latestBodyweight(data)
+  if (!bw || bw <= 0) return []
+  return personalRecords(data)
+    .map((p) => {
+      const ratio = Math.round((p.weight / bw) * 100) / 100
+      return { exercise: p.exercise, weight: p.weight, ratio, band: strengthBand(ratio) }
+    })
+    .sort((a, b) => b.ratio - a.ratio)
+}
+
+// ── Neglected-muscle alert (F: #297) ─────────────────────────────────────────
+export interface NeglectedMuscle {
+  /** wger muscle id with no working sets in the window. */
+  muscle: number
+  /** Days since the muscle was last trained, or null if never. */
+  daysSince: number | null
+}
+
+/**
+ * Muscle groups that have received ZERO working sets in the last `days`, so the
+ * UI can nudge balanced training. Only the muscles our keyword mapper actually
+ * recognises across the exercise library are candidates (we can't flag what we
+ * can't detect). `daysSince` is the gap to the most recent prior session that hit
+ * the muscle (null if never trained at all). Sorted longest-neglected first, then
+ * by muscle id. Reads structured rows, falling back to legacy strings. Pure.
+ */
+export function neglectedMuscles(data: JournalData, today = todayISO(), days = 10): NeglectedMuscle[] {
+  // Every muscle id reachable from the known library is a candidate.
+  const candidates = new Set<number>()
+  for (const ex of EXERCISE_LIBRARY) for (const id of musclesForExercise(ex)) candidates.add(id)
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const trainedInWindow = new Set<number>()
+  const lastTrained = new Map<number, string>() // muscle → latest date ever trained
+  for (const w of data.workouts) {
+    const rows = w.setRows ?? []
+    const exercises = rows.length
+      ? rows.filter((r) => r.kind !== 'warmup' && r.exercise.trim()).map((r) => r.exercise)
+      : w.sets.map((line) => parseSet(line)?.exercise).filter((e): e is string => !!e)
+    for (const ex of exercises) {
+      for (const id of musclesForExercise(ex)) {
+        if (inWindow(w.date)) trainedInWindow.add(id)
+        const cur = lastTrained.get(id)
+        if (!cur || w.date > cur) lastTrained.set(id, w.date)
+      }
+    }
+  }
+  return [...candidates]
+    .filter((id) => !trainedInWindow.has(id))
+    .map((id) => {
+      const last = lastTrained.get(id)
+      return { muscle: id, daysSince: last ? dayDiff(last, today) : null }
+    })
+    .sort((a, b) => {
+      // never-trained (null) sort last? No — surface them as most neglected (first).
+      const ad = a.daysSince ?? Infinity, bd = b.daysSince ?? Infinity
+      return (bd - ad) || (a.muscle - b.muscle)
+    })
+}
+
+// ── Stalled-lift detector (F: #479) ──────────────────────────────────────────
+export interface StalledLift {
+  exercise: string
+  /** Current top weight (kg/lb in the user's unit). */
+  top: number
+  /** Number of consecutive most-recent sessions at or below `top`. */
+  sessions: number
+  /** Most recent session date for the lift. */
+  lastDate: string
+}
+
+/**
+ * Lifts whose heaviest set hasn't improved across the last `sessions` sessions.
+ * For each exercise we walk exerciseProgression (best weight per training day,
+ * ascending) and look at the trailing window: if the most recent day's top
+ * weight is not greater than every earlier day in that window — i.e. no new high
+ * was set across the last `sessions` days — the lift is flagged as stalled. Needs
+ * at least `sessions` logged days for an exercise to qualify. Sorted by stall
+ * length desc then name. Pure — derived from logged progression.
+ */
+export function stalledLifts(data: JournalData, sessions = 3): StalledLift[] {
+  // Distinct exercise names across structured rows + legacy strings.
+  const names = new Set<string>()
+  for (const w of data.workouts) {
+    for (const r of w.setRows ?? []) if (r.exercise.trim()) names.add(r.exercise.trim())
+    for (const line of w.sets) { const p = parseSet(line); if (p) names.add(p.exercise.trim()) }
+  }
+  const out: StalledLift[] = []
+  for (const name of names) {
+    const prog = exerciseProgression(data, name) // {date:'MM-DD', weight} ascending
+    if (prog.length < sessions) continue
+    const window = prog.slice(-sessions)
+    const recent = window[window.length - 1].weight
+    // Stalled when the latest top is not a new high over the window — i.e. some
+    // earlier session in the window already matched or beat it.
+    const newHigh = window.slice(0, -1).every((p) => recent > p.weight)
+    if (newHigh) continue
+    // Count how many trailing sessions sit at or below the current top (the run
+    // length of the plateau), capped at the available history.
+    let run = 0
+    for (let i = prog.length - 1; i >= 0; i--) {
+      if (prog[i].weight <= recent) run++; else break
+    }
+    out.push({ exercise: name, top: recent, sessions: run, lastDate: prog[prog.length - 1].date })
+  }
+  return out.sort((a, b) => (b.sessions - a.sessions) || (a.exercise < b.exercise ? -1 : 1))
+}

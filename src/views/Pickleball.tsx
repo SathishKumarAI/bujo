@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange, Award, HeartPulse } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 
@@ -131,6 +131,12 @@ export function Pickleball() {
   const matchup = levelMatchup(data)
   const weekdays = weekdayPerformance(data)
   const weekdaysPlayed = weekdays.filter((w) => w.games > 0)
+  // Read-only monthly volume / forecast / load / milestone signals.
+  const months = monthlyGames(data, 6, today)
+  const monthsPlayed = months.some((m) => m.games > 0)
+  const forecast = winRateForecast(data)
+  const load = rpeLoad(data, 7, today)
+  const milestones = pickleMilestones(data)
   const goal = data.settings.pickleballGoalGames ?? 0
   // 13-week play-frequency heatmap.
   const WEEKS = 13
@@ -201,6 +207,21 @@ export function Pickleball() {
           </ResponsiveContainer>
         </div>
       </Card>
+      {monthsPlayed && (
+        <Card title="Games per month" subtitle="Last 6 months · win % in tooltip" enlargeable>
+          <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={months.map((m) => ({ m: m.label.slice(0, 3), games: m.games, winPct: m.winPct }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                <XAxis dataKey="m" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} formatter={(v, n) => [n === 'winPct' ? `${v}%` : `${v}`, n === 'winPct' ? 'Win %' : 'Games'] as [string, string]} />
+                <Bar dataKey="games" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
       <Card title="By format" subtitle="Singles vs doubles · games & win %" enlargeable>
         {formats.length === 0 ? <Empty>No games yet.</Empty> : (
           <ul className="space-y-3">
@@ -346,6 +367,52 @@ export function Pickleball() {
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('mauve') + '22', color: cat('mauve') }}><Trophy size={12} /> Longest: {streaks.longest}</span>
             </div>
           )}
+        </Card>
+      )}
+
+      {/* ── Win-rate forecast & rating readiness (#133) ── */}
+      {forecast.ready && (
+        <Card title={<span className="inline-flex items-center gap-2"><TrendingUp size={18} className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile compact label="Current win %" value={`${forecast.current}%`} color="green" />
+            <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <TrendingUp size={14} /> : forecast.direction === 'down' ? <TrendingDown size={14} /> : <Minus size={14} />} />
+            <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} color={forecast.slope > 0 ? 'green' : forecast.slope < 0 ? 'red' : 'overlay0'} />
+          </div>
+          <div className="mt-3 flex items-center gap-2 border-t border-surface0 pt-3">
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') + '22', color: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') }}>
+              <Gauge size={13} /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
+            </span>
+            <p className="text-xs text-overlay1">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
+          </div>
+        </Card>
+      )}
+
+      {/* ── Pickleball milestones (#161) ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Award size={18} className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
+        <ul className="space-y-3">
+          {milestones.map((m) => (
+            <li key={m.id}>
+              <div className="mb-1 flex justify-between text-sm">
+                <span className="text-subtext1">{m.label}{m.done && <span className="ml-1.5 text-green">✓</span>}</span>
+                <span className="text-overlay1">{Math.min(m.current, m.target)} / {m.target}</span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      {/* ── Session intensity / training load (#566) ── */}
+      {load.sessions > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><HeartPulse size={18} className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile compact label="Avg RPE" value={load.avg} color={load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green'} />
+            <StatTile compact label="Hardest" value={load.hardest} color="red" />
+            <StatTile compact label="7-day load" value={load.weekLoad} color="mauve" />
+          </div>
+          <p className="mt-3 text-xs text-overlay1">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
         </Card>
       )}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv } from './csv'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive } from './csv'
 import { emptyJournal } from './storage'
 
 describe('csv export', () => {
@@ -99,6 +99,77 @@ describe('recoveryCsv', () => {
     expect(csv).toContain('reset,primary,2026-06-05,stress')
     expect(csv).toContain('streak,Sugar,2026-06-02,best 10d')
     expect(csv).toContain('reset,Sugar,2026-06-06,cake')
+  })
+})
+
+describe('personalRecordsCsv', () => {
+  it('header-only on a fresh journal', () => {
+    expect(personalRecordsCsv(emptyJournal())).toBe('kind,metric,value,reps,est1RM')
+  })
+
+  it('emits the best set per exercise with an Epley 1RM, plus cardio PBs', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: 'w1', date: '2026-06-10', activity: 'Strength', sets: ['Bench 5x5 @ 80', 'Bench 8x8 @ 70'], distanceKm: 5, calories: 400, durationMin: 30, notes: '' },
+      { id: 'w2', date: '2026-06-11', activity: 'Run', sets: [], distanceKm: 10, calories: 700, durationMin: 60, notes: '' },
+    ]
+    const csv = personalRecordsCsv(d)
+    // Best Bench set is the heaviest (80kg @ 5 reps) → Epley 80*(1+5/30)=93.33 → rounded to .5 = 93.5
+    expect(csv).toContain('strength,Bench,80,5,93.5')
+    expect(csv).not.toContain(',70,')
+    // Cardio PBs are the maxima across all workouts.
+    expect(csv).toContain('cardio,Longest distance (km),10,,')
+    expect(csv).toContain('cardio,Most calories,700,,')
+    expect(csv).toContain('cardio,Most minutes,60,,')
+  })
+
+  it('omits zero cardio PB rows', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: 'w1', date: '2026-06-10', activity: 'Strength', sets: ['Squat 3x3 @ 100'], distanceKm: 0, calories: 0, durationMin: 0, notes: '' }]
+    const csv = personalRecordsCsv(d)
+    expect(csv).toContain('strength,Squat,100,3')
+    expect(csv).not.toContain('cardio')
+  })
+})
+
+describe('collectionCsv', () => {
+  it('header-only when the collection has no entries', () => {
+    expect(collectionCsv(emptyJournal(), 'missing')).toBe('date,type,status,important,text,tags')
+  })
+
+  it('exports only the chosen collection, sorted by date', () => {
+    const d = emptyJournal()
+    d.entries = [
+      { id: '1', date: '2026-06-12', type: 'task', text: 'later task', status: 'open', important: false, memory: false, tags: ['proj'], collection: 'c1', createdAt: '2026-06-12' },
+      { id: '2', date: '2026-06-10', type: 'task', text: 'early task', status: 'open', important: true, memory: false, tags: [], collection: 'c1', createdAt: '2026-06-10' },
+      { id: '3', date: '2026-06-11', type: 'note', text: 'other page', status: 'open', important: false, memory: false, tags: [], collection: 'c2', createdAt: '2026-06-11' },
+    ]
+    const csv = collectionCsv(d, 'c1')
+    const lines = csv.split('\n')
+    expect(lines).toHaveLength(3) // header + 2 c1 rows
+    expect(lines[1]).toBe('2026-06-10,task,open,yes,early task,')
+    expect(lines[2]).toContain('later task')
+    expect(csv).not.toContain('other page')
+  })
+})
+
+describe('redactSensitive', () => {
+  it('drops recovery + cycle and blanks entry text, without mutating input', () => {
+    const d = emptyJournal()
+    d.nofap = { startedOn: '2026-06-01', best: 30, relapses: [{ id: 'r', date: '2026-06-05', trigger: 'stress', note: 'private' }] }
+    d.cycle = [{ date: '2026-06-03', temp: 36.5, flags: ['period'] }]
+    d.entries = [{ id: 'e', date: '2026-06-10', type: 'note', text: 'secret thought', status: 'open', important: false, memory: false, tags: ['secret'], createdAt: '2026-06-10' }]
+    const out = redactSensitive(d)
+    expect(out.nofap.relapses).toEqual([])
+    expect(out.nofap.best).toBe(0)
+    expect(out.cycle).toEqual([])
+    expect(out.entries[0].text).toBe('')
+    expect(out.entries[0].tags).toEqual([])
+    // Structure of the entry survives so charts still have shape.
+    expect(out.entries[0].type).toBe('note')
+    // Input untouched.
+    expect(d.nofap.relapses).toHaveLength(1)
+    expect(d.entries[0].text).toBe('secret thought')
   })
 })
 

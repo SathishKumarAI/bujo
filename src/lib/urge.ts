@@ -300,3 +300,221 @@ export function paceToRecord(
     beatDate: addDays(today, daysToMatch + 1),
   }
 }
+
+// ── #348 Urge frequency trend (weekly sparkline) ─────────────────────────────
+
+/** One weekly bucket of the urge-frequency trend. */
+export interface UrgeWeek {
+  /** ISO day of the week's start (Monday-anchored 7-day bucket). */
+  weekStart: string
+  /** Urges logged in that 7-day window. */
+  count: number
+}
+
+/** Direction + magnitude of the urge-frequency trend over the tracked weeks. */
+export interface UrgeTrend {
+  /** Per-week counts, oldest → newest (length === weeks asked for). */
+  weeks: UrgeWeek[]
+  /** Total urges across the window. */
+  total: number
+  /** Average urges/week over the window, rounded to one decimal. */
+  avgPerWeek: number
+  /** Signed change: (last week) − (first week). Negative = cravings easing. */
+  delta: number
+  /** 'down' | 'up' | 'flat' — overall direction (first half vs. second half). */
+  direction: 'down' | 'up' | 'flat'
+}
+
+/**
+ * Bucket the urge log into the last `weeks` consecutive 7-day windows ending at
+ * `today`, oldest first, so a sparkline can show whether cravings are easing.
+ * Each urge is placed by its `at` timestamp (falling back to its `date`). Logs
+ * outside the window are ignored. `direction` compares the first half of the
+ * window's average to the second half (a small flat band avoids noise). Pure.
+ */
+export function urgeFrequencyTrend(
+  urgeLog: UrgeWin[] = [],
+  weeks = 8,
+  today = todayISO(),
+): UrgeTrend {
+  const n = Math.max(1, Math.floor(weeks))
+  // Window day range: [start, today]. Bucket i covers days [i*7, i*7+6] from start.
+  const windowStart = addDays(today, -(n * 7 - 1))
+  const buckets = new Array<number>(n).fill(0)
+  for (const u of urgeLog) {
+    if (!u) continue
+    const day = (u.at ? u.at.slice(0, 10) : u.date) || ''
+    if (!day) continue
+    const offset = dayDiff(windowStart, day)
+    if (offset < 0 || offset >= n * 7) continue
+    buckets[Math.floor(offset / 7)]++
+  }
+  const result: UrgeWeek[] = buckets.map((count, i) => ({
+    weekStart: addDays(windowStart, i * 7),
+    count,
+  }))
+  const total = buckets.reduce((s, c) => s + c, 0)
+  const avgPerWeek = Math.round((total / n) * 10) / 10
+  const delta = buckets[n - 1] - buckets[0]
+  // Direction from half-window averages so a single spike doesn't flip it.
+  const mid = Math.floor(n / 2)
+  const firstHalf = buckets.slice(0, mid)
+  const secondHalf = buckets.slice(mid)
+  const avg = (a: number[]) => (a.length ? a.reduce((s, c) => s + c, 0) / a.length : 0)
+  const diff = avg(secondHalf) - avg(firstHalf)
+  const direction: UrgeTrend['direction'] = diff < -0.25 ? 'down' : diff > 0.25 ? 'up' : 'flat'
+  return { weeks: result, total, avgPerWeek, delta, direction }
+}
+
+// ── #334 Streak-saved counter ────────────────────────────────────────────────
+
+/** Resisted urges reframed as streaks protected from a possible reset. */
+export interface StreaksSaved {
+  /** Total resisted urges (dated log + any pre-dated tally). */
+  saved: number
+  /** Resisted urges logged today (a daily "wins kept" count). */
+  savedToday: number
+}
+
+/**
+ * Streak-saved counter (#334): every resisted urge is a moment that could have
+ * become a reset, so the count of resisted urges = streaks you might have lost.
+ * Folds the dated urge log together with the legacy `urgesResisted` tally. Pure.
+ */
+export function streaksSaved(
+  urgeLog: UrgeWin[] = [],
+  priorResisted = 0,
+  today = todayISO(),
+): StreaksSaved {
+  const log = urgeLog ?? []
+  const saved = log.length + Math.max(0, priorResisted)
+  const savedToday = log.filter((u) => {
+    if (!u) return false
+    const day = (u.at ? u.at.slice(0, 10) : u.date) || ''
+    return day === today
+  }).length
+  return { saved, savedToday }
+}
+
+// ── #74 Urge-intensity distribution ──────────────────────────────────────────
+
+/** Aggregated stats over the self-rated urge intensities (1–5). */
+export interface IntensityStats {
+  /** Count of rated urges at each level, index 0 = level 1 … index 4 = level 5. */
+  buckets: number[]
+  /** How many urges carried an intensity rating. */
+  rated: number
+  /** Mean intensity over rated urges, one decimal (0 when none rated). */
+  avg: number
+  /** Most-common intensity level 1–5 (the mode), or undefined when none rated.
+   *  Ties resolve to the higher level (the scarier reading). */
+  mode?: number
+  /** Signed change in average intensity: (recent half) − (earlier half) of the
+   *  rated urges in log order. Negative = urges are getting weaker over time. */
+  trend: number
+}
+
+/**
+ * Summarise the intensity field across the urge log (#74). Urges without an
+ * `intensity` are ignored. `trend` splits the rated urges in chronological log
+ * order into earlier/recent halves and reports the change in mean intensity, so
+ * a negative trend is evidence cravings are weakening. Pure.
+ */
+export function intensityStats(urgeLog: UrgeWin[] = []): IntensityStats {
+  const buckets = new Array<number>(5).fill(0)
+  const rated: number[] = []
+  for (const u of urgeLog) {
+    if (!u || !u.intensity) continue
+    const lvl = u.intensity
+    if (lvl < 1 || lvl > 5) continue
+    buckets[lvl - 1]++
+    rated.push(lvl)
+  }
+  const count = rated.length
+  if (count === 0) return { buckets, rated: 0, avg: 0, mode: undefined, trend: 0 }
+  const sum = rated.reduce((s, v) => s + v, 0)
+  const avg = Math.round((sum / count) * 10) / 10
+  // Mode: highest count, ties → higher level.
+  let mode = 1
+  for (let i = 0; i < 5; i++) if (buckets[i] >= buckets[mode - 1]) mode = i + 1
+  // Trend: mean of the earlier half vs. the recent half (in log order).
+  const mid = Math.floor(count / 2)
+  const mean = (a: number[]) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0)
+  const trend = count >= 2
+    ? Math.round((mean(rated.slice(mid)) - mean(rated.slice(0, mid))) * 10) / 10
+    : 0
+  return { buckets, rated: count, avg, mode, trend }
+}
+
+// ── #322 Relapse-free week / month rollup ────────────────────────────────────
+
+/** Counts of fully clean calendar weeks and months across the journey. */
+export interface CleanRollup {
+  /** Fully reset-free ISO weeks (Mon-anchored) since tracking began. */
+  cleanWeeks: number
+  /** Fully reset-free calendar months since tracking began. */
+  cleanMonths: number
+  /** Total whole weeks spanned by the journey (denominator for cleanWeeks). */
+  totalWeeks: number
+  /** Total whole months spanned by the journey (denominator for cleanMonths). */
+  totalMonths: number
+}
+
+/** Monday-anchored ISO week key "YYYY-MM-DD" of the week containing `iso`. */
+function weekAnchor(iso: string): string {
+  const d = fromISODay(iso)
+  const dow = d.getDay() // 0=Sun
+  const back = (dow + 6) % 7 // days since Monday
+  return addDays(iso, -back)
+}
+
+/**
+ * Relapse-free rollup (#322): count fully clean weeks and months across the
+ * span from the first activity (earliest of `startedOn` / first relapse) to
+ * `today`. A week/month is "clean" only if it lies within the tracked span and
+ * has zero resets in it. Pure; duplicate relapse dates collapse to one.
+ */
+export function cleanRollup(
+  relapses: Relapse[] = [],
+  startedOn: string,
+  today = todayISO(),
+): CleanRollup {
+  const resetDates = [...new Set((relapses ?? []).map((r) => r?.date).filter(Boolean) as string[])]
+  // Journey starts at the earliest known activity so weeks before startedOn that
+  // contained a relapse (and the streak's own start) are all in scope.
+  const earliest = resetDates.reduce((min, d) => (d < min ? d : min), startedOn)
+  if (dayDiff(earliest, today) < 0) {
+    return { cleanWeeks: 0, cleanMonths: 0, totalWeeks: 0, totalMonths: 0 }
+  }
+  // Weeks dirtied by a reset.
+  const dirtyWeeks = new Set(resetDates.map(weekAnchor))
+  const dirtyMonths = new Set(resetDates.map((d) => d.slice(0, 7)))
+
+  // Enumerate every week anchor in [earliest, today].
+  const weekSet = new Set<string>()
+  let w = weekAnchor(earliest)
+  const lastWeek = weekAnchor(today)
+  while (w <= lastWeek) {
+    weekSet.add(w)
+    w = addDays(w, 7)
+  }
+  const monthSet = new Set<string>()
+  const [ey, em] = earliest.slice(0, 7).split('-').map(Number)
+  const tKey = today.slice(0, 7)
+  let my = ey, mm = em
+  while (true) {
+    const key = `${my}-${String(mm).padStart(2, '0')}`
+    monthSet.add(key)
+    if (key === tKey) break
+    mm++
+    if (mm > 12) { mm = 1; my++ }
+  }
+
+  const totalWeeks = weekSet.size
+  const totalMonths = monthSet.size
+  let cleanWeeks = 0
+  for (const wk of weekSet) if (!dirtyWeeks.has(wk)) cleanWeeks++
+  let cleanMonths = 0
+  for (const mo of monthSet) if (!dirtyMonths.has(mo)) cleanMonths++
+  return { cleanWeeks, cleanMonths, totalWeeks, totalMonths }
+}

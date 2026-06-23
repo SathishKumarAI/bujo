@@ -129,6 +129,24 @@ export function habitRemindersToICS(data: JournalData): string {
 }
 
 /**
+ * Export open, dated tasks as all-day iCalendar (.ics) events (BUJO-117) so your
+ * to-dos / deadlines land on the calendar alongside events. Skips done/dropped
+ * tasks and undated ones; prefixes each summary with "☐ " so tasks read distinctly
+ * from plain events. Pure; returns a full VCALENDAR (header-only when nothing is
+ * due).
+ */
+export function tasksToICS(data: JournalData): string {
+  const events: string[] = []
+  for (const e of data.entries) {
+    if (e.type !== 'task' || !e.date) continue
+    if (e.status === 'done' || e.status === 'dropped') continue
+    const v = vevent(`bujo-task-${e.id}`, e.date, `☐ ${e.text}`)
+    if (v) events.push(v)
+  }
+  return calendar(events)
+}
+
+/**
  * Export dated journal items as an all-day iCalendar (.ics) feed importable into
  * Google/Apple Calendar: `event`-type entries, plus this year's birthdays.
  * Pure; pass `year` for deterministic birthday dates (defaults to current year).

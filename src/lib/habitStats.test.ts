@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { bestWeekday, completionRate30, consistencyScore, habitCellFill, isScheduledOn } from './habitStats'
+import {
+  bestWeekday, categoryRollup, completionRate30, consistencyScore, habitCellFill,
+  isScheduledOn, perfectDayStats, perfectWeeks, weeklyHeatRow,
+} from './habitStats'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
 
@@ -192,5 +195,171 @@ describe('bestWeekday', () => {
     const b = bestWeekday(emptyJournal(), h, TODAY, 90)
     expect(b.best).toBeNull()
     expect(b.worst).toBeNull()
+  })
+})
+
+/** Build a journal from several habits, marking the given check habits done on days. */
+function withHabits(habits: Habit[], log: Record<string, string[]> = {}): JournalData {
+  const d = emptyJournal()
+  d.habits = habits
+  d.habitLog = log
+  return d
+}
+
+describe('categoryRollup', () => {
+  it('aggregates scheduled-vs-done across habits per category', () => {
+    const a = habit({ id: 'a', category: 'wellness', startedOn: '2000-01-01' })
+    const b = habit({ id: 'b', category: 'wellness', startedOn: '2000-01-01' })
+    // a done every day in the window, b never done.
+    const log: Record<string, string[]> = {}
+    for (const day of isoDays(TODAY, 30)) log[day] = ['a']
+    const out = categoryRollup(withHabits([a, b], log), TODAY, 30)
+    const wellness = out.find((r) => r.category === 'wellness')!
+    expect(wellness.habits).toBe(2)
+    expect(wellness.scheduled).toBe(60) // 2 habits × 30 days
+    expect(wellness.done).toBe(30) // only a
+    expect(wellness.pct).toBe(50)
+  })
+
+  it('counts avoid habits toward the count but excludes them from completion maths', () => {
+    const build = habit({ id: 'b', category: 'food', startedOn: '2000-01-01' })
+    const quit = habit({ id: 'q', category: 'food', startedOn: '2000-01-01', avoid: true })
+    const log: Record<string, string[]> = {}
+    for (const day of isoDays(TODAY, 30)) { log[day] = ['b', 'q'] } // both logged
+    const out = categoryRollup(withHabits([build, quit], log), TODAY, 30)
+    const food = out.find((r) => r.category === 'food')!
+    expect(food.habits).toBe(2)
+    expect(food.scheduled).toBe(30) // only the build habit contributes days
+    expect(food.done).toBe(30)
+    expect(food.pct).toBe(100)
+  })
+
+  it('drops archived habits and sorts by pct descending', () => {
+    const good = habit({ id: 'g', category: 'wellness', startedOn: '2000-01-01' })
+    const bad = habit({ id: 'x', category: 'movement', startedOn: '2000-01-01' })
+    const gone = habit({ id: 'z', category: 'custom', startedOn: '2000-01-01', archived: true })
+    const log: Record<string, string[]> = {}
+    for (const day of isoDays(TODAY, 30)) log[day] = ['g'] // wellness 100%, movement 0%
+    const out = categoryRollup(withHabits([good, bad, gone], log), TODAY, 30)
+    expect(out.map((r) => r.category)).toEqual(['wellness', 'movement']) // custom dropped
+    expect(out[0].pct).toBeGreaterThan(out[1].pct)
+  })
+
+  it('pct is 0 (not NaN) when nothing was scheduled', () => {
+    const future = habit({ id: 'f', category: 'wellness', startedOn: '2026-12-01' })
+    const out = categoryRollup(withHabits([future]), TODAY, 30)
+    expect(out[0].pct).toBe(0)
+  })
+})
+
+describe('perfectWeeks', () => {
+  it('counts past weeks where every scheduled day was done', () => {
+    const h = habit({ startedOn: '2000-01-01' }) // everyday
+    // Mark all of last week fully done (the 7 days before the current Sun-week).
+    const dow = new Date(TODAY + 'T00:00').getDay() // Thu → 4
+    const curStart = isoDays(TODAY, dow + 1)[dow] // Sunday of current week
+    const lastWeek = isoDays(curStart, 8).slice(1, 8) // 7 days before curStart
+    const data = withDone(h, lastWeek)
+    expect(perfectWeeks(data, h, TODAY, 12)).toBe(1)
+  })
+
+  it('a week with one missed scheduled day is not perfect', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const dow = new Date(TODAY + 'T00:00').getDay()
+    const curStart = isoDays(TODAY, dow + 1)[dow]
+    const lastWeek = isoDays(curStart, 8).slice(1, 8)
+    const data = withDone(h, lastWeek.slice(1)) // miss one day
+    expect(perfectWeeks(data, h, TODAY, 12)).toBe(0)
+  })
+
+  it('the in-progress current week is excluded', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    // Mark every day so far this week done — still shouldn't count (current week excluded).
+    const dow = new Date(TODAY + 'T00:00').getDay()
+    const thisWeekSoFar = isoDays(TODAY, dow + 1)
+    const data = withDone(h, thisWeekSoFar)
+    expect(perfectWeeks(data, h, TODAY, 12)).toBe(0)
+  })
+
+  it('weeks with no scheduled days are skipped, not counted as broken', () => {
+    const h = habit({ activeDays: [0], startedOn: '2000-01-01' }) // Sundays only
+    // No Sundays done → no perfect weeks, and never a divide/false positive.
+    expect(perfectWeeks(emptyJournal2(h), h, TODAY, 12)).toBe(0)
+  })
+})
+
+/** emptyJournal with one habit, nothing done. */
+function emptyJournal2(h: Habit): JournalData {
+  const d = emptyJournal()
+  d.habits = [h]
+  return d
+}
+
+describe('perfectDayStats', () => {
+  it('counts days where every scheduled check habit was done', () => {
+    const a = habit({ id: 'a', startedOn: '2000-01-01' })
+    const b = habit({ id: 'b', startedOn: '2000-01-01' })
+    const log: Record<string, string[]> = {}
+    // Last 3 days: both done. Day -3: only a done (not perfect).
+    for (const day of isoDays(TODAY, 3)) log[day] = ['a', 'b']
+    log[isoDays(TODAY, 4)[3]] = ['a']
+    const out = perfectDayStats(withHabits([a, b], log), TODAY, 90)
+    expect(out.total).toBe(3)
+    expect(out.streak).toBe(3) // today perfect → run includes today
+  })
+
+  it('forgives an unfinished today without breaking the streak', () => {
+    const a = habit({ id: 'a', startedOn: '2000-01-01' })
+    const log: Record<string, string[]> = {}
+    // Yesterday + day before done, today NOT done yet.
+    log[isoDays(TODAY, 2)[1]] = ['a']
+    log[isoDays(TODAY, 3)[2]] = ['a']
+    const out = perfectDayStats(withHabits([a], log), TODAY, 90)
+    expect(out.streak).toBe(2) // starts from yesterday, today forgiven
+  })
+
+  it('a real miss (a past non-perfect scheduled day) breaks the streak', () => {
+    const a = habit({ id: 'a', startedOn: '2000-01-01' })
+    const log: Record<string, string[]> = {}
+    log[TODAY] = ['a'] // today perfect
+    // yesterday missed (no log) → streak stops at today
+    log[isoDays(TODAY, 3)[2]] = ['a']
+    const out = perfectDayStats(withHabits([a], log), TODAY, 90)
+    expect(out.streak).toBe(1)
+  })
+
+  it('returns zeros when there are no build check habits', () => {
+    const quit = habit({ id: 'q', avoid: true, startedOn: '2000-01-01' })
+    const out = perfectDayStats(withHabits([quit]), TODAY, 90)
+    expect(out).toEqual({ total: 0, streak: 0 })
+  })
+})
+
+describe('weeklyHeatRow', () => {
+  it('returns 7 cells oldest→newest ending today', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const row = weeklyHeatRow(withDone(h, [TODAY]), h, TODAY)
+    expect(row).toHaveLength(7)
+    expect(row[6].day).toBe(TODAY) // last cell is today
+    expect(row[6].level).toBe(4) // check habit done → full intensity
+    expect(row[6].scheduled).toBe(true)
+  })
+
+  it('marks off-schedule days as unscheduled with level 0', () => {
+    const h = habit({ activeDays: [4], startedOn: '2000-01-01' }) // Thursdays only
+    const row = weeklyHeatRow(emptyJournal2(h), h, TODAY) // TODAY = Thu
+    expect(row[6].scheduled).toBe(true) // today (Thu) scheduled
+    // The other 6 days span Fri..Wed — none scheduled.
+    expect(row.slice(0, 6).every((c) => !c.scheduled && c.level === 0)).toBe(true)
+  })
+
+  it('grades a partial count habit between 0 and 4', () => {
+    const h = habit({ id: 'c', type: 'count', target: 8, startedOn: '2000-01-01' })
+    const d = emptyJournal()
+    d.habits = [h]
+    d.habitValues = { [TODAY]: { c: 4 } } // half of target
+    const row = weeklyHeatRow(d, h, TODAY)
+    expect(row[6].level).toBeGreaterThan(0)
+    expect(row[6].level).toBeLessThan(4)
   })
 })

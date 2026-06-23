@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseICS, journalToICS, habitRemindersToICS } from './ics'
+import { parseICS, journalToICS, habitRemindersToICS, tasksToICS } from './ics'
 import { emptyJournal } from './storage'
 
 describe('parseICS', () => {
@@ -65,6 +65,38 @@ describe('journalToICS', () => {
     d.entries = [{ id: 'e1', date: '2026-06-10', type: 'event', text: 'Demo day', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-10' }]
     const back = parseICS(journalToICS(d))
     expect(back).toContainEqual({ date: '2026-06-10', summary: 'Demo day' })
+  })
+})
+
+describe('tasksToICS', () => {
+  it('wraps output in a VCALENDAR envelope', () => {
+    const ics = tasksToICS(emptyJournal())
+    expect(ics.startsWith('BEGIN:VCALENDAR')).toBe(true)
+    expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
+  })
+
+  it('emits open dated tasks and skips events/done/dropped/undated', () => {
+    const d = emptyJournal()
+    d.entries = [
+      { id: 't1', date: '2026-06-10', type: 'task', text: 'File taxes', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-10' },
+      { id: 't2', date: '2026-06-11', type: 'task', text: 'done thing', status: 'done', important: false, memory: false, tags: [], createdAt: '2026-06-11' },
+      { id: 't3', date: '2026-06-12', type: 'task', text: 'dropped thing', status: 'dropped', important: false, memory: false, tags: [], createdAt: '2026-06-12' },
+      { id: 't4', date: '', type: 'task', text: 'no date', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-13' },
+      { id: 'e1', date: '2026-06-14', type: 'event', text: 'a meeting', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-14' },
+    ]
+    const ics = tasksToICS(d)
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260610')
+    expect(ics).toContain('SUMMARY:☐ File taxes')
+    expect(ics).not.toContain('done thing')
+    expect(ics).not.toContain('dropped thing')
+    expect(ics).not.toContain('no date')
+    expect(ics).not.toContain('a meeting')
+  })
+
+  it('round-trips an open task back through the parser', () => {
+    const d = emptyJournal()
+    d.entries = [{ id: 't1', date: '2026-06-10', type: 'task', text: 'Pay rent', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-10' }]
+    expect(parseICS(tasksToICS(d))).toContainEqual({ date: '2026-06-10', summary: '☐ Pay rent' })
   })
 })
 

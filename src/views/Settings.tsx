@@ -13,8 +13,8 @@ import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '..
 import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv } from '../lib/csv'
-import { journalToICS, habitRemindersToICS } from '../lib/ics'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive } from '../lib/csv'
+import { journalToICS, habitRemindersToICS, tasksToICS } from '../lib/ics'
 import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
@@ -64,6 +64,13 @@ export function Settings() {
     const full = await inlineImages(data)
     download(`bujo-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
     setSettings({ lastBackup: todayISO() })
+  }
+
+  async function doRedactedExport() {
+    // Privacy-safe share copy (BUJO-308): inline photos, strip sync secrets, then
+    // redact the sensitive domains (Recovery, Cycle) and free-text entry bodies.
+    const full = await inlineImages(data)
+    download(`bujo-shared-${todayISO()}.json`, exportJSON(redactSensitive(stripSyncSecrets(full))))
   }
 
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -272,6 +279,10 @@ export function Settings() {
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
         <p className="mt-1.5 text-xs text-overlay0">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
+        <div className="mt-2">
+          <Button onClick={doRedactedExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export shareable (redacted) JSON</Button>
+          <p className="mt-1 text-xs text-overlay0">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
+        </div>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
         <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-xs text-overlay0">Export a section as CSV (for spreadsheets):</p>
@@ -282,11 +293,28 @@ export function Settings() {
             <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
             <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
             <Button onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
+            <Button onClick={() => download(`bujo-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
             {s.nofapEnabled && <Button onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
           </div>
+          {data.collections.length > 0 && (
+            <div className="mt-2">
+              <p className="mb-1 text-xs text-overlay0">Export one collection's entries as CSV:</p>
+              <div className="flex flex-wrap gap-2">
+                {data.collections.map((c) => (
+                  <Button key={c.id} onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
+                    {c.icon} {c.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-2">
             <Button onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
             <p className="mt-1 text-xs text-overlay0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
+          </div>
+          <div className="mt-2">
+            <Button onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
+            <p className="mt-1 text-xs text-overlay0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
           </div>
           <div className="mt-2">
             <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>

@@ -95,6 +95,39 @@ export function minutesByWeekday(data: JournalData): { day: number; label: strin
   return labels.map((label, day) => ({ day, label, min: totals[day] }))
 }
 
+/**
+ * Total coding minutes grouped by project, highest first. Sessions with no
+ * project fall under "(no project)". Returns at most `limit` rows.
+ */
+export function minutesByProject(data: JournalData, limit = 6): { project: string; min: number }[] {
+  const totals = new Map<string, number>()
+  for (const s of sessions(data)) {
+    const key = s.project?.trim() || '(no project)'
+    totals.set(key, (totals.get(key) ?? 0) + (s.durationMin || 0))
+  }
+  return [...totals.entries()]
+    .map(([project, min]) => ({ project, min }))
+    .filter((r) => r.min > 0)
+    .sort((a, b) => b.min - a.min)
+    .slice(0, limit)
+}
+
+/**
+ * Interruptions-per-session over the last `days`, oldest→newest. Each day shows
+ * the mean interruptions across that day's sessions (0 when no session logged
+ * interruptions that day, null-free for charting). `count` is how many sessions
+ * contributed, so the view can dim empty days.
+ */
+export function interruptionsTrend(data: JournalData, today = todayISO(), days = 14): { date: string; avg: number; count: number }[] {
+  return Array.from({ length: days }, (_, i) => {
+    const date = addDays(today, -(days - 1 - i))
+    const day = sessions(data).filter((s) => s.date === date && s.interruptions != null)
+    if (!day.length) return { date, avg: 0, count: 0 }
+    const total = day.reduce((a, s) => a + (s.interruptions || 0), 0)
+    return { date, avg: Math.round((total / day.length) * 10) / 10, count: day.length }
+  })
+}
+
 /** The single longest focus session by duration (null when no sessions). */
 export function longestSession(data: JournalData): DevSession | null {
   const ss = sessions(data)

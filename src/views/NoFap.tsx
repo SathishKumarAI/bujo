@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target } from 'lucide-react'
+import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target, TrendingDown, TrendingUp, Activity, CalendarRange } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, type HaltState } from '../lib/streak'
-import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord } from '../lib/urge'
+import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 
 const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
@@ -160,6 +160,12 @@ export function NoFap() {
   const peakWeekday = peakRelapseWeekday(s.relapses)
   const conversion = urgeConversion(s.urgeLog ?? [], s.relapses, s.urgesResisted ?? 0)
   const pace = paceToRecord(stats.current, stats.best, today)
+  // #348 urge frequency trend · #334 streaks saved · #74 intensity · #322 clean rollup
+  const urgeTrend = urgeFrequencyTrend(s.urgeLog ?? [], 8, today)
+  const saved = streaksSaved(s.urgeLog ?? [], s.urgesResisted ?? 0, today)
+  const intensity9 = intensityStats(s.urgeLog ?? [])
+  const rollup = cleanRollup(s.relapses, s.startedOn, today)
+  const INTENSITY_LABELS = ['Faint', 'Mild', 'Moderate', 'Strong', 'Intense']
 
   function relapse() {
     if (!trigger.trim()) { setErr('Add the reason behind it first · patterns are data.'); return }
@@ -271,6 +277,92 @@ export function NoFap() {
               <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${conversion.resistRate}%`, background: cat('green') }} />
             </div>
             <p className="mt-2 text-xs text-overlay0">Each resisted urge is a streak you protected. Keep the green bar climbing.</p>
+          </Card>
+        )}
+
+        {/* Streak-saved counter (#334) · resisted urges = streaks protected */}
+        {saved.saved > 0 && (
+          <Card title={<span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-green" /> Streaks you saved</span>} subtitle="Every resisted urge was a reset that didn’t happen" help="Each urge you surfed was a moment that could have become a reset. Counting them reframes resistance as progress protected — not just willpower spent, but streaks kept alive.">
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{saved.saved}</div>
+                <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">urges resisted</div>
+              </div>
+              <p className="flex-1 text-sm text-subtext0">
+                That’s <strong style={{ color: cat('green') }}>{saved.saved} streak{saved.saved === 1 ? '' : 's'}</strong> you might have lost.
+                {saved.savedToday > 0 && <> <span className="text-overlay1">{saved.savedToday} saved today</span> · keep the count climbing.</>}
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {/* Urge-frequency trend (#348) · weekly sparkline, evidence cravings ease */}
+        {urgeTrend.total > 0 && (
+          <Card
+            title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <TrendingDown size={16} className="text-green" /> : urgeTrend.direction === 'up' ? <TrendingUp size={16} className="text-peach" /> : <Activity size={16} className="text-overlay1" />} Urge trend</span>}
+            subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}
+            help="Resisted urges bucketed into the last 8 weeks. A falling line is hard evidence that cravings genuinely weaken with abstinence — the brain re-regulates and the waves get smaller.">
+            <div className="h-40 w-full" role="img" aria-label={`Weekly urge counts, oldest to newest: ${urgeTrend.weeks.map((w) => w.count).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={urgeTrend.weeks} margin={{ top: 6, right: 8, bottom: 0, left: -24 }}>
+                  <defs>
+                    <linearGradient id="urgeTrendFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={cat('mauve')} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={cat('mauve')} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                  <XAxis dataKey="weekStart" stroke={cat('overlay0')} fontSize={10} tickLine={false}
+                    tickFormatter={(d) => prettyDay(d as string).replace(/^\w+, /, '')} />
+                  <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ stroke: cat('surface1') }}
+                    labelFormatter={(d) => `Week of ${prettyDay(d as string)}`}
+                    formatter={(v) => [`${v} urge${v === 1 ? '' : 's'}`, 'Resisted'] as [string, string]} />
+                  <Area type="monotone" dataKey="count" stroke={cat('mauve')} strokeWidth={2} fill="url(#urgeTrendFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-1.5 text-xs text-overlay0">Averaging <span className="font-medium" style={{ color: cat('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
+          </Card>
+        )}
+
+        {/* Urge-intensity distribution (#74) · how strong, and whether it's weakening */}
+        {intensity9.rated > 0 && (
+          <Card title={<span className="inline-flex items-center gap-2"><Activity size={16} className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`} help="Your self-rated urge strengths (1 faint … 5 intense). A falling trend means the urges themselves are getting weaker over time, not just less frequent — the strongest signal that recovery is working.">
+            <div className="space-y-1.5">
+              {intensity9.buckets.map((c, i) => {
+                const pct = intensity9.rated > 0 ? Math.round((c / intensity9.rated) * 100) : 0
+                const isMode = intensity9.mode === i + 1
+                return (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <span className="w-16 shrink-0 text-overlay0">{i + 1} · {INTENSITY_LABELS[i]}</span>
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
+                      <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
+                    </div>
+                    <span className="w-8 shrink-0 text-right text-overlay1">{c}</span>
+                  </div>
+                )
+              })}
+            </div>
+            {intensity9.rated >= 2 && intensity9.trend !== 0 && (
+              <p className="mt-2.5 inline-flex items-center gap-1.5 text-xs" style={{ color: intensity9.trend < 0 ? cat('green') : cat('peach') }}>
+                {intensity9.trend < 0 ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
+                {intensity9.trend < 0
+                  ? <span>Urges are getting <strong>weaker</strong> · recent ones average {Math.abs(intensity9.trend)} lower.</span>
+                  : <span>Urges have intensified by {intensity9.trend} lately · extra care this stretch.</span>}
+              </p>
+            )}
+          </Card>
+        )}
+
+        {/* Relapse-free week / month rollup (#322) · reward sustained windows */}
+        {rollup.totalWeeks > 0 && (
+          <Card title={<span className="inline-flex items-center gap-2"><CalendarRange size={16} className="text-teal" /> Clean weeks &amp; months</span>} subtitle="Fully reset-free windows across your whole journey" help="Counts of calendar weeks and months with zero resets since you started tracking. Rewarding sustained clean windows — not just single days — keeps a stumble from feeling like total failure.">
+            <div className="grid grid-cols-2 gap-3">
+              <StatTile compact label="Clean weeks" value={`${rollup.cleanWeeks}/${rollup.totalWeeks}`} color="teal" icon={<CalendarCheck size={14} />} />
+              <StatTile compact label="Clean months" value={`${rollup.cleanMonths}/${rollup.totalMonths}`} color="green" icon={<CalendarRange size={14} />} />
+            </div>
+            <p className="mt-2 text-xs text-overlay0">{rollup.cleanWeeks} of {rollup.totalWeeks} weeks and {rollup.cleanMonths} of {rollup.totalMonths} month{rollup.totalMonths === 1 ? '' : 's'} stayed fully reset-free.</p>
           </Card>
         )}
 

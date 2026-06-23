@@ -4,6 +4,7 @@ import {
   urgeHourHistogram, peakUrgeHour, hourLabel,
   relapseWeekdayPattern, peakRelapseWeekday,
   urgeConversion, paceToRecord,
+  urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup,
 } from './urge'
 import type { UrgeWin, TriggerPlan, Relapse } from './types'
 
@@ -249,5 +250,135 @@ describe('paceToRecord', () => {
 
   it('clamps negative inputs', () => {
     expect(paceToRecord(-3, -1, today)).toMatchObject({ alreadyRecord: true })
+  })
+})
+
+describe('urgeFrequencyTrend', () => {
+  const today = '2026-06-22' // a Monday
+  const day = (d: string): UrgeWin => ({ id: d, date: d })
+
+  it('buckets urges into consecutive 7-day windows, oldest first', () => {
+    // window of 2 weeks ends 06-22 → starts 06-09. Bucket0=[06-09..06-15], Bucket1=[06-16..06-22]
+    const log: UrgeWin[] = [day('2026-06-10'), day('2026-06-12'), day('2026-06-20')]
+    const t = urgeFrequencyTrend(log, 2, today)
+    expect(t.weeks).toHaveLength(2)
+    expect(t.weeks[0]).toEqual({ weekStart: '2026-06-09', count: 2 })
+    expect(t.weeks[1]).toEqual({ weekStart: '2026-06-16', count: 1 })
+    expect(t.total).toBe(3)
+    expect(t.avgPerWeek).toBe(1.5)
+    expect(t.delta).toBe(-1) // last(1) − first(2)
+  })
+
+  it('ignores urges outside the window and prefers the at timestamp', () => {
+    const log: UrgeWin[] = [
+      { id: 'a', date: '2026-01-01' }, // way before window
+      { id: 'b', date: '2026-06-30' }, // after today
+      { id: 'c', date: '2026-06-01', at: '2026-06-20T10:00:00.000Z' }, // at wins → in window
+    ]
+    const t = urgeFrequencyTrend(log, 2, today)
+    expect(t.total).toBe(1)
+    expect(t.weeks[1].count).toBe(1)
+  })
+
+  it('reports a downward direction when later weeks ease off', () => {
+    const log: UrgeWin[] = [
+      day('2026-06-02'), day('2026-06-03'), day('2026-06-04'), // earliest week heavy
+      day('2026-06-20'), // recent week light
+    ]
+    const t = urgeFrequencyTrend(log, 3, today)
+    expect(t.direction).toBe('down')
+  })
+
+  it('is flat / empty for no logs', () => {
+    const t = urgeFrequencyTrend([], 4, today)
+    expect(t.total).toBe(0)
+    expect(t.direction).toBe('flat')
+    expect(t.weeks).toHaveLength(4)
+  })
+})
+
+describe('streaksSaved', () => {
+  const today = '2026-06-22'
+  it('counts the log plus pre-dated wins, and today separately', () => {
+    const log: UrgeWin[] = [
+      { id: '1', date: '2026-06-22' },
+      { id: '2', date: '2026-06-22', at: '2026-06-22T09:00:00.000Z' },
+      { id: '3', date: '2026-06-10' },
+    ]
+    expect(streaksSaved(log, 4, today)).toEqual({ saved: 7, savedToday: 2 })
+  })
+
+  it('handles empty input', () => {
+    expect(streaksSaved([], 0, today)).toEqual({ saved: 0, savedToday: 0 })
+    expect(streaksSaved(undefined, -3, today)).toEqual({ saved: 0, savedToday: 0 })
+  })
+})
+
+describe('intensityStats', () => {
+  const u = (id: string, intensity?: UrgeWin['intensity']): UrgeWin => ({ id, date: '2026-06-22', intensity })
+
+  it('buckets, averages and finds the mode', () => {
+    const log: UrgeWin[] = [u('1', 5), u('2', 3), u('3', 5), u('4', 1)]
+    const s = intensityStats(log)
+    expect(s.rated).toBe(4)
+    expect(s.buckets).toEqual([1, 0, 1, 0, 2]) // levels 1,3,5,5
+    expect(s.avg).toBe(3.5)
+    expect(s.mode).toBe(5)
+  })
+
+  it('reports a negative trend when recent urges are milder', () => {
+    // earlier half strong (5,5), recent half weak (1,1)
+    const log: UrgeWin[] = [u('1', 5), u('2', 5), u('3', 1), u('4', 1)]
+    expect(intensityStats(log).trend).toBe(-4)
+  })
+
+  it('ignores unrated / out-of-range entries', () => {
+    const log: UrgeWin[] = [u('1'), u('2', 4), { id: '3', date: '2026-06-22', intensity: 9 as unknown as UrgeWin['intensity'] }]
+    const s = intensityStats(log)
+    expect(s.rated).toBe(1)
+    expect(s.avg).toBe(4)
+  })
+
+  it('returns zeros with no rated urges', () => {
+    expect(intensityStats([])).toEqual({ buckets: [0, 0, 0, 0, 0], rated: 0, avg: 0, mode: undefined, trend: 0 })
+  })
+})
+
+describe('cleanRollup', () => {
+  const today = '2026-06-22' // Monday
+  const rel = (date: string): Relapse => ({ id: date, date, trigger: '', note: '' })
+
+  it('counts fully reset-free weeks and months in the span', () => {
+    // Journey from 2026-05-01 to 2026-06-22, one reset on 2026-05-15.
+    const r = cleanRollup([rel('2026-05-15')], '2026-05-01', today)
+    // May + June = 2 months; May dirtied → 1 clean month.
+    expect(r.totalMonths).toBe(2)
+    expect(r.cleanMonths).toBe(1)
+    // One reset dirties exactly one week; the rest of the spanned weeks are clean.
+    expect(r.cleanWeeks).toBe(r.totalWeeks - 1)
+    expect(r.totalWeeks).toBeGreaterThan(1)
+  })
+
+  it('treats the whole span as clean when there are no resets', () => {
+    const r = cleanRollup([], '2026-06-01', today)
+    expect(r.cleanWeeks).toBe(r.totalWeeks)
+    expect(r.cleanMonths).toBe(r.totalMonths)
+    expect(r.totalMonths).toBe(1) // all June
+  })
+
+  it('extends the span back to a relapse earlier than startedOn', () => {
+    // startedOn after a reset that lives in an earlier month.
+    const r = cleanRollup([rel('2026-04-10')], '2026-06-20', today)
+    expect(r.totalMonths).toBe(3) // Apr, May, Jun
+    expect(r.cleanMonths).toBe(2) // Apr dirtied
+  })
+
+  it('collapses duplicate reset dates', () => {
+    const r = cleanRollup([rel('2026-06-10'), rel('2026-06-10')], '2026-06-01', today)
+    expect(r.cleanWeeks).toBe(r.totalWeeks - 1)
+  })
+
+  it('handles a future startedOn defensively', () => {
+    expect(cleanRollup([], '2026-12-01', today)).toEqual({ cleanWeeks: 0, cleanMonths: 0, totalWeeks: 0, totalMonths: 0 })
   })
 })
