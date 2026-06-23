@@ -47,7 +47,7 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
             <DropdownMenuItem onClick={out} className="text-red"><LogOut size={14} className="mr-2" /> Sign out</DropdownMenuItem>
           </>
         ) : (
-          <DropdownMenuItem onClick={() => onNavigate('settings')}><LogIn size={14} className="mr-2" /> Sign in / Sign up</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onNavigate('account')}><LogIn size={14} className="mr-2" /> Sign in / Sign up</DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={share}><Share2 size={14} className="mr-2" /> Share app</DropdownMenuItem>
         <DropdownMenuItem onClick={() => onNavigate('settings')}><Cog size={14} className="mr-2" /> Account & sync settings</DropdownMenuItem>

@@ -12,7 +12,7 @@ const MUSCLES: (Muscle | 'all')[] = ['all', 'chest', 'shoulders', 'arms', 'back'
 interface SessionItem { id: string; name: string; reps: string }
 
 /**
- * Home Workout — a no-equipment training hub. Browse a curated bodyweight
+ * Home Workout · a no-equipment training hub. Browse a curated bodyweight
  * library (each with form cues + a professional YouTube demo and a search
  * fallback), build a session, and log it as a Workout (activity='Home') so it
  * lands in the journal store → localStorage + account sync, and the Fitness stats.
@@ -105,7 +105,7 @@ export function HomeWorkout() {
         </>
       }
     >
-      <Card title="Exercise library" subtitle="No equipment — tap a demo to watch proper form">
+      <Card title="Exercise library" subtitle="No equipment · tap a demo to watch proper form">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {MUSCLES.map((m) => (
             <button

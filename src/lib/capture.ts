@@ -147,26 +147,64 @@ function isKnownExercise(name: string, library: string[]): boolean {
   return !!EXERCISE_ALIASES[lc] || library.some((e) => e.toLowerCase() === lc || e.toLowerCase().startsWith(lc))
 }
 
+/** Bodyweight moves count reps, not load — so a bare `pullups 12` means 12 reps. */
+function isBodyweight(name: string): boolean {
+  const canon = (EXERCISE_ALIASES[name.toLowerCase().trim()] ?? name).toLowerCase()
+  return /pull-?up|chin-?up|push-?up|dip|sit-?up|burpee|plank/.test(canon)
+}
+
 // ── matchers (return null when they don't apply) ─────────────────────────────
 
-/** `bench 80x5 @8`, `ohp 40kg x 8 rpe7`, `squat 100×5`. weight × reps. */
+/**
+ * `bench 80x5 @8`, `ohp 40kg x 8 rpe7`, `squat 100×5` (weight × reps), plus the
+ * single-number forms `bench 80kg` (weight only) and `pullups 12` (reps only).
+ * The bare forms are ambiguous with habit-count / metric lines, so they require
+ * a KNOWN exercise name; the `weight×reps` form is unambiguous and always wins.
+ */
 function matchGym(text: string, ctx: CaptureCtx): GymCapture | null {
-  const m = text.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|lb|lbs)?\s*[x×]\s*(\d+)\b/i)
-  if (!m) return null
-  const name = m[1].trim()
-  if (!name) return null
-  const unitSuffix = m[3]?.toLowerCase()
-  const unit: 'kg' | 'lb' = unitSuffix ? (unitSuffix.startsWith('lb') ? 'lb' : 'kg') : ctx.unit ?? 'kg'
   const rpe = text.match(/(?:@|rpe\s*)(\d+(?:\.\d+)?)/i)
-  const known = isKnownExercise(name, ctx.exercises)
+  const rpeVal = rpe ? clamp(Number(rpe[1]), 1, 10) : undefined
+
+  // weight × reps — the canonical form.
+  const m = text.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|lb|lbs)?\s*[x×]\s*(\d+)\b/i)
+  if (m) {
+    const name = m[1].trim()
+    if (!name) return null
+    const unitSuffix = m[3]?.toLowerCase()
+    const unit: 'kg' | 'lb' = unitSuffix ? (unitSuffix.startsWith('lb') ? 'lb' : 'kg') : ctx.unit ?? 'kg'
+    const known = isKnownExercise(name, ctx.exercises)
+    return {
+      kind: 'gym',
+      raw: text,
+      confidence: known ? 0.95 : 0.7,
+      exercise: normalizeExercise(name, ctx.exercises),
+      weight: Number(m[2]),
+      reps: Number(m[4]),
+      rpe: rpeVal,
+      unit,
+    }
+  }
+
+  // Single-number form: `<exercise> <number>[unit]`. Gate on a known exercise so
+  // `water 6` (habit) / `mood 7` (metric) don't get swallowed.
+  const s = text.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|lb|lbs)?\s*$/i)
+  if (!s) return null
+  const name = s[1].trim()
+  if (!name || !isKnownExercise(name, ctx.exercises)) return null
+  const num = Number(s[2])
+  const unitSuffix = s[3]?.toLowerCase()
+  // A bare number is weight (`bench 80`) for weighted lifts but reps for
+  // bodyweight moves (`pullups 12`); an explicit weight unit is always weight.
+  const isWeight = !!unitSuffix || !isBodyweight(name)
+  const unit: 'kg' | 'lb' = unitSuffix ? (unitSuffix.startsWith('lb') ? 'lb' : 'kg') : ctx.unit ?? 'kg'
   return {
     kind: 'gym',
     raw: text,
-    confidence: known ? 0.95 : 0.7,
+    confidence: 0.8,
     exercise: normalizeExercise(name, ctx.exercises),
-    weight: Number(m[2]),
-    reps: Number(m[4]),
-    rpe: rpe ? clamp(Number(rpe[1]), 1, 10) : undefined,
+    weight: isWeight ? num : undefined,
+    reps: isWeight ? undefined : num,
+    rpe: rpeVal,
     unit,
   }
 }
@@ -226,13 +264,10 @@ function matchHabit(text: string, habits: string[]): HabitCapture | null {
   const countM = text.match(/^(.*?)\s+(\d+)\s*$/)
   const namePart = (countM ? countM[1] : text).toLowerCase().trim()
   if (!namePart) return null
-  // Match the habit name exactly, or as a prefix the user is still typing —
-  // but NOT when extra words follow it ("water plants" is a task, not the
-  // Water habit). A trailing count is already split off above.
-  const habit = habits.find((h) => {
-    const hl = h.toLowerCase()
-    return hl === namePart || hl.startsWith(namePart)
-  })
+  // Require an EXACT (case-insensitive) habit-name match. A prefix match would
+  // toggle the wrong habit on submit ("med" → "Meditate"); autocomplete handles
+  // partial typing in the UI. "water plants" stays a task, not the Water habit.
+  const habit = habits.find((h) => h.toLowerCase() === namePart)
   if (!habit) return null
   return {
     kind: 'habit',

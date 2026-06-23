@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Split } from '../lib/types'
 
 // Professional anatomical muscle diagrams from wger (CC-BY-SA): a base body
-// image with per-muscle highlight overlays stacked on top — the same technique
+// image with per-muscle highlight overlays stacked on top · the same technique
 // wger uses on its own site. Credited in CREDITS.md / README.
 const WGER = 'https://wger.de/static/images/muscles'
 const BASE_FRONT = `${WGER}/muscular_system_front.svg`

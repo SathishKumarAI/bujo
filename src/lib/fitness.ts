@@ -211,6 +211,15 @@ export function platesPerSide(target: number, bar = 20, plates = [25, 20, 15, 10
   return out
 }
 
+/**
+ * True when the empty bar already weighs more than the requested target, so the
+ * "closest loadable" (the bare bar) is HEAVIER than asked. UI should warn here
+ * rather than silently presenting an over-target weight as a clean match.
+ */
+export function barExceedsTarget(target: number, bar = 20): boolean {
+  return bar > target
+}
+
 // ── Structured sets (Lyfta-style) ────────────────────────────────────────────
 import type { WorkoutSet } from './types'
 
@@ -223,10 +232,12 @@ export function lastSetFor(data: JournalData, exercise: string, beforeDate?: str
     .sort((a, b) => (a.date < b.date ? 1 : -1))
   for (const w of sorted) {
     const rows = (w.setRows ?? []).filter((r) => r.exercise.trim().toLowerCase() === ex && r.weight != null && r.reps != null && r.kind !== 'warmup')
-    const row = rows.sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
+    // Most recent set = the last entry logged that day, not the heaviest.
+    const row = rows[rows.length - 1]
     if (row) return { weight: row.weight!, reps: row.reps!, date: w.date }
-    for (const line of w.sets) {
-      const p = parseSet(line)
+    // Legacy string fallback — also take the last matching line in the day.
+    for (let i = w.sets.length - 1; i >= 0; i--) {
+      const p = parseSet(w.sets[i])
       if (p && p.exercise.toLowerCase() === ex) return { weight: p.weight, reps: p.reps, date: w.date }
     }
   }

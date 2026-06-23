@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type {
   Birthday,
+  Book,
   Challenge,
   CyclePoint,
   DevSession,
@@ -49,7 +50,7 @@ interface HState {
 }
 
 type Action =
-  | { type: 'set'; data: JournalData } // undoable replace
+  | { type: 'set'; data: JournalData; stamp?: boolean } // undoable replace; stamp=re-date (import)
   | { type: 'patch'; fn: (d: JournalData) => JournalData; label?: string; at?: number } // undoable mutate
   | { type: 'silent'; fn: (d: JournalData) => JournalData } // no history (mount-time)
   | { type: 'undo' }
@@ -67,7 +68,9 @@ function commit(state: HState, next: JournalData, label?: string, at = 0): HStat
 function reducer(state: HState, action: Action): HState {
   switch (action.type) {
     case 'set':
-      return commit(state, action.data)
+      // Sync-apply keeps the incoming stamp byte-stable (echo-guard). Import
+      // re-stamps so a freshly restored backup wins over a stale remote.
+      return commit(state, action.stamp ? { ...action.data, updatedAt: new Date().toISOString() } : action.data)
     case 'patch': {
       const next = action.fn(state.present)
       if (next === state.present) return state // no-op fn → don't bump updatedAt
@@ -77,7 +80,9 @@ function reducer(state: HState, action: Action): HState {
       return commit(state, stamped, action.label, action.at)
     }
     case 'silent':
-      return { ...state, present: action.fn(state.present) }
+      // Reset coalesce keys: a remote/mount-time apply must not let a later
+      // user edit merge into a pre-silent undo step under a reused label.
+      return { ...state, present: action.fn(state.present), lastLabel: undefined, lastAt: undefined }
     case 'undo': {
       if (!state.past.length) return state
       const prev = state.past[state.past.length - 1]
@@ -136,11 +141,26 @@ interface Store {
   removeProgressPhoto: (id: string) => void
   // pickleball
   addPickleball: (p: Omit<import('./lib/types').PickleballSession, 'id'>) => void
+  updatePickleball: (id: string, patch: Partial<import('./lib/types').PickleballSession>) => void
   removePickleball: (id: string) => void
   // friends / contacts
   addFriend: (f: Omit<import('./lib/types').Friend, 'id' | 'createdAt'>) => void
   updateFriend: (id: string, patch: Partial<import('./lib/types').Friend>) => void
   removeFriend: (id: string) => void
+  // reading log
+  addBook: (b: Omit<Book, 'id' | 'createdAt'>) => void
+  updateBook: (id: string, patch: Partial<Book>) => void
+  removeBook: (id: string) => void
+  /** Append a dated "what I learned" reflection to a book. */
+  addBookLearning: (id: string, text: string, date: string) => void
+  removeBookLearning: (id: string, index: number) => void
+  // read-later links
+  addReadLink: (l: Omit<import('./lib/types').ReadLink, 'id' | 'createdAt'>) => void
+  updateReadLink: (id: string, patch: Partial<import('./lib/types').ReadLink>) => void
+  removeReadLink: (id: string) => void
+  // pickleball leagues / tournaments
+  addPickleEvent: (e: Omit<import('./lib/types').PickleballEvent, 'id'>) => void
+  removePickleEvent: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
   setMemory: (date: string, patch: Partial<{ text: string; photo?: string }>) => void
@@ -153,7 +173,22 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: () => void
+  resistUrge: (entry?: { trigger?: string; note?: string }) => void
+  removeUrge: (id: string) => void
+  addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
+  removeTriggerPlan: (id: string) => void
+  // per-addiction streaks (BUJO-199)
+  addAddiction: (name: string) => void
+  removeAddiction: (id: string) => void
+  relapseAddiction: (id: string, r: Omit<Relapse, 'id'>) => void
+  // custom goals
+  addCustomGoal: (g: Omit<import('./lib/types').CustomGoal, 'id' | 'createdAt'>) => void
+  updateCustomGoal: (id: string, patch: Partial<import('./lib/types').CustomGoal>) => void
+  removeCustomGoal: (id: string) => void
+  // mindset focus
+  addMindsetFocus: (principleId: string) => void
+  setMindsetNote: (id: string, note: string) => void
+  removeMindsetFocus: (id: string) => void
   // challenges
   addChallenge: (c: Omit<Challenge, 'id'>) => void
   removeChallenge: (id: string) => void
@@ -178,7 +213,7 @@ interface Store {
   // settings
   setSettings: (patch: Partial<Settings>) => void
   // bulk
-  replaceAll: (data: JournalData) => void
+  replaceAll: (data: JournalData, opts?: { stamp?: boolean }) => void
   // passcode / encryption
   setPasscode: (passcode: string | null) => void
   encrypted: boolean
@@ -248,7 +283,14 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     const wantsDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
     dispatch({
       type: 'silent',
-      fn: (d) => (wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)),
+      fn: (d) => {
+        const next = wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)
+        if (next === d) return d
+        // Materialised new recurring occurrences → stamp updatedAt so they survive
+        // a sync against a stale remote (silent normally leaves the stamp alone).
+        if (next.entries.length !== d.entries.length) return { ...next, updatedAt: new Date().toISOString() }
+        return next
+      },
     })
   }, [])
 
@@ -361,14 +403,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       bulkAddEvents: (events) => {
         const existing = new Set(data.entries.map((e) => `${e.date}|${e.text}`))
-        const fresh: Entry[] = events
-          .filter((ev) => !existing.has(`${ev.date}|${ev.summary}`))
-          .map((ev) => ({
-            id: uid('e'), date: ev.date, type: 'event' as const, text: ev.summary,
-            status: 'open' as const, important: false, memory: false, tags: [], createdAt: todayISO(),
-          }))
-        if (fresh.length) patch((d) => ({ ...d, entries: [...d.entries, ...fresh] }))
-        return fresh.length
+        const candidates = events.filter((ev) => !existing.has(`${ev.date}|${ev.summary}`))
+        if (!candidates.length) return 0
+        // Authoritative dedupe happens INSIDE the reducer against the live `d`,
+        // not the closed-over `data`, so a stale snapshot can't double-insert.
+        patch((d) => {
+          const have = new Set(d.entries.map((e) => `${e.date}|${e.text}`))
+          const fresh: Entry[] = candidates
+            .filter((ev) => !have.has(`${ev.date}|${ev.summary}`))
+            .map((ev) => ({
+              id: uid('e'), date: ev.date, type: 'event' as const, text: ev.summary,
+              status: 'open' as const, important: false, memory: false, tags: [], createdAt: todayISO(),
+            }))
+          if (!fresh.length) return d
+          return { ...d, entries: [...d.entries, ...fresh] }
+        })
+        return candidates.length
       },
 
       setMetric: (date, mp) =>
@@ -497,6 +547,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       addPickleball: (p) =>
         patch((d) => ({ ...d, pickleball: [...(d.pickleball ?? []), { id: uid('pk'), ...p }] })),
 
+      updatePickleball: (id, ppatch) =>
+        patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).map((p) => (p.id === id ? { ...p, ...ppatch } : p)) }), `pk:${id}`),
+
       removePickleball: (id) =>
         patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).filter((p) => p.id !== id) })),
 
@@ -508,6 +561,46 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeFriend: (id) =>
         patch((d) => ({ ...d, friends: (d.friends ?? []).filter((f) => f.id !== id) })),
+
+      addBook: (b) =>
+        patch((d) => ({ ...d, books: [...(d.books ?? []), { id: uid('bk'), createdAt: todayISO(), ...b }] })),
+
+      updateBook: (id, bpatch) =>
+        patch((d) => ({ ...d, books: (d.books ?? []).map((b) => (b.id === id ? { ...b, ...bpatch } : b)) }), `book:${id}`),
+
+      removeBook: (id) =>
+        patch((d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
+
+      addBookLearning: (id, text, date) =>
+        patch((d) => ({
+          ...d,
+          books: (d.books ?? []).map((b) =>
+            b.id === id ? { ...b, learnings: [...(b.learnings ?? []), { date, text }] } : b,
+          ),
+        })),
+
+      removeBookLearning: (id, index) =>
+        patch((d) => ({
+          ...d,
+          books: (d.books ?? []).map((b) =>
+            b.id === id ? { ...b, learnings: (b.learnings ?? []).filter((_, i) => i !== index) } : b,
+          ),
+        })),
+
+      addReadLink: (l) =>
+        patch((d) => ({ ...d, readLinks: [...(d.readLinks ?? []), { id: uid('rl'), createdAt: todayISO(), ...l }] })),
+
+      updateReadLink: (id, lpatch) =>
+        patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).map((l) => (l.id === id ? { ...l, ...lpatch } : l)) })),
+
+      removeReadLink: (id) =>
+        patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).filter((l) => l.id !== id) })),
+
+      addPickleEvent: (e) =>
+        patch((d) => ({ ...d, pickleballEvents: [...(d.pickleballEvents ?? []), { id: uid('pke'), ...e }] })),
+
+      removePickleEvent: (id) =>
+        patch((d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).filter((e) => e.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {
@@ -566,8 +659,70 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           }
         }),
 
-      resistUrge: () =>
-        patch((d) => ({ ...d, nofap: { ...d.nofap, urgesResisted: (d.nofap.urgesResisted ?? 0) + 1 } })),
+      resistUrge: (entry) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            urgeLog: [...(d.nofap.urgeLog ?? []), {
+              id: uid('u'), date: todayISO(), at: new Date().toISOString(),
+              trigger: entry?.trigger?.trim() || undefined, note: entry?.note?.trim() || undefined,
+            }],
+          },
+        })),
+
+      removeUrge: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, urgeLog: (d.nofap.urgeLog ?? []).filter((u) => u.id !== id) } })),
+
+      addTriggerPlan: (p) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, plans: [...(d.nofap.plans ?? []), { id: uid('tp'), ...p }] } })),
+
+      removeTriggerPlan: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
+
+      addAddiction: (name) =>
+        patch((d) => {
+          const n = name.trim()
+          if (!n || (d.nofap.addictions ?? []).some((a) => a.name.toLowerCase() === n.toLowerCase())) return d
+          return { ...d, nofap: { ...d.nofap, addictions: [...(d.nofap.addictions ?? []), { id: uid('ad'), name: n, startedOn: todayISO(), best: 0, relapses: [] }] } }
+        }),
+
+      removeAddiction: (id) =>
+        patch((d) => ({ ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).filter((a) => a.id !== id) } })),
+
+      relapseAddiction: (id, r) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            addictions: (d.nofap.addictions ?? []).map((a) => {
+              if (a.id !== id) return a
+              const len = Math.max(0, dayDiff(a.startedOn, r.date)) // streak length just before reset
+              return { ...a, startedOn: r.date, best: Math.max(a.best, len), relapses: [...a.relapses, { id: uid('r'), ...r }] }
+            }),
+          },
+        })),
+
+      addCustomGoal: (g) =>
+        patch((d) => ({ ...d, customGoals: [...(d.customGoals ?? []), { id: uid('cg'), createdAt: todayISO(), ...g }] })),
+
+      updateCustomGoal: (id, gpatch) =>
+        patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).map((g) => (g.id === id ? { ...g, ...gpatch } : g)) }), `cgoal:${id}`),
+
+      removeCustomGoal: (id) =>
+        patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).filter((g) => g.id !== id) })),
+
+      addMindsetFocus: (principleId) =>
+        patch((d) => {
+          if ((d.mindsetFocus ?? []).some((m) => m.principleId === principleId)) return d // no dupes
+          return { ...d, mindsetFocus: [...(d.mindsetFocus ?? []), { id: uid('mf'), principleId, createdAt: todayISO() }] }
+        }),
+
+      setMindsetNote: (id, note) =>
+        patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).map((m) => (m.id === id ? { ...m, note: note.trim() || undefined } : m)) }), `mind:${id}`),
+
+      removeMindsetFocus: (id) =>
+        patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).filter((m) => m.id !== id) })),
 
       addChallenge: (c) =>
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),
@@ -677,7 +832,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       setSettings: (sp) =>
         patch((d) => ({ ...d, settings: { ...d.settings, ...sp } }), 'settings'),
 
-      replaceAll: (next) => dispatch({ type: 'set', data: next }),
+      replaceAll: (next, opts) => dispatch({ type: 'set', data: next, stamp: opts?.stamp }),
 
       // Enable (passcode string) → encrypt + drop plaintext. Disable (null) →
       // write plaintext + drop the encrypted blob. Data in memory is untouched.
@@ -703,7 +858,10 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
   async function unlock(pc: string) {
     const blob = readEncryptedRaw()
-    if (!blob) { setUnlocked(true); return }
+    // No encrypted blob despite a locked start = inconsistent state. Recover any
+    // plaintext journal instead of unlocking onto the empty mount journal, which
+    // would persist blank over real data on the next save effect.
+    if (!blob) { dispatch({ type: 'silent', fn: () => load() }); setUnlocked(true); return }
     const json = await decryptString(blob, pc) // throws → LockScreen shows error
     const decrypted = migrate(JSON.parse(json))
     passcodeRef.current = pc

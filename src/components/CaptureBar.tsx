@@ -13,7 +13,7 @@ import { cat } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
 
 // One smart capture bar: type or speak anything and it routes to the right
-// place — a gym set, a cardio session, a wellbeing metric, a habit tick, or a
+// place · a gym set, a cardio session, a wellbeing metric, a habit tick, or a
 // plain journal bullet. The parsing is deterministic and local (lib/capture.ts);
 // this component only renders the preview and dispatches to existing mutators.
 
@@ -115,7 +115,12 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       case 'habit': {
         const h = data.habits.find((x) => x.name === r.habit)
         if (h) {
+          // Numeric habits (count/timer/rating) are scored from habitValues, so
+          // toggleHabit (which writes habitLog) would never register them as done.
+          // Route them through setHabitValue; only plain 'check' habits toggle.
+          const numeric = h.type === 'count' || h.type === 'timer' || h.type === 'rating'
           if (r.value != null) setHabitValue(date, h.id, r.value)
+          else if (numeric) setHabitValue(date, h.id, h.target ?? 1)
           else toggleHabit(date, h.id)
         }
         break
@@ -172,7 +177,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
         </Button>
       </div>
 
-      {/* Saved templates — tap to insert; ✕ to forget. */}
+      {/* Saved templates · tap to insert; ✕ to forget. */}
       {(templates.length > 0 || val.trim()) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {templates.map((t) => (
@@ -206,7 +211,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
         </p>
       )}
 
-      {/* Structured editor — pre-filled from the parse, tap to adjust, no typing. */}
+      {/* Structured editor · pre-filled from the parse, tap to adjust, no typing. */}
       {draft && (
         <div className="mt-2 rounded-lg border border-surface0 bg-base p-3">
           <div className="flex flex-wrap items-end gap-3">

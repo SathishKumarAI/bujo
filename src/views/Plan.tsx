@@ -54,7 +54,7 @@ export function Plan() {
     <div className="mx-auto max-w-[1400px] columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card
         title="Migration"
-        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'} — the heart of bullet journaling`}
+        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'} · the heart of bullet journaling`}
         right={overdue.length > 1 ? (
           <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
         ) : undefined}

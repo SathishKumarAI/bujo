@@ -36,7 +36,6 @@ export function BottomNav({
   items: NavItem[]
   view: ViewId
   onNavigate: (id: ViewId) => void
-  onQuickAdd?: () => void
 }) {
   const byId = new Map(items.map((n) => [n.id, n]))
   const tabs = PRIMARY.map((id) => byId.get(id)).filter(Boolean) as NavItem[]

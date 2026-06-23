@@ -166,7 +166,7 @@ export function Fitness() {
         <p className="mt-1 text-center text-[10px] text-overlay0">last 8 weeks · green = goal hit</p>
       </Card>
 
-      {/* Totals + bests in one compact 6-tile card — no scrolling to read them. */}
+      {/* Totals + bests in one compact 6-tile card · no scrolling to read them. */}
       <Card title="At a glance" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           <Stat label="Workouts" value={inRange.length} color="teal" />
@@ -237,7 +237,7 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
   )
 }
 
-/** 14-day calorie trend with a 7-day average line — momentum, not just today. */
+/** 14-day calorie trend with a 7-day average line · momentum, not just today. */
 function CalorieTrendCard({ today }: { today: string }) {
   const { data } = useJournal()
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -249,7 +249,7 @@ function CalorieTrendCard({ today }: { today: string }) {
   const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
   const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
   return (
-    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`} defer>
+    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`} defer enlargeable>
       <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
         {days.map((d) => (
           <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
@@ -289,7 +289,7 @@ function NutritionCard({ date }: { date: string }) {
   return (
     <Card
       title="Nutrition"
-      subtitle="Calories & macros — add foods or type your own"
+      subtitle="Calories & macros · add foods or type your own"
       right={<Button onClick={fillSample} title="Fill a typical ~1800 kcal day">Sample day</Button>}
     >
       {/* Quick-add from the food DB (American + Indian staples). */}

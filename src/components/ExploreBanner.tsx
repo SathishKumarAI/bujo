@@ -7,7 +7,7 @@ import { cat } from '../lib/colors'
 
 /**
  * Shown while exploring sample data (the guest demo). Guest is for *seeing* the
- * features; keeping a real journal needs an account — this nudges the sign-up
+ * features; keeping a real journal needs an account · this nudges the sign-up
  * without blocking exploration. Hidden once a real account takes over (App
  * clears `settings.explore` on sign-in).
  */
@@ -28,7 +28,7 @@ export function ExploreBanner() {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-surface0 bg-mantle px-4 py-2 text-sm">
       <Compass size={15} style={{ color: cat('mauve') }} />
       <span className="text-subtext1">
-        You’re exploring sample data. <strong className="text-text">Sign up to start your own journal</strong> — it syncs across your devices.
+        You’re exploring sample data. <strong className="text-text">Sign up to start your own journal</strong> · it syncs across your devices.
       </span>
       <div className="ml-auto flex items-center gap-2">
         <button onClick={startAccount} disabled={busy} className="press-3d rounded-lg bg-mauve px-3 py-1 text-xs font-medium text-crust disabled:opacity-50">

@@ -458,6 +458,31 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-190 | Full self-host stack — web + Postgres + Adminer (verified) | ✅ (#39) |
 | BUJO-191 | NoFap — days-resisted, red relapses, required reason; default gender male | ✅ (#40) |
 | BUJO-192 | Default to US units (lb · mi · °F), switchable | ✅ (#41) |
-| BUJO-193 | Secure PostgREST API tier (JWT + RLS + TLS) | 🔜 designed/offered |
-| BUJO-194 | Wire app to self-host Postgres (PostgREST backend) | 🔜 |
-| BUJO-195 | Scaffold real Tauri `src-tauri/` + store adapter | 🔜 (needs Rust toolchain) |
+| BUJO-193 | Secure PostgREST API tier (JWT + RLS + TLS) | ✅ done (2026-06-22) |
+| BUJO-194 | Wire app to self-host Postgres (PostgREST backend) | ✅ done (2026-06-22) |
+| BUJO-195 | Scaffold real Tauri `src-tauri/` + store adapter | ✅ done (2026-06-22) |
+| BUJO-196 | Streak redesign — progress-ring hero, lifetime total-clean days, recovery-benefits ladder, trigger patterns, dated **urge log** (quick-pick presets + custom), slip-but-continue reframe | ✅ |
+| BUJO-197 | **Light mode redesign** — user dislikes current Latte light theme; build a more **modern, Chrome-style** light theme (cleaner neutrals, softer surfaces, crisp borders). Think + build, then document. | ✅ done (2026-06-22) |
+| BUJO-198 | Recovery — addiction **trigger plans** (if-then per trigger point) + per-addiction urge chart | ✅ |
+| BUJO-199 | **Per-addiction streaks** — today the ring/ladder track one main streak; make each addiction its own streak + ladder + best (multi-streak data model). Clarified in UI for now. | ✅ done (2026-06-22) |
+| BUJO-200 | **Custom goals** — user-defined targets with manual progress in the Goals view (`CustomGoal`) | ✅ |
+| BUJO-201 | Edit logged **Pickleball / Focus sessions** in place (currently delete-and-re-log) | ✅ done (2026-06-22) |
+| BUJO-202 | Feature QA pass · 20+ user questions, answers, gaps → `docs/qa/feature-questions.md` | ✅ |
+| BUJO-203 | Sync robustness · Supabase realtime subscribe after auth resolves; stamp updatedAt on silent/mount changes; pull-before-push guard | ✅ done (2026-06-22) |
+| BUJO-204 | Per-collection merge in `resolveIncoming`; re-stamp on import; distinguish explore-fail from empty account | ✅ done (2026-06-22) |
+| BUJO-205 | crypto b64 chunking; bulkAddEvents dedupe in reducer; unlock empty-blob guard; undo coalesce reset | ✅ done (2026-06-22) |
+| BUJO-206 | Smart-capture routing · count-habit via setHabitValue; weight-only/reps-only gym; exact habit-name match | ✅ done (2026-06-22) |
+| BUJO-207 | Numeric habits in Monthly/Today progress (use habitDoneOn, not habitLog.length) | ✅ done (2026-06-22) |
+| BUJO-208 | Recurrence backfill cap drops old occurrences while advancing lastGenerated | ✅ done (2026-06-22) |
+| BUJO-209 | Challenges strict %/day vs completedDays text disagree; zero-rule challenge trap | ✅ done (2026-06-22) |
+| BUJO-210 | streak.best ignores long completed past streak; avgGap mishandles unsorted/dup dates | ✅ done (2026-06-22) |
+| BUJO-211 | Gym legacy set-string rep slot; "Repeat last" = heaviest not latest; plate calc bar>target warning | ✅ done (2026-06-22) |
+| BUJO-212 | Polish · custom-goal cap; Goals streak-vs-best on first streak; reading pagesRead unknown-total; Stats empty-state for workout bars | ✅ done (2026-06-22) |
+| BUJO-213 | Fixed this pass · migrate hardening, radar calm/adherence, program 100%, search filter reset, birthday validation, pickleball future-plan, readability (em-dash→·), Recovery urge tips + viz-to-rail | ✅ |
+| BUJO-214 | 50+ logical-gaps audit → `docs/qa/logical-gaps-audit.md` | ✅ |
+| BUJO-215 | Coaching Academy tab · 12-week program + per-week detail, skill ladder, drill library, mental game, knee ACL/MCL rehab+prehab; research dumped to `docs/research/` | ✅ |
+| BUJO-216 | Coaching · full technique guide (how-to + cues + mistakes for every shot) so the app is self-contained | ✅ |
+| BUJO-217 | **Mindset tab** · app-wide interactive thinking-style tool — pick principles to focus on + journal a note each (`MindsetFocus`, lib/mindset.ts) | ✅ |
+| BUJO-218 | a11y deferred items · FriendsCard/ProgramTracker/TagManager aria-labels, ProgramTracker 32px pills, Cycle active-flag contrast | ✅ done (2026-06-22) |
+| BUJO-219 | Remove dead `BottomNav.onQuickAdd` prop (declared/passed, unused) | ✅ done (2026-06-22) |
+| BUJO-220 | Docs drift · expand `uml.mdx` data-model class diagram; fix FEATURE_GUIDE bottom-nav line + add HomeWorkout section | ✅ done (2026-06-22) |

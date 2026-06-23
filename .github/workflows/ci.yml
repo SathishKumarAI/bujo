@@ -1,0 +1,31 @@
+name: CI
+
+# Quality gate for pull requests and feature branches: typecheck, tests, build.
+# (Pushes to `main` are already covered by deploy.yml; this fills the gap so
+# every PR/branch is verified before it lands.) Production deploys to Vercel are
+# driven from a dev box via `scripts/ship.sh` — see docs/PIPELINE.md.
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc -b
+      - name: Lint (soft — repo carries pre-existing debt)
+        run: npx eslint . || echo "::warning::eslint reported issues (pre-existing debt tolerated)"
+      - name: Tests
+        run: npm test -- --run
+      - name: Build
+        run: npm run build

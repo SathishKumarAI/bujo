@@ -303,27 +303,102 @@ body.handwriting textarea {
   .page-in { animation: none; }
 }
 
-/* Light mode override (data-theme="latte") */
-:root[data-theme='latte'] {
-  --color-text: #4c4f69;
-  --color-subtext1: #5c5f77;
-  --color-subtext0: #6c6f85;
-  --color-overlay2: #7c7f93;
-  --color-overlay1: #8c8fa1;
-  --color-overlay0: #9ca0b0;
-  --color-surface2: #acb0be;
-  --color-surface1: #bcc0cc;
-  --color-surface0: #ccd0da;
-  --color-base: #eff1f5;
-  --color-mantle: #e6e9ef;
-  --color-crust: #dce0e8;
-  --color-mauve: #8839ef;
-  --color-blue: #1e66f5;
-  --color-green: #40a02b;
-  --color-red: #d20f39;
-  --color-peach: #fe640b;
-  --color-yellow: #df8e1d;
+/* Enlarge-modal motion: backdrop fades, panel scales up (used by every viz card). */
+@keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
+.modal-backdrop-in { animation: modal-backdrop-in 0.16s ease both; }
+.modal-panel-in { animation: modal-panel-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop-in, .modal-panel-in { animation: none; }
+}
+
+/* Light mode (data-theme="latte"): modern Chrome / Material neutrals — clean
+   near-white surfaces, crisp hairline borders, high-contrast ink. The app reads
+   semantic tokens, so recoloring them here re-skins every view. Full token map
+   + rationale: docs/redesign/light-theme.md */
+:root[data-theme='latte'] {
+  --color-text: #202124;
+  --color-subtext1: #3c4043;
+  --color-subtext0: #5f6368;
+  --color-overlay2: #9aa0a6;
+  --color-overlay1: #80868b;
+  --color-overlay0: #5f6368;
+  --color-surface2: #dadce0;
+  --color-surface1: #e8eaed;
+  --color-surface0: #f1f3f4;
+  --color-base: #f8f9fa;
+  --color-mantle: #ffffff;
+  --color-crust: #f1f3f4;
+
+  /* Hairline border color, separate from fills, so borders stay crisp on white. */
+  --border-hairline: #e0e0e0;
+
+  /* Accents tuned for legibility on light surfaces. */
+  --color-mauve: #6c4cf0;   /* primary accent: calm violet, AA on white */
+  --color-lavender: #7c5cff;
+  --color-blue: #1a73e8;    /* Google blue — links, info */
+  --color-sapphire: #1967d2;
+  --color-sky: #1a73e8;
+  --color-teal: #00897b;
+  --color-green: #1e8e3e;   /* success */
+  --color-red: #d93025;     /* destructive */
+  --color-maroon: #c5221f;
+  --color-peach: #e8710a;   /* warning */
+  --color-yellow: #f29900;
+  --color-pink: #d01884;
+
+  /* Map the shadcn semantic border/input to the crisp hairline. */
+  --border: var(--border-hairline);
+  --input: var(--border-hairline);
+}
+
+/* Light mode: soft, low elevation. The dark theme's heavy black drop-shadows
+   read wrong on white, so cards get a hairline border + a faint, diffuse
+   shadow, roughly Material elevation 1, instead. */
+:root[data-theme='latte'] .card-3d {
+  background-image: none;
+  border: 1px solid var(--border-hairline);
+  box-shadow:
+    0 1px 2px 0 rgba(60, 64, 67, 0.08),
+    0 1px 3px 1px rgba(60, 64, 67, 0.05);
+}
+:root[data-theme='latte'] .card-3d:hover {
+  box-shadow:
+    0 1px 3px 0 rgba(60, 64, 67, 0.12),
+    0 4px 8px 3px rgba(60, 64, 67, 0.08);
+}
+:root[data-theme='latte'] .press-3d {
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.12);
+}
+:root[data-theme='latte'] .press-3d:active {
+  box-shadow: 0 1px 1px 0 rgba(60, 64, 67, 0.1);
+}
+/* The "open book" frame: light paper, hairline edges, soft cover shadow. */
+:root[data-theme='latte'] .book {
+  border-color: var(--border-hairline);
+  box-shadow:
+    0 8px 24px -16px rgba(60, 64, 67, 0.25),
+    0 2px 8px -6px rgba(60, 64, 67, 0.15);
+}
+:root[data-theme='latte'] .book::after {
+  box-shadow:
+    3px 3px 0 -1px #ffffff,
+    4px 4px 0 -1px var(--border-hairline),
+    7px 7px 0 -1px #ffffff,
+    8px 8px 0 -1px var(--border-hairline);
+}
+/* Aurora hero: keep it whisper-faint so it doesn't muddy the clean white. */
+:root[data-theme='latte'] .aurora {
+  background:
+    radial-gradient(55% 45% at 18% 12%, color-mix(in srgb, var(--color-mauve) 7%, transparent), transparent 60%),
+    radial-gradient(48% 48% at 88% 18%, color-mix(in srgb, var(--color-blue) 6%, transparent), transparent 55%),
+    radial-gradient(60% 55% at 50% 108%, color-mix(in srgb, var(--color-pink) 5%, transparent), transparent 60%),
+    var(--color-base);
+}
+:root[data-theme='latte'] .aurora::after { opacity: 0.02; }
 
 /* Futuristic "Neon" theme (data-theme="neon") — deep space + electric accents */
 :root[data-theme='neon'] {

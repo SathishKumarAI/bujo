@@ -76,7 +76,7 @@ export function AppShell({
         <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
 
-      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} onQuickAdd={() => setQuickOpen(true)} />}
+      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>

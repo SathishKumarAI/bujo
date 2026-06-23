@@ -13,7 +13,7 @@ import {
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
 
 export function Focus() {
-  const { data, addDevSession, removeDevSession } = useJournal()
+  const { data, addDevSession, updateDevSession, removeDevSession } = useJournal()
   const [f, setF] = useState(blank)
   const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
   const today = todayISO()
@@ -98,7 +98,7 @@ export function Focus() {
         const W = 600, H = 120
         const pts = cum.map((c, i) => `${(i / (cum.length - 1)) * W},${H - (c.hours / max) * H}`).join(' ')
         return (
-          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time — momentum over ${cum.length} days`}>
+          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time · momentum over ${cum.length} days`}>
             <div className="w-full" role="img" aria-label={`Line chart of cumulative coding hours, reaching ${cum[cum.length - 1].hours} hours`}>
               <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
                 <polyline points={`0,${H} ${pts} ${W},${H}`} fill={cat('mauve') + '22'} stroke="none" />
@@ -131,20 +131,7 @@ export function Focus() {
         ) : (
           <ul className="space-y-2">
             {sessions.map((s) => (
-              <li key={s.id} className="group rounded-lg border border-border bg-background p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-overlay0">{prettyDay(s.date)}</span></span>
-                  <button onClick={() => removeDevSession(s.id)} aria-label="Delete session" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
-                  <span>{hrs(s.durationMin)}</span>
-                  <span style={{ color: cat('mauve') }}>focus {s.focus}</span>
-                  <span style={{ color: cat('red') }}>stress {s.stress}</span>
-                  {s.interruptions != null && <span>{s.interruptions} interruptions</span>}
-                  {(s.tags ?? []).map((t) => <span key={t} className="text-teal">#{t}</span>)}
-                </div>
-                {s.notes && <p className="mt-1 text-xs text-overlay1 italic">{s.notes}</p>}
-              </li>
+              <SessionRow key={s.id} s={s} onSave={(p) => updateDevSession(s.id, p)} onDelete={() => removeDevSession(s.id)} />
             ))}
           </ul>
         )}
@@ -155,4 +142,62 @@ export function Focus() {
 
 function Stat({ label, value, color, icon }: { label: string; value: string; color: string; icon?: React.ReactNode }) {
   return <StatTile label={label} value={value} color={color} icon={icon} />
+}
+
+const hrsLabel = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
+
+// History row with an in-place editor (BUJO-201) so a mistyped duration/focus
+// no longer means delete-and-re-log (which also skews the duration-weighted avg).
+function SessionRow({ s, onSave, onDelete }: {
+  s: import('../lib/types').DevSession
+  onSave: (patch: Partial<import('../lib/types').DevSession>) => void
+  onDelete: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [d, setD] = useState({
+    durationMin: String(s.durationMin), project: s.project ?? '',
+    focus: s.focus, stress: s.stress, notes: s.notes ?? '',
+  })
+  function save() {
+    const mins = Number(d.durationMin)
+    if (!mins || mins <= 0) return
+    onSave({ durationMin: mins, project: d.project.trim() || undefined, focus: d.focus, stress: d.stress, notes: d.notes.trim() || undefined })
+    setEditing(false)
+  }
+  if (editing) {
+    return (
+      <li className="rounded-lg border border-mauve/40 bg-background p-3">
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block text-xs text-subtext1">Minutes<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-xs text-subtext1">Project<Input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className="mt-1" /></label>
+        </div>
+        <div className="mt-2"><Slider label="Focus / flow" value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" /></div>
+        <div className="mt-2"><Slider label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
+        <label className="mt-2 block text-xs text-subtext1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
+        <div className="mt-3 flex gap-2">
+          <Button variant="primary" onClick={save} className="flex-1">Save</Button>
+          <Button onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+        </div>
+      </li>
+    )
+  }
+  return (
+    <li className="group rounded-lg border border-border bg-background p-3">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-overlay0">{prettyDay(s.date)}</span></span>
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+          <button onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-xs text-overlay0 hover:text-mauve">Edit</button>
+          <button onClick={onDelete} aria-label="Delete session" className="text-overlay0 hover:text-red">×</button>
+        </div>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
+        <span>{hrsLabel(s.durationMin)}</span>
+        <span style={{ color: cat('mauve') }}>focus {s.focus}</span>
+        <span style={{ color: cat('red') }}>stress {s.stress}</span>
+        {s.interruptions != null && <span>{s.interruptions} interruptions</span>}
+        {(s.tags ?? []).map((t) => <span key={t} className="text-teal">#{t}</span>)}
+      </div>
+      {s.notes && <p className="mt-1 text-xs text-overlay1 italic">{s.notes}</p>}
+    </li>
+  )
 }

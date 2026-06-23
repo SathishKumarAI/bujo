@@ -71,7 +71,7 @@ export function RestTimer() {
         </button>
       </div>
 
-      {done && <span className="inline-flex items-center gap-1 text-sm" style={{ color: cat('green') }}><Timer size={14} /> Rest done — go!</span>}
+      {done && <span className="inline-flex items-center gap-1 text-sm" style={{ color: cat('green') }}><Timer size={14} /> Rest done · go!</span>}
     </div>
   )
 }

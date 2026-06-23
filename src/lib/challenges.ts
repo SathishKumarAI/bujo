@@ -56,7 +56,10 @@ export function rulesDoneOn(data: JournalData, challengeId: string, day: string)
 
 /** A day is complete when every rule is checked. */
 export function isDayComplete(data: JournalData, c: Challenge, day: string): boolean {
-  if (c.rules.length === 0) return false
+  // A zero-rule challenge (e.g. a freshly-created Custom one with no rules yet)
+  // has nothing to check off, so every elapsed day is trivially complete. Without
+  // this guard such a challenge can never advance and is stuck at 0% forever.
+  if (c.rules.length === 0) return true
   return rulesDoneOn(data, c.id, day).length >= c.rules.length
 }
 
@@ -101,10 +104,16 @@ export function progressDay(data: JournalData, c: Challenge, today: string): num
   return Math.min(day, c.durationDays)
 }
 
-/** Whole-number percent complete (0–100), never a fraction. */
+/**
+ * Whole-number percent complete (0–100), never a fraction.
+ * Single source of truth = `completedDays`, the same count the card text/bar show
+ * ("X of N days done"). This keeps the ring and the text in agreement even for
+ * strict challenges after a miss — the strict "reset" nuance is surfaced
+ * separately via `streakBeforeToday`/`progressDay` (the Flame streak + "Day X"),
+ * not by contradicting the headline percentage.
+ */
 export function percentComplete(data: JournalData, c: Challenge, today: string): number {
-  const day = c.strict ? streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0) : completedDays(data, c, today)
-  return Math.round((day / c.durationDays) * 100)
+  return Math.round((completedDays(data, c, today) / c.durationDays) * 100)
 }
 
 /** Longest run of consecutive complete days so far (best streak). */

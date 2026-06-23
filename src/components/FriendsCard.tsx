@@ -7,7 +7,7 @@ import { Button, Card, Empty, Input } from './ui'
 
 /**
  * Friends / contacts collection. Everything is manual; the only network call is
- * an opt-in GitHub enrichment — you type a username and we pull that person's
+ * an opt-in GitHub enrichment · you type a username and we pull that person's
  * PUBLIC profile from GitHub's official API (avatar, bio, company). No scraping,
  * no people-search, no third-party trackers.
  */
@@ -61,14 +61,14 @@ export function FriendsCard() {
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
           <div className="flex flex-1 items-center gap-1 rounded-lg border border-input bg-background px-2">
             <AtSign size={14} className="shrink-0 text-overlay0" />
-            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-overlay0 focus:outline-none" />
+            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-overlay0 focus:outline-none" />
           </div>
           <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5">
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>
         <label className="flex items-center gap-2 text-xs text-overlay0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
-        <p className="text-[11px] text-overlay0">GitHub pull uses the official public API — only data they’ve made public. Nothing else is fetched.</p>
+        <p className="text-[11px] text-overlay0">GitHub pull uses the official public API · only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
       {friends.length === 0 ? (
@@ -97,7 +97,7 @@ export function FriendsCard() {
                       <ExternalLink size={11} /> {new URL(l).hostname.replace('www.', '')}
                     </a>
                   ))}
-                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} className="text-overlay0 hover:text-mauve">refresh</button>}
+                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-overlay0 hover:text-mauve">refresh</button>}
                 </div>
               </div>
               <button onClick={() => removeFriend(f.id)} aria-label={`Remove ${f.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>

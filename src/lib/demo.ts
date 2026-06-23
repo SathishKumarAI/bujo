@@ -139,6 +139,34 @@ export function generateDemoData(today = todayISO()): JournalData {
   }
   j.settings.pickleballGoalGames = 12
 
+  // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──
+  j.pickleballEvents = [
+    { id: uid('pke'), date: addDays(today, -21), name: 'Spring Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', wins: 4, losses: 2, placement: 'Bronze', partner: 'Maya' },
+    { id: uid('pke'), date: addDays(today, -7), name: 'Tuesday Night Ladder', kind: 'league', format: 'ladder', division: '3.5–4.0', wins: 3, losses: 1, placement: '2nd of 8' },
+  ]
+  j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
+
+  // ── Streak (abstinence) demo: a 16-day live run with prior resets + urges ──
+  j.nofap = {
+    startedOn: addDays(today, -16),
+    best: 24,
+    urgesResisted: 5,
+    urgeLog: [
+      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling' },
+      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking' },
+      { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn' },
+    ],
+    plans: [
+      { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },
+      { id: uid('tp'), addiction: 'Doomscrolling', trigger: 'in bed at night', coping: 'Phone charges in another room; read instead' },
+    ],
+    relapses: [
+      { id: uid('r'), date: addDays(today, -58), trigger: 'Stress', note: 'Rough day at work — defaulted to the old pattern.' },
+      { id: uid('r'), date: addDays(today, -40), trigger: 'Boredom', note: 'Late night, nothing to do.' },
+      { id: uid('r'), date: addDays(today, -16), trigger: 'Stress', note: 'Need an if-then plan for stressful evenings.' },
+    ],
+  }
+
   // ── Developer focus sessions (Focus view) ──
   const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
   const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]
@@ -179,7 +207,41 @@ export function generateDemoData(today = todayISO()): JournalData {
 
   // ── Give a couple habits weekly goals so the Goals roll-up populates ──
   j.habits.slice(0, 2).forEach((h, i) => { h.weeklyGoal = i === 0 ? 5 : 7 })
+  // Assign times of day + cues so the routine-timeline lens demos well.
+  const SLOT: Record<string, { t: 'morning' | 'afternoon' | 'evening' | 'anytime'; cue?: string }> = {
+    Caffeine: { t: 'morning', cue: 'With breakfast' },
+    Vitamins: { t: 'morning', cue: 'After coffee' },
+    Exercise: { t: 'morning', cue: 'Before the workday' },
+    Vegetables: { t: 'afternoon', cue: 'At lunch' },
+    'Water 2L': { t: 'anytime' },
+    Read: { t: 'evening', cue: 'Before bed' },
+  }
+  j.habits.forEach((h) => { const m = SLOT[h.name]; if (m) { h.timeOfDay = m.t; h.cue = m.cue } })
   j.settings.fitnessGoalMin = 150
+
+  // ── Reading log: one of each shelf so the view + stats demo nicely ──
+  j.books = [
+    { id: uid('bk'), title: 'Atomic Habits', author: 'James Clear', status: 'finished', totalPages: 320, currentPage: 320, rating: 5, startedOn: addDays(today, -40), finishedOn: addDays(today, -12), createdAt: addDays(today, -40), color: 'green',
+      link: 'https://jamesclear.com/atomic-habits', notes: 'Systems > goals. The 1% better idea reframed how I plan.',
+      learnings: [
+        { date: addDays(today, -20), text: 'Habit stacking: attach a new habit to an existing one.' },
+        { date: addDays(today, -14), text: 'Make it obvious, attractive, easy, satisfying — the 4 laws.' },
+      ] },
+    { id: uid('bk'), title: 'Deep Work', author: 'Cal Newport', status: 'reading', totalPages: 296, currentPage: 120, startedOn: addDays(today, -6), createdAt: addDays(today, -6), color: 'mauve',
+      learnings: [{ date: addDays(today, -2), text: 'Schedule deep blocks; treat shallow work as the exception.' }] },
+    { id: uid('bk'), title: 'The Pragmatic Programmer', author: 'Hunt & Thomas', status: 'want', createdAt: addDays(today, -2), color: 'sky' },
+  ]
+  j.readLinks = [
+    { id: uid('rl'), url: 'https://www.thedinkpickleball.com/third-shot-drop/', title: 'The third-shot drop, explained', createdAt: addDays(today, -3) },
+    { id: uid('rl'), url: 'https://jamesclear.com/articles', title: 'James Clear — article archive', done: true, createdAt: addDays(today, -9) },
+  ]
+  j.settings.readingGoalBooks = 12
+
+  // ── Mindset: a couple of principles in focus with notes ──
+  j.mindsetFocus = [
+    { id: uid('mf'), principleId: 'short-memory', note: 'Deep breath + paddle tap after every miss. Next point only.', createdAt: addDays(today, -5) },
+    { id: uid('mf'), principleId: 'process', note: 'Grade myself on shot selection, not the scoreboard.', createdAt: addDays(today, -2) },
+  ]
 
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'

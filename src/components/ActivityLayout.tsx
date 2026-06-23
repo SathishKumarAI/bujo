@@ -10,7 +10,7 @@ const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'welln
 const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
 
 /**
- * Activity layout — one row per habit with a GitHub-style intensity heatmap
+ * Activity layout · one row per habit with a GitHub-style intensity heatmap
  * (last 16 weeks) plus a type-aware "today" control. An alternative to the
  * classic month grid; reads the same store via the shared stats helpers so
  * completion/streaks stay consistent across layouts.
@@ -81,7 +81,7 @@ function ActivityRow({
     <div className="flex items-center gap-3">
       <div className="flex w-32 shrink-0 items-center gap-1 truncate">
         <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} — habit to avoid` : undefined} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} · habit to avoid` : undefined} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
       </div>
       <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
         {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}

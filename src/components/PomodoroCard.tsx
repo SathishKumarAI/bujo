@@ -15,7 +15,7 @@ const PRESETS = [
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /**
- * A focus timer (Pomodoro) — a visual countdown with gentle work/break cycles,
+ * A focus timer (Pomodoro) · a visual countdown with gentle work/break cycles,
  * the ADHD-focus mechanic from habitify.me. Self-contained; counts the focus
  * blocks finished this sitting.
  */

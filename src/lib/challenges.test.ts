@@ -79,4 +79,30 @@ describe('strict progress (75-Hard reset rule)', () => {
     const d = withChallenge(S, full)
     expect(isFinished(d, S, '2026-06-05')).toBe(true)
   })
+
+  it('BUJO-209: ring % agrees with the "X of N days done" text after a miss', () => {
+    // 3 complete days (01-03), a miss on 06-04. Viewed on 06-05 the streak is
+    // broken (0), but the card text shows completedDays (3). The ring must reflect
+    // that same count, not the broken streak — they must not contradict.
+    const log = { '2026-06-01': [0, 1], '2026-06-02': [0, 1], '2026-06-03': [0, 1] }
+    const d = withChallenge(S, log)
+    const done = completedDays(d, S, '2026-06-05')
+    expect(done).toBe(3) // the count the card text renders
+    expect(percentComplete(d, S, '2026-06-05')).toBe(Math.round((done / 5) * 100)) // 60
+    expect(percentComplete(d, S, '2026-06-05')).toBe(60)
+    // streak nuance is still surfaced separately and is allowed to differ
+    expect(streakBeforeToday(d, S, '2026-06-05')).toBe(0)
+  })
+})
+
+describe('BUJO-209: zero-rule custom challenge', () => {
+  const Z: Challenge = { ...C, id: 'z1', rules: [] }
+  it('does not get stuck at 0% — each elapsed day counts as complete', () => {
+    const d = withChallenge(Z, {})
+    expect(isDayComplete(d, Z, '2026-06-01')).toBe(true)
+    expect(completedDays(d, Z, '2026-06-03')).toBe(3)
+    expect(percentComplete(d, Z, '2026-06-03')).toBe(60) // 3/5
+    expect(percentComplete(d, Z, '2026-06-30')).toBe(100) // clamped duration
+    expect(isFinished(d, Z, '2026-06-30')).toBe(true)
+  })
 })

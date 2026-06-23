@@ -185,3 +185,74 @@ is no second database to keep in step.
 - **System theme** — follows the OS light/dark preference live.
 - **Personal records** (Insights) — longest streak, best mood day, longest
   workout, best pickleball session, busiest day.
+
+## Reading + account/login (appended 2026-06-18)
+
+- **Reading log** (`reading` view) — three shelves (want / reading / finished)
+  with a page-progress bar, 1–5 star ratings, a yearly book goal, and a stats
+  strip (reading now, finished this year, pages read, avg rating). Books-read
+  also appears in the **Goals** roll-up. Full detail:
+  `docs/features/reading-and-login-gate.md`.
+- **Real login page** (`account` view) — the top-bar account menu now opens a
+  dedicated, branded sign in / sign up screen (Google + email, show/hide
+  password, forgot-password, guest), not the buried Settings form.
+- **Auth gate** — while signed out on the login page (Supabase configured), the
+  app goes full-screen with no sidebar/top bar, so other pages aren't reachable
+  until you sign in, start a guest session, or choose "continue on this device".
+- **Email validation** (`src/lib/validate.ts`) — format check + "Did you mean
+  gmail.com?" typo suggestions before every auth submit (server still confirms
+  deliverability via the email link).
+
+## Reading depth + Stats layout (appended 2026-06-18)
+
+- **Reading — read later & learnings:** save online links to read later (a
+  checkable list), a per-book review, a book link, and a dated **"what I learned"**
+  log you can add to each day you read.
+- **Stats — compact & enlargeable:** the mood calendar is compact and sits
+  **side by side** with year-in-pixels; tap **⛶** on either to open a large
+  click-to-enlarge modal.
+- **Pickleball (competitive):** leagues & tournaments tracker (8 formats),
+  richer per-game logging (opponent/location/level/points/scoring), and a
+  research-backed **75-day 3.5→4.0 plan**. See
+  `docs/features/pickleball-competitive.md`.
+- **Coach** (Today): proactive "do this next" prompts derived from your data —
+  check-in, behind-pace habit, movement goal, pickleball plan. See
+  `docs/features/coach-and-card-system.md`.
+- **Tracker routine-timeline lens**: a third tracker layout (⏰) grouping habits
+  by **time of day** (morning → evening → anytime) as a "run your day" timeline
+  with cues, streaks, and a "now" marker. Toggle in the tracker's layout switch
+  (grid / activity / routine); set a habit's time of day in its detail panel.
+- **Onboarding tour**: a one-time, dismissable first-run guide (4 steps:
+  capture → track → coach → ⌘K) shown after you pick a storage mode; never nags
+  again (`bujo:onboarded`).
+- **Fitness charts to the bottom**: calorie trend (cardio) and body-weight /
+  training-volume / effort-trend (strength) now `defer` below the logging tools
+  and are ⛶-enlargeable.
+- **Per-habit daily notes** on the routine lens: tap the 📝 on any habit row to
+  jot a note for today (stored in `habitNotes`).
+- **Stats layout toggle**: switch the mood-calendar / year-in-pixels pair between
+  side-by-side and full-width stacked (persisted) — resize the dashboard to taste.
+
+## Coaching academy (appended 2026-06-20)
+
+- **Coaching tab** (`coaching` view) — a pickleball curriculum, not just tracking:
+  a **12-week beginner→4.0 program** (start it to track your week, tap weeks done),
+  **today's session** from a weekly split + a 45–60 min template, a **skill ladder**
+  (DUPR 2.0→4.5+ with the skills to master in order), a **drill library** grouped
+  by skill, and a **mental-game** track (16 mindset principles). Content researched
+  from USAP/DUPR/coaching sources → `docs/research/pickleball-coaching-curriculum.md`.
+  Data in `src/lib/pickleballAcademy.ts`.
+
+## Cards, charts & Recovery (appended 2026-06-18)
+
+- **Card ⓘ help**: every titled card has an always-visible ⓘ popover ("what is
+  this?"); views keep their top-bar `?` help. New optional `Card help` prop.
+- **Enlarge like the mood tracker**: every visualization card's ⛶ opens a
+  **screen-centred** large modal (portalled to `<body>` to escape transformed
+  ancestors) with a scale-up entrance; the ⛶ reveals/brightens on card hover, and
+  mood/year cells pop on hover. Charts fill 64vh. One place: `CARD` tokens +
+  `ChartCard` in `src/components/ui.tsx`.
+- **Recovery tab** (renamed from *Streak*): progress-ring hero, lifetime
+  total-clean days, recovery-benefits ladder, trigger patterns, a dated **urge
+  log** with addiction quick-pick presets + custom, a **per-addiction bar chart**,
+  and a slip-but-continue reframe. See `docs/features/streak-redesign.md`.

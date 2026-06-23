@@ -18,7 +18,7 @@ export function PenaltyCard() {
   const dismissKey = `bujo:penalty-dismissed:${today}`
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(dismissKey) === '1')
   const [reroll, setReroll] = useState(0)
-  const [open, setOpen] = useState(false) // compact by default — it's a nudge, not the main event
+  const [open, setOpen] = useState(false) // compact by default · it's a nudge, not the main event
 
   if (!report.tier || dismissed) return null
   const tier: PenaltyTier = report.tier
@@ -34,7 +34,7 @@ export function PenaltyCard() {
   return (
     <Card
       title={<span className="inline-flex items-center gap-2"><Swords size={18} style={{ color: cat(meta.color) }} /> Training penalty</span>}
-      subtitle={open ? 'You skipped something yesterday — pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
+      subtitle={open ? 'You skipped something yesterday · pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
       right={
         <span className="inline-flex items-center gap-2">
           <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>{meta.label}</span>

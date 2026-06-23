@@ -175,6 +175,71 @@ export interface CyclePoint {
   flags: string[] // free tags e.g. "period", "spotting"
 }
 
+/** Where a book sits on the reading shelf. */
+export type BookStatus = 'want' | 'reading' | 'finished'
+
+/**
+ * A book on the reading log. The shelf has three columns — want-to-read,
+ * currently-reading (with a page-progress bar), and finished (with a rating).
+ * Classic bullet-journal "reading list", but trackable.
+ */
+export interface Book {
+  id: string
+  title: string
+  author?: string
+  status: BookStatus
+  /** Total pages, if known — drives the progress bar while reading. */
+  totalPages?: number
+  /** Pages read so far (current-reading progress). */
+  currentPage?: number
+  /** 1–5 star rating, set when finished. */
+  rating?: number
+  /** ISO day reading started (status → reading). */
+  startedOn?: string
+  /** ISO day finished (status → finished); powers the "books this year" stat. */
+  finishedOn?: string
+  /** Short review / notes. */
+  notes?: string
+  /** Optional link — buy page, author site, summary, etc. */
+  link?: string
+  /** Dated reflections: what you learned from the book that day. */
+  learnings?: { date: string; text: string }[]
+  /** Catppuccin token for the spine colour. */
+  color?: string
+  createdAt: string
+}
+
+/** A saved online link to read later (article, summary, book page). */
+export interface ReadLink {
+  id: string
+  url: string
+  title?: string
+  note?: string
+  done?: boolean
+  createdAt: string
+}
+
+/** A user-defined goal not derived from another view (e.g. "Save $500"). */
+export interface CustomGoal {
+  id: string
+  label: string
+  target: number
+  value: number
+  unit?: string
+  color?: string // Catppuccin token
+  createdAt: string
+}
+
+/** A mindset principle the user is actively working on, with a personal note. */
+export interface MindsetFocus {
+  id: string
+  /** Id into MINDSET_LIBRARY. */
+  principleId: string
+  /** The user's own reminder / how they'll apply it. */
+  note?: string
+  createdAt: string
+}
+
 /** One gratitude line per day. */
 export interface Gratitude {
   date: string
@@ -253,15 +318,56 @@ export interface Relapse {
   note: string // reflection
 }
 
+/** A resisted-urge win — logged with when and (optionally) what it was. */
+export interface UrgeWin {
+  id: string
+  date: string // ISO day
+  /** ISO timestamp it was logged (for time-of-day patterns). */
+  at?: string
+  /** What the urge was / what triggered it (optional). */
+  trigger?: string
+  note?: string
+}
+
+/** An if-then plan: a known trigger point for an addiction + how to respond. */
+export interface TriggerPlan {
+  id: string
+  /** Which addiction/urge this is for (e.g. "Smoking"). */
+  addiction: string
+  /** The trigger point / situation (e.g. "after meals", "stress at work"). */
+  trigger: string
+  /** The coping response (the "then" — e.g. "chew gum, 10-min walk"). */
+  coping?: string
+}
+
+/** An independently-tracked addiction with its own streak + best + resets (BUJO-199). */
+export interface AddictionStreak {
+  id: string
+  /** Display name, e.g. "Smoking", "Sugar". */
+  name: string
+  /** ISO day this addiction's current streak started (reset on its own relapse). */
+  startedOn: string
+  /** Personal best for this addiction, in days. */
+  best: number
+  relapses: Relapse[]
+}
+
 /** Abstinence / NoFap streak tracker state. */
 export interface Streak {
-  /** ISO day the current streak started (reset on relapse). */
+  /** ISO day the current (primary) streak started (reset on relapse). */
   startedOn: string
   /** Personal best, in days. */
   best: number
   relapses: Relapse[]
-  /** Count of urges resisted (a positive counter). */
+  /** Legacy count of urges resisted (pre-log). Kept so old data still totals. */
   urgesResisted?: number
+  /** Dated log of resisted urges (when + what). */
+  urgeLog?: UrgeWin[]
+  /** If-then plans for each addiction's trigger points. */
+  plans?: TriggerPlan[]
+  /** Additional addictions, each tracked as its own streak (BUJO-199). The
+   *  fields above remain the primary/default streak for backward compatibility. */
+  addictions?: AddictionStreak[]
 }
 
 export interface Settings {
@@ -330,6 +436,16 @@ export interface Settings {
   fitnessGoalMin?: number
   /** Weekly pickleball-games goal (shown on Pickleball + Goals). */
   pickleballGoalGames?: number
+  /** Yearly reading goal in books (shown on Reading + Goals). */
+  readingGoalBooks?: number
+  /** ISO day the 75-day pickleball 3.5→4.0 plan was started (drives day/phase). */
+  pickleballPlanStart?: string
+  /** ISO day the 12-week Coaching Academy program was started. */
+  coachingStart?: string
+  /** Completed Coaching Academy week numbers (1–12). */
+  coachingWeeksDone?: number[]
+  /** Stats mood/year pair: side-by-side ('split', default) or full-width 'stacked'. */
+  statsPairLayout?: 'split' | 'stacked'
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
   programDone?: string[]
   /** Actual reps/sets achieved per program exercise: exKey -> "did 8, 6, 4". */
@@ -338,8 +454,9 @@ export interface Settings {
   trackerDensity?: 'comfortable' | 'compact'
   trackerHideWeekends?: boolean
   trackerShowArchived?: boolean
-  /** Habit tracker layout: classic month-grid vs activity-heatmap rows. */
-  trackerLayout?: 'classic' | 'activity'
+  /** Habit tracker layout: classic month-grid, activity-heatmap rows, or a
+   *  time-of-day routine timeline ("run your day"). */
+  trackerLayout?: 'classic' | 'activity' | 'routine'
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
   /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
@@ -377,6 +494,41 @@ export interface PickleballSession {
   partner?: string // doubles partner
   /** Perceived exertion 1–10. */
   rpe?: number
+  notes?: string
+  // ── richer per-game logging (all optional, additive) ──
+  /** Opponent(s) name/handle. */
+  opponent?: string
+  /** Where you played (court / club / city). */
+  location?: string
+  /** Self/opponent skill level for the session, e.g. "3.5". */
+  level?: string
+  /** Total points you scored across games (for point-differential). */
+  pointsFor?: number
+  /** Total points conceded across games. */
+  pointsAgainst?: number
+  /** Scoring used: 11/15/21 side-out, or rally-to-21. */
+  scoring?: '11' | '15' | '21' | 'rally21'
+}
+
+/** Bracket/league format for a competitive pickleball event. */
+export type PickleballFormat =
+  | 'round-robin' | 'single-elim' | 'double-elim' | 'pool-play'
+  | 'ladder' | 'box' | 'swiss' | 'king-of-court'
+
+/** A league or tournament the player entered (separate from casual sessions). */
+export interface PickleballEvent {
+  id: string
+  date: string // ISO day (start date)
+  name: string
+  kind: 'league' | 'tournament'
+  format: PickleballFormat
+  /** Division entered, e.g. "3.5 Mixed Doubles". */
+  division?: string
+  wins?: number
+  losses?: number
+  /** Final placement / medal, e.g. "Gold", "2nd of 8", "5th". */
+  placement?: string
+  partner?: string
   notes?: string
 }
 
@@ -435,10 +587,20 @@ export interface JournalData {
   devSessions?: DevSession[]
   /** Pickleball play sessions. */
   pickleball?: PickleballSession[]
+  /** Pickleball leagues & tournaments entered. */
+  pickleballEvents?: PickleballEvent[]
   /** Physique / progress photos for week-to-week comparison. */
   progressPhotos?: ProgressPhoto[]
   /** Friends / contacts (manual, with optional opt-in GitHub enrichment). */
   friends?: Friend[]
+  /** Reading log — want-to-read / reading / finished shelves. */
+  books?: Book[]
+  /** Saved online links to read later. */
+  readLinks?: ReadLink[]
+  /** User-defined custom goals (manual progress). */
+  customGoals?: CustomGoal[]
+  /** Mindset principles the user is actively working on. */
+  mindsetFocus?: MindsetFocus[]
   settings: Settings
 }
 

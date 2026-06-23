@@ -53,7 +53,7 @@ export function TodayHabits() {
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
-          {h.name}{h.avoid ? (on ? ' — slip' : ' — clean') : (on ? ' ✓' : '')}
+          {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
         </button>
         <button
           onClick={() => setNoteFor((v) => (v === h.id ? null : h.id))}
@@ -71,7 +71,7 @@ export function TodayHabits() {
   return (
     <Card
       title="Today’s habits"
-      subtitle="Tap to check off — grouped by time of day"
+      subtitle="Tap to check off · grouped by time of day"
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (

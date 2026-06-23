@@ -102,6 +102,19 @@ export function onPasswordRecovery(cb: () => void): () => void {
   return () => data.subscription.unsubscribe()
 }
 
+/**
+ * Subscribe to session presence. `cb` receives true when ANY session exists —
+ * a real account OR an anonymous guest (guests chose to explore, so they get
+ * full app access; only the truly signed-out state is gated). Fires once with
+ * the current state, then on every change. No-op when unconfigured.
+ */
+export function onAuthChange(cb: (hasSession: boolean) => void): () => void {
+  if (!supabase) { cb(false); return () => {} }
+  currentUser().then((u) => cb(!!u))
+  const { data } = supabase.auth.onAuthStateChange((_e, session) => cb(!!session?.user))
+  return () => data.subscription.unsubscribe()
+}
+
 export async function currentUser(): Promise<User | null> {
   if (!supabase) return null
   const { data } = await supabase.auth.getUser()

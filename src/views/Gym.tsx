@@ -21,7 +21,7 @@ import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
-  musclesForExercise, epley1RM, platesPerSide, lastSetFor, parseSet,
+  musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
   weeklyVolumeSeries, exerciseProgression,
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
@@ -96,7 +96,10 @@ export function Gym() {
 
   function finish() {
     const valid = rows.filter((r) => r.exercise.trim())
-    const sets = valid.map((r, i) => `${r.exercise.trim()} ${i + 1}x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
+    // Legacy "NxM @ w" set-string: parseSet() reads M (the number after `x`)
+    // as reps. One row = one set, so N = 1 (set count) and M = actual reps —
+    // previously N held the loop index, leaving the rep slot wrong.
+    const sets = valid.map((r) => `${r.exercise.trim()} 1x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
     if (sets.length === 0) return
     // Structured rows for analytics (volume / progression / previous-session).
     const structured: WorkoutSet[] = valid.map((r) => ({
@@ -142,14 +145,14 @@ export function Gym() {
     return { date: b.date.slice(5), weight: b.weight, avg: Math.round(avg * 10) / 10 }
   })
 
-  // Anatomy lookup — lives in the right rail (aside) so it stays visible while logging.
+  // Anatomy lookup · lives in the right rail (aside) so it stays visible while logging.
   const anatomyCard = (
     <Card
       title={focusEx ? focusEx : 'Exercise anatomy'}
       subtitle={
         focusEx
           ? 'Muscles worked by this exercise'
-          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> — or look one up</span>
+          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
       right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
     >
@@ -273,7 +276,7 @@ export function Gym() {
             const kind = row.kind ?? 'working'
             const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'peach', title: 'Drop set' } }[kind]
             const nextKind = { working: 'warmup', warmup: 'drop', drop: 'working' }[kind] as SetRow['kind']
-            // Strong-style "completed set" — a filled weight+reps row reads as done (green accent).
+            // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
             const complete = !!(row.weight.trim() && row.reps.trim())
             return (
               <div key={i} className={`-ml-2 rounded-lg border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
@@ -306,7 +309,7 @@ export function Gym() {
                       <button
                         type="button"
                         onClick={() => setRow(i, { weight: String(prev.weight ?? ''), reps: String(prev.reps ?? '') })}
-                        title="Repeat last set — fill weight & reps"
+                        title="Repeat last set · fill weight & reps"
                         className="inline-flex items-center gap-1 hover:text-mauve"
                       >
                         <RotateCcw size={10} /> last: {prev.weight}{unit}×{prev.reps}
@@ -351,13 +354,13 @@ export function Gym() {
       <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
 
       {/* ── Exercise database (wger) ─────────────────────────── */}
-      <Card title="Exercise database" subtitle="Search wger’s library — tap a card to view it, then add to your session" collapsible defaultCollapsed>
+      <Card title="Exercise database" subtitle="Search wger’s library · tap a card to view it, then add to your session" collapsible defaultCollapsed>
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
 
       {/* ── Body weight + training volume, side by side ──────── */}
       <div className="grid items-start gap-5 lg:grid-cols-2">
-      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average">
+      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average" defer enlargeable>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -386,7 +389,7 @@ export function Gym() {
       </Card>
 
       {/* ── Training volume + per-exercise progression ───────── */}
-      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'}>
+      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
         <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -400,7 +403,7 @@ export function Gym() {
         </div>
         {focusEx && progression.length > 1 && (
           <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-            <p className="mb-1 text-xs text-overlay0">{focusEx} — heaviest set per day ({unit})</p>
+            <p className="mb-1 text-xs text-overlay0">{focusEx} · heaviest set per day ({unit})</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -416,7 +419,7 @@ export function Gym() {
       </div>
 
       {rpeSeries.length >= 2 && (
-        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session — watch for over-reaching">
+        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
           <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -445,14 +448,17 @@ function PlateCalculator({ unit }: { unit: string }) {
   const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
   const plates = platesPerSide(Number(target) || 0, Number(bar) || 0, denoms)
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
+  const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
   return (
     <Card title="Plate calculator" subtitle="What to load on the bar">
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <label className="block text-sm text-subtext1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
         <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
       </div>
-      {plates.length === 0 ? (
-        <p className="text-sm text-overlay0">Just the bar — no plates needed.</p>
+      {barOverTarget ? (
+        <p className="text-sm text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
+      ) : plates.length === 0 ? (
+        <p className="text-sm text-overlay0">Just the bar · no plates needed.</p>
       ) : (
         <>
           <p className="mb-2 text-xs text-overlay0">Per side:</p>

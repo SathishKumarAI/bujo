@@ -89,33 +89,253 @@ classDiagram
     +string updatedAt
     +Entry[] entries
     +Habit[] habits
-    +Record habitLog
-    +Record habitValues
-    +Record habitTimes
-    +Record habitNotes
+    +Record~string,string[]~ habitLog
+    +Record~string,Record~ habitValues
+    +Record~string,Record~ habitTimes
+    +Record~string,Record~ habitNotes
+    +Record~string,string[]~ habitSkips
     +DailyMetric[] metrics
     +Workout[] workouts
     +Fast[] fasts
+    +Routine[] routines
+    +BodyMetric[] bodyMetrics
+    +CyclePoint[] cycle
+    +Gratitude[] gratitude
+    +Memory[] memories
+    +Birthday[] birthdays
+    +MonthlyMeta[] monthly
+    +Collection[] collections
+    +Recurrence[] recurrences
+    +Record~string,string[]~ stickers
     +Streak nofap
+    +Challenge[] challenges
+    +DevSession[] devSessions
+    +PickleballSession[] pickleball
+    +PickleballEvent[] pickleballEvents
+    +ProgressPhoto[] progressPhotos
+    +Friend[] friends
+    +Book[] books
+    +ReadLink[] readLinks
+    +CustomGoal[] customGoals
+    +MindsetFocus[] mindsetFocus
     +Settings settings
   }
-  class Entry { +id +date +type +text +status +tags }
-  class Habit { +id +name +type +category +color +avoid +timeOfDay +cue +startedOn }
-  class DailyMetric { +date +mood +stress +sleep +energy +calories }
-  class Workout { +id +date +activity +setRows +durationMin +rpe }
-  class Fast { +id +start +end }
-  class Streak { +startedOn +best +Relapse[] relapses +urgesResisted }
-  class Relapse { +id +date +trigger +note }
-  class Settings { +gender +weightUnit +distanceUnit +tempUnit +storageMode +selfHostUrl +fastTargetHours }
+  class Entry {
+    +string id
+    +string date
+    +BulletType type
+    +string text
+    +EntryStatus status
+    +bool important
+    +bool memory
+    +string[] tags
+    +string collection
+    +string recurringId
+  }
+  class Habit {
+    +string id
+    +string name
+    +HabitCategory category
+    +HabitType type
+    +string color
+    +string startedOn
+    +int target
+    +string unit
+    +int[] activeDays
+    +int weeklyGoal
+    +bool avoid
+    +string timeOfDay
+    +string cue
+    +string emoji
+  }
+  class DailyMetric {
+    +string date
+    +int mood
+    +int stress
+    +int sleep
+    +int energy
+    +string fastBreak
+    +Weather weather
+    +int calories
+    +int protein
+    +int carbs
+    +int fat
+  }
+  class Workout {
+    +string id
+    +string date
+    +string activity
+    +Split split
+    +int durationMin
+    +int distanceKm
+    +string[] sets
+    +WorkoutSet[] setRows
+    +int calories
+    +int rpe
+    +string notes
+  }
+  class WorkoutSet {
+    +string exercise
+    +int weight
+    +int reps
+    +int rpe
+    +string kind
+  }
+  class Routine {
+    +string id
+    +string name
+    +Split split
+    +string[] exercises
+  }
+  class Fast {
+    +string id
+    +string start
+    +string end
+  }
+  class BodyMetric {
+    +string date
+    +int weight
+    +int bodyFat
+    +Record measurements
+  }
+  class Streak {
+    +string startedOn
+    +int best
+    +Relapse[] relapses
+    +int urgesResisted
+    +UrgeWin[] urgeLog
+    +TriggerPlan[] plans
+  }
+  class Relapse {
+    +string id
+    +string date
+    +string trigger
+    +string note
+  }
+  class UrgeWin {
+    +string id
+    +string date
+    +string at
+    +string trigger
+  }
+  class TriggerPlan {
+    +string id
+    +string addiction
+    +string trigger
+    +string coping
+  }
+  class Book {
+    +string id
+    +string title
+    +string author
+    +BookStatus status
+    +int totalPages
+    +int currentPage
+    +int rating
+    +Learning[] learnings
+  }
+  class ReadLink {
+    +string id
+    +string url
+    +string title
+    +bool done
+  }
+  class CustomGoal {
+    +string id
+    +string label
+    +int target
+    +int value
+    +string unit
+  }
+  class MindsetFocus {
+    +string id
+    +string principleId
+    +string note
+  }
+  class Challenge {
+    +string id
+    +string name
+    +int durationDays
+    +string startDate
+    +string[] rules
+    +bool strict
+  }
+  class PickleballSession {
+    +string id
+    +string date
+    +string format
+    +int gamesWon
+    +int gamesLost
+    +int pointsFor
+    +int pointsAgainst
+  }
+  class PickleballEvent {
+    +string id
+    +string date
+    +string name
+    +string kind
+    +PickleballFormat format
+    +string placement
+  }
+  class DevSession {
+    +string id
+    +string date
+    +int durationMin
+    +int focus
+    +int stress
+    +string[] tags
+  }
+  class ProgressPhoto {
+    +string id
+    +string date
+    +string photo
+    +int weight
+  }
+  class Friend {
+    +string id
+    +string name
+    +string birthday
+    +string github
+    +string bio
+  }
+  class Settings {
+    +Gender gender
+    +WeightUnit weightUnit
+    +DistanceUnit distanceUnit
+    +TempUnit tempUnit
+    +string storageMode
+    +string selfHostUrl
+    +int fastTargetHours
+    +bool nofapEnabled
+    +bool cycleTrackerEnabled
+    +int readingGoalBooks
+    +int pickleballGoalGames
+    +int fitnessGoalMin
+  }
 
   JournalData "1" *-- "many" Entry
   JournalData "1" *-- "many" Habit
   JournalData "1" *-- "many" DailyMetric
   JournalData "1" *-- "many" Workout
   JournalData "1" *-- "many" Fast
+  JournalData "1" *-- "many" Routine
+  JournalData "1" *-- "many" BodyMetric
+  JournalData "1" *-- "many" Book
+  JournalData "1" *-- "many" ReadLink
+  JournalData "1" *-- "many" CustomGoal
+  JournalData "1" *-- "many" MindsetFocus
+  JournalData "1" *-- "many" Challenge
+  JournalData "1" *-- "many" PickleballSession
+  JournalData "1" *-- "many" PickleballEvent
+  JournalData "1" *-- "many" DevSession
+  JournalData "1" *-- "many" ProgressPhoto
+  JournalData "1" *-- "many" Friend
   JournalData "1" *-- "1" Streak
-  Streak "1" *-- "many" Relapse
   JournalData "1" *-- "1" Settings
+  Workout "1" *-- "many" WorkoutSet
+  Streak "1" *-- "many" Relapse
+  Streak "1" *-- "many" UrgeWin
+  Streak "1" *-- "many" TriggerPlan
 ```
 
 ## 4. Sync sequence (save → persist → flush on close)

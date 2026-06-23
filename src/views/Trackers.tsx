@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
@@ -10,7 +10,7 @@ import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../co
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
-import { TIME_SLOTS } from '../lib/timeofday'
+import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { rollingAverage } from '../lib/correlations'
@@ -97,7 +97,7 @@ export function Trackers() {
     return { day: Number(d.slice(8)), mood: m?.mood, stress: m?.stress, sleep: m?.sleep, moodAvg: moodAvg[i], stressAvg: stressAvg[i], sleepAvg: sleepAvg[i] }
   })
 
-  /** True when a habit by this name already exists (case-insensitive) — used to
+  /** True when a habit by this name already exists (case-insensitive) · used to
    *  prevent duplicate trackers from manual add or preset taps. */
   const habitExists = (name: string) => data.habits.some((h) => h.name.trim().toLowerCase() === name.trim().toLowerCase())
 
@@ -118,11 +118,23 @@ export function Trackers() {
           <div className="flex items-center gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             {!radial && (
-              <Button
-                onClick={() => setSettings({ trackerLayout: layout === 'activity' ? 'classic' : 'activity' })}
-                aria-label={layout === 'activity' ? 'Switch to classic grid' : 'Switch to activity view'}
-                title={layout === 'activity' ? 'Classic grid' : 'Activity view'}
-              >{layout === 'activity' ? <LayoutGrid size={15} /> : <Activity size={15} />}</Button>
+              <div className="inline-flex overflow-hidden rounded-lg border border-surface1">
+                {([
+                  { id: 'classic', icon: <LayoutGrid size={15} />, title: 'Grid' },
+                  { id: 'activity', icon: <Activity size={15} />, title: 'Activity' },
+                  { id: 'routine', icon: <Clock size={15} />, title: 'Routine (by time of day)' },
+                ] as const).map((o) => (
+                  <button
+                    key={o.id}
+                    onClick={() => setSettings({ trackerLayout: o.id })}
+                    aria-label={`${o.title} layout`}
+                    aria-pressed={layout === o.id}
+                    title={o.title}
+                    className="px-2 py-1.5"
+                    style={{ background: layout === o.id ? cat('mauve') : 'transparent', color: layout === o.id ? cat('crust') : cat('subtext1') }}
+                  >{o.icon}</button>
+                ))}
+              </div>
             )}
             <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
             <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
@@ -139,7 +151,7 @@ export function Trackers() {
         )}
 
         {visibleHabits.length === 0 ? (
-          <Empty>No habits yet — add one below.</Empty>
+          <Empty>No habits yet · add one below.</Empty>
         ) : radial ? (
           <RadialTracker
             habits={visibleHabits}
@@ -147,6 +159,15 @@ export function Trackers() {
             habitValues={data.habitValues}
             days={monthDays(ym)}
             today={today}
+          />
+        ) : layout === 'routine' ? (
+          <RoutineTimeline
+            habits={visibleHabits}
+            data={data}
+            today={today}
+            onToggle={toggleHabit}
+            onSetValue={setHabitValue}
+            onEdit={setEditing}
           />
         ) : layout === 'activity' ? (
           <ActivityLayout
@@ -229,7 +250,7 @@ export function Trackers() {
       </Card>
 
       <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-3">
-      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} — faint = daily · bold = 7-day avg`} className="lg:col-span-2">
+      <Card title="Mood · Stress · Sleep" subtitle={`${prettyMonth(ym)} · faint = daily · bold = 7-day avg`} className="lg:col-span-2">
         <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -275,13 +296,13 @@ export function Trackers() {
   )
 }
 
-/** Browser for archived habits — restore or delete for good. */
+/** Browser for archived habits · restore or delete for good. */
 function ArchivedHabits() {
   const { data, updateHabit, removeHabit } = useJournal()
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
   return (
-    <Card title="Archived habits" subtitle="Out of the grid — restore any time">
+    <Card title="Archived habits" subtitle="Out of the grid · restore any time">
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">
@@ -326,7 +347,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
 
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks — greener = more habits done that day" className="lg:col-span-2" collapsible>
+      <Card title="Completion heatmap" subtitle="Last 13 weeks · greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
@@ -364,7 +385,7 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
         )}
       </Card>
 
-      <Card title="Monthly trend" subtitle="Avg completion per month — is it climbing?">
+      <Card title="Monthly trend" subtitle="Avg completion per month · is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
           return (
@@ -456,7 +477,7 @@ function TodayStrip({
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors"
-              title={h.avoid ? (on ? 'Slipped today — tap to clear' : 'Clean today') : undefined}
+              title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
               style={{
                 borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                 background: on ? (h.avoid ? cat('red') : cat(h.color)) + '22' : 'transparent',
@@ -471,6 +492,97 @@ function TodayStrip({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ── Routine timeline: habits grouped by time of day (run your day) ───────────
+function RoutineTimeline({
+  habits, data, today, onToggle, onSetValue, onEdit,
+}: {
+  habits: Habit[]
+  data: import('../lib/types').JournalData
+  today: string
+  onToggle: (date: string, id: string) => void
+  onSetValue: (date: string, id: string, value: number) => void
+  onEdit: (id: string) => void
+}) {
+  const { setHabitNote } = useJournal()
+  const [noting, setNoting] = useState<string | null>(null)
+  const hour = new Date().getHours()
+  const now = currentSlot(hour)
+  const dow = fromISODay(today).getDay()
+
+  const sections = orderedSlots(hour)
+    .map((slot) => ({ slot, list: habits.filter((h) => (h.timeOfDay ?? 'anytime') === slot) }))
+    .filter((s) => s.list.length > 0)
+
+  if (sections.length === 0) {
+    return <Empty>Assign habits a time of day (open a habit → “Time of day”) to build your daily routine.</Empty>
+  }
+
+  return (
+    <div className="space-y-4">
+      {sections.map(({ slot, list }) => {
+        const meta = slotMeta(slot)
+        const scheduled = list.filter((h) => !h.activeDays?.length || h.activeDays.includes(dow))
+        const done = scheduled.filter((h) => habitDoneOn(data, h, today)).length
+        return (
+          <div key={slot}>
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="text-sm font-medium text-subtext1">{meta.emoji} {meta.label}</span>
+              {slot === now && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>now</span>}
+              <span className="ml-auto text-xs text-overlay0">{done}/{scheduled.length || list.length}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {list.map((h) => {
+                const type = h.type ?? 'check'
+                const numeric = type === 'count' || type === 'timer' || type === 'rating'
+                const target = habitTarget(h)
+                const val = habitValueOn(data, h, today)
+                const on = habitDoneOn(data, h, today)
+                const next = nextHabitValue(type, target, val)
+                const dueToday = !h.activeDays?.length || h.activeDays.includes(dow)
+                const streak = h.avoid ? cleanStreak(data, h.id, today) : habitStreak(data, h.id, today)
+                const note = data.habitNotes?.[today]?.[h.id] ?? ''
+                const open = noting === h.id
+                return (
+                  <li key={h.id} className={`rounded-xl border border-surface0 bg-base p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
+                        aria-label={`Mark ${h.name}`}
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm transition-colors"
+                        style={{
+                          borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
+                          background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
+                        }}
+                      >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
+                      <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
+                        <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
+                        {h.cue && <span className="block truncate text-[11px] text-overlay0">{h.cue}</span>}
+                      </button>
+                      {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
+                      <button onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-overlay0 hover:text-subtext1'}`}><StickyNote size={14} /></button>
+                    </div>
+                    {(open || note) && (
+                      <input
+                        value={note}
+                        onChange={(e) => setHabitNote(today, h.id, e.target.value)}
+                        onBlur={() => setNoting(null)}
+                        autoFocus={open}
+                        placeholder="Jot a note for today…"
+                        className="mt-2 w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground"
+                      />
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -533,7 +645,7 @@ function CategoryRows({
                 {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} — habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
+                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
                 {streak > 1 && (
                   avoid
@@ -618,7 +730,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
           <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
 
-          {/* Completion heatmap — 12 weeks or a full year */}
+          {/* Completion heatmap · 12 weeks or a full year */}
           <div>
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs text-overlay0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
@@ -632,7 +744,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
           <label className="flex items-center justify-between rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
-            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit — a logged day counts as a slip)</span></span>
+            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
           <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
@@ -672,7 +784,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             </div>
           </div>
 
-          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking — after what?)</span>
+          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking · after what?)</span>
             <Input value={habit.cue ?? ''} onChange={(e) => set({ cue: e.target.value || undefined })} placeholder="e.g. After morning coffee" className="mt-1" />
           </label>
 

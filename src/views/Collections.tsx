@@ -32,8 +32,9 @@ export function Collections() {
       const [m, d] = md.split('-').map(Number)
       return { id: `friend:${f.id}`, name: f.name, month: m, day: d, fromFriend: true }
     })
-    .filter((b) => b.month && b.day)
+    .filter((b) => b.month >= 1 && b.month <= 12 && b.day >= 1 && b.day <= 31)
   const birthdays = [...data.birthdays.map((b) => ({ ...b, fromFriend: false })), ...friendBirthdays]
+    .filter((b) => b.month >= 1 && b.month <= 12 && b.day >= 1 && b.day <= 31)
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
@@ -86,7 +87,7 @@ export function Collections() {
 
       <Card
         title="Custom collections"
-        subtitle="Free-form pages — book lists, packing, projects…"
+        subtitle="Free-form pages · book lists, packing, projects…"
         className="md:col-span-2"
       >
         <div className="mb-3 flex flex-wrap gap-2">
@@ -140,7 +141,7 @@ export function Collections() {
               ))}
             </ul>
             {data.entries.filter((e) => e.collection === openCol).length === 0 && (
-              <Empty>Empty — add your first item above.</Empty>
+              <Empty>Empty · add your first item above.</Empty>
             )}
           </div>
         )}

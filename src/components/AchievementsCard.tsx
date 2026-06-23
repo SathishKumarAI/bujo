@@ -7,7 +7,7 @@ import { ACHIEVEMENTS, earnedAchievements } from '../lib/achievements'
 /**
  * Achievement badges (HarambeFit-inspired). Earned badges light up in their
  * colour; locked ones are dimmed with a padlock. Everything is derived from
- * existing journal data — no new state.
+ * existing journal data · no new state.
  */
 export function AchievementsCard() {
   const { data } = useJournal()

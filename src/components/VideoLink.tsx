@@ -3,7 +3,7 @@ import { videoUrl } from '../lib/video'
 import { cn } from '../lib/cn'
 
 /**
- * Inline "Watch demo" link for any named exercise/drill — opens a pinned clip
+ * Inline "Watch demo" link for any named exercise/drill · opens a pinned clip
  * (`yt`) or a proper-form YouTube search. Mirrors the Home Workout demo link so
  * every exercise list in the app gets a video the same way.
  */

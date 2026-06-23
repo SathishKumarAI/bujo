@@ -6,7 +6,7 @@ import { todayISO } from '../lib/date'
 /**
  * Daily nudge to journal. Shows an in-app banner (and fires a browser
  * notification once per day) when the reminder time has passed and today
- * hasn't been logged yet. Purely client-side — no push server.
+ * hasn't been logged yet. Purely client-side · no push server.
  */
 export function ReminderBanner() {
   const { data } = useJournal()
@@ -19,7 +19,7 @@ export function ReminderBanner() {
   // Most-urgent nudge (streak-at-risk / challenge-day) wins over the plain one.
   const urgent = reminderMessage(data, today)
   const title = urgent?.title ?? 'Time to journal ✦'
-  const body = urgent?.body ?? "A couple of minutes for yourself — fill in today's bujo."
+  const body = urgent?.body ?? "A couple of minutes for yourself · fill in today's bujo."
 
   useEffect(() => {
     // Suppress only when there's nothing to nudge: logged today AND nothing urgent.

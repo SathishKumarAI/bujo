@@ -9,7 +9,7 @@ import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
 
 /**
- * "Today's plan" — a compact daily command-centre. It *summarises and links*
+ * "Today's plan" · a compact daily command-centre. It *summarises and links*
  * (habits left · workout status · tasks due · pull-up program day) instead of
  * re-rendering those views, so the day is actionable from one screen without
  * duplicating the dedicated views (see DECISIONS D-34). Tap a chip to jump in.
@@ -56,15 +56,15 @@ export function TodayPlanCard() {
   if (focusMin > 0) chips.push({ label: `${focusMin}m focused`, color: 'lavender', icon: Timer, to: 'focus', done: true })
 
   // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
-  // summary card — avoids the "crowded Today" con from DECISIONS D-34).
+  // summary card · avoids the "crowded Today" con from DECISIONS D-34).
   const week = weekCoverage(data, today, 7)
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
 
   return (
-    <Card title="Today’s plan" subtitle="Your whole day at a glance — tap to jump in" right={<span className="text-xs text-overlay0">week {weekScore}%</span>}>
+    <Card title="Today’s plan" subtitle="Your whole day at a glance · tap to jump in" right={<span className="text-xs text-overlay0">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
-          🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} — tap to keep them alive
+          🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
         </button>
       )}
       <div className="flex flex-wrap gap-2">

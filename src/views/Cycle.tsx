@@ -73,7 +73,7 @@ export function Cycle() {
                             key={f}
                             onClick={() => toggleFlag(d, f)}
                             className="rounded-full px-2 py-0.5"
-                            style={{ background: on ? cat('maroon') : cat('surface0'), color: on ? cat('surface0') : cat('subtext0') }}
+                            style={{ background: on ? cat('red') : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}
                           >
                             {f}
                           </button>

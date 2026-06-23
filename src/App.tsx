@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
-import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal } from './lib/supabase'
+import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Monthly } from './views/Monthly'
@@ -11,6 +11,10 @@ import { HomeWorkout } from './views/HomeWorkout'
 import { Challenges } from './views/Challenges'
 import { Focus } from './views/Focus'
 import { Collections } from './views/Collections'
+import { Reading } from './views/Reading'
+import { Coaching } from './views/Coaching'
+import { Mindset } from './views/Mindset'
+import { Account } from './views/Account'
 import { Plan } from './views/Plan'
 import { Goals } from './views/Goals'
 import { Insights } from './views/Insights'
@@ -21,6 +25,7 @@ import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
 import { CommandPalette } from './components/CommandPalette'
+import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
@@ -32,7 +37,7 @@ import type { ViewId } from './components/shell/viewChrome'
 import {
   Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
   Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell, Flag,
+  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap, Brain,
 } from 'lucide-react'
 
 // Chart-heavy views (recharts) are code-split to keep the initial bundle small.
@@ -54,14 +59,17 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
   { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
   { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
+  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Health' },
   { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
   { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
   { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
-  { id: 'nofap', label: 'Streak', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
+  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
   { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Insights & Stats' },
   { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
+  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Insights & Stats' },
   { id: 'goals', label: 'Goals', icon: Flag, group: 'Insights & Stats' },
+  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Insights & Stats' },
   { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Insights & Stats' },
   { id: 'stats', label: 'Stats', icon: PieChart, group: 'Insights & Stats' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
@@ -70,8 +78,8 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, goals: Goals,
-  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, help: Help,
+  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
+  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
   settings: Settings,
 }
 
@@ -120,10 +128,14 @@ export default function App() {
   // Supabase account sync (when configured + signed in): pull on load, push on change.
   const sbReady = useRef(false)
   const sbAuthed = useRef(false)
+  // Mirror auth in state so the realtime effect re-subscribes once auth resolves.
+  // The ref alone is false at mount, so a []-dep effect never activated until reload.
+  const [sbAuthedState, setSbAuthedState] = useState(false)
   useEffect(() => {
     if (!supabaseEnabled()) { sbReady.current = true; return }
     currentUser().then((u) => {
       sbAuthed.current = !!u
+      setSbAuthedState(!!u)
       if (!u) return
       // Leaving explore: a real (non-anonymous) account just took over the
       // sample-data session → adopt their cloud journal (or start clean) and
@@ -145,12 +157,30 @@ export default function App() {
     if (!supabaseEnabled() || !sbReady.current || !sbAuthed.current) return
     const snapshot = JSON.stringify(data)
     if (snapshot === lastSync.current) return // nothing new (e.g. just applied a remote change)
-    const id = setTimeout(() => { lastSync.current = snapshot; pushJournal(data).catch(() => {}) }, 4000)
+    const id = setTimeout(async () => {
+      try {
+        // Pull-first guard (two devices, one account): adopt+merge a newer remote
+        // instead of clobbering it, mirroring the blob/folder paths.
+        const remote = await pullJournal()
+        if (remote) {
+          const rm = migrate(remote)
+          if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
+            const merged = resolveIncoming(dataRef.current, rm)
+            if (merged) { lastSync.current = JSON.stringify(merged); replaceAll(merged) }
+            else lastSync.current = JSON.stringify(rm)
+            return // adopted remote; do NOT push over it
+          }
+        }
+        lastSync.current = JSON.stringify(dataRef.current)
+        await pushJournal(dataRef.current)
+      } catch { /* offline — retry on the next change */ }
+    }, 4000)
     return () => clearTimeout(id)
   }, [data])
   // Realtime: apply changes pushed from another device/session (live multi-device).
+  // Keyed on sbAuthedState so it (re)subscribes once auth resolves, not just at mount.
   useEffect(() => {
-    if (!supabaseEnabled() || !sbAuthed.current) return
+    if (!supabaseEnabled() || !sbAuthedState) return
     let off = () => {}
     subscribeJournal((remote) => {
       const snap = JSON.stringify(remote)
@@ -160,10 +190,16 @@ export default function App() {
       if (next) replaceAll(next) // null = keep local; it re-pushes on next change
     }).then((fn) => { off = fn })
     return () => off()
-  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
   const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
+  const [showTour, setShowTour] = useState(() => !onboarded())
+  // Session presence (real account OR guest) — drives the full-screen auth gate
+  // so the signed-out sign in / sign up page can't reach the rest of the app.
+  const [hasSession, setHasSession] = useState(false)
+  useEffect(() => onAuthChange(setHasSession), [])
   const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
   const items = NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
@@ -206,6 +242,21 @@ export default function App() {
   // First run → show the login/welcome gate.
   if (!mode) return <Welcome />
 
+  // Auth gate: on the Account page while signed out (and a backend exists), take
+  // over the whole screen — no sidebar/top bar — so sign in / sign up can't
+  // navigate into the rest of the app until the user is signed in.
+  if (view === 'account' && supabaseEnabled() && !hasSession) {
+    return (
+      <DeviceProvider>
+      <CursorProvider>
+        <NavProvider navigate={setView}>
+          <Account />
+        </NavProvider>
+      </CursorProvider>
+      </DeviceProvider>
+    )
+  }
+
   return (
     <DeviceProvider>
     <CursorProvider>
@@ -216,6 +267,7 @@ export default function App() {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
+      {showTour && !data.settings.explore && <Onboarding onClose={() => setShowTour(false)} />}
       <ExploreBanner />
       <ReminderBanner />
       <SyncIndicator />
