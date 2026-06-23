@@ -1,5 +1,39 @@
 # Worklog
 
+## 2026-06-23 16:45 — Data-model batch 2: 4 interactive features + DEPLOY (PR #55)
+
+**Summary:** Serial single-owner build of 4 contained interactive features that
+need types/store changes. All built, none deferred. Merged PR #55, deployed to
+production, verified live. +15 tests (658 total).
+
+**Changes (4 features):**
+- Habit floor vs stretch target (#280) — optional `Habit.floor`; `goalTier()`;
+  distinct "met floor" vs full stretch cell in Trackers; floor input in editor.
+- Money/time saved counter (#123) — optional `costPerDay` on Streak/AddictionStreak
+  + `Settings.currencySymbol`; `moneySaved()`; NoFap "Money saved" card.
+- Custom-goal deadline + pace (#95/#261) — optional `CustomGoal.due`; new
+  `lib/goals.ts goalPace()`; Goals shows per-day-needed + on-track/behind/past-due.
+- Quit-date commitment contract (#316) — optional `Streak.commitment`;
+  `setCommitment` action; NoFap "My commitment" card with reason + days-since.
+
+**Decisions:** All new type fields optional + back-compat (`migrate()` + round-trip
+test verify old data loads). New store actions: `setStreakCost`, `setAddictionCost`,
+`setCommitment`. Stopped short of cross-cutting entry due-dates/priority (too
+sprawling for one run).
+
+**Deploy:** `ship.sh --deploy-only` → prod → re-aliased **bujo-journal.vercel.app**.
+Verified: HTTP 200, title correct, Supabase env inlined (bundle index-CHjM6dtx.js).
+
+**Verify:** tsc 0 · vitest 658/658 · eslint clean (touched) · vite build OK · live HTTP 200.
+
+**Running total:** ~142 backlog features built across PRs #48, #50–#55 — all live.
+
+**Follow-ups:**
+- [ ] Practical end of the locally-buildable backlog. Remaining items need a real
+  backend (account-delete, multi-device server sync), Tauri-native plugins (tray,
+  notifications, autostart, native fs), or new deps (Apple-Health/Obsidian import).
+  These are held, not skipped — listed in `docs/FEATURE-BACKLOG-500.md`.
+
 ## 2026-06-23 16:20 — Backlog batch 4: 33 features + PRODUCTION DEPLOY (PR #54)
 
 **Summary:** Fourth backlog sweep — 8 disjoint-file agents shipped 33 more
