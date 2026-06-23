@@ -5,6 +5,7 @@ import {
   relapseWeekdayPattern, peakRelapseWeekday,
   urgeConversion, paceToRecord,
   urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup,
+  timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch,
 } from './urge'
 import type { UrgeWin, TriggerPlan, Relapse } from './types'
 
@@ -380,5 +381,113 @@ describe('cleanRollup', () => {
 
   it('handles a future startedOn defensively', () => {
     expect(cleanRollup([], '2026-12-01', today)).toEqual({ cleanWeeks: 0, cleanMonths: 0, totalWeeks: 0, totalMonths: 0 })
+  })
+})
+
+describe('timeReclaimed (#344)', () => {
+  it('multiplies clean days by the per-day rate and splits into days+hours', () => {
+    const r = timeReclaimed(30, 2) // 60 hours
+    expect(r.hours).toBe(60)
+    expect(r.days).toBe(2)
+    expect(r.remHours).toBe(12)
+    expect(r.perDay).toBe(2)
+  })
+
+  it('floors fractional hour totals', () => {
+    expect(timeReclaimed(3, 1.5).hours).toBe(4) // 4.5 → 4
+  })
+
+  it('clamps negative inputs to zero', () => {
+    expect(timeReclaimed(-5, 2)).toEqual({ hours: 0, days: 0, remHours: 0, perDay: 2 })
+    expect(timeReclaimed(10, -3)).toEqual({ hours: 0, days: 0, remHours: 0, perDay: 0 })
+  })
+
+  it('returns all zeros for a zero streak', () => {
+    expect(timeReclaimed(0, 4)).toEqual({ hours: 0, days: 0, remHours: 0, perDay: 4 })
+  })
+})
+
+describe('addictionPortfolio (#408)', () => {
+  const rel = (date: string): Relapse => ({ id: date, date, trigger: '', note: '' })
+  const today = '2026-06-22'
+
+  it('ranks addictions by current streak, longest first', () => {
+    const rows = addictionPortfolio([
+      { id: 'a', name: 'Sugar', startedOn: '2026-06-20', best: 5, relapses: [] }, // 2d
+      { id: 'b', name: 'Smoking', startedOn: '2026-06-12', best: 10, relapses: [] }, // 10d
+    ], today)
+    expect(rows.map((r) => r.name)).toEqual(['Smoking', 'Sugar'])
+    expect(rows[0].current).toBe(10)
+    expect(rows[1].current).toBe(2)
+  })
+
+  it('counts resets and lifetime clean days from the relapse history', () => {
+    const rows = addictionPortfolio([
+      { id: 'a', name: 'Vaping', startedOn: '2026-06-18', best: 0, relapses: [rel('2026-06-10'), rel('2026-06-18')] },
+    ], today)
+    const r = rows[0]
+    expect(r.resets).toBe(2)
+    expect(r.current).toBe(4) // 18 → 22
+    // gap 10→18 = 7 clean days between, plus the live 4 → 11
+    expect(r.totalClean).toBe(11)
+    expect(r.best).toBe(4) // best lifts to at least the current run
+  })
+
+  it('flags an addiction reset today and dedupes duplicate reset dates', () => {
+    const rows = addictionPortfolio([
+      { id: 'a', name: 'Caffeine', startedOn: today, best: 9, relapses: [rel(today), rel(today)] },
+    ], today)
+    expect(rows[0].resetToday).toBe(true)
+    expect(rows[0].resets).toBe(1)
+    expect(rows[0].current).toBe(0)
+    expect(rows[0].best).toBe(9)
+  })
+
+  it('returns [] for empty / nullish input', () => {
+    expect(addictionPortfolio([], today)).toEqual([])
+    expect(addictionPortfolio(undefined, today)).toEqual([])
+  })
+})
+
+describe('recordApproach (#321)', () => {
+  it('escalates tiers as the run nears the best', () => {
+    expect(recordApproach(0, 20).tier).toBe('far')
+    expect(recordApproach(14, 20).tier).toBe('near') // 6 to go
+    expect(recordApproach(18, 20).tier).toBe('close') // 2 to go
+    expect(recordApproach(19, 20).tier).toBe('edge') // 1 to go
+  })
+
+  it('reports a record once current matches or passes best', () => {
+    expect(recordApproach(20, 20)).toEqual({ daysToBeat: 0, isRecord: true, tier: 'record' })
+    expect(recordApproach(25, 20)).toEqual({ daysToBeat: 0, isRecord: true, tier: 'record' })
+  })
+
+  it('computes daysToBeat and clamps negatives', () => {
+    expect(recordApproach(12, 20).daysToBeat).toBe(8)
+    expect(recordApproach(-3, 20).daysToBeat).toBe(20)
+  })
+})
+
+describe('urgeQuietStretch', () => {
+  const today = '2026-06-22'
+  it('returns days since the most-recent logged urge', () => {
+    const log: UrgeWin[] = [
+      { id: '1', date: '2026-06-15' },
+      { id: '2', date: '2026-06-19' },
+    ]
+    expect(urgeQuietStretch(log, today)).toEqual({ days: 3, lastDate: '2026-06-19', empty: false })
+  })
+
+  it('prefers the at-timestamp over date and clamps future logs to 0', () => {
+    const log: UrgeWin[] = [
+      { id: '1', date: '2026-06-01', at: '2026-06-25T08:00:00.000Z' },
+    ]
+    expect(urgeQuietStretch(log, today).days).toBe(0)
+    expect(urgeQuietStretch(log, today).lastDate).toBe('2026-06-25')
+  })
+
+  it('reports empty when there is no log', () => {
+    expect(urgeQuietStretch([], today)).toEqual({ days: 0, empty: true })
+    expect(urgeQuietStretch(undefined, today)).toEqual({ days: 0, empty: true })
   })
 })

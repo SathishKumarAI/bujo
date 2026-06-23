@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { emptyJournal } from './storage'
 import type { DevSession } from './types'
-import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession, minutesByProject, interruptionsTrend } from './focus'
+import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday } from './focus'
 
 function withSessions(ss: DevSession[]) {
   const d = emptyJournal()
@@ -91,5 +91,47 @@ describe('focus helpers', () => {
     expect(t[0]).toEqual({ date: '2026-06-09', avg: 0, count: 0 })
     expect(t[1]).toEqual({ date: '2026-06-10', avg: 1, count: 1 })
     expect(t[2]).toEqual({ date: '2026-06-11', avg: 3, count: 2 })
+  })
+
+  it('builds a deep-work heatmap aligned to whole Sun..Sat weeks', () => {
+    // today 2026-06-11 is a Thursday (wd 4) → window ends Sat 2026-06-13
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 120 }),
+      S({ date: '2026-06-11', durationMin: 60 }), // same day → 180 total (busiest)
+      S({ date: '2026-06-08', durationMin: 90 }),
+    ])
+    const { cells, max } = deepWorkHeatmap(d, '2026-06-11', 2)
+    expect(cells.length).toBe(14) // 2 weeks * 7
+    expect(max).toBe(180)
+    expect(cells[0].weekday).toBe(0) // starts on a Sunday
+    expect(cells[cells.length - 1].date).toBe('2026-06-13') // ends Saturday
+    const thu = cells.find((c) => c.date === '2026-06-11')!
+    expect(thu.min).toBe(180)
+    expect(thu.level).toBe(4) // busiest day → top level
+    const mon = cells.find((c) => c.date === '2026-06-08')!
+    expect(mon.min).toBe(90)
+    expect(mon.level).toBe(2) // 90/180 = 0.5 → ceil(2)
+    const empty = cells.find((c) => c.date === '2026-06-09')!
+    expect(empty.level).toBe(0)
+  })
+
+  it('heatmap reports a zero max and all-zero levels with no sessions', () => {
+    const { cells, max } = deepWorkHeatmap(withSessions([]), '2026-06-11', 1)
+    expect(max).toBe(0)
+    expect(cells.every((c) => c.level === 0 && c.min === 0)).toBe(true)
+  })
+
+  it('averages focus score by weekday, duration-weighted', () => {
+    // both Thursday: focus 8 over 60m and focus 6 over 60m → 7.0
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 60, focus: 8 }),
+      S({ date: '2026-06-11', durationMin: 60, focus: 6 }),
+      S({ date: '2026-06-08', durationMin: 30, focus: 9 }), // Monday
+    ])
+    const by = focusByWeekday(d)
+    expect(by.length).toBe(7)
+    expect(by[4]).toEqual({ day: 4, label: 'Thu', avg: 7, count: 2 })
+    expect(by[1]).toEqual({ day: 1, label: 'Mon', avg: 9, count: 1 })
+    expect(by[0]).toEqual({ day: 0, label: 'Sun', avg: 0, count: 0 })
   })
 })

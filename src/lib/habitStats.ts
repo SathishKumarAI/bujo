@@ -317,3 +317,180 @@ export function weeklyHeatRow(
   }
   return out
 }
+
+export interface MonthlyCompletion {
+  /** Calendar month key "YYYY-MM". */
+  ym: string
+  /** Scheduled days for this habit in that month (respecting activeDays/startedOn). */
+  scheduled: number
+  /** Of those, how many were done. */
+  done: number
+  /** 0–100 completion share; 0 when nothing was scheduled (never NaN). */
+  pct: number
+}
+
+/**
+ * Per-habit monthly completion over the trailing `months` calendar months
+ * (BUJO #407), oldest→newest, ending with the current (in-progress) month.
+ * For each month it sums the habit's scheduled days vs done days — so a
+ * Mon/Wed/Fri habit isn't penalised for days it was never due, and months
+ * before the habit started simply report scheduled=0. Days in the future (after
+ * `today`, within the current month) are not counted toward scheduled, so the
+ * current month reflects only what's been due so far. Pure; powers a per-habit
+ * monthly bar chart to spot seasonal momentum. Avoid habits can be passed but
+ * "done" means a *slip* for them, so callers typically use it for build habits.
+ */
+export function monthlyHabitCompletion(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  months = 12,
+): MonthlyCompletion[] {
+  const [y0, m0] = today.split('-').map(Number)
+  const out: MonthlyCompletion[] = []
+  for (let k = months - 1; k >= 0; k--) {
+    // First of the target month, k months before the current one.
+    const y = y0
+    const monthIndex = m0 - 1 - k // 0-based, may go negative → normalise below
+    const d = new Date(y, monthIndex, 1)
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+    let scheduled = 0
+    let done = 0
+    for (let day = 1; day <= lastDay; day++) {
+      const iso = `${ym}-${String(day).padStart(2, '0')}`
+      if (iso > today) break // future days don't count yet
+      if (!isScheduledOn(habit, iso)) continue
+      scheduled += 1
+      if (habitDoneOn(data, habit, iso)) done += 1
+    }
+    out.push({ ym, scheduled, done, pct: scheduled ? Math.round((done / scheduled) * 100) : 0 })
+  }
+  return out
+}
+
+/**
+ * Last-`days` value sparkline for a habit (BUJO #399), oldest→newest ending
+ * `today`. Each point carries the habit's raw logged value that day and a 0–1
+ * `norm` for drawing a fixed-height sparkline: count/timer normalise to the
+ * target (clamped to 1), rating to /5, and check habits to 0/1. Off-schedule and
+ * pre-start days carry value 0 / norm 0 so the line dips for genuinely-missed
+ * days without special-casing. Pure; lets the grid/editor render a tiny inline
+ * trend beside numeric habits instead of only a single day's number.
+ */
+export interface SparkPoint {
+  day: string
+  value: number
+  /** 0–1 height fraction for a fixed-height sparkline. */
+  norm: number
+}
+
+export function valueSparkline(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  days = 14,
+): SparkPoint[] {
+  const type = habit.type ?? 'check'
+  const target = habitTarget(habit)
+  const out: SparkPoint[] = []
+  for (let i = days - 1; i >= 0; i--) {
+    const day = addDays(today, -i)
+    const value = isScheduledOn(habit, day) ? habitValueOn(data, habit, day) : 0
+    let norm: number
+    if (value <= 0) norm = 0
+    else if (type === 'rating') norm = Math.min(1, value / 5)
+    else if (type === 'check') norm = 1
+    else norm = Math.min(1, target > 0 ? value / target : 1)
+    out.push({ day, value, norm })
+  }
+  return out
+}
+
+/**
+ * Letter grade (A–F) for a habit's recency-weighted consistency (BUJO trackers ·
+ * at-a-glance grade). A thin, pure mapping over {@link consistencyScore} so the
+ * grid can show a single glanceable mark instead of a raw number: A ≥ 90, B ≥ 75,
+ * C ≥ 60, D ≥ 40, else F. Returns the numeric `score` too so callers can colour
+ * the badge. Build habits only in spirit (avoid habits invert the meaning), but
+ * it's a pure read so callers choose.
+ */
+export interface HabitGrade {
+  letter: 'A' | 'B' | 'C' | 'D' | 'F'
+  score: number
+}
+
+export function habitGrade(
+  data: JournalData,
+  habit: Habit,
+  today = todayISO(),
+  window = 30,
+): HabitGrade {
+  const score = consistencyScore(data, habit, today, window)
+  const letter = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F'
+  return { letter, score }
+}
+
+export interface TrackerSummary {
+  /** Non-archived build (non-avoid) habits being tracked. */
+  buildHabits: number
+  /** Non-archived avoid (quit) habits being tracked. */
+  avoidHabits: number
+  /** Mean 30-day recency-weighted consistency across build habits (0–100). */
+  avgConsistency: number
+  /** Longest current streak among build check habits and which habit holds it. */
+  topStreak: number
+  topStreakHabit: string | null
+  /** Build habits scheduled today that are still done across all of them (0–100). */
+  todayPct: number
+}
+
+/**
+ * One-glance roll-up across all tracked habits (BUJO trackers · summary tile):
+ * how many build vs quit habits, the mean consistency score, the single longest
+ * current streak (with the habit's name), and today's overall completion share of
+ * scheduled build habits. Pure — composes the existing per-habit helpers
+ * (consistencyScore, habitStreak via the passed streakOf, isScheduledOn,
+ * habitDoneOn) into a header card so the user sees the shape of their whole grid
+ * without scanning every row. `streakOf` is injected (the live habit-streak fn
+ * lives in stats.ts, outside this module) so this stays a pure, dependency-light
+ * composition; pass a no-op returning 0 to skip streaks.
+ */
+export function trackerSummary(
+  data: JournalData,
+  streakOf: (habitId: string, today: string) => number,
+  today = todayISO(),
+): TrackerSummary {
+  const active = data.habits.filter((h) => !h.archived)
+  const build = active.filter((h) => !h.avoid)
+  const avoid = active.filter((h) => h.avoid)
+
+  const scores = build.map((h) => consistencyScore(data, h, today))
+  const avgConsistency = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+
+  let topStreak = 0
+  let topStreakHabit: string | null = null
+  for (const h of build) {
+    if ((h.type ?? 'check') !== 'check') continue
+    const s = streakOf(h.id, today)
+    if (s > topStreak) { topStreak = s; topStreakHabit = h.name }
+  }
+
+  let scheduledToday = 0
+  let doneToday = 0
+  for (const h of build) {
+    if (!isScheduledOn(h, today)) continue
+    scheduledToday += 1
+    if (habitDoneOn(data, h, today)) doneToday += 1
+  }
+  const todayPct = scheduledToday ? Math.round((doneToday / scheduledToday) * 100) : 0
+
+  return {
+    buildHabits: build.length,
+    avoidHabits: avoid.length,
+    avgConsistency,
+    topStreak,
+    topStreakHabit,
+    todayPct,
+  }
+}

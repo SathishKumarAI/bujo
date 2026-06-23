@@ -184,6 +184,138 @@ export function collectionCsv(data: JournalData, collectionId: string): string {
   return toCsv(['date', 'type', 'status', 'important', 'text', 'tags'], rows)
 }
 
+/**
+ * Developer focus / coding-session CSV export (BUJO per-domain export): one row per
+ * logged DevSession with its duration, flow/stress scores, interruptions, project
+ * and language tags, so a developer can analyse their deep-work time in a
+ * spreadsheet. Pure; header-only on a journal with no sessions.
+ */
+export function devSessionsCsv(data: JournalData): string {
+  return toCsv(
+    ['date', 'project', 'durationMin', 'focus', 'stress', 'interruptions', 'tags', 'notes'],
+    [...(data.devSessions ?? [])]
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .map((s) => [s.date, s.project ?? '', s.durationMin, s.focus, s.stress, s.interruptions ?? '', (s.tags ?? []).join(' '), s.notes ?? '']),
+  )
+}
+
+// ── Data summary (BUJO-331 / 325 family) ──────────────────────────────────────
+
+export interface DataSummary {
+  /** Earliest ISO day seen across every dated record, or null if empty. */
+  firstDay: string | null
+  /** Latest ISO day seen across every dated record, or null if empty. */
+  lastDay: string | null
+  /** Whole days from firstDay to lastDay inclusive (1 if same day, 0 if empty). */
+  spanDays: number
+  /** Distinct ISO days that have at least one record of any kind. */
+  activeDays: number
+  /** activeDays / spanDays as a 0–100 percentage (0 when span is 0). */
+  coveragePct: number
+  /** Per-domain record counts, largest first. */
+  counts: { label: string; count: number }[]
+  /** Total records summed across all domains. */
+  totalRecords: number
+}
+
+/** Collect every ISO "YYYY-MM-DD" day from the journal's dated records. */
+function collectDays(data: JournalData): Set<string> {
+  const days = new Set<string>()
+  const add = (d?: string) => { if (d && /^\d{4}-\d{2}-\d{2}/.test(d)) days.add(d.slice(0, 10)) }
+  for (const e of data.entries) add(e.date)
+  for (const m of data.metrics) add(m.date)
+  for (const w of data.workouts) add(w.date)
+  for (const d of Object.keys(data.habitLog)) add(d)
+  for (const d of Object.keys(data.habitValues ?? {})) add(d)
+  for (const g of data.gratitude) add(g.date)
+  for (const s of data.devSessions ?? []) add(s.date)
+  for (const p of data.pickleball ?? []) add(p.date)
+  for (const c of data.cycle) add(c.date)
+  for (const b of data.bodyMetrics) add(b.date)
+  return days
+}
+
+/**
+ * Whole-journal summary stats (read-only, pure): the tracked date range, how many
+ * of those days actually have data ("coverage"), and a per-domain record count.
+ * Powers a "Journal at a glance" card in Settings so users can see the shape and
+ * span of everything they've captured without changing any stored data.
+ */
+export function dataSummary(data: JournalData): DataSummary {
+  const days = collectDays(data)
+  const sorted = [...days].sort()
+  const firstDay = sorted[0] ?? null
+  const lastDay = sorted[sorted.length - 1] ?? null
+  let spanDays = 0
+  if (firstDay && lastDay) {
+    const a = Date.parse(firstDay + 'T00:00:00')
+    const b = Date.parse(lastDay + 'T00:00:00')
+    spanDays = Number.isNaN(a) || Number.isNaN(b) ? 0 : Math.round((b - a) / 86_400_000) + 1
+  }
+  const activeDays = days.size
+  const coveragePct = spanDays > 0 ? Math.min(100, Math.round((activeDays / spanDays) * 100)) : 0
+  const raw: { label: string; count: number }[] = [
+    { label: 'Entries', count: data.entries.length },
+    { label: 'Habits', count: data.habits.length },
+    { label: 'Metrics', count: data.metrics.length },
+    { label: 'Workouts', count: data.workouts.length },
+    { label: 'Focus sessions', count: (data.devSessions ?? []).length },
+    { label: 'Pickleball', count: (data.pickleball ?? []).length },
+    { label: 'Books', count: (data.books ?? []).length },
+    { label: 'Gratitude', count: data.gratitude.length },
+    { label: 'Memories', count: data.memories.length },
+    { label: 'Collections', count: data.collections.length },
+  ]
+  const counts = raw.filter((r) => r.count > 0).sort((a, b) => b.count - a.count)
+  const totalRecords = raw.reduce((s, r) => s + r.count, 0)
+  return { firstDay, lastDay, spanDays, activeDays, coveragePct, counts, totalRecords }
+}
+
+// ── Backup integrity checksum (BUJO-246) ──────────────────────────────────────
+
+/**
+ * Deterministic 32-bit FNV-1a checksum of a backup string, as 8 lowercase hex
+ * chars. Dependency-free (no Web Crypto, so it's sync and testable anywhere).
+ * Not cryptographic — its job is to catch truncated/corrupted backup files, not
+ * tampering. Same input always yields the same digest.
+ */
+export function checksum(text: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i)
+    // FNV prime 16777619, kept in 32-bit range via Math.imul.
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+
+const CHECKSUM_PREFIX = 'bujo-checksum:'
+
+/**
+ * Wrap a backup payload with a leading checksum line so a later import can verify
+ * the file wasn't truncated. Round-trips with `verifyChecksum`. Pure.
+ */
+export function withChecksum(payload: string): string {
+  return `${CHECKSUM_PREFIX}${checksum(payload)}\n${payload}`
+}
+
+/**
+ * Verify (and unwrap) a checksum-stamped backup. Returns the original payload when
+ * the stored digest matches, or an `{ ok: false }` result describing the problem.
+ * A file with no checksum line is reported as `unstamped` (not an error) so plain
+ * backups still load. Pure.
+ */
+export function verifyChecksum(
+  text: string,
+): { ok: true; payload: string; stamped: boolean } | { ok: false; reason: 'mismatch' } {
+  if (!text.startsWith(CHECKSUM_PREFIX)) return { ok: true, payload: text, stamped: false }
+  const nl = text.indexOf('\n')
+  if (nl < 0) return { ok: false, reason: 'mismatch' }
+  const stored = text.slice(CHECKSUM_PREFIX.length, nl).trim()
+  const payload = text.slice(nl + 1)
+  return checksum(payload) === stored ? { ok: true, payload, stamped: true } : { ok: false, reason: 'mismatch' }
+}
+
 // ── Backup hygiene helpers ────────────────────────────────────────────────────
 
 /** Settings keys that are device-/account-specific secrets. Stripped from a

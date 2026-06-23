@@ -1,7 +1,8 @@
-import type { JournalData, PickleballSession, Settings } from './types'
+import type { JournalData, PickleballSession, PickleballEvent, Settings } from './types'
 import { todayISO, addDays, dayDiff, fromISODay, ymOf, prettyMonth, WEEKDAYS } from './date'
 
 const sessions = (data: JournalData): PickleballSession[] => data.pickleball ?? []
+const events = (data: JournalData): PickleballEvent[] => data.pickleballEvents ?? []
 
 export interface PickleStats {
   sessions: number
@@ -527,4 +528,173 @@ export function pickleMilestones(data: JournalData): PickleMilestone[] {
     ladder('wins', 'Games won', gamesWon, [25, 100, 250, 500, 1000]),
     ladder('streak', 'Win streak', longest, [3, 5, 10, 20]),
   ]
+}
+
+export interface PickleHours {
+  /** Sessions that logged a durationMin (others are excluded from time math). */
+  timedSessions: number
+  /** Total minutes logged across timed sessions. */
+  minutes: number
+  /** Total hours, one decimal. */
+  hours: number
+  /** Average minutes per timed session (rounded). */
+  avgMin: number
+  /** Hours logged within the last `recentDays` window, one decimal. */
+  recentHours: number
+  /** Minutes per game where games were played (court efficiency), rounded; 0 when none. */
+  minPerGame: number
+}
+
+/**
+ * Time-on-court summary (#149 time-allocation) from session durationMin. Only
+ * sessions that logged a duration count toward the time totals. recentHours is
+ * the trailing window; minPerGame is a tempo read (lower = faster games). Pure.
+ */
+export function pickleHours(data: JournalData, recentDays = 30, today = todayISO()): PickleHours {
+  const timed = sessions(data).filter((s) => s.durationMin != null && s.durationMin > 0)
+  const minutes = timed.reduce((a, s) => a + (s.durationMin ?? 0), 0)
+  const n = timed.length
+  let recentMin = 0
+  let games = 0
+  for (const s of timed) {
+    const d = dayDiff(s.date, today)
+    if (d >= 0 && d < recentDays) recentMin += s.durationMin ?? 0
+    games += s.gamesWon + s.gamesLost
+  }
+  return {
+    timedSessions: n,
+    minutes,
+    hours: Math.round((minutes / 60) * 10) / 10,
+    avgMin: n ? Math.round(minutes / n) : 0,
+    recentHours: Math.round((recentMin / 60) * 10) / 10,
+    minPerGame: games ? Math.round(minutes / games) : 0,
+  }
+}
+
+export interface ScoringStat {
+  /** Scoring system used. */
+  scoring: '11' | '15' | '21' | 'rally21'
+  label: string
+  sessions: number
+  games: number
+  gamesWon: number
+  winPct: number // whole number 0–100
+}
+
+const SCORING_LABEL: Record<ScoringStat['scoring'], string> = {
+  '11': 'To 11', '15': 'To 15', '21': 'To 21', rally21: 'Rally 21',
+}
+
+/**
+ * Win% + games split by the scoring system logged on each session (to 11/15/21
+ * or rally-21). Surfaces whether you play better in short vs long games. Only
+ * sessions carrying a `scoring` value count. Sorted by games desc, then win%
+ * desc. Pure & empty-safe.
+ */
+export function scoringStats(data: JournalData): ScoringStat[] {
+  const by = new Map<ScoringStat['scoring'], { sessions: number; games: number; won: number }>()
+  for (const s of sessions(data)) {
+    const sc = s.scoring
+    if (!sc) continue
+    const cur = by.get(sc) ?? { sessions: 0, games: 0, won: 0 }
+    cur.sessions += 1
+    cur.games += s.gamesWon + s.gamesLost
+    cur.won += s.gamesWon
+    by.set(sc, cur)
+  }
+  return [...by.entries()]
+    .map(([scoring, v]) => ({
+      scoring,
+      label: SCORING_LABEL[scoring],
+      sessions: v.sessions,
+      games: v.games,
+      gamesWon: v.won,
+      winPct: v.games ? Math.round((v.won / v.games) * 100) : 0,
+    }))
+    .sort((a, b) => b.games - a.games || b.winPct - a.winPct || (a.scoring < b.scoring ? -1 : 1))
+}
+
+export interface UpcomingEvent {
+  id: string
+  name: string
+  date: string
+  kind: 'league' | 'tournament'
+  format: PickleballEvent['format']
+  division?: string
+  /** Whole days from `today` until the event (0 = today, never negative here). */
+  daysUntil: number
+  /** True when the event is today or tomorrow (urgency styling hook). */
+  soon: boolean
+}
+
+/**
+ * Upcoming leagues/tournaments for a prep countdown (#345). Returns events dated
+ * today or later, soonest first, each with a daysUntil. `soon` flags the next
+ * 48h. Past events are excluded. Pure.
+ */
+export function upcomingEvents(data: JournalData, today = todayISO()): UpcomingEvent[] {
+  return events(data)
+    .map((e) => ({ e, daysUntil: dayDiff(today, e.date) }))
+    .filter((x) => x.daysUntil >= 0)
+    .sort((a, b) => a.daysUntil - b.daysUntil || (a.e.name < b.e.name ? -1 : 1))
+    .map(({ e, daysUntil }) => ({
+      id: e.id,
+      name: e.name,
+      date: e.date,
+      kind: e.kind,
+      format: e.format,
+      division: e.division,
+      daysUntil,
+      soon: daysUntil <= 1,
+    }))
+}
+
+export interface PlayConsistency {
+  /** Distinct calendar days you played. */
+  daysPlayed: number
+  /** Longest gap (in days) between consecutive play days; 0 with <2 play days. */
+  longestGap: number
+  /** Average days between consecutive play days, one decimal; 0 with <2. */
+  avgGap: number
+  /** Distinct weeks with ≥1 session within the trailing `weeks` window. */
+  activeWeeks: number
+  /** The trailing window size used for activeWeeks. */
+  weeks: number
+  /** Days since your most recent session; null when nothing is logged. */
+  daysSinceLast: number | null
+}
+
+/**
+ * Play-consistency / cadence read over session days (#: gap analysis, extends
+ * playStreak). Looks at the spacing of distinct play days: the longest layoff,
+ * the average cadence, and how many of the last `weeks` weeks had any play.
+ * Pure & empty-safe.
+ */
+export function playConsistency(data: JournalData, weeks = 8, today = todayISO()): PlayConsistency {
+  const days = [...new Set(sessions(data).map((s) => s.date))].sort()
+  const daysPlayed = days.length
+  let longestGap = 0
+  let gapSum = 0
+  for (let i = 1; i < days.length; i++) {
+    const gap = dayDiff(days[i - 1], days[i])
+    if (gap > longestGap) longestGap = gap
+    gapSum += gap
+  }
+  const avgGap = days.length >= 2 ? Math.round((gapSum / (days.length - 1)) * 10) / 10 : 0
+  // Active weeks: count distinct 7-day buckets ending at `today` that had play.
+  const start = addDays(today, -(weeks * 7 - 1))
+  const activeBuckets = new Set<number>()
+  for (const d of days) {
+    const off = dayDiff(start, d)
+    if (off >= 0 && off < weeks * 7) activeBuckets.add(Math.floor(off / 7))
+  }
+  const last = days[days.length - 1]
+  return {
+    daysPlayed,
+    longestGap,
+    avgGap,
+    activeWeeks: activeBuckets.size,
+    weeks,
+    daysSinceLast: last ? Math.max(0, dayDiff(last, today)) : null,
+  }
 }

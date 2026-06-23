@@ -401,3 +401,148 @@ describe('momentumIndicator', () => {
     expect(m.find((x) => x.key === 'mood')).toBeUndefined()
   })
 })
+
+import { migrationAnalytics, taskAging, pickleballInsights, focusSleepCorrelation } from './correlations'
+
+function task(d: JournalData, id: string, date: string, opts: Partial<JournalData['entries'][number]> = {}) {
+  d.entries.push({
+    id, date, type: 'task', text: opts.text ?? id, status: opts.status ?? 'open',
+    important: false, memory: false, tags: [], createdAt: date + 'T00:00:00.000Z',
+    originId: opts.originId,
+  })
+}
+
+describe('migrationAnalytics', () => {
+  it('counts origin-chain hops and surfaces chronically-deferred open tasks', () => {
+    const d = emptyJournal()
+    // A chain migrated 3 times: t0 → t1 → t2 → t3 (live tip, still open).
+    task(d, 't0', '2026-06-01', { status: 'migrated' })
+    task(d, 't1', '2026-06-02', { status: 'migrated', originId: 't0' })
+    task(d, 't2', '2026-06-03', { status: 'migrated', originId: 't1' })
+    task(d, 't3', '2026-06-04', { status: 'open', originId: 't2', text: 'Call dentist' })
+    // A once-migrated chain (below the default threshold of 2).
+    task(d, 'a0', '2026-06-01', { status: 'migrated' })
+    task(d, 'a1', '2026-06-02', { status: 'open', originId: 'a0' })
+    // A migrated-but-now-done chain → excluded from chronic.
+    task(d, 'b0', '2026-06-01', { status: 'migrated' })
+    task(d, 'b1', '2026-06-02', { status: 'migrated', originId: 'b0' })
+    task(d, 'b2', '2026-06-03', { status: 'done', originId: 'b1' })
+
+    const rep = migrationAnalytics(d)
+    expect(rep.totalMigrations).toBe(3 + 1 + 2) // hops across all three chains
+    expect(rep.migratedChains).toBe(3)
+    expect(rep.chronic).toHaveLength(1)
+    expect(rep.chronic[0].id).toBe('t3')
+    expect(rep.chronic[0].migrations).toBe(3)
+    expect(rep.chronic[0].text).toBe('Call dentist')
+  })
+
+  it('returns an empty report when no tasks were migrated', () => {
+    const d = emptyJournal()
+    task(d, 'x', '2026-06-01')
+    const rep = migrationAnalytics(d)
+    expect(rep.totalMigrations).toBe(0)
+    expect(rep.migratedChains).toBe(0)
+    expect(rep.chronic).toEqual([])
+  })
+})
+
+describe('taskAging', () => {
+  it('buckets open tasks by age and finds the oldest', () => {
+    const d = emptyJournal()
+    const today = '2026-06-20'
+    task(d, 'today', today)
+    task(d, 'week', '2026-06-15') // 5d → 1–7d
+    task(d, 'two', '2026-06-10') // 10d → 8–14d
+    task(d, 'old', '2026-06-01', { text: 'Ancient', status: 'migrated' }) // 19d → 15+d
+    task(d, 'done', '2026-05-01', { status: 'done' }) // excluded
+
+    const rep = taskAging(d, today)
+    expect(rep.open).toBe(4)
+    const by = Object.fromEntries(rep.buckets.map((b) => [b.label, b.count]))
+    expect(by['Today']).toBe(1)
+    expect(by['1–7d']).toBe(1)
+    expect(by['8–14d']).toBe(1)
+    expect(by['15+d']).toBe(1)
+    expect(rep.oldest?.text).toBe('Ancient')
+    expect(rep.oldest?.age).toBe(19)
+  })
+
+  it('reports no open tasks cleanly', () => {
+    const d = emptyJournal()
+    const rep = taskAging(d, '2026-06-20')
+    expect(rep.open).toBe(0)
+    expect(rep.oldest).toBeNull()
+  })
+})
+
+describe('pickleballInsights', () => {
+  it('computes win rate, weekly games, play streak and recent form', () => {
+    const d = emptyJournal()
+    const today = '2026-06-20'
+    d.pickleball = [
+      // prior 5 sessions: low win rate (2 won / 10)
+      { id: 's1', date: '2026-06-01', format: 'singles', gamesWon: 0, gamesLost: 2 },
+      { id: 's2', date: '2026-06-02', format: 'doubles', gamesWon: 1, gamesLost: 1 },
+      { id: 's3', date: '2026-06-03', format: 'doubles', gamesWon: 0, gamesLost: 2 },
+      { id: 's4', date: '2026-06-04', format: 'doubles', gamesWon: 1, gamesLost: 1 },
+      { id: 's5', date: '2026-06-05', format: 'doubles', gamesWon: 0, gamesLost: 2 },
+      // recent 5: high win rate (8 won / 10) and a 2-day streak ending today
+      { id: 's6', date: '2026-06-15', format: 'doubles', gamesWon: 2, gamesLost: 0 },
+      { id: 's7', date: '2026-06-16', format: 'doubles', gamesWon: 2, gamesLost: 0 },
+      { id: 's8', date: '2026-06-17', format: 'doubles', gamesWon: 1, gamesLost: 1 },
+      { id: 's9', date: '2026-06-19', format: 'doubles', gamesWon: 1, gamesLost: 1 },
+      { id: 's10', date: '2026-06-20', format: 'doubles', gamesWon: 2, gamesLost: 0 },
+    ]
+    const p = pickleballInsights(d, today)
+    expect(p.sessions).toBe(10)
+    expect(p.winRate).toBe(0.5) // 10 won / 20 total
+    // last 7 days = jun 14..20 → s6,s7,s8,s9,s10 each 2 games = 10
+    expect(p.weekGames).toBe(10)
+    expect(p.playStreak).toBe(2) // jun 20 + jun 19
+    expect(p.formDir).toBe('up') // recent win rate > prior
+    expect(p.doubles).toBe(9)
+    expect(p.singles).toBe(1)
+  })
+
+  it('returns null win rate with no sessions', () => {
+    const d = emptyJournal()
+    const p = pickleballInsights(d, '2026-06-20')
+    expect(p.winRate).toBeNull()
+    expect(p.sessions).toBe(0)
+    expect(p.playStreak).toBe(0)
+    expect(p.formDir).toBeNull()
+  })
+})
+
+describe('focusSleepCorrelation', () => {
+  it('correlates same-day sleep with averaged focus', () => {
+    const d = emptyJournal()
+    // Positive relationship: more sleep → higher focus.
+    const rows: [string, number, number][] = [
+      ['2026-06-01', 5, 3],
+      ['2026-06-02', 6, 5],
+      ['2026-06-03', 7, 6],
+      ['2026-06-04', 8, 8],
+      ['2026-06-05', 9, 9],
+    ]
+    for (const [date, sleep, focus] of rows) {
+      d.metrics.push({ date, sleep })
+      d.devSessions = d.devSessions ?? []
+      d.devSessions.push({ id: 'd-' + date, date, durationMin: 60, focus, stress: 3 })
+    }
+    const link = focusSleepCorrelation(d)
+    expect(link.days).toBe(5)
+    expect(link.r).toBeGreaterThan(0.8)
+    expect(link.note).toMatch(/sharper focus/)
+  })
+
+  it('returns null when too few paired days', () => {
+    const d = emptyJournal()
+    d.metrics.push({ date: '2026-06-01', sleep: 7 })
+    d.devSessions = [{ id: 'x', date: '2026-06-01', durationMin: 30, focus: 6, stress: 2 }]
+    const link = focusSleepCorrelation(d)
+    expect(link.r).toBeNull()
+    expect(link.days).toBe(1)
+  })
+})

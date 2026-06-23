@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive } from './csv'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive, devSessionsCsv, dataSummary, checksum, withChecksum, verifyChecksum } from './csv'
 import { emptyJournal } from './storage'
 
 describe('csv export', () => {
@@ -216,5 +216,77 @@ describe('daysSinceBackup', () => {
 
   it('never returns negative for a future backup date', () => {
     expect(daysSinceBackup('2026-06-20', '2026-06-17')).toBe(0)
+  })
+})
+
+describe('devSessionsCsv', () => {
+  it('has headers and is empty on a fresh journal', () => {
+    expect(devSessionsCsv(emptyJournal())).toBe('date,project,durationMin,focus,stress,interruptions,tags,notes')
+  })
+
+  it('emits a row per session, sorted by date, joining tags', () => {
+    const d = emptyJournal()
+    d.devSessions = [
+      { id: 'b', date: '2026-06-12', durationMin: 90, focus: 8, stress: 2, interruptions: 1, project: 'bujo', tags: ['typescript', 'react'] },
+      { id: 'a', date: '2026-06-10', durationMin: 45, focus: 6, stress: 4 },
+    ]
+    const lines = devSessionsCsv(d).split('\n')
+    expect(lines[1].startsWith('2026-06-10,,45,6,4')).toBe(true)
+    expect(lines[2]).toBe('2026-06-12,bujo,90,8,2,1,typescript react,')
+  })
+})
+
+describe('dataSummary', () => {
+  it('is empty/zeroed on a fresh journal', () => {
+    const s = dataSummary(emptyJournal())
+    expect(s).toMatchObject({ firstDay: null, lastDay: null, spanDays: 0, activeDays: 0, coveragePct: 0, totalRecords: 0 })
+    expect(s.counts).toEqual([])
+  })
+
+  it('computes span, active days, coverage and domain counts', () => {
+    const d = emptyJournal()
+    d.entries = [
+      { id: '1', date: '2026-06-01', type: 'note', text: 'a', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-01' },
+      { id: '2', date: '2026-06-05', type: 'note', text: 'b', status: 'open', important: false, memory: false, tags: [], createdAt: '2026-06-05' },
+    ]
+    d.metrics = [{ date: '2026-06-03', mood: 7 }]
+    const s = dataSummary(d)
+    expect(s.firstDay).toBe('2026-06-01')
+    expect(s.lastDay).toBe('2026-06-05')
+    expect(s.spanDays).toBe(5) // inclusive: Jun 1..5
+    expect(s.activeDays).toBe(3) // Jun 1, 3, 5
+    expect(s.coveragePct).toBe(60) // 3/5
+    expect(s.counts).toContainEqual({ label: 'Entries', count: 2 })
+    expect(s.totalRecords).toBe(3)
+  })
+})
+
+describe('checksum / verifyChecksum', () => {
+  it('is deterministic and 8 hex chars', () => {
+    expect(checksum('hello')).toMatch(/^[0-9a-f]{8}$/)
+    expect(checksum('hello')).toBe(checksum('hello'))
+    expect(checksum('hello')).not.toBe(checksum('world'))
+  })
+
+  it('round-trips a stamped payload', () => {
+    const stamped = withChecksum('{"version":2}')
+    const r = verifyChecksum(stamped)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.stamped).toBe(true)
+      expect(r.payload).toBe('{"version":2}')
+    }
+  })
+
+  it('treats an unstamped file as ok-but-unstamped', () => {
+    const r = verifyChecksum('{"version":2}')
+    expect(r).toEqual({ ok: true, payload: '{"version":2}', stamped: false })
+  })
+
+  it('rejects a corrupted/truncated stamped payload', () => {
+    const stamped = withChecksum('original-content')
+    const corrupted = stamped.slice(0, -3) // drop tail bytes
+    const r = verifyChecksum(corrupted)
+    expect(r).toEqual({ ok: false, reason: 'mismatch' })
   })
 })

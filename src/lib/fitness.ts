@@ -691,3 +691,243 @@ export function stalledLifts(data: JournalData, sessions = 3): StalledLift[] {
   }
   return out.sort((a, b) => (b.sessions - a.sessions) || (a.exercise < b.exercise ? -1 : 1))
 }
+
+// ── Rep-PR tracking · best reps at each weight (F: #426) ─────────────────────
+export interface RepPR {
+  /** The load this record was set at (kg/lb, user's unit). */
+  weight: number
+  /** Most reps ever logged at that weight. */
+  reps: number
+  /** Date the rep record was first achieved. */
+  date: string
+}
+
+/**
+ * Rep records for one exercise: the most reps ever performed at each distinct
+ * weight, so high-rep gains register even when the bar weight doesn't change.
+ * Walks every working set (structured rows first, parsed legacy strings as a
+ * fallback), keeping the best rep count per weight and the *earliest* date that
+ * rep count was reached (a later equal effort doesn't reset the date). Warm-ups
+ * are excluded. Sorted heaviest weight first. Pure — derived from logged sets.
+ */
+export function repPRs(data: JournalData, exercise: string): RepPR[] {
+  const ex = exercise.trim().toLowerCase()
+  if (!ex) return []
+  const best = new Map<number, { reps: number; date: string }>()
+  const consider = (weight: number, reps: number, date: string) => {
+    if (!(weight > 0) || !(reps > 0)) return
+    const cur = best.get(weight)
+    if (!cur || reps > cur.reps || (reps === cur.reps && date < cur.date)) {
+      best.set(weight, { reps, date })
+    }
+  }
+  for (const w of [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1))) {
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) {
+        if (r.kind === 'warmup') continue
+        if (r.exercise.trim().toLowerCase() !== ex) continue
+        consider(r.weight ?? 0, r.reps ?? 0, w.date)
+      }
+    } else {
+      for (const line of w.sets) {
+        const p = parseSet(line)
+        if (p && p.exercise.toLowerCase() === ex) consider(p.weight, p.reps, w.date)
+      }
+    }
+  }
+  return [...best.entries()]
+    .map(([weight, v]) => ({ weight, reps: v.reps, date: v.date }))
+    .sort((a, b) => b.weight - a.weight)
+}
+
+// ── Movement-category volume radar (F: #419) ─────────────────────────────────
+export type MovementCategory = 'Push' | 'Pull' | 'Legs' | 'Core'
+
+/** Which movement category an exercise's muscles fall into (push/pull/legs/core). */
+const CATEGORY_MUSCLES: Record<MovementCategory, number[]> = {
+  Push: [4, 2, 5], // chest, shoulders, triceps
+  Pull: [12, 1, 9, 13], // lats, biceps, traps, forearms
+  Legs: [10, 11, 8, 7, 15], // quads, hams, glutes, calves
+  Core: [6, 14], // abs, obliques
+}
+
+export interface CategoryVolume {
+  category: MovementCategory
+  /** Working-set volume (Σ weight × reps) attributed to this category in the window. */
+  volume: number
+}
+
+/**
+ * Weekly working-set volume split across the four movement categories
+ * (Push / Pull / Legs / Core) — a quadrant view for spotting imbalances, ideal
+ * for a radar chart. Each set's volume is attributed to a category when any of
+ * its trained muscles (via musclesForExercise) belongs to that category; a set
+ * spanning two categories counts toward both (e.g. a deadlift hits Pull + Legs),
+ * matching how lifters reason about movement balance. Always returns all four
+ * categories in fixed order so the radar shape is stable. Warm-ups excluded.
+ * Reads structured rows, falling back to parsed legacy strings. Pure.
+ */
+export function volumeByCategory(data: JournalData, today = todayISO(), days = 7): CategoryVolume[] {
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const order: MovementCategory[] = ['Push', 'Pull', 'Legs', 'Core']
+  const totals = new Map<MovementCategory, number>(order.map((c) => [c, 0]))
+  const add = (exercise: string, vol: number) => {
+    if (!(vol > 0)) return
+    const muscles = musclesForExercise(exercise)
+    for (const cat of order) {
+      if (CATEGORY_MUSCLES[cat].some((m) => muscles.includes(m))) {
+        totals.set(cat, (totals.get(cat) ?? 0) + vol)
+      }
+    }
+  }
+  for (const w of data.workouts) {
+    if (!inWindow(w.date)) continue
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) {
+        if (r.kind === 'warmup' || !r.exercise.trim()) continue
+        add(r.exercise, (r.weight ?? 0) * (r.reps ?? 0))
+      }
+    } else {
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.weight * p.reps) }
+    }
+  }
+  return order.map((category) => ({ category, volume: Math.round(totals.get(category) ?? 0) }))
+}
+
+// ── Muscle-recovery readiness map (F: #467) ──────────────────────────────────
+export type RecoveryState = 'fresh' | 'recovering' | 'fatigued'
+
+export interface MuscleRecovery {
+  /** wger muscle id. */
+  muscle: number
+  /** Days since this muscle was last given a working set, or null if never. */
+  daysSince: number | null
+  /**
+   * Readiness band: <1 day = fatigued (trained today/yesterday), 1 day = still
+   * recovering, ≥2 days (or never) = fresh and ready to train.
+   */
+  state: RecoveryState
+}
+
+/** Readiness band for a recovery gap (days since last trained, null = never). */
+export function recoveryState(daysSince: number | null): RecoveryState {
+  if (daysSince == null) return 'fresh'
+  if (daysSince < 1) return 'fatigued'
+  if (daysSince < 2) return 'recovering'
+  return 'fresh'
+}
+
+/**
+ * Recovery readiness for every muscle the exercise library can detect: how many
+ * days since each was last given a working set, plus a coarse readiness band
+ * (fatigued / recovering / fresh). Lets the UI colour a body map by what's ready
+ * to train again. Never-trained muscles read as `fresh` with a null gap (nothing
+ * to recover from). Warm-ups don't count as a training stimulus. Sorted freshest
+ * (longest rest) first, then muscle id. Reads structured rows, falling back to
+ * parsed legacy strings. Pure — derived from logged sessions.
+ */
+export function muscleRecovery(data: JournalData, today = todayISO()): MuscleRecovery[] {
+  const candidates = new Set<number>()
+  for (const ex of EXERCISE_LIBRARY) for (const id of musclesForExercise(ex)) candidates.add(id)
+  const lastTrained = new Map<number, string>()
+  for (const w of data.workouts) {
+    const rows = w.setRows ?? []
+    const exercises = rows.length
+      ? rows.filter((r) => r.kind !== 'warmup' && r.exercise.trim()).map((r) => r.exercise)
+      : w.sets.map((line) => parseSet(line)?.exercise).filter((e): e is string => !!e)
+    for (const ex of exercises) {
+      for (const id of musclesForExercise(ex)) {
+        const cur = lastTrained.get(id)
+        if (!cur || w.date > cur) lastTrained.set(id, w.date)
+      }
+    }
+  }
+  return [...candidates]
+    .map((muscle) => {
+      const last = lastTrained.get(muscle)
+      const daysSince = last ? dayDiff(last, today) : null
+      return { muscle, daysSince, state: recoveryState(daysSince) }
+    })
+    .sort((a, b) => {
+      const ad = a.daysSince ?? Infinity, bd = b.daysSince ?? Infinity
+      return (bd - ad) || (a.muscle - b.muscle)
+    })
+}
+
+// ── Exercise frequency + train/rest ratio (F: #102 / #474) ───────────────────
+export interface ExerciseFreq {
+  exercise: string
+  /** Number of distinct training days this exercise appeared in the window. */
+  days: number
+  /** Total working sets logged for it in the window. */
+  sets: number
+}
+
+/**
+ * How often each exercise was trained in the last `days`: distinct training days
+ * it appeared on and its total working-set count. Surfaces your most- and
+ * least-frequent movements so neglected staples are obvious. A day counts once
+ * toward `days` no matter how many sets it held. Warm-ups excluded. Sorted by
+ * day-count desc, then sets desc, then name. Reads structured rows, falling back
+ * to parsed legacy strings. Pure.
+ */
+export function exerciseFrequency(data: JournalData, today = todayISO(), days = 28): ExerciseFreq[] {
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  // exercise → { days set, set count }
+  const stat = new Map<string, { display: string; days: Set<string>; sets: number }>()
+  const bump = (exercise: string, date: string) => {
+    const name = exercise.trim()
+    if (!name) return
+    const key = name.toLowerCase()
+    const cur = stat.get(key) ?? { display: name, days: new Set<string>(), sets: 0 }
+    cur.days.add(date)
+    cur.sets += 1
+    stat.set(key, cur)
+  }
+  for (const w of data.workouts) {
+    if (!inWindow(w.date)) continue
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) if (r.kind !== 'warmup' && r.exercise.trim()) bump(r.exercise, w.date)
+    } else {
+      for (const line of w.sets) { const p = parseSet(line); if (p) bump(p.exercise, w.date) }
+    }
+  }
+  return [...stat.values()]
+    .map((s) => ({ exercise: s.display, days: s.days.size, sets: s.sets }))
+    .sort((a, b) => (b.days - a.days) || (b.sets - a.sets) || (a.exercise < b.exercise ? -1 : 1))
+}
+
+export interface TrainRestRatio {
+  /** Distinct days with at least one workout in the window. */
+  trainDays: number
+  /** Days in the window with no workout logged. */
+  restDays: number
+  /** Length of the window in days. */
+  window: number
+  /** trainDays ÷ window as a 0–1 fraction (rounded 2dp). */
+  ratio: number
+}
+
+/**
+ * Train-day vs rest-day balance over the last `days`: how many distinct days had
+ * a workout, how many were rest, and the training fraction. Useful for spotting
+ * both under-training and a lack of recovery. Any workout (cardio, strength,
+ * home) counts a day as trained; multiple sessions on one day still count once.
+ * The window is inclusive of today. Pure — derived from workout dates.
+ */
+export function trainRestRatio(data: JournalData, today = todayISO(), days = 28): TrainRestRatio {
+  const window = Math.max(1, days)
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < window }
+  const trained = new Set<string>()
+  for (const w of data.workouts) if (inWindow(w.date)) trained.add(w.date)
+  const trainDays = trained.size
+  return {
+    trainDays,
+    restDays: window - trainDays,
+    window,
+    ratio: Math.round((trainDays / window) * 100) / 100,
+  }
+}

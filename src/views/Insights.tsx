@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, Sun, Activity, type LucideIcon } from 'lucide-react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, Sun, Activity, Repeat, Hourglass, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, type PeriodTrend } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, migrationAnalytics, taskAging, pickleballInsights, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
@@ -36,6 +36,12 @@ export function Insights() {
   const split = weekdayWeekendSplit(data)
   const moodVol = metricVolatility(data, 'mood')
   const momentum = momentumIndicator(data)
+
+  // Task hygiene + cross-domain pickleball.
+  const migration = migrationAnalytics(data)
+  const aging = taskAging(data)
+  const maxAging = Math.max(1, ...aging.buckets.map((b) => b.count))
+  const pickle = pickleballInsights(data)
 
   // Habit deep-dives — anchored to your hottest build habit (top of the
   // streak leaderboard) so the weekday/consistency/month cards always have a
@@ -182,6 +188,70 @@ export function Insights() {
               )
             })}
           </ul>
+        </Card>
+      )}
+
+      {(aging.open > 0 || migration.chronic.length > 0) && (
+        <div className="grid items-start gap-5 md:grid-cols-2">
+          {aging.open > 0 && (
+            <Card title="Open task aging" subtitle={`${aging.open} open task${aging.open === 1 ? '' : 's'} · how long they've sat`}>
+              <div className="flex items-end justify-between gap-2" style={{ height: 110 }} role="img" aria-label="Open tasks bucketed by age">
+                {aging.buckets.map((b) => (
+                  <div key={b.label} className="flex flex-1 flex-col items-center gap-1">
+                    <span className="text-[11px] font-semibold tabular-nums text-text">{b.count}</span>
+                    <div className="flex w-full flex-1 items-end">
+                      <div className="w-full rounded-t" style={{ height: `${Math.max(2, (b.count / maxAging) * 100)}%`, background: cat(b.color) }} title={`${b.count} task${b.count === 1 ? '' : 's'} aged ${b.label}`} />
+                    </div>
+                    <span className="text-[10px] text-overlay0">{b.label}</span>
+                  </div>
+                ))}
+              </div>
+              {aging.oldest && (
+                <p className="mt-3 flex items-center gap-2 border-t border-surface0 pt-3 text-xs text-subtext1">
+                  <Hourglass size={13} style={{ color: cat('peach') }} />
+                  Oldest: <span className="text-text">{aging.oldest.text}</span> · {aging.oldest.age}d
+                </p>
+              )}
+            </Card>
+          )}
+
+          {migration.chronic.length > 0 && (
+            <Card title="Chronically deferred" subtitle="Tasks you keep carrying forward — do or drop">
+              <ul className="space-y-2 text-sm">
+                {migration.chronic.slice(0, 6).map((t) => (
+                  <li key={t.id} className="flex items-center gap-2">
+                    <span className="flex w-12 shrink-0 items-center justify-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: cat('surface0'), color: cat('peach') }}>
+                      <Repeat size={11} />{t.migrations}×
+                    </span>
+                    <span className="flex-1 truncate text-text" title={t.text}>{t.text}</span>
+                    <span className="shrink-0 text-xs text-overlay0">{prettyDay(t.date)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 border-t border-surface0 pt-3 text-xs text-overlay0">
+                {migration.migratedChains} task{migration.migratedChains === 1 ? '' : 's'} migrated at least once · {migration.totalMigrations} carry-forward{migration.totalMigrations === 1 ? '' : 's'} total.
+              </p>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {pickle.sessions > 0 && (
+        <Card title="Pickleball" subtitle="Your game at a glance">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
+            <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />
+            <PickStat label="Play streak" value={`${pickle.playStreak}d`} color="peach" />
+            <PickStat
+              label="Recent form"
+              value={pickle.recentWinRate == null ? '—' : `${Math.round(pickle.recentWinRate * 100)}%`}
+              color={pickle.formDir === 'up' ? 'green' : pickle.formDir === 'down' ? 'red' : 'overlay0'}
+              trend={pickle.formDir}
+            />
+          </ul>
+          <p className="mt-3 border-t border-surface0 pt-3 text-xs text-overlay0">
+            {pickle.sessions} session{pickle.sessions === 1 ? '' : 's'} logged · {pickle.doubles} doubles / {pickle.singles} singles.
+          </p>
         </Card>
       )}
 
@@ -414,6 +484,19 @@ export function Insights() {
 
       <TagManager />
     </div>
+  )
+}
+
+function PickStat({ label, value, color, trend }: { label: string; value: string; color: string; trend?: 'up' | 'down' | 'flat' | null }) {
+  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  return (
+    <li className="rounded-xl border border-surface0 bg-base p-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-subtext0">{label}</span>
+        {trend && <TrendIcon size={13} style={{ color: cat(color) }} />}
+      </div>
+      <p className="mt-1 text-lg font-bold tabular-nums" style={{ color: cat(color) }}>{value}</p>
+    </li>
   )
 }
 

@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange, Award, HeartPulse } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange, Award, HeartPulse, Clock, Hash, CalendarClock, CalendarCheck } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 
@@ -41,6 +41,17 @@ const DRILLS = [
   { name: 'Footwork & split-step', focus: 'Movement', how: 'Split-step on every shot, shuffle (never cross feet) at the line. 3×30s ladder.' },
   { name: 'Stacking & poaching', focus: 'Doubles strategy', how: 'Signals + switches with your partner; cover the middle, call “mine / yours”.' },
   { name: 'Lob & overhead', focus: 'Court coverage', how: 'Alternate defensive lobs and putaway overheads. Agree who takes the lob.' },
+]
+
+/** Tournament-day prep checklist · shown alongside the countdown to an event. */
+const PREP_CHECKLIST = [
+  'Paddles (+ a backup) and fresh grip / overgrip tape',
+  'Court shoes, extra socks, athletic tape',
+  'Water + electrolytes; quick-energy snacks',
+  'Sun: hat, sunglasses, sunscreen — or layers for cold',
+  'Warm-up band, foam roller; ibuprofen / blister kit',
+  'Know your start time, division & format; arrive 45 min early',
+  'Mental routine: pre-point breath, one tactical intention',
 ]
 
 /** Reputable external coaching / rules resources (open in a new tab). */
@@ -137,6 +148,11 @@ export function Pickleball() {
   const forecast = winRateForecast(data)
   const load = rpeLoad(data, 7, today)
   const milestones = pickleMilestones(data)
+  // Read-only time-on-court, scoring split, consistency & event-prep signals.
+  const hours = pickleHours(data, 30, today)
+  const scoring = scoringStats(data)
+  const consistency = playConsistency(data, 8, today)
+  const upcoming = upcomingEvents(data, today)
   const goal = data.settings.pickleballGoalGames ?? 0
   // 13-week play-frequency heatmap.
   const WEEKS = 13
@@ -563,6 +579,57 @@ export function Pickleball() {
         </Card>
       )}
 
+      {/* ── Time on court (#149 time-allocation) ── */}
+      {hours.timedSessions > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Clock size={18} className="text-sky" /> Time on court</span>} subtitle={`From duration on ${hours.timedSessions} ${hours.timedSessions === 1 ? 'session' : 'sessions'}`} collapsible>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <StatTile compact label="Total hours" value={hours.hours} color="sky" />
+            <StatTile compact label="Last 30d" value={`${hours.recentHours}h`} color="teal" />
+            <StatTile compact label="Avg session" value={`${hours.avgMin}m`} color="blue" />
+            <StatTile compact label="Min / game" value={hours.minPerGame || '—'} color="mauve" />
+          </div>
+          <p className="mt-3 text-xs text-overlay1">Add Minutes when logging a session to track time invested. Min/game is your court tempo — lower means faster games.</p>
+        </Card>
+      )}
+
+      {/* ── Win% by scoring system ── */}
+      {scoring.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Hash size={18} className="text-peach" /> Performance by scoring</span>} subtitle="Win % &amp; games by scoring system" collapsible>
+          <ul className="space-y-3">
+            {scoring.map((sc) => (
+              <li key={sc.scoring}>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="text-subtext1">{sc.label}</span>
+                  <span className="text-overlay1">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
+                  <div className="h-full rounded-full" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[11px] text-overlay0">Set a Scoring system when logging to see if you play better in short or long games.</p>
+        </Card>
+      )}
+
+      {/* ── Play consistency / cadence ── */}
+      {consistency.daysPlayed > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><CalendarCheck size={18} className="text-green" /> Play consistency</span>} subtitle="How regularly you get on court" collapsible>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <StatTile compact label="Days played" value={consistency.daysPlayed} color="green" />
+            <StatTile compact label={`Active wks / ${consistency.weeks}`} value={consistency.activeWeeks} color="teal" />
+            <StatTile compact label="Avg gap" value={consistency.avgGap ? `${consistency.avgGap}d` : '—'} color="blue" />
+            <StatTile compact label="Longest gap" value={consistency.longestGap ? `${consistency.longestGap}d` : '—'} color="peach" />
+          </div>
+          {consistency.daysSinceLast != null && (
+            <p className="mt-3 text-xs text-overlay1">
+              {consistency.daysSinceLast === 0 ? 'You played today — keep the rhythm.' : `Last played ${consistency.daysSinceLast} ${consistency.daysSinceLast === 1 ? 'day' : 'days'} ago.`}
+              {consistency.longestGap > 0 && ` Your average cadence is about one play day every ${consistency.avgGap} days.`}
+            </p>
+          )}
+        </Card>
+      )}
+
       <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" enlargeable={false}>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
@@ -605,6 +672,33 @@ export function Pickleball() {
           ))}
         </ul>
       </Card>
+
+      {/* ── Tournament prep countdown (#345) ── */}
+      {upcoming.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><CalendarClock size={18} className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+          <ul className="mb-3 space-y-2">
+            {upcoming.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+                <span className="min-w-0">
+                  <span className="text-sm font-medium text-text">{e.name}</span>
+                  <span className="block truncate text-xs text-overlay0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                </span>
+                <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
+                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <details className="rounded-lg border border-surface0 bg-base p-3">
+            <summary className="cursor-pointer text-sm font-medium text-text">Tournament-day prep checklist</summary>
+            <ul className="mt-2 space-y-1">
+              {PREP_CHECKLIST.map((x) => (
+                <li key={x} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {x}</li>
+              ))}
+            </ul>
+          </details>
+        </Card>
+      )}
 
       {/* ── Leagues & tournaments ── */}
       <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events · separate from casual sessions">

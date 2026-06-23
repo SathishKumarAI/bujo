@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks } from './reading'
+import { shelf, progressPct, finishedThisYear, pagesRead, averageRating, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks, allLearnings, ratingDistribution } from './reading'
 import type { Book } from './types'
 
 const mk = (p: Partial<Book>): Book => ({
@@ -197,5 +197,48 @@ describe('reading', () => {
     expect(staleBooks(books, '2026-06-18')).toEqual([])
     const recent = [mk({ id: 'b', status: 'reading', totalPages: 300, currentPage: 40, startedOn: '2026-06-10' })]
     expect(staleBooks(recent, '2026-06-18', 14)).toEqual([]) // only 8 days idle
+  })
+
+  it('allLearnings aggregates every dated learning newest-first, tagged by book', () => {
+    const books = [
+      mk({ id: 'a', title: 'Dune', status: 'reading', learnings: [
+        { date: '2026-06-10', text: 'spice matters' },
+        { date: '2026-06-15', text: 'fear is the mind-killer' },
+      ] }),
+      mk({ id: 'b', title: 'Atomic Habits', status: 'finished', learnings: [
+        { date: '2026-06-12', text: 'systems over goals' },
+      ] }),
+      mk({ id: 'c', title: 'No Notes', status: 'want' }),
+    ]
+    const all = allLearnings(books)
+    expect(all.map((l) => l.date)).toEqual(['2026-06-15', '2026-06-12', '2026-06-10'])
+    expect(all[0]).toEqual({ date: '2026-06-15', text: 'fear is the mind-killer', bookId: 'a', bookTitle: 'Dune' })
+  })
+
+  it('allLearnings filters by query across text and book title (case-insensitive)', () => {
+    const books = [
+      mk({ id: 'a', title: 'Dune', learnings: [{ date: '2026-06-10', text: 'spice matters' }] }),
+      mk({ id: 'b', title: 'Atomic Habits', learnings: [{ date: '2026-06-12', text: 'systems over goals' }] }),
+    ]
+    expect(allLearnings(books, 'SPICE').map((l) => l.text)).toEqual(['spice matters'])
+    expect(allLearnings(books, 'atomic').map((l) => l.bookTitle)).toEqual(['Atomic Habits'])
+    expect(allLearnings(books, 'nothing')).toEqual([])
+    expect(allLearnings([])).toEqual([])
+  })
+
+  it('ratingDistribution histograms finished, rated books by star', () => {
+    const books = [
+      mk({ status: 'finished', rating: 5 }),
+      mk({ status: 'finished', rating: 5 }),
+      mk({ status: 'finished', rating: 3 }),
+      mk({ status: 'finished' }), // unrated → ignored
+      mk({ status: 'reading', rating: 4 }), // unfinished → ignored
+    ]
+    const dist = ratingDistribution(books)
+    expect(dist.length).toBe(5)
+    expect(dist[2]).toEqual({ stars: 3, count: 1 })
+    expect(dist[4]).toEqual({ stars: 5, count: 2 })
+    expect(dist.reduce((a, d) => a + d.count, 0)).toBe(3)
+    expect(ratingDistribution([]).every((d) => d.count === 0)).toBe(true)
   })
 })

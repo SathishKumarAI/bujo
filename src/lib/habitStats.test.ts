@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   bestWeekday, categoryRollup, completionRate30, consistencyScore, habitCellFill,
   isScheduledOn, perfectDayStats, perfectWeeks, weeklyHeatRow,
+  monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary,
 } from './habitStats'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
@@ -361,5 +362,147 @@ describe('weeklyHeatRow', () => {
     const row = weeklyHeatRow(d, h, TODAY)
     expect(row[6].level).toBeGreaterThan(0)
     expect(row[6].level).toBeLessThan(4)
+  })
+})
+
+describe('monthlyHabitCompletion', () => {
+  it('returns one entry per month oldest→newest ending the current month', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const out = monthlyHabitCompletion(withDone(h, []), h, TODAY, 3)
+    expect(out).toHaveLength(3)
+    expect(out[2].ym).toBe('2026-06') // current month last
+    expect(out[1].ym).toBe('2026-05')
+    expect(out[0].ym).toBe('2026-04')
+  })
+
+  it('counts scheduled-vs-done within a month and stops at today', () => {
+    const h = habit({ startedOn: '2000-01-01' }) // every day
+    // Done on 3 days in the current month (June), within the trailing window.
+    const out = monthlyHabitCompletion(withDone(h, ['2026-06-18', '2026-06-17', '2026-06-10']), h, TODAY, 1)
+    const jun = out[0]
+    expect(jun.ym).toBe('2026-06')
+    // TODAY=2026-06-18 → scheduled days = Jun 1..18 inclusive = 18
+    expect(jun.scheduled).toBe(18)
+    expect(jun.done).toBe(3)
+    expect(jun.pct).toBe(Math.round((3 / 18) * 100))
+  })
+
+  it('reports scheduled=0 (pct 0, no NaN) for months before the habit started', () => {
+    const h = habit({ startedOn: '2026-06-01' })
+    const out = monthlyHabitCompletion(withDone(h, []), h, TODAY, 3)
+    expect(out[0].scheduled).toBe(0) // April — before start
+    expect(out[0].pct).toBe(0)
+    expect(out[2].scheduled).toBeGreaterThan(0) // June — active
+  })
+
+  it('respects activeDays in the scheduled denominator', () => {
+    const h = habit({ activeDays: [4], startedOn: '2000-01-01' }) // Thursdays only
+    const out = monthlyHabitCompletion(withDone(h, []), h, TODAY, 1)
+    // June 2026 Thursdays up to the 18th: Jun 4, 11, 18 = 3
+    expect(out[0].scheduled).toBe(3)
+  })
+})
+
+describe('valueSparkline', () => {
+  it('returns `days` points oldest→newest ending today', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const pts = valueSparkline(withDone(h, [TODAY]), h, TODAY, 14)
+    expect(pts).toHaveLength(14)
+    expect(pts[13].day).toBe(TODAY)
+    expect(pts[13].value).toBe(1) // check habit done
+    expect(pts[13].norm).toBe(1)
+  })
+
+  it('normalises a count habit to its target and clamps overshoot to 1', () => {
+    const h = habit({ id: 'c', type: 'count', target: 8, startedOn: '2000-01-01' })
+    const d = emptyJournal()
+    d.habits = [h]
+    d.habitValues = { [TODAY]: { c: 4 }, [isoDays(TODAY, 2)[1]]: { c: 12 } } // half, then overshoot
+    const pts = valueSparkline(d, h, TODAY, 2)
+    expect(pts[1].value).toBe(4)
+    expect(pts[1].norm).toBe(0.5)
+    expect(pts[0].value).toBe(12)
+    expect(pts[0].norm).toBe(1) // clamped
+  })
+
+  it('treats off-schedule days as 0', () => {
+    const h = habit({ activeDays: [4], startedOn: '2000-01-01' }) // Thursdays only
+    const pts = valueSparkline(withDone(h, isoDays(TODAY, 14)), h, TODAY, 14)
+    // Only Thursdays carry value; today (Thu) is 1.
+    expect(pts[13].value).toBe(1)
+    expect(pts[12].value).toBe(0) // yesterday (Wed) off-schedule
+  })
+
+  it('normalises a rating habit to /5', () => {
+    const h = habit({ id: 'r', type: 'rating', startedOn: '2000-01-01' })
+    const d = emptyJournal()
+    d.habits = [h]
+    d.habitValues = { [TODAY]: { r: 5 } }
+    const pts = valueSparkline(d, h, TODAY, 1)
+    expect(pts[0].norm).toBe(1)
+  })
+})
+
+describe('habitGrade', () => {
+  it('grades a perfectly-consistent habit as A', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const g = habitGrade(withDone(h, isoDays(TODAY, 30)), h, TODAY)
+    expect(g.score).toBe(100)
+    expect(g.letter).toBe('A')
+  })
+
+  it('grades a never-done habit as F', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const g = habitGrade(withDone(h, []), h, TODAY)
+    expect(g.score).toBe(0)
+    expect(g.letter).toBe('F')
+  })
+
+  it('maps mid scores to the right band', () => {
+    // Recency-weighted: do only the most recent ~14 of 30 days → a C/B-ish score.
+    const h = habit({ startedOn: '2000-01-01' })
+    const g = habitGrade(withDone(h, isoDays(TODAY, 14)), h, TODAY)
+    expect(g.score).toBeGreaterThan(40)
+    expect(['B', 'C', 'D']).toContain(g.letter)
+  })
+})
+
+describe('trackerSummary', () => {
+  // tiny inline streak stub so the test doesn't import stats.ts: returns 0.
+  const streakOf = () => 0
+
+  it('counts build vs avoid habits and averages consistency', () => {
+    const a = habit({ id: 'a', startedOn: '2000-01-01' })
+    const b = habit({ id: 'b', startedOn: '2000-01-01' })
+    const quit = habit({ id: 'q', avoid: true, startedOn: '2000-01-01' })
+    // a done every day (100), b never done (0) → avg 50.
+    const data = withHabits([a, b, quit], Object.fromEntries(isoDays(TODAY, 30).map((d) => [d, ['a']])))
+    const out = trackerSummary(data, streakOf, TODAY)
+    expect(out.buildHabits).toBe(2)
+    expect(out.avoidHabits).toBe(1)
+    expect(out.avgConsistency).toBe(50)
+  })
+
+  it('reports today completion share of scheduled build habits', () => {
+    const a = habit({ id: 'a', startedOn: '2000-01-01' })
+    const b = habit({ id: 'b', startedOn: '2000-01-01' })
+    const data = withHabits([a, b], { [TODAY]: ['a'] }) // 1 of 2 done today
+    const out = trackerSummary(data, streakOf, TODAY)
+    expect(out.todayPct).toBe(50)
+  })
+
+  it('surfaces the longest current streak and its habit name', () => {
+    const a = habit({ id: 'a', name: 'Read', startedOn: '2000-01-01' })
+    const b = habit({ id: 'b', name: 'Run', startedOn: '2000-01-01' })
+    const data = withHabits([a, b], {})
+    // Injected streakOf: Read=5, Run=2.
+    const out = trackerSummary(data, (id) => (id === 'a' ? 5 : 2), TODAY)
+    expect(out.topStreak).toBe(5)
+    expect(out.topStreakHabit).toBe('Read')
+  })
+
+  it('returns sane zeros for an empty grid', () => {
+    const out = trackerSummary(emptyJournal(), streakOf, TODAY)
+    expect(out).toEqual({ buildHabits: 0, avoidHabits: 0, avgConsistency: 0, topStreak: 0, topStreakHabit: null, todayPct: 0 })
   })
 })

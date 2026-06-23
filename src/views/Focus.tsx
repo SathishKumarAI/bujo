@@ -8,7 +8,7 @@ import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
-  minutesByWeekday, longestSession, minutesByProject, interruptionsTrend,
+  minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday,
 } from '../lib/focus'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
@@ -35,6 +35,9 @@ export function Focus() {
   const maxProj = Math.max(1, ...byProject.map((p) => p.min))
   const intTrend = interruptionsTrend(data, today, 14)
   const maxInt = Math.max(1, ...intTrend.map((d) => d.avg))
+  const heat = deepWorkHeatmap(data, today, 26)
+  const focusWd = focusByWeekday(data)
+  const maxFocusWd = Math.max(1, ...focusWd.map((w) => w.avg))
 
   function log() {
     if (!f.durationMin) return
@@ -129,6 +132,40 @@ export function Focus() {
         )
       })()}
 
+      {heat.max > 0 && (
+        <Card title="Deep-work heatmap" subtitle="Daily coding minutes · last 26 weeks">
+          <div className="overflow-x-auto">
+            <div
+              className="grid w-max gap-[3px]"
+              style={{ gridTemplateRows: 'repeat(7, 11px)', gridAutoFlow: 'column', gridAutoColumns: '11px' }}
+              role="img"
+              aria-label={`Heatmap of daily coding minutes over the last 26 weeks, busiest day ${heat.max} minutes`}
+            >
+              {heat.cells.map((c) => {
+                const bg = c.level === 0 ? cat('surface0') : cat('mauve')
+                const opacity = c.level === 0 ? 1 : 0.25 + (c.level / 4) * 0.75
+                return (
+                  <div
+                    key={c.date}
+                    title={`${c.date}: ${c.min}m`}
+                    className="rounded-[2px]"
+                    style={{ gridRow: c.weekday + 1, background: bg, opacity }}
+                  />
+                )
+              })}
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-overlay0">
+            <span>less</span>
+            {[0, 1, 2, 3, 4].map((lv) => (
+              <span key={lv} className="h-2.5 w-2.5 rounded-[2px]"
+                style={{ background: lv === 0 ? cat('surface0') : cat('mauve'), opacity: lv === 0 ? 1 : 0.25 + (lv / 4) * 0.75 }} />
+            ))}
+            <span>more</span>
+          </div>
+        </Card>
+      )}
+
       {byWeekday.some((w) => w.min > 0) && (
         <Card title="Focus by weekday" subtitle="Total deep-work minutes by day of week">
           <div className="space-y-1.5">
@@ -139,6 +176,22 @@ export function Focus() {
                   <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {focusWd.some((w) => w.count > 0) && (
+        <Card title="Focus quality by weekday" subtitle="Duration-weighted avg focus score by day of week">
+          <div className="space-y-1.5">
+            {focusWd.map((w) => (
+              <div key={w.day} className="flex items-center gap-2 text-sm">
+                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{w.count ? `${w.avg}/10` : '—'}</span>
               </div>
             ))}
           </div>

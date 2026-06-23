@@ -1,4 +1,4 @@
-import type { JournalData, Habit } from './types'
+import type { JournalData, Habit, Entry } from './types'
 import { habitDoneOn, currentStreak, taskCompletion, habitStreak } from './stats'
 import { addDays, prettyDay, todayISO, dayDiff, ymOf, prettyMonth, WEEKDAYS } from './date'
 
@@ -759,4 +759,251 @@ export function momentumIndicator(
     })
   }
   return out.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+}
+
+export interface DeferredTask {
+  /** id of the most-recent (live) entry in the chain. */
+  id: string
+  text: string
+  /** Times this task was carried forward (length of its origin chain minus 1). */
+  migrations: number
+  /** ISO day the live entry currently sits on. */
+  date: string
+  /** Whether the live entry is still open (vs. done/dropped). */
+  open: boolean
+}
+
+export interface MigrationReport {
+  /** Open tasks migrated at least `minMigrations` times, most-migrated first. */
+  chronic: DeferredTask[]
+  /** Total migrations counted across every task chain (engagement signal). */
+  totalMigrations: number
+  /** How many distinct task chains were migrated at least once. */
+  migratedChains: number
+}
+
+/**
+ * Migration analytics: the BuJo "is this task actually worth doing?" read. A
+ * task that gets carried forward day after day forms an `originId` chain; the
+ * length of that chain is how many times you deferred it. We walk every chain to
+ * its live tip, count the hops, and surface still-open tasks that have been
+ * migrated `minMigrations`+ times — the chronically-deferred work that wants a
+ * "do it or drop it" decision. Pure + deterministic, read-only over entries.
+ */
+export function migrationAnalytics(data: JournalData, minMigrations = 2): MigrationReport {
+  const byId = new Map<string, Entry>()
+  for (const e of data.entries) byId.set(e.id, e)
+  // Entries that are someone's origin are mid-chain, not the live tip.
+  const isOrigin = new Set<string>()
+  for (const e of data.entries) if (e.originId) isOrigin.add(e.originId)
+
+  let totalMigrations = 0
+  let migratedChains = 0
+  const chronic: DeferredTask[] = []
+
+  for (const e of data.entries) {
+    if (e.type !== 'task') continue
+    if (isOrigin.has(e.id)) continue // not the tip of its chain
+    // Walk back through originId to count hops (guard against cycles).
+    let hops = 0
+    let cur: Entry | undefined = e
+    const seen = new Set<string>()
+    while (cur?.originId && byId.has(cur.originId) && !seen.has(cur.originId)) {
+      seen.add(cur.originId)
+      hops += 1
+      cur = byId.get(cur.originId)
+    }
+    if (hops > 0) {
+      totalMigrations += hops
+      migratedChains += 1
+    }
+    const open = e.status === 'open' || e.status === 'migrated' || e.status === 'scheduled'
+    if (hops >= minMigrations && open && e.status !== 'dropped' && e.status !== 'done') {
+      chronic.push({ id: e.id, text: e.text, migrations: hops, date: e.date, open })
+    }
+  }
+  chronic.sort((a, b) => b.migrations - a.migrations || (a.date < b.date ? -1 : 1))
+  return { chronic, totalMigrations, migratedChains }
+}
+
+export interface TaskAgingBucket {
+  /** Bucket label, e.g. "8–14d". */
+  label: string
+  /** Open tasks whose age (days since they live-date) falls in this bucket. */
+  count: number
+  /** Catppuccin color name keyed to urgency (fresh → stale). */
+  color: string
+}
+
+export interface TaskAgingReport {
+  buckets: TaskAgingBucket[]
+  /** Total open tasks across all buckets. */
+  open: number
+  /** The single oldest open task (text + age in days), or null. */
+  oldest: { text: string; age: number } | null
+}
+
+/**
+ * Task-aging report: how long your open tasks have been sitting, bucketed by
+ * age (today, this week, 1–2 weeks, 2+ weeks). Stale open tasks are the silent
+ * backlog a tracker never confronts; bucketing them makes the pile legible and
+ * nudges a cleanup. Age is measured from the entry's live date to `today`.
+ * Only genuinely open tasks (not done/dropped) count. Pure + deterministic.
+ */
+export function taskAging(data: JournalData, today = todayISO()): TaskAgingReport {
+  const defs: { label: string; max: number; color: string }[] = [
+    { label: 'Today', max: 0, color: 'green' },
+    { label: '1–7d', max: 7, color: 'teal' },
+    { label: '8–14d', max: 14, color: 'yellow' },
+    { label: '15+d', max: Infinity, color: 'peach' },
+  ]
+  const counts = defs.map(() => 0)
+  let open = 0
+  let oldest: { text: string; age: number } | null = null
+  for (const e of data.entries) {
+    if (e.type !== 'task') continue
+    if (e.status !== 'open' && e.status !== 'migrated' && e.status !== 'scheduled') continue
+    if (!e.date) continue
+    const age = Math.max(0, dayDiff(e.date, today))
+    open += 1
+    const bi = defs.findIndex((d) => age <= d.max)
+    counts[bi >= 0 ? bi : defs.length - 1] += 1
+    if (!oldest || age > oldest.age) oldest = { text: e.text, age }
+  }
+  const buckets = defs.map((d, i) => ({ label: d.label, count: counts[i], color: d.color }))
+  return { buckets, open, oldest }
+}
+
+export interface PickleballInsights {
+  /** Lifetime games won ÷ total games, 0–1, or null if no games logged. */
+  winRate: number | null
+  /** Games played in the trailing 7 days. */
+  weekGames: number
+  /** Consecutive days (ending today or yesterday) with a logged session. */
+  playStreak: number
+  /** Total sessions logged. */
+  sessions: number
+  /** Win-rate over the most recent 5 sessions minus the prior 5 (momentum). */
+  recentWinRate: number | null
+  formDir: 'up' | 'down' | 'flat' | null
+  /** Doubles vs singles session split. */
+  doubles: number
+  singles: number
+}
+
+/**
+ * Cross-domain pickleball KPIs for the Insights view: lifetime win rate, games
+ * this week, current play streak, and a recent-form read (win rate over the last
+ * 5 sessions vs. the 5 before). Mirrors how other trackers surface a compact
+ * scorecard so pickleball sits alongside habits and mood. Pure + deterministic,
+ * read-only over `data.pickleball`.
+ */
+export function pickleballInsights(data: JournalData, today = todayISO()): PickleballInsights {
+  const all = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? -1 : 1))
+  let won = 0
+  let total = 0
+  let doubles = 0
+  let singles = 0
+  for (const s of all) {
+    won += s.gamesWon
+    total += s.gamesWon + s.gamesLost
+    if (s.format === 'doubles') doubles += 1
+    else singles += 1
+  }
+  const weekFrom = addDays(today, -6)
+  const weekGames = all
+    .filter((s) => s.date >= weekFrom && s.date <= today)
+    .reduce((n, s) => n + s.gamesWon + s.gamesLost, 0)
+
+  // Play streak: consecutive days with ≥1 session, anchored to today or yesterday.
+  const playedDays = new Set(all.map((s) => s.date))
+  let playStreak = 0
+  let cursor = playedDays.has(today) ? today : playedDays.has(addDays(today, -1)) ? addDays(today, -1) : null
+  while (cursor && playedDays.has(cursor)) {
+    playStreak += 1
+    cursor = addDays(cursor, -1)
+  }
+
+  // Recent form: win rate of last 5 sessions vs. the 5 before them.
+  const sessionWinRate = (xs: typeof all): number | null => {
+    let w = 0
+    let t = 0
+    for (const s of xs) {
+      w += s.gamesWon
+      t += s.gamesWon + s.gamesLost
+    }
+    return t ? w / t : null
+  }
+  let recentWinRate: number | null = null
+  let formDir: PickleballInsights['formDir'] = null
+  if (all.length >= 2) {
+    const last5 = all.slice(-5)
+    const prev5 = all.slice(-10, -5)
+    const r = sessionWinRate(last5)
+    recentWinRate = r == null ? null : Math.round(r * 100) / 100
+    const p = sessionWinRate(prev5)
+    if (r != null && p != null) {
+      const d = r - p
+      formDir = Math.abs(d) < 0.05 ? 'flat' : d > 0 ? 'up' : 'down'
+    }
+  }
+
+  return {
+    winRate: total ? Math.round((won / total) * 100) / 100 : null,
+    weekGames,
+    playStreak,
+    sessions: all.length,
+    recentWinRate,
+    formDir,
+    doubles,
+    singles,
+  }
+}
+
+export interface FocusSleepLink {
+  /** Pearson r of same-day sleep vs. focus score, or null when too sparse. */
+  r: number | null
+  /** Paired (sleep, focus) days behind the figure. */
+  days: number
+  /** Plain-language read, or null when there's no usable signal. */
+  note: string | null
+}
+
+/**
+ * Productivity-vs-sleep link: pairs each dev/focus session's quality score with
+ * the same day's logged sleep hours and correlates them — the "does rest fuel
+ * deep work?" question, answered from your own data. When a day has several
+ * sessions we average their focus so each day weighs once. Needs at least a few
+ * paired days; below that there's no honest signal (r = null). Pure.
+ */
+export function focusSleepCorrelation(data: JournalData): FocusSleepLink {
+  const sleepByDay = new Map<string, number>()
+  for (const m of data.metrics) if (m.sleep != null) sleepByDay.set(m.date, m.sleep)
+
+  // Average focus per day so multi-session days don't dominate.
+  const focusSum = new Map<string, number>()
+  const focusN = new Map<string, number>()
+  for (const s of data.devSessions ?? []) {
+    if (s.focus == null) continue
+    focusSum.set(s.date, (focusSum.get(s.date) ?? 0) + s.focus)
+    focusN.set(s.date, (focusN.get(s.date) ?? 0) + 1)
+  }
+
+  const sleeps: number[] = []
+  const focuses: number[] = []
+  for (const [day, n] of focusN) {
+    const sleep = sleepByDay.get(day)
+    if (sleep == null) continue
+    sleeps.push(sleep)
+    focuses.push(focusSum.get(day)! / n)
+  }
+  const days = sleeps.length
+  const r = pearson(sleeps, focuses)
+  if (Number.isNaN(r)) return { r: null, days, note: null }
+  const rounded = Math.round(r * 100) / 100
+  let note: string | null
+  if (Math.abs(r) < 0.3) note = 'Your sleep and focus look fairly independent so far.'
+  else if (r > 0) note = 'More sleep tends to track with sharper focus for you.'
+  else note = 'Oddly, your focus runs higher on shorter-sleep days — worth a closer look.'
+  return { r: rounded, days, note }
 }

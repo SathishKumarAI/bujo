@@ -6,7 +6,7 @@ import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
-import { collectionProgress, inboxEntries, tagIndex } from '../lib/bullets'
+import { collectionBreakdown, collectionProgress, inboxEntries, memoryBullets, tagIndex } from '../lib/bullets'
 
 export function Collections() {
   const { data, addBirthday, removeBirthday, addCollection, removeCollection, addEntry } = useJournal()
@@ -28,15 +28,12 @@ export function Collections() {
   // Brain-dump inbox: dateless, unfiled entries waiting to be triaged.
   const inbox = inboxEntries(data.entries)
 
-  // ── Index / table of contents (#402): every collection + tag page in one list.
-  const collectionIndex = data.collections
-    .map((c) => ({
-      id: c.id,
-      icon: c.icon,
-      name: c.name,
-      count: data.entries.filter((e) => e.collection === c.id).length,
-    }))
-    .sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
+  // ── Index / table of contents (#402): every collection + tag page in one list,
+  // with a per-collection task-completion badge (#366-style breakdown).
+  const collectionIndex = collectionBreakdown(data.entries, data.collections)
+
+  // ── Memories (▲): quick-memory bullets surfaced as their own auto-page. ──
+  const memories = memoryBullets(data.entries)
 
   function jumpToCollection(id: string) {
     setOpenCol(id)
@@ -87,7 +84,16 @@ export function Collections() {
                       <button onClick={() => jumpToCollection(c.id)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
                         <span>{c.icon}</span>
                         <span className="flex-1 truncate text-subtext1">{c.name}</span>
-                        <span className="text-overlay0">{c.count}</span>
+                        {c.tasks > 0 && (
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                            style={{ background: cat('green') + '22', color: cat('green') }}
+                            title={`${c.done} of ${c.tasks} tasks done`}
+                          >
+                            {c.done}/{c.tasks}
+                          </span>
+                        )}
+                        <span className="w-5 text-right text-overlay0">{c.count}</span>
                       </button>
                     </li>
                   ))}
@@ -287,6 +293,23 @@ export function Collections() {
               </ul>
             )}
           </div>
+        )}
+      </Card>
+
+      <Card
+        title="Memories"
+        subtitle={`${memories.length} ▲ moment${memories.length === 1 ? '' : 's'} worth remembering`}
+        className="md:col-span-2"
+        help="Any bullet you mark as a memory (the ▲ signifier, or the '^' prefix in quick capture) is gathered here automatically — a running highlight reel of small moments, newest first."
+      >
+        {memories.length === 0 ? (
+          <Empty>No memories yet. Mark a bullet with ▲ (or capture with '^ …') to start your highlight reel.</Empty>
+        ) : (
+          <ul>
+            {memories.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
         )}
       </Card>
 

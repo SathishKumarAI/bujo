@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles, CalendarDays, AlarmClock } from 'lucide-react'
+import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles, CalendarDays, AlarmClock, Lightbulb, Search } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
-import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks } from '../lib/reading'
+import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks, allLearnings, ratingDistribution } from '../lib/reading'
 import { StatTile } from '../components/ui'
 import type { Book, BookStatus } from '../lib/types'
 
@@ -27,6 +27,8 @@ export function Reading() {
   const byMonth = finishedByMonth(books, today)
   const maxMonth = Math.max(1, ...byMonth.map((m) => m.count))
   const stale = staleBooks(books, today)
+  const ratingDist = ratingDistribution(books)
+  const ratedTotal = ratingDist.reduce((a, r) => a + r.count, 0)
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -145,8 +147,27 @@ export function Reading() {
               )}
             </div>
           )}
+          {/* Rating distribution · the shape of your taste */}
+          {ratedTotal > 0 && (
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="mb-2 text-[11px] font-medium text-subtext1">Rating distribution · {ratedTotal} rated</p>
+              <div className="space-y-1">
+                {[...ratingDist].reverse().map((r) => (
+                  <div key={r.stars} className="flex items-center gap-2 text-xs">
+                    <span className="flex w-12 shrink-0 items-center gap-0.5 text-overlay1">{r.stars}<Star size={10} className="fill-yellow text-yellow" /></span>
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full rounded-full" style={{ width: `${ratedTotal ? (r.count / ratedTotal) * 100 : 0}%`, background: cat('yellow') }} />
+                    </div>
+                    <span className="w-6 shrink-0 text-right tabular-nums text-overlay0">{r.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <LearningLog />
 
       {/* Add a book */}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
@@ -180,6 +201,48 @@ export function Reading() {
       </div>
 
       <ReadLater />
+    </div>
+  )
+}
+
+/**
+ * Aggregated personal knowledge feed (#405): every dated learning from every
+ * book in one searchable place, newest first. Read-only over book.learnings.
+ */
+function LearningLog() {
+  const { data } = useJournal()
+  const books = data.books ?? []
+  const [q, setQ] = useState('')
+  const total = books.reduce((n, b) => n + (b.learnings?.length ?? 0), 0)
+  if (total === 0) return null
+  const entries = allLearnings(books, q)
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+        <Lightbulb size={16} className="text-yellow" /> Learning log
+        <span className="text-overlay0">({total})</span>
+      </h3>
+      <div className="mb-3 flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
+        <Search size={14} className="shrink-0 text-overlay0" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search learnings & titles…"
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
+      </div>
+      {entries.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No learnings match “{q}”.</p>
+      ) : (
+        <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
+          {entries.map((l, i) => (
+            <li key={i} className="text-xs">
+              <div className="flex items-baseline gap-2">
+                <span className="shrink-0 text-overlay0">{prettyDay(l.date)}</span>
+                <span className="min-w-0 flex-1 text-subtext0">{l.text}</span>
+              </div>
+              <span className="ml-[4.5rem] inline-flex items-center gap-1 text-[10px] text-overlay0"><BookOpen size={9} /> {l.bookTitle}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

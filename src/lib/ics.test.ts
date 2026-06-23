@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseICS, journalToICS, habitRemindersToICS, tasksToICS } from './ics'
+import { parseICS, journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from './ics'
 import { emptyJournal } from './storage'
 
 describe('parseICS', () => {
@@ -133,5 +133,41 @@ describe('habitRemindersToICS', () => {
     const ics = habitRemindersToICS(d)
     expect(ics).toContain('SUMMARY:Water (8 glasses)')
     expect(ics).not.toContain('Old')
+  })
+})
+
+describe('completionsToICS', () => {
+  it('wraps output in a VCALENDAR envelope', () => {
+    const ics = completionsToICS(emptyJournal())
+    expect(ics.startsWith('BEGIN:VCALENDAR')).toBe(true)
+    expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
+  })
+
+  it('emits a ✓ all-day event per logged check-habit completion', () => {
+    const d = emptyJournal()
+    d.habits = [{ id: 'h', name: 'Meditate', category: 'wellness', color: 'mauve', startedOn: '2026-06-01', emoji: '🧘' }]
+    d.habitLog = { '2026-06-10': ['h'] }
+    const ics = completionsToICS(d)
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260610')
+    expect(ics).toContain('SUMMARY:✓ 🧘 Meditate')
+  })
+
+  it('counts a count-habit day only when the value meets the target, without duplicating the log', () => {
+    const d = emptyJournal()
+    d.habits = [{ id: 'w', name: 'Water', category: 'food', color: 'sky', startedOn: '2026-06-01', type: 'count', target: 8 }]
+    d.habitValues = { '2026-06-10': { w: 8 }, '2026-06-11': { w: 3 } }
+    const ics = completionsToICS(d)
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260610') // met target
+    expect(ics).not.toContain('20260611') // below target
+    // Met-target day appears exactly once (no log+value duplicate).
+    expect(ics.match(/20260610/g)).toHaveLength(1)
+  })
+
+  it('emits an event for each logged workout with its duration', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: 'wk', date: '2026-06-12', activity: 'Run', durationMin: 30, sets: [], notes: '' }]
+    const ics = completionsToICS(d)
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260612')
+    expect(ics).toContain('SUMMARY:✓ Run (30m)')
   })
 })
