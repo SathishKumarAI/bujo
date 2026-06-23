@@ -3,11 +3,11 @@ import { UserCircle2, LogOut, Mail, Lock, Eye, EyeOff, ShieldCheck, Cloud, Refre
 import { useJournal } from '../store'
 import { useNav } from '../components/shell/nav'
 import { migrate } from '../lib/storage'
-import { authFormError, isValidEmail, suggestEmailFix } from '../lib/validate'
+import { authFormError, isValidEmail, suggestEmailFix, passwordError } from '../lib/validate'
 import {
   supabaseEnabled, providerEnabled, currentUser,
   signInGoogle, signUpEmail, signInEmail, signInGuest, signOut,
-  resetPassword, pullJournal, pushJournal,
+  resetPassword, updatePassword, pullJournal, pushJournal,
 } from '../lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -27,6 +27,8 @@ export function Account() {
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
   const [googleOk, setGoogleOk] = useState(false)
+  const [changing, setChanging] = useState(false)
+  const [newPw, setNewPw] = useState('')
 
   const refresh = () => currentUser().then(setUser).catch(() => {})
   useEffect(() => { if (supabaseEnabled()) { refresh(); providerEnabled('google').then(setGoogleOk) } }, [])
@@ -71,6 +73,13 @@ export function Account() {
     setBusy(true)
     try { await signOut() } finally { await refresh(); setBusy(false) }
   }
+  async function changePw() {
+    const ve = passwordError(newPw)
+    if (ve) { setErr(ve); return }
+    setBusy(true); setErr(''); setMsg('')
+    try { await updatePassword(newPw); setNewPw(''); setChanging(false); setMsg('Password updated.') }
+    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+  }
 
   // ── Not configured: honest fallback ──
   if (!supabaseEnabled()) {
@@ -111,6 +120,30 @@ export function Account() {
             <LogOut size={14} /> Sign out
           </button>
         </div>
+        {signedIn && (
+          <div className="mt-4 border-t border-border pt-4">
+            {!changing ? (
+              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-xs text-overlay1 hover:text-subtext1">Change password</button>
+            ) : (
+              <div className="space-y-2.5">
+                <Field icon={Lock}>
+                  <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); setErr('') }}
+                    onKeyDown={(e) => e.key === 'Enter' && changePw()} placeholder="New password (min 6)"
+                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
+                  <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="text-overlay0 hover:text-subtext1">
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </Field>
+                <div className="flex gap-2">
+                  <button onClick={changePw} disabled={busy} className="press-3d inline-flex flex-1 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-medium text-crust disabled:opacity-50">
+                    {busy ? 'Updating…' : 'Update password'}
+                  </button>
+                  <button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} className="rounded-lg border border-border px-3 py-2 text-xs text-subtext0 disabled:opacity-50">Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {isGuest && <p className="mt-4 rounded-lg bg-secondary/50 p-3 text-xs text-subtext0">Exploring as a guest. Sign out, then create an account to keep your data safe and synced.</p>}
         {msg && <p className="mt-3 text-center text-xs text-green">{msg}</p>}
         {err && <p className="mt-3 text-center text-xs text-red">{err}</p>}
