@@ -145,6 +145,15 @@ export function Goals() {
   }
 
   const hit = goals.filter((g) => g.value >= g.target).length
+  // Read-only roll-up insight: overall average progress and how many goals are
+  // in the "nearly there" band (80–99%) so users see what's worth a final push.
+  const avgPct = goals.length
+    ? Math.round(goals.reduce((a, g) => a + (g.target > 0 ? Math.min(1, g.value / g.target) : 0), 0) / goals.length * 100)
+    : 0
+  const nearly = goals.filter((g) => {
+    const p = g.target > 0 ? g.value / g.target : 0
+    return p >= 0.8 && p < 1
+  }).length
 
   const { addCustomGoal, updateCustomGoal, removeCustomGoal } = useJournal()
   const customGoals = data.customGoals ?? []
@@ -162,6 +171,19 @@ export function Goals() {
         {goals.length === 0 ? (
           <Empty>No goals yet · set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
+          <>
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm">
+            <span className="inline-flex items-center gap-1.5 text-subtext1">
+              <Target size={14} style={{ color: cat('mauve') }} /> Overall progress
+              <span className="font-medium tabular-nums text-text">{avgPct}%</span>
+            </span>
+            {nearly > 0 && (
+              <span className="text-overlay0">{nearly} nearly there <span className="text-overlay0">(80–99%)</span></span>
+            )}
+          </div>
+          </>
+        )}
+        {goals.length === 0 ? null : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {goals.map((g, i) => {
               const pct = g.target > 0 ? Math.min(100, Math.round((g.value / g.target) * 100)) : 0

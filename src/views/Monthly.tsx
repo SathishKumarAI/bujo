@@ -6,7 +6,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
-import { bulletTypeBreakdown, entriesPerDay, journalingStreak, parseTags, taskCompletion, weekdayActivity } from '../lib/bullets'
+import { bulletTypeBreakdown, entriesPerDay, journalingStreak, monthlyEntryCounts, parseTags, taskCompletion, weekdayActivity } from '../lib/bullets'
 import { habitDoneOn } from '../lib/stats'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
@@ -79,6 +79,10 @@ export function Monthly() {
   const maxWeekday = Math.max(1, ...weekdays.map((w) => w.count))
   const busiestWeekday = weekdays.reduce((a, b) => (b.count > a.count ? b : a))
   const streak = journalingStreak(data.entries, today)
+  // ── Trailing-year entry rhythm: entries per month across the last 12 months ──
+  const monthlyCounts = monthlyEntryCounts(data.entries, ym, 12)
+  const maxMonthly = Math.max(1, ...monthlyCounts.map((m) => m.count))
+  const monthlyTotal = monthlyCounts.reduce((a, b) => a + b.count, 0)
   const TYPE_META = [
     { key: 'task' as const, label: 'tasks', glyph: '·', color: 'green', n: mix.task },
     { key: 'event' as const, label: 'events', glyph: '○', color: 'blue', n: mix.event },
@@ -238,6 +242,34 @@ export function Monthly() {
                 </div>
               </div>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Trailing year · entries per month over the last 12 months */}
+      {monthlyTotal > 0 && (
+        <Card title="Entries per month" subtitle="Your journaling rhythm over the last 12 months"
+          help="Each bar is one month's total entries, ending with the month you're viewing. Use it to spot busy seasons and quiet stretches across the year.">
+          <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+            <span>Last 12 months</span>
+            <span><b style={{ color: cat('mauve') }}>{monthlyTotal}</b> entries</span>
+          </div>
+          <div className="flex items-end gap-1.5" role="img" aria-label={`Entries per month over the last 12 months, ${monthlyTotal} total`}>
+            {monthlyCounts.map((m) => (
+              <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
+                <div className="flex h-20 w-full items-end">
+                  <div
+                    className="w-full rounded-t-sm"
+                    title={`${m.label}: ${m.count} entr${m.count === 1 ? 'y' : 'ies'}`}
+                    style={{
+                      height: `${Math.max(m.count ? 6 : 2, (m.count / maxMonthly) * 100)}%`,
+                      background: m.ym === ym ? cat('mauve') : m.count ? cat('blue') : cat('surface0'),
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] text-overlay0">{m.label[0]}</span>
+              </div>
+            ))}
           </div>
         </Card>
       )}

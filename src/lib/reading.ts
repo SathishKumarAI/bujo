@@ -183,6 +183,45 @@ export function staleBooks(books: Book[], today: string, staleDays = 14): { book
   return out.sort((a, b) => b.idleDays - a.idleDays)
 }
 
+/**
+ * Every dated book "learning" across the whole library, newest-first, tagged
+ * with the book it came from — a personal knowledge feed (backlog #405). When
+ * `query` is given, only entries whose text or book title contain it (case-
+ * insensitive) are returned. Ties on the same date keep a stable order.
+ */
+export function allLearnings(
+  books: Book[],
+  query = '',
+): { date: string; text: string; bookId: string; bookTitle: string }[] {
+  const q = query.trim().toLowerCase()
+  const out: { date: string; text: string; bookId: string; bookTitle: string }[] = []
+  for (const b of books) {
+    for (const l of b.learnings ?? []) {
+      out.push({ date: l.date, text: l.text, bookId: b.id, bookTitle: b.title })
+    }
+  }
+  const filtered = q
+    ? out.filter((e) => e.text.toLowerCase().includes(q) || e.bookTitle.toLowerCase().includes(q))
+    : out
+  return filtered.sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * Star-rating histogram across finished, rated books: counts for 1..5 stars
+ * (index 0 = 1★ … index 4 = 5★) plus the total rated. Unrated or unfinished
+ * books are ignored. Lets the view show the shape of your taste, not just the
+ * mean.
+ */
+export function ratingDistribution(books: Book[]): { stars: number; count: number }[] {
+  const counts = [0, 0, 0, 0, 0]
+  for (const b of books) {
+    if (b.status !== 'finished') continue
+    const r = b.rating ?? 0
+    if (r >= 1 && r <= 5) counts[r - 1] += 1
+  }
+  return counts.map((count, i) => ({ stars: i + 1, count }))
+}
+
 /** A compact summary for the Insights / Goals rollups. */
 export function readingSummary(books: Book[], today: string) {
   return {

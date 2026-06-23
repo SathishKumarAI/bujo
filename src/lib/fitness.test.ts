@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
@@ -552,5 +552,158 @@ describe('stalledLifts (#479 plateau detector)', () => {
     const d = emptyJournal()
     d.workouts = [rowDay('2026-06-08', 65), rowDay('2026-06-15', 65)]
     expect(stalledLifts(d, 3)).toEqual([])
+  })
+})
+
+describe('repPRs (#426 rep records)', () => {
+  const benchDay = (date: string, weight: number, reps: number): Workout => ({
+    id: date, date, activity: 'Push', sets: [],
+    setRows: [{ exercise: 'Bench Press', weight, reps, kind: 'working' }], notes: '',
+  })
+  it('keeps the most reps at each weight', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      benchDay('2026-06-01', 60, 5),
+      benchDay('2026-06-08', 60, 8), // better reps at 60
+      benchDay('2026-06-15', 80, 3),
+    ]
+    const prs = repPRs(d, 'Bench Press')
+    expect(prs).toEqual([
+      { weight: 80, reps: 3, date: '2026-06-15' },
+      { weight: 60, reps: 8, date: '2026-06-08' },
+    ])
+  })
+  it('credits the earliest date a rep count was hit (later ties do not reset it)', () => {
+    const d = emptyJournal()
+    d.workouts = [benchDay('2026-06-01', 60, 5), benchDay('2026-06-20', 60, 5)]
+    expect(repPRs(d, 'Bench Press')[0]).toEqual({ weight: 60, reps: 5, date: '2026-06-01' })
+  })
+  it('excludes warm-ups and parses legacy strings', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: 'w', date: '2026-06-02', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 40, reps: 20, kind: 'warmup' }, // ignored
+        { exercise: 'Bench Press', weight: 70, reps: 6, kind: 'working' },
+      ], notes: '' },
+      workout({ id: 'legacy', date: '2026-06-09', sets: ['Bench Press 1x10 @ 50kg'] }),
+    ]
+    const prs = repPRs(d, 'Bench Press')
+    expect(prs).toEqual([
+      { weight: 70, reps: 6, date: '2026-06-02' },
+      { weight: 50, reps: 10, date: '2026-06-09' },
+    ])
+  })
+  it('returns [] for an unknown exercise or blank name', () => {
+    expect(repPRs(emptyJournal(), 'Bench Press')).toEqual([])
+    expect(repPRs(emptyJournal(), '  ')).toEqual([])
+  })
+})
+
+describe('volumeByCategory (#419 movement radar)', () => {
+  const set = (exercise: string, weight: number, reps: number, kind: 'warmup' | 'working' = 'working') =>
+    ({ exercise, weight, reps, kind })
+  it('attributes working volume to push/pull/legs/core in fixed order', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: '1', date: '2026-06-20', activity: 'Full', sets: [], setRows: [
+      set('Bench Press', 60, 5), // Push: 300
+      set('Pull-up', 80, 5),     // Pull: 400
+      set('Plank', 0, 30),       // Core: 0 volume (no weight) → ignored
+      set('Crunch', 10, 20),     // Core: 200
+    ], notes: '' }]
+    const v = volumeByCategory(d, '2026-06-22', 7)
+    expect(v.map((c) => c.category)).toEqual(['Push', 'Pull', 'Legs', 'Core'])
+    expect(v.find((c) => c.category === 'Push')!.volume).toBe(300)
+    expect(v.find((c) => c.category === 'Pull')!.volume).toBe(400)
+    expect(v.find((c) => c.category === 'Core')!.volume).toBe(200)
+    expect(v.find((c) => c.category === 'Legs')!.volume).toBe(0)
+  })
+  it('counts a multi-category lift (deadlift) toward both pull and legs', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: '1', date: '2026-06-21', activity: 'Pull', sets: [], setRows: [
+      set('Deadlift', 100, 5), // 500 volume, hits hams/glutes (legs) + lats/traps (pull)
+    ], notes: '' }]
+    const v = volumeByCategory(d, '2026-06-22', 7)
+    expect(v.find((c) => c.category === 'Pull')!.volume).toBe(500)
+    expect(v.find((c) => c.category === 'Legs')!.volume).toBe(500)
+  })
+  it('ignores sets outside the window and warm-ups', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: 'old', date: '2026-06-01', activity: 'Push', sets: [], setRows: [set('Bench Press', 60, 5)], notes: '' },
+      { id: 'warm', date: '2026-06-21', activity: 'Push', sets: [], setRows: [set('Bench Press', 60, 5, 'warmup')], notes: '' },
+    ]
+    expect(volumeByCategory(d, '2026-06-22', 7).every((c) => c.volume === 0)).toBe(true)
+  })
+})
+
+describe('muscleRecovery / recoveryState (#467)', () => {
+  it('bands recovery gaps into fatigued/recovering/fresh', () => {
+    expect(recoveryState(0)).toBe('fatigued')
+    expect(recoveryState(1)).toBe('recovering')
+    expect(recoveryState(2)).toBe('fresh')
+    expect(recoveryState(null)).toBe('fresh')
+  })
+  it('reports days since each muscle was last trained, freshest first', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: 'chest', date: '2026-06-22', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // chest 4,2,5
+      ], notes: '' },
+      { id: 'back', date: '2026-06-19', activity: 'Pull', sets: [], setRows: [
+        { exercise: 'Barbell Row', weight: 60, reps: 5, kind: 'working' }, // lats 12 etc.
+      ], notes: '' },
+    ]
+    const rec = muscleRecovery(d, '2026-06-22')
+    const chest = rec.find((r) => r.muscle === 4)!
+    const lats = rec.find((r) => r.muscle === 12)!
+    expect(chest.daysSince).toBe(0)
+    expect(chest.state).toBe('fatigued')
+    expect(lats.daysSince).toBe(3)
+    expect(lats.state).toBe('fresh')
+    // never-trained legs read fresh with a null gap, sorted ahead of trained.
+    const hams = rec.find((r) => r.muscle === 11)!
+    expect(hams.daysSince).toBeNull()
+    expect(hams.state).toBe('fresh')
+    expect(rec[0].daysSince).toBeNull() // longest-rested (never) leads
+  })
+})
+
+describe('exerciseFrequency / trainRestRatio (#102 / #474)', () => {
+  it('counts distinct training days and working sets per exercise', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-20', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
+        { exercise: 'Squat', weight: 80, reps: 5, kind: 'warmup' }, // warm-up excluded
+      ], notes: '' },
+      { id: '2', date: '2026-06-22', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' },
+      ], notes: '' },
+    ]
+    const freq = exerciseFrequency(d, '2026-06-22', 28)
+    const bench = freq.find((f) => f.exercise === 'Bench Press')!
+    expect(bench.days).toBe(2) // two distinct days
+    expect(bench.sets).toBe(3) // three working sets
+    expect(freq.find((f) => f.exercise === 'Squat')).toBeUndefined() // only warm-up
+  })
+  it('honours the window and falls back to legacy strings', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      workout({ id: 'in', date: '2026-06-21', sets: ['Deadlift 5x5 @ 100kg'] }),
+      workout({ id: 'old', date: '2026-05-01', sets: ['Deadlift 5x5 @ 90kg'] }),
+    ]
+    const freq = exerciseFrequency(d, '2026-06-22', 7)
+    expect(freq).toEqual([{ exercise: 'Deadlift', days: 1, sets: 1 }])
+  })
+  it('computes the train/rest split over the window', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      workout({ id: 'a', date: '2026-06-22', sets: [] }),
+      workout({ id: 'b1', date: '2026-06-20', sets: [] }),
+      workout({ id: 'b2', date: '2026-06-20', sets: [] }), // same day → counts once
+    ]
+    const r = trainRestRatio(d, '2026-06-22', 7)
+    expect(r).toEqual({ trainDays: 2, restDays: 5, window: 7, ratio: 0.29 })
   })
 })

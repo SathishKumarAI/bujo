@@ -13,8 +13,8 @@ import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '..
 import { pushCloud, pullCloud } from '../lib/bujocloud'
 import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
 import { generateDemoData } from '../lib/demo'
-import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive } from '../lib/csv'
-import { journalToICS, habitRemindersToICS, tasksToICS } from '../lib/ics'
+import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive, devSessionsCsv, dataSummary, verifyChecksum, withChecksum } from '../lib/csv'
+import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from '../lib/ics'
 import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
@@ -34,6 +34,25 @@ export function Settings() {
   const { data, setSettings, replaceAll, setMetric } = useJournal()
   const fileRef = useRef<HTMLInputElement>(null)
   const csvRef = useRef<HTMLInputElement>(null)
+  const verifyRef = useRef<HTMLInputElement>(null)
+
+  function onVerifyBackup(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const r = verifyChecksum(String(reader.result))
+      if (!r.ok) {
+        alert('✗ This backup failed its integrity check — it looks truncated or corrupted. Do not rely on it; keep an older copy.')
+      } else if (!r.stamped) {
+        alert('This file has no integrity checksum (an older or plain export). It looks readable, but can’t be verified.')
+      } else {
+        alert('✓ Integrity check passed — this backup is intact.')
+      }
+    }
+    reader.readAsText(file)
+    if (verifyRef.current) verifyRef.current.value = ''
+  }
 
   function onMetricsCsv(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -251,6 +270,40 @@ export function Settings() {
               )
             })()}
           </Card>
+          {(() => {
+            // Read-only whole-journal summary: tracked span, coverage, top domains.
+            const sum = dataSummary(data)
+            if (sum.totalRecords === 0) return null
+            return (
+              <Card title="Journal summary" subtitle="The span and shape of everything you've tracked" className="mb-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
+                  <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} color="lavender" />
+                  <StatTile compact label="Days span" value={sum.spanDays} color="blue" />
+                  <StatTile compact label="Active days" value={sum.activeDays} color="green" />
+                </div>
+                <div className="mt-3">
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="text-overlay0">Days with data (coverage)</span>
+                    <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                    <div className="h-full rounded-full" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
+                  </div>
+                </div>
+                {sum.counts.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {sum.counts.map((c) => (
+                      <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-surface0 bg-base px-2 py-0.5 text-xs text-subtext1">
+                        {c.label} <span className="font-medium text-text">{c.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-overlay0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
+              </Card>
+            )
+          })()}
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
         {(() => {
@@ -292,6 +345,7 @@ export function Settings() {
             <Button onClick={() => download(`bujo-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
             <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
             <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+            {(data.devSessions?.length ?? 0) > 0 && <Button onClick={() => download(`bujo-focus-${todayISO()}.csv`, devSessionsCsv(data), 'text/csv')}>Focus sessions</Button>}
             <Button onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
             <Button onClick={() => download(`bujo-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
             {s.nofapEnabled && <Button onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
@@ -317,8 +371,21 @@ export function Settings() {
             <p className="mt-1 text-xs text-overlay0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
           </div>
           <div className="mt-2">
+            <Button onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
+            <p className="mt-1 text-xs text-overlay0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
+          </div>
+          <div className="mt-2">
             <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
             <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="mb-2 text-xs text-overlay0">Backup integrity:</p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Download size={14} /> Export checksummed backup</Button>
+              <Button onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Verify a backup file</Button>
+              <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
+            </div>
+            <p className="mt-1 text-xs text-overlay0">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
           </div>
           <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>

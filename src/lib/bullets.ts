@@ -1,5 +1,5 @@
-import type { BulletType, Entry, EntryStatus } from './types'
-import { addDays, dayDiff, WEEKDAYS } from './date'
+import type { BulletType, Collection, Entry, EntryStatus } from './types'
+import { addDays, dayDiff, ymOf, MONTHS, WEEKDAYS } from './date'
 
 // ── Rapid-logging signifiers (Ryder Carroll method + Elsa's additions) ───────
 
@@ -273,6 +273,101 @@ export function overdueBuckets(
     if (age > oldestDays) oldestDays = age
   }
   return { recent, week, stale, ancient, total: recent + week + stale + ancient, oldestDays }
+}
+
+/**
+ * Migration history thread (#268): the full chain a task moved through, oldest
+ * first. Given any entry id, find its thread root (its own `originId` or itself),
+ * gather every task entry in that thread, and order them by creation time so the
+ * caller can render "lived on these days" history. Returns [] if the id isn't a
+ * known task. Non-task entries never thread. The returned entries are the real
+ * stored ones (not copies), so callers can read date/status off each hop.
+ */
+export function entryThread(entries: Entry[], id: string): Entry[] {
+  const self = entries.find((e) => e.id === id)
+  if (!self || self.type !== 'task') return []
+  const root = self.originId ?? self.id
+  return entries
+    .filter((e) => e.type === 'task' && (e.originId ?? e.id) === root)
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0))
+}
+
+/**
+ * Per-collection breakdown for the Index: for each collection, how many entries
+ * it holds and — over its task entries (dropped excluded) — how many are done.
+ * `rate` is 0–1 over live tasks (0 when none). Empty collections still appear
+ * (count 0). Sorted by entry count desc, then name. Pure; read-only over data.
+ */
+export function collectionBreakdown(
+  entries: Entry[],
+  collections: Collection[],
+): { id: string; name: string; icon: string; count: number; done: number; tasks: number; rate: number }[] {
+  return collections
+    .map((c) => {
+      const mine = entries.filter((e) => e.collection === c.id)
+      const liveTasks = mine.filter((e) => e.type === 'task' && e.status !== 'dropped')
+      const done = liveTasks.filter((e) => e.status === 'done').length
+      return {
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        count: mine.length,
+        done,
+        tasks: liveTasks.length,
+        rate: liveTasks.length ? done / liveTasks.length : 0,
+      }
+    })
+    .sort((a, b) => b.count - a.count || (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
+}
+
+/**
+ * Entries per calendar month across a trailing window ending at `ym` (inclusive),
+ * oldest first, every month zero-filled. `months` is the window length (e.g. 12).
+ * Collection-only (dateless) entries are skipped; dropped entries still count
+ * (they happened). `label` is the short month name ("Jun") for axis ticks.
+ * Pure — paces a yearly entry rhythm without touching the store.
+ */
+export function monthlyEntryCounts(
+  entries: Entry[],
+  ym: string,
+  months: number,
+): { ym: string; label: string; count: number }[] {
+  // Build the ordered list of YYYY-MM keys, stepping back from `ym`.
+  const [y0, m0] = ym.split('-').map(Number)
+  const keys: string[] = []
+  for (let i = months - 1; i >= 0; i--) {
+    // Step back i months from (y0, m0) using a 0-based month index.
+    const idx = (y0 * 12 + (m0 - 1)) - i
+    const yy = Math.floor(idx / 12)
+    const mm = (idx % 12) + 1
+    keys.push(`${yy}-${String(mm).padStart(2, '0')}`)
+  }
+  const counts = new Map<string, number>()
+  for (const e of entries) {
+    if (!e.date) continue
+    const k = ymOf(e.date)
+    if (counts.has(k) || keys.includes(k)) counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  return keys.map((k) => ({
+    ym: k,
+    label: MONTHS[Number(k.slice(5)) - 1].slice(0, 3),
+    count: counts.get(k) ?? 0,
+  }))
+}
+
+/**
+ * Quick-memory bullets (▲): entries flagged `memory` — fleeting moments worth
+ * remembering, captured inline in the daily log. Dropped ones are excluded.
+ * Sorted by day desc (dateless last), then newest-created first, so the most
+ * recent memories surface. Pure; powers a read-only "Memories" collection page.
+ */
+export function memoryBullets(entries: Entry[]): Entry[] {
+  return entries
+    .filter((e) => e.memory && e.status !== 'dropped')
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1
+      return a.createdAt < b.createdAt ? 1 : -1
+    })
 }
 
 /**

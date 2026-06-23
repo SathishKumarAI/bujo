@@ -18,7 +18,7 @@ import {
 } from '../lib/viz'
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
 import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
-import { sleepDebt } from '../lib/correlations'
+import { sleepDebt, focusSleepCorrelation } from '../lib/correlations'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
@@ -42,6 +42,7 @@ export function Stats() {
   const debt = sleepDebt(data)
   const hasSleep = debt.some((d) => d.sleep != null)
   const peakDebt = debt.reduce((m, d) => Math.max(m, d.debt), 0)
+  const focusSleep = focusSleepCorrelation(data)
 
   function shift(d: number) {
     const [y, m] = ym.split('-').map(Number)
@@ -165,6 +166,19 @@ export function Stats() {
             </div>
           )}
         </Card>
+
+        {focusSleep.r != null && (
+          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before · ${focusSleep.days} paired days`}>
+            <p className="text-4xl font-extrabold tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
+              {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
+              <span className="ml-1 text-sm text-overlay0">r</span>
+            </p>
+            <p className="mt-2 text-sm text-subtext1">{focusSleep.note}</p>
+            <p className="mt-2 text-xs text-overlay0">
+              Pearson correlation: +1 means more sleep always tracks with sharper focus, 0 means no link.
+            </p>
+          </Card>
+        )}
 
         <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (

@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
   Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell,
-  Scale, TrendingDown, AlertTriangle, type LucideIcon,
+  Scale, TrendingDown, AlertTriangle, Repeat, CalendarCheck, HeartPulse, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis,
 } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile } from '../components/ui'
@@ -26,6 +27,7 @@ import {
   weeklyVolumeSeries, exerciseProgression, isNewPR, warmupRamp, sessionSummary,
   weeklySetsPerMuscle, e1rmProgression, MUSCLE_SET_LANDMARK,
   bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts,
+  repPRs, volumeByCategory, muscleRecovery, exerciseFrequency, trainRestRatio,
 } from '../lib/fitness'
 import { PlateStack, plateColor } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
@@ -89,6 +91,13 @@ export function Gym() {
   const relStrength = useMemo(() => relativeStrength(data), [data])
   const neglected = useMemo(() => neglectedMuscles(data), [data])
   const stalled = useMemo(() => stalledLifts(data), [data])
+  // Movement-balance radar + recovery readiness + frequency/consistency (read-only).
+  const categoryVolume = useMemo(() => volumeByCategory(data), [data])
+  const recovery = useMemo(() => muscleRecovery(data), [data])
+  const frequency = useMemo(() => exerciseFrequency(data), [data])
+  const trainRest = useMemo(() => trainRestRatio(data), [data])
+  // Rep records for the focused lift (best reps at each weight).
+  const repRecords = focusEx ? repPRs(data, focusEx) : []
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
   // cached from a prior search); otherwise fall back to the keyword mapper.
@@ -535,8 +544,20 @@ export function Gym() {
       </Card>
       </div>
 
+      {/* ── Rep records for the focused lift · best reps at each weight ── */}
+      {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
+
       {/* ── Weekly volume balance · hard sets per muscle vs hypertrophy landmark ── */}
       <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
+
+      {/* ── Movement-balance radar + muscle-recovery readiness ── */}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <MovementRadar data={categoryVolume} unit={unit} />
+        <RecoveryMap recovery={recovery} setFocusEx={setFocusEx} />
+      </div>
+
+      {/* ── Exercise frequency + train/rest consistency ── */}
+      <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
 
       {/* ── Strength snapshots · big-three total + relative strength ── */}
       <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -567,6 +588,141 @@ export function Gym() {
       {/* ── Progress photos ──────────────────────────────────── */}
       <ProgressPhotos />
     </Page>
+  )
+}
+
+/**
+ * Rep records for the focused lift: the most reps ever done at each weight, so
+ * high-rep gains register as PRs even when the bar weight is unchanged. Read-only
+ * — derived from logged sets via repPRs.
+ */
+function RepPRCard({ exercise, records, unit }: { exercise: string; records: import('../lib/fitness').RepPR[]; unit: string }) {
+  return (
+    <Card title="Rep records" subtitle={<span>Best reps at each weight · <span className="text-mauve">{exercise}</span></span>} defer>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {records.slice(0, 9).map((r) => (
+          <li key={r.weight} className="rounded-xl border border-surface0 bg-base px-3 py-2" title={`${r.reps} reps at ${r.weight}${unit} · set ${prettyDay(r.date)}`}>
+            <p className="text-lg font-bold" style={{ color: cat('green') }}>{r.reps}<span className="ml-0.5 text-xs font-normal text-overlay0">reps</span></p>
+            <p className="text-xs text-subtext1">@ {r.weight}{unit}</p>
+            <p className="text-[10px] text-overlay0">{prettyDay(r.date)}</p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
+/**
+ * Push/Pull/Legs/Core volume radar: this week's working-set volume by movement
+ * category, so imbalances jump out as a lopsided shape. Read-only — derived via
+ * volumeByCategory.
+ */
+function MovementRadar({ data, unit }: { data: import('../lib/fitness').CategoryVolume[]; unit: string }) {
+  const total = data.reduce((s, c) => s + c.volume, 0)
+  return (
+    <Card title="Movement balance" subtitle="Weekly volume by push / pull / legs / core" defer>
+      {total === 0 ? (
+        <Empty>Log some working sets this week to see your movement balance.</Empty>
+      ) : (
+        <>
+          <div className="h-56" role="img" aria-label={`Radar chart of weekly working-set volume by movement category (${unit}): ${data.map((c) => `${c.category} ${c.volume}`).join(', ')}`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                <PolarGrid stroke={cat('surface0')} />
+                <PolarAngleAxis dataKey="category" tick={{ fill: cat('subtext0'), fontSize: 12 }} />
+                <Radar dataKey="volume" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-overlay0">
+            {data.map((c) => (
+              <span key={c.category}>{c.category} <span className="text-subtext1">{c.volume.toLocaleString()}{unit}</span></span>
+            ))}
+          </div>
+        </>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * Muscle-recovery readiness map: how long since each muscle was last trained,
+ * coloured by readiness (fatigued today/yesterday → green when rested). Tap a
+ * muscle to focus the anatomy map. Read-only — derived via muscleRecovery.
+ */
+function RecoveryMap({ recovery, setFocusEx }: { recovery: import('../lib/fitness').MuscleRecovery[]; setFocusEx: (e: string | null) => void }) {
+  const named = recovery
+    .map((r) => ({ ...r, name: muscleNames([r.muscle])[0] }))
+    .filter((r) => r.name)
+  const stateColor: Record<string, string> = { fresh: 'green', recovering: 'yellow', fatigued: 'red' }
+  const stateLabel: Record<string, string> = { fresh: 'ready', recovering: 'recovering', fatigued: 'fatigued' }
+  return (
+    <Card title="Recovery readiness" subtitle="Time since each muscle was last trained · green = ready" defer right={<HeartPulse size={16} style={{ color: cat('green') }} />}>
+      {named.length === 0 ? (
+        <Empty>Log some working sets to see what's recovered and ready.</Empty>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {named.map((r) => {
+            const color = stateColor[r.state]
+            return (
+              <button
+                key={r.muscle}
+                onClick={() => setFocusEx(r.name)}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
+                style={{ background: cat(color) + '22', color: cat(color) }}
+                title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
+              >
+                {r.name}
+                <span className="text-[10px] text-overlay0">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * Exercise frequency (most-trained movements in the last 4 weeks) alongside a
+ * train-vs-rest consistency readout. Tap an exercise to focus the muscle map.
+ * Read-only — derived via exerciseFrequency + trainRestRatio.
+ */
+function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: import('../lib/fitness').ExerciseFreq[]; ratio: import('../lib/fitness').TrainRestRatio; setFocusEx: (e: string | null) => void }) {
+  if (rows.length === 0) return null
+  const maxDays = Math.max(...rows.map((r) => r.days), 1)
+  return (
+    <Card title="Exercise frequency" subtitle={`Most-trained movements · last ${ratio.window} days`} defer>
+      <div className="mb-3 flex items-center gap-3 rounded-xl border border-surface0 bg-base px-3 py-2 text-sm">
+        <CalendarCheck size={16} style={{ color: cat('teal') }} />
+        <span className="text-subtext1">
+          <span className="font-semibold text-text">{ratio.trainDays}</span> train ·{' '}
+          <span className="font-semibold text-text">{ratio.restDays}</span> rest
+        </span>
+        <span className="ml-auto inline-flex items-center gap-1 text-overlay0" title="Share of days trained in the window">
+          <Repeat size={13} /> {Math.round(ratio.ratio * 100)}% active
+        </span>
+      </div>
+      <ul className="space-y-2 text-sm">
+        {rows.slice(0, 8).map((r) => (
+          <li key={r.exercise} className="flex items-center gap-2">
+            <button
+              onClick={() => setFocusEx(r.exercise)}
+              className="w-28 shrink-0 truncate text-left text-subtext1 hover:text-text"
+              title={`Focus the muscle map on ${r.exercise}`}
+            >
+              {r.exercise}
+            </button>
+            <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-surface0">
+              <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
+            </div>
+            <span className="w-16 shrink-0 text-right text-xs text-overlay0">
+              {r.days}d · {r.sets} set{r.sets === 1 ? '' : 's'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   )
 }
 

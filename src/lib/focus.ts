@@ -135,6 +135,68 @@ export function longestSession(data: JournalData): DevSession | null {
   return ss.reduce((best, s) => ((s.durationMin || 0) > (best.durationMin || 0) ? s : best))
 }
 
+/**
+ * GitHub-style heatmap of daily coding minutes ending today, covering the last
+ * `weeks` calendar weeks aligned to whole Sun→Sat rows (backlog #376). Returns
+ * one cell per day, oldest→newest, each with its weekday column (0=Sun..6=Sat)
+ * and an intensity level 0..4 (0 = no work) bucketed against the busiest day in
+ * the window. `max` is that busiest day's minutes, for a legend.
+ */
+export function deepWorkHeatmap(
+  data: JournalData,
+  today = todayISO(),
+  weeks = 26,
+): { cells: { date: string; min: number; weekday: number; level: number }[]; max: number } {
+  // Align the window's end to the Saturday of today's week so rows are whole.
+  const [ty, tm, td] = today.split('-').map(Number)
+  const todayWd = new Date(ty, (tm || 1) - 1, td || 1).getDay() // 0..6
+  const end = addDays(today, 6 - todayWd) // Saturday of this week
+  const totalDays = weeks * 7
+  const start = addDays(end, -(totalDays - 1))
+
+  const byDay = new Map<string, number>()
+  for (const s of sessions(data)) byDay.set(s.date, (byDay.get(s.date) ?? 0) + (s.durationMin || 0))
+  const max = Math.max(0, ...[...byDay.values()])
+
+  const cells = Array.from({ length: totalDays }, (_, i) => {
+    const date = addDays(start, i)
+    const min = byDay.get(date) ?? 0
+    const [y, m, d] = date.split('-').map(Number)
+    const weekday = new Date(y, (m || 1) - 1, d || 1).getDay()
+    let level = 0
+    if (min > 0 && max > 0) level = Math.min(4, Math.max(1, Math.ceil((min / max) * 4)))
+    return { date, min, weekday, level }
+  })
+  return { cells, max }
+}
+
+/**
+ * Duration-weighted average focus score per weekday (Sun→Sat, indices 0..6),
+ * across all sessions — complements minutesByWeekday by showing *quality*, not
+ * just volume. Days with no logged minutes report avg 0 and count 0 so the view
+ * can dim them.
+ */
+export function focusByWeekday(data: JournalData): { day: number; label: string; avg: number; count: number }[] {
+  const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const wsum = new Array(7).fill(0) // focus * minutes
+  const wmin = new Array(7).fill(0) // minutes
+  const cnt = new Array(7).fill(0)
+  for (const s of sessions(data)) {
+    const [y, m, d] = s.date.split('-').map(Number)
+    const wd = new Date(y, (m || 1) - 1, d || 1).getDay()
+    const min = s.durationMin || 0
+    wsum[wd] += s.focus * min
+    wmin[wd] += min
+    cnt[wd] += 1
+  }
+  return labels.map((label, day) => ({
+    day,
+    label,
+    avg: wmin[day] ? Math.round((wsum[day] / wmin[day]) * 10) / 10 : 0,
+    count: cnt[day],
+  }))
+}
+
 /** A plain-language read on the focus↔stress relationship. */
 export function focusInsight(data: JournalData): string | null {
   const r = focusStressCorrelation(data)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -334,6 +334,93 @@ describe('pickleMilestones', () => {
     const ms = pickleMilestones(emptyJournal())
     expect(ms).toHaveLength(3)
     expect(ms.every((m) => m.current === 0 && !m.done)).toBe(true)
+  })
+})
+
+describe('pickleHours', () => {
+  it('totals only timed sessions, averages, and reads a recent window', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-20', 2, 1), durationMin: 90 }, // 3 games · in window
+      { ...s('2026-06-22', 1, 1), durationMin: 30 }, // 2 games · in window
+      { ...s('2026-05-01', 2, 0), durationMin: 60 }, // outside 30-day window
+      s('2026-06-21', 1, 0), // no duration → excluded from time math
+    ]
+    const h = pickleHours(d, 30, '2026-06-23')
+    expect(h.timedSessions).toBe(3)
+    expect(h.minutes).toBe(180) // 90 + 30 + 60 (all timed sessions)
+    expect(h.hours).toBe(3)
+    expect(h.avgMin).toBe(60) // 180/3
+    expect(h.recentHours).toBe(2) // (90+30)/60, May session outside 30-day window
+    expect(h.minPerGame).toBe(26) // 180 / (3+2+2 timed games) = 180/7 ≈ 26
+  })
+
+  it('is empty-safe', () => {
+    expect(pickleHours(emptyJournal())).toMatchObject({ timedSessions: 0, minutes: 0, hours: 0, avgMin: 0, minPerGame: 0 })
+  })
+})
+
+describe('scoringStats', () => {
+  it('splits games + win% by scoring system, sorted by games desc', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      { ...s('2026-06-01', 3, 1), scoring: '11' }, // 4 games
+      { ...s('2026-06-02', 1, 3), scoring: '11' }, // 4 games → to-11 total 8 games, 4 won → 50%
+      { ...s('2026-06-03', 2, 0), scoring: 'rally21' }, // 2 games, 100%
+      s('2026-06-04', 1, 1), // no scoring → ignored
+    ]
+    const ss = scoringStats(d)
+    expect(ss.map((x) => x.scoring)).toEqual(['11', 'rally21'])
+    expect(ss[0]).toMatchObject({ scoring: '11', label: 'To 11', sessions: 2, games: 8, gamesWon: 4, winPct: 50 })
+    expect(ss[1]).toMatchObject({ scoring: 'rally21', label: 'Rally 21', games: 2, winPct: 100 })
+  })
+
+  it('is empty-safe', () => {
+    expect(scoringStats(emptyJournal())).toEqual([])
+  })
+})
+
+describe('upcomingEvents', () => {
+  it('returns future events soonest-first with daysUntil and a soon flag', () => {
+    const d = emptyJournal()
+    d.pickleballEvents = [
+      { id: 'a', date: '2026-06-30', name: 'Summer Slam', kind: 'tournament', format: 'pool-play' },
+      { id: 'b', date: '2026-06-24', name: 'League Night', kind: 'league', format: 'round-robin' },
+      { id: 'c', date: '2026-06-01', name: 'Past Open', kind: 'tournament', format: 'single-elim' }, // past → excluded
+    ]
+    const up = upcomingEvents(d, '2026-06-23')
+    expect(up.map((e) => e.id)).toEqual(['b', 'a'])
+    expect(up[0]).toMatchObject({ daysUntil: 1, soon: true })
+    expect(up[1]).toMatchObject({ daysUntil: 7, soon: false })
+  })
+
+  it('includes an event dated today and is empty-safe', () => {
+    const d = emptyJournal()
+    d.pickleballEvents = [{ id: 't', date: '2026-06-23', name: 'Today Cup', kind: 'tournament', format: 'box' }]
+    expect(upcomingEvents(d, '2026-06-23')[0]).toMatchObject({ daysUntil: 0, soon: true })
+    expect(upcomingEvents(emptyJournal())).toEqual([])
+  })
+})
+
+describe('playConsistency', () => {
+  it('measures distinct play days, gaps, active weeks, and recency', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      s('2026-06-01', 1, 0),
+      s('2026-06-01', 2, 0), // same day → one distinct day
+      s('2026-06-05', 1, 0), // 4-day gap
+      s('2026-06-20', 1, 0), // 15-day gap (longest)
+    ]
+    const c = playConsistency(d, 8, '2026-06-23')
+    expect(c.daysPlayed).toBe(3)
+    expect(c.longestGap).toBe(15)
+    expect(c.avgGap).toBe(9.5) // (4 + 15) / 2
+    expect(c.daysSinceLast).toBe(3)
+    expect(c.activeWeeks).toBeGreaterThanOrEqual(1)
+  })
+
+  it('is empty-safe', () => {
+    expect(playConsistency(emptyJournal())).toMatchObject({ daysPlayed: 0, longestGap: 0, avgGap: 0, activeWeeks: 0, daysSinceLast: null })
   })
 })
 

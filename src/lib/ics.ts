@@ -147,6 +147,48 @@ export function tasksToICS(data: JournalData): string {
 }
 
 /**
+ * Calendar feed of completions (BUJO-513): one all-day VEVENT per completed habit
+ * and per logged workout, so an external calendar shows a "done" record on each
+ * day you showed up. Check habits use the habitLog; count habits also count when a
+ * day's logged value met the target. Each summary is prefixed "✓ ". Pure; returns
+ * a full VCALENDAR (header-only when nothing has been completed).
+ */
+export function completionsToICS(data: JournalData): string {
+  const events: string[] = []
+  const byId = new Map(data.habits.map((h) => [h.id, h]))
+  // Check-habit completions from the habitLog.
+  for (const [date, ids] of Object.entries(data.habitLog)) {
+    for (const id of ids) {
+      const h = byId.get(id)
+      const name = h ? `${h.emoji ? `${h.emoji} ` : ''}${h.name}` : id
+      const v = vevent(`bujo-done-${id}-${date}`, date, `✓ ${name}`)
+      if (v) events.push(v)
+    }
+  }
+  // Count-habit completions: a day whose value met the habit's target.
+  for (const [date, vals] of Object.entries(data.habitValues ?? {})) {
+    for (const [id, value] of Object.entries(vals)) {
+      const h = byId.get(id)
+      if (!h || h.type !== 'count') continue
+      // Skip if the check-log already recorded this day (avoid a duplicate event).
+      if ((data.habitLog[date] ?? []).includes(id)) continue
+      const met = h.target == null ? value > 0 : value >= h.target
+      if (!met) continue
+      const name = `${h.emoji ? `${h.emoji} ` : ''}${h.name}`
+      const v = vevent(`bujo-done-${id}-${date}`, date, `✓ ${name}`)
+      if (v) events.push(v)
+    }
+  }
+  // Logged workouts.
+  for (const w of data.workouts) {
+    if (!w.date) continue
+    const v = vevent(`bujo-workout-${w.id}`, w.date, `✓ ${w.activity}${w.durationMin ? ` (${w.durationMin}m)` : ''}`)
+    if (v) events.push(v)
+  }
+  return calendar(events)
+}
+
+/**
  * Export dated journal items as an all-day iCalendar (.ics) feed importable into
  * Google/Apple Calendar: `event`-type entries, plus this year's birthdays.
  * Pure; pass `year` for deterministic birthday dates (defaults to current year).

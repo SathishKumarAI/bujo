@@ -15,7 +15,7 @@ import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30, habitCellFill, consistencyScore, bestWeekday, categoryRollup, perfectDayStats, perfectWeeks, weeklyHeatRow } from '../lib/habitStats'
+import { completionRate30, habitCellFill, consistencyScore, bestWeekday, categoryRollup, perfectDayStats, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
@@ -115,6 +115,7 @@ export function Trackers() {
 
   return (
     <Page>
+      <TrackerSummaryCard data={data} today={today} />
       <Card
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
@@ -297,6 +298,27 @@ export function Trackers() {
 
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
     </Page>
+  )
+}
+
+/** One-glance roll-up across the whole grid: counts, mean consistency, top
+ *  current streak, and today's completion share. Pure data → a header tile. */
+function TrackerSummaryCard({ data, today }: { data: import('../lib/types').JournalData; today: string }) {
+  if (data.habits.filter((h) => !h.archived).length === 0) return null
+  const sum = trackerSummary(data, (id, t) => habitStreak(data, id, t), today)
+  return (
+    <Card title="At a glance" subtitle="Your whole tracker, summarised">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatTile label="today done" value={`${sum.todayPct}%`} color={sum.todayPct >= 80 ? 'green' : sum.todayPct >= 50 ? 'yellow' : 'peach'} />
+        <StatTile label="avg consistency" value={sum.avgConsistency} color="mauve" />
+        <StatTile
+          label={sum.topStreakHabit ? `🔥 ${sum.topStreakHabit}` : 'top streak'}
+          value={`${sum.topStreak}d`}
+          color="peach"
+        />
+        <StatTile label="habits tracked" value={`${sum.buildHabits}${sum.avoidHabits ? ` +${sum.avoidHabits}🚫` : ''}`} color="sapphire" />
+      </div>
+    </Card>
   )
 }
 
@@ -707,6 +729,9 @@ function CategoryRows({
         // scheduled miss (a complement to the raw streak). Build habits only.
         const consistency = avoid ? null : consistencyScore(data, h, today)
         const sinceMiss = avoid ? null : daysSinceLastMiss(data, h, today)
+        // Letter grade (A–F) over the recency-weighted 30-day consistency — a
+        // single glanceable mark. Only show once there's a real signal (not F at 0).
+        const grade = avoid ? null : habitGrade(data, h, today)
         return (
           <tr
             key={h.id}
@@ -753,6 +778,10 @@ function CategoryRows({
                     {/* #395: recency-weighted consistency score — momentum, not a flat avg. */}
                     {consistency != null && consistency > 0 && (
                       <span title={`Consistency score ${consistency}/100 (recent scheduled days weighted more)`} className="shrink-0 text-[10px]" style={{ color: consistency >= 80 ? cat('green') : consistency >= 50 ? cat('yellow') : cat('overlay1') }}>◆{consistency}</span>
+                    )}
+                    {/* Letter grade (A–F) over the same window — a single glanceable mark. */}
+                    {grade && grade.score > 0 && (
+                      <span title={`Grade ${grade.letter} · consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] font-semibold" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach')) + '33', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach') }}>{grade.letter}</span>
                     )}
                     {/* Days since the last scheduled miss — a clean-since counter. */}
                     {sinceMiss != null && sinceMiss >= 3 && (
@@ -839,6 +868,11 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const perfectWk = habit.avoid ? 0 : perfectWeeks(data, habit, today)
   // Last-7-day intensity strip — a glanceable "how's this week going".
   const week = weeklyHeatRow(data, habit, today)
+  // #407: per-habit trailing-12-month completion bars (seasonal momentum).
+  const months = habit.avoid ? [] : monthlyHabitCompletion(data, habit, today, 12).filter((m) => m.scheduled > 0)
+  // #399: last-14-day value sparkline for numeric habits.
+  const numericType = habit.type === 'count' || habit.type === 'timer' || habit.type === 'rating'
+  const spark = numericType ? valueSparkline(data, habit, today, 14) : []
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
@@ -876,6 +910,44 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               ))}
             </div>
           </div>
+
+          {/* #399: last-14-day value sparkline for numeric habits. */}
+          {numericType && spark.some((p) => p.value > 0) && (
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-[10px] text-overlay0">Last 14d</span>
+              <div className="flex h-8 flex-1 items-end gap-0.5" role="img" aria-label="Sparkline of the last 14 days' logged values">
+                {spark.map((p) => (
+                  <span
+                    key={p.day}
+                    title={`${p.day}: ${p.value}${habit.unit ? ` ${habit.unit}` : ''}`}
+                    className={`flex-1 rounded-sm ${p.day === today ? 'ring-1 ring-mauve' : ''}`}
+                    style={{ height: `${Math.max(p.value > 0 ? 12 : 4, p.norm * 100)}%`, background: p.value > 0 ? cat(habit.color) : cat('surface0'), opacity: p.value > 0 ? 0.4 + p.norm * 0.6 : 1 }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* #407: per-habit monthly completion bars (trailing year). */}
+          {!habit.avoid && months.length >= 2 && (
+            <div>
+              <p className="mb-1 text-xs text-overlay0">Monthly completion (trailing year)</p>
+              <div className="flex items-end justify-between gap-1" style={{ height: 72 }} role="img" aria-label="Bar chart of monthly completion percentage over the trailing year">
+                {months.map((m) => (
+                  <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full rounded-t"
+                        title={`${m.ym}: ${m.done}/${m.scheduled} scheduled days · ${m.pct}%`}
+                        style={{ height: `${Math.max(3, m.pct)}%`, background: m.pct >= 80 ? cat('green') : m.pct >= 50 ? cat('yellow') : cat('peach'), opacity: 0.55 + m.pct / 100 * 0.45 }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-overlay0">{prettyMonth(m.ym).slice(0, 1)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Completion heatmap · 12 weeks or a full year */}
           <div>

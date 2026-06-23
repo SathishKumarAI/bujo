@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
   bulletTypeBreakdown,
+  collectionBreakdown,
   collectionProgress,
   entriesPerDay,
+  entryThread,
   glyphFor,
   inboxEntries,
   journalingStreak,
+  memoryBullets,
   migrationCounts,
+  monthlyEntryCounts,
   nextStatus,
   overdueBuckets,
   parseQuickCapture,
@@ -15,7 +19,7 @@ import {
   taskCompletion,
   weekdayActivity,
 } from './bullets'
-import type { Entry } from './types'
+import type { Collection, Entry } from './types'
 
 function entry(over: Partial<Entry> = {}): Entry {
   return {
@@ -366,5 +370,107 @@ describe('overdueBuckets', () => {
     )
     expect(out.total).toBe(0)
     expect(out.oldestDays).toBe(0)
+  })
+})
+
+describe('entryThread', () => {
+  it('returns the full migration chain oldest-first', () => {
+    const orig = entry({ id: 'a', date: '2026-06-01', status: 'migrated', createdAt: '2026-06-01T08:00:00Z' })
+    const c1 = entry({ id: 'b', date: '2026-06-02', status: 'migrated', originId: 'a', createdAt: '2026-06-02T08:00:00Z' })
+    const c2 = entry({ id: 'c', date: '2026-06-03', status: 'open', originId: 'a', createdAt: '2026-06-03T08:00:00Z' })
+    // Query by any member id resolves the same thread.
+    expect(entryThread([c2, orig, c1], 'c').map((e) => e.id)).toEqual(['a', 'b', 'c'])
+    expect(entryThread([c2, orig, c1], 'a').map((e) => e.id)).toEqual(['a', 'b', 'c'])
+  })
+  it('returns just the entry for an unmigrated task', () => {
+    expect(entryThread([entry({ id: 'solo' })], 'solo').map((e) => e.id)).toEqual(['solo'])
+  })
+  it('returns [] for an unknown or non-task id', () => {
+    expect(entryThread([entry({ id: 'x' })], 'nope')).toEqual([])
+    expect(entryThread([entry({ id: 'ev', type: 'event' })], 'ev')).toEqual([])
+  })
+})
+
+describe('collectionBreakdown', () => {
+  function col(over: Partial<Collection> = {}): Collection {
+    return { id: 'c1', name: 'Pack', icon: '🎒', createdAt: '2026-06-01T00:00:00Z', ...over }
+  }
+  it('counts entries and live-task completion per collection', () => {
+    const out = collectionBreakdown(
+      [
+        entry({ collection: 'c1', type: 'task', status: 'done' }),
+        entry({ collection: 'c1', type: 'task', status: 'open' }),
+        entry({ collection: 'c1', type: 'note' }),
+        entry({ collection: 'c1', type: 'task', status: 'dropped' }), // excluded from tasks
+        entry({ collection: 'c2', type: 'task', status: 'done' }),
+      ],
+      [col({ id: 'c1', name: 'Pack' }), col({ id: 'c2', name: 'Work' })],
+    )
+    const pack = out.find((c) => c.id === 'c1')!
+    expect(pack.count).toBe(4)
+    expect(pack.tasks).toBe(2)
+    expect(pack.done).toBe(1)
+    expect(pack.rate).toBe(0.5)
+    expect(out.find((c) => c.id === 'c2')!.rate).toBe(1)
+  })
+  it('includes empty collections with rate 0 and sorts by count desc then name', () => {
+    const out = collectionBreakdown(
+      [entry({ collection: 'b', type: 'note' })],
+      [col({ id: 'a', name: 'Apple' }), col({ id: 'b', name: 'Banana' }), col({ id: 'z', name: 'Zen' })],
+    )
+    expect(out.map((c) => c.id)).toEqual(['b', 'a', 'z']) // b has 1 entry; a,z tie at 0 → alpha
+    expect(out[1].rate).toBe(0)
+  })
+})
+
+describe('monthlyEntryCounts', () => {
+  it('zero-fills a trailing window of months, oldest first', () => {
+    const out = monthlyEntryCounts(
+      [
+        entry({ date: '2026-06-10' }),
+        entry({ date: '2026-06-20' }),
+        entry({ date: '2026-04-05' }),
+      ],
+      '2026-06',
+      3,
+    )
+    expect(out.map((m) => m.ym)).toEqual(['2026-04', '2026-05', '2026-06'])
+    expect(out.map((m) => m.count)).toEqual([1, 0, 2])
+    expect(out.map((m) => m.label)).toEqual(['Apr', 'May', 'Jun'])
+  })
+  it('crosses a year boundary correctly', () => {
+    const out = monthlyEntryCounts([entry({ date: '2025-12-31' })], '2026-01', 2)
+    expect(out.map((m) => m.ym)).toEqual(['2025-12', '2026-01'])
+    expect(out[0].count).toBe(1)
+  })
+  it('ignores dateless and out-of-window entries', () => {
+    const out = monthlyEntryCounts(
+      [entry({ date: '' }), entry({ date: '2026-01-01' }), entry({ date: '2026-06-01' })],
+      '2026-06',
+      2,
+    )
+    expect(out.map((m) => m.ym)).toEqual(['2026-05', '2026-06'])
+    expect(out.reduce((a, b) => a + b.count, 0)).toBe(1) // only June is in-window
+  })
+})
+
+describe('memoryBullets', () => {
+  it('keeps memory-flagged entries, newest day first', () => {
+    const out = memoryBullets([
+      entry({ id: 'old', date: '2026-06-01', memory: true }),
+      entry({ id: 'new', date: '2026-06-09', memory: true }),
+      entry({ id: 'plain', date: '2026-06-10', memory: false }),
+    ])
+    expect(out.map((e) => e.id)).toEqual(['new', 'old'])
+  })
+  it('excludes dropped memories', () => {
+    expect(memoryBullets([entry({ memory: true, status: 'dropped' })])).toEqual([])
+  })
+  it('orders dateless memories after dated ones', () => {
+    const out = memoryBullets([
+      entry({ id: 'nodate', date: '', memory: true }),
+      entry({ id: 'dated', date: '2026-06-01', memory: true }),
+    ])
+    expect(out.map((e) => e.id)).toEqual(['dated', 'nodate'])
   })
 })

@@ -6,7 +6,7 @@ import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
-import { migrationCounts, overdueBuckets } from '../lib/bullets'
+import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
 
 export function Plan() {
@@ -15,6 +15,7 @@ export function Plan() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date')
   const [showAllOverdue, setShowAllOverdue] = useState(false)
+  const [openThread, setOpenThread] = useState<string | null>(null)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -135,26 +136,49 @@ export function Plan() {
           help="Every time you migrate a task forward it counts a hop here. A task pushed several times is a signal: it may be too big, badly timed, or not actually yours to do. Tackle it or let it go."
         >
           <ul className="space-y-1.5 text-sm">
-            {deferred.slice(0, 8).map((t) => (
-              <li key={t.rootId} className="flex items-center justify-between gap-2 rounded-lg border border-surface0 bg-base px-2.5 py-1.5">
-                <span className="flex items-center gap-2 truncate">
-                  <button
-                    onClick={() => migrateEntry(t.current.id, today)}
-                    title="Bring to today"
-                    className="shrink-0 text-overlay0 hover:text-mauve"
-                    aria-label={`Bring "${t.text}" to today`}
-                  >→</button>
-                  <span className="truncate text-subtext1">{t.text}</span>
-                </span>
-                <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
-                  title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}`}
-                >
-                  migrated {t.count}×
-                </span>
-              </li>
-            ))}
+            {deferred.slice(0, 8).map((t) => {
+              const open = openThread === t.rootId
+              const thread = open ? entryThread(data.entries, t.current.id) : []
+              return (
+                <li key={t.rootId} className="rounded-lg border border-surface0 bg-base px-2.5 py-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 truncate">
+                      <button
+                        onClick={() => migrateEntry(t.current.id, today)}
+                        title="Bring to today"
+                        className="shrink-0 text-overlay0 hover:text-mauve"
+                        aria-label={`Bring "${t.text}" to today`}
+                      >→</button>
+                      <span className="truncate text-subtext1">{t.text}</span>
+                    </span>
+                    <button
+                      onClick={() => setOpenThread(open ? null : t.rootId)}
+                      className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
+                      title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'} · tap for history`}
+                      aria-expanded={open}
+                      aria-label={`Migration history for "${t.text}"`}
+                    >
+                      migrated {t.count}×
+                    </button>
+                  </div>
+                  {open && thread.length > 0 && (
+                    <ol className="mt-2 space-y-0.5 border-t border-surface0 pt-2 text-xs text-overlay0">
+                      {thread.map((h, i) => (
+                        <li key={h.id} className="flex items-center gap-2">
+                          <span className="w-4 shrink-0 text-right">{i + 1}.</span>
+                          <span className="w-24 shrink-0">{h.date ? prettyDay(h.date) : 'no date'}</span>
+                          <span style={{ color: cat(h.status === 'done' ? 'green' : h.status === 'migrated' ? 'peach' : 'subtext0') }}>
+                            {h.status}
+                          </span>
+                          {i === thread.length - 1 && <span className="text-overlay0">· now</span>}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </Card>
       )}

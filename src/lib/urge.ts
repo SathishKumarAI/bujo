@@ -446,6 +446,159 @@ export function intensityStats(urgeLog: UrgeWin[] = []): IntensityStats {
   return { buckets, rated: count, avg, mode, trend }
 }
 
+// ── #344 Time / life reclaimed estimate ──────────────────────────────────────
+
+/** Hours (and a friendly breakdown) reclaimed from a clean streak. */
+export interface TimeReclaimed {
+  /** Whole hours reclaimed = cleanDays × hoursPerDay, floored. */
+  hours: number
+  /** Whole days' worth of those hours (24h = 1 day). */
+  days: number
+  /** Leftover hours after taking out whole days (0–23). */
+  remHours: number
+  /** Hours reclaimed per clean day (the input rate, clamped ≥ 0). */
+  perDay: number
+}
+
+/**
+ * Time-reclaimed estimate (#344): a non-financial motivator. Given the clean
+ * streak length and a per-day time cost the user would otherwise have lost to
+ * the behaviour, estimate cumulative hours reclaimed and express it as
+ * days + leftover hours for a glanceable tile. Pure; negative inputs clamp to 0.
+ */
+export function timeReclaimed(cleanDays: number, hoursPerDay: number): TimeReclaimed {
+  const d = Math.max(0, Math.floor(cleanDays))
+  const perDay = Math.max(0, hoursPerDay)
+  const hours = Math.floor(d * perDay)
+  return { hours, days: Math.floor(hours / 24), remHours: hours % 24, perDay }
+}
+
+// ── #408 Multi-addiction overview dashboard ──────────────────────────────────
+
+/** One row in the recovery portfolio — an addiction ranked by current streak. */
+export interface PortfolioRow {
+  /** Stable id of the addiction (the primary streak uses 'main'). */
+  id: string
+  /** Display name. */
+  name: string
+  /** Days in the current clean run. */
+  current: number
+  /** Personal best, in days. */
+  best: number
+  /** Lifetime clean days across this addiction's whole history. */
+  totalClean: number
+  /** Number of resets logged. */
+  resets: number
+  /** True when this addiction was reset today (still counts as a current run of 0). */
+  resetToday: boolean
+}
+
+/** A single addiction's raw streak fields, as stored (primary or extra). */
+export interface PortfolioInput {
+  id: string
+  name: string
+  startedOn: string
+  best: number
+  relapses: Relapse[]
+}
+
+/**
+ * Multi-addiction overview (#408): rank every tracked addiction (the primary
+ * streak plus any extras) by current clean streak, longest first, for an
+ * at-a-glance recovery portfolio. Pure — computes current / totalClean / resets
+ * straight from each addiction's `startedOn` + `relapses` so it mirrors
+ * addictionStats without importing it. Ties break by best, then name.
+ */
+export function addictionPortfolio(
+  rows: PortfolioInput[] = [],
+  today = todayISO(),
+): PortfolioRow[] {
+  return (rows ?? [])
+    .filter(Boolean)
+    .map((a) => {
+      const dates = [...new Set((a.relapses ?? []).map((r) => r?.date).filter(Boolean) as string[])]
+      const current = Math.max(0, dayDiff(a.startedOn, today))
+      const best = Math.max(0, a.best ?? 0, current)
+      // Lifetime clean days: sum of gaps between consecutive resets, plus the run
+      // from the last reset to today (the live streak), plus the run before the
+      // first reset (startedOn predates resets only for the primary streak).
+      const sorted = [...dates].sort()
+      let totalClean = current
+      for (let i = 1; i < sorted.length; i++) {
+        totalClean += Math.max(0, dayDiff(sorted[i - 1], sorted[i]) - 1)
+      }
+      return {
+        id: a.id,
+        name: a.name,
+        current,
+        best,
+        totalClean,
+        resets: dates.length,
+        resetToday: dates.includes(today),
+      }
+    })
+    .sort((a, b) => b.current - a.current || b.best - a.best || a.name.localeCompare(b.name))
+}
+
+// ── #321 Record-approach escalation ──────────────────────────────────────────
+
+/** Escalating warning as the current run nears (or passes) the personal best. */
+export interface RecordApproach {
+  /** Days still needed to MATCH the best (0 once matched/passed). */
+  daysToBeat: number
+  /** True once the current run is the record (≥ best). */
+  isRecord: boolean
+  /** Escalation tier: 'far' (>7d away) · 'near' (≤7d) · 'close' (≤3d) ·
+   *  'edge' (≤1d) · 'record' (already there). Drives copy intensity. */
+  tier: 'far' | 'near' | 'close' | 'edge' | 'record'
+}
+
+/**
+ * Record-approach escalation (#321): as the live streak closes on the personal
+ * best, return a tier so the UI can escalate the "don't slip now" copy — the
+ * cost of a reset rises the closer you are to a new record. `best` already
+ * includes the live run (streakStats convention), so current===best is a record.
+ * Pure.
+ */
+export function recordApproach(current: number, best: number): RecordApproach {
+  const cur = Math.max(0, current)
+  const bst = Math.max(0, best)
+  const daysToBeat = Math.max(0, bst - cur)
+  if (cur >= bst) return { daysToBeat: 0, isRecord: true, tier: 'record' }
+  const tier: RecordApproach['tier'] =
+    daysToBeat <= 1 ? 'edge' : daysToBeat <= 3 ? 'close' : daysToBeat <= 7 ? 'near' : 'far'
+  return { daysToBeat, isRecord: false, tier }
+}
+
+// ── Urge-quiet stretch (days since the last logged urge) ─────────────────────
+
+/** How long it's been since the last logged urge — a "calm stretch" metric. */
+export interface UrgeQuiet {
+  /** Whole days since the most-recent urge (0 = an urge today). */
+  days: number
+  /** ISO day of the most-recent logged urge, or undefined when the log is empty. */
+  lastDate?: string
+  /** True when there are no logged urges at all (nothing to measure). */
+  empty: boolean
+}
+
+/**
+ * Urge-quiet stretch: days since the most-recent logged urge, giving the user a
+ * "X days without even a craving" calm-stretch number that complements the
+ * frequency trend. Uses each urge's `at` timestamp (falling back to `date`).
+ * Future-dated logs clamp to 0. Pure; returns empty=true when there's no log.
+ */
+export function urgeQuietStretch(urgeLog: UrgeWin[] = [], today = todayISO()): UrgeQuiet {
+  let last = ''
+  for (const u of urgeLog ?? []) {
+    if (!u) continue
+    const day = (u.at ? u.at.slice(0, 10) : u.date) || ''
+    if (day && day > last) last = day
+  }
+  if (!last) return { days: 0, empty: true }
+  return { days: Math.max(0, dayDiff(last, today)), lastDate: last, empty: false }
+}
+
 // ── #322 Relapse-free week / month rollup ────────────────────────────────────
 
 /** Counts of fully clean calendar weeks and months across the journey. */
