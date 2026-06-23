@@ -152,6 +152,7 @@ export function epley1RM(weight: number, reps: number): number {
 
 // ── Cardio / activity analytics (v2) ─────────────────────────────────────────
 import { addDays, dayDiff, todayISO } from './date'
+import { rollingAverage } from './correlations'
 
 /** Pace as "m:ss /unit" from distance + duration. '' if not derivable. */
 export function pace(distanceKm?: number, durationMin?: number, unit: 'km' | 'mi' = 'km'): string {
@@ -277,4 +278,42 @@ export function weeklyVolumeSeries(data: JournalData, today = todayISO(), weeks 
       .reduce((a, w) => a + workoutVolume(w), 0)
     return { label: end.slice(5), volume: Math.round(volume) }
   })
+}
+
+/**
+ * True when (weight, reps) beats the existing best for `exercise`. Compares both
+ * the heaviest logged weight AND the estimated 1RM (so a strong rep PR at lighter
+ * weight still counts). The very first ever set for an exercise is a PR; ties are
+ * NOT (you have to actually beat it). Case-insensitive on the exercise name.
+ */
+export function isNewPR(data: JournalData, exercise: string, weight: number, reps: number): boolean {
+  const ex = exercise.trim().toLowerCase()
+  if (!ex || !(weight > 0) || !(reps > 0)) return false
+  const cur = personalRecords(data).find((p) => p.exercise.toLowerCase() === ex)
+  if (!cur) return true // first-ever logged set for this lift
+  if (weight > cur.weight) return true
+  // Rep PR at equal-or-lighter weight: beat the estimated 1RM, not just match it.
+  return epley1RM(weight, reps) > epley1RM(cur.weight, cur.reps)
+}
+
+/**
+ * Dated body-weight series (ascending) with a trailing 7-day moving average and
+ * an optional goal line. Reuses correlations.rollingAverage for the MA so the
+ * smoothing matches the rest of the app. `goal` is carried on every point (for a
+ * flat recharts reference line) only when a numeric target is supplied.
+ */
+export function bodyweightSeries(
+  data: JournalData,
+  goal?: number,
+): { date: string; weight: number; avg: number | null; goal?: number }[] {
+  const rows = data.bodyMetrics
+    .filter((b) => b.weight != null)
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+  const ma = rollingAverage(rows.map((b) => b.weight), 7)
+  return rows.map((b, i) => ({
+    date: b.date.slice(5),
+    weight: b.weight as number,
+    avg: ma[i],
+    ...(goal != null ? { goal } : {}),
+  }))
 }

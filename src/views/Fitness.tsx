@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { Repeat, Trash2 } from 'lucide-react'
+import {
+  CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from 'recharts'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -7,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
 import { cat } from '../lib/colors'
-import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs } from '../lib/fitness'
+import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, bodyweightSeries } from '../lib/fitness'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
 
@@ -178,6 +181,7 @@ export function Fitness() {
         </div>
       </Card>
 
+      <BodyweightCard unit={data.settings.weightUnit} />
       <NutritionCard date={f.date} />
       <CalorieTrendCard today={today} />
 
@@ -234,6 +238,33 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
       <circle cx="38" cy="38" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="7" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 38 38)" />
       <text x="38" y="42" textAnchor="middle" className="fill-text font-bold" fontSize="16">{pct}%</text>
     </svg>
+  )
+}
+
+/** Body-weight progress · daily points + 7-day moving average + optional goal line. */
+function BodyweightCard({ unit }: { unit: string }) {
+  const { data } = useJournal()
+  // goalWeight isn't (yet) a first-class Setting — read it defensively so the
+  // goal line appears for users who have one without coupling to a schema change.
+  const goal = (data.settings as { goalWeight?: number }).goalWeight
+  const series = bodyweightSeries(data, goal)
+  if (series.length < 2) return null
+  return (
+    <Card title="Body-weight progress" subtitle="Faint = daily · bold = 7-day average" defer enlargeable>
+      <div className="h-56" role="img" aria-label={`Line chart of body weight over ${series.length} logged days (${unit})`}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+            <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+            <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+            <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+            <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+            {goal != null && <ReferenceLine y={goal} stroke={cat('green')} strokeDasharray="4 4" label={{ value: `goal ${goal}${unit}`, fill: cat('green'), fontSize: 10, position: 'insideTopRight' }} />}
+            <Line type="monotone" dataKey="weight" stroke={cat('overlay1')} dot={{ r: 1.5 }} strokeWidth={1} opacity={0.5} />
+            <Line type="monotone" dataKey="avg" stroke={cat('mauve')} dot={false} strokeWidth={2.5} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
   )
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, STREAK_MILESTONES } from './streak'
+import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES } from './streak'
 import { emptyJournal } from './storage'
 import type { Relapse } from './types'
 
@@ -69,6 +69,15 @@ describe('streak', () => {
     expect(unlockedBenefits(0)).toHaveLength(0)
     expect(unlockedBenefits(7).at(-1)?.day).toBe(7)
     expect(unlockedBenefits(999)).toHaveLength(STREAK_MILESTONES.length)
+  })
+
+  it('nextHabitMilestone finds the next celebratory rung (clean-day badge)', () => {
+    expect(nextHabitMilestone(0)).toEqual({ day: 3, daysToGo: 3 })
+    expect(nextHabitMilestone(3)).toEqual({ day: 7, daysToGo: 4 }) // already at 3 → next is 7
+    expect(nextHabitMilestone(10)).toEqual({ day: 14, daysToGo: 4 })
+    expect(nextHabitMilestone(364)).toEqual({ day: 365, daysToGo: 1 })
+    expect(nextHabitMilestone(365)).toBeNull() // past the last rung
+    expect(nextHabitMilestone(9999)).toBeNull()
   })
 
   it('addictionStats computes an independent per-addiction streak (BUJO-199)', () => {

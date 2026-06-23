@@ -327,6 +327,10 @@ export interface UrgeWin {
   /** What the urge was / what triggered it (optional). */
   trigger?: string
   note?: string
+  /** Self-rated intensity of the urge, 1 (faint) … 5 (overwhelming). */
+  intensity?: 1 | 2 | 3 | 4 | 5
+  /** Which coping technique was used to surf it. */
+  technique?: 'surf' | 'delay' | 'halt' | 'reach-out'
 }
 
 /** An if-then plan: a known trigger point for an addiction + how to respond. */

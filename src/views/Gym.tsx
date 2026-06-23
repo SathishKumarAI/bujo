@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
   Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, type LucideIcon,
@@ -22,8 +22,9 @@ import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
-  weeklyVolumeSeries, exerciseProgression,
+  weeklyVolumeSeries, exerciseProgression, isNewPR,
 } from '../lib/fitness'
+import { PlateStack, plateColor } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
@@ -46,6 +47,8 @@ export function Gym() {
   const [split, setSplit] = useState<Split>(suggested)
   const [rows, setRows] = useState<SetRow[]>([{ exercise: '', weight: '', reps: '' }])
   const [routineName, setRoutineName] = useState('')
+  // Ephemeral PR celebration after a set is saved (local state, auto-dismisses).
+  const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
 
   // Body metrics quick entry.
   const [weight, setWeight] = useState('')
@@ -83,6 +86,13 @@ export function Gym() {
       ? "today's exercises"
       : `${splitMeta(split).label} split`
 
+  // Auto-dismiss the PR celebration (~3s), mirroring MilestoneToast's timing.
+  useEffect(() => {
+    if (!prParty) return
+    const t = setTimeout(() => setPrParty(null), 3000)
+    return () => clearTimeout(t)
+  }, [prParty])
+
   function setRow(i: number, patch: Partial<SetRow>) {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)))
   }
@@ -109,6 +119,19 @@ export function Gym() {
       rpe: r.rpe ? Number(r.rpe) : undefined,
       kind: r.kind ?? 'working',
     }))
+    // Detect a fresh PR *before* this session is committed (compare vs prior data).
+    // The biggest 1RM-improving set wins the celebration.
+    let pr: { exercise: string; weight: number; reps: number } | null = null
+    let prGain = 0
+    for (const r of valid) {
+      if (r.kind === 'warmup') continue
+      const w = Number(r.weight), reps = Number(r.reps)
+      if (!(w > 0) || !(reps > 0)) continue
+      if (isNewPR(data, r.exercise.trim(), w, reps)) {
+        const gain = epley1RM(w, reps)
+        if (gain >= prGain) { prGain = gain; pr = { exercise: r.exercise.trim(), weight: w, reps } }
+      }
+    }
     addWorkout({
       date: todayISO(),
       activity: `${splitMeta(split).label} day`,
@@ -118,6 +141,7 @@ export function Gym() {
       notes: '',
     })
     setRows([{ exercise: '', weight: '', reps: '' }])
+    if (pr) setPrParty(pr)
   }
 
   function saveAsRoutine() {
@@ -217,6 +241,19 @@ export function Gym() {
         </>
       }
     >
+      {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
+      {prParty && (
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
+          <div className="celebrate-pop flex items-center gap-2 rounded-2xl border border-surface1 bg-mantle/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
+            <Trophy size={20} style={{ color: cat('yellow') }} />
+            <p className="text-sm font-medium text-text">
+              New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
+              {prParty.weight}{unit}×{prParty.reps} 🎉
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Session logger ─────────────────────────────────── */}
       <Card
         title="Today's session"
@@ -464,9 +501,10 @@ function PlateCalculator({ unit }: { unit: string }) {
           <p className="mb-2 text-xs text-overlay0">Per side:</p>
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-bold text-crust" style={{ background: cat(['mauve', 'blue', 'green', 'peach', 'teal', 'pink'][i % 6]) }}>{p}</span>
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-bold text-crust" style={{ background: plateColor(p) }}>{p}</span>
             ))}
           </div>
+          <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
           {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
         </>
       )}

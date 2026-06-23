@@ -173,7 +173,7 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: (entry?: { trigger?: string; note?: string }) => void
+  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out' }) => void
   removeUrge: (id: string) => void
   addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
   removeTriggerPlan: (id: string) => void
@@ -667,6 +667,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
             urgeLog: [...(d.nofap.urgeLog ?? []), {
               id: uid('u'), date: todayISO(), at: new Date().toISOString(),
               trigger: entry?.trigger?.trim() || undefined, note: entry?.note?.trim() || undefined,
+              intensity: entry?.intensity, technique: entry?.technique,
             }],
           },
         })),
