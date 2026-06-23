@@ -1,5 +1,35 @@
 # Worklog
 
+## 2026-06-23 16:05 — Backlog batch 3: built 32 features (PR #53)
+
+**Summary:** Third parallel backlog sweep — 8 disjoint-file agents shipped 32 more
+additive/read-only analytics features with tests. Verified + merged PR #53. +92
+tests (557 total).
+
+**Changes (32 features):**
+- Trackers — category roll-up, perfect-weeks, perfect-days, weekly heat row.
+- Fitness — big-three total, bodyweight-relative strength, neglected-muscle alert, stalled-lift detector.
+- Pickleball — games-per-month chart, win-rate forecast/readiness, milestone badges, RPE load.
+- Recovery — urge-frequency trend, streak-saved counter, urge-intensity distribution, relapse-free rollup.
+- Reading/Goals — monthly reading-goal breakdown, stalled-books nudge, focus by project, interruptions trend.
+- Insights — best/worst weekday, weekday-vs-weekend split, mood volatility, momentum.
+- Data — PR-leaderboard CSV, collection CSV, privacy/redaction export filter, open-tasks ICS.
+- Journaling — logging rhythm by weekday, journaling streak, collection checklist progress, overdue aging.
+
+**Decisions:** Fixed a pre-existing csv.test.ts fixture (missing required
+`Workout.notes`) surfaced by the new tests — caught by full `tsc -b`. Confirmed
+the "11 vitest errors under load" are parallel-worker flakiness; `--no-file-parallelism`
+gives definitive results.
+
+**Verify:** tsc 0 · vitest 557/557 · eslint clean (touched) · vite build OK.
+
+**Running total:** ~105 backlog features built across PRs #48, #50, #51, #52, #53.
+
+**Follow-ups:**
+- [ ] More batches possible but remaining buildable items are increasingly
+  value-3/niche or surface metrics already shown elsewhere. The high-value
+  remainder needs a real backend, Tauri-native plugins, or new deps (held).
+
 ## 2026-06-23 12:35 — Data-model backlog batch: 5 interactive features (PR #52)
 
 **Summary:** Serial single-owner build of the high-value backlog features that
