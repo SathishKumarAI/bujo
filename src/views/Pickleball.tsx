@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 
@@ -116,6 +116,13 @@ export function Pickleball() {
   const partners = partnerStats(data)
   const venues = venueStats(data)
   const opponents = opponentRecords(data)
+  // Read-only form / streak / point / matchup / weekday signals over logged sessions.
+  const form = rollingForm(data)
+  const streaks = winStreaks(data)
+  const points = pointDifferential(data)
+  const matchup = levelMatchup(data)
+  const weekdays = weekdayPerformance(data)
+  const weekdaysPlayed = weekdays.filter((w) => w.games > 0)
   const goal = data.settings.pickleballGoalGames ?? 0
   // 13-week play-frequency heatmap.
   const WEEKS = 13
@@ -262,6 +269,34 @@ export function Pickleball() {
         )}
       </Card>
 
+      {/* ── Recent form & momentum (#323) ── */}
+      {form.results.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Activity size={18} className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'} · newest first`}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
+              {form.results.map((r, i) => {
+                const c = r === 'W' ? 'green' : r === 'L' ? 'red' : 'overlay0'
+                return <span key={i} className="grid h-6 w-6 place-items-center rounded-md text-[11px] font-semibold" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
+              })}
+            </div>
+            <span className="text-sm text-overlay1"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
+            {form.momentum !== 'flat' && (
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat(form.momentum === 'up' ? 'green' : 'red') + '22', color: cat(form.momentum === 'up' ? 'green' : 'red') }}>
+                {form.momentum === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                {form.momentum === 'up' ? 'Trending up' : 'In a slump'}
+              </span>
+            )}
+            {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-overlay0"><Minus size={12} /> Steady</span>}
+          </div>
+          {(streaks.longest > 0 || streaks.current > 0) && (
+            <div className="mt-3 flex flex-wrap gap-2 border-t border-surface0 pt-3 text-xs text-overlay1">
+              {streaks.current > 0 && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('peach') + '22', color: cat('peach') }}><Flame size={12} /> {streaks.current}-session win streak</span>}
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('mauve') + '22', color: cat('mauve') }}><Trophy size={12} /> Longest: {streaks.longest}</span>
+            </div>
+          )}
+        </Card>
+      )}
+
       <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
@@ -356,6 +391,56 @@ export function Pickleball() {
             ))}
           </ul>
           <p className="mt-3 text-[11px] text-overlay0">Name your Opponent(s) when logging to build a head-to-head book.</p>
+        </Card>
+      )}
+
+      {/* ── Win% by opponent level (#478) ── */}
+      {matchup.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
+          <ul className="space-y-3">
+            {matchup.map((m) => (
+              <li key={m.bucket}>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="text-subtext1">{m.label}</span>
+                  <span className="text-overlay1">{m.games} games · <span style={{ color: cat('green') }}>{m.winPct}%</span></span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
+                  <div className="h-full rounded-full" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[11px] text-overlay0">Set a Level when logging to see a truer skill signal than raw win %.</p>
+        </Card>
+      )}
+
+      {/* ── Win% by weekday (time-of-play performance) ── */}
+      {weekdaysPlayed.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><CalendarRange size={18} className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
+          <div className="grid grid-cols-7 gap-1.5">
+            {weekdays.map((w) => {
+              const has = w.games > 0
+              return (
+                <div key={w.day} className="rounded-md p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
+                  <div className="text-[10px] font-medium text-overlay1">{w.day}</div>
+                  <div className="mt-0.5 text-sm font-semibold" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
+                  <div className="text-[9px] text-overlay0">{has ? `${w.games}g` : ''}</div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Point differential (close-game signal) ── */}
+      {points.sessions > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-teal" /> Point differential</span>} subtitle={`Across ${points.sessions} ${points.sessions === 1 ? 'session' : 'sessions'} with logged points`} collapsible>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile compact label="Points for" value={points.pointsFor} color="green" />
+            <StatTile compact label="Points against" value={points.pointsAgainst} color="red" />
+            <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} color={points.diff > 0 ? 'green' : points.diff < 0 ? 'red' : 'overlay0'} />
+          </div>
+          <p className="mt-3 text-xs text-overlay1">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
         </Card>
       )}
 

@@ -12,10 +12,10 @@ import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
-import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
-import { nextHabitMilestone, habitComeback } from '../lib/streak'
+import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
+import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30, habitCellFill } from '../lib/habitStats'
+import { completionRate30, habitCellFill, consistencyScore, bestWeekday } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
@@ -338,13 +338,13 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
   const heatColor = (r: number | null) =>
     r == null ? cat('surface0') : r === 0 ? cat('surface1') : `color-mix(in srgb, ${cat('green')} ${Math.round(25 + r * 75)}%, ${cat('surface1')})`
 
-  // Streak leaderboard (current streak per check-habit).
+  // Streak leaderboard (current streak per check-habit) + all-time best (#290).
   const streaks = active
     .filter((h) => (h.type ?? 'check') === 'check')
-    .map((h) => ({ h, streak: habitStreak(data, h.id, today) }))
-    .sort((a, b) => b.streak - a.streak)
+    .map((h) => ({ h, streak: habitStreak(data, h.id, today), best: longestStreakEver(data, h, today) }))
+    .sort((a, b) => b.streak - a.streak || b.best - a.best)
     .slice(0, 8)
-  const maxStreak = Math.max(1, ...streaks.map((s) => s.streak))
+  const maxStreak = Math.max(1, ...streaks.map((s) => Math.max(s.streak, s.best)))
 
   // Weekday consistency (avg completion per weekday, 90d).
   const wd = weekdayConsistency(data, 90, today)
@@ -371,18 +371,22 @@ function TrackerVisuals({ data, today }: { data: import('../lib/types').JournalD
         </div>
       </Card>
 
-      <Card title="Streak leaderboard" subtitle="Current consecutive-day streaks">
+      <Card title="Streak leaderboard" subtitle="Current streak · faint marker = all-time best">
         {streaks.length === 0 ? (
           <Empty>No check habits yet.</Empty>
         ) : (
           <ul className="space-y-1.5">
-            {streaks.map(({ h, streak }) => (
+            {streaks.map(({ h, streak, best }) => (
               <li key={h.id} className="flex items-center gap-2 text-sm">
                 <span className="w-24 shrink-0 truncate text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface0">
+                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
+                  {/* All-time best marker (#290): a notch at the personal record. */}
+                  {best > streak && (
+                    <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
+                  )}
                 </div>
-                <span className="inline-flex w-10 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }}><Flame size={12} />{streak}</span>
+                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak} · best ever ${best}`}><Flame size={12} />{streak}<span className="text-overlay0">/{best}</span></span>
               </li>
             ))}
           </ul>
@@ -634,6 +638,10 @@ function CategoryRows({
         // Comeback tracking: after a lapse, surface "back on track — Nd" so a
         // missed day doesn't read as failure. Only for build habits.
         const comeback = avoid ? null : habitComeback(data, h, today)
+        // Recency-weighted consistency score (#395) + days since the last
+        // scheduled miss (a complement to the raw streak). Build habits only.
+        const consistency = avoid ? null : consistencyScore(data, h, today)
+        const sinceMiss = avoid ? null : daysSinceLastMiss(data, h, today)
         return (
           <tr
             key={h.id}
@@ -676,6 +684,14 @@ function CategoryRows({
                     {/* Comeback chip: encourage after a lapse + show lifetime restarts. */}
                     {comeback?.recovering && (
                       <span title={`Back on track — ${comeback.current} ${comeback.current === 1 ? 'day' : 'days'}${comeback.comebackCount > 1 ? ` · ${comeback.comebackCount} comebacks` : ''}`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('teal') }}>↺ back {comeback.current}d{comeback.comebackCount > 1 ? ` ·${comeback.comebackCount}` : ''}</span>
+                    )}
+                    {/* #395: recency-weighted consistency score — momentum, not a flat avg. */}
+                    {consistency != null && consistency > 0 && (
+                      <span title={`Consistency score ${consistency}/100 (recent scheduled days weighted more)`} className="shrink-0 text-[10px]" style={{ color: consistency >= 80 ? cat('green') : consistency >= 50 ? cat('yellow') : cat('overlay1') }}>◆{consistency}</span>
+                    )}
+                    {/* Days since the last scheduled miss — a clean-since counter. */}
+                    {sinceMiss != null && sinceMiss >= 3 && (
+                      <span title={`${sinceMiss} days since the last missed scheduled day`} className="shrink-0 text-[10px]" style={{ color: cat('sapphire') }}>{sinceMiss}d clean</span>
                     )}
                   </>
                 )}
@@ -749,8 +765,11 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const [heatYear, setHeatYear] = useState(false)
   const today = todayISO()
   const streak = habitStreak(data, habit.id)
-  const dow = habitDayOfWeekBreakdown(data, habit.id)
-  const bestDow = dow.some((n) => n > 0) ? WEEKDAYS[dow.indexOf(Math.max(...dow))] : '—'
+  const bestEver = longestStreakEver(data, habit, today)
+  // #85: best/worst weekday by scheduled-day success rate (last 90d).
+  const wd = bestWeekday(data, habit, today)
+  const bestDow = wd.best != null ? WEEKDAYS[wd.best] : '—'
+  const worstDow = wd.worst != null && wd.worst !== wd.best ? WEEKDAYS[wd.worst] : null
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
@@ -763,10 +782,12 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             <StatTile label="day streak" value={streak} color="peach" />
+            <StatTile label="best ever" value={bestEver} color="yellow" />
             <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} color="green" />
-            <StatTile label="90-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 90)}%`} color="blue" />
           </div>
-          <p className="text-xs text-overlay0">Most consistent on <span className="text-subtext1">{bestDow}</span>. <Momentum data={data} habit={habit} today={today} /></p>
+          <p className="text-xs text-overlay0">
+            Strongest on <span className="text-subtext1">{bestDow}</span>{worstDow && <> · weakest on <span className="text-subtext1">{worstDow}</span></>}. <Momentum data={data} habit={habit} today={today} />
+          </p>
 
           {/* Completion heatmap · 12 weeks or a full year */}
           <div>

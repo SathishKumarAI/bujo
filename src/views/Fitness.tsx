@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
 import { cat } from '../lib/colors'
-import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, bodyweightSeries } from '../lib/fitness'
+import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, bodyweightSeries, trainingHeatmap, cardioBadges } from '../lib/fitness'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
 
@@ -181,6 +181,8 @@ export function Fitness() {
         </div>
       </Card>
 
+      <CardioBadgesCard />
+      <TrainingHeatmapCard today={today} />
       <BodyweightCard unit={data.settings.weightUnit} />
       <NutritionCard date={f.date} />
       <CalorieTrendCard today={today} />
@@ -289,6 +291,72 @@ function CalorieTrendCard({ today }: { today: string }) {
         ))}
       </div>
       <p className="mt-1 text-center text-[10px] text-overlay0">peach = today</p>
+    </Card>
+  )
+}
+
+/** Cardio personal-best badges (distance · duration · calories) + date earned. */
+function CardioBadgesCard() {
+  const { data } = useJournal()
+  const dist = data.settings.distanceUnit
+  const badges = cardioBadges(data)
+  const earned = badges.filter((b) => b.value > 0)
+  if (earned.length === 0) return null
+  const fmt = (b: (typeof badges)[number]) => {
+    if (b.key === 'longestKm') return `${Math.round((dist === 'mi' ? b.value / 1.60934 : b.value) * 10) / 10} ${dist}`
+    if (b.key === 'mostMinutes') return `${b.value} min`
+    return `${b.value} kcal`
+  }
+  const tint: Record<string, string> = { longestKm: 'green', mostMinutes: 'lavender', mostCalories: 'red' }
+  return (
+    <Card title="Cardio bests" subtitle="All-time personal bests · with the day you set them" defer>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {earned.map((b) => (
+          <div key={b.key} className="rounded-xl border border-surface0 bg-base px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
+            <div className="flex items-center gap-1.5 text-lg font-bold" style={{ color: cat(tint[b.key]) }}>
+              🏅 <span>{fmt(b)}</span>
+            </div>
+            <p className="mt-0.5 text-xs text-subtext1">{b.label}</p>
+            {b.date && <p className="text-[10px] text-overlay0">earned {prettyDay(b.date)}</p>}
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+/** GitHub-style 17-week training calendar · cell intensity scales with volume. */
+function TrainingHeatmapCard({ today }: { today: string }) {
+  const { data } = useJournal()
+  const cells = trainingHeatmap(data, today, 119) // 17 weeks × 7 days
+  const trained = cells.filter((c) => c.volume > 0).length
+  if (trained === 0) return null
+  // Column-major weeks so each column is a Mon→Sun-ish week (oldest left).
+  const weeks: typeof cells[] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+  const levelColor = (level: number) =>
+    level === 0 ? cat('surface0') : cat('green') + ['', '55', '88', 'bb', 'ff'][level]
+  return (
+    <Card title="Training calendar" subtitle={`${trained} training days in the last 17 weeks · darker = more volume`} defer>
+      <div className="flex gap-[3px] overflow-x-auto pb-1" role="img" aria-label={`Training-day heatmap: ${trained} days trained in the last 17 weeks, shaded by workout volume`}>
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-[3px]">
+            {week.map((c) => (
+              <div
+                key={c.date}
+                className="h-3 w-3 rounded-[3px]"
+                style={{ background: levelColor(c.level) }}
+                title={`${c.date}: ${c.volume > 0 ? `${c.volume.toLocaleString()} volume` : 'rest day'}`}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-overlay0">
+        <span>less</span>
+        {[0, 1, 2, 3, 4].map((l) => <span key={l} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: levelColor(l) }} />)}
+        <span>more</span>
+      </div>
     </Card>
   )
 }

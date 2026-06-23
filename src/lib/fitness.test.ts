@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
@@ -314,5 +314,115 @@ describe('bodyweightSeries (F10)', () => {
   })
   it('returns [] when no body weight is logged', () => {
     expect(bodyweightSeries(emptyJournal())).toEqual([])
+  })
+})
+
+describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
+  it('counts a working set toward every muscle its exercise trains', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // 4,2,5
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
+        { exercise: 'Bench Press', weight: 40, reps: 10, kind: 'warmup' }, // excluded
+      ], notes: '' },
+    ]
+    const counts = weeklySetsPerMuscle(d, '2026-06-11')
+    // chest(4)/shoulders(2)/triceps(5) each get 2 working sets; warm-up ignored.
+    expect(counts.find((c) => c.muscle === 4)?.sets).toBe(2)
+    expect(counts.find((c) => c.muscle === 2)?.sets).toBe(2)
+    expect(counts.find((c) => c.muscle === 5)?.sets).toBe(2)
+  })
+  it('only counts sets inside the window and sorts by count desc', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-11', activity: 'Pull', sets: [], setRows: [
+        { exercise: 'Bicep Curl', weight: 15, reps: 10 }, // 1,13
+        { exercise: 'Bicep Curl', weight: 15, reps: 10 },
+        { exercise: 'Pull-up', weight: 0, reps: 8 }, // 12,1,9
+      ], notes: '' },
+      { id: '2', date: '2026-06-01', activity: 'old', sets: [], setRows: [
+        { exercise: 'Squat', weight: 100, reps: 5 }, // outside 7-day window
+      ], notes: '' },
+    ]
+    const counts = weeklySetsPerMuscle(d, '2026-06-11')
+    // Biceps(1) hit by both curls + the pull-up = 3 → ranks first.
+    expect(counts[0]).toEqual({ muscle: 1, sets: 3 })
+    // The out-of-window squat (quads=10) must not appear.
+    expect(counts.find((c) => c.muscle === 10)).toBeUndefined()
+  })
+  it('falls back to legacy set strings when there are no structured rows', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'Push', sets: ['Bench Press 5x5 @ 60kg'], notes: '' }]
+    const counts = weeklySetsPerMuscle(d, '2026-06-11')
+    expect(counts.find((c) => c.muscle === 4)?.sets).toBe(1)
+  })
+})
+
+describe('e1rmProgression (#101 estimated-1RM trend)', () => {
+  it('plots the best estimated 1RM per day, ascending, crediting rep PRs', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-08', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // e1RM 70
+        { exercise: 'Bench Press', weight: 70, reps: 1, kind: 'working' }, // e1RM 70 (tie)
+      ], notes: '' },
+      { id: '2', date: '2026-06-01', activity: 'Push', sets: [], setRows: [
+        { exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' }, // e1RM 75.5
+        { exercise: 'Bench Press', weight: 50, reps: 5, kind: 'warmup' }, // excluded
+      ], notes: '' },
+    ]
+    expect(e1rmProgression(d, 'Bench Press')).toEqual([
+      { date: '06-01', e1rm: epley1RM(65, 5) }, // 75.5
+      { date: '06-08', e1rm: 70 },
+    ])
+  })
+  it('returns [] for a never-logged exercise or empty name', () => {
+    expect(e1rmProgression(emptyJournal(), 'Deadlift')).toEqual([])
+    expect(e1rmProgression(emptyJournal(), '')).toEqual([])
+  })
+})
+
+describe('trainingHeatmap (#162 workout calendar)', () => {
+  it('emits one contiguous cell per day, today last, with relative intensity levels', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench', weight: 100, reps: 5 }], notes: '' }, // vol 500 (peak)
+      { id: '2', date: '2026-06-09', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench', weight: 25, reps: 5 }], notes: '' }, // vol 125
+    ]
+    const cells = trainingHeatmap(d, '2026-06-11', 5)
+    expect(cells).toHaveLength(5)
+    expect(cells[cells.length - 1].date).toBe('2026-06-11') // today is last
+    expect(cells[0].date).toBe('2026-06-07') // oldest first
+    const peak = cells.find((c) => c.date === '2026-06-11')!
+    const light = cells.find((c) => c.date === '2026-06-09')!
+    const rest = cells.find((c) => c.date === '2026-06-10')!
+    expect(peak).toMatchObject({ volume: 500, level: 4 })
+    expect(rest).toMatchObject({ volume: 0, level: 0 }) // untrained day
+    expect(light.level).toBeGreaterThanOrEqual(1) // any trained day is ≥1
+    expect(light.level).toBeLessThan(4)
+  })
+  it('marks all days level 0 when nothing is trained', () => {
+    const cells = trainingHeatmap(emptyJournal(), '2026-06-11', 3)
+    expect(cells.every((c) => c.level === 0 && c.volume === 0)).toBe(true)
+  })
+})
+
+describe('cardioBadges (#251 PB badges with date earned)', () => {
+  it('pairs each cardio best with the earliest date it was reached', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      { id: '1', date: '2026-06-01', activity: 'Run', distanceKm: 10, durationMin: 50, calories: 400, sets: [], notes: '' },
+      { id: '2', date: '2026-06-08', activity: 'Run', distanceKm: 10, durationMin: 60, calories: 300, sets: [], notes: '' }, // ties distance later, beats minutes
+    ]
+    const badges = cardioBadges(d)
+    const dist = badges.find((b) => b.key === 'longestKm')!
+    const mins = badges.find((b) => b.key === 'mostMinutes')!
+    expect(dist).toEqual({ key: 'longestKm', label: 'Longest distance', value: 10, date: '2026-06-01' }) // earliest tie wins
+    expect(mins).toEqual({ key: 'mostMinutes', label: 'Longest session', value: 60, date: '2026-06-08' })
+  })
+  it('carries a null date for bests that were never logged', () => {
+    const badges = cardioBadges(emptyJournal())
+    expect(badges.every((b) => b.value === 0 && b.date === null)).toBe(true)
   })
 })

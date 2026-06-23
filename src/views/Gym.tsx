@@ -23,6 +23,7 @@ import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
   weeklyVolumeSeries, exerciseProgression, isNewPR, warmupRamp, sessionSummary,
+  weeklySetsPerMuscle, e1rmProgression, MUSCLE_SET_LANDMARK,
 } from '../lib/fitness'
 import { PlateStack, plateColor } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
@@ -77,6 +78,10 @@ export function Gym() {
   // Collapse the session logger by default on phones to keep the view compact.
   const [sessionOpen, setSessionOpen] = useState(typeof window === 'undefined' || window.innerWidth >= 640)
   const progression = focusEx ? exerciseProgression(data, focusEx) : []
+  // Estimated-1RM trend for the focused lift (credits rep PRs, not just top weight).
+  const e1rmProg = focusEx ? e1rmProgression(data, focusEx) : []
+  // Weekly hard-sets per muscle — hypertrophy volume balance (read-only).
+  const muscleSets = useMemo(() => weeklySetsPerMuscle(data), [data])
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
   // cached from a prior search); otherwise fall back to the keyword mapper.
@@ -506,8 +511,25 @@ export function Gym() {
             </ResponsiveContainer>
           </div>
         )}
+        {focusEx && e1rmProg.length > 1 && (
+          <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
+            <p className="mb-1 text-xs text-overlay0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                <Line type="monotone" dataKey="e1rm" stroke={cat('yellow')} dot={{ r: 2 }} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </Card>
       </div>
+
+      {/* ── Weekly volume balance · hard sets per muscle vs hypertrophy landmark ── */}
+      <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
 
       {rpeSeries.length >= 2 && (
         <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
@@ -561,6 +583,59 @@ function PlateCalculator({ unit }: { unit: string }) {
           <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
           {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
         </>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * Weekly hard-sets per muscle vs the 10–20 hypertrophy landmark. Each muscle is
+ * a horizontal bar coloured by zone (under / in-range / over), so imbalances and
+ * under-trained groups jump out at a glance. Read-only — derived from this
+ * week's logged working sets via weeklySetsPerMuscle.
+ */
+function MuscleVolumeBalance({ counts, setFocusEx }: { counts: import('../lib/fitness').MuscleSetCount[]; setFocusEx: (e: string | null) => void }) {
+  const { min, max } = MUSCLE_SET_LANDMARK
+  const named = counts
+    .map((c) => ({ ...c, name: muscleNames([c.muscle])[0] }))
+    .filter((c) => c.name) // skip ids without a display name
+  const scaleMax = Math.max(max, ...named.map((c) => c.sets), 1)
+  const zone = (sets: number) => (sets < min ? 'peach' : sets > max ? 'red' : 'green')
+  const zoneLabel = (sets: number) => (sets < min ? 'below 10' : sets > max ? 'over 20' : 'in range')
+  return (
+    <Card title="Muscle volume balance" subtitle="Hard sets per muscle this week · target 10–20" defer>
+      {named.length === 0 ? (
+        <Empty>Log some working sets this week to see your per-muscle volume.</Empty>
+      ) : (
+        <ul className="space-y-2">
+          {named.map((c) => {
+            const color = zone(c.sets)
+            return (
+              <li key={c.muscle} className="flex items-center gap-2 text-sm">
+                <button
+                  onClick={() => setFocusEx(c.name)}
+                  className="w-20 shrink-0 truncate text-left text-subtext1 hover:text-text"
+                  title={`Focus the muscle map on ${c.name}`}
+                >
+                  {c.name}
+                </button>
+                <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-surface0">
+                  {/* landmark band (10–20 sets) shaded behind the bar */}
+                  <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
+                  <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />
+                </div>
+                <span className="w-7 shrink-0 text-right font-medium" style={{ color: cat(color) }}>{c.sets}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {named.length > 0 && (
+        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-overlay0">
+          <span style={{ color: cat('peach') }}>● {zoneLabel(0)}</span>
+          <span style={{ color: cat('green') }}>● {zoneLabel(min)}</span>
+          <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>
+        </p>
       )}
     </Card>
   )

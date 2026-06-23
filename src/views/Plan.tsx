@@ -6,6 +6,7 @@ import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
+import { migrationCounts } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
 
 export function Plan() {
@@ -35,6 +36,9 @@ export function Plan() {
         ? Number(b.important) - Number(a.important) || (a.date < b.date ? -1 : 1)
         : (a.date < b.date ? -1 : 1),
     )
+
+  // ── Migration analytics (#406): chronically-deferred tasks ──
+  const deferred = migrationCounts(data.entries).filter((t) => t.current.status !== 'done')
 
   // ── ICS import ──
   function onIcs(e: React.ChangeEvent<HTMLInputElement>) {
@@ -93,6 +97,37 @@ export function Plan() {
           </button>
         )}
       </Card>
+
+      {deferred.length > 0 && (
+        <Card
+          title="Chronically deferred"
+          subtitle="Tasks you keep migrating — decide: do it or drop it"
+          help="Every time you migrate a task forward it counts a hop here. A task pushed several times is a signal: it may be too big, badly timed, or not actually yours to do. Tackle it or let it go."
+        >
+          <ul className="space-y-1.5 text-sm">
+            {deferred.slice(0, 8).map((t) => (
+              <li key={t.rootId} className="flex items-center justify-between gap-2 rounded-lg border border-surface0 bg-base px-2.5 py-1.5">
+                <span className="flex items-center gap-2 truncate">
+                  <button
+                    onClick={() => migrateEntry(t.current.id, today)}
+                    title="Bring to today"
+                    className="shrink-0 text-overlay0 hover:text-mauve"
+                    aria-label={`Bring "${t.text}" to today`}
+                  >→</button>
+                  <span className="truncate text-subtext1">{t.text}</span>
+                </span>
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
+                  title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}`}
+                >
+                  migrated {t.count}×
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">

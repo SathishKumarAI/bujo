@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark } from 'lucide-react'
+import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
-import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish } from '../lib/reading'
+import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks } from '../lib/reading'
 import { StatTile } from '../components/ui'
 import type { Book, BookStatus } from '../lib/types'
 
@@ -21,6 +21,9 @@ export function Reading() {
   const sum = readingSummary(books, today)
   const goal = data.settings.readingGoalBooks ?? 0
   const projected = projectedBooksThisYear(books, today)
+  const streak = readingStreak(books, today)
+  const avgDays = averageDaysToFinish(books)
+  const wrapped = yearInBooks(books, today)
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -35,11 +38,13 @@ export function Reading() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Stat strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Reading now" value={sum.reading} color="mauve" />
         <StatTile label="Finished this year" value={sum.finishedThisYear} color="green" />
         <StatTile label="Pages read" value={sum.pages.toLocaleString()} color="peach" />
         <StatTile label="Avg rating" value={sum.avgRating ? sum.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
+        <StatTile label="Reading streak" value={streak ? `${streak}d` : '—'} color="red" icon={<Flame size={14} />} />
+        <StatTile label="Avg days/book" value={avgDays != null ? `${avgDays}d` : '—'} color="sky" />
       </div>
 
       {/* Yearly goal */}
@@ -69,6 +74,35 @@ export function Reading() {
           </>
         )}
       </div>
+
+      {/* Year in books · wrapped-style recap */}
+      {wrapped && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            <Sparkles size={16} className="text-mauve" /> {wrapped.year} in books
+          </h3>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label="Books finished" value={wrapped.count} color="green" />
+            <StatTile label="Pages read" value={wrapped.pages.toLocaleString()} color="peach" />
+            <StatTile label="Avg rating" value={wrapped.avgRating ? wrapped.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
+            <StatTile label="Longest" value={wrapped.longest?.totalPages ? `${wrapped.longest.totalPages}p` : '—'} color="sky" />
+          </div>
+          {(wrapped.topRated || wrapped.longest) && (
+            <div className="mt-3 space-y-1 text-xs text-overlay1">
+              {wrapped.topRated && (
+                <p className="flex items-center gap-1.5">
+                  <Star size={12} className="fill-yellow text-yellow" /> Top-rated: <span className="text-subtext0">{wrapped.topRated.title}</span>
+                </p>
+              )}
+              {wrapped.longest && (
+                <p className="flex items-center gap-1.5">
+                  <BookOpen size={12} className="text-sky" /> Longest read: <span className="text-subtext0">{wrapped.longest.title}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add a book */}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">

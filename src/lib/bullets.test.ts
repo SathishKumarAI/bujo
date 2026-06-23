@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { glyphFor, inboxEntries, nextStatus, parseQuickCapture, parseTags, tagIndex } from './bullets'
+import {
+  bulletTypeBreakdown,
+  entriesPerDay,
+  glyphFor,
+  inboxEntries,
+  migrationCounts,
+  nextStatus,
+  parseQuickCapture,
+  parseTags,
+  tagIndex,
+  taskCompletion,
+} from './bullets'
 import type { Entry } from './types'
 
 function entry(over: Partial<Entry> = {}): Entry {
@@ -127,5 +138,104 @@ describe('inboxEntries', () => {
       entry({ date: '', text: 'new', createdAt: '2026-06-09T00:00:00Z' }),
     ])
     expect(out.map((e) => e.text)).toEqual(['new', 'old'])
+  })
+})
+
+describe('migrationCounts', () => {
+  it('counts migrated hops per thread, threaded by originId', () => {
+    // A task migrated twice: original (migrated) → copy1 (migrated) → copy2 (open).
+    const orig = entry({ id: 'a', text: 'pay rent', status: 'migrated', createdAt: '2026-06-01T00:00:00Z' })
+    const c1 = entry({ id: 'b', text: 'pay rent', status: 'migrated', originId: 'a', createdAt: '2026-06-02T00:00:00Z' })
+    const c2 = entry({ id: 'c', text: 'pay rent', status: 'open', originId: 'a', createdAt: '2026-06-03T00:00:00Z' })
+    const out = migrationCounts([orig, c1, c2])
+    expect(out).toHaveLength(1)
+    expect(out[0].rootId).toBe('a')
+    expect(out[0].count).toBe(2)
+    expect(out[0].current.id).toBe('c')
+  })
+  it('excludes tasks that were never migrated', () => {
+    expect(migrationCounts([entry({ status: 'open' }), entry({ status: 'done' })])).toEqual([])
+  })
+  it('ignores events and notes', () => {
+    expect(migrationCounts([entry({ type: 'event', status: 'migrated' })])).toEqual([])
+  })
+  it('sorts most-deferred first, then by text', () => {
+    const a1 = entry({ id: 'a1', text: 'twice', status: 'migrated', createdAt: '2026-06-01T00:00:00Z' })
+    const a2 = entry({ id: 'a2', text: 'twice', status: 'migrated', originId: 'a1', createdAt: '2026-06-02T00:00:00Z' })
+    const a3 = entry({ id: 'a3', text: 'twice', status: 'open', originId: 'a1', createdAt: '2026-06-03T00:00:00Z' })
+    const b1 = entry({ id: 'b1', text: 'once', status: 'migrated', createdAt: '2026-06-01T00:00:00Z' })
+    const b2 = entry({ id: 'b2', text: 'once', status: 'open', originId: 'b1', createdAt: '2026-06-02T00:00:00Z' })
+    const out = migrationCounts([a1, a2, a3, b1, b2])
+    expect(out.map((t) => t.text)).toEqual(['twice', 'once'])
+  })
+  it('falls back to newest entry when all hops are migrated', () => {
+    const a = entry({ id: 'a', text: 'x', status: 'migrated', createdAt: '2026-06-01T00:00:00Z' })
+    const b = entry({ id: 'b', text: 'x', status: 'migrated', originId: 'a', createdAt: '2026-06-02T00:00:00Z' })
+    const out = migrationCounts([a, b])
+    expect(out[0].count).toBe(2)
+    expect(out[0].current.id).toBe('b')
+  })
+})
+
+describe('bulletTypeBreakdown', () => {
+  it('counts tasks, events and notes', () => {
+    const out = bulletTypeBreakdown([
+      entry({ type: 'task' }),
+      entry({ type: 'task', status: 'done' }),
+      entry({ type: 'event' }),
+      entry({ type: 'note' }),
+    ])
+    expect(out).toEqual({ task: 2, event: 1, note: 1, total: 4 })
+  })
+  it('excludes dropped entries', () => {
+    expect(bulletTypeBreakdown([entry({ type: 'task', status: 'dropped' })])).toEqual({
+      task: 0, event: 0, note: 0, total: 0,
+    })
+  })
+})
+
+describe('taskCompletion', () => {
+  it('computes done/open ratio over live tasks', () => {
+    const out = taskCompletion([
+      entry({ type: 'task', status: 'done' }),
+      entry({ type: 'task', status: 'done' }),
+      entry({ type: 'task', status: 'open' }),
+      entry({ type: 'event' }),
+    ])
+    expect(out).toEqual({ done: 2, open: 1, total: 3, rate: 2 / 3 })
+  })
+  it('excludes dropped tasks from the denominator', () => {
+    const out = taskCompletion([
+      entry({ type: 'task', status: 'done' }),
+      entry({ type: 'task', status: 'dropped' }),
+    ])
+    expect(out).toEqual({ done: 1, open: 0, total: 1, rate: 1 })
+  })
+  it('returns rate 0 with no tasks', () => {
+    expect(taskCompletion([entry({ type: 'note' })])).toEqual({ done: 0, open: 0, total: 0, rate: 0 })
+  })
+})
+
+describe('entriesPerDay', () => {
+  it('zero-fills every day in the inclusive range', () => {
+    const out = entriesPerDay(
+      [entry({ date: '2026-06-02' }), entry({ date: '2026-06-02' }), entry({ date: '2026-06-04' })],
+      '2026-06-01',
+      '2026-06-04',
+    )
+    expect(out).toEqual([
+      { date: '2026-06-01', count: 0 },
+      { date: '2026-06-02', count: 2 },
+      { date: '2026-06-03', count: 0 },
+      { date: '2026-06-04', count: 1 },
+    ])
+  })
+  it('ignores dateless and out-of-range entries', () => {
+    const out = entriesPerDay(
+      [entry({ date: '' }), entry({ date: '2026-05-31' }), entry({ date: '2026-06-01' })],
+      '2026-06-01',
+      '2026-06-01',
+    )
+    expect(out).toEqual([{ date: '2026-06-01', count: 1 }])
   })
 })

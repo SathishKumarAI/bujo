@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, type LucideIcon } from 'lucide-react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, type PeriodTrend } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
@@ -30,6 +30,17 @@ export function Insights() {
   const digest = weeklyDigest(data)
   const habitTrend = weeklyHabitTrend(data)
   const coach = coachDigest(data)
+
+  // Habit deep-dives — anchored to your hottest build habit (top of the
+  // streak leaderboard) so the weekday/consistency/month cards always have a
+  // meaningful subject without a picker.
+  const leaders = streakLeaderboard(data)
+  const focusId = leaders[0]?.habitId
+  const focusName = focusId ? `${leaders[0].emoji ? leaders[0].emoji + ' ' : ''}${leaders[0].name}` : ''
+  const weekdayPerf = focusId ? habitWeekdayPerformance(data, focusId) : null
+  const focusScore = focusId ? habitConsistencyScore(data, focusId) : null
+  const monthly = focusId ? habitMonthlyDeltas(data, focusId) : []
+  const maxMonthly = Math.max(1, ...monthly.map((m) => m.done))
 
   // Year-in-review aggregates.
   const moods = data.metrics.map((m) => m.mood).filter((v): v is number => v != null)
@@ -161,6 +172,80 @@ export function Insights() {
               </li>
             ))}
           </ul>
+        </Card>
+      )}
+
+      {leaders.length > 0 && (
+        <Card title="Streak leaderboard" subtitle="Your hottest habits right now">
+          <ul className="space-y-2">
+            {leaders.slice(0, 8).map((l, i) => (
+              <li key={l.habitId} className="flex items-center gap-2 text-sm">
+                <span className="w-5 shrink-0 text-center text-overlay0">{i + 1}</span>
+                <Flame size={14} style={{ color: cat(l.current > 0 ? 'peach' : 'overlay0') }} />
+                <span className="flex-1 text-text">{l.emoji ? l.emoji + ' ' : ''}{l.name}</span>
+                <span className="tabular-nums text-text" title="Current streak">{l.current}d</span>
+                <span className="w-20 shrink-0 text-right text-xs text-overlay0" title="All-time best">best {l.best}d</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {focusId && weekdayPerf?.best && weekdayPerf.worst && (
+        <div className="grid items-start gap-5 md:grid-cols-2">
+          <Card title="Best & worst days" subtitle={`When ${focusName} sticks`}>
+            <div className="mb-3 flex items-center gap-2 text-sm">
+              <CalendarDays size={15} style={{ color: cat('green') }} />
+              <span className="text-subtext1">
+                Strongest on <strong className="text-text">{weekdayPerf.best.label}</strong> ({Math.round(weekdayPerf.best.rate! * 100)}%),
+                weakest on <strong className="text-text">{weekdayPerf.worst.label}</strong> ({Math.round(weekdayPerf.worst.rate! * 100)}%).
+              </span>
+            </div>
+            <div className="flex items-end justify-between gap-2" style={{ height: 110 }} role="img" aria-label={`Success rate of ${focusName} by weekday`}>
+              {weekdayPerf.rows.map((r) => (
+                <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
+                  <span className="text-[10px] tabular-nums text-subtext0">{r.rate == null ? '–' : Math.round(r.rate * 100) + '%'}</span>
+                  <div className="flex w-full flex-1 items-end">
+                    <div className="w-full rounded-t" style={{ height: `${r.rate == null ? 2 : Math.max(2, r.rate * 100)}%`, background: r.rate == null ? cat('surface0') : r.weekday === weekdayPerf.best!.weekday ? cat('green') : r.weekday === weekdayPerf.worst!.weekday ? cat('peach') : cat('surface1') }} title={r.scheduled ? `${r.done}/${r.scheduled} done` : 'never scheduled'} />
+                  </div>
+                  <span className="text-[10px] text-overlay0">{r.label}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card title="Consistency score" subtitle={`${focusName} · recency-weighted, last 30 days`}>
+            {focusScore == null ? (
+              <Empty>Not enough scheduled days yet.</Empty>
+            ) : (
+              <>
+                <p className="text-4xl font-extrabold" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-lg text-overlay0">/100</span></p>
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
+                </div>
+                <p className="mt-2 text-xs text-overlay0">Recent days count more, so this tracks your momentum — not just a flat average.</p>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {focusId && monthly.some((m) => m.done > 0) && (
+        <Card title="Month over month" subtitle={`${focusName} · completions per month`}>
+          <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
+            {monthly.map((m) => (
+              <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
+                <span className="text-[10px] tabular-nums" style={{ color: m.delta > 0 ? cat('green') : m.delta < 0 ? cat('red') : cat('overlay0') }}>
+                  {m.delta > 0 ? `+${m.delta}` : m.delta < 0 ? m.delta : '–'}
+                </span>
+                <span className="text-[11px] font-semibold tabular-nums text-text">{m.done}</span>
+                <div className="flex w-full flex-1 items-end">
+                  <div className="w-full rounded-t" style={{ height: `${Math.max(2, (m.done / maxMonthly) * 100)}%`, background: cat('mauve') }} title={`${m.label}: ${m.done} done`} />
+                </div>
+                <span className="text-[10px] text-overlay0">{m.label.split(' ')[0]}</span>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 

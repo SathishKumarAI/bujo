@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { emptyJournal } from './storage'
 import type { DevSession } from './types'
-import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes } from './focus'
+import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession } from './focus'
 
 function withSessions(ss: DevSession[]) {
   const d = emptyJournal()
@@ -45,5 +45,23 @@ describe('focus helpers', () => {
   })
   it('returns null projection when nothing logged this week', () => {
     expect(projectedWeeklyMinutes(withSessions([]), '2026-06-11')).toBeNull()
+  })
+  it('buckets minutes by weekday (Sun..Sat)', () => {
+    // 2026-06-11 is a Thursday (idx 4), 2026-06-08 is a Monday (idx 1)
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 60 }),
+      S({ date: '2026-06-11', durationMin: 30 }),
+      S({ date: '2026-06-08', durationMin: 45 }),
+    ])
+    const by = minutesByWeekday(d)
+    expect(by.length).toBe(7)
+    expect(by[4]).toEqual({ day: 4, label: 'Thu', min: 90 })
+    expect(by[1]).toEqual({ day: 1, label: 'Mon', min: 45 })
+    expect(by[0].min).toBe(0)
+  })
+  it('finds the longest session', () => {
+    const d = withSessions([S({ id: 'a', durationMin: 30 }), S({ id: 'b', durationMin: 120 }), S({ id: 'c', durationMin: 90 })])
+    expect(longestSession(d)?.id).toBe('b')
+    expect(longestSession(withSessions([]))).toBeNull()
   })
 })

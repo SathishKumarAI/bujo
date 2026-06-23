@@ -1,6 +1,11 @@
-import type { JournalData } from './types'
-import { habitDoneOn, currentStreak, taskCompletion } from './stats'
-import { addDays, prettyDay, todayISO } from './date'
+import type { JournalData, Habit } from './types'
+import { habitDoneOn, currentStreak, taskCompletion, habitStreak } from './stats'
+import { addDays, prettyDay, todayISO, dayDiff, ymOf, prettyMonth, WEEKDAYS } from './date'
+
+/** Live (non-archived) habit lookup by id. */
+function findHabit(data: JournalData, habitId: string): Habit | undefined {
+  return data.habits.find((h) => h.id === habitId)
+}
 
 /** Pearson correlation of two equal-length numeric arrays. */
 export function pearson(xs: number[], ys: number[]): number {
@@ -295,6 +300,214 @@ export function weeklyHabitTrend(data: JournalData, today = todayISO()): PeriodT
 /** Pretty "Jun 1 – Jun 7" label for the digest range. */
 export function digestRangeLabel(from: string, to: string): string {
   return `${prettyDay(from)} – ${prettyDay(to)}`
+}
+
+export interface WeekdayPerf {
+  /** 0 = Sun … 6 = Sat. */
+  weekday: number
+  /** Short label, e.g. "Mon". */
+  label: string
+  /** Days this weekday was scheduled (active + after start). */
+  scheduled: number
+  /** Days it was actually done. */
+  done: number
+  /** done / scheduled in [0,1], or null when never scheduled. */
+  rate: number | null
+}
+
+export interface HabitWeekdayReport {
+  rows: WeekdayPerf[]
+  /** Weekday with the highest success rate (needs ≥1 scheduled day), or null. */
+  best: WeekdayPerf | null
+  /** Weekday with the lowest success rate, or null. */
+  worst: WeekdayPerf | null
+}
+
+/**
+ * Per-weekday success RATE for a single habit, so you can see which days it
+ * actually sticks vs. slips — to inform rescheduling. Unlike a raw completion
+ * count (biased by how often each weekday has occurred since you started), this
+ * divides done-days by SCHEDULED days for that weekday, respecting `activeDays`
+ * and `startedOn`. Best/worst pick the extreme rates among weekdays that were
+ * ever scheduled, requiring the two to actually differ (else both null — no
+ * signal). Pure + deterministic.
+ */
+export function habitWeekdayPerformance(
+  data: JournalData,
+  habitId: string,
+  today = todayISO(),
+): HabitWeekdayReport {
+  const h = findHabit(data, habitId)
+  const scheduled = [0, 0, 0, 0, 0, 0, 0]
+  const done = [0, 0, 0, 0, 0, 0, 0]
+  if (h && !h.archived) {
+    const span = dayDiff(h.startedOn, today)
+    for (let i = 0; i <= span; i++) {
+      const day = addDays(h.startedOn, i)
+      const wd = new Date(day + 'T00:00:00').getDay()
+      if (h.activeDays?.length && !h.activeDays.includes(wd)) continue
+      scheduled[wd] += 1
+      if (habitDoneOn(data, h, day)) done[wd] += 1
+    }
+  }
+  const rows: WeekdayPerf[] = scheduled.map((s, wd) => ({
+    weekday: wd,
+    label: WEEKDAYS[wd],
+    scheduled: s,
+    done: done[wd],
+    rate: s ? Math.round((done[wd] / s) * 100) / 100 : null,
+  }))
+  const rated = rows.filter((r) => r.rate != null)
+  let best: WeekdayPerf | null = null
+  let worst: WeekdayPerf | null = null
+  if (rated.length >= 2) {
+    const sorted = [...rated].sort((a, b) => b.rate! - a.rate!)
+    if (sorted[0].rate !== sorted[sorted.length - 1].rate) {
+      best = sorted[0]
+      worst = sorted[sorted.length - 1]
+    }
+  }
+  return { rows, best, worst }
+}
+
+export interface StreakLeader {
+  habitId: string
+  name: string
+  emoji?: string
+  color: string
+  /** Current consecutive-day streak. */
+  current: number
+  /** All-time longest streak for this habit. */
+  best: number
+}
+
+/** All-time longest run of consecutive done-days for one habit (history-wide). */
+function habitBestStreak(data: JournalData, h: Habit): number {
+  const days = new Set<string>()
+  for (const [day, ids] of Object.entries(data.habitLog)) {
+    if (ids.includes(h.id)) days.add(day)
+  }
+  // Numeric habits log values, not the habitLog id list.
+  if ((h.type ?? 'check') !== 'check') {
+    for (const day of Object.keys(data.habitValues ?? {})) {
+      if (habitDoneOn(data, h, day)) days.add(day)
+    }
+  }
+  const sorted = [...days].sort()
+  let best = 0
+  let run = 0
+  let prev: string | null = null
+  for (const d of sorted) {
+    run = prev && dayDiff(prev, d) === 1 ? run + 1 : 1
+    best = Math.max(best, run)
+    prev = d
+  }
+  return best
+}
+
+/**
+ * Ranked leaderboard of your build habits by streak — current first, then
+ * all-time best as a tiebreak — for a motivating "who's hottest" glance.
+ * Excludes archived and avoid (quit) habits, whose streak semantics are
+ * inverted (clean-day, handled elsewhere). Habits with no streak at all
+ * (current 0 and best 0) are dropped. Pure + deterministic.
+ */
+export function streakLeaderboard(data: JournalData, today = todayISO()): StreakLeader[] {
+  const out: StreakLeader[] = []
+  for (const h of data.habits) {
+    if (h.archived || h.avoid) continue
+    const current = habitStreak(data, h.id, today)
+    const best = Math.max(current, habitBestStreak(data, h))
+    if (current === 0 && best === 0) continue
+    out.push({ habitId: h.id, name: h.name, emoji: h.emoji, color: h.color, current, best })
+  }
+  return out.sort((a, b) => b.current - a.current || b.best - a.best)
+}
+
+/**
+ * Recency-weighted consistency score (0–100) for a single habit over the last
+ * `window` scheduled days. Unlike a flat completion %, recent days count more
+ * (linear weight: today weighs `window`, the oldest day weighs 1), so the score
+ * captures momentum — a habit you've nailed all week scores high even if last
+ * month was patchy, and a recent slump drags it down fast. Only scheduled days
+ * (active weekday + after start) enter the denominator. Returns null when
+ * nothing was scheduled in the window. Pure.
+ */
+export function habitConsistencyScore(
+  data: JournalData,
+  habitId: string,
+  window = 30,
+  today = todayISO(),
+): number | null {
+  const h = findHabit(data, habitId)
+  if (!h) return null
+  let num = 0
+  let den = 0
+  for (let i = 0; i < window; i++) {
+    const day = addDays(today, -i)
+    if (day < h.startedOn) continue
+    const wd = new Date(day + 'T00:00:00').getDay()
+    if (h.activeDays?.length && !h.activeDays.includes(wd)) continue
+    const weight = window - i // today heaviest, oldest lightest
+    den += weight
+    if (habitDoneOn(data, h, day)) num += weight
+  }
+  return den ? Math.round((num / den) * 100) : null
+}
+
+export interface MonthlyHabitPoint {
+  /** "YYYY-MM". */
+  ym: string
+  /** Pretty label, e.g. "Jun 2026". */
+  label: string
+  /** Completions that calendar month. */
+  done: number
+  /** Change vs. the previous listed month (0 for the first). */
+  delta: number
+}
+
+/**
+ * Month-over-month completion counts for one habit across the trailing
+ * `months`, each tagged with its delta vs. the prior month — the raw signal
+ * behind "you did X more this month than last". Oldest-first so the series
+ * reads left-to-right and the first point's delta is 0 (no baseline). Pure.
+ */
+export function habitMonthlyDeltas(
+  data: JournalData,
+  habitId: string,
+  months = 6,
+  today = todayISO(),
+): MonthlyHabitPoint[] {
+  const h = findHabit(data, habitId)
+  if (!h) return []
+  // Build the list of trailing year-months, oldest first.
+  const yms: string[] = []
+  const [y0, m0] = ymOf(today).split('-').map(Number)
+  for (let i = months - 1; i >= 0; i--) {
+    yms.push(ymOf(new Date(y0, m0 - 1 - i, 1)))
+  }
+  const counts = new Map<string, number>(yms.map((ym) => [ym, 0]))
+  // Count done-days per month from both the check log and numeric values.
+  const tally = (day: string) => {
+    if (day < h.startedOn) return
+    const ym = ymOf(day)
+    if (counts.has(ym) && habitDoneOn(data, h, day)) counts.set(ym, counts.get(ym)! + 1)
+  }
+  if ((h.type ?? 'check') === 'check') {
+    for (const [day, ids] of Object.entries(data.habitLog)) {
+      if (ids.includes(h.id)) tally(day)
+    }
+  } else {
+    for (const day of Object.keys(data.habitValues ?? {})) tally(day)
+  }
+  const out: MonthlyHabitPoint[] = []
+  let prev: number | null = null
+  for (const ym of yms) {
+    const done = counts.get(ym) ?? 0
+    out.push({ ym, label: prettyMonth(ym), done, delta: prev == null ? 0 : done - prev })
+    prev = done
+  }
+  return out
 }
 
 /** Simple trailing moving average over a numeric series (nulls skipped). */

@@ -79,6 +79,29 @@ export function projectedWeeklyMinutes(data: JournalData, today = todayISO(), da
   return Math.round((soFar / observed) * days)
 }
 
+/**
+ * Total coding minutes bucketed by weekday (Sun→Sat, indices 0..6), summed
+ * across all sessions. Reveals which days of the week you do deep work.
+ */
+export function minutesByWeekday(data: JournalData): { day: number; label: string; min: number }[] {
+  const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const totals = new Array(7).fill(0)
+  for (const s of sessions(data)) {
+    // Parse the ISO day as a local date to get a stable weekday index.
+    const [y, m, d] = s.date.split('-').map(Number)
+    const wd = new Date(y, (m || 1) - 1, d || 1).getDay()
+    totals[wd] += s.durationMin || 0
+  }
+  return labels.map((label, day) => ({ day, label, min: totals[day] }))
+}
+
+/** The single longest focus session by duration (null when no sessions). */
+export function longestSession(data: JournalData): DevSession | null {
+  const ss = sessions(data)
+  if (!ss.length) return null
+  return ss.reduce((best, s) => ((s.durationMin || 0) > (best.durationMin || 0) ? s : best))
+}
+
 /** A plain-language read on the focus↔stress relationship. */
 export function focusInsight(data: JournalData): string | null {
   const r = focusStressCorrelation(data)

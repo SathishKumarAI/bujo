@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend } from './correlations'
+import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend, habitWeekdayPerformance, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas } from './correlations'
 import { emptyJournal } from './storage'
 import type { JournalData } from './types'
 
@@ -137,5 +137,120 @@ describe('periodTrend / weeklyHabitTrend', () => {
     for (let i = 0; i < 6; i++) logHabit(d, 'h', addDays(today, -i)) // 6 this week
     for (let i = 7; i < 10; i++) logHabit(d, 'h', addDays(today, -i)) // 3 last week
     expect(weeklyHabitTrend(d, today).dir).toBe('up')
+  })
+})
+
+describe('habitWeekdayPerformance', () => {
+  // 2026-06-29 is a Monday; use a window that covers several of each weekday.
+  it('picks the strongest and weakest weekday by success rate', () => {
+    const d = emptyJournal()
+    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
+    const today = '2026-06-30' // Tuesday
+    // Always done on Mondays (1), never on Sundays (0).
+    let day = '2026-06-01'
+    while (day <= today) {
+      const wd = new Date(day + 'T00:00:00').getDay()
+      if (wd === 1) logHabit(d, 'h', day)
+      day = addDays(day, 1)
+    }
+    const rep = habitWeekdayPerformance(d, 'h', today)
+    expect(rep.best?.weekday).toBe(1) // Monday: rate 1
+    expect(rep.best?.rate).toBe(1)
+    // Several never-done weekdays tie at 0; worst is just one of them at rate 0.
+    expect(rep.worst?.rate).toBe(0)
+    expect(rep.rows).toHaveLength(7)
+  })
+
+  it('returns no best/worst when every weekday has the same rate', () => {
+    const d = emptyJournal()
+    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
+    const today = '2026-06-30'
+    let day = '2026-06-01'
+    while (day <= today) { logHabit(d, 'h', day); day = addDays(day, 1) } // done every day → all rates 1
+    const rep = habitWeekdayPerformance(d, 'h', today)
+    expect(rep.best).toBeNull()
+    expect(rep.worst).toBeNull()
+  })
+
+  it('respects activeDays so off-days are never scheduled', () => {
+    const d = emptyJournal()
+    d.habits.push({ id: 'h', name: 'Gym', category: 'movement', color: 'teal', startedOn: '2026-06-01', activeDays: [1, 3, 5] })
+    const rep = habitWeekdayPerformance(d, 'h', '2026-06-30')
+    expect(rep.rows[0].scheduled).toBe(0) // Sunday never scheduled
+    expect(rep.rows[1].scheduled).toBeGreaterThan(0) // Monday is active
+  })
+})
+
+describe('streakLeaderboard', () => {
+  it('ranks habits by current streak then best, excluding avoid/archived and zero-streak', () => {
+    const d = emptyJournal()
+    const today = '2026-06-30'
+    d.habits.push({ id: 'a', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-01-01' })
+    d.habits.push({ id: 'b', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-01-01' })
+    d.habits.push({ id: 'q', name: 'No booze', category: 'wellness', color: 'red', startedOn: '2026-01-01', avoid: true })
+    d.habits.push({ id: 'z', name: 'Never', category: 'wellness', color: 'sky', startedOn: '2026-01-01' })
+    for (let i = 0; i < 5; i++) logHabit(d, 'a', addDays(today, -i)) // current 5
+    for (let i = 0; i < 2; i++) logHabit(d, 'b', addDays(today, -i)) // current 2
+    const board = streakLeaderboard(d, today)
+    expect(board.map((r) => r.habitId)).toEqual(['a', 'b'])
+    expect(board[0].current).toBe(5)
+    expect(board.find((r) => r.habitId === 'q')).toBeUndefined() // avoid excluded
+    expect(board.find((r) => r.habitId === 'z')).toBeUndefined() // zero-streak dropped
+  })
+
+  it('reports an all-time best higher than the current streak', () => {
+    const d = emptyJournal()
+    const today = '2026-06-30'
+    d.habits.push({ id: 'a', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-01-01' })
+    // A long past run (10 days), a gap, then a short current run (2 days).
+    for (let i = 0; i < 10; i++) logHabit(d, 'a', addDays(today, -(20 + i)))
+    for (let i = 0; i < 2; i++) logHabit(d, 'a', addDays(today, -i))
+    const board = streakLeaderboard(d, today)
+    expect(board[0].current).toBe(2)
+    expect(board[0].best).toBe(10)
+  })
+})
+
+describe('habitConsistencyScore', () => {
+  it('weights recent days more heavily than old ones', () => {
+    const d = emptyJournal()
+    const today = '2026-06-30'
+    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
+    // Done the last 5 days, nothing before → high (recency-weighted) score.
+    for (let i = 0; i < 5; i++) logHabit(d, 'h', addDays(today, -i))
+    const recentStrong = habitConsistencyScore(d, 'h', 10, today)!
+
+    const d2 = emptyJournal()
+    d2.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
+    // Same count of done days but they're the OLDEST 5 in the window → lower.
+    for (let i = 5; i < 10; i++) logHabit(d2, 'h', addDays(today, -i))
+    const oldStrong = habitConsistencyScore(d2, 'h', 10, today)!
+
+    expect(recentStrong).toBeGreaterThan(oldStrong)
+    expect(recentStrong).toBeLessThanOrEqual(100)
+  })
+
+  it('returns null when nothing was scheduled in the window', () => {
+    const d = emptyJournal()
+    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2030-01-01' })
+    expect(habitConsistencyScore(d, 'h', 30, '2026-06-30')).toBeNull()
+  })
+})
+
+describe('habitMonthlyDeltas', () => {
+  it('counts completions per month with deltas vs the prior month, oldest first', () => {
+    const d = emptyJournal()
+    const today = '2026-06-15'
+    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-01-01' })
+    logHabit(d, 'h', '2026-05-10')
+    logHabit(d, 'h', '2026-05-20')
+    logHabit(d, 'h', '2026-06-01')
+    logHabit(d, 'h', '2026-06-05')
+    logHabit(d, 'h', '2026-06-10')
+    const pts = habitMonthlyDeltas(d, 'h', 3, today)
+    expect(pts.map((p) => p.ym)).toEqual(['2026-04', '2026-05', '2026-06'])
+    expect(pts[0]).toMatchObject({ done: 0, delta: 0 })
+    expect(pts[1]).toMatchObject({ done: 2, delta: 2 })
+    expect(pts[2]).toMatchObject({ done: 3, delta: 1 })
   })
 })

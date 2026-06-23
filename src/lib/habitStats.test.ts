@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { completionRate30, habitCellFill, isScheduledOn } from './habitStats'
+import { bestWeekday, completionRate30, consistencyScore, habitCellFill, isScheduledOn } from './habitStats'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
 
@@ -132,5 +132,65 @@ describe('habitCellFill', () => {
     expect(f.state).toBe('partial')
     expect(f.ratio).toBeCloseTo(29 / 30)
     expect(f.ratio).toBeLessThan(1)
+  })
+})
+
+describe('consistencyScore', () => {
+  it('100 when every scheduled day in the window is done', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    expect(consistencyScore(withDone(h, isoDays(TODAY, 30)), h, TODAY)).toBe(100)
+  })
+
+  it('0 when nothing scheduled (no divide-by-zero)', () => {
+    const h = habit({ startedOn: '2026-12-01' }) // starts in the future
+    const s = consistencyScore(emptyJournal(), h, TODAY)
+    expect(s).toBe(0)
+    expect(Number.isNaN(s)).toBe(false)
+  })
+
+  it('weights recent days more: same #done scores higher when those days are recent', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const recent = consistencyScore(withDone(h, isoDays(TODAY, 5)), h, TODAY, 30) // last 5 days done
+    const oldDays = isoDays(TODAY, 30).slice(25) // the 5 OLDEST days in the window
+    const old = consistencyScore(withDone(h, oldDays), h, TODAY, 30)
+    expect(recent).toBeGreaterThan(old)
+  })
+
+  it('between 0 and 100 for a mixed record', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    const s = consistencyScore(withDone(h, ['2026-06-18', '2026-06-16', '2026-06-14']), h, TODAY, 30)
+    expect(s).toBeGreaterThan(0)
+    expect(s).toBeLessThan(100)
+  })
+})
+
+describe('bestWeekday', () => {
+  it('identifies the strongest and weakest scheduled weekday', () => {
+    const h = habit({ startedOn: '2000-01-01' })
+    // Over 90 days, do every Monday (getDay 1) but skip every Sunday (getDay 0).
+    const days = isoDays(TODAY, 90)
+    const mondays = days.filter((d) => new Date(d + 'T00:00').getDay() === 1)
+    const b = bestWeekday(withDone(h, mondays), h, TODAY, 90)
+    expect(b.best).toBe(1) // Monday: 100%
+    expect(b.rates[1]).toBe(1)
+    expect(b.worst).not.toBe(1) // some other weekday (0% done) is the weakest
+    expect(b.rates[b.worst as number]).toBe(0)
+  })
+
+  it('only reports weekdays the habit was actually scheduled on', () => {
+    const h = habit({ activeDays: [1, 3], startedOn: '2000-01-01' }) // Mon & Wed only
+    const b = bestWeekday(emptyJournal(), h, TODAY, 90)
+    // Non-scheduled weekdays have a null rate; best/worst come from {Mon,Wed}.
+    expect(b.rates[0]).toBeNull() // Sunday never scheduled
+    expect(b.rates[2]).toBeNull() // Tuesday never scheduled
+    expect([1, 3]).toContain(b.best)
+    expect([1, 3]).toContain(b.worst)
+  })
+
+  it('returns null best/worst when nothing was scheduled in the window', () => {
+    const h = habit({ startedOn: '2026-12-01' }) // future start → nothing scheduled
+    const b = bestWeekday(emptyJournal(), h, TODAY, 90)
+    expect(b.best).toBeNull()
+    expect(b.worst).toBeNull()
   })
 })

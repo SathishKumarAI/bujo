@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { monthDays, todayISO, weekColumn, weekdayLabels } from '../lib/date'
+import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Button, Card, Input, Textarea } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { cat } from '../lib/colors'
-import { parseTags } from '../lib/bullets'
+import { bulletTypeBreakdown, entriesPerDay, parseTags, taskCompletion } from '../lib/bullets'
 import { habitDoneOn } from '../lib/stats'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
@@ -68,6 +68,17 @@ export function Monthly() {
     return acc
   }, {})
   const topTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+  // ── Month pulse: per-day entry counts (sparkline), bullet-type mix, completion ──
+  const perDay = entriesPerDay(monthEntries, days[0], days[days.length - 1])
+  const maxPerDay = Math.max(1, ...perDay.map((p) => p.count))
+  const mix = bulletTypeBreakdown(monthEntries)
+  const completion = taskCompletion(monthEntries)
+  const TYPE_META = [
+    { key: 'task' as const, label: 'tasks', glyph: '·', color: 'green', n: mix.task },
+    { key: 'event' as const, label: 'events', glyph: '○', color: 'blue', n: mix.event },
+    { key: 'note' as const, label: 'notes', glyph: '–', color: 'mauve', n: mix.note },
+  ]
 
   return (
     <Page>
@@ -131,6 +142,59 @@ export function Monthly() {
             })}
           </div>
         </Card>
+
+      {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
+      {monthEntries.length > 0 && (
+        <Card title="Month pulse" subtitle="The shape of this month — when you logged, what you logged, what got done"
+          help="A read-only snapshot of the current month. The sparkline is entries per day (taller = busier). The mix is your task/event/note balance, and the bar is the share of this month's tasks you've completed.">
+          <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
+            {/* Entries-per-day sparkline */}
+            <div>
+              <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+                <span>Entries per day</span>
+                <span>peak <b style={{ color: cat('mauve') }}>{maxPerDay}</b></span>
+              </div>
+              <div className="flex h-16 items-end gap-px" role="img" aria-label={`Entries per day across ${prettyMonth(ym)}: peak ${maxPerDay}`}>
+                {perDay.map((p) => (
+                  <div
+                    key={p.date}
+                    className="flex-1 rounded-t-sm"
+                    title={`${p.date}: ${p.count} entr${p.count === 1 ? 'y' : 'ies'}`}
+                    style={{
+                      height: `${Math.max(p.count ? 8 : 2, (p.count / maxPerDay) * 100)}%`,
+                      background: p.date === today ? cat('mauve') : p.count ? cat('blue') : cat('surface0'),
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Bullet-type mix + completion */}
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1 text-xs text-overlay0">Bullet mix</div>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {TYPE_META.map((t) => (
+                    <span key={t.key} className="inline-flex items-baseline gap-1">
+                      <span style={{ color: cat(t.color) }}>{t.glyph}</span>
+                      <b style={{ color: cat(t.color) }}>{t.n}</b>
+                      <span className="text-overlay0">{t.label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                  <span>Tasks done</span>
+                  <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Location · Goals · Photo · 3 across, below the calendar */}
       <div className="grid items-start gap-5 lg:grid-cols-3">
