@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { shelf, progressPct, readingSummary } from '../lib/reading'
+import { StatTile } from '../components/ui'
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
@@ -34,10 +35,10 @@ export function Reading() {
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Reading now" value={sum.reading} color="mauve" />
-        <Stat label="Finished this year" value={sum.finishedThisYear} color="green" />
-        <Stat label="Pages read" value={sum.pages.toLocaleString()} color="peach" />
-        <Stat label="Avg rating" value={sum.avgRating ? sum.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
+        <StatTile label="Reading now" value={sum.reading} color="mauve" />
+        <StatTile label="Finished this year" value={sum.finishedThisYear} color="green" />
+        <StatTile label="Pages read" value={sum.pages.toLocaleString()} color="peach" />
+        <StatTile label="Avg rating" value={sum.avgRating ? sum.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
       </div>
 
       {/* Yearly goal */}
@@ -143,15 +144,6 @@ function ReadLater() {
           ))}
         </ul>
       )}
-    </div>
-  )
-}
-
-function Stat({ label, value, color }: { label: string; value: number | string; color: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="font-display text-2xl font-semibold" style={{ color: cat(color) }}>{value}</p>
-      <p className="mt-0.5 text-xs text-overlay0">{label}</p>
     </div>
   )
 }
