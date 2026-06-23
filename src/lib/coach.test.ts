@@ -40,4 +40,41 @@ describe('coach', () => {
     const tips = coachTips(d, '2026-06-18')
     expect(tips.find((t) => t.id === 'pb')).toBeTruthy()
   })
+
+  it('warns when a habit completion rate drops sharply this week', () => {
+    const d = emptyJournal()
+    const today = '2026-06-30'
+    d.metrics.push({ date: today, mood: 7 })
+    d.habits.push({ id: 'h1', name: 'Meditate', category: 'wellness', color: 'mauve', startedOn: '2026-01-01' })
+    // Strong 30-day baseline: done on days 8..30 ago, but NOT the recent 7 days
+    // (days 0..6 ago) → recent rate 0, baseline high → sharp drop.
+    function addDays(iso: string, delta: number) {
+      const dt = new Date(iso + 'T00:00:00')
+      dt.setDate(dt.getDate() + delta)
+      return dt.toISOString().slice(0, 10)
+    }
+    for (let i = 7; i < 30; i++) {
+      d.habitLog[addDays(today, -i)] = ['h1']
+    }
+    const tips = coachTips(d, today)
+    expect(tips.find((t) => t.id === 'slip-h1')).toBeTruthy()
+  })
+
+  it('does not warn when a habit stays stable', () => {
+    const d = emptyJournal()
+    const today = '2026-06-30'
+    d.metrics.push({ date: today, mood: 7 })
+    d.habits.push({ id: 'h2', name: 'Meditate', category: 'wellness', color: 'mauve', startedOn: '2026-01-01' })
+    function addDays(iso: string, delta: number) {
+      const dt = new Date(iso + 'T00:00:00')
+      dt.setDate(dt.getDate() + delta)
+      return dt.toISOString().slice(0, 10)
+    }
+    // Done every day across the whole 30-day window → recent == baseline.
+    for (let i = 0; i < 30; i++) {
+      d.habitLog[addDays(today, -i)] = ['h2']
+    }
+    const tips = coachTips(d, today)
+    expect(tips.find((t) => t.id === 'slip-h2')).toBeUndefined()
+  })
 })

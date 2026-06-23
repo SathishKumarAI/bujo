@@ -1,6 +1,6 @@
 import type { JournalData } from './types'
-import { todayISO, dayDiff } from './date'
-import { weeklyHabitCount } from './stats'
+import { todayISO, dayDiff, addDays } from './date'
+import { weeklyHabitCount, habitDoneOn } from './stats'
 import { weeklyActiveMinutes } from './fitness'
 import { PICKLE_PLAN } from './pickleballPlan'
 
@@ -16,6 +16,31 @@ export interface CoachTip {
   detail: string
   to: string // ViewId to jump to
   tone: 'do' | 'win' | 'info'
+}
+
+/**
+ * Completion rate (0–1) of a habit on its SCHEDULED days over the last `window`
+ * days ending `today`. Only days where the habit was due (active weekday + after
+ * it started) count toward the denominator, so changing your schedule or a fresh
+ * habit doesn't read as a "drop". Returns null when nothing was scheduled.
+ */
+function scheduledRate(
+  data: JournalData,
+  h: JournalData['habits'][number],
+  today: string,
+  window: number,
+): number | null {
+  let due = 0
+  let done = 0
+  for (let i = 0; i < window; i++) {
+    const day = addDays(today, -i)
+    if (day < h.startedOn) continue
+    const dow = new Date(day + 'T00:00:00').getDay()
+    if (h.activeDays?.length && !h.activeDays.includes(dow)) continue
+    due += 1
+    if (habitDoneOn(data, h, day)) done += 1
+  }
+  return due ? done / due : null
 }
 
 export function coachTips(data: JournalData, today = todayISO()): CoachTip[] {
@@ -59,7 +84,26 @@ export function coachTips(data: JournalData, today = todayISO()): CoachTip[] {
     }
   }
 
-  // 4. Highest priority: if today's mood isn't logged yet, check in first.
+  // 4. Early warning: a habit whose recent (7-day) completion on scheduled days
+  //    has dropped sharply versus its 30-day baseline — catch the slip before
+  //    the streak dies. Threshold: baseline was solid (≥50%) and the recent
+  //    rate fell by at least 30 points (absolute) to clearly worse.
+  for (const h of data.habits) {
+    if (h.archived || h.avoid) continue
+    const baseline = scheduledRate(data, h, today, 30)
+    const recent = scheduledRate(data, h, today, 7)
+    if (baseline == null || recent == null) continue
+    if (baseline >= 0.5 && baseline - recent >= 0.3) {
+      tips.push({
+        id: 'slip-' + h.id,
+        title: `${h.emoji ? h.emoji + ' ' : ''}${h.name} is slipping`,
+        detail: `Down to ${Math.round(recent * 100)}% this week from ${Math.round(baseline * 100)}% — get back on it before the habit fades.`,
+        to: 'trackers', tone: 'do',
+      })
+    }
+  }
+
+  // 5. Highest priority: if today's mood isn't logged yet, check in first.
   const moodLogged = data.metrics.some((m) => m.date === today && m.mood != null)
   if (!moodLogged) {
     tips.unshift({ id: 'log', title: 'Check in', detail: 'Rate today’s mood & sleep and tick your habits.', to: 'today', tone: 'do' })

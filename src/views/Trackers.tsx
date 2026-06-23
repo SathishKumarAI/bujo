@@ -13,6 +13,9 @@ import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDayOfWeekBreakdown, dayCompletion, weekdayConsistency, monthlyCompletion, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
+import { nextHabitMilestone } from '../lib/streak'
+import { milestoneEmoji } from '../lib/milestones'
+import { completionRate30 } from '../lib/habitStats'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory, HabitType } from '../lib/types'
@@ -624,6 +627,9 @@ function CategoryRows({
         const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
         const slipColor = avoid ? cat('red') : cat(h.color)
         const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
+        // H4: nearest clean-day milestone for avoid habits. H5: 30-day completion %.
+        const milestone = avoid ? nextHabitMilestone(streak) : null
+        const rate30 = avoid ? null : completionRate30(data, h, today)
         return (
           <tr
             key={h.id}
@@ -647,10 +653,23 @@ function CategoryRows({
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
                 <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
-                {streak > 1 && (
-                  avoid
-                    ? <span title={`${streak} days clean`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('green') }}><ShieldCheck size={11} />{streak}d clean</span>
-                    : <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>
+                {avoid ? (
+                  <>
+                    {/* H4: clean-day chip — staying clean is the win for quit habits. */}
+                    <span title={`${streak} ${streak === 1 ? 'day' : 'days'} clean`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('green') }}><ShieldCheck size={11} />{streak}d clean</span>
+                    {/* H4: nearest milestone badge — what to aim for next. */}
+                    {milestone && (
+                      <span title={`${milestone.daysToGo} ${milestone.daysToGo === 1 ? 'day' : 'days'} to your ${milestone.day}-day milestone`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}>{milestoneEmoji(milestone.day)}{milestone.day}d</span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {streak > 1 && <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-[10px]" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>}
+                    {/* H5: 30-day completion % (scheduled days done), only when any day was scheduled. */}
+                    {rate30 && rate30.scheduled > 0 && (
+                      <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-[10px]" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('yellow') : cat('overlay1') }}>{rate30.pct}%30d</span>
+                    )}
+                  </>
                 )}
                 {h.weeklyGoal ? (
                   <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-[10px]" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>

@@ -1,5 +1,6 @@
 import type { JournalData, Relapse, AddictionStreak } from './types'
 import { dayDiff, todayISO } from './date'
+import { STREAK_MILESTONES as MILESTONE_DAYS } from './milestones'
 
 /**
  * Streak (abstinence) analytics — pure + testable. Goes beyond "days since the
@@ -121,6 +122,19 @@ export function streakStatsFor(
 /** Per-addiction streak stats (BUJO-199). Shares the global urge log, so urges=0 here. */
 export function addictionStats(a: AddictionStreak, today = todayISO()): StreakStats {
   return streakStatsFor(a.startedOn, a.best, a.relapses, today, 0)
+}
+
+/**
+ * Nearest upcoming habit-streak milestone for a clean-day / build streak. Uses
+ * the celebratory milestone ladder in milestones.ts (3, 7, 14, 30, …). Returns
+ * the next rung the streak hasn't reached yet plus how many days remain, or null
+ * once every milestone is passed. Pure — powers the per-habit "nearest milestone"
+ * badge (e.g. for quit/avoid habits' clean-day counter).
+ */
+export function nextHabitMilestone(streak: number): { day: number; daysToGo: number } | null {
+  const day = (MILESTONE_DAYS as readonly number[]).find((m) => m > streak)
+  if (day === undefined) return null
+  return { day, daysToGo: day - streak }
 }
 
 /** Milestones already reached at `current` days. */

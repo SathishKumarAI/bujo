@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, exerciseProgression } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, exerciseProgression, isNewPR, bodyweightSeries } from './fitness'
+import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -139,5 +140,110 @@ describe('fitness v2 helpers', () => {
     ]
     // Last legacy line wins → 70, parseSet reads reps from the post-`x` number.
     expect(lastSetFor(d, 'bench press')).toEqual({ weight: 70, reps: 8, date: '2026-06-08' })
+  })
+})
+
+describe('lastSetFor — ghost prefill (F1)', () => {
+  const d = (): JournalData => {
+    const j = emptyJournal()
+    j.workouts = [
+      { id: '1', date: '2026-06-01', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }], notes: '' },
+      { id: '2', date: '2026-06-08', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' }], notes: '' },
+    ]
+    return j
+  }
+  it('returns the most recent working set before a date', () => {
+    // Before 2026-06-08 the latest is the 2026-06-01 session (60kg).
+    expect(lastSetFor(d(), 'Bench Press', '2026-06-08')).toEqual({ weight: 60, reps: 5, date: '2026-06-01' })
+  })
+  it('returns null when nothing precedes the date', () => {
+    expect(lastSetFor(d(), 'Bench Press', '2026-06-01')).toBeNull()
+  })
+  it('returns null for an exercise never logged', () => {
+    expect(lastSetFor(d(), 'Deadlift')).toBeNull()
+    expect(lastSetFor(emptyJournal(), 'Bench Press')).toBeNull()
+  })
+})
+
+describe('isNewPR (F2)', () => {
+  const withBench = (weight: number, reps: number): JournalData => {
+    const j = emptyJournal()
+    // personalRecords() reads legacy `sets` strings, so seed the record that way.
+    j.workouts = [{ id: '1', date: '2026-06-01', activity: 'Push', sets: [`Bench Press 1x${reps} @ ${weight}kg`], notes: '' }]
+    return j
+  }
+  it('counts the first-ever set for an exercise as a PR', () => {
+    expect(isNewPR(emptyJournal(), 'Bench Press', 60, 5)).toBe(true)
+  })
+  it('flags a heavier weight', () => {
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 65, 5)).toBe(true)
+  })
+  it('does NOT flag a tie (must beat, not match)', () => {
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 60, 5)).toBe(false)
+  })
+  it('does NOT flag a lower weight at the same reps', () => {
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 55, 5)).toBe(false)
+  })
+  it('flags a rep PR at lighter weight via estimated 1RM', () => {
+    // 60kg×5 1RM ≈ 70; 55kg×10 1RM ≈ 73.5 → higher, so it is a PR.
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 55, 10)).toBe(true)
+  })
+  it('rejects empty / non-positive input', () => {
+    expect(isNewPR(withBench(60, 5), '', 80, 5)).toBe(false)
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 0, 5)).toBe(false)
+    expect(isNewPR(withBench(60, 5), 'Bench Press', 80, 0)).toBe(false)
+  })
+})
+
+describe('platesPerSide is deterministic (F3)', () => {
+  it('returns the same descending plate stack on repeated calls', () => {
+    const a = platesPerSide(100, 20)
+    const b = platesPerSide(100, 20)
+    expect(a).toEqual(b)
+    expect(a).toEqual([25, 15])
+    // sorted descending (visualiser stacks heaviest at the centre)
+    expect([...a].sort((x, y) => y - x)).toEqual(a)
+  })
+})
+
+describe('plateColor map (F3)', () => {
+  it('maps a known plate to a stable Catppuccin token color', () => {
+    expect(plateColor(25)).toBe(plateColor(25)) // stable
+    expect(plateColor(25)).not.toBe(plateColor(20)) // distinct per denomination
+  })
+  it('falls back for an unknown denomination', () => {
+    expect(typeof plateColor(99)).toBe('string')
+    expect(plateColor(99).startsWith('#')).toBe(true)
+  })
+})
+
+describe('bodyweightSeries (F10)', () => {
+  const j = (): JournalData => {
+    const d = emptyJournal()
+    d.bodyMetrics = [
+      { date: '2026-06-03', weight: 82, measurements: {} },
+      { date: '2026-06-01', weight: 80, measurements: {} },
+      { date: '2026-06-02', measurements: {} }, // gap: no weight → skipped
+      { date: '2026-06-04', weight: 84, measurements: {} },
+    ]
+    return d
+  }
+  it('orders points ascending by date and skips weightless gaps', () => {
+    const s = bodyweightSeries(j())
+    expect(s.map((p) => p.date)).toEqual(['06-01', '06-03', '06-04'])
+    expect(s.map((p) => p.weight)).toEqual([80, 82, 84])
+  })
+  it('computes a trailing 7-day moving average', () => {
+    const s = bodyweightSeries(j())
+    expect(s[0].avg).toBe(80) // first point
+    expect(s[1].avg).toBe(81) // (80+82)/2
+    expect(s[2].avg).toBe(82) // (80+82+84)/3
+  })
+  it('carries a goal value on each point only when supplied', () => {
+    expect(bodyweightSeries(j())[0].goal).toBeUndefined()
+    expect(bodyweightSeries(j(), 78).every((p) => p.goal === 78)).toBe(true)
+  })
+  it('returns [] when no body weight is logged', () => {
+    expect(bodyweightSeries(emptyJournal())).toEqual([])
   })
 })

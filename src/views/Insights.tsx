@@ -4,7 +4,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights } from '../lib/correlations'
+import { insights, moodImpactRanking } from '../lib/correlations'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
@@ -25,6 +25,7 @@ export function Insights() {
   const kinds = ['all', ...new Set(allResults.map((r) => r.kind))]
   const results = kind === 'all' ? allResults : allResults.filter((r) => r.kind === kind)
   const found = insights(data)
+  const moodImpact = moodImpactRanking(data)
 
   // Year-in-review aggregates.
   const moods = data.metrics.map((m) => m.mood).filter((v): v is number => v != null)
@@ -73,6 +74,27 @@ export function Insights() {
                   r={ins.r} · {ins.strength}
                 </span>
                 <span className="text-subtext1">{ins.text}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {moodImpact.length > 0 && (
+        <Card title="Habit mood impact" subtitle="How much each habit lifts your mood">
+          <ul className="space-y-2">
+            {moodImpact.map((h) => (
+              <li key={h.habitId} className="flex items-center gap-2 text-sm">
+                <span
+                  className="w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-semibold"
+                  style={{ background: cat('surface0'), color: h.lift >= 0 ? cat('green') : cat('red') }}
+                >
+                  {h.lift >= 0 ? '+' : ''}{h.lift}
+                </span>
+                <span className="text-text">{h.emoji ? h.emoji + ' ' : ''}{h.name}</span>
+                <span className="text-overlay0">
+                  {h.doneMood} vs {h.skipMood} mood · {h.doneDays}d
+                </span>
               </li>
             ))}
           </ul>

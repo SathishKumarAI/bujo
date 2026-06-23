@@ -6,6 +6,17 @@ import { cat } from '../lib/colors'
 import { prettyDay, todayISO } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType } from '../lib/streak'
+import { techniqueRanking, matchPlanForTrigger } from '../lib/urge'
+
+const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
+  { id: 'surf', label: 'Surf it' },
+  { id: 'delay', label: 'Delay 10 min' },
+  { id: 'halt', label: 'HALT check' },
+  { id: 'reach-out', label: 'Reach out' },
+]
+const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
+  surf: 'Surf it', delay: 'Delay 10 min', halt: 'HALT check', 'reach-out': 'Reach out',
+}
 
 /**
  * Streak (abstinence) hub · a progress-ring hero to the next milestone, lifetime
@@ -21,8 +32,12 @@ export function NoFap() {
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')
   const [urge, setUrge] = useState('')
+  const [intensity, setIntensity] = useState(3)
+  const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
   const [plan, setPlan] = useState({ addiction: '', trigger: '', coping: '' })
   const plans = data.nofap.plans ?? []
+  const matchedPlan = matchPlanForTrigger(plans, urge)
+  const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
   function savePlan() {
     if (!plan.addiction.trim() || !plan.trigger.trim()) return
     addTriggerPlan({ addiction: plan.addiction.trim(), trigger: plan.trigger.trim(), coping: plan.coping.trim() || undefined })
@@ -31,8 +46,8 @@ export function NoFap() {
   const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
 
   function logUrge() {
-    resistUrge({ trigger: urge.trim() || undefined })
-    setUrge('')
+    resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique })
+    setUrge(''); setIntensity(3); setTechnique(undefined)
   }
   const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
   const s = data.nofap
@@ -150,11 +165,51 @@ export function NoFap() {
           <div className="flex flex-wrap items-center gap-2">
             <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge()} placeholder="…or type your own" list="urge-presets" className="min-w-[10rem] flex-1" />
             <datalist id="urge-presets">{URGE_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
+          </div>
+          {/* Trigger-plan match · surfaced as the user types/picks a trigger (U9) */}
+          {matchedPlan && (
+            <div className="mt-2 rounded-lg p-2 text-xs" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
+              <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matchedPlan.trigger}”:</span>{' '}
+              <span className="text-subtext0">{matchedPlan.coping || 'name it and let it pass.'}</span>
+            </div>
+          )}
+          {/* Intensity 1–5 (U8) */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-subtext1">
+              <label htmlFor="urge-intensity">Intensity</label>
+              <span className="font-semibold" style={{ color: cat('peach') }}>{intensity}/5</span>
+            </div>
+            <input id="urge-intensity" type="range" min={1} max={5} step={1} value={intensity}
+              onChange={(e) => setIntensity(Number(e.target.value))}
+              className="mt-1 w-full accent-mauve" style={{ accentColor: cat('mauve') }} aria-label="Urge intensity, 1 to 5" />
+          </div>
+          {/* Technique chips (U8) */}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {TECHNIQUES.map((t) => (
+              <button key={t.id} onClick={() => setTechnique(technique === t.id ? undefined : t.id)}
+                className="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                style={{ borderColor: technique === t.id ? cat('teal') : cat('surface1'), background: technique === t.id ? cat('teal') + '22' : 'transparent', color: technique === t.id ? cat('text') : cat('subtext0') }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex justify-end">
             <Button variant="primary" onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
           </div>
           <div className="mt-3 flex items-center justify-between text-sm">
             <span className="text-subtext1">Urges resisted: <span className="font-semibold" style={{ color: cat('green') }}>{stats.urges}</span></span>
           </div>
+          {/* Most-effective technique tally (U8) */}
+          {techRank.length > 0 && (
+            <div className="mt-2 rounded-lg border border-surface0 bg-base p-2.5 text-xs">
+              <div className="mb-1 text-subtext1">Most-used technique: <span className="font-medium" style={{ color: cat('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
+              <div className="flex flex-wrap gap-1.5">
+                {techRank.map((t) => (
+                  <span key={t.technique} className="rounded-full px-2 py-0.5" style={{ background: cat('surface0'), color: cat('subtext0') }}>{TECH_LABEL[t.technique]} {t.count}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {urgeLog.length > 0 && (
             <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto">
               {urgeLog.map((u) => (
