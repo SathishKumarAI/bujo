@@ -1,5 +1,38 @@
 # Worklog
 
+## 2026-06-23 16:20 — Backlog batch 4: 33 features + PRODUCTION DEPLOY (PR #54)
+
+**Summary:** Fourth backlog sweep — 8 disjoint-file agents shipped 33 more
+additive/read-only features with tests (PR #54). Then deployed main to Vercel
+production and verified the live site. +86 tests (643 total).
+
+**Changes (33 features):**
+- Trackers — monthly completion bars, value sparkline, habit letter grade, at-a-glance summary.
+- Fitness — rep-PR tracking, movement-balance radar, muscle-recovery readiness, exercise frequency/train-rest ratio.
+- Pickleball — time-on-court, win% by scoring system, play consistency, tournament prep countdown.
+- Recovery — time-reclaimed, multi-addiction portfolio, record-approach escalation, urge-quiet stretch.
+- Reading/Goals — learning log, rating histogram, deep-work heatmap, focus-by-weekday, goals roll-up.
+- Insights — migration analytics, open-task aging, pickleball stats on Insights, focus-vs-sleep correlation.
+- Data — dev-session CSV, journal data-summary card, completions .ics feed, backup checksum verify.
+- Journaling — entry migration thread, collection completion badge, entries-per-month chart, memories auto-page.
+
+**Deploy:** `scripts/ship.sh --deploy-only` → prebuilt prod build (Supabase public
+env re-injected) → `vercel deploy --prebuilt --prod` → re-aliased
+**bujo-journal.vercel.app**. Verified live: HTTP 200, correct title, Supabase URL
+inlined in the bundle (login enabled).
+
+**Verify:** tsc 0 · vitest 643/643 · eslint clean (touched) · vite build OK · live HTTP 200.
+
+**Running total:** ~138 backlog features built across PRs #48, #50, #51, #52, #53, #54 — all live in production.
+
+**Follow-ups:**
+- [ ] Additive read-only pool is thinning — batch 4 agents skipped many as already
+  built. Remaining high-value items are interactive (need types.ts/store.tsx):
+  floor/stretch targets, due dates, priority levels, money-saved counter,
+  custom-goal deadline/period, quit-date contract — candidates for another serial
+  data-model batch.
+- [ ] Backend/Tauri/dep-gated items remain held.
+
 ## 2026-06-23 16:05 — Backlog batch 3: built 32 features (PR #53)
 
 **Summary:** Third parallel backlog sweep — 8 disjoint-file agents shipped 32 more
