@@ -18,7 +18,17 @@ import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from 
 import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
-import type { Gender } from '../lib/types'
+import type { Gender, ThemeName } from '../lib/types'
+
+/** Selectable themes (swatch = base / surface / accent) for the Settings picker. */
+const THEMES: { value: ThemeName; label: string; hint: string; swatch: [string, string, string] }[] = [
+  { value: 'mocha', label: 'Mocha', hint: 'Dark · default', swatch: ['#1e1e2e', '#313244', '#cba6f7'] },
+  { value: 'vscode', label: 'VS Code', hint: 'Dark · editor', swatch: ['#1f1f1f', '#2a2a2e', '#c586c0'] },
+  { value: 'neon', label: 'Neon', hint: 'Dark · vivid', swatch: ['#0a0a16', '#20203c', '#c77dff'] },
+  { value: 'latte', label: 'Latte', hint: 'Light · crisp', swatch: ['#f8f9fa', '#e8eaed', '#6c4cf0'] },
+  { value: 'dawn', label: 'Dawn', hint: 'Light · warm', swatch: ['#faf3e7', '#ecdcc4', '#b45309'] },
+  { value: 'system', label: 'System', hint: 'Match OS', swatch: ['#1e1e2e', '#f8f9fa', '#89b4fa'] },
+]
 
 function download(filename: string, text: string, mime = 'application/json') {
   const blob = new Blob([text], { type: mime })
@@ -170,6 +180,30 @@ export function Settings() {
 
         <TabsContent value="feel" className="max-w-2xl">
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
+        <div className="mb-3 border-b border-border pb-3">
+          <p className="mb-2 text-sm text-subtext1">Theme</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {THEMES.map((t) => {
+              const active = (s.theme ?? 'mocha') === t.value
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => setSettings({ theme: t.value })}
+                  aria-pressed={active}
+                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-border hover:border-surface2'}`}
+                >
+                  <span className="flex shrink-0 overflow-hidden rounded-md border border-border" aria-hidden>
+                    {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm text-text">{t.label}</span>
+                    <span className="block text-[11px] text-overlay0">{t.hint}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
           <Toggle label="Dot-grid paper texture" on={s.paperMode} onChange={(v) => setSettings({ paperMode: v })} />
