@@ -1,5 +1,32 @@
 # Worklog
 
+## 2026-06-23 23:30 — Typing-practice tracker + DEPLOY (PR #57)
+
+**Summary:** New feature on request — a typing-practice / typing-speed tracker in
+the Focus view. Built (serial single-owner agent), verified, merged PR #57,
+deployed, verified live on prod. +20 tests (675 total).
+
+**Changes:**
+- `TypingSession {id,date,durationMin,wpm?,accuracy?,source?}` + `JournalData.typingSessions`
+  (seeded `[]`), optional `Settings.typingGoalMin` (default 60). Back-compat
+  migrate + round-trip test.
+- store: `addTypingSession` / `removeTypingSession`.
+- `lib/typing.ts`: `typingTodayMinutes`, `typingWeekMinutes`, `typingGoalProgress`
+  (1hr/day), `bestWpm`, `avgWpm`, `wpmTrend`, `typingStreak` (weekday-scheduled,
+  weekend-neutral), `isWeekday` — all unit-tested.
+- Focus view: log form (minutes/WPM/accuracy/source), daily **1-hour weekday goal**
+  bar (weekend = bonus), best/avg WPM + week-minutes + streak tiles, WPM trend line,
+  recent list, and **practice-site links**: Monkeytype, keybr, TypingClub,
+  10FastFingers, TypeRacer.
+
+**Decisions:** Folded into Focus (deep-work/coding view) rather than add a 26th
+nav view. Weekday-scheduled streak: missed Mon–Fri breaks it, weekends neutral.
+
+**Deploy:** `ship.sh --deploy-only` → **bujo-journal.vercel.app**. Verified live:
+Focus view 0 console errors, typing section + practice links render on prod.
+
+**Verify:** tsc 0 · vitest 675/675 · eslint clean (touched) · build OK · live (dev+prod) clean.
+
 ## 2026-06-23 23:10 — P0 perf + UI extraction + view smoke tests + DEPLOY (PR #56)
 
 **Summary:** Health/perf pass (not features). Lazy-loaded all views, extracted the
