@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "shots": "node scripts/capture-screenshots.mjs",
+    "smoke": "node scripts/smoke-views.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

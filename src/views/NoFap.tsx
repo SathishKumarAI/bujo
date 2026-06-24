@@ -1,13 +1,29 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, RotateCcw, Clock, CalendarX, ShieldCheck, Target, TrendingDown, TrendingUp, Activity, CalendarRange, Hourglass, ListOrdered, Wind, PiggyBank, Heart } from 'lucide-react'
+import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, Heart, Hourglass, ShieldCheck } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
+import {
+  CollapsibleSection,
+  StreakVsBestCard,
+  SelfEfficacyCard,
+  StreaksSavedCard,
+  TimeReclaimedCard,
+  MoneySavedCard,
+  CalmStretchCard,
+  UrgeTrendCard,
+  UrgeIntensityCard,
+  CleanRollupCard,
+  HighRiskHoursCard,
+  RiskiestDaysCard,
+  RecoveryPortfolioCard,
+  TriggerPatternsCard,
+} from '../components/recovery'
 
 const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
   { id: 'surf', label: 'Surf it' },
@@ -168,7 +184,6 @@ export function NoFap() {
   const saved = streaksSaved(s.urgeLog ?? [], s.urgesResisted ?? 0, today)
   const intensity9 = intensityStats(s.urgeLog ?? [])
   const rollup = cleanRollup(s.relapses, s.startedOn, today)
-  const INTENSITY_LABELS = ['Faint', 'Mild', 'Moderate', 'Strong', 'Intense']
   // #344 time reclaimed · #408 portfolio · #321 record-approach · urge-quiet stretch
   const reclaimed = timeReclaimed(stats.totalClean, hoursPerDay)
   const portfolio = addictionPortfolio([
@@ -295,267 +310,37 @@ export function NoFap() {
           <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
         </div>
 
-        {/* Streak vs personal best · ghost bar (current overlaid on best) */}
-        <Card title="Current vs your best" subtitle={vsBest.isRecord ? 'You’re writing a new record right now' : `${vsBest.daysToBeat} day${vsBest.daysToBeat === 1 ? '' : 's'} to match your best`} help="The faint bar is your longest streak ever; the solid bar is your current run climbing toward it. Once it fills, you’re in record territory.">
-          <div className="relative h-4 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
-            {/* ghost = personal best (full width reference) */}
-            <div className="absolute inset-0 rounded-full" style={{ background: cat('peach') + '2e' }} />
-            {/* solid = current run, proportional to best */}
-            <div className="relative h-full rounded-full transition-[width] duration-500"
-              style={{ width: `${vsBest.pct}%`, background: vsBest.isRecord ? cat('green') : cat('mauve') }} />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span style={{ color: vsBest.isRecord ? cat('green') : cat('mauve') }}><span className="font-semibold">{vsBest.current}</span>d now</span>
-            <span className="text-overlay1 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
-          </div>
-          {comeback.isComeback && (
-            <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-sm" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
-              <RotateCcw size={16} style={{ color: cat('green') }} className="shrink-0" />
-              <span className="text-subtext0"><span className="font-semibold" style={{ color: cat('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: cat('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
-            </div>
+        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
+        {/* Insights · motivational / progress cards · default OPEN */}
+        <CollapsibleSection
+          title="Insights & progress"
+          subtitle="Streak vs. best, self-efficacy, money & time saved"
+          icon={<ShieldCheck size={18} className="text-green" />}
+          defaultOpen
+        >
+          <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
+          {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
+          {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
+          {stats.totalClean > 0 && (
+            <TimeReclaimedCard reclaimed={reclaimed} totalClean={stats.totalClean} hoursPerDay={hoursPerDay} onHoursPerDayChange={setHoursPerDay} />
           )}
-          {/* Pace-to-record projection (#298) · concrete calendar target */}
-          {!pace.alreadyRecord && pace.matchDate && (
-            <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: cat('mauve') + '12', border: `1px solid ${cat('mauve')}33` }}>
-              <Target size={15} style={{ color: cat('mauve') }} className="shrink-0" />
-              <span className="text-subtext0">Stay clean and you’ll <strong style={{ color: cat('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong> · a new record the very next day ({pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
-            </div>
-          )}
-          {/* Record-approach escalation (#321) · the cost of slipping rises near your best */}
-          {approachCopy && (
-            <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: cat(approachCopy.color) + '14', border: `1px solid ${cat(approachCopy.color)}44` }}>
-              <AlertTriangle size={15} style={{ color: cat(approachCopy.color) }} className="shrink-0" />
-              <span className="text-subtext0">{approachCopy.text}</span>
-            </div>
-          )}
-        </Card>
+          <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
+          {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
+        </CollapsibleSection>
 
-        {/* Urge-to-relapse conversion (#76) · self-efficacy from the urge log */}
-        {conversion.total > 0 && (
-          <Card title="Self-efficacy" subtitle={`${conversion.resistRate}% of urge moments ended in a win, not a reset`} help="Every logged urge you surfed is a win; every reset is the rare miss. This is how often, when an urge showed up, you chose your streak — a direct measure of growing self-control.">
-            <div className="grid grid-cols-3 gap-3">
-              <StatTile compact label="Resisted" value={conversion.resisted} color="green" icon={<ShieldCheck size={14} />} />
-              <StatTile compact label="Resets" value={conversion.relapses} color="red" icon={<X size={14} />} />
-              <StatTile compact label="Win rate" value={`${conversion.resistRate}%`} color="teal" icon={<HandMetal size={14} />} />
-            </div>
-            <div className="mt-3 h-2.5 overflow-hidden rounded-full" style={{ background: cat('red') + '33' }}>
-              <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${conversion.resistRate}%`, background: cat('green') }} />
-            </div>
-            <p className="mt-2 text-xs text-overlay0">Each resisted urge is a streak you protected. Keep the green bar climbing.</p>
-          </Card>
-        )}
-
-        {/* Streak-saved counter (#334) · resisted urges = streaks protected */}
-        {saved.saved > 0 && (
-          <Card title={<span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-green" /> Streaks you saved</span>} subtitle="Every resisted urge was a reset that didn’t happen" help="Each urge you surfed was a moment that could have become a reset. Counting them reframes resistance as progress protected — not just willpower spent, but streaks kept alive.">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{saved.saved}</div>
-                <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">urges resisted</div>
-              </div>
-              <p className="flex-1 text-sm text-subtext0">
-                That’s <strong style={{ color: cat('green') }}>{saved.saved} streak{saved.saved === 1 ? '' : 's'}</strong> you might have lost.
-                {saved.savedToday > 0 && <> <span className="text-overlay1">{saved.savedToday} saved today</span> · keep the count climbing.</>}
-              </p>
-            </div>
-          </Card>
-        )}
-
-        {/* Time / life reclaimed (#344) · per-day cost × clean days, non-financial motivator */}
-        {stats.totalClean > 0 && (
-          <Card title={<span className="inline-flex items-center gap-2"><Hourglass size={16} className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost · across all your clean days" help="An estimate of the life you’ve won back: set how many hours a day the behaviour used to cost you, and this multiplies it across your lifetime clean days. A concrete, non-financial reason every day counts.">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-4xl font-extrabold leading-none" style={{ color: cat('teal') }}>{reclaimed.hours}</div>
-                <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">hours back</div>
-              </div>
-              <p className="flex-1 text-sm text-subtext0">
-                That’s about <strong style={{ color: cat('teal') }}>{reclaimed.days} full day{reclaimed.days === 1 ? '' : 's'}</strong>{reclaimed.remHours > 0 && <> and {reclaimed.remHours}h</>} of life reclaimed across <strong>{stats.totalClean}</strong> clean day{stats.totalClean === 1 ? '' : 's'}.
-              </p>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs text-subtext1">
-                <label htmlFor="reclaim-rate">Hours/day it used to cost you</label>
-                <span className="font-semibold" style={{ color: cat('teal') }}>{hoursPerDay}h</span>
-              </div>
-              <input id="reclaim-rate" type="range" min={0} max={8} step={1} value={hoursPerDay}
-                onChange={(e) => setHoursPerDay(Number(e.target.value))}
-                className="mt-1 w-full" style={{ accentColor: cat('teal') }} aria-label="Hours per day reclaimed, 0 to 8" />
-            </div>
-          </Card>
-        )}
-
-        {/* Money saved (#123) · clean days × cost/day · editable per-day rate */}
-        <Card title={<span className="inline-flex items-center gap-2"><PiggyBank size={16} className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket" help="Set what the habit used to cost you per day; this multiplies it across your lifetime clean days. A concrete tally of money you didn't spend.">
-          <div className="flex items-center gap-4">
-            <div className="text-center">
-              <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
-              <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">saved</div>
-            </div>
-            <p className="flex-1 text-sm text-subtext0">
-              {s.costPerDay
-                ? <>Across <strong>{stats.totalClean}</strong> clean day{stats.totalClean === 1 ? '' : 's'} at {currency}{s.costPerDay}/day.</>
-                : <>Set a daily cost to see what you’ve saved across <strong>{stats.totalClean}</strong> clean day{stats.totalClean === 1 ? '' : 's'}.</>}
-            </p>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <label htmlFor="streak-cost" className="text-sm text-subtext1">Cost per day</label>
-            <span className="text-subtext1">{currency}</span>
-            <Input
-              id="streak-cost"
-              type="number"
-              min={0}
-              step="0.5"
-              value={s.costPerDay ?? ''}
-              onChange={(e) => setStreakCost(e.target.value === '' ? undefined : Number(e.target.value))}
-              placeholder="0"
-              className="w-24"
-              aria-label="Cost per day for the main streak"
-            />
-          </div>
-        </Card>
-
-        {/* Urge-quiet stretch · days since even a craving showed up */}
-        {!quiet.empty && quiet.days >= 1 && (
-          <Card title={<span className="inline-flex items-center gap-2"><Wind size={16} className="text-sky" /> Calm stretch</span>} subtitle="Days since your last logged urge" help="Not just clean days — days without even a craving worth logging. A growing number here is the quiet that follows the storm: the brain settling and the urges thinning out.">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-4xl font-extrabold leading-none" style={{ color: cat('sky') }}>{quiet.days}</div>
-                <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">day{quiet.days === 1 ? '' : 's'} quiet</div>
-              </div>
-              <p className="flex-1 text-sm text-subtext0">No urge logged since <strong style={{ color: cat('sky') }}>{quiet.lastDate && prettyDay(quiet.lastDate)}</strong>. The cravings are getting quieter · this is the work paying off.</p>
-            </div>
-          </Card>
-        )}
-
-        {/* Urge-frequency trend (#348) · weekly sparkline, evidence cravings ease */}
-        {urgeTrend.total > 0 && (
-          <Card
-            title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <TrendingDown size={16} className="text-green" /> : urgeTrend.direction === 'up' ? <TrendingUp size={16} className="text-peach" /> : <Activity size={16} className="text-overlay1" />} Urge trend</span>}
-            subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}
-            help="Resisted urges bucketed into the last 8 weeks. A falling line is hard evidence that cravings genuinely weaken with abstinence — the brain re-regulates and the waves get smaller.">
-            <div className="h-40 w-full" role="img" aria-label={`Weekly urge counts, oldest to newest: ${urgeTrend.weeks.map((w) => w.count).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={urgeTrend.weeks} margin={{ top: 6, right: 8, bottom: 0, left: -24 }}>
-                  <defs>
-                    <linearGradient id="urgeTrendFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={cat('mauve')} stopOpacity={0.35} />
-                      <stop offset="100%" stopColor={cat('mauve')} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                  <XAxis dataKey="weekStart" stroke={cat('overlay0')} fontSize={10} tickLine={false}
-                    tickFormatter={(d) => prettyDay(d as string).replace(/^\w+, /, '')} />
-                  <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ stroke: cat('surface1') }}
-                    labelFormatter={(d) => `Week of ${prettyDay(d as string)}`}
-                    formatter={(v) => [`${v} urge${v === 1 ? '' : 's'}`, 'Resisted'] as [string, string]} />
-                  <Area type="monotone" dataKey="count" stroke={cat('mauve')} strokeWidth={2} fill="url(#urgeTrendFill)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="mt-1.5 text-xs text-overlay0">Averaging <span className="font-medium" style={{ color: cat('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
-          </Card>
-        )}
-
-        {/* Urge-intensity distribution (#74) · how strong, and whether it's weakening */}
-        {intensity9.rated > 0 && (
-          <Card title={<span className="inline-flex items-center gap-2"><Activity size={16} className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`} help="Your self-rated urge strengths (1 faint … 5 intense). A falling trend means the urges themselves are getting weaker over time, not just less frequent — the strongest signal that recovery is working.">
-            <div className="space-y-1.5">
-              {intensity9.buckets.map((c, i) => {
-                const pct = intensity9.rated > 0 ? Math.round((c / intensity9.rated) * 100) : 0
-                const isMode = intensity9.mode === i + 1
-                return (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <span className="w-16 shrink-0 text-overlay0">{i + 1} · {INTENSITY_LABELS[i]}</span>
-                    <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
-                      <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
-                    </div>
-                    <span className="w-8 shrink-0 text-right text-overlay1">{c}</span>
-                  </div>
-                )
-              })}
-            </div>
-            {intensity9.rated >= 2 && intensity9.trend !== 0 && (
-              <p className="mt-2.5 inline-flex items-center gap-1.5 text-xs" style={{ color: intensity9.trend < 0 ? cat('green') : cat('peach') }}>
-                {intensity9.trend < 0 ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
-                {intensity9.trend < 0
-                  ? <span>Urges are getting <strong>weaker</strong> · recent ones average {Math.abs(intensity9.trend)} lower.</span>
-                  : <span>Urges have intensified by {intensity9.trend} lately · extra care this stretch.</span>}
-              </p>
-            )}
-          </Card>
-        )}
-
-        {/* Relapse-free week / month rollup (#322) · reward sustained windows */}
-        {rollup.totalWeeks > 0 && (
-          <Card title={<span className="inline-flex items-center gap-2"><CalendarRange size={16} className="text-teal" /> Clean weeks &amp; months</span>} subtitle="Fully reset-free windows across your whole journey" help="Counts of calendar weeks and months with zero resets since you started tracking. Rewarding sustained clean windows — not just single days — keeps a stumble from feeling like total failure.">
-            <div className="grid grid-cols-2 gap-3">
-              <StatTile compact label="Clean weeks" value={`${rollup.cleanWeeks}/${rollup.totalWeeks}`} color="teal" icon={<CalendarCheck size={14} />} />
-              <StatTile compact label="Clean months" value={`${rollup.cleanMonths}/${rollup.totalMonths}`} color="green" icon={<CalendarRange size={14} />} />
-            </div>
-            <p className="mt-2 text-xs text-overlay0">{rollup.cleanWeeks} of {rollup.totalWeeks} weeks and {rollup.cleanMonths} of {rollup.totalMonths} month{rollup.totalMonths === 1 ? '' : 's'} stayed fully reset-free.</p>
-          </Card>
-        )}
-
-        {/* High-risk hour heatmap (#114) · 24h clock from urge timestamps */}
-        {peakHour && (
-          <Card title={<span className="inline-flex items-center gap-2"><Clock size={16} className="text-peach" /> High-risk hours</span>} subtitle={`Urges cluster around ${peakHour.label} · pre-plan a defense`} help="Each cell is an hour of the day, shaded by how many urges you logged then (from their timestamps). Your peak hours are when to remove cues and have your plan ready before the craving hits.">
-            <div className="grid grid-cols-12 gap-1" role="img" aria-label={`Hour-of-day urge heatmap; peak at ${peakHour.label} with ${peakHour.count} urges`}>
-              {hourHist.map((h) => (
-                <div key={h.hour} title={`${h.count} urge${h.count === 1 ? '' : 's'} around ${((h.hour % 12) === 0 ? 12 : h.hour % 12)}${h.hour < 12 ? 'am' : 'pm'}`}
-                  className="grid aspect-square place-items-center rounded text-[9px]"
-                  style={{
-                    background: h.count > 0 ? cat('peach') + Math.round(38 + h.heat * 217).toString(16).padStart(2, '0') : cat('surface0'),
-                    color: h.heat > 0.5 ? cat('crust') : cat('overlay0'),
-                  }}>
-                  {h.hour % 6 === 0 ? h.hour : ''}
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 flex justify-between text-[10px] text-overlay0"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-            <p className="mt-1.5 text-xs text-overlay0">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
-          </Card>
-        )}
-
-        {/* Day-of-week relapse pattern (#263) · weekday bar chart from reset dates */}
-        {peakWeekday && (
-          <Card title={<span className="inline-flex items-center gap-2"><CalendarX size={16} className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`} help="Resets counted by day of the week. A tall bar means that day repeatedly trips you up — a weekend, a routine, a recurring trigger. Spot it, then build a plan for that day.">
-            <div className="h-44 w-full" role="img" aria-label={`Relapses by weekday: ${weekdayPattern.map((w) => `${w.count} on ${w.label}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weekdayPattern} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                  <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} tickLine={false} />
-                  <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }}
-                    formatter={(v) => [`${v} reset${v === 1 ? '' : 's'}`, 'Resets'] as [string, string]} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {weekdayPattern.map((w) => <Cell key={w.day} fill={w.day === peakWeekday.day ? cat('red') : cat('surface1')} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="mt-1.5 text-xs text-overlay0">Most resets land on <span className="font-medium" style={{ color: cat('red') }}>{peakWeekday.label}</span> · plan extra support there.</p>
-          </Card>
-        )}
-
-        {/* Multi-addiction overview (#408) · whole recovery portfolio ranked by current streak */}
-        {(s.addictions ?? []).length > 0 && (
-          <Card title={<span className="inline-flex items-center gap-2"><ListOrdered size={16} className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding · ranked by current run" help="An at-a-glance ranking of everything you’re quitting — your main streak plus each tracked addiction — by days clean now, with best and reset counts. See your whole recovery in one place.">
-            <ul className="space-y-1.5">
-              {portfolio.map((p, i) => (
-                <li key={p.id} className="flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold" style={{ background: i === 0 ? cat('mauve') + '22' : cat('surface0'), color: i === 0 ? cat('mauve') : cat('overlay1') }}>{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate font-medium text-text">{p.name}</span>
-                  <span className="shrink-0 tabular-nums" style={{ color: p.resetToday ? cat('red') : cat('mauve') }}><span className="font-semibold">{p.current}</span>d</span>
-                  <span className="hidden shrink-0 text-xs text-overlay0 sm:inline">best {p.best}d</span>
-                  <span className="hidden shrink-0 text-xs text-overlay0 sm:inline">{p.totalClean}d total</span>
-                  <span className="shrink-0 text-xs text-overlay0">{p.resets} reset{p.resets === 1 ? '' : 's'}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
+        {/* Deep analytics · trends, distributions, heatmaps · default COLLAPSED */}
+        <CollapsibleSection
+          title="Deep analytics"
+          subtitle="Trends, intensity, clean windows, high-risk hours & days"
+          icon={<Hourglass size={18} className="text-teal" />}
+        >
+          {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
+          {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
+          {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
+          {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
+          {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
+          {(s.addictions ?? []).length > 0 && <RecoveryPortfolioCard portfolio={portfolio} />}
+        </CollapsibleSection>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
@@ -759,23 +544,7 @@ export function NoFap() {
 
         {/* Trigger patterns */}
         {stats.topTriggers.length > 0 && (
-          <Card title="Trigger patterns" subtitle="Your most common reasons · name them to beat them" help="Aggregated from your reset reasons. The biggest bars are where to build a plan: an if-then for your top trigger removes most relapses.">
-            <ul className="space-y-2">
-              {stats.topTriggers.map((t) => {
-                const pct = Math.round((t.count / stats.relapseCount) * 100)
-                return (
-                  <li key={t.trigger}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span className="capitalize text-subtext1">{t.trigger}</span>
-                      <span className="text-overlay1">{t.count}× · {pct}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
-                  </li>
-                )
-              })}
-            </ul>
-            {stats.avgGap > 0 && <p className="mt-3 text-xs text-overlay0">Average <span style={{ color: cat('teal') }}>{stats.avgGap} days</span> between resets · aim to stretch it.</p>}
-          </Card>
+          <TriggerPatternsCard topTriggers={stats.topTriggers} relapseCount={stats.relapseCount} avgGap={stats.avgGap} />
         )}
 
         {/* Relapse log */}
