@@ -206,7 +206,7 @@ table and that doc in sync** (the cross-place task-sync rule applies to our docs
 | V3-A | Smart input (VS Code-style completion) + duplicate corner-badge | ✅ |
 | V3-B | Cross-place task sync — recurrence-instance linking + edit propagates to future occurrences (+ ↻ badge, Plan edit) | ✅ |
 | V3-C | Developer "Focus" tracker (coding time · work style · stress) | ✅ |
-| V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + radar deferred) | ◑ |
+| V3-D | Richer tracker viz: 12-week heatmap, momentum, collapsible categories (day/week/month + category radar) | ✅ |
 | V3-E | Recommendations & smart defaults (dismissible suggestion notes) | ✅ |
 | V3-F | Gym v2 — structured `setRows` + plate calc (kg/lb) + previous-session/1RM hints + 2-col redesign + pull-up program | ✅ |
 | V3-G | Quick exercise picker — searchable dropdown (recents + library + custom) on set rows + anatomy lookup | ✅ |
@@ -228,7 +228,7 @@ Page-by-page enhancement pass. Full audit in `docs/redesign/06-app-audit-and-enh
 | P-3 | Trackers Day/Week/Month view toggle | ✅ |
 | P-4 | Side-by-side cards to cut scrolling (Fitness Totals+PBs, Focus stats+chart) | ✅ |
 | P-5 | Cloud storage — verified: own-folder / Google Drive / GitHub gist (Settings → Data & Cloud) | ✅ |
-| P-6 | Trackers category radar chart | 🔜 |
+| P-6 | Trackers category radar chart | ✅ (`CategoryConsistencyCard`, in Trackers "This week / Trends") |
 | P-7 | Custom-collections UI (BUJO-93) | 🔜 |
 | P-8 | Passcode + client-side encryption (BUJO-90) | 🔜 |
 | P-9 | Accounts + E2E cloud sync (BUJO-91, needs backend) | 🔜 |
@@ -243,23 +243,26 @@ Vision + full reasoning in `docs/redesign/07-space-vision-and-backlog.mdx`.
 | R2-2 | Monthly: habit-completion ribbon per day | S | ✅ |
 | R2-3 | Insights: clickable stats → jump to source (nav context) | S | ✅ |
 | R2-4 | Stats: activity-heatmap range picker (3/6/12mo) | S | ✅ |
-| R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | 🔜 |
+| R2-5 | Shared `StatTile` + `ChartCard` primitives (de-dup) | S | ✅ (shipped as P-14; `ui.tsx` exports, adopted app-wide) |
 | R2-6 | Drag-and-drop: **reorder habits** (native DnD on a grip) | M | ✅ |
 | R2-7 | Unified cross-view goal system | M | 🔜 |
 | R2-8 | Smarter notifications (streak-at-risk, challenge day) | M | ✅ |
 | R2-9 | Accent-color picker (Settings → Journal feel) | M | ✅ |
 | R2-10 | Accounts + E2E-encrypted cloud sync (needs backend) | L | 🔜 |
-| R2-11 | Chart a11y text-alternatives (key charts) — axe-core CI deferred | M | ◑ |
+| R2-11 | Chart a11y text-alternatives (key charts) — axe-core CI deferred | M | ✅ (every `ResponsiveContainer` chart now has a `role="img"` aria-label; only the axe-core CI job stays deferred) |
 
 **Still open after this run** (each merits its own focused session, not a rushed
 end-of-marathon patch):
-- **R2-5** — extract `StatTile`/`ChartCard` from the ~dozen ad-hoc stat/chart
-  blocks. Pure refactor; touches many files, so do it deliberately.
+- ~~**R2-5**~~ ✅ done — `StatTile`/`ChartCard` shipped in `ui.tsx` (P-14) and
+  adopted app-wide; no ad-hoc stat-tile holdouts remain (2026-06-24 audit).
 - **R2-7** — a unified goal model (one `Goal` type spanning habits, challenges,
   fitness, focus) with a cross-view roll-up. Genuine feature design needed.
+  (The Goals *view* roll-up shipped as A-02; the unified *data model* is the
+  open piece.)
 - **R2-10** — accounts + E2E cloud sync **needs a backend**; out of the
   local-first scope. R2-1's at-rest crypto is the client half of this.
-- **R2-11 tail** — full chart sweep + `axe-core` CI job (needs CI wiring).
+- ~~**R2-11**~~ ✅ chart text-alternatives done (every chart has a `role="img"`
+  aria-label); only the `axe-core` CI job stays deferred (needs CI wiring).
 
 ## Epic PDF/UX — coaching content + mobile + hosting (shipped)
 
@@ -383,7 +386,7 @@ Three features shipped in one working session, plus follow-ups queued.
 | BUJO-148 | Habit metric types: `timer` (minutes) + `rating` (1–5), additive to `check`/`count` | ✅ |
 | BUJO-149 | Habit **activity-heatmap** layout + classic/activity switcher (persisted in `Settings.trackerLayout`) | ✅ |
 | BUJO-150 | Expanded habit presets (timer/rating examples: Run, Stretch, Focus, Mood, Energy, Steps, Coffee, Vitamins, Journal, No sugar) | ✅ |
-| BUJO-151 | Drag-to-reorder in the activity view (classic-grid only today; rows honor saved `order`) | 🔜 |
+| BUJO-151 | Drag-to-reorder in the activity view (classic-grid only today; rows honor saved `order`) | ✅ |
 | BUJO-152 | Guest (view-only) + Google sign-in (secure storage) auth split, with per-page data security model | 🔜 |
 
 Shared internals: `habitDoneOn` / `habitValueOn` / `habitIntensity` / `habitTarget` /
@@ -430,7 +433,7 @@ Input-capture program + habit polarity + a mobile/nav overhaul. PRs #10–#24 (+
 | BUJO-172 | Hide Google sign-in until provider enabled (fixes "provider not enabled" error page) | ✅ (#23) |
 | BUJO-173 | Auto-updating README screenshots (`npm run shots` + CI workflow) | ✅ (#24) |
 | BUJO-174 | Mobile bottom nav: Plan → Pickleball | ✅ (#24) |
-| BUJO-175 | Drag-to-reorder habits in activity view (BUJO-151 tail) | 🔜 |
+| BUJO-175 | Drag-to-reorder habits in activity view (BUJO-151 tail) | ✅ (grip handle per row, reuses `reorderHabits`) |
 | BUJO-176 | "Same-unit tracker" combined totals/compare (if that was the intent) | 🔜 |
 
 **External switches (user-only):** enable Google provider in Supabase (button auto-reappears); delete smoke-test account `bujo-smoketest-260616@example.com`.
@@ -506,6 +509,7 @@ view smoke) and deployed live to bujo-journal.vercel.app.
 | BUJO-229 | UX/IA card-arrangement recommendation → `docs/UX-CARD-LAYOUT.csv` (+ .md) | ✅ |
 | BUJO-231 | Implement the BUJO-229 card-layout across all 23 views (three-tier order: primary-action → this-week → collapsed deep-analytics); `CollapsibleSection` for progressive disclosure | ✅ (PR #59) |
 | BUJO-230 | Reusable prompt playbooks: `prompts/08-backlog-fanout-and-build.md`, `prompts/feature-prompt-template.md` | ✅ |
+| BUJO-232 | Drag-to-reorder habits in the **activity** layout (BUJO-151/175 closeout) + audit pass marking stale-but-done tickets (R2-5, R2-11, P-6, V3-D) | ✅ |
 
 **Still held (need infra/dep decision):** real backend (account-delete, multi-device
 server sync), Tauri-native plugins (tray/notifications/autostart/native-fs),
