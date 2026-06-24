@@ -503,7 +503,8 @@ view smoke) and deployed live to bujo-journal.vercel.app.
 | BUJO-226 | View smoke tests — `npm run smoke` boots all 23 views in headless Chrome | ✅ (#56) |
 | BUJO-227 | Typing-practice tracker in Focus (WPM, 1hr weekday goal, streak, trend, practice-site links) + habit preset | ✅ (#57) |
 | BUJO-228 | 4× production deploys via `ship.sh`, each verified live (HTTP 200 + smoke) | ✅ |
-| BUJO-229 | UX/IA card-arrangement recommendation → `docs/UX-CARD-LAYOUT.csv` (+ .md) for review | 🔜 review |
+| BUJO-229 | UX/IA card-arrangement recommendation → `docs/UX-CARD-LAYOUT.csv` (+ .md) | ✅ |
+| BUJO-231 | Implement the BUJO-229 card-layout across all 23 views (three-tier order: primary-action → this-week → collapsed deep-analytics); `CollapsibleSection` for progressive disclosure | ✅ (PR #59) |
 | BUJO-230 | Reusable prompt playbooks: `prompts/08-backlog-fanout-and-build.md`, `prompts/feature-prompt-template.md` | ✅ |
 
 **Still held (need infra/dep decision):** real backend (account-delete, multi-device

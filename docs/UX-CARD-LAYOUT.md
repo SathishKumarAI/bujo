@@ -1,6 +1,8 @@
 # UX / Information-Architecture — card layout recommendation
 
-_Generated 2026-06-23. A per-card arrangement plan for all **272 cards** across every view (7-agent inventory + design synthesis). Full spreadsheet: **[`UX-CARD-LAYOUT.csv`](./UX-CARD-LAYOUT.csv)** (Excel/Sheets). REVIEW doc — nothing implemented yet._
+_Generated 2026-06-23. A per-card arrangement plan for all **272 cards** across every view (7-agent inventory + design synthesis). Full spreadsheet: **[`UX-CARD-LAYOUT.csv`](./UX-CARD-LAYOUT.csv)** (Excel/Sheets)._
+
+> **Status (2026-06-24): IMPLEMENTED.** The recommended top-to-bottom order below is live across all 23 views on `feat/ux-layout-all` (PR #59, BUJO-231). Three-tier hierarchy applied everywhere — primary-action/today-glance always-visible, this-week trends expanded, deep-analytics/reference behind default-collapsed `CollapsibleSection`s. Verified: 675 tests, `tsc -b` + `vite build` (index 639 KB), live-checked in browser (Today/Trackers/Pull-ups/Fitness/Stats).
 
 ## How to read the spreadsheet
 

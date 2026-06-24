@@ -1,5 +1,41 @@
 # Worklog
 
+## 2026-06-24 — Implement UX card-layout across all views (BUJO-231, PR #59)
+
+**Summary:** Implemented the BUJO-229 card-arrangement recommendation
+(`docs/UX-CARD-LAYOUT.md`) across all 23 views. Every view now leads with its
+primary logging/action + today's glance, keeps one "this week" trend expanded,
+and folds deep analytics + reference behind default-collapsed
+`CollapsibleSection`s. Committed the in-progress sweep, fixed a build break,
+shipped two stranded branches, and synced docs.
+
+**Shipped:**
+- **Card-layout sweep** — 23 views (`Today/Trackers/Pull-ups/Fitness/Gym/Focus/
+  Pickleball/Coaching/NoFap/Mindset/Challenges/Insights/Stats/Reading/Settings/
+  Collections/Monthly/Cycle/HomeWorkout/FitnessHub/Plan/Help` + `TrackerVisuals`),
+  ~1.6k lines reflowed to the three-tier order. Builds on the earlier P0 commit.
+- **Build fix** — `Stats.tsx` referenced `<Section>` without an import, breaking
+  `tsc -b`/`vite build` (`tsc --noEmit` missed it). Aliased `CollapsibleSection as
+  Section`; dropped unused `ReactNode`/`ChevronDown`/`ChevronRight`.
+
+**Git housekeeping (same session):**
+- Pushed `feat/v3-smart-input` (8 stranded local commits; already in `main`, no PR).
+- Fast-forwarded local `main` (was behind 1).
+- Opened **PR #59** (`feat/ux-layout-all` → `main`).
+
+**Verified:** 675 tests green · `tsc -b` + `vite build` clean (index 639 KB,
+947→639) · `eslint` clean on touched files · live-checked Today/Trackers/
+Pull-ups/Fitness/Stats in Chrome (DevTools MCP, dev server :5173).
+
+**Docs updated:** `TICKETS.md` BUJO-229 ✅ + new BUJO-231; `UX-CARD-LAYOUT.md`
+header flipped to IMPLEMENTED.
+
+**Follow-ups:**
+- [ ] Merge PR #59; deploy to bujo-journal.vercel.app via `scripts/ship.sh`.
+- [ ] Prune ~14 stale `feat/*` branches on origin (backlog batches etc.).
+
+---
+
 ## 2026-06-23 23:55 — Typing habit preset + UX card-layout doc + ticket/feature updates (PR #58)
 
 **Summary:** Added the typing-practice habit preset, produced a full UX/IA
