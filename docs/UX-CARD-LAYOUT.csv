@@ -1,0 +1,273 @@
+View,Card / Section,Tier,Recommended placement,Action,Default state,Priority,Effort,Rationale
+Account,Login / sign-up card,primary-action,Centered gate,keep,always-visible,P3,S,Auth gate; already a clean single-card login page.
+Account,Signed-in status + change-password,primary-action,Centered gate,keep,always-visible,P3,S,"Account status, save, sign-out, change password; complete."
+Challenges,Per-challenge: today's rules check-in,primary-action,Inside challenge card,keep,always-visible,P0,S,Daily rule check-in is the primary action; must be visible.
+Challenges,Challenges header / new-challenge,primary-action,Top: new challenge,keep,always-visible,P1,S,Create-challenge entry point belongs at top.
+Challenges,Per-challenge card: progress ring + bar + headline,daily-glance,Mid: active challenges,keep,always-visible,P1,S,Per-challenge status is the core grid.
+Challenges,Per-challenge: calendar grid,daily-glance,Inside challenge card (collapsed),collapse,collapsed,P2,S,Full calendar is heavy; collapse so the daily check-in stays prominent.
+Challenges,Per-challenge: stats block,daily-glance,Inside challenge card,keep,always-visible,P2,S,Streak/days-left stats are lightweight glance.
+Challenges,Completed & archived,reference,Bottom: archive (collapsed),keep,collapsed,P3,S,Already collapsed reference; fine.
+Coaching,Today: <focus>,daily-glance,Top: today's focus,promote,always-visible,P1,S,Today's scheduled focus is the daily-use hook; lift above the roadmap.
+Coaching,12-week program · beginner → 4.0,primary-action,Top: program hero,keep,always-visible,P1,S,Program hero is the spine of the coaching view.
+Coaching,The 12-week roadmap,primary-action,Mid: roadmap,keep,collapsed,P2,S,Full curriculum; collapse below today's focus.
+Coaching,Drill library,reference,Mid: reference (collapsed),keep,collapsed,P3,S,Static drills; collapsed.
+Coaching,How to play every shot,reference,Mid: reference (collapsed),keep,collapsed,P3,S,Technique guide; collapsed.
+Coaching,Knee rehab & prehab · ACL / MCL,reference,Bottom: reference (collapsed),keep,collapsed,P3,S,Static rehab; collapsed at bottom.
+Coaching,Mental game,reference,Bottom: reference (collapsed),keep,collapsed,P3,S,Static mindset content; collapsed.
+Coaching,Skill ladder · 2.0 → 4.5+,reference,Mid: reference (collapsed),keep,collapsed,P3,S,Already collapsed reference; fine.
+Collections,Brain-dump inbox,primary-action,Top: triage,promote,always-visible,P0,S,Unfiled-entry triage is an active daily job; promote above reference lists.
+Collections,Custom collections,primary-action,Mid: collections,keep,always-visible,P1,S,Core create/list surface for the view.
+Collections,Future log,daily-glance,Top: upcoming (2-col),keep,always-visible,P1,S,Future-dated items are a glanceable planning aid.
+Collections,Index,daily-glance,Top: jump to,keep,always-visible,P1,S,Table of contents is the navigation spine of Collections.
+Collections,Birthdays,primary-action,Mid: people (2-col),keep,collapsed,P2,S,Pairs with Friends; both fold into a People accordion.
+Collections,FriendsCard,primary-action,Mid: people (2-col),keep,collapsed,P2,S,People management is occasional; pair with birthdays and collapse.
+Collections,Memories,daily-glance,Low: auto-pages,keep,collapsed,P3,S,Auto-generated feed; fine low and foldable.
+Collections,Tags,reference,Low: auto-pages,keep,collapsed,P3,S,Auto tag chips are reference; collapse at the bottom.
+Cycle,Daily entry,primary-action,Top: log,promote,always-visible,P1,S,"Logging should lead; chart follows the action, not the reverse."
+Cycle,Cycle & temperature,daily-glance,Top: chart (below log),keep,always-visible,P2,S,Temperature chart is the glance; keep but below the entry table.
+Fitness (Cardio tab),Log a workout,primary-action,Top: log (move from rail),move,always-visible,P0,S,Logging is the primary job; pull out of right rail so it leads on mobile.
+Fitness (Cardio tab),Body-weight progress,analytics,MERGE into Gym Body weight,merge,collapsed,P1,M,Same daily-weight chart exists in Gym; keep one canonical bodyweight card shared across tabs.
+Fitness (Cardio tab),This week,daily-glance,Top: this-week status,merge,always-visible,P1,M,Weekly ring overlaps the Hub ring; consolidate to avoid double goal displays.
+Fitness (Cardio tab),At a glance,analytics,Section: Cardio analytics (collapsed),collapse,collapsed,P1,S,Stat tiles are analytics; fold below logging like the Gym deep-analytics pattern.
+Fitness (Cardio tab),History,primary-action,Top: log (move from rail),move,always-visible,P1,S,"Recent log belongs beside the form, in the main column on mobile."
+Fitness (Cardio tab),Calorie trend,analytics,Inside Nutrition (collapsed),merge,collapsed,P2,S,Calorie trend belongs with the Nutrition card it analyses.
+Fitness (Cardio tab),Cardio bests,analytics,Section: Cardio analytics (collapsed),collapse,collapsed,P2,S,PB badges are reference-grade analytics; collapse.
+Fitness (Cardio tab),Training calendar,analytics,Section: Cardio analytics (collapsed),collapse,collapsed,P2,S,Heatmap is deep history; collapse.
+Fitness (Cardio tab),Nutrition,primary-action,Mid: nutrition,keep,collapsed,P2,S,Secondary logging surface; collapse so cardio logging stays primary.
+Fitness (Cardio tab),Edit workout dialog,primary-action,Modal (on demand),keep,n/a,P3,S,On-demand edit overlay; no change.
+FitnessHub,Strength / Cardio tab switcher,primary-action,Top: tabs,keep,always-visible,P0,S,Primary navigation between the two fitness sub-views.
+FitnessHub,Active-minutes ring (this week),daily-glance,Top: this-week status,merge,always-visible,P1,M,Same weekly active-minutes goal as Cardio 'This week' ring; unify into one hub status.
+FitnessHub,Next-split banner,daily-glance,Top: this-week status,keep,always-visible,P1,S,Actionable jump-to-next-split; good top-of-hub nudge.
+Focus,Log a session (right rail),primary-action,Top: timer + log (move from rail),move,always-visible,P0,S,Session logging must lead; pull from rail into the main column.
+Focus,Coding minutes,analytics,Section: Focus analytics (collapsed),collapse,collapsed,P1,S,Chart sitting beside This week adds noise; fold into one analytics section.
+Focus,Pomodoro (right rail),primary-action,Top: timer + log (move from rail),move,always-visible,P1,S,Timer is a primary action; surface in main flow on mobile.
+Focus,This week,daily-glance,Top: this-week status,keep,always-visible,P1,S,Week tiles + insights are the right glance for Focus.
+Focus,Typing practice,primary-action,Mid: typing (collapsed),collapse,collapsed,P2,S,Separate tracker; fold into its own accordion so it doesn't crowd coding logging.
+Focus,Cumulative coding hours,analytics,Section: Focus analytics (collapsed),keep,collapsed,P2,S,Already conditional; group into the analytics section.
+Focus,Deep-work heatmap,analytics,Section: Focus analytics (collapsed),keep,collapsed,P2,S,Heatmap; grouped and collapsed.
+Focus,History,primary-action,Bottom: log history,keep,collapsed,P2,S,"Editable session list; bottom, collapsible."
+Focus,Focus quality by weekday,analytics,Section: Focus analytics (collapsed),merge,collapsed,P3,S,Two weekday charts (volume + quality) should combine into one toggleable card.
+Focus,Focus by project,analytics,Section: Focus analytics (collapsed),keep,collapsed,P3,S,Project breakdown; collapsed.
+Focus,Focus by weekday,analytics,Section: Focus analytics (collapsed),keep,collapsed,P3,S,Weekday split; collapsed.
+Focus,Interruptions trend,analytics,Section: Focus analytics (collapsed),keep,collapsed,P3,S,Trend chart; collapsed.
+Focus,Languages & tools,analytics,Section: Focus analytics (collapsed),keep,collapsed,P3,S,Tag breakdown; collapsed.
+Goals,Custom goals,primary-action,Mid: your goals,keep,always-visible,P1,S,User-defined goals with steppers are the primary action here.
+Goals,Goals,daily-glance,Top: roll-up,keep,always-visible,P1,S,Cross-view derived-goals roll-up is the point of this view.
+Gym (Strength tab),Today's session,primary-action,Top: log,keep,always-visible,P0,S,The strength logger is the core action; stays at top.
+Gym (Strength tab),Training volume,analytics,Section: Training insights (collapsed),collapse,collapsed,P1,S,Volume charts are analytics; fold into the insights section default-collapsed.
+Gym (Strength tab),Body weight,primary-action,"Mid: bodyweight (canonical, shared)",keep,collapsed,P1,M,Canonical bodyweight log/chart; Cardio tab's version merges here.
+Gym (Strength tab),Rest timer,primary-action,Right rail (sticky) / inline on mobile,keep,always-visible,P1,S,Used mid-session; keep accessible but ensure it surfaces inline on mobile.
+Gym (Strength tab),Progress photos,primary-action,Mid: progress (collapsed),collapse,collapsed,P2,S,Occasional input; fold below logging.
+Gym (Strength tab),Personal records,analytics,Section: Deep analytics (collapsed),move,collapsed,P2,S,Move from rail into the analytics section with the other PR/insight cards.
+Gym (Strength tab),Deep analytics: Needs attention (NeglectedMuscles),analytics,Section: Training insights (collapsed),keep,collapsed,P2,S,Actionable; promote to insights group but still collapsed.
+Gym (Strength tab),Deep analytics: Stalled lifts,analytics,Section: Training insights (collapsed),keep,collapsed,P2,S,Actionable plateau signal; group with insights.
+Gym (Strength tab),Exercise anatomy,reference,Right rail: tools (collapsed),keep,collapsed,P2,S,Reference muscle map; collapse in tools.
+Gym (Strength tab),Plate calculator,reference,Right rail: tools (collapsed),keep,collapsed,P2,S,Handy tool but on-demand; collapse into a tools group.
+Gym (Strength tab),Saved routines,reference,Right rail: tools (collapsed),keep,collapsed,P2,S,Loaded from the session picker; collapse the standalone list.
+Gym (Strength tab),Session logged (rollup),daily-glance,Top: post-finish,keep,always-visible,P2,S,Post-finish summary appears contextually after save; fine.
+Gym (Strength tab),Training insights: Movement balance (radar),analytics,Section: Training insights (collapsed),keep,collapsed,P2,S,Grouped analytics; fine collapsed.
+Gym (Strength tab),Training insights: Muscle volume balance,analytics,Section: Training insights (collapsed),keep,collapsed,P2,S,Already collapsed; keep grouped.
+Gym (Strength tab),Training insights: Recovery readiness,analytics,Section: Training insights (collapsed),keep,collapsed,P2,S,Useful but not daily-blocking; collapsed.
+Gym (Strength tab),Training program (ProgramTracker hyper12),primary-action,Mid: program,keep,collapsed,P2,S,Program tracking is secondary to today's session; collapse.
+Gym (Strength tab),Deep analytics: Big-three total,analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Already correctly collapsed.
+Gym (Strength tab),Deep analytics: Effort trend (RPE),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Deep trend; collapsed.
+Gym (Strength tab),Deep analytics: Relative strength,analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Deep stat; collapsed.
+Gym (Strength tab),Exercise database (wger),reference,Right rail: tools (collapsed),keep,collapsed,P3,S,Reference library; already collapsed.
+Gym (Strength tab),PR celebration toast,daily-glance,Top: ephemeral,keep,n/a,P3,S,Transient celebration; no IA change.
+Gym (Strength tab),Rep records (RepPRCard),analytics,Section: Training insights (focus-only),keep,collapsed,P3,S,Only shows on focus; fine inside insights.
+Gym (Strength tab),Training insights: Exercise frequency,analytics,Section: Training insights (collapsed),keep,collapsed,P3,S,Grouped frequency analytics; collapsed.
+Help,Challenges & Focus (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Collections (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Command palette & book mode (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Cycle & NoFap (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Fitness (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Gym (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Insights (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Monthly (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Group all per-view help into one accordion.
+Help,Plan (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Pull-ups (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Realism & reminders (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Settings & backups (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Today (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Per-view help should be one collapsible accordion to shorten the page.
+Help,Trackers (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Training penalties (section),reference,Section list: per-view help (accordion),collapse,collapsed,P3,S,Accordion item.
+Help,Getting around · the top bar,reference,Top: basics,keep,always-visible,P3,S,Core navigation help; keep near top.
+Help,How to use your bullet journal,reference,Top: intro,keep,always-visible,P3,S,Intro orientation; fine at top.
+Help,Rapid logging · the bullets,reference,Upper: cheat sheet,keep,always-visible,P3,S,Bullet legend is the most-referenced help; keep high.
+HomeWorkout,Today's session,primary-action,Top: log (move from rail),move,always-visible,P0,S,Builder is the primary action; lead with it in main column for mobile.
+HomeWorkout,Recent home workouts,primary-action,Top: log,keep,always-visible,P1,S,Recent sessions sit beside the builder.
+HomeWorkout,Exercise library,reference,Mid: library (collapsed),collapse,collapsed,P2,S,Catalog is reference; fold below the active session builder.
+Insights,Chronically deferred,analytics,CUT (link to Plan),cut,n/a,P0,S,Identical to Plan's Chronically deferred; remove the duplicate.
+Insights,Open task aging,analytics,CUT (link to Plan),cut,n/a,P0,S,Duplicates Plan's Aging card; keep one canonical home in Plan and link.
+Insights,Streak leaderboard,analytics,CUT (link to Trackers),cut,n/a,P1,S,Duplicates Trackers' streak leaderboard; keep the Trackers copy.
+Insights,Best & worst days (focus habit),redundant,MERGE into Best & worst day (mood),merge,collapsed,P1,M,Overlaps the mood weekday card and Trackers Best-weekdays; consolidate weekday analyses.
+Insights,Search,primary-action,Top: utility bar,promote,always-visible,P1,S,Full-text search is a high-value action buried at the bottom; raise it.
+Insights,Weekly Review (WeeklyReview component),primary-action,Top: the ritual,promote,always-visible,P1,S,The one action on Insights; lead with it above all read-only analytics.
+Insights,Coach digest,analytics,Section: This week digest,keep,expanded,P1,S,Actionable navigable tips; pair with weekly digest.
+Insights,Weekly digest,analytics,Section: This week digest,keep,expanded,P1,S,The cross-domain digest is what Insights should be about; keep prominent.
+Insights,Tag manager (TagManager component),primary-action,Bottom: manage (collapsed),collapse,collapsed,P2,S,Maintenance tool; collapse at bottom.
+Insights,Best & worst day (mood),analytics,Section: Mood analytics (collapsed),keep,collapsed,P2,S,"Mood weekday; canonical here, dedupe Stats 'Mood by weekday'."
+Insights,Current streak (Big stat),daily-glance,Top: stat row,keep,always-visible,P2,S,Navigable big stat; fine as a top tile that links to Trackers.
+Insights,Entries (Big stat),daily-glance,Top: stat row,keep,always-visible,P2,S,Navigable stat; links to Today.
+Insights,Habit mood impact,analytics,Section: Habit analytics (collapsed),keep,collapsed,P2,S,Useful habit-mood correlation; collapsed.
+Insights,Longest streak (Big stat),daily-glance,Top: stat row,keep,always-visible,P2,S,Big stat tile; links out.
+Insights,Momentum,analytics,Section: Correlations (collapsed),keep,collapsed,P2,S,Trend-direction summary; collapsed.
+Insights,Patterns,analytics,Section: Correlations (collapsed),keep,collapsed,P2,S,Correlation insights are deep; fold.
+Insights,Personal records,analytics,Section: Lifetime (collapsed),keep,collapsed,P2,S,"Cross-domain bests; canonical here, dedupe Gym's rail PR list scope."
+Insights,Pickleball,analytics,"Section: Domain digests (collapsed, link out)",keep,collapsed,P2,S,"Acceptable as a compact digest that links to the Pickleball view, not a re-render."
+Insights,Tasks done (Big stat),daily-glance,Top: stat row,keep,always-visible,P2,S,Navigable stat; links to Today.
+Insights,Year in review,analytics,Section: Lifetime (collapsed),keep,collapsed,P2,S,"Lifetime totals; deep, collapsed."
+Insights,Consistency score,analytics,Section: Habit analytics (collapsed),keep,collapsed,P3,S,Top-habit consistency; collapsed.
+Insights,Index,reference,Section: Lifetime (collapsed),keep,collapsed,P3,S,Month list navigator; collapsed reference.
+Insights,Month over month,analytics,Section: Habit analytics (collapsed),keep,collapsed,P3,S,MoM habit delta; collapsed.
+Insights,Mood stability,analytics,Section: Mood analytics (collapsed),keep,collapsed,P3,S,Stability score; collapsed.
+Insights,Weekday vs weekend,analytics,Section: Mood analytics (collapsed),keep,collapsed,P3,S,Split analytics; collapsed.
+Mindset,Your focus,primary-action,Top: your principles (move from rail),move,always-visible,P1,S,Your chosen principles are the active surface; lead with them in main flow.
+Mindset,Principle library,reference,Mid: library,keep,always-visible,P2,S,Browse-and-add is the secondary action; keep below your focus.
+Monthly,Calendar grid,primary-action,Top: the month,promote,always-visible,P0,S,The calendar is the reason to visit Monthly; lead with it full-width.
+Monthly,Month pulse,analytics,Section: Month analytics (collapsed),collapse,collapsed,P1,S,Multi-chart pulse is deep analytics; fold below the calendar and inputs.
+Monthly,This month summary bar,daily-glance,Top: above calendar,keep,always-visible,P1,S,Thin glance strip is cheap and orients the month.
+Monthly,By weekday (sub-section of Month pulse),analytics,Inside Month pulse (collapsed),merge,collapsed,P2,S,Already nested; keep merged inside the collapsed pulse card.
+Monthly,Streaks (sub-section of Month pulse),analytics,Inside Month pulse (collapsed),merge,collapsed,P2,S,Journaling streak duplicates Insights; keep one copy here inside the pulse.
+Monthly,Entries per month,analytics,Section: Month analytics (collapsed),collapse,collapsed,P2,S,12-month volume chart is historical; collapse with the rest.
+Monthly,Goals,primary-action,Mid: month inputs (3-col),keep,always-visible,P2,S,Month goals are a monthly ritual input.
+Monthly,Location,primary-action,Mid: month inputs (3-col),keep,always-visible,P2,S,"Light monthly input, fine mid-page."
+Monthly,Photo of the month,primary-action,Mid: month inputs (3-col),keep,always-visible,P2,S,Single image input pairs with the other monthly inputs.
+NoFap,Urge surfing,primary-action,Mid: cope & log,promote,always-visible,P0,S,Logging a resisted urge is the core daily action; keep prominent.
+NoFap,SOS panic button + ride-it-out overlay,primary-action,Top: always-on SOS,keep,always-visible,P0,S,Crisis action must be permanently reachable; keep the floating button.
+NoFap,Recovery portfolio (RecoveryPortfolioCard),redundant,MERGE into Per-addiction streaks,merge,collapsed,P1,M,Ranks the same per-addiction streaks already shown; merge to remove duplication.
+NoFap,"Insights & progress (collapsible section, default open)",analytics,Section: Insights & progress (collapsed),collapse,collapsed,P1,S,Default this open section closed so logging/coping leads.
+NoFap,Log a reset,primary-action,Mid: cope & log (move from rail),move,always-visible,P1,S,Reset logging is primary; pull from rail next to urge surfing.
+NoFap,Per-addiction streaks,primary-action,Mid: cope & log,keep,always-visible,P1,S,Multi-streak tracking is a core action; keep visible.
+NoFap,Streak hero ring,daily-glance,Top: streak status,keep,always-visible,P1,S,The streak ring is the emotional anchor of the view.
+NoFap,My commitment,primary-action,Mid: setup (collapsed),collapse,collapsed,P2,S,Set-once contract; collapse after initial setup.
+NoFap,Trigger plans,primary-action,Mid: cope & log (collapsed),collapse,collapsed,P2,S,If-then plans set occasionally; collapse.
+NoFap,Current vs your best (StreakVsBestCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P2,S,Motivational stat; grouped.
+NoFap,Lifetime stats tiles,daily-glance,Top: streak status,keep,always-visible,P2,S,Four headline tiles pair with the hero ring.
+NoFap,Beat the urge,reference,Inside SOS / reference (collapsed),merge,collapsed,P3,S,Coping techniques belong with the SOS flow rather than a standalone rail card.
+NoFap,Trigger patterns (TriggerPatternsCard),analytics,Section: Deep analytics (collapsed),move,collapsed,P3,S,Aggregated analytics; move into the deep section rather than mid-column.
+NoFap,Urges by addiction (bar chart),analytics,"Section: Deep analytics (from rail, collapsed)",move,collapsed,P3,S,Rail chart strands on mobile; move into deep analytics.
+NoFap,Calm stretch (CalmStretchCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P3,S,Days-since stat; grouped.
+NoFap,Clean rollup (CleanRollupCard),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Counts; collapsed.
+NoFap,"Deep analytics (collapsible section, default collapsed)",analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Already correct pattern.
+NoFap,High-risk hours (HighRiskHoursCard),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Histogram; collapsed.
+NoFap,Money saved (MoneySavedCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P3,S,Motivational calc; grouped.
+NoFap,Recovery ladder,reference,Section: reference (collapsed),keep,collapsed,P3,S,Static milestone timeline; collapsed.
+NoFap,Reset history,reference,Section: reference (collapsed),keep,collapsed,P3,S,Already collapsible log; fine.
+NoFap,Riskiest days (RiskiestDaysCard),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Weekday pattern; collapsed.
+NoFap,Self-efficacy (SelfEfficacyCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P3,S,Confidence stat; grouped.
+NoFap,Streaks saved (StreaksSavedCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P3,S,Reframe stat; grouped.
+NoFap,Time reclaimed (TimeReclaimedCard),analytics,Section: Insights & progress (collapsed),keep,collapsed,P3,S,Motivational calc; grouped.
+NoFap,Urge frequency trend (UrgeTrendCard),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Trend; collapsed.
+NoFap,Urge intensity (UrgeIntensityCard),analytics,Section: Deep analytics (collapsed),keep,collapsed,P3,S,Intensity trend; collapsed.
+Pickleball,Log a session,primary-action,Top: log,promote,always-visible,P0,S,Logging must lead; move above the analytics sections it currently sits among.
+Pickleball,Recent form (Form & momentum section),analytics,Section: Form & momentum (collapsed),collapse,collapsed,P1,S,Default this section closed; too many open analytics dominate the view.
+Pickleball,At a glance,daily-glance,Top: status + this week,keep,always-visible,P1,S,Record tiles + weekly goal are the right top status.
+Pickleball,History,primary-action,Top: log,keep,collapsed,P1,S,Recent sessions beside the form; collapsible to save space.
+Pickleball,75-day plan · 3.5 → 4.0,reference,MERGE into Coaching view,merge,collapsed,P2,M,Structured drill plan overlaps the Coaching 12-week program; consolidate curricula in Coaching.
+Pickleball,Practice today & improve,reference,Mid: improve (collapsed),collapse,collapsed,P2,S,Rotating drill + links is reference; fold below logging.
+Pickleball,Win / loss (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P2,S,Move rail donut into the Charts section.
+Pickleball,Win-rate trend (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P2,M,Seven rail charts strand on mobile; move into one collapsed Charts section.
+Pickleball,DUPR rating,primary-action,Mid: rating (collapsed),keep,collapsed,P2,S,Logged occasionally; keep collapsible.
+Pickleball,Leagues & tournaments,primary-action,Mid: events,keep,collapsed,P2,S,Event logging is secondary; collapse.
+Pickleball,Upcoming events,daily-glance,Top: status (conditional),keep,collapsed,P2,S,Conditional countdown; surfaces only when events exist.
+Pickleball,Win-rate forecast (Form & momentum section),analytics,Section: Form & momentum (collapsed),keep,collapsed,P2,S,Grouped form analytics; collapsed.
+Pickleball,By format (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P3,S,Consolidate rail charts.
+Pickleball,Cumulative games (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P3,S,Consolidate rail charts.
+Pickleball,Games per month (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P3,S,Consolidate; consider merging week/month into one toggle.
+Pickleball,Games per week (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P3,S,Consolidate rail charts.
+Pickleball,Play heatmap (right rail),analytics,"Section: Charts (collapsed, from rail)",move,collapsed,P3,S,Consolidate rail charts.
+Pickleball,Courts & venues (Opponents/partners/venues section),analytics,Section: Opponents & venues (collapsed),keep,collapsed,P3,S,Grouped; collapsed.
+Pickleball,Format playbook,reference,Bottom: reference (collapsed),keep,collapsed,P3,S,Static reference; collapsed.
+Pickleball,Milestones (Form & momentum section),analytics,Section: Form & momentum (collapsed),keep,collapsed,P3,S,Badge progress; collapsed.
+Pickleball,Partner chemistry (Opponents/partners/venues section),analytics,Section: Opponents & venues (collapsed),keep,collapsed,P3,S,Already collapsed; keep grouped.
+Pickleball,Performance by opponent level (Opponents/partners/venues section),analytics,Section: Opponents & venues (collapsed),keep,collapsed,P3,S,Grouped; collapsed.
+Pickleball,Performance by scoring (Deeper signals section),analytics,Section: Deeper signals (collapsed),keep,collapsed,P3,S,Deep split; collapsed.
+Pickleball,Performance by weekday (Deeper signals section),analytics,Section: Deeper signals (collapsed),keep,collapsed,P3,S,Deep split; collapsed.
+Pickleball,Play consistency (Deeper signals section),analytics,Section: Deeper signals (collapsed),keep,collapsed,P3,S,Cadence stat; collapsed.
+Pickleball,Play safe · physio & trainer notes,reference,Bottom: reference (collapsed),keep,collapsed,P3,S,Static tips; bottom and collapsed.
+Pickleball,Point differential (Deeper signals section),analytics,Section: Deeper signals (collapsed),keep,collapsed,P3,S,Deep stat; collapsed.
+Pickleball,Rivalry record book (Opponents/partners/venues section),analytics,Section: Opponents & venues (collapsed),keep,collapsed,P3,S,Grouped; collapsed.
+Pickleball,Session intensity (Form & momentum section),analytics,Section: Form & momentum (collapsed),keep,collapsed,P3,S,RPE load stats; collapsed.
+Pickleball,Time on court (Deeper signals section),analytics,Section: Deeper signals (collapsed),keep,collapsed,P3,S,Deep stat; collapsed.
+Plan,Migration,primary-action,Top: triage tasks,keep,always-visible,P0,S,Overdue-task triage is the primary job of Plan.
+Plan,Chronically deferred,analytics,Section: This week (conditional),keep,expanded,P1,S,Actionable do-or-drop list; keep but it is the canonical home (cut the Insights copy).
+Plan,Aging (sub-section of Migration),analytics,Inside Migration (collapsed),collapse,collapsed,P2,S,Staleness bar is analytics inside the action card; collapse to reduce noise.
+Plan,Import calendar (.ics),primary-action,Mid: setup (collapsed),collapse,collapsed,P2,S,One-off import utility; fold into a setup accordion.
+Plan,Recurring tasks & events,primary-action,Mid: setup,keep,collapsed,P2,S,"Configuration, used occasionally; collapse below active triage."
+Pullups,Pull-up training set (guide),primary-action,Top: your training set (move from rail),move,always-visible,P1,S,Personalised calculator is actionable; pull into main flow.
+Pullups,Training program (ProgramTracker pullup-zero),primary-action,Top: program,keep,always-visible,P1,S,The trackable program is the active part of this view.
+Pullups,Pull-up progressions,reference,Mid: reference (collapsed),collapse,collapsed,P2,S,Static progression library; collapse.
+Pullups,Pull-up workouts,reference,Mid: reference (collapsed),collapse,collapsed,P2,S,Static session formats; collapse as reference.
+Pullups,Ability ladder,reference,Mid: reference (collapsed),merge,collapsed,P3,S,Reference table belongs inside/next to the training-set guide it supports.
+Reading,Shelves (Want / Reading / Finished),primary-action,Top: add + shelves,promote,always-visible,P0,S,"Shelves are the heart of Reading; should sit high, not below charts."
+Reading,Add a book,primary-action,Top: add + shelves,promote,always-visible,P1,S,Adding/managing books is the primary action; raise above analytics charts.
+Reading,Stat strip,daily-glance,Top: status strip,keep,always-visible,P1,S,Reading status tiles are the right glance lead.
+Reading,Yearly reading goal,primary-action,Top: status strip,keep,always-visible,P1,S,Goal + pace is a glanceable target; keep near top.
+Reading,Finished by month,analytics,Section: Reading analytics (collapsed),collapse,collapsed,P2,S,Volume chart; fold below shelves and logging.
+Reading,Learning log (LearningLog),reference,Mid: learnings (collapsed),collapse,collapsed,P2,S,"Cross-book feed; valuable but secondary, fold."
+Reading,Year in books (wrapped),redundant,Section: Reading analytics (collapsed),collapse,collapsed,P2,M,Wrapped recap restates the stat strip + finished-by-month; collapse and dedupe overlapping numbers.
+Reading,Stalled books,analytics,Section: This week (expanded),keep,expanded,P2,S,Actionable nudge to resume idle books; keep visible.
+Reading,Rating distribution,analytics,Inside Year in books (collapsed),keep,collapsed,P3,S,Already nested; keep inside the collapsed wrapped card.
+Reading,Read later (ReadLater),primary-action,Bottom: read later (collapsed),keep,collapsed,P3,S,Link list; bottom and collapsible.
+Settings,Account (AccountCard),primary-action,Data tab: Sync (consolidated),keep,always-visible,P0,L,Six overlapping sync cards confuse; make Account+Cloud sync the recommended path.
+Settings,Cloud sync (BujoCloudCard),primary-action,"Data tab: Sync (consolidated, recommended)",keep,always-visible,P0,L,E2E passphrase sync is the flagship; surface as the default sync option.
+Settings,Cloud sync · Google Drive (DriveSync),redundant,"Data tab: Sync (Advanced, collapsed)",merge,collapsed,P1,M,Yet another BYO-storage variant; fold into the Advanced sync group to cut option overload.
+Settings,Your cloud storage (CloudStorage),redundant,"Data tab: Sync (Advanced, collapsed)",merge,collapsed,P1,M,Overlaps the other BYO-storage sync options; consolidate under one Advanced choice.
+Settings,Self-host sync (SelfHostCard),primary-action,"Data tab: Sync (Advanced, collapsed)",collapse,collapsed,P1,M,Power-user option; tuck under an Advanced sync accordion.
+Settings,Backup & data,primary-action,Data tab: backup,keep,always-visible,P1,S,Export/import is a core local-first action; keep prominent.
+Settings,Demo & reset,primary-action,Data tab: backup (2-col),keep,always-visible,P2,S,Demo/reset pairs with backup.
+Settings,Journal feel,primary-action,Journal feel tab,keep,always-visible,P2,S,Theme/feel controls; fine in its tab.
+Settings,Passcode lock (PasscodeCard),primary-action,Data tab: Security,keep,always-visible,P2,S,"At-rest lock; distinct from sync, keep visible."
+Settings,Profile,primary-action,Profile tab,keep,always-visible,P2,S,Tabbed settings already well-organised.
+Settings,Reminders & weather,primary-action,Reminders tab,keep,always-visible,P2,S,Reminder settings; fine.
+Settings,Your data at a glance,daily-glance,Data tab: top,keep,always-visible,P2,S,Storage glance is useful at top of data tab.
+Settings,Journal summary,analytics,Data tab (collapsed),collapse,collapsed,P3,S,Coverage analytics; fold in the data tab.
+Settings,Page header,reference,Top,keep,always-visible,P3,S,Standard header; no change.
+Stats,Mood by weekday,redundant,CUT (Insights owns weekday mood),cut,n/a,P1,S,Duplicates Insights 'Best & worst day (mood)'; keep one canonical weekday-mood chart.
+Stats,Year in pixels,redundant,MERGE into Mood calendar toggle,merge,collapsed,P1,M,Same daily-mood tint as mood calendar; combine into a single toggleable view.
+Stats,Tags,redundant,CUT (Collections + Tag manager own tags),cut,n/a,P2,S,Tag cloud duplicates Collections Tags and Insights Tag manager; remove.
+Stats,Mood calendar,analytics,Section: Mood views (collapsed toggle),merge,collapsed,P2,M,Mood calendar and Year-in-pixels show the same data; merge into one toggle.
+Stats,Activity (heatmap),daily-glance,Top: activity,keep,always-visible,P2,S,Show-up heatmap is the signature top card of Stats.
+Stats,This week at a glance,analytics,Section: This week (collapsed),keep,collapsed,P2,S,"Radar of 7-day averages overlaps Trackers metrics; keep but collapsed, link to Trackers."
+Stats,Achievements (AchievementsCard),analytics,Top: achievements,keep,expanded,P3,S,Badge grid is engaging; fine near top.
+Stats,Enlarge modal,reference,Overlay (on demand),keep,n/a,P3,S,Supporting overlay; no change.
+Stats,Focus vs sleep,analytics,Section: Sleep & mood (collapsed),keep,collapsed,P3,S,Correlation; grouped.
+Stats,Sleep debt,analytics,Section: Sleep & mood (collapsed),keep,collapsed,P3,S,Sleep deficit; grouped.
+Stats,Sleep vs mood,analytics,Section: Sleep & mood (collapsed),keep,collapsed,P3,S,Scatter; collapsed group.
+Stats,Task breakdown,analytics,Section: Tasks (collapsed),keep,collapsed,P3,S,Outcome donut; collapsed.
+Stats,When you check in (CheckinTimesCard),analytics,Section: Habit timing (collapsed),keep,collapsed,P3,S,Check-in histogram; collapsed.
+Stats,Workout minutes,analytics,"Section: Fitness stats (collapsed, link out)",keep,collapsed,P3,S,Overlaps Fitness 'This week' minutes; collapse and prefer the domain card.
+Stats,Workout split,analytics,Section: Fitness stats (collapsed),keep,collapsed,P3,S,Session-type donut; collapsed.
+Today,Count habits,primary-action,Top: daily actions,merge,always-visible,P0,M,"Steppers should sit in one unified habit block with TodayHabits, not split boolean vs count."
+Today,Daily log (prettyDay),primary-action,Mid: the day,keep,always-visible,P0,S,The journal entry list is the heart of the app and stays prominent.
+Today,TodayHabits,primary-action,Top: daily actions,keep,always-visible,P0,S,Core daily check-off must be above the fold.
+Today,TodayPlanCard,daily-glance,Top: today command centre,keep,always-visible,P0,S,Command centre + week strip is the natural first thing on the daily view.
+Today,Keep your streaks (AtRiskNudge),daily-glance,Top: daily actions,merge,always-visible,P1,M,"At-risk chips belong inside TodayHabits as a highlighted row, not a separate card."
+Today,Weekly goals (WeeklyGoalRings),analytics,Section: This week (collapsed),collapse,collapsed,P1,S,"Rings are analytics, not a daily action; fold below the day so logging leads."
+Today,Wellbeing,primary-action,Top: daily actions (move out of right rail),move,always-visible,P1,S,Mood/sleep logging is a primary daily action; pull from rail into main flow for mobile.
+Today,CoachCard,daily-glance,Top: today command centre,keep,always-visible,P1,S,Proactive do-this-next belongs at the very top to drive action.
+Today,Daily memory,primary-action,Mid: reflect (2-col),keep,always-visible,P2,S,Memorable-line + photo is a core journaling ritual.
+Today,FastingCard,primary-action,Top: daily actions (gated),keep,collapsed,P2,S,Loggable but niche; keep but collapse unless fasting is enabled.
+Today,Gratitude,primary-action,Mid: reflect (2-col),keep,always-visible,P2,S,"Light daily reflection input, fine in the mid grid."
+Today,PenaltyCard,daily-glance,Top: today command centre (conditional),keep,collapsed,P2,S,Nudge only matters when there is a skipped habit; render conditionally and compact.
+Today,Reflection,primary-action,Mid: reflect (2-col),keep,always-visible,P2,S,Settings-gated reflection prompt pairs with gratitude.
+Today,On this day,daily-glance,Section: Memories (collapsed),keep,collapsed,P3,S,"Nice flashback but not load-bearing; already collapsed, keep low."
+Today,Stickers,reference,Section: Decorate (collapsed),keep,collapsed,P3,S,Pure decoration; stays collapsed at the bottom.
+Trackers,Habit & intake tracker,primary-action,Top: logging grid,keep,always-visible,P0,S,Main logging surface; the core of the view.
+Trackers,Today (TodayStrip),primary-action,Top: daily actions,keep,always-visible,P0,S,Quick check-in chips are the primary daily action on Trackers.
+Trackers,Category roll-up,redundant,MERGE into Category consistency,merge,collapsed,P1,M,Duplicates the consistency radar's category data; merge into one category card.
+Trackers,"Trends (collapsible section, default open)",analytics,Section: This week (collapsed),collapse,collapsed,P1,S,Change default to collapsed so logging leads on mobile.
+Trackers,At a glance,daily-glance,Top: status strip,keep,always-visible,P1,S,Roll-up tiles give the today-done status; keep as the lead strip.
+Trackers,Streak leaderboard,analytics,Section: Deep analytics,keep,collapsed,P1,M,Canonical streak leaderboard; cut the duplicate in Insights.
+Trackers,Quick add presets + new-habit input,primary-action,Inside tracker card (collapsed),collapse,collapsed,P2,S,"Add-habit form is setup, not daily; fold to declutter the grid footer."
+Trackers,Best weekdays,analytics,Section: Deep analytics,keep,collapsed,P2,S,"Weekday completion; canonical here, dedupe Insights focus-habit copy."
+Trackers,Category consistency (CategoryConsistencyCard),analytics,Section: This week (Trends),keep,collapsed,P2,S,Radar is useful but secondary; lives in the collapsed Trends section.
+Trackers,Completion heatmap,analytics,Section: Deep analytics,keep,collapsed,P2,S,Heatmap is deep history; stays collapsed.
+Trackers,"Deep analytics (collapsible section, default closed)",analytics,Section: Deep analytics (collapsed),keep,collapsed,P2,S,Already correct pattern; this is the model other views should copy.
+Trackers,Monthly trend,analytics,Section: Deep analytics,keep,collapsed,P2,S,Historical completion chart; fine collapsed.
+Trackers,Mood · Stress · Sleep (MetricsTrendCard),analytics,Section: This week (Trends),keep,collapsed,P2,S,Canonical home for the metrics trend; Stats radar should link here not duplicate.
+Trackers,Archived habits,reference,Bottom: manage (collapsed),keep,collapsed,P3,S,Maintenance utility; bottom and folded.
+Trackers,HabitEditor (modal),primary-action,Modal (on demand),keep,n/a,P3,S,On-demand overlay; no placement change needed.
+Trackers,Perfect days,analytics,Section: Deep analytics,keep,collapsed,P3,S,Fun stat tiles; collapsed is fine.
+Welcome,First-run gate (account vs this-device vs guest),primary-action,Full-screen gate,keep,always-visible,P3,S,Onboarding entry; keep minimal.
