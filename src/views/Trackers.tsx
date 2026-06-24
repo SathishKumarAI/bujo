@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote } from 'lucide-react'
+import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote, Grid3x3 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -17,6 +17,7 @@ import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory, HabitType } from '../lib/types'
 import { ActivityLayout } from '../components/ActivityLayout'
+import { GridCardsLayout } from '../components/GridCardsLayout'
 import { HabitDetail } from '../components/trackers/HabitDetail'
 import { TrackerSummaryCard } from '../components/trackers/TrackerSummaryCard'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
@@ -133,6 +134,7 @@ export function Trackers() {
               <div className="inline-flex overflow-hidden rounded-lg border border-surface1">
                 {([
                   { id: 'classic', icon: <LayoutGrid size={15} />, title: 'Grid' },
+                  { id: 'cards', icon: <Grid3x3 size={15} />, title: 'Cards (heatmap grids)' },
                   { id: 'activity', icon: <Activity size={15} />, title: 'Activity' },
                   { id: 'routine', icon: <Clock size={15} />, title: 'Routine (by time of day)' },
                 ] as const).map((o) => (
@@ -174,6 +176,15 @@ export function Trackers() {
           />
         ) : layout === 'routine' ? (
           <RoutineTimeline
+            habits={visibleHabits}
+            data={data}
+            today={today}
+            onToggle={toggleHabit}
+            onSetValue={setHabitValue}
+            onEdit={setViewing}
+          />
+        ) : layout === 'cards' ? (
+          <GridCardsLayout
             habits={visibleHabits}
             data={data}
             today={today}

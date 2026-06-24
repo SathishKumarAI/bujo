@@ -566,3 +566,17 @@ see `docs/FEATURE-CARD-AUDIT.md`), then fixed the survivors + built a text-size 
 | BUJO-238 | **Year-wise date jump** — the shared date-nav label opens a picker (year ◀▶ + 12-month grid; native date field for day-views) so you can leap to any month/year instead of stepping ‹ › one at a time. Lands on every month-nav view (Today/Monthly/Trackers/Stats/Cycle/Insights) via the shared TopBar. `components/shell/DateJumpPicker.tsx` | ✅ |
 | BUJO-239 | **Responsive card density** — research said CSS breakpoints (not the JS device hook) are the right "knows desktop vs mobile" lever for spacing (no reflow, pre-hydration). Tightened the shared `CARD.container` (`p-4 sm:p-5 lg:p-6`, `rounded-xl sm:rounded-2xl`), header margin (`mb-3 sm:mb-4`), and `Page` gaps (`gap-4 sm:gap-5`) → denser on phones, roomy on desktop. One-place change, every card adapts | ✅ |
 | BUJO-240 | **Sidebar auto-hide toggle (desktop)** — expose the existing edge-hover auto-hide as a Settings → Appearance toggle (`sidebarAutoHide`). Confirmed safe on mobile: the hover behaviour is entirely `md:`-gated, so touch devices keep the always-visible BottomNav + tap-drawer and never depend on a mouse | ✅ |
+| BUJO-241 | **Per-habit activity discoverability** — visible Activity-icon affordance next to each habit (all 3 layouts) so the detail view (BUJO-237) is findable | ✅ |
+
+## Epic COMPETITIVE — features mined from other habit apps (2026-06-24, appended)
+
+Research + gap-fill vs HabitKit and the web-highlights top-apps comparison. Full
+audit: `docs/COMPETITIVE-FEATURES.md`. **Additive only — nothing removed.** bujo
+already matched ~12/14 of HabitKit and ~26/30 of the comparison; built the real gaps.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-242 | **Share habit grid as PNG** (HabitKit signature) — "Share" in the per-habit detail renders the heatmap to a canvas → PNG download | ✅ |
+| BUJO-243 | **Habit strength meter** — surface the existing recency-weighted `consistencyScore` + A–F `habitGrade` as a visible bar in the detail | ✅ |
+| BUJO-244 | **HabitKit-style "Cards" layout** — 4th tracker layout: each habit a large colourful 13-week tile-grid card; tap a cell to log (a new heatmap-grid logging surface). `components/GridCardsLayout.tsx` | ✅ |
+| — | Out of scope: home-screen widgets / Wear OS (native shell), social / community challenges (backend), MBTI (niche) | ⊘ |
