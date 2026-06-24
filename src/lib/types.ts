@@ -486,7 +486,7 @@ export interface Settings {
   trackerShowArchived?: boolean
   /** Habit tracker layout: classic month-grid, activity-heatmap rows, or a
    *  time-of-day routine timeline ("run your day"). */
-  trackerLayout?: 'classic' | 'activity' | 'routine'
+  trackerLayout?: 'classic' | 'activity' | 'routine' | 'cards'
   /** Collapse the sidebar to an icon rail that expands on hover. */
   sidebarCollapsed?: boolean
   /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
