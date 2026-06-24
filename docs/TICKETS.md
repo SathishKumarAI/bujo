@@ -526,3 +526,17 @@ quick-open.
 | BUJO-234 | **Theme picker** — swatch grid in Settings → Journal feel (was a binary TopBar toggle only); command palette lists every theme | ✅ |
 | BUJO-235 | **Sidebar regroup** — split the overloaded 10-item Health group into Fitness / Sports / Habits / Wellbeing; split Insights&Stats into Library / Review (no group is unwieldy now) | ✅ |
 | BUJO-236 | **⌘P / Ctrl-P quick-open** — VS Code-style "go to page", alias of the ⌘K command palette | ✅ |
+
+## Epic SETTINGS — page audit & UX overhaul (2026-06-24, appended)
+
+Full audit + backlog: `docs/SETTINGS-AUDIT.md`. The Data tab carried ~10 cards;
+the tab nav was a cramped vertical rail.
+
+| ID | Title | Status |
+|---|---|---|
+| SET-1 | Split the overloaded Data tab — new **Sync & privacy** tab (Account/Cloud/Passcode/Advanced); rename "Journal feel" → **Appearance** (now 5 tabs) | ✅ |
+| SET-2 | **Group the Backup card** — Export/Import JSON stays primary; CSV / calendar-feed / integrity exports fold into `Disclosure` sections | ✅ |
+| SET-4 | **Reset appearance to defaults** button | ✅ |
+| SET-5 | Shared `Disclosure` collapsible primitive (de-dup 3 ad-hoc toggles) | ✅ |
+| SET-9 | **Horizontal pill tab bar** replacing the stacked/clipped rail — all sections visible, content full-width (user feedback) | ✅ |
+| SET-3 | ~~Settings search box~~ | ✗ removed per user feedback (built, then reverted) |
