@@ -1,5 +1,50 @@
 # Worklog
 
+## 2026-06-24 17:18 — Big UX + competitive-feature run, shipped to prod (PRs #59–#75)
+
+**Summary:** One long session: a UX layout sweep, 5 themes + theme-aware charts,
+a Settings overhaul, global text size, a per-habit activity view, a year/month
+date-jump, responsive cards, and a set of HabitKit-inspired features — all merged
+to `main` and deployed live to **bujo-journal.vercel.app** (HTTP 200).
+
+**Shipped (17 PRs):**
+- **UX/layout:** card-layout sweep (#59), activity drag-reorder, responsive card
+  density (#68), page-width consistency (#65), sidebar regroup + ⌘P quick-open (#62).
+- **Theming:** 5 selectable themes + picker (#62), global text size S–XL with
+  figures held fixed (#64), **theme-aware charts** via per-theme JS palettes (#65).
+- **Settings overhaul (#63):** pill tab bar (killed the stacked rail), new Sync &
+  privacy tab, grouped backup exports, reset-appearance; search built then removed
+  per feedback.
+- **Per-habit activity view (#66, #70, #71):** tap a habit → heatmap + stat tiles +
+  strength meter; visible activity-icon affordance across all 3 layouts.
+- **Date nav (#67):** year ◀▶ + 12-month grid jump on the shared cursor.
+- **HabitKit-inspired (#72–#75):** share habit grid as PNG, habit strength meter,
+  **Cards layout** (per-habit 13-week tile grid, tap to log), 90-day demo history.
+- **Audit fixes (#64):** challenges /0 guard, shared recharts tooltip, a11y labels;
+  ~60% of panel findings were false-positive/by-design (documented).
+
+**Decisions:**
+- Theme-aware charts use **per-theme JS palettes** (not `getComputedStyle`) because
+  charts need concrete colors and the DOM-read path forced a lint-rejected
+  setState-in-effect.
+- Card density adapts via **CSS breakpoints**, not the JS device hook (no reflow).
+- Sidebar auto-hide is desktop-only (`md:`-gated); mobile keeps BottomNav + tap-drawer.
+- Habit detail is heatmap-led (no line graph) per user choice.
+
+**Docs:** `FEATURE-CARD-AUDIT.md`, `SETTINGS-AUDIT.md`, `COMPETITIVE-FEATURES.md`
+(HabitKit + top-apps comparison), TICKETS BUJO-231→245.
+
+**Process note:** twice committed to `main` by mistake; once a branch reset
+orphaned a commit (recovered via reflog). Be stricter about branching *before*
+editing.
+
+**Follow-ups:**
+- [ ] Prune ~20 merged `feat/*` branches on origin.
+- [ ] Out-of-scope gaps: home-screen widgets / Wear OS (native shell), social /
+  community challenges (backend), MBTI (niche).
+
+---
+
 ## 2026-06-24 — Feature batch: habit detail, year-jump, responsive cards, sidebar toggle
 
 Four user-requested features (PRs #66–#69), each branched/verified/merged:
