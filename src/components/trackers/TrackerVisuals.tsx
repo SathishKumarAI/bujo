@@ -4,7 +4,7 @@ import { addDays, fromISODay, prettyMonth, WEEKDAYS } from '../../lib/date'
 import { cat } from '../../lib/colors'
 import { habitStreak, dayCompletion, weekdayConsistency, monthlyCompletion } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
-import { categoryRollup, perfectDayStats } from '../../lib/habitStats'
+import { perfectDayStats } from '../../lib/habitStats'
 import type { JournalData } from '../../lib/types'
 
 /** Extra at-a-glance visualisations: completion heatmap, streak board, weekday bars. */
@@ -35,8 +35,6 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
   // Weekday consistency (avg completion per weekday, 90d).
   const wd = weekdayConsistency(data, 90, today)
 
-  // Category roll-up: 30-day completion share per category (build habits).
-  const rollup = categoryRollup(data, today).filter((r) => r.scheduled > 0)
   // Perfect-day analytics across all build check habits (90d window).
   const perfect = perfectDayStats(data, today)
 
@@ -114,27 +112,6 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* Category roll-up: which groups are you keeping up with? (30-day share). */}
-      <Card title="Category roll-up" subtitle="30-day completion share per category">
-        {rollup.length === 0 ? (
-          <Empty>No scheduled build habits yet.</Empty>
-        ) : (
-          <ul className="space-y-2">
-            {rollup.map((r) => (
-              <li key={r.category} className="flex items-center gap-2 text-sm">
-                <span className="w-20 shrink-0 truncate capitalize text-subtext1">{r.category}</span>
-                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface0">
-                  <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: r.pct >= 80 ? cat('green') : r.pct >= 50 ? cat('yellow') : cat('peach') }} />
-                </div>
-                <span className="w-20 shrink-0 text-right tabular-nums text-overlay1" title={`${r.done} of ${r.scheduled} scheduled habit-days · ${r.habits} ${r.habits === 1 ? 'habit' : 'habits'}`}>
-                  <span style={{ color: r.pct >= 80 ? cat('green') : r.pct >= 50 ? cat('yellow') : cat('peach') }}>{r.pct}%</span> · {r.habits}h
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </Card>
 
       {/* Perfect days: every scheduled build habit done. Rewards full days, not single habits. */}

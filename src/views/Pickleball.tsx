@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
-import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../lib/date'
+import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
-import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
+import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 import { Section } from '../components/pickleball/Section'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
@@ -170,18 +170,11 @@ export function Pickleball() {
   const evLosses = events.reduce((s, e) => s + (e.losses ?? 0), 0)
   const medals = events.filter((e) => /gold|silver|bronze|1st|2nd|3rd/i.test(e.placement ?? '')).length
 
-  // ── 75-day 3.5→4.0 plan ──
-  const planStart = data.settings.pickleballPlanStart
-  // A future-dated start means "not started yet" (0), not Day 1.
-  const planDay = planStart ? Math.min(PLAN_TOTAL_DAYS, Math.max(0, dayDiff(planStart, today) + 1)) : 0
-  const PHASE_END = [18, 36, 54, 72, 75]
-  const activePhaseIdx = planDay > 0 ? PHASE_END.findIndex((end) => planDay <= end) : -1
-
-  // Charts live in the right rail (compact, enlargeable) so the main column
-  // stays focused on logging + actionable coaching content, not chart noise.
+  // Charts are grouped into one collapsed "Charts" section in the main column
+  // (formerly a right rail) so the seven visualizations don't strand on mobile
+  // and the primary logging + coaching content stays uncluttered.
   const charts = (
     <>
-      <p className="px-1 text-[11px] font-medium tracking-wider text-overlay0 uppercase">Visualizations · tap ⛶ to enlarge</p>
       <Card title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
           <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
@@ -291,9 +284,7 @@ export function Pickleball() {
   )
 
   return (
-    <Page
-      aside={charts}
-    >
+    <Page>
       <Card title="At a glance" subtitle="Your pickleball record">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
@@ -317,6 +308,34 @@ export function Pickleball() {
           </div>
         )}
       </Card>
+
+      {/* ── Tournament prep countdown (#345) · conditional top status,
+            surfaces only when events exist; collapsed. ── */}
+      {upcoming.length > 0 && (
+        <Card title={<span className="inline-flex items-center gap-2"><CalendarClock size={18} className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+          <ul className="mb-3 space-y-2">
+            {upcoming.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+                <span className="min-w-0">
+                  <span className="text-sm font-medium text-text">{e.name}</span>
+                  <span className="block truncate text-xs text-overlay0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                </span>
+                <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
+                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <details className="rounded-lg border border-surface0 bg-base p-3">
+            <summary className="cursor-pointer text-sm font-medium text-text">Tournament-day prep checklist</summary>
+            <ul className="mt-2 space-y-1">
+              {PREP_CHECKLIST.map((x) => (
+                <li key={x} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {x}</li>
+              ))}
+            </ul>
+          </details>
+        </Card>
+      )}
 
       <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -401,117 +420,9 @@ export function Pickleball() {
         )}
       </Card>
 
-      {/* ── SECONDARY analytics · grouped under collapsible sections so the
-            primary logging + history UI above stays uncluttered. Form & momentum
-            (the most actionable read) opens by default; the deeper rivalry/venue
-            and signal groups default collapsed. ── */}
-      <Section
-        title="Form & momentum"
-        icon={<Activity size={18} className="text-sky" />}
-        hint="Recent form · forecast · milestones · intensity"
-        defaultOpen
-      >
-        {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
-        {forecast.ready && <WinRateForecastCard forecast={forecast} />}
-        <MilestonesCard milestones={milestones} />
-        {load.sessions > 0 && <SessionIntensityCard load={load} />}
-      </Section>
-
-      <Section
-        title="Opponents, partners & venues"
-        icon={<Swords size={18} className="text-red" />}
-        hint="Chemistry · courts · rivalries · level matchups"
-      >
-        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
-        {venues.length > 0 && <VenuesCard venues={venues} />}
-        {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
-        {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-      </Section>
-
-      <Section
-        title="Deeper signals"
-        icon={<BarChart3 size={18} className="text-blue" />}
-        hint="Weekday · points · time · scoring · consistency"
-      >
-        {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
-        {points.sessions > 0 && <PointDifferentialCard points={points} />}
-        {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
-        {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
-        {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
-      </Section>
-
-      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" enlargeable={false}>
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Today's rotating practice focus */}
-          <div className="rounded-lg border border-surface0 bg-base p-3">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="text-sm font-medium text-text">{drill.name}</span>
-              <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
-            </div>
-            <p className="text-xs text-overlay1">{drill.how}</p>
-            <p className="mt-2 text-[11px] text-overlay0">New focus each day · log a session below after you drill it.</p>
-          </div>
-          {/* Warm-up checklist */}
-          <div className="rounded-lg border border-surface0 bg-base p-3">
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-text"><Dumbbell size={14} className="text-green" /> Warm up first</p>
-            <ul className="space-y-1">
-              {WARMUP.map((w) => (
-                <li key={w} className="flex gap-1.5 text-xs text-overlay1"><span className="text-green">•</span> {w}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        {/* External resources */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-surface0 pt-3">
-          <span className="text-xs text-overlay0">Learn more:</span>
-          {RESOURCES.map((r) => (
-            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue hover:underline">
-              {r.name} <ExternalLink size={11} />
-            </a>
-          ))}
-        </div>
-      </Card>
-
-      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
-        <ul className="space-y-2">
-          {TIPS.map((x) => (
-            <li key={x.t} className="border-t border-surface0 pt-2 text-sm first:border-t-0 first:pt-0">
-              <p className="text-subtext1">{x.t}</p>
-              <p className="text-xs text-overlay1">{x.d}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      {/* ── Tournament prep countdown (#345) ── */}
-      {upcoming.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><CalendarClock size={18} className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
-          <ul className="mb-3 space-y-2">
-            {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
-                <span className="min-w-0">
-                  <span className="text-sm font-medium text-text">{e.name}</span>
-                  <span className="block truncate text-xs text-overlay0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                </span>
-                <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
-                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <details className="rounded-lg border border-surface0 bg-base p-3">
-            <summary className="cursor-pointer text-sm font-medium text-text">Tournament-day prep checklist</summary>
-            <ul className="mt-2 space-y-1">
-              {PREP_CHECKLIST.map((x) => (
-                <li key={x} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {x}</li>
-              ))}
-            </ul>
-          </details>
-        </Card>
-      )}
-
-      {/* ── Leagues & tournaments ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events · separate from casual sessions">
+      {/* ── Leagues & tournaments · secondary event logging, grouped beside the
+            DUPR tracker and collapsed. ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events · separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
@@ -552,6 +463,98 @@ export function Pickleball() {
         )}
       </Card>
 
+      {/* ── Improve · rotating practice focus + warm-up; reference content folded
+            below logging, collapsed. ── */}
+      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Today's rotating practice focus */}
+          <div className="rounded-lg border border-surface0 bg-base p-3">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-sm font-medium text-text">{drill.name}</span>
+              <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
+            </div>
+            <p className="text-xs text-overlay1">{drill.how}</p>
+            <p className="mt-2 text-[11px] text-overlay0">New focus each day · log a session below after you drill it.</p>
+          </div>
+          {/* Warm-up checklist */}
+          <div className="rounded-lg border border-surface0 bg-base p-3">
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-text"><Dumbbell size={14} className="text-green" /> Warm up first</p>
+            <ul className="space-y-1">
+              {WARMUP.map((w) => (
+                <li key={w} className="flex gap-1.5 text-xs text-overlay1"><span className="text-green">•</span> {w}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {/* External resources */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-surface0 pt-3">
+          <span className="text-xs text-overlay0">Learn more:</span>
+          {RESOURCES.map((r) => (
+            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue hover:underline">
+              {r.name} <ExternalLink size={11} />
+            </a>
+          ))}
+        </div>
+      </Card>
+
+      {/* ── SECONDARY analytics · grouped under collapsible sections so the
+            primary logging + history UI above stays uncluttered. All analytics
+            groups default collapsed so open analytics don't dominate the view. ── */}
+      <Section
+        title="Form & momentum"
+        icon={<Activity size={18} className="text-sky" />}
+        hint="Recent form · forecast · milestones · intensity"
+      >
+        {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
+        {forecast.ready && <WinRateForecastCard forecast={forecast} />}
+        <MilestonesCard milestones={milestones} />
+        {load.sessions > 0 && <SessionIntensityCard load={load} />}
+      </Section>
+
+      <Section
+        title="Opponents, partners & venues"
+        icon={<Swords size={18} className="text-red" />}
+        hint="Chemistry · courts · rivalries · level matchups"
+      >
+        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
+        {venues.length > 0 && <VenuesCard venues={venues} />}
+        {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
+        {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
+      </Section>
+
+      <Section
+        title="Deeper signals"
+        icon={<BarChart3 size={18} className="text-blue" />}
+        hint="Weekday · points · time · scoring · consistency"
+      >
+        {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
+        {points.sessions > 0 && <PointDifferentialCard points={points} />}
+        {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
+        {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
+        {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
+      </Section>
+
+      {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
+            section so they don't strand on mobile. ── */}
+      <Section
+        title="Charts"
+        icon={<BarChart3 size={18} className="text-teal" />}
+        hint="Trends · volume · heatmap · tap ⛶ to enlarge"
+      >
+        {charts}
+      </Section>
+
+      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+        <ul className="space-y-2">
+          {TIPS.map((x) => (
+            <li key={x.t} className="border-t border-surface0 pt-2 text-sm first:border-t-0 first:pt-0">
+              <p className="text-subtext1">{x.t}</p>
+              <p className="text-xs text-overlay1">{x.d}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
       {/* ── Format playbook ── */}
       <Card title={<span className="inline-flex items-center gap-2"><ListChecks size={18} className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -565,55 +568,6 @@ export function Pickleball() {
             </li>
           ))}
         </ul>
-      </Card>
-
-      {/* ── 75-day 3.5 → 4.0 plan ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Flame size={18} className="text-peach" /> 75-day plan · 3.5 → 4.0</span>} subtitle="A structured drill plan to hit 4.0-level benchmarks">
-        {planDay === 0 ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-surface1 p-4">
-            <p className="text-sm text-subtext0">Commit to 75 days. ~8–12 hrs/week, ~65% drilling. Five phases: soft game → third-shot drop → transitions → net battles → assessment.</p>
-            <Button variant="primary" onClick={() => setSettings({ pickleballPlanStart: today })}>Start the 75-day plan</Button>
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 flex items-center gap-3">
-              <div className="flex-1">
-                <div className="mb-1 flex justify-between text-xs text-overlay0"><span>Day {planDay} of {PLAN_TOTAL_DAYS}</span><span>{Math.round((planDay / PLAN_TOTAL_DAYS) * 100)}%</span></div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full" style={{ width: `${(planDay / PLAN_TOTAL_DAYS) * 100}%`, background: cat('peach') }} /></div>
-              </div>
-              <button onClick={() => setSettings({ pickleballPlanStart: undefined })} className="text-xs text-overlay0 hover:text-red">Reset</button>
-            </div>
-          </>
-        )}
-        <div className="mt-3 space-y-2">
-          {PICKLE_PLAN.map((p, i) => {
-            const active = i === activePhaseIdx
-            const done = planDay > 0 && i < activePhaseIdx
-            return (
-              <div key={p.phase} className={`rounded-lg border p-3 ${active ? 'border-peach bg-peach/5' : 'border-surface0 bg-base'}`}>
-                <div className="flex items-center gap-2">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-medium" style={{ background: done ? cat('green') : active ? cat('peach') : cat('surface1'), color: cat('crust') }}>{done ? '✓' : p.phase}</span>
-                  <span className="text-sm font-medium text-text">{p.title}</span>
-                  <span className="text-[10px] text-overlay0">{p.days}</span>
-                  {active && <span className="ml-auto rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('peach') + '22', color: cat('peach') }}>You’re here</span>}
-                </div>
-                <p className="mt-1.5 text-xs text-overlay1">{p.focus}</p>
-                <ul className="mt-2 grid gap-1 sm:grid-cols-2">
-                  {p.drills.map((d) => (
-                    <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-overlay0">· {d.how}</span></li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-[11px]" style={{ color: cat('green') }}>🎯 {p.goal}</p>
-              </div>
-            )
-          })}
-        </div>
-        <details className="mt-3 rounded-lg border border-surface0 bg-base p-3">
-          <summary className="cursor-pointer text-sm font-medium text-text">What separates a 3.5 from a 4.0</summary>
-          <ul className="mt-2 space-y-1">
-            {SKILLS_35_TO_40.map((s) => <li key={s} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {s}</li>)}
-          </ul>
-        </details>
       </Card>
     </Page>
   )

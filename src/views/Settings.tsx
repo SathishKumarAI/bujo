@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, SlidersHorizontal, UserRound, Palette, Bell, Database } from 'lucide-react'
+import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, SlidersHorizontal, UserRound, Palette, Bell, Database, ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Input, Segmented, StatTile } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -35,6 +35,8 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const csvRef = useRef<HTMLInputElement>(null)
   const verifyRef = useRef<HTMLInputElement>(null)
+  const [advancedSyncOpen, setAdvancedSyncOpen] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
 
   function onVerifyBackup(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -270,40 +272,6 @@ export function Settings() {
               )
             })()}
           </Card>
-          {(() => {
-            // Read-only whole-journal summary: tracked span, coverage, top domains.
-            const sum = dataSummary(data)
-            if (sum.totalRecords === 0) return null
-            return (
-              <Card title="Journal summary" subtitle="The span and shape of everything you've tracked" className="mb-5">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
-                  <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} color="lavender" />
-                  <StatTile compact label="Days span" value={sum.spanDays} color="blue" />
-                  <StatTile compact label="Active days" value={sum.activeDays} color="green" />
-                </div>
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span className="text-overlay0">Days with data (coverage)</span>
-                    <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
-                    <div className="h-full rounded-full" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
-                  </div>
-                </div>
-                {sum.counts.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {sum.counts.map((c) => (
-                      <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-surface0 bg-base px-2 py-0.5 text-xs text-subtext1">
-                        {c.label} <span className="font-medium text-text">{c.count}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="mt-2 text-xs text-overlay0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
-              </Card>
-            )
-          })()}
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
       <Card title="Backup & data" subtitle="Back it up regularly">
         {(() => {
@@ -428,15 +396,84 @@ export function Settings() {
           </div>
           <div className="mt-6">
             <p className="mb-3 text-xs font-medium tracking-wide text-overlay0 uppercase">Account, sync & privacy</p>
+            {/* Recommended path: account + E2E cloud sync, plus at-rest passcode. */}
             <div className="space-y-5">
               <AccountCard />
               <BujoCloudCard />
               <PasscodeCard />
-              <CloudStorage />
-              <DriveSync />
-              <SelfHostCard />
             </div>
+            {/* Advanced sync · the BYO-storage / self-host options, collapsed to cut option overload. */}
+            <section className="mt-5 space-y-5">
+              <button
+                type="button"
+                onClick={() => setAdvancedSyncOpen((o) => !o)}
+                aria-expanded={advancedSyncOpen}
+                className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+              >
+                <span className="text-overlay0">{advancedSyncOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+                <span className="font-display text-base font-medium text-subtext1">Advanced sync</span>
+                <span className="text-xs text-overlay0">· self-host &amp; bring-your-own storage</span>
+                {!advancedSyncOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+              </button>
+              {advancedSyncOpen && (
+                <div className="space-y-5">
+                  <SelfHostCard />
+                  <CloudStorage />
+                  <DriveSync />
+                </div>
+              )}
+            </section>
           </div>
+
+          {/* Journal summary · read-only coverage analytics, collapsed at the bottom. */}
+          {(() => {
+            const sum = dataSummary(data)
+            if (sum.totalRecords === 0) return null
+            return (
+              <section className="mt-6 space-y-5">
+                <button
+                  type="button"
+                  onClick={() => setSummaryOpen((o) => !o)}
+                  aria-expanded={summaryOpen}
+                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+                >
+                  <span className="text-overlay0">{summaryOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+                  <span className="font-display text-base font-medium text-subtext1">Journal summary</span>
+                  <span className="text-xs text-overlay0">· the span and shape of everything you've tracked</span>
+                  {!summaryOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+                </button>
+                {summaryOpen && (
+                  <Card title="Journal summary" subtitle="The span and shape of everything you've tracked">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
+                      <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} color="lavender" />
+                      <StatTile compact label="Days span" value={sum.spanDays} color="blue" />
+                      <StatTile compact label="Active days" value={sum.activeDays} color="green" />
+                    </div>
+                    <div className="mt-3">
+                      <div className="mb-1 flex justify-between text-xs">
+                        <span className="text-overlay0">Days with data (coverage)</span>
+                        <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                        <div className="h-full rounded-full" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
+                      </div>
+                    </div>
+                    {sum.counts.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {sum.counts.map((c) => (
+                          <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-surface0 bg-base px-2 py-0.5 text-xs text-subtext1">
+                            {c.label} <span className="font-medium text-text">{c.count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="mt-2 text-xs text-overlay0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
+                  </Card>
+                )}
+              </section>
+            )
+          })()}
         </TabsContent>
         </div>
       </Tabs>

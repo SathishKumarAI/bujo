@@ -26,7 +26,22 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4">
-      {/* ── At-a-glance: weekly active-minutes ring + next-split banner ── */}
+      {/* 1) Primary navigation between the two fitness sub-views. */}
+      <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
+        {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
+              tab === id ? 'bg-primary text-primary-foreground' : 'text-subtext1 hover:text-text'
+            }`}
+          >
+            <Icon size={16} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 2) Unified this-week status: weekly active-minutes ring + next-split banner. */}
       <div className="grid items-stretch gap-3 sm:grid-cols-[auto_1fr]">
         <ActiveMinutesRing minutes={minutes} goal={goal} />
         <button
@@ -45,20 +60,6 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
           </span>
           <ArrowRight size={18} className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
         </button>
-      </div>
-
-      <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
-        {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
-              tab === id ? 'bg-primary text-primary-foreground' : 'text-subtext1 hover:text-text'
-            }`}
-          >
-            <Icon size={16} /> {label}
-          </button>
-        ))}
       </div>
       {tab === 'cardio' ? (
         <Fitness />

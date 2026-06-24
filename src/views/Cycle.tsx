@@ -28,24 +28,6 @@ export function Cycle() {
 
   return (
     <Page>
-      <Card
-        title="Cycle & temperature"
-        subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
-      >
-        <p className="mb-2 text-xs text-overlay0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
-        <div className="h-56 w-full" role="img" aria-label={`Line chart of basal temperature across ${prettyMonth(ym)} (°${unit})`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-              <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-              <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
-              <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-              <Line type="monotone" dataKey="temp" stroke={cat('maroon')} dot={{ r: 2 }} connectNulls strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
       <Card title="Daily entry" subtitle="Tap a day to log temperature and flags">
         <div className="overflow-x-auto">
           <table className="text-xs">
@@ -85,6 +67,24 @@ export function Cycle() {
               })}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      <Card
+        title="Cycle & temperature"
+        subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
+      >
+        <p className="mb-2 text-xs text-overlay0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
+        <div className="h-56 w-full" role="img" aria-label={`Line chart of basal temperature across ${prettyMonth(ym)} (°${unit})`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+              <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
+              <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+              <Line type="monotone" dataKey="temp" stroke={cat('maroon')} dot={{ r: 2 }} connectNulls strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </Card>
     </Page>

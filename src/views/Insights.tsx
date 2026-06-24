@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, CalendarDays, Sun, Activity, type LucideIcon } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, Sun, Activity, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitWeekdayPerformance, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/Counter'
 import { useNav } from '../components/shell/nav'
@@ -46,7 +46,6 @@ export function Insights() {
   const leaders = streakLeaderboard(data)
   const focusId = leaders[0]?.habitId
   const focusName = focusId ? `${leaders[0].emoji ? leaders[0].emoji + ' ' : ''}${leaders[0].name}` : ''
-  const weekdayPerf = focusId ? habitWeekdayPerformance(data, focusId) : null
   const focusScore = focusId ? habitConsistencyScore(data, focusId) : null
   const monthly = focusId ? habitMonthlyDeltas(data, focusId) : []
   const maxMonthly = Math.max(1, ...monthly.map((m) => m.done))
@@ -79,6 +78,51 @@ export function Insights() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
+      {/* 1) The ritual + search utility lead, above all read-only analytics. */}
+      <WeeklyReview />
+
+      <Card title="Search" subtitle="Find anything across your journal">
+        <Input value={q} onChange={(e) => { setQ(e.target.value); setKind('all') }} placeholder="Search entries, memories, gratitude, workouts…" />
+        {q && kinds.length > 2 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {kinds.map((k) => (
+              <button
+                key={k}
+                onClick={() => setKind(k)}
+                className="rounded-full px-2.5 py-0.5 text-xs capitalize"
+                style={{ background: kind === k ? cat('mauve') : cat('surface0'), color: kind === k ? cat('crust') : cat('subtext1') }}
+              >
+                {k}{k !== 'all' ? ` (${allResults.filter((r) => r.kind === k).length})` : ''}
+              </button>
+            ))}
+          </div>
+        )}
+        {q && (
+          <div className="mt-3">
+            {results.length === 0 ? (
+              <Empty>No matches for “{q}”.</Empty>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {results.slice(0, 50).map((r, i) => (
+                  <li key={i}>
+                    <button
+                      onClick={() => { if (r.date) { setDay(r.date); nav('today') } }}
+                      disabled={!r.date}
+                      className="flex w-full gap-2 rounded px-2 py-1 text-left hover:bg-surface0 disabled:cursor-default"
+                    >
+                      <span className="w-24 shrink-0 text-overlay0">{r.date ? prettyDay(r.date) : '—'}</span>
+                      <span className="w-16 shrink-0 text-xs" style={{ color: cat('sapphire') }}>{r.kind}</span>
+                      <span className="text-subtext1">{r.text}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* 2) Big-stat row. */}
       <div className="grid grid-cols-2 items-start gap-3 sm:gap-5 lg:grid-cols-4">
         <Big label="Current streak" value={streak} suffix="d" color="peach" trend={habitTrend} trendLabel="habits vs last week" onClick={() => nav('trackers')} />
         <Big label="Longest streak" value={best} suffix="d" color="mauve" onClick={() => nav('trackers')} />
@@ -86,9 +130,7 @@ export function Insights() {
         <Big label="Entries" value={data.entries.length} color="sky" onClick={() => nav('today')} />
       </div>
 
-      {/* Actions first: the weekly ritual + search sit above the read-only analytics. */}
-      <WeeklyReview />
-
+      {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
       <div className="grid items-start gap-5 md:grid-cols-2">
         <Card title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
           <ul className="space-y-1.5 text-sm">
@@ -148,6 +190,9 @@ export function Insights() {
         </Card>
       </div>
 
+      {/* 4) Correlations — deep read-only analytics, collapsed. */}
+      {(found.length > 0 || momentum.length > 0) && (
+        <Section title="Correlations" subtitle="patterns & momentum">
       {found.length > 0 && (
         <Card title="Patterns" subtitle="What your data is telling you">
           <ul className="space-y-2">
@@ -187,32 +232,17 @@ export function Insights() {
           </ul>
         </Card>
       )}
+        </Section>
+      )}
 
       <p className="text-xs text-overlay0">
         Task migration &amp; aging live in{' '}
         <button onClick={() => nav('plan')} className="text-mauve hover:underline">Plan →</button>
       </p>
 
-      {pickle.sessions > 0 && (
-        <Card title="Pickleball" subtitle="Your game at a glance">
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
-            <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />
-            <PickStat label="Play streak" value={`${pickle.playStreak}d`} color="peach" />
-            <PickStat
-              label="Recent form"
-              value={pickle.recentWinRate == null ? '—' : `${Math.round(pickle.recentWinRate * 100)}%`}
-              color={pickle.formDir === 'up' ? 'green' : pickle.formDir === 'down' ? 'red' : 'overlay0'}
-              trend={pickle.formDir}
-            />
-          </ul>
-          <p className="mt-3 border-t border-surface0 pt-3 text-xs text-overlay0">
-            {pickle.sessions} session{pickle.sessions === 1 ? '' : 's'} logged · {pickle.doubles} doubles / {pickle.singles} singles.
-          </p>
-        </Card>
-      )}
-
+      {/* 5) Mood analytics — collapsed. */}
       {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
+        <Section title="Mood analytics" subtitle="weekday, split & stability">
         <div className="grid items-start gap-5 md:grid-cols-2">
           {moodWd.best && moodWd.worst && (
             <Card title="Best & worst day" subtitle="When your mood runs brightest">
@@ -259,8 +289,12 @@ export function Insights() {
             </Card>
           )}
         </div>
+        </Section>
       )}
 
+      {/* 6) Habit analytics — collapsed. */}
+      {(moodImpact.length > 0 || (focusId && focusScore != null) || (focusId && monthly.some((m) => m.done > 0))) && (
+        <Section title="Habit analytics" subtitle="mood impact, consistency & trend">
       {moodImpact.length > 0 && (
         <Card title="Habit mood impact" subtitle="How much each habit lifts your mood">
           <ul className="space-y-2">
@@ -282,45 +316,7 @@ export function Insights() {
         </Card>
       )}
 
-      {leaders.length > 0 && (
-        <Card title="Streak leaderboard" subtitle="Your hottest habits right now">
-          <ul className="space-y-2">
-            {leaders.slice(0, 8).map((l, i) => (
-              <li key={l.habitId} className="flex items-center gap-2 text-sm">
-                <span className="w-5 shrink-0 text-center text-overlay0">{i + 1}</span>
-                <Flame size={14} style={{ color: cat(l.current > 0 ? 'peach' : 'overlay0') }} />
-                <span className="flex-1 text-text">{l.emoji ? l.emoji + ' ' : ''}{l.name}</span>
-                <span className="tabular-nums text-text" title="Current streak">{l.current}d</span>
-                <span className="w-20 shrink-0 text-right text-xs text-overlay0" title="All-time best">best {l.best}d</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {focusId && weekdayPerf?.best && weekdayPerf.worst && (
-        <div className="grid items-start gap-5 md:grid-cols-2">
-          <Card title="Best & worst days" subtitle={`When ${focusName} sticks`}>
-            <div className="mb-3 flex items-center gap-2 text-sm">
-              <CalendarDays size={15} style={{ color: cat('green') }} />
-              <span className="text-subtext1">
-                Strongest on <strong className="text-text">{weekdayPerf.best.label}</strong> ({Math.round(weekdayPerf.best.rate! * 100)}%),
-                weakest on <strong className="text-text">{weekdayPerf.worst.label}</strong> ({Math.round(weekdayPerf.worst.rate! * 100)}%).
-              </span>
-            </div>
-            <div className="flex items-end justify-between gap-2" style={{ height: 110 }} role="img" aria-label={`Success rate of ${focusName} by weekday`}>
-              {weekdayPerf.rows.map((r) => (
-                <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-[10px] tabular-nums text-subtext0">{r.rate == null ? '–' : Math.round(r.rate * 100) + '%'}</span>
-                  <div className="flex w-full flex-1 items-end">
-                    <div className="w-full rounded-t" style={{ height: `${r.rate == null ? 2 : Math.max(2, r.rate * 100)}%`, background: r.rate == null ? cat('surface0') : r.weekday === weekdayPerf.best!.weekday ? cat('green') : r.weekday === weekdayPerf.worst!.weekday ? cat('peach') : cat('surface1') }} title={r.scheduled ? `${r.done}/${r.scheduled} done` : 'never scheduled'} />
-                  </div>
-                  <span className="text-[10px] text-overlay0">{r.label}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
+      {focusId && (
           <Card title="Consistency score" subtitle={`${focusName} · recency-weighted, last 30 days`}>
             {focusScore == null ? (
               <Empty>Not enough scheduled days yet.</Empty>
@@ -334,7 +330,6 @@ export function Insights() {
               </>
             )}
           </Card>
-        </div>
       )}
 
       {focusId && monthly.some((m) => m.done > 0) && (
@@ -355,7 +350,33 @@ export function Insights() {
           </div>
         </Card>
       )}
+        </Section>
+      )}
 
+      {/* 7) Domain digests — compact, link-out, collapsed. */}
+      {pickle.sessions > 0 && (
+        <Section title="Domain digests" subtitle="cross-domain glances">
+        <Card title="Pickleball" subtitle="Your game at a glance" right={<button onClick={() => nav('pickleball')} className="text-xs text-mauve hover:underline">Open →</button>}>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
+            <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />
+            <PickStat label="Play streak" value={`${pickle.playStreak}d`} color="peach" />
+            <PickStat
+              label="Recent form"
+              value={pickle.recentWinRate == null ? '—' : `${Math.round(pickle.recentWinRate * 100)}%`}
+              color={pickle.formDir === 'up' ? 'green' : pickle.formDir === 'down' ? 'red' : 'overlay0'}
+              trend={pickle.formDir}
+            />
+          </ul>
+          <p className="mt-3 border-t border-surface0 pt-3 text-xs text-overlay0">
+            {pickle.sessions} session{pickle.sessions === 1 ? '' : 's'} logged · {pickle.doubles} doubles / {pickle.singles} singles.
+          </p>
+        </Card>
+        </Section>
+      )}
+
+      {/* 8) Lifetime — deep totals & navigation, collapsed. */}
+      <Section title="Lifetime" subtitle="year in review, records & index">
       <div className="grid items-start gap-5 md:grid-cols-2">
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-sm text-subtext1">
@@ -397,50 +418,38 @@ export function Insights() {
           </div>
         </Card>
       )}
+      </Section>
 
-      <Card title="Search" subtitle="Find anything across your journal">
-        <Input value={q} onChange={(e) => { setQ(e.target.value); setKind('all') }} placeholder="Search entries, memories, gratitude, workouts…" autoFocus />
-        {q && kinds.length > 2 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {kinds.map((k) => (
-              <button
-                key={k}
-                onClick={() => setKind(k)}
-                className="rounded-full px-2.5 py-0.5 text-xs capitalize"
-                style={{ background: kind === k ? cat('mauve') : cat('surface0'), color: kind === k ? cat('crust') : cat('subtext1') }}
-              >
-                {k}{k !== 'all' ? ` (${allResults.filter((r) => r.kind === k).length})` : ''}
-              </button>
-            ))}
-          </div>
-        )}
-        {q && (
-          <div className="mt-3">
-            {results.length === 0 ? (
-              <Empty>No matches for “{q}”.</Empty>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {results.slice(0, 50).map((r, i) => (
-                  <li key={i}>
-                    <button
-                      onClick={() => { if (r.date) { setDay(r.date); nav('today') } }}
-                      disabled={!r.date}
-                      className="flex w-full gap-2 rounded px-2 py-1 text-left hover:bg-surface0 disabled:cursor-default"
-                    >
-                      <span className="w-24 shrink-0 text-overlay0">{r.date ? prettyDay(r.date) : '—'}</span>
-                      <span className="w-16 shrink-0 text-xs" style={{ color: cat('sapphire') }}>{r.kind}</span>
-                      <span className="text-subtext1">{r.text}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </Card>
-
-      <TagManager />
+      {/* 9) Maintenance — collapsed at the bottom. */}
+      <Section title="Tag manager" subtitle="merge, rename & retire tags">
+        <TagManager />
+      </Section>
     </div>
+  )
+}
+
+/**
+ * Lightweight labelled section that toggles its body open/closed — groups the
+ * read-only analytics under the always-visible primary UI (deep groups default
+ * closed). Keyboard-accessible: a real <button> with aria-expanded.
+ */
+function Section({ title, subtitle, defaultOpen = false, children }: { title: string; subtitle?: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <section className="space-y-5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+      >
+        <span className="text-overlay0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="font-display text-base font-medium text-subtext1">{title}</span>
+        {subtitle && <span className="text-xs text-overlay0">· {subtitle}</span>}
+        {!open && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+      </button>
+      {open && children}
+    </section>
   )
 }
 

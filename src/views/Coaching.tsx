@@ -82,7 +82,7 @@ export function Coaching() {
       </Card>
 
       {/* 12-week roadmap — tap a week to study it, check to mark done */}
-      <Card title="The 12-week roadmap" subtitle="Tap a week to open it · check to mark it done" help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
+      <Card title="The 12-week roadmap" subtitle="Tap a week to open it · check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
         <ol className="space-y-1.5">
           {TWELVE_WEEK.map((w) => {
             const isDone = done.includes(w.week)

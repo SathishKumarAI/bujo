@@ -70,6 +70,7 @@ export function Trackers() {
   const [editing, setEditing] = useState<string | null>(null)
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
   const layout = data.settings.trackerLayout ?? 'classic'
@@ -222,6 +223,15 @@ export function Trackers() {
         )}
 
         <div className="mt-4 border-t border-surface0 pt-3">
+          <button
+            onClick={() => setShowAdd((v) => !v)}
+            aria-expanded={showAdd}
+            className="mb-2 flex items-center gap-1.5 text-xs tracking-wide text-overlay0 uppercase hover:text-subtext1"
+          >
+            {showAdd ? '▾' : '▸'} Add a habit
+          </button>
+          {showAdd && (
+          <>
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-overlay0">Quick add:</span>
             {HABIT_PRESETS.map((p) => (
@@ -253,13 +263,15 @@ export function Trackers() {
             </select>
             <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={14} /> Add habit</Button>
           </div>
+          </>
+          )}
         </div>
       </Card>
 
       {/* Secondary analytics: kept below the primary tracker UI and grouped under
           collapsible sections so the daily-use controls stay front-and-centre.
           Trends default open; the deep-analytics group defaults collapsed. */}
-      <CollapsibleSection title="Trends" subtitle="mood, sleep & category consistency" defaultOpen>
+      <CollapsibleSection title="This week / Trends" subtitle="mood, sleep & category consistency">
         <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-3">
           <MetricsTrendCard chartData={chartData} ym={ym} />
           <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
@@ -283,7 +295,7 @@ function ArchivedHabits() {
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
   return (
-    <Card title="Archived habits" subtitle="Out of the grid · restore any time">
+    <Card title="Archived habits" subtitle="Out of the grid · restore any time" collapsible defaultCollapsed>
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">

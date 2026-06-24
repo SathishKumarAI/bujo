@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Cake } from 'lucide-react'
+import { Cake, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button, Card, Empty, Input } from '../components/ui'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
@@ -20,6 +20,9 @@ export function Collections() {
   const [colEntry, setColEntry] = useState('')
   // Tag pages (auto-collections): one filtered page per #tag.
   const [openTag, setOpenTag] = useState<string | null>(null)
+  // Collapsed groups: people management + auto-generated pages.
+  const [peopleOpen, setPeopleOpen] = useState(false)
+  const [autoPagesOpen, setAutoPagesOpen] = useState(false)
 
   // Auto-collections: every #tag across the journal, most-used first.
   const tags = tagIndex(data.entries)
@@ -40,8 +43,10 @@ export function Collections() {
     document.getElementById('bujo-collections')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   function jumpToTag(tag: string) {
+    setAutoPagesOpen(true)
     setOpenTag(tag)
-    document.getElementById('bujo-tags')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Defer scroll so the now-expanded Auto-pages section is in the DOM.
+    setTimeout(() => document.getElementById('bujo-tags')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
   }
 
   // Future log = events/tasks dated after today.
@@ -64,7 +69,8 @@ export function Collections() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-2">
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-5">
+    <div className="grid items-start gap-5 lg:grid-cols-2">
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
           title="Index"
@@ -155,35 +161,6 @@ export function Collections() {
         )}
       </Card>
 
-      <FriendsCard />
-
-      <Card title="Birthdays" subtitle="Never miss one">
-        <div className="mb-3 flex flex-wrap gap-2">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[40%]" />
-          <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-lg border border-surface1 bg-base px-2 text-sm text-text">
-            {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
-          </select>
-          <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-surface1 bg-base px-2 text-sm text-text" aria-label="Day" />
-          <Button variant="primary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }}>Add</Button>
-        </div>
-        {birthdays.length === 0 ? (
-          <Empty>No birthdays yet.</Empty>
-        ) : (
-          <ul className="space-y-1 text-sm">
-            {birthdays.map((b) => (
-              <li key={b.id} className="group flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-subtext1">
-                  <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
-                  <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
-                  {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
-                </span>
-                {!b.fromFriend && <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
       <span id="bujo-collections" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
       <Card
         title="Custom collections"
@@ -263,72 +240,136 @@ export function Collections() {
         )}
       </Card>
 
-      <span id="bujo-tags" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
-      <Card
-        title="Tags"
-        subtitle="Auto-collections · every #tag, tap to open its page"
-        className="md:col-span-2"
-        help="Tag pages are built automatically from the #tags in your entries — no setup. Tap a tag to see every entry that mentions it, across days and collections."
-      >
-        {tags.length === 0 ? (
-          <Empty>No tags yet. Add a #tag to any entry and it shows up here.</Empty>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {tags.map(({ tag, entries }) => (
-              <button
-                key={tag}
-                onClick={() => setOpenTag(openTag === tag ? null : tag)}
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
-                style={{
-                  borderColor: openTag === tag ? cat('sapphire') : cat('surface1'),
-                  color: cat('sapphire'),
-                }}
-              >
-                #{tag}
-                <span className="text-xs text-overlay0">{entries.length}</span>
-              </button>
-            ))}
+    </div>
+
+      {/* People · friends + birthdays, occasional management, collapsed. */}
+      <section className="space-y-5">
+        <button
+          type="button"
+          onClick={() => setPeopleOpen((o) => !o)}
+          aria-expanded={peopleOpen}
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+        >
+          <span className="text-overlay0">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-base font-medium text-subtext1">People</span>
+          <span className="text-xs text-overlay0">· friends &amp; birthdays</span>
+          {!peopleOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        </button>
+        {peopleOpen && (
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            <FriendsCard />
+            <Card title="Birthdays" subtitle="Never miss one">
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[40%]" />
+                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-lg border border-surface1 bg-base px-2 text-sm text-text">
+                  {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
+                </select>
+                <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-surface1 bg-base px-2 text-sm text-text" aria-label="Day" />
+                <Button variant="primary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }}>Add</Button>
+              </div>
+              {birthdays.length === 0 ? (
+                <Empty>No birthdays yet.</Empty>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {birthdays.map((b) => (
+                    <li key={b.id} className="group flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-subtext1">
+                        <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
+                        <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
+                        {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
+                      </span>
+                      {!b.fromFriend && <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
           </div>
         )}
+      </section>
 
-        {openTag && (
-          <div className="mt-4 border-t border-surface0 pt-3">
-            <div className="mb-1 text-sm text-subtext1">
-              <span style={{ color: cat('sapphire') }}>#{openTag}</span>
-              <span className="ml-2 text-overlay0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
-            </div>
-            {openTagEntries.length === 0 ? (
-              <Empty>No entries with this tag.</Empty>
-            ) : (
-              <ul>
-                {openTagEntries
-                  .slice()
-                  .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-                  .map((e) => (
+      {/* Auto-pages · memories + tags, auto-generated reference, collapsed. */}
+      <section className="space-y-5">
+        <button
+          type="button"
+          onClick={() => setAutoPagesOpen((o) => !o)}
+          aria-expanded={autoPagesOpen}
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+        >
+          <span className="text-overlay0">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-base font-medium text-subtext1">Auto-pages</span>
+          <span className="text-xs text-overlay0">· memories &amp; tag pages</span>
+          {!autoPagesOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        </button>
+        {autoPagesOpen && (
+          <div className="space-y-5">
+            <Card
+              title="Memories"
+              subtitle={`${memories.length} ▲ moment${memories.length === 1 ? '' : 's'} worth remembering`}
+              help="Any bullet you mark as a memory (the ▲ signifier, or the '^' prefix in quick capture) is gathered here automatically — a running highlight reel of small moments, newest first."
+            >
+              {memories.length === 0 ? (
+                <Empty>No memories yet. Mark a bullet with ▲ (or capture with '^ …') to start your highlight reel.</Empty>
+              ) : (
+                <ul>
+                  {memories.map((e) => (
                     <EntryRow key={e.id} entry={e} />
                   ))}
-              </ul>
-            )}
+                </ul>
+              )}
+            </Card>
+
+            <span id="bujo-tags" className="-mt-5 block scroll-mt-20" aria-hidden />
+            <Card
+              title="Tags"
+              subtitle="Auto-collections · every #tag, tap to open its page"
+              help="Tag pages are built automatically from the #tags in your entries — no setup. Tap a tag to see every entry that mentions it, across days and collections."
+            >
+              {tags.length === 0 ? (
+                <Empty>No tags yet. Add a #tag to any entry and it shows up here.</Empty>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(({ tag, entries }) => (
+                    <button
+                      key={tag}
+                      onClick={() => setOpenTag(openTag === tag ? null : tag)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
+                      style={{
+                        borderColor: openTag === tag ? cat('sapphire') : cat('surface1'),
+                        color: cat('sapphire'),
+                      }}
+                    >
+                      #{tag}
+                      <span className="text-xs text-overlay0">{entries.length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {openTag && (
+                <div className="mt-4 border-t border-surface0 pt-3">
+                  <div className="mb-1 text-sm text-subtext1">
+                    <span style={{ color: cat('sapphire') }}>#{openTag}</span>
+                    <span className="ml-2 text-overlay0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
+                  </div>
+                  {openTagEntries.length === 0 ? (
+                    <Empty>No entries with this tag.</Empty>
+                  ) : (
+                    <ul>
+                      {openTagEntries
+                        .slice()
+                        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+                        .map((e) => (
+                          <EntryRow key={e.id} entry={e} />
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </Card>
           </div>
         )}
-      </Card>
-
-      <Card
-        title="Memories"
-        subtitle={`${memories.length} ▲ moment${memories.length === 1 ? '' : 's'} worth remembering`}
-        className="md:col-span-2"
-        help="Any bullet you mark as a memory (the ▲ signifier, or the '^' prefix in quick capture) is gathered here automatically — a running highlight reel of small moments, newest first."
-      >
-        {memories.length === 0 ? (
-          <Empty>No memories yet. Mark a bullet with ▲ (or capture with '^ …') to start your highlight reel.</Empty>
-        ) : (
-          <ul>
-            {memories.map((e) => (
-              <EntryRow key={e.id} entry={e} />
-            ))}
-          </ul>
-        )}
-      </Card>
+      </section>
     </div>
   )
 }

@@ -210,6 +210,8 @@ export function Gym() {
           : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
       right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
+      collapsible
+      defaultCollapsed
     >
       <div className="mb-3 space-y-2">
         <ExercisePicker
@@ -264,11 +266,16 @@ export function Gym() {
     <Page
       aside={
         <>
-          {anatomyCard}
+          {/* Rest timer stays always-visible — used mid-session, surfaces inline on mobile. */}
           <Card title="Rest timer" subtitle="Between-sets countdown"><RestTimer /></Card>
+          {/* On-demand tools / reference — collapsed by default. */}
           <PlateCalculator key={unit} unit={unit} />
+          {anatomyCard}
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
+          <Card title="Exercise database" subtitle="Search wger’s library · tap a card to view it, then add to your session" collapsible defaultCollapsed>
+            <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
+          </Card>
         </>
       }
     >
@@ -465,17 +472,8 @@ export function Gym() {
         </>)}
       </Card>
 
-      {/* ── Training program ─────────────────────────────────── */}
-      <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
-
-      {/* ── Exercise database (wger) ─────────────────────────── */}
-      <Card title="Exercise database" subtitle="Search wger’s library · tap a card to view it, then add to your session" collapsible defaultCollapsed>
-        <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
-      </Card>
-
-      {/* ── Body weight + training volume, side by side ──────── */}
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average" defer enlargeable>
+      {/* ── Body weight · canonical bodyweight log/chart (Cardio tab merges here) ── */}
+      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average" defer enlargeable collapsible defaultCollapsed>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -503,64 +501,70 @@ export function Gym() {
         )}
       </Card>
 
-      {/* ── Training volume + per-exercise progression ───────── */}
-      <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
-        <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
-              <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-              <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
-              <YAxis stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-              <Bar dataKey="volume" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        {focusEx && progression.length > 1 && (
-          <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-            <p className="mb-1 text-xs text-overlay0">{focusEx} · heaviest set per day ({unit})</p>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-                <Line type="monotone" dataKey="weight" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-        {focusEx && e1rmProg.length > 1 && (
-          <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
-            <p className="mb-1 text-xs text-overlay0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-                <Line type="monotone" dataKey="e1rm" stroke={cat('yellow')} dot={{ r: 2 }} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Card>
-      </div>
+      {/* ── Program & progress · secondary inputs, folded below logging ── */}
+      <CollapsibleSection
+        title="Program & progress"
+        subtitle="Training program · progress photos"
+        icon={Layers}
+        color="blue"
+      >
+        <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
+        <ProgressPhotos />
+      </CollapsibleSection>
 
-      {/* ── Rep records for the focused lift · best reps at each weight ──
-            Kept above the collapsible groups: it only appears when a lift is
-            focused, so it's a contextual response to the user's tap, not
-            persistent analytics. */}
-      {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
-
-      {/* ── Training insights · lighter at-a-glance cards (default expanded) ── */}
+      {/* ── Training insights · volume + at-a-glance analytics (default collapsed) ── */}
       <CollapsibleSection
         title="Training insights"
-        subtitle="Volume balance · movement & recovery · frequency"
+        subtitle="Volume · muscle balance · movement & recovery · frequency · alerts"
         icon={Gauge}
         color="teal"
-        defaultOpen
       >
+        {/* Weekly working-set volume + per-exercise progression (focus-aware) */}
+        <Card title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
+          <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
+                <YAxis stroke={cat('overlay0')} fontSize={11} />
+                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                <Bar dataKey="volume" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {focusEx && progression.length > 1 && (
+            <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
+              <p className="mb-1 text-xs text-overlay0">{focusEx} · heaviest set per day ({unit})</p>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Line type="monotone" dataKey="weight" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {focusEx && e1rmProg.length > 1 && (
+            <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
+              <p className="mb-1 text-xs text-overlay0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Line type="monotone" dataKey="e1rm" stroke={cat('yellow')} dot={{ r: 2 }} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        {/* Rep records for the focused lift · only renders when a lift is focused */}
+        {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
+
         {/* Weekly volume balance · hard sets per muscle vs hypertrophy landmark */}
         <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
 
@@ -572,6 +576,10 @@ export function Gym() {
 
         {/* Exercise frequency + train/rest consistency */}
         <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
+
+        {/* Actionable alerts · neglected muscles + stalled lifts */}
+        <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
+        <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
       </CollapsibleSection>
 
       {/* ── Deep analytics · strength snapshots, alerts & effort trend
@@ -587,10 +595,6 @@ export function Gym() {
           <BigThreeCard total={bigThree} unit={unit} setFocusEx={setFocusEx} />
           <RelativeStrengthCard rows={relStrength} unit={unit} setFocusEx={setFocusEx} />
         </div>
-
-        {/* Neglected-muscle alert + stalled-lift detector */}
-        <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
-        <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
 
         {rpeSeries.length >= 2 && (
           <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
@@ -608,9 +612,6 @@ export function Gym() {
           </Card>
         )}
       </CollapsibleSection>
-
-      {/* ── Progress photos ──────────────────────────────────── */}
-      <ProgressPhotos />
     </Page>
   )
 }
@@ -625,7 +626,7 @@ function PlateCalculator({ unit }: { unit: string }) {
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
   const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
   return (
-    <Card title="Plate calculator" subtitle="What to load on the bar">
+    <Card title="Plate calculator" subtitle="What to load on the bar" collapsible defaultCollapsed>
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <label className="block text-sm text-subtext1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
         <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
@@ -652,7 +653,7 @@ function PlateCalculator({ unit }: { unit: string }) {
 
 function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../lib/fitness').PR[]; focusEx: string | null; setFocusEx: (e: string | null) => void; unit: string }) {
   return (
-    <Card title="Personal records" subtitle="Heaviest logged lift per exercise">
+    <Card title="Personal records" subtitle="Heaviest logged lift per exercise" collapsible defaultCollapsed>
       {prs.length === 0 ? (
         <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
       ) : (
@@ -680,7 +681,7 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
 
 function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; onRemove: (id: string) => void; onLoad: (exs: string[], split: Split) => void }) {
   return (
-    <Card title="Saved routines">
+    <Card title="Saved routines" collapsible defaultCollapsed>
       {routines.length === 0 ? (
         <Empty>Build a session and “Save routine”. PPL presets are quick-loadable.</Empty>
       ) : (

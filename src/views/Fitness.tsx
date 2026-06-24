@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { Repeat, Trash2 } from 'lucide-react'
-import {
-  CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from 'recharts'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { CollapsibleSection } from '../components/gym/CollapsibleSection'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
 import { cat } from '../lib/colors'
-import { pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, bodyweightSeries, trainingHeatmap, cardioBadges } from '../lib/fitness'
+import { pace, cardioPBs, trainingHeatmap, cardioBadges } from '../lib/fitness'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
 
@@ -50,7 +48,7 @@ const workoutToForm = (w: Workout): Form => ({
 })
 
 export function Fitness() {
-  const { data, addWorkout, removeWorkout, setSettings } = useJournal()
+  const { data, addWorkout, removeWorkout } = useJournal()
   const [f, setF] = useState(emptyForm)
   const [editing, setEditing] = useState<Workout | null>(null)
   const [range, setRange] = useState<'week' | 'all'>('all')
@@ -63,20 +61,7 @@ export function Fitness() {
   const inRange = range === 'week' ? data.workouts.filter((w) => { const d = dayDiff(w.date, today); return d >= 0 && d < 7 }) : data.workouts
   const totalMin = inRange.reduce((s, w) => s + (w.durationMin ?? 0), 0)
   const totalKm = inRange.reduce((s, w) => s + (w.distanceKm ?? 0), 0)
-  const goal = data.settings.fitnessGoalMin ?? 150
-  const weekMin = weeklyActiveMinutes(data, today)
-  const streak = activeDayStreak(data, today)
   const pbs = cardioPBs(data)
-
-  // Weekly-minutes sparkline: last 8 weeks (whole numbers).
-  const weeks = Array.from({ length: 8 }, (_, i) => {
-    const end = addDays(today, -7 * i)
-    const mins = data.workouts
-      .filter((w) => { const d = dayDiff(w.date, end); return d >= 0 && d < 7 })
-      .reduce((s, w) => s + (w.durationMin ?? 0), 0)
-    return mins
-  }).reverse()
-  const maxWeek = Math.max(goal, ...weeks, 1)
 
   function submit() {
     if (!f.activity) return
@@ -140,47 +125,29 @@ export function Fitness() {
         )}
       </Card>
 
-      <Card title="This week" subtitle="Active-minutes goal" defer>
-        <div className="flex items-center gap-5">
-          <GoalRing value={weekMin} goal={goal} />
-          <div className="flex-1 space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-subtext1">Weekly goal</span>
-              <span className="inline-flex items-center gap-1">
-                <Stepper value={goal} onChange={(v) => setSettings({ fitnessGoalMin: v })} step={30} min={0} aria-label="Weekly goal minutes" />
-                <span className="text-xs text-overlay0">min</span>
-              </span>
-            </div>
-            <p className="text-sm text-subtext0">{weekMin} of {goal} min this week</p>
-            <p className="text-sm text-peach">🔥 {streak}-day active streak</p>
+      {/* Nutrition is a secondary logging surface · collapse so cardio logging
+          leads. The calorie-trend chart lives inside the card it analyses. */}
+      <NutritionCard date={f.date} today={today} />
+
+      {/* Deep cardio analytics · folded below logging (collapsed by default),
+          mirroring the Gym deep-analytics pattern. Bodyweight now lives only in
+          the shared Gym card. */}
+      <CollapsibleSection title="Cardio analytics" subtitle="Totals, bests & training calendar">
+        {/* Totals + bests in one compact 6-tile card · no scrolling to read them. */}
+        <Card title="At a glance" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            <Stat label="Workouts" value={inRange.length} color="teal" />
+            <Stat label="Minutes" value={totalMin} color="peach" />
+            <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={Math.round(totalKm * 10) / 10} color="sky" />
+            <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
+            <Stat label="Best kcal" value={pbs.mostCalories} color="red" />
+            <Stat label="Best min" value={pbs.mostMinutes} color="lavender" />
           </div>
-        </div>
-        {/* 8-week sparkline (whole-number minutes) */}
-        <div className="mt-4 flex items-end gap-1" style={{ height: 56 }} title="Active minutes per week (last 8 weeks)" role="img" aria-label={`Bar chart of active minutes per week over the last 8 weeks, against a ${goal}-minute weekly goal: ${weeks.map((m) => `${m}m`).join(', ')}`}>
-          {weeks.map((m, i) => (
-            <div key={i} className="flex-1 rounded-t" style={{ height: `${Math.max(2, (m / maxWeek) * 100)}%`, background: m >= goal ? cat('green') : cat('surface2') }} />
-          ))}
-        </div>
-        <p className="mt-1 text-center text-[10px] text-overlay0">last 8 weeks · green = goal hit</p>
-      </Card>
+        </Card>
 
-      {/* Totals + bests in one compact 6-tile card · no scrolling to read them. */}
-      <Card title="At a glance" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          <Stat label="Workouts" value={inRange.length} color="teal" />
-          <Stat label="Minutes" value={totalMin} color="peach" />
-          <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={Math.round(totalKm * 10) / 10} color="sky" />
-          <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
-          <Stat label="Best kcal" value={pbs.mostCalories} color="red" />
-          <Stat label="Best min" value={pbs.mostMinutes} color="lavender" />
-        </div>
-      </Card>
-
-      <CardioBadgesCard />
-      <TrainingHeatmapCard today={today} />
-      <BodyweightCard unit={data.settings.weightUnit} />
-      <NutritionCard date={f.date} />
-      <CalorieTrendCard today={today} />
+        <CardioBadgesCard />
+        <TrainingHeatmapCard today={today} />
+      </CollapsibleSection>
 
       <WorkoutEditDialog workout={editing} onClose={() => setEditing(null)} />
     </Page>
@@ -221,72 +188,6 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
         <Button variant="danger" onClick={() => { if (confirm('Delete this workout?')) onDelete() }} className="inline-flex items-center gap-1.5"><Trash2 size={14} /> Delete</Button>
       </div>
     </div>
-  )
-}
-
-/** A circular progress ring (whole-number percent). */
-function GoalRing({ value, goal }: { value: number; goal: number }) {
-  const pct = Math.min(100, Math.round((value / Math.max(1, goal)) * 100))
-  const r = 30
-  const circ = 2 * Math.PI * r
-  return (
-    <svg width="76" height="76" viewBox="0 0 76 76" className="shrink-0" role="img" aria-label={`Weekly active-minutes goal: ${pct}% complete`}>
-      <circle cx="38" cy="38" r={r} fill="none" stroke={cat('surface0')} strokeWidth="7" />
-      <circle cx="38" cy="38" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="7" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 38 38)" />
-      <text x="38" y="42" textAnchor="middle" className="fill-text font-bold" fontSize="16">{pct}%</text>
-    </svg>
-  )
-}
-
-/** Body-weight progress · daily points + 7-day moving average + optional goal line. */
-function BodyweightCard({ unit }: { unit: string }) {
-  const { data } = useJournal()
-  // goalWeight isn't (yet) a first-class Setting — read it defensively so the
-  // goal line appears for users who have one without coupling to a schema change.
-  const goal = (data.settings as { goalWeight?: number }).goalWeight
-  const series = bodyweightSeries(data, goal)
-  if (series.length < 2) return null
-  return (
-    <Card title="Body-weight progress" subtitle="Faint = daily · bold = 7-day average" defer enlargeable>
-      <div className="h-56" role="img" aria-label={`Line chart of body weight over ${series.length} logged days (${unit})`}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-            <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-            <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-            <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-            <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-            {goal != null && <ReferenceLine y={goal} stroke={cat('green')} strokeDasharray="4 4" label={{ value: `goal ${goal}${unit}`, fill: cat('green'), fontSize: 10, position: 'insideTopRight' }} />}
-            <Line type="monotone" dataKey="weight" stroke={cat('overlay1')} dot={{ r: 1.5 }} strokeWidth={1} opacity={0.5} />
-            <Line type="monotone" dataKey="avg" stroke={cat('mauve')} dot={false} strokeWidth={2.5} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </Card>
-  )
-}
-
-/** 14-day calorie trend with a 7-day average line · momentum, not just today. */
-function CalorieTrendCard({ today }: { today: string }) {
-  const { data } = useJournal()
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const date = addDays(today, -(13 - i))
-    return { date, kcal: data.metrics.find((x) => x.date === date)?.calories ?? 0 }
-  })
-  if (days.every((d) => d.kcal === 0)) return null
-  const logged = days.filter((d) => d.kcal > 0)
-  const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
-  const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
-  return (
-    <Card title="Calorie trend" subtitle={`Last 14 days · avg ${avg} kcal on logged days`} defer enlargeable>
-      <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
-        {days.map((d) => (
-          <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
-            <div className="rounded-t" style={{ height: `${Math.max(2, (d.kcal / max) * 100)}%`, background: d.date === today ? cat('peach') : cat('surface2') }} />
-          </div>
-        ))}
-      </div>
-      <p className="mt-1 text-center text-[10px] text-overlay0">peach = today</p>
-    </Card>
   )
 }
 
@@ -356,7 +257,7 @@ function TrainingHeatmapCard({ today }: { today: string }) {
   )
 }
 
-function NutritionCard({ date }: { date: string }) {
+function NutritionCard({ date, today }: { date: string; today: string }) {
   const { data, setMetric } = useJournal()
   const m = data.metrics.find((x) => x.date === date)
   const macros = [
@@ -384,6 +285,8 @@ function NutritionCard({ date }: { date: string }) {
     <Card
       title="Nutrition"
       subtitle="Calories & macros · add foods or type your own"
+      collapsible
+      defaultCollapsed
       right={<Button onClick={fillSample} title="Fill a typical ~1800 kcal day">Sample day</Button>}
     >
       {/* Quick-add from the food DB (American + Indian staples). */}
@@ -457,7 +360,35 @@ function NutritionCard({ date }: { date: string }) {
           )
         })}
       </div>
+      <CalorieTrend today={today} />
     </Card>
+  )
+}
+
+/** 14-day calorie trend with a 7-day average line · momentum, not just today.
+ *  Rendered inside the Nutrition card it analyses. */
+function CalorieTrend({ today }: { today: string }) {
+  const { data } = useJournal()
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const date = addDays(today, -(13 - i))
+    return { date, kcal: data.metrics.find((x) => x.date === date)?.calories ?? 0 }
+  })
+  if (days.every((d) => d.kcal === 0)) return null
+  const logged = days.filter((d) => d.kcal > 0)
+  const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
+  const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
+  return (
+    <div className="mt-4 border-t border-surface0 pt-3">
+      <p className="mb-2 text-xs text-subtext1">Calorie trend <span className="text-overlay0">· last 14 days · avg {avg} kcal on logged days</span></p>
+      <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
+        {days.map((d) => (
+          <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
+            <div className="rounded-t" style={{ height: `${Math.max(2, (d.kcal / max) * 100)}%`, background: d.date === today ? cat('peach') : cat('surface2') }} />
+          </div>
+        ))}
+      </div>
+      <p className="mt-1 text-center text-[10px] text-overlay0">peach = today</p>
+    </div>
   )
 }
 

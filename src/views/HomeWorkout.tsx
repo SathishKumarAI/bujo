@@ -71,36 +71,6 @@ export function HomeWorkout() {
         )}
       </Card>
 
-      <Card title="Exercise library" subtitle="No equipment · tap a demo to watch proper form">
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {MUSCLES.map((m) => (
-            <button
-              key={m}
-              onClick={() => setFilter(m)}
-              className="rounded-full border px-2.5 py-1 text-xs capitalize transition-colors"
-              style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
-            >{m}</button>
-          ))}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {lib.map((ex) => (
-            <div key={ex.id} className="rounded-lg border border-surface0 bg-base p-3">
-              <div className="mb-1 flex items-center gap-2">
-                <span className="text-lg">{ex.emoji}</span>
-                <span className="text-sm font-medium text-text">{ex.name}</span>
-                <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
-              </div>
-              <p className="text-xs text-overlay1">{ex.how}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-red hover:underline"><Play size={11} /> Watch demo</a>
-                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-overlay0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
-                <button onClick={() => add(ex)} className="ml-auto inline-flex items-center gap-1 rounded-md border border-surface1 px-2 py-0.5 text-xs text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
       <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
         {sessions.length === 0 ? (
           <Empty>No home workouts logged yet.</Empty>
@@ -129,6 +99,37 @@ export function HomeWorkout() {
             })}
           </ul>
         )}
+      </Card>
+
+      {/* Catalog is reference · folded below the active session builder + history. */}
+      <Card title="Exercise library" subtitle="No equipment · tap a demo to watch proper form" collapsible defaultCollapsed>
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {MUSCLES.map((m) => (
+            <button
+              key={m}
+              onClick={() => setFilter(m)}
+              className="rounded-full border px-2.5 py-1 text-xs capitalize transition-colors"
+              style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
+            >{m}</button>
+          ))}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {lib.map((ex) => (
+            <div key={ex.id} className="rounded-lg border border-surface0 bg-base p-3">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-lg">{ex.emoji}</span>
+                <span className="text-sm font-medium text-text">{ex.name}</span>
+                <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
+              </div>
+              <p className="text-xs text-overlay1">{ex.how}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-red hover:underline"><Play size={11} /> Watch demo</a>
+                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-overlay0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
+                <button onClick={() => add(ex)} className="ml-auto inline-flex items-center gap-1 rounded-md border border-surface1 px-2 py-0.5 text-xs text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</button>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
     </Page>
   )

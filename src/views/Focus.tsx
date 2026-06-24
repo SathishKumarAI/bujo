@@ -8,6 +8,7 @@ import { prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
+import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
@@ -64,26 +65,7 @@ export function Focus() {
 
   return (
     <Page>
-      {/* PRIMARY: timer + log first, before analytics (UX IA pass) */}
-      <PomodoroCard />
-      <Card title="Log a session" subtitle="Coding / deep-work time">
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
-          </div>
-          <label className="block text-sm text-subtext1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
-          <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
-          <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
-          </div>
-          <Button variant="primary" onClick={log} className="w-full">Log session</Button>
-        </div>
-      </Card>
-
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      {/* This-week status leads (UX IA pass) */}
       <Card title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
           <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Code2 size={14} />} />
@@ -105,6 +87,32 @@ export function Focus() {
         {insight && <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">💡 {insight}</p>}
       </Card>
 
+      {/* PRIMARY: timer + log, before analytics (UX IA pass) */}
+      <PomodoroCard />
+      <Card title="Log a session" subtitle="Coding / deep-work time">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
+          </div>
+          <label className="block text-sm text-subtext1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
+          <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
+          <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
+          </div>
+          <Button variant="primary" onClick={log} className="w-full">Log session</Button>
+        </div>
+      </Card>
+
+      {/* Typing practice — its own collapsed accordion (separate tracker) */}
+      <CollapsibleSection title="Typing" subtitle="speed & accuracy drills">
+        <TypingPractice />
+      </CollapsibleSection>
+
+      {/* Focus analytics — deep charts, default-collapsed */}
+      <CollapsibleSection title="Focus analytics" subtitle="charts, heatmap & breakdowns">
       <Card title="Coding minutes" subtitle="Last 14 days" defer>
         <div className="flex items-end gap-1" style={{ height: 80 }} role="img" aria-label={`Bar chart of coding minutes per day over the last 14 days: ${series.map((s) => `${s.min}m`).join(', ')}`}>
           {series.map((s) => (
@@ -114,7 +122,6 @@ export function Focus() {
           ))}
         </div>
       </Card>
-      </div>
 
       {(() => {
         const cum = cumulativeHours(data)
@@ -168,36 +175,8 @@ export function Focus() {
         </Card>
       )}
 
-      {byWeekday.some((w) => w.min > 0) && (
-        <Card title="Focus by weekday" subtitle="Total deep-work minutes by day of week">
-          <div className="space-y-1.5">
-            {byWeekday.map((w) => (
-              <div key={w.day} className="flex items-center gap-2 text-sm">
-                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
-                  <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
-                </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {focusWd.some((w) => w.count > 0) && (
-        <Card title="Focus quality by weekday" subtitle="Duration-weighted avg focus score by day of week">
-          <div className="space-y-1.5">
-            {focusWd.map((w) => (
-              <div key={w.day} className="flex items-center gap-2 text-sm">
-                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
-                  <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
-                </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{w.count ? `${w.avg}/10` : '—'}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {(byWeekday.some((w) => w.min > 0) || focusWd.some((w) => w.count > 0)) && (
+        <WeekdayFocusCard byWeekday={byWeekday} maxWd={maxWd} focusWd={focusWd} maxFocusWd={maxFocusWd} hrs={hrs} />
       )}
 
       {byProject.length > 0 && (
@@ -244,10 +223,10 @@ export function Focus() {
           </div>
         </Card>
       )}
+      </CollapsibleSection>
 
-      <TypingPractice />
-
-      <Card title="History">
+      {/* History — editable session list, collapsed at the bottom */}
+      <Card title="History" collapsible defaultCollapsed>
         {sessions.length === 0 ? (
           <Empty>No sessions yet. Log your first coding block.</Empty>
         ) : (
@@ -264,6 +243,68 @@ export function Focus() {
 
 function Stat({ label, value, color, icon }: { label: string; value: string; color: string; icon?: React.ReactNode }) {
   return <StatTile label={label} value={value} color={color} icon={icon} />
+}
+
+// Merged weekday card (UX IA pass): one card that toggles between deep-work
+// volume and focus-quality by weekday, replacing two separate sibling charts.
+function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
+  byWeekday: { day: number; label: string; min: number }[]
+  maxWd: number
+  focusWd: { day: number; label: string; avg: number; count: number }[]
+  maxFocusWd: number
+  hrs: (m: number) => string
+}) {
+  const [mode, setMode] = useState<'volume' | 'quality'>('volume')
+  const hasVolume = byWeekday.some((w) => w.min > 0)
+  const hasQuality = focusWd.some((w) => w.count > 0)
+  // Fall back to whichever metric has data if the chosen one is empty.
+  const showQuality = mode === 'quality' ? hasQuality : !hasVolume && hasQuality
+  return (
+    <Card
+      title="Focus by weekday"
+      subtitle={showQuality ? 'Duration-weighted avg focus score by day of week' : 'Total deep-work minutes by day of week'}
+      right={
+        <div className="flex gap-1">
+          {(['volume', 'quality'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              aria-pressed={showQuality ? m === 'quality' : m === 'volume'}
+              className="rounded-md px-2 py-0.5 text-[11px] capitalize transition-colors"
+              style={{
+                background: (showQuality ? m === 'quality' : m === 'volume') ? cat('surface1') : 'transparent',
+                color: (showQuality ? m === 'quality' : m === 'volume') ? cat('text') : cat('overlay0'),
+              }}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      }
+    >
+      <div className="space-y-1.5">
+        {showQuality
+          ? focusWd.map((w) => (
+              <div key={w.day} className="flex items-center gap-2 text-sm">
+                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{w.count ? `${w.avg}/10` : '—'}</span>
+              </div>
+            ))
+          : byWeekday.map((w) => (
+              <div key={w.day} className="flex items-center gap-2 text-sm">
+                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+              </div>
+            ))}
+      </div>
+    </Card>
+  )
 }
 
 const TYPING_SOURCES = ['Monkeytype', 'keybr', 'TypingClub', '10FastFingers', 'TypeRacer', 'Other'] as const

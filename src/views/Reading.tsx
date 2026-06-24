@@ -5,6 +5,7 @@ import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks, allLearnings, ratingDistribution } from '../lib/reading'
 import { StatTile } from '../components/ui'
+import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
@@ -131,6 +132,13 @@ export function Reading() {
         </div>
       )}
 
+      {/* Learnings · cross-book knowledge feed (collapsed, secondary) */}
+      <CollapsibleSection title="Learnings" subtitle="cross-book knowledge feed">
+        <LearningLog />
+      </CollapsibleSection>
+
+      {/* Reading analytics · volume + wrapped recap (deep, default-collapsed) */}
+      <CollapsibleSection title="Reading analytics" subtitle="finished by month · year in books">
       {/* Books finished per month · paces the yearly goal visibly */}
       {byMonth.some((m) => m.count > 0) && (
         <div className="rounded-2xl border border-border bg-card p-4">
@@ -197,10 +205,12 @@ export function Reading() {
           )}
         </div>
       )}
+      </CollapsibleSection>
 
-      <LearningLog />
-
-      <ReadLater />
+      {/* Read later · saved links (bottom, collapsed) */}
+      <CollapsibleSection title="Read later" subtitle="saved links">
+        <ReadLater />
+      </CollapsibleSection>
     </div>
   )
 }

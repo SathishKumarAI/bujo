@@ -6,7 +6,7 @@ import { cat } from '../lib/colors'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
-import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch } from '../lib/urge'
+import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 import {
   CollapsibleSection,
@@ -21,7 +21,6 @@ import {
   CleanRollupCard,
   HighRiskHoursCard,
   RiskiestDaysCard,
-  RecoveryPortfolioCard,
   TriggerPatternsCard,
 } from '../components/recovery'
 
@@ -184,12 +183,8 @@ export function NoFap() {
   const saved = streaksSaved(s.urgeLog ?? [], s.urgesResisted ?? 0, today)
   const intensity9 = intensityStats(s.urgeLog ?? [])
   const rollup = cleanRollup(s.relapses, s.startedOn, today)
-  // #344 time reclaimed · #408 portfolio · #321 record-approach · urge-quiet stretch
+  // #344 time reclaimed · #321 record-approach · urge-quiet stretch
   const reclaimed = timeReclaimed(stats.totalClean, hoursPerDay)
-  const portfolio = addictionPortfolio([
-    { id: 'main', name: 'Main streak', startedOn: s.startedOn, best: s.best, relapses: s.relapses },
-    ...(s.addictions ?? []).map((a) => ({ id: a.id, name: a.name, startedOn: a.startedOn, best: a.best, relapses: a.relapses })),
-  ], today)
   const approach = recordApproach(stats.current, stats.best)
   const quiet = urgeQuietStretch(s.urgeLog ?? [], today)
   const APPROACH_COPY: Record<typeof approach.tier, { color: string; text: string } | null> = {
@@ -218,7 +213,7 @@ export function NoFap() {
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
 
   return (
-    <div className="mx-auto grid max-w-[1400px] items-start gap-5 lg:grid-cols-3">
+    <div className="mx-auto max-w-[820px] items-start">
       {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic · open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-105"
@@ -227,7 +222,8 @@ export function NoFap() {
       </button>
       {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
 
-      <div className="space-y-4 lg:col-span-2">
+      <div className="space-y-4">
+        {/* ── Streak status · hero ring + lifetime tiles (daily glance) ──────── */}
         {/* Hero: progress ring to next milestone */}
         <Card className="glow-mauve">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -267,39 +263,6 @@ export function NoFap() {
               )}
             </div>
           </div>
-        </Card>
-
-        {/* My commitment (#316) · quit-date contract + personal "why" */}
-        <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
-          subtitle="Your quit-date contract · the reason you’re doing this"
-          help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
-          right={hasCommitment && !editingCommit ? <Button onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
-          {hasCommitment && !editingCommit ? (
-            <div>
-              {commitment?.reason && (
-                <blockquote className="border-l-2 pl-3 text-lg font-medium italic" style={{ borderColor: cat('mauve'), color: cat('text') }}>
-                  “{commitment.reason}”
-                </blockquote>
-              )}
-              {commitment?.quitDate && (
-                <p className="mt-3 text-sm text-subtext0">
-                  Committed on <span className="font-medium text-text">{prettyDay(commitment.quitDate)}</span>
-                  {daysSinceQuit != null && daysSinceQuit > 0 && <> · <span className="font-semibold" style={{ color: cat('mauve') }}>{daysSinceQuit}</span> day{daysSinceQuit === 1 ? '' : 's'} ago</>}
-                  {daysSinceQuit === 0 && <> · <span style={{ color: cat('mauve') }}>today</span></>}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <label className="block text-sm text-subtext1">Quit date
-                <Input type="date" value={commitment?.quitDate ?? ''} max={today} onChange={(e) => setCommitment({ quitDate: e.target.value })} className="mt-1" aria-label="Quit date" />
-              </label>
-              <label className="block text-sm text-subtext1">Why I quit
-                <Textarea value={commitment?.reason ?? ''} onChange={(e) => setCommitment({ reason: e.target.value })} placeholder="The reason that matters most to you…" rows={2} className="mt-1" aria-label="Reason for quitting" />
-              </label>
-              {editingCommit && <div className="flex justify-end"><Button variant="primary" onClick={() => setEditingCommit(false)}>Done</Button></div>}
-            </div>
-          )}
         </Card>
 
         {/* Lifetime stats */}
@@ -413,37 +376,22 @@ export function NoFap() {
           {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-xs text-overlay0">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
         </Card>
 
-        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
-        {/* Insights · motivational / progress cards · default OPEN */}
-        <CollapsibleSection
-          title="Insights & progress"
-          subtitle="Streak vs. best, self-efficacy, money & time saved"
-          icon={<ShieldCheck size={18} className="text-green" />}
-          defaultOpen
-        >
-          <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
-          {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
-          {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
-          {stats.totalClean > 0 && (
-            <TimeReclaimedCard reclaimed={reclaimed} totalClean={stats.totalClean} hoursPerDay={hoursPerDay} onHoursPerDayChange={setHoursPerDay} />
-          )}
-          <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
-          {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
-        </CollapsibleSection>
-
-        {/* Deep analytics · trends, distributions, heatmaps · default COLLAPSED */}
-        <CollapsibleSection
-          title="Deep analytics"
-          subtitle="Trends, intensity, clean windows, high-risk hours & days"
-          icon={<Hourglass size={18} className="text-teal" />}
-        >
-          {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
-          {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
-          {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
-          {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
-          {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
-          {(s.addictions ?? []).length > 0 && <RecoveryPortfolioCard portfolio={portfolio} />}
-        </CollapsibleSection>
+        {/* Log a reset · moved up from the rail · the second primary action */}
+        <Card title="Log a reset" subtitle="Reflect, learn, restart the counter">
+          <div className="space-y-3">
+            <label className="block text-sm text-subtext1">
+              Reason <span style={{ color: cat('red') }}>*</span>
+              <Input value={trigger} onChange={(e) => { setTrigger(e.target.value); if (err) setErr('') }} placeholder="What led to it? (required)" className="mt-1" />
+            </label>
+            <label className="block text-sm text-subtext1">
+              Reflection
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
+            </label>
+            {err && <p className="text-xs" style={{ color: cat('red') }}>{err}</p>}
+            <Button variant="danger" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
+            <p className="text-xs text-overlay0">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
+          </div>
+        </Card>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
@@ -495,129 +443,188 @@ export function NoFap() {
           )}
         </Card>
 
-        {/* Trigger plans · if-then for each addiction's trigger points */}
-        <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response" help="Pre-deciding what to do beats willpower in the moment. For each addiction, add a trigger (the situation) and a coping response. When the urge hits, you already have the plan.">
-          <div className="grid gap-2 rounded-lg border border-surface0 bg-base p-3 sm:grid-cols-2">
-            <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
-            <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
-            <Input value={plan.coping} onChange={(e) => setPlan({ ...plan, coping: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && savePlan()} placeholder="Then I will… (e.g. chew gum, walk 10 min)" aria-label="Coping response" className="sm:col-span-2" />
-            <Button variant="primary" onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
-          </div>
-          {plans.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {plans.map((pl) => (
-                <li key={pl.id} className="group rounded-lg border border-surface0 bg-base p-2.5 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{pl.addiction}</span>
-                    <span className="text-subtext1"><span className="text-overlay0">when</span> {pl.trigger}</span>
-                    <button onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                  </div>
-                  {pl.coping && <p className="mt-0.5 text-xs text-overlay1"><span className="text-teal">→ then</span> {pl.coping}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Benefits ladder */}
-        <Card title="Recovery ladder" subtitle="What clears as the streak grows" help="A motivational timeline of what typically improves at each milestone. Reached rungs are lit; the next is highlighted.">
-          <ol className="relative ml-3 space-y-3 border-l border-surface1 pl-5">
-            {STREAK_MILESTONES.map((m) => {
-              const reached = stats.current >= m.day
-              const isNext = nextBenefit?.day === m.day
-              return (
-                <li key={m.day} className="relative">
-                  <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-full text-[10px]"
-                    style={{ background: reached ? cat('green') : isNext ? cat('teal') : cat('surface0'), color: cat('crust') }}>
-                    {reached ? <Check size={11} /> : m.day}
-                  </span>
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-sm font-medium ${reached ? 'text-text' : isNext ? 'text-teal' : 'text-overlay0'}`}>{m.label}</span>
-                    <span className="text-[11px] text-overlay0">{m.day}d</span>
-                    {isNext && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('teal') + '22', color: cat('teal') }}>next</span>}
-                  </div>
-                  <p className={`text-xs ${reached || isNext ? 'text-overlay1' : 'text-overlay0'}`}>{m.benefit}</p>
-                </li>
-              )
-            })}
-          </ol>
-        </Card>
-
-        {/* Trigger patterns */}
-        {stats.topTriggers.length > 0 && (
-          <TriggerPatternsCard topTriggers={stats.topTriggers} relapseCount={stats.relapseCount} avgGap={stats.avgGap} />
-        )}
-
-        {/* Relapse log */}
-        <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'} collapsible defaultCollapsed={s.relapses.length > 4}>
-          {s.relapses.length === 0 ? (
-            <Empty>No resets logged. Keep going.</Empty>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {[...s.relapses].reverse().map((r) => (
-                <li key={r.id} className="rounded-lg border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
-                  <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset · {prettyDay(r.date)}</div>
-                  {r.trigger && <div className="mt-0.5 text-subtext1"><span className="text-overlay0">Reason:</span> {r.trigger}</div>}
-                  {r.note && <div className="text-overlay1 italic">{r.note}</div>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      {/* Right rail: the visualization (fits here) + actions + tips */}
-      <div className="space-y-4">
-        {byType.length > 0 && (
-          <Card title="Urges by addiction" subtitle="What you resist most" enlargeable help="Every logged urge counted by type. Tall bars are your battleground habits; a steady count means you're catching and surfing them, not giving in.">
-            <div className="h-52 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
-                  <CartesianGrid stroke={cat('surface0')} horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis type="category" dataKey="type" width={84} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        {/* ── Setup · set-once contract + if-then plans · default COLLAPSED ──── */}
+        <CollapsibleSection
+          title="Setup"
+          subtitle="Your commitment contract & if-then trigger plans"
+          icon={<Heart size={18} className="text-mauve" />}
+        >
+          {/* My commitment (#316) · quit-date contract + personal "why" */}
+          <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
+            subtitle="Your quit-date contract · the reason you’re doing this"
+            help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
+            right={hasCommitment && !editingCommit ? <Button onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
+            {hasCommitment && !editingCommit ? (
+              <div>
+                {commitment?.reason && (
+                  <blockquote className="border-l-2 pl-3 text-lg font-medium italic" style={{ borderColor: cat('mauve'), color: cat('text') }}>
+                    “{commitment.reason}”
+                  </blockquote>
+                )}
+                {commitment?.quitDate && (
+                  <p className="mt-3 text-sm text-subtext0">
+                    Committed on <span className="font-medium text-text">{prettyDay(commitment.quitDate)}</span>
+                    {daysSinceQuit != null && daysSinceQuit > 0 && <> · <span className="font-semibold" style={{ color: cat('mauve') }}>{daysSinceQuit}</span> day{daysSinceQuit === 1 ? '' : 's'} ago</>}
+                    {daysSinceQuit === 0 && <> · <span style={{ color: cat('mauve') }}>today</span></>}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="block text-sm text-subtext1">Quit date
+                  <Input type="date" value={commitment?.quitDate ?? ''} max={today} onChange={(e) => setCommitment({ quitDate: e.target.value })} className="mt-1" aria-label="Quit date" />
+                </label>
+                <label className="block text-sm text-subtext1">Why I quit
+                  <Textarea value={commitment?.reason ?? ''} onChange={(e) => setCommitment({ reason: e.target.value })} placeholder="The reason that matters most to you…" rows={2} className="mt-1" aria-label="Reason for quitting" />
+                </label>
+                {editingCommit && <div className="flex justify-end"><Button variant="primary" onClick={() => setEditingCommit(false)}>Done</Button></div>}
+              </div>
+            )}
           </Card>
-        )}
-        <Card title="Log a reset" subtitle="Reflect, learn, restart the counter">
-          <div className="space-y-3">
-            <label className="block text-sm text-subtext1">
-              Reason <span style={{ color: cat('red') }}>*</span>
-              <Input value={trigger} onChange={(e) => { setTrigger(e.target.value); if (err) setErr('') }} placeholder="What led to it? (required)" className="mt-1" />
-            </label>
-            <label className="block text-sm text-subtext1">
-              Reflection
-              <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
-            </label>
-            {err && <p className="text-xs" style={{ color: cat('red') }}>{err}</p>}
-            <Button variant="danger" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
-            <p className="text-xs text-overlay0">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
-          </div>
-        </Card>
 
-        <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques · an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
-          <ol className="space-y-2 text-sm text-subtext1">
-            <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">HALT check</span> · Hungry? Angry? Lonely? Tired? Fix the real need instead.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">Play it forward</span> · picture how you’ll feel 1 hour after giving in vs. resisting.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">Remove the cue</span> · leave the room, phone in another room, block the site.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">Reach out</span> · text someone; saying it out loud drains the urge’s power.</li>
-            <li className="flex gap-2"><span className="font-medium text-teal">Log the win</span> · tap <strong>I resisted it</strong> above; evidence beats willpower.</li>
-          </ol>
-          {plans.length > 0 && (
-            <div className="mt-3 rounded-lg bg-secondary/50 p-2 text-xs text-subtext0">
-              <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(' · ')}
+          {/* Trigger plans · if-then for each addiction's trigger points */}
+          <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response" help="Pre-deciding what to do beats willpower in the moment. For each addiction, add a trigger (the situation) and a coping response. When the urge hits, you already have the plan.">
+            <div className="grid gap-2 rounded-lg border border-surface0 bg-base p-3 sm:grid-cols-2">
+              <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
+              <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
+              <Input value={plan.coping} onChange={(e) => setPlan({ ...plan, coping: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && savePlan()} placeholder="Then I will… (e.g. chew gum, walk 10 min)" aria-label="Coping response" className="sm:col-span-2" />
+              <Button variant="primary" onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
             </div>
+            {plans.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {plans.map((pl) => (
+                  <li key={pl.id} className="group rounded-lg border border-surface0 bg-base p-2.5 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{pl.addiction}</span>
+                      <span className="text-subtext1"><span className="text-overlay0">when</span> {pl.trigger}</span>
+                      <button onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    </div>
+                    {pl.coping && <p className="mt-0.5 text-xs text-overlay1"><span className="text-teal">→ then</span> {pl.coping}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </CollapsibleSection>
+
+        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
+        {/* Insights · motivational / progress cards · default COLLAPSED */}
+        <CollapsibleSection
+          title="Insights & progress"
+          subtitle="Streak vs. best, self-efficacy, money & time saved"
+          icon={<ShieldCheck size={18} className="text-green" />}
+        >
+          <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
+          {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
+          {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
+          {stats.totalClean > 0 && (
+            <TimeReclaimedCard reclaimed={reclaimed} totalClean={stats.totalClean} hoursPerDay={hoursPerDay} onHoursPerDayChange={setHoursPerDay} />
           )}
-          {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-peach/10 p-2 text-xs text-subtext0"><AlertTriangle size={13} className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
-        </Card>
+          <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
+          {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
+        </CollapsibleSection>
+
+        {/* Deep analytics · trends, distributions, heatmaps, patterns · default COLLAPSED */}
+        <CollapsibleSection
+          title="Deep analytics"
+          subtitle="Trends, intensity, clean windows, high-risk hours & days, urge mix"
+          icon={<Hourglass size={18} className="text-teal" />}
+        >
+          {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
+          {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
+          {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
+          {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
+          {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
+          {/* Trigger patterns · aggregated relapse triggers */}
+          {stats.topTriggers.length > 0 && (
+            <TriggerPatternsCard topTriggers={stats.topTriggers} relapseCount={stats.relapseCount} avgGap={stats.avgGap} />
+          )}
+          {/* Urges by addiction · moved from the rail (strands on mobile) */}
+          {byType.length > 0 && (
+            <Card title="Urges by addiction" subtitle="What you resist most" enlargeable help="Every logged urge counted by type. Tall bars are your battleground habits; a steady count means you're catching and surfing them, not giving in.">
+              <div className="h-52 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
+                    <CartesianGrid stroke={cat('surface0')} horizontal={false} />
+                    <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
+                    <YAxis type="category" dataKey="type" width={84} stroke={cat('overlay0')} fontSize={11} />
+                    <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                      {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          )}
+        </CollapsibleSection>
+
+        {/* ── Reference · static guides & history · default COLLAPSED ────────── */}
+        <CollapsibleSection
+          title="Reference"
+          subtitle="Coping techniques, recovery ladder & reset history"
+          icon={<Sparkles size={18} className="text-mauve" />}
+        >
+          {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
+          <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques · an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
+            <ol className="space-y-2 text-sm text-subtext1">
+              <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">HALT check</span> · Hungry? Angry? Lonely? Tired? Fix the real need instead.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">Play it forward</span> · picture how you’ll feel 1 hour after giving in vs. resisting.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">Remove the cue</span> · leave the room, phone in another room, block the site.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">Reach out</span> · text someone; saying it out loud drains the urge’s power.</li>
+              <li className="flex gap-2"><span className="font-medium text-teal">Log the win</span> · tap <strong>I resisted it</strong> above; evidence beats willpower.</li>
+            </ol>
+            {plans.length > 0 && (
+              <div className="mt-3 rounded-lg bg-secondary/50 p-2 text-xs text-subtext0">
+                <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(' · ')}
+              </div>
+            )}
+            {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-peach/10 p-2 text-xs text-subtext0"><AlertTriangle size={13} className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
+          </Card>
+
+          {/* Benefits ladder */}
+          <Card title="Recovery ladder" subtitle="What clears as the streak grows" help="A motivational timeline of what typically improves at each milestone. Reached rungs are lit; the next is highlighted.">
+            <ol className="relative ml-3 space-y-3 border-l border-surface1 pl-5">
+              {STREAK_MILESTONES.map((m) => {
+                const reached = stats.current >= m.day
+                const isNext = nextBenefit?.day === m.day
+                return (
+                  <li key={m.day} className="relative">
+                    <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-full text-[10px]"
+                      style={{ background: reached ? cat('green') : isNext ? cat('teal') : cat('surface0'), color: cat('crust') }}>
+                      {reached ? <Check size={11} /> : m.day}
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-sm font-medium ${reached ? 'text-text' : isNext ? 'text-teal' : 'text-overlay0'}`}>{m.label}</span>
+                      <span className="text-[11px] text-overlay0">{m.day}d</span>
+                      {isNext && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('teal') + '22', color: cat('teal') }}>next</span>}
+                    </div>
+                    <p className={`text-xs ${reached || isNext ? 'text-overlay1' : 'text-overlay0'}`}>{m.benefit}</p>
+                  </li>
+                )
+              })}
+            </ol>
+          </Card>
+
+          {/* Relapse log */}
+          <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'} collapsible defaultCollapsed={s.relapses.length > 4}>
+            {s.relapses.length === 0 ? (
+              <Empty>No resets logged. Keep going.</Empty>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {[...s.relapses].reverse().map((r) => (
+                  <li key={r.id} className="rounded-lg border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
+                    <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset · {prettyDay(r.date)}</div>
+                    {r.trigger && <div className="mt-0.5 text-subtext1"><span className="text-overlay0">Reason:</span> {r.trigger}</div>}
+                    {r.note && <div className="text-overlay1 italic">{r.note}</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </CollapsibleSection>
       </div>
     </div>
   )
