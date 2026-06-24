@@ -457,6 +457,8 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /** Daily typing-practice goal in minutes (default treated as 60 in code). */
+  typingGoalMin?: number
   /** Weekly pickleball-games goal (shown on Pickleball + Goals). */
   pickleballGoalGames?: number
   /** Yearly reading goal in books (shown on Reading + Goals). */
@@ -572,6 +574,19 @@ export interface DevSession {
   notes?: string
 }
 
+/** A logged typing-practice session (typing-speed tracker). */
+export interface TypingSession {
+  id: string
+  date: string // ISO day
+  durationMin: number
+  /** Words per minute for the session (optional — some logs are just time). */
+  wpm?: number
+  /** Accuracy percent 0–100. */
+  accuracy?: number
+  /** Where it was practiced, e.g. "Monkeytype", "keybr". */
+  source?: string
+}
+
 /** The single root object persisted to localStorage. */
 export interface JournalData {
   version: number
@@ -610,6 +625,8 @@ export interface JournalData {
   habitSkips?: Record<string, string[]>
   /** Developer focus/coding sessions. */
   devSessions?: DevSession[]
+  /** Typing-practice sessions (speed/accuracy tracker). */
+  typingSessions?: TypingSession[]
   /** Pickleball play sessions. */
   pickleball?: PickleballSession[]
   /** Pickleball leagues & tournaments entered. */

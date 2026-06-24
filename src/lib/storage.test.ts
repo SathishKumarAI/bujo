@@ -45,6 +45,9 @@ describe('export/import round-trip', () => {
     j.nofap = { ...j.nofap, costPerDay: 12, commitment: { quitDate: '2026-06-01', reason: 'for my kids' }, addictions: [{ id: 'ad1', name: 'Sugar', startedOn: '2026-06-01', best: 5, relapses: [], costPerDay: 4 }] }
     // #95/#261 custom-goal deadline.
     j.customGoals = [{ id: 'cg1', label: 'Save', target: 500, value: 100, due: '2026-12-31', createdAt: '2026-06-01' }]
+    // Typing-practice tracker.
+    j.typingSessions = [{ id: 't1', date: '2026-06-11', durationMin: 30, wpm: 72, accuracy: 96, source: 'Monkeytype' }]
+    j.settings = { ...j.settings, typingGoalMin: 45 }
 
     const r = importJSON(exportJSON(j))
     expect(r.fasts).toEqual(j.fasts)
@@ -61,6 +64,8 @@ describe('export/import round-trip', () => {
     expect(r.nofap.commitment).toEqual({ quitDate: '2026-06-01', reason: 'for my kids' }) // #316
     expect(r.nofap.addictions?.[0].costPerDay).toBe(4) // #123
     expect(r.customGoals?.[0].due).toBe('2026-12-31') // #95/#261
+    expect(r.typingSessions?.[0]).toEqual(j.typingSessions![0]) // typing tracker
+    expect(r.settings.typingGoalMin).toBe(45)
   })
 
   it('migrate loads old data lacking every new optional field (back-compat)', () => {
@@ -76,6 +81,9 @@ describe('export/import round-trip', () => {
     expect(m.nofap.costPerDay).toBeUndefined()
     expect(m.nofap.commitment).toBeUndefined()
     expect(m.settings.currencySymbol).toBeUndefined()
+    // Typing tracker absent in old payloads → seeded empty, goal unset.
+    expect(m.typingSessions).toEqual([])
+    expect(m.settings.typingGoalMin).toBeUndefined()
   })
 })
 
