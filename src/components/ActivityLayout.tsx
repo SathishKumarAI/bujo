@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, Star, GripVertical } from 'lucide-react'
+import { Flame, Star, GripVertical, Activity } from 'lucide-react'
 import type { Habit, HabitCategory, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
@@ -124,7 +124,8 @@ function ActivityRow({
           ><GripVertical size={11} /></span>
         )}
         <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} · habit to avoid` : undefined} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={11} /></button>
       </div>
       <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
         {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}
