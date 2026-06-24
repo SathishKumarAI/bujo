@@ -5,38 +5,38 @@ import {
 } from 'recharts'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize2, X, Columns2, Rows2 } from 'lucide-react'
+import { Maximize2, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
+import { CollapsibleSection as Section } from '../components/trackers/CollapsibleSection'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
 import { cat } from '../lib/colors'
 import {
-  buildHeatmap, moodByDay, sleepMoodScatter, tagCounts, taskBreakdown,
+  buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
 } from '../lib/viz'
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
-import { moodByWeekday, workoutSplitCounts } from '../lib/stats'
+import { workoutSplitCounts } from '../lib/stats'
 import { sleepDebt, focusSleepCorrelation } from '../lib/correlations'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 
 export function Stats() {
-  const { data, setSettings } = useJournal()
-  const pairStacked = data.settings.statsPairLayout === 'stacked'
+  const { data } = useJournal()
   const [ym, setYm] = useState(ymOf(todayISO()))
   const [heatWeeks, setHeatWeeks] = useState(26)
+  // Merged mood view: one card toggles between the month calendar and the
+  // year-in-pixels grid (same daily-mood tint, two zoom levels).
+  const [moodView, setMoodView] = useState<'calendar' | 'pixels'>('calendar')
 
   const heat = buildHeatmap(data, heatWeeks)
   const radar = weeklyRadar(data)
   const scatter = sleepMoodScatter(data)
   const workout = weeklyWorkoutMinutes(data)
   const tasks = taskBreakdown(data)
-  const tags = tagCounts(data)
-  const maxTag = tags[0]?.count ?? 1
   const moods = moodByDay(data)
-  const moodWd = moodByWeekday(data)
   const splits = workoutSplitCounts(data)
   const SPLIT_COLORS = ['mauve', 'blue', 'green', 'peach', 'teal', 'pink', 'yellow', 'sky']
   const debt = sleepDebt(data)
@@ -114,9 +114,8 @@ export function Stats() {
 
       <AchievementsCard />
 
-      <CheckinTimesCard />
-
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
+      <Section title="This week" subtitle="7-day averages · see Trackers for live metrics">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +128,11 @@ export function Stats() {
             </ResponsiveContainer>
           </div>
         </Card>
+      </Section>
 
+      {/* 3) Sleep & mood correlations — collapsed. */}
+      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="Sleep vs mood" subtitle="Each dot is a day · see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
@@ -179,59 +182,19 @@ export function Stats() {
             </p>
           </Card>
         )}
-
-        <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
-          {workout.every((w) => !w.minutes) ? (
-            <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                  <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
-                  <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-
-        <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
-          {tasks.length === 0 ? (
-            <Empty>No tasks yet.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                    {tasks.map((t) => <Cell key={t.name} fill={cat(t.color)} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tip} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-3 text-xs">
-                {tasks.map((t) => <span key={t.name} style={{ color: cat(t.color) }}>● {t.name} {t.value}</span>)}
-              </div>
-            </div>
-          )}
-        </Card>
       </div>
+      </Section>
 
-      <div className="flex items-center justify-end">
-        <Button onClick={() => setSettings({ statsPairLayout: pairStacked ? 'split' : 'stacked' })}
-          aria-label={pairStacked ? 'Show side by side' : 'Stack full width'} title={pairStacked ? 'Side by side' : 'Stack full width'}>
-          {pairStacked ? <Columns2 size={14} /> : <Rows2 size={14} />}
-        </Button>
-      </div>
-      <div className={`grid items-start gap-5 ${pairStacked ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
+      {/* 4) Mood views — merged calendar / year-in-pixels toggle, collapsed. */}
+      <Section title="Mood views" subtitle="calendar & year-in-pixels">
+      {moodView === 'calendar' ? (
       <Card
         enlargeable={false}
         title="Mood calendar"
         subtitle="Each day tinted by your mood (0–10) · tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
+            <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
             <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
             <Button onClick={() => setYm(ymOf(todayISO()))}>This month</Button>
             <Button onClick={() => shift(1)} aria-label="Next month">→</Button>
@@ -261,65 +224,89 @@ export function Stats() {
           <span>great</span>
         </div>
       </Card>
-
+      ) : (
       <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} · one square per day, tinted by mood`} enlargeable={false}
-        right={<Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>}>
+        right={
+          <div className="flex gap-1">
+            <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
+            <Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>
+          </div>
+        }>
         {yearPixels(false)}
       </Card>
-      </div>
+      )}
+      </Section>
 
-      <Card title="Mood by weekday" subtitle="Which days run brightest (all logged moods)" enlargeable>
-        {moodWd.every((v) => v == null) ? (
-          <Empty>Log mood on a few days to see your weekly rhythm.</Empty>
-        ) : (
-          <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label="Bar chart of average mood by weekday, 0 to 10">
-            {moodWd.map((v, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-[10px] tabular-nums text-subtext0">{v == null ? '–' : Math.round(v * 10) / 10}</span>
-                <div className="flex w-full flex-1 items-end">
-                  <div className="w-full rounded-t" style={{ height: `${v == null ? 2 : (v / 10) * 100}%`, background: moodColor(v == null ? undefined : Math.round(v)) }} title={v == null ? 'no data' : `${Math.round(v * 10) / 10}/10`} />
-                </div>
-                <span className="text-[10px] text-overlay0">{WEEKDAYS[i]}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
-        {splits.length === 0 ? (
-          <Empty>No workouts logged yet.</Empty>
-        ) : (
-          <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                  {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
-                </Pie>
-                <Tooltip contentStyle={tip} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap justify-center gap-2 text-xs">
-              {splits.map((s, i) => <span key={s.split} style={{ color: cat(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
+      {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
+      <Section title="Fitness stats" subtitle="workout minutes & split · see Fitness for live logging">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
+          {workout.every((w) => !w.minutes) ? (
+            <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
+          ) : (
+            <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
+                  <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
+                  <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          </div>
-        )}
-      </Card>
+          )}
+        </Card>
 
-      <Card title="Tags" subtitle="What you write about most">
-        {tags.length === 0 ? (
-          <Empty>No #tags yet · add them in any entry.</Empty>
-        ) : (
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {tags.map((t) => (
-              <span key={t.tag} style={{ fontSize: `${0.8 + (t.count / maxTag) * 1.1}rem`, color: cat('sapphire') }}>
-                #{t.tag}
-                <sup className="ml-0.5 text-[10px] text-overlay0">{t.count}</sup>
-              </span>
-            ))}
-          </div>
-        )}
-      </Card>
+        <Card title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
+          {splits.length === 0 ? (
+            <Empty>No workouts logged yet.</Empty>
+          ) : (
+            <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+                    {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tip} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-2 text-xs">
+                {splits.map((s, i) => <span key={s.split} style={{ color: cat(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+      </Section>
+
+      {/* 6) Tasks — collapsed. */}
+      <Section title="Tasks" subtitle="where your tasks land">
+        <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
+          {tasks.length === 0 ? (
+            <Empty>No tasks yet.</Empty>
+          ) : (
+            <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+                    {tasks.map((t) => <Cell key={t.name} fill={cat(t.color)} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tip} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-3 text-xs">
+                {tasks.map((t) => <span key={t.name} style={{ color: cat(t.color) }}>● {t.name} {t.value}</span>)}
+              </div>
+            </div>
+          )}
+        </Card>
+      </Section>
+
+      {/* 7) Habit timing — collapsed. */}
+      <Section title="Habit timing" subtitle="when you check in">
+        <CheckinTimesCard />
+      </Section>
 
       {/* Click-to-enlarge modal · portalled to <body> so it centres on the
           viewport, not inside transformed ancestors (book mode / zoom). */}

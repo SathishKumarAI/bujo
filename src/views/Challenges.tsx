@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, Plus, Trophy, Archive, Trash2, X } from 'lucide-react'
+import { Flame, Plus, Trophy, Archive, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { Switch } from '../components/ui/switch'
@@ -15,6 +15,7 @@ import {
 export function Challenges() {
   const { data, addChallenge } = useJournal()
   const [creating, setCreating] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const active = (data.challenges ?? []).filter((c) => !c.archived)
   const archived = (data.challenges ?? []).filter((c) => c.archived)
 
@@ -42,16 +43,31 @@ export function Challenges() {
       )}
 
       {archived.length > 0 && (
-        <Card title="Completed & archived" subtitle="Your past challenges">
-          <ul className="space-y-2 text-sm">
-            {archived.map((c) => (
-              <li key={c.id} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
-                <span className="text-subtext1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
-                <span className="text-xs text-overlay0">{completedDays(data, c, todayISO())} days done</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <section className="space-y-5">
+          <button
+            type="button"
+            onClick={() => setArchiveOpen((o) => !o)}
+            aria-expanded={archiveOpen}
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          >
+            <span className="text-overlay0">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="font-display text-base font-medium text-subtext1">Completed &amp; archived</span>
+            <span className="text-xs text-overlay0">· {archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
+            {!archiveOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          </button>
+          {archiveOpen && (
+            <Card title="Completed & archived" subtitle="Your past challenges">
+              <ul className="space-y-2 text-sm">
+                {archived.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
+                    <span className="text-subtext1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
+                    <span className="text-xs text-overlay0">{completedDays(data, c, todayISO())} days done</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </section>
       )}
     </Page>
   )
@@ -59,6 +75,7 @@ export function Challenges() {
 
 function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
   const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
+  const [calOpen, setCalOpen] = useState(false)
   const today = todayISO()
   const day = progressDay(data, c, today)
   const pct = percentComplete(data, c, today)
@@ -103,68 +120,76 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         </div>
       </div>
 
-      {/* Two-grid: check-in + stats (left) · calendar (right) */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="space-y-4">
-          {/* Today's check-in */}
-          {!notStarted && !finished && (
-            <div>
-              <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-overlay0">({todayDone.length}/{c.rules.length})</span></p>
-              <ul className="space-y-1.5">
-                {c.rules.map((rule, i) => {
-                  const ruleDone = todayDone.includes(i)
-                  return (
-                    <li key={i}>
-                      <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                        <span className={ruleDone ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
-                        <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
-                      </label>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
-
-          {/* Stats block */}
-          <div className="grid grid-cols-2 gap-2 text-center">
-            <Stat label="Current streak" value={`${streak}`} icon="🔥" color="peach" />
-            <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="🏅" color="yellow" />
-            <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
-            <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
-          </div>
-        </div>
-
-        {/* Calendar grid · grouped into weeks of 7 for readability. */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-medium text-subtext1">Calendar</p>
-            <div className="flex items-center gap-3 text-[10px] text-overlay0">
-              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
-              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
-              <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
-            </div>
-          </div>
-          <div className="grid w-fit grid-cols-7 gap-1">
-            {Array.from({ length: c.durationDays }).map((_, i) => {
-              const d = addDays(c.startDate, i)
-              const complete = isDayComplete(data, c, d)
-              const isToday = d === today
-              const past = dayDiff(d, today) > 0
-              const bg = complete ? cat('green') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
+      {/* Today's check-in */}
+      {!notStarted && !finished && (
+        <div className="mb-4">
+          <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-overlay0">({todayDone.length}/{c.rules.length})</span></p>
+          <ul className="space-y-1.5">
+            {c.rules.map((rule, i) => {
+              const ruleDone = todayDone.includes(i)
               return (
-                <span
-                  key={d}
-                  title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
-                  className="grid h-7 w-7 place-items-center rounded text-[9px]"
-                  style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
-                >
-                  {i + 1}
-                </span>
+                <li key={i}>
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                    <span className={ruleDone ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
+                    <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
+                  </label>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </div>
+      )}
+
+      {/* Stats block */}
+      <div className="mb-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+        <Stat label="Current streak" value={`${streak}`} icon="🔥" color="peach" />
+        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="🏅" color="yellow" />
+        <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
+        <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
+      </div>
+
+      {/* Calendar grid · collapsed by default so the daily check-in stays prominent. */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setCalOpen((o) => !o)}
+          aria-expanded={calOpen}
+          className="flex w-full items-center gap-1.5 text-sm font-medium text-subtext1 hover:text-text"
+        >
+          <span className="text-overlay0">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
+          Calendar
+          {!calOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        </button>
+        {calOpen && (
+          <>
+            <div className="mt-2 mb-2 flex items-center justify-end">
+              <div className="flex items-center gap-3 text-[10px] text-overlay0">
+                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
+                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
+                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
+              </div>
+            </div>
+            <div className="grid w-fit grid-cols-7 gap-1">
+              {Array.from({ length: c.durationDays }).map((_, i) => {
+                const d = addDays(c.startDate, i)
+                const complete = isDayComplete(data, c, d)
+                const isToday = d === today
+                const past = dayDiff(d, today) > 0
+                const bg = complete ? cat('green') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
+                return (
+                  <span
+                    key={d}
+                    title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
+                    className="grid h-7 w-7 place-items-center rounded text-[9px]"
+                    style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
+                  >
+                    {i + 1}
+                  </span>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
     </Card>
   )

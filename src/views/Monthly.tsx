@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Button, Card, Input, Textarea } from '../components/ui'
@@ -15,6 +16,7 @@ export function Monthly() {
   const { month: ym, setDay } = useCursor()
   const nav = useNav()
   const [geoBusy, setGeoBusy] = useState(false)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
 
   async function autoFill() {
     setGeoBusy(true)
@@ -152,6 +154,59 @@ export function Monthly() {
           </div>
         </Card>
 
+      {/* Location · Goals · Photo · 3 across, below the calendar */}
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        <Card title="Location" subtitle="Where are you this month?">
+          <Input
+            value={meta?.location ?? ''}
+            onChange={(e) => setMonthly(ym, { location: e.target.value })}
+            placeholder="e.g. Moab, Utah 🏜️"
+          />
+          {data.settings.weatherEnabled && (
+            <Button onClick={autoFill} className="mt-2 w-full">
+              {geoBusy ? 'Locating…' : '📍 Auto-fill'}
+            </Button>
+          )}
+        </Card>
+        <Card title="Goals" subtitle="What matters this month">
+          <Textarea
+            rows={3}
+            value={meta?.goals ?? ''}
+            onChange={(e) => setMonthly(ym, { goals: e.target.value })}
+            placeholder={'• Finish the trail map\n• Read 2 books'}
+          />
+        </Card>
+        <Card title="Photo of the month" subtitle="One image">
+          <ImageUpload
+            value={meta?.photo}
+            onChange={(photo) => setMonthly(ym, { photo })}
+            label="Upload photo"
+            className="mb-2"
+          />
+          <Input
+            value={meta?.photoCaption ?? ''}
+            onChange={(e) => setMonthly(ym, { photoCaption: e.target.value })}
+            placeholder="Caption…"
+          />
+        </Card>
+      </div>
+
+      {/* Month analytics · deep charts, collapsed by default below the calendar + inputs */}
+      {(monthEntries.length > 0 || monthlyTotal > 0) && (
+        <section className="space-y-5">
+          <button
+            type="button"
+            onClick={() => setAnalyticsOpen((o) => !o)}
+            aria-expanded={analyticsOpen}
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          >
+            <span className="text-overlay0">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="font-display text-base font-medium text-subtext1">Month analytics</span>
+            <span className="text-xs text-overlay0">· month pulse &amp; trailing-year rhythm</span>
+            {!analyticsOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          </button>
+          {analyticsOpen && (
+            <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
       {monthEntries.length > 0 && (
         <Card title="Month pulse" subtitle="The shape of this month — when you logged, what you logged, what got done"
@@ -273,43 +328,10 @@ export function Monthly() {
           </div>
         </Card>
       )}
-
-      {/* Location · Goals · Photo · 3 across, below the calendar */}
-      <div className="grid items-start gap-5 lg:grid-cols-3">
-        <Card title="Location" subtitle="Where are you this month?">
-          <Input
-            value={meta?.location ?? ''}
-            onChange={(e) => setMonthly(ym, { location: e.target.value })}
-            placeholder="e.g. Moab, Utah 🏜️"
-          />
-          {data.settings.weatherEnabled && (
-            <Button onClick={autoFill} className="mt-2 w-full">
-              {geoBusy ? 'Locating…' : '📍 Auto-fill'}
-            </Button>
+            </>
           )}
-        </Card>
-        <Card title="Goals" subtitle="What matters this month">
-          <Textarea
-            rows={3}
-            value={meta?.goals ?? ''}
-            onChange={(e) => setMonthly(ym, { goals: e.target.value })}
-            placeholder={'• Finish the trail map\n• Read 2 books'}
-          />
-        </Card>
-        <Card title="Photo of the month" subtitle="One image">
-          <ImageUpload
-            value={meta?.photo}
-            onChange={(photo) => setMonthly(ym, { photo })}
-            label="Upload photo"
-            className="mb-2"
-          />
-          <Input
-            value={meta?.photoCaption ?? ''}
-            onChange={(e) => setMonthly(ym, { photoCaption: e.target.value })}
-            placeholder="Caption…"
-          />
-        </Card>
-      </div>
+        </section>
+      )}
     </Page>
   )
 }

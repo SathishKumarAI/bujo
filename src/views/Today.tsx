@@ -38,81 +38,64 @@ export function Today() {
   const hasFlash = flashbacks.entries.length + flashbacks.memories.length > 0
 
   return (
-    <Page
-      aside={
-        <>
-          <Card title="Wellbeing" subtitle="Rate today 0–10">
-            <div className="space-y-4">
-              <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
-              <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
-              <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
-              <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
-            </div>
-            <div className="mt-4 border-t border-border pt-3">
-              <p className="mb-2 text-sm text-subtext1">Broke fast with</p>
-              <div className="flex gap-2">
-                <Button
-                  variant={metric?.fastBreak === 'food' ? 'primary' : 'ghost'}
-                  onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-                  className="inline-flex items-center gap-1.5"
-                >
-                  <Utensils size={14} /> Food
-                </Button>
-                <Button
-                  variant={metric?.fastBreak === 'drink' ? 'primary' : 'ghost'}
-                  onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-                  className="inline-flex items-center gap-1.5"
-                >
-                  <CupSoda size={14} /> Drink
-                </Button>
-              </div>
-            </div>
-          </Card>
+    <Page>
+      {/* ── 1) Today command centre: plan + coach lead, penalty only when relevant ─ */}
+      {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
+      {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
 
-          <FastingCard />
-
-          {hasFlash && !hidden.includes('onThisDay') && (
-            <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
-              <ul className="space-y-2 text-sm">
-                {flashbacks.memories.map((m) => (
-                  <li key={m.date} className="text-subtext1">
-                    <span className="text-overlay0">{m.date}</span> · ▲ {m.text}
-                  </li>
-                ))}
-                {flashbacks.entries.slice(0, 5).map((e) => (
-                  <li key={e.id} className="text-subtext1">
-                    <span className="text-overlay0">{e.date}</span> · {e.text}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-        </>
-      }
-    >
       {/* ── Coach: proactive "do this next" prompts from your data ── */}
       {date === todayISO() && <CoachCard />}
 
       {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
       {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
 
-      {/* ── Daily coverage: what you covered yesterday + the week ── */}
-      {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
-      {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
+      {/* ── 2) Daily actions: one unified habit block — boolean check-offs,
+             count/timer steppers, and at-risk streak chips sit together,
+             then Wellbeing logging and the gated Fasting card. ──────── */}
+      {date === todayISO() && (
+        <section className="flex flex-col gap-3">
+          {/* Quick-check today's check habits without leaving Today */}
+          {!hidden.includes('habits') && <TodayHabits />}
+          {/* Count/timer habits: +/- quick adjust */}
+          {!hidden.includes('habits') && <TodayCountHabits date={date} />}
+          {/* At-risk streak nudge: don't break a live streak */}
+          <AtRiskNudge date={date} />
+        </section>
+      )}
 
-      {/* ── Quick-check today's habits without leaving Today ──── */}
-      {date === todayISO() && !hidden.includes('habits') && <TodayHabits />}
+      {/* ── Wellbeing: mood/sleep/energy logging is a primary daily action ─ */}
+      <Card title="Wellbeing" subtitle="Rate today 0–10">
+        <div className="space-y-4">
+          <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
+          <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
+          <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
+          <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="mb-2 text-sm text-subtext1">Broke fast with</p>
+          <div className="flex gap-2">
+            <Button
+              variant={metric?.fastBreak === 'food' ? 'primary' : 'ghost'}
+              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Utensils size={14} /> Food
+            </Button>
+            <Button
+              variant={metric?.fastBreak === 'drink' ? 'primary' : 'ghost'}
+              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
+              className="inline-flex items-center gap-1.5"
+            >
+              <CupSoda size={14} /> Drink
+            </Button>
+          </div>
+        </div>
+      </Card>
 
-      {/* ── Count/timer habits: +/- quick adjust ──────────────── */}
-      {date === todayISO() && !hidden.includes('habits') && <TodayCountHabits date={date} />}
+      {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
+      <FastingCard />
 
-      {/* ── At-risk streak nudge: don't break a live streak ───── */}
-      {date === todayISO() && <AtRiskNudge date={date} />}
-
-      {/* ── Weekly-goal progress rings ────────────────────────── */}
-      {date === todayISO() && <WeeklyGoalRings date={date} />}
-
-      {/* ── Daily log (primary, above the fold) ─────────────────── */}
+      {/* ── 3) The day: Daily log (primary, above the fold) ─────── */}
       <Card
         title={prettyDay(date)}
         subtitle={
@@ -151,7 +134,7 @@ export function Today() {
         )}
       </Card>
 
-      {/* ── Secondary cards in a balanced grid (no tall scroll) ─── */}
+      {/* ── 4) Reflect (2-col): light daily journaling rituals ─── */}
       <div className="grid gap-5 sm:grid-cols-2">
         <Card title="Gratitude" subtitle="One thing you're grateful for today">
           <Input
@@ -194,10 +177,33 @@ export function Today() {
           </div>
         </Card>
 
-        <Card title="Stickers" subtitle="Decorate the day" collapsible defaultCollapsed>
-          <StickerBar date={date} />
-        </Card>
       </div>
+
+      {/* ── 5) This week (collapsed): weekly-goal progress rings ─── */}
+      {date === todayISO() && <WeeklyGoalRings date={date} />}
+
+      {/* ── 6) Memories (collapsed): on this day from earlier journals ─ */}
+      {hasFlash && !hidden.includes('onThisDay') && (
+        <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
+          <ul className="space-y-2 text-sm">
+            {flashbacks.memories.map((m) => (
+              <li key={m.date} className="text-subtext1">
+                <span className="text-overlay0">{m.date}</span> · ▲ {m.text}
+              </li>
+            ))}
+            {flashbacks.entries.slice(0, 5).map((e) => (
+              <li key={e.id} className="text-subtext1">
+                <span className="text-overlay0">{e.date}</span> · {e.text}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* ── 7) Decorate (collapsed): stickers at the very bottom ─── */}
+      <Card title="Stickers" subtitle="Decorate the day" collapsible defaultCollapsed>
+        <StickerBar date={date} />
+      </Card>
     </Page>
   )
 }
@@ -291,7 +297,7 @@ function WeeklyGoalRings({ date }: { date: string }) {
   const R = 16
   const C = 2 * Math.PI * R
   return (
-    <Card title="Weekly goals" subtitle="This week's completions vs your goal">
+    <Card title="Weekly goals" subtitle="This week's completions vs your goal" collapsible defaultCollapsed>
       <div className="flex flex-wrap gap-4">
         {habits.map((h) => {
           const { done, goal, pct } = weeklyGoalProgress(data, h, date, data.settings.weekStart ?? 0)

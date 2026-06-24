@@ -1,4 +1,5 @@
 import { Card } from '../components/ui'
+import { CollapsibleSection } from '../components/gym/CollapsibleSection'
 import { BULLET_LEGEND } from '../lib/bullets'
 import { cat } from '../lib/colors'
 
@@ -40,7 +41,10 @@ export function Help() {
         </div>
       </Card>
 
-      <Section
+      {/* Per-view help folded into one collapsed accordion · keeps the page
+          short, leading with the intro + cheat sheet above. */}
+      <CollapsibleSection title="Per-view guide" subtitle="What every screen does · tap to expand">
+        <Section
         title="Today"
         body="Your daily log. Add tasks/events/notes, rate mood, stress and sleep (0–10), mark how you broke your fast, and write one gratitude line and one daily memory. The 'On this day' card resurfaces entries from the same date in past months."
       />
@@ -100,6 +104,7 @@ export function Help() {
         title="Settings & backups"
         body="Switch between dark (Mocha) and light (Latte) themes, set your profile, and · importantly · export a JSON or Markdown backup. Because data lives only in your browser, export regularly so you never lose it. Import restores a backup on any device."
       />
+      </CollapsibleSection>
     </div>
   )
 }

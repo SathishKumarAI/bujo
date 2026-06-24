@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card, Input } from '../components/ui'
+import { CollapsibleSection } from '../components/gym/CollapsibleSection'
 import { Page } from '../components/shell/Page'
 import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'
@@ -16,22 +17,31 @@ import {
  */
 export function Pullups() {
   return (
-    <Page aside={<><PullupGuideCard /><AbilityLadderCard /></>}>
-      {/* The trackable program is the headline · check off days right here. */}
+    <Page>
+      {/* 1) The trackable program is the headline · check off days right here. */}
       <ProgramTracker only="pullup-zero" />
 
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <PullupWorkoutsCard />
-        <ProgressionsCard />
-      </div>
+      {/* 2) Your personalised training set (pulled in from the rail), with the
+          ability-ladder reference merged in beside the calculator it supports. */}
+      <PullupGuideCard />
+
+      {/* 3) Static reference · session formats + progressions, collapsed below. */}
+      <CollapsibleSection title="Reference" subtitle="Workout formats & progression exercises">
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <PullupWorkoutsCard />
+          <ProgressionsCard />
+        </div>
+      </CollapsibleSection>
     </Page>
   )
 }
 
-/** Reference: ability group → training set + daily/weekly volume targets. */
-function AbilityLadderCard() {
+/** Reference: ability group → training set + daily/weekly volume targets.
+ *  Rendered inside the training-set guide it supports. */
+function AbilityLadderTable() {
   return (
-    <Card title="Ability ladder" subtitle="Max strict pull-ups → what to train">
+    <div className="mt-4 border-t border-surface0 pt-3">
+      <p className="mb-2 text-xs text-subtext1">Ability ladder <span className="text-overlay0">· max strict pull-ups → what to train</span></p>
       <table className="w-full text-left text-xs">
         <thead>
           <tr className="text-overlay0">
@@ -52,7 +62,7 @@ function AbilityLadderCard() {
           ))}
         </tbody>
       </table>
-    </Card>
+    </div>
   )
 }
 
@@ -125,6 +135,7 @@ function PullupGuideCard() {
         <div className="flex justify-between border-t border-surface0 pt-1.5"><span className="text-overlay0">Daily</span><span className="text-subtext1">{a.daily}</span></div>
         <div className="flex justify-between"><span className="text-overlay0">Weekly</span><span className="text-subtext1">{a.weekly}</span></div>
       </div>
+      <AbilityLadderTable />
     </Card>
   )
 }

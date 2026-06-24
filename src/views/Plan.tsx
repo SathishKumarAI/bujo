@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
-import { CalendarPlus } from 'lucide-react'
+import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
 import { Star } from 'lucide-react'
 import { Button, Card, Empty, Input, Segmented } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -16,6 +16,8 @@ export function Plan() {
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date')
   const [showAllOverdue, setShowAllOverdue] = useState(false)
   const [openThread, setOpenThread] = useState<string | null>(null)
+  const [agingOpen, setAgingOpen] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -74,24 +76,35 @@ export function Plan() {
         ) : undefined}
       >
         {agingBuckets.length > 0 && (
-          <div className="mb-3" title={`Oldest overdue task: ${aging.oldestDays} days`}>
-            <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setAgingOpen((o) => !o)}
+              aria-expanded={agingOpen}
+              className="flex w-full items-center gap-1.5 text-xs text-overlay0 hover:text-subtext1"
+              title={`Oldest overdue task: ${aging.oldestDays} days`}
+            >
+              {agingOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
               <span>Aging</span>
-              <span>oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
-            </div>
-            <div className="flex h-2 overflow-hidden rounded-full bg-surface0">
-              {agingBuckets.map((b) => (
-                <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
-              ))}
-            </div>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-overlay0">
-              {agingBuckets.map((b) => (
-                <span key={b.key} className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat(b.color) }} />
-                  {b.label} <b style={{ color: cat(b.color) }}>{b.n}</b>
-                </span>
-              ))}
-            </div>
+              <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
+            </button>
+            {agingOpen && (
+              <>
+                <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-surface0">
+                  {agingBuckets.map((b) => (
+                    <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
+                  ))}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-overlay0">
+                  {agingBuckets.map((b) => (
+                    <span key={b.key} className="inline-flex items-center gap-1">
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat(b.color) }} />
+                      {b.label} <b style={{ color: cat(b.color) }}>{b.n}</b>
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
         {overdue.length === 0 ? (
@@ -183,6 +196,20 @@ export function Plan() {
         </Card>
       )}
 
+      <div>
+        <button
+          type="button"
+          onClick={() => setSetupOpen((o) => !o)}
+          aria-expanded={setupOpen}
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+        >
+          <span className="text-overlay0">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-base font-medium text-subtext1">Setup</span>
+          <span className="text-xs text-overlay0">· recurring rules &amp; calendar import</span>
+          {!setupOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        </button>
+        {setupOpen && (
+          <div className="mt-3 space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
@@ -244,6 +271,9 @@ export function Plan() {
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
         <p className="mt-2 text-xs text-overlay0">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
