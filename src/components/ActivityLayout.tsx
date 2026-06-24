@@ -1,4 +1,5 @@
-import { Flame, Star } from 'lucide-react'
+import { useState } from 'react'
+import { Flame, Star, GripVertical } from 'lucide-react'
 import type { Habit, HabitCategory, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
@@ -15,11 +16,12 @@ const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
  * classic month grid; reads the same store via the shared stats helpers so
  * completion/streaks stay consistent across layouts.
  *
- * TODO(BUJO-151): drag-to-reorder is classic-grid only; activity rows follow the
- * saved `order` but can't be reordered here yet.
+ * BUJO-151/175: drag-to-reorder works here too (grip handle per row), reusing the
+ * same `reorderHabits` store logic as the classic grid. Reorder is within a
+ * category (matching the classic grid); the grip appears on row hover.
  */
 export function ActivityLayout({
-  habits, data, today, onToggle, onSetValue, onEdit,
+  habits, data, today, onToggle, onSetValue, onEdit, onReorder,
 }: {
   habits: Habit[]
   data: JournalData
@@ -27,8 +29,13 @@ export function ActivityLayout({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
+  onReorder?: (category: HabitCategory, dragId: string, dropId: string) => void
 }) {
   const cats = CATEGORY_ORDER.filter((c) => habits.some((h) => h.category === c))
+  // Drag state is shared across categories; onDrop passes its own category so a
+  // habit can only land within the row it was lifted from.
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   return (
     <div className="space-y-4">
       {cats.map((category) => (
@@ -39,7 +46,17 @@ export function ActivityLayout({
               .filter((h) => h.category === category)
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
               .map((h) => (
-                <ActivityRow key={h.id} habit={h} data={data} today={today} onToggle={onToggle} onSetValue={onSetValue} onEdit={onEdit} />
+                <ActivityRow
+                  key={h.id} habit={h} data={data} today={today}
+                  onToggle={onToggle} onSetValue={onSetValue} onEdit={onEdit}
+                  reorder={onReorder ? {
+                    dragId, overId,
+                    onDragStart: () => setDragId(h.id),
+                    onDragEnd: () => { setDragId(null); setOverId(null) },
+                    onDragOver: () => setOverId(h.id),
+                    onDrop: () => { if (dragId) onReorder(category, dragId, h.id); setDragId(null); setOverId(null) },
+                  } : undefined}
+                />
               ))}
           </div>
         </div>
@@ -48,10 +65,20 @@ export function ActivityLayout({
   )
 }
 
+/** Drag-reorder wiring for a single activity row (omitted when read-only). */
+type RowReorder = {
+  dragId: string | null
+  overId: string | null
+  onDragStart: () => void
+  onDragEnd: () => void
+  onDragOver: () => void
+  onDrop: () => void
+}
+
 const WEEKS = 16
 
 function ActivityRow({
-  habit: h, data, today, onToggle, onSetValue, onEdit,
+  habit: h, data, today, onToggle, onSetValue, onEdit, reorder,
 }: {
   habit: Habit
   data: JournalData
@@ -59,6 +86,7 @@ function ActivityRow({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
   onEdit: (id: string) => void
+  reorder?: RowReorder
 }) {
   const type = h.type ?? 'check'
   const target = habitTarget(h)
@@ -77,9 +105,24 @@ function ActivityRow({
   const start = addDays(today, -(days - 1))
   const pad = fromISODay(start).getDay() // align first column to weekday
 
+  const dragging = reorder?.dragId === h.id
+  const dropTarget = reorder && reorder.overId === h.id && reorder.dragId !== h.id
   return (
-    <div className="flex items-center gap-3">
+    <div
+      className={`group flex items-center gap-3 rounded ${dropTarget ? 'outline-dashed outline-1 outline-mauve' : ''} ${dragging ? 'opacity-40' : ''}`}
+      onDragOver={reorder ? (e) => { if (reorder.dragId) { e.preventDefault(); reorder.onDragOver() } } : undefined}
+      onDrop={reorder ? (e) => { e.preventDefault(); reorder.onDrop() } : undefined}
+    >
       <div className="flex w-32 shrink-0 items-center gap-1 truncate">
+        {reorder && (
+          <span
+            draggable
+            onDragStart={reorder.onDragStart}
+            onDragEnd={reorder.onDragEnd}
+            title="Drag to reorder"
+            className="shrink-0 cursor-grab text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+          ><GripVertical size={11} /></span>
+        )}
         <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
         <button onClick={() => onEdit(h.id)} title={avoid ? `${h.name} · habit to avoid` : undefined} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
       </div>

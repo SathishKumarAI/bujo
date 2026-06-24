@@ -185,6 +185,7 @@ export function Trackers() {
             onToggle={toggleHabit}
             onSetValue={setHabitValue}
             onEdit={setEditing}
+            onReorder={reorderHabits}
           />
         ) : (
           <div className="overflow-x-auto">
