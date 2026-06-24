@@ -63,30 +63,26 @@ export function Focus() {
   const hrs = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
 
   return (
-    <Page
-      asideFirst
-      aside={
-        <>
-        <PomodoroCard />
-        <Card title="Log a session" subtitle="Coding / deep-work time">
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-              <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
-            </div>
-            <label className="block text-sm text-subtext1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
-            <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
-            <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
-              <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
-            </div>
-            <Button variant="primary" onClick={log} className="w-full">Log session</Button>
+    <Page>
+      {/* PRIMARY: timer + log first, before analytics (UX IA pass) */}
+      <PomodoroCard />
+      <Card title="Log a session" subtitle="Coding / deep-work time">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
           </div>
-        </Card>
-        </>
-      }
-    >
+          <label className="block text-sm text-subtext1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
+          <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
+          <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
+          </div>
+          <Button variant="primary" onClick={log} className="w-full">Log session</Button>
+        </div>
+      </Card>
+
       <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">

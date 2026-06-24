@@ -100,14 +100,19 @@ export function Today() {
       {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
       {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
 
-      {/* ── Quick-check today's habits without leaving Today ──── */}
-      {date === todayISO() && !hidden.includes('habits') && <TodayHabits />}
-
-      {/* ── Count/timer habits: +/- quick adjust ──────────────── */}
-      {date === todayISO() && !hidden.includes('habits') && <TodayCountHabits date={date} />}
-
-      {/* ── At-risk streak nudge: don't break a live streak ───── */}
-      {date === todayISO() && <AtRiskNudge date={date} />}
+      {/* ── Daily actions: one unified habit block — boolean check-offs,
+             count/timer steppers, and at-risk streak chips sit together,
+             not split into far-apart cards. ───────────────────────── */}
+      {date === todayISO() && (
+        <section className="flex flex-col gap-3">
+          {/* Quick-check today's check habits without leaving Today */}
+          {!hidden.includes('habits') && <TodayHabits />}
+          {/* Count/timer habits: +/- quick adjust */}
+          {!hidden.includes('habits') && <TodayCountHabits date={date} />}
+          {/* At-risk streak nudge: don't break a live streak */}
+          <AtRiskNudge date={date} />
+        </section>
+      )}
 
       {/* ── Weekly-goal progress rings ────────────────────────── */}
       {date === todayISO() && <WeeklyGoalRings date={date} />}

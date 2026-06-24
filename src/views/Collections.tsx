@@ -121,6 +121,23 @@ export function Collections() {
         </Card>
       )}
 
+      <Card
+        title="Brain-dump inbox"
+        subtitle={`${inbox.length} dateless item${inbox.length === 1 ? '' : 's'} to triage`}
+        className="md:col-span-2"
+        help="Rapid-captured entries with no day and no collection land here. Triage them: give one a day (edit it on Today) or check it off when it's handled."
+      >
+        {inbox.length === 0 ? (
+          <Empty>Inbox zero. Nothing dateless waiting to be sorted. ✨</Empty>
+        ) : (
+          <ul>
+            {inbox.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <Card title="Future log" subtitle="Tasks & events dated ahead of today">
         {future.length === 0 ? (
           <Empty>Nothing scheduled. Add a future-dated entry from any day.</Empty>
@@ -307,23 +324,6 @@ export function Collections() {
         ) : (
           <ul>
             {memories.map((e) => (
-              <EntryRow key={e.id} entry={e} />
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card
-        title="Brain-dump inbox"
-        subtitle={`${inbox.length} dateless item${inbox.length === 1 ? '' : 's'} to triage`}
-        className="md:col-span-2"
-        help="Rapid-captured entries with no day and no collection land here. Triage them: give one a day (edit it on Today) or check it off when it's handled."
-      >
-        {inbox.length === 0 ? (
-          <Empty>Inbox zero. Nothing dateless waiting to be sorted. ✨</Empty>
-        ) : (
-          <ul>
-            {inbox.map((e) => (
               <EntryRow key={e.id} entry={e} />
             ))}
           </ul>

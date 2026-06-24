@@ -80,26 +80,36 @@ export function Reading() {
         )}
       </div>
 
-      {/* Books finished per month · paces the yearly goal visibly */}
-      {byMonth.some((m) => m.count > 0) && (
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-            <CalendarDays size={16} className="text-green" /> Finished by month · {today.slice(0, 4)}
-          </h3>
-          <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
-            aria-label={`Books finished per month: ${byMonth.map((m) => `${m.label} ${m.count}`).join(', ')}`}>
-            {byMonth.map((m) => (
-              <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
-                <div className="flex w-full flex-1 items-end">
-                  <div className="w-full rounded-t" title={`${m.label}: ${m.count}`}
-                    style={{ height: `${m.count ? Math.max(8, (m.count / maxMonth) * 100) : 0}%`, background: m.count ? cat('green') : cat('surface1') }} />
-                </div>
-                <span className="text-[9px] text-overlay0">{m.label[0]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Add a book */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Book title"
+          onKeyDown={(e) => e.key === 'Enter' && add()}
+          className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+        <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)"
+          onKeyDown={(e) => e.key === 'Enter' && add()}
+          className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+        <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">
+          <Plus size={15} /> Add to shelf
+        </button>
+      </div>
+
+      {/* Shelves */}
+      <div className="grid gap-5 md:grid-cols-3">
+        {SHELVES.map((s) => {
+          const list = shelf(books, s.id)
+          const Icon = s.icon
+          return (
+            <div key={s.id} className="space-y-3">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
+                <span className="text-overlay0">({list.length})</span>
+              </h3>
+              {list.length === 0 && <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">Nothing here yet.</p>}
+              {list.map((b) => <BookCard key={b.id} book={b} />)}
+            </div>
+          )
+        })}
+      </div>
 
       {/* Stalled books nudge · pick back up or shelve */}
       {stale.length > 0 && (
@@ -118,6 +128,27 @@ export function Reading() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Books finished per month · paces the yearly goal visibly */}
+      {byMonth.some((m) => m.count > 0) && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            <CalendarDays size={16} className="text-green" /> Finished by month · {today.slice(0, 4)}
+          </h3>
+          <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
+            aria-label={`Books finished per month: ${byMonth.map((m) => `${m.label} ${m.count}`).join(', ')}`}>
+            {byMonth.map((m) => (
+              <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
+                <div className="flex w-full flex-1 items-end">
+                  <div className="w-full rounded-t" title={`${m.label}: ${m.count}`}
+                    style={{ height: `${m.count ? Math.max(8, (m.count / maxMonth) * 100) : 0}%`, background: m.count ? cat('green') : cat('surface1') }} />
+                </div>
+                <span className="text-[9px] text-overlay0">{m.label[0]}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -168,37 +199,6 @@ export function Reading() {
       )}
 
       <LearningLog />
-
-      {/* Add a book */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Book title"
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
-        <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)"
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
-        <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">
-          <Plus size={15} /> Add to shelf
-        </button>
-      </div>
-
-      {/* Shelves */}
-      <div className="grid gap-5 md:grid-cols-3">
-        {SHELVES.map((s) => {
-          const list = shelf(books, s.id)
-          const Icon = s.icon
-          return (
-            <div key={s.id} className="space-y-3">
-              <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
-                <span className="text-overlay0">({list.length})</span>
-              </h3>
-              {list.length === 0 && <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">Nothing here yet.</p>}
-              {list.map((b) => <BookCard key={b.id} book={b} />)}
-            </div>
-          )
-        })}
-      </div>
 
       <ReadLater />
     </div>

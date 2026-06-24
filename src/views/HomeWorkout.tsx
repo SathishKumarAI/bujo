@@ -48,63 +48,29 @@ export function HomeWorkout() {
   }
 
   return (
-    <Page
-      asideFirst
-      aside={
-        <>
-          <Card title={<span className="inline-flex items-center gap-2"><Dumbbell size={18} className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
-            {items.length === 0 ? (
-              <Empty>Tap “Add” on an exercise to build your session.</Empty>
-            ) : (
-              <div className="space-y-2">
-                {items.map((i) => (
-                  <div key={i.id} className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-sm text-subtext1">{i.name}</span>
-                    <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-xs" />
-                    <button onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-overlay0 hover:text-red">×</button>
-                  </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
-                </div>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
-                <Button variant="primary" onClick={logSession} className="w-full">Log workout</Button>
+    <Page>
+      {/* PRIMARY: build & log today's session first, before the library/history (UX IA pass) */}
+      <Card title={<span className="inline-flex items-center gap-2"><Dumbbell size={18} className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
+        {items.length === 0 ? (
+          <Empty>Tap “Add” on an exercise to build your session.</Empty>
+        ) : (
+          <div className="space-y-2">
+            {items.map((i) => (
+              <div key={i.id} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-sm text-subtext1">{i.name}</span>
+                <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-xs" />
+                <button onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-overlay0 hover:text-red">×</button>
               </div>
-            )}
-          </Card>
+            ))}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
+            </div>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
+            <Button variant="primary" onClick={logSession} className="w-full">Log workout</Button>
+          </div>
+        )}
+      </Card>
 
-          <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
-            {sessions.length === 0 ? (
-              <Empty>No home workouts logged yet.</Empty>
-            ) : (
-              <ul className="divide-y divide-surface0">
-                {sessions.slice(0, 12).map((w) => {
-                  const open = openId === w.id
-                  return (
-                    <li key={w.id} className="group py-2 text-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-text">
-                          <span className="text-subtext1">{prettyDay(w.date)}</span>
-                          <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                          <span className="ml-1 text-[10px] text-overlay0">{open ? '▾' : '▸'}</span>
-                        </button>
-                        <button onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                      </div>
-                      {open && (
-                        <ul className="mt-1.5 ml-1 space-y-0.5">
-                          {w.sets.map((s, i) => <li key={i} className="text-xs text-subtext0">• {s}</li>)}
-                          {w.notes && <li className="mt-1 text-xs text-overlay0 italic">“{w.notes}”</li>}
-                        </ul>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </Card>
-        </>
-      }
-    >
       <Card title="Exercise library" subtitle="No equipment · tap a demo to watch proper form">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {MUSCLES.map((m) => (
@@ -133,6 +99,36 @@ export function HomeWorkout() {
             </div>
           ))}
         </div>
+      </Card>
+
+      <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
+        {sessions.length === 0 ? (
+          <Empty>No home workouts logged yet.</Empty>
+        ) : (
+          <ul className="divide-y divide-surface0">
+            {sessions.slice(0, 12).map((w) => {
+              const open = openId === w.id
+              return (
+                <li key={w.id} className="group py-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-text">
+                      <span className="text-subtext1">{prettyDay(w.date)}</span>
+                      <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
+                      <span className="ml-1 text-[10px] text-overlay0">{open ? '▾' : '▸'}</span>
+                    </button>
+                    <button onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  </div>
+                  {open && (
+                    <ul className="mt-1.5 ml-1 space-y-0.5">
+                      {w.sets.map((s, i) => <li key={i} className="text-xs text-subtext0">• {s}</li>)}
+                      {w.notes && <li className="mt-1 text-xs text-overlay0 italic">“{w.notes}”</li>}
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </Card>
     </Page>
   )

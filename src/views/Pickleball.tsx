@@ -318,6 +318,45 @@ export function Pickleball() {
         )}
       </Card>
 
+      <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+          <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
+          <label className="block text-sm text-subtext1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <label className="block text-sm text-subtext1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
+          <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
+          {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
+          <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
+          <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
+          <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
+          <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
+          <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
+            <option value="">Scoring</option>
+            <option value="11">to 11</option>
+            <option value="15">to 15</option>
+            <option value="21">to 21</option>
+            <option value="rally21">rally 21</option>
+          </select>
+        </div>
+        <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
+        <Button variant="primary" onClick={log} className="mt-3 w-full">Log session</Button>
+      </Card>
+
+      <Card title="History" subtitle="Tap Edit to fix a score · × to remove" collapsible>
+        {sessions.length === 0 ? (
+          <Empty>No sessions logged yet.</Empty>
+        ) : (
+          <ul className="divide-y divide-surface0">
+            {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
+              <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
+            ))}
+          </ul>
+        )}
+        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
+      </Card>
+
       {/* ── DUPR rating tracker ── */}
       <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time · watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
@@ -360,45 +399,6 @@ export function Pickleball() {
             </ul>
           </>
         )}
-      </Card>
-
-      <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-          <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
-          <label className="block text-sm text-subtext1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
-          <label className="block text-sm text-subtext1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
-          <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
-          <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
-          {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
-          <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
-          <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
-          <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
-          <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
-          <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
-            <option value="">Scoring</option>
-            <option value="11">to 11</option>
-            <option value="15">to 15</option>
-            <option value="21">to 21</option>
-            <option value="rally21">rally 21</option>
-          </select>
-        </div>
-        <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
-        <Button variant="primary" onClick={log} className="mt-3 w-full">Log session</Button>
-      </Card>
-
-      <Card title="History" subtitle="Tap Edit to fix a score · × to remove" collapsible>
-        {sessions.length === 0 ? (
-          <Empty>No sessions logged yet.</Empty>
-        ) : (
-          <ul className="divide-y divide-surface0">
-            {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
-              <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
-            ))}
-          </ul>
-        )}
-        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
 
       {/* ── SECONDARY analytics · grouped under collapsible sections so the

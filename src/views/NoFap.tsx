@@ -310,89 +310,8 @@ export function NoFap() {
           <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
         </div>
 
-        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
-        {/* Insights · motivational / progress cards · default OPEN */}
-        <CollapsibleSection
-          title="Insights & progress"
-          subtitle="Streak vs. best, self-efficacy, money & time saved"
-          icon={<ShieldCheck size={18} className="text-green" />}
-          defaultOpen
-        >
-          <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
-          {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
-          {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
-          {stats.totalClean > 0 && (
-            <TimeReclaimedCard reclaimed={reclaimed} totalClean={stats.totalClean} hoursPerDay={hoursPerDay} onHoursPerDayChange={setHoursPerDay} />
-          )}
-          <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
-          {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
-        </CollapsibleSection>
-
-        {/* Deep analytics · trends, distributions, heatmaps · default COLLAPSED */}
-        <CollapsibleSection
-          title="Deep analytics"
-          subtitle="Trends, intensity, clean windows, high-risk hours & days"
-          icon={<Hourglass size={18} className="text-teal" />}
-        >
-          {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
-          {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
-          {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
-          {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
-          {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
-          {(s.addictions ?? []).length > 0 && <RecoveryPortfolioCard portfolio={portfolio} />}
-        </CollapsibleSection>
-
-        {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
-        <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
-            <Button variant="primary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
-          </div>
-          {(data.nofap.addictions ?? []).length === 0 ? (
-            <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
-          ) : (
-            <ul className="space-y-2">
-              {(data.nofap.addictions ?? []).map((a) => {
-                const st = addictionStats(a, today)
-                const reset = a.relapses.some((r) => r.date === today)
-                const aSaved = moneySaved(st.totalClean, a.costPerDay)
-                return (
-                  <li key={a.id} className="group rounded-lg border border-surface0 bg-base px-3 py-2.5">
-                    <div className="flex items-center gap-3">
-                      <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="truncate font-medium text-text">{a.name}</span>
-                          <span className="text-xs text-overlay0">best {st.best}d</span>
-                          {a.costPerDay && aSaved > 0 && <span className="text-xs" style={{ color: cat('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
-                        </div>
-                        <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
-                      </div>
-                      <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
-                      <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                    </div>
-                    {/* #123 per-addiction cost/day → money saved */}
-                    <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-overlay1">
-                      <span>{currency}/day</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.5"
-                        value={a.costPerDay ?? ''}
-                        onChange={(e) => setAddictionCost(a.id, e.target.value === '' ? undefined : Number(e.target.value))}
-                        placeholder="0"
-                        className="w-20 !py-1 text-xs"
-                        aria-label={`Cost per day for ${a.name}`}
-                      />
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
-
-        {/* Urge surfing · pick what it was, log the win with date + time */}
+        {/* Urge surfing · pick what it was, log the win with date + time.
+            Promoted above analytics: the primary "cope & log" action. */}
         <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win · it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
@@ -492,6 +411,88 @@ export function NoFap() {
             </ul>
           )}
           {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-xs text-overlay0">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
+        </Card>
+
+        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
+        {/* Insights · motivational / progress cards · default OPEN */}
+        <CollapsibleSection
+          title="Insights & progress"
+          subtitle="Streak vs. best, self-efficacy, money & time saved"
+          icon={<ShieldCheck size={18} className="text-green" />}
+          defaultOpen
+        >
+          <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
+          {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
+          {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
+          {stats.totalClean > 0 && (
+            <TimeReclaimedCard reclaimed={reclaimed} totalClean={stats.totalClean} hoursPerDay={hoursPerDay} onHoursPerDayChange={setHoursPerDay} />
+          )}
+          <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
+          {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
+        </CollapsibleSection>
+
+        {/* Deep analytics · trends, distributions, heatmaps · default COLLAPSED */}
+        <CollapsibleSection
+          title="Deep analytics"
+          subtitle="Trends, intensity, clean windows, high-risk hours & days"
+          icon={<Hourglass size={18} className="text-teal" />}
+        >
+          {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
+          {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
+          {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
+          {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
+          {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
+          {(s.addictions ?? []).length > 0 && <RecoveryPortfolioCard portfolio={portfolio} />}
+        </CollapsibleSection>
+
+        {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
+        <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
+            <Button variant="primary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
+          </div>
+          {(data.nofap.addictions ?? []).length === 0 ? (
+            <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
+          ) : (
+            <ul className="space-y-2">
+              {(data.nofap.addictions ?? []).map((a) => {
+                const st = addictionStats(a, today)
+                const reset = a.relapses.some((r) => r.date === today)
+                const aSaved = moneySaved(st.totalClean, a.costPerDay)
+                return (
+                  <li key={a.id} className="group rounded-lg border border-surface0 bg-base px-3 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="truncate font-medium text-text">{a.name}</span>
+                          <span className="text-xs text-overlay0">best {st.best}d</span>
+                          {a.costPerDay && aSaved > 0 && <span className="text-xs" style={{ color: cat('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
+                        </div>
+                        <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
+                      </div>
+                      <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
+                      <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    </div>
+                    {/* #123 per-addiction cost/day → money saved */}
+                    <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-overlay1">
+                      <span>{currency}/day</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        value={a.costPerDay ?? ''}
+                        onChange={(e) => setAddictionCost(a.id, e.target.value === '' ? undefined : Number(e.target.value))}
+                        placeholder="0"
+                        className="w-20 !py-1 text-xs"
+                        aria-label={`Cost per day for ${a.name}`}
+                      />
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </Card>
 
         {/* Trigger plans · if-then for each addiction's trigger points */}

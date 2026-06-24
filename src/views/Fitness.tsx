@@ -93,58 +93,53 @@ export function Fitness() {
   const shown = showAll ? workouts : workouts.slice(0, 6)
 
   return (
-    <Page
-      asideFirst
-      aside={
-        <>
-        <Card title="Log a workout" right={workouts.length > 0 ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat last</Button> : undefined}>
-          <div className="space-y-3">
-            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Activity
-              <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text">
-                {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
-              </select>
-            </label>
-            <MetricFields f={f} set={set} distUnit={dist} />
-            {f.distance && f.duration && <p className="text-xs text-overlay0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
-            <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
-            <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
-            <Button variant="primary" onClick={submit} className="w-full">Log workout</Button>
-          </div>
-        </Card>
+    <Page>
+      <Card title="Log a workout" right={workouts.length > 0 ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat last</Button> : undefined}>
+        <div className="space-y-3">
+          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+          <label className="block text-sm text-subtext1">Activity
+            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text">
+              {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
+            </select>
+          </label>
+          <MetricFields f={f} set={set} distUnit={dist} />
+          {f.distance && f.duration && <p className="text-xs text-overlay0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
+          <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
+          <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
+          <Button variant="primary" onClick={submit} className="w-full">Log workout</Button>
+        </div>
+      </Card>
 
-        <Card
-          title="History"
-          subtitle="Tap a workout to edit"
-          right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
-        >
-          {workouts.length === 0 ? (
-            <Empty>No workouts logged yet.</Empty>
-          ) : (
-            <ul className="divide-y divide-surface0">
-              {shown.map((w) => {
-                const p = pace(w.distanceKm, w.durationMin, dist)
-                return (
-                  <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
-                    <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                      <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
-                      <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
-                    </button>
-                    <div className="flex shrink-0 items-center gap-2 text-xs text-subtext0">
-                      {w.durationMin != null && <span>{w.durationMin}m</span>}
-                      {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
-                      {p && <span className="text-sky">{p}</span>}
-                      <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
-        </>
-      }
-    >
+      <Card
+        title="History"
+        subtitle="Tap a workout to edit"
+        right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
+      >
+        {workouts.length === 0 ? (
+          <Empty>No workouts logged yet.</Empty>
+        ) : (
+          <ul className="divide-y divide-surface0">
+            {shown.map((w) => {
+              const p = pace(w.distanceKm, w.durationMin, dist)
+              return (
+                <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
+                  <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+                    <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
+                    <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-2 text-xs text-subtext0">
+                    {w.durationMin != null && <span>{w.durationMin}m</span>}
+                    {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
+                    {p && <span className="text-sky">{p}</span>}
+                    <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
+
       <Card title="This week" subtitle="Active-minutes goal" defer>
         <div className="flex items-center gap-5">
           <GoalRing value={weekMin} goal={goal} />
