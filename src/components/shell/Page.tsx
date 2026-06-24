@@ -19,20 +19,21 @@ export function Page({
   className?: string
 }) {
   if (!aside) {
-    return <div className={cn('page-enter mx-auto flex w-full max-w-[1400px] flex-col gap-5', className)}>{children}</div>
+    return <div className={cn('page-enter mx-auto flex w-full max-w-[1400px] flex-col gap-4 sm:gap-5', className)}>{children}</div>
   }
   return (
     <div
       className={cn(
-        'mx-auto grid w-full max-w-[1400px] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]',
+        'mx-auto grid w-full max-w-[1400px] items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]',
         className,
       )}
     >
-      <div className={cn('page-enter flex min-w-0 flex-col gap-5', asideFirst && 'order-last xl:order-none')}>{children}</div>
-      <aside className={cn('flex flex-col gap-5', asideFirst && 'order-first xl:order-none')}>{aside}</aside>
+      <div className={cn('page-enter flex min-w-0 flex-col gap-4 sm:gap-5', asideFirst && 'order-last xl:order-none')}>{children}</div>
+      <aside className={cn('flex flex-col gap-4 sm:gap-5', asideFirst && 'order-first xl:order-none')}>{aside}</aside>
     </div>
   )
 }
 
 // Re-export so views can grab the cursor from one shell entrypoint.
+// eslint-disable-next-line react-refresh/only-export-components -- shell re-export by design
 export { useCursor } from './cursor'

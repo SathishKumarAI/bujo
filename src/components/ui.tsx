@@ -17,7 +17,7 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 // eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
 export const CARD = {
   /** The card container (border, radius, background, padding, 3-D press, hover group). */
-  container: 'card-3d group/card min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-6',
+  container: 'card-3d group/card min-w-0 rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-5 lg:p-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl',
@@ -67,7 +67,7 @@ export function Card({
       className={`${CARD.container} ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
-        <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-4'}`}>
+        <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-3 sm:mb-4'}`}>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-lg leading-tight font-medium text-text sm:text-xl">{title}</h2>}
