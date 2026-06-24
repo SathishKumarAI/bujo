@@ -1,5 +1,39 @@
 # Worklog
 
+## 2026-06-24 — Activity drag-reorder + pending-ticket audit (BUJO-232)
+
+**Summary:** Worked the pending-ticket board autonomously. Most `🔜`/`◑` items
+turned out to be **stale-but-done** — verified against the code and corrected the
+statuses — leaving one genuine gap, which I built.
+
+**Built:**
+- **BUJO-151/175** — drag-to-reorder habits in the Trackers **activity** layout.
+  It was the last holdout (classic grid already had it). Threaded the existing
+  `reorderHabits` store logic into `ActivityLayout` via an optional `reorder`
+  prop, added a hover grip per row (mirrors the classic grid), reorder within a
+  category on drop. Verified live: all 8 activity rows expose a "Drag to reorder"
+  grip (DevTools snapshot).
+
+**Audit — statuses corrected to ✅ (already shipped, never flipped):**
+- **R2-5** — `StatTile`/`ChartCard` exist in `ui.tsx` (shipped as P-14), adopted
+  app-wide; the 3 "ad-hoc" greps were logo wordmarks, not stat tiles.
+- **R2-11** — every `ResponsiveContainer` chart already carries a `role="img"`
+  aria-label; only the `axe-core` CI job stays deferred.
+- **P-6 / V3-D radar** — `CategoryConsistencyCard` (category-consistency radar)
+  is live in Trackers → "This week / Trends".
+
+**Verified:** `tsc -b` + `vite build` clean (index 639 KB) · `eslint` clean on
+touched files · live-checked the activity layout in Chrome.
+
+**Still genuinely open (need a steer / infra):** R2-7 unified `Goal` *data model*
+(view roll-up shipped as A-02); R2-10 accounts + E2E sync (needs backend);
+P-7 custom-collections UI; BUJO-176 same-unit combined totals (unclear intent).
+
+**Follow-ups:**
+- [ ] Open/merge the activity-drag-reorder PR; deploy.
+
+---
+
 ## 2026-06-24 — Implement UX card-layout across all views (BUJO-231, PR #59)
 
 **Summary:** Implemented the BUJO-229 card-arrangement recommendation
