@@ -15,6 +15,7 @@ import type {
   Challenge,
   CyclePoint,
   DevSession,
+  TypingSession,
   DailyMetric,
   Entry,
   BodyMetric,
@@ -204,6 +205,8 @@ interface Store {
   addDevSession: (s: Omit<DevSession, 'id'>) => void
   updateDevSession: (id: string, patch: Partial<DevSession>) => void
   removeDevSession: (id: string) => void
+  addTypingSession: (s: Omit<TypingSession, 'id'>) => void
+  removeTypingSession: (id: string) => void
   // recurrences
   addRecurrence: (r: Omit<Recurrence, 'id'>) => void
   updateRecurrence: (id: string, patch: Partial<Recurrence>) => void
@@ -792,6 +795,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeDevSession: (id) =>
         patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).filter((s) => s.id !== id) })),
+
+      addTypingSession: (s) =>
+        patch((d) => ({ ...d, typingSessions: [...(d.typingSessions ?? []), { id: uid('typ'), ...s }] })),
+
+      removeTypingSession: (id) =>
+        patch((d) => ({ ...d, typingSessions: (d.typingSessions ?? []).filter((s) => s.id !== id) })),
 
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),

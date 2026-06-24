@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Code2, Flame } from 'lucide-react'
+import {
+  CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from 'recharts'
+import { Code2, Flame, Keyboard } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Slider, StatTile } from '../components/ui'
+import { Button, Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
 import { cat } from '../lib/colors'
@@ -10,6 +13,9 @@ import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
   minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday,
 } from '../lib/focus'
+import {
+  typingWeekMinutes, typingGoalProgress, bestWpm, avgWpm, wpmTrend, typingStreak, isWeekday, DEFAULT_TYPING_GOAL_MIN,
+} from '../lib/typing'
 
 const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
 
@@ -243,6 +249,8 @@ export function Focus() {
         </Card>
       )}
 
+      <TypingPractice />
+
       <Card title="History">
         {sessions.length === 0 ? (
           <Empty>No sessions yet. Log your first coding block.</Empty>
@@ -260,6 +268,151 @@ export function Focus() {
 
 function Stat({ label, value, color, icon }: { label: string; value: string; color: string; icon?: React.ReactNode }) {
   return <StatTile label={label} value={value} color={color} icon={icon} />
+}
+
+const TYPING_SOURCES = ['Monkeytype', 'keybr', 'TypingClub', '10FastFingers', 'TypeRacer', 'Other'] as const
+const PRACTICE_SITES: { name: string; url: string; color: string }[] = [
+  { name: 'Monkeytype', url: 'https://monkeytype.com', color: 'mauve' },
+  { name: 'keybr', url: 'https://www.keybr.com', color: 'sky' },
+  { name: 'TypingClub', url: 'https://www.typingclub.com', color: 'green' },
+  { name: '10FastFingers', url: 'https://10fastfingers.com', color: 'peach' },
+  { name: 'TypeRacer', url: 'https://play.typeracer.com', color: 'pink' },
+]
+const typingBlank = { date: todayISO(), durationMin: '', wpm: '', accuracy: '', source: 'Monkeytype' as string }
+
+// Typing-practice tracker (mirrors the dev-session log) — logged inside the
+// Focus view since speed-typing drills are deep-work practice.
+function TypingPractice() {
+  const { data, addTypingSession, removeTypingSession } = useJournal()
+  const [f, setF] = useState(typingBlank)
+  const set = (p: Partial<typeof typingBlank>) => setF((c) => ({ ...c, ...p }))
+  const today = todayISO()
+
+  const sessions = [...(data.typingSessions ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const goalMin = data.settings.typingGoalMin ?? DEFAULT_TYPING_GOAL_MIN
+  const goal = typingGoalProgress(data, today, goalMin)
+  const weekday = isWeekday(today)
+  const weekMin = typingWeekMinutes(data, today)
+  const best = bestWpm(data)
+  const avg = avgWpm(data)
+  const streak = typingStreak(data, today)
+  const trend = wpmTrend(data, 14, today).filter((d) => d.has)
+  const wpmCount = (data.typingSessions ?? []).filter((s) => s.wpm != null).length
+
+  const hrs = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
+
+  function log() {
+    if (!f.durationMin) return
+    addTypingSession({
+      date: f.date,
+      durationMin: Number(f.durationMin),
+      wpm: f.wpm ? Number(f.wpm) : undefined,
+      accuracy: f.accuracy ? Number(f.accuracy) : undefined,
+      source: f.source || undefined,
+    })
+    setF({ ...typingBlank })
+  }
+
+  return (
+    <Card title="Typing practice" subtitle="Speed & accuracy drills">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        {/* Log form */}
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="20" className="mt-1" /></label>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm text-subtext1">WPM<Input type="number" value={f.wpm} onChange={(e) => set({ wpm: e.target.value })} placeholder="75" className="mt-1" /></label>
+            <label className="block text-sm text-subtext1">Accuracy %<Input type="number" value={f.accuracy} onChange={(e) => set({ accuracy: e.target.value })} placeholder="96" className="mt-1" /></label>
+          </div>
+          <label className="block text-sm text-subtext1">Source
+            <select
+              value={f.source}
+              onChange={(e) => set({ source: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-text outline-none focus:border-mauve"
+            >
+              {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </label>
+          <Button variant="primary" onClick={log} className="w-full">Add session</Button>
+
+          {/* Today's goal progress */}
+          <div className="rounded-lg border border-surface0 bg-base px-3 py-2.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-subtext1">
+                {weekday ? "Today's goal" : 'Bonus today'} · {hrs(goal.minutes)} / {hrs(goal.goalMin)}
+              </span>
+              <span className={`text-xs ${goal.met ? 'text-green' : 'text-overlay0'}`}>
+                {goal.met ? '✓ met' : weekday ? `${goal.pct}%` : 'optional'}
+              </span>
+            </div>
+            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface0">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${goal.pct}%`, background: goal.met ? cat('green') : weekday ? cat('mauve') : cat('teal') }}
+              />
+            </div>
+            {!weekday && <p className="mt-1 text-[11px] text-overlay0">Weekends are off-schedule — practice counts as bonus and won't break your streak.</p>}
+          </div>
+        </div>
+
+        {/* Stats + trend */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+            <Stat label="Best WPM" value={best ? String(best) : '—'} color="mauve" icon={<Keyboard size={14} />} />
+            <Stat label="Avg WPM" value={avg ? String(avg) : '—'} color="sky" />
+            <Stat label="This week" value={hrs(weekMin)} color="green" />
+            <Stat label="Streak" value={String(streak)} color="peach" icon={<Flame size={14} />} />
+          </div>
+
+          {wpmCount >= 2 && trend.length >= 1 && (
+            <div className="h-32" role="img" aria-label={`Line chart of best WPM per practiced day: ${trend.map((d) => `${d.date} ${d.wpm}`).join(', ')}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Line type="monotone" dataKey="wpm" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Practice sites */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-overlay0">Practice:</span>
+        {PRACTICE_SITES.map((site) => (
+          <a key={site.name} href={site.url} target="_blank" rel="noreferrer noopener" className="transition-opacity hover:opacity-80">
+            <Pill color={site.color}>{site.name}</Pill>
+          </a>
+        ))}
+      </div>
+
+      {/* Recent sessions */}
+      {sessions.length === 0 ? (
+        <Empty>No typing sessions yet. Log a quick drill.</Empty>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {sessions.slice(0, 12).map((s) => (
+            <li key={s.id} className="group flex items-center justify-between rounded-lg border border-border bg-background p-2.5 text-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-medium text-text">{s.source || 'Typing'}</span>
+                <span className="text-xs text-overlay0">{prettyDay(s.date)}</span>
+                <span className="text-subtext0">{hrs(s.durationMin)}</span>
+                {s.wpm != null && <span style={{ color: cat('mauve') }}>{s.wpm} wpm</span>}
+                {s.accuracy != null && <span style={{ color: cat('green') }}>{s.accuracy}% acc</span>}
+              </div>
+              <button onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-overlay0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
 }
 
 const hrsLabel = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)

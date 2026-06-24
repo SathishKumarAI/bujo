@@ -60,6 +60,7 @@ export function emptyJournal(): JournalData {
     challengeLog: {},
     habitSkips: {},
     devSessions: [],
+    typingSessions: [],
     books: [],
     readLinks: [],
     customGoals: [],
