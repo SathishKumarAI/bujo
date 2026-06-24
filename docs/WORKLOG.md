@@ -1,5 +1,28 @@
 # Worklog
 
+## 2026-06-24 — Feature batch: habit detail, year-jump, responsive cards, sidebar toggle
+
+Four user-requested features (PRs #66–#69), each branched/verified/merged:
+
+- **BUJO-237 Per-habit detail view** — tap a habit → modal with an 18-week day
+  heatmap + stat tiles (streak/clean, best-ever, 30/90-day %, best weekday, perfect
+  weeks) + Edit handoff. Heatmap-led, no line graph (asked the user; they chose
+  heatmap+stats). `components/trackers/HabitDetail.tsx`.
+- **BUJO-238 Year-wise date jump** — the shared date-nav label opens a year ◀▶ +
+  12-month grid (native date field for day-views), so you leap to any month/year
+  instead of stepping ‹ ›. Lands on every month-nav view via the shared TopBar.
+- **BUJO-239 Responsive card density** — researched: CSS breakpoints (not the JS
+  device hook) are the right spacing lever (no reflow, pre-hydration). Tightened
+  `CARD.container` / header / `Page` gaps → denser on phones, roomy on desktop.
+- **BUJO-240 Sidebar auto-hide toggle** — exposed the existing edge-hover auto-hide
+  in Settings. User asked "does hover work on mobile?" — verified **no dependency**:
+  the auto-hide is all `md:`-gated, mobile uses the always-on BottomNav + tap-drawer.
+
+**Verified:** every PR `tsc -b` + build clean, eslint clean on touched files,
+675 tests green, live-checked in Chrome (incl. 390px mobile density + theme switch).
+
+---
+
 ## 2026-06-24 — Theme-aware charts + page-width consistency
 
 **Theme-aware charts (AUD-6):** charts were stuck on Mocha colors under the new
