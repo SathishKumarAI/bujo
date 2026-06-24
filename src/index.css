@@ -116,6 +116,14 @@ body,
   border-radius: 4px;
 }
 
+/* Figure/chart counter-scale: when the user bumps the global text size we scale
+   the rem root, which would also enlarge chart geometry. `.fig-fixed` zooms the
+   figure back by 1/scale so charts keep their natural size (the user asked for
+   bigger text, not bigger figures). zoom is supported in all current browsers. */
+.fig-fixed {
+  zoom: calc(1 / var(--font-scale, 1));
+}
+
 /* ── 3D depth utilities ─────────────────────────────────────────────────── */
 .card-3d {
   background-image: linear-gradient(

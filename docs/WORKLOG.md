@@ -1,5 +1,37 @@
 # Worklog
 
+## 2026-06-24 — Feature/card audit + global text size (Epic A11Y-FONT)
+
+**Summary:** Ran a 3-reviewer panel audit over the feature views/cards, **verified
+every finding by hand**, fixed the survivors, and built a global text-size control.
+
+**Audit (`docs/FEATURE-CARD-AUDIT.md`):** dispatched Correctness / UI-consistency /
+UX-a11y reviewers in parallel, then read each cited line and classified it. ~60% of
+raw findings were **false positives or by-design** — e.g. the "P0 streak bug" was
+correct per the data model (a relapse resets `startedOn`, so no relapse is after it);
+the "0-count habit wins" claim was wrong (`now > bestCount`, strict); Trackers layout
+toggles already had aria-labels. Documented all of it — reasoning + the false
+positives — so we don't re-chase them.
+
+**Fixed (verified-real):**
+- **FONT-1/2 — global text size (S/M/L/XL):** `Settings.fontScale` scales the rem
+  root in `store`, so all token-based text + controls grow/shrink across every screen.
+  Charts/figures held at natural size via a `.fig-fixed` counter-scale
+  (`zoom: calc(1 / var(--font-scale))`) on `ChartCard` — the user wanted bigger text,
+  not bigger figures. Control in Settings → Appearance; included in Reset-appearance.
+- **AUD-1** `challenges.percentComplete` guards `durationDays === 0` (no NaN ring).
+- **AUD-2** shared `rechartsTooltip` de-dups the literal across Stats/Cycle/Pickleball/Gym (×5).
+- **AUD-3** a11y: Cycle flag `aria-pressed`/`aria-label`; Coaching week chevron `aria-expanded`/`aria-label`.
+
+**Verified:** `tsc -b` + `vite build` clean · **675 tests green** · `eslint` clean on
+all touched files · live in Chrome — XL scales the whole UI; Stats charts hold size.
+
+**Deferred (logged in the audit doc):** Heatmap/Monthly aria, **theme-aware charts**
+(`cat()` returns static Mocha hexes → charts ignore the new themes; needs `cat()` →
+CSS vars), save/confirmation toasts, Focus custom charts → `ChartCard`.
+
+---
+
 ## 2026-06-24 — Settings page audit & UX overhaul (Epic SETTINGS)
 
 **Summary:** Audited the Settings page (`docs/SETTINGS-AUDIT.md`), wrote a

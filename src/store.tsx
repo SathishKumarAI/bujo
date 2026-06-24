@@ -276,6 +276,16 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', apply)
   }, [data.settings.theme])
 
+  // Global text size → scale the rem root so all token-based text/spacing grows
+  // or shrinks together. `--font-scale` lets figure/chart cards counter-scale
+  // (`.fig-fixed`) so charts keep their natural geometry.
+  useEffect(() => {
+    const scale = data.settings.fontScale ?? 1
+    const root = document.documentElement
+    root.style.setProperty('--font-scale', String(scale))
+    root.style.fontSize = scale === 1 ? '' : `${16 * scale}px`
+  }, [data.settings.fontScale])
+
   // Optional accent override → drives every `--primary`/`bg-primary` use.
   useEffect(() => {
     const root = document.documentElement

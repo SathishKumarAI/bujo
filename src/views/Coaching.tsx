@@ -100,7 +100,7 @@ export function Coaching() {
                     <span className="text-sm font-medium text-text">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
                     <span className="block truncate text-xs text-overlay1">{w.skills}</span>
                   </button>
-                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="shrink-0 text-overlay0">{isOpen ? '▴' : '▾'}</button>
+                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-overlay0">{isOpen ? '▴' : '▾'}</button>
                 </div>
                 {isOpen && (
                   <div className="space-y-2 border-t border-surface0 px-3 py-2.5 text-sm">

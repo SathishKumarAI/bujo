@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { monthDays, prettyMonth } from '../lib/date'
 import { Card, Input } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
-import { cat } from '../lib/colors'
+import { cat, rechartsTooltip } from '../lib/colors'
 
 const FLAGS = ['period', 'spotting', 'ovulation', 'pms', 'cramps']
 
@@ -54,6 +54,8 @@ export function Cycle() {
                           <button
                             key={f}
                             onClick={() => toggleFlag(d, f)}
+                            aria-pressed={on}
+                            aria-label={`${f}${on ? ' (on)' : ''}`}
                             className="rounded-full px-2 py-0.5"
                             style={{ background: on ? cat('red') : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}
                           >
@@ -81,7 +83,7 @@ export function Cycle() {
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
               <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
               <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+              <Tooltip contentStyle={rechartsTooltip} />
               <Line type="monotone" dataKey="temp" stroke={cat('maroon')} dot={{ r: 2 }} connectNulls strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>

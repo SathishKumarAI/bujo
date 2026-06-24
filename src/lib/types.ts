@@ -395,6 +395,9 @@ export interface Settings {
   theme: ThemeName
   /** Optional accent override (Catppuccin token name); defaults to mauve. */
   accent?: string
+  /** Global UI text scale (root font-size multiplier). 1 = default. Charts/figures
+   *  are held at their natural size via the `.fig-fixed` counter-scale. */
+  fontScale?: number
   tempUnit: TempUnit
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit

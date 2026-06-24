@@ -113,6 +113,7 @@ export function progressDay(data: JournalData, c: Challenge, today: string): num
  * not by contradicting the headline percentage.
  */
 export function percentComplete(data: JournalData, c: Challenge, today: string): number {
+  if (!c.durationDays) return 0 // guard 0-duration (imported/legacy) → avoid NaN in the ProgressRing
   return Math.round((completedDays(data, c, today) / c.durationDays) * 100)
 }
 
