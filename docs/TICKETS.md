@@ -514,3 +514,15 @@ view smoke) and deployed live to bujo-journal.vercel.app.
 **Still held (need infra/dep decision):** real backend (account-delete, multi-device
 server sync), Tauri-native plugins (tray/notifications/autostart/native-fs),
 Apple-Health/Obsidian importers. Listed in `FEATURE-BACKLOG-500.md`.
+
+## Epic UX-3 — appearance, navigation & quick-open (2026-06-24, appended)
+
+User-requested polish pass: more themes, a tidier sidebar, and VS Code-style
+quick-open.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-233 | **5 selectable themes** — add `vscode` (VS Code Dark Modern: flat editor neutrals, low-fatigue) + `dawn` (warm cream light) to the existing mocha/latte/neon; each is a CSS-var override block | ✅ |
+| BUJO-234 | **Theme picker** — swatch grid in Settings → Journal feel (was a binary TopBar toggle only); command palette lists every theme | ✅ |
+| BUJO-235 | **Sidebar regroup** — split the overloaded 10-item Health group into Fitness / Sports / Habits / Wellbeing; split Insights&Stats into Library / Review (no group is unwieldy now) | ✅ |
+| BUJO-236 | **⌘P / Ctrl-P quick-open** — VS Code-style "go to page", alias of the ⌘K command palette | ✅ |

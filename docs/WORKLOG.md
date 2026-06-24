@@ -1,5 +1,33 @@
 # Worklog
 
+## 2026-06-24 — Themes, sidebar regroup & ⌘P quick-open (UX-3, BUJO-233–236)
+
+**Summary:** User-requested appearance + navigation pass. Two new themes (now 5
+selectable), a real theme picker, a tidier sidebar, and VS Code-style quick-open.
+
+**Shipped:**
+- **5 themes** (BUJO-233) — added `vscode` (VS Code Dark Modern: flat #1f1f1f
+  editor neutrals, soft #d4d4d4 ink, syntax-color accents — tuned for low-fatigue
+  reading) and `dawn` (warm cream light: #faf3e7 paper, warm-brown ink, amber
+  accent) alongside mocha/latte/neon. Each is a `:root[data-theme=…]` CSS-var
+  override; the semantic shadcn tokens follow automatically, so one block re-skins
+  every view. `ThemeName` extended; store already applied any value.
+- **Theme picker** (BUJO-234) — swatch grid in Settings → Journal feel (base /
+  surface / accent strip per theme), replacing the binary TopBar toggle as the
+  full control. Command palette also lists every theme.
+- **Sidebar regroup** (BUJO-235) — the Health group held **10** items; split into
+  job-based groups: Journal · **Fitness** · **Sports** · **Habits** · **Wellbeing**
+  · **Library** · **Review** (Insights&Stats also split). No group is unwieldy now.
+- **⌘P quick-open** (BUJO-236) — `⌘P`/`Ctrl-P` opens the command palette (VS Code
+  "go to page"), alias of `⌘K`. The palette already does fuzzy "Go to <view>".
+
+**Verified:** `tsc -b` + `vite build` clean · `eslint` clean on the lines I added
+(one pre-existing set-state-in-effect warning in CommandPalette is untouched debt)
+· live-checked in Chrome — new sidebar groups render, and switching to VS Code
+(flat dark) and Dawn (warm cream) re-skins the whole app correctly.
+
+---
+
 ## 2026-06-24 — Activity drag-reorder + pending-ticket audit (BUJO-232)
 
 **Summary:** Worked the pending-ticket board autonomously. Most `🔜`/`◑` items
