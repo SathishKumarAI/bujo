@@ -3,11 +3,12 @@ import {
   Radar, RadarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
   XAxis, YAxis, ZAxis,
 } from 'recharts'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize2, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { Maximize2, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Segmented } from '../components/ui'
+import { CollapsibleSection as Section } from '../components/trackers/CollapsibleSection'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
