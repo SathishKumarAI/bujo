@@ -12,7 +12,7 @@ import { CollapsibleSection as Section } from '../components/trackers/Collapsibl
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
-import { cat } from '../lib/colors'
+import { cat, rechartsTooltip } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
@@ -21,7 +21,7 @@ import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } 
 import { workoutSplitCounts } from '../lib/stats'
 import { sleepDebt, focusSleepCorrelation } from '../lib/correlations'
 
-const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
+const tip = rechartsTooltip
 
 export function Stats() {
   const { data } = useJournal()

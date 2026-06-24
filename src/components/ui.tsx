@@ -202,7 +202,7 @@ export function ChartCard({
   // area in the modal so the chart truly enlarges.
   return (
     <Card title={title} subtitle={subtitle} right={right} className={className} enlargeable>
-      <div className={`${height} w-full`} role="img" aria-label={label}>
+      <div className={`${height} w-full fig-fixed`} role="img" aria-label={label}>
         {children}
       </div>
     </Card>

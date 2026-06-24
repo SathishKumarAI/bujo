@@ -29,3 +29,12 @@ export function cat(name: string): string {
 export const HABIT_COLORS = [
   'mauve', 'pink', 'red', 'peach', 'yellow', 'green', 'teal', 'sky', 'blue', 'lavender',
 ]
+
+/** Shared recharts <Tooltip contentStyle> — one source of truth instead of the
+ *  same literal repeated across Stats / Cycle / Pickleball / Gym. */
+export const rechartsTooltip = {
+  background: '#181825',
+  border: '1px solid #313244',
+  borderRadius: 8,
+  color: '#cdd6f4',
+}

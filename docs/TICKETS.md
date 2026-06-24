@@ -540,3 +540,18 @@ the tab nav was a cramped vertical rail.
 | SET-5 | Shared `Disclosure` collapsible primitive (de-dup 3 ad-hoc toggles) | ✅ |
 | SET-9 | **Horizontal pill tab bar** replacing the stacked/clipped rail — all sections visible, content full-width (user feedback) | ✅ |
 | SET-3 | ~~Settings search box~~ | ✗ removed per user feedback (built, then reverted) |
+
+## Epic A11Y-FONT — feature/card audit + global text size (2026-06-24, appended)
+
+Panel audit (3 reviewers) → verified by hand (~60% were false-positive/by-design;
+see `docs/FEATURE-CARD-AUDIT.md`), then fixed the survivors + built a text-size control.
+
+| ID | Title | Status |
+|---|---|---|
+| FONT-1 | **Global text size** (S/M/L/XL) — scales the rem root so all text/controls grow across every screen; `Settings.fontScale`, applied in `store`, control in Appearance + in Reset-appearance | ✅ |
+| FONT-2 | **Figures excluded** — `.fig-fixed` counter-scale (`zoom: 1/var(--font-scale)`) on `ChartCard` keeps charts/figures at natural size (user: "not for the figure cards") | ✅ |
+| AUD-1 | `challenges.percentComplete` guards `durationDays === 0` (no NaN ring) | ✅ |
+| AUD-2 | Shared `rechartsTooltip` (de-dup the literal across Stats/Cycle/Pickleball/Gym ×5) | ✅ |
+| AUD-3 | a11y: Cycle flag buttons `aria-pressed`/`aria-label`; Coaching week chevron `aria-expanded`/`aria-label` | ✅ |
+| AUD-4 | Audit doc with every finding + verification verdict + reasoning (`FEATURE-CARD-AUDIT.md`) | ✅ |
+| AUD-5 | Deferred: Heatmap/Monthly aria, theme-aware charts (`cat()` → CSS vars), save-toasts, Focus→ChartCard | 🔜 |

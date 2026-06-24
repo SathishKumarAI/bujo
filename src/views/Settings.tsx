@@ -229,6 +229,15 @@ export function Settings() {
             })}
           </div>
         </div>
+        <div className="mb-3 border-b border-border pb-3">
+          <p className="mb-2 text-sm text-subtext1">Text size</p>
+          <Segmented
+            value={s.fontScale ?? 1}
+            onChange={(v) => setSettings({ fontScale: v })}
+            options={[{ value: 0.9, label: 'S' }, { value: 1, label: 'M' }, { value: 1.1, label: 'L' }, { value: 1.25, label: 'XL' }]}
+          />
+          <p className="mt-1 text-xs text-overlay0">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
+        </div>
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
           <Toggle label="Dot-grid paper texture" on={s.paperMode} onChange={(v) => setSettings({ paperMode: v })} />
@@ -275,7 +284,7 @@ export function Settings() {
         <div className="mt-3 border-t border-border pt-3">
           {/* SET-4: one-tap return to the default look. */}
           <Button
-            onClick={() => { if (confirm('Reset appearance to defaults? (theme, accent, paper & dashboard toggles — your data is untouched.)')) setSettings({ theme: 'mocha', accent: undefined, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
+            onClick={() => { if (confirm('Reset appearance to defaults? (theme, accent, paper & dashboard toggles — your data is untouched.)')) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
             className="inline-flex items-center gap-1.5"
           >
             <RefreshCw size={14} /> Reset appearance to defaults
