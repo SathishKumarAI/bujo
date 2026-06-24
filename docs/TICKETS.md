@@ -166,11 +166,11 @@ IDs are stable references for commits and PRs.
 
 | ID | Title | Status |
 |---|---|---|
-| BUJO-90 | Passcode lock + client-side encryption (Web Crypto) | 🔜 |
+| BUJO-90 | Passcode lock + client-side encryption (Web Crypto) | ✅ (shipped as R2-1: `LockScreen.tsx` + `lib/crypto.ts`, AES-GCM/PBKDF2 at rest) |
 | BUJO-91 | Opt-in accounts + E2E-encrypted cloud sync | 🔜 |
 | BUJO-92 | Command palette (Cmd/Ctrl-K) | ✅ |
-| BUJO-93 | Custom free-form collections UI | 🔜 |
-| BUJO-94 | Chart text-alternatives + axe-core CI | 🔜 |
+| BUJO-93 | Custom free-form collections UI | ✅ (Collections view: `addCollection`/`removeCollection`, "New collection", index) |
+| BUJO-94 | Chart text-alternatives + axe-core CI | ◑ (text-alts done — every chart has a `role="img"` aria-label; only the `axe-core` CI job stays deferred, needs CI wiring) |
 
 ## Epic R — Layout redesign (2026-06)
 
@@ -229,8 +229,8 @@ Page-by-page enhancement pass. Full audit in `docs/redesign/06-app-audit-and-enh
 | P-4 | Side-by-side cards to cut scrolling (Fitness Totals+PBs, Focus stats+chart) | ✅ |
 | P-5 | Cloud storage — verified: own-folder / Google Drive / GitHub gist (Settings → Data & Cloud) | ✅ |
 | P-6 | Trackers category radar chart | ✅ (`CategoryConsistencyCard`, in Trackers "This week / Trends") |
-| P-7 | Custom-collections UI (BUJO-93) | 🔜 |
-| P-8 | Passcode + client-side encryption (BUJO-90) | 🔜 |
+| P-7 | Custom-collections UI (BUJO-93) | ✅ (see BUJO-93) |
+| P-8 | Passcode + client-side encryption (BUJO-90) | ✅ (see BUJO-90 / R2-1) |
 | P-9 | Accounts + E2E cloud sync (BUJO-91, needs backend) | 🔜 |
 
 ## Epic R2 — Roadmap (scoped 2026-06-12)
@@ -387,7 +387,7 @@ Three features shipped in one working session, plus follow-ups queued.
 | BUJO-149 | Habit **activity-heatmap** layout + classic/activity switcher (persisted in `Settings.trackerLayout`) | ✅ |
 | BUJO-150 | Expanded habit presets (timer/rating examples: Run, Stretch, Focus, Mood, Energy, Steps, Coffee, Vitamins, Journal, No sugar) | ✅ |
 | BUJO-151 | Drag-to-reorder in the activity view (classic-grid only today; rows honor saved `order`) | ✅ |
-| BUJO-152 | Guest (view-only) + Google sign-in (secure storage) auth split, with per-page data security model | 🔜 |
+| BUJO-152 | Guest (view-only) + Google sign-in (secure storage) auth split, with per-page data security model | ✅ (built, PR #6; Google button gated on the external Supabase provider switch) |
 
 Shared internals: `habitDoneOn` / `habitValueOn` / `habitIntensity` / `habitTarget` /
 `nextHabitValue` extracted to `stats.ts` as the single source of truth so completion,
