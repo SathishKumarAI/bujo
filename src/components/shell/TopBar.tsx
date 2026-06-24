@@ -11,9 +11,11 @@ import {
 import { useJournal } from '../../store'
 import { useCursor } from './cursor'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
-import { addDays, prettyDay, prettyMonth, todayISO, ymOf } from '../../lib/date'
+import { addDays, prettyDay, prettyMonth, ymOf } from '../../lib/date'
 import { AccountMenu } from './AccountMenu'
 import { FeedbackButton } from '../feedback/FeedbackButton'
+import { DateJumpPicker } from './DateJumpPicker'
+import { useState } from 'react'
 
 function shiftMonth(ym: string, delta: number): string {
   const [y, mo] = ym.split('-').map(Number)
@@ -36,6 +38,7 @@ export function TopBar({
 }) {
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const { day, setDay, month, setMonth } = useCursor()
+  const [pickerOpen, setPickerOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const recs = recommendations(data)
   const zoom = data.settings.zoom ?? 1
@@ -72,7 +75,7 @@ export function TopBar({
       )}
 
       {chrome.dateNav && (
-        <div className="ml-2 flex items-center gap-1">
+        <div className="relative ml-2 flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -84,7 +87,10 @@ export function TopBar({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(todayISO()) : setMonth(ymOf(todayISO())))}
+            aria-haspopup="dialog"
+            aria-expanded={pickerOpen}
+            title="Jump to month / year"
+            onClick={() => setPickerOpen((o) => !o)}
           >
             {chrome.dateNav === 'day' ? prettyDay(day) : prettyMonth(month)}
           </Button>
@@ -96,6 +102,16 @@ export function TopBar({
           >
             <ChevronRight size={16} />
           </Button>
+          {pickerOpen && (
+            <DateJumpPicker
+              mode={chrome.dateNav}
+              month={month}
+              day={day}
+              onPickMonth={setMonth}
+              onPickDay={setDay}
+              onClose={() => setPickerOpen(false)}
+            />
+          )}
         </div>
       )}
 

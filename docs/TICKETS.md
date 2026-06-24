@@ -563,3 +563,4 @@ see `docs/FEATURE-CARD-AUDIT.md`), then fixed the survivors + built a text-size 
 | ID | Title | Status |
 |---|---|---|
 | BUJO-237 | **Per-habit detail view** — tapping a habit opens a focused modal: 18-week day heatmap + stat tiles (streak/clean, best-ever, 30/90-day %, best weekday, perfect weeks) + "Edit settings" handoff. Heatmap-led, no line graph (user choice). `components/trackers/HabitDetail.tsx`; wired from all Trackers layouts | ✅ |
+| BUJO-238 | **Year-wise date jump** — the shared date-nav label opens a picker (year ◀▶ + 12-month grid; native date field for day-views) so you can leap to any month/year instead of stepping ‹ › one at a time. Lands on every month-nav view (Today/Monthly/Trackers/Stats/Cycle/Insights) via the shared TopBar. `components/shell/DateJumpPicker.tsx` | ✅ |
