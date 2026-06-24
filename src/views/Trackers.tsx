@@ -36,6 +36,7 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
   { name: 'Run', emoji: '🏃', category: 'movement', color: 'green', type: 'timer', target: 30, unit: 'min' },
   { name: 'Stretch', emoji: '🤸', category: 'movement', color: 'teal', type: 'timer', target: 10, unit: 'min' },
   { name: 'Focus', emoji: '🎯', category: 'wellness', color: 'mauve', type: 'timer', target: 90, unit: 'min' },
+  { name: 'Typing practice', emoji: '⌨️', category: 'wellness', color: 'sapphire', type: 'timer', target: 60, unit: 'min' },
   { name: 'Mood', emoji: '😊', category: 'wellness', color: 'yellow', type: 'rating' },
   { name: 'Energy', emoji: '⚡', category: 'wellness', color: 'peach', type: 'rating' },
   { name: 'Steps', emoji: '👟', category: 'movement', color: 'sapphire', type: 'count', target: 10000, unit: 'steps' },

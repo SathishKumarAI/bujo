@@ -486,3 +486,26 @@ Mined Strong / HarambeFit / lovable.dev / Habitify / Bearable / Streaks / an ADH
 | BUJO-218 | a11y deferred items · FriendsCard/ProgramTracker/TagManager aria-labels, ProgramTracker 32px pills, Cycle active-flag contrast | ✅ done (2026-06-22) |
 | BUJO-219 | Remove dead `BottomNav.onQuickAdd` prop (declared/passed, unused) | ✅ done (2026-06-22) |
 | BUJO-220 | Docs drift · expand `uml.mdx` data-model class diagram; fix FEATURE_GUIDE bottom-nav line + add HomeWorkout section | ✅ done (2026-06-22) |
+
+## Epic BACKLOG-BUILD — 2026-06-22/23 (appended)
+
+Large autonomous build + ship + deploy run. ~147 features built from the 572-item
+backlog, plus perf/UX/test health work. All verified (tsc/vitest/eslint/build +
+view smoke) and deployed live to bujo-journal.vercel.app.
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| BUJO-221 | Generate 572-feature ranked backlog → `FEATURE-BACKLOG-500.md` (10-agent fan-out, scored) | ✅ |
+| BUJO-222 | Build top-10 + batches 1–4 + 2 data-model batches ≈ 147 features | ✅ (#48,#50–#55) |
+| BUJO-223 | Account change-password UI (wire existing `updatePassword`) | ✅ (#49) |
+| BUJO-224 | P0 perf — lazy-load all non-landing views; index **947KB→642KB** | ✅ (#56) |
+| BUJO-225 | Extract ~44 cards from 4 bloated views into components + collapsible density sections | ✅ (#56) |
+| BUJO-226 | View smoke tests — `npm run smoke` boots all 23 views in headless Chrome | ✅ (#56) |
+| BUJO-227 | Typing-practice tracker in Focus (WPM, 1hr weekday goal, streak, trend, practice-site links) + habit preset | ✅ (#57) |
+| BUJO-228 | 4× production deploys via `ship.sh`, each verified live (HTTP 200 + smoke) | ✅ |
+| BUJO-229 | UX/IA card-arrangement recommendation → `docs/UX-CARD-LAYOUT.csv` (+ .md) for review | 🔜 review |
+| BUJO-230 | Reusable prompt playbooks: `prompts/08-backlog-fanout-and-build.md`, `prompts/feature-prompt-template.md` | ✅ |
+
+**Still held (need infra/dep decision):** real backend (account-delete, multi-device
+server sync), Tauri-native plugins (tray/notifications/autostart/native-fs),
+Apple-Health/Obsidian importers. Listed in `FEATURE-BACKLOG-500.md`.
