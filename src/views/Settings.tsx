@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, SlidersHorizontal, UserRound, Palette, Bell, Database, ChevronDown, ChevronRight } from 'lucide-react'
+import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, SlidersHorizontal, UserRound, Palette, Bell, Database, ChevronDown, ChevronRight, RefreshCw, Cloud } from 'lucide-react'
 import { useJournal } from '../store'
 import { Button, Card, Input, Segmented, StatTile } from '../components/ui'
 import { cat } from '../lib/colors'
@@ -40,13 +40,36 @@ function download(filename: string, text: string, mime = 'application/json') {
   URL.revokeObjectURL(url)
 }
 
+/** Self-managed collapsible settings section (SET-5) — one disclosure primitive
+ *  instead of the three ad-hoc toggle buttons this page used to repeat. */
+function Disclosure({ title, subtitle, defaultOpen = false, children }: {
+  title: string; subtitle?: string; defaultOpen?: boolean; children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <section className="space-y-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+      >
+        <span className="text-overlay0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="font-display text-base font-medium text-subtext1">{title}</span>
+        {subtitle && <span className="text-xs text-overlay0">· {subtitle}</span>}
+        {!open && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+      </button>
+      {open && children}
+    </section>
+  )
+}
+
 export function Settings() {
   const { data, setSettings, replaceAll, setMetric } = useJournal()
   const fileRef = useRef<HTMLInputElement>(null)
   const csvRef = useRef<HTMLInputElement>(null)
   const verifyRef = useRef<HTMLInputElement>(null)
-  const [advancedSyncOpen, setAdvancedSyncOpen] = useState(false)
-  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [tab, setTab] = useState('profile')
 
   function onVerifyBackup(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -119,7 +142,7 @@ export function Settings() {
     reader.readAsText(file)
   }
 
-  const tabClass = 'gap-1.5 whitespace-nowrap lg:w-full lg:justify-start lg:py-2'
+  const tabClass = 'gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-2 text-sm text-subtext0 hover:text-text data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-text data-[state=active]:shadow-sm'
   return (
     <Page>
       {/* Designed header · sets the page apart from a plain card stack. */}
@@ -133,16 +156,18 @@ export function Settings() {
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="lg:flex lg:items-start lg:gap-6">
-        {/* Sidebar rail on desktop; a scrollable row on mobile. */}
-        <TabsList className="mb-5 flex h-auto w-full justify-start gap-1 overflow-x-auto bg-secondary lg:sticky lg:top-4 lg:mb-0 lg:w-52 lg:shrink-0 lg:flex-col lg:items-stretch lg:gap-1 lg:bg-transparent lg:p-0">
+      <Tabs value={tab} onValueChange={setTab}>
+        {/* Horizontal pill bar — every section visible at once, wraps on narrow
+            screens. No sidebar rail, no clipped scroller. */}
+        <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-start gap-1.5 bg-transparent p-0">
           <TabsTrigger value="profile" className={tabClass}><UserRound size={15} /> Profile</TabsTrigger>
-          <TabsTrigger value="feel" className={tabClass}><Palette size={15} /> Journal feel</TabsTrigger>
+          <TabsTrigger value="feel" className={tabClass}><Palette size={15} /> Appearance</TabsTrigger>
           <TabsTrigger value="reminders" className={tabClass}><Bell size={15} /> Reminders</TabsTrigger>
-          <TabsTrigger value="data" className={tabClass}><Database size={15} /> Data &amp; Cloud</TabsTrigger>
+          <TabsTrigger value="sync" className={tabClass}><Cloud size={15} /> Sync &amp; privacy</TabsTrigger>
+          <TabsTrigger value="data" className={tabClass}><Database size={15} /> Data</TabsTrigger>
         </TabsList>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
         <TabsContent value="profile" className="max-w-2xl">
       <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
@@ -247,6 +272,15 @@ export function Settings() {
             })}
           </div>
         </div>
+        <div className="mt-3 border-t border-border pt-3">
+          {/* SET-4: one-tap return to the default look. */}
+          <Button
+            onClick={() => { if (confirm('Reset appearance to defaults? (theme, accent, paper & dashboard toggles — your data is untouched.)')) setSettings({ theme: 'mocha', accent: undefined, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
+            className="inline-flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> Reset appearance to defaults
+          </Button>
+        </div>
       </Card>
         </TabsContent>
 
@@ -270,6 +304,25 @@ export function Settings() {
           </div>
         </div>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="sync">
+          {/* Recommended path: account + E2E cloud sync, plus at-rest passcode. */}
+          <div className="space-y-5">
+            <AccountCard />
+            <BujoCloudCard />
+            <PasscodeCard />
+          </div>
+          {/* Advanced · BYO-storage / self-host, collapsed to cut option overload. */}
+          <div className="mt-5">
+            <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage">
+              <div className="space-y-5">
+                <SelfHostCard />
+                <CloudStorage />
+                <DriveSync />
+              </div>
+            </Disclosure>
+          </div>
         </TabsContent>
 
         <TabsContent value="data">
@@ -339,57 +392,62 @@ export function Settings() {
           <p className="mt-1 text-xs text-overlay0">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
         </div>
         {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
-        <div className="mt-3 border-t border-border pt-3">
-          <p className="mb-2 text-xs text-overlay0">Export a section as CSV (for spreadsheets):</p>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
-            <Button onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
-            <Button onClick={() => download(`bujo-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
-            <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
-            <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
-            {(data.devSessions?.length ?? 0) > 0 && <Button onClick={() => download(`bujo-focus-${todayISO()}.csv`, devSessionsCsv(data), 'text/csv')}>Focus sessions</Button>}
-            <Button onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
-            <Button onClick={() => download(`bujo-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
-            {s.nofapEnabled && <Button onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
-          </div>
-          {data.collections.length > 0 && (
+        {/* SET-2: power-user exports fold away so Export/Import JSON stays the hero. */}
+        <div className="mt-3 space-y-3 border-t border-border pt-3">
+          <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
+              <Button onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
+              <Button onClick={() => download(`bujo-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
+              <Button onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
+              <Button onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+              {(data.devSessions?.length ?? 0) > 0 && <Button onClick={() => download(`bujo-focus-${todayISO()}.csv`, devSessionsCsv(data), 'text/csv')}>Focus sessions</Button>}
+              <Button onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
+              <Button onClick={() => download(`bujo-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
+              {s.nofapEnabled && <Button onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
+            </div>
+            {data.collections.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-1 text-xs text-overlay0">Export one collection's entries as CSV:</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.collections.map((c) => (
+                    <Button key={c.id} onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
+                      {c.icon} {c.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-2">
-              <p className="mb-1 text-xs text-overlay0">Export one collection's entries as CSV:</p>
-              <div className="flex flex-wrap gap-2">
-                {data.collections.map((c) => (
-                  <Button key={c.id} onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
-                    {c.icon} {c.name}
-                  </Button>
-                ))}
+              <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
+              <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
+            </div>
+          </Disclosure>
+          <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
+            <div className="space-y-2">
+              <div>
+                <Button onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
+                <p className="mt-1 text-xs text-overlay0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
+              </div>
+              <div>
+                <Button onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
+                <p className="mt-1 text-xs text-overlay0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
+              </div>
+              <div>
+                <Button onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
+                <p className="mt-1 text-xs text-overlay0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
-          )}
-          <div className="mt-2">
-            <Button onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
-            <p className="mt-1 text-xs text-overlay0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
-          </div>
-          <div className="mt-2">
-            <Button onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
-            <p className="mt-1 text-xs text-overlay0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
-          </div>
-          <div className="mt-2">
-            <Button onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
-            <p className="mt-1 text-xs text-overlay0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
-          </div>
-          <div className="mt-2">
-            <Button onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
-            <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
-          </div>
-          <div className="mt-3 border-t border-border pt-3">
-            <p className="mb-2 text-xs text-overlay0">Backup integrity:</p>
+          </Disclosure>
+          <Disclosure title="Backup integrity" subtitle="checksum & verify a file">
             <div className="flex flex-wrap gap-2">
               <Button onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Download size={14} /> Export checksummed backup</Button>
               <Button onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>
             <p className="mt-1 text-xs text-overlay0">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
-          </div>
-          <p className="mt-3 text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
+          </Disclosure>
+          <p className="text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
 
@@ -428,55 +486,13 @@ export function Settings() {
         </p>
       </Card>
           </div>
-          <div className="mt-6">
-            <p className="mb-3 text-xs font-medium tracking-wide text-overlay0 uppercase">Account, sync & privacy</p>
-            {/* Recommended path: account + E2E cloud sync, plus at-rest passcode. */}
-            <div className="space-y-5">
-              <AccountCard />
-              <BujoCloudCard />
-              <PasscodeCard />
-            </div>
-            {/* Advanced sync · the BYO-storage / self-host options, collapsed to cut option overload. */}
-            <section className="mt-5 space-y-5">
-              <button
-                type="button"
-                onClick={() => setAdvancedSyncOpen((o) => !o)}
-                aria-expanded={advancedSyncOpen}
-                className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
-              >
-                <span className="text-overlay0">{advancedSyncOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-                <span className="font-display text-base font-medium text-subtext1">Advanced sync</span>
-                <span className="text-xs text-overlay0">· self-host &amp; bring-your-own storage</span>
-                {!advancedSyncOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
-              </button>
-              {advancedSyncOpen && (
-                <div className="space-y-5">
-                  <SelfHostCard />
-                  <CloudStorage />
-                  <DriveSync />
-                </div>
-              )}
-            </section>
-          </div>
-
           {/* Journal summary · read-only coverage analytics, collapsed at the bottom. */}
           {(() => {
             const sum = dataSummary(data)
             if (sum.totalRecords === 0) return null
             return (
               <section className="mt-6 space-y-5">
-                <button
-                  type="button"
-                  onClick={() => setSummaryOpen((o) => !o)}
-                  aria-expanded={summaryOpen}
-                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
-                >
-                  <span className="text-overlay0">{summaryOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-                  <span className="font-display text-base font-medium text-subtext1">Journal summary</span>
-                  <span className="text-xs text-overlay0">· the span and shape of everything you've tracked</span>
-                  {!summaryOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
-                </button>
-                {summaryOpen && (
+                <Disclosure title="Journal summary" subtitle="the span and shape of everything you've tracked">
                   <Card title="Journal summary" subtitle="The span and shape of everything you've tracked">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
@@ -504,7 +520,7 @@ export function Settings() {
                     )}
                     <p className="mt-2 text-xs text-overlay0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
                   </Card>
-                )}
+                </Disclosure>
               </section>
             )
           })()}

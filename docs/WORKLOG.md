@@ -1,5 +1,33 @@
 # Worklog
 
+## 2026-06-24 — Settings page audit & UX overhaul (Epic SETTINGS)
+
+**Summary:** Audited the Settings page (`docs/SETTINGS-AUDIT.md`), wrote a
+dedicated backlog, and rebuilt the worst parts. Mid-build the user steered twice:
+drop the search box and kill the stacked tab rail — both done.
+
+**Shipped:**
+- **SET-1 — tab split:** the Data tab held ~10 cards. Moved Account / Cloud sync /
+  Passcode / Advanced-sync into a new **Sync & privacy** tab; renamed "Journal
+  feel" → **Appearance**. Now 5 focused tabs.
+- **SET-2 — backup grouping:** Export/Import JSON stays the hero; the CSV exports,
+  calendar `.ics` feeds, and checksum/verify fold into collapsed `Disclosure`s.
+- **SET-9 — pill tab bar (user feedback):** replaced the cramped, clipping
+  vertical rail with a **horizontal pill bar** — every section visible at once,
+  wraps on narrow screens, content full-width below. "Easy to get the view."
+- **SET-4 — reset appearance:** one button restores theme/accent/realism/dashboard
+  defaults.
+- **SET-5 — `Disclosure` primitive:** one self-managed collapsible replaces the 3
+  ad-hoc toggle buttons the page repeated.
+- **SET-3 — settings search: built, then removed** at the user's request (they
+  didn't want a category-search inside Settings).
+
+**Verified:** `tsc -b` + `vite build` clean · `eslint` clean on Settings · live in
+Chrome — 5-pill bar renders, tab switching works, Sync tab holds the moved cards,
+Data tab decluttered.
+
+---
+
 ## 2026-06-24 — Themes, sidebar regroup & ⌘P quick-open (UX-3, BUJO-233–236)
 
 **Summary:** User-requested appearance + navigation pass. Two new themes (now 5
