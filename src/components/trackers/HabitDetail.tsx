@@ -5,7 +5,7 @@ import { cat } from '../../lib/colors'
 import { addDays, fromISODay, todayISO, WEEKDAYS } from '../../lib/date'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
-import { completionRate30, bestWeekday, perfectWeeks } from '../../lib/habitStats'
+import { completionRate30, bestWeekday, perfectWeeks, habitGrade } from '../../lib/habitStats'
 import type { Habit, JournalData } from '../../lib/types'
 
 const WEEKS = 18
@@ -37,6 +37,8 @@ export function HabitDetail({
   const r90 = completionRate30(data, h, today, 90)
   const wd = bestWeekday(data, h, today, 90)
   const perfect = perfectWeeks(data, h, today, 12)
+  const grade = habitGrade(data, h, today, 30) // recency-weighted strength (0–100) + A–F
+  const gradeColor = grade.score >= 75 ? 'green' : grade.score >= 50 ? 'yellow' : grade.score >= 25 ? 'peach' : 'red'
 
   // 18-week day heatmap (one column per week, aligned to weekday rows).
   const days = WEEKS * 7
@@ -119,6 +121,19 @@ export function HabitDetail({
             <StatTile compact label="best day" value={wd.best == null ? '—' : WEEKDAYS[wd.best]} color="blue" />
             <StatTile compact label="perfect wks" value={perfect} color="sky" />
           </div>
+
+          {/* Habit strength meter (BUJO-243): recency-weighted consistency + grade. */}
+          {!avoid && (
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-overlay0">Habit strength</span>
+                <span style={{ color: cat(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                <div className="h-full rounded-full transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
+              </div>
+            </div>
+          )}
 
           {/* Day heatmap */}
           <div>
