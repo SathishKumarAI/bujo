@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Users, MapPin, Swords, Activity, TrendingUp, TrendingDown, Minus, Gauge, CalendarRange, Award, HeartPulse, Clock, Hash, CalendarClock, CalendarCheck } from 'lucide-react'
+import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, Flame, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -9,6 +9,10 @@ import { todayISO, prettyDay, addDays, fromISODay, dayDiff, WEEKDAYS } from '../
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL, PICKLE_PLAN, PLAN_TOTAL_DAYS, SKILLS_35_TO_40 } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
+import { Section } from '../components/pickleball/Section'
+import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
+import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
+import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
 
 const tip = { background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }
 const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
@@ -358,80 +362,6 @@ export function Pickleball() {
         )}
       </Card>
 
-      {/* ── Recent form & momentum (#323) ── */}
-      {form.results.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Activity size={18} className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'} · newest first`}>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
-              {form.results.map((r, i) => {
-                const c = r === 'W' ? 'green' : r === 'L' ? 'red' : 'overlay0'
-                return <span key={i} className="grid h-6 w-6 place-items-center rounded-md text-[11px] font-semibold" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
-              })}
-            </div>
-            <span className="text-sm text-overlay1"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
-            {form.momentum !== 'flat' && (
-              <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat(form.momentum === 'up' ? 'green' : 'red') + '22', color: cat(form.momentum === 'up' ? 'green' : 'red') }}>
-                {form.momentum === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                {form.momentum === 'up' ? 'Trending up' : 'In a slump'}
-              </span>
-            )}
-            {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-overlay0"><Minus size={12} /> Steady</span>}
-          </div>
-          {(streaks.longest > 0 || streaks.current > 0) && (
-            <div className="mt-3 flex flex-wrap gap-2 border-t border-surface0 pt-3 text-xs text-overlay1">
-              {streaks.current > 0 && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('peach') + '22', color: cat('peach') }}><Flame size={12} /> {streaks.current}-session win streak</span>}
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('mauve') + '22', color: cat('mauve') }}><Trophy size={12} /> Longest: {streaks.longest}</span>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* ── Win-rate forecast & rating readiness (#133) ── */}
-      {forecast.ready && (
-        <Card title={<span className="inline-flex items-center gap-2"><TrendingUp size={18} className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
-          <div className="grid grid-cols-3 gap-2">
-            <StatTile compact label="Current win %" value={`${forecast.current}%`} color="green" />
-            <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <TrendingUp size={14} /> : forecast.direction === 'down' ? <TrendingDown size={14} /> : <Minus size={14} />} />
-            <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} color={forecast.slope > 0 ? 'green' : forecast.slope < 0 ? 'red' : 'overlay0'} />
-          </div>
-          <div className="mt-3 flex items-center gap-2 border-t border-surface0 pt-3">
-            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') + '22', color: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') }}>
-              <Gauge size={13} /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
-            </span>
-            <p className="text-xs text-overlay1">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
-          </div>
-        </Card>
-      )}
-
-      {/* ── Pickleball milestones (#161) ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Award size={18} className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
-        <ul className="space-y-3">
-          {milestones.map((m) => (
-            <li key={m.id}>
-              <div className="mb-1 flex justify-between text-sm">
-                <span className="text-subtext1">{m.label}{m.done && <span className="ml-1.5 text-green">✓</span>}</span>
-                <span className="text-overlay1">{Math.min(m.current, m.target)} / {m.target}</span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
-                <div className="h-full rounded-full" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      {/* ── Session intensity / training load (#566) ── */}
-      {load.sessions > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><HeartPulse size={18} className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
-          <div className="grid grid-cols-3 gap-2">
-            <StatTile compact label="Avg RPE" value={load.avg} color={load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green'} />
-            <StatTile compact label="Hardest" value={load.hardest} color="red" />
-            <StatTile compact label="7-day load" value={load.weekLoad} color="mauve" />
-          </div>
-          <p className="mt-3 text-xs text-overlay1">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
-        </Card>
-      )}
-
       <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
@@ -471,164 +401,44 @@ export function Pickleball() {
         {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
 
-      {/* ── Partner chemistry ── */}
-      {partners.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Users size={18} className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner · most-played first" collapsible>
-          <ul className="space-y-3">
-            {partners.map((p) => (
-              <li key={p.partner}>
-                <div className="mb-1 flex items-baseline justify-between text-sm">
-                  <span className="min-w-0 truncate text-subtext1">{p.partner}</span>
-                  <span className="shrink-0 text-overlay1">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: cat('green') }}>{p.winPct}%</span></span>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
-                  <div className="h-full rounded-full" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-overlay0">Add a partner when logging a doubles session to track your chemistry.</p>
-        </Card>
-      )}
+      {/* ── SECONDARY analytics · grouped under collapsible sections so the
+            primary logging + history UI above stays uncluttered. Form & momentum
+            (the most actionable read) opens by default; the deeper rivalry/venue
+            and signal groups default collapsed. ── */}
+      <Section
+        title="Form & momentum"
+        icon={<Activity size={18} className="text-sky" />}
+        hint="Recent form · forecast · milestones · intensity"
+        defaultOpen
+      >
+        {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
+        {forecast.ready && <WinRateForecastCard forecast={forecast} />}
+        <MilestonesCard milestones={milestones} />
+        {load.sessions > 0 && <SessionIntensityCard load={load} />}
+      </Section>
 
-      {/* ── Court / venue log ── */}
-      {venues.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><MapPin size={18} className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
-          <ul className="divide-y divide-surface0">
-            {venues.map((v) => (
-              <li key={v.location} className="flex items-center justify-between gap-2 py-2 text-sm">
-                <span className="min-w-0 truncate text-subtext1">{v.location}</span>
-                <span className="flex shrink-0 items-center gap-2 text-overlay1">
-                  {v.sessions} {v.sessions === 1 ? 'visit' : 'visits'} · {v.games} games
-                  <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('teal') + '22', color: cat('teal') }}>{v.winPct}%</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-overlay0">Set a Location when logging to see your home-court advantage.</p>
-        </Card>
-      )}
+      <Section
+        title="Opponents, partners & venues"
+        icon={<Swords size={18} className="text-red" />}
+        hint="Chemistry · courts · rivalries · level matchups"
+      >
+        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
+        {venues.length > 0 && <VenuesCard venues={venues} />}
+        {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
+        {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
+      </Section>
 
-      {/* ── Opponent rivalry record book ── */}
-      {opponents.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Swords size={18} className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
-          <ul className="divide-y divide-surface0">
-            {opponents.map((o) => (
-              <li key={o.opponent} className="flex items-center justify-between gap-2 py-2 text-sm">
-                <span className="min-w-0 truncate text-subtext1">vs {o.opponent} <span className="text-overlay0">· {o.sessions} {o.sessions === 1 ? 'meeting' : 'meetings'}</span></span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <span><span style={{ color: cat('green') }}>{o.gamesWon}</span>–<span style={{ color: cat('red') }}>{o.gamesLost}</span></span>
-                  <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') + '22', color: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') }}>
-                    {o.diff > 0 ? `+${o.diff}` : o.diff}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-overlay0">Name your Opponent(s) when logging to build a head-to-head book.</p>
-        </Card>
-      )}
-
-      {/* ── Win% by opponent level (#478) ── */}
-      {matchup.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
-          <ul className="space-y-3">
-            {matchup.map((m) => (
-              <li key={m.bucket}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-subtext1">{m.label}</span>
-                  <span className="text-overlay1">{m.games} games · <span style={{ color: cat('green') }}>{m.winPct}%</span></span>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
-                  <div className="h-full rounded-full" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-overlay0">Set a Level when logging to see a truer skill signal than raw win %.</p>
-        </Card>
-      )}
-
-      {/* ── Win% by weekday (time-of-play performance) ── */}
-      {weekdaysPlayed.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><CalendarRange size={18} className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
-          <div className="grid grid-cols-7 gap-1.5">
-            {weekdays.map((w) => {
-              const has = w.games > 0
-              return (
-                <div key={w.day} className="rounded-md p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
-                  <div className="text-[10px] font-medium text-overlay1">{w.day}</div>
-                  <div className="mt-0.5 text-sm font-semibold" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
-                  <div className="text-[9px] text-overlay0">{has ? `${w.games}g` : ''}</div>
-                </div>
-              )
-            })}
-          </div>
-        </Card>
-      )}
-
-      {/* ── Point differential (close-game signal) ── */}
-      {points.sessions > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-teal" /> Point differential</span>} subtitle={`Across ${points.sessions} ${points.sessions === 1 ? 'session' : 'sessions'} with logged points`} collapsible>
-          <div className="grid grid-cols-3 gap-2">
-            <StatTile compact label="Points for" value={points.pointsFor} color="green" />
-            <StatTile compact label="Points against" value={points.pointsAgainst} color="red" />
-            <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} color={points.diff > 0 ? 'green' : points.diff < 0 ? 'red' : 'overlay0'} />
-          </div>
-          <p className="mt-3 text-xs text-overlay1">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
-        </Card>
-      )}
-
-      {/* ── Time on court (#149 time-allocation) ── */}
-      {hours.timedSessions > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Clock size={18} className="text-sky" /> Time on court</span>} subtitle={`From duration on ${hours.timedSessions} ${hours.timedSessions === 1 ? 'session' : 'sessions'}`} collapsible>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <StatTile compact label="Total hours" value={hours.hours} color="sky" />
-            <StatTile compact label="Last 30d" value={`${hours.recentHours}h`} color="teal" />
-            <StatTile compact label="Avg session" value={`${hours.avgMin}m`} color="blue" />
-            <StatTile compact label="Min / game" value={hours.minPerGame || '—'} color="mauve" />
-          </div>
-          <p className="mt-3 text-xs text-overlay1">Add Minutes when logging a session to track time invested. Min/game is your court tempo — lower means faster games.</p>
-        </Card>
-      )}
-
-      {/* ── Win% by scoring system ── */}
-      {scoring.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Hash size={18} className="text-peach" /> Performance by scoring</span>} subtitle="Win % &amp; games by scoring system" collapsible>
-          <ul className="space-y-3">
-            {scoring.map((sc) => (
-              <li key={sc.scoring}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-subtext1">{sc.label}</span>
-                  <span className="text-overlay1">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
-                  <div className="h-full rounded-full" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[11px] text-overlay0">Set a Scoring system when logging to see if you play better in short or long games.</p>
-        </Card>
-      )}
-
-      {/* ── Play consistency / cadence ── */}
-      {consistency.daysPlayed > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><CalendarCheck size={18} className="text-green" /> Play consistency</span>} subtitle="How regularly you get on court" collapsible>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <StatTile compact label="Days played" value={consistency.daysPlayed} color="green" />
-            <StatTile compact label={`Active wks / ${consistency.weeks}`} value={consistency.activeWeeks} color="teal" />
-            <StatTile compact label="Avg gap" value={consistency.avgGap ? `${consistency.avgGap}d` : '—'} color="blue" />
-            <StatTile compact label="Longest gap" value={consistency.longestGap ? `${consistency.longestGap}d` : '—'} color="peach" />
-          </div>
-          {consistency.daysSinceLast != null && (
-            <p className="mt-3 text-xs text-overlay1">
-              {consistency.daysSinceLast === 0 ? 'You played today — keep the rhythm.' : `Last played ${consistency.daysSinceLast} ${consistency.daysSinceLast === 1 ? 'day' : 'days'} ago.`}
-              {consistency.longestGap > 0 && ` Your average cadence is about one play day every ${consistency.avgGap} days.`}
-            </p>
-          )}
-        </Card>
-      )}
+      <Section
+        title="Deeper signals"
+        icon={<BarChart3 size={18} className="text-blue" />}
+        hint="Weekday · points · time · scoring · consistency"
+      >
+        {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
+        {points.sessions > 0 && <PointDifferentialCard points={points} />}
+        {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
+        {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
+        {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
+      </Section>
 
       <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" enlargeable={false}>
         <div className="grid gap-4 md:grid-cols-2">

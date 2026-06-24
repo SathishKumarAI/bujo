@@ -5,22 +5,7 @@ import { pushCloud, pullCloud } from './lib/bujocloud'
 import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
-import { Monthly } from './views/Monthly'
-import { FitnessHub } from './views/FitnessHub'
-import { HomeWorkout } from './views/HomeWorkout'
-import { Challenges } from './views/Challenges'
-import { Focus } from './views/Focus'
-import { Collections } from './views/Collections'
-import { Reading } from './views/Reading'
-import { Coaching } from './views/Coaching'
-import { Mindset } from './views/Mindset'
 import { Account } from './views/Account'
-import { Plan } from './views/Plan'
-import { Goals } from './views/Goals'
-import { Insights } from './views/Insights'
-import { NoFap } from './views/NoFap'
-import { Help } from './views/Help'
-import { Settings } from './views/Settings'
 import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
@@ -40,12 +25,29 @@ import {
   ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap, Brain,
 } from 'lucide-react'
 
-// Chart-heavy views (recharts) are code-split to keep the initial bundle small.
+// All non-landing views are code-split so the initial bundle only ships Today +
+// Account (the gate). Each view (and its recharts/feature-card weight) loads on
+// first navigation behind the <Suspense> fallback below.
 const Trackers = lazy(() => import('./views/Trackers').then((m) => ({ default: m.Trackers })))
 const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle })))
 const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
 const Pullups = lazy(() => import('./views/Pullups').then((m) => ({ default: m.Pullups })))
 const Pickleball = lazy(() => import('./views/Pickleball').then((m) => ({ default: m.Pickleball })))
+const Monthly = lazy(() => import('./views/Monthly').then((m) => ({ default: m.Monthly })))
+const FitnessHub = lazy(() => import('./views/FitnessHub').then((m) => ({ default: m.FitnessHub })))
+const HomeWorkout = lazy(() => import('./views/HomeWorkout').then((m) => ({ default: m.HomeWorkout })))
+const Challenges = lazy(() => import('./views/Challenges').then((m) => ({ default: m.Challenges })))
+const Focus = lazy(() => import('./views/Focus').then((m) => ({ default: m.Focus })))
+const Collections = lazy(() => import('./views/Collections').then((m) => ({ default: m.Collections })))
+const Reading = lazy(() => import('./views/Reading').then((m) => ({ default: m.Reading })))
+const Coaching = lazy(() => import('./views/Coaching').then((m) => ({ default: m.Coaching })))
+const Mindset = lazy(() => import('./views/Mindset').then((m) => ({ default: m.Mindset })))
+const Plan = lazy(() => import('./views/Plan').then((m) => ({ default: m.Plan })))
+const Goals = lazy(() => import('./views/Goals').then((m) => ({ default: m.Goals })))
+const Insights = lazy(() => import('./views/Insights').then((m) => ({ default: m.Insights })))
+const NoFap = lazy(() => import('./views/NoFap').then((m) => ({ default: m.NoFap })))
+const Help = lazy(() => import('./views/Help').then((m) => ({ default: m.Help })))
+const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m.Settings })))
 
 // Daily pipeline: capture & organise → track health → review.
 // "System" (Help, Settings) is intentionally NOT here — those live in the top

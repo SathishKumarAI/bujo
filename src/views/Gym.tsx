@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
   Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell,
-  Scale, TrendingDown, AlertTriangle, Repeat, CalendarCheck, HeartPulse, type LucideIcon,
+  BarChart3, Gauge, type LucideIcon,
 } from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis,
 } from 'recharts'
 import { useJournal } from '../store'
 import { Button, Card, Empty, Input, StatTile } from '../components/ui'
@@ -18,14 +17,18 @@ import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'
+import {
+  CollapsibleSection, RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
+  MuscleVolumeBalance, BigThreeCard, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
+} from '../components/gym'
 import { exerciseInfo } from '../lib/exerciseInfo'
 import { cat } from '../lib/colors'
-import { todayISO, prettyDay } from '../lib/date'
+import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, lastSetFor, parseSet,
   weeklyVolumeSeries, exerciseProgression, isNewPR, warmupRamp, sessionSummary,
-  weeklySetsPerMuscle, e1rmProgression, MUSCLE_SET_LANDMARK,
+  weeklySetsPerMuscle, e1rmProgression,
   bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts,
   repPRs, volumeByCategory, muscleRecovery, exerciseFrequency, trainRestRatio,
 } from '../lib/fitness'
@@ -544,185 +547,71 @@ export function Gym() {
       </Card>
       </div>
 
-      {/* ── Rep records for the focused lift · best reps at each weight ── */}
+      {/* ── Rep records for the focused lift · best reps at each weight ──
+            Kept above the collapsible groups: it only appears when a lift is
+            focused, so it's a contextual response to the user's tap, not
+            persistent analytics. */}
       {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
 
-      {/* ── Weekly volume balance · hard sets per muscle vs hypertrophy landmark ── */}
-      <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
+      {/* ── Training insights · lighter at-a-glance cards (default expanded) ── */}
+      <CollapsibleSection
+        title="Training insights"
+        subtitle="Volume balance · movement & recovery · frequency"
+        icon={Gauge}
+        color="teal"
+        defaultOpen
+      >
+        {/* Weekly volume balance · hard sets per muscle vs hypertrophy landmark */}
+        <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
 
-      {/* ── Movement-balance radar + muscle-recovery readiness ── */}
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <MovementRadar data={categoryVolume} unit={unit} />
-        <RecoveryMap recovery={recovery} setFocusEx={setFocusEx} />
-      </div>
+        {/* Movement-balance radar + muscle-recovery readiness */}
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <MovementRadar data={categoryVolume} unit={unit} />
+          <RecoveryMap recovery={recovery} setFocusEx={setFocusEx} />
+        </div>
 
-      {/* ── Exercise frequency + train/rest consistency ── */}
-      <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
+        {/* Exercise frequency + train/rest consistency */}
+        <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
+      </CollapsibleSection>
 
-      {/* ── Strength snapshots · big-three total + relative strength ── */}
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <BigThreeCard total={bigThree} unit={unit} setFocusEx={setFocusEx} />
-        <RelativeStrengthCard rows={relStrength} unit={unit} setFocusEx={setFocusEx} />
-      </div>
+      {/* ── Deep analytics · strength snapshots, alerts & effort trend
+            (default COLLAPSED — drill-down stats, not daily-use) ── */}
+      <CollapsibleSection
+        title="Deep analytics"
+        subtitle="Strength standards · plateau & neglect alerts · effort trend"
+        icon={BarChart3}
+        color="mauve"
+      >
+        {/* Strength snapshots · big-three total + relative strength */}
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <BigThreeCard total={bigThree} unit={unit} setFocusEx={setFocusEx} />
+          <RelativeStrengthCard rows={relStrength} unit={unit} setFocusEx={setFocusEx} />
+        </div>
 
-      {/* ── Neglected-muscle alert + stalled-lift detector ── */}
-      <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
-      <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
+        {/* Neglected-muscle alert + stalled-lift detector */}
+        <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
+        <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
 
-      {rpeSeries.length >= 2 && (
-        <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
-          <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
-                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
-                <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      )}
+        {rpeSeries.length >= 2 && (
+          <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
+            <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                  <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
+                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        )}
+      </CollapsibleSection>
 
       {/* ── Progress photos ──────────────────────────────────── */}
       <ProgressPhotos />
     </Page>
-  )
-}
-
-/**
- * Rep records for the focused lift: the most reps ever done at each weight, so
- * high-rep gains register as PRs even when the bar weight is unchanged. Read-only
- * — derived from logged sets via repPRs.
- */
-function RepPRCard({ exercise, records, unit }: { exercise: string; records: import('../lib/fitness').RepPR[]; unit: string }) {
-  return (
-    <Card title="Rep records" subtitle={<span>Best reps at each weight · <span className="text-mauve">{exercise}</span></span>} defer>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {records.slice(0, 9).map((r) => (
-          <li key={r.weight} className="rounded-xl border border-surface0 bg-base px-3 py-2" title={`${r.reps} reps at ${r.weight}${unit} · set ${prettyDay(r.date)}`}>
-            <p className="text-lg font-bold" style={{ color: cat('green') }}>{r.reps}<span className="ml-0.5 text-xs font-normal text-overlay0">reps</span></p>
-            <p className="text-xs text-subtext1">@ {r.weight}{unit}</p>
-            <p className="text-[10px] text-overlay0">{prettyDay(r.date)}</p>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  )
-}
-
-/**
- * Push/Pull/Legs/Core volume radar: this week's working-set volume by movement
- * category, so imbalances jump out as a lopsided shape. Read-only — derived via
- * volumeByCategory.
- */
-function MovementRadar({ data, unit }: { data: import('../lib/fitness').CategoryVolume[]; unit: string }) {
-  const total = data.reduce((s, c) => s + c.volume, 0)
-  return (
-    <Card title="Movement balance" subtitle="Weekly volume by push / pull / legs / core" defer>
-      {total === 0 ? (
-        <Empty>Log some working sets this week to see your movement balance.</Empty>
-      ) : (
-        <>
-          <div className="h-56" role="img" aria-label={`Radar chart of weekly working-set volume by movement category (${unit}): ${data.map((c) => `${c.category} ${c.volume}`).join(', ')}`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                <PolarGrid stroke={cat('surface0')} />
-                <PolarAngleAxis dataKey="category" tick={{ fill: cat('subtext0'), fontSize: 12 }} />
-                <Radar dataKey="volume" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-overlay0">
-            {data.map((c) => (
-              <span key={c.category}>{c.category} <span className="text-subtext1">{c.volume.toLocaleString()}{unit}</span></span>
-            ))}
-          </div>
-        </>
-      )}
-    </Card>
-  )
-}
-
-/**
- * Muscle-recovery readiness map: how long since each muscle was last trained,
- * coloured by readiness (fatigued today/yesterday → green when rested). Tap a
- * muscle to focus the anatomy map. Read-only — derived via muscleRecovery.
- */
-function RecoveryMap({ recovery, setFocusEx }: { recovery: import('../lib/fitness').MuscleRecovery[]; setFocusEx: (e: string | null) => void }) {
-  const named = recovery
-    .map((r) => ({ ...r, name: muscleNames([r.muscle])[0] }))
-    .filter((r) => r.name)
-  const stateColor: Record<string, string> = { fresh: 'green', recovering: 'yellow', fatigued: 'red' }
-  const stateLabel: Record<string, string> = { fresh: 'ready', recovering: 'recovering', fatigued: 'fatigued' }
-  return (
-    <Card title="Recovery readiness" subtitle="Time since each muscle was last trained · green = ready" defer right={<HeartPulse size={16} style={{ color: cat('green') }} />}>
-      {named.length === 0 ? (
-        <Empty>Log some working sets to see what's recovered and ready.</Empty>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {named.map((r) => {
-            const color = stateColor[r.state]
-            return (
-              <button
-                key={r.muscle}
-                onClick={() => setFocusEx(r.name)}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
-                style={{ background: cat(color) + '22', color: cat(color) }}
-                title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
-              >
-                {r.name}
-                <span className="text-[10px] text-overlay0">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </Card>
-  )
-}
-
-/**
- * Exercise frequency (most-trained movements in the last 4 weeks) alongside a
- * train-vs-rest consistency readout. Tap an exercise to focus the muscle map.
- * Read-only — derived via exerciseFrequency + trainRestRatio.
- */
-function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: import('../lib/fitness').ExerciseFreq[]; ratio: import('../lib/fitness').TrainRestRatio; setFocusEx: (e: string | null) => void }) {
-  if (rows.length === 0) return null
-  const maxDays = Math.max(...rows.map((r) => r.days), 1)
-  return (
-    <Card title="Exercise frequency" subtitle={`Most-trained movements · last ${ratio.window} days`} defer>
-      <div className="mb-3 flex items-center gap-3 rounded-xl border border-surface0 bg-base px-3 py-2 text-sm">
-        <CalendarCheck size={16} style={{ color: cat('teal') }} />
-        <span className="text-subtext1">
-          <span className="font-semibold text-text">{ratio.trainDays}</span> train ·{' '}
-          <span className="font-semibold text-text">{ratio.restDays}</span> rest
-        </span>
-        <span className="ml-auto inline-flex items-center gap-1 text-overlay0" title="Share of days trained in the window">
-          <Repeat size={13} /> {Math.round(ratio.ratio * 100)}% active
-        </span>
-      </div>
-      <ul className="space-y-2 text-sm">
-        {rows.slice(0, 8).map((r) => (
-          <li key={r.exercise} className="flex items-center gap-2">
-            <button
-              onClick={() => setFocusEx(r.exercise)}
-              className="w-28 shrink-0 truncate text-left text-subtext1 hover:text-text"
-              title={`Focus the muscle map on ${r.exercise}`}
-            >
-              {r.exercise}
-            </button>
-            <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-surface0">
-              <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
-            </div>
-            <span className="w-16 shrink-0 text-right text-xs text-overlay0">
-              {r.days}d · {r.sets} set{r.sets === 1 ? '' : 's'}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Card>
   )
 }
 
@@ -757,196 +646,6 @@ function PlateCalculator({ unit }: { unit: string }) {
           {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
         </>
       )}
-    </Card>
-  )
-}
-
-/**
- * Weekly hard-sets per muscle vs the 10–20 hypertrophy landmark. Each muscle is
- * a horizontal bar coloured by zone (under / in-range / over), so imbalances and
- * under-trained groups jump out at a glance. Read-only — derived from this
- * week's logged working sets via weeklySetsPerMuscle.
- */
-function MuscleVolumeBalance({ counts, setFocusEx }: { counts: import('../lib/fitness').MuscleSetCount[]; setFocusEx: (e: string | null) => void }) {
-  const { min, max } = MUSCLE_SET_LANDMARK
-  const named = counts
-    .map((c) => ({ ...c, name: muscleNames([c.muscle])[0] }))
-    .filter((c) => c.name) // skip ids without a display name
-  const scaleMax = Math.max(max, ...named.map((c) => c.sets), 1)
-  const zone = (sets: number) => (sets < min ? 'peach' : sets > max ? 'red' : 'green')
-  const zoneLabel = (sets: number) => (sets < min ? 'below 10' : sets > max ? 'over 20' : 'in range')
-  return (
-    <Card title="Muscle volume balance" subtitle="Hard sets per muscle this week · target 10–20" defer>
-      {named.length === 0 ? (
-        <Empty>Log some working sets this week to see your per-muscle volume.</Empty>
-      ) : (
-        <ul className="space-y-2">
-          {named.map((c) => {
-            const color = zone(c.sets)
-            return (
-              <li key={c.muscle} className="flex items-center gap-2 text-sm">
-                <button
-                  onClick={() => setFocusEx(c.name)}
-                  className="w-20 shrink-0 truncate text-left text-subtext1 hover:text-text"
-                  title={`Focus the muscle map on ${c.name}`}
-                >
-                  {c.name}
-                </button>
-                <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-surface0">
-                  {/* landmark band (10–20 sets) shaded behind the bar */}
-                  <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
-                  <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />
-                </div>
-                <span className="w-7 shrink-0 text-right font-medium" style={{ color: cat(color) }}>{c.sets}</span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-      {named.length > 0 && (
-        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-overlay0">
-          <span style={{ color: cat('peach') }}>● {zoneLabel(0)}</span>
-          <span style={{ color: cat('green') }}>● {zoneLabel(min)}</span>
-          <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>
-        </p>
-      )}
-    </Card>
-  )
-}
-
-/**
- * Big-three powerlifting total: best squat + bench + deadlift, with each lift's
- * PR and the running sum. Missing lifts show a dash and a hint to log them.
- * Read-only — derived from logged PRs via bigThreeTotal.
- */
-function BigThreeCard({ total, unit, setFocusEx }: { total: import('../lib/fitness').BigThreeTotal; unit: string; setFocusEx: (e: string | null) => void }) {
-  const liftColor: Record<string, string> = { Squat: 'green', Bench: 'red', Deadlift: 'blue' }
-  return (
-    <Card title="Big-three total" subtitle="Squat + bench + deadlift · your powerlifting number" defer>
-      {total.total === 0 ? (
-        <Empty>Log a squat, bench, and deadlift to build your total.</Empty>
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-2">
-            {total.lifts.map((l) => (
-              <button
-                key={l.lift}
-                onClick={() => l.weight > 0 && setFocusEx(l.lift)}
-                disabled={l.weight === 0}
-                className="rounded-xl border border-surface0 bg-base px-3 py-2.5 text-left disabled:cursor-default"
-                title={l.weight > 0 ? `Best ${l.lift}: ${l.weight}${unit}${l.date ? ` on ${l.date}` : ''}` : `No ${l.lift} logged yet`}
-              >
-                <p className="text-xs text-subtext1">{l.lift}</p>
-                <p className="text-lg font-bold" style={{ color: l.weight > 0 ? cat(liftColor[l.lift]) : cat('overlay0') }}>
-                  {l.weight > 0 ? `${l.weight}${unit}` : '—'}
-                </p>
-                {l.date && <p className="text-[10px] text-overlay0">{prettyDay(l.date)}</p>}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 flex items-baseline justify-between border-t border-surface0 pt-3">
-            <span className="inline-flex items-center gap-1.5 text-sm text-subtext1"><Trophy size={15} style={{ color: cat('yellow') }} /> Total</span>
-            <span className="text-2xl font-bold" style={{ color: cat('yellow') }}>{total.total}{unit}</span>
-          </div>
-          {!total.complete && <p className="mt-1 text-[11px] text-overlay0">Log all three for your true total.</p>}
-        </>
-      )}
-    </Card>
-  )
-}
-
-/**
- * Relative strength: each PR as a multiple of the latest logged bodyweight, with
- * a strength-standard band. Hidden until a bodyweight is logged. Read-only.
- */
-function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: import('../lib/fitness').RelativeStrength[]; unit: string; setFocusEx: (e: string | null) => void }) {
-  const bandColor: Record<string, string> = { Elite: 'mauve', Advanced: 'blue', Intermediate: 'green', Novice: 'yellow', Beginner: 'overlay0' }
-  return (
-    <Card title="Relative strength" subtitle="Best lift ÷ bodyweight · with strength standard" defer>
-      {rows.length === 0 ? (
-        <Empty>Log your bodyweight and some PRs to see strength-to-weight ratios.</Empty>
-      ) : (
-        <ul className="space-y-1.5 text-sm">
-          {rows.slice(0, 8).map((r) => (
-            <li key={r.exercise}>
-              <button
-                onClick={() => setFocusEx(r.exercise)}
-                className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left hover:bg-surface0/50"
-                title={`${r.exercise}: ${r.weight}${unit} = ${r.ratio}× bodyweight`}
-              >
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
-                  <Scale size={14} style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
-                </span>
-                <span className="shrink-0 text-overlay0">
-                  <span className="font-semibold" style={{ color: cat('text') }}>{r.ratio}×</span>
-                  <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat(bandColor[r.band] ?? 'overlay0') + '22', color: cat(bandColor[r.band] ?? 'overlay0') }}>{r.band}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  )
-}
-
-/**
- * Neglected-muscle alert: groups with zero working sets in the last 10 days, so
- * the user can rebalance. Shows days since each was last trained. Read-only.
- */
-function NeglectedMuscles({ muscles, setFocusEx }: { muscles: import('../lib/fitness').NeglectedMuscle[]; setFocusEx: (e: string | null) => void }) {
-  const named = muscles
-    .map((m) => ({ ...m, name: muscleNames([m.muscle])[0] }))
-    .filter((m) => m.name)
-  if (named.length === 0) return null // every muscle trained recently → nothing to nudge
-  return (
-    <Card title="Needs attention" subtitle="No hard sets in the last 10 days · tap to focus the map" defer>
-      <div className="flex flex-wrap gap-1.5">
-        {named.map((m) => (
-          <button
-            key={m.muscle}
-            onClick={() => setFocusEx(m.name)}
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
-            style={{ background: cat('peach') + '22', color: cat('peach') }}
-            title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
-          >
-            <AlertTriangle size={12} /> {m.name}
-            <span className="text-[10px] text-overlay0">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
-          </button>
-        ))}
-      </div>
-    </Card>
-  )
-}
-
-/**
- * Stalled-lift detector: exercises whose top weight hasn't improved across the
- * last few sessions, with the plateau length, nudging a deload/variation.
- * Read-only — derived from exercise progression.
- */
-function StalledLifts({ lifts, unit, setFocusEx }: { lifts: import('../lib/fitness').StalledLift[]; unit: string; setFocusEx: (e: string | null) => void }) {
-  if (lifts.length === 0) return null // nothing plateaued → hide
-  return (
-    <Card title="Stalled lifts" subtitle="No new top set in the last 3+ sessions · time for a reset or variation" defer>
-      <ul className="space-y-1.5 text-sm">
-        {lifts.slice(0, 6).map((l) => (
-          <li key={l.exercise}>
-            <button
-              onClick={() => setFocusEx(l.exercise)}
-              className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left hover:bg-surface0/50"
-              title={`${l.exercise} stuck at ${l.top}${unit} across ${l.sessions} sessions (last ${l.lastDate})`}
-            >
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
-                <TrendingDown size={14} style={{ color: cat('red') }} /> <span className="truncate">{l.exercise}</span>
-              </span>
-              <span className="shrink-0 text-overlay0">
-                <span className="font-semibold" style={{ color: cat('peach') }}>{l.top}{unit}</span>
-                <span className="ml-1.5 text-[10px]">{l.sessions} sessions</span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
     </Card>
   )
 }
