@@ -1,5 +1,40 @@
 # Worklog
 
+## 2026-06-23 23:10 — P0 perf + UI extraction + view smoke tests + DEPLOY (PR #56)
+
+**Summary:** Health/perf pass (not features). Lazy-loaded all views, extracted the
+4 bloated views into components with collapsible density sections, added a
+headless-Chrome smoke test across all 23 views. Merged PR #56, deployed, verified
+live (smoke 23/23 against prod). Also spun up a live dev server + Chrome remote-debug
+for the user to watch.
+
+**Changes:**
+- **Perf (P0):** lazy-load 12 heavy views → initial **index 947KB→642KB**; recharts
+  now a separate on-demand 433KB chunk. (`src/App.tsx`)
+- **Extraction + density (P0/P1):** ~44 analytics cards moved into
+  `src/components/{trackers,gym,pickleball,recovery}/`; Trackers 1130→937, Gym
+  1006→705, Pickleball 858→668, NoFap 854→623. Secondary analytics grouped under
+  accessible collapsible sections (real `<button>` + aria-expanded, deep groups
+  default collapsed).
+- **Testing (P1):** `scripts/smoke-views.mjs` + `npm run smoke` — boots all 23
+  routable views in headless Chrome, fails on console error / crash / blank.
+  Hardened to ignore service-worker chunk-abort noise on prod (settles per view).
+- Fixed `MetricsTrendCard` type (number|null) caught by full `tsc -b`.
+
+**Decisions:** Behavior-preserving extraction (UI only, no logic changes). Verified
+the prod smoke `ERR_FAILED` flags were navigation-cancellation noise (each view
+loads clean in isolation), not regressions — hardened the harness rather than
+chase a non-bug.
+
+**Deploy:** `ship.sh --deploy-only` → **bujo-journal.vercel.app**. Live verified:
+HTTP 200 + **smoke 23/23 against production**.
+
+**Verify:** tsc 0 · vitest 658/658 · eslint 0 errors (touched) · vite build OK ·
+smoke 23/23 (dev + prod).
+
+**Dev convenience left running:** `vite dev` on :5173 (HMR) + Chrome remote-debug
+on :9333 for live viewing.
+
 ## 2026-06-23 16:45 — Data-model batch 2: 4 interactive features + DEPLOY (PR #55)
 
 **Summary:** Serial single-owner build of 4 contained interactive features that

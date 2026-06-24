@@ -28,6 +28,12 @@ const IGNORE = [
   /\[vite\]/i,
   /React Router Future Flag/i,
   /favicon/i,
+  // Sequential full-page navigation against the service-worker-controlled prod
+  // site aborts the previous view's in-flight lazy-chunk fetches. Chrome surfaces
+  // those as resource-load console errors (ERR_FAILED/ERR_ABORTED) — they are
+  // navigation-cancellation noise, not app errors. Real JS failures still arrive
+  // via 'pageerror' or as a blank render, which we DO fail on.
+  /Failed to load resource:.*(ERR_FAILED|ERR_ABORTED)/i,
 ]
 const ignored = (t) => IGNORE.some((re) => re.test(t))
 
@@ -57,7 +63,8 @@ for (const v of VIEWS) {
   const before = failures.length
   try {
     await page.goto(`${BASE}/?view=${v}`, { waitUntil: 'load' })
-    await page.waitForTimeout(1200) // let the lazy chunk + Suspense resolve
+    await page.waitForLoadState('networkidle').catch(() => {}) // let lazy chunks settle before the next nav
+    await page.waitForTimeout(800) // + Suspense resolve
     const text = (await page.locator('main, #root').first().innerText().catch(() => '')) || ''
     const blank = text.trim().length < 5
     if (blank) failures.push(`[${v}] rendered blank/empty main`)
