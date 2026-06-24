@@ -1,5 +1,32 @@
 # Worklog
 
+## 2026-06-23 23:55 — Typing habit preset + UX card-layout doc + ticket/feature updates (PR #58)
+
+**Summary:** Added the typing-practice habit preset, produced a full UX/IA
+card-arrangement recommendation for **all 272 cards across all 25 views** (review
+doc), and updated the ticket list + feature docs. Merged PR #58, deployed.
+
+**Changes:**
+- Trackers: "Typing practice" timer habit preset (60-min) — daily typing now also
+  shows on the habit grid (complements the Focus-view typing tracker).
+- `docs/UX-CARD-LAYOUT.csv` (+ `.md`): per-card IA plan — tier, recommended
+  placement, action (keep/promote/move/collapse/merge/cut), default state,
+  **priority P0:23 / P1:60 / P2:89 / P3:100**, effort, rationale + per-view ideal
+  order. Built from a 7-agent inventory (269 cards) + design synthesis; +3 auth/gate
+  rows for full 25-view coverage. **Nothing implemented yet — awaiting your review.**
+- `docs/TICKETS.md`: Epic BACKLOG-BUILD (BUJO-221..230).
+- `docs/FEATURES.md`: backlog-build + typing + perf/UX section.
+
+**Top P0/P1 themes in the recommendation:** kill cross-view metric redundancy
+(weekday/mood/streak duplicated in domain views AND Insights/Stats), promote
+buried primary actions (Reading shelves, Insights search), consolidate Settings'
+6 overlapping sync cards into Account+Cloud + one Advanced accordion, progressive
+disclosure everywhere.
+
+**Verify:** tsc 0 · vitest 675/675 · eslint clean (touched) · build OK · deployed.
+
+**Next (your call):** which views/priorities from `UX-CARD-LAYOUT.csv` to implement.
+
 ## 2026-06-23 23:30 — Typing-practice tracker + DEPLOY (PR #57)
 
 **Summary:** New feature on request — a typing-practice / typing-speed tracker in
