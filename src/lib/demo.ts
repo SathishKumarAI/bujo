@@ -34,6 +34,16 @@ export function generateDemoData(today = todayISO()): JournalData {
   const rand = rng(42)
   const entries: Entry[] = []
 
+  // Lived-in history: backdate the seeded habits and fill 90 days of completions
+  // so the activity + cards heatmap grids look full (the wellbeing/charts data
+  // still spans the recent 30 days below).
+  const HIST_DAYS = 90
+  j.habits.forEach((h) => { h.startedOn = addDays(today, -(HIST_DAYS - 1)) })
+  for (let i = HIST_DAYS - 1; i >= 30; i--) {
+    const d = addDays(today, -i)
+    j.habitLog[d] = j.habits.filter(() => rand() > 0.4).map((h) => h.id)
+  }
+
   for (let i = 29; i >= 0; i--) {
     const date = addDays(today, -i)
 
