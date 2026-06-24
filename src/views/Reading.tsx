@@ -42,7 +42,7 @@ export function Reading() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Reading now" value={sum.reading} color="mauve" />

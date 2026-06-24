@@ -492,7 +492,7 @@ export function Gym() {
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                 <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={rechartsTooltip} />
+                <Tooltip contentStyle={rechartsTooltip()} />
                 <Line type="monotone" dataKey="weight" stroke={cat('overlay1')} dot={{ r: 1.5 }} strokeWidth={1} opacity={0.5} />
                 <Line type="monotone" dataKey="avg" stroke={cat('mauve')} dot={false} strokeWidth={2.5} />
               </LineChart>
@@ -527,7 +527,7 @@ export function Gym() {
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                 <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={rechartsTooltip} />
+                <Tooltip contentStyle={rechartsTooltip()} />
                 <Bar dataKey="volume" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -540,7 +540,7 @@ export function Gym() {
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                   <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={rechartsTooltip} />
+                  <Tooltip contentStyle={rechartsTooltip()} />
                   <Line type="monotone" dataKey="weight" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
@@ -554,7 +554,7 @@ export function Gym() {
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                   <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={rechartsTooltip} />
+                  <Tooltip contentStyle={rechartsTooltip()} />
                   <Line type="monotone" dataKey="e1rm" stroke={cat('yellow')} dot={{ r: 2 }} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
@@ -604,7 +604,7 @@ export function Gym() {
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                   <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={rechartsTooltip} />
+                  <Tooltip contentStyle={rechartsTooltip()} />
                   <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>

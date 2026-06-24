@@ -34,6 +34,7 @@ import { encryptString, decryptString } from './lib/crypto'
 import { LockScreen } from './components/LockScreen'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
+import { setActiveTheme } from './lib/colors'
 import { generateRecurring } from './lib/recurrence'
 import { generateDemoData } from './lib/demo'
 
@@ -261,20 +262,26 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     }
   }, [data, unlocked])
 
-  // Keep the <html data-theme> in sync. 'system' follows the OS light/dark
-  // preference live (mocha ↔ latte).
+  // 'system' theme follows the live OS light/dark preference; the listener just
+  // re-renders (setState in an event callback, not the effect body).
+  const [systemLight, setSystemLight] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-color-scheme: light)').matches,
+  )
   useEffect(() => {
-    const theme = data.settings.theme
-    if (theme !== 'system') {
-      document.documentElement.dataset.theme = theme
-      return
-    }
+    if (typeof window === 'undefined' || !window.matchMedia) return
     const mq = window.matchMedia('(prefers-color-scheme: light)')
-    const apply = () => { document.documentElement.dataset.theme = mq.matches ? 'latte' : 'mocha' }
-    apply()
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
-  }, [data.settings.theme])
+    const on = () => setSystemLight(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  const resolvedTheme = data.settings.theme === 'system' ? (systemLight ? 'latte' : 'mocha') : data.settings.theme
+  // Select the chart palette synchronously during render so children render with
+  // the new theme's colors (no post-render flash; charts need concrete colors).
+  setActiveTheme(resolvedTheme)
+  // Apply <html data-theme> — drives all CSS-var-based styling.
+  useEffect(() => {
+    if (typeof document !== 'undefined') document.documentElement.dataset.theme = resolvedTheme
+  }, [resolvedTheme])
 
   // Global text size → scale the rem root so all token-based text/spacing grows
   // or shrinks together. `--font-scale` lets figure/chart cards counter-scale

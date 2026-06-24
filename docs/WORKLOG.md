@@ -1,5 +1,26 @@
 # Worklog
 
+## 2026-06-24 — Theme-aware charts + page-width consistency
+
+**Theme-aware charts (AUD-6):** charts were stuck on Mocha colors under the new
+themes because `cat()` returned static hexes. Fixed with **per-theme JS palettes**
+(`THEME_PALETTES` in `lib/colors.ts`, mirroring the `--color-*` CSS blocks); the
+store calls `setActiveTheme(resolvedTheme)` **synchronously during render**, so
+charts (which need concrete colors, not `var()`) pick up the theme with no flash.
+`rechartsTooltip` became a function so it reads the live palette; applied across
+Stats/Cycle/Pickleball/Gym. Chose JS palettes over `getComputedStyle` because the
+DOM-read path forced a setState-in-effect the linter rejects. Also reworked
+`system`-theme resolution to a render-time computed value (no setState-in-effect).
+
+**Page-width consistency (AUD-7):** answered "why do some pages not fill the
+width?" — most cap at `max-w-[1400px]` (via `<Page>` or directly), but **Reading**
+(`max-w-5xl` ≈1024px) and **NoFap** (`max-w-[820px]`) set narrower caps. Bumped
+both to `max-w-[1400px]`. (Settings tabs + Welcome stay intentionally narrow.)
+
+**Verified:** `tsc -b` + build clean · **675 tests green** · `eslint` clean.
+
+---
+
 ## 2026-06-24 — Feature/card audit + global text size (Epic A11Y-FONT)
 
 **Summary:** Ran a 3-reviewer panel audit over the feature views/cards, **verified

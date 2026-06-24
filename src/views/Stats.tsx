@@ -123,7 +123,7 @@ export function Stats() {
                 <PolarGrid stroke={cat('surface1')} />
                 <PolarAngleAxis dataKey="axis" tick={{ fill: cat('subtext0'), fontSize: 12 }} />
                 <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
-                <Tooltip contentStyle={tip} />
+                <Tooltip contentStyle={tip()} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -144,7 +144,7 @@ export function Stats() {
                   <XAxis type="number" dataKey="sleep" name="sleep" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
                   <YAxis type="number" dataKey="mood" name="mood" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
                   <ZAxis range={[40, 40]} />
-                  <Tooltip contentStyle={tip} cursor={{ strokeDasharray: '3 3' }} />
+                  <Tooltip contentStyle={tip()} cursor={{ strokeDasharray: '3 3' }} />
                   <Scatter data={scatter} fill={cat('sky')} />
                 </ScatterChart>
               </ResponsiveContainer>
@@ -162,7 +162,7 @@ export function Stats() {
                   <CartesianGrid stroke={cat('surface0')} vertical={false} />
                   <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} stroke={cat('overlay0')} fontSize={11} />
                   <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}h`, 'debt'] as [string, string]} />
+                  <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}h`, 'debt'] as [string, string]} />
                   <Area type="monotone" dataKey="debt" stroke={cat('peach')} fill={cat('peach')} fillOpacity={0.25} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -250,7 +250,7 @@ export function Stats() {
                   <CartesianGrid stroke={cat('surface0')} vertical={false} />
                   <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
+                  <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
                   <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -268,7 +268,7 @@ export function Stats() {
                   <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
                     {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
                   </Pie>
-                  <Tooltip contentStyle={tip} />
+                  <Tooltip contentStyle={tip()} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap justify-center gap-2 text-xs">
@@ -292,7 +292,7 @@ export function Stats() {
                   <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
                     {tasks.map((t) => <Cell key={t.name} fill={cat(t.color)} />)}
                   </Pie>
-                  <Tooltip contentStyle={tip} />
+                  <Tooltip contentStyle={tip()} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex justify-center gap-3 text-xs">
