@@ -438,6 +438,112 @@ body.handwriting textarea {
     0 4px 10px -6px rgba(0, 0, 0, 0.6);
 }
 
+/* "VS Code" dark theme (data-theme="vscode") — Dark Modern editor neutrals tuned
+   for long, low-fatigue reading: flat #1f1f1f surfaces, soft #d4d4d4 ink, and
+   the familiar syntax accents (keyword purple, string orange, function yellow). */
+:root[data-theme='vscode'] {
+  --color-text: #d4d4d4;
+  --color-subtext1: #cccccc;
+  --color-subtext0: #b5b5b5;
+  --color-overlay2: #9d9d9d;
+  --color-overlay1: #858585;
+  --color-overlay0: #6e7681;
+  --color-surface2: #3e3e42;
+  --color-surface1: #333337;
+  --color-surface0: #2a2a2e;
+  --color-base: #1f1f1f;
+  --color-mantle: #181818;
+  --color-crust: #141414;
+
+  --color-mauve: #c586c0;     /* primary accent: VS Code keyword purple, AA on #1f1f1f */
+  --color-lavender: #b5a4e0;
+  --color-blue: #569cd6;      /* VS Code "type" blue — links/info */
+  --color-sapphire: #4fc1ff;
+  --color-sky: #9cdcfe;
+  --color-teal: #4ec9b0;
+  --color-green: #89d185;     /* success (git-added green) */
+  --color-red: #f14c4c;       /* error red */
+  --color-maroon: #f48771;
+  --color-peach: #ce9178;     /* string orange */
+  --color-yellow: #dcdcaa;    /* function yellow */
+  --color-pink: #d16d9e;
+
+  --border-hairline: #2b2b2b;
+  --border: var(--border-hairline);
+  --input: #3c3c3c;
+}
+/* VS Code: flatter cards — thin border + minimal shadow, like editor panels. */
+:root[data-theme='vscode'] .card-3d {
+  background-image: none;
+  border: 1px solid var(--border-hairline);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+:root[data-theme='vscode'] .card-3d:hover {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* "Dawn" warm light theme (data-theme="dawn") — cozy cream paper, warm-brown ink,
+   jewel-tone accents kept at AA contrast on the light surfaces. A softer, warmer
+   alternative to the crisp neutral Latte. */
+:root[data-theme='dawn'] {
+  --color-text: #3a322a;
+  --color-subtext1: #574d40;
+  --color-subtext0: #6f6354;
+  --color-overlay2: #8a7d6b;
+  --color-overlay1: #9c8f7c;
+  --color-overlay0: #6f6354;
+  --color-surface2: #ddc9ad;
+  --color-surface1: #ecdcc4;
+  --color-surface0: #f4e9d6;
+  --color-base: #faf3e7;
+  --color-mantle: #fffdf8;
+  --color-crust: #f1e6d2;
+
+  --border-hairline: #e4d6bf;
+
+  --color-mauve: #b45309;     /* primary accent: warm amber, AA on cream */
+  --color-lavender: #7c3aed;
+  --color-blue: #2563eb;      /* links/info */
+  --color-sapphire: #1e40af;
+  --color-sky: #0369a1;
+  --color-teal: #0f766e;
+  --color-green: #15803d;     /* success */
+  --color-red: #dc2626;       /* destructive */
+  --color-maroon: #9f1239;
+  --color-peach: #ea580c;     /* warning */
+  --color-yellow: #ca8a04;
+  --color-pink: #be185d;
+
+  --border: var(--border-hairline);
+  --input: var(--border-hairline);
+}
+/* Dawn (light): soft, low-elevation cards like Latte — heavy dark shadows read
+   wrong on cream, so use a hairline border + faint warm shadow. */
+:root[data-theme='dawn'] .card-3d {
+  background-image: none;
+  border: 1px solid var(--border-hairline);
+  box-shadow:
+    0 1px 2px 0 rgba(120, 90, 50, 0.10),
+    0 1px 3px 1px rgba(120, 90, 50, 0.06);
+}
+:root[data-theme='dawn'] .card-3d:hover {
+  box-shadow:
+    0 1px 3px 0 rgba(120, 90, 50, 0.15),
+    0 4px 8px 3px rgba(120, 90, 50, 0.10);
+}
+:root[data-theme='dawn'] .press-3d {
+  box-shadow: 0 1px 2px 0 rgba(120, 90, 50, 0.15);
+}
+:root[data-theme='dawn'] .press-3d:active {
+  box-shadow: 0 1px 1px 0 rgba(120, 90, 50, 0.12);
+}
+:root[data-theme='dawn'] .book {
+  border-color: var(--border-hairline);
+  box-shadow:
+    0 8px 24px -16px rgba(120, 90, 50, 0.30),
+    0 2px 8px -6px rgba(120, 90, 50, 0.18);
+}
+
 /* Readable long-form "doc" typography — GitHub-pages-style prose for Help and
    other content pages. Comfortable measure, generous line-height, styled
    headings/lists/code/links, all on Catppuccin tokens. */

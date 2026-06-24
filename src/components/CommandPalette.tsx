@@ -3,6 +3,16 @@ import { useJournal } from '../store'
 import { exportJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
+import type { ThemeName } from '../lib/types'
+
+const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
+  { value: 'mocha', label: 'Mocha (dark)' },
+  { value: 'vscode', label: 'VS Code (dark)' },
+  { value: 'neon', label: 'Neon (dark)' },
+  { value: 'latte', label: 'Latte (light)' },
+  { value: 'dawn', label: 'Dawn (warm light)' },
+  { value: 'system', label: 'System' },
+]
 
 export interface Command {
   id: string
@@ -35,7 +45,10 @@ export function CommandPalette({
   // Global hotkey.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      // ⌘K / Ctrl-K (command) and ⌘P / Ctrl-P (VS Code-style "go to page") both
+      // open the same quick-open palette.
+      const k = e.key.toLowerCase()
+      if ((e.metaKey || e.ctrlKey) && (k === 'k' || k === 'p')) {
         e.preventDefault()
         onOpenChange(!open)
       } else if (e.key === 'Escape') {
@@ -70,7 +83,9 @@ export function CommandPalette({
     const actions: Command[] = [
       ...(canUndo ? [{ id: 'undo', label: 'Undo last change', hint: 'history', run: undo }] : []),
       ...(canRedo ? [{ id: 'redo', label: 'Redo', hint: 'history', run: redo }] : []),
-      { id: 'theme', label: `Switch to ${data.settings.theme === 'mocha' ? 'light' : 'dark'} theme`, hint: 'action', run: () => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' }) },
+      ...THEME_OPTIONS.filter((t) => t.value !== data.settings.theme).map((t) => ({
+        id: `theme-${t.value}`, label: `Theme: ${t.label}`, hint: 'theme', run: () => setSettings({ theme: t.value }),
+      })),
       { id: 'paper', label: `${data.settings.paperMode ? 'Disable' : 'Enable'} paper texture`, hint: 'action', run: () => setSettings({ paperMode: !data.settings.paperMode }) },
       { id: 'hand', label: `${data.settings.handwriting ? 'Disable' : 'Enable'} handwriting font`, hint: 'action', run: () => setSettings({ handwriting: !data.settings.handwriting }) },
       { id: 'export', label: 'Export JSON backup', hint: 'action', run: () => download(`bujo-backup-${todayISO()}.json`, exportJSON(data)) },

@@ -52,28 +52,31 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 // Daily pipeline: capture & organise → track health → review.
 // "System" (Help, Settings) is intentionally NOT here — those live in the top
 // bar (gear + overflow menu) so the sidebar stays focused on daily views.
-const GROUP_ORDER = ['Journal', 'Health', 'Insights & Stats']
+// Smaller, job-to-be-done groups so no single section gets unwieldy (Health used
+// to hold 10 items). Order flows: capture → body → skill → discipline → mind →
+// reference → analysis. System (Help/Settings) lives in the top bar, not the rail.
+const GROUP_ORDER = ['Journal', 'Fitness', 'Sports', 'Habits', 'Wellbeing', 'Library', 'Review']
 
 const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
   { id: 'plan', label: 'Plan', icon: Repeat, group: 'Journal' },
-  { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Health' },
-  { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Health' },
-  { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Health' },
-  { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Health' },
-  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Health' },
-  { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Health' },
-  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Health' },
-  { id: 'focus', label: 'Focus', icon: Code2, group: 'Health' },
-  { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Health', show: (g) => g.cycle },
-  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Health', show: (g) => g.nofap },
-  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Insights & Stats' },
-  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Insights & Stats' },
-  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Insights & Stats' },
-  { id: 'goals', label: 'Goals', icon: Flag, group: 'Insights & Stats' },
-  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Insights & Stats' },
-  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Insights & Stats' },
-  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Insights & Stats' },
+  { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Fitness' },
+  { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Fitness' },
+  { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Fitness' },
+  { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Sports' },
+  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Sports' },
+  { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Habits' },
+  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Habits' },
+  { id: 'focus', label: 'Focus', icon: Code2, group: 'Habits' },
+  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Wellbeing' },
+  { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Wellbeing', show: (g) => g.cycle },
+  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Wellbeing', show: (g) => g.nofap },
+  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Library' },
+  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Library' },
+  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Library' },
+  { id: 'goals', label: 'Goals', icon: Flag, group: 'Library' },
+  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
+  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
   { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
   { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
 ]
