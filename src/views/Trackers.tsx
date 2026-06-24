@@ -17,6 +17,7 @@ import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
 import type { Habit, HabitCategory, HabitType } from '../lib/types'
 import { ActivityLayout } from '../components/ActivityLayout'
+import { HabitDetail } from '../components/trackers/HabitDetail'
 import { TrackerSummaryCard } from '../components/trackers/TrackerSummaryCard'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
@@ -68,6 +69,9 @@ export function Trackers() {
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   const [editing, setEditing] = useState<string | null>(null)
+  // Tapping a habit opens its read-first activity detail (heatmap + stats);
+  // "Edit" inside hands off to the settings editor.
+  const [viewing, setViewing] = useState<string | null>(null)
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
@@ -175,7 +179,7 @@ export function Trackers() {
             today={today}
             onToggle={toggleHabit}
             onSetValue={setHabitValue}
-            onEdit={setEditing}
+            onEdit={setViewing}
           />
         ) : layout === 'activity' ? (
           <ActivityLayout
@@ -184,7 +188,7 @@ export function Trackers() {
             today={today}
             onToggle={toggleHabit}
             onSetValue={setHabitValue}
-            onEdit={setEditing}
+            onEdit={setViewing}
             onReorder={reorderHabits}
           />
         ) : (
@@ -212,7 +216,7 @@ export function Trackers() {
                     data={data}
                     onToggle={toggleHabit}
                     onSetValue={setHabitValue}
-                    onEdit={setEditing}
+                    onEdit={setViewing}
                     onReorder={reorderHabits}
                     collapsed={collapsedCats.has(category)}
                     onToggleCollapse={() => setCollapsedCats((cur) => { const n = new Set(cur); if (n.has(category)) n.delete(category); else n.add(category); return n })}
@@ -285,6 +289,14 @@ export function Trackers() {
 
       <ArchivedHabits />
 
+      {viewing && data.habits.find((h) => h.id === viewing) && (
+        <HabitDetail
+          habit={data.habits.find((h) => h.id === viewing)!}
+          data={data}
+          onClose={() => setViewing(null)}
+          onEdit={() => { setEditing(viewing); setViewing(null) }}
+        />
+      )}
       {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
     </Page>
   )

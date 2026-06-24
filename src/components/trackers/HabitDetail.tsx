@@ -1,0 +1,113 @@
+import { createPortal } from 'react-dom'
+import { X, Flame, ShieldCheck, Settings2, Ban } from 'lucide-react'
+import { StatTile } from '../ui'
+import { cat } from '../../lib/colors'
+import { addDays, fromISODay, todayISO, WEEKDAYS } from '../../lib/date'
+import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } from '../../lib/stats'
+import { longestStreakEver } from '../../lib/streak'
+import { completionRate30, bestWeekday, perfectWeeks } from '../../lib/habitStats'
+import type { Habit, JournalData } from '../../lib/types'
+
+const WEEKS = 18
+const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
+
+/**
+ * Per-habit activity view (BUJO-237): a focused read-first panel for one habit —
+ * a GitHub-style day heatmap plus the key numbers (streak, best, 30/90-day rate,
+ * best weekday, perfect weeks). Opened by tapping a habit; "Edit settings" hands
+ * off to the editor. No line graph by design — the heatmap is the story.
+ */
+export function HabitDetail({
+  habit: h, data, onClose, onEdit,
+}: {
+  habit: Habit
+  data: JournalData
+  onClose: () => void
+  onEdit: () => void
+}) {
+  const today = todayISO()
+  const type = h.type ?? 'check'
+  const target = habitTarget(h)
+  const avoid = !!h.avoid
+  const accent = avoid ? cat('red') : cat(h.color)
+
+  const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
+  const best = longestStreakEver(data, h, today)
+  const r30 = completionRate30(data, h, today, 30)
+  const r90 = completionRate30(data, h, today, 90)
+  const wd = bestWeekday(data, h, today, 90)
+  const perfect = perfectWeeks(data, h, today, 12)
+
+  // 18-week day heatmap (one column per week, aligned to weekday rows).
+  const days = WEEKS * 7
+  const start = addDays(today, -(days - 1))
+  const pad = fromISODay(start).getDay()
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
+      <div
+        className="card-3d w-full max-w-2xl overflow-hidden rounded-xl border border-surface1 bg-mantle"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label={`${h.name} activity`}
+      >
+        <div className="flex items-center justify-between border-b border-surface0 px-5 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-lg">{avoid ? <Ban size={18} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+            <h2 className="truncate font-display text-lg text-text">{h.name}</h2>
+            {h.unit && <span className="text-xs text-overlay0">({h.unit})</span>}
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="inline-flex items-center gap-1 rounded-lg border border-surface1 px-2 py-1 text-xs text-subtext1 hover:text-text"><Settings2 size={13} /> Edit</button>
+            <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-overlay1 hover:text-text"><X size={18} /></button>
+          </div>
+        </div>
+
+        <div className="space-y-4 p-5">
+          {/* Stat tiles */}
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            <StatTile compact label={avoid ? 'clean' : 'streak'} value={<span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={13} /> : <Flame size={13} />}{streak}</span>} color={avoid ? 'green' : 'peach'} />
+            <StatTile compact label="best ever" value={best} color="mauve" />
+            <StatTile compact label="30-day" value={`${r30.pct}%`} color="green" />
+            <StatTile compact label="90-day" value={`${r90.pct}%`} color="teal" />
+            <StatTile compact label="best day" value={wd.best == null ? '—' : WEEKDAYS[wd.best]} color="blue" />
+            <StatTile compact label="perfect wks" value={perfect} color="sky" />
+          </div>
+
+          {/* Day heatmap */}
+          <div>
+            <p className="mb-1.5 text-xs text-overlay0">Last {WEEKS} weeks · {avoid ? 'clean = empty, slip = filled' : 'greener cells = done'}</p>
+            <div className="overflow-x-auto">
+              <div
+                className="grid grid-flow-col grid-rows-7 gap-0.5"
+                role="img"
+                aria-label={`${h.name} day-by-day activity heatmap for the last ${WEEKS} weeks`}
+              >
+                {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-3 w-3" />)}
+                {Array.from({ length: days }).map((_, i) => {
+                  const d = addDays(start, i)
+                  const before = d < h.startedOn
+                  const level = habitIntensity(type, habitValueOn(data, h, d), target)
+                  return (
+                    <span
+                      key={d}
+                      title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                      className="h-3 w-3 rounded-[2px]"
+                      style={{ background: before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-overlay0">
+            {r30.done}/{r30.scheduled} scheduled days done in the last 30.
+            {h.cue && <> · Cue: {h.cue}</>}
+          </p>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
