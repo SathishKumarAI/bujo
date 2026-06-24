@@ -213,7 +213,7 @@ export function NoFap() {
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
 
   return (
-    <div className="mx-auto max-w-[820px] items-start">
+    <div className="mx-auto max-w-[1400px] items-start">
       {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic · open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-105"

@@ -83,7 +83,7 @@ export function Cycle() {
               <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
               <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
               <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={rechartsTooltip} />
+              <Tooltip contentStyle={rechartsTooltip()} />
               <Line type="monotone" dataKey="temp" stroke={cat('maroon')} dot={{ r: 2 }} connectNulls strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>

@@ -554,4 +554,6 @@ see `docs/FEATURE-CARD-AUDIT.md`), then fixed the survivors + built a text-size 
 | AUD-2 | Shared `rechartsTooltip` (de-dup the literal across Stats/Cycle/Pickleball/Gym ×5) | ✅ |
 | AUD-3 | a11y: Cycle flag buttons `aria-pressed`/`aria-label`; Coaching week chevron `aria-expanded`/`aria-label` | ✅ |
 | AUD-4 | Audit doc with every finding + verification verdict + reasoning (`FEATURE-CARD-AUDIT.md`) | ✅ |
-| AUD-5 | Deferred: Heatmap/Monthly aria, theme-aware charts (`cat()` → CSS vars), save-toasts, Focus→ChartCard | 🔜 |
+| AUD-5 | Deferred: Heatmap/Monthly aria, save-toasts, Focus→ChartCard | 🔜 |
+| AUD-6 | **Theme-aware charts** — `cat()` resolves a per-theme `THEME_PALETTES` (lib/colors); store calls `setActiveTheme` in render; `rechartsTooltip()` reads live palette. Charts now follow mocha/latte/neon/vscode/dawn | ✅ |
+| AUD-7 | **Page-width consistency** — Reading (`max-w-5xl`) + NoFap (`max-w-[820px]`) → standard `max-w-[1400px]` like every other view | ✅ |

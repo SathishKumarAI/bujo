@@ -73,10 +73,14 @@ hand**. This doc records every finding, my verification verdict, and the reasoni
   toast pattern; do it once, app-wide.
 - **UI2** Focus custom charts → `ChartCard`; **UI3** Coaching tile primitive — refactors, own pass.
 - **U9** Pomodoro icon-button labels.
-- **Theme-aware charts** — `cat()` returns static Mocha hexes, so every recharts
-  series/tooltip stays Mocha-coloured under the vscode/dawn/etc themes. Making
-  `cat()` read CSS custom properties (or a theme-keyed palette) is the real fix;
-  scoped separately because it touches every chart.
+- ~~**Theme-aware charts**~~ ✅ **done (2026-06-24).** `cat()` now resolves against
+  a per-theme JS palette (`THEME_PALETTES` in `lib/colors.ts`, mirroring the
+  `--color-*` CSS blocks). The store calls `setActiveTheme(resolvedTheme)`
+  synchronously during render, so charts + inline styles pick up mocha / latte /
+  neon / vscode / dawn colors with no post-render flash. `rechartsTooltip()`
+  became a function so it reads the live palette. Chose JS palettes over reading
+  `getComputedStyle` because charts need concrete colors (not `var()`) and the
+  DOM-read approach forced a setState-in-effect the linter rejects.
 
 ## Key lesson (kept here on purpose)
 Multi-agent review is a *finder*, not an *authority*. Roughly 60% of raw findings

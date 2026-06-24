@@ -183,7 +183,7 @@ export function Pickleball() {
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                 <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis domain={[0, 100]} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip} />
+                <Tooltip contentStyle={tip()} />
                 <Line type="monotone" dataKey="winPct" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -198,7 +198,7 @@ export function Pickleball() {
                 <Pie data={wl} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
                   {wl.map((x) => <Cell key={x.name} fill={cat(x.color)} />)}
                 </Pie>
-                <Tooltip contentStyle={tip} />
+                <Tooltip contentStyle={tip()} />
               </PieChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-3 text-xs">
@@ -214,7 +214,7 @@ export function Pickleball() {
               <CartesianGrid stroke={cat('surface0')} vertical={false} />
               <XAxis dataKey="wk" stroke={cat('overlay0')} fontSize={11} />
               <YAxis stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} />
+              <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
               <Bar dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -228,7 +228,7 @@ export function Pickleball() {
                 <CartesianGrid stroke={cat('surface0')} vertical={false} />
                 <XAxis dataKey="m" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip} cursor={{ fill: cat('surface0') }} formatter={(v, n) => [n === 'winPct' ? `${v}%` : `${v}`, n === 'winPct' ? 'Win %' : 'Games'] as [string, string]} />
+                <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v, n) => [n === 'winPct' ? `${v}%` : `${v}`, n === 'winPct' ? 'Win %' : 'Games'] as [string, string]} />
                 <Bar dataKey="games" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -260,7 +260,7 @@ export function Pickleball() {
                 <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                 <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip} />
+                <Tooltip contentStyle={tip()} />
                 <Line type="monotone" dataKey="games" stroke={cat('blue')} dot={false} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -399,7 +399,7 @@ export function Pickleball() {
                     <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                     <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                     <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
-                    <Tooltip contentStyle={tip} />
+                    <Tooltip contentStyle={tip()} />
                     <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
