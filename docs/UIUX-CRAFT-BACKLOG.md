@@ -132,3 +132,43 @@ they do not agree on height, radius, focus ring, or disabled state.
 ### Destructive-action semantics
 
 - [ ] `destructive` variant is now correct in Settings, but confirmation is still a native `confirm()` everywhere. Replace with an `AlertDialog` that names the thing being destroyed and offers "export a backup first" — the one-click path to wiping a journal deserves better than a browser modal.
+
+---
+
+## 2026-07-13 · Craft backlog closed out
+
+### Read this first: `tsc --noEmit` does nothing in this repo
+
+The root `tsconfig.json` is solution-style (`"files": []` + project references), so
+`npx tsc --noEmit` has no root files to check and **always exits 0**. It silently passes
+broken code. The real typecheck is **`npx tsc -b`** — what `npm run build` runs.
+
+This masked 7 real type errors during this work. Use `tsc -b`.
+
+### Done
+
+- [x] **Text contrast — the eye-strain bug.** Both muted tokens failed WCAG AA for body text on Mocha's `#1e1e2e`:
+
+  | Token | Hex | Ratio | |
+  | --- | --- | --- | --- |
+  | `overlay0` | `#6c7086` | **3.36:1** | fails AA — 462 uses |
+  | `overlay1` | `#7f849c` | **4.44:1** | fails AA — 93 uses |
+  | `subtext0` | `#a6adc8` | **7.37:1** | passes AA + AAA |
+
+  All 555 text uses moved to `subtext0`. Palette-native, so Catppuccin is unchanged. No
+  `text-overlay0`/`text-overlay1` remains in `src/`.
+
+- [x] **Global focus ring.** There was none — only shadcn primitives were keyboard-visible; every hand-rolled button, link and input focused invisibly. One `:focus-visible` rule now covers `a, button, input, select, textarea, summary, [tabindex]`.
+- [x] **Destructive `confirm()` → `AlertDialog`.** New `ui/alert-dialog.tsx` + promise-based `useConfirm()`. All 22 call sites migrated. Dialogs now name what dies ("This deletes all 143 entries, 12 habits…"), label the button with the action, and the two data-wiping paths offer **"Export a backup first"** inline. `useConfirm()` falls back to `window.confirm` with no provider, so a missing provider can't turn a guard into a no-op.
+- [x] **Legacy `Button` retired.** 11 importers, 29 call sites migrated; wrapper deleted from `ui.tsx`. One Button import path.
+- [x] **Copy.** `·` was doing the work of every punctuation mark (555 uses). Converted to real punctuation in prose only; kept for genuine metadata (`12 reps · 3 sets`). Emoji status prefixes and the redundant uppercase `show` labels removed.
+- [x] **`CollapsibleSection` dedupe.** The three copies were orphaned dead code. Moved to `archive/` (commented out, outside the TS program).
+
+### Stale entries above — already shipped, ignore them
+
+`ErrorBoundary`, Toaster/`notify()`, and `Skeleton` all exist and are wired up.
+
+### Still open
+
+- [ ] 17 pre-existing eslint errors (`set-state-in-effect` ×4, `react-refresh/only-export-components` ×7, `no-explicit-any` ×5 in `lib/wger.ts`, refs-during-render in `lib/speech.ts`). Untouched by this pass; baseline and current are identical.
+- [ ] Delete `archive/` once you're happy the CollapsibleSection copies aren't needed.
