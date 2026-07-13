@@ -7,9 +7,11 @@ import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { folderName, isSupported, loadFromFolder, pickFolder, restoreFolder, saveToFolder } from '../lib/fscloud'
 import { pullGist, pushGist, verifyToken } from '../lib/github'
+import { useConfirm } from './ConfirmDialog'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
+  const confirm = useConfirm()
   const { data, setSettings, replaceAll } = useJournal()
   const s = data.settings
   const [busy, setBusy] = useState('')
@@ -20,7 +22,11 @@ export function CloudStorage() {
     try {
       const name = await pickFolder()
       const remote = await loadFromFolder()
-      if (remote && confirm('Load the bujo.json already in this folder? (replaces this device’s data)')) {
+      if (remote && await confirm({
+        title: 'Load the journal already in this folder?',
+        description: 'This folder has an existing bujo.json. Loading it replaces everything currently on this device.',
+        confirmLabel: 'Load it', destructive: true,
+      })) {
         replaceAll(migrate(remote))
       } else {
         await saveToFolder(data)
@@ -62,7 +68,11 @@ export function CloudStorage() {
   }
   async function ghRestore() {
     if (!s.githubToken || !s.githubGistId) return alert('Connect + back up to GitHub first.')
-    if (!confirm('Replace this device’s journal with the GitHub copy?')) return
+    if (!await confirm({
+      title: 'Replace this device’s journal with the GitHub copy?',
+      description: 'Everything currently on this device is overwritten by the copy stored in your gist.',
+      confirmLabel: 'Replace my data', destructive: true,
+    })) return
     setBusy('gh')
     try {
       const remote = await pullGist(s.githubToken, s.githubGistId)

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { suggest, findDuplicates, type SuggestContext, type DupItem, type Suggestion } from '../lib/suggest'
+import { useConfirm } from './ConfirmDialog'
 
 /**
  * A text input with VS Code-style completion + duplicate detection.
@@ -34,6 +35,7 @@ export function SmartInput({
   onMergeDuplicate?: (id: string) => void
   confirmOnDuplicate?: boolean
 }) {
+  const confirm = useConfirm()
   const inputRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -51,9 +53,13 @@ export function SmartInput({
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
-  function submit() {
+  async function submit() {
     if (!value.trim()) return
-    if (confirmOnDuplicate && dupes.length && !confirm('Possible duplicate · add anyway?')) return
+    if (confirmOnDuplicate && dupes.length && !await confirm({
+      title: 'This looks like a duplicate.',
+      description: 'You already have a similar entry. Add this one anyway?',
+      confirmLabel: 'Add anyway',
+    })) return
     onSubmit(value)
     setOpen(false)
   }

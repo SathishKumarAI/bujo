@@ -9,6 +9,7 @@ import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
 import { supabaseEnabled, providerEnabled, signInGoogle, signUpEmail, signInEmail, resetPassword, pullJournal, pushJournal } from '../lib/supabase'
 import { authFormError, isValidEmail } from '../lib/validate'
+import { useConfirm } from '../components/ConfirmDialog'
 
 /**
  * First-run gate. The app is local-first; here the user chooses where their
@@ -17,6 +18,7 @@ import { authFormError, isValidEmail } from '../lib/validate'
  */
 export function Welcome() {
   const { data, setSettings, replaceAll } = useJournal()
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const supported = isSupported()
 
@@ -26,7 +28,11 @@ export function Welcome() {
       const name = await pickFolder()
       const remote = await loadFromFolder()
       if (remote) {
-        if (confirm('Found an existing bujo.json in this folder. Load it? (replaces this device’s current data)')) {
+        if (await confirm({
+          title: 'Load the journal already in this folder?',
+          description: 'This folder has an existing bujo.json. Loading it replaces the data currently on this device.',
+          confirmLabel: 'Load it', destructive: true,
+        })) {
           replaceAll(migrate(remote))
         } else {
           await saveToFolder(data)

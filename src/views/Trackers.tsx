@@ -25,6 +25,7 @@ import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../components/trackers/CategoryConsistencyCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
+import { useConfirm } from '../components/ConfirmDialog'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
@@ -316,6 +317,7 @@ export function Trackers() {
 
 /** Browser for archived habits · restore or delete for good. */
 function ArchivedHabits() {
+  const confirm = useConfirm()
   const { data, updateHabit, removeHabit } = useJournal()
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
@@ -327,7 +329,11 @@ function ArchivedHabits() {
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             <Button variant="link" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-xs text-green">restore</Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-subtext0 hover:text-red">×</Button>
+            <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
+              title: `Delete “${h.name}”?`,
+              description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
+              confirmLabel: 'Delete habit', destructive: true,
+            })) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-subtext0 hover:text-red">×</Button>
           </li>
         ))}
       </ul>
@@ -704,6 +710,7 @@ function CategoryRows({
 
 // ── Per-habit customisation modal ────────────────────────────────────────────
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
+  const confirm = useConfirm()
   const { updateHabit, removeHabit, toggleHabitSkip, setHabitNote, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
   // Reuse units already in use so trackers share consistent units (e.g. always
@@ -923,7 +930,11 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               {skippedToday ? 'Un-skip today' : 'Skip today'}
             </Button>
             <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Archive size={14} /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
-            <Button variant="ghost" onClick={() => { if (confirm(`Delete "${habit.name}" and its history?`)) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
+            <Button variant="ghost" onClick={async () => { if (await confirm({
+              title: `Delete “${habit.name}”?`,
+              description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
+              confirmLabel: 'Delete habit', destructive: true,
+            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
             <Button onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
           </div>
         </div>

@@ -12,6 +12,7 @@ import { cat } from '../lib/colors'
 import { pace, cardioPBs, trainingHeatmap, cardioBadges } from '../lib/fitness'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
+import { useConfirm } from '../components/ConfirmDialog'
 
 const ACTIVITIES = ['Run', 'Walk', 'Strength', 'Cycling', 'Yoga', 'Swim', 'HIIT', 'Sport', 'Other']
 type Form = { date: string; activity: string; duration: string; distance: string; calories: string; rpe: string; sets: string; notes: string }
@@ -169,6 +170,7 @@ function WorkoutEditDialog({ workout, onClose }: { workout: Workout | null; onCl
 }
 
 function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (p: Omit<Workout, 'id'>) => void; onDelete: () => void }) {
+  const confirm = useConfirm()
   const [f, setF] = useState<Form>(() => workoutToForm(workout))
   const set = (p: Partial<Form>) => setF((cur) => ({ ...cur, ...p }))
   return (
@@ -186,7 +188,11 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
         <Button variant="default" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-lg">Save</Button>
-        <Button variant="ghost" onClick={() => { if (confirm('Delete this workout?')) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
+        <Button variant="ghost" onClick={async () => { if (await confirm({
+          title: 'Delete this workout?',
+          description: 'The workout and its sets are removed from your history. This cannot be undone.',
+          confirmLabel: 'Delete workout', destructive: true,
+        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
       </div>
     </div>
   )

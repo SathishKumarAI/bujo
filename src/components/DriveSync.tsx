@@ -6,12 +6,14 @@ import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
+import { useConfirm } from './ConfirmDialog'
 
 /**
  * Optional Google Drive sync card. Requires a Google OAuth Client ID
  * (see docs/GOOGLE_DRIVE.md). Local-first stays default; this is opt-in.
  */
 export function DriveSync() {
+  const confirm = useConfirm()
   const { data, setSettings, replaceAll } = useJournal()
   const clientId = data.settings.googleClientId ?? ''
   const [connected, setConnected] = useState(isConnected())
@@ -46,7 +48,11 @@ export function DriveSync() {
   }
 
   async function restore() {
-    if (!confirm('Replace this device’s journal with the copy on Google Drive?')) return
+    if (!await confirm({
+      title: 'Replace this device’s journal with the Google Drive copy?',
+      description: 'Everything currently on this device is overwritten by the copy stored in Drive.',
+      confirmLabel: 'Replace my data', destructive: true,
+    })) return
     setBusy('pull')
     try {
       const remote = await pullData()

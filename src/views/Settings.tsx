@@ -20,6 +20,7 @@ import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender, ThemeName } from '../lib/types'
+import { useConfirm } from '../components/ConfirmDialog'
 
 /** Selectable themes (swatch = base / surface / accent) for the Settings picker. */
 const THEMES: { value: ThemeName; label: string; hint: string; swatch: [string, string, string] }[] = [
@@ -66,6 +67,7 @@ function Disclosure({ title, subtitle, defaultOpen = false, children }: {
 }
 
 export function Settings() {
+  const confirm = useConfirm()
   const { data, setSettings, replaceAll, setMetric } = useJournal()
   const fileRef = useRef<HTMLInputElement>(null)
   const csvRef = useRef<HTMLInputElement>(null)
@@ -287,7 +289,11 @@ export function Settings() {
           {/* SET-4: one-tap return to the default look. */}
           <Button
             variant="destructive"
-            onClick={() => { if (confirm('Reset appearance to defaults? (theme, accent, paper & dashboard toggles — your data is untouched.)')) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
+            onClick={async () => { if (await confirm({
+              title: 'Reset appearance to defaults?',
+              description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
+              confirmLabel: 'Reset appearance', destructive: true,
+            })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
             className="inline-flex items-center gap-1.5"
           >
             <RefreshCw size={14} /> Reset appearance to defaults
@@ -467,8 +473,12 @@ export function Settings() {
         <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
-            onClick={() => {
-              if (data.entries.length === 0 || confirm('Load demo data? This replaces your current journal.')) {
+            onClick={async () => {
+              if (data.entries.length === 0 || await confirm({
+                title: 'Load demo data?',
+                description: 'This replaces your current journal with about 30 days of sample entries.',
+                confirmLabel: 'Load demo data', destructive: true, onBackup: doExport,
+              })) {
                 replaceAll(generateDemoData())
               }
             }}
@@ -478,8 +488,12 @@ export function Settings() {
           </Button>
           <Button
             variant="destructive"
-            onClick={() => {
-              if (confirm('Erase everything and start fresh? Export a backup first if unsure.')) {
+            onClick={async () => {
+              if (await confirm({
+                title: 'Erase everything and start fresh?',
+                description: `This deletes all ${data.entries.length} entries, ${data.habits.length} habits, ${data.workouts.length} workouts, and every photo and memory on this device. It cannot be undone.`,
+                confirmLabel: 'Erase everything', destructive: true, onBackup: doExport,
+              })) {
                 replaceAll(emptyJournal())
               }
             }}
@@ -489,7 +503,11 @@ export function Settings() {
           </Button>
           <Button
             variant="secondary"
-            onClick={() => { if (confirm('Return to the start screen? Your data is kept · you can pick guest / account / device again.')) setSettings({ storageMode: undefined }) }}
+            onClick={async () => { if (await confirm({
+              title: 'Return to the start screen?',
+              description: 'Your data is kept, and you can choose guest, account, or device again.',
+              confirmLabel: 'Go to start screen',
+            })) setSettings({ storageMode: undefined }) }}
             className="inline-flex items-center gap-1.5"
           >
             Back to start screen
@@ -566,6 +584,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 
 /** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync. */
 function AccountCard() {
+  const confirm = useConfirm()
   const { data, replaceAll, setSettings } = useJournal()
   const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null)
   const [email, setEmail] = useState('')
@@ -593,7 +612,11 @@ function AccountCard() {
   const signedIn = !!user && !guest
   // Return to the first-run gate (keeps local data; lets them switch/log in).
   async function leave() {
-    if (!confirm('Log out and return to the start screen? Your data stays on this device · sign in afterward to save it to an account.')) return
+    if (!await confirm({
+      title: 'Log out and return to the start screen?',
+      description: 'Your data stays on this device. Sign in afterward to save it to an account.',
+      confirmLabel: 'Log out',
+    })) return
     setBusy(true)
     try { if (user) await import('../lib/supabase').then((m) => m.signOut()) } catch { /* ignore */ }
     localStorage.removeItem('bujo:sync')
@@ -623,7 +646,11 @@ function AccountCard() {
           <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="default" disabled={busy} onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
-            <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && await confirm({
+              title: 'Load your cloud data onto this device?',
+              description: 'This replaces what is currently on this device with the copy stored in your account.',
+              confirmLabel: 'Load cloud data', destructive: true,
+            })) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
             <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
             <button onClick={leave} className="ml-auto text-xs text-subtext0 hover:text-red">Log out / switch</button>
           </div>
@@ -632,7 +659,11 @@ function AccountCard() {
       {signedIn && (
         <div className="flex flex-wrap gap-2">
           <Button variant="default" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, '✓ Saved to your account.')}>Save now</Button>
-          <Button variant="secondary" disabled={busy} onClick={() => run(async () => { const r = await pullJournal(); if (r && confirm('Replace this device with your cloud data?')) replaceAll(migrate(r)) }, '✓ Loaded.')}>Load</Button>
+          <Button variant="secondary" disabled={busy} onClick={() => run(async () => { const r = await pullJournal(); if (r && await confirm({
+              title: 'Replace this device with your cloud data?',
+              description: 'Everything currently on this device is overwritten by the copy stored in your account.',
+              confirmLabel: 'Replace my data', destructive: true,
+            })) replaceAll(migrate(r)) }, '✓ Loaded.')}>Load</Button>
           <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={() => run(async () => { await signOut() }, 'Signed out.')}>Sign out</Button>
         </div>
       )}
@@ -644,6 +675,7 @@ function AccountCard() {
 
 /** One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync). */
 function BujoCloudCard() {
+  const confirm = useConfirm()
   const { data, replaceAll } = useJournal()
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState('')
@@ -662,7 +694,11 @@ function BujoCloudCard() {
     try {
       const remote = await pullCloud(pass)
       if (!remote) { setMsg('Nothing stored for that passphrase yet.'); return }
-      if (confirm('Replace this device’s data with the cloud copy?')) { replaceAll(migrate(remote)); setMsg('✓ Pulled from cloud.') }
+      if (await confirm({
+        title: 'Replace this device’s data with the cloud copy?',
+        description: 'Everything currently on this device is overwritten by the encrypted copy stored in the cloud.',
+        confirmLabel: 'Replace my data', destructive: true,
+      })) { replaceAll(migrate(remote)); setMsg('Pulled from cloud.') }
     } catch (e) { setMsg(/wrong|decrypt|operation/i.test((e as Error).message) ? 'Wrong passphrase, or corrupt data.' : (e as Error).message) }
     finally { setBusy('') }
   }
@@ -694,6 +730,7 @@ function BujoCloudCard() {
 
 /** Encrypt the journal at rest behind a passcode (Web Crypto, local-only). */
 function PasscodeCard() {
+  const confirm = useConfirm()
   const { setPasscode, encrypted } = useJournal()
   const [pc, setPc] = useState('')
   const [pc2, setPc2] = useState('')
@@ -708,7 +745,11 @@ function PasscodeCard() {
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-sm text-green">🔒 Journal is encrypted</span>
-          <Button variant="destructive" onClick={() => { if (confirm('Remove the passcode and store the journal unencrypted?')) setPasscode(null) }}>Remove passcode</Button>
+          <Button variant="destructive" onClick={async () => { if (await confirm({
+            title: 'Remove the passcode?',
+            description: 'The journal will be stored unencrypted on this device. Anyone with access to this browser can read it.',
+            confirmLabel: 'Remove passcode', destructive: true,
+          })) setPasscode(null) }}>Remove passcode</Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -731,6 +772,7 @@ function PasscodeCard() {
  *  sub=<this device id>); mint one with the helper in
  *  docs/security/postgrest-hardening.md. */
 function SelfHostCard() {
+  const confirm = useConfirm()
   const { data, setSettings, replaceAll } = useJournal()
   const s = data.settings
   const [msg, setMsg] = useState('')
@@ -744,7 +786,11 @@ function SelfHostCard() {
   async function pull() {
     if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }
     const r = await pullJournalFromServer(s.selfHostUrl ?? '', s.selfHostToken)
-    if (r && confirm('Load the server copy onto this device? (replaces current data)')) { replaceAll(migrate(r)); setMsg('✓ Loaded from server.') }
+    if (r && await confirm({
+      title: 'Load the server copy onto this device?',
+      description: 'Everything currently on this device is replaced by the copy on your server.',
+      confirmLabel: 'Load from server', destructive: true,
+    })) { replaceAll(migrate(r)); setMsg('Loaded from the server.') }
     else setMsg(r ? 'Cancelled.' : 'Nothing on the server yet (or auth failed).')
   }
 

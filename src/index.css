@@ -102,6 +102,15 @@ body,
   -webkit-font-smoothing: antialiased;
 }
 
+/* One keyboard-focus ring for the whole app. Without this only the shadcn
+   primitives had a visible ring; every hand-rolled button, link and input
+   focused invisibly. :focus-visible keeps it off for mouse clicks. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-mauve);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
 /* Thin Catppuccin scrollbars */
 * {
   scrollbar-width: thin;

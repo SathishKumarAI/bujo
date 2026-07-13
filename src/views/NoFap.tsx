@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
+import { useConfirm } from '../components/ConfirmDialog'
 import {
   CollapsibleSection,
   StreakVsBestCard,
@@ -134,6 +135,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
 }
 
 export function NoFap() {
+  const confirm = useConfirm()
   const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction, setStreakCost, setAddictionCost, setCommitment } = useJournal()
   const currency = data.settings.currencySymbol || '$'
   const [newAddiction, setNewAddiction] = useState('')
@@ -420,8 +422,16 @@ export function NoFap() {
                         </div>
                         <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
-                      <Button variant="ghost" onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0 text-xs text-red hover:text-red">Reset</Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                      <Button variant="ghost" onClick={async () => { if (await confirm({
+                        title: `Reset the ${a.name} streak?`,
+                        description: 'Your current streak goes back to zero. Your total clean days and best streak are kept.',
+                        confirmLabel: 'Reset streak', destructive: true,
+                      })) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0 text-xs text-red hover:text-red">Reset</Button>
+                      <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
+                        title: `Stop tracking ${a.name}?`,
+                        description: 'Its streak and full reset history are deleted. This cannot be undone.',
+                        confirmLabel: 'Stop tracking', destructive: true,
+                      })) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
                     {/* #123 per-addiction cost/day → money saved */}
                     <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-subtext0">

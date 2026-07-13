@@ -8,6 +8,7 @@ import { Page } from '../components/shell/Page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 import type { Challenge } from '../lib/types'
+import { useConfirm } from '../components/ConfirmDialog'
 import {
   CHALLENGE_PRESETS, isDayComplete, progressDay, percentComplete,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -75,6 +76,7 @@ export function Challenges() {
 }
 
 function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
+  const confirm = useConfirm()
   const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
   const [calOpen, setCalOpen] = useState(false)
   const today = todayISO()
@@ -93,7 +95,11 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         <div className="flex items-center gap-1">
           <span className="mr-1 inline-flex items-center gap-1 text-xs text-peach" title="Current streak"><Flame size={13} />{streak}</span>
           <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
-          <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete the "${c.name}" challenge and its log?`)) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Trash2 size={14} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
+            title: `Delete the “${c.name}” challenge?`,
+            description: 'Its progress log and streak are deleted with it. This cannot be undone.',
+            confirmLabel: 'Delete challenge', destructive: true,
+          })) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Trash2 size={14} /></Button>
         </div>
       }
     >

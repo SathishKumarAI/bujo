@@ -4,6 +4,7 @@ import { exportJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
 import type { ThemeName } from '../lib/types'
+import { useConfirm } from './ConfirmDialog'
 
 const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
   { value: 'mocha', label: 'Mocha (dark)' },
@@ -37,6 +38,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void
 }) {
   const { data, setSettings, replaceAll, undo, redo, canUndo, canRedo } = useJournal()
+  const confirm = useConfirm()
   const setOpen = onOpenChange
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
@@ -89,10 +91,14 @@ export function CommandPalette({
       { id: 'paper', label: `${data.settings.paperMode ? 'Disable' : 'Enable'} paper texture`, hint: 'action', run: () => setSettings({ paperMode: !data.settings.paperMode }) },
       { id: 'hand', label: `${data.settings.handwriting ? 'Disable' : 'Enable'} handwriting font`, hint: 'action', run: () => setSettings({ handwriting: !data.settings.handwriting }) },
       { id: 'export', label: 'Export JSON backup', hint: 'action', run: () => download(`bujo-backup-${todayISO()}.json`, exportJSON(data)) },
-      { id: 'demo', label: 'Load demo data', hint: 'action', run: () => { if (data.entries.length === 0 || confirm('Replace current journal with demo data?')) replaceAll(generateDemoData()) } },
+      { id: 'demo', label: 'Load demo data', hint: 'action', run: async () => { if (data.entries.length === 0 || await confirm({
+        title: 'Replace your journal with demo data?',
+        description: 'Your current entries are overwritten by about 30 days of sample data.',
+        confirmLabel: 'Load demo data', destructive: true,
+      })) replaceAll(generateDemoData()) } },
     ]
     return [...nav, ...actions]
-  }, [data, navItems, onNavigate, setSettings, replaceAll, undo, redo, canUndo, canRedo])
+  }, [data, navItems, onNavigate, setSettings, replaceAll, undo, redo, canUndo, canRedo, confirm])
 
   const filtered = commands.filter((c) => c.label.toLowerCase().includes(q.toLowerCase()))
 
