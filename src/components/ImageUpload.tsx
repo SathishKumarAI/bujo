@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Camera, X } from 'lucide-react'
 import { fileToDataURL } from '../lib/image'
-import { Button } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Drop-in image picker. Stores a downscaled JPEG data-URL via `onChange`.
@@ -60,7 +60,7 @@ export function ImageUpload({
           </div>
         </div>
       ) : (
-        <Button onClick={() => ref.current?.click()} className="flex w-full items-center justify-center gap-2">
+        <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-lg flex w-full items-center justify-center gap-2">
           <Camera size={15} /> {busy ? 'Processing…' : label}
         </Button>
       )}

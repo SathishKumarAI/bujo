@@ -3,7 +3,8 @@ import { UserPlus, AtSign, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { fetchGithubProfile } from '../lib/enrich'
-import { Button, Card, Empty, Input } from './ui'
+import { Card, Empty, Input } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Friends / contacts collection. Everything is manual; the only network call is
@@ -63,7 +64,7 @@ export function FriendsCard() {
             <AtSign size={14} className="shrink-0 text-subtext0" />
             <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-subtext0 focus:outline-none" />
           </div>
-          <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5">
+          <Button variant="default" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>

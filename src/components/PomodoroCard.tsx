@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react'
-import { Card, Button } from './ui'
+import { Card } from './ui'
 import { useJournal } from '../store'
 import { todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
+import { Button } from './ui/button'
 
 // ADHD-friendly defaults: start gentle, scale up. Pomodoro work/break in minutes.
 const PRESETS = [
@@ -82,16 +83,16 @@ export function PomodoroCard() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="primary" onClick={() => setRunning((r) => !r)} className="inline-flex items-center gap-1.5">
+          <Button variant="default" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             {running ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Start</>}
           </Button>
-          <Button onClick={skip} aria-label="Skip" title="Skip to next"><SkipForward size={15} /></Button>
-          <Button onClick={reset} aria-label="Reset" title="Reset"><RotateCcw size={15} /></Button>
+          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><SkipForward size={15} /></Button>
+          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d rounded-lg"><RotateCcw size={15} /></Button>
         </div>
 
         <div className="mt-3 flex gap-1.5">
           {PRESETS.map((p) => (
-            <Button key={p.label} variant={preset.label === p.label ? 'primary' : 'ghost'} onClick={() => choose(p)} className="text-xs">{p.label}</Button>
+            <Button key={p.label} variant={preset.label === p.label ? 'default' : 'secondary'} onClick={() => choose(p)} className="press-3d rounded-lg text-xs">{p.label}</Button>
           ))}
         </div>
       </div>

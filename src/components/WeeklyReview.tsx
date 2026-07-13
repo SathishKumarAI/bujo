@@ -5,7 +5,8 @@ import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { weekCoverage } from '../lib/coverage'
 import { useNav } from './shell/nav'
-import { Button, Card, Textarea } from './ui'
+import { Card, Textarea } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Guided weekly review, top to bottom: (1) migrate overdue tasks, (2) read the
@@ -40,7 +41,7 @@ export function WeeklyReview() {
     <Card
       title={<span className="inline-flex items-center gap-2"><ClipboardCheck size={18} className="text-mauve" /> Weekly review</span>}
       subtitle={`Last 7 days · ${score}% covered`}
-      right={<Button onClick={() => setOpen((o) => !o)}>{open ? 'Close' : 'Start review'}</Button>}
+      right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-lg">{open ? 'Close' : 'Start review'}</Button>}
     >
       {!open ? (
         <p className="text-sm text-subtext0">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>
@@ -75,7 +76,7 @@ export function WeeklyReview() {
             <p className="mb-2 text-xs font-medium tracking-wide text-subtext0 uppercase">3 · Reflect</p>
             <Textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="What went well? What will you change next week?" rows={3} />
             <div className="mt-2 flex justify-end">
-              <Button variant="primary" onClick={saveReflection}>Save reflection</Button>
+              <Button variant="default" onClick={saveReflection} className="press-3d rounded-lg">Save reflection</Button>
             </div>
           </div>
         </div>

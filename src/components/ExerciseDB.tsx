@@ -3,7 +3,8 @@ import { Dumbbell, Plus, X, Video } from 'lucide-react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { MuscleMap, muscleNames } from './MuscleMap'
-import { Button, Empty, Input } from './ui'
+import { Empty, Input } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Browse the wger exercise database (image-based grid) and pick an exercise.
@@ -119,8 +120,8 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
               </div>
             </div>
             <footer className="flex justify-end gap-2 border-t border-surface0 px-4 py-3">
-              <Button onClick={() => setSelected(null)}>Close</Button>
-              <Button variant="primary" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="inline-flex items-center gap-1.5">
+              <Button variant="secondary" onClick={() => setSelected(null)} className="press-3d rounded-lg">Close</Button>
+              <Button variant="default" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="press-3d rounded-lg inline-flex items-center gap-1.5">
                 <Plus size={15} /> Add to session
               </Button>
             </footer>

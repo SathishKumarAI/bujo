@@ -4,7 +4,8 @@ import { useJournal } from '../store'
 import { fileToDataURL } from '../lib/image'
 import { putImage, getImage, deleteImage } from '../lib/imageStore'
 import { todayISO, prettyDay } from '../lib/date'
-import { Button, Card, Empty } from './ui'
+import { Card, Empty } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Physique / progress-photo tracker: upload a dated photo, view the gallery
@@ -59,13 +60,13 @@ export function ProgressPhotos() {
       subtitle="Weekly physique check · private, on-device"
       right={
         photos.length >= 2 && (
-          <Button onClick={() => setCompare((c) => !c)} className="inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setCompare((c) => !c)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <Columns2 size={14} /> {compare ? 'Gallery' : 'Compare'}
           </Button>
         )
       }
     >
-      <Button onClick={() => ref.current?.click()} className="mb-3 flex w-full items-center justify-center gap-2">
+      <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-lg mb-3 flex w-full items-center justify-center gap-2">
         <Camera size={15} /> {busy ? 'Processing…' : 'Add today’s photo'}
       </Button>
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />

@@ -126,7 +126,6 @@ export function Card({
   )
 }
 
-
 /**
  * A bordered metric tile: a big colored number/value over a small label.
  * Replaces the ad-hoc `Stat` blocks scattered across Fitness/Focus/Trackers.
@@ -206,43 +205,6 @@ export function ChartCard({
         {children}
       </div>
     </Card>
-  )
-}
-
-export function Button({
-  children,
-  onClick,
-  variant = 'ghost',
-  type = 'button',
-  className = '',
-  title,
-  disabled,
-  'aria-label': ariaLabel,
-}: {
-  children: ReactNode
-  onClick?: () => void
-  variant?: 'primary' | 'ghost' | 'danger'
-  type?: 'button' | 'submit'
-  className?: string
-  title?: string
-  /** Forwarded so an async action can go busy — without this the button stays
-   *  clickable mid-flight and double-submits. */
-  disabled?: boolean
-  'aria-label'?: string
-}) {
-  const v = variant === 'primary' ? 'default' : variant === 'danger' ? 'ghost' : 'secondary'
-  return (
-    <SButton
-      type={type}
-      onClick={onClick}
-      title={title}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      variant={v}
-      className={cn('press-3d rounded-lg', variant === 'danger' && 'text-red hover:text-red', className)}
-    >
-      {children}
-    </SButton>
   )
 }
 

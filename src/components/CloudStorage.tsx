@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { FolderOpen, GitBranch, RefreshCw, Upload, Download, HardDrive } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Input } from './ui'
+import { Card, Input } from './ui'
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { folderName, isSupported, loadFromFolder, pickFolder, restoreFolder, saveToFolder } from '../lib/fscloud'
 import { pullGist, pushGist, verifyToken } from '../lib/github'
 import { useConfirm } from './ConfirmDialog'
+import { Button } from './ui/button'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
@@ -103,9 +104,9 @@ export function CloudStorage() {
           <p className="mt-2 text-xs text-red">Needs Chrome / Edge.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button onClick={chooseFolder} disabled={!!busy} className="inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
-            {s.storageMode === 'folder' && <Button onClick={syncFolderNow} disabled={!!busy} className="inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
-            {s.storageMode === 'folder' && <Button variant="danger" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })}>Switch to local</Button>}
+            <Button variant="secondary" onClick={chooseFolder} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
+            {s.storageMode === 'folder' && <Button variant="secondary" onClick={syncFolderNow} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
+            {s.storageMode === 'folder' && <Button variant="ghost" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })} className="press-3d rounded-lg text-red hover:text-red">Switch to local</Button>}
           </div>
         )}
       </div>
@@ -124,8 +125,8 @@ export function CloudStorage() {
           className="mt-2 font-mono"
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button onClick={ghBackup} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
-          <Button onClick={ghRestore} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
+          <Button variant="secondary" onClick={ghBackup} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
+          <Button variant="secondary" onClick={ghRestore} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
           {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-xs text-mauve hover:underline">open gist</a>}
         </div>
       </div>

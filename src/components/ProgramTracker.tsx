@@ -3,8 +3,9 @@ import { Plus } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { PROGRAMS } from '../lib/programs'
-import { Button, Card, Segmented } from './ui'
+import { Card, Segmented } from './ui'
 import { VideoLink } from './VideoLink'
+import { Button } from './ui/button'
 
 /**
  * Follow a built-in multi-week training program (encoded in `lib/programs.ts`):
@@ -118,8 +119,8 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
             })}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
-            {onLoad && <Button variant="primary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="inline-flex items-center gap-1.5"><Plus size={14} /> Load into session</Button>}
-            <Button onClick={toggleAll}>{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
+            {onLoad && <Button variant="default" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={14} /> Load into session</Button>}
+            <Button variant="secondary" onClick={toggleAll} className="press-3d rounded-lg">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
           </div>
         </>
       )}

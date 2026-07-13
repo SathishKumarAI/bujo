@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Cloud, CloudUpload, CloudDownload, Search, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input } from './ui'
+import { Card, Empty, Input } from './ui'
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
 import { useConfirm } from './ConfirmDialog'
+import { Button } from './ui/button'
 
 /**
  * Optional Google Drive sync card. Requires a Google OAuth Client ID
@@ -99,14 +100,14 @@ export function DriveSync() {
 
       <div className="mt-3 flex flex-wrap gap-2 border-t border-surface0 pt-3">
         {!connected ? (
-          <Button variant="primary" onClick={doConnect} className="inline-flex items-center gap-1.5">
+          <Button variant="default" onClick={doConnect} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <Cloud size={14} /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
           </Button>
         ) : (
           <>
-            <Button variant="primary" onClick={backup} className="inline-flex items-center gap-1.5"><CloudUpload size={14} /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
-            <Button onClick={restore} className="inline-flex items-center gap-1.5"><CloudDownload size={14} /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
-            <Button variant="danger" onClick={() => { disconnect(); setConnected(false) }}>Disconnect</Button>
+            <Button variant="default" onClick={backup} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudUpload size={14} /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
+            <Button variant="secondary" onClick={restore} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudDownload size={14} /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
+            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-lg text-red hover:text-red">Disconnect</Button>
           </>
         )}
       </div>
@@ -117,7 +118,7 @@ export function DriveSync() {
           <p className="mb-2 text-sm text-subtext1">Reference a file from Drive</p>
           <div className="flex gap-2">
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <Button onClick={search} className="inline-flex items-center gap-1.5"><Search size={14} /> Search</Button>
+            <Button variant="secondary" onClick={search} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Search size={14} /> Search</Button>
           </div>
           {files.length === 0 ? (
             <Empty>Search your Drive to list images and documents.</Empty>

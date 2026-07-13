@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Timer, Play, Square, Check, Flame, X } from 'lucide-react'
 import { useJournal } from '../store'
-import { Card, Button } from './ui'
+import { Card } from './ui'
 import { Stepper } from './fields/Stepper'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { DEFAULT_FAST_TARGET, elapsedHours, fastHours, fmtDuration, fastingStreak, recentFasts } from '../lib/fasting'
+import { Button } from './ui/button'
 
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 const dayLabel = (iso: string) => new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
@@ -62,12 +63,12 @@ export function FastingCard() {
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
           </div>
           <p className="mt-2 text-xs text-subtext0">Started {timeOf(active)}</p>
-          <Button variant="primary" onClick={endFast} className="mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
+          <Button variant="default" onClick={endFast} className="press-3d rounded-lg mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between">
-            <Button variant="primary" onClick={startFast} className="inline-flex items-center gap-1.5"><Play size={14} /> Start fast</Button>
+            <Button variant="default" onClick={startFast} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Play size={14} /> Start fast</Button>
             {last && (
               <span className="text-sm text-subtext1">
                 Last: <span style={{ color: fastHours(last) >= target ? cat('green') : cat('subtext0') }}>{fmtDuration(fastHours(last))}</span>

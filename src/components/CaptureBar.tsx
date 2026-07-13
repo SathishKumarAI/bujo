@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Dumbbell, Footprints, HeartPulse, CheckCircle2, PenLine, SlidersHorizontal } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button } from './ui'
+
 import { SmartInput } from './SmartInput'
 import { MicButton } from './MicButton'
 import { Stepper } from './fields/Stepper'
@@ -11,6 +11,7 @@ import { parseCapture, type CaptureResult } from '../lib/capture'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { cat } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
+import { Button } from './ui/button'
 
 // One smart capture bar: type or speak anything and it routes to the right
 // place · a gym set, a cardio session, a wellbeing metric, a habit tick, or a
@@ -172,7 +173,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           aria-label="Smart capture"
         />
         <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
-        <Button type="button" variant="primary" onClick={() => add(val)}>
+        <Button type="button" variant="default" onClick={() => add(val)} className="press-3d rounded-lg">
           Add
         </Button>
       </div>
@@ -237,8 +238,8 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             )}
           </div>
           <div className="mt-3 flex gap-2">
-            <Button variant="primary" onClick={() => commitAndClear(draft)}>Add</Button>
-            <Button onClick={() => setDraft(null)}>Cancel</Button>
+            <Button variant="default" onClick={() => commitAndClear(draft)} className="press-3d rounded-lg">Add</Button>
+            <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-lg">Cancel</Button>
           </div>
         </div>
       )}
