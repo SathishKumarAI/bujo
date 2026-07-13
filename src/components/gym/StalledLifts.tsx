@@ -11,7 +11,7 @@ import type { StalledLift } from '../../lib/fitness'
 export function StalledLifts({ lifts, unit, setFocusEx }: { lifts: StalledLift[]; unit: string; setFocusEx: (e: string | null) => void }) {
   if (lifts.length === 0) return null // nothing plateaued → hide
   return (
-    <Card title="Stalled lifts" subtitle="No new top set in the last 3+ sessions · time for a reset or variation" defer>
+    <Card title="Stalled lifts" subtitle="No new top set in the last 3+ sessions, time for a reset or variation" defer>
       <ul className="space-y-1.5 text-sm">
         {lifts.slice(0, 6).map((l) => (
           <li key={l.exercise}>

@@ -15,7 +15,7 @@ export function Heatmap({ cols, colorFor }: { cols: HeatCell[][]; colorFor?: (c:
             {col.map((cell) => (
               <span
                 key={cell.date}
-                title={`${prettyDay(cell.date)} · ${cell.count} item${cell.count === 1 ? '' : 's'}`}
+                title={`${prettyDay(cell.date)}, ${cell.count} item${cell.count === 1 ? '' : 's'}`}
                 className="h-[11px] w-[11px] rounded-[2px]"
                 style={
                   colorFor

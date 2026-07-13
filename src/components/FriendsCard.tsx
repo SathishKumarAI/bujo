@@ -56,7 +56,7 @@ export function FriendsCard() {
   }
 
   return (
-    <Card title="Friends" subtitle="Manual contacts · optional GitHub profile pull (public, opt-in)">
+    <Card title="Friends" subtitle="Manual contacts, optional GitHub profile pull (public, opt-in)">
       <div className="mb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
@@ -69,7 +69,7 @@ export function FriendsCard() {
           </Button>
         </div>
         <label className="flex items-center gap-2 text-xs text-subtext0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
-        <p className="text-[11px] text-subtext0">GitHub pull uses the official public API · only data they’ve made public. Nothing else is fetched.</p>
+        <p className="text-[11px] text-subtext0">GitHub pull uses the official public API, only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
       {friends.length === 0 ? (

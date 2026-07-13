@@ -21,7 +21,7 @@ export function TimeReclaimedCard({
   onHoursPerDayChange: (h: number) => void
 }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Hourglass size={16} className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost · across all your clean days" help="An estimate of the life you’ve won back: set how many hours a day the behaviour used to cost you, and this multiplies it across your lifetime clean days. A concrete, non-financial reason every day counts.">
+    <Card title={<span className="inline-flex items-center gap-2"><Hourglass size={16} className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost, across all your clean days" help="An estimate of the life you’ve won back: set how many hours a day the behaviour used to cost you, and this multiplies it across your lifetime clean days. A concrete, non-financial reason every day counts.">
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-extrabold leading-none" style={{ color: cat('teal') }}>{reclaimed.hours}</div>

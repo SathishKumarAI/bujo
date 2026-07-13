@@ -53,7 +53,7 @@ export function PenaltyCard() {
           </ul>
           <div className="rounded-xl border p-3" style={{ borderColor: cat(meta.color) + '55', background: cat(meta.color) + '11' }}>
             <p className="font-display text-lg font-semibold" style={{ color: cat(meta.color) }}>{penalty.title}</p>
-            <p className="text-sm text-text">{task} <span className="text-xs text-subtext0">· {level}</span></p>
+            <p className="text-sm text-text">{task} <span className="text-xs text-subtext0">{level}</span></p>
           </div>
           <div className="mt-3 flex items-center gap-3 text-xs">
             <button onClick={() => setReroll((r) => r + 1)} className="inline-flex items-center gap-1 text-subtext1 hover:text-text">

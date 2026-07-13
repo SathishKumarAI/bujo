@@ -169,7 +169,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           onSubmit={add}
           suggestCtx={{ tags, recents, habits: habitNames }}
           dupItems={dupItems}
-          placeholder="Capture… e.g. bench 80x5 · ran 5k 28min · mood 7 · water 6 · t call mom"
+          placeholder="Capture… e.g. bench 80x5, ran 5k 28min, mood 7, water 6, t call mom"
           aria-label="Smart capture"
         />
         <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />

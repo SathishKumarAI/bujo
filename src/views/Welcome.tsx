@@ -76,7 +76,7 @@ export function Welcome() {
   async function forgot() {
     if (!isValidEmail(email)) { setErr('Enter a valid email above, then tap “Forgot password”.'); return }
     setBusy(true); setErr(''); setNotice('')
-    try { await resetPassword(email); setNotice('Password-reset link sent · check your inbox.') }
+    try { await resetPassword(email); setNotice('Password-reset link sent, check your inbox.') }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
 
@@ -88,7 +88,7 @@ export function Welcome() {
             <span className="font-display text-5xl font-semibold tracking-tight text-text">bujo</span>
             <span className="text-2xl text-mauve">✦</span>
           </div>
-          <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync everywhere, or stay on this device.</p>
+          <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync across your devices, or keep everything on this one.</p>
         </div>
 
         {/* Account · recommended when configured: guest now, or log in to sync. */}
@@ -108,7 +108,7 @@ export function Welcome() {
                 ) : (
                   <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><LogIn size={14} /> Sign in with email</Button>
                 )}
-                <span className="text-xs text-subtext0">Sign in to create your journal and sync it across devices.</span>
+                <span className="text-xs text-subtext0">Signing in creates your journal and keeps it in sync across devices.</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -149,7 +149,7 @@ export function Welcome() {
             <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-mauve">
               <FolderOpen size={15} /> {busy ? 'Opening…' : 'Choose folder'}
             </span>
-            {!supported && <p className="mt-2 text-xs text-red">Needs Chrome / Edge. Use “this device” instead.</p>}
+            {!supported && <p className="mt-2 text-xs text-red">Requires Chrome or Edge. Choose “This device only” instead.</p>}
           </button>
 
           {/* Local only */}
@@ -189,7 +189,7 @@ export function Welcome() {
         </div>
 
         <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-subtext0" style={{ animationDelay: '360ms' }}>
-          <ShieldCheck size={13} /> No servers, no tracking. Your data is yours.
+          <ShieldCheck size={13} /> No tracking. Your data stays yours.
         </p>
       </div>
     </div>

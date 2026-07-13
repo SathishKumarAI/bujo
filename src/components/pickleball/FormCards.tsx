@@ -6,7 +6,7 @@ import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../
 /** Recent form / momentum strip with win-streak chips (#323). */
 export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: { longest: number; current: number } }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Activity size={18} className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'} · newest first`}>
+    <Card title={<span className="inline-flex items-center gap-2"><Activity size={18} className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'}, newest first`}>
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
           {form.results.map((r, i) => {

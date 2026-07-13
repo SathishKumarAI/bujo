@@ -58,8 +58,7 @@ function Disclosure({ title, subtitle, defaultOpen = false, children }: {
       >
         <span className="text-subtext0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
         <span className="font-display text-base font-medium text-subtext1">{title}</span>
-        {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
-        {!open && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+        {subtitle && <span className="text-xs text-subtext0">{subtitle}</span>}
       </button>
       {open && children}
     </section>
@@ -81,11 +80,11 @@ export function Settings() {
     reader.onload = () => {
       const r = verifyChecksum(String(reader.result))
       if (!r.ok) {
-        alert('✗ This backup failed its integrity check — it looks truncated or corrupted. Do not rely on it; keep an older copy.')
+        alert('This backup failed its integrity check — it looks truncated or corrupted. Do not rely on it; keep an older copy.')
       } else if (!r.stamped) {
         alert('This file has no integrity checksum (an older or plain export). It looks readable, but can’t be verified.')
       } else {
-        alert('✓ Integrity check passed — this backup is intact.')
+        alert('Integrity check passed — this backup is intact.')
       }
     }
     reader.readAsText(file)
@@ -139,7 +138,7 @@ export function Settings() {
         replaceAll(importJSON(String(reader.result)), { stamp: true })
         alert('Backup imported successfully.')
       } catch {
-        alert('Could not read that file · is it a valid bujo backup?')
+        alert('Could not read that file, is it a valid bujo backup?')
       }
     }
     reader.readAsText(file)
@@ -155,7 +154,7 @@ export function Settings() {
         </span>
         <div className="min-w-0">
           <h1 className="font-display text-2xl text-text">Settings</h1>
-          <p className="text-sm text-subtext0">Profile, appearance, reminders, and your data · organised in one place.</p>
+          <p className="text-sm text-subtext0">Profile, appearance, reminders, and your data.</p>
         </div>
       </div>
 
@@ -303,7 +302,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="reminders" className="max-w-2xl">
-      <Card title="Reminders & weather" subtitle="Opt-in · weather makes network calls">
+      <Card title="Reminders & weather" subtitle="Weather is off until you turn it on">
         <div className="space-y-3">
           <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
           {s.reminderEnabled && (
@@ -318,7 +317,7 @@ export function Settings() {
           )}
           <div className="border-t border-border pt-3">
             <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
-            <p className="mt-1 text-xs text-subtext0">Uses open-meteo + your browser location. Off = zero network calls.</p>
+            <p className="mt-1 text-xs text-subtext0">Uses open-meteo and your browser location. When off, the app makes no network calls.</p>
           </div>
         </div>
       </Card>
@@ -370,7 +369,7 @@ export function Settings() {
                   </div>
                   {warn && (
                     <p className="mt-1.5 text-xs text-peach">
-                      Getting full · photos use the most space. Export a backup, and remove old progress photos if needed.
+                      Getting full, photos use the most space. Export a backup, and remove old progress photos if needed.
                     </p>
                   )}
                 </div>
@@ -599,7 +598,7 @@ function AccountCard() {
   if (!supabaseEnabled()) return null
 
   function share() {
-    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('✓ App link copied · share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
+    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('App link copied, share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
   }
 
   async function run(fn: () => Promise<void>, ok: string) {
@@ -625,12 +624,12 @@ function AccountCard() {
   }
 
   return (
-    <Card title="Account" subtitle="Sign in to sync across devices · guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
+    <Card title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
       {recovery && (
         <div className="mb-3 rounded-lg border border-mauve/40 bg-base p-3">
           <p className="mb-2 text-sm text-subtext1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
-          <Button variant="default" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, '✓ Password updated.')}>Update password</Button>
+          <Button variant="default" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
         </div>
       )}
       <p className="mb-1 text-sm text-subtext1">
@@ -658,12 +657,12 @@ function AccountCard() {
       )}
       {signedIn && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="default" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, '✓ Saved to your account.')}>Save now</Button>
+          <Button variant="default" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, 'Saved to your account.')}>Save now</Button>
           <Button variant="secondary" disabled={busy} onClick={() => run(async () => { const r = await pullJournal(); if (r && await confirm({
               title: 'Replace this device with your cloud data?',
               description: 'Everything currently on this device is overwritten by the copy stored in your account.',
               confirmLabel: 'Replace my data', destructive: true,
-            })) replaceAll(migrate(r)) }, '✓ Loaded.')}>Load</Button>
+            })) replaceAll(migrate(r)) }, 'Loaded.')}>Load</Button>
           <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={() => run(async () => { await signOut() }, 'Signed out.')}>Sign out</Button>
         </div>
       )}
@@ -684,7 +683,7 @@ function BujoCloudCard() {
   async function push() {
     if (pass.length < 6) { setMsg('Use a passphrase of at least 6 characters.'); return }
     setBusy('push'); setMsg('')
-    try { await pushCloud(pass, data); setMsg('✓ Pushed to cloud.') }
+    try { await pushCloud(pass, data); setMsg('Pushed to cloud.') }
     catch (e) { setMsg((e as Error).message) }
     finally { setBusy('') }
   }
@@ -712,7 +711,7 @@ function BujoCloudCard() {
   }
 
   return (
-    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted · sync across devices">
+    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="default" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
@@ -723,7 +722,7 @@ function BujoCloudCard() {
         <Switch checked={auto} onCheckedChange={toggleAuto} />
       </label>
       {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
-      <p className="mt-2 text-xs text-subtext0">Your journal is encrypted in this browser before upload · the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
+      <p className="mt-2 text-xs text-subtext0">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
     </Card>
   )
 }
@@ -741,7 +740,7 @@ function PasscodeCard() {
     setPasscode(pc); setPc(''); setPc2(''); setErr('')
   }
   return (
-    <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto · stays on this device)">
+    <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto, stays on this device)">
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-sm text-green">🔒 Journal is encrypted</span>
@@ -759,7 +758,7 @@ function PasscodeCard() {
           </div>
           {err && <p className="text-xs text-red">{err}</p>}
           <Button variant="default" onClick={enable}>Encrypt journal</Button>
-          <p className="text-xs text-subtext0">There’s no recovery · if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
+          <p className="text-xs text-subtext0">There is no recovery. If you forget the passcode the data cannot be decrypted, so keep a JSON export as a backup.</p>
         </div>
       )}
     </Card>
@@ -781,7 +780,7 @@ function SelfHostCard() {
   async function test() {
     if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }
     const ok = await pushJournalToServer(s.selfHostUrl ?? '', data, s.selfHostToken)
-    setMsg(ok ? '✓ Pushed to the server.' : '✗ Could not reach the server (check URL, token, and TLS cert).')
+    setMsg(ok ? 'Pushed to the server.' : 'Could not reach the server (check URL, token, and TLS cert).')
   }
   async function pull() {
     if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }

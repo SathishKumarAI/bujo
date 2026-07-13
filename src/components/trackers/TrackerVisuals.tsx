@@ -40,7 +40,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
 
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks · greener = more habits done that day" className="lg:col-span-2" collapsible>
+      <Card title="Completion heatmap" subtitle="Last 13 weeks, greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
@@ -60,7 +60,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         </div>
       </Card>
 
-      <Card title="Streak leaderboard" subtitle="Current streak · faint marker = all-time best">
+      <Card title="Streak leaderboard" subtitle="Current streak, faint marker = all-time best">
         {streaks.length === 0 ? (
           <Empty>No check habits yet.</Empty>
         ) : (
@@ -75,14 +75,14 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
                   )}
                 </div>
-                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak} · best ever ${best}`}><Flame size={12} />{streak}<span className="text-subtext0">/{best}</span></span>
+                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Flame size={12} />{streak}<span className="text-subtext0">/{best}</span></span>
               </li>
             ))}
           </ul>
         )}
       </Card>
 
-      <Card title="Monthly trend" subtitle="Avg completion per month · is it climbing?">
+      <Card title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
           return (

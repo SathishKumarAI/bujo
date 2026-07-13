@@ -10,7 +10,7 @@ import type { RelativeStrength } from '../../lib/fitness'
 export function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: RelativeStrength[]; unit: string; setFocusEx: (e: string | null) => void }) {
   const bandColor: Record<string, string> = { Elite: 'mauve', Advanced: 'blue', Intermediate: 'green', Novice: 'yellow', Beginner: 'overlay0' }
   return (
-    <Card title="Relative strength" subtitle="Best lift ÷ bodyweight · with strength standard" defer>
+    <Card title="Relative strength" subtitle="Best lift ÷ bodyweight, with strength standard" defer>
       {rows.length === 0 ? (
         <Empty>Log your bodyweight and some PRs to see strength-to-weight ratios.</Empty>
       ) : (

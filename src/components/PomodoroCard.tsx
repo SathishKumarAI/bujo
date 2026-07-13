@@ -69,7 +69,7 @@ export function PomodoroCard() {
   function choose(p: typeof PRESETS[number]) { setRunning(false); setMode('work'); setPreset(p); setLeft(p.w * 60) }
 
   return (
-    <Card title="Focus timer" subtitle={`${mode === 'work' ? 'Work' : 'Break'} · ${blocks} block${blocks === 1 ? '' : 's'} done`}>
+    <Card title="Focus timer" subtitle={`${mode === 'work' ? 'Work' : 'Break'}, ${blocks} block${blocks === 1 ? '' : 's'} done`}>
       <div className="flex flex-col items-center">
         <div className="relative grid place-items-center">
           <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden>

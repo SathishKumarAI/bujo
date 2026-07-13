@@ -25,7 +25,7 @@ export function Challenges() {
     <Page>
       <Card
         title="Challenges"
-        subtitle="Fixed-length discipline challenges · 75 Hard, 90-day & more"
+        subtitle="Fixed-length discipline challenges, 75 Hard, 90-day & more"
         right={
           <Button onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
             {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
@@ -54,8 +54,7 @@ export function Challenges() {
           >
             <span className="text-subtext0">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
             <span className="font-display text-base font-medium text-subtext1">Completed &amp; archived</span>
-            <span className="text-xs text-subtext0">· {archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
-            {!archiveOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+            <span className="text-xs text-subtext0">{archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
           </button>
           {archiveOpen && (
             <Card title="Completed & archived" subtitle="Your past challenges">
@@ -149,8 +148,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
       {/* Stats block */}
       <div className="mb-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-        <Stat label="Current streak" value={`${streak}`} icon="🔥" color="peach" />
-        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="🏅" color="yellow" />
+        <Stat label="Current streak" value={`${streak}`} icon="" color="peach" />
+        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="" color="yellow" />
         <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
         <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
       </div>
@@ -165,7 +164,6 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         >
           <span className="text-subtext0">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
           Calendar
-          {!calOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
         </button>
         {calOpen && (
           <>
@@ -186,7 +184,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
                 return (
                   <span
                     key={d}
-                    title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
+                    title={`Day ${i + 1}, ${d}${complete ? ', done' : past ? ', missed' : isToday ? ', today' : ''}`}
                     className="grid h-7 w-7 place-items-center rounded text-[9px]"
                     style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
                   >

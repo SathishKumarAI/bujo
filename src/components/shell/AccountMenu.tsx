@@ -30,7 +30,7 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Account" title={`Account · ${label}`} className="relative">
+        <Button variant="ghost" size="icon-sm" aria-label="Account" title={`Account, ${label}`} className="relative">
           <UserCircle2 size={18} style={{ color: signedIn ? 'var(--color-green)' : undefined }} />
           {!signedIn && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-yellow" />}
         </Button>

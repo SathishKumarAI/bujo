@@ -23,7 +23,7 @@ export function CheckinTimesCard() {
         <>
           <div className="flex h-28 items-end gap-px" role="img" aria-label="Bar chart of habit check-ins by hour of day">
             {hours.map((c, h) => (
-              <div key={h} className="group flex flex-1 flex-col items-center justify-end" title={`${fmtHour(h)} · ${c} check-in${c === 1 ? '' : 's'}`}>
+              <div key={h} className="group flex flex-1 flex-col items-center justify-end" title={`${fmtHour(h)}, ${c} check-in${c === 1 ? '' : 's'}`}>
                 <div
                   className="w-full rounded-sm"
                   style={{ height: `${Math.max(c ? 6 : 1, (c / max) * 100)}%`, background: h === peak ? cat('mauve') : cat('surface2'), opacity: c ? 1 : 0.4 }}

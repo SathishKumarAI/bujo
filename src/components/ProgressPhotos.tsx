@@ -57,7 +57,7 @@ export function ProgressPhotos() {
   return (
     <Card
       title="Progress photos"
-      subtitle="Weekly physique check · private, on-device"
+      subtitle="Weekly physique check, private, on-device"
       right={
         photos.length >= 2 && (
           <Button variant="secondary" onClick={() => setCompare((c) => !c)} className="press-3d rounded-lg inline-flex items-center gap-1.5">

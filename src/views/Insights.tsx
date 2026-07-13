@@ -277,7 +277,7 @@ export function Insights() {
           )}
 
           {moodVol.band && (
-            <Card title="Mood stability" subtitle={`Last ${moodVol.days} logged days · how steady you've felt`}>
+            <Card title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
               <p className="text-4xl font-extrabold" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
                 {moodVol.stability}<span className="text-lg text-subtext0">/100</span>
               </p>
@@ -317,7 +317,7 @@ export function Insights() {
       )}
 
       {focusId && (
-          <Card title="Consistency score" subtitle={`${focusName} · recency-weighted, last 30 days`}>
+          <Card title="Consistency score" subtitle={`${focusName}, recency-weighted, last 30 days`}>
             {focusScore == null ? (
               <Empty>Not enough scheduled days yet.</Empty>
             ) : (
@@ -333,7 +333,7 @@ export function Insights() {
       )}
 
       {focusId && monthly.some((m) => m.done > 0) && (
-        <Card title="Month over month" subtitle={`${focusName} · completions per month`}>
+        <Card title="Month over month" subtitle={`${focusName}, completions per month`}>
           <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
             {monthly.map((m) => (
               <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
@@ -445,8 +445,7 @@ function Section({ title, subtitle, defaultOpen = false, children }: { title: st
       >
         <span className="text-subtext0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
         <span className="font-display text-base font-medium text-subtext1">{title}</span>
-        {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
-        {!open && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+        {subtitle && <span className="text-xs text-subtext0">{subtitle}</span>}
       </button>
       {open && children}
     </section>

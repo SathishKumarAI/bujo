@@ -62,7 +62,7 @@ export function Coaching() {
       </Card>
 
       {/* Today's session */}
-      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-teal" /> Today: {todaySlot.focus}</span>} subtitle={`${WEEKDAYS[todayDow]} · your scheduled focus`} help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day.">
+      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-teal" /> Today: {todaySlot.focus}</span>} subtitle={`${WEEKDAYS[todayDow]}, your scheduled focus`} help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day.">
         <p className="text-sm text-subtext1">{todaySlot.detail}</p>
         <details className="mt-3 rounded-lg border border-surface0 bg-base p-3">
           <summary className="cursor-pointer text-sm font-medium text-text">A 45–60 min session</summary>
@@ -83,7 +83,7 @@ export function Coaching() {
       </Card>
 
       {/* 12-week roadmap — tap a week to study it, check to mark done */}
-      <Card title="The 12-week roadmap" subtitle="Tap a week to open it · check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
+      <Card title="The 12-week roadmap" subtitle="Tap a week to open it, check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
         <ol className="space-y-1.5">
           {TWELVE_WEEK.map((w) => {
             const isDone = done.includes(w.week)
@@ -220,7 +220,7 @@ export function Coaching() {
           if (!list.length) return null
           return (
             <div key={phase} className="mb-3">
-              <p className="mb-1.5 text-sm font-medium text-subtext1">{phase === 'prehab' ? '🛡️ Prehab — prevention' : '🩹 Rehab — recovery (clear with a physio)'}</p>
+              <p className="mb-1.5 text-sm font-medium text-subtext1">{phase === 'prehab' ? 'Prehab — prevention' : '🩹 Rehab — recovery (clear with a physio)'}</p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {list.map((e) => (
                   <li key={e.name} className="rounded-lg border border-surface0 bg-base p-2.5">

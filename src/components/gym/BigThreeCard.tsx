@@ -12,7 +12,7 @@ import type { BigThreeTotal } from '../../lib/fitness'
 export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal; unit: string; setFocusEx: (e: string | null) => void }) {
   const liftColor: Record<string, string> = { Squat: 'green', Bench: 'red', Deadlift: 'blue' }
   return (
-    <Card title="Big-three total" subtitle="Squat + bench + deadlift · your powerlifting number" defer>
+    <Card title="Big-three total" subtitle="Squat + bench + deadlift, your powerlifting number" defer>
       {total.total === 0 ? (
         <Empty>Log a squat, bench, and deadlift to build your total.</Empty>
       ) : (

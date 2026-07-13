@@ -82,7 +82,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
         <span className="text-xs text-subtext0">Day</span>
         {dayNums.map((dn) => (
           <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
-            {dayComplete(week, dn) && '✓'} {dn}
+            {dayComplete(week, dn) && ''} {dn}
           </button>
         ))}
       </div>

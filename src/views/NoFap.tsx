@@ -125,7 +125,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
             <span className="text-subtext0">{matched.coping || 'name it and let it pass.'}</span>
           </div>
         ) : (
-          <p className="mt-2 text-center text-xs text-subtext0">No matching plan yet · try “Surf it”: name the urge and watch it pass without acting.</p>
+          <p className="mt-2 text-center text-xs text-subtext0">No matching plan yet, try “Surf it”: name the urge and watch it pass without acting.</p>
         )}
       </div>
 
@@ -206,7 +206,7 @@ export function NoFap() {
   const daysSinceQuit = commitment?.quitDate ? Math.max(0, dayDiff(commitment.quitDate, today)) : null
 
   function relapse() {
-    if (!trigger.trim()) { setErr('Add the reason behind it first · patterns are data.'); return }
+    if (!trigger.trim()) { setErr('Add the reason behind it first, patterns are data.'); return }
     logRelapse({ date: today, trigger: trigger.trim(), note: note.trim() })
     setTrigger(''); setNote(''); setErr('')
   }
@@ -218,7 +218,7 @@ export function NoFap() {
   return (
     <div className="mx-auto max-w-[1400px] items-start">
       {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
-      <button onClick={() => setSosOpen(true)} aria-label="Panic · open urge SOS"
+      <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-105"
         style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
         <LifeBuoy size={18} /> SOS
@@ -278,7 +278,7 @@ export function NoFap() {
 
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
-        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win · it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">
+        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
               <button key={u} onClick={() => setUrge(u)}
@@ -321,7 +321,7 @@ export function NoFap() {
           </div>
           {/* HALT quick-check · which unmet need is driving the urge? */}
           <div className="mt-2">
-            <p className="mb-1 text-xs text-subtext0">HALT check · tap any that fit</p>
+            <p className="mb-1 text-xs text-subtext0">HALT check, tap any that fit</p>
             <div className="flex flex-wrap gap-1.5">
               {HALT_STATES.map((hs) => {
                 const on = halt.includes(hs.id)
@@ -397,7 +397,7 @@ export function NoFap() {
         </Card>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
-        <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
+        <Card title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
             <Button onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
@@ -462,7 +462,7 @@ export function NoFap() {
         >
           {/* My commitment (#316) · quit-date contract + personal "why" */}
           <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
-            subtitle="Your quit-date contract · the reason you’re doing this"
+            subtitle="Your quit-date contract, the reason you’re doing this"
             help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
             right={hasCommitment && !editingCommit ? <Button variant="secondary" size="sm" onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
             {hasCommitment && !editingCommit ? (
@@ -577,7 +577,7 @@ export function NoFap() {
           icon={<Sparkles size={18} className="text-mauve" />}
         >
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
-          <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques · an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
+          <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
             <ol className="space-y-2 text-sm text-subtext1">
               <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
               <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>

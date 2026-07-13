@@ -70,7 +70,7 @@ function AbilityLadderTable() {
 function PullupWorkoutsCard() {
   const [open, setOpen] = useState<string | null>(PULLUP_WORKOUTS[0].name)
   return (
-    <Card title="Pull-up workouts" subtitle="Session formats · tap one for how to run it">
+    <Card title="Pull-up workouts" subtitle="Session formats, tap one for how to run it">
       <ul className="space-y-1">
         {PULLUP_WORKOUTS.map((w) => {
           const isOpen = open === w.name
@@ -98,7 +98,7 @@ function PullupWorkoutsCard() {
 /** How to build toward a first pull-up · progression exercises with form cues. */
 function ProgressionsCard() {
   return (
-    <Card title="Pull-up progressions" subtitle="Build the first rep safely · why & how for each">
+    <Card title="Pull-up progressions" subtitle="Build the first rep safely, why & how for each">
       <ul className="space-y-2">
         {PULLUP_PROGRESSIONS.map((p) => (
           <li key={p.name} className="border-t border-surface0 pt-2 first:border-t-0 first:pt-0">

@@ -30,7 +30,7 @@ export function Monthly() {
       setWeather(todayISO(), w)
       if (city) setMonthly(ym, { location: city })
     } catch {
-      alert('Could not get location/weather · permission denied or offline.')
+      alert('Could not get location/weather, permission denied or offline.')
     } finally {
       setGeoBusy(false)
     }
@@ -165,7 +165,7 @@ export function Monthly() {
           />
           {data.settings.weatherEnabled && (
             <Button variant="secondary" onClick={autoFill} className="press-3d rounded-lg mt-2 w-full">
-              {geoBusy ? 'Locating…' : '📍 Auto-fill'}
+              {geoBusy ? 'Locating…' : 'Auto-fill'}
             </Button>
           )}
         </Card>
@@ -203,8 +203,7 @@ export function Monthly() {
           >
             <span className="text-subtext0">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
             <span className="font-display text-base font-medium text-subtext1">Month analytics</span>
-            <span className="text-xs text-subtext0">· month pulse &amp; trailing-year rhythm</span>
-            {!analyticsOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+            <span className="text-xs text-subtext0">month pulse &amp; trailing-year rhythm</span>
           </button>
           {analyticsOpen && (
             <>

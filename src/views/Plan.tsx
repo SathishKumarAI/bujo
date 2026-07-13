@@ -71,7 +71,7 @@ export function Plan() {
     <div className="mx-auto max-w-[1400px] columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card
         title="Migration"
-        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'} · the heart of bullet journaling`}
+        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
         right={overdue.length > 1 ? (
           <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
         ) : undefined}
@@ -171,7 +171,7 @@ export function Plan() {
                       onClick={() => setOpenThread(open ? null : t.rootId)}
                       className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
                       style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
-                      title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'} · tap for history`}
+                      title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                       aria-expanded={open}
                       aria-label={`Migration history for "${t.text}"`}
                     >
@@ -208,8 +208,7 @@ export function Plan() {
         >
           <span className="text-subtext0">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
           <span className="font-display text-base font-medium text-subtext1">Setup</span>
-          <span className="text-xs text-subtext0">· recurring rules &amp; calendar import</span>
-          {!setupOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+          <span className="text-xs text-subtext0">recurring rules &amp; calendar import</span>
         </button>
         {setupOpen && (
           <div className="mt-3 space-y-5">

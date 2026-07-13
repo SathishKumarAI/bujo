@@ -1,6 +1,6 @@
 import { useJournal } from '../store'
 
-const PALETTE = ['⭐', '❤️', '🔥', '✅', '🎉', '🌧️', '☀️', '💪', '📚', '✈️', '🎂', '🌸', '☕', '🎵', '💡', '🏆']
+const PALETTE = ['⭐', '❤️', '', '✅', '', '🌧️', '☀️', '💪', '📚', '✈️', '🎂', '🌸', '☕', '🎵', '', '']
 
 /** Emoji sticker / washi decorations for a given day. */
 export function StickerBar({ date }: { date: string }) {

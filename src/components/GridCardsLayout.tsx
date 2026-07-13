@@ -88,8 +88,8 @@ function HabitGridCard({
                 key={d}
                 disabled={!editable}
                 onClick={() => logDay(d)}
-                aria-label={`${h.name} ${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
-                title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                aria-label={`${h.name} ${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
+                title={`${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
                 className="h-3.5 w-3.5 rounded-[3px] disabled:cursor-default enabled:hover:ring-1 enabled:hover:ring-overlay0"
                 style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
               />

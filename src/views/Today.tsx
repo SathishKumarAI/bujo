@@ -282,7 +282,7 @@ function AtRiskNudge({ date }: { date: string }) {
   const atRisk = atRiskHabits(data, date)
   if (atRisk.length === 0) return null
   return (
-    <Card title="Keep your streaks" subtitle="Scheduled today · streak alive · not logged yet">
+    <Card title="Keep your streaks" subtitle="Scheduled today, streak alive, not logged yet">
       <ul className="flex flex-wrap gap-2">
         {atRisk.map(({ habit, streak }) => (
           <li

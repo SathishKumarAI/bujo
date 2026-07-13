@@ -222,7 +222,7 @@ export function Pickleball() {
         </div>
       </Card>
       {monthsPlayed && (
-        <Card title="Games per month" subtitle="Last 6 months · win % in tooltip" enlargeable>
+        <Card title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
           <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={months.map((m) => ({ m: m.label.slice(0, 3), games: m.games, winPct: m.winPct }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -236,7 +236,7 @@ export function Pickleball() {
           </div>
         </Card>
       )}
-      <Card title="By format" subtitle="Singles vs doubles · games & win %" enlargeable>
+      <Card title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
         {formats.length === 0 ? <Empty>No games yet.</Empty> : (
           <ul className="space-y-3">
             {formats.map((fm) => (
@@ -268,7 +268,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card title="Play heatmap" subtitle="Last 13 weeks · darker = more games" enlargeable>
+      <Card title="Play heatmap" subtitle="Last 13 weeks, darker = more games" enlargeable>
         <div className="overflow-x-auto">
           <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
             {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
@@ -364,7 +364,7 @@ export function Pickleball() {
         <Button variant="default" onClick={log} className="press-3d mt-3 w-full rounded-lg">Log session</Button>
       </Card>
 
-      <Card title="History" subtitle="Tap Edit to fix a score · × to remove" collapsible>
+      <Card title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
         {sessions.length === 0 ? (
           <Empty>No sessions logged yet.</Empty>
         ) : (
@@ -378,7 +378,7 @@ export function Pickleball() {
       </Card>
 
       {/* ── DUPR rating tracker ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time · watch the trend climb" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-xs text-subtext1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-xs text-subtext1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
@@ -423,7 +423,7 @@ export function Pickleball() {
 
       {/* ── Leagues & tournaments · secondary event logging, grouped beside the
             DUPR tracker and collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events · separate from casual sessions" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
@@ -475,7 +475,7 @@ export function Pickleball() {
               <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
             </div>
             <p className="text-xs text-subtext0">{drill.how}</p>
-            <p className="mt-2 text-[11px] text-subtext0">New focus each day · log a session below after you drill it.</p>
+            <p className="mt-2 text-[11px] text-subtext0">New focus each day, log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
           <div className="rounded-lg border border-surface0 bg-base p-3">

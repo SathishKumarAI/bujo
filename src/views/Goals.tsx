@@ -213,7 +213,7 @@ export function Goals() {
         )}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets · track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
+      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
         <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-surface0 bg-base p-3">
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />

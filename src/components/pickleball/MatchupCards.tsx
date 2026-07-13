@@ -6,7 +6,7 @@ import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../
 /** Partner chemistry · win rate by doubles partner. */
 export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Users size={18} className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner · most-played first" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Users size={18} className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
       <ul className="space-y-3">
         {partners.map((p) => (
           <li key={p.partner}>

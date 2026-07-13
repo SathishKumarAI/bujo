@@ -131,7 +131,7 @@ export function Focus() {
         const W = 600, H = 120
         const pts = cum.map((c, i) => `${(i / (cum.length - 1)) * W},${H - (c.hours / max) * H}`).join(' ')
         return (
-          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time · momentum over ${cum.length} days`}>
+          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time, momentum over ${cum.length} days`}>
             <div className="w-full" role="img" aria-label={`Line chart of cumulative coding hours, reaching ${cum[cum.length - 1].hours} hours`}>
               <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
                 <polyline points={`0,${H} ${pts} ${W},${H}`} fill={cat('mauve') + '22'} stroke="none" />
@@ -143,7 +143,7 @@ export function Focus() {
       })()}
 
       {heat.max > 0 && (
-        <Card title="Deep-work heatmap" subtitle="Daily coding minutes · last 26 weeks">
+        <Card title="Deep-work heatmap" subtitle="Daily coding minutes, last 26 weeks">
           <div className="overflow-x-auto">
             <div
               className="grid w-max gap-[3px]"
@@ -197,7 +197,7 @@ export function Focus() {
       )}
 
       {intTrend.some((d) => d.count > 0) && (
-        <Card title="Interruptions trend" subtitle="Avg interruptions per session · last 14 days">
+        <Card title="Interruptions trend" subtitle="Avg interruptions per session, last 14 days">
           <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
             aria-label={`Average interruptions per session over the last 14 days: ${intTrend.map((d) => `${d.date} ${d.avg}`).join(', ')}`}>
             {intTrend.map((d) => (
@@ -382,7 +382,7 @@ function TypingPractice() {
                 {weekday ? "Today's goal" : 'Bonus today'} · {hrs(goal.minutes)} / {hrs(goal.goalMin)}
               </span>
               <span className={`text-xs ${goal.met ? 'text-green' : 'text-subtext0'}`}>
-                {goal.met ? '✓ met' : weekday ? `${goal.pct}%` : 'optional'}
+                {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}
               </span>
             </div>
             <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface0">

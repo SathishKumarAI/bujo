@@ -71,7 +71,7 @@ export function TodayHabits() {
   return (
     <Card
       title="Today’s habits"
-      subtitle="Tap to check off · grouped by time of day"
+      subtitle="Tap to check off, grouped by time of day"
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (

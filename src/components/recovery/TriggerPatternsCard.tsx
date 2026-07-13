@@ -12,7 +12,7 @@ export function TriggerPatternsCard({
   avgGap: number
 }) {
   return (
-    <Card title="Trigger patterns" subtitle="Your most common reasons · name them to beat them" help="Aggregated from your reset reasons. The biggest bars are where to build a plan: an if-then for your top trigger removes most relapses.">
+    <Card title="Trigger patterns" subtitle="Your most common reasons, name them to beat them" help="Aggregated from your reset reasons. The biggest bars are where to build a plan: an if-then for your top trigger removes most relapses.">
       <ul className="space-y-2">
         {topTriggers.map((t) => {
           const pct = Math.round((t.count / relapseCount) * 100)

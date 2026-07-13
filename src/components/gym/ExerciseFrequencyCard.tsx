@@ -12,7 +12,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
   if (rows.length === 0) return null
   const maxDays = Math.max(...rows.map((r) => r.days), 1)
   return (
-    <Card title="Exercise frequency" subtitle={`Most-trained movements · last ${ratio.window} days`} defer>
+    <Card title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
       <div className="mb-3 flex items-center gap-3 rounded-xl border border-surface0 bg-base px-3 py-2 text-sm">
         <CalendarCheck size={16} style={{ color: cat('teal') }} />
         <span className="text-subtext1">

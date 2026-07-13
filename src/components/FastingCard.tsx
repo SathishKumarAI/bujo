@@ -39,7 +39,7 @@ export function FastingCard() {
   return (
     <Card
       title="Intermittent fasting"
-      subtitle={`${target}:${24 - target} window · track it day to day`}
+      subtitle={`${target}:${24 - target} window, track it day to day`}
       right={
         <div className="flex items-center gap-2">
           {streak > 0 && (

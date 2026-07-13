@@ -59,7 +59,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
           className={`flex-1 cursor-text text-sm ${entry.status === 'done' ? 'text-subtext0' : 'text-text'} ${dropped ? 'text-subtext0 line-through' : ''}`}
         >
           {entry.text}
-          {entry.recurringId && <span className="ml-1 align-middle text-xs" style={{ color: cat('overlay1') }} title="Repeats · edit the rule in Plan to change every future occurrence">↻</span>}
+          {entry.recurringId && <span className="ml-1 align-middle text-xs" style={{ color: cat('overlay1') }} title="Repeats, edit the rule in Plan to change every future occurrence">↻</span>}
           {entry.tags.map((t) => (
             <span key={t} className="ml-1 text-xs" style={{ color: cat('sapphire') }}>
               #{t}

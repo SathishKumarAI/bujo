@@ -13,7 +13,7 @@ export function RepPRCard({ exercise, records, unit }: { exercise: string; recor
     <Card title="Rep records" subtitle={<span>Best reps at each weight · <span className="text-mauve">{exercise}</span></span>} defer>
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {records.slice(0, 9).map((r) => (
-          <li key={r.weight} className="rounded-xl border border-surface0 bg-base px-3 py-2" title={`${r.reps} reps at ${r.weight}${unit} · set ${prettyDay(r.date)}`}>
+          <li key={r.weight} className="rounded-xl border border-surface0 bg-base px-3 py-2" title={`${r.reps} reps at ${r.weight}${unit}, set ${prettyDay(r.date)}`}>
             <p className="text-lg font-bold" style={{ color: cat('green') }}>{r.reps}<span className="ml-0.5 text-xs font-normal text-subtext0">reps</span></p>
             <p className="text-xs text-subtext1">@ {r.weight}{unit}</p>
             <p className="text-[10px] text-subtext0">{prettyDay(r.date)}</p>

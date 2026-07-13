@@ -212,7 +212,7 @@ function CardioBadgesCard() {
   }
   const tint: Record<string, string> = { longestKm: 'green', mostMinutes: 'lavender', mostCalories: 'red' }
   return (
-    <Card title="Cardio bests" subtitle="All-time personal bests · with the day you set them" defer>
+    <Card title="Cardio bests" subtitle="All-time personal bests, with the day you set them" defer>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {earned.map((b) => (
           <div key={b.key} className="rounded-xl border border-surface0 bg-base px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
@@ -240,7 +240,7 @@ function TrainingHeatmapCard({ today }: { today: string }) {
   const levelColor = (level: number) =>
     level === 0 ? cat('surface0') : cat('green') + ['', '55', '88', 'bb', 'ff'][level]
   return (
-    <Card title="Training calendar" subtitle={`${trained} training days in the last 17 weeks · darker = more volume`} defer>
+    <Card title="Training calendar" subtitle={`${trained} training days in the last 17 weeks, darker = more volume`} defer>
       <div className="flex gap-[3px] overflow-x-auto pb-1" role="img" aria-label={`Training-day heatmap: ${trained} days trained in the last 17 weeks, shaded by workout volume`}>
         {weeks.map((week, wi) => (
           <div key={wi} className="flex flex-col gap-[3px]">
@@ -291,7 +291,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
   return (
     <Card
       title="Nutrition"
-      subtitle="Calories & macros · add foods or type your own"
+      subtitle="Calories & macros, add foods or type your own"
       collapsible
       defaultCollapsed
       right={<Button variant="secondary" onClick={fillSample} title="Fill a typical ~1800 kcal day" className="press-3d rounded-lg">Sample day</Button>}

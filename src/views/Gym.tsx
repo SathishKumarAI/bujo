@@ -274,7 +274,7 @@ export function Gym() {
           {anatomyCard}
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
-          <Card title="Exercise database" subtitle="Search wger’s library · tap a card to view it, then add to your session" collapsible defaultCollapsed>
+          <Card title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session" collapsible defaultCollapsed>
             <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
           </Card>
         </>
@@ -402,7 +402,7 @@ export function Gym() {
                       <button
                         type="button"
                         onClick={() => setRow(i, { weight: String(prev.weight ?? ''), reps: String(prev.reps ?? '') })}
-                        title="Repeat last set · fill weight & reps"
+                        title="Repeat last set, fill weight & reps"
                         className="inline-flex items-center gap-1 hover:text-mauve"
                       >
                         <RotateCcw size={10} /> last: {prev.weight}{unit}×{prev.reps}
@@ -474,7 +474,7 @@ export function Gym() {
       </Card>
 
       {/* ── Body weight · canonical bodyweight log/chart (Cardio tab merges here) ── */}
-      <Card title="Body weight" subtitle="Faint = daily · bold = 7-day average" defer enlargeable collapsible defaultCollapsed>
+      <Card title="Body weight" subtitle="Faint = daily, bold = 7-day average" defer enlargeable collapsible defaultCollapsed>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -506,7 +506,7 @@ export function Gym() {
       {/* ── Program & progress · secondary inputs, folded below logging ── */}
       <CollapsibleSection
         title="Program & progress"
-        subtitle="Training program · progress photos"
+        subtitle="Training program, progress photos"
         icon={Layers}
         color="blue"
       >
@@ -517,7 +517,7 @@ export function Gym() {
       {/* ── Training insights · volume + at-a-glance analytics (default collapsed) ── */}
       <CollapsibleSection
         title="Training insights"
-        subtitle="Volume · muscle balance · movement & recovery · frequency · alerts"
+        subtitle="Volume, muscle balance, movement & recovery, frequency, alerts"
         icon={Gauge}
         color="teal"
       >
@@ -588,7 +588,7 @@ export function Gym() {
             (default COLLAPSED — drill-down stats, not daily-use) ── */}
       <CollapsibleSection
         title="Deep analytics"
-        subtitle="Strength standards · plateau & neglect alerts · effort trend"
+        subtitle="Strength standards, plateau & neglect alerts, effort trend"
         icon={BarChart3}
         color="mauve"
       >
@@ -599,7 +599,7 @@ export function Gym() {
         </div>
 
         {rpeSeries.length >= 2 && (
-          <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session · watch for over-reaching" defer enlargeable>
+          <Card title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
             <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -636,7 +636,7 @@ function PlateCalculator({ unit }: { unit: string }) {
       {barOverTarget ? (
         <p className="text-sm text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
       ) : plates.length === 0 ? (
-        <p className="text-sm text-subtext0">Just the bar · no plates needed.</p>
+        <p className="text-sm text-subtext0">Just the bar, no plates needed.</p>
       ) : (
         <>
           <p className="mb-2 text-xs text-subtext0">Per side:</p>

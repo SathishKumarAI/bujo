@@ -116,7 +116,7 @@ export function Stats() {
       <AchievementsCard />
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
-      <Section title="This week" subtitle="7-day averages · see Trackers for live metrics">
+      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
@@ -134,7 +134,7 @@ export function Stats() {
       {/* 3) Sleep & mood correlations — collapsed. */}
       <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus">
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="Sleep vs mood" subtitle="Each dot is a day · see the trend" enlargeable>
+        <Card title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
@@ -172,7 +172,7 @@ export function Stats() {
         </Card>
 
         {focusSleep.r != null && (
-          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before · ${focusSleep.days} paired days`}>
+          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
             <p className="text-4xl font-extrabold tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
               {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
               <span className="ml-1 text-sm text-subtext0">r</span>
@@ -192,7 +192,7 @@ export function Stats() {
       <Card
         enlargeable={false}
         title="Mood calendar"
-        subtitle="Each day tinted by your mood (0–10) · tap ⛶ to enlarge"
+        subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
@@ -226,7 +226,7 @@ export function Stats() {
         </div>
       </Card>
       ) : (
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} · one square per day, tinted by mood`} enlargeable={false}
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
@@ -239,7 +239,7 @@ export function Stats() {
       </Section>
 
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
-      <Section title="Fitness stats" subtitle="workout minutes & split · see Fitness for live logging">
+      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging">
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (

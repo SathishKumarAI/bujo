@@ -152,7 +152,7 @@ export function HabitDetail({
                   return (
                     <span
                       key={d}
-                      title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                      title={`${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
                       className="h-3 w-3 rounded-[2px]"
                       style={{ background: before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
                     />

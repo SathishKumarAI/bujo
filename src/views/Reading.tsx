@@ -139,7 +139,7 @@ export function Reading() {
       </CollapsibleSection>
 
       {/* Reading analytics · volume + wrapped recap (deep, default-collapsed) */}
-      <CollapsibleSection title="Reading analytics" subtitle="finished by month · year in books">
+      <CollapsibleSection title="Reading analytics" subtitle="finished by month, year in books">
       {/* Books finished per month · paces the yearly goal visibly */}
       {byMonth.some((m) => m.count > 0) && (
         <div className="rounded-2xl border border-border bg-card p-4">
@@ -286,7 +286,7 @@ function ReadLater() {
         <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
       </div>
       {links.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-subtext0">No saved links yet · paste an article or book page to read later.</p>
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-subtext0">No saved links yet, paste an article or book page to read later.</p>
       ) : (
         <ul className="divide-y divide-border">
           {links.map((l) => (

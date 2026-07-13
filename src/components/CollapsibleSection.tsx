@@ -63,7 +63,7 @@ export function CollapsibleSection({
           </span>
           {iconNode}
           <span className="font-display text-base font-medium text-subtext1">{title}</span>
-          {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
+          {subtitle && <span className="text-xs text-subtext0">{subtitle}</span>}
           {!open && (
             <span className="ml-auto text-[10px] uppercase tracking-wide text-subtext0">show</span>
           )}

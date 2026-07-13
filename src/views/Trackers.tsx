@@ -128,7 +128,7 @@ export function Trackers() {
       <TrackerSummaryCard data={data} today={today} />
       <Card
         title="Habit & intake tracker"
-        subtitle={`${prettyMonth(ym)} · tap a cell to mark the day`}
+        subtitle={`${prettyMonth(ym)}, tap a cell to mark the day`}
         right={
           <div className="flex items-center gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
@@ -322,7 +322,7 @@ function ArchivedHabits() {
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
   return (
-    <Card title="Archived habits" subtitle="Out of the grid · restore any time" collapsible defaultCollapsed>
+    <Card title="Archived habits" subtitle="Out of the grid, restore any time" collapsible defaultCollapsed>
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">
@@ -504,7 +504,7 @@ function RoutineTimeline({
                           borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                           background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
                         }}
-                      >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
+                      >{on ? (h.avoid ? '🚫' : '') : (h.emoji ?? '○')}</button>
                       <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
                         <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
                         {h.cue && <span className="block truncate text-[11px] text-subtext0">{h.cue}</span>}
@@ -635,7 +635,7 @@ function CategoryRows({
                     )}
                     {/* Letter grade (A–F) over the same window — a single glanceable mark. */}
                     {grade && grade.score > 0 && (
-                      <span title={`Grade ${grade.letter} · consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] font-semibold" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach')) + '33', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach') }}>{grade.letter}</span>
+                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] font-semibold" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach')) + '33', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach') }}>{grade.letter}</span>
                     )}
                     {/* Days since the last scheduled miss — a clean-since counter. */}
                     {sinceMiss != null && sinceMiss >= 3 && (
@@ -760,7 +760,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               {week.map((c) => (
                 <span
                   key={c.day}
-                  title={`${c.day}${!c.scheduled ? ' · off-schedule' : c.level === 4 ? ' · done' : c.level > 0 ? ' · partial' : ' · missed'}`}
+                  title={`${c.day}${!c.scheduled ? ', off-schedule' : c.level === 4 ? ', done' : c.level > 0 ? ', partial' : ', missed'}`}
                   className={`h-4 w-4 rounded-[3px] ${c.day === today ? 'ring-1 ring-mauve' : ''}`}
                   style={{
                     background: !c.scheduled || c.level === 0 ? cat('surface0') : cat(habit.color),
@@ -798,7 +798,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
                     <div className="flex w-full flex-1 items-end">
                       <div
                         className="w-full rounded-t"
-                        title={`${m.ym}: ${m.done}/${m.scheduled} scheduled days · ${m.pct}%`}
+                        title={`${m.ym}: ${m.done}/${m.scheduled} scheduled days, ${m.pct}%`}
                         style={{ height: `${Math.max(3, m.pct)}%`, background: m.pct >= 80 ? cat('green') : m.pct >= 50 ? cat('yellow') : cat('peach'), opacity: 0.55 + m.pct / 100 * 0.45 }}
                       />
                     </div>
@@ -976,7 +976,7 @@ function HabitHeatmap({ data, habit, today, weeks = 12 }: { data: JData; habit: 
           return (
             <span
               key={d}
-              title={`${d}${level === 4 ? ' · done' : level > 0 ? ' · partial' : ''}`}
+              title={`${d}${level === 4 ? ', done' : level > 0 ? ', partial' : ''}`}
               className={`${cell} rounded-[2px]`}
               style={{ background: future ? 'transparent' : level === 0 ? cat('surface0') : cat(habit.color), opacity: level === 0 ? 1 : op }}
             />

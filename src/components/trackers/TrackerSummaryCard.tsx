@@ -16,7 +16,7 @@ export function TrackerSummaryCard({ data, today }: { data: JournalData; today: 
         <StatTile label="today done" value={`${sum.todayPct}%`} color={sum.todayPct >= 80 ? 'green' : sum.todayPct >= 50 ? 'yellow' : 'peach'} />
         <StatTile label="avg consistency" value={sum.avgConsistency} color="mauve" />
         <StatTile
-          label={sum.topStreakHabit ? `🔥 ${sum.topStreakHabit}` : 'top streak'}
+          label={sum.topStreakHabit ? `${sum.topStreakHabit}` : 'top streak'}
           value={`${sum.topStreak}d`}
           color="peach"
         />

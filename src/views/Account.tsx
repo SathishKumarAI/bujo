@@ -48,7 +48,7 @@ export function Account() {
     try {
       if (mode === 'signup') {
         await signUpEmail(email, pw); await pushJournal(data)
-        setMsg('Account created · check your inbox to confirm your email, then sign in.')
+        setMsg('Account created, check your inbox to confirm your email, then sign in.')
       } else {
         await signInEmail(email, pw)
         const r = await pullJournal(); if (r) replaceAll(migrate(r))
@@ -62,7 +62,7 @@ export function Account() {
   async function forgot() {
     if (!isValidEmail(email)) { setErr('Enter a valid email first, then tap “Forgot password”.'); return }
     setBusy(true); setErr(''); setMsg('')
-    try { await resetPassword(email); setMsg('Password-reset link sent · check your inbox.') }
+    try { await resetPassword(email); setMsg('Password-reset link sent, check your inbox.') }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
   async function guest() {

@@ -14,7 +14,7 @@ import { useJournal } from '../../store'
 
 const CATEGORIES = [
   { id: 'bug', label: '🐞 Bug' },
-  { id: 'idea', label: '💡 Idea' },
+  { id: 'idea', label: 'Idea' },
   { id: 'praise', label: '❤️ Praise' },
   { id: 'other', label: '💬 Other' },
 ] as const

@@ -18,7 +18,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
   const zone = (sets: number) => (sets < min ? 'peach' : sets > max ? 'red' : 'green')
   const zoneLabel = (sets: number) => (sets < min ? 'below 10' : sets > max ? 'over 20' : 'in range')
   return (
-    <Card title="Muscle volume balance" subtitle="Hard sets per muscle this week · target 10–20" defer>
+    <Card title="Muscle volume balance" subtitle="Hard sets per muscle this week, target 10–20" defer>
       {named.length === 0 ? (
         <Empty>Log some working sets this week to see your per-muscle volume.</Empty>
       ) : (

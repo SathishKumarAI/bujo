@@ -6,7 +6,7 @@ import { cat } from '../lib/colors'
 export function Help() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
-      <Card title="How to use your bullet journal" subtitle="A 2-minute guide to every feature">
+      <Card title="How to use your bullet journal" subtitle="What each screen does">
         <div className="prose-doc text-sm">
           <p>
             This is a digital take on the <strong>Bullet Journal method</strong> by Ryder Carroll,
@@ -17,11 +17,11 @@ export function Help() {
       </Card>
 
       <Section
-        title="Getting around · the top bar"
+        title="Getting around, the top bar"
         body="Every screen has a sticky bar at the top. It shows where you are, and on date screens (Today, Monthly, Trackers, Cycle) a ← date → control to move through days or months. On the right: Quick add (capture an entry from anywhere), ⌘K (jump to any view or run a command), and the ⋯ menu · that's where theme, zoom, undo/redo, and the paper/handwriting/book toggles now live."
       />
 
-      <Card title="Rapid logging · the bullets">
+      <Card title="Rapid logging, the bullets">
         <p className="mb-3 text-sm text-subtext1">
           On the <strong>Today</strong> page, type into the add bar and press Enter. Start a line with a
           letter to choose the kind, and click the glyph on any task to cycle its status.
@@ -37,13 +37,13 @@ export function Help() {
         <div className="mt-3 rounded-lg bg-base p-3 text-sm text-subtext0">
           <p className="font-medium text-subtext1">Quick-capture prefixes</p>
           <p className="mt-1"><code>t</code> task · <code>e</code> event · <code>n</code> note · <code>*</code> important · <code>^</code> memory · <code>#tag</code> to tag.</p>
-          <p className="mt-1 text-subtext0">Example: <code>* t book the campsite #travel</code> → an important task, tagged travel.</p>
+          <p className="mt-1 text-subtext0">For example, <code>* t book the campsite #travel</code> creates an important task tagged travel.</p>
         </div>
       </Card>
 
       {/* Per-view help folded into one collapsed accordion · keeps the page
           short, leading with the intro + cheat sheet above. */}
-      <CollapsibleSection title="Per-view guide" subtitle="What every screen does · tap to expand">
+      <CollapsibleSection title="Per-view guide" subtitle="What every screen does, tap to expand">
         <Section
         title="Today"
         body="Your daily log. Add tasks/events/notes, rate mood, stress and sleep (0–10), mark how you broke your fast, and write one gratitude line and one daily memory. The 'On this day' card resurfaces entries from the same date in past months."

@@ -75,7 +75,7 @@ export function Collections() {
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
           title="Index"
-          subtitle="The journal's table of contents · jump to any page"
+          subtitle="The journal's table of contents, jump to any page"
           className="md:col-span-2"
           help="A classic bullet-journal Index: every custom collection and every #tag page in one place, with how many entries each holds. Tap a row to open it below."
         >
@@ -165,7 +165,7 @@ export function Collections() {
       <span id="bujo-collections" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
       <Card
         title="Custom collections"
-        subtitle="Free-form pages · book lists, packing, projects…"
+        subtitle="Free-form pages, book lists, packing, projects…"
         className="md:col-span-2"
       >
         <div className="mb-3 flex flex-wrap gap-2">
@@ -253,8 +253,7 @@ export function Collections() {
         >
           <span className="text-subtext0">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
           <span className="font-display text-base font-medium text-subtext1">People</span>
-          <span className="text-xs text-subtext0">· friends &amp; birthdays</span>
-          {!peopleOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+          <span className="text-xs text-subtext0">friends &amp; birthdays</span>
         </button>
         {peopleOpen && (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -299,8 +298,7 @@ export function Collections() {
         >
           <span className="text-subtext0">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
           <span className="font-display text-base font-medium text-subtext1">Auto-pages</span>
-          <span className="text-xs text-subtext0">· memories &amp; tag pages</span>
-          {!autoPagesOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
+          <span className="text-xs text-subtext0">memories &amp; tag pages</span>
         </button>
         {autoPagesOpen && (
           <div className="space-y-5">
@@ -323,7 +321,7 @@ export function Collections() {
             <span id="bujo-tags" className="-mt-5 block scroll-mt-20" aria-hidden />
             <Card
               title="Tags"
-              subtitle="Auto-collections · every #tag, tap to open its page"
+              subtitle="Auto-collections, every #tag, tap to open its page"
               help="Tag pages are built automatically from the #tags in your entries — no setup. Tap a tag to see every entry that mentions it, across days and collections."
             >
               {tags.length === 0 ? (
