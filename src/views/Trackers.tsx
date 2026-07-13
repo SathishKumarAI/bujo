@@ -208,11 +208,11 @@ export function Trackers() {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 bg-mantle p-1 text-left font-normal text-overlay0">Habit</th>
+                  <th className="sticky left-0 z-10 bg-mantle p-1 text-left font-normal text-subtext0">Habit</th>
                   {days.map((d) => (
-                    <th key={d} className={`p-0.5 text-center font-normal ${d === today ? 'text-mauve' : 'text-overlay0'}`}>{Number(d.slice(8))}</th>
+                    <th key={d} className={`p-0.5 text-center font-normal ${d === today ? 'text-mauve' : 'text-subtext0'}`}>{Number(d.slice(8))}</th>
                   ))}
-                  <th className="p-1 pr-2 text-overlay0">%</th>
+                  <th className="p-1 pr-2 text-subtext0">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,14 +243,14 @@ export function Trackers() {
           <button
             onClick={() => setShowAdd((v) => !v)}
             aria-expanded={showAdd}
-            className="mb-2 flex items-center gap-1.5 text-xs tracking-wide text-overlay0 uppercase hover:text-subtext1"
+            className="mb-2 flex items-center gap-1.5 text-xs tracking-wide text-subtext0 uppercase hover:text-subtext1"
           >
             {showAdd ? '▾' : '▸'} Add a habit
           </button>
           {showAdd && (
           <>
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-overlay0">Quick add:</span>
+            <span className="text-xs text-subtext0">Quick add:</span>
             {HABIT_PRESETS.map((p) => (
               <button
                 key={p.name}
@@ -327,7 +327,7 @@ function ArchivedHabits() {
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             <Button variant="link" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-xs text-green">restore</Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-overlay0 hover:text-red">×</Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-subtext0 hover:text-red">×</Button>
           </li>
         ))}
       </ul>
@@ -339,7 +339,7 @@ function ArchivedHabits() {
 function Seg({ label, options, value, onChange }: { label: string; options: [string, string][]; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <p className="mb-1 text-xs text-overlay0">{label}</p>
+      <p className="mb-1 text-xs text-subtext0">{label}</p>
       <div className="flex gap-1">
         {options.map(([v, l]) => (
           <button key={v} onClick={() => onChange(v)} className="rounded px-2 py-1 text-xs" style={{ background: value === v ? cat('mauve') : cat('surface0'), color: value === v ? cat('crust') : cat('subtext1') }}>{l}</button>
@@ -377,7 +377,7 @@ function TodayStrip({
     <div className="mb-4 rounded-xl border border-surface0 bg-base p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium text-subtext1">Today</span>
-        <span className="text-xs text-overlay0">{done}/{todays.length} done</span>
+        <span className="text-xs text-subtext0">{done}/{todays.length} done</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {todays.map((h) => {
@@ -402,13 +402,13 @@ function TodayStrip({
                   onClick={() => onSetValue(today, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-overlay1 transition-colors hover:text-text disabled:opacity-30"
+                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-subtext0 transition-colors hover:text-text disabled:opacity-30"
                 >−</button>
-                <span className="min-w-[2.5rem] text-center tabular-nums text-overlay1">{val}/{target}{type === 'timer' ? 'm' : ''}</span>
+                <span className="min-w-[2.5rem] text-center tabular-nums text-subtext0">{val}/{target}{type === 'timer' ? 'm' : ''}</span>
                 <button
                   onClick={() => onSetValue(today, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-overlay1 transition-colors hover:text-text"
+                  className="grid h-5 w-5 place-items-center rounded-full border border-surface1 text-subtext0 transition-colors hover:text-text"
                 >+</button>
               </span>
             )
@@ -428,7 +428,7 @@ function TodayStrip({
               <span>{h.avoid ? '🚫' : (h.emoji ?? '●')}</span>
               {h.name}
               {h.avoid && <span className="text-[10px]" style={{ color: on ? cat('red') : cat('green') }}>{on ? 'slip' : 'clean'}</span>}
-              {numeric && !h.avoid && <span className="text-overlay0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+              {numeric && !h.avoid && <span className="text-subtext0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
             </button>
           )
         })}
@@ -473,7 +473,7 @@ function RoutineTimeline({
             <div className="mb-1.5 flex items-center gap-2">
               <span className="text-sm font-medium text-subtext1">{meta.emoji} {meta.label}</span>
               {slot === now && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>now</span>}
-              <span className="ml-auto text-xs text-overlay0">{done}/{scheduled.length || list.length}</span>
+              <span className="ml-auto text-xs text-subtext0">{done}/{scheduled.length || list.length}</span>
             </div>
             <ul className="space-y-1.5">
               {list.map((h) => {
@@ -501,12 +501,12 @@ function RoutineTimeline({
                       >{on ? (h.avoid ? '🚫' : '✓') : (h.emoji ?? '○')}</button>
                       <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
                         <span className={`block truncate text-sm ${on && !h.avoid ? 'text-text' : 'text-subtext1'}`}>{h.name}</span>
-                        {h.cue && <span className="block truncate text-[11px] text-overlay0">{h.cue}</span>}
+                        {h.cue && <span className="block truncate text-[11px] text-subtext0">{h.cue}</span>}
                       </button>
-                      {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
+                      {numeric && !h.avoid && <span className="shrink-0 text-xs text-subtext0">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
                       {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
-                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={14} /></Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-overlay0 hover:text-subtext1'}`}><StickyNote size={14} /></Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-subtext0 hover:text-mauve"><Activity size={14} /></Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-subtext0 hover:text-subtext1'}`}><StickyNote size={14} /></Button>
                     </div>
                     {(open || note) && (
                       <input
@@ -553,8 +553,8 @@ function CategoryRows({
     <>
       <tr>
         <td colSpan={days.length + 2} className="pt-3 pb-1">
-          <button onClick={onToggleCollapse} className="text-[10px] tracking-wide text-overlay0 uppercase hover:text-subtext1">
-            {collapsed ? '▸' : '▾'} {category} {collapsed && <span className="text-overlay1">({habits.length})</span>}
+          <button onClick={onToggleCollapse} className="text-[10px] tracking-wide text-subtext0 uppercase hover:text-subtext1">
+            {collapsed ? '▸' : '▾'} {category} {collapsed && <span className="text-subtext0">({habits.length})</span>}
           </button>
         </td>
       </tr>
@@ -595,14 +595,14 @@ function CategoryRows({
                   onDragStart={() => setDragId(h.id)}
                   onDragEnd={() => { setDragId(null); setOverId(null) }}
                   title="Drag to reorder"
-                  className="shrink-0 cursor-grab text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+                  className="shrink-0 cursor-grab text-subtext0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
                 ><GripVertical size={11} /></span>
                 {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={11} /></Button>
-                {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
+                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-subtext0 line-through' : ''}`}>{h.name}</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-subtext0 hover:text-mauve"><Activity size={11} /></Button>
+                {h.unit && <span className="shrink-0 text-subtext0">({h.unit})</span>}
                 {avoid ? (
                   <>
                     {/* H4: clean-day chip — staying clean is the win for quit habits. */}
@@ -694,7 +694,7 @@ function CategoryRows({
                 </td>
               )
             })}
-            <td className="px-1 text-center text-overlay0">{habitConsistency(data, h.id, h.startedOn)}</td>
+            <td className="px-1 text-center text-subtext0">{habitConsistency(data, h.id, h.startedOn)}</td>
           </tr>
         )
       })}
@@ -732,7 +732,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
       <div className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-surface0 bg-mantle px-4 py-3">
           <h3 className="font-display text-lg text-text">{habit.emoji} {habit.name}</h3>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-subtext0 hover:text-text"><X size={18} /></Button>
         </header>
         <div className="space-y-3 p-4">
           {/* Stats */}
@@ -741,14 +741,14 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <StatTile label="best ever" value={bestEver} color="yellow" />
             <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} color="green" />
           </div>
-          <p className="text-xs text-overlay0">
+          <p className="text-xs text-subtext0">
             Strongest on <span className="text-subtext1">{bestDow}</span>{worstDow && <> · weakest on <span className="text-subtext1">{worstDow}</span></>}. <Momentum data={data} habit={habit} today={today} />
             {!habit.avoid && perfectWk > 0 && <> · <span style={{ color: cat('green') }}>{perfectWk}</span> perfect {perfectWk === 1 ? 'week' : 'weeks'} (12)</>}
           </p>
 
           {/* Last-7-day intensity strip — this week at a glance. */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-overlay0">This week</span>
+            <span className="text-[10px] text-subtext0">This week</span>
             <div className="flex gap-1" role="img" aria-label="This week's completion, one cell per day">
               {week.map((c) => (
                 <span
@@ -767,7 +767,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {/* #399: last-14-day value sparkline for numeric habits. */}
           {numericType && spark.some((p) => p.value > 0) && (
             <div className="flex items-center gap-2">
-              <span className="shrink-0 text-[10px] text-overlay0">Last 14d</span>
+              <span className="shrink-0 text-[10px] text-subtext0">Last 14d</span>
               <div className="flex h-8 flex-1 items-end gap-0.5" role="img" aria-label="Sparkline of the last 14 days' logged values">
                 {spark.map((p) => (
                   <span
@@ -784,7 +784,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {/* #407: per-habit monthly completion bars (trailing year). */}
           {!habit.avoid && months.length >= 2 && (
             <div>
-              <p className="mb-1 text-xs text-overlay0">Monthly completion (trailing year)</p>
+              <p className="mb-1 text-xs text-subtext0">Monthly completion (trailing year)</p>
               <div className="flex items-end justify-between gap-1" style={{ height: 72 }} role="img" aria-label="Bar chart of monthly completion percentage over the trailing year">
                 {months.map((m) => (
                   <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
@@ -795,7 +795,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
                         style={{ height: `${Math.max(3, m.pct)}%`, background: m.pct >= 80 ? cat('green') : m.pct >= 50 ? cat('yellow') : cat('peach'), opacity: 0.55 + m.pct / 100 * 0.45 }}
                       />
                     </div>
-                    <span className="text-[9px] text-overlay0">{prettyMonth(m.ym).slice(0, 1)}</span>
+                    <span className="text-[9px] text-subtext0">{prettyMonth(m.ym).slice(0, 1)}</span>
                   </div>
                 ))}
               </div>
@@ -805,7 +805,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {/* Completion heatmap · 12 weeks or a full year */}
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <p className="text-xs text-overlay0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
+              <p className="text-xs text-subtext0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
               <Button variant="link" onClick={() => setHeatYear((v) => !v)} className="h-auto p-0 text-xs text-mauve">{heatYear ? '12 weeks' : 'Full year'}</Button>
             </div>
             <HabitHeatmap data={data} habit={habit} today={today} weeks={heatYear ? 53 : 12} />
@@ -816,10 +816,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-sm text-subtext1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
           <label className="flex items-center justify-between rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
-            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-overlay0">(quit · a logged day counts as a slip)</span></span>
+            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-subtext0">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
-          <label className="block text-sm text-subtext1">Weekly goal <span className="text-overlay0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
+          <label className="block text-sm text-subtext1">Weekly goal <span className="text-subtext0">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
 
           <div>
             <p className="mb-1 text-sm text-subtext1">Color</p>
@@ -856,7 +856,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             </div>
           </div>
 
-          <label className="block text-sm text-subtext1">Cue <span className="text-overlay0">(habit stacking · after what?)</span>
+          <label className="block text-sm text-subtext1">Cue <span className="text-subtext0">(habit stacking · after what?)</span>
             <Input value={habit.cue ?? ''} onChange={(e) => set({ cue: e.target.value || undefined })} placeholder="e.g. After morning coffee" className="mt-1" />
           </label>
 
@@ -873,11 +873,11 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             if (!recent.length) return null
             return (
               <div>
-                <p className="mb-1 text-sm text-overlay0">Recent notes</p>
+                <p className="mb-1 text-sm text-subtext0">Recent notes</p>
                 <ul className="space-y-1">
                   {recent.map((n) => (
                     <li key={n.day} className="rounded-lg border border-surface0 bg-base px-2.5 py-1.5 text-xs">
-                      <span className="text-overlay0">{n.day}</span> · <span className="text-subtext1">{n.text}</span>
+                      <span className="text-subtext0">{n.day}</span> · <span className="text-subtext1">{n.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -888,13 +888,13 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {(habit.type === 'count' || habit.type === 'timer') && (
             <>
               <div className="grid grid-cols-2 gap-2">
-                <label className="block text-sm text-subtext1">Daily target <span className="text-overlay0">(stretch)</span><div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
+                <label className="block text-sm text-subtext1">Daily target <span className="text-subtext0">(stretch)</span><div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Daily target" /></div></label>
                 <label className="block text-sm text-subtext1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder={habit.type === 'timer' ? 'min' : 'glasses'} list="habit-units" className="mt-1" /><datalist id="habit-units">{knownUnits.map((u) => <option key={u} value={u} />)}</datalist></label>
               </div>
               {/* #280: optional floor — a minimum "showed up" threshold below the
                   stretch target. A day that clears it but not the target reads as
                   a partial win on the grid. */}
-              <label className="block text-sm text-subtext1">Floor <span className="text-overlay0">(min “showed up”, optional · below the target)</span>
+              <label className="block text-sm text-subtext1">Floor <span className="text-subtext0">(min “showed up”, optional · below the target)</span>
                 <div className="mt-1"><Stepper value={habit.floor ?? undefined} onChange={(v) => set({ floor: v && v > 0 ? v : undefined })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Floor threshold" /></div>
                 {habit.floor != null && habit.floor >= habitTarget(habit) && (
                   <span className="mt-1 block text-[11px]" style={{ color: cat('peach') }}>Floor should be below the target ({habitTarget(habit)}) to show a “met floor” state.</span>
@@ -903,11 +903,11 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             </>
           )}
           {habit.type === 'rating' && (
-            <p className="text-xs text-overlay0">Logs a 1–5 rating per day (tap the stars in the activity view or today strip).</p>
+            <p className="text-xs text-subtext0">Logs a 1–5 rating per day (tap the stars in the activity view or today strip).</p>
           )}
 
           <div>
-            <p className="mb-1 text-sm text-subtext1">Scheduled days <span className="text-overlay0">(none = every day)</span></p>
+            <p className="mb-1 text-sm text-subtext1">Scheduled days <span className="text-subtext0">(none = every day)</span></p>
             <div className="flex gap-1">
               {WEEKDAYS.map((w, i) => {
                 const on = habit.activeDays?.includes(i)
@@ -940,7 +940,7 @@ function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: st
   const week = (end: string) => Array.from({ length: 7 }, (_, i) => addDays(end, -i)).filter((d) => habitDoneOn(data, habit, d)).length
   const now = week(today)
   const prev = week(addDays(today, -7))
-  if (now === prev) return <span className="text-overlay0">→ steady</span>
+  if (now === prev) return <span className="text-subtext0">→ steady</span>
   const up = now > prev
   return <span style={{ color: cat(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
 }

@@ -30,7 +30,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
                 <p className="text-lg font-bold" style={{ color: l.weight > 0 ? cat(liftColor[l.lift]) : cat('overlay0') }}>
                   {l.weight > 0 ? `${l.weight}${unit}` : '—'}
                 </p>
-                {l.date && <p className="text-[10px] text-overlay0">{prettyDay(l.date)}</p>}
+                {l.date && <p className="text-[10px] text-subtext0">{prettyDay(l.date)}</p>}
               </button>
             ))}
           </div>
@@ -38,7 +38,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
             <span className="inline-flex items-center gap-1.5 text-sm text-subtext1"><Trophy size={15} style={{ color: cat('yellow') }} /> Total</span>
             <span className="text-2xl font-bold" style={{ color: cat('yellow') }}>{total.total}{unit}</span>
           </div>
-          {!total.complete && <p className="mt-1 text-[11px] text-overlay0">Log all three for your true total.</p>}
+          {!total.complete && <p className="mt-1 text-[11px] text-subtext0">Log all three for your true total.</p>}
         </>
       )}
     </Card>

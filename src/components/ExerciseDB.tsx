@@ -43,7 +43,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
     <div>
       <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search wger exercise database… (e.g. bench, squat)" />
       {state === 'loading' && (
-        <p className="mt-2 text-sm text-overlay0">
+        <p className="mt-2 text-sm text-subtext0">
           {progress > 0 ? `Building exercise index (one-time)… ${progress} loaded` : 'Searching…'}
         </p>
       )}
@@ -71,7 +71,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
           ))}
         </div>
       )}
-      <p className="mt-2 text-[11px] text-overlay0">
+      <p className="mt-2 text-[11px] text-subtext0">
         Exercise data & images from <a href="https://wger.de" className="underline" target="_blank" rel="noreferrer">wger.de</a> (CC-BY-SA).
       </p>
 
@@ -80,7 +80,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
           <div className="card-3d w-full max-w-lg overflow-hidden rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={selected.name}>
             <header className="flex items-center justify-between border-b border-surface0 px-4 py-3">
               <h3 className="font-display text-lg text-text">{selected.name}</h3>
-              <button onClick={() => setSelected(null)} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></button>
+              <button onClick={() => setSelected(null)} aria-label="Close" className="text-subtext0 hover:text-text"><X size={18} /></button>
             </header>
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -103,7 +103,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                 </a>
               </div>
               <div>
-                <p className="mb-1 text-xs tracking-wide text-overlay0 uppercase">Targets</p>
+                <p className="mb-1 text-xs tracking-wide text-subtext0 uppercase">Targets</p>
                 {selected.muscles.length > 0 ? (
                   <>
                     <MuscleMap muscles={selected.muscles} />
@@ -114,7 +114,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-overlay0">No muscle data for this exercise.</p>
+                  <p className="text-sm text-subtext0">No muscle data for this exercise.</p>
                 )}
               </div>
             </div>

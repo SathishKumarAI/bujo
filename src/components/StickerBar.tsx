@@ -10,7 +10,7 @@ export function StickerBar({ date }: { date: string }) {
   return (
     <div>
       <div className="mb-2 flex flex-wrap gap-1">
-        {current.length === 0 && <span className="text-xs text-overlay0">No stickers yet</span>}
+        {current.length === 0 && <span className="text-xs text-subtext0">No stickers yet</span>}
         {current.map((e) => (
           <button
             key={e}

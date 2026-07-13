@@ -52,7 +52,7 @@ export function BottomNav({
             onClick={() => onNavigate(n.id)}
             aria-label={n.label}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${active ? 'text-primary' : 'text-overlay1'}`}
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${active ? 'text-primary' : 'text-subtext0'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
             <Icon size={20} aria-hidden />

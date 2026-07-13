@@ -38,7 +38,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-        <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-overlay1 hover:text-text"><X size={18} /></button>
+        <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-subtext0 hover:text-text"><X size={18} /></button>
         <div className="mb-3 flex items-baseline gap-2">
           <span className="font-display text-2xl font-semibold tracking-tight text-foreground">bujo</span>
           <span className="text-primary">✦</span>
@@ -52,7 +52,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
             <span key={n} className="h-1.5 rounded-full transition-all" style={{ width: n === i ? 18 : 6, background: n === i ? 'var(--color-mauve)' : 'var(--color-surface1)' }} />
           ))}
           <div className="ml-auto flex gap-2">
-            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-xs text-overlay1 hover:text-subtext1">Show me</button>}
+            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-xs text-subtext0 hover:text-subtext1">Show me</button>}
             {last ? (
               <button onClick={done} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">Start journaling</button>
             ) : (
@@ -60,7 +60,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </div>
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-overlay0"><ShieldCheck size={12} /> Private & local-first. Your data is yours.</p>
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-subtext0"><ShieldCheck size={12} /> Private & local-first. Your data is yours.</p>
       </div>
     </div>
   )

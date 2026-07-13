@@ -102,7 +102,7 @@ export function Welcome() {
                 ) : (
                   <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><LogIn size={14} /> Sign in with email</Button>
                 )}
-                <span className="text-xs text-overlay0">Sign in to create your journal and sync it across devices.</span>
+                <span className="text-xs text-subtext0">Sign in to create your journal and sync it across devices.</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -111,8 +111,8 @@ export function Welcome() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Button onClick={() => account('login')} disabled={busy} variant="default" className="press-3d">Log in</Button>
                   <Button onClick={() => account('signup')} disabled={busy} variant="outline" className="text-subtext1">Sign up</Button>
-                  <button onClick={forgot} disabled={busy} className="ml-auto text-xs text-overlay1 hover:text-subtext1">Forgot password?</button>
-                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-sm text-overlay0">Back</button>
+                  <button onClick={forgot} disabled={busy} className="ml-auto text-xs text-subtext0 hover:text-subtext1">Forgot password?</button>
+                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-sm text-subtext0">Back</button>
                 </div>
               </div>
             )}
@@ -135,7 +135,7 @@ export function Welcome() {
               Point bujo at a folder inside your Drive / Dropbox / OneDrive sync
               folder. Your existing cloud syncs it across devices.
             </p>
-            <ul className="mt-3 space-y-1 text-xs text-overlay1">
+            <ul className="mt-3 space-y-1 text-xs text-subtext0">
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> No account, no sign-in</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Works with any cloud you already use</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Your files, your control</li>
@@ -158,7 +158,7 @@ export function Welcome() {
               Keep everything in this browser. Nothing leaves the device. You can
               connect a cloud folder later in Settings.
             </p>
-            <ul className="mt-3 space-y-1 text-xs text-overlay1">
+            <ul className="mt-3 space-y-1 text-xs text-subtext0">
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Fastest, fully offline</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Export backups anytime</li>
             </ul>
@@ -176,13 +176,13 @@ export function Welcome() {
           >
             Explore the demo →
           </Button>
-          <p className="mt-2 text-xs text-overlay0">
+          <p className="mt-2 text-xs text-subtext0">
             Learn as you go: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
             <br />Changed your mind? Reset or wipe the sample anytime in <strong>Settings → Data &amp; Cloud</strong>.
           </p>
         </div>
 
-        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '360ms' }}>
+        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-subtext0" style={{ animationDelay: '360ms' }}>
           <ShieldCheck size={13} /> No servers, no tracking. Your data is yours.
         </p>
       </div>

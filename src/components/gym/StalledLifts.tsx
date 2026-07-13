@@ -23,7 +23,7 @@ export function StalledLifts({ lifts, unit, setFocusEx }: { lifts: StalledLift[]
               <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
                 <TrendingDown size={14} style={{ color: cat('red') }} /> <span className="truncate">{l.exercise}</span>
               </span>
-              <span className="shrink-0 text-overlay0">
+              <span className="shrink-0 text-subtext0">
                 <span className="font-semibold" style={{ color: cat('peach') }}>{l.top}{unit}</span>
                 <span className="ml-1.5 text-[10px]">{l.sessions} sessions</span>
               </span>

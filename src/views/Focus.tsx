@@ -165,7 +165,7 @@ export function Focus() {
               })}
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-overlay0">
+          <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-subtext0">
             <span>less</span>
             {[0, 1, 2, 3, 4].map((lv) => (
               <span key={lv} className="h-2.5 w-2.5 rounded-[2px]"
@@ -189,7 +189,7 @@ export function Focus() {
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(p.min)}</span>
+                <span className="w-12 shrink-0 text-right text-xs text-subtext0">{hrs(p.min)}</span>
               </div>
             ))}
           </div>
@@ -218,7 +218,7 @@ export function Focus() {
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${(t.min / maxTag) * 100}%`, background: cat('teal') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(t.min)}</span>
+                <span className="w-12 shrink-0 text-right text-xs text-subtext0">{hrs(t.min)}</span>
               </div>
             ))}
           </div>
@@ -291,7 +291,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{w.count ? `${w.avg}/10` : '—'}</span>
+                <span className="w-12 shrink-0 text-right text-xs text-subtext0">{w.count ? `${w.avg}/10` : '—'}</span>
               </div>
             ))
           : byWeekday.map((w) => (
@@ -300,7 +300,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+                <span className="w-12 shrink-0 text-right text-xs text-subtext0">{hrs(w.min)}</span>
               </div>
             ))}
       </div>
@@ -381,7 +381,7 @@ function TypingPractice() {
               <span className="text-subtext1">
                 {weekday ? "Today's goal" : 'Bonus today'} · {hrs(goal.minutes)} / {hrs(goal.goalMin)}
               </span>
-              <span className={`text-xs ${goal.met ? 'text-green' : 'text-overlay0'}`}>
+              <span className={`text-xs ${goal.met ? 'text-green' : 'text-subtext0'}`}>
                 {goal.met ? '✓ met' : weekday ? `${goal.pct}%` : 'optional'}
               </span>
             </div>
@@ -391,7 +391,7 @@ function TypingPractice() {
                 style={{ width: `${goal.pct}%`, background: goal.met ? cat('green') : weekday ? cat('mauve') : cat('teal') }}
               />
             </div>
-            {!weekday && <p className="mt-1 text-[11px] text-overlay0">Weekends are off-schedule — practice counts as bonus and won't break your streak.</p>}
+            {!weekday && <p className="mt-1 text-[11px] text-subtext0">Weekends are off-schedule — practice counts as bonus and won't break your streak.</p>}
           </div>
         </div>
 
@@ -422,7 +422,7 @@ function TypingPractice() {
 
       {/* Practice sites */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-overlay0">Practice:</span>
+        <span className="text-xs text-subtext0">Practice:</span>
         {PRACTICE_SITES.map((site) => (
           <a key={site.name} href={site.url} target="_blank" rel="noreferrer noopener" className="transition-opacity hover:opacity-80">
             <Pill color={site.color}>{site.name}</Pill>
@@ -439,12 +439,12 @@ function TypingPractice() {
             <li key={s.id} className="group flex items-center justify-between rounded-lg border border-border bg-background p-2.5 text-sm">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-medium text-text">{s.source || 'Typing'}</span>
-                <span className="text-xs text-overlay0">{prettyDay(s.date)}</span>
+                <span className="text-xs text-subtext0">{prettyDay(s.date)}</span>
                 <span className="text-subtext0">{hrs(s.durationMin)}</span>
                 {s.wpm != null && <span style={{ color: cat('mauve') }}>{s.wpm} wpm</span>}
                 {s.accuracy != null && <span style={{ color: cat('green') }}>{s.accuracy}% acc</span>}
               </div>
-              <Button variant="ghost" size="icon-sm" onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-overlay0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</Button>
+              <Button variant="ghost" size="icon-sm" onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-subtext0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</Button>
             </li>
           ))}
         </ul>
@@ -493,10 +493,10 @@ function SessionRow({ s, onSave, onDelete }: {
   return (
     <li className="group rounded-lg border border-border bg-background p-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-overlay0">{prettyDay(s.date)}</span></span>
+        <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-subtext0">{prettyDay(s.date)}</span></span>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-          <Button variant="ghost" size="sm" onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="h-auto p-0 text-xs text-overlay0 hover:text-mauve">Edit</Button>
-          <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete session" className="text-overlay0 hover:text-red">×</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="h-auto p-0 text-xs text-subtext0 hover:text-mauve">Edit</Button>
+          <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete session" className="text-subtext0 hover:text-red">×</Button>
         </div>
       </div>
       <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
@@ -506,7 +506,7 @@ function SessionRow({ s, onSave, onDelete }: {
         {s.interruptions != null && <span>{s.interruptions} interruptions</span>}
         {(s.tags ?? []).map((t) => <span key={t} className="text-teal">#{t}</span>)}
       </div>
-      {s.notes && <p className="mt-1 text-xs text-overlay1 italic">{s.notes}</p>}
+      {s.notes && <p className="mt-1 text-xs text-subtext0 italic">{s.notes}</p>}
     </li>
   )
 }

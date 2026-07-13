@@ -183,18 +183,18 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           {templates.map((t) => (
             <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-surface0 px-2 py-0.5 text-xs text-subtext1">
               <button onClick={() => setVal(t)} className="hover:text-text">{t}</button>
-              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (
-            <button onClick={saveTemplate} className="rounded-full border border-dashed border-surface2 px-2 py-0.5 text-xs text-overlay1 hover:text-mauve">+ save as template</button>
+            <button onClick={saveTemplate} className="rounded-full border border-dashed border-surface2 px-2 py-0.5 text-xs text-subtext0 hover:text-mauve">+ save as template</button>
           )}
         </div>
       )}
 
       {/* Live routed preview: which view it lands in + the parsed values. */}
       {parsed && meta && Icon && (
-        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-overlay0">
+        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-subtext0">
           <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>
             <Icon size={11} /> {meta.label}
           </span>
@@ -203,7 +203,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             <button
               type="button"
               onClick={() => setDraft((d) => d ?? parsed)}
-              className="inline-flex items-center gap-1 text-overlay0 hover:text-mauve"
+              className="inline-flex items-center gap-1 text-subtext0 hover:text-mauve"
             >
               <SlidersHorizontal size={11} /> edit fields
             </button>

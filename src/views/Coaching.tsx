@@ -56,7 +56,7 @@ export function Coaching() {
               <StatTile compact label="Progress" value={`${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`} color="teal" icon={<Trophy size={14} />} />
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-[width]" style={{ width: `${(done.length / ACADEMY_TOTAL_WEEKS) * 100}%`, background: cat('green') }} /></div>
-            <Button variant="link" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-xs text-overlay0 hover:text-red hover:no-underline">Reset program</Button>
+            <Button variant="link" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-xs text-subtext0 hover:text-red hover:no-underline">Reset program</Button>
           </>
         )}
       </Card>
@@ -68,13 +68,13 @@ export function Coaching() {
           <summary className="cursor-pointer text-sm font-medium text-text">A 45–60 min session</summary>
           <ul className="mt-2 space-y-1">
             {SESSION_TEMPLATE.map((b) => (
-              <li key={b.mins} className="flex gap-2 text-xs"><span className="w-12 shrink-0 tabular-nums text-overlay0">{b.mins}</span><span className="text-overlay1">{b.activity}</span></li>
+              <li key={b.mins} className="flex gap-2 text-xs"><span className="w-12 shrink-0 tabular-nums text-subtext0">{b.mins}</span><span className="text-subtext0">{b.activity}</span></li>
             ))}
           </ul>
         </details>
         <div className="mt-3 grid grid-cols-7 gap-1">
           {WEEKLY_TEMPLATE.map((d, i) => (
-            <div key={d.day} className={`rounded-md p-1.5 text-center text-[10px] ${i === (todayDow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-base text-overlay0'}`} title={d.focus}>
+            <div key={d.day} className={`rounded-md p-1.5 text-center text-[10px] ${i === (todayDow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-base text-subtext0'}`} title={d.focus}>
               <div className="font-medium">{d.day}</div>
               <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
             </div>
@@ -99,17 +99,17 @@ export function Coaching() {
                   </button>
                   <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
                     <span className="text-sm font-medium text-text">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
-                    <span className="block truncate text-xs text-overlay1">{w.skills}</span>
+                    <span className="block truncate text-xs text-subtext0">{w.skills}</span>
                   </button>
-                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-overlay0">{isOpen ? '▴' : '▾'}</button>
+                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-subtext0">{isOpen ? '▴' : '▾'}</button>
                 </div>
                 {isOpen && (
                   <div className="space-y-2 border-t border-surface0 px-3 py-2.5 text-sm">
                     <p className="text-subtext1">{w.doThis}</p>
                     <div>
-                      <p className="mb-1 text-xs font-medium text-overlay1">Drills</p>
+                      <p className="mb-1 text-xs font-medium text-subtext0">Drills</p>
                       <ul className="space-y-0.5">
-                        {w.drills.map((d) => <li key={d} className="flex gap-1.5 text-xs text-overlay1"><Dumbbell size={11} className="mt-0.5 shrink-0 text-green" /> {d}</li>)}
+                        {w.drills.map((d) => <li key={d} className="flex gap-1.5 text-xs text-subtext0"><Dumbbell size={11} className="mt-0.5 shrink-0 text-green" /> {d}</li>)}
                       </ul>
                     </div>
                     <p className="inline-flex items-center gap-1.5 rounded-lg bg-secondary/50 p-2 text-xs" style={{ color: cat('green') }}><Target size={12} /> Goal: {w.goal}</p>
@@ -131,7 +131,7 @@ export function Coaching() {
                 <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat(lvl.color) + '22', color: cat(lvl.color) }}>DUPR {lvl.dupr}</span>
               </div>
               <ul className="grid gap-1 sm:grid-cols-2">
-                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-xs text-overlay1"><span style={{ color: cat(lvl.color) }}>•</span> {sk}</li>)}
+                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-xs text-subtext0"><span style={{ color: cat(lvl.color) }}>•</span> {sk}</li>)}
               </ul>
             </div>
           ))}
@@ -142,7 +142,7 @@ export function Coaching() {
       <Card title={<span className="inline-flex items-center gap-2"><BookOpen size={18} className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible defaultCollapsed help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
-            <p className="mb-1 text-[11px] font-medium tracking-wider text-overlay0 uppercase">{group}</p>
+            <p className="mb-1 text-[11px] font-medium tracking-wider text-subtext0 uppercase">{group}</p>
             <ul className="space-y-1.5">
               {TECHNIQUES.filter((t) => t.group === group).map((t) => {
                 const open = openTech === t.name
@@ -151,26 +151,26 @@ export function Coaching() {
                     <button onClick={() => setOpenTech(open ? null : t.name)} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-sm font-medium text-text">{t.name}</span>
-                        <span className="block truncate text-xs text-overlay1">{t.what}</span>
+                        <span className="block truncate text-xs text-subtext0">{t.what}</span>
                       </span>
-                      <span className="shrink-0 text-overlay0">{open ? '▴' : '▾'}</span>
+                      <span className="shrink-0 text-subtext0">{open ? '▴' : '▾'}</span>
                     </button>
                     {open && (
                       <div className="space-y-2.5 border-t border-surface0 px-3 py-2.5">
                         <div>
                           <p className="mb-1 text-xs font-medium text-subtext1">How to do it</p>
                           <ol className="space-y-1">
-                            {t.how.map((step, i) => <li key={i} className="flex gap-2 text-xs text-overlay1"><span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {step}</li>)}
+                            {t.how.map((step, i) => <li key={i} className="flex gap-2 text-xs text-subtext0"><span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {step}</li>)}
                           </ol>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div>
                             <p className="mb-1 text-xs font-medium" style={{ color: cat('green') }}>✓ Key cues</p>
-                            <ul className="space-y-0.5">{t.cues.map((c) => <li key={c} className="text-xs text-overlay1">{c}</li>)}</ul>
+                            <ul className="space-y-0.5">{t.cues.map((c) => <li key={c} className="text-xs text-subtext0">{c}</li>)}</ul>
                           </div>
                           <div>
                             <p className="mb-1 text-xs font-medium" style={{ color: cat('red') }}>✗ Common mistakes</p>
-                            <ul className="space-y-0.5">{t.mistakes.map((m) => <li key={m} className="text-xs text-overlay1">{m}</li>)}</ul>
+                            <ul className="space-y-0.5">{t.mistakes.map((m) => <li key={m} className="text-xs text-subtext0">{m}</li>)}</ul>
                           </div>
                         </div>
                       </div>
@@ -192,11 +192,11 @@ export function Coaching() {
             return (
               <div key={skill} className="rounded-lg border border-surface0 bg-base">
                 <button onClick={() => setOpenSkill(open ? null : skill)} className="flex w-full items-center justify-between p-2.5 text-left text-sm font-medium text-text">
-                  {skill} <span className="text-xs text-overlay0">{list.length}{open ? ' ▴' : ' ▾'}</span>
+                  {skill} <span className="text-xs text-subtext0">{list.length}{open ? ' ▴' : ' ▾'}</span>
                 </button>
                 {open && (
                   <ul className="space-y-1 px-3 pb-3">
-                    {list.map((d) => <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-overlay0">· {d.how}</span></li>)}
+                    {list.map((d) => <li key={d.name} className="text-xs"><span className="text-subtext1">{d.name}</span> <span className="text-subtext0">· {d.how}</span></li>)}
                   </ul>
                 )}
               </div>
@@ -227,9 +227,9 @@ export function Coaching() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-text">{e.name}</span>
                       <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('sky') + '22', color: cat('sky') }}>{e.target}</span>
-                      {e.equip !== 'none' && <span className="rounded-full bg-surface0 px-1.5 py-0.5 text-[10px] text-overlay1">{e.equip}</span>}
+                      {e.equip !== 'none' && <span className="rounded-full bg-surface0 px-1.5 py-0.5 text-[10px] text-subtext0">{e.equip}</span>}
                     </div>
-                    <p className="mt-0.5 text-xs text-overlay1">{e.how}</p>
+                    <p className="mt-0.5 text-xs text-subtext0">{e.how}</p>
                   </li>
                 ))}
               </ul>
@@ -245,7 +245,7 @@ export function Coaching() {
           {MINDSET.map((m) => (
             <li key={m.title} className="rounded-lg border border-surface0 bg-base p-2.5">
               <p className="text-sm font-medium text-text">{m.title}</p>
-              <p className="text-xs text-overlay1">{m.why}</p>
+              <p className="text-xs text-subtext0">{m.why}</p>
             </li>
           ))}
         </ul>

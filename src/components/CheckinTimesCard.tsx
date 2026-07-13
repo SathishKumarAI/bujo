@@ -31,7 +31,7 @@ export function CheckinTimesCard() {
               </div>
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[10px] text-overlay0">
+          <div className="mt-1 flex justify-between text-[10px] text-subtext0">
             <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
           </div>
         </>

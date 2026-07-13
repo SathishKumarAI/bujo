@@ -77,7 +77,7 @@ export function PomodoroCard() {
           </svg>
           <div className="absolute text-center">
             <p className="font-display text-3xl tabular-nums text-text">{pad(Math.floor(shown / 60))}:{pad(shown % 60)}</p>
-            <p className="text-xs uppercase tracking-wide text-overlay0">{mode}</p>
+            <p className="text-xs uppercase tracking-wide text-subtext0">{mode}</p>
           </div>
         </div>
 

@@ -47,7 +47,7 @@ export function LockScreen({ onUnlock }: { onUnlock: (passcode: string) => Promi
         >
           {busy ? 'Unlocking…' : 'Unlock'}
         </button>
-        <p className="mt-3 text-xs text-overlay0">Your passcode never leaves this device. Lost it = the data can’t be recovered.</p>
+        <p className="mt-3 text-xs text-subtext0">Your passcode never leaves this device. Lost it = the data can’t be recovered.</p>
       </form>
     </div>
   )

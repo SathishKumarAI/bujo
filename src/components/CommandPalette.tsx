@@ -120,10 +120,10 @@ export function CommandPalette({
           }}
           placeholder="Jump to… or type a command"
           aria-label="Command search"
-          className="w-full border-b border-surface0 bg-transparent px-4 py-3 text-sm text-text placeholder:text-overlay0 focus:outline-none"
+          className="w-full border-b border-surface0 bg-transparent px-4 py-3 text-sm text-text placeholder:text-subtext0 focus:outline-none"
         />
         <ul className="max-h-72 overflow-y-auto py-1">
-          {filtered.length === 0 && <li className="px-4 py-3 text-sm text-overlay0">No matches</li>}
+          {filtered.length === 0 && <li className="px-4 py-3 text-sm text-subtext0">No matches</li>}
           {filtered.map((c, i) => (
             <li key={c.id}>
               <button
@@ -132,12 +132,12 @@ export function CommandPalette({
                 className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm ${i === active ? 'bg-surface0 text-text' : 'text-subtext1'}`}
               >
                 <span>{c.label}</span>
-                {c.hint && <span className="text-xs text-overlay0">{c.hint}</span>}
+                {c.hint && <span className="text-xs text-subtext0">{c.hint}</span>}
               </button>
             </li>
           ))}
         </ul>
-        <div className="border-t border-surface0 px-4 py-2 text-xs text-overlay0">↑↓ navigate · ↵ run · esc close</div>
+        <div className="border-t border-surface0 px-4 py-2 text-xs text-subtext0">↑↓ navigate · ↵ run · esc close</div>
       </div>
     </div>
   )

@@ -51,10 +51,10 @@ export function Challenges() {
             aria-expanded={archiveOpen}
             className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
           >
-            <span className="text-overlay0">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="text-subtext0">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
             <span className="font-display text-base font-medium text-subtext1">Completed &amp; archived</span>
-            <span className="text-xs text-overlay0">· {archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
-            {!archiveOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+            <span className="text-xs text-subtext0">· {archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
+            {!archiveOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
           </button>
           {archiveOpen && (
             <Card title="Completed & archived" subtitle="Your past challenges">
@@ -62,7 +62,7 @@ export function Challenges() {
                 {archived.map((c) => (
                   <li key={c.id} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
                     <span className="text-subtext1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
-                    <span className="text-xs text-overlay0">{completedDays(data, c, todayISO())} days done</span>
+                    <span className="text-xs text-subtext0">{completedDays(data, c, todayISO())} days done</span>
                   </li>
                 ))}
               </ul>
@@ -107,7 +107,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       <div className="mb-4 flex items-center gap-4">
         <ProgressRing pct={pct} />
         <div className="flex-1">
-          <div className="mb-1 flex items-center justify-between text-xs text-overlay0">
+          <div className="mb-1 flex items-center justify-between text-xs text-subtext0">
             <span>{completedDays(data, c, today)} of {c.durationDays} days done</span>
             <span>{Math.max(0, c.durationDays - completedDays(data, c, today))} to go</span>
           </div>
@@ -124,14 +124,14 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       {/* Today's check-in */}
       {!notStarted && !finished && (
         <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-overlay0">({todayDone.length}/{c.rules.length})</span></p>
+          <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-subtext0">({todayDone.length}/{c.rules.length})</span></p>
           <ul className="space-y-1.5">
             {c.rules.map((rule, i) => {
               const ruleDone = todayDone.includes(i)
               return (
                 <li key={i}>
                   <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <span className={ruleDone ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
+                    <span className={ruleDone ? 'text-subtext0 line-through' : 'text-subtext1'}>{rule}</span>
                     <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   </label>
                 </li>
@@ -157,14 +157,14 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           aria-expanded={calOpen}
           className="flex w-full items-center gap-1.5 text-sm font-medium text-subtext1 hover:text-text"
         >
-          <span className="text-overlay0">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
+          <span className="text-subtext0">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
           Calendar
-          {!calOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          {!calOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
         </button>
         {calOpen && (
           <>
             <div className="mt-2 mb-2 flex items-center justify-end">
-              <div className="flex items-center gap-3 text-[10px] text-overlay0">
+              <div className="flex items-center gap-3 text-[10px] text-subtext0">
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
@@ -200,7 +200,7 @@ function Stat({ label, value, icon, color }: { label: string; value: string; ico
   return (
     <div className="rounded-lg border border-surface0 bg-background py-2">
       <div className="text-lg font-bold" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
-      <div className="text-[10px] text-overlay0">{label}</div>
+      <div className="text-[10px] text-subtext0">{label}</div>
     </div>
   )
 }
@@ -245,7 +245,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
   return (
     <div className="mb-2 space-y-3 rounded-lg border border-border bg-background p-4">
       <div>
-        <p className="mb-1.5 text-xs text-overlay0">Preset</p>
+        <p className="mb-1.5 text-xs text-subtext0">Preset</p>
         <Segmented
           value={presetName}
           onChange={choosePreset}
@@ -264,7 +264,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
           onChange={(e) => setRules(e.target.value)}
           rows={4}
           placeholder={'Two 45-min workouts\nDrink water\nRead 10 pages'}
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
       </label>
       <label className="flex cursor-pointer items-center justify-between text-sm text-subtext1">

@@ -14,17 +14,17 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
             return <span key={i} className="grid h-6 w-6 place-items-center rounded-md text-[11px] font-semibold" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
           })}
         </div>
-        <span className="text-sm text-overlay1"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
+        <span className="text-sm text-subtext0"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
         {form.momentum !== 'flat' && (
           <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat(form.momentum === 'up' ? 'green' : 'red') + '22', color: cat(form.momentum === 'up' ? 'green' : 'red') }}>
             {form.momentum === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             {form.momentum === 'up' ? 'Trending up' : 'In a slump'}
           </span>
         )}
-        {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-overlay0"><Minus size={12} /> Steady</span>}
+        {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-subtext0"><Minus size={12} /> Steady</span>}
       </div>
       {(streaks.longest > 0 || streaks.current > 0) && (
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-surface0 pt-3 text-xs text-overlay1">
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-surface0 pt-3 text-xs text-subtext0">
           {streaks.current > 0 && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('peach') + '22', color: cat('peach') }}><Flame size={12} /> {streaks.current}-session win streak</span>}
           <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('mauve') + '22', color: cat('mauve') }}><Trophy size={12} /> Longest: {streaks.longest}</span>
         </div>
@@ -46,7 +46,7 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
         <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') + '22', color: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') }}>
           <Gauge size={13} /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
         </span>
-        <p className="text-xs text-overlay1">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
+        <p className="text-xs text-subtext0">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
       </div>
     </Card>
   )
@@ -61,7 +61,7 @@ export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }
           <li key={m.id}>
             <div className="mb-1 flex justify-between text-sm">
               <span className="text-subtext1">{m.label}{m.done && <span className="ml-1.5 text-green">✓</span>}</span>
-              <span className="text-overlay1">{Math.min(m.current, m.target)} / {m.target}</span>
+              <span className="text-subtext0">{Math.min(m.current, m.target)} / {m.target}</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
               <div className="h-full rounded-full" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
@@ -82,7 +82,7 @@ export function SessionIntensityCard({ load }: { load: RpeLoad }) {
         <StatTile compact label="Hardest" value={load.hardest} color="red" />
         <StatTile compact label="7-day load" value={load.weekLoad} color="mauve" />
       </div>
-      <p className="mt-3 text-xs text-overlay1">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
+      <p className="mt-3 text-xs text-subtext0">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
     </Card>
   )
 }

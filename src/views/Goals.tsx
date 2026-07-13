@@ -180,7 +180,7 @@ export function Goals() {
               <span className="font-medium tabular-nums text-text">{avgPct}%</span>
             </span>
             {nearly > 0 && (
-              <span className="text-overlay0">{nearly} nearly there <span className="text-overlay0">(80–99%)</span></span>
+              <span className="text-subtext0">{nearly} nearly there <span className="text-subtext0">(80–99%)</span></span>
             )}
           </div>
           </>
@@ -197,7 +197,7 @@ export function Goals() {
                     <div className="mb-1 flex items-center gap-2 text-sm">
                       <Icon size={15} style={{ color: cat(g.color) }} />
                       <span className="font-medium text-text">{g.label}</span>
-                      <span className="text-xs text-overlay0">{g.detail}</span>
+                      <span className="text-xs text-subtext0">{g.detail}</span>
                       <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
                         {g.value}/{g.target}{reached ? ' ✓' : ''}
                       </span>
@@ -235,13 +235,13 @@ export function Goals() {
                   <div className="mb-1.5 flex items-center gap-2 text-sm">
                     <span className="font-medium text-text">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />
                   {/* Deadline + pace (#95/#261) */}
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                    <label className="inline-flex items-center gap-1.5 text-overlay0">
+                    <label className="inline-flex items-center gap-1.5 text-subtext0">
                       <CalendarClock size={13} /> Deadline
                       <input
                         type="date"

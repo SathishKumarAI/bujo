@@ -37,9 +37,9 @@ export function DateJumpPicker({
           />
         )}
         <div className="mb-2 flex items-center justify-between">
-          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-overlay1 hover:text-text"><ChevronLeft size={16} /></button>
+          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-subtext0 hover:text-text"><ChevronLeft size={16} /></button>
           <span className="font-display text-sm font-medium text-text tabular-nums">{year}</span>
-          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-overlay1 hover:text-text"><ChevronRight size={16} /></button>
+          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-subtext0 hover:text-text"><ChevronRight size={16} /></button>
         </div>
         <div className="grid grid-cols-3 gap-1">
           {MONTHS.map((m, i) => {
@@ -63,7 +63,7 @@ export function DateJumpPicker({
         </div>
         <button
           onClick={() => { if (mode === 'day') onPickDay(todayISO()); else onPickMonth(ymOf(todayISO())); onClose() }}
-          className="mt-2 w-full rounded-md py-1 text-xs text-overlay0 hover:text-text"
+          className="mt-2 w-full rounded-md py-1 text-xs text-subtext0 hover:text-text"
         >
           Jump to today
         </button>

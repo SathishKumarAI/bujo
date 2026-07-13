@@ -24,7 +24,7 @@ export function MoneySavedCard({
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">saved</div>
+          <div className="mt-1 text-[11px] uppercase tracking-wide text-subtext0">saved</div>
         </div>
         <p className="flex-1 text-sm text-subtext0">
           {costPerDay

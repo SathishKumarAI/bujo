@@ -60,7 +60,7 @@ export function HomeWorkout() {
               <div key={i.id} className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm text-subtext1">{i.name}</span>
                 <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-xs" />
-                <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-overlay0 hover:text-red">×</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-subtext0 hover:text-red">×</Button>
               </div>
             ))}
             <div className="grid grid-cols-2 gap-2 pt-1">
@@ -84,15 +84,15 @@ export function HomeWorkout() {
                   <div className="flex items-center justify-between gap-2">
                     <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-text">
                       <span className="text-subtext1">{prettyDay(w.date)}</span>
-                      <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                      <span className="ml-1 text-[10px] text-overlay0">{open ? '▾' : '▸'}</span>
+                      <span className="text-subtext0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
+                      <span className="ml-1 text-[10px] text-subtext0">{open ? '▾' : '▸'}</span>
                     </button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                   {open && (
                     <ul className="mt-1.5 ml-1 space-y-0.5">
                       {w.sets.map((s, i) => <li key={i} className="text-xs text-subtext0">• {s}</li>)}
-                      {w.notes && <li className="mt-1 text-xs text-overlay0 italic">“{w.notes}”</li>}
+                      {w.notes && <li className="mt-1 text-xs text-subtext0 italic">“{w.notes}”</li>}
                     </ul>
                   )}
                 </li>
@@ -122,10 +122,10 @@ export function HomeWorkout() {
                 <span className="text-sm font-medium text-text">{ex.name}</span>
                 <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
               </div>
-              <p className="text-xs text-overlay1">{ex.how}</p>
+              <p className="text-xs text-subtext0">{ex.how}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-red hover:underline"><Play size={11} /> Watch demo</a>
-                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-overlay0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
+                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-subtext0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
                 <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</Button>
               </div>
             </div>

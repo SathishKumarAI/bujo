@@ -36,7 +36,7 @@ export function Cycle() {
                 const c = data.cycle.find((x) => x.date === d)
                 return (
                   <tr key={d} className="border-b border-surface0">
-                    <td className="py-1 pr-3 text-overlay0">{Number(d.slice(8))}</td>
+                    <td className="py-1 pr-3 text-subtext0">{Number(d.slice(8))}</td>
                     <td className="pr-3">
                       <Input
                         type="number"
@@ -76,7 +76,7 @@ export function Cycle() {
         title="Cycle & temperature"
         subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
       >
-        <p className="mb-2 text-xs text-overlay0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
+        <p className="mb-2 text-xs text-subtext0">{prettyMonth(ym)} · basal temperature (°{unit})</p>
         <div className="h-56 w-full" role="img" aria-label={`Line chart of basal temperature across ${prettyMonth(ym)} (°${unit})`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>

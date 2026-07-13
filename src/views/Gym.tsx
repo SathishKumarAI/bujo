@@ -251,7 +251,7 @@ export function Gym() {
 
       <div className="mt-3 flex flex-wrap justify-center gap-1.5">
         {activeMuscles.length === 0 ? (
-          <span className="text-xs text-overlay0">Type an exercise, pick a split, or tap a set row’s target.</span>
+          <span className="text-xs text-subtext0">Type an exercise, pick a split, or tap a set row’s target.</span>
         ) : (
           muscleNames(activeMuscles).map((m) => (
             <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
@@ -295,7 +295,7 @@ export function Gym() {
 
       {/* ── Last session rollup · shown after Finish, until the next edit ── */}
       {summary && summary.sets > 0 && (
-        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-overlay0 hover:text-text"><X size={16} /></Button>}>
+        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-subtext0 hover:text-text"><X size={16} /></Button>}>
           <div className="grid grid-cols-3 gap-3">
             <StatTile icon={<Dumbbell size={16} />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
             <StatTile icon={<Layers size={16} />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
@@ -315,7 +315,7 @@ export function Gym() {
         title="Today's session"
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
         right={
-          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-overlay0 hover:text-text">
+          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-subtext0 hover:text-text">
             {sessionOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </Button>
         }
@@ -341,7 +341,7 @@ export function Gym() {
         </div>
 
         <div className="mb-2 flex flex-wrap gap-2">
-          <span className="text-xs text-overlay0">Quick-load:</span>
+          <span className="text-xs text-subtext0">Quick-load:</span>
           {PPL_PRESETS.map((p) => (
             <button key={p.name} onClick={() => loadRoutine(p.exercises, p.split)} className="text-xs text-mauve hover:underline">
               {p.name}
@@ -359,7 +359,7 @@ export function Gym() {
         </datalist>
 
         <div className="space-y-2">
-          <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] gap-2 text-xs text-overlay0">
+          <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] gap-2 text-xs text-subtext0">
             <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span>RPE</span><span>Type</span><span />
           </div>
           {rows.map((row, i) => {
@@ -394,10 +394,10 @@ export function Gym() {
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
                 <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-xs font-bold" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-overlay0 hover:text-red"><X size={15} /></Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-subtext0 hover:text-red"><X size={15} /></Button>
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
-                  <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-overlay0">
+                  <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-subtext0">
                     {prev && (
                       <button
                         type="button"
@@ -418,7 +418,7 @@ export function Gym() {
                   const ramp = warmupRamp(Number(row.weight) || 0, defaultBar, warmStep)
                   if (!ramp.length) return null
                   return (
-                    <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-[10px] text-overlay0">
+                    <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-[10px] text-subtext0">
                       <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
                         <Layers size={11} style={{ color: cat('blue') }} /> Warm-up:
                       </span>
@@ -456,7 +456,7 @@ export function Gym() {
           return (
             <div className="mt-2 flex items-center gap-2 text-xs">
               <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><Check size={12} /> {done.length} set{done.length === 1 ? '' : 's'}</span>
-              <span className="text-overlay0">·</span>
+              <span className="text-subtext0">·</span>
               <span className="text-subtext1">{vol.toLocaleString()}{unit} volume</span>
             </div>
           )
@@ -536,7 +536,7 @@ export function Gym() {
           </div>
           {focusEx && progression.length > 1 && (
             <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-              <p className="mb-1 text-xs text-overlay0">{focusEx} · heaviest set per day ({unit})</p>
+              <p className="mb-1 text-xs text-subtext0">{focusEx} · heaviest set per day ({unit})</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -550,7 +550,7 @@ export function Gym() {
           )}
           {focusEx && e1rmProg.length > 1 && (
             <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
-              <p className="mb-1 text-xs text-overlay0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
+              <p className="mb-1 text-xs text-subtext0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -636,10 +636,10 @@ function PlateCalculator({ unit }: { unit: string }) {
       {barOverTarget ? (
         <p className="text-sm text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
       ) : plates.length === 0 ? (
-        <p className="text-sm text-overlay0">Just the bar · no plates needed.</p>
+        <p className="text-sm text-subtext0">Just the bar · no plates needed.</p>
       ) : (
         <>
-          <p className="mb-2 text-xs text-overlay0">Per side:</p>
+          <p className="mb-2 text-xs text-subtext0">Per side:</p>
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
               <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-bold text-crust" style={{ background: plateColor(p) }}>{p}</span>
@@ -668,7 +668,7 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
                 title="Show this lift on the muscle map"
               >
                 <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
-                <span className="text-overlay0">
+                <span className="text-subtext0">
                   <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
                   {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
                 </span>
@@ -695,9 +695,9 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
               <li key={r.id} className="group flex items-center justify-between">
                 <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-subtext1 hover:text-text" title="Load into session">
                   <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
-                  <span className="ml-1 text-overlay0">{r.exercises.length} exercises</span>
+                  <span className="ml-1 text-subtext0">{r.exercises.length} exercises</span>
                 </button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
               </li>
             )
           })}

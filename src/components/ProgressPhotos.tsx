@@ -78,7 +78,7 @@ export function ProgressPhotos() {
             <figure key={p.id} className="overflow-hidden rounded-xl border border-surface0">
               <img src={resolved[p.photo]} alt={`${i === 0 ? 'First' : 'Latest'} progress photo`} className="aspect-[3/4] w-full bg-surface0 object-cover" />
               <figcaption className="bg-mantle px-2 py-1 text-center text-xs text-subtext0">
-                <span className="text-overlay0">{i === 0 ? 'First' : 'Latest'}</span> · {prettyDay(p.date)}{p.weight != null && ` · ${p.weight}`}
+                <span className="text-subtext0">{i === 0 ? 'First' : 'Latest'}</span> · {prettyDay(p.date)}{p.weight != null && ` · ${p.weight}`}
               </figcaption>
             </figure>
           ))}

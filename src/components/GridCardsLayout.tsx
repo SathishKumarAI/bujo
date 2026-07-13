@@ -64,11 +64,11 @@ function HabitGridCard({
     <Card className="!p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className="shrink-0">{avoid ? <Ban size={15} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-sm font-medium hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-text'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-sm font-medium hover:underline ${h.archived ? 'text-subtext0 line-through' : 'text-text'}`}>{h.name}</button>
         <span className="inline-flex shrink-0 items-center gap-0.5 text-xs tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }}>
           {streak > 0 ? <>{avoid ? <ShieldCheck size={12} /> : <Flame size={12} />}{streak}</> : '—'}
         </span>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={13} /></button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-subtext0 hover:text-mauve"><Activity size={13} /></button>
       </div>
       <div className="overflow-x-auto">
         <div

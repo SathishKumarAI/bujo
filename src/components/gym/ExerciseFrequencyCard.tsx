@@ -19,7 +19,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
           <span className="font-semibold text-text">{ratio.trainDays}</span> train ·{' '}
           <span className="font-semibold text-text">{ratio.restDays}</span> rest
         </span>
-        <span className="ml-auto inline-flex items-center gap-1 text-overlay0" title="Share of days trained in the window">
+        <span className="ml-auto inline-flex items-center gap-1 text-subtext0" title="Share of days trained in the window">
           <Repeat size={13} /> {Math.round(ratio.ratio * 100)}% active
         </span>
       </div>
@@ -36,7 +36,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
             <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-surface0">
               <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
             </div>
-            <span className="w-16 shrink-0 text-right text-xs text-overlay0">
+            <span className="w-16 shrink-0 text-right text-xs text-subtext0">
               {r.days}d · {r.sets} set{r.sets === 1 ? '' : 's'}
             </span>
           </li>

@@ -44,7 +44,7 @@ export function TagManager() {
                     aria-label={`Rename tag ${tag}`}
                   />
                   <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Check size={13} className="text-green" /></button>
-                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-overlay0" /></button>
+                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-subtext0" /></button>
                 </span>
               ) : (
                 <button
@@ -53,7 +53,7 @@ export function TagManager() {
                   style={{ background: cat('surface0'), color: cat('sapphire') }}
                   title="Click to rename / merge"
                 >
-                  #{tag}<sup className="ml-0.5 text-[10px] text-overlay0">{n}</sup>
+                  #{tag}<sup className="ml-0.5 text-[10px] text-subtext0">{n}</sup>
                 </button>
               )}
             </li>

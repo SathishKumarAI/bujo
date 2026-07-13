@@ -62,7 +62,7 @@ export function Reading() {
             <input type="number" min={0} value={goal || ''} placeholder="0"
               onChange={(e) => setSettings({ readingGoalBooks: Math.max(0, Number(e.target.value) || 0) })}
               className="w-16 rounded-md border border-input bg-background px-2 py-1 text-right text-foreground" />
-            <span className="text-overlay0">books</span>
+            <span className="text-subtext0">books</span>
           </div>
         </div>
         {goal > 0 && (
@@ -70,7 +70,7 @@ export function Reading() {
             <div className="h-2 overflow-hidden rounded-full bg-secondary">
               <div className="h-full rounded-full bg-green transition-[width]" style={{ width: `${Math.min(100, Math.round((sum.finishedThisYear / goal) * 100))}%` }} />
             </div>
-            <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 text-xs text-overlay0">
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 text-xs text-subtext0">
               <span>{sum.finishedThisYear} of {goal} finished this year</span>
               {projected != null && (
                 <span style={{ color: cat(projected >= goal ? 'green' : 'peach') }}>
@@ -104,9 +104,9 @@ export function Reading() {
             <div key={s.id} className="space-y-3">
               <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
-                <span className="text-overlay0">({list.length})</span>
+                <span className="text-subtext0">({list.length})</span>
               </h3>
-              {list.length === 0 && <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">Nothing here yet.</p>}
+              {list.length === 0 && <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-subtext0">Nothing here yet.</p>}
               {list.map((b) => <BookCard key={b.id} book={b} />)}
             </div>
           )
@@ -118,14 +118,14 @@ export function Reading() {
         <div className="rounded-2xl border border-border bg-card p-4">
           <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
             <AlarmClock size={16} className="text-peach" /> Stalled books
-            <span className="text-overlay0">({stale.length})</span>
+            <span className="text-subtext0">({stale.length})</span>
           </h3>
           <ul className="space-y-1.5 text-xs">
             {stale.map(({ book, idleDays }) => (
               <li key={book.id} className="flex items-center gap-2">
-                <BookOpen size={12} className="shrink-0 text-overlay0" />
+                <BookOpen size={12} className="shrink-0 text-subtext0" />
                 <span className="min-w-0 flex-1 truncate text-subtext0">{book.title}</span>
-                <span className="shrink-0 text-overlay0">{progressPct(book)}%</span>
+                <span className="shrink-0 text-subtext0">{progressPct(book)}%</span>
                 <span className="shrink-0 tabular-nums" style={{ color: cat('peach') }}>idle {idleDays}d</span>
               </li>
             ))}
@@ -154,7 +154,7 @@ export function Reading() {
                   <div className="w-full rounded-t" title={`${m.label}: ${m.count}`}
                     style={{ height: `${m.count ? Math.max(8, (m.count / maxMonth) * 100) : 0}%`, background: m.count ? cat('green') : cat('surface1') }} />
                 </div>
-                <span className="text-[9px] text-overlay0">{m.label[0]}</span>
+                <span className="text-[9px] text-subtext0">{m.label[0]}</span>
               </div>
             ))}
           </div>
@@ -174,7 +174,7 @@ export function Reading() {
             <StatTile label="Longest" value={wrapped.longest?.totalPages ? `${wrapped.longest.totalPages}p` : '—'} color="sky" />
           </div>
           {(wrapped.topRated || wrapped.longest) && (
-            <div className="mt-3 space-y-1 text-xs text-overlay1">
+            <div className="mt-3 space-y-1 text-xs text-subtext0">
               {wrapped.topRated && (
                 <p className="flex items-center gap-1.5">
                   <Star size={12} className="fill-yellow text-yellow" /> Top-rated: <span className="text-subtext0">{wrapped.topRated.title}</span>
@@ -194,11 +194,11 @@ export function Reading() {
               <div className="space-y-1">
                 {[...ratingDist].reverse().map((r) => (
                   <div key={r.stars} className="flex items-center gap-2 text-xs">
-                    <span className="flex w-12 shrink-0 items-center gap-0.5 text-overlay1">{r.stars}<Star size={10} className="fill-yellow text-yellow" /></span>
+                    <span className="flex w-12 shrink-0 items-center gap-0.5 text-subtext0">{r.stars}<Star size={10} className="fill-yellow text-yellow" /></span>
                     <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
                       <div className="h-full rounded-full" style={{ width: `${ratedTotal ? (r.count / ratedTotal) * 100 : 0}%`, background: cat('yellow') }} />
                     </div>
-                    <span className="w-6 shrink-0 text-right tabular-nums text-overlay0">{r.count}</span>
+                    <span className="w-6 shrink-0 text-right tabular-nums text-subtext0">{r.count}</span>
                   </div>
                 ))}
               </div>
@@ -232,24 +232,24 @@ function LearningLog() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
         <Lightbulb size={16} className="text-yellow" /> Learning log
-        <span className="text-overlay0">({total})</span>
+        <span className="text-subtext0">({total})</span>
       </h3>
       <div className="mb-3 flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
-        <Search size={14} className="shrink-0 text-overlay0" />
+        <Search size={14} className="shrink-0 text-subtext0" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search learnings & titles…"
-          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-subtext0" />
       </div>
       {entries.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No learnings match “{q}”.</p>
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-subtext0">No learnings match “{q}”.</p>
       ) : (
         <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
           {entries.map((l, i) => (
             <li key={i} className="text-xs">
               <div className="flex items-baseline gap-2">
-                <span className="shrink-0 text-overlay0">{prettyDay(l.date)}</span>
+                <span className="shrink-0 text-subtext0">{prettyDay(l.date)}</span>
                 <span className="min-w-0 flex-1 text-subtext0">{l.text}</span>
               </div>
-              <span className="ml-[4.5rem] inline-flex items-center gap-1 text-[10px] text-overlay0"><BookOpen size={9} /> {l.bookTitle}</span>
+              <span className="ml-[4.5rem] inline-flex items-center gap-1 text-[10px] text-subtext0"><BookOpen size={9} /> {l.bookTitle}</span>
             </li>
           ))}
         </ul>
@@ -276,7 +276,7 @@ function ReadLater() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
         <Bookmark size={16} className="text-sky" /> Read later · saved links
-        <span className="text-overlay0">({links.filter((l) => !l.done).length} to read)</span>
+        <span className="text-subtext0">({links.filter((l) => !l.done).length} to read)</span>
       </h3>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Paste a link to read later"
@@ -286,7 +286,7 @@ function ReadLater() {
         <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
       </div>
       {links.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No saved links yet · paste an article or book page to read later.</p>
+        <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-subtext0">No saved links yet · paste an article or book page to read later.</p>
       ) : (
         <ul className="divide-y divide-border">
           {links.map((l) => (
@@ -295,11 +295,11 @@ function ReadLater() {
                 className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${l.done ? 'border-green bg-green text-crust' : 'border-overlay0'}`}>
                 {l.done && <Check size={11} />}
               </button>
-              <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 truncate ${l.done ? 'text-overlay0 line-through' : 'text-subtext1 hover:text-foreground'}`}>
+              <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 truncate ${l.done ? 'text-subtext0 line-through' : 'text-subtext1 hover:text-foreground'}`}>
                 {l.title || l.url}
               </a>
-              <ExternalLink size={12} className="shrink-0 text-overlay0" />
-              <Button variant="ghost" size="icon-sm" onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
+              <ExternalLink size={12} className="shrink-0 text-subtext0" />
+              <Button variant="ghost" size="icon-sm" onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
             </li>
           ))}
         </ul>
@@ -335,9 +335,9 @@ function BookCard({ book }: { book: Book }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-foreground">{book.title}</p>
-          {book.author && <p className="truncate text-xs text-overlay0">{book.author}</p>}
+          {book.author && <p className="truncate text-xs text-subtext0">{book.author}</p>}
         </div>
-        <Button variant="ghost" size="icon-sm" onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-overlay0 hover:text-red"><Trash2 size={14} /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-subtext0 hover:text-red"><Trash2 size={14} /></Button>
       </div>
 
       {book.status === 'reading' && (
@@ -356,7 +356,7 @@ function BookCard({ book }: { book: Book }) {
             <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
           </div>
           {est && (
-            <p className="mt-1 text-[11px] text-overlay0">
+            <p className="mt-1 text-[11px] text-subtext0">
               At this pace, done by <span className="text-subtext0">{prettyDay(est.iso)}</span> · ~{est.daysLeft}d left
             </p>
           )}
@@ -367,7 +367,7 @@ function BookCard({ book }: { book: Book }) {
         <div className="mt-2 flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} onClick={() => store.updateBook(book.id, { rating: n })} aria-label={`Rate ${n} stars`}>
-              <Star size={15} className={n <= (book.rating ?? 0) ? 'fill-yellow text-yellow' : 'text-overlay0'} />
+              <Star size={15} className={n <= (book.rating ?? 0) ? 'fill-yellow text-yellow' : 'text-subtext0'} />
             </button>
           ))}
         </div>
@@ -378,7 +378,7 @@ function BookCard({ book }: { book: Book }) {
         {book.status !== 'want' && <Move label="Want" onClick={() => move('want')} />}
         {book.status !== 'reading' && <Move label="Reading" onClick={() => move('reading')} />}
         {book.status !== 'finished' && <Move label="Finished" onClick={() => move('finished')} />}
-        <button onClick={() => setOpen((v) => !v)} className="ml-auto inline-flex items-center gap-1 text-[11px] text-overlay1 hover:text-foreground">
+        <button onClick={() => setOpen((v) => !v)} className="ml-auto inline-flex items-center gap-1 text-[11px] text-subtext0 hover:text-foreground">
           <NotebookPen size={12} /> Notes{learnings.length ? ` (${learnings.length})` : ''} <ChevronDown size={12} className={open ? 'rotate-180 transition' : 'transition'} />
         </button>
       </div>
@@ -387,7 +387,7 @@ function BookCard({ book }: { book: Book }) {
         <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
           {/* Link */}
           <div className="flex items-center gap-1.5">
-            <Link2 size={13} className="shrink-0 text-overlay1" />
+            <Link2 size={13} className="shrink-0 text-subtext0" />
             <input value={book.link ?? ''} onChange={(e) => store.updateBook(book.id, { link: e.target.value || undefined })} placeholder="Link (summary, buy page, author…)"
               className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
             {book.link && <a href={book.link} target="_blank" rel="noreferrer" className="text-mauve"><ExternalLink size={13} /></a>}
@@ -401,10 +401,10 @@ function BookCard({ book }: { book: Book }) {
             {learnings.length > 0 && (
               <ul className="mb-1.5 space-y-1">
                 {learnings.map((l, i) => (
-                  <li key={i} className="group flex items-start gap-1.5 text-xs text-overlay1">
-                    <span className="shrink-0 text-overlay0">{prettyDay(l.date)}:</span>
+                  <li key={i} className="group flex items-start gap-1.5 text-xs text-subtext0">
+                    <span className="shrink-0 text-subtext0">{prettyDay(l.date)}:</span>
                     <span className="flex-1">{l.text}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => store.removeBookLearning(book.id, i)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => store.removeBookLearning(book.id, i)} aria-label="Remove" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </li>
                 ))}
               </ul>

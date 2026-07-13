@@ -25,7 +25,7 @@ export function TimeReclaimedCard({
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-extrabold leading-none" style={{ color: cat('teal') }}>{reclaimed.hours}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">hours back</div>
+          <div className="mt-1 text-[11px] uppercase tracking-wide text-subtext0">hours back</div>
         </div>
         <p className="flex-1 text-sm text-subtext0">
           That’s about <strong style={{ color: cat('teal') }}>{reclaimed.days} full day{reclaimed.days === 1 ? '' : 's'}</strong>{reclaimed.remHours > 0 && <> and {reclaimed.remHours}h</>} of life reclaimed across <strong>{totalClean}</strong> clean day{totalClean === 1 ? '' : 's'}.

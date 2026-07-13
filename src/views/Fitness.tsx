@@ -89,7 +89,7 @@ export function Fitness() {
             </select>
           </label>
           <MetricFields f={f} set={set} distUnit={dist} />
-          {f.distance && f.duration && <p className="text-xs text-overlay0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
+          {f.distance && f.duration && <p className="text-xs text-subtext0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
           <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
           <Button variant="default" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
@@ -111,13 +111,13 @@ export function Fitness() {
                 <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
                   <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
                     <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
-                    <span className="shrink-0 text-xs text-overlay0">{prettyDay(w.date)}</span>
+                    <span className="shrink-0 text-xs text-subtext0">{prettyDay(w.date)}</span>
                   </button>
                   <div className="flex shrink-0 items-center gap-2 text-xs text-subtext0">
                     {w.durationMin != null && <span>{w.durationMin}m</span>}
                     {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
                     {p && <span className="text-sky">{p}</span>}
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                 </li>
               )
@@ -214,7 +214,7 @@ function CardioBadgesCard() {
               🏅 <span>{fmt(b)}</span>
             </div>
             <p className="mt-0.5 text-xs text-subtext1">{b.label}</p>
-            {b.date && <p className="text-[10px] text-overlay0">earned {prettyDay(b.date)}</p>}
+            {b.date && <p className="text-[10px] text-subtext0">earned {prettyDay(b.date)}</p>}
           </div>
         ))}
       </div>
@@ -249,7 +249,7 @@ function TrainingHeatmapCard({ today }: { today: string }) {
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-overlay0">
+      <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-subtext0">
         <span>less</span>
         {[0, 1, 2, 3, 4].map((l) => <span key={l} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: levelColor(l) }} />)}
         <span>more</span>
@@ -314,7 +314,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
           href="https://www.google.com/search?q=calories+macros+"
           target="_blank"
           rel="noreferrer"
-          className="mt-1 inline-block text-xs text-overlay0 hover:text-mauve"
+          className="mt-1 inline-block text-xs text-subtext0 hover:text-mauve"
         >Food not listed? Look it up online ↗</a>
       </div>
       <label className="mb-3 block text-sm text-subtext1">
@@ -336,7 +336,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
               <div key={mac.k} style={{ width: `${((mac.val ?? 0) / totalG) * 100}%`, background: cat(mac.color) }} />
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-xs text-overlay0">
+          <div className="mt-1 flex justify-between text-xs text-subtext0">
             {macros.map((mac) => (
               <span key={mac.k} style={{ color: cat(mac.color) }}>● {mac.label} {mac.val ?? 0}g</span>
             ))}
@@ -356,7 +356,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
                 <circle cx="28" cy="28" r={r} fill="none" stroke={cat(mac.color)} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 28 28)" />
                 <text x="28" y="32" textAnchor="middle" className="fill-text text-[11px] font-bold">{pct}%</text>
               </svg>
-              <span className="text-[10px] text-overlay0">{mac.label}</span>
+              <span className="text-[10px] text-subtext0">{mac.label}</span>
             </div>
           )
         })}
@@ -380,7 +380,7 @@ function CalorieTrend({ today }: { today: string }) {
   const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
   return (
     <div className="mt-4 border-t border-surface0 pt-3">
-      <p className="mb-2 text-xs text-subtext1">Calorie trend <span className="text-overlay0">· last 14 days · avg {avg} kcal on logged days</span></p>
+      <p className="mb-2 text-xs text-subtext1">Calorie trend <span className="text-subtext0">· last 14 days · avg {avg} kcal on logged days</span></p>
       <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
         {days.map((d) => (
           <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
@@ -388,7 +388,7 @@ function CalorieTrend({ today }: { today: string }) {
           </div>
         ))}
       </div>
-      <p className="mt-1 text-center text-[10px] text-overlay0">peach = today</p>
+      <p className="mt-1 text-center text-[10px] text-subtext0">peach = today</p>
     </div>
   )
 }

@@ -20,14 +20,14 @@ export function TriggerPatternsCard({
             <li key={t.trigger}>
               <div className="mb-1 flex justify-between text-sm">
                 <span className="capitalize text-subtext1">{t.trigger}</span>
-                <span className="text-overlay1">{t.count}× · {pct}%</span>
+                <span className="text-subtext0">{t.count}× · {pct}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
             </li>
           )
         })}
       </ul>
-      {avgGap > 0 && <p className="mt-3 text-xs text-overlay0">Average <span style={{ color: cat('teal') }}>{avgGap} days</span> between resets · aim to stretch it.</p>}
+      {avgGap > 0 && <p className="mt-3 text-xs text-subtext0">Average <span style={{ color: cat('teal') }}>{avgGap} days</span> between resets · aim to stretch it.</p>}
     </Card>
   )
 }

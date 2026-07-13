@@ -13,7 +13,7 @@ export function CalmStretchCard({ quiet }: { quiet: Quiet }) {
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-extrabold leading-none" style={{ color: cat('sky') }}>{quiet.days}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">day{quiet.days === 1 ? '' : 's'} quiet</div>
+          <div className="mt-1 text-[11px] uppercase tracking-wide text-subtext0">day{quiet.days === 1 ? '' : 's'} quiet</div>
         </div>
         <p className="flex-1 text-sm text-subtext0">No urge logged since <strong style={{ color: cat('sky') }}>{quiet.lastDate && prettyDay(quiet.lastDate)}</strong>. The cravings are getting quieter · this is the work paying off.</p>
       </div>

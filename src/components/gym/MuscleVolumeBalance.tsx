@@ -46,7 +46,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
         </ul>
       )}
       {named.length > 0 && (
-        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-overlay0">
+        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-subtext0">
           <span style={{ color: cat('peach') }}>● {zoneLabel(0)}</span>
           <span style={{ color: cat('green') }}>● {zoneLabel(min)}</span>
           <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>

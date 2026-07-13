@@ -86,7 +86,7 @@ export function DriveSync() {
           className="mt-1 font-mono"
         />
       </label>
-      <p className="mt-1 text-xs text-overlay0">
+      <p className="mt-1 text-xs text-subtext0">
         Create one in Google Cloud Console (OAuth 2.0, Web). Steps in
         <code className="mx-1">docs/GOOGLE_DRIVE.md</code>.
       </p>
@@ -104,7 +104,7 @@ export function DriveSync() {
           </>
         )}
       </div>
-      {data.settings.lastDriveSync && <p className="mt-2 text-xs text-overlay0">Last Drive sync: {data.settings.lastDriveSync}</p>}
+      {data.settings.lastDriveSync && <p className="mt-2 text-xs text-subtext0">Last Drive sync: {data.settings.lastDriveSync}</p>}
 
       {connected && (
         <div className="mt-4 border-t border-surface0 pt-3">

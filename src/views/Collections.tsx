@@ -81,7 +81,7 @@ export function Collections() {
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Collections</div>
+              <div className="mb-1.5 text-xs tracking-wide text-subtext0 uppercase">Collections</div>
               {collectionIndex.length === 0 ? (
                 <Empty>No collections yet.</Empty>
               ) : (
@@ -100,7 +100,7 @@ export function Collections() {
                             {c.done}/{c.tasks}
                           </span>
                         )}
-                        <span className="w-5 text-right text-overlay0">{c.count}</span>
+                        <span className="w-5 text-right text-subtext0">{c.count}</span>
                       </button>
                     </li>
                   ))}
@@ -108,7 +108,7 @@ export function Collections() {
               )}
             </div>
             <div>
-              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Tag pages</div>
+              <div className="mb-1.5 text-xs tracking-wide text-subtext0 uppercase">Tag pages</div>
               {tags.length === 0 ? (
                 <Empty>No tags yet.</Empty>
               ) : (
@@ -117,7 +117,7 @@ export function Collections() {
                     <li key={tag}>
                       <button onClick={() => jumpToTag(tag)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
                         <span className="flex-1 truncate" style={{ color: cat('sapphire') }}>#{tag}</span>
-                        <span className="text-overlay0">{entries.length}</span>
+                        <span className="text-subtext0">{entries.length}</span>
                       </button>
                     </li>
                   ))}
@@ -152,7 +152,7 @@ export function Collections() {
           <ul className="space-y-1 text-sm">
             {future.map((e) => (
               <li key={e.id} className="flex gap-2">
-                <span className="w-24 shrink-0 text-overlay0">{e.date}</span>
+                <span className="w-24 shrink-0 text-subtext0">{e.date}</span>
                 <span className="text-subtext1">
                   {e.type === 'event' ? '○' : '·'} {e.text}
                 </span>
@@ -197,7 +197,7 @@ export function Collections() {
                 <button
                   onClick={() => { removeCollection(c.id); if (openCol === c.id) setOpenCol(null) }}
                   aria-label={`Delete ${c.name}`}
-                  className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"
+                  className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"
                 >×</button>
               </span>
             ))}
@@ -219,7 +219,7 @@ export function Collections() {
               const pct = Math.round(p.rate * 100)
               return (
                 <div className="mb-3" title={`${p.done} of ${p.total} tasks done`}>
-                  <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                  <div className="mb-1 flex items-baseline justify-between text-xs text-subtext0">
                     <span>Checklist</span>
                     <span><b style={{ color: cat('green') }}>{p.done}/{p.total}</b> · {pct}%</span>
                   </div>
@@ -251,10 +251,10 @@ export function Collections() {
           aria-expanded={peopleOpen}
           className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
         >
-          <span className="text-overlay0">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="text-subtext0">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
           <span className="font-display text-base font-medium text-subtext1">People</span>
-          <span className="text-xs text-overlay0">· friends &amp; birthdays</span>
-          {!peopleOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          <span className="text-xs text-subtext0">· friends &amp; birthdays</span>
+          {!peopleOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
         </button>
         {peopleOpen && (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -276,10 +276,10 @@ export function Collections() {
                     <li key={b.id} className="group flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 text-subtext1">
                         <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
-                        <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
-                        {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
+                        <span className="ml-1 text-subtext0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
+                        {b.fromFriend && <span className="text-[10px] text-subtext0">· friend</span>}
                       </span>
-                      {!b.fromFriend && <Button variant="ghost" size="icon-sm" onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>}
+                      {!b.fromFriend && <Button variant="ghost" size="icon-sm" onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>}
                     </li>
                   ))}
                 </ul>
@@ -297,10 +297,10 @@ export function Collections() {
           aria-expanded={autoPagesOpen}
           className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
         >
-          <span className="text-overlay0">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="text-subtext0">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
           <span className="font-display text-base font-medium text-subtext1">Auto-pages</span>
-          <span className="text-xs text-overlay0">· memories &amp; tag pages</span>
-          {!autoPagesOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          <span className="text-xs text-subtext0">· memories &amp; tag pages</span>
+          {!autoPagesOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
         </button>
         {autoPagesOpen && (
           <div className="space-y-5">
@@ -341,7 +341,7 @@ export function Collections() {
                       }}
                     >
                       #{tag}
-                      <span className="text-xs text-overlay0">{entries.length}</span>
+                      <span className="text-xs text-subtext0">{entries.length}</span>
                     </button>
                   ))}
                 </div>
@@ -351,7 +351,7 @@ export function Collections() {
                 <div className="mt-4 border-t border-surface0 pt-3">
                   <div className="mb-1 text-sm text-subtext1">
                     <span style={{ color: cat('sapphire') }}>#{openTag}</span>
-                    <span className="ml-2 text-overlay0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
+                    <span className="ml-2 text-subtext0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
                   </div>
                   {openTagEntries.length === 0 ? (
                     <Empty>No entries with this tag.</Empty>

@@ -56,7 +56,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
         <span
           onDoubleClick={() => { setDraft(entry.text); setEditing(true) }}
           title="Double-click to edit"
-          className={`flex-1 cursor-text text-sm ${entry.status === 'done' ? 'text-overlay0' : 'text-text'} ${dropped ? 'text-overlay0 line-through' : ''}`}
+          className={`flex-1 cursor-text text-sm ${entry.status === 'done' ? 'text-subtext0' : 'text-text'} ${dropped ? 'text-subtext0 line-through' : ''}`}
         >
           {entry.text}
           {entry.recurringId && <span className="ml-1 align-middle text-xs" style={{ color: cat('overlay1') }} title="Repeats · edit the rule in Plan to change every future occurrence">↻</span>}
@@ -76,7 +76,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
           notify.undo('Entry deleted', undo)
         }}
         aria-label="Delete entry"
-        className="shrink-0 text-overlay0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
+        className="shrink-0 text-subtext0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
       >
         ×
       </button>

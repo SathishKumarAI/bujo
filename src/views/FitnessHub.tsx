@@ -53,7 +53,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
             {split.icon}
           </span>
           <span className="min-w-0">
-            <span className="block text-[11px] uppercase tracking-wide text-overlay0">Next up</span>
+            <span className="block text-[11px] uppercase tracking-wide text-subtext0">Next up</span>
             <span className="block truncate font-semibold text-text">
               {split.label} day
             </span>
@@ -64,7 +64,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
       {tab === 'cardio' ? (
         <Fitness />
       ) : (
-        <Suspense fallback={<p className="py-10 text-center text-sm text-overlay0">Loading strength tools…</p>}>
+        <Suspense fallback={<p className="py-10 text-center text-sm text-subtext0">Loading strength tools…</p>}>
           <Gym />
         </Suspense>
       )}
@@ -106,11 +106,11 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
         </span>
       </div>
       <div className="min-w-0">
-        <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-overlay0">
+        <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-subtext0">
           <Timer size={12} /> This week
         </span>
         <span className="block font-semibold text-text">
-          {minutes}<span className="text-overlay0"> / {goal} min</span>
+          {minutes}<span className="text-subtext0"> / {goal} min</span>
         </span>
         <span className="block text-xs" style={{ color }}>
           {met ? 'Goal met 🎉' : `${Math.max(0, goal - minutes)} min to go`}

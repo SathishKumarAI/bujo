@@ -59,7 +59,7 @@ export function TopBar({
       {chrome.help && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-overlay0 hover:text-foreground">
+            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-subtext0 hover:text-foreground">
               <HelpCircle size={16} />
             </Button>
           </DropdownMenuTrigger>
@@ -176,7 +176,7 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <div className="px-2 py-1.5 text-[10px] tracking-wider text-overlay0 uppercase">Theme</div>
+            <div className="px-2 py-1.5 text-[10px] tracking-wider text-subtext0 uppercase">Theme</div>
             {(['mocha', 'latte', 'neon', 'system'] as const).map((th) => (
               <DropdownMenuItem key={th} onClick={() => setSettings({ theme: th })}>
                 <span className={data.settings.theme === th ? 'text-mauve' : ''}>{data.settings.theme === th ? '● ' : '○ '}</span>

@@ -40,7 +40,7 @@ export function ShortcutHelp({ open, onClose }: { open: boolean; onClose: () => 
         <div className="flex flex-col gap-4">
           {GROUPS.map((g) => (
             <div key={g.title}>
-              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-overlay0">
+              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-subtext0">
                 {g.title}
               </div>
               <div className="flex flex-col gap-0.5">

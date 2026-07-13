@@ -60,7 +60,7 @@ function Figure({ base, ids, label }: { base: string; ids: number[]; label: stri
   const [ok, setOk] = useState(true)
   if (!ok) {
     return (
-      <div className="grid h-64 w-40 place-items-center rounded-xl border border-surface0 text-center text-xs text-overlay0">
+      <div className="grid h-64 w-40 place-items-center rounded-xl border border-surface0 text-center text-xs text-subtext0">
         Muscle diagram needs a connection
       </div>
     )
@@ -81,7 +81,7 @@ function Figure({ base, ids, label }: { base: string; ids: number[]; label: stri
           />
         ))}
       </div>
-      <figcaption className="text-[11px] tracking-wide text-overlay0 uppercase">{label}</figcaption>
+      <figcaption className="text-[11px] tracking-wide text-subtext0 uppercase">{label}</figcaption>
     </figure>
   )
 }

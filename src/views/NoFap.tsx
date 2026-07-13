@@ -92,12 +92,12 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
     <div role="dialog" aria-modal="true" aria-label="Urge SOS"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6"
       style={{ background: cat('crust') + 'f2', backdropFilter: 'blur(6px)' }}>
-      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full text-overlay0 hover:text-text" style={{ background: cat('surface0') }}><X size={20} /></Button>
+      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full text-subtext0 hover:text-text" style={{ background: cat('surface0') }}><X size={20} /></Button>
 
       <div className="text-center">
         <div className="inline-flex items-center gap-2 text-sm" style={{ color: cat('peach') }}><LifeBuoy size={16} /> Ride it out · this is a wave, not a command</div>
         <div className="mt-1 font-mono text-6xl font-extrabold tabular-nums" style={{ color: done ? cat('green') : cat('text') }}>{mm}:{ss}</div>
-        <p className="mt-1 text-xs text-overlay0">{done ? 'The peak has passed. You made it.' : 'Stay until the timer ends · the urge will crest and fall.'}</p>
+        <p className="mt-1 text-xs text-subtext0">{done ? 'The peak has passed. You made it.' : 'Stay until the timer ends · the urge will crest and fall.'}</p>
       </div>
 
       {/* Breathing pacer */}
@@ -124,7 +124,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
             <span className="text-subtext0">{matched.coping || 'name it and let it pass.'}</span>
           </div>
         ) : (
-          <p className="mt-2 text-center text-xs text-overlay0">No matching plan yet · try “Surf it”: name the urge and watch it pass without acting.</p>
+          <p className="mt-2 text-center text-xs text-subtext0">No matching plan yet · try “Surf it”: name the urge and watch it pass without acting.</p>
         )}
       </div>
 
@@ -237,12 +237,12 @@ export function NoFap() {
               </svg>
               <div className="absolute text-center">
                 <div className="text-5xl font-extrabold leading-none" style={{ color: ringColor }}>{stats.current}</div>
-                <div className="mt-1 text-[11px] tracking-wide text-overlay0 uppercase">days clean</div>
+                <div className="mt-1 text-[11px] tracking-wide text-subtext0 uppercase">days clean</div>
               </div>
             </div>
             <div className="flex-1 text-center sm:text-left">
               <div className="inline-flex items-center gap-1.5 text-sm text-subtext1"><Shield size={15} style={{ color: ringColor }} /> Your main streak · since {prettyDay(s.startedOn)}</div>
-              <p className="mt-0.5 text-xs text-overlay0">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
+              <p className="mt-0.5 text-xs text-subtext0">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
               {relapsedToday && (
                 <div className="mt-1.5 rounded-lg p-2 text-left text-xs" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
                   <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset today · and that’s okay.</span>
@@ -252,12 +252,12 @@ export function NoFap() {
               {nextBenefit ? (
                 <>
                   <p className="mt-3 text-sm text-subtext0">
-                    Next: <span className="font-medium" style={{ color: cat('teal') }}>{nextBenefit.label}</span> · <span className="text-overlay1">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
+                    Next: <span className="font-medium" style={{ color: cat('teal') }}>{nextBenefit.label}</span> · <span className="text-subtext0">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
                   </p>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface0">
                     <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${stats.progressPct}%`, background: cat('teal') }} />
                   </div>
-                  <p className="mt-2 text-xs text-overlay1 italic">“{nextBenefit.benefit}”</p>
+                  <p className="mt-2 text-xs text-subtext0 italic">“{nextBenefit.benefit}”</p>
                 </>
               ) : (
                 <p className="mt-3 text-sm" style={{ color: cat('peach') }}>Every milestone cleared. You’re writing your own ladder now.</p>
@@ -319,7 +319,7 @@ export function NoFap() {
           </div>
           {/* HALT quick-check · which unmet need is driving the urge? */}
           <div className="mt-2">
-            <p className="mb-1 text-xs text-overlay0">HALT check · tap any that fit</p>
+            <p className="mb-1 text-xs text-subtext0">HALT check · tap any that fit</p>
             <div className="flex flex-wrap gap-1.5">
               {HALT_STATES.map((hs) => {
                 const on = halt.includes(hs.id)
@@ -368,13 +368,13 @@ export function NoFap() {
                 <li key={u.id} className="group flex items-center gap-2 rounded-lg border border-surface0 bg-base px-2.5 py-1.5 text-sm">
                   <HandMetal size={13} style={{ color: cat('green') }} className="shrink-0" />
                   <span className="text-subtext1">{u.trigger || 'Urge'}</span>
-                  <span className="ml-auto text-xs text-overlay0">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
-                  <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                  <span className="ml-auto text-xs text-subtext0">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
+                  <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </li>
               ))}
             </ul>
           )}
-          {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-xs text-overlay0">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
+          {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-xs text-subtext0">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
         </Card>
 
         {/* Log a reset · moved up from the rail · the second primary action */}
@@ -390,7 +390,7 @@ export function NoFap() {
             </label>
             {err && <p className="text-xs" style={{ color: cat('red') }}>{err}</p>}
             <Button variant="destructive" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
-            <p className="text-xs text-overlay0">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
+            <p className="text-xs text-subtext0">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
         </Card>
 
@@ -415,16 +415,16 @@ export function NoFap() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2">
                           <span className="truncate font-medium text-text">{a.name}</span>
-                          <span className="text-xs text-overlay0">best {st.best}d</span>
+                          <span className="text-xs text-subtext0">best {st.best}d</span>
                           {a.costPerDay && aSaved > 0 && <span className="text-xs" style={{ color: cat('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
                         </div>
                         <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
                       <Button variant="ghost" onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0 text-xs text-red hover:text-red">Reset</Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
                     {/* #123 per-addiction cost/day → money saved */}
-                    <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-overlay1">
+                    <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-subtext0">
                       <span>{currency}/day</span>
                       <Input
                         type="number"
@@ -497,10 +497,10 @@ export function NoFap() {
                   <li key={pl.id} className="group rounded-lg border border-surface0 bg-base p-2.5 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{pl.addiction}</span>
-                      <span className="text-subtext1"><span className="text-overlay0">when</span> {pl.trigger}</span>
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                      <span className="text-subtext1"><span className="text-subtext0">when</span> {pl.trigger}</span>
+                      <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
-                    {pl.coping && <p className="mt-0.5 text-xs text-overlay1"><span className="text-teal">→ then</span> {pl.coping}</p>}
+                    {pl.coping && <p className="mt-0.5 text-xs text-subtext0"><span className="text-teal">→ then</span> {pl.coping}</p>}
                   </li>
                 ))}
               </ul>
@@ -598,11 +598,11 @@ export function NoFap() {
                       {reached ? <Check size={11} /> : m.day}
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-sm font-medium ${reached ? 'text-text' : isNext ? 'text-teal' : 'text-overlay0'}`}>{m.label}</span>
-                      <span className="text-[11px] text-overlay0">{m.day}d</span>
+                      <span className={`text-sm font-medium ${reached ? 'text-text' : isNext ? 'text-teal' : 'text-subtext0'}`}>{m.label}</span>
+                      <span className="text-[11px] text-subtext0">{m.day}d</span>
                       {isNext && <span className="rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat('teal') + '22', color: cat('teal') }}>next</span>}
                     </div>
-                    <p className={`text-xs ${reached || isNext ? 'text-overlay1' : 'text-overlay0'}`}>{m.benefit}</p>
+                    <p className={`text-xs ${reached || isNext ? 'text-subtext0' : 'text-subtext0'}`}>{m.benefit}</p>
                   </li>
                 )
               })}
@@ -618,8 +618,8 @@ export function NoFap() {
                 {[...s.relapses].reverse().map((r) => (
                   <li key={r.id} className="rounded-lg border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
                     <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset · {prettyDay(r.date)}</div>
-                    {r.trigger && <div className="mt-0.5 text-subtext1"><span className="text-overlay0">Reason:</span> {r.trigger}</div>}
-                    {r.note && <div className="text-overlay1 italic">{r.note}</div>}
+                    {r.trigger && <div className="mt-0.5 text-subtext1"><span className="text-subtext0">Reason:</span> {r.trigger}</div>}
+                    {r.note && <div className="text-subtext0 italic">{r.note}</div>}
                   </li>
                 ))}
               </ul>

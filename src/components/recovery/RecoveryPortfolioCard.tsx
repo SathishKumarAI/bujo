@@ -15,9 +15,9 @@ export function RecoveryPortfolioCard({ portfolio }: { portfolio: Portfolio }) {
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold" style={{ background: i === 0 ? cat('mauve') + '22' : cat('surface0'), color: i === 0 ? cat('mauve') : cat('overlay1') }}>{i + 1}</span>
             <span className="min-w-0 flex-1 truncate font-medium text-text">{p.name}</span>
             <span className="shrink-0 tabular-nums" style={{ color: p.resetToday ? cat('red') : cat('mauve') }}><span className="font-semibold">{p.current}</span>d</span>
-            <span className="hidden shrink-0 text-xs text-overlay0 sm:inline">best {p.best}d</span>
-            <span className="hidden shrink-0 text-xs text-overlay0 sm:inline">{p.totalClean}d total</span>
-            <span className="shrink-0 text-xs text-overlay0">{p.resets} reset{p.resets === 1 ? '' : 's'}</span>
+            <span className="hidden shrink-0 text-xs text-subtext0 sm:inline">best {p.best}d</span>
+            <span className="hidden shrink-0 text-xs text-subtext0 sm:inline">{p.totalClean}d total</span>
+            <span className="shrink-0 text-xs text-subtext0">{p.resets} reset{p.resets === 1 ? '' : 's'}</span>
           </li>
         ))}
       </ul>

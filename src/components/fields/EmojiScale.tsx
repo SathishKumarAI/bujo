@@ -29,7 +29,7 @@ export function EmojiScale({
 
   return (
     <div className={cn('inline-flex flex-col gap-0.5', className)}>
-      {label && <span className="text-[10px] text-overlay0">{label}</span>}
+      {label && <span className="text-[10px] text-subtext0">{label}</span>}
       <div className="inline-flex gap-1">
         {FACES.map((f) => (
           <button

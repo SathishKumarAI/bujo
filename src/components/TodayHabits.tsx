@@ -82,7 +82,7 @@ export function TodayHabits() {
               <circle cx="11" cy="11" r={R} fill="none" stroke={cat('surface1')} strokeWidth="2.5" />
               <circle cx="11" cy="11" r={R} fill="none" stroke={cat(allDone ? 'green' : 'mauve')} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} transform="rotate(-90 11 11)" style={{ transition: 'stroke-dashoffset 0.3s' }} />
             </svg>
-            <span className="text-xs tabular-nums text-overlay0">{done}/{total}</span>
+            <span className="text-xs tabular-nums text-subtext0">{done}/{total}</span>
           </span>
         </span>
       }
@@ -98,9 +98,9 @@ export function TodayHabits() {
           return (
             <div key={s}>
               {grouped && (
-                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-overlay1">
+                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-subtext0">
                   <span>{m.emoji}</span> {m.label}
-                  {sBuild.length > 0 && <span className="text-overlay0">· {sDone}/{sBuild.length}</span>}
+                  {sBuild.length > 0 && <span className="text-subtext0">· {sDone}/{sBuild.length}</span>}
                 </p>
               )}
               <div className="flex flex-wrap gap-2">{hs.map(chip)}</div>
@@ -111,7 +111,7 @@ export function TodayHabits() {
 
       {noteFor && (
         <div className="mt-3 border-t border-surface0 pt-3">
-          <p className="mb-1 inline-flex items-center gap-1 text-xs text-overlay0"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+          <p className="mb-1 inline-flex items-center gap-1 text-xs text-subtext0"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
           <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
         </div>
       )}

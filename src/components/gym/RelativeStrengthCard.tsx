@@ -25,7 +25,7 @@ export function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: Relativ
                 <span className="inline-flex min-w-0 items-center gap-1.5 text-subtext1">
                   <Scale size={14} style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
                 </span>
-                <span className="shrink-0 text-overlay0">
+                <span className="shrink-0 text-subtext0">
                   <span className="font-semibold" style={{ color: cat('text') }}>{r.ratio}×</span>
                   <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: cat(bandColor[r.band] ?? 'overlay0') + '22', color: cat(bandColor[r.band] ?? 'overlay0') }}>{r.band}</span>
                 </span>

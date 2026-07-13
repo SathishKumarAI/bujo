@@ -74,7 +74,7 @@ export function Card({
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-overlay0 hover:text-text">
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-subtext0 hover:text-text">
                       <Info size={14} />
                     </button>
                   </PopoverTrigger>
@@ -88,12 +88,12 @@ export function Card({
             {right}
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
-                className="text-overlay0 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
+                className="text-subtext0 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
                 <Maximize2 size={15} />
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-overlay0 hover:text-text">
+              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-subtext0 hover:text-text">
                 {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
             )}
@@ -113,7 +113,7 @@ export function Card({
                 {title && <h2 className="truncate font-display text-xl font-medium text-text">{title}</h2>}
                 {subtitle && <p className="mt-0.5 text-sm text-subtext0">{subtitle}</p>}
               </div>
-              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-overlay1 hover:text-text"><X size={20} /></button>
+              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-subtext0 hover:text-text"><X size={20} /></button>
             </div>
             {/* Charts mark their plot area with role="img"; CARD.modalChartHeight
                 forces it tall so the chart genuinely enlarges, not just widens. */}
@@ -170,7 +170,7 @@ export function StatTile({
         {icon}
         {value}
       </div>
-      <div className={cn('text-overlay0', compact ? 'text-[10px]' : 'mt-0.5 text-xs')}>{label}</div>
+      <div className={cn('text-subtext0', compact ? 'text-[10px]' : 'mt-0.5 text-xs')}>{label}</div>
     </Tag>
   )
 }
@@ -250,7 +250,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -259,7 +259,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -295,7 +295,7 @@ export function Slider({
         className="w-full"
         style={{ accentColor: cat(color) }}
       />
-      {hint && <p className="mt-0.5 text-xs text-overlay0">{hint}</p>}
+      {hint && <p className="mt-0.5 text-xs text-subtext0">{hint}</p>}
     </label>
   )
 }
@@ -331,17 +331,17 @@ export function Empty({
   action?: { label: string; onClick: () => void }
 }) {
   if (!Icon && !hint && !action) {
-    return <p className="py-6 text-center text-sm text-overlay0">{children}</p>
+    return <p className="py-6 text-center text-sm text-subtext0">{children}</p>
   }
   return (
     <div className="flex flex-col items-center gap-2 py-10 text-center">
       {Icon && (
-        <span className="grid size-10 place-items-center rounded-full bg-surface0 text-overlay1">
+        <span className="grid size-10 place-items-center rounded-full bg-surface0 text-subtext0">
           <Icon size={18} />
         </span>
       )}
       <p className="text-sm font-medium text-subtext1">{children}</p>
-      {hint && <p className="max-w-xs text-xs text-overlay0">{hint}</p>}
+      {hint && <p className="max-w-xs text-xs text-subtext0">{hint}</p>}
       {action && (
         <SButton variant="secondary" size="sm" className="mt-1" onClick={action.onClick}>
           {action.label}

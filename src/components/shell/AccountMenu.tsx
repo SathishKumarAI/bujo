@@ -38,7 +38,7 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
       <DropdownMenuContent align="end" className="w-60">
         <div className="px-2 py-1.5">
           <p className="truncate text-sm font-medium text-text">{label}</p>
-          <p className="text-xs text-overlay0">{signedIn ? 'Synced to your account' : 'Data on this device only'}</p>
+          <p className="text-xs text-subtext0">{signedIn ? 'Synced to your account' : 'Data on this device only'}</p>
         </div>
         <DropdownMenuSeparator />
         {signedIn ? (

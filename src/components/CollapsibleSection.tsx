@@ -58,14 +58,14 @@ export function CollapsibleSection({
           aria-expanded={open}
           className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
         >
-          <span className="text-overlay0">
+          <span className="text-subtext0">
             {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
           {iconNode}
           <span className="font-display text-base font-medium text-subtext1">{title}</span>
-          {subtitle && <span className="text-xs text-overlay0">· {subtitle}</span>}
+          {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
           {!open && (
-            <span className="ml-auto text-[10px] uppercase tracking-wide text-overlay0">show</span>
+            <span className="ml-auto text-[10px] uppercase tracking-wide text-subtext0">show</span>
           )}
         </button>
         {open && children}
@@ -86,7 +86,7 @@ export function CollapsibleSection({
           <span className="block font-display text-base font-medium text-text">{title}</span>
           {subtitle && <span className="block text-xs text-subtext0">{subtitle}</span>}
         </span>
-        <span className="ml-auto text-overlay0 transition-colors group-hover/sec:text-text">
+        <span className="ml-auto text-subtext0 transition-colors group-hover/sec:text-text">
           {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </span>
       </button>

@@ -38,7 +38,7 @@ export function PenaltyCard() {
       right={
         <span className="inline-flex items-center gap-2">
           <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>{meta.label}</span>
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-overlay0 hover:text-text">
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-subtext0 hover:text-text">
             {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
         </span>
@@ -48,12 +48,12 @@ export function PenaltyCard() {
         <>
           <ul className="mb-3 space-y-0.5 text-sm text-subtext0">
             {report.items.map((it, i) => (
-              <li key={i} className="flex gap-2"><span className="text-overlay0">·</span>{it}</li>
+              <li key={i} className="flex gap-2"><span className="text-subtext0">·</span>{it}</li>
             ))}
           </ul>
           <div className="rounded-xl border p-3" style={{ borderColor: cat(meta.color) + '55', background: cat(meta.color) + '11' }}>
             <p className="font-display text-lg font-semibold" style={{ color: cat(meta.color) }}>{penalty.title}</p>
-            <p className="text-sm text-text">{task} <span className="text-xs text-overlay0">· {level}</span></p>
+            <p className="text-sm text-text">{task} <span className="text-xs text-subtext0">· {level}</span></p>
           </div>
           <div className="mt-3 flex items-center gap-3 text-xs">
             <button onClick={() => setReroll((r) => r + 1)} className="inline-flex items-center gap-1 text-subtext1 hover:text-text">
@@ -61,7 +61,7 @@ export function PenaltyCard() {
             </button>
             <button
               onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
-              className="ml-auto text-overlay0 hover:text-text"
+              className="ml-auto text-subtext0 hover:text-text"
             >
               Served it / dismiss
             </button>

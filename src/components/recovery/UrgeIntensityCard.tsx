@@ -17,11 +17,11 @@ export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
           const isMode = intensity9.mode === i + 1
           return (
             <div key={i} className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-overlay0">{i + 1} · {INTENSITY_LABELS[i]}</span>
+              <span className="w-16 shrink-0 text-subtext0">{i + 1} · {INTENSITY_LABELS[i]}</span>
               <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
                 <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
               </div>
-              <span className="w-8 shrink-0 text-right text-overlay1">{c}</span>
+              <span className="w-8 shrink-0 text-right text-subtext0">{c}</span>
             </div>
           )
         })}

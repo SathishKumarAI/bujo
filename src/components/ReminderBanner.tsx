@@ -55,7 +55,7 @@ export function ReminderBanner() {
           Enable notifications
         </button>
       )}
-      <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-overlay0 hover:text-text">×</button>
+      <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-subtext0 hover:text-text">×</button>
     </div>
   )
 }

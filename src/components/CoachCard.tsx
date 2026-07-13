@@ -37,9 +37,9 @@ export function CoachCard() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-text">{t.title}</span>
-                  <span className="block text-xs text-overlay1">{t.detail}</span>
+                  <span className="block text-xs text-subtext0">{t.detail}</span>
                 </span>
-                <Sparkles size={13} className="mt-1 shrink-0 text-overlay0" />
+                <Sparkles size={13} className="mt-1 shrink-0 text-subtext0" />
               </button>
             </li>
           )

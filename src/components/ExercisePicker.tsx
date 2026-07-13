@@ -40,8 +40,8 @@ export function ExercisePicker({
         onClick={() => { setOpen((o) => !o); setTimeout(() => inputRef.current?.focus(), 0) }}
         className="flex w-full items-center justify-between gap-1 rounded-lg border border-surface1 bg-base px-2 py-1.5 text-left text-sm text-text"
       >
-        <span className={value ? 'truncate' : 'text-overlay0'}>{value || 'Pick exercise…'}</span>
-        <ChevronDown size={14} className="shrink-0 text-overlay1" />
+        <span className={value ? 'truncate' : 'text-subtext0'}>{value || 'Pick exercise…'}</span>
+        <ChevronDown size={14} className="shrink-0 text-subtext0" />
       </button>
 
       {open && (
@@ -49,14 +49,14 @@ export function ExercisePicker({
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-surface1 bg-mantle shadow-xl">
             <div className="flex items-center gap-2 border-b border-surface0 px-2.5 py-2">
-              <Search size={14} className="text-overlay0" />
+              <Search size={14} className="text-subtext0" />
               <input
                 ref={inputRef}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') pick(q.trim() || value); if (e.key === 'Escape') setOpen(false) }}
                 placeholder="Search or type a new exercise…"
-                className="w-full bg-transparent text-sm text-text placeholder:text-overlay0 focus:outline-none"
+                className="w-full bg-transparent text-sm text-text placeholder:text-subtext0 focus:outline-none"
               />
             </div>
             <ul className="max-h-64 overflow-y-auto py-1">
@@ -67,12 +67,12 @@ export function ExercisePicker({
                   </button>
                 </li>
               )}
-              {recent.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-overlay0 uppercase">Recent</li>}
+              {recent.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-subtext0 uppercase">Recent</li>}
               {recent.map((r) => <Item key={`r-${r}`} name={r} active={r === value} onPick={pick} />)}
-              {lib.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-overlay0 uppercase">Library</li>}
+              {lib.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-subtext0 uppercase">Library</li>}
               {lib.map((e) => <Item key={`l-${e}`} name={e} active={e === value} onPick={pick} />)}
               {recent.length === 0 && lib.length === 0 && !showCustom && (
-                <li className="px-3 py-2 text-sm text-overlay0">No matches</li>
+                <li className="px-3 py-2 text-sm text-subtext0">No matches</li>
               )}
             </ul>
           </div>

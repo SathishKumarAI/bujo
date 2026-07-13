@@ -68,7 +68,7 @@ export function Sidebar({
             onClick={onToggleCollapse}
             aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar'}
             title={collapsed ? 'Pin open' : 'Collapse'}
-            className="hidden text-overlay1 hover:text-foreground md:block"
+            className="hidden text-subtext0 hover:text-foreground md:block"
           >
             {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
           </button>
@@ -79,7 +79,7 @@ export function Sidebar({
             if (groupItems.length === 0) return null
             return (
               <div key={group}>
-                <p className={`px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-overlay0 uppercase ${collapsed ? 'md:hidden' : ''}`}>
+                <p className={`px-3 pt-4 pb-1 text-[10px] font-medium tracking-wider text-subtext0 uppercase ${collapsed ? 'md:hidden' : ''}`}>
                   {group}
                 </p>
                 <ul>
@@ -95,7 +95,7 @@ export function Sidebar({
                         }`}
                       >
                         {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
-                        <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-overlay1 group-hover:text-subtext0'}`} aria-hidden />
+                        <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-subtext0 group-hover:text-subtext0'}`} aria-hidden />
                         <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
                       </button>
                     )

@@ -110,7 +110,7 @@ export function Insights() {
                       disabled={!r.date}
                       className="flex w-full gap-2 rounded px-2 py-1 text-left hover:bg-surface0 disabled:cursor-default"
                     >
-                      <span className="w-24 shrink-0 text-overlay0">{r.date ? prettyDay(r.date) : '—'}</span>
+                      <span className="w-24 shrink-0 text-subtext0">{r.date ? prettyDay(r.date) : '—'}</span>
                       <span className="w-16 shrink-0 text-xs" style={{ color: cat('sapphire') }}>{r.kind}</span>
                       <span className="text-subtext1">{r.text}</span>
                     </button>
@@ -173,7 +173,7 @@ export function Insights() {
                     className="w-full rounded-lg border border-surface0 bg-base px-3 py-2 text-left hover:border-mauve"
                   >
                     <span className="font-medium text-text">{t.title}</span>
-                    <span className="block text-xs text-overlay0">{t.detail}</span>
+                    <span className="block text-xs text-subtext0">{t.detail}</span>
                   </button>
                 </li>
               ))}
@@ -222,7 +222,7 @@ export function Insights() {
                     <span className="text-xs text-subtext0">{m.label}</span>
                     <Icon size={14} style={{ color: cat(color) }} />
                   </div>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-text">{m.recent}<span className="text-xs text-overlay0">/10</span></p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-text">{m.recent}<span className="text-xs text-subtext0">/10</span></p>
                   <p className="text-xs" style={{ color: cat(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
                     {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
                   </p>
@@ -235,7 +235,7 @@ export function Insights() {
         </Section>
       )}
 
-      <p className="text-xs text-overlay0">
+      <p className="text-xs text-subtext0">
         Task migration &amp; aging live in{' '}
         <button onClick={() => nav('plan')} className="text-mauve hover:underline">Plan →</button>
       </p>
@@ -260,7 +260,7 @@ export function Insights() {
                     <div className="flex w-full flex-1 items-end">
                       <div className="w-full rounded-t" style={{ height: `${r.avg == null ? 2 : Math.max(2, (r.avg / 10) * 100)}%`, background: r.avg == null ? cat('surface0') : r.weekday === moodWd.best!.weekday ? cat('green') : r.weekday === moodWd.worst!.weekday ? cat('peach') : cat('surface1') }} title={r.days ? `${r.avg}/10 over ${r.days}d` : 'no data'} />
                     </div>
-                    <span className="text-[10px] text-overlay0">{r.label}</span>
+                    <span className="text-[10px] text-subtext0">{r.label}</span>
                   </div>
                 ))}
               </div>
@@ -279,13 +279,13 @@ export function Insights() {
           {moodVol.band && (
             <Card title="Mood stability" subtitle={`Last ${moodVol.days} logged days · how steady you've felt`}>
               <p className="text-4xl font-extrabold" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
-                {moodVol.stability}<span className="text-lg text-overlay0">/100</span>
+                {moodVol.stability}<span className="text-lg text-subtext0">/100</span>
               </p>
               <p className="mt-1 text-sm capitalize text-subtext1">
                 <span className="mr-1.5 rounded px-1.5 py-0.5 text-xs" style={{ background: cat('surface0'), color: moodVol.band === 'steady' ? cat('green') : moodVol.band === 'volatile' ? cat('peach') : cat('subtext0') }}>{moodVol.band}</span>
                 avg {moodVol.mean}/10 · swing ±{moodVol.sd}
               </p>
-              <p className="mt-2 text-xs text-overlay0">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
+              <p className="mt-2 text-xs text-subtext0">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
             </Card>
           )}
         </div>
@@ -307,7 +307,7 @@ export function Insights() {
                   {h.lift >= 0 ? '+' : ''}{h.lift}
                 </span>
                 <span className="text-text">{h.emoji ? h.emoji + ' ' : ''}{h.name}</span>
-                <span className="text-overlay0">
+                <span className="text-subtext0">
                   {h.doneMood} vs {h.skipMood} mood · {h.doneDays}d
                 </span>
               </li>
@@ -322,11 +322,11 @@ export function Insights() {
               <Empty>Not enough scheduled days yet.</Empty>
             ) : (
               <>
-                <p className="text-4xl font-extrabold" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-lg text-overlay0">/100</span></p>
+                <p className="text-4xl font-extrabold" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-lg text-subtext0">/100</span></p>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface0">
                   <div className="h-full rounded-full" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
                 </div>
-                <p className="mt-2 text-xs text-overlay0">Recent days count more, so this tracks your momentum — not just a flat average.</p>
+                <p className="mt-2 text-xs text-subtext0">Recent days count more, so this tracks your momentum — not just a flat average.</p>
               </>
             )}
           </Card>
@@ -344,7 +344,7 @@ export function Insights() {
                 <div className="flex w-full flex-1 items-end">
                   <div className="w-full rounded-t" style={{ height: `${Math.max(2, (m.done / maxMonthly) * 100)}%`, background: cat('mauve') }} title={`${m.label}: ${m.done} done`} />
                 </div>
-                <span className="text-[10px] text-overlay0">{m.label.split(' ')[0]}</span>
+                <span className="text-[10px] text-subtext0">{m.label.split(' ')[0]}</span>
               </div>
             ))}
           </div>
@@ -368,7 +368,7 @@ export function Insights() {
               trend={pickle.formDir}
             />
           </ul>
-          <p className="mt-3 border-t border-surface0 pt-3 text-xs text-overlay0">
+          <p className="mt-3 border-t border-surface0 pt-3 text-xs text-subtext0">
             {pickle.sessions} session{pickle.sessions === 1 ? '' : 's'} logged · {pickle.doubles} doubles / {pickle.singles} singles.
           </p>
         </Card>
@@ -412,7 +412,7 @@ export function Insights() {
             {records.map((r) => (
               <div key={r.label} className="rounded-xl border border-surface0 bg-base p-3">
                 <p className="text-sm font-semibold text-text">{r.value}</p>
-                <p className="text-xs text-overlay0">{r.label}</p>
+                <p className="text-xs text-subtext0">{r.label}</p>
               </div>
             ))}
           </div>
@@ -443,10 +443,10 @@ function Section({ title, subtitle, defaultOpen = false, children }: { title: st
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
       >
-        <span className="text-overlay0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="text-subtext0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
         <span className="font-display text-base font-medium text-subtext1">{title}</span>
-        {subtitle && <span className="text-xs text-overlay0">· {subtitle}</span>}
-        {!open && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
+        {!open && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
       </button>
       {open && children}
     </section>
@@ -473,14 +473,14 @@ function SplitCol({ label, habit, mood, days }: { label: string; habit: number |
       <p className="flex items-center gap-1.5 text-text">
         <Activity size={14} style={{ color: cat('mauve') }} />
         <strong className="tabular-nums">{habit == null ? '—' : Math.round(habit * 100) + '%'}</strong>
-        <span className="text-xs text-overlay0">habits</span>
+        <span className="text-xs text-subtext0">habits</span>
       </p>
       <p className="mt-1 flex items-center gap-1.5 text-text">
         <Smile size={14} style={{ color: cat('green') }} />
         <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
-        <span className="text-xs text-overlay0">mood</span>
+        <span className="text-xs text-subtext0">mood</span>
       </p>
-      {days > 0 && <p className="mt-1 text-[10px] text-overlay0">{days} scheduled day{days === 1 ? '' : 's'}</p>}
+      {days > 0 && <p className="mt-1 text-[10px] text-subtext0">{days} scheduled day{days === 1 ? '' : 's'}</p>}
     </div>
   )
 }
@@ -508,7 +508,7 @@ function Big({ label, value, color, sub, suffix = '', ring, max = 100, trend, tr
         </div>
       )}
       <div className="mt-1 text-sm text-subtext0">{label}</div>
-      {sub && <div className="text-xs text-overlay0">{sub}</div>}
+      {sub && <div className="text-xs text-subtext0">{sub}</div>}
       {trend && (
         <div className="mt-1 flex items-center gap-1 text-xs" style={{ color: cat(trendColor) }} title={trendLabel}>
           <TrendIcon size={13} />

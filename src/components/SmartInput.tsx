@@ -82,7 +82,7 @@ export function SmartInput({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full rounded-lg border border-input bg-background px-3 py-2 pr-9 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+        className={`w-full rounded-lg border border-input bg-background px-3 py-2 pr-9 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
       />
 
       {/* Duplicate corner badge */}
@@ -102,7 +102,7 @@ export function SmartInput({
       {/* Duplicate popover */}
       {dupOpen && dupes.length > 0 && (
         <div className="absolute top-full right-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-surface1 bg-mantle shadow-xl">
-          <p className="border-b border-surface0 px-3 py-2 text-xs text-overlay0">Looks similar to:</p>
+          <p className="border-b border-surface0 px-3 py-2 text-xs text-subtext0">Looks similar to:</p>
           <ul className="max-h-56 overflow-y-auto py-1">
             {dupes.map((d) => (
               <li key={d.id} className="px-3 py-1.5 text-sm">
@@ -110,7 +110,7 @@ export function SmartInput({
                 <div className="mt-1 flex gap-2 text-xs">
                   {onGoToDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onGoToDuplicate(d.id); setDupOpen(false) }} className="text-blue hover:underline">Go to</button>}
                   {onMergeDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onMergeDuplicate(d.id); setDupOpen(false); onChange('') }} className="text-green hover:underline">Merge</button>}
-                  <span className="text-overlay0">{Math.round(d.score * 100)}% match</span>
+                  <span className="text-subtext0">{Math.round(d.score * 100)}% match</span>
                 </div>
               </li>
             ))}
@@ -131,11 +131,11 @@ export function SmartInput({
                 className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-sm ${i === active ? 'bg-surface0 text-text' : 'text-subtext1'}`}
               >
                 <span className="truncate">{s.label ?? s.value}</span>
-                {s.hint && <span className="ml-2 shrink-0 text-[10px] text-overlay0">{s.hint}</span>}
+                {s.hint && <span className="ml-2 shrink-0 text-[10px] text-subtext0">{s.hint}</span>}
               </button>
             </li>
           ))}
-          <li className="border-t border-surface0 px-3 py-1 text-[10px] text-overlay0">↑↓ move · Tab accept · ↵ add</li>
+          <li className="border-t border-surface0 px-3 py-1 text-[10px] text-subtext0">↑↓ move · Tab accept · ↵ add</li>
         </ul>
       )}
     </div>

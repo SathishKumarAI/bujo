@@ -32,7 +32,7 @@ export function RecoveryMap({ recovery, setFocusEx }: { recovery: MuscleRecovery
                 title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
               >
                 {r.name}
-                <span className="text-[10px] text-overlay0">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
+                <span className="text-[10px] text-subtext0">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
               </button>
             )
           })}

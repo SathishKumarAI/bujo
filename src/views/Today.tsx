@@ -139,7 +139,7 @@ export function Today() {
               ))}
             </ul>
             {taskCount > 0 && (
-              <p className="mt-2 text-right text-xs text-overlay0">{doneCount}/{taskCount} tasks done</p>
+              <p className="mt-2 text-right text-xs text-subtext0">{doneCount}/{taskCount} tasks done</p>
             )}
           </>
         )}
@@ -166,9 +166,9 @@ export function Today() {
                 setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
               }
               rows={3}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
             />
-            <p className="mt-1 text-xs text-overlay0">Saved into today's memory on blur.</p>
+            <p className="mt-1 text-xs text-subtext0">Saved into today's memory on blur.</p>
           </Card>
         )}
 
@@ -199,12 +199,12 @@ export function Today() {
           <ul className="space-y-2 text-sm">
             {flashbacks.memories.map((m) => (
               <li key={m.date} className="text-subtext1">
-                <span className="text-overlay0">{m.date}</span> · ▲ {m.text}
+                <span className="text-subtext0">{m.date}</span> · ▲ {m.text}
               </li>
             ))}
             {flashbacks.entries.slice(0, 5).map((e) => (
               <li key={e.id} className="text-subtext1">
-                <span className="text-overlay0">{e.date}</span> · {e.text}
+                <span className="text-subtext0">{e.date}</span> · {e.text}
               </li>
             ))}
           </ul>
@@ -242,7 +242,7 @@ function TodayCountHabits({ date }: { date: string }) {
             <li key={h.id} className="flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-sm text-subtext1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
-                {h.unit && <span className="text-overlay0"> ({h.unit})</span>}
+                {h.unit && <span className="text-subtext0"> ({h.unit})</span>}
               </span>
               <span className="text-xs tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
                 {val}/{target}{h.type === 'timer' ? 'm' : ''}{met ? ' ✓' : ''}
@@ -327,7 +327,7 @@ function WeeklyGoalRings({ date }: { date: string }) {
                 </svg>
                 <span className="absolute text-[11px] font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
               </span>
-              <span className="max-w-full truncate text-center text-[11px] text-overlay1" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+              <span className="max-w-full truncate text-center text-[11px] text-subtext0" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             </div>
           )
         })}

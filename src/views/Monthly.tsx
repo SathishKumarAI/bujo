@@ -105,7 +105,7 @@ export function Monthly() {
       </div>
 
       <Card>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-overlay0">
+        <div className="grid grid-cols-7 gap-1 text-center text-xs text-subtext0">
             {weekdayLabels(weekStart).map((w) => <div key={w} className="pb-1">{w}</div>)}
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`pad${i}`} />)}
             {days.map((d) => {
@@ -201,10 +201,10 @@ export function Monthly() {
             aria-expanded={analyticsOpen}
             className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
           >
-            <span className="text-overlay0">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="text-subtext0">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
             <span className="font-display text-base font-medium text-subtext1">Month analytics</span>
-            <span className="text-xs text-overlay0">· month pulse &amp; trailing-year rhythm</span>
-            {!analyticsOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+            <span className="text-xs text-subtext0">· month pulse &amp; trailing-year rhythm</span>
+            {!analyticsOpen && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
           </button>
           {analyticsOpen && (
             <>
@@ -215,7 +215,7 @@ export function Monthly() {
           <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
             {/* Entries-per-day sparkline */}
             <div>
-              <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+              <div className="mb-1.5 flex items-baseline justify-between text-xs text-subtext0">
                 <span>Entries per day</span>
                 <span>peak <b style={{ color: cat('mauve') }}>{maxPerDay}</b></span>
               </div>
@@ -236,19 +236,19 @@ export function Monthly() {
             {/* Bullet-type mix + completion */}
             <div className="space-y-3">
               <div>
-                <div className="mb-1 text-xs text-overlay0">Bullet mix</div>
+                <div className="mb-1 text-xs text-subtext0">Bullet mix</div>
                 <div className="flex flex-wrap gap-3 text-sm">
                   {TYPE_META.map((t) => (
                     <span key={t.key} className="inline-flex items-baseline gap-1">
                       <span style={{ color: cat(t.color) }}>{t.glyph}</span>
                       <b style={{ color: cat(t.color) }}>{t.n}</b>
-                      <span className="text-overlay0">{t.label}</span>
+                      <span className="text-subtext0">{t.label}</span>
                     </span>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                <div className="mb-1 flex items-baseline justify-between text-xs text-subtext0">
                   <span>Tasks done</span>
                   <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
                 </div>
@@ -262,7 +262,7 @@ export function Monthly() {
           {/* Logging rhythm by weekday + journaling streak */}
           <div className="mt-5 grid gap-5 border-t border-surface0 pt-4 sm:grid-cols-[2fr_1fr]">
             <div>
-              <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+              <div className="mb-1.5 flex items-baseline justify-between text-xs text-subtext0">
                 <span>By weekday</span>
                 <span>busiest <b style={{ color: cat('sapphire') }}>{busiestWeekday.count > 0 ? busiestWeekday.label : '—'}</b></span>
               </div>
@@ -279,20 +279,20 @@ export function Monthly() {
                         }}
                       />
                     </div>
-                    <span className="text-[10px] text-overlay0">{w.label[0]}</span>
+                    <span className="text-[10px] text-subtext0">{w.label[0]}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex flex-col justify-center gap-2">
               <div>
-                <div className="text-xs text-overlay0">Current streak</div>
+                <div className="text-xs text-subtext0">Current streak</div>
                 <div className="text-lg font-semibold" style={{ color: cat(streak.current > 0 ? 'green' : 'overlay0') }}>
                   {streak.current} day{streak.current === 1 ? '' : 's'}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-overlay0">Longest streak</div>
+                <div className="text-xs text-subtext0">Longest streak</div>
                 <div className="text-lg font-semibold" style={{ color: cat('mauve') }}>
                   {streak.longest} day{streak.longest === 1 ? '' : 's'}
                 </div>
@@ -306,7 +306,7 @@ export function Monthly() {
       {monthlyTotal > 0 && (
         <Card title="Entries per month" subtitle="Your journaling rhythm over the last 12 months"
           help="Each bar is one month's total entries, ending with the month you're viewing. Use it to spot busy seasons and quiet stretches across the year.">
-          <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+          <div className="mb-1.5 flex items-baseline justify-between text-xs text-subtext0">
             <span>Last 12 months</span>
             <span><b style={{ color: cat('mauve') }}>{monthlyTotal}</b> entries</span>
           </div>
@@ -323,7 +323,7 @@ export function Monthly() {
                     }}
                   />
                 </div>
-                <span className="text-[10px] text-overlay0">{m.label[0]}</span>
+                <span className="text-[10px] text-subtext0">{m.label[0]}</span>
               </div>
             ))}
           </div>

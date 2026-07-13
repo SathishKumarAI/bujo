@@ -88,7 +88,7 @@ export function CloudStorage() {
           <span className="inline-flex items-center gap-2 text-sm text-subtext1"><FolderOpen size={15} style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
           {s.storageMode === 'folder' && <span className="text-xs" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
         </div>
-        <p className="mt-1 text-xs text-overlay0">Pick a folder in your Drive/Dropbox/OneDrive sync folder · auto-saves there.</p>
+        <p className="mt-1 text-xs text-subtext0">Pick a folder in your Drive/Dropbox/OneDrive sync folder · auto-saves there.</p>
         {!isSupported() ? (
           <p className="mt-2 text-xs text-red">Needs Chrome / Edge.</p>
         ) : (
@@ -103,7 +103,7 @@ export function CloudStorage() {
       {/* GitHub gist */}
       <div className="mt-3 rounded-lg border border-surface0 bg-base p-3">
         <span className="inline-flex items-center gap-2 text-sm text-subtext1"><GitBranch size={15} /> GitHub (private gist)</span>
-        <p className="mt-1 text-xs text-overlay0">
+        <p className="mt-1 text-xs text-subtext0">
           Paste a token with the <code>gist</code> scope (github.com → Settings → Developer settings → Tokens).
         </p>
         <Input

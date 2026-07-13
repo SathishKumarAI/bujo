@@ -25,7 +25,7 @@ export function NeglectedMuscles({ muscles, setFocusEx }: { muscles: NeglectedMu
             title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
           >
             <AlertTriangle size={12} /> {m.name}
-            <span className="text-[10px] text-overlay0">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
+            <span className="text-[10px] text-subtext0">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
           </button>
         ))}
       </div>

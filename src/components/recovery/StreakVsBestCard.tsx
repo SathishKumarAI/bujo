@@ -35,7 +35,7 @@ export function StreakVsBestCard({
       </div>
       <div className="mt-2 flex items-center justify-between text-xs">
         <span style={{ color: vsBest.isRecord ? cat('green') : cat('mauve') }}><span className="font-semibold">{vsBest.current}</span>d now</span>
-        <span className="text-overlay1 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
+        <span className="text-subtext0 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
       </div>
       {comeback.isComeback && (
         <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-sm" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>

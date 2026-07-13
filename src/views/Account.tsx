@@ -87,7 +87,7 @@ export function Account() {
     return (
       <Hero>
         <div className="text-center">
-          <Cloud size={30} className="mx-auto text-overlay1" />
+          <Cloud size={30} className="mx-auto text-subtext0" />
           <h2 className="mt-3 font-display text-xl text-foreground">Accounts aren’t configured</h2>
           <p className="mt-2 text-sm text-subtext0">
             This build has no cloud backend, so the app is fully local. You can still back up and
@@ -109,7 +109,7 @@ export function Account() {
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-lg text-foreground">{signedIn ? user!.email : 'Guest session'}</p>
-            <p className="text-xs text-overlay0">{signedIn ? 'Synced across your devices' : 'On this device · not yet synced'}</p>
+            <p className="text-xs text-subtext0">{signedIn ? 'Synced across your devices' : 'On this device · not yet synced'}</p>
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
@@ -124,14 +124,14 @@ export function Account() {
         {signedIn && (
           <div className="mt-4 border-t border-border pt-4">
             {!changing ? (
-              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-xs text-overlay1 hover:text-subtext1">Change password</button>
+              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-xs text-subtext0 hover:text-subtext1">Change password</button>
             ) : (
               <div className="space-y-2.5">
                 <Field icon={Lock}>
                   <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); setErr('') }}
                     onKeyDown={(e) => e.key === 'Enter' && changePw()} placeholder="New password (min 6)"
-                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-                  <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-overlay0 hover:text-subtext1">
+                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-subtext0" />
+                  <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-subtext0 hover:text-subtext1">
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                   </Button>
                 </Field>
@@ -161,7 +161,7 @@ export function Account() {
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary/60 p-1">
         {(['login', 'signup'] as const).map((m) => (
           <button key={m} onClick={() => { setMode(m); setErr(''); setMsg('') }}
-            className={`rounded-lg py-2 text-sm font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-overlay1 hover:text-subtext1'}`}>
+            className={`rounded-lg py-2 text-sm font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-subtext0 hover:text-subtext1'}`}>
             {m === 'login' ? 'Sign in' : 'Sign up'}
           </button>
         ))}
@@ -172,7 +172,7 @@ export function Account() {
           <Button onClick={google} disabled={busy} variant="outline" className="press-3d w-full gap-2 hover:border-primary">
             <GoogleMark /> Continue with Google
           </Button>
-          <div className="my-4 flex items-center gap-3 text-xs text-overlay0">
+          <div className="my-4 flex items-center gap-3 text-xs text-subtext0">
             <span className="h-px flex-1 bg-border" /> or {mode === 'login' ? 'sign in' : 'sign up'} with email <span className="h-px flex-1 bg-border" />
           </div>
         </>
@@ -181,14 +181,14 @@ export function Account() {
       <div className="space-y-2.5">
         <Field icon={Mail}>
           <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr('') }} placeholder="you@email.com"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
+            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-subtext0" />
         </Field>
         {fix && <button type="button" onClick={() => setEmail(fix)} className="text-xs text-yellow hover:underline">Did you mean <strong>{fix}</strong>?</button>}
         <Field icon={Lock}>
           <input type={showPw ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={pw} onChange={(e) => setPw(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="Password (min 6)"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-          <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-overlay0 hover:text-subtext1">
+            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-subtext0" />
+          <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-subtext0 hover:text-subtext1">
             {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
           </Button>
         </Field>
@@ -200,7 +200,7 @@ export function Account() {
 
       {mode === 'login' && (
         <div className="mt-3 text-center">
-          <button onClick={forgot} disabled={busy} className="text-xs text-overlay1 hover:text-subtext1">Forgot password?</button>
+          <button onClick={forgot} disabled={busy} className="text-xs text-subtext0 hover:text-subtext1">Forgot password?</button>
         </div>
       )}
 
@@ -212,7 +212,7 @@ export function Account() {
           <Check size={13} className="text-green" /> Just explore as a guest · no email needed
         </button>
         <div>
-          <button onClick={() => { setSettings({ storageMode: 'local' }); nav('today') }} className="text-xs text-overlay0 hover:text-subtext1">
+          <button onClick={() => { setSettings({ storageMode: 'local' }); nav('today') }} className="text-xs text-subtext0 hover:text-subtext1">
             Continue on this device without an account →
           </button>
         </div>
@@ -236,7 +236,7 @@ function Hero({ children }: { children: React.ReactNode }) {
         <div className="card-3d rise rounded-2xl border border-border bg-card/80 p-6 backdrop-blur" style={{ animationDelay: '140ms' }}>
           {children}
         </div>
-        <p className="rise mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '200ms' }}>
+        <p className="rise mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-subtext0" style={{ animationDelay: '200ms' }}>
           <ShieldCheck size={13} /> No tracking. Your data is yours.
         </p>
       </div>
@@ -247,7 +247,7 @@ function Hero({ children }: { children: React.ReactNode }) {
 function Field({ icon: Icon, children }: { icon: typeof Mail; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-input bg-background px-3 py-2.5 focus-within:border-primary">
-      <Icon size={15} className="shrink-0 text-overlay1" />
+      <Icon size={15} className="shrink-0 text-subtext0" />
       {children}
     </div>
   )

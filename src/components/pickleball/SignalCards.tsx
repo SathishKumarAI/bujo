@@ -14,9 +14,9 @@ export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
           const has = w.games > 0
           return (
             <div key={w.day} className="rounded-md p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
-              <div className="text-[10px] font-medium text-overlay1">{w.day}</div>
+              <div className="text-[10px] font-medium text-subtext0">{w.day}</div>
               <div className="mt-0.5 text-sm font-semibold" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
-              <div className="text-[9px] text-overlay0">{has ? `${w.games}g` : ''}</div>
+              <div className="text-[9px] text-subtext0">{has ? `${w.games}g` : ''}</div>
             </div>
           )
         })}
@@ -34,7 +34,7 @@ export function PointDifferentialCard({ points }: { points: PointDiff }) {
         <StatTile compact label="Points against" value={points.pointsAgainst} color="red" />
         <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} color={points.diff > 0 ? 'green' : points.diff < 0 ? 'red' : 'overlay0'} />
       </div>
-      <p className="mt-3 text-xs text-overlay1">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
+      <p className="mt-3 text-xs text-subtext0">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
     </Card>
   )
 }
@@ -49,7 +49,7 @@ export function TimeOnCourtCard({ hours }: { hours: PickleHours }) {
         <StatTile compact label="Avg session" value={`${hours.avgMin}m`} color="blue" />
         <StatTile compact label="Min / game" value={hours.minPerGame || '—'} color="mauve" />
       </div>
-      <p className="mt-3 text-xs text-overlay1">Add Minutes when logging a session to track time invested. Min/game is your court tempo — lower means faster games.</p>
+      <p className="mt-3 text-xs text-subtext0">Add Minutes when logging a session to track time invested. Min/game is your court tempo — lower means faster games.</p>
     </Card>
   )
 }
@@ -63,7 +63,7 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
           <li key={sc.scoring}>
             <div className="mb-1 flex justify-between text-sm">
               <span className="text-subtext1">{sc.label}</span>
-              <span className="text-overlay1">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
+              <span className="text-subtext0">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
               <div className="h-full rounded-full" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
@@ -71,7 +71,7 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] text-overlay0">Set a Scoring system when logging to see if you play better in short or long games.</p>
+      <p className="mt-3 text-[11px] text-subtext0">Set a Scoring system when logging to see if you play better in short or long games.</p>
     </Card>
   )
 }
@@ -87,7 +87,7 @@ export function PlayConsistencyCard({ consistency }: { consistency: PlayConsiste
         <StatTile compact label="Longest gap" value={consistency.longestGap ? `${consistency.longestGap}d` : '—'} color="peach" />
       </div>
       {consistency.daysSinceLast != null && (
-        <p className="mt-3 text-xs text-overlay1">
+        <p className="mt-3 text-xs text-subtext0">
           {consistency.daysSinceLast === 0 ? 'You played today — keep the rhythm.' : `Last played ${consistency.daysSinceLast} ${consistency.daysSinceLast === 1 ? 'day' : 'days'} ago.`}
           {consistency.longestGap > 0 && ` Your average cadence is about one play day every ${consistency.avgGap} days.`}
         </p>

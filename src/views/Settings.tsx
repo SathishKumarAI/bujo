@@ -55,10 +55,10 @@ function Disclosure({ title, subtitle, defaultOpen = false, children }: {
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
       >
-        <span className="text-overlay0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="text-subtext0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
         <span className="font-display text-base font-medium text-subtext1">{title}</span>
-        {subtitle && <span className="text-xs text-overlay0">· {subtitle}</span>}
-        {!open && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+        {subtitle && <span className="text-xs text-subtext0">· {subtitle}</span>}
+        {!open && <span className="ml-auto text-[10px] tracking-wide text-subtext0 uppercase">show</span>}
       </button>
       {open && children}
     </section>
@@ -153,7 +153,7 @@ export function Settings() {
         </span>
         <div className="min-w-0">
           <h1 className="font-display text-2xl text-text">Settings</h1>
-          <p className="text-sm text-overlay0">Profile, appearance, reminders, and your data · organised in one place.</p>
+          <p className="text-sm text-subtext0">Profile, appearance, reminders, and your data · organised in one place.</p>
         </div>
       </div>
 
@@ -223,7 +223,7 @@ export function Settings() {
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-text">{t.label}</span>
-                    <span className="block text-[11px] text-overlay0">{t.hint}</span>
+                    <span className="block text-[11px] text-subtext0">{t.hint}</span>
                   </span>
                 </button>
               )
@@ -237,7 +237,7 @@ export function Settings() {
             onChange={(v) => setSettings({ fontScale: v })}
             options={[{ value: 0.9, label: 'S' }, { value: 1, label: 'M' }, { value: 1.1, label: 'L' }, { value: 1.25, label: 'XL' }]}
           />
-          <p className="mt-1 text-xs text-overlay0">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
+          <p className="mt-1 text-xs text-subtext0">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
         </div>
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
@@ -254,7 +254,7 @@ export function Settings() {
               options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Inter' }, { value: 'hard', label: 'Hard' }]}
             />
           </Row>
-          <p className="mt-1 text-xs text-overlay0">Scales the training-penalty drills to a doable level.</p>
+          <p className="mt-1 text-xs text-subtext0">Scales the training-penalty drills to a doable level.</p>
         </div>
         <div className="mt-3 border-t border-border pt-3">
           <p className="mb-2 text-sm text-subtext1">Today dashboard cards</p>
@@ -312,7 +312,7 @@ export function Settings() {
           )}
           <div className="border-t border-border pt-3">
             <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
-            <p className="mt-1 text-xs text-overlay0">Uses open-meteo + your browser location. Off = zero network calls.</p>
+            <p className="mt-1 text-xs text-subtext0">Uses open-meteo + your browser location. Off = zero network calls.</p>
           </div>
         </div>
       </Card>
@@ -356,7 +356,7 @@ export function Settings() {
               return (
                 <div className="mt-3">
                   <div className="mb-1 flex justify-between text-xs">
-                    <span className="text-overlay0">Browser storage used</span>
+                    <span className="text-subtext0">Browser storage used</span>
                     <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-surface0">
@@ -398,12 +398,12 @@ export function Settings() {
           <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
-        <p className="mt-1.5 text-xs text-overlay0">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
+        <p className="mt-1.5 text-xs text-subtext0">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
         <div className="mt-2">
           <Button variant="secondary" onClick={doRedactedExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export shareable (redacted) JSON</Button>
-          <p className="mt-1 text-xs text-overlay0">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
+          <p className="mt-1 text-xs text-subtext0">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
         </div>
-        {s.lastBackup && <p className="mt-2 text-xs text-overlay0">Last backup: {s.lastBackup}</p>}
+        {s.lastBackup && <p className="mt-2 text-xs text-subtext0">Last backup: {s.lastBackup}</p>}
         {/* SET-2: power-user exports fold away so Export/Import JSON stays the hero. */}
         <div className="mt-3 space-y-3 border-t border-border pt-3">
           <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
@@ -420,7 +420,7 @@ export function Settings() {
             </div>
             {data.collections.length > 0 && (
               <div className="mt-2">
-                <p className="mb-1 text-xs text-overlay0">Export one collection's entries as CSV:</p>
+                <p className="mb-1 text-xs text-subtext0">Export one collection's entries as CSV:</p>
                 <div className="flex flex-wrap gap-2">
                   {data.collections.map((c) => (
                     <Button key={c.id} variant="secondary" onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
@@ -439,15 +439,15 @@ export function Settings() {
             <div className="space-y-2">
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
-                <p className="mt-1 text-xs text-overlay0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
+                <p className="mt-1 text-xs text-subtext0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
               </div>
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
-                <p className="mt-1 text-xs text-overlay0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
+                <p className="mt-1 text-xs text-subtext0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
               </div>
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
-                <p className="mt-1 text-xs text-overlay0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
+                <p className="mt-1 text-xs text-subtext0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
           </Disclosure>
@@ -457,9 +457,9 @@ export function Settings() {
               <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>
-            <p className="mt-1 text-xs text-overlay0">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
+            <p className="mt-1 text-xs text-subtext0">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
           </Disclosure>
-          <p className="text-xs text-overlay0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
+          <p className="text-xs text-subtext0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
 
@@ -495,7 +495,7 @@ export function Settings() {
             Back to start screen
           </Button>
         </div>
-        <p className="mt-2 text-xs text-overlay0">
+        <p className="mt-2 text-xs text-subtext0">
           Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
         </p>
       </Card>
@@ -516,7 +516,7 @@ export function Settings() {
                     </div>
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-xs">
-                        <span className="text-overlay0">Days with data (coverage)</span>
+                        <span className="text-subtext0">Days with data (coverage)</span>
                         <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-surface0">
@@ -532,7 +532,7 @@ export function Settings() {
                         ))}
                       </div>
                     )}
-                    <p className="mt-2 text-xs text-overlay0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
+                    <p className="mt-2 text-xs text-subtext0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
                   </Card>
                 </Disclosure>
               </section>
@@ -615,7 +615,7 @@ function AccountCard() {
           : guest ? <span className="text-peach">Guest · data is on <strong>this device only</strong>, not in any account.</span>
             : <span className="text-peach">On this device only · <strong>no account</strong>, nothing is stored online.</span>}
       </p>
-      {!signedIn && <p className="mb-3 text-xs text-overlay0">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
+      {!signedIn && <p className="mb-3 text-xs text-subtext0">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
       {!signedIn && (
         <div className="space-y-2">
           {!user && <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
@@ -625,7 +625,7 @@ function AccountCard() {
             <Button variant="default" disabled={busy} onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
             <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && confirm('Load your cloud data onto this device?')) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
             <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
-            <button onClick={leave} className="ml-auto text-xs text-overlay0 hover:text-red">Log out / switch</button>
+            <button onClick={leave} className="ml-auto text-xs text-subtext0 hover:text-red">Log out / switch</button>
           </div>
         </div>
       )}
@@ -637,7 +637,7 @@ function AccountCard() {
         </div>
       )}
       {msg && <p className="mt-2 text-xs text-subtext1">{busy ? '…' : msg}</p>}
-      <p className="mt-2 text-xs text-overlay0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
+      <p className="mt-2 text-xs text-subtext0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
     </Card>
   )
 }
@@ -683,11 +683,11 @@ function BujoCloudCard() {
         <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
       </div>
       <label className="mt-3 flex cursor-pointer items-center justify-between text-sm text-subtext1">
-        <span>Auto-sync on this device <span className="text-xs text-overlay0">(pull on open · push on change)</span></span>
+        <span>Auto-sync on this device <span className="text-xs text-subtext0">(pull on open · push on change)</span></span>
         <Switch checked={auto} onCheckedChange={toggleAuto} />
       </label>
       {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
-      <p className="mt-2 text-xs text-overlay0">Your journal is encrypted in this browser before upload · the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
+      <p className="mt-2 text-xs text-subtext0">Your journal is encrypted in this browser before upload · the server only stores ciphertext. Same passphrase on another device = your data. No accounts. Lost passphrase = no recovery.</p>
     </Card>
   )
 }
@@ -718,7 +718,7 @@ function PasscodeCard() {
           </div>
           {err && <p className="text-xs text-red">{err}</p>}
           <Button variant="default" onClick={enable}>Encrypt journal</Button>
-          <p className="text-xs text-overlay0">There’s no recovery · if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
+          <p className="text-xs text-subtext0">There’s no recovery · if you forget the passcode, the data can’t be decrypted. Keep a JSON export as backup.</p>
         </div>
       )}
     </Card>
@@ -754,15 +754,15 @@ function SelfHostCard() {
         <label className="block text-sm text-subtext1">API URL
           <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="https://localhost:8443" className="mt-1" />
         </label>
-        <label className="block text-sm text-subtext1">Bearer token <span className="text-overlay0">(HS256 JWT · required)</span>
+        <label className="block text-sm text-subtext1">Bearer token <span className="text-subtext0">(HS256 JWT · required)</span>
           <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="paste your minted JWT (role=bujo_user, sub=device id)" className="mt-1" />
         </label>
         <div className="flex gap-2">
           <Button variant="default" onClick={test}>Test / Push now</Button>
           <Button variant="secondary" onClick={pull}>Pull from server</Button>
         </div>
-        {msg && <p className="text-xs text-overlay0">{msg}</p>}
-        <p className="text-xs text-overlay0">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
+        {msg && <p className="text-xs text-subtext0">{msg}</p>}
+        <p className="text-xs text-subtext0">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
       </div>
     </Card>
   )

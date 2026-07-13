@@ -37,7 +37,7 @@ export function Help() {
         <div className="mt-3 rounded-lg bg-base p-3 text-sm text-subtext0">
           <p className="font-medium text-subtext1">Quick-capture prefixes</p>
           <p className="mt-1"><code>t</code> task · <code>e</code> event · <code>n</code> note · <code>*</code> important · <code>^</code> memory · <code>#tag</code> to tag.</p>
-          <p className="mt-1 text-overlay0">Example: <code>* t book the campsite #travel</code> → an important task, tagged travel.</p>
+          <p className="mt-1 text-subtext0">Example: <code>* t book the campsite #travel</code> → an important task, tagged travel.</p>
         </div>
       </Card>
 

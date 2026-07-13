@@ -60,15 +60,15 @@ export function FriendsCard() {
         <div className="flex flex-wrap gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
           <div className="flex flex-1 items-center gap-1 rounded-lg border border-input bg-background px-2">
-            <AtSign size={14} className="shrink-0 text-overlay0" />
-            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-overlay0 focus:outline-none" />
+            <AtSign size={14} className="shrink-0 text-subtext0" />
+            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-subtext0 focus:outline-none" />
           </div>
           <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5">
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-xs text-overlay0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
-        <p className="text-[11px] text-overlay0">GitHub pull uses the official public API · only data they’ve made public. Nothing else is fetched.</p>
+        <label className="flex items-center gap-2 text-xs text-subtext0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
+        <p className="text-[11px] text-subtext0">GitHub pull uses the official public API · only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
       {friends.length === 0 ? (
@@ -90,17 +90,17 @@ export function FriendsCard() {
                   })()}
                 </p>
                 {f.bio && <p className="truncate text-xs text-subtext0">{f.bio}</p>}
-                {f.company && <p className="truncate text-xs text-overlay0">{f.company}</p>}
+                {f.company && <p className="truncate text-xs text-subtext0">{f.company}</p>}
                 <div className="mt-0.5 flex flex-wrap gap-2 text-xs">
                   {(f.links ?? []).map((l) => (
                     <a key={l} href={l} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-blue hover:underline">
                       <ExternalLink size={11} /> {new URL(l).hostname.replace('www.', '')}
                     </a>
                   ))}
-                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-overlay0 hover:text-mauve">refresh</button>}
+                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-subtext0 hover:text-mauve">refresh</button>}
                 </div>
               </div>
-              <button onClick={() => removeFriend(f.id)} aria-label={`Remove ${f.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+              <button onClick={() => removeFriend(f.id)} aria-label={`Remove ${f.name}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </li>
           ))}
         </ul>

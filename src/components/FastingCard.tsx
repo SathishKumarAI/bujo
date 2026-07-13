@@ -61,7 +61,7 @@ export function FastingCard() {
           <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface0">
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
           </div>
-          <p className="mt-2 text-xs text-overlay0">Started {timeOf(active)}</p>
+          <p className="mt-2 text-xs text-subtext0">Started {timeOf(active)}</p>
           <Button variant="primary" onClick={endFast} className="mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
         </div>
       ) : (
@@ -74,7 +74,7 @@ export function FastingCard() {
               </span>
             )}
           </div>
-          <p className="mt-2 inline-flex items-center gap-1 text-xs text-overlay0"><Timer size={12} /> Tap when you stop eating; end it at your first meal.</p>
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-subtext0"><Timer size={12} /> Tap when you stop eating; end it at your first meal.</p>
         </div>
       )}
 
@@ -85,11 +85,11 @@ export function FastingCard() {
             const hit = h >= target
             return (
               <li key={f.id} className="group flex items-center gap-2 text-sm">
-                <span className="w-14 shrink-0 text-overlay0">{dayLabel(f.end)}</span>
+                <span className="w-14 shrink-0 text-subtext0">{dayLabel(f.end)}</span>
                 <span className="w-20 shrink-0 tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{fmtDuration(h)}</span>
-                <span className="shrink-0">{hit ? <Check size={13} style={{ color: cat('green') }} /> : <span className="text-overlay0">·</span>}</span>
-                <span className="flex-1 truncate text-xs text-overlay0">{timeOf(f.start)} → {timeOf(f.end)}</span>
-                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><X size={13} /></button>
+                <span className="shrink-0">{hit ? <Check size={13} style={{ color: cat('green') }} /> : <span className="text-subtext0">·</span>}</span>
+                <span className="flex-1 truncate text-xs text-subtext0">{timeOf(f.start)} → {timeOf(f.end)}</span>
+                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"><X size={13} /></button>
               </li>
             )
           })}

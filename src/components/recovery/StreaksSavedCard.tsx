@@ -12,11 +12,11 @@ export function StreaksSavedCard({ saved }: { saved: Saved }) {
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{saved.saved}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wide text-overlay0">urges resisted</div>
+          <div className="mt-1 text-[11px] uppercase tracking-wide text-subtext0">urges resisted</div>
         </div>
         <p className="flex-1 text-sm text-subtext0">
           That’s <strong style={{ color: cat('green') }}>{saved.saved} streak{saved.saved === 1 ? '' : 's'}</strong> you might have lost.
-          {saved.savedToday > 0 && <> <span className="text-overlay1">{saved.savedToday} saved today</span> · keep the count climbing.</>}
+          {saved.savedToday > 0 && <> <span className="text-subtext0">{saved.savedToday} saved today</span> · keep the count climbing.</>}
         </p>
       </div>
     </Card>

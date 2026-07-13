@@ -243,7 +243,7 @@ export function Pickleball() {
               <li key={fm.format}>
                 <div className="mb-1 flex justify-between text-sm">
                   <span className="capitalize text-subtext1">{fm.format}</span>
-                  <span className="text-overlay1">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
+                  <span className="text-subtext0">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
                   <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
@@ -279,7 +279,7 @@ export function Pickleball() {
             })}
           </div>
         </div>
-        <div className="mt-1 text-center text-[10px] text-overlay0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+        <div className="mt-1 text-center text-[10px] text-subtext0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
       </Card>
     </>
   )
@@ -297,7 +297,7 @@ export function Pickleball() {
           <span className="text-subtext0">This week: <span className="text-text">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
           <label className="ml-auto inline-flex items-center gap-1.5 text-subtext1">Weekly goal
             <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
-            <span className="text-xs text-overlay0">games</span>
+            <span className="text-xs text-subtext0">games</span>
           </label>
         </div>
         {goal > 0 && (
@@ -305,7 +305,7 @@ export function Pickleball() {
             <div className="h-2.5 overflow-hidden rounded-full bg-surface0">
               <div className="h-full rounded-full" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
             </div>
-            <p className="mt-1 text-xs text-overlay0">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
+            <p className="mt-1 text-xs text-subtext0">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
           </div>
         )}
       </Card>
@@ -319,7 +319,7 @@ export function Pickleball() {
               <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
                 <span className="min-w-0">
                   <span className="text-sm font-medium text-text">{e.name}</span>
-                  <span className="block truncate text-xs text-overlay0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  <span className="block truncate text-xs text-subtext0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
                 <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
                   {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
@@ -331,7 +331,7 @@ export function Pickleball() {
             <summary className="cursor-pointer text-sm font-medium text-text">Tournament-day prep checklist</summary>
             <ul className="mt-2 space-y-1">
               {PREP_CHECKLIST.map((x) => (
-                <li key={x} className="flex gap-1.5 text-xs text-overlay1"><span className="text-peach">•</span> {x}</li>
+                <li key={x} className="flex gap-1.5 text-xs text-subtext0"><span className="text-peach">•</span> {x}</li>
               ))}
             </ul>
           </details>
@@ -412,7 +412,7 @@ export function Pickleball() {
                   <span className="text-subtext1">{prettyDay(p.date)}</span>
                   <span className="flex items-center gap-2">
                     <span className="font-medium tabular-nums" style={{ color: cat('mauve') }}>{p.rating}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </span>
                 </li>
               ))}
@@ -451,12 +451,12 @@ export function Pickleball() {
               <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
                 <span className="min-w-0">
                   <span className="text-subtext1">{e.name}</span>
-                  <span className="text-overlay0"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  <span className="text-subtext0"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {e.placement && <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
-                  {(e.wins != null || e.losses != null) && <span className="text-overlay1">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                  {(e.wins != null || e.losses != null) && <span className="text-subtext0">{e.wins ?? 0}–{e.losses ?? 0}</span>}
+                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </span>
               </li>
             ))}
@@ -474,22 +474,22 @@ export function Pickleball() {
               <span className="text-sm font-medium text-text">{drill.name}</span>
               <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
             </div>
-            <p className="text-xs text-overlay1">{drill.how}</p>
-            <p className="mt-2 text-[11px] text-overlay0">New focus each day · log a session below after you drill it.</p>
+            <p className="text-xs text-subtext0">{drill.how}</p>
+            <p className="mt-2 text-[11px] text-subtext0">New focus each day · log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
           <div className="rounded-lg border border-surface0 bg-base p-3">
             <p className="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-text"><Dumbbell size={14} className="text-green" /> Warm up first</p>
             <ul className="space-y-1">
               {WARMUP.map((w) => (
-                <li key={w} className="flex gap-1.5 text-xs text-overlay1"><span className="text-green">•</span> {w}</li>
+                <li key={w} className="flex gap-1.5 text-xs text-subtext0"><span className="text-green">•</span> {w}</li>
               ))}
             </ul>
           </div>
         </div>
         {/* External resources */}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-surface0 pt-3">
-          <span className="text-xs text-overlay0">Learn more:</span>
+          <span className="text-xs text-subtext0">Learn more:</span>
           {RESOURCES.map((r) => (
             <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue hover:underline">
               {r.name} <ExternalLink size={11} />
@@ -550,7 +550,7 @@ export function Pickleball() {
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-surface0 pt-2 text-sm first:border-t-0 first:pt-0">
               <p className="text-subtext1">{x.t}</p>
-              <p className="text-xs text-overlay1">{x.d}</p>
+              <p className="text-xs text-subtext0">{x.d}</p>
             </li>
           ))}
         </ul>
@@ -563,9 +563,9 @@ export function Pickleball() {
             <li key={fm.id} className="rounded-lg border border-surface0 bg-base p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium text-text">{fm.label}</span>
-                <span className="text-[10px] text-overlay0">{fm.size}</span>
+                <span className="text-[10px] text-subtext0">{fm.size}</span>
               </div>
-              <p className="text-xs text-overlay1">{fm.how}</p>
+              <p className="text-xs text-subtext0">{fm.how}</p>
             </li>
           ))}
         </ul>
@@ -612,11 +612,11 @@ function PickleRow({ p, onSave, onDelete }: {
   }
   return (
     <li className="group flex items-center justify-between gap-2 py-2 text-sm">
-      <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+      <span className="text-subtext1">{prettyDay(p.date)} <span className="text-subtext0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
-        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
       </span>
     </li>
   )

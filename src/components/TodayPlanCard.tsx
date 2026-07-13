@@ -61,7 +61,7 @@ export function TodayPlanCard() {
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
 
   return (
-    <Card title="Today’s plan" subtitle="Your whole day at a glance · tap to jump in" right={<span className="text-xs text-overlay0">week {weekScore}%</span>}>
+    <Card title="Today’s plan" subtitle="Your whole day at a glance · tap to jump in" right={<span className="text-xs text-subtext0">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
           🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
@@ -86,7 +86,7 @@ export function TodayPlanCard() {
         {week.map((d) => (
           <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${Math.round(d.score * 100)}% covered`}>
             <div className="h-6 w-full rounded" style={{ background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'), outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }} />
-            <span className="text-[10px] text-overlay0">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
+            <span className="text-[10px] text-subtext0">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
           </div>
         ))}
       </div>

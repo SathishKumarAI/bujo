@@ -22,8 +22,8 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
           </div>
         ))}
       </div>
-      <div className="mt-2 flex justify-between text-[10px] text-overlay0"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-      <p className="mt-1.5 text-xs text-overlay0">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
+      <div className="mt-2 flex justify-between text-[10px] text-subtext0"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+      <p className="mt-1.5 text-xs text-subtext0">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
     </Card>
   )
 }
