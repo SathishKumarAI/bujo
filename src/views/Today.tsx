@@ -1,4 +1,4 @@
-import { Utensils, CupSoda, Flame } from 'lucide-react'
+import { Utensils, CupSoda, Flame, NotebookPen } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button, Card, Empty, Input, Slider } from '../components/ui'
@@ -119,7 +119,17 @@ export function Today() {
           </div>
         )}
         {dayEntries.length === 0 ? (
-          <Empty>No entries yet. Add a task, event, or note above.</Empty>
+          <Empty
+            icon={NotebookPen}
+            hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
+            action={{
+              label: 'Start writing',
+              onClick: () =>
+                document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
+            }}
+          >
+            Nothing logged for this day
+          </Empty>
         ) : (
           <>
             <ul>

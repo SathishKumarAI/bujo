@@ -9,6 +9,8 @@ import { Account } from './views/Account'
 import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
+import { SkeletonView } from './components/Skeleton'
+import { OfflineBanner } from './components/OfflineBanner'
 import { CommandPalette } from './components/CommandPalette'
 import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
@@ -273,6 +275,7 @@ export default function App() {
         onOpenChange={setPaletteOpen}
       />
       {showTour && !data.settings.explore && <Onboarding onClose={() => setShowTour(false)} />}
+      <OfflineBanner />
       <ExploreBanner />
       <ReminderBanner />
       <SyncIndicator />
@@ -287,7 +290,7 @@ export default function App() {
         onCommand={() => setPaletteOpen(true)}
       >
         <div className="mx-auto max-w-[1600px]" style={{ zoom }}>
-          <Suspense fallback={<p className="py-10 text-center text-muted-foreground">Loading…</p>}>
+          <Suspense fallback={<SkeletonView />}>
             {book ? (
               <div className="book">
                 <div key={view} className="book-inner page-in">
