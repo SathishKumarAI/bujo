@@ -7,6 +7,9 @@ import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
 import { ServerSync } from '../ServerSync'
+import { Toasts } from '../Toasts'
+import { ShortcutHelp } from '../ShortcutHelp'
+import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
@@ -35,8 +38,29 @@ export function AppShell({
 }) {
   const [quickOpen, setQuickOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const { day } = useCursor()
   const isMobile = useDevice() === 'mobile'
+
+  // Single-key shortcuts. ⌘K (palette) and ⌘Z (undo) are chords, so they stay
+  // where they are — these are the bare keys, which need the typing/dialog
+  // guards that useHotkeys provides.
+  useHotkeys({
+    n: () => setQuickOpen(true),
+    '?': () => setHelpOpen(true),
+  })
+
+  // `g` then a destination — jump without lifting your hands.
+  useLeaderKey('g', {
+    t: () => onNavigate('today'),
+    p: () => onNavigate('plan'),
+    h: () => onNavigate('trackers'),
+    f: () => onNavigate('fitness'),
+    c: () => onNavigate('collections'),
+    i: () => onNavigate('insights'),
+    s: () => onNavigate('stats'),
+    ',': () => onNavigate('settings'),
+  })
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -86,7 +110,9 @@ export function AppShell({
           <CaptureBar date={day} onAdded={() => setQuickOpen(false)} />
         </DialogContent>
       </Dialog>
+      <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       <MilestoneToast />
+      <Toasts />
       <ServerSync />
     </div>
     </TooltipProvider>
