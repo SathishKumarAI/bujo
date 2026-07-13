@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote, Grid3x3 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
@@ -23,7 +24,7 @@ import { TrackerSummaryCard } from '../components/trackers/TrackerSummaryCard'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../components/trackers/CategoryConsistencyCard'
-import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
+import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
@@ -150,8 +151,8 @@ export function Trackers() {
                 ))}
               </div>
             )}
-            <Button onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'}>{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
-            <Button onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings"><Settings2 size={15} /></Button>
+            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-lg">{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
+            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-lg"><Settings2 size={15} /></Button>
           </div>
         }
       >
@@ -277,7 +278,7 @@ export function Trackers() {
             <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={14} /> Add habit</Button>
+            <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={14} /> Add habit</Button>
           </div>
           </>
           )}
@@ -325,8 +326,8 @@ function ArchivedHabits() {
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-surface0 bg-base px-2.5 py-1 text-sm">
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-            <button onClick={() => updateHabit(h.id, { archived: false })} className="text-xs text-green hover:underline">restore</button>
-            <button onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-overlay0 hover:text-red">×</button>
+            <Button variant="link" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-xs text-green">restore</Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete "${h.name}" and its history for good?`)) removeHabit(h.id) }} aria-label={`Delete ${h.name}`} className="text-overlay0 hover:text-red">×</Button>
           </li>
         ))}
       </ul>
@@ -504,8 +505,8 @@ function RoutineTimeline({
                       </button>
                       {numeric && !h.avoid && <span className="shrink-0 text-xs text-overlay1">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
                       {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-xs" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
-                      <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={14} /></button>
-                      <button onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-overlay0 hover:text-subtext1'}`}><StickyNote size={14} /></button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={14} /></Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-overlay0 hover:text-subtext1'}`}><StickyNote size={14} /></Button>
                     </div>
                     {(open || note) && (
                       <input
@@ -600,7 +601,7 @@ function CategoryRows({
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
                 <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : ''}`}>{h.name}</button>
-                <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={11} /></button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={11} /></Button>
                 {h.unit && <span className="shrink-0 text-overlay0">({h.unit})</span>}
                 {avoid ? (
                   <>
@@ -731,7 +732,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
       <div className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-surface1 bg-mantle" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-surface0 bg-mantle px-4 py-3">
           <h3 className="font-display text-lg text-text">{habit.emoji} {habit.name}</h3>
-          <button onClick={onClose} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></button>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-overlay0 hover:text-text"><X size={18} /></Button>
         </header>
         <div className="space-y-3 p-4">
           {/* Stats */}
@@ -805,7 +806,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           <div>
             <div className="mb-1 flex items-center justify-between">
               <p className="text-xs text-overlay0">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
-              <button onClick={() => setHeatYear((v) => !v)} className="text-xs text-mauve hover:underline">{heatYear ? '12 weeks' : 'Full year'}</button>
+              <Button variant="link" onClick={() => setHeatYear((v) => !v)} className="h-auto p-0 text-xs text-mauve">{heatYear ? '12 weeks' : 'Full year'}</Button>
             </div>
             <HabitHeatmap data={data} habit={habit} today={today} weeks={heatYear ? 53 : 12} />
           </div>
@@ -839,10 +840,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           <div className="flex items-center justify-between">
             <span className="text-sm text-subtext1">Type</span>
             <div className="flex flex-wrap justify-end gap-1.5">
-              <Button variant={(habit.type ?? 'check') === 'check' ? 'primary' : 'ghost'} onClick={() => set({ type: 'check' })}>Yes / no</Button>
-              <Button variant={habit.type === 'count' ? 'primary' : 'ghost'} onClick={() => set({ type: 'count' })}>Count</Button>
-              <Button variant={habit.type === 'timer' ? 'primary' : 'ghost'} onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
-              <Button variant={habit.type === 'rating' ? 'primary' : 'ghost'} onClick={() => set({ type: 'rating' })}>Rating</Button>
+              <Button variant={(habit.type ?? 'check') === 'check' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'check' })}>Yes / no</Button>
+              <Button variant={habit.type === 'count' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'count' })}>Count</Button>
+              <Button variant={habit.type === 'timer' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
+              <Button variant={habit.type === 'rating' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'rating' })}>Rating</Button>
             </div>
           </div>
 
@@ -850,7 +851,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <span className="text-sm text-subtext1">Time of day</span>
             <div className="flex flex-wrap justify-end gap-1.5">
               {TIME_SLOTS.map((s) => (
-                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'primary' : 'ghost'} onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
+                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
               ))}
             </div>
           </div>
@@ -918,12 +919,12 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-surface0 pt-3">
-            <Button onClick={() => toggleHabitSkip(habit.id, today)} className="inline-flex items-center gap-1.5" title="A planned skip won't break your streak">
+            <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5 rounded-lg" title="A planned skip won't break your streak">
               {skippedToday ? 'Un-skip today' : 'Skip today'}
             </Button>
-            <Button onClick={() => set({ archived: !habit.archived })} className="inline-flex items-center gap-1.5"><Archive size={14} /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
-            <Button variant="danger" onClick={() => { if (confirm(`Delete "${habit.name}" and its history?`)) { removeHabit(habit.id); onClose() } }} className="inline-flex items-center gap-1.5"><Trash2 size={14} /> Delete</Button>
-            <Button variant="primary" onClick={onClose} className="ml-auto">Done</Button>
+            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Archive size={14} /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
+            <Button variant="ghost" onClick={() => { if (confirm(`Delete "${habit.name}" and its history?`)) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
+            <Button onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
           </div>
         </div>
       </div>

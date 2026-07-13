@@ -93,8 +93,8 @@ export function CloudStorage() {
           <p className="mt-2 text-xs text-red">Needs Chrome / Edge.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button onClick={chooseFolder} className="inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
-            {s.storageMode === 'folder' && <Button onClick={syncFolderNow} className="inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
+            <Button onClick={chooseFolder} disabled={!!busy} className="inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
+            {s.storageMode === 'folder' && <Button onClick={syncFolderNow} disabled={!!busy} className="inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
             {s.storageMode === 'folder' && <Button variant="danger" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })}>Switch to local</Button>}
           </div>
         )}
@@ -114,8 +114,8 @@ export function CloudStorage() {
           className="mt-2 font-mono"
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button onClick={ghBackup} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
-          <Button onClick={ghRestore} className="inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
+          <Button onClick={ghBackup} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
+          <Button onClick={ghRestore} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
           {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-xs text-mauve hover:underline">open gist</a>}
         </div>
       </div>

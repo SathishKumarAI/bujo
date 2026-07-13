@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Cake, ChevronDown, ChevronRight } from 'lucide-react'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Card, Empty, Input } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
@@ -175,7 +176,7 @@ export function Collections() {
             className="w-12 rounded-lg border border-surface1 bg-base px-2 text-center text-lg text-text"
           />
           <Input value={colName} onChange={(e) => setColName(e.target.value)} placeholder="Collection name" className="max-w-xs" />
-          <Button variant="primary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }}>
+          <Button variant="default" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-lg">
             New collection
           </Button>
         </div>
@@ -210,7 +211,7 @@ export function Collections() {
               onSubmit={(e) => { e.preventDefault(); if (colEntry.trim()) { addEntry(todayISO(), colEntry, openCol); setColEntry('') } }}
             >
               <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
-              <Button type="submit" variant="primary">Add</Button>
+              <Button type="submit" variant="default" className="press-3d rounded-lg">Add</Button>
             </form>
             {(() => {
               const p = collectionProgress(data.entries, openCol)
@@ -265,7 +266,7 @@ export function Collections() {
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
                 </select>
                 <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-surface1 bg-base px-2 text-sm text-text" aria-label="Day" />
-                <Button variant="primary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }}>Add</Button>
+                <Button variant="default" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-lg">Add</Button>
               </div>
               {birthdays.length === 0 ? (
                 <Empty>No birthdays yet.</Empty>
@@ -278,7 +279,7 @@ export function Collections() {
                         <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
                         {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
                       </span>
-                      {!b.fromFriend && <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>}
+                      {!b.fromFriend && <Button variant="ghost" size="icon-sm" onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>}
                     </li>
                   ))}
                 </ul>

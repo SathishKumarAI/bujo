@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Card, Input } from '../components/ui'
-import { CollapsibleSection } from '../components/gym/CollapsibleSection'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Page } from '../components/shell/Page'
 import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { CloudCog, HardDrive, FolderOpen, ShieldCheck, Check, UserCircle2, LogIn } from 'lucide-react'
 import { useJournal } from '../store'
-// (Welcome uses native buttons)
+// (the three choice cards below stay native buttons — card-shaped click targets)
+import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
@@ -94,9 +95,13 @@ export function Welcome() {
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
                 {googleOk && (
-                  <button onClick={google} disabled={busy} className="press-3d inline-flex items-center gap-2 rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">{busy ? 'Starting…' : 'Continue with Google'}</button>
+                  <Button onClick={google} disabled={busy} variant="default" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
                 )}
-                <button onClick={() => { setShowLogin(true); setErr('') }} className={`inline-flex items-center gap-1.5 text-sm ${googleOk ? 'text-mauve hover:underline' : 'press-3d rounded-lg bg-mauve px-4 py-2 font-medium text-crust'}`}><LogIn size={14} /> {googleOk ? 'Use email' : 'Sign in with email'}</button>
+                {googleOk ? (
+                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Use email</button>
+                ) : (
+                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><LogIn size={14} /> Sign in with email</Button>
+                )}
                 <span className="text-xs text-overlay0">Sign in to create your journal and sync it across devices.</span>
               </div>
             ) : (
@@ -104,8 +109,8 @@ export function Welcome() {
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
                 <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
                 <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => account('login')} disabled={busy} className="press-3d rounded-lg bg-mauve px-4 py-2 text-sm font-medium text-crust disabled:opacity-50">Log in</button>
-                  <button onClick={() => account('signup')} disabled={busy} className="rounded-lg border border-surface1 px-4 py-2 text-sm text-subtext1">Sign up</button>
+                  <Button onClick={() => account('login')} disabled={busy} variant="default" className="press-3d">Log in</Button>
+                  <Button onClick={() => account('signup')} disabled={busy} variant="outline" className="text-subtext1">Sign up</Button>
                   <button onClick={forgot} disabled={busy} className="ml-auto text-xs text-overlay1 hover:text-subtext1">Forgot password?</button>
                   <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-sm text-overlay0">Back</button>
                 </div>
@@ -164,12 +169,13 @@ export function Welcome() {
         {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
         <div className="rise mt-5 rounded-xl border border-dashed border-surface1 p-4 text-center" style={{ animationDelay: '320ms' }}>
           <p className="mb-2 text-sm text-subtext1">Just looking? <strong className="text-text">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
-          <button
+          <Button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}
-            className="press-3d rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-text hover:text-mauve"
+            variant="secondary"
+            className="press-3d hover:text-mauve"
           >
             Explore the demo →
-          </button>
+          </Button>
           <p className="mt-2 text-xs text-overlay0">
             Learn as you go: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
             <br />Changed your mind? Reset or wipe the sample anytime in <strong>Settings → Data &amp; Cloud</strong>.

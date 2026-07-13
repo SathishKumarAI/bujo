@@ -7,8 +7,9 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Maximize2, X } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Segmented } from '../components/ui'
-import { CollapsibleSection as Section } from '../components/trackers/CollapsibleSection'
+import { Card, Empty, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
+import { QuietSection as Section } from '../components/CollapsibleSection'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
@@ -195,10 +196,10 @@ export function Stats() {
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
-            <Button onClick={() => setYm(ymOf(todayISO()))}>This month</Button>
-            <Button onClick={() => shift(1)} aria-label="Next month">→</Button>
-            <Button onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge"><Maximize2 size={14} /></Button>
+            <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d rounded-lg">←</Button>
+            <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d rounded-lg">This month</Button>
+            <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d rounded-lg">→</Button>
+            <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d rounded-lg"><Maximize2 size={14} /></Button>
           </div>
         }
       >
@@ -229,7 +230,7 @@ export function Stats() {
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>
+            <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d rounded-lg"><Maximize2 size={14} /></Button>
           </div>
         }>
         {yearPixels(false)}
@@ -315,7 +316,7 @@ export function Stats() {
           <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
-              <button onClick={() => setEnlarged(null)} aria-label="Close" className="text-overlay1 hover:text-foreground"><X size={20} /></button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-overlay1 hover:text-foreground"><X size={20} /></Button>
             </div>
             {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
           </div>

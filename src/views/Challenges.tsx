@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Flame, Plus, Trophy, Archive, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, Segmented } from '../components/ui'
+import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Page } from '../components/shell/Page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
@@ -25,7 +26,7 @@ export function Challenges() {
         title="Challenges"
         subtitle="Fixed-length discipline challenges · 75 Hard, 90-day & more"
         right={
-          <Button variant="primary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
+          <Button onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
             {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
           </Button>
         }
@@ -91,8 +92,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       right={
         <div className="flex items-center gap-1">
           <span className="mr-1 inline-flex items-center gap-1 text-xs text-peach" title="Current streak"><Flame size={13} />{streak}</span>
-          <Button onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
-          <Button variant="danger" onClick={() => { if (confirm(`Delete the "${c.name}" challenge and its log?`)) removeChallenge(c.id) }} aria-label="Delete challenge"><Trash2 size={14} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Delete the "${c.name}" challenge and its log?`)) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Trash2 size={14} /></Button>
         </div>
       }
     >
@@ -270,7 +271,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
         <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
-      <Button variant="primary" onClick={submit} className="w-full">Start challenge</Button>
+      <Button onClick={submit} className="w-full">Start challenge</Button>
     </div>
   )
 }

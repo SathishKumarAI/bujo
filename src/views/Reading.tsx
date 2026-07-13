@@ -5,7 +5,8 @@ import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFinish, readingStreak, averageDaysToFinish, yearInBooks, finishedByMonth, staleBooks, allLearnings, ratingDistribution } from '../lib/reading'
 import { StatTile } from '../components/ui'
-import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
+import { Button } from '../components/ui/button'
+import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
@@ -89,9 +90,9 @@ export function Reading() {
         <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)"
           onKeyDown={(e) => e.key === 'Enter' && add()}
           className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
-        <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">
+        <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
           <Plus size={15} /> Add to shelf
-        </button>
+        </Button>
       </div>
 
       {/* Shelves */}
@@ -282,7 +283,7 @@ function ReadLater() {
           className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
         <input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Title (optional)"
           className="min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
-        <button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust"><Plus size={15} /> Save</button>
+        <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
       </div>
       {links.length === 0 ? (
         <p className="rounded-xl border border-dashed border-surface1 p-4 text-center text-xs text-overlay0">No saved links yet · paste an article or book page to read later.</p>
@@ -298,7 +299,7 @@ function ReadLater() {
                 {l.title || l.url}
               </a>
               <ExternalLink size={12} className="shrink-0 text-overlay0" />
-              <button onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></button>
+              <Button variant="ghost" size="icon-sm" onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
             </li>
           ))}
         </ul>
@@ -336,7 +337,7 @@ function BookCard({ book }: { book: Book }) {
           <p className="truncate text-sm font-medium text-foreground">{book.title}</p>
           {book.author && <p className="truncate text-xs text-overlay0">{book.author}</p>}
         </div>
-        <button onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-overlay0 hover:text-red"><Trash2 size={14} /></button>
+        <Button variant="ghost" size="icon-sm" onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-overlay0 hover:text-red"><Trash2 size={14} /></Button>
       </div>
 
       {book.status === 'reading' && (
@@ -403,7 +404,7 @@ function BookCard({ book }: { book: Book }) {
                   <li key={i} className="group flex items-start gap-1.5 text-xs text-overlay1">
                     <span className="shrink-0 text-overlay0">{prettyDay(l.date)}:</span>
                     <span className="flex-1">{l.text}</span>
-                    <button onClick={() => store.removeBookLearning(book.id, i)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => store.removeBookLearning(book.id, i)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </li>
                 ))}
               </ul>
@@ -411,7 +412,7 @@ function BookCard({ book }: { book: Book }) {
             <div className="flex gap-1.5">
               <input value={learn} onChange={(e) => setLearn(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLearning()} placeholder="What did you learn today?"
                 className="w-full rounded-md border border-input bg-card px-2 py-1 text-xs text-foreground" />
-              <button onClick={addLearning} className="shrink-0 rounded-md bg-primary px-2 text-xs font-medium text-crust">Add</button>
+              <Button onClick={addLearning} size="xs" className="shrink-0">Add</Button>
             </div>
           </div>
         </div>
@@ -422,8 +423,8 @@ function BookCard({ book }: { book: Book }) {
 
 function Move({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="rounded-md border border-border px-2 py-0.5 text-[11px] text-subtext0 hover:border-primary hover:text-foreground">
+    <Button onClick={onClick} variant="ghost" size="xs" className="border border-border text-subtext0 hover:border-primary hover:text-foreground">
       → {label}
-    </button>
+    </Button>
   )
 }

@@ -216,6 +216,7 @@ export function Button({
   type = 'button',
   className = '',
   title,
+  disabled,
   'aria-label': ariaLabel,
 }: {
   children: ReactNode
@@ -224,6 +225,9 @@ export function Button({
   type?: 'button' | 'submit'
   className?: string
   title?: string
+  /** Forwarded so an async action can go busy — without this the button stays
+   *  clickable mid-flight and double-submits. */
+  disabled?: boolean
   'aria-label'?: string
 }) {
   const v = variant === 'primary' ? 'default' : variant === 'danger' ? 'ghost' : 'secondary'
@@ -232,6 +236,7 @@ export function Button({
       type={type}
       onClick={onClick}
       title={title}
+      disabled={disabled}
       aria-label={ariaLabel}
       variant={v}
       className={cn('press-3d rounded-lg', variant === 'danger' && 'text-red hover:text-red', className)}
@@ -338,12 +343,9 @@ export function Empty({
       <p className="text-sm font-medium text-subtext1">{children}</p>
       {hint && <p className="max-w-xs text-xs text-overlay0">{hint}</p>}
       {action && (
-        <button
-          onClick={action.onClick}
-          className="mt-1 rounded-lg bg-surface1 px-3 py-1.5 text-xs text-text hover:bg-surface2"
-        >
+        <SButton variant="secondary" size="sm" className="mt-1" onClick={action.onClick}>
           {action.label}
-        </button>
+        </SButton>
       )}
     </div>
   )

@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Repeat, Trash2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
-import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
-import { CollapsibleSection } from '../components/gym/CollapsibleSection'
+import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
@@ -79,7 +80,7 @@ export function Fitness() {
 
   return (
     <Page>
-      <Card title="Log a workout" right={workouts.length > 0 ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat last</Button> : undefined}>
+      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat last</Button> : undefined}>
         <div className="space-y-3">
           <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <label className="block text-sm text-subtext1">Activity
@@ -91,14 +92,14 @@ export function Fitness() {
           {f.distance && f.duration && <p className="text-xs text-overlay0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
           <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
-          <Button variant="primary" onClick={submit} className="w-full">Log workout</Button>
+          <Button variant="default" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
         </div>
       </Card>
 
       <Card
         title="History"
         subtitle="Tap a workout to edit"
-        right={workouts.length > 6 ? <Button onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
+        right={workouts.length > 6 ? <Button variant="secondary" onClick={() => setShowAll((v) => !v)} className="press-3d rounded-lg">{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
       >
         {workouts.length === 0 ? (
           <Empty>No workouts logged yet.</Empty>
@@ -116,7 +117,7 @@ export function Fitness() {
                     {w.durationMin != null && <span>{w.durationMin}m</span>}
                     {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
                     {p && <span className="text-sky">{p}</span>}
-                    <button onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                 </li>
               )
@@ -184,8 +185,8 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
       <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
-        <Button variant="primary" onClick={() => onSave(formToPayload(f))} className="flex-1">Save</Button>
-        <Button variant="danger" onClick={() => { if (confirm('Delete this workout?')) onDelete() }} className="inline-flex items-center gap-1.5"><Trash2 size={14} /> Delete</Button>
+        <Button variant="default" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-lg">Save</Button>
+        <Button variant="ghost" onClick={() => { if (confirm('Delete this workout?')) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
       </div>
     </div>
   )
@@ -287,7 +288,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
       subtitle="Calories & macros · add foods or type your own"
       collapsible
       defaultCollapsed
-      right={<Button onClick={fillSample} title="Fill a typical ~1800 kcal day">Sample day</Button>}
+      right={<Button variant="secondary" onClick={fillSample} title="Fill a typical ~1800 kcal day" className="press-3d rounded-lg">Sample day</Button>}
     >
       {/* Quick-add from the food DB (American + Indian staples). */}
       <div className="mb-3">

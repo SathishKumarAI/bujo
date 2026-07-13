@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen, Plus, Trash2, Sparkles, CalendarClock } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Card, Empty, Input } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Stepper } from '../components/fields/Stepper'
 import { Page } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
@@ -217,7 +218,7 @@ export function Goals() {
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
           <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="Unit" className="w-24" aria-label="Unit" />
-          <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
+          <Button variant="default" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
         </div>
         {customGoals.length === 0 ? (
           <Empty>No custom goals yet · add one above to track anything.</Empty>
@@ -234,7 +235,7 @@ export function Goals() {
                   <div className="mb-1.5 flex items-center gap-2 text-sm">
                     <span className="font-medium text-text">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
-                    <button onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />

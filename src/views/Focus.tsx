@@ -5,10 +5,11 @@ import {
 import { Code2, Flame, Keyboard } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
+import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
-import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
+import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
@@ -102,7 +103,7 @@ export function Focus() {
             <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
             <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
           </div>
-          <Button variant="primary" onClick={log} className="w-full">Log session</Button>
+          <Button onClick={log} className="w-full">Log session</Button>
         </div>
       </Card>
 
@@ -372,7 +373,7 @@ function TypingPractice() {
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <Button variant="primary" onClick={log} className="w-full">Add session</Button>
+          <Button onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
           <div className="rounded-lg border border-surface0 bg-base px-3 py-2.5">
@@ -443,7 +444,7 @@ function TypingPractice() {
                 {s.wpm != null && <span style={{ color: cat('mauve') }}>{s.wpm} wpm</span>}
                 {s.accuracy != null && <span style={{ color: cat('green') }}>{s.accuracy}% acc</span>}
               </div>
-              <button onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-overlay0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</button>
+              <Button variant="ghost" size="icon-sm" onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-overlay0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</Button>
             </li>
           ))}
         </ul>
@@ -483,8 +484,8 @@ function SessionRow({ s, onSave, onDelete }: {
         <div className="mt-2"><Slider label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
         <label className="mt-2 block text-xs text-subtext1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
         <div className="mt-3 flex gap-2">
-          <Button variant="primary" onClick={save} className="flex-1">Save</Button>
-          <Button onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+          <Button onClick={save} className="flex-1">Save</Button>
+          <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
         </div>
       </li>
     )
@@ -494,8 +495,8 @@ function SessionRow({ s, onSave, onDelete }: {
       <div className="flex items-center justify-between">
         <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-overlay0">{prettyDay(s.date)}</span></span>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-          <button onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-xs text-overlay0 hover:text-mauve">Edit</button>
-          <button onClick={onDelete} aria-label="Delete session" className="text-overlay0 hover:text-red">×</button>
+          <Button variant="ghost" size="sm" onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="h-auto p-0 text-xs text-overlay0 hover:text-mauve">Edit</Button>
+          <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete session" className="text-overlay0 hover:text-red">×</Button>
         </div>
       </div>
       <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">

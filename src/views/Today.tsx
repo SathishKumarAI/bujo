@@ -1,7 +1,8 @@
 import { Utensils, CupSoda, Flame, NotebookPen } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Slider } from '../components/ui'
+import { Card, Empty, Input, Slider } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
@@ -75,16 +76,16 @@ export function Today() {
           <p className="mb-2 text-sm text-subtext1">Broke fast with</p>
           <div className="flex gap-2">
             <Button
-              variant={metric?.fastBreak === 'food' ? 'primary' : 'ghost'}
+              variant={metric?.fastBreak === 'food' ? 'default' : 'ghost'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-              className="inline-flex items-center gap-1.5"
+              className="press-3d inline-flex items-center gap-1.5 rounded-lg"
             >
               <Utensils size={14} /> Food
             </Button>
             <Button
-              variant={metric?.fastBreak === 'drink' ? 'primary' : 'ghost'}
+              variant={metric?.fastBreak === 'drink' ? 'default' : 'ghost'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-              className="inline-flex items-center gap-1.5"
+              className="press-3d inline-flex items-center gap-1.5 rounded-lg"
             >
               <CupSoda size={14} /> Drink
             </Button>
@@ -115,7 +116,7 @@ export function Today() {
         {carryover.length > 0 && (
           <div className="mb-3 flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
             <span className="text-subtext1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-            <Button onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))}>Carry forward</Button>
+            <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-lg">Carry forward</Button>
           </div>
         )}
         {dayEntries.length === 0 ? (

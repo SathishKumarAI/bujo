@@ -1,6 +1,7 @@
 import { Brain, Plus, Check, Trash2, Sparkles } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { MINDSET_LIBRARY, MINDSET_CATEGORIES, principleById } from '../lib/mindset'
 
@@ -29,7 +30,7 @@ export function Mindset() {
                   <div className="mb-1 flex items-center gap-2">
                     <Check size={14} className="shrink-0 text-mauve" />
                     <span className="text-sm font-medium text-text">{p.title}</span>
-                    <button onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
                   </div>
                   <p className="mb-2 text-xs text-overlay1">{p.why}</p>
                   <Textarea value={f.note ?? ''} onChange={(e) => setMindsetNote(f.id, e.target.value)} placeholder="How will you apply this? (your cue)" rows={2} className="text-xs" />

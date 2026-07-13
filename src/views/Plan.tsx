@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
 import { Star } from 'lucide-react'
-import { Button, Card, Empty, Input, Segmented } from '../components/ui'
+import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
@@ -127,18 +128,18 @@ export function Plan() {
                   <span className="shrink-0 text-xs text-overlay0">{prettyDay(e.date)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <Button onClick={() => migrateEntry(e.id, today)} title="Move to today">→ Today</Button>
-                  <Button onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow">→ Tomorrow</Button>
-                  <Button variant="danger" onClick={() => dropEntry(e.id)} title="Drop it">drop</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, today)} title="Move to today" className="press-3d rounded-lg">→ Today</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow" className="press-3d rounded-lg">→ Tomorrow</Button>
+                  <Button variant="ghost" onClick={() => dropEntry(e.id)} title="Drop it" className="press-3d rounded-lg text-red hover:text-red">drop</Button>
                 </div>
               </li>
             ))}
           </ul>
         )}
         {overdue.length > 5 && (
-          <button onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 text-sm text-mauve hover:underline">
+          <Button variant="link" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-sm text-mauve">
             {showAllOverdue ? 'Show less' : `Show all ${overdue.length}`}
-          </button>
+          </Button>
         )}
       </Card>
 
@@ -156,12 +157,14 @@ export function Plan() {
                 <li key={t.rootId} className="rounded-lg border border-surface0 bg-base px-2.5 py-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2 truncate">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => migrateEntry(t.current.id, today)}
                         title="Bring to today"
                         className="shrink-0 text-overlay0 hover:text-mauve"
                         aria-label={`Bring "${t.text}" to today`}
-                      >→</button>
+                      >→</Button>
                       <span className="truncate text-subtext1">{t.text}</span>
                     </span>
                     <button
@@ -222,7 +225,7 @@ export function Plan() {
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
-          <Button variant="primary" onClick={addRule}>Add rule</Button>
+          <Button onClick={addRule} className="press-3d rounded-lg">Add rule</Button>
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">
@@ -252,12 +255,14 @@ export function Plan() {
                     </span>
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => { const t = prompt('Edit recurring task (updates every future occurrence):', r.text); if (t && t.trim()) updateRecurrence(r.id, { text: t.trim() }) }}
                       aria-label="Edit rule"
                       className="text-overlay0 hover:text-mauve"
-                    >✎</button>
-                    <button onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-overlay0 hover:text-red">×</button>
+                    >✎</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-overlay0 hover:text-red">×</Button>
                   </div>
                 </li>
               ))}
@@ -267,7 +272,7 @@ export function Plan() {
       </Card>
 
       <Card title="Import calendar (.ics)" subtitle="Bring events from Google/Apple Calendar onto your monthly">
-        <Button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Choose .ics file</Button>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><CalendarPlus size={15} /> Choose .ics file</Button>
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
         <p className="mt-2 text-xs text-overlay0">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>

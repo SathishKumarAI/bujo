@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Play, Search, Plus, Dumbbell } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, Textarea } from '../components/ui'
+import { Card, Empty, Input, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
@@ -59,14 +60,14 @@ export function HomeWorkout() {
               <div key={i.id} className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm text-subtext1">{i.name}</span>
                 <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-xs" />
-                <button onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-overlay0 hover:text-red">×</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-overlay0 hover:text-red">×</Button>
               </div>
             ))}
             <div className="grid grid-cols-2 gap-2 pt-1">
               <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
             </div>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
-            <Button variant="primary" onClick={logSession} className="w-full">Log workout</Button>
+            <Button variant="default" onClick={logSession} className="press-3d w-full rounded-lg">Log workout</Button>
           </div>
         )}
       </Card>
@@ -86,7 +87,7 @@ export function HomeWorkout() {
                       <span className="text-overlay0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
                       <span className="ml-1 text-[10px] text-overlay0">{open ? '▾' : '▸'}</span>
                     </button>
-                    <button onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                   {open && (
                     <ul className="mt-1.5 ml-1 space-y-0.5">
@@ -125,7 +126,7 @@ export function HomeWorkout() {
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-red hover:underline"><Play size={11} /> Watch demo</a>
                 <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-overlay0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
-                <button onClick={() => add(ex)} className="ml-auto inline-flex items-center gap-1 rounded-md border border-surface1 px-2 py-0.5 text-xs text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</button>
+                <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</Button>
               </div>
             </div>
           ))}

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
-import { Button, Card, Input, Textarea } from '../components/ui'
+import { Card, Input, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
@@ -163,7 +164,7 @@ export function Monthly() {
             placeholder="e.g. Moab, Utah 🏜️"
           />
           {data.settings.weatherEnabled && (
-            <Button onClick={autoFill} className="mt-2 w-full">
+            <Button variant="secondary" onClick={autoFill} className="press-3d rounded-lg mt-2 w-full">
               {geoBusy ? 'Locating…' : '📍 Auto-fill'}
             </Button>
           )}

@@ -1,4 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Download, RotateCw } from 'lucide-react'
+import { Button } from './ui/button'
 import { STORAGE_KEY, STORAGE_ENC_KEY } from '../lib/storage'
 
 interface Props { children: ReactNode }
@@ -53,19 +55,13 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
 
           <div className="mt-5 flex flex-col gap-2">
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-lg bg-surface1 px-4 py-2 text-sm text-text hover:bg-surface2"
-            >
-              Reload the app
-            </button>
+            <Button onClick={() => window.location.reload()}>
+              <RotateCw /> Reload the app
+            </Button>
             {hasData && (
-              <button
-                onClick={this.download}
-                className="rounded-lg border border-surface1 px-4 py-2 text-sm text-subtext1 hover:text-text"
-              >
-                Download a backup first
-              </button>
+              <Button variant="outline" onClick={this.download}>
+                <Download /> Download a backup first
+              </Button>
             )}
           </div>
 

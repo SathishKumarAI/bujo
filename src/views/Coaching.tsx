@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { GraduationCap, Check, Dumbbell, Brain, CalendarDays, Trophy, ListChecks, Target, HeartPulse, ShieldAlert, BookOpen } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, StatTile } from '../components/ui'
+import { Card, StatTile } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
@@ -45,7 +46,7 @@ export function Coaching() {
         {!start ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-surface1 p-4">
             <p className="text-sm text-subtext0">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
-            <Button variant="primary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
+            <Button onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
           </div>
         ) : (
           <>
@@ -55,7 +56,7 @@ export function Coaching() {
               <StatTile compact label="Progress" value={`${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`} color="teal" icon={<Trophy size={14} />} />
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-[width]" style={{ width: `${(done.length / ACADEMY_TOTAL_WEEKS) * 100}%`, background: cat('green') }} /></div>
-            <button onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 text-xs text-overlay0 hover:text-red">Reset program</button>
+            <Button variant="link" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-xs text-overlay0 hover:text-red hover:no-underline">Reset program</Button>
           </>
         )}
       </Card>

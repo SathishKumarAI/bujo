@@ -8,7 +8,8 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, StatTile } from '../components/ui'
+import { Card, Empty, Input, StatTile } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
 import { ExerciseDB } from '../components/ExerciseDB'
@@ -209,7 +210,7 @@ export function Gym() {
           ? 'Muscles worked by this exercise'
           : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
-      right={focusEx && <Button onClick={() => setFocusEx(null)} className="inline-flex items-center gap-1.5"><X size={14} /> Clear</Button>}
+      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><X size={14} /> Clear</Button>}
       collapsible
       defaultCollapsed
     >
@@ -222,7 +223,7 @@ export function Gym() {
         />
         <div className="flex flex-wrap items-center gap-2">
           {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="primary" onClick={() => { addRow(focusEx) }} className="inline-flex items-center gap-1.5">
+            <Button variant="default" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
               <Plus size={14} /> Add to session
             </Button>
           )}
@@ -294,7 +295,7 @@ export function Gym() {
 
       {/* ── Last session rollup · shown after Finish, until the next edit ── */}
       {summary && summary.sets > 0 && (
-        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<button onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-overlay0 hover:text-text"><X size={16} /></button>}>
+        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-overlay0 hover:text-text"><X size={16} /></Button>}>
           <div className="grid grid-cols-3 gap-3">
             <StatTile icon={<Dumbbell size={16} />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
             <StatTile icon={<Layers size={16} />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
@@ -314,9 +315,9 @@ export function Gym() {
         title="Today's session"
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
         right={
-          <button onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-overlay0 hover:text-text">
+          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-overlay0 hover:text-text">
             {sessionOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+          </Button>
         }
       >
         {sessionOpen && (<>
@@ -393,7 +394,7 @@ export function Gym() {
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
                 <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-xs font-bold" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
-                <button onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="grid h-7 w-7 place-items-center text-overlay0 hover:text-red"><X size={15} /></button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-overlay0 hover:text-red"><X size={15} /></Button>
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
                   <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-overlay0">
@@ -462,11 +463,11 @@ export function Gym() {
         })()}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button onClick={() => addRow()}>+ Add set</Button>
-          <Button variant="primary" onClick={finish}>Finish session</Button>
+          <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-lg">+ Add set</Button>
+          <Button variant="default" onClick={finish} className="press-3d rounded-lg">Finish session</Button>
           <div className="ml-auto flex gap-2">
             <Input value={routineName} onChange={(e) => setRoutineName(e.target.value)} placeholder="Save as routine…" className="max-w-[160px] py-1.5" />
-            <Button onClick={saveAsRoutine}>Save routine</Button>
+            <Button variant="secondary" onClick={saveAsRoutine} className="press-3d rounded-lg">Save routine</Button>
           </div>
         </div>
         </>)}
@@ -477,7 +478,8 @@ export function Gym() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
-            variant="primary"
+            variant="default"
+            className="press-3d rounded-lg"
             onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}
           >
             Log weight
@@ -695,7 +697,7 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
                   <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
                   <span className="ml-1 text-overlay0">{r.exercises.length} exercises</span>
                 </button>
-                <button onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
               </li>
             )
           })}

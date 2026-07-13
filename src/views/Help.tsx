@@ -1,5 +1,5 @@
 import { Card } from '../components/ui'
-import { CollapsibleSection } from '../components/gym/CollapsibleSection'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { BULLET_LEGEND } from '../lib/bullets'
 import { cat } from '../lib/colors'
 

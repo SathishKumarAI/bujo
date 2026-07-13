@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { UserCircle2, LogOut, Mail, Lock, Eye, EyeOff, ShieldCheck, Cloud, RefreshCw, Check } from 'lucide-react'
 import { useJournal } from '../store'
+import { Button } from '../components/ui/button'
 import { useNav } from '../components/shell/nav'
 import { migrate } from '../lib/storage'
 import { authFormError, isValidEmail, suggestEmailFix, passwordError } from '../lib/validate'
@@ -112,13 +113,13 @@ export function Account() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
-          <button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
-            disabled={busy} className="press-3d inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-crust disabled:opacity-50">
+          <Button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
+            disabled={busy} variant="default" className="press-3d flex-1 gap-1.5">
             <RefreshCw size={14} /> {busy ? 'Saving…' : 'Save now'}
-          </button>
-          <button onClick={out} disabled={busy} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-sm text-red disabled:opacity-50">
+          </Button>
+          <Button onClick={out} disabled={busy} variant="outline" className="gap-1.5 text-red hover:text-red">
             <LogOut size={14} /> Sign out
-          </button>
+          </Button>
         </div>
         {signedIn && (
           <div className="mt-4 border-t border-border pt-4">
@@ -130,15 +131,15 @@ export function Account() {
                   <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); setErr('') }}
                     onKeyDown={(e) => e.key === 'Enter' && changePw()} placeholder="New password (min 6)"
                     className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-                  <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="text-overlay0 hover:text-subtext1">
+                  <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-overlay0 hover:text-subtext1">
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                  </Button>
                 </Field>
                 <div className="flex gap-2">
-                  <button onClick={changePw} disabled={busy} className="press-3d inline-flex flex-1 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-medium text-crust disabled:opacity-50">
+                  <Button onClick={changePw} disabled={busy} variant="default" size="sm" className="press-3d flex-1">
                     {busy ? 'Updating…' : 'Update password'}
-                  </button>
-                  <button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} className="rounded-lg border border-border px-3 py-2 text-xs text-subtext0 disabled:opacity-50">Cancel</button>
+                  </Button>
+                  <Button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} variant="outline" size="sm" className="text-subtext0">Cancel</Button>
                 </div>
               </div>
             )}
@@ -168,9 +169,9 @@ export function Account() {
 
       {googleOk && (
         <>
-          <button onClick={google} disabled={busy} className="press-3d inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:border-primary disabled:opacity-50">
+          <Button onClick={google} disabled={busy} variant="outline" className="press-3d w-full gap-2 hover:border-primary">
             <GoogleMark /> Continue with Google
-          </button>
+          </Button>
           <div className="my-4 flex items-center gap-3 text-xs text-overlay0">
             <span className="h-px flex-1 bg-border" /> or {mode === 'login' ? 'sign in' : 'sign up'} with email <span className="h-px flex-1 bg-border" />
           </div>
@@ -187,15 +188,15 @@ export function Account() {
           <input type={showPw ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={pw} onChange={(e) => setPw(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="Password (min 6)"
             className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-          <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="text-overlay0 hover:text-subtext1">
+          <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-overlay0 hover:text-subtext1">
             {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
+          </Button>
         </Field>
       </div>
 
-      <button onClick={submit} disabled={busy} className="press-3d mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-crust disabled:opacity-50">
+      <Button onClick={submit} disabled={busy} variant="default" className="press-3d mt-4 w-full gap-1.5">
         {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
-      </button>
+      </Button>
 
       {mode === 'login' && (
         <div className="mt-3 text-center">

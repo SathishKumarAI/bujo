@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
@@ -337,7 +338,7 @@ export function Pickleball() {
         </Card>
       )}
 
-      <Card title="Log a session" right={sessions.length ? <Button onClick={repeatLast} className="inline-flex items-center gap-1"><Repeat size={13} /> Repeat</Button> : undefined}>
+      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
@@ -360,7 +361,7 @@ export function Pickleball() {
           </select>
         </div>
         <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
-        <Button variant="primary" onClick={log} className="mt-3 w-full">Log session</Button>
+        <Button variant="default" onClick={log} className="press-3d mt-3 w-full rounded-lg">Log session</Button>
       </Card>
 
       <Card title="History" subtitle="Tap Edit to fix a score · × to remove" collapsible>
@@ -381,7 +382,7 @@ export function Pickleball() {
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-xs text-subtext1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-xs text-subtext1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-          <Button variant="primary" onClick={saveDupr}>Log rating</Button>
+          <Button variant="default" onClick={saveDupr} className="press-3d rounded-lg">Log rating</Button>
         </div>
         {duprStats.points.length === 0 ? (
           <Empty>No DUPR ratings logged yet · add one above to start the trend.</Empty>
@@ -411,7 +412,7 @@ export function Pickleball() {
                   <span className="text-subtext1">{prettyDay(p.date)}</span>
                   <span className="flex items-center gap-2">
                     <span className="font-medium tabular-nums" style={{ color: cat('mauve') }}>{p.rating}</span>
-                    <button onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </span>
                 </li>
               ))}
@@ -441,7 +442,7 @@ export function Pickleball() {
           <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
           <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
           <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-          <Button variant="primary" onClick={logEvent} className="sm:col-span-2">Log event</Button>
+          <Button variant="default" onClick={logEvent} className="press-3d rounded-lg sm:col-span-2">Log event</Button>
         </div>
         {/* event list */}
         {events.length > 0 && (
@@ -455,7 +456,7 @@ export function Pickleball() {
                 <span className="flex shrink-0 items-center gap-2">
                   {e.placement && <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
                   {(e.wins != null || e.losses != null) && <span className="text-overlay1">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                  <button onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </span>
               </li>
             ))}
@@ -603,8 +604,8 @@ function PickleRow({ p, onSave, onDelete }: {
         </div>
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
-          <Button variant="primary" onClick={save} className="flex-1">Save</Button>
-          <Button onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+          <Button variant="default" onClick={save} className="press-3d flex-1 rounded-lg">Save</Button>
+          <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-lg">Cancel</Button>
         </div>
       </li>
     )
@@ -614,8 +615,8 @@ function PickleRow({ p, onSave, onDelete }: {
       <span className="text-subtext1">{prettyDay(p.date)} <span className="text-overlay0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-        <button onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-xs text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</button>
-        <button onClick={onDelete} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
       </span>
     </li>
   )

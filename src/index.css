@@ -124,6 +124,20 @@ body,
   zoom: calc(1 / var(--font-scale, 1));
 }
 
+/* ── Motion tokens ──────────────────────────────────────────────────────────
+   One emphasis curve and one small set of durations, so every animation in the
+   app moves like it belongs to the same app. The curve below was already the de
+   facto standard — it was pasted as a literal in five places; naming it means a
+   change to the app's feel happens here, once. */
+:root {
+  --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1); /* entrances, sheets, celebrations */
+  --ease-rise: cubic-bezier(0.2, 0.7, 0.2, 1); /* softer, for long rises */
+  --dur-press: 0.1s;   /* button/press feedback — must feel instant */
+  --dur-fast: 0.18s;   /* hovers, sheets */
+  --dur-base: 0.28s;   /* page/content transitions */
+  --dur-slow: 0.4s;    /* staged entrances */
+}
+
 /* ── 3D depth utilities ─────────────────────────────────────────────────── */
 .card-3d {
   background-image: linear-gradient(
@@ -135,7 +149,7 @@ body,
     0 1px 0 0 color-mix(in srgb, var(--color-surface2) 50%, transparent) inset,
     0 10px 22px -12px rgba(0, 0, 0, 0.55),
     0 4px 8px -6px rgba(0, 0, 0, 0.4);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 .card-3d:hover {
   transform: translateY(-2px);
@@ -146,7 +160,7 @@ body,
 }
 .press-3d {
   box-shadow: 0 3px 0 0 color-mix(in srgb, var(--color-crust) 80%, transparent);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: transform var(--dur-press) ease, box-shadow var(--dur-press) ease;
 }
 .press-3d:active {
   transform: translateY(2px);
@@ -294,7 +308,7 @@ body.handwriting textarea {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
-.rise { animation: rise-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.rise { animation: rise-in 0.6s var(--ease-rise) both; }
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; }
 }
@@ -318,7 +332,7 @@ body.handwriting textarea {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 .modal-backdrop-in { animation: modal-backdrop-in 0.16s ease both; }
-.modal-panel-in { animation: modal-panel-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.modal-panel-in { animation: modal-panel-in 0.22s var(--ease-emphasis) both; }
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop-in, .modal-panel-in { animation: none; }
 }
@@ -597,7 +611,7 @@ body.handwriting textarea {
     to { opacity: 1; transform: translateY(0); }
   }
   /* Staggered fade-rise for a page's top-level cards. */
-  .page-enter > * { animation: bujo-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .page-enter > * { animation: bujo-rise 0.4s var(--ease-emphasis) both; }
   .page-enter > *:nth-child(1) { animation-delay: 0ms; }
   .page-enter > *:nth-child(2) { animation-delay: 45ms; }
   .page-enter > *:nth-child(3) { animation-delay: 90ms; }
@@ -607,11 +621,11 @@ body.handwriting textarea {
   .page-enter > *:nth-child(n + 7) { animation-delay: 270ms; }
 
   /* Cards lift a touch toward the cursor — the "3D" feel without a library. */
-  .card-3d { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .card-3d { transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; }
   .card-3d:hover { transform: translateY(-2px); }
 
   /* Pressable controls dip when clicked. */
-  .press-3d { transition: transform 0.1s ease; }
+  .press-3d { transition: transform var(--dur-press) ease; }
   .press-3d:active { transform: translateY(1px) scale(0.985); }
 }
 
@@ -634,7 +648,7 @@ body.handwriting textarea {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .sheet-up { animation: sheet-up 0.18s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .sheet-up { animation: sheet-up 0.18s var(--ease-emphasis) both; }
 }
 
 /* ── Native-app feel on touch / iOS ───────────────────────────────────────── */
@@ -687,7 +701,7 @@ button, a, [role='button'], label, input, select, textarea {
     55% { opacity: 1; transform: scale(1.05); }
     100% { opacity: 1; transform: scale(1); }
   }
-  .celebrate-pop { animation: celebrate-pop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .celebrate-pop { animation: celebrate-pop 0.34s var(--ease-emphasis) both; }
   @keyframes celebrate-confetti {
     0% { transform: translateY(0) rotate(0); opacity: 1; }
     100% { transform: translateY(-24px) rotate(28deg); opacity: 0; }

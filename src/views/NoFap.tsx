@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, Heart, Hourglass, ShieldCheck } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, StatTile, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
@@ -91,7 +92,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
     <div role="dialog" aria-modal="true" aria-label="Urge SOS"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6"
       style={{ background: cat('crust') + 'f2', backdropFilter: 'blur(6px)' }}>
-      <button onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full p-2 text-overlay0 hover:text-text" style={{ background: cat('surface0') }}><X size={20} /></button>
+      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full text-overlay0 hover:text-text" style={{ background: cat('surface0') }}><X size={20} /></Button>
 
       <div className="text-center">
         <div className="inline-flex items-center gap-2 text-sm" style={{ color: cat('peach') }}><LifeBuoy size={16} /> Ride it out · this is a wave, not a command</div>
@@ -127,7 +128,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
         )}
       </div>
 
-      <Button variant="primary" onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
+      <Button onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
     </div>
   )
 }
@@ -334,7 +335,7 @@ export function NoFap() {
             </div>
           </div>
           <div className="mt-3 flex justify-end">
-            <Button variant="primary" onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
+            <Button onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
           </div>
           <div className="mt-3 flex items-center justify-between text-sm">
             <span className="text-subtext1">Urges resisted: <span className="font-semibold" style={{ color: cat('green') }}>{stats.urges}</span></span>
@@ -368,7 +369,7 @@ export function NoFap() {
                   <HandMetal size={13} style={{ color: cat('green') }} className="shrink-0" />
                   <span className="text-subtext1">{u.trigger || 'Urge'}</span>
                   <span className="ml-auto text-xs text-overlay0">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
-                  <button onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </li>
               ))}
             </ul>
@@ -388,7 +389,7 @@ export function NoFap() {
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
             </label>
             {err && <p className="text-xs" style={{ color: cat('red') }}>{err}</p>}
-            <Button variant="danger" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
+            <Button variant="destructive" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
             <p className="text-xs text-overlay0">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
         </Card>
@@ -397,7 +398,7 @@ export function NoFap() {
         <Card title="Per-addiction streaks" subtitle="Track each habit separately · its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
-            <Button variant="primary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
+            <Button onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
           </div>
           {(data.nofap.addictions ?? []).length === 0 ? (
             <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
@@ -419,8 +420,8 @@ export function NoFap() {
                         </div>
                         <span className="text-sm text-subtext1"><span className="font-semibold" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
-                      <Button onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="shrink-0 text-xs">Reset</Button>
-                      <button onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                      <Button variant="ghost" onClick={() => { if (confirm(`Reset the ${a.name} streak to today?`)) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0 text-xs text-red hover:text-red">Reset</Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => { if (confirm(`Stop tracking ${a.name}? Its history is removed.`)) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
                     {/* #123 per-addiction cost/day → money saved */}
                     <div className="mt-2 flex items-center gap-2 pl-7 text-xs text-overlay1">
@@ -453,7 +454,7 @@ export function NoFap() {
           <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
             subtitle="Your quit-date contract · the reason you’re doing this"
             help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
-            right={hasCommitment && !editingCommit ? <Button onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
+            right={hasCommitment && !editingCommit ? <Button variant="secondary" size="sm" onClick={() => setEditingCommit(true)} className="text-xs">Edit</Button> : undefined}>
             {hasCommitment && !editingCommit ? (
               <div>
                 {commitment?.reason && (
@@ -477,7 +478,7 @@ export function NoFap() {
                 <label className="block text-sm text-subtext1">Why I quit
                   <Textarea value={commitment?.reason ?? ''} onChange={(e) => setCommitment({ reason: e.target.value })} placeholder="The reason that matters most to you…" rows={2} className="mt-1" aria-label="Reason for quitting" />
                 </label>
-                {editingCommit && <div className="flex justify-end"><Button variant="primary" onClick={() => setEditingCommit(false)}>Done</Button></div>}
+                {editingCommit && <div className="flex justify-end"><Button onClick={() => setEditingCommit(false)}>Done</Button></div>}
               </div>
             )}
           </Card>
@@ -488,7 +489,7 @@ export function NoFap() {
               <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
               <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
               <Input value={plan.coping} onChange={(e) => setPlan({ ...plan, coping: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && savePlan()} placeholder="Then I will… (e.g. chew gum, walk 10 min)" aria-label="Coping response" className="sm:col-span-2" />
-              <Button variant="primary" onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
+              <Button onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
             </div>
             {plans.length > 0 && (
               <ul className="mt-3 space-y-2">
@@ -497,7 +498,7 @@ export function NoFap() {
                     <div className="flex items-center gap-2">
                       <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{pl.addiction}</span>
                       <span className="text-subtext1"><span className="text-overlay0">when</span> {pl.trigger}</span>
-                      <button onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
                     {pl.coping && <p className="mt-0.5 text-xs text-overlay1"><span className="text-teal">→ then</span> {pl.coping}</p>}
                   </li>
