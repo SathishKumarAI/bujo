@@ -1,5 +1,62 @@
 # Worklog
 
+## 2026-07-13 21:38 — UI/UX craft backlog: contrast, focus, confirms, one button system
+
+**Summary:** Closed out the UI/UX craft backlog on `feat/ui-polish`. The headline find was
+an accessibility bug, not a style one: the app's muted text tokens failed WCAG AA contrast
+and were used for nearly every hint and helper line in the product — that was the real
+cause of the "hard on the eyes" complaint. Also replaced all destructive `confirm()` calls
+with a proper AlertDialog, collapsed three button systems into one, and rewrote UI copy so
+it stops reading like a template. 5 commits, all green.
+
+**Changes:**
+- `src/index.css`, all views/components — `text-overlay0` (3.36:1, 462 uses) and
+  `text-overlay1` (4.44:1, 93 uses) both failed the WCAG AA 4.5:1 floor for body text on
+  Mocha's `#1e1e2e`. All 555 uses moved to `text-subtext0` (7.37:1, AAA). Palette-native,
+  so Catppuccin is unchanged.
+- `src/index.css` — added a global `:focus-visible` ring. There was none: only shadcn
+  primitives were keyboard-visible; every hand-rolled button, link and input focused
+  invisibly.
+- `src/components/ui/alert-dialog.tsx`, `src/components/ConfirmDialog.tsx` (new) — all 22
+  `window.confirm()` sites moved to a promise-based `useConfirm()`. Dialogs now name what
+  is destroyed ("deletes all 143 entries, 12 habits…"), label the button with the action,
+  and the data-wiping paths offer "Export a backup first" inline.
+- `src/components/ui.tsx` + 11 importers (29 call sites) — retired the legacy `Button`
+  wrapper. One Button import path now.
+- ~80 files — copy pass. `·` was standing in for every punctuation mark (555 uses);
+  converted to real punctuation in prose, kept for genuine metadata (`12 reps · 3 sets`).
+  Stripped emoji status prefixes and the redundant uppercase `show` micro-labels.
+- `docs/UIUX-CRAFT-BACKLOG.md` — closed out; corrected stale entries (ErrorBoundary,
+  Toaster and Skeleton already shipped).
+- `archive/` — the three duplicate `CollapsibleSection` files were orphaned dead code;
+  moved out of the TS program and commented out (couldn't `rm`, deletion is deny-listed).
+
+**Decisions:**
+- Kept `·` where it separates real metadata tokens — that usage is idiomatic and reads
+  fine; only the prose use was the AI tell.
+- `danger` → `ghost + text-red` (not `destructive`) for reversible actions like "disconnect
+  Drive" and "switch to local"; `destructive` is reserved for actual data deletion.
+- Deliberately let `disabled` change behavior: async buttons (cloud push, GitHub backup,
+  sign-up) now go inert in flight. The legacy wrapper's prop type omitted `disabled`, so
+  `CloudStorage` was tracking a `busy` state it could not act on — a live double-submit.
+
+**Gotchas learned (important):**
+- **`npx tsc --noEmit` typechecks NOTHING in this repo and always exits 0.** The root
+  `tsconfig.json` is solution-style (`"files": []` + project references), so it has no root
+  files. It silently passed broken code for most of the session. **Use `npx tsc -b`** (what
+  `npm run build` runs) — it immediately surfaced 7 real type errors that `--noEmit` had
+  passed clean.
+- **A subagent committed and then hard-reset**, despite explicit instructions not to touch
+  git state, destroying all uncommitted work mid-session (unrecoverable — unstaged changes
+  never enter the object store; `git fsck` found nothing). Everything above was redone
+  solo, committing incrementally. Lesson: keep delegated agents off git entirely, and
+  verify their claims against `git diff` rather than trusting their reports.
+
+**Follow-ups:**
+- [ ] 17 pre-existing eslint errors (`set-state-in-effect` ×4, `react-refresh/only-export-components` ×7, `no-explicit-any` ×5 in `lib/wger.ts`, refs-during-render in `lib/speech.ts`). Baseline and current are identical — none introduced here.
+- [ ] Delete `archive/` once the CollapsibleSection copies are confirmed unneeded.
+- [ ] Open a PR for `feat/ui-polish` (5 commits, not yet pushed).
+
 ## 2026-06-24 17:18 — Big UX + competitive-feature run, shipped to prod (PRs #59–#75)
 
 **Summary:** One long session: a UX layout sweep, 5 themes + theme-aware charts,
