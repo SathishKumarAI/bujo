@@ -52,6 +52,13 @@ export function CollapsibleSection({
   if (variant === 'quiet') {
     return (
       <section className="space-y-5">
+        {/* Heading wraps button — the WAI-ARIA accordion pattern. The title is
+            styled as a section heading in both variants, so it has to *be* one:
+            without this the whole group is invisible to a screen reader's
+            heading list, and Reading (all three of its sections are collapsible)
+            rendered zero headings inside <main>. The h2 is layout-neutral —
+            preflight zeroes its margin and size, the button keeps w-full. */}
+        <h2>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -68,6 +75,7 @@ export function CollapsibleSection({
             <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
           )}
         </button>
+        </h2>
         {open && children}
       </section>
     )
@@ -75,6 +83,7 @@ export function CollapsibleSection({
 
   return (
     <section className="flex flex-col gap-5">
+      <h2>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -90,6 +99,7 @@ export function CollapsibleSection({
           {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </span>
       </button>
+      </h2>
       {open && children}
     </section>
   )
