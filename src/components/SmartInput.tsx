@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { suggest, findDuplicates, type SuggestContext, type DupItem, type Suggestion } from '../lib/suggest'
 import { useConfirm } from './ConfirmDialog'
+import { Button } from './ui/button'
 
 /**
  * A text input with VS Code-style completion + duplicate detection.
@@ -114,8 +115,8 @@ export function SmartInput({
               <li key={d.id} className="px-3 py-1.5 text-body">
                 <div className="truncate text-fg-1">{d.text}</div>
                 <div className="mt-1 flex gap-2 text-label">
-                  {onGoToDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onGoToDuplicate(d.id); setDupOpen(false) }} className="text-blue hover:underline">Go to</button>}
-                  {onMergeDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onMergeDuplicate(d.id); setDupOpen(false); onChange('') }} className="text-green hover:underline">Merge</button>}
+                  {onGoToDuplicate && <Button variant="link" size="xs" onMouseDown={(e) => e.preventDefault()} onClick={() => { onGoToDuplicate(d.id); setDupOpen(false) }} className="h-auto p-0 text-label font-normal text-blue">Go to</Button>}
+                  {onMergeDuplicate && <Button variant="link" size="xs" onMouseDown={(e) => e.preventDefault()} onClick={() => { onMergeDuplicate(d.id); setDupOpen(false); onChange('') }} className="h-auto p-0 text-label font-normal text-green">Merge</Button>}
                   <span className="text-fg-2">{Math.round(d.score * 100)}% match</span>
                 </div>
               </li>
