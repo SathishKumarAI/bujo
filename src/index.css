@@ -1,5 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+/* Self-hosted fonts (@fontsource, latin subset). Previously a Google Fonts
+   @import, which cost a render-blocking third-party request on every load,
+   leaked the visitor's IP to Google, and left the app fontless offline — wrong
+   for a local-first journal that should open instantly and work on a plane.
+   Self-hosting also let `font-src`/`style-src` drop their Google allowances in
+   vercel.json, tightening the enforced CSP.
+
+   JetBrains Mono is new here: `--font-mono` named it but nothing ever fetched
+   it, so every mono numeral in the app was silently rendering in Consolas. */
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/instrument-sans';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/caveat';
 @import 'tailwindcss';
+@import './styles/tokens.css';
 
 /*
   Catppuccin Mocha palette as Tailwind v4 theme tokens.
@@ -30,13 +43,21 @@
   --color-surface2: #585b70;
   --color-surface1: #45475a;
   --color-surface0: #313244;
-  --color-base: #1e1e2e;
-  --color-mantle: #181825;
-  --color-crust: #11111b;
+  /* Base surfaces retuned toward neutral (was #1e1e2e/#181825/#11111b, 21%
+     saturation). The purple-tinted near-black left the mauve accent nothing to
+     push against — when the background is already violet, a violet button
+     stops reading as the primary action. Saturation drops 21% → 9%; lightness
+     is essentially unchanged, so every text contrast ratio improves slightly
+     (subtext0 7.37 → 7.79, overlay2 5.81 → 6.14). Catppuccin's *palette* is
+     untouched; only these three surface values move. */
+  --color-base: #1a1a1f;
+  --color-mantle: #141419;
+  --color-crust: #0e0e12;
 
-  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Instrument Sans Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Consolas, monospace;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --font-hand: 'Caveat Variable', 'Comic Sans MS', cursive;
 
   /* shadcn semantic colors as Tailwind utilities (bg-background, border-border…) */
   --color-background: var(--background);
@@ -83,6 +104,13 @@
   --input: var(--color-surface1);
   --ring: var(--color-mauve);
   --radius: 0.75rem;
+
+  /* Tertiary text (the brief's `--text-3`), surfaced as `--color-fg-3`.
+     Per-theme, because no single grey clears AA on both near-black and
+     near-white. Mocha uses overlay2 — palette-native, and 6.14:1 against the
+     page / 6.55:1 against a card after the surface retune. overlay1 (4.44:1)
+     and overlay0 (3.36:1) both fail and stay retired from text use. */
+  --fg-3: var(--color-overlay2);
 }
 
 /* Editorial serif for titles gives the journal an intentional, un-generic feel. */
@@ -100,6 +128,15 @@ body,
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Anchor the document to the scale. Without this, any element that doesn't
+   carry an explicit size class inherits the browser's 16px default — a value
+   that isn't in the scale at all (140 such elements before this rule). Stated
+   in rem, so the global text-size setting (FONT-1) still scales it. */
+body {
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 /* One keyboard-focus ring for the whole app. Without this only the shadcn
@@ -192,13 +229,15 @@ body.paper {
   background-position: -1px -1px;
 }
 
-/* Handwriting font for entry text & headings. */
+/* Handwriting font for entry text & headings. Routed through --font-hand: the
+   self-hosted package registers the family as 'Caveat Variable', so the old
+   literal 'Caveat' would have silently fallen through to cursive. */
 body.handwriting {
-  --font-sans: 'Caveat', system-ui, sans-serif;
+  --font-sans: var(--font-hand);
 }
 body.handwriting input,
 body.handwriting textarea {
-  font-family: 'Caveat', system-ui, sans-serif;
+  font-family: var(--font-hand);
   font-size: 1.15em;
 }
 
@@ -384,6 +423,13 @@ body.handwriting textarea {
   /* Map the shadcn semantic border/input to the crisp hairline. */
   --border: var(--border-hairline);
   --input: var(--border-hairline);
+
+  /* Light themes invert the problem: overlay2 (#9aa0a6) is a mid grey that
+     fails badly on near-white (2.50:1). The third tier has to go *darker*, and
+     the usable band between subtext0 (5.74:1) and the 4.5:1 floor is narrow —
+     this value sits at 4.74:1. Not palette-native; there is no Catppuccin slot
+     in that band. */
+  --fg-3: #6b7075;
 }
 
 /* Light mode: soft, low elevation. The dark theme's heavy black drop-shadows
@@ -457,6 +503,9 @@ body.handwriting textarea {
   --color-peach: #ffb86c;
   --color-yellow: #ffe66d;
   --color-pink: #ff8ad8;
+
+  /* overlay2 — 5.57:1 worst case. */
+  --fg-3: var(--color-overlay2);
 }
 /* Neon: accent buttons + active rails get a soft glow. */
 :root[data-theme='neon'] .bg-primary {
@@ -502,6 +551,9 @@ body.handwriting textarea {
   --border-hairline: #2b2b2b;
   --border: var(--border-hairline);
   --input: #3c3c3c;
+
+  /* overlay2 — 6.08:1 worst case. */
+  --fg-3: var(--color-overlay2);
 }
 /* VS Code: flatter cards — thin border + minimal shadow, like editor panels. */
 :root[data-theme='vscode'] .card-3d {
@@ -547,6 +599,14 @@ body.handwriting textarea {
 
   --border: var(--border-hairline);
   --input: var(--border-hairline);
+
+  /* Dawn is the one theme where the third tier does not fit. Its cream surfaces
+     (#faf3e7 page, #fffdf8 card) leave a band between subtext0 (5.31:1) and the
+     4.5:1 floor barely one step wide — the best warm candidate, #7a6e5d, lands
+     at 4.52:1 with 0.02 of headroom, so any future surface tweak breaks it
+     silently. Collapsed to the secondary tier instead: dawn renders two text
+     tiers, not three. Flagged for review — see TASKS.md §H14. */
+  --fg-3: var(--color-subtext0);
 }
 /* Dawn (light): soft, low-elevation cards like Latte — heavy dark shadows read
    wrong on cream, so use a hairline border + faint warm shadow. */
