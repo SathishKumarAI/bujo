@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sun, BarChart3, Compass, Command, ShieldCheck, ArrowRight, X } from 'lucide-react'
 import { useNav } from './shell/nav'
 import type { ViewId } from './shell/viewChrome'
+import { Button } from './ui/button'
 
 const KEY = 'bujo:onboarded'
 
@@ -54,9 +55,9 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
           <div className="ml-auto flex gap-2">
             {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-label text-fg-2 hover:text-fg-1">Show me</button>}
             {last ? (
-              <button onClick={done} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-body font-medium text-crust">Start journaling</button>
+              <Button onClick={done} className="press-3d gap-1.5">Start journaling</Button>
             ) : (
-              <button onClick={() => setI(i + 1)} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-body font-medium text-crust">Next <ArrowRight size={14} /></button>
+              <Button onClick={() => setI(i + 1)} className="press-3d gap-1.5">Next <ArrowRight size={14} /></Button>
             )}
           </div>
         </div>

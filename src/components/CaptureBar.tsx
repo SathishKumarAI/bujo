@@ -188,7 +188,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (
-            <button onClick={saveTemplate} className="rounded-full border border-dashed border-line-strong px-2 py-0.5 text-label text-fg-2 hover:text-mauve">+ save as template</button>
+            <Button variant="outline" size="sm" onClick={saveTemplate} className="h-auto rounded-full border-dashed px-2 py-0.5 text-label text-fg-2">+ save as template</Button>
           )}
         </div>
       )}

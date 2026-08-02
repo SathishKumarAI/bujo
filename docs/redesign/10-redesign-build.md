@@ -372,3 +372,62 @@ errored, every size was on-scale. It was just wrong, and only a screenshot said 
 | 18 views × 5 themes | ✅ 0 blank, 0 overflow, 0 accent-in-main, 0 off-scale, 0 heavy, 0 errors |
 | Stats grid | ✅ 183 cells, 0 interactive, legend present |
 | Trackers grids | ✅ 8 grids, 90 clickable cells each |
+
+---
+
+# Raw-button pass (2026-08-02, appended)
+
+Branch `refactor/button-system`.
+
+## The "190 raw buttons" figure was misleading — mine
+
+Earlier notes (including my own PR descriptions) said ~190 raw `<button>`
+elements "bypass the button system". Classifying them by whether they actually
+re-invent button chrome — padding **and** a radius **and** a border or
+background — gives a very different picture:
+
+| | Count |
+|---|--:|
+| Re-invent button chrome | **7** |
+| Bare interactive targets (correctly native) | **180** |
+
+The 180 are heatmap cells, glyph toggles, icon hit-areas, full-width list rows
+and card-shaped targets. A `<Button>` is the wrong element for all of them —
+they have no chrome to drift. Only the 7 were a real problem.
+
+Migrated 6 of the 7. The last is Welcome's first-run choice card: a card-shaped
+target, deliberately native, per the decision recorded in the earlier session.
+
+| Site | To | Why |
+|---|---|---|
+| `HabitDetail` Share / Edit | `outline` `sm` | hand-rolled padding and radius; now 32px/6px like every other control |
+| `CaptureBar` save-as-template | `outline` `sm` | keeps its dashed border, loses the bespoke sizing |
+| `ExploreBanner` sign-up | `secondary` `sm` | **was accent-filled inside the app** — see below |
+| `ExploreBanner` use-email | `link` | a text link wearing a button |
+| `LockScreen` unlock | default | pre-app gate, so the accent fill is correct |
+| `Onboarding` next / start | default | pre-app overlay, same reasoning |
+| `Insights` Plan → / Open → | `link` `sm` | text links |
+
+## Two accent-inflation misses, and why the sweep could not see them
+
+The accent pass reported 0 accent fills in view bodies. Two survived:
+
+1. **Insights search filter chips** — accent-filled, and behind
+   `{q && kinds.length > 2 && …}`. They only exist *after you type a query*.
+2. **`ExploreBanner` sign-up** — accent-filled, and only rendered for guests.
+
+Both are **conditional surfaces**. A sweep over the default state of each view
+cannot reach them by construction, no matter how many themes it runs. Reading
+the source found them; the browser could not.
+
+Both now use the accent wash / secondary, consistent with the rule.
+
+## Verification
+
+| Check | Result |
+|---|---|
+| `npx tsc -b` / `vitest` / `eslint` / `build` | ✅ 0 · 678 · 0 · 537ms |
+| 18 views × 5 themes | ✅ 0 blank, 0 overflow, 0 accent-in-main, 0 off-scale, 0 heavy, 0 errors |
+| Insights filter chips (after typing) | ✅ 7 chips, 0 accent-filled |
+| HabitDetail actions | ✅ both 32px tall, 6px radius, bordered |
+| Chrome-reinventing buttons | ✅ 7 → 1 (Welcome's card target, by design) |

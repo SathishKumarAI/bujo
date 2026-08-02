@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, Sun, Activity, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
 import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
@@ -86,11 +87,17 @@ export function Insights() {
         {q && kinds.length > 2 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {kinds.map((k) => (
+              // A filter chip is selection state, so it takes the accent wash
+              // rather than the accent fill — same rule as Segmented and the
+              // First-meal pills. These render only after you type a query,
+              // which is why the accent sweep over default state never saw them.
               <button
                 key={k}
                 onClick={() => setKind(k)}
-                className="rounded-full px-2.5 py-0.5 text-label capitalize"
-                style={{ background: kind === k ? cat('mauve') : cat('surface0'), color: kind === k ? cat('crust') : cat('subtext1') }}
+                aria-pressed={kind === k}
+                className={`rounded-full px-2.5 py-0.5 text-label capitalize transition-colors ${
+                  kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
+                }`}
               >
                 {k}{k !== 'all' ? ` (${allResults.filter((r) => r.kind === k).length})` : ''}
               </button>
@@ -237,7 +244,7 @@ export function Insights() {
 
       <p className="text-label text-fg-2">
         Task migration &amp; aging live in{' '}
-        <button onClick={() => nav('plan')} className="text-mauve hover:underline">Plan →</button>
+        <Button variant="link" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
       </p>
 
       {/* 5) Mood analytics — collapsed. */}
@@ -356,7 +363,7 @@ export function Insights() {
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
         <Section title="Domain digests" subtitle="cross-domain glances">
-        <Card title="Pickleball" subtitle="Your game at a glance" right={<button onClick={() => nav('pickleball')} className="text-label text-mauve hover:underline">Open →</button>}>
+        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="link" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
             <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />

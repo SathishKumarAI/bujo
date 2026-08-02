@@ -7,6 +7,7 @@ import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } f
 import { longestStreakEver } from '../../lib/streak'
 import { completionRate30, bestWeekday, perfectWeeks, habitGrade } from '../../lib/habitStats'
 import type { Habit, JournalData } from '../../lib/types'
+import { Button } from '../ui/button'
 
 const WEEKS = 18
 const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
@@ -105,8 +106,8 @@ export function HabitDetail({
             {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="inline-flex items-center gap-1 rounded-lg border border-line-strong px-2 py-1 text-label text-fg-1 hover:text-fg-1"><Share2 size={13} /> Share</button>
-            <button onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="inline-flex items-center gap-1 rounded-lg border border-line-strong px-2 py-1 text-label text-fg-1 hover:text-fg-1"><Settings2 size={13} /> Edit</button>
+            <Button variant="outline" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Share2 size={13} /> Share</Button>
+            <Button variant="outline" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Settings2 size={13} /> Edit</Button>
             <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-fg-2 hover:text-fg-1"><X size={18} /></button>
           </div>
         </div>

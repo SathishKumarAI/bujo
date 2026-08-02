@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { supabaseEnabled, signInGoogle } from '../lib/supabase'
 import { cat } from '../lib/colors'
+import { Button } from './ui/button'
 
 /**
  * Shown while exploring sample data (the guest demo). Guest is for *seeing* the
@@ -31,10 +32,10 @@ export function ExploreBanner() {
         You’re exploring sample data. <strong className="text-fg-1">Sign up to start your own journal</strong> · it syncs across your devices.
       </span>
       <div className="ml-auto flex items-center gap-2">
-        <button onClick={startAccount} disabled={busy} className="press-3d rounded-lg bg-mauve px-3 py-1 text-label font-medium text-crust disabled:opacity-50">
+        <Button variant="secondary" size="sm" onClick={startAccount} disabled={busy} className="press-3d text-label">
           {busy ? '…' : supabaseEnabled() ? 'Continue with Google' : 'Sign up'}
-        </button>
-        <button onClick={() => nav('settings')} className="text-label text-mauve hover:underline">Use email</button>
+        </Button>
+        <Button variant="link" size="sm" onClick={() => nav('settings')} className="h-auto p-0 text-label">Use email</Button>
       </div>
     </div>
   )
