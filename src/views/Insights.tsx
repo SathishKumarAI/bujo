@@ -8,6 +8,7 @@ import { currentStreak, longestStreak, search, taskCompletion } from '../lib/sta
 import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
+import { Page } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
@@ -78,7 +79,7 @@ export function Insights() {
   ])].sort().reverse()
 
   return (
-    <div className="mx-auto max-w-wide space-y-5">
+    <Page width="wide">
       {/* 1) The ritual + search utility lead, above all read-only analytics. */}
       <WeeklyReview />
 
@@ -431,7 +432,7 @@ export function Insights() {
       <Section title="Tag manager" subtitle="merge, rename & retire tags">
         <TagManager />
       </Section>
-    </div>
+    </Page>
   )
 }
 

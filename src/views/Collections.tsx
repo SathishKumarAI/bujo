@@ -3,6 +3,7 @@ import { useJournal } from '../store'
 import { Cake, ChevronDown, ChevronRight } from 'lucide-react'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { Page } from '../components/shell/Page'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
@@ -70,7 +71,7 @@ export function Collections() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="mx-auto flex max-w-wide flex-col gap-5">
+    <Page width="wide">
     <div className="grid items-start gap-5 lg:grid-cols-2">
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
@@ -369,6 +370,6 @@ export function Collections() {
           </div>
         )}
       </section>
-    </div>
+    </Page>
   )
 }

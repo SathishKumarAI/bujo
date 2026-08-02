@@ -7,6 +7,7 @@ import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFi
 import { StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
+import { Page } from '../components/shell/Page'
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
@@ -43,7 +44,7 @@ export function Reading() {
   }
 
   return (
-    <div className="mx-auto max-w-read space-y-6">
+    <Page>
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Reading now" value={sum.reading} color="mauve" />
@@ -212,7 +213,7 @@ export function Reading() {
       <CollapsibleSection title="Read later" subtitle="saved links">
         <ReadLater />
       </CollapsibleSection>
-    </div>
+    </Page>
   )
 }
 

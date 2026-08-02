@@ -3,6 +3,7 @@ import { useJournal } from '../store'
 import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
 import { Star } from 'lucide-react'
 import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Page } from '../components/shell/Page'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
@@ -72,7 +73,11 @@ export function Plan() {
   // title and stacks its actions vertically — a short measure helps prose, not
   // a column layout.
   return (
-    <div className="mx-auto max-w-wide columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    // The masonry column layout stays — it is what makes Plan read as two
+    // independent stacks. Page only supplies the container tier, the entrance
+    // transition and the shared rhythm around it.
+    <Page width="wide">
+      <div className="columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card
         title="Migration"
         subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
@@ -282,6 +287,7 @@ export function Plan() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </Page>
   )
 }
