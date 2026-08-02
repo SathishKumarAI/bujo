@@ -99,21 +99,47 @@ is engineer-speak for "based on what you have logged".
 
 ## Upgrades, ranked
 
-1. **P1 · Move capture to the top.** Log card first, then habits/wellbeing, then
-   the derived cards. One reorder in `Today.tsx`; no data model change.
-2. **P1 · Use the rail on desktop.** `<Page aside={…}>` with plan / coach /
-   penalty in the rail. Fills the 600px void and makes capture the widest thing
-   on screen at the same time.
-3. **P1 · Rewrite the capture placeholder** to one rotating example.
+1. ~~**P1 · Move capture to the top.**~~ ✅ Done. Capture sits **215px** from the
+   top, was ~2,100px.
+2. ~~**P1 · Use the rail on desktop.**~~ ✅ Done. `<Page aside={…}>`; every card
+   now has a weight and a side (table below).
+3. ~~**P1 · Rewrite the capture placeholder.**~~ ✅ Done — one example, picked by
+   a stable hash of the logged date, so it teaches a different piece of the
+   grammar each day and never changes mid-sentence.
 4. **P2 · Pick a voice** and rewrite the penalty card or the reflection prompts
-   to match it.
-5. **P2 · Merge Gratitude + Reflection + Daily memory** into one "Close the day"
-   card with three fields.
+   to match it. **Still open** — the one item here that is a judgement call, not
+   a fix.
+5. ~~**P2 · Merge Gratitude + Reflection + Daily memory.**~~ ✅ Done — one "Close
+   the day" card, three labelled fields, on a new `Field` primitive.
 6. **P2 · Give the week strip a scale**, or drop it to a sparkline with a single
-   number.
-7. **P2 · Distinguish unset from 0** on the Wellbeing sliders (dim the track and
-   park the handle centre until first touch).
-8. **P3 · Drop the duplicated date** from the log card title.
+   number. **Still open.**
+7. ~~**P2 · Distinguish unset from 0** on the Wellbeing sliders.~~ ✅ Done — an
+   unrated slider dims its track, parks at the midpoint and reads "not set",
+   with `aria-valuetext` to match. Sleep also gained the anchors it was missing.
+8. **P3 · Drop the duplicated date** from the log card title. **Still open.**
+
+Also done while in here: the habit note buttons were bare 13px glyphs beside
+each chip — under the 24px floor and reading as an eighth unexplained icon.
+Now 24×24, grouped with their chip, quiet until hovered, focused, or holding a
+note. "Mark all" became "Mark 3 left", through the Button system.
+
+## Where each card lives now
+
+One rule: **the left column is the journal entry you are writing; the right rail
+is everything that reports on it.** The weight also sets order within a column.
+
+| Left (you write it) | | Right (it tells you something) | |
+|---|---|---|---|
+| Day log + capture | 10 | Today's plan | 7 |
+| Today's habits | 9 | Your coach | 6 |
+| Wellbeing | 8 | Training penalty | 4 |
+| Close the day | 6 | Intermittent fasting | 4 |
+| | | Weekly goals · On this day | 3 |
+| | | Stickers | 1 |
+
+Measured at 1920: page 3.5 → **2.4 screens**, left gutter 245 → **163px**,
+column 808 → **908px**, rail 352 → **416px**, rail height 983 → **1,348px**
+against the column's 1,932 (it used to stop a third of the way down).
 
 ## Leave alone
 

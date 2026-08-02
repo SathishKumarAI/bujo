@@ -80,20 +80,24 @@ default.
 
 ## Upgrades, ranked
 
-1. **P1 · Add bulk migration.** "Move all → Today", or checkboxes with one action
-   bar. The page exists to clear a backlog and cannot do it in bulk.
-2. **P1 · Fix the empty right column.** Single column with `Page aside` for
-   Setup, or expand Setup by default so the masonry has two real stacks.
-3. **P2 · Compress the task card to a row.** Title + date on one line, actions
-   revealed on hover (desktop) / swipe (touch). Fourteen tasks should fit on one
-   screen.
-4. **P2 · Open "Aging" by default** — it is the decision aid for the decision the
-   page is asking for.
-5. **P2 · Show all tasks** instead of 5-plus-a-link; the page has the room.
-6. **P3 · Give the three actions one visual family**, with `drop` as the quiet
-   destructive variant rather than a different species.
-7. **P3 · Add a progress line** — "9 of 14 cleared" — so a review session has a
-   finish line.
+1. ~~**P1 · Add bulk migration.**~~ ✅ Done — "Move all 14 → Today". No confirm:
+   it moves dates, destroys nothing, and undo covers it.
+2. ~~**P1 · Fix the empty right column.**~~ ✅ Done — the masonry is gone, one
+   `read` column. The wide tier went with it; that width existed only to stop
+   the masonry collapsing.
+3. **P2 · Compress the task card to a row.** **Still open** — fourteen tasks now
+   render, but each still costs ~130px and three always-visible buttons.
+4. ~~**P2 · Open "Aging" by default.**~~ ✅ Done.
+5. ~~**P2 · Show all tasks.**~~ ✅ Done.
+6. **P3 · Give the three actions one visual family.** **Still open.**
+7. **P3 · Add a progress line.** **Still open.**
+
+The subtitle also changed: "14 overdue open tasks, the heart of bullet
+journaling" → **"14 tasks waiting on a decision"**. The old second clause was a
+claim about the method rather than information about your day.
+
+Measured after: 0.9 → **1.1 screens** (all 14 tasks now render), single 820px
+column, no dead half-page.
 
 ## Leave alone
 
