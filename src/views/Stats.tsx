@@ -265,7 +265,7 @@ export function Stats() {
 
         <Card title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
           {splits.length === 0 ? (
-            <Empty>No workouts logged yet.</Empty>
+            <Empty>Log a workout to see which splits you actually train.</Empty>
           ) : (
             <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
               <ResponsiveContainer width="100%" height="100%">
@@ -289,7 +289,7 @@ export function Stats() {
       <Section title="Tasks" subtitle="where your tasks land">
         <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
           {tasks.length === 0 ? (
-            <Empty>No tasks yet.</Empty>
+            <Empty>Add a task on Today to see how your week breaks down.</Empty>
           ) : (
             <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
               <ResponsiveContainer width="100%" height="100%">

@@ -8,6 +8,7 @@ import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
 import { useConfirm } from './ConfirmDialog'
+import { notify } from '../lib/notify'
 import { Button } from './ui/button'
 
 /**
@@ -24,13 +25,13 @@ export function DriveSync() {
   const [q, setQ] = useState('')
 
   async function doConnect() {
-    if (!clientId) return alert('Paste your Google OAuth Client ID first.')
+    if (!clientId) return notify.error('Drive needs a client ID', 'Paste your Google OAuth Client ID above, then connect.')
     setBusy('connect')
     try {
       await connect(clientId)
       setConnected(true)
     } catch (e) {
-      alert('Google sign-in failed: ' + (e as Error).message)
+      notify.error('Google would not sign you in', `${(e as Error).message}. Check the client ID and that this origin is authorised.`)
     } finally {
       setBusy('')
     }
@@ -41,9 +42,9 @@ export function DriveSync() {
     try {
       await pushData(data)
       setSettings({ lastDriveSync: todayISO() })
-      alert('Backed up to Google Drive.')
+      notify.success('Backed up to Google Drive')
     } catch (e) {
-      alert('Backup failed: ' + (e as Error).message)
+      notify.error('Backup did not finish', `${(e as Error).message}. Your journal on this device is untouched — try again.`)
     } finally {
       setBusy('')
     }
@@ -58,11 +59,11 @@ export function DriveSync() {
     setBusy('pull')
     try {
       const remote = await pullData()
-      if (!remote) return alert('No backup found on Drive yet.')
+      if (!remote) return notify.info('Nothing in Drive yet', 'Back up first, then you can restore from it.')
       replaceAll(migrate(remote))
-      alert('Restored from Google Drive.')
+      notify.success('Restored from Google Drive')
     } catch (e) {
-      alert('Restore failed: ' + (e as Error).message)
+      notify.error('Restore did not finish', `${(e as Error).message}. This device still has its own journal.`)
     } finally {
       setBusy('')
     }
@@ -73,7 +74,7 @@ export function DriveSync() {
     try {
       setFiles(await listFiles(q.trim()))
     } catch (e) {
-      alert('Drive search failed: ' + (e as Error).message)
+      notify.error('Drive search did not run', `${(e as Error).message}. Reconnect and try the search again.`)
     } finally {
       setBusy('')
     }
@@ -118,11 +119,11 @@ export function DriveSync() {
         <div className="mt-4 border-t border-line pt-3">
           <p className="mb-2 text-body text-fg-1">Reference a file from Drive</p>
           <div className="flex gap-2">
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="MagnifyingGlass Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
             <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> MagnifyingGlass</Button>
           </div>
           {files.length === 0 ? (
-            <Empty>MagnifyingGlass your Drive to list images and documents.</Empty>
+            <Empty>Search your Drive to list images and documents.</Empty>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((f) => (

@@ -404,7 +404,7 @@ export function Insights() {
 
         <Card title="Index" subtitle="Every month with entries">
           {months.length === 0 ? (
-            <Empty>No months logged yet.</Empty>
+            <Empty>Log entries on a few days to fill in the index.</Empty>
           ) : (
             <ul className="grid grid-cols-2 gap-1 text-body">
               {months.map((ym) => (

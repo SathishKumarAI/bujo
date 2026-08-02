@@ -9,7 +9,7 @@ import { DayGrid } from './ui/day-grid'
 
 const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 /**
- * PersonSimpleRun layout · one row per habit with a GitHub-style intensity heatmap
+ * Activity layout · one row per habit with a GitHub-style intensity heatmap
  * (last 16 weeks) plus a type-aware "today" control. An alternative to the
  * classic month grid; reads the same store via the shared stats helpers so
  * completion/streaks stay consistent across layouts.

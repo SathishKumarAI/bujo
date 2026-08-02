@@ -56,7 +56,7 @@ export function ExercisePicker({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') pick(q.trim() || value); if (e.key === 'Escape') setOpen(false) }}
-                placeholder="MagnifyingGlass or type a new exercise…"
+                placeholder="Search or type a new exercise…"
                 className="w-full bg-transparent text-body text-fg-1 placeholder:text-fg-2 focus:outline-none"
               />
             </div>

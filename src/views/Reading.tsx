@@ -241,7 +241,7 @@ function LearningLog() {
       </h3>
       <div className="mb-3 flex items-center gap-2 rounded-control border border-input bg-background px-2.5 py-1.5">
         <AppIcon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-2" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="MagnifyingGlass learnings & titles…"
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search learnings & titles…"
           className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
       </div>
       {entries.length === 0 ? (

@@ -248,7 +248,7 @@ export function Plan() {
         )}
         <div className="mt-3 border-t border-line pt-3">
           {data.recurrences.length === 0 ? (
-            <Empty>No recurring rules yet.</Empty>
+            <Empty>Add a rule above to repeat something without retyping it.</Empty>
           ) : (
             <ul className="space-y-1 text-body">
               {data.recurrences.map((r) => (
