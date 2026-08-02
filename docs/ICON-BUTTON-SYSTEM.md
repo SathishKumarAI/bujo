@@ -1,6 +1,8 @@
 # Icon and button system — spec, audit, stage log
 
-**Status:** Stages 0 and 1 complete. Stage 2 (Phosphor) next.
+**Status:** Stages 0–3 complete (audit, tokens, icons, buttons). Stage 4
+(kitchen sink at three font scales × five themes) and Stage 5 (per-cluster
+rollout) remain.
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 
