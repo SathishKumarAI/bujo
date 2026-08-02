@@ -63,7 +63,7 @@ export function Stepper({
           onPointerDown={() => holdStart(-1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
+          className="grid h-8 w-8 place-items-center rounded-control border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
           <Icon as={Minus} size="sm" />
         </button>
@@ -72,7 +72,7 @@ export function Stepper({
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? undefined : clamp(Number(e.target.value)))}
           aria-label={ariaLabel ?? label}
-          className="num w-14 rounded-lg border border-input bg-ink-0 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
+          className="num w-14 rounded-card border border-input bg-ink-0 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
         />
         {suffix && <span className="text-label text-fg-2">{suffix}</span>}
         <button
@@ -81,7 +81,7 @@ export function Stepper({
           onPointerDown={() => holdStart(1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
+          className="grid h-8 w-8 place-items-center rounded-control border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
           <Icon as={Plus} size="sm" />
         </button>

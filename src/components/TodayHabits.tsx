@@ -50,7 +50,7 @@ export function TodayHabits() {
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-body transition-colors active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}

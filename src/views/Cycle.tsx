@@ -56,7 +56,7 @@ export function Cycle() {
                             onClick={() => toggleFlag(d, f)}
                             aria-pressed={on}
                             aria-label={`${f}${on ? ' (on)' : ''}`}
-                            className="rounded-full px-2 py-0.5"
+                            className="rounded-pill px-2 py-0.5"
                             style={{ background: on ? cat('red') : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}
                           >
                             {f}

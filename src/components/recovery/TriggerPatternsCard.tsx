@@ -22,7 +22,7 @@ export function TriggerPatternsCard({
                 <span className="capitalize text-fg-1">{t.trigger}</span>
                 <span className="text-fg-2">{t.count}× · {pct}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-ink-2"><div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
+              <div className="h-2 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
             </li>
           )
         })}

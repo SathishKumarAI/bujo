@@ -12,7 +12,7 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
         <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
           {form.results.map((r, i) => {
             const c = r === 'W' ? 'green' : r === 'L' ? 'red' : 'overlay0'
-            return <span key={i} className="grid h-6 w-6 place-items-center rounded-md text-caption font-medium" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
+            return <span key={i} className="grid h-6 w-6 place-items-center rounded-control text-caption font-medium" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
           })}
         </div>
         <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
@@ -64,8 +64,8 @@ export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }
               <span className="text-fg-1">{m.label}{m.done && <span className="ml-1.5 text-green">✓</span>}</span>
               <span className="text-fg-2">{Math.min(m.current, m.target)} / {m.target}</span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
-              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
+              <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
             </div>
           </li>
         ))}

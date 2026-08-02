@@ -174,7 +174,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           aria-label="Smart capture"
         />
         <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
-        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-lg">
+        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-control">
           Add
         </Button>
       </div>
@@ -183,13 +183,13 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {(templates.length > 0 || val.trim()) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {templates.map((t) => (
-            <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-ink-2 px-2 py-0.5 text-label text-fg-1">
+            <span key={t} className="group inline-flex items-center gap-1 rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-1">
               <button onClick={() => setVal(t)} className="hover:text-fg-1">{t}</button>
               <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (
-            <Button variant="secondary" size="sm" onClick={saveTemplate} className="h-auto rounded-full border-dashed px-2 py-0.5 text-label text-fg-2">+ save as template</Button>
+            <Button variant="secondary" size="sm" onClick={saveTemplate} className="h-auto rounded-pill border-dashed px-2 py-0.5 text-label text-fg-2">+ save as template</Button>
           )}
         </div>
       )}
@@ -215,7 +215,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
 
       {/* Structured editor · pre-filled from the parse, tap to adjust, no typing. */}
       {draft && (
-        <div className="mt-2 rounded-lg border border-line bg-ink-0 p-3">
+        <div className="mt-2 rounded-card border border-line bg-ink-0 p-3">
           <div className="flex flex-wrap items-end gap-3">
             {draft.kind === 'gym' && (
               <>
@@ -239,8 +239,8 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             )}
           </div>
           <div className="mt-3 flex gap-2">
-            <Button variant="secondary" onClick={() => commitAndClear(draft)} className="press-3d rounded-lg">Add</Button>
-            <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-lg">Cancel</Button>
+            <Button variant="secondary" onClick={() => commitAndClear(draft)} className="press-3d rounded-control">Add</Button>
+            <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-control">Cancel</Button>
           </div>
         </div>
       )}

@@ -4,13 +4,13 @@
  * line reads as "nothing is happening".
  */
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-ink-2 ${className}`} />
+  return <div className={`animate-pulse rounded-card bg-ink-2 ${className}`} />
 }
 
 /** One card's worth of placeholder: a title line and a few body lines. */
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-line-strong bg-ink-1 p-5">
+    <div className="rounded-card border border-line-strong bg-ink-1 p-5">
       <Skeleton className="h-4 w-1/3" />
       <Skeleton className="mt-3 h-3 w-full" />
       <Skeleton className="mt-2 h-3 w-5/6" />

@@ -94,7 +94,7 @@ export function Welcome() {
 
         {/* Account · recommended when configured: guest now, or log in to sync. */}
         {supabaseEnabled() && (
-          <div className="rise mb-5 rounded-2xl border border-line bg-ink-1/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
+          <div className="rise mb-5 rounded-card border border-line bg-ink-1/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
             <div className="mb-3 flex items-center gap-2">
               <Icon as={UserCircle} size="lg" style={{ color: cat('mauve') }} />
               <h2 className="font-display text-title text-fg-1">Sync with an account</h2>
@@ -113,8 +113,8 @@ export function Welcome() {
               </div>
             ) : (
               <div className="space-y-2">
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
-                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1" />
+                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <div className="flex flex-wrap items-center gap-2">
                   <Button onClick={() => account('login')} disabled={busy} variant="primary" className="press-3d">Log in</Button>
                   <Button onClick={() => account('signup')} disabled={busy} variant="secondary" className="text-fg-1">Sign up</Button>
@@ -133,7 +133,7 @@ export function Welcome() {
           <button
             onClick={chooseFolder}
             disabled={!supported || busy}
-            className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
+            className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
             style={{ animationDelay: '180ms' }}
           >
             <Icon as={CloudCheck} size="lg" style={{ color: cat('mauve') }} />
@@ -156,7 +156,7 @@ export function Welcome() {
           {/* Local only */}
           <button
             onClick={() => setSettings({ storageMode: 'local' })}
-            className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
+            className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
             style={{ animationDelay: '260ms' }}
           >
             <Icon as={HardDrive} size="lg" style={{ color: cat('blue') }} />
@@ -174,7 +174,7 @@ export function Welcome() {
         </div>
 
         {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
-        <div className="rise mt-5 rounded-xl border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
+        <div className="rise mt-5 rounded-card border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
           <p className="mb-2 text-body text-fg-1">Just looking? <strong className="text-fg-1">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
           <Button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}

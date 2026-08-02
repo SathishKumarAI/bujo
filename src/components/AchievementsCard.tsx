@@ -25,7 +25,7 @@ export function AchievementsCard() {
               className={`flex items-center gap-2 rounded-xl border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
                 {got ? a.emoji : <Icon as={Lock} size="sm" className="text-fg-2" />}
               </span>
               <div className="min-w-0">

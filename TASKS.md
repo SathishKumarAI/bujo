@@ -332,15 +332,23 @@ cream. Anything checked in mocha alone is unchecked.
   - **Still open:** `Segmented` and `Stepper` are not yet rebuilt on
     `ToggleGroup`, and ~12 call sites still override the radius with
     `rounded-lg`. Both belong to Stage 5.
-- [ ] **J4 · Stage 4 — kitchen sink** becomes the review surface: every variant ×
-  size × state, every mapped icon in both weights, screenshotted in five themes ×
-  three font scales.
+- [x] **J4 · Stage 4 — DONE.** `/kitchen-sink` now carries its own five-theme
+  switcher and S/M/L/XL text-size control, both driving the real settings (a
+  faked switch would hide the §I2 palette desync). Swept **5 themes × 3 scales
+  = 15 combinations**: 0 page overflow, 0 clipped buttons, 0 card overflow, and
+  heights scaling 25/32/40 → 28/36/44 → 35/45/55, which is the rem sizing
+  proving itself.
 - [ ] **J5 · Stage 5 — roll out by cluster** (Today → shell → logging → data →
   reflective → settings/onboarding/empty/error), reporting after each.
-- [ ] **J6 · Stage 6 — sweep**, as a table of counts: zero hex outside theme
-  files, zero direct icon imports, zero solid-accent buttons, zero px sizes,
-  exactly three heights and three radii, focus ring on every stop,
-  `prefers-reduced-motion` honoured.
+- [~] **J6 · Stage 6 — mechanical half DONE.** 0 lucide refs, 0 Phosphor imports
+  outside the registry, 0 px icon sizes, 0 px font sizes, 0 solid-accent
+  buttons, exactly 3 control heights, and the ten radii collapsed to three
+  (`card` ×144, `pill` ×143, `control` ×137) by codemod.
+  **Not cleared, with reasons in the doc:** 34 side-specific/geometry radius
+  stragglers; ~170 hex literals that are mostly *data* (theme swatch previews,
+  chart palettes, habit colour pickers) and need carving out before the check
+  can be a gate; ~174 deliberately-raw `<button>`; `Segmented`/`Stepper` not yet
+  on `ToggleGroup`.
 
 ---
 

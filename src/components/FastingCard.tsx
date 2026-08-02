@@ -60,16 +60,16 @@ export function FastingCard() {
               {hitNow ? <span className="inline-flex items-center gap-1"><Icon as={Check} size="sm" /> target met</span> : `of ${target}h`}
             </span>
           </div>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-ink-2">
-            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
+          <div className="mt-2 h-2.5 overflow-hidden rounded-pill bg-ink-2">
+            <div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
           </div>
           <p className="mt-2 text-label text-fg-2">Started {timeOf(active)}</p>
-          <Button variant="secondary" onClick={endFast} className="press-3d rounded-lg mt-3 inline-flex items-center gap-1.5"><Icon as={Square} size="sm" /> End fast</Button>
+          <Button variant="secondary" onClick={endFast} className="press-3d mt-3 inline-flex items-center gap-1.5"><Icon as={Square} size="sm" /> End fast</Button>
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between">
-            <Button variant="secondary" onClick={startFast} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={Play} size="sm" /> Start fast</Button>
+            <Button variant="secondary" onClick={startFast} className="press-3d inline-flex items-center gap-1.5"><Icon as={Play} size="sm" /> Start fast</Button>
             {last && (
               <span className="text-body text-fg-1">
                 Last: <span style={{ color: fastHours(last) >= target ? cat('green') : cat('subtext0') }}>{fmtDuration(fastHours(last))}</span>

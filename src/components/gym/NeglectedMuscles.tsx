@@ -21,7 +21,7 @@ export function NeglectedMuscles({ muscles, setFocusEx }: { muscles: NeglectedMu
           <button
             key={m.muscle}
             onClick={() => setFocusEx(m.name)}
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-label"
+            className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-label"
             style={{ background: cat('peach') + '22', color: cat('peach') }}
             title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
           >

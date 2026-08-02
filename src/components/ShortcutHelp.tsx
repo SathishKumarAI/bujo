@@ -47,7 +47,7 @@ export function ShortcutHelp({ open, onClose }: { open: boolean; onClose: () => 
                 {g.items.map((s) => (
                   <div
                     key={s.desc}
-                    className="flex items-center justify-between gap-4 rounded-md px-2 py-1.5 hover:bg-ink-2/60"
+                    className="flex items-center justify-between gap-4 rounded-card px-2 py-1.5 hover:bg-ink-2/60"
                   >
                     <span className="text-body text-fg-1">{s.desc}</span>
                     <span className="flex shrink-0 gap-1">

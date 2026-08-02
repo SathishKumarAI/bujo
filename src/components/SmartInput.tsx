@@ -89,7 +89,7 @@ export function SmartInput({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full rounded-lg border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+        className={`w-full rounded-control border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
       />
 
       {/* Duplicate corner badge */}
@@ -100,7 +100,7 @@ export function SmartInput({
           onClick={() => setDupOpen((o) => !o)}
           aria-label={`${dupes.length} possible duplicate${dupes.length === 1 ? '' : 's'}`}
           title="Possible duplicate"
-          className="absolute top-1/2 right-2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full bg-yellow text-caption font-medium text-crust"
+          className="absolute top-1/2 right-2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-pill bg-yellow text-caption font-medium text-crust"
         >
           {dupes.length}
         </button>
@@ -108,7 +108,7 @@ export function SmartInput({
 
       {/* Duplicate popover */}
       {dupOpen && dupes.length > 0 && (
-        <div className="absolute top-full right-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
+        <div className="absolute top-full right-0 z-50 mt-1 w-72 overflow-hidden rounded-card border border-line-strong bg-ink-1 shadow-xl">
           <p className="border-b border-line px-3 py-2 text-label text-fg-2">Looks similar to:</p>
           <ul className="max-h-56 overflow-y-auto py-1">
             {dupes.map((d) => (
@@ -128,7 +128,7 @@ export function SmartInput({
 
       {/* Completion popover */}
       {open && suggestions.length > 0 && (
-        <ul className="absolute top-full left-0 z-40 mt-1 w-full overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
+        <ul className="absolute top-full left-0 z-40 mt-1 w-full overflow-hidden rounded-card border border-line-strong bg-ink-1 shadow-xl">
           {suggestions.map((s, i) => (
             <li key={`${s.kind}-${s.value}`}>
               <button

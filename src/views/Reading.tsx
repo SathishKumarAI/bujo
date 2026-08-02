@@ -56,7 +56,7 @@ export function Reading() {
       </div>
 
       {/* Yearly goal */}
-      <div className="rounded-2xl border border-line bg-card p-4">
+      <div className="rounded-card border border-line bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
           {/* Real headings, not styled spans: this view hand-rolls its cards
               instead of using <Card>, so it was the one view with no <h2> at
@@ -66,14 +66,14 @@ export function Reading() {
           <div className="flex items-center gap-2 text-body">
             <input type="number" min={0} value={goal || ''} placeholder="0"
               onChange={(e) => setSettings({ readingGoalBooks: Math.max(0, Number(e.target.value) || 0) })}
-              className="w-16 rounded-md border border-input bg-background px-2 py-1 text-right text-foreground" />
+              className="w-16 rounded-control border border-input bg-background px-2 py-1 text-right text-foreground" />
             <span className="text-fg-2">books</span>
           </div>
         </div>
         {goal > 0 && (
           <>
-            <div className="h-2 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full rounded-full bg-green transition-[width]" style={{ width: `${Math.min(100, Math.round((sum.finishedThisYear / goal) * 100))}%` }} />
+            <div className="h-2 overflow-hidden rounded-pill bg-secondary">
+              <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${Math.min(100, Math.round((sum.finishedThisYear / goal) * 100))}%` }} />
             </div>
             <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 text-label text-fg-2">
               <span>{sum.finishedThisYear} of {goal} finished this year</span>
@@ -88,14 +88,14 @@ export function Reading() {
       </div>
 
       {/* Add a book */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-card p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-card border border-line bg-card p-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Book title"
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
+          className="min-w-[12rem] flex-1 rounded-control border border-input bg-background px-3 py-2 text-body text-foreground" />
         <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)"
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
-        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
+          className="min-w-[10rem] flex-1 rounded-control border border-input bg-background px-3 py-2 text-body text-foreground" />
+        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5">
           <AppIcon as={Plus} size="sm" /> Add to shelf
         </Button>
       </div>
@@ -111,7 +111,7 @@ export function Reading() {
                 <AppIcon as={Icon} size="md" style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
               </h2>
-              {list.length === 0 && <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
+              {list.length === 0 && <p className="rounded-card border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
               {list.map((b) => <BookCard key={b.id} book={b} />)}
             </div>
           )
@@ -120,7 +120,7 @@ export function Reading() {
 
       {/* Stalled books nudge · pick back up or shelve */}
       {stale.length > 0 && (
-        <div className="rounded-2xl border border-line bg-card p-4">
+        <div className="rounded-card border border-line bg-card p-4">
           <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-foreground">
             <AppIcon as={Alarm} size="md" className="text-peach" /> Stalled books
             <span className="text-fg-2">({stale.length})</span>
@@ -147,7 +147,7 @@ export function Reading() {
       <CollapsibleSection title="Reading analytics" subtitle="finished by month, year in books">
       {/* Books finished per month · paces the yearly goal visibly */}
       {byMonth.some((m) => m.count > 0) && (
-        <div className="rounded-2xl border border-line bg-card p-4">
+        <div className="rounded-card border border-line bg-card p-4">
           <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
             <AppIcon as={CalendarBlank} size="md" className="text-green" /> Finished by month · {today.slice(0, 4)}
           </h3>
@@ -168,7 +168,7 @@ export function Reading() {
 
       {/* Year in books · wrapped-style recap */}
       {wrapped && (
-        <div className="rounded-2xl border border-line bg-card p-4">
+        <div className="rounded-card border border-line bg-card p-4">
           <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
             <AppIcon as={Sparkle} size="md" className="text-mauve" /> {wrapped.year} in books
           </h3>
@@ -200,8 +200,8 @@ export function Reading() {
                 {[...ratingDist].reverse().map((r) => (
                   <div key={r.stars} className="flex items-center gap-2 text-label">
                     <span className="flex w-12 shrink-0 items-center gap-0.5 text-fg-2">{r.stars}<AppIcon as={Star} size="sm" className="fill-yellow text-yellow" /></span>
-                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full" style={{ width: `${ratedTotal ? (r.count / ratedTotal) * 100 : 0}%`, background: cat('yellow') }} />
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-pill bg-secondary">
+                      <div className="h-full rounded-pill" style={{ width: `${ratedTotal ? (r.count / ratedTotal) * 100 : 0}%`, background: cat('yellow') }} />
                     </div>
                     <span className="w-6 shrink-0 text-right tabular-nums text-fg-2">{r.count}</span>
                   </div>
@@ -234,18 +234,18 @@ function LearningLog() {
   const entries = allLearnings(books, q)
 
   return (
-    <div className="rounded-2xl border border-line bg-card p-4">
+    <div className="rounded-card border border-line bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
         <AppIcon as={Lightbulb} size="md" className="text-yellow" /> Learning log
         <span className="text-fg-2">({total})</span>
       </h3>
-      <div className="mb-3 flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
+      <div className="mb-3 flex items-center gap-2 rounded-control border border-input bg-background px-2.5 py-1.5">
         <AppIcon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-2" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="MagnifyingGlass learnings & titles…"
           className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
       </div>
       {entries.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No learnings match “{q}”.</p>
+        <p className="rounded-card border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No learnings match “{q}”.</p>
       ) : (
         <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
           {entries.map((l, i) => (
@@ -278,20 +278,20 @@ function ReadLater() {
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-card p-4">
+    <div className="rounded-card border border-line bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
         <AppIcon as={Bookmark} size="md" className="text-sky" /> Read later · saved links
         <span className="text-fg-2">({links.filter((l) => !l.done).length} to read)</span>
       </h3>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Paste a link to read later"
-          className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
+          className="min-w-[12rem] flex-1 rounded-control border border-input bg-background px-3 py-2 text-body text-foreground" />
         <input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Title (optional)"
-          className="min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
-        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><AppIcon as={Plus} size="sm" /> Save</Button>
+          className="min-w-[8rem] flex-1 rounded-control border border-input bg-background px-3 py-2 text-body text-foreground" />
+        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5"><AppIcon as={Plus} size="sm" /> Save</Button>
       </div>
       {links.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No saved links yet, paste an article or book page to read later.</p>
+        <p className="rounded-card border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No saved links yet, paste an article or book page to read later.</p>
       ) : (
         <ul className="divide-y divide-border">
           {links.map((l) => (
@@ -336,7 +336,7 @@ function BookCard({ book }: { book: Book }) {
   }
 
   return (
-    <div className="rounded-xl border border-line bg-background p-3">
+    <div className="rounded-card border border-line bg-background p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-body font-medium text-foreground">{book.title}</p>
@@ -350,15 +350,15 @@ function BookCard({ book }: { book: Book }) {
           <div className="flex items-center gap-2 text-label text-fg-2">
             <input type="number" min={0} value={book.currentPage ?? ''} placeholder="0"
               onChange={(e) => store.updateBook(book.id, { currentPage: Math.max(0, Number(e.target.value) || 0) })}
-              className="w-14 rounded-md border border-input bg-card px-1.5 py-0.5 text-right text-foreground" />
+              className="w-14 rounded-card border border-input bg-card px-1.5 py-0.5 text-right text-foreground" />
             <span>/</span>
             <input type="number" min={0} value={book.totalPages ?? ''} placeholder="pages"
               onChange={(e) => store.updateBook(book.id, { totalPages: Math.max(0, Number(e.target.value) || 0) || undefined })}
-              className="w-16 rounded-md border border-input bg-card px-1.5 py-0.5 text-right text-foreground" />
+              className="w-16 rounded-card border border-input bg-card px-1.5 py-0.5 text-right text-foreground" />
             <span className="ml-auto font-medium text-primary">{pct}%</span>
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-secondary">
+            <div className="h-full rounded-pill bg-primary transition-[width]" style={{ width: `${pct}%` }} />
           </div>
           {est && (
             <p className="mt-1 text-caption text-fg-2">
@@ -394,12 +394,12 @@ function BookCard({ book }: { book: Book }) {
           <div className="flex items-center gap-1.5">
             <AppIcon as={Link} size="sm" className="shrink-0 text-fg-2" />
             <input value={book.link ?? ''} onChange={(e) => store.updateBook(book.id, { link: e.target.value || undefined })} placeholder="Link (summary, buy page, author…)"
-              className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
+              className="w-full rounded-card border border-input bg-card px-2 py-1 text-label text-foreground" />
             {book.link && <a href={book.link} target="_blank" rel="noreferrer" className="text-mauve"><AppIcon as={ArrowSquareOut} size="sm" /></a>}
           </div>
           {/* Review */}
           <textarea value={book.notes ?? ''} onChange={(e) => store.updateBook(book.id, { notes: e.target.value || undefined })} placeholder="Your review / overall takeaways…" rows={2}
-            className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
+            className="w-full rounded-card border border-input bg-card px-2 py-1 text-label text-foreground" />
           {/* What I learned · dated log */}
           <div>
             <p className="mb-1 text-caption font-medium text-fg-1">What I learned</p>
@@ -416,7 +416,7 @@ function BookCard({ book }: { book: Book }) {
             )}
             <div className="flex gap-1.5">
               <input value={learn} onChange={(e) => setLearn(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLearning()} placeholder="What did you learn today?"
-                className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
+                className="w-full rounded-card border border-input bg-card px-2 py-1 text-label text-foreground" />
               <Button variant="secondary" onClick={addLearning} size="sm" className="shrink-0">Add</Button>
             </div>
           </div>

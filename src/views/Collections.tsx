@@ -94,7 +94,7 @@ export function Collections() {
                         <span className="flex-1 truncate text-fg-1">{c.name}</span>
                         {c.tasks > 0 && (
                           <span
-                            className="rounded-full px-1.5 py-0.5 text-micro font-medium"
+                            className="rounded-pill px-1.5 py-0.5 text-micro font-medium"
                             style={{ background: cat('green') + '22', color: cat('green') }}
                             title={`${c.done} of ${c.tasks} tasks done`}
                           >
@@ -174,10 +174,10 @@ export function Collections() {
             value={colIcon}
             onChange={(e) => setColIcon(e.target.value.slice(0, 2))}
             aria-label="Collection icon"
-            className="w-12 rounded-lg border border-line-strong bg-ink-0 px-2 text-center text-heading text-fg-1"
+            className="w-12 rounded-card border border-line-strong bg-ink-0 px-2 text-center text-heading text-fg-1"
           />
           <Input value={colName} onChange={(e) => setColName(e.target.value)} placeholder="Collection name" className="max-w-xs" />
-          <Button variant="secondary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-lg">
+          <Button variant="secondary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-control">
             New collection
           </Button>
         </div>
@@ -189,7 +189,7 @@ export function Collections() {
             {data.collections.map((c) => (
               <span
                 key={c.id}
-                className="group inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-body"
+                className="group inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body"
                 style={{ borderColor: openCol === c.id ? cat('mauve') : cat('surface1') }}
               >
                 <button onClick={() => setOpenCol(openCol === c.id ? null : c.id)} className="inline-flex items-center gap-2" style={{ color: cat('subtext1') }}>
@@ -212,7 +212,7 @@ export function Collections() {
               onSubmit={(e) => { e.preventDefault(); if (colEntry.trim()) { addEntry(todayISO(), colEntry, openCol); setColEntry('') } }}
             >
               <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
-              <Button type="submit" variant="secondary" className="press-3d rounded-lg">Add</Button>
+              <Button type="submit" variant="secondary" className="press-3d">Add</Button>
             </form>
             {(() => {
               const p = collectionProgress(data.entries, openCol)
@@ -224,8 +224,8 @@ export function Collections() {
                     <span>Checklist</span>
                     <span><b style={{ color: cat('green') }}>{p.done}/{p.total}</b> · {pct}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('green') }} />
+                  <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+                    <div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat('green') }} />
                   </div>
                 </div>
               )
@@ -250,7 +250,7 @@ export function Collections() {
           type="button"
           onClick={() => setPeopleOpen((o) => !o)}
           aria-expanded={peopleOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
         >
           <span className="text-fg-2">{peopleOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
           <span className="font-display text-heading font-medium text-fg-1">People</span>
@@ -262,11 +262,11 @@ export function Collections() {
             <Card title="Birthdays" subtitle="Never miss one">
               <div className="mb-3 flex flex-wrap gap-2">
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[40%]" />
-                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-lg border border-line-strong bg-ink-0 px-2 text-body text-fg-1">
+                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-card border border-line-strong bg-ink-0 px-2 text-body text-fg-1">
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
                 </select>
-                <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-line-strong bg-ink-0 px-2 text-body text-fg-1" aria-label="Day" />
-                <Button variant="secondary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-lg">Add</Button>
+                <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-card border border-line-strong bg-ink-0 px-2 text-body text-fg-1" aria-label="Day" />
+                <Button variant="secondary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-control">Add</Button>
               </div>
               {birthdays.length === 0 ? (
                 <Empty>No birthdays yet.</Empty>
@@ -295,7 +295,7 @@ export function Collections() {
           type="button"
           onClick={() => setAutoPagesOpen((o) => !o)}
           aria-expanded={autoPagesOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
         >
           <span className="text-fg-2">{autoPagesOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
           <span className="font-display text-heading font-medium text-fg-1">Auto-pages</span>
@@ -333,7 +333,7 @@ export function Collections() {
                     <button
                       key={tag}
                       onClick={() => setOpenTag(openTag === tag ? null : tag)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-body"
+                      className="inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body"
                       style={{
                         borderColor: openTag === tag ? cat('sapphire') : cat('surface1'),
                         color: cat('sapphire'),

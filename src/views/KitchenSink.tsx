@@ -1,6 +1,7 @@
 import { Plus, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
+import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Ring } from '../components/ui/ring'
@@ -30,9 +31,47 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function KitchenSink() {
   const [seg, setSeg] = useState<'a' | 'b' | 'c'>('a')
   const [n, setN] = useState(3)
+  const { data, setSettings } = useJournal()
+  const theme = data.settings.theme ?? 'mocha'
+  const scale = data.settings.fontScale ?? 1
 
   return (
     <Page width="read">
+      {/* REVIEW CONTROLS · the two axes every stage has to be checked against,
+          on the page being reviewed rather than three clicks away in Settings.
+          They drive the real settings, not a local copy — a theme switcher that
+          only fakes it would let a desynced JS palette (§I2) pass unnoticed. */}
+      <Card title="Review controls" subtitle="Both axes drive the real settings, not a preview.">
+        <Row label="Theme">
+          <Segmented
+            value={theme}
+            onChange={(v) => setSettings({ theme: v })}
+            options={[
+              { value: 'mocha', label: 'Mocha' },
+              { value: 'latte', label: 'Latte' },
+              { value: 'neon', label: 'Neon' },
+              { value: 'vscode', label: 'VS Code' },
+              { value: 'dawn', label: 'Dawn' },
+            ]}
+          />
+        </Row>
+        <Row label="Text size">
+          <Segmented
+            value={scale}
+            onChange={(v) => setSettings({ fontScale: v })}
+            options={[
+              { value: 0.9, label: 'S' },
+              { value: 1, label: 'M' },
+              { value: 1.1, label: 'L' },
+              { value: 1.25, label: 'XL' },
+            ]}
+          />
+          <span className="text-caption text-fg-3">
+            Everything below is sized in rem, so it grows with this. If a control clips at XL, it is wrong.
+          </span>
+        </Row>
+      </Card>
+
       <Card title="Type scale" subtitle="Seven steps. Nothing outside this scale.">
         <div className="space-y-2">
           <p className="font-display text-display">Display 32 — Fraunces</p>
@@ -122,7 +161,7 @@ export function KitchenSink() {
               ['ink-3', 'bg-ink-3'],
             ] as const
           ).map(([name, cls]) => (
-            <div key={name} className={`grid h-16 w-28 place-items-center rounded-lg border border-line ${cls}`}>
+            <div key={name} className={`grid h-16 w-28 place-items-center rounded-card border border-line ${cls}`}>
               <span className="text-caption text-fg-2">{name}</span>
             </div>
           ))}

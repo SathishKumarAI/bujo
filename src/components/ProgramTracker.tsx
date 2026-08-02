@@ -87,7 +87,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
           </button>
         ))}
       </div>
-      {p.note && <p className="mb-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{p.note}</p>}
+      {p.note && <p className="mb-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{p.note}</p>}
 
       {cur && (
         <>
@@ -120,8 +120,8 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
             })}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
-            {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>}
-            <Button variant="secondary" onClick={toggleAll} className="press-3d rounded-lg">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
+            {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-control inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>}
+            <Button variant="secondary" onClick={toggleAll} className="press-3d">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
           </div>
         </>
       )}

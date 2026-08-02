@@ -32,8 +32,8 @@ export function CoachCard() {
           const { color, Icon } = TONE[t.tone]
           return (
             <li key={t.id}>
-              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-lg border border-line bg-ink-0 p-3 text-left hover:border-mauve">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ background: cat(color) + '22' }}>
+              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-card border border-line bg-ink-0 p-3 text-left hover:border-mauve">
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill" style={{ background: cat(color) + '22' }}>
                   <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
                 </span>
                 <span className="min-w-0 flex-1">

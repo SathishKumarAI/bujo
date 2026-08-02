@@ -202,7 +202,7 @@ function TodayControl({
       <button
         onClick={() => onSetValue(today, h.id, next)}
         aria-label={`${h.name}: ${value} of ${target}${h.unit ? ' ' + h.unit : ''}, tap to add`}
-        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-label"
+        className="inline-flex items-center gap-1 rounded-pill border px-2 py-0.5 text-label"
         style={{ borderColor: value > 0 ? accent : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
         title={`Tap to log${h.unit ? ' (' + h.unit + ')' : ''}`}
       >
@@ -216,7 +216,7 @@ function TodayControl({
       onClick={() => onToggle(today, h.id)}
       aria-label={h.avoid ? (on ? 'Slipped today' : 'Clean today') : 'Toggle today'}
       title={h.avoid ? (on ? 'Slipped today' : 'Clean today') : undefined}
-      className="inline-grid h-6 w-6 place-items-center rounded-full border"
+      className="inline-grid h-6 w-6 place-items-center rounded-pill border"
       style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
       {on && <span className="text-micro" style={{ color: cat('crust') }}>✓</span>}

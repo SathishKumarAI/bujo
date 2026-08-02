@@ -82,11 +82,11 @@ export function Fitness() {
 
   return (
     <Page>
-      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Icon as={ArrowsClockwise} size="sm" /> ArrowsClockwise last</Button> : undefined}>
+      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> ArrowsClockwise last</Button> : undefined}>
         <div className="space-y-3">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <label className="block text-body text-fg-1">Activity
-            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1">
+            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
               {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
             </select>
           </label>
@@ -94,14 +94,14 @@ export function Fitness() {
           {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
           <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
-          <Button variant="secondary" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
+          <Button variant="secondary" onClick={submit} className="press-3d w-full">Log workout</Button>
         </div>
       </Card>
 
       <Card
         title="History"
         subtitle="Tap a workout to edit"
-        right={workouts.length > 6 ? <Button variant="secondary" onClick={() => setShowAll((v) => !v)} className="press-3d rounded-lg">{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
+        right={workouts.length > 6 ? <Button variant="secondary" onClick={() => setShowAll((v) => !v)} className="press-3d rounded-control">{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
       >
         {workouts.length === 0 ? (
           <Empty>No workouts logged yet.</Empty>
@@ -179,7 +179,7 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
       <div className="grid grid-cols-2 gap-2">
         <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
         <label className="block text-body text-fg-1">Activity
-          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1">
+          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
             {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
           </select>
         </label>
@@ -188,12 +188,12 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
       <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-lg">Save</Button>
+        <Button variant="secondary" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-control">Save</Button>
         <Button variant="ghost" onClick={async () => { if (await confirm({
           title: 'Delete this workout?',
           description: 'The workout and its sets are removed from your history. This cannot be undone.',
           confirmLabel: 'Delete workout', destructive: true,
-        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
+        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-control text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
       </div>
     </div>
   )
@@ -216,7 +216,7 @@ function CardioBadgesCard() {
     <Card title="Cardio bests" subtitle="All-time personal bests, with the day you set them" defer>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {earned.map((b) => (
-          <div key={b.key} className="rounded-xl border border-line bg-ink-0 px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
+          <div key={b.key} className="rounded-card border border-line bg-ink-0 px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
             <div className="flex items-center gap-1.5 text-heading font-medium" style={{ color: cat(tint[b.key]) }}>
               🏅 <span>{fmt(b)}</span>
             </div>
@@ -295,14 +295,14 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
       subtitle="Calories & macros, add foods or type your own"
       collapsible
       defaultCollapsed
-      right={<Button variant="secondary" onClick={fillSample} title="Fill a typical ~1800 kcal day" className="press-3d rounded-lg">Sample day</Button>}
+      right={<Button variant="secondary" onClick={fillSample} title="Fill a typical ~1800 kcal day" className="press-3d">Sample day</Button>}
     >
       {/* Quick-add from the food DB (American + Indian staples). */}
       <div className="mb-3">
         <select
           value=""
           onChange={(e) => { const f = FOODS.find((x) => x.name === e.target.value); if (f) addFood(f) }}
-          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1"
+          className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1"
           aria-label="Add a food"
         >
           <option value="">+ Add a food…</option>
@@ -338,7 +338,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
       </div>
       {totalG > 0 && (
         <div className="mt-3">
-          <div className="flex h-3 overflow-hidden rounded-full">
+          <div className="flex h-3 overflow-hidden rounded-pill">
             {macros.map((mac) => (
               <div key={mac.k} style={{ width: `${((mac.val ?? 0) / totalG) * 100}%`, background: cat(mac.color) }} />
             ))}

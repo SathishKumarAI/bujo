@@ -15,8 +15,8 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
               <span className="min-w-0 truncate text-fg-1">{p.partner}</span>
               <span className="shrink-0 text-fg-2">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: cat('green') }}>{p.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
-              <div className="h-full rounded-full" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
+              <div className="h-full rounded-pill" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
             </div>
           </li>
         ))}
@@ -79,8 +79,8 @@ export function LevelMatchupCard({ matchup }: { matchup: LevelBucket[] }) {
               <span className="text-fg-1">{m.label}</span>
               <span className="text-fg-2">{m.games} games · <span style={{ color: cat('green') }}>{m.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
-              <div className="h-full rounded-full" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
+              <div className="h-full rounded-pill" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
             </div>
           </li>
         ))}

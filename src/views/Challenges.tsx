@@ -51,7 +51,7 @@ export function Challenges() {
             type="button"
             onClick={() => setArchiveOpen((o) => !o)}
             aria-expanded={archiveOpen}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+            className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
           >
             <span className="text-fg-2">{archiveOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
             <span className="font-display text-heading font-medium text-fg-1">Completed &amp; archived</span>
@@ -61,7 +61,7 @@ export function Challenges() {
             <Card title="Completed & archived" subtitle="Your past challenges">
               <ul className="space-y-2 text-body">
                 {archived.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2">
+                  <li key={c.id} className="flex items-center justify-between rounded-card border border-line bg-background px-3 py-2">
                     <span className="text-fg-1"><Icon as={Trophy} size="sm" className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
                     <span className="text-label text-fg-2">{completedDays(data, c, todayISO())} days done</span>
                   </li>
@@ -89,7 +89,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2">{c.name}{c.strict && <span className="rounded-full bg-red/15 px-2 py-0.5 text-micro font-medium text-red">strict · resets on a miss</span>}</span>}
+      title={<span className="flex items-center gap-2">{c.name}{c.strict && <span className="rounded-pill bg-red/15 px-2 py-0.5 text-micro font-medium text-red">strict · resets on a miss</span>}</span>}
       subtitle={notStarted ? `Starts ${c.startDate}` : `Day ${day} of ${c.durationDays}`}
       right={
         <div className="flex items-center gap-1">
@@ -104,7 +104,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       }
     >
       {finished && (
-        <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-2 text-body text-green">
+        <p className="mb-3 flex items-center gap-1.5 rounded-control border border-green/30 bg-green/10 px-3 py-2 text-body text-green">
           <Icon as={Trophy} size="sm" /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
         </p>
       )}
@@ -117,8 +117,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
             <span>{completedDays(data, c, today)} of {c.durationDays} days done</span>
             <span>{Math.max(0, c.durationDays - completedDays(data, c, today))} to go</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-            <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
+          <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+            <div className="h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
           </div>
           <div className="mt-2 flex gap-4 text-label">
             <span className="text-peach">🔥 {streak} streak</span>
@@ -136,7 +136,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
               const ruleDone = todayDone.includes(i)
               return (
                 <li key={i}>
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-line bg-background px-3 py-2 text-body">
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-card border border-line bg-background px-3 py-2 text-body">
                     <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
                     <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   </label>
@@ -203,7 +203,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
 function Stat({ label, value, icon, color }: { label: string; value: string; icon?: string; color: string }) {
   return (
-    <div className="rounded-lg border border-line bg-background py-2">
+    <div className="rounded-card border border-line bg-background py-2">
       <div className="text-heading font-medium" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
       <div className="text-micro text-fg-2">{label}</div>
     </div>
@@ -248,7 +248,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
   }
 
   return (
-    <div className="mb-2 space-y-3 rounded-lg border border-line bg-background p-4">
+    <div className="mb-2 space-y-3 rounded-card border border-line bg-background p-4">
       <div>
         <p className="mb-1.5 text-label text-fg-2">Preset</p>
         <Segmented
@@ -269,7 +269,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
           onChange={(e) => setRules(e.target.value)}
           rows={4}
           placeholder={'Two 45-min workouts\nDrink water\nRead 10 pages'}
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
       </label>
       <label className="flex cursor-pointer items-center justify-between text-body text-fg-1">

@@ -19,8 +19,8 @@ export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
           return (
             <div key={i} className="flex items-center gap-2 text-label">
               <span className="w-16 shrink-0 text-fg-2">{i + 1} · {INTENSITY_LABELS[i]}</span>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
-                <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
+              <div className="h-2.5 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
+                <div className="h-full rounded-pill transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
               </div>
               <span className="w-8 shrink-0 text-right text-fg-2">{c}</span>
             </div>

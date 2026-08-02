@@ -55,7 +55,7 @@ export function BottomNav({
             aria-current={active ? 'page' : undefined}
             className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
-            {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
+            {active && <span className="absolute top-0 h-0.5 w-8 rounded-pill bg-primary" />}
             <AppIcon as={Icon} size="lg" active={active} />
             {n.label}
           </button>

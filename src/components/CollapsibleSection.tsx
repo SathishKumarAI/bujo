@@ -72,7 +72,7 @@ export function CollapsibleSection({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+          className="press-3d flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
         >
           <span className="text-fg-2">
             {open ? <AppIcon as={CaretDown} size="md" /> : <AppIcon as={CaretRight} size="md" />}
@@ -95,7 +95,7 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
+        className="press-3d group/sec flex w-full items-center gap-3 rounded-card border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
         {iconNode}
         <span className="min-w-0">
