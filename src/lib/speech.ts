@@ -33,7 +33,15 @@ export function useSpeechInput(onText: (text: string) => void) {
   const [listening, setListening] = useState(false)
   const recRef = useRef<SpeechRecognitionLike | null>(null)
   const onTextRef = useRef(onText)
-  onTextRef.current = onText
+  // Keep the latest callback without re-creating the recogniser. Assigning in
+  // an effect rather than during render: a render can be thrown away or
+  // replayed, and mutating a ref in that phase is exactly what
+  // `react-hooks/refs` warns about. The recogniser only reads this from an
+  // event callback, which always runs after commit, so the effect is soon
+  // enough.
+  useEffect(() => {
+    onTextRef.current = onText
+  }, [onText])
 
   useEffect(() => () => recRef.current?.stop(), [])
 

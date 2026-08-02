@@ -36,6 +36,25 @@ function readCache(): WgerExercise[] | null {
   }
 }
 
+/*
+  Shape of the slice of wger's `exerciseinfo` response we actually read. Every
+  field is optional because it comes off the network from a third party — the
+  parser below already treats them as such, this just tells the compiler so.
+*/
+type WgerTranslation = { language?: number; name?: string }
+type WgerImage = { image?: string; is_main?: boolean }
+type WgerVideo = { video?: string }
+type WgerMuscle = { id: number }
+type WgerResult = {
+  id: number
+  translations?: WgerTranslation[]
+  images?: WgerImage[]
+  videos?: WgerVideo[]
+  muscles?: WgerMuscle[]
+  muscles_secondary?: WgerMuscle[]
+}
+type WgerPage = { results?: WgerResult[]; next?: string | null }
+
 /** Build the slim catalogue from wger's paginated exerciseinfo (English). */
 async function buildCatalog(signal?: AbortSignal, onProgress?: (n: number) => void): Promise<WgerExercise[]> {
   const items: WgerExercise[] = []
@@ -44,20 +63,22 @@ async function buildCatalog(signal?: AbortSignal, onProgress?: (n: number) => vo
   while (url && pages < 10) {
     const res = await fetch(url, { signal })
     if (!res.ok) throw new Error(`wger ${res.status}`)
-    const json: any = await res.json()
+    const json: WgerPage = await res.json()
     for (const r of json.results ?? []) {
-      const t = (r.translations ?? []).find((x: any) => x.language === 2) ?? (r.translations ?? [])[0]
+      const t = (r.translations ?? []).find((x) => x.language === 2) ?? (r.translations ?? [])[0]
       if (!t?.name) continue
-      const img = (r.images ?? []).find((i: any) => i.is_main) ?? (r.images ?? [])[0]
+      const img = (r.images ?? []).find((i) => i.is_main) ?? (r.images ?? [])[0]
       const vid = (r.videos ?? [])[0]
       const muscles = [
-        ...(r.muscles ?? []).map((m: any) => m.id),
-        ...(r.muscles_secondary ?? []).map((m: any) => m.id),
+        ...(r.muscles ?? []).map((m) => m.id),
+        ...(r.muscles_secondary ?? []).map((m) => m.id),
       ]
       items.push({ id: r.id, name: t.name, image: img?.image ?? null, video: vid?.video ?? null, muscles })
     }
     onProgress?.(items.length)
-    url = json.next
+    // `?? null` because wger omits `next` on the last page — with `any` this
+    // silently assigned undefined and relied on the loop's truthiness check.
+    url = json.next ?? null
     pages++
   }
   // De-dup by name, prefer entries that have an image.
