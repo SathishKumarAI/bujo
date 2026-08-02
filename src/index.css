@@ -105,12 +105,32 @@
   --ring: var(--color-mauve);
   --radius: 0.75rem;
 
+  /* ── Control heights ──────────────────────────────────────────────────────
+     Three, and only three. In rem so they scale with the global text-size
+     setting (FONT-1) — a control sized in px stops matching its own label the
+     moment someone bumps the font scale, which is exactly the user who needs
+     the target to stay big.
+
+     sm 28px · dense toolbars, inline row actions
+     md 36px · the default, and what `--h-control` alone means
+     lg 44px · reserved for a single empty-state call to action per screen */
+  --h-control-sm: 1.75rem;
+  --h-control: 2.25rem;
+  --h-control-lg: 2.75rem;
+
   /* Tertiary text (the brief's `--text-3`), surfaced as `--color-fg-3`.
      Per-theme, because no single grey clears AA on both near-black and
      near-white. Mocha uses overlay2 — palette-native, and 6.14:1 against the
      page / 6.55:1 against a card after the surface retune. overlay1 (4.44:1)
      and overlay0 (3.36:1) both fail and stay retired from text use. */
   --fg-3: var(--color-overlay2);
+
+  /* The accent as text. Mocha's mauve clears AA on its own wash (7.00:1 at
+     rest, 6.7:1 on hover), so it aliases the accent unchanged. See
+     `--color-brand-text` in tokens.css for why the light themes cannot. */
+  --brand-text: var(--color-mauve);
+  /* Mocha's palette red clears AA on its own wash (6.28:1 rest, 5.54:1 hover). */
+  --danger-text: var(--color-red);
 }
 
 /* Editorial serif for titles gives the journal an intentional, un-generic feel. */
@@ -470,6 +490,16 @@ body.handwriting textarea {
      this value sits at 4.74:1. Not palette-native; there is no Catppuccin slot
      in that band. */
   --fg-3: #6b7075;
+
+  /* Accent-as-text. `#6c4cf0` on the 14% wash measures 4.39:1 — under the
+     floor, and 4.04:1 once the hover wash deepens it. This darker violet reads
+     as the same colour and clears both (5.94:1 rest, 5.47:1 hover, 7.24:1 on
+     card), with enough headroom that a future surface tweak will not silently
+     drop it below AA. */
+  --brand-text: #5733db;
+  /* `#d93025` on the danger wash is 3.87:1, and 3.53:1 on hover. Darkened to
+     5.32:1 / 4.85:1 — still Google red, now legible on its own tint. */
+  --danger-text: #b2271e;
 }
 
 /* Light mode: soft, low elevation. The dark theme's heavy black drop-shadows
@@ -546,6 +576,11 @@ body.handwriting textarea {
 
   /* overlay2 — 5.57:1 worst case. */
   --fg-3: var(--color-overlay2);
+
+  /* Neon's accent and red both clear AA on their own washes unchanged
+     (5.94:1 and 5.66:1), so they alias the palette. */
+  --brand-text: var(--color-mauve);
+  --danger-text: var(--color-red);
 }
 /* Neon: accent buttons + active rails get a soft glow. */
 :root[data-theme='neon'] .bg-primary {
@@ -594,6 +629,13 @@ body.handwriting textarea {
 
   /* overlay2 — 6.08:1 worst case. */
   --fg-3: var(--color-overlay2);
+
+  /* Accent-as-text. The raw keyword purple passes on the hover wash at 4.67:1,
+     but with 0.17 of headroom — one surface tweak from failing silently. A
+     step lighter holds 5.29:1 there and stays the VS Code keyword colour. */
+  --brand-text: #cd92c8;
+  /* `#f14c4c` on the danger wash is 4.28:1. Lightened to 5.29:1 / 4.87:1. */
+  --danger-text: #f46d6d;
 }
 /* VS Code: flatter cards — thin border + minimal shadow, like editor panels. */
 :root[data-theme='vscode'] .card-3d {
@@ -647,6 +689,13 @@ body.handwriting textarea {
      silently. Collapsed to the secondary tier instead: dawn renders two text
      tiers, not three. Flagged for review — see TASKS.md §H14. */
   --fg-3: var(--color-subtext0);
+
+  /* Accent-as-text. Dawn's amber is the worst case in the app: `#b45309` on its
+     own wash is 4.07:1, and 3.72:1 on hover. Darkened to hold 5.49:1 / 5.02:1
+     while staying an amber rather than sliding into brown. */
+  --brand-text: #964307;
+  /* `#dc2626` on the danger wash is 3.80:1, the worst in the app. 5.35:1 now. */
+  --danger-text: #b21d1d;
 }
 /* Dawn (light): soft, low-elevation cards like Latte — heavy dark shadows read
    wrong on cream, so use a hairline border + faint warm shadow. */

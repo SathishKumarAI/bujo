@@ -59,6 +59,55 @@ export function KitchenSink() {
         </div>
       </Card>
 
+      {/* Stage 1 of the icon/button pass. Every token added there is rendered
+          here, because a token you cannot see in all five themes is a token
+          nobody can review. Switch themes in Settings and re-read this card. */}
+      <Card title="Accent wash" subtitle="The tonal surface. There is no solid-fill accent button in this app.">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-control bg-brand-wash px-3 py-2 text-body font-medium text-brand-text">
+              wash 14% · rest
+            </span>
+            <span className="inline-flex items-center rounded-control bg-brand-wash-hover px-3 py-2 text-body font-medium text-brand-text">
+              wash 20% · hover
+            </span>
+            <span className="inline-flex items-center rounded-control bg-danger-wash px-3 py-2 text-body font-medium text-danger-text">
+              danger wash
+            </span>
+          </div>
+          <p className="text-label text-fg-2">
+            Mixed in oklab, not srgb — srgb drags a mix toward grey through the middle of
+            the range, worst in dawn, whose accent is an amber rather than a violet.
+          </p>
+          <p className="text-label text-fg-2">
+            The label uses <span className="text-brand-text">brand-text</span>, not{' '}
+            <span className="text-brand">brand</span>: the accent as a surface and the accent
+            as text are not the same colour. On this wash the raw accent measures 4.39:1 in
+            latte and 4.07:1 in dawn — both under AA — so those two themes darken it.
+          </p>
+        </div>
+      </Card>
+
+      <Card title="Shape & size" subtitle="Three radii, three control heights. Everything else is drift.">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-control border border-line-strong px-3 py-2 text-label">rounded-control · 8px</span>
+            <span className="rounded-card border border-line-strong px-3 py-2 text-label">rounded-card · 14px</span>
+            <span className="rounded-pill border border-line-strong px-3 py-2 text-label">rounded-pill</span>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <span className="inline-flex h-[var(--h-control-sm)] items-center rounded-control bg-ink-2 px-3 text-label">28 · sm</span>
+            <span className="inline-flex h-[var(--h-control)] items-center rounded-control bg-ink-2 px-3 text-label">36 · md</span>
+            <span className="inline-flex h-[var(--h-control-lg)] items-center rounded-control bg-ink-2 px-3 text-label">44 · lg</span>
+          </div>
+          <p className="text-label text-fg-2">
+            Heights are in rem, so they track the global text-size setting. A control sized
+            in px stops matching its own label the moment someone bumps the font scale —
+            which is exactly the person who needs the target to stay big.
+          </p>
+        </div>
+      </Card>
+
       <Card title="Surfaces">
         {/* Classes are written out, not interpolated — Tailwind scans source
             text, so a computed `bg-${s}` produces no CSS at all. */}
