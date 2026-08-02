@@ -38,17 +38,85 @@ export function Today() {
   const hidden = data.settings.hideToday ?? []
   const hasFlash = flashbacks.entries.length + flashbacks.memories.length > 0
 
+  const isToday = date === todayISO()
+
+  /** The log itself: capture box, yesterday's carry-forward, the day's entries. */
+  const dayLog = (
+    <Card
+      title={prettyDay(date)}
+      subtitle={
+        <span className="flex items-center gap-2">
+          {isToday ? 'Today' : ''}
+          {metric?.weather && (
+            <span title={metric.weather.label}>
+              {metric.weather.icon} {metric.weather.tempC}°C
+            </span>
+          )}
+        </span>
+      }
+    >
+      <div className="mb-3">
+        <CaptureBar date={date} />
+      </div>
+      {carryover.length > 0 && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2 text-body">
+          <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
+          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-lg">Carry forward</Button>
+        </div>
+      )}
+      {dayEntries.length === 0 ? (
+        <Empty
+          icon={NotebookPen}
+          hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
+          action={{
+            label: 'Start writing',
+            onClick: () =>
+              document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
+          }}
+        >
+          Nothing logged for this day
+        </Empty>
+      ) : (
+        <>
+          <ul>
+            {dayEntries.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
+          {taskCount > 0 && (
+            <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
+          )}
+        </>
+      )}
+    </Card>
+  )
+
+  /**
+   * The right rail holds everything *derived* — the plan summary, the coach's
+   * prompts, the penalty. None of it can be acted on here; it reports on
+   * entries made elsewhere. Putting it in the rail does two things at once: it
+   * fills the ~600px of dead gutter this page used to leave at desktop widths,
+   * and it gets three read-only cards out from in front of the capture box.
+   *
+   * Undefined on any day but today, so Page falls back to its single-column
+   * `read` tier rather than rendering an empty rail.
+   */
+  const rail = isToday ? (
+    <>
+      {!hidden.includes('plan') && <TodayPlanCard />}
+      <CoachCard />
+      {!hidden.includes('penalty') && <PenaltyCard />}
+    </>
+  ) : undefined
+
   return (
-    <Page>
-      {/* ── 1) Today command centre: plan + coach lead, penalty only when relevant ─ */}
-      {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
-      {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
-
-      {/* ── Coach: proactive "do this next" prompts from your data ── */}
-      {date === todayISO() && <CoachCard />}
-
-      {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
-      {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
+    // `asideFirst` stays off: on phones the rail drops *below* the log, so the
+    // capture box is the first thing on the screen at every width.
+    <Page aside={rail}>
+      {/* ── 1) The day: capture first. This is a bullet journal; writing a line
+             is the point of the page, so the log leads and everything that
+             summarises it follows. ─────────────────────────────────── */}
+      {dayLog}
 
       {/* ── 2) Daily actions: one unified habit block — boolean check-offs,
              count/timer steppers, and at-risk streak chips sit together,
@@ -100,55 +168,6 @@ export function Today() {
 
       {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
       <FastingCard />
-
-      {/* ── 3) The day: Daily log (primary, above the fold) ─────── */}
-      <Card
-        title={prettyDay(date)}
-        subtitle={
-          <span className="flex items-center gap-2">
-            {date === todayISO() ? 'Today' : ''}
-            {metric?.weather && (
-              <span title={metric.weather.label}>
-                {metric.weather.icon} {metric.weather.tempC}°C
-              </span>
-            )}
-          </span>
-        }
-      >
-        <div className="mb-3">
-          <CaptureBar date={date} />
-        </div>
-        {carryover.length > 0 && (
-          <div className="mb-3 flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2 text-body">
-            <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-            <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-lg">Carry forward</Button>
-          </div>
-        )}
-        {dayEntries.length === 0 ? (
-          <Empty
-            icon={NotebookPen}
-            hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
-            action={{
-              label: 'Start writing',
-              onClick: () =>
-                document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
-            }}
-          >
-            Nothing logged for this day
-          </Empty>
-        ) : (
-          <>
-            <ul>
-              {dayEntries.map((e) => (
-                <EntryRow key={e.id} entry={e} />
-              ))}
-            </ul>
-            {taskCount > 0 && (
-              <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
-            )}
-          </>
-        )}
-      </Card>
 
       {/* ── 4) Reflect (2-col): light daily journaling rituals ─── */}
       <div className="grid gap-5 sm:grid-cols-2">
