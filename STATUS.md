@@ -22,13 +22,28 @@ Update this when you STOP working, not when you start.
   to `main` — five commits landed on local `main` before they were moved onto
   `fix/a11y-gaps` and `main` was reset to `origin/main`. Check `git branch --show-current`
   before committing here.
-- **Next action:** review and merge the stack bottom-up, then answer the four
-  open questions in `docs/ICON-BUTTON-SYSTEM.md` so §J (icon & button system)
-  can start. Stage 0 of that pass is done and already changes the plan — the
-  theme bridge exists and runs the *opposite* way to what the brief assumed, and
-  the contrast stage is already satisfied. §I1 (accent-as-text failing AA in
-  latte) is now a **one-file** fix: every pill reads its colour from `Pill` in
-  `src/components/ui.tsx`.
+- **Icon & button system (§J):** stages 0–4 and the mechanical half of 6 are
+  done, on `feat/icon-button-stage1` — PR **#94**, stacked on **#92**
+  (`docs/icon-button-system`), which is stacked on #91. So the full merge order
+  is now **#88 → #89 → #90 → #91 → #92 → #94**.
+  lucide is gone (Phosphor behind one `Icon` wrapper, 85 files, 397 conversions),
+  the solid accent button is gone (four variants, tonal primary, 28/36/44 in
+  rem), ten radii are three, and the kitchen sink switches theme and text size
+  itself. Stickers were removed outright, including saved data. Today is a
+  weighted three-column layout, and the weight / left-right contract for every
+  card is in `docs/LAYOUT-WEIGHT-ALIGNMENT.md`.
+  §I1 got solved on the way: accent-as-text failed AA in latte (4.39:1) and dawn
+  (4.07:1) once the primary button went tonal, and it is fixed **at the token**
+  (`--color-brand-text`, `--color-danger-text`), so no call site has to remember.
+- **Next action:** Stage 5 — what is left is *judgement* work, not mechanical:
+  empty-state and error copy per view, container tiers, and ~170 hex literals
+  that need the genuine data cases carved out first (Settings' theme-swatch
+  previews must render another theme's colours while you look at this one; chart
+  palettes and habit colour pickers are the same shape of problem). Also open:
+  rebuild `Segmented`/`Stepper` on `ToggleGroup`, and decide the icon bundle —
+  413 kB raw / 93 kB gzip because Phosphor ships six weights per glyph and this
+  app uses two. Trim the 144-glyph vocabulary, or generate a two-weight local
+  build. Relates to **B4**.
 - **Standing rule from this session:** UI changes are verified in **all five
   themes** — mocha, latte, neon, vscode, dawn — not mocha plus a spot check.
   Three of them redefine the accent (dawn's is an amber), two invert surface
