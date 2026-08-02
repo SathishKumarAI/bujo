@@ -4,7 +4,7 @@ import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { MuscleMap } from './MuscleMap'
 import { muscleNames } from '../lib/muscles'
-import { Empty, Input } from './ui'
+import { Empty, Input, Pill } from './ui'
 import { Button } from './ui/button'
 import { useFocusTrap } from '../lib/useFocusTrap'
 
@@ -121,7 +121,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                     <MuscleMap muscles={selected.muscles} />
                     <div className="mt-2 flex flex-wrap gap-1">
                       {muscleNames(selected.muscles).map((m) => (
-                        <span key={m} className="rounded-full px-2 py-0.5 text-label" style={{ background: cat('mauve') + '33', color: cat('mauve') }}>{m}</span>
+                        <Pill key={m} color="mauve">{m}</Pill>
                       ))}
                     </div>
                   </>
