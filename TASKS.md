@@ -329,9 +329,18 @@ cream. Anything checked in mocha alone is unchecked.
     distinguish custom `text-label` (size) from `text-brand-text` (colour), so
     a small primary rendered in the foreground colour. Sizes now use
     `text-[length:…]`.
-  - **Still open:** `Segmented` and `Stepper` are not yet rebuilt on
-    `ToggleGroup`, and ~12 call sites still override the radius with
-    `rounded-lg`. Both belong to Stage 5.
+  - **`Segmented` is now Radix `ToggleGroup`** (same API, ~30 call sites
+    unmoved). Roving focus is off because with it on every item computed
+    `tabIndex: -1` — the control could not be tabbed into at all. Deselect is
+    refused; the selected colour is inline, bound to `--brand-text`, because the
+    vendored `toggleVariants` ships a competing `data-[state=on]:text-*`.
+    Its filled grey track became a hairline: the wash had been stacking on a
+    lighter base and vscode measured **4.63:1**, 0.13 above the floor. Now
+    7.00 mocha · 5.94 neon · 5.86 vscode · 5.49 dawn · 5.35 latte.
+  - **`Stepper` is deliberately not on `ToggleGroup`** — a toggle group picks
+    one of a set; a stepper nudges a number, with hold-to-repeat and a typing
+    escape hatch. Its ± controls do go through `Button`.
+  - Radius overrides are gone (the codemod removed 17 on buttons).
 - [x] **J4 · Stage 4 — DONE.** `/kitchen-sink` now carries its own five-theme
   switcher and S/M/L/XL text-size control, both driving the real settings (a
   faked switch would hide the §I2 palette desync). Swept **5 themes × 3 scales
