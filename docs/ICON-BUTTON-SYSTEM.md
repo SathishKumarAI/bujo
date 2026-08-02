@@ -284,6 +284,70 @@ the kitchen sink in all five themes does not count as shipped.** It also makes
 Tailwind emit the new utilities, which is how the first measurement pass caught
 that `rounded-control` did not exist yet.
 
+## Stage 2 — done. One icon library, behind one wrapper
+
+**Two modules, and nothing else touches icons.** `components/icons.ts` is the
+only importer of `@phosphor-icons/react` (144 glyphs, each commented with the
+lucide name it replaces); `components/Icon.tsx` owns size and state.
+
+- **397 JSX icons** converted across **85 files** by codemod, kept in
+  `scripts/codemod/` because it records the mapping better than a diff can.
+  A further **19** were dynamic — a glyph held in a variable — and were done by
+  hand, which is also where the active states got wired.
+- **Sizes: three, in rem.** The app had sixteen px sizes (`size={14}` at 112
+  sites). Boundaries follow where the old sizes actually clustered: ≤15 → `sm`,
+  16–18 → `md`, ≥20 → `lg`.
+- **State is weight, not colour.** Regular at rest, duotone when active. The
+  active nav row no longer needs to be purple *and* filled *and* railed.
+- The bullet glyph column (`· × — ›`) stays typographic, as specified.
+
+Icons that were not in the brief's 23-surface map were chosen by noun and are
+listed in the registry with the lucide name each replaces. The ones worth a
+second opinion, because Phosphor's noun is not the obvious word:
+
+| Was | Now | Why |
+|---|---|---|
+| `Ban` | `Prohibit` | Phosphor has no "ban" |
+| `HelpCircle` | `Question` | |
+| `LifeBuoy` | `Lifebuoy` | spelling differs |
+| `Swords` | `Sword` | no crossed-swords glyph |
+| `CupSoda` | `Drop` | the call site is hydration, not a drink |
+| `Layers` | `Stack` | |
+| `GripVertical` | `DotsSixVertical` | |
+| `Settings` / `Settings2` | `SlidersHorizontal` / `FadersHorizontal` | two distinct controls kept distinct |
+| `Repeat` + `RefreshCw` | both `ArrowsClockwise` | they were the same idea twice |
+
+### Verified in all five themes
+
+Measured on the rendered sidebar, per theme: the active row's glyph renders
+**two paths with an opacity layer** (duotone), the resting row renders **one**
+(regular), both at **1.125rem**, with the active one in that theme's
+`--color-brand-text` — `#cba6f7` mocha, `#5733db` latte, `#c77dff` neon,
+`#cd92c8` vscode, `#964307` dawn.
+
+### Two judgement calls
+
+- Rating stars and the "important" marker used `fill` to mean "this one
+  counts". They use `active` now, so the state reads as duotone like every
+  other state in the app — which is also why `fill` never had to come back.
+- `VideoLink` took a px `size` number. It takes a scale step, so a caller
+  cannot invent a seventeenth icon size.
+
+### The cost, stated rather than absorbed
+
+The icon set is **413 kB raw / 93 kB gzip**, in its own chunk. Phosphor ships
+all six weights per glyph in a single module and this app uses two, so roughly
+two thirds of that is dead weight that tree-shaking cannot reach — confirmed by
+testing per-icon entrypoints, which produced a byte-identical chunk. Chunked
+separately so it does not invalidate the app bundle on every release. Options
+for Stage 6: trim the 144-glyph vocabulary, or generate a local two-weight
+build. Relates to `TASKS.md` B4 (bundle regression).
+
+Also note: the five vendored shadcn primitives (command, dialog, dropdown-menu,
+resizable, sonner) imported lucide of their own accord. They point at the
+registry now — but `shadcn add` will reintroduce lucide in anything it
+regenerates, so that is a thing to re-check after any future component add.
+
 ## Open questions — answered
 
 All four were answered "go with the recommendation":

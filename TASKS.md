@@ -285,9 +285,36 @@ cream. Anything checked in mocha alone is unchecked.
   - `shadcn add` cannot resolve this repo's `@` alias (solution-style root
     tsconfig, no `paths`) and writes to a literal `@/` folder. Files copied by
     hand; `@/` is gitignored + eslint-ignored as a reference copy.
-- [ ] **J2 · Stage 2 — Phosphor + one `Icon` wrapper.** Three rem sizes, weight
-  as the state signal, nothing imports Phosphor directly. The bullet glyph
-  column stays typographic.
+- [x] **J2 · Stage 2 — DONE. lucide → Phosphor, behind one wrapper.** 85 files,
+  397 JSX icons converted by codemod (`scripts/codemod/`, kept because it
+  documents the 144-glyph mapping better than a diff), plus 19 dynamic-glyph
+  sites by hand. `components/icons.ts` is the only importer of Phosphor;
+  `components/Icon.tsx` owns size (three steps, **rem**) and state (**duotone
+  when active, regular at rest** — never a colour change).
+  - Verified in **all five themes**: active glyph = 2 paths with an opacity
+    layer, resting = 1 path, at 1.125rem, in each theme's `--color-brand-text`.
+  - Rating stars and the important marker dropped `fill` for `active`, so state
+    reads as weight like everywhere else. `VideoLink`'s px `size` prop became a
+    scale step.
+  - The five vendored shadcn primitives point at the registry too, so the app
+    ships one icon library. Caveat: `shadcn add` reintroduces lucide imports in
+    anything it regenerates.
+  - **Cost, flagged not hidden:** the icon set is 413 kB raw / 93 kB gzip in its
+    own chunk. Phosphor ships six weights per glyph and two are used, so ~2/3 is
+    unshakeable with this package layout. Decide in J6 whether to trim the
+    vocabulary or generate a two-weight local build. Relates to **B4**.
+- [x] **J7 · Weight & alignment contract — `docs/LAYOUT-WEIGHT-ALIGNMENT.md`.**
+  Every card and component gets a weight (1 primary / 2 working / 3 quiet) and
+  an explicit side: **left is identity, right is state and actions**. Applied
+  already: `EntryRow`'s `!` moved out of the left gutter into one right-hand
+  cluster with `×` (the log gets that indent back on every row), and **Today is
+  now three weighted columns** — full-width command band, log at two of three
+  tracks, tap-to-log and quiet cards in the third.
+- [x] **J8 · Stickers ("Decorate the day") removed — including saved data.**
+  Confirmed destructive: the Today card, the Monthly day-cell strip, the store
+  actions, the demo seeding, the type field and `StickerBar.tsx` are gone, and
+  `migrate()` strips `stickers` from any journal it loads. Stickers placed
+  before this upgrade survive only in backups taken before it.
 - [ ] **J3 · Stage 3 — four button variants, three heights (28/36/44).** Delete
   shadcn's solid `default`. Rebuild `Segmented` and `Stepper` on `ToggleGroup`.
   Dev-only warning when a route mounts more than one `primary`.

@@ -90,8 +90,6 @@ export function generateDemoData(today = todayISO()): JournalData {
       })
     }
 
-    // Occasional stickers.
-    if (rand() > 0.8) j.stickers[date] = ['⭐']
   }
 
   j.entries = entries

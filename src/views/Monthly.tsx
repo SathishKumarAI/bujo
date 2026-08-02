@@ -151,9 +151,6 @@ export function Monthly() {
                       />
                     ))}
                   </div>
-                  <div className="mt-0.5 text-body leading-tight">
-                    {(data.stickers[d] ?? []).slice(0, 4).join('')}
-                  </div>
                   {(() => {
                     const { done, total } = cellHabits
                     if (total === 0 || d > today) return null
