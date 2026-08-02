@@ -32,6 +32,14 @@ type Props = {
    *  that is deliberately closed every visit (a rarely-read appendix) should
    *  not silently start staying open. */
   stickyKey?: string
+  /**
+   * Controlled mode. Pass both to drive the section from outside — Collections
+   * needs it because "jump to tag" has to expand Auto-pages before it scrolls
+   * there. Omit both and the section keeps its own state (sticky or not),
+   * which is what nearly every call site wants.
+   */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   children: ReactNode
 }
 
@@ -43,6 +51,8 @@ export function CollapsibleSection({
   variant = 'card',
   defaultOpen = false,
   stickyKey,
+  open: controlledOpen,
+  onOpenChange,
   children,
 }: Props) {
   const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
@@ -50,8 +60,13 @@ export function CollapsibleSection({
     defaultOpen ? '1' : '0',
     OPEN_STATES,
   )
-  const open = openFlag === '1'
-  const setOpen = (next: boolean) => setOpenFlag(next ? '1' : '0')
+  // A controlled `open` wins over the internal (optionally sticky) flag, so a
+  // caller that drives the section from outside is never fighting storage.
+  const open = controlledOpen ?? openFlag === '1'
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setOpenFlag(next ? '1' : '0')
+    onOpenChange?.(next)
+  }
 
   // A Lucide icon arrives as a component; a pre-rendered node arrives as an element.
   let iconNode: ReactNode = null

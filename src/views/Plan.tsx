@@ -4,6 +4,7 @@ import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
 import { Star } from 'lucide-react'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Page } from '../components/shell/Page'
+import { QuietSection } from '../components/CollapsibleSection'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
@@ -19,7 +20,6 @@ export function Plan() {
   const [showAllOverdue, setShowAllOverdue] = useState(false)
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [agingOpen, setAgingOpen] = useState(false)
-  const [setupOpen, setSetupOpen] = useState(false)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -208,18 +208,7 @@ export function Plan() {
         </Card>
       )}
 
-      <div>
-        <button
-          type="button"
-          onClick={() => setSetupOpen((o) => !o)}
-          aria-expanded={setupOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
-        >
-          <span className="text-fg-2">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-          <span className="font-display text-heading font-medium text-fg-1">Setup</span>
-          <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
-        </button>
-        {setupOpen && (
+      <QuietSection title="Setup" subtitle="recurring rules &amp; calendar import">
           <div className="mt-3 space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
@@ -285,8 +274,7 @@ export function Plan() {
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
           </div>
-        )}
-      </div>
+      </QuietSection>
       </div>
     </Page>
   )
