@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
-import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat, rechartsTooltip } from '../lib/colors'
@@ -321,9 +321,9 @@ export function Pickleball() {
                   <span className="text-body font-medium text-fg-1">{e.name}</span>
                   <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
-                <span className="shrink-0 rounded-full px-2.5 py-1 text-label font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
+                <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
                   {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
-                </span>
+                </Pill>
               </li>
             ))}
           </ul>
@@ -454,7 +454,7 @@ export function Pickleball() {
                   <span className="text-fg-2"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  {e.placement && <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
+                  {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
                   {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
                   <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </span>
@@ -472,7 +472,7 @@ export function Pickleball() {
           <div className="rounded-lg border border-line bg-ink-0 p-3">
             <div className="mb-1 flex items-center gap-2">
               <span className="text-body font-medium text-fg-1">{drill.name}</span>
-              <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
+              <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
             </div>
             <p className="text-label text-fg-2">{drill.how}</p>
             <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>

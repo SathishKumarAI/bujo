@@ -1,5 +1,5 @@
 import { Users, MapPin, Swords, Gauge } from 'lucide-react'
-import { Card } from '../ui'
+import { Card, Pill } from '../ui'
 import { cat } from '../../lib/colors'
 import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../lib/pickleball'
 
@@ -35,7 +35,7 @@ export function VenuesCard({ venues }: { venues: VenueStat[] }) {
             <span className="min-w-0 truncate text-fg-1">{v.location}</span>
             <span className="flex shrink-0 items-center gap-2 text-fg-2">
               {v.sessions} {v.sessions === 1 ? 'visit' : 'visits'} · {v.games} games
-              <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat('teal') + '22', color: cat('teal') }}>{v.winPct}%</span>
+              <Pill color="teal" size="micro" className="px-2">{v.winPct}%</Pill>
             </span>
           </li>
         ))}
@@ -55,9 +55,9 @@ export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }
             <span className="min-w-0 truncate text-fg-1">vs {o.opponent} <span className="text-fg-2">· {o.sessions} {o.sessions === 1 ? 'meeting' : 'meetings'}</span></span>
             <span className="flex shrink-0 items-center gap-2">
               <span><span style={{ color: cat('green') }}>{o.gamesWon}</span>–<span style={{ color: cat('red') }}>{o.gamesLost}</span></span>
-              <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') + '22', color: cat(o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0') }}>
+              <Pill color={o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0'} size="micro" className="px-2">
                 {o.diff > 0 ? `+${o.diff}` : o.diff}
-              </span>
+              </Pill>
             </span>
           </li>
         ))}

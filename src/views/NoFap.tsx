@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, Heart, Hourglass, ShieldCheck } from 'lucide-react'
 import { useJournal } from '../store'
-import { Card, Empty, Input, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
@@ -352,7 +352,7 @@ export function NoFap() {
               <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: cat('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {techRank.map((t) => (
-                  <span key={t.technique} className="rounded-full px-2 py-0.5" style={{ background: cat('surface0'), color: cat('subtext0') }}>{TECH_LABEL[t.technique]} {t.count}</span>
+                  <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>
                 ))}
               </div>
             </div>
@@ -363,7 +363,7 @@ export function NoFap() {
               <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: cat('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {haltRank.map((h) => (
-                  <span key={h.state} className="rounded-full px-2 py-0.5" style={{ background: cat('surface0'), color: cat('subtext0') }}>{h.label} {h.count}</span>
+                  <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>
                 ))}
               </div>
             </div>
@@ -510,7 +510,7 @@ export function NoFap() {
                 {plans.map((pl) => (
                   <li key={pl.id} className="group rounded-lg border border-line bg-ink-0 p-2.5 text-body">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full px-2 py-0.5 text-caption" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{pl.addiction}</span>
+                      <Pill color="mauve" size="caption">{pl.addiction}</Pill>
                       <span className="text-fg-1"><span className="text-fg-2">when</span> {pl.trigger}</span>
                       <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                     </div>
@@ -614,7 +614,7 @@ export function NoFap() {
                     <div className="flex items-baseline gap-2">
                       <span className={`text-body font-medium ${reached ? 'text-fg-1' : isNext ? 'text-teal' : 'text-fg-2'}`}>{m.label}</span>
                       <span className="text-caption text-fg-2">{m.day}d</span>
-                      {isNext && <span className="rounded-full px-1.5 py-0.5 text-micro" style={{ background: cat('teal') + '22', color: cat('teal') }}>next</span>}
+                      {isNext && <Pill color="teal" size="micro">next</Pill>}
                     </div>
                     <p className={`text-label ${reached || isNext ? 'text-fg-2' : 'text-fg-2'}`}>{m.benefit}</p>
                   </li>

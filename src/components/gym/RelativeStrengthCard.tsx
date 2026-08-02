@@ -1,5 +1,5 @@
 import { Scale } from 'lucide-react'
-import { Card, Empty } from '../ui'
+import { Card, Empty, Pill } from '../ui'
 import { cat } from '../../lib/colors'
 import type { RelativeStrength } from '../../lib/fitness'
 
@@ -27,7 +27,7 @@ export function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: Relativ
                 </span>
                 <span className="shrink-0 text-fg-2">
                   <span className="font-medium" style={{ color: cat('text') }}>{r.ratio}×</span>
-                  <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-micro" style={{ background: cat(bandColor[r.band] ?? 'overlay0') + '22', color: cat(bandColor[r.band] ?? 'overlay0') }}>{r.band}</span>
+                  <Pill color={bandColor[r.band] ?? 'overlay0'} size="micro" className="ml-1.5">{r.band}</Pill>
                 </span>
               </button>
             </li>
