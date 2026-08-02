@@ -11,10 +11,16 @@ Update this when you STOP working, not when you start.
   (accent fills in view bodies: 19 → 0), the motion-token pass, and the bullet
   glyph column raised to a real signature. eslint 0 errors, 678 tests, build
   green, 18 views × 5 themes clean.
-- **Next action:** Reconcile the day/week strip — `Heatmap`, `ActivityLayout`
-  and `TodayHabits` are three implementations of one visual idea. **Propose the
-  API before building it**; three implementations means three sets of
-  assumptions, and merging them by guess will lose one.
+- **Also done:** the day/week strip (PR #82). `DayGrid` now backs both the
+  Stats heatmap and the Trackers per-habit grid. `TodayHabits` was left alone —
+  it is chips grouped by time of day, not a strip, and the audit was wrong to
+  group it. Fixed a pre-existing bug while in there: both grids stretched their
+  columns to a 39.5px pitch around 10px cells; now 12px.
+- **Next action:** ~190 raw `<button>` still bypass the button system, clustered
+  in 8 files (Trackers 16, Gym 9, Insights 8, Collections 7, Account 7). Many
+  are legitimately not buttons — heatmap cells, glyph toggles, card-shaped
+  targets — so this needs a judgement per site, not a codemod. Start with
+  **Insights**: it has the highest defect density in the app.
 - **Blocked on:** Nothing in the redesign. Separately, `B1` in `TASKS.md`: the
   Supabase project at `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so
   every account/cloud-sync feature is dead until it is repointed or the env vars
