@@ -26,6 +26,7 @@ import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../components/trackers/CategoryConsistencyCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { useConfirm } from '../components/ConfirmDialog'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
@@ -711,6 +712,10 @@ function CategoryRows({
 // ── Per-habit customisation modal ────────────────────────────────────────────
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const confirm = useConfirm()
+  // Hand-rolled sheet, so it traps Tab itself. The confirm dialog it opens
+  // portals outside this node — the trap deliberately only guards Tab, so that
+  // still works.
+  const trap = useFocusTrap<HTMLDivElement>()
   const { updateHabit, removeHabit, toggleHabitSkip, setHabitNote, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
   // Reuse units already in use so trackers share consistent units (e.g. always
@@ -736,7 +741,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
-      <div className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
+      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
           <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>

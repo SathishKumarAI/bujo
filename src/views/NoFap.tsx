@@ -10,6 +10,7 @@ import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByTy
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import {
   CollapsibleSection,
   StreakVsBestCard,
@@ -68,6 +69,9 @@ function breathPhase(elapsed: number) {
  * user's own coping line for the matching trigger plan. All local state.
  */
 function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => void }) {
+  // Full-screen overlay: without a trap, Tab walks into the page underneath it,
+  // which is exactly the moment a user should not be able to wander off.
+  const trap = useFocusTrap<HTMLDivElement>()
   const [elapsed, setElapsed] = useState(0)
   const [trigger, setTrigger] = useState('')
   const startRef = useRef<number | null>(null)
@@ -90,7 +94,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
   const phase = breathPhase(elapsed)
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Urge SOS"
+    <div ref={trap} role="dialog" aria-modal="true" aria-label="Urge SOS"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6"
       style={{ background: cat('crust') + 'f2', backdropFilter: 'blur(6px)' }}>
       <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full text-fg-2 hover:text-fg-1" style={{ background: cat('surface0') }}><X size={20} /></Button>

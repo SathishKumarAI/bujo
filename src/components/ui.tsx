@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, Info, Maximize2, X, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 
@@ -56,6 +57,9 @@ export function Card({
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
   const [large, setLarge] = useState(false)
+  // The enlarge modal is hand-rolled (not Radix), so it owns its own focus
+  // containment: trap Tab inside it, hand focus back to the ⛶ button on close.
+  const modalTrap = useFocusTrap<HTMLDivElement>(large)
   // Enlarge affordance: any titled, non-clickable card (charts, calendars…).
   const showEnlarge = enlargeable && !!title && !onClick
   // Every titled card gets an always-visible ⓘ that explains what it is
@@ -107,7 +111,7 @@ export function Card({
           to truly centre on the viewport. */}
       {large && createPortal(
         <div className={CARD.modalBackdrop} onClick={() => setLarge(false)} role="dialog" aria-modal="true">
-          <div className={CARD.modalPanel} onClick={(e) => e.stopPropagation()}>
+          <div ref={modalTrap} className={CARD.modalPanel} onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 {title && <h2 className="truncate font-display text-title font-medium text-fg-1">{title}</h2>}
