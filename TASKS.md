@@ -195,3 +195,28 @@ The diagnosis is sound and the reference implementation is real, working code �
 6. **C1–C5** — lint debt in one mechanical pass; all 17 gone. Good filler while H is being decided.
 7. **D1, B3, B5** — small cleanups.
 8. Then the redesign proper, or pick from **E** / **F** by what you want the product to do.
+
+---
+
+## I. Contrast & theme — parked 2026-08-02 (do not start without a decision)
+
+Measured, not started. Two separate things, don't conflate them:
+
+- [ ] **I1 · Semantic accent colours fail AA as text.** In latte, measured over
+  757 real text nodes: green `#1e8e3e` at 3.99:1, orange `#e8710a` at 3.09:1,
+  blue `#1a73e8` at 4.27:1, and any accent-on-its-own-wash pill at ~1:1
+  (e.g. `#f29900` on `rgba(242,153,0,0.13)`). These are status colours used as
+  *text*, which is the part that has to clear 4.5:1 — the same class of bug the
+  earlier session fixed for the muted greys. Needs a per-theme tuned set of
+  "accent, but legible as text" values, like `--fg-3` got.
+- [ ] **I2 · `cat()` does not follow a direct `data-theme` change.** Setting the
+  attribute on `<html>` repaints CSS surfaces but leaves the JS palette on its
+  previous theme, so inline `style={{ color: cat(...) }}` renders *latte
+  foregrounds on mocha surfaces*. Via Settings the store calls
+  `setActiveTheme`, so the normal path is fine — but any other way of changing
+  the attribute silently desyncs. Worth a guard (subscribe to the attribute)
+  rather than relying on every caller remembering.
+
+Note: this also means **any earlier "N low-contrast nodes" figure in this file
+or the build record was measured through a desynced palette** and overstates the
+problem. I1 above is the re-measured, trustworthy version.
