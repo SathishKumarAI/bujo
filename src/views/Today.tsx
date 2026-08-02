@@ -1,6 +1,6 @@
 import { Utensils, CupSoda, Flame, NotebookPen } from 'lucide-react'
 import { useJournal } from '../store'
-import { addDays, prettyDay, todayISO } from '../lib/date'
+import { addDays, fromISODay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Slider } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
@@ -41,21 +41,17 @@ export function Today() {
 
   const isToday = date === todayISO()
 
-  /** The log itself: capture box, yesterday's carry-forward, the day's entries. */
+  /** The log itself: dateline, capture box, carry-forward, the day's entries. */
   const dayLog = (
-    <Card
-      title={prettyDay(date)}
-      subtitle={
-        <span className="flex items-center gap-2">
-          {isToday ? 'Today' : ''}
-          {metric?.weather && (
-            <span title={metric.weather.label}>
-              {metric.weather.icon} {metric.weather.tempC}°C
-            </span>
-          )}
-        </span>
-      }
-    >
+    <Card>
+      <DayMasthead
+        date={date}
+        isToday={isToday}
+        weather={metric?.weather}
+        entryCount={dayEntries.length}
+        openTasks={taskCount - doneCount}
+        taskCount={taskCount}
+      />
       <div className="mb-3">
         <CaptureBar date={date} />
       </div>
@@ -84,9 +80,9 @@ export function Today() {
               <EntryRow key={e.id} entry={e} />
             ))}
           </ul>
-          {taskCount > 0 && (
-            <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
-          )}
+          {/* The task count used to be repeated here as "1/4 tasks done" while
+              the masthead said "3 still open" — the same fact in two framings,
+              300px apart. The masthead owns it now. */}
         </>
       )}
     </Card>
@@ -261,6 +257,66 @@ export function Today() {
       </Card>
 
     </Page>
+  )
+}
+
+/**
+ * DAY MASTHEAD · the dateline at the top of the daily log.
+ *
+ * A paper bullet journal opens every daily log by writing the date at the top
+ * of the page. That is the artifact this app is a version of, and it was
+ * rendered as a small card title — so the page read as a widget rather than as
+ * a dated page you are about to write on.
+ *
+ * The one flourish is **№ 214**: bullet journals number and index their pages,
+ * so the day-of-year is a real page number in the method's own vocabulary. It
+ * is set in the mono face, kept small, and appears exactly once.
+ *
+ * Everything else stays quiet — no new colours, no new motion, nothing that
+ * would fight the five themes.
+ */
+function DayMasthead({
+  date, isToday, weather, entryCount, openTasks, taskCount,
+}: {
+  date: string
+  isToday: boolean
+  weather?: { icon: string; label: string; tempC: number }
+  entryCount: number
+  openTasks: number
+  taskCount: number
+}) {
+  const d = fromISODay(date)
+  const weekday = d.toLocaleDateString(undefined, { weekday: 'long' })
+  const dayMonth = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+  // Day of the year — the journal's page number for this day. `round`, not
+  // `floor`: across a spring-forward boundary the span is 213.96 days, and
+  // flooring that printed Aug 2 as № 213 instead of 214.
+  const pageNo = Math.round((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86_400_000)
+
+  // One sentence about where the day stands. An empty page is an invitation,
+  // not a report of nothing.
+  let line: string
+  if (entryCount === 0) line = 'Blank page. Start with anything.'
+  else if (taskCount > 0 && openTasks === 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today, every task closed.`
+  else if (openTasks > 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today · ${openTasks} still open.`
+  else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
+
+  return (
+    <header className="mb-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-title leading-tight font-medium text-fg-1 sm:text-display">{weekday}</h2>
+        <span className="shrink-0 font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
+          № {pageNo}
+        </span>
+      </div>
+      <p className="mt-0.5 flex items-center gap-2 text-body text-fg-2">
+        {dayMonth}
+        {isToday && <span className="text-fg-2">· today</span>}
+        {weather && <span title={weather.label}>· {weather.icon} {weather.tempC}°C</span>}
+      </p>
+      <hr className="mt-3 mb-2.5 border-line" />
+      <p className="text-body text-fg-1">{line}</p>
+    </header>
   )
 }
 
