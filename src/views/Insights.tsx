@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, Sun, Activity, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react'
+import { useState } from 'react'
+import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, Sun, Activity, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -13,6 +13,10 @@ import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
 import { TagManager } from '../components/TagManager'
 import { WeeklyReview } from '../components/WeeklyReview'
+// Insights carried a private copy of this collapsible section header — the
+// same markup, minus the press affordance and the "show" hint. Three copies of
+// CollapsibleSection were already consolidated once; this was a fourth.
+import { QuietSection as Section } from '../components/CollapsibleSection'
 
 export function Insights() {
   const { data } = useJournal()
@@ -432,30 +436,6 @@ export function Insights() {
         <TagManager />
       </Section>
     </div>
-  )
-}
-
-/**
- * Lightweight labelled section that toggles its body open/closed — groups the
- * read-only analytics under the always-visible primary UI (deep groups default
- * closed). Keyboard-accessible: a real <button> with aria-expanded.
- */
-function Section({ title, subtitle, defaultOpen = false, children }: { title: string; subtitle?: string; defaultOpen?: boolean; children: ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <section className="space-y-5">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
-      >
-        <span className="text-fg-2">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-        <span className="font-display text-heading font-medium text-fg-1">{title}</span>
-        {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
-      </button>
-      {open && children}
-    </section>
   )
 }
 
