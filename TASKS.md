@@ -1,0 +1,193 @@
+# bujo — pending tasks & bugs
+
+**Generated:** 2026-08-02 · branch `feat/ui-polish` · commit `dbcdbf3`
+
+> **Redesign steps 1–4 are shipped** — see `docs/redesign/10-redesign-build.md`. eslint is at **0 errors** (was 17), the type scale is live across 113 files, fonts are self-hosted, and `?view=kitchen-sink` shows every primitive. Steps 5–10 (per-cluster restyle, motion, accent-inflation pass) remain.
+>
+> **Newest thing here → [§H, the redesign brief in `docs/new/`](#h-redesign-brief--docsnewfiles-new-untracked).** It's the biggest item on this page and it collides with shipped work in four places. Decide H1–H4 and H10 before anything else in it starts.
+
+**How to use this file:** mark each item you want done. Leave the rest alone.
+
+- `[ ]` = untouched, I ignore it
+- `[>]` = **do this** (I pick these up)
+- `[~]` = do it, but ask me first
+- `[x]` = done / already handled
+- `[-]` = won't do, drop it
+
+Add a note after any line (`— why / how you want it`) and I'll follow it.
+
+---
+
+## Verification baseline (as of this scan)
+
+Everything below is confirmed by running it, not inferred.
+
+| Check | Command | Result |
+|---|---|---|
+| Typecheck | `npx tsc -b` | ✅ exit 0 |
+| Tests | `npx vitest run` | ✅ 41 files, 678 tests passed |
+| Build | `npm run build` | ✅ 537ms, PWA precache 60 entries |
+| Lint | `npx eslint .` | ✅ **0 errors**, 2 warnings (was 17 errors) |
+| Dev server | `npm run dev` | ✅ http://localhost:5173 |
+| All 24 views × 5 themes | in-browser sweep | ✅ 0 blank, 0 overflow, **0 runtime errors** |
+| View smoke script | `npm run smoke` | ❌ crashes (missing dep) |
+
+> ⚠️ `npx tsc --noEmit` typechecks **nothing** in this repo (solution-style tsconfig, always exits 0). Always use `npx tsc -b`.
+
+---
+
+## A. Blockers / decisions only you can make
+
+- [ ] **A1 · Open the PR stack.** 3 PRs open, all stacked, all already ancestors of `HEAD`:
+  - #77 `feat/ui-feedback-keyboard` — toast + keyboard layer
+  - #78 `feat/ui-resilience` — error boundary, skeletons, empty states, offline banner
+  - #79 `feat/ui-polish` — one button system + motion tokens + CollapsibleSection
+  Since they stack, merging #79 alone carries all 9 commits. Decide: merge all three in order, or squash into one PR to `main`.
+- [ ] **A2 · `package-lock.json` is modified.** `node_modules/.bin/` was empty — the tree was copied from Linux and the symlinks died, so `vite` wasn't runnable. `npm install` fixed it but rewrote the lockfile with Windows-resolved deps. Commit it, or `git checkout package-lock.json` and treat this machine as install-only?
+- [ ] **A3 · `scripts/ship.sh` shows as modified but has no content change** — file mode 755→644, a Windows-checkout artifact. Fix: `git config core.fileMode false`, then `git checkout scripts/ship.sh`.
+- [ ] **A4 · `STATUS.md` is still the blank template.** Workspace rule (`CLAUDE.md`) says fill it when you stop. Want me to write it from the current state?
+
+---
+
+## B. Bugs — verified, with evidence
+
+- [ ] **B1 · Supabase project no longer exists → all account/cloud-sync features are dead.**
+  `VITE_SUPABASE_URL` in `.env` points at `ueahhgqxshfvkjgcwtnh.supabase.co`. DNS returns **NXDOMAIN** while `supabase.co` itself resolves (`76.76.21.21`) — so the project was deleted or its ref changed, this is not a local network problem. The app fires `/auth/v1/settings` twice on boot (`src/lib/supabase.ts:24`), both fail `ERR_NAME_NOT_RESOLVED`, and the failure is silent: no user-facing message, sign-in just never appears.
+  Fix options: (a) point at a live project, (b) unset the vars so the null-client path kicks in cleanly, (c) surface "cloud unavailable" in the UI instead of failing silently.
+- [ ] **B2 · Duplicate boot probe.** That same `/auth/v1/settings` request fires **twice** per load. Likely a double-invoked effect (StrictMode) with no in-flight guard. Cheap fix, and it halves the failure noise.
+- [ ] **B3 · `npm run smoke` and `npm run shots` crash locally.** Both scripts `require('playwright')`, which is not in `package.json` (CI installs it with `npm i -D --no-save`, so CI is fine). Locally you get a raw `MODULE_NOT_FOUND` stack. Fix: catch the require and print "run `npm i -D --no-save playwright` first", or add it as an optional devDependency.
+- [ ] **B4 · Bundle regression.** `dist/assets/index-*.js` is now **687 kB** (203 kB gzip). BUJO-224 got it to 642 kB; it has grown 45 kB since. Rolldown warns over the 500 kB budget. Worth a chunking pass.
+- [ ] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** (all other 17 views do). It hand-rolls its own heading markup (`Reading.tsx`) — a heading-hierarchy gap for screen readers.
+
+---
+
+## C. Lint debt — ✅ CLEARED (17 errors → 0)
+
+Done 2026-08-02. Full breakdown in `docs/redesign/10-redesign-build.md`.
+
+- [x] **C1 · `set-state-in-effect` (4)** — real fixes, not suppressions: `ExerciseDB` and
+  `ReminderBanner` now derive the cleared state instead of writing it from an effect body;
+  `CommandPalette` resets during render via the documented prop-change pattern; `countUp`
+  returns a derived value under reduced motion.
+- [x] **C2 · `only-export-components` (7)** — `muscles.ts` and `countUp.ts` extracted to `lib/`;
+  `Ring`/`CountUp` moved to `components/ui/ring.tsx`. The remaining four are documented
+  exceptions: two context hooks beside their providers (matching the existing convention in
+  `device.tsx`/`Page.tsx`), and two vendored shadcn files whose export shape `shadcn add`
+  regenerates.
+- [x] **C3 · `no-explicit-any` (5)** — wger response typed. Typing it immediately surfaced a real
+  latent bug: `json.next` is `undefined` on the last page, which the `any` had been hiding.
+- [x] **C4 · `react-hooks/refs` (1)** — `speech.ts` ref-write moved out of render into an effect.
+- [ ] **C5 · `exhaustive-deps` (2 warnings)** — `src/App.tsx:136` and `:188`, missing `replaceAll`.
+  Left alone: both are boot-path effects where adding the dep changes behaviour. Verify intent first.
+
+---
+
+## D. Dead code / cleanup
+
+- [ ] **D1 · Delete `archive/components/`.** The three duplicate `CollapsibleSection` copies, already commented out and outside the TS program. Left in place last session because deletion is deny-listed — needs your go-ahead.
+- [ ] **D2 · Prune ~20 merged `feat/*` branches on origin.** Carried across three worklog entries, never done.
+
+---
+
+## E. Feature backlog — open tickets
+
+From `docs/TICKETS.md`. These are the only items still marked 🔜/◑ after the last audit.
+
+- [ ] **E1 · R2-7 / BUJO-91 — unified `Goal` data model.** One type spanning habits, challenges, fitness and focus, with a cross-view roll-up. The Goals *view* shipped (A-02); the *model* didn't. Genuine design work, not a mechanical change.
+- [ ] **E2 · R2-10 / P-9 — accounts + E2E-encrypted cloud sync.** Needs a backend, so it's out of the current local-first scope. R2-1's at-rest crypto is the client half. Blocked on a scope decision from you, not on code.
+- [ ] **E3 · BUJO-176 — same-unit tracker combined totals/compare.** Logged as "if that was the intent" — needs you to confirm what you actually wanted.
+- [ ] **E4 · AUD-5 — deferred a11y.** Heatmap/Monthly aria labels, save-toasts, Focus → `ChartCard`.
+- [ ] **E5 · BUJO-94 tail — axe-core CI job.** Chart text-alternatives are all done; only the CI wiring is left.
+- [ ] **E6 · PRODUCT_GAPS #2 — sync-conflict prompt on silent cloud load.** `updatedAt` stamping exists; the newer/older prompt only fires on first-run folder pick, not on silent reload. Touches the App boot path.
+- [ ] **E7 · PRODUCT_GAPS #7 — Playwright e2e.** Related to B3; CI currently has no e2e gate.
+- [ ] **E8 · ~561 unbuilt items in `docs/FEATURE-BACKLOG-500.md`** (582 rows total). Pick a batch if you want more feature volume — otherwise this stays parked.
+
+### Held indefinitely (need infra or a dependency decision)
+- [ ] Real backend: account deletion, multi-device server sync
+- [ ] Tauri-native plugins: tray, notifications, autostart, native filesystem
+- [ ] Apple Health / Obsidian importers
+- [ ] Home-screen widgets / Wear OS (native shell), social challenges (backend)
+
+---
+
+## F. UI/UX backlog leftovers
+
+From `docs/UIUX-CRAFT-BACKLOG.md`. The feedback/keyboard/resilience/button work is done (PRs #77–#79); these survived.
+
+- [ ] **F1 · Hand-rolled buttons still bypassing the button system** — visible drift, since each re-invents padding/radius/hover:
+  `Collections.tsx:91,118` · `Insights.tsx:399` · `Onboarding.tsx:57,59` (first-run, highest visibility) · `CaptureBar.tsx:190` · `SmartInput.tsx:118` · `trackers/HabitDetail.tsx:108,109` · `RestTimer.tsx:66,69` · `TodayPlanCard.tsx:66` · `ExercisePicker.tsx:65` · `ExploreBanner.tsx:34` · `ReminderBanner.tsx:54` · `CoachCard.tsx:34`
+- [ ] **F2 · Skip-to-content link** — listed as a known gap in `docs/ACCESSIBILITY.md:39`.
+- [ ] **F3 · Focus trap in dialogs** + restore focus on close (quick-add, palette, SOS overlay).
+- [ ] **F4 · Palette fuzzy matching** — today it's a plain substring filter (`CommandPalette.tsx:97`); no recent/frequent ranking.
+- [ ] **F5 · Vim-style jumps** — `g t` Today, `g s` Stats, `j`/`k` between entries, `x` toggle status.
+- [ ] **F6 · Persist last-visited tab per view** (Fitness, Trackers, Insights).
+- [ ] **F7 · Deep-link a specific entry/day by URL** so a day is shareable and bookmarkable.
+- [ ] **F8 · Collapse long entry text** with "show more".
+- [ ] **F9 · Single `Pill`/`Badge` component** — inline pill styles still duplicated across views.
+- [ ] **F10 · Decide `SyncIndicator`'s fate** — fold into the toast system, or keep it deliberately as a status pill. Right now both exist by accident.
+
+---
+
+## G. External — only you can do these
+
+Nothing here is code; each is a click in someone else's dashboard.
+
+- [ ] **G1 ·** Fix or retire the Supabase project (see B1). Sign-in stays hidden until a provider is live.
+- [ ] **G2 ·** Enable Google provider in Supabase — the sign-in button auto-reappears when it's on.
+- [ ] **G3 ·** Enable GitHub Pages: Repo → Settings → Pages → Build and deployment → GitHub Actions.
+- [ ] **G4 ·** Delete the smoke-test account `bujo-smoketest-260616@example.com`.
+- [ ] **G5 ·** Self-host stack: set `PGRST_JWT_SECRET` + certs, `docker compose up -d`, then paste the API URL + JWT into Settings → Self-host.
+- [ ] **G6 ·** Tauri build prerequisites (Linux box): webkit2gtk/libsoup via sudo script, then `npx @tauri-apps/cli icon` before `npm run tauri:build`.
+
+---
+
+## H. Redesign brief — `docs/new/files/` (new, untracked)
+
+Five files, 1031 lines, not in git (untracked, **not** gitignored):
+
+| File | What it is |
+|---|---|
+| `bujo-redesign-prompt.md` | 212-line brief: diagnosis, tokens, type system, 10 numbered tasks, definition-of-done, a 7-step sequenced workflow |
+| `tokens.css` | The token layer, ready to drop in — plus base element styles and `.num` / `.col` / `.rule` helpers |
+| `ui.css` | 268 lines of component CSS: `.btn` (3 variants), `.card`, `.section-head`, `.field`, `.seg`, `.stepper`, `.glyph`, `.entry`, `.tag`, `.ring`, `@keyframes roll`/`tick` |
+| `ui.jsx` | The primitives: `Button`, `Card`, `SectionHeader`, `Field`, `Rolling`, `SegmentScale`, `Stepper`, `LogEntry`, `FastRing` |
+| `KitchenSink.jsx` | The `/kitchen-sink` review route the brief's step 2 asks for |
+
+The diagnosis is sound and the reference implementation is real, working code — not a mood board. But it was written against a screenshot, so it doesn't know what this codebase already is. **These are the collisions. Decide them before any code is written**, because most of them are one-way doors.
+
+- [x] **H1 · DONE: remapped, not replaced.** The brief is plain CSS with a `tokens.css` import; the app is **Tailwind v4 + shadcn**, styled through Catppuccin CSS vars. The definition-of-done check `grep -rE "#[0-9a-fA-F]{3,6}" src/` already passes trivially today (colors are Tailwind class names, not hex) — so that check would *pass* while proving nothing. Pick one: (a) remap the token values into the existing Tailwind/Catppuccin var layer and keep utility classes, (b) adopt the brief's plain-CSS classes as a parallel system, or (c) full rewrite off Tailwind. **(a) is the only one I'd recommend** — (b) leaves two systems alive, which is precisely the failure mode the brief itself warns about.
+- [x] **H2 · DONE: `--fg-3` computed per theme, all ≥ 4.5:1.** Computed against the brief's own surfaces:
+
+  | Value | On `--ink-0` `#0B0B0F` | On `--ink-1` `#131218` (cards) |
+  |---|---|---|
+  | `#6B6878` (the prompt) | 3.63:1 ❌ | **3.44:1** ❌ |
+  | `#7A7788` (tokens.css) | 4.51:1 ~ | **4.28:1** ❌ |
+
+  Note the two files already disagree — `tokens.css` has silently bumped the value, which suggests this was noticed but not finished. The brief flags it too ("check `--text-3` specifically — it's borderline"). It isn't borderline on cards, it fails. Last session moved 555 text uses off `overlay0`/`overlay1` for this identical reason; adopting `--text-3` as-is for body text walks straight back into it. Fix: lift to ≥ `#8A8798` before adoption, or restrict `--text-3` to non-text decoration only.
+- [x] **H3 · DONE: self-hosted via @fontsource; CSP tightened.** `tokens.css` line 1 is an `@import` from `fonts.googleapis.com`. CSP is **enforced** (BUJO-156, verified at 0 violations) and the app is an offline-first PWA. That import means a CSP amendment, a render-blocking third-party request, a privacy leak on every load, and no fonts offline. Self-host the three families instead (`@fontsource/*` or vendored woff2) — same typography, none of the cost.
+- [x] **H4 · DONE: all five survive; mocha is canonical.** The app ships mocha / latte / neon / vscode / dawn, with a Settings swatch picker and **theme-aware charts** (`THEME_PALETTES` + `cat()` in `lib/colors`, AUD-6). The brief specifies exactly one dark palette and "one accent. One." Is this a 6th theme, a replacement for mocha, or does it delete the theme system? This decides how much of `lib/colors` survives.
+- [ ] **H5 · "Visual pass only" — but three tasks aren't.** The brief says "do not change data models, storage, or business logic … every existing feature must still work identically", then asks for: sliders → 10-segment tap scale (§4, an input-model change), "reduce card count" (§1, an IA change), and top-bar reduction to 3 controls (§2, moving 7 features into the palette). Those are fine changes — they just aren't visual, and two of them **overwrite BUJO-231**, the three-tier card-layout pass shipped across all 23 views. Confirm you want that undone.
+- [ ] **H6 · Scope is bigger than the brief thinks.** §10 lists 12 pages. The app has **18 nav views plus Settings**. Missing from the brief: Monthly, Goals, Insights, Stats, Collections, Reading, Settings. Settings alone is 5 tabs and 61 kB. Realistic scope is ~1.5× what's written.
+- [ ] **H7 · Already shipped — don't rebuild.** The brief asks for six things that landed in PRs #77–#79 last session: global `:focus-visible` ring, the `prefers-reduced-motion` block (§9's "non-negotiable" snippet is already in `index.css`), one Button system with variants, ⌘K command palette, `aria-label` on every icon-only button, motion duration/easing tokens. Reconcile against what exists rather than writing them twice — the brief's ring spec and the shipped one differ, so pick a winner.
+- [x] **H8 · DONE: kitchen sink written in TSX.** Reference files are `.jsx` + plain `.css`; the repo is TypeScript with `tsc -b` in CI. `ui.jsx` and `KitchenSink.jsx` need porting to `.tsx` with real prop types before they compile.
+- [ ] **H9 · `framer-motion` is not a dependency.** §9 allows it for springs. Adding it is ~34 kB gzip on a bundle already 45 kB over budget (B4). The spring easing is already in `tokens.css` as `--spring` — CSS may be enough. Decide before installing.
+- [x] **H10 · Step 0 audit — DONE → `docs/redesign/09-redesign-audit.md`.** Every view measured, every token layer located, migration costed by cluster. Headline: **the brief's premise that primitives don't exist is wrong** — 6 of the 7 it plans to extract already exist and are adopted in 23/25 views. Real scope is narrower (tokens, type, weight, 188 raw buttons in 8 hot files) but the page count is **25, not 12**. Remaining steps 1–7 stay blocked on H1–H4 below.
+- [x] **H12 · RESOLVED: the scale is in rem, FONT-1 lives.** The brief's scale is `32/22/17/15/13/11` in px. FONT-1 ships a global S/M/L/XL text-size setting that works by scaling the rem root (with `.fig-fixed` counter-scaling so charts stay put). **Fixed px in `tokens.css` breaks it.** Either the type scale goes through rem, or the font-size setting dies. Also: none of the 6 target values map cleanly onto Tailwind's scale (each is 1–2px off), so every one needs a theme extension. **Blocks step 1.**
+- [x] **H14 · Dawn can't carry three text tiers — DECIDED: collapse.** Computed across all five themes: the third tier works comfortably in the three dark themes (`overlay2`, 5.6–6.1:1) and narrowly in latte (`#6b7075`, 4.74:1). Dawn's cream surfaces leave a band barely one step wide — the best warm candidate `#7a6e5d` lands at **4.52:1, two hundredths above the floor**, so any future surface tweak breaks it silently. **Shipped as a collapse to the secondary tier: dawn renders two text tiers, not three.** Override if you'd rather take the fragile value.
+- [x] **H15 · DECIDED: added a 7th step, `micro` (10px).** The audit's 814 count only caught *named* classes. Including bracketed sizes the real total is **955 sites**, of which **`text-[10px]` ×88, `text-[11px]` ×45 and `text-[9px]` ×8** are smaller than `caption` (11px), the smallest step in the agreed scale. They cluster in dense data surfaces — Trackers 17, Reading 6, Insights 6, Coaching 6, MatchupCards 6. Mapping them up to `caption` makes 141 pieces of text **larger** in exactly the layouts tuned to be tight. Options: (a) add a 7th step below caption (`micro`, 10px) for data-dense surfaces, (b) let them round up to `caption` and accept the density change, (c) leave bracketed values in place for chart/grid internals and exempt them from the DoD. **(a) is my recommendation** — it's one more token and it keeps the rule honest, versus (c) which puts 141 sites permanently outside the system.
+- [x] **H16 · DECIDED: role-based mapping — the two dominant tiers grow 1px.** 735 of the 814 named sites are just these two. The app's de-facto body size is `text-sm` (14px, 337 uses) with `text-xs` (12px, 398 uses) beneath it — so **the app currently runs a full step smaller than the brief's scale**, and `body` (15px) would go essentially unused under the audit's literal mapping. Two readings: **(i) preserve density** — `xs→caption`, `sm→label`, everything shrinks ~1px and `body` stays unused; **(ii) implement the brief's intent** — `xs→label`, `sm→body`, nearly every string grows 1–2px and the app gets the comfortable 15px reading size the scale was designed around, at the cost of re-tuning dense layouts. (ii) is what the brief asks for; (i) is what the current app is. Your call — it changes how every screen looks.
+- [ ] **H13 · Audit's recommended plan changes** (detail in §8 of the audit doc): move the shell from step 7 to step 2 (it sets width/nav/top-bar for every page, so doing it last re-touches everything); rewrite the hex definition-of-done check to exclude the token files (it currently flags the token layer itself, 255 of 392 matches); mock the 820px column on one view before committing to a 40% narrowing app-wide; budget the accent-inflation pass separately since no tool can measure it.
+- [ ] **H11 · Commit `docs/new/`?** (still open) Currently untracked and not ignored, so it'll follow you into any commit that stages broadly. Track it as the design source of record, or move it out of the repo.
+
+---
+
+## Suggested order, if you want one
+
+1. **A2, A3** — clean the working tree first, so nothing else is confused by it.
+2. **A1** — get the 9 UI commits merged before they rot. Do this **before** any redesign work; the redesign touches the same files and merging afterwards would be a conflict marathon.
+3. **B1, B2** — the only bug a real user would actually hit.
+4. **H1–H4, H10** — settle the redesign's one-way doors. Nothing else in H can start until the stack, the contrast values, the fonts, and the theme question have answers.
+5. **H10 step 0** — the audit table. No code, and it sizes the real job.
+6. **C1–C5** — lint debt in one mechanical pass; all 17 gone. Good filler while H is being decided.
+7. **D1, B3, B5** — small cleanups.
+8. Then the redesign proper, or pick from **E** / **F** by what you want the product to do.
