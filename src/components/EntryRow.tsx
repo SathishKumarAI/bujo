@@ -47,22 +47,6 @@ export function EntryRow({ entry }: { entry: Entry }) {
       </button>
 
       {entry.memory && <span title="Memory" style={{ color: cat('teal') }}>▲</span>}
-      {/* The `!` used to render on every row at 45% opacity, so a five-line log
-          showed five amber marks — noise that competed with the glyph column
-          for the same job. Now it only shows when the entry IS important; the
-          affordance for setting it appears on row hover, like delete does. */}
-      <button
-        onClick={() => toggleImportant(entry.id)}
-        title={entry.important ? 'Important, tap to clear' : 'Mark important'}
-        aria-pressed={entry.important}
-        aria-label="Toggle important"
-        className={`shrink-0 font-medium transition-opacity ${
-          entry.important ? 'opacity-100' : 'opacity-0 group-hover:opacity-60 focus-visible:opacity-100'
-        }`}
-        style={{ color: entry.important ? cat('yellow') : cat('overlay0') }}
-      >
-        !
-      </button>
 
       {editing ? (
         <input
@@ -110,18 +94,41 @@ export function EntryRow({ entry }: { entry: Entry }) {
         </span>
       )}
 
-      <button
-        onClick={() => {
-          deleteEntry(entry.id)
-          // The store keeps an undo stack; surface it here so deleting is
-          // recoverable without knowing ⌘Z exists.
-          notify.undo('Entry deleted', undo)
-        }}
-        aria-label="Delete entry"
-        className="shrink-0 text-fg-2 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
-      >
-        ×
-      </button>
+      {/* ACTION CLUSTER · every control this row owns, side by side on the
+          right, in one place.
+          `!` used to sit to the LEFT of the text, which cost a column on every
+          row in the log — a permanent indent paid so a mark could appear on the
+          few rows that are important — and split the row's controls across two
+          ends of the line. Right-aligned and grouped, the text gets that width
+          back, and "what can I do to this row" is one target area instead of a
+          scavenger hunt.
+          Important stays visible when set; both reveal on hover or focus. */}
+      <span className="ml-auto flex shrink-0 items-center gap-1.5">
+        <button
+          onClick={() => toggleImportant(entry.id)}
+          title={entry.important ? 'Important, tap to clear' : 'Mark important'}
+          aria-pressed={entry.important}
+          aria-label="Toggle important"
+          className={`font-medium transition-opacity ${
+            entry.important ? 'opacity-100' : 'opacity-0 group-hover:opacity-60 focus-visible:opacity-100'
+          }`}
+          style={{ color: entry.important ? cat('yellow') : cat('overlay0') }}
+        >
+          !
+        </button>
+        <button
+          onClick={() => {
+            deleteEntry(entry.id)
+            // The store keeps an undo stack; surface it here so deleting is
+            // recoverable without knowing ⌘Z exists.
+            notify.undo('Entry deleted', undo)
+          }}
+          aria-label="Delete entry"
+          className="text-fg-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+        >
+          ×
+        </button>
+      </span>
     </li>
   )
 }

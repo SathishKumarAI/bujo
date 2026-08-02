@@ -54,7 +54,6 @@ export function emptyJournal(): JournalData {
     monthly: [],
     collections: [],
     recurrences: [],
-    stickers: {},
     nofap: { startedOn: todayISO(), best: 0, relapses: [] },
     challenges: [],
     challengeLog: {},
@@ -98,6 +97,15 @@ export function migrate(raw: unknown): JournalData {
   // e.g. metrics:null and every `.map`/`.some` over it throws).
   const clean: Partial<JournalData> = {}
   for (const [k, v] of Object.entries(data)) if (v != null) (clean as Record<string, unknown>)[k] = v
+  // RETIRED FEATURE · per-day emoji stickers ("Decorate the day"), removed
+  // 2026-08-02. Without this line the key would survive every load-and-save
+  // round trip as an orphaned field nothing reads.
+  //
+  // This is deliberately destructive and was confirmed as such: a journal
+  // saved after this migration no longer contains the stickers a user placed,
+  // and they cannot be recovered from that file. Backups taken *before* the
+  // upgrade still hold them.
+  delete (clean as Record<string, unknown>).stickers
   return {
     ...base,
     ...clean,
@@ -119,7 +127,6 @@ export function migrate(raw: unknown): JournalData {
     habitLog: data.habitLog ?? {},
     habitValues: data.habitValues ?? {},
     recurrences: data.recurrences ?? [],
-    stickers: data.stickers ?? {},
     routines: data.routines ?? [],
     bodyMetrics: data.bodyMetrics ?? [],
     version: SCHEMA_VERSION,

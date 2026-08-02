@@ -82,7 +82,7 @@ export function Help() {
       />
       <Section
         title="Realism & reminders"
-        body="In Settings you can turn on a dot-grid paper texture, a handwriting font, and a daily reflection prompt; decorate days with stickers; opt into a daily reminder (with browser notification) and auto weather + location. Install the app to your home screen for offline use."
+        body="In Settings you can turn on a dot-grid paper texture, a handwriting font, and a daily reflection prompt; opt into a daily reminder (with browser notification) and auto weather + location. Install the app to your home screen for offline use."
       />
       <Section
         title="Collections"
