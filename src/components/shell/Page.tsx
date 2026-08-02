@@ -49,9 +49,13 @@ export function Page({
     )
   }
   return (
+    // At 1920 the 1180px cap left ~245px of dead gutter on *each* side while the
+    // rail was only 352px wide and half-empty. Past 1536px the container grows
+    // to 1344px and the rail to 26rem: the extra width goes to the rail, not to
+    // the reading column, which stays near its comfortable measure.
     <div
       className={cn(
-        'mx-auto grid w-full max-w-wide items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]',
+        'mx-auto grid w-full max-w-wide items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:max-w-[84rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]',
         className,
       )}
     >

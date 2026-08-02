@@ -247,21 +247,28 @@ export function Slider({
   color?: string
   hint?: string
 }) {
+  // Unset is not zero. With `value ?? 0` the handle parks at the far left,
+  // which is exactly where a real 0 sits — so "not rated yet" and "rated 0"
+  // rendered identically while the readout said "–". An unrated slider now
+  // dims its track and sits at the midpoint: clearly untouched, and one drag
+  // from any value rather than biased toward the bottom of the scale.
+  const unset = value == null
   return (
     <label className="block">
       <div className="mb-1 flex items-center justify-between text-body">
         <span className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono" style={{ color: cat(color) }}>
-          {value ?? '–'}
+        <span className="rounded px-1.5 font-mono" style={{ color: unset ? undefined : cat(color) }}>
+          {value ?? 'not set'}
         </span>
       </div>
       <input
         type="range"
         min={0}
         max={10}
-        value={value ?? 0}
+        value={value ?? 5}
+        aria-valuetext={unset ? 'Not set' : undefined}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
+        className={`w-full ${unset ? 'opacity-40' : ''}`}
         style={{ accentColor: cat(color) }}
       />
       {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}

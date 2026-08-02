@@ -8,6 +8,7 @@ import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
+import { Field } from '../components/fields/Field'
 import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
 import { TodayHabits } from '../components/TodayHabits'
@@ -92,11 +93,30 @@ export function Today() {
   )
 
   /**
-   * The right rail holds everything *derived* — the plan summary, the coach's
-   * prompts, the penalty. None of it can be acted on here; it reports on
-   * entries made elsewhere. Putting it in the rail does two things at once: it
-   * fills the ~600px of dead gutter this page used to leave at desktop widths,
-   * and it gets three read-only cards out from in front of the capture box.
+   * WHICH SIDE A CARD GOES ON
+   *
+   * One rule, applied to every card on this page: **the left column is the
+   * journal entry you are writing; the right rail is everything that reports
+   * on it or sits beside it.** Weights below are how strongly each card earns
+   * its place, and they also set the order within each column.
+   *
+   * | Card                | Weight | Side  | Why |
+   * |---------------------|--------|-------|-----|
+   * | Day log + capture   | 10     | left  | The page exists for this |
+   * | Today's habits      | 9      | left  | The other thing you tick every day |
+   * | Wellbeing           | 8      | left  | Four ratings, part of the entry |
+   * | Close the day       | 6      | left  | Gratitude, reflection, memory |
+   * | Today's plan        | 7      | right | Orientation, but read-only |
+   * | Your coach          | 6      | right | Advice derived from your data |
+   * | Training penalty    | 4      | right | Status, conditional, read-only |
+   * | Intermittent fasting| 4      | right | A timer widget, not a journal entry |
+   * | Weekly goals        | 3      | right | Collapsed, derived |
+   * | On this day         | 3      | right | Read-only, from past journals |
+   * | Stickers            | 1      | right | Decoration |
+   *
+   * The rail also fills the ~600px of dead gutter this page used to leave at
+   * desktop widths, and it now runs to roughly the column's own length instead
+   * of stopping a third of the way down.
    *
    * Undefined on any day but today, so Page falls back to its single-column
    * `read` tier rather than rendering an empty rail.
@@ -106,6 +126,27 @@ export function Today() {
       {!hidden.includes('plan') && <TodayPlanCard />}
       <CoachCard />
       {!hidden.includes('penalty') && <PenaltyCard />}
+      <FastingCard />
+      <WeeklyGoalRings date={date} />
+      {hasFlash && !hidden.includes('onThisDay') && (
+        <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
+          <ul className="space-y-2 text-body">
+            {flashbacks.memories.map((m) => (
+              <li key={m.date} className="text-fg-1">
+                <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
+              </li>
+            ))}
+            {flashbacks.entries.slice(0, 5).map((e) => (
+              <li key={e.id} className="text-fg-1">
+                <span className="text-fg-2">{e.date}</span> · {e.text}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      <Card title="Stickers" subtitle="Decorate the day" collapsible defaultCollapsed>
+        <StickerBar date={date} />
+      </Card>
     </>
   ) : undefined
 
@@ -137,7 +178,9 @@ export function Today() {
         <div className="space-y-4">
           <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
           <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
-          <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
+          {/* Every other slider carries its anchors; this one did not, so the
+              column of hints had a hole in it and "8" had no stated unit. */}
+          <Slider label="Sleep" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" hint="hours slept · 0–10" />
           <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
         </div>
         <div className="mt-4 border-t border-line pt-3">
@@ -166,79 +209,57 @@ export function Today() {
         </div>
       </Card>
 
-      {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
-      <FastingCard />
-
-      {/* ── 4) Reflect (2-col): light daily journaling rituals ─── */}
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Card title="Gratitude" subtitle="One thing you're grateful for today">
-          <Input
-            value={gratitude}
-            onChange={(e) => setGratitude(date, e.target.value)}
-            placeholder="Today I'm grateful for…"
-          />
-        </Card>
-
-        {data.settings.reflectionPrompts && (
-          <Card title="Reflection" subtitle={promptForDay(date)}>
-            <textarea
-              key={`reflect-${date}`}
-              defaultValue=""
-              placeholder="Write a few honest lines…"
-              onBlur={(e) =>
-                e.target.value.trim() &&
-                setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
-              }
-              rows={3}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+      {/* ── 4) Close the day: one card, three fields.
+             This was three separate bordered cards — Gratitude, Reflection and
+             Daily memory — each holding a single input, laid out in a two-column
+             grid that left one cell empty. Three containers for one act, and
+             the emptiest 460px on the page. They are one ritual, so they are
+             one card, with each field carrying its own label and prompt. ─── */}
+      <Card title="Close the day" subtitle="Three lines, then you're done">
+        <div className="space-y-5">
+          <Field label="Grateful for" hint="One thing, however small">
+            <Input
+              value={gratitude}
+              onChange={(e) => setGratitude(date, e.target.value)}
+              placeholder="Today I'm grateful for…"
             />
-            <p className="mt-1 text-label text-fg-2">Saved into today's memory on blur.</p>
-          </Card>
-        )}
+          </Field>
 
-        <Card title="Daily memory" subtitle="One line to remember this day by">
-          <Input
-            value={memory}
-            onChange={(e) => setMemory(date, { text: e.target.value })}
-            placeholder="A single memorable moment…"
-          />
-          <div className="mt-3">
-            <ImageUpload
-              value={memoryRec?.photo}
-              onChange={(photo) => setMemory(date, { photo })}
-              label="Add a photo of the day"
-              className={memoryRec?.photo ? 'taped' : ''}
+          {data.settings.reflectionPrompts && (
+            <Field label="Reflection" hint={promptForDay(date)}>
+              <textarea
+                key={`reflect-${date}`}
+                defaultValue=""
+                placeholder="Write a few honest lines…"
+                onBlur={(e) =>
+                  e.target.value.trim() &&
+                  setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
+                }
+                rows={3}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              />
+              <p className="mt-1 text-label text-fg-2">Saved into today's memory when you click away.</p>
+            </Field>
+          )}
+
+          <Field label="Memory of the day" hint="One line to remember it by">
+            <Input
+              value={memory}
+              onChange={(e) => setMemory(date, { text: e.target.value })}
+              placeholder="A single memorable moment…"
             />
-          </div>
-        </Card>
-
-      </div>
-
-      {/* ── 5) This week (collapsed): weekly-goal progress rings ─── */}
-      {date === todayISO() && <WeeklyGoalRings date={date} />}
-
-      {/* ── 6) Memories (collapsed): on this day from earlier journals ─ */}
-      {hasFlash && !hidden.includes('onThisDay') && (
-        <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
-          <ul className="space-y-2 text-body">
-            {flashbacks.memories.map((m) => (
-              <li key={m.date} className="text-fg-1">
-                <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
-              </li>
-            ))}
-            {flashbacks.entries.slice(0, 5).map((e) => (
-              <li key={e.id} className="text-fg-1">
-                <span className="text-fg-2">{e.date}</span> · {e.text}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* ── 7) Decorate (collapsed): stickers at the very bottom ─── */}
-      <Card title="Stickers" subtitle="Decorate the day" collapsible defaultCollapsed>
-        <StickerBar date={date} />
+            <div className="mt-3">
+              <ImageUpload
+                value={memoryRec?.photo}
+                onChange={(photo) => setMemory(date, { photo })}
+                label="Add a photo of the day"
+                className={memoryRec?.photo ? 'taped' : ''}
+              />
+            </div>
+          </Field>
+        </div>
       </Card>
+
     </Page>
   )
 }
