@@ -14,16 +14,15 @@ holds the month pulse and trailing-year rhythm.
 - **1.3 screens.** Grid is 669px of the 1,063px column.
 - Four blocks: summary strip (33px) · calendar (669px) · Location/Goals/Photo
   row (211px) · Month analytics (32px, collapsed).
-- **Only 3 elements on the whole page carry an `aria-label`.** The day cells are
-  buttons without one.
 
 ## UX / IA
 
-**P1 · The day cells are unlabelled buttons.** A screen reader hears "2" and
-then nothing — the dots, the ribbon and the mood tint are all visual-only. This
-is the deferred `AUD-5` item and it is the page's most concrete defect: the
-calendar's entire information layer is inaccessible. Each cell wants a label
-like "August 2 · 5 entries · 4 of 5 habits · mood 7".
+**~~P1 · The day cells are unlabelled buttons.~~ Fixed on `fix/a11y-gaps` (PR
+#88) while this audit was being written.** They now read
+`"Sun, Aug 2, today, 5 items, mood 7 of 10, 5 of 8 habits"` and carry
+`aria-current="date"`. Kept here because the *visual* half of the same problem
+is still open: everything that label says is available to a screen reader and
+still not available to a sighted user without guessing (see the next item).
 
 **P2 · Nothing explains the marks.** A cell can carry coloured dots, a green
 ribbon, a star and a background tint. The subtitle says "Events show as dots"
@@ -70,10 +69,11 @@ different words. "The one shot that says August" would earn its line.
 
 ## Upgrades, ranked
 
-1. **P1 · Label the day cells** for screen readers, with entry count, habit
-   completion and mood.
+1. ~~**P1 · Label the day cells**~~ — done, PR #88. The *visible* legend for the
+   same information is the remaining half.
 2. **P1 · Make today unmistakable** — not just an outline, but the one cell that
-   is visibly the subject of the page.
+   is visibly the subject of the page. The `aria-label` already says
+   "today"; the pixels barely do.
 3. **P2 · Add a legend** for dots, ribbon, star and tint, or reduce to fewer
    encodings and explain those.
 4. **P2 · Dim future days** so an in-progress month does not read as failure.
