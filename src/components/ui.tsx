@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp, Info, Maximize2, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Info, Maximize2, X, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { Button as SButton } from './ui/button'
@@ -306,8 +306,47 @@ export function Pill({ children, color }: { children: ReactNode; color?: string 
   )
 }
 
-export function Empty({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-sm text-overlay0">{children}</p>
+/**
+ * EMPTY STATE · what a view says when it has nothing to show.
+ *
+ * A bare "nothing here" line tells the user they are stuck; an empty state with
+ * a reason and a way forward tells them what to do next. `children` alone still
+ * renders the old one-line form, so existing call sites are unchanged — pass
+ * `icon` / `hint` / `action` to get the fuller treatment.
+ */
+export function Empty({
+  children,
+  icon: Icon,
+  hint,
+  action,
+}: {
+  children: ReactNode
+  icon?: LucideIcon
+  hint?: string
+  action?: { label: string; onClick: () => void }
+}) {
+  if (!Icon && !hint && !action) {
+    return <p className="py-6 text-center text-sm text-overlay0">{children}</p>
+  }
+  return (
+    <div className="flex flex-col items-center gap-2 py-10 text-center">
+      {Icon && (
+        <span className="grid size-10 place-items-center rounded-full bg-surface0 text-overlay1">
+          <Icon size={18} />
+        </span>
+      )}
+      <p className="text-sm font-medium text-subtext1">{children}</p>
+      {hint && <p className="max-w-xs text-xs text-overlay0">{hint}</p>}
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="mt-1 rounded-lg bg-surface1 px-3 py-1.5 text-xs text-text hover:bg-surface2"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  )
 }
 
 /** Segmented control for mutually-exclusive choices (theme, units, …). */
