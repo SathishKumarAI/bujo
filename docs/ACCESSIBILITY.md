@@ -36,9 +36,21 @@ important an `!`, dropped a strikethrough.
 | Recharts SVG charts lack text alternatives | Medium | Add an `aria-label` summary + a data table toggle for the mood/sleep chart |
 | Sticker/emoji buttons announce raw emoji | Low | Add descriptive `aria-label` per emoji |
 | Color-picker for habits relies on swatch color | Low | Add a name/label to each swatch |
-| No skip-to-content link | Low | Add a visually-hidden skip link before the nav |
-| Focus trap in modals | N/A | No modal dialogs yet; revisit if added |
 | Automated axe-core checks | — | Add `@axe-core/playwright` to CI |
+
+### Closed
+
+| Gap | Closed by |
+|---|---|
+| No skip-to-content link | `AppShell` renders a visually-hidden `Skip to content` link as the first focusable element, targeting `<main id="main">` |
+| Focus trap in modals | Radix (`ui/dialog`, `ui/alert-dialog`) traps and restores focus for dialogs built on it; every hand-rolled overlay (command palette, card enlarge modal, Stats enlarge, habit editor, habit detail, exercise detail, SOS overlay, onboarding tour) uses `useFocusTrap` — Tab cycles inside, focus returns to the opener on close |
+| Month calendar cells announced as bare numbers | Each `Monthly` day cell carries an `aria-label` with the date, item count, mood and habit progress, plus `aria-current="date"` on today |
+| Saves gave no announcement | Off-screen saves (weekly reflection, gym routine) fire a `notify.success` toast, which sonner announces politely |
+
+**Rule for new overlays:** if it is a `fixed inset-0` div rather than a Radix
+dialog, it must call `useFocusTrap` (`src/lib/useFocusTrap.ts`). The hook
+deliberately traps Tab only — no `focusin` guard — because these overlays open
+Radix confirm dialogs that portal outside the trapped node.
 
 ## How to test
 
