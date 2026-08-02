@@ -65,6 +65,15 @@ export function AppShell({
   return (
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
+      {/* First focusable element on the page: a keyboard user lands here and can
+          jump straight past the sidebar and top bar to the content. Off-screen
+          until focused. Listed as a known gap in docs/ACCESSIBILITY.md. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-ink-1 focus:px-3 focus:py-2 focus:text-body focus:text-fg-1 focus:outline-2 focus:outline-mauve"
+      >
+        Skip to content
+      </a>
       {/* Dim scrim behind the mobile drawer — tap to close (iOS-style). */}
       {isMobile && (
         <div
@@ -97,7 +106,7 @@ export function AppShell({
           onMenu={() => setNavOpen((o) => !o)}
         />
         {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
-        <main className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
+        <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
 
       {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} />}
