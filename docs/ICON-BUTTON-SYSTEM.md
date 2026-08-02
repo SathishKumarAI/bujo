@@ -1,6 +1,6 @@
-# Icon and button system — spec + Stage 0 audit
+# Icon and button system — spec, audit, stage log
 
-**Status:** Stage 0 complete, awaiting go-ahead before Stage 1 (install).
+**Status:** Stages 0 and 1 complete. Stage 2 (Phosphor) next.
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 
@@ -200,7 +200,100 @@ text tiers, not three.
 with no variant defaults to `default`). Those **37 solid-accent buttons** are
 what decision 2 deletes.
 
-## Open questions for Stage 1
+## Stage 1 — done. Token extension, not a second bridge
+
+**Approach taken: extend the existing token layer.** No `shadcn-bridge.css`.
+The bridge already runs Catppuccin → shadcn → purpose tokens, and a second file
+redefining `--background` / `--card` / `--border` would have given every one of
+them two definitions with the winner decided by import order. Everything new
+went into the layer that already exists: `src/index.css` for per-theme raw
+values, `src/styles/tokens.css` for what those values are *for*.
+
+**shadcn additions:** `toggle-group`, `toggle`, `command` (button, tooltip,
+dialog, dropdown-menu were already installed). `cmdk` is a new dependency.
+The CLI could not resolve the `@` alias — the root tsconfig is solution-style
+with no `paths` — so it wrote into a literal `@/` directory at the repo root;
+the wanted files were copied into `src/components/ui/` by hand and `@/` is now
+gitignored and eslint-ignored as a reference copy. Its stock `dialog.tsx` was
+**not** adopted: this app's dialog is customised.
+
+### Tokens added
+
+| Token | Value | Why |
+|---|---|---|
+| `--color-brand-wash` | `color-mix(in oklab, primary 14%, transparent)` | was srgb 16%; oklab keeps the hue instead of dragging the mix toward grey |
+| `--color-brand-wash-hover` | same at 20% | the tonal button needs a hover step that is not a colour change |
+| `--color-danger-wash` / `-hover` | destructive at 14% / 20% | so `danger` is the same shape in a different colour, not a different system |
+| `--color-brand-text` | per theme | the accent as *text* is not the accent as a *surface* — see below |
+| `--color-danger-text` | per theme | same, for destructive |
+| `--radius-control` / `-card` / `-pill` | 8px / 14px / pill | replaces ten radii in circulation |
+| `--h-control-sm` / `--h-control` / `-lg` | 1.75 / 2.25 / 2.75rem | 28 / 36 / 44, in rem so they track the font-scale control |
+
+### The finding that changed the plan
+
+A tonal primary button puts the accent **as text** on the accent **as a wash**.
+Measured on the real rendered surfaces, that pairing failed AA in two themes,
+and the destructive equivalent failed in three:
+
+| Theme | accent on wash (before) | after | destructive on wash (before) | after |
+|---|---|---|---|---|
+| mocha | 7.00 ✅ | unchanged | 6.28 ✅ | unchanged |
+| latte | **4.39 ❌** | 5.94 (`#5733db`) | **3.87 ❌** | 5.32 (`#b2271e`) |
+| neon | 5.94 ✅ | unchanged | 5.66 ✅ | unchanged |
+| vscode | 5.18 ✅ | 5.86 (`#cd92c8`)¹ | **4.28 ❌** | 5.29 (`#f46d6d`) |
+| dawn | **4.07 ❌** | 5.49 (`#964307`) | **3.80 ❌** | 5.35 (`#b21d1d`) |
+
+¹ vscode's accent passed at rest but sat at 4.67:1 on the *hover* wash — 0.17
+above the floor, one surface tweak from failing silently. Lightened for
+headroom.
+
+This is §I1 arriving early. It was parked as "accents fail AA as text"; making
+the loud button tonal turns it from a papercut into the primary action's label,
+so it had to be solved now. It is solved **at the token**, so nothing downstream
+has to remember it — anything rendering the accent as text reads
+`--color-brand-text`, never `--color-brand`.
+
+### Verification — all five themes
+
+Measured in the browser on the rendered kitchen sink, not computed from source.
+ΔE is CIE76 in Lab; a wash is a hue shift, so luminance contrast alone cannot
+say whether it is visible (JND ≈ 2.3).
+
+| Theme | wash vs card ΔE | hover step ΔE | label on wash | label on hover | danger label | radii | heights |
+|---|---|---|---|---|---|---|---|
+| mocha | 13.5 | 5.2 | 7.00 | 6.08 | 6.28 | 8/14/pill | 28/36/44 |
+| latte | 14.3 | 6.4 | 5.94 | 5.44 | 5.32 | 8/14/pill | 28/36/44 |
+| neon | 16.4 | 5.5 | 5.94 | 5.32 | 5.66 | 8/14/pill | 28/36/44 |
+| vscode | 11.1 | 4.3 | 5.86 | 5.24 | 5.29 | 8/14/pill | 28/36/44 |
+| dawn | 10.4 | 4.5 | 5.49 | 5.05 | 5.35 | 8/14/pill | 28/36/44 |
+
+No theme needed a local percentage override: 14% is visible everywhere, by a
+wide margin on the light themes (ΔE ~14) and comfortably on the dark ones
+(ΔE 10–16). Screenshots taken in all five, through the real theme setter rather
+than by poking `data-theme` — that path leaves the JS chart palette on the
+previous theme (§I2), so a screenshot taken that way would be a lie.
+
+**`--text-3` was already passing** in all five (4.74–6.55:1) before this stage,
+so no change was needed there.
+
+### Kitchen sink
+
+Two cards added — *Accent wash* and *Shape & size* — rendering every token this
+stage introduced. Standing rule from here on: **a token that cannot be seen in
+the kitchen sink in all five themes does not count as shipped.** It also makes
+Tailwind emit the new utilities, which is how the first measurement pass caught
+that `rounded-control` did not exist yet.
+
+## Open questions — answered
+
+All four were answered "go with the recommendation":
+
+1. Extend the existing token layer — **done**, no second bridge.
+2. oklab wash + hover step — **done**, verified in five themes.
+3. lucide → Phosphor across 85 files — **approved**, Stage 2.
+4. Icons outside the map get picked by noun and reported — **approved**.
+
+## Original open questions (for the record)
 
 1. **Bridge approach.** Recommend extending `src/styles/tokens.css` +
    `src/index.css` rather than adding `shadcn-bridge.css`, because the bridge
