@@ -338,8 +338,20 @@ cream. Anything checked in mocha alone is unchecked.
   = 15 combinations**: 0 page overflow, 0 clipped buttons, 0 card overflow, and
   heights scaling 25/32/40 → 28/36/44 → 35/45/55, which is the rem sizing
   proving itself.
-- [ ] **J5 · Stage 5 — roll out by cluster** (Today → shell → logging → data →
-  reflective → settings/onboarding/empty/error), reporting after each.
+- [~] **J5 · Stage 5 — started.** Today (weighted three columns, §J7) and the
+  copy rules are done; the per-view container-tier and hex-literal work is not.
+  - **Empty states** are invitations now, not status reports: eleven bare "No X
+    yet" strings name the action instead ("Log a workout to see which splits you
+    actually train").
+  - **Error copy** says what happened *and* what is still true — and Drive's
+    eight blocking `alert()` calls became toasts, which also stops a modal
+    freezing the in-browser review loop.
+  - **Codemod damage repaired:** the lucide→Phosphor rename hit *prose*. Five
+    user-visible strings shipped as "MagnifyingGlass your Drive…" and
+    "PersonSimpleRun layout" before a grep of every renamed name back out of
+    string literals found them. The hazard is now written into the script:
+    `Search`, `Activity`, `Settings`, `Scale` and `Repeat` are ordinary English
+    words, and an 85-file diff hides this perfectly.
 - [~] **J6 · Stage 6 — mechanical half DONE.** 0 lucide refs, 0 Phosphor imports
   outside the registry, 0 px icon sizes, 0 px font sizes, 0 solid-accent
   buttons, exactly 3 control heights, and the ten radii collapsed to three

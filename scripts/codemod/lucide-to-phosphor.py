@@ -16,6 +16,14 @@ What it does, per file that imports from 'lucide-react':
    (several views destructure one from a lookup table), the wrapper comes in as
    `AppIcon` so the local binding still wins where it is meant to.
 
+KNOWN HAZARD, learned the hard way: step 1 renames with a word-boundary regex
+over the whole file, and several lucide names are ordinary English words —
+`Search`, `Activity`, `Settings`, `Scale`, `Repeat`. It happily rewrote them
+inside user-visible strings, so three search placeholders shipped reading
+"MagnifyingGlass your Drive…" until a grep found them. After running this,
+always grep every renamed name back out of string literals, JSX text and
+comments; an 85-file diff will not show it to you.
+
 Deliberately NOT handled, and reported instead:
 - JSX whose tag is a *variable* holding a glyph (`const Icon = tone.icon`).
   Those are real, and they need a human to decide the size and active state.
