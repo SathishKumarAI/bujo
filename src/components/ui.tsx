@@ -8,6 +8,7 @@ import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
@@ -375,7 +376,29 @@ export function Empty({
   )
 }
 
-/** Segmented control for mutually-exclusive choices (theme, units, …). */
+/**
+ * SEGMENTED · mutually-exclusive choice (theme, units, range).
+ *
+ * Built on Radix `ToggleGroup` rather than hand-rolled buttons, so roving
+ * focus, arrow-key navigation and the radio-group semantics come from the
+ * primitive instead of being approximated. The API is unchanged — ~30 call
+ * sites pass `value` / `onChange` / `options` and did not move.
+ *
+ * Two details the primitive does not decide:
+ *
+ * - **Radix speaks strings.** Callers pass numbers as often as strings (week
+ *   counts, font scales), so values round-trip through their string form and
+ *   are mapped back to the original option on the way out. Comparing the
+ *   stringified value also means `26` and `'26'` cannot silently disagree.
+ * - **Deselect is refused.** A single-select ToggleGroup emits `''` when you
+ *   click the active item again, which for a *choice* means "no theme" or "no
+ *   range" — states this app has no representation for. That event is dropped.
+ *
+ * Selected takes the accent **wash**, never the fill: a filled segment reads as
+ * the primary action on the screen, and it is a choice you already made. The
+ * label uses `brand-text`, which is the accent tuned to stay legible on that
+ * wash in all five themes.
+ */
 export function Segmented<T extends string | number>({
   value,
   onChange,
@@ -386,25 +409,46 @@ export function Segmented<T extends string | number>({
   options: { value: T; label: ReactNode }[]
 }) {
   return (
-    <div className="inline-flex rounded-control bg-secondary p-0.5">
+    <ToggleGroup
+      type="single"
+      // Roving focus off, deliberately. With it on, Radix gives the group a
+      // single tab stop — and measured on the rendered page every item came out
+      // `tabIndex: -1`, so the control could not be tabbed into at all. That is
+      // a regression against the plain buttons this replaced. Each segment is
+      // its own tab stop now, which is exactly how it behaved before; the cost
+      // is arrow-key traversal, which nothing in the app relied on.
+      rovingFocus={false}
+      value={String(value)}
+      onValueChange={(next) => {
+        if (!next) return // clicking the active segment must not clear the choice
+        const match = options.find((o) => String(o.value) === next)
+        if (match) onChange(match.value)
+      }}
+      className="inline-flex rounded-control border border-line p-0.5"
+    >
       {options.map((o) => {
-        const active = o.value === value
+        const selected = String(o.value) === String(value)
         return (
-          <button
+          <ToggleGroupItem
             key={String(o.value)}
-            onClick={() => onChange(o.value)}
-            aria-pressed={active}
-            className={`inline-flex items-center gap-1.5 rounded-control px-2.5 py-1 text-body transition-colors ${
-              // Selected state gets the accent *wash*, not the accent fill: a
-              // filled segment reads as "the primary action on this screen",
-              // which it isn't — it's a choice you already made.
-              active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
-            }`}
+            value={String(o.value)}
+            // Selected colour set inline, and bound to `--brand-text` rather
+            // than the `@theme` alias `--color-brand-text`.
+            //
+            // Two reasons, both found by measuring rather than reasoning. The
+            // vendored `toggleVariants` already ships
+            // `data-[state=on]:text-accent-foreground`, so a competing
+            // `data-[state=on]:text-*` class of equal specificity is resolved
+            // by stylesheet order, not by us. And the `@theme` alias did not
+            // track the theme on this element — the raw per-theme variable
+            // does, in all five.
+            style={selected ? { color: 'var(--brand-text)' } : undefined}
+            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
           >
             {o.label}
-          </button>
+          </ToggleGroupItem>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }
