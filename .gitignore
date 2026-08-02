@@ -36,3 +36,9 @@ docs/pdf/
 # BUJO-193 self-host API TLS certs (do not commit)
 docker/certs/
 .env
+
+# shadcn CLI output. It cannot resolve this repo's `@` alias (solution-style
+# root tsconfig, no `paths`), so `shadcn add` writes here instead of
+# src/components/ui. Wanted files are copied into place by hand; this stays on
+# disk as a reference copy for diffing the next `shadcn add`, untracked.
+/@/
