@@ -25,6 +25,14 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
+  /**
+   * Controlled mode. Pass both to drive the section from outside — Collections
+   * needs it because "jump to tag" has to expand Auto-pages before it scrolls
+   * there. Omit both and the section keeps its own state, which is what nearly
+   * every call site wants.
+   */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   children: ReactNode
 }
 
@@ -35,9 +43,16 @@ export function CollapsibleSection({
   color = 'overlay1',
   variant = 'card',
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   children,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
+  const open = controlledOpen ?? uncontrolledOpen
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next)
+    onOpenChange?.(next)
+  }
 
   // A Lucide icon arrives as a component; a pre-rendered node arrives as an element.
   let iconNode: ReactNode = null
@@ -61,7 +76,7 @@ export function CollapsibleSection({
         <h2>
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen(!open)}
           aria-expanded={open}
           className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
@@ -86,7 +101,7 @@ export function CollapsibleSection({
       <h2>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
