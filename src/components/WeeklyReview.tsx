@@ -4,6 +4,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { weekCoverage } from '../lib/coverage'
+import { notify } from '../lib/notify'
 import { useNav } from './shell/nav'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
@@ -35,6 +36,10 @@ export function WeeklyReview() {
     addEntry(today, `n ${t} #review`)
     setReflection('')
     setOpen(false)
+    // The reflection lands in today's log, which is a different view — without
+    // this the form just empties and nothing tells you it saved (and a screen
+    // reader gets no announcement at all).
+    notify.success('Reflection saved', "Filed in today's log as a #review note.")
   }
 
   return (

@@ -13,6 +13,7 @@ import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { MuscleMap } from '../components/MuscleMap'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
+import { notify } from '../lib/notify'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
@@ -180,8 +181,10 @@ export function Gym() {
   function saveAsRoutine() {
     const exercises = rows.map((r) => r.exercise.trim()).filter(Boolean)
     if (!routineName.trim() || exercises.length === 0) return
-    addRoutine({ name: routineName.trim(), split, exercises })
+    const name = routineName.trim()
+    addRoutine({ name, split, exercises })
     setRoutineName('')
+    notify.success(`Routine “${name}” saved`, `${exercises.length} ${exercises.length === 1 ? 'exercise' : 'exercises'}.`)
   }
 
   // Body-weight chart.
