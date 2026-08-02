@@ -77,8 +77,8 @@ export function PomodoroCard() {
             <circle cx="70" cy="70" r={R} fill="none" stroke={accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} transform="rotate(-90 70 70)" style={{ transition: 'stroke-dashoffset 1s linear' }} />
           </svg>
           <div className="absolute text-center">
-            <p className="font-display text-3xl tabular-nums text-text">{pad(Math.floor(shown / 60))}:{pad(shown % 60)}</p>
-            <p className="text-xs uppercase tracking-wide text-subtext0">{mode}</p>
+            <p className="font-display text-display tabular-nums text-fg-1">{pad(Math.floor(shown / 60))}:{pad(shown % 60)}</p>
+            <p className="text-label uppercase tracking-wide text-fg-2">{mode}</p>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export function PomodoroCard() {
 
         <div className="mt-3 flex gap-1.5">
           {PRESETS.map((p) => (
-            <Button key={p.label} variant={preset.label === p.label ? 'default' : 'secondary'} onClick={() => choose(p)} className="press-3d rounded-lg text-xs">{p.label}</Button>
+            <Button key={p.label} variant={preset.label === p.label ? 'default' : 'secondary'} onClick={() => choose(p)} className="press-3d rounded-lg text-label">{p.label}</Button>
           ))}
         </div>
       </div>

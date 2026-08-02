@@ -44,36 +44,36 @@ export function WeeklyReview() {
       right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-lg">{open ? 'Close' : 'Start review'}</Button>}
     >
       {!open ? (
-        <p className="text-sm text-subtext0">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>
+        <p className="text-body text-fg-2">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>
       ) : (
         <div className="space-y-4">
           {/* Step 1 · migrate */}
           <div>
-            <p className="mb-1 text-xs font-medium tracking-wide text-subtext0 uppercase">1. Clear the backlog</p>
+            <p className="mb-1 text-label font-medium tracking-wide text-fg-2 uppercase">1. Clear the backlog</p>
             {overdue === 0
-              ? <p className="text-sm text-green">Nothing overdue, clean slate. 🎉</p>
-              : <p className="text-sm text-subtext1">{overdue} overdue task{overdue === 1 ? '' : 's'} waiting. <button onClick={() => navigate('plan')} className="text-mauve hover:underline">Migrate them →</button></p>}
+              ? <p className="text-body text-green">Nothing overdue, clean slate. 🎉</p>
+              : <p className="text-body text-fg-1">{overdue} overdue task{overdue === 1 ? '' : 's'} waiting. <button onClick={() => navigate('plan')} className="text-mauve hover:underline">Migrate them →</button></p>}
           </div>
 
           {/* Step 2 · review */}
-          <div className="border-t border-surface0 pt-3">
-            <p className="mb-2 text-xs font-medium tracking-wide text-subtext0 uppercase">2. How the week went</p>
+          <div className="border-t border-line pt-3">
+            <p className="mb-2 text-label font-medium tracking-wide text-fg-2 uppercase">2. How the week went</p>
             <div className="mb-2 flex gap-1.5">
               {week.map((d) => (
                 <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${Math.round(d.score * 100)}%`}>
                   <div className="h-6 w-full rounded" style={{ background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1') }} />
-                  <span className="text-[10px] text-subtext0">{d.date.slice(8)}</span>
+                  <span className="text-micro text-fg-2">{d.date.slice(8)}</span>
                 </div>
               ))}
             </div>
             {topMissed.length > 0
-              ? <p className="text-xs text-subtext0"><span className="text-peach">Most missed:</span> {topMissed.map(([n, c]) => `${n} (${c}×)`).join(', ')}</p>
-              : <p className="text-xs text-green">No habits missed this week.</p>}
+              ? <p className="text-label text-fg-2"><span className="text-peach">Most missed:</span> {topMissed.map(([n, c]) => `${n} (${c}×)`).join(', ')}</p>
+              : <p className="text-label text-green">No habits missed this week.</p>}
           </div>
 
           {/* Step 3 · reflect */}
-          <div className="border-t border-surface0 pt-3">
-            <p className="mb-2 text-xs font-medium tracking-wide text-subtext0 uppercase">3. Reflect</p>
+          <div className="border-t border-line pt-3">
+            <p className="mb-2 text-label font-medium tracking-wide text-fg-2 uppercase">3. Reflect</p>
             <Textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="What went well? What will you change next week?" rows={3} />
             <div className="mt-2 flex justify-end">
               <Button variant="default" onClick={saveReflection} className="press-3d rounded-lg">Save reflection</Button>

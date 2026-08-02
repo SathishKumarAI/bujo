@@ -54,11 +54,11 @@ function Disclosure({ title, subtitle, defaultOpen = false, children }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
       >
-        <span className="text-subtext0">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-        <span className="font-display text-base font-medium text-subtext1">{title}</span>
-        {subtitle && <span className="text-xs text-subtext0">{subtitle}</span>}
+        <span className="text-fg-2">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="font-display text-heading font-medium text-fg-1">{title}</span>
+        {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
       </button>
       {open && children}
     </section>
@@ -144,17 +144,17 @@ export function Settings() {
     reader.readAsText(file)
   }
 
-  const tabClass = 'gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-2 text-sm text-subtext0 hover:text-text data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-text data-[state=active]:shadow-sm'
+  const tabClass = 'gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
-    <Page>
+    <Page width="wide">
       {/* Designed header · sets the page apart from a plain card stack. */}
-      <div className="mb-6 flex items-center gap-3 border-b border-surface0 pb-4">
+      <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
           <SlidersHorizontal size={20} />
         </span>
         <div className="min-w-0">
-          <h1 className="font-display text-2xl text-text">Settings</h1>
-          <p className="text-sm text-subtext0">Profile, appearance, reminders, and your data.</p>
+          <h1 className="font-display text-title text-fg-1">Settings</h1>
+          <p className="text-body text-fg-2">Profile, appearance, reminders, and your data.</p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export function Settings() {
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
-            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-text"
+            className="rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           >
             <option value="prefer-not">Prefer not to say</option>
             <option value="female">Female</option>
@@ -184,11 +184,11 @@ export function Settings() {
             <option value="nonbinary">Non-binary</option>
           </select>
         </Row>
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
+        <div className="mt-3 space-y-2 border-t border-line pt-3">
           <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
           <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
         </div>
-        <div className="mt-3 grid gap-x-6 gap-y-2 border-t border-border pt-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-x-6 gap-y-2 border-t border-line pt-3 sm:grid-cols-2">
           <Row label="Weight">
             <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
           </Row>
@@ -207,8 +207,8 @@ export function Settings() {
 
         <TabsContent value="feel" className="max-w-2xl">
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
-        <div className="mb-3 border-b border-border pb-3">
-          <p className="mb-2 text-sm text-subtext1">Theme</p>
+        <div className="mb-3 border-b border-line pb-3">
+          <p className="mb-2 text-body text-fg-1">Theme</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {THEMES.map((t) => {
               const active = (s.theme ?? 'mocha') === t.value
@@ -217,28 +217,28 @@ export function Settings() {
                   key={t.value}
                   onClick={() => setSettings({ theme: t.value })}
                   aria-pressed={active}
-                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-border hover:border-surface2'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
                 >
-                  <span className="flex shrink-0 overflow-hidden rounded-md border border-border" aria-hidden>
+                  <span className="flex shrink-0 overflow-hidden rounded-md border border-line" aria-hidden>
                     {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-text">{t.label}</span>
-                    <span className="block text-[11px] text-subtext0">{t.hint}</span>
+                    <span className="block truncate text-body text-fg-1">{t.label}</span>
+                    <span className="block text-caption text-fg-2">{t.hint}</span>
                   </span>
                 </button>
               )
             })}
           </div>
         </div>
-        <div className="mb-3 border-b border-border pb-3">
-          <p className="mb-2 text-sm text-subtext1">Text size</p>
+        <div className="mb-3 border-b border-line pb-3">
+          <p className="mb-2 text-body text-fg-1">Text size</p>
           <Segmented
             value={s.fontScale ?? 1}
             onChange={(v) => setSettings({ fontScale: v })}
             options={[{ value: 0.9, label: 'S' }, { value: 1, label: 'M' }, { value: 1.1, label: 'L' }, { value: 1.25, label: 'XL' }]}
           />
-          <p className="mt-1 text-xs text-subtext0">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
+          <p className="mt-1 text-label text-fg-2">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
         </div>
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
@@ -247,7 +247,7 @@ export function Settings() {
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
           <Toggle label="Auto-hide sidebar — reveal on hover (desktop)" on={!!s.sidebarAutoHide} onChange={(v) => setSettings({ sidebarAutoHide: v })} />
         </div>
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           <Row label="Penalty difficulty">
             <Segmented
               value={s.penaltyLevel ?? 'beginner'}
@@ -255,10 +255,10 @@ export function Settings() {
               options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Inter' }, { value: 'hard', label: 'Hard' }]}
             />
           </Row>
-          <p className="mt-1 text-xs text-subtext0">Scales the training-penalty drills to a doable level.</p>
+          <p className="mt-1 text-label text-fg-2">Scales the training-penalty drills to a doable level.</p>
         </div>
-        <div className="mt-3 border-t border-border pt-3">
-          <p className="mb-2 text-sm text-subtext1">Today dashboard cards</p>
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-body text-fg-1">Today dashboard cards</p>
           <div className="space-y-2">
             {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Training penalty'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
               const hidden = s.hideToday ?? []
@@ -273,8 +273,8 @@ export function Settings() {
             })}
           </div>
         </div>
-        <div className="mt-3 border-t border-border pt-3">
-          <p className="mb-2 text-sm text-subtext1">Accent color</p>
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-body text-fg-1">Accent color</p>
           <div className="flex flex-wrap gap-2">
             {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
               const active = (s.accent ?? 'mauve') === c
@@ -284,7 +284,7 @@ export function Settings() {
             })}
           </div>
         </div>
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           {/* SET-4: one-tap return to the default look. */}
           <Button
             variant="destructive"
@@ -311,13 +311,13 @@ export function Settings() {
                 type="time"
                 value={s.reminderTime}
                 onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-text"
+                className="rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
           )}
-          <div className="border-t border-border pt-3">
+          <div className="border-t border-line pt-3">
             <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
-            <p className="mt-1 text-xs text-subtext0">Uses open-meteo and your browser location. When off, the app makes no network calls.</p>
+            <p className="mt-1 text-label text-fg-2">Uses open-meteo and your browser location. When off, the app makes no network calls.</p>
           </div>
         </div>
       </Card>
@@ -360,15 +360,15 @@ export function Settings() {
               const warn = pct >= 80
               return (
                 <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span className="text-subtext0">Browser storage used</span>
+                  <div className="mb-1 flex justify-between text-label">
+                    <span className="text-fg-2">Browser storage used</span>
                     <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-2 overflow-hidden rounded-full bg-ink-2">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
                   </div>
                   {warn && (
-                    <p className="mt-1.5 text-xs text-peach">
+                    <p className="mt-1.5 text-label text-peach">
                       Getting full, photos use the most space. Export a backup, and remove old progress photos if needed.
                     </p>
                   )}
@@ -382,14 +382,14 @@ export function Settings() {
           const stale = daysSinceBackup(s.lastBackup, todayISO())
           if (stale == null) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
+              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
                 <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage · export a copy.
               </p>
             )
           }
           if (stale >= 7) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-base p-2 text-xs text-yellow">
+              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
                 <AlertTriangle size={14} /> Not backed up in {stale} day{stale === 1 ? '' : 's'} · export a fresh copy to be safe.
               </p>
             )
@@ -403,14 +403,14 @@ export function Settings() {
           <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
-        <p className="mt-1.5 text-xs text-subtext0">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
+        <p className="mt-1.5 text-label text-fg-2">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
         <div className="mt-2">
           <Button variant="secondary" onClick={doRedactedExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export shareable (redacted) JSON</Button>
-          <p className="mt-1 text-xs text-subtext0">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
+          <p className="mt-1 text-label text-fg-2">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
         </div>
-        {s.lastBackup && <p className="mt-2 text-xs text-subtext0">Last backup: {s.lastBackup}</p>}
+        {s.lastBackup && <p className="mt-2 text-label text-fg-2">Last backup: {s.lastBackup}</p>}
         {/* SET-2: power-user exports fold away so Export/Import JSON stays the hero. */}
-        <div className="mt-3 space-y-3 border-t border-border pt-3">
+        <div className="mt-3 space-y-3 border-t border-line pt-3">
           <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
@@ -425,7 +425,7 @@ export function Settings() {
             </div>
             {data.collections.length > 0 && (
               <div className="mt-2">
-                <p className="mb-1 text-xs text-subtext0">Export one collection's entries as CSV:</p>
+                <p className="mb-1 text-label text-fg-2">Export one collection's entries as CSV:</p>
                 <div className="flex flex-wrap gap-2">
                   {data.collections.map((c) => (
                     <Button key={c.id} variant="secondary" onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
@@ -444,15 +444,15 @@ export function Settings() {
             <div className="space-y-2">
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
-                <p className="mt-1 text-xs text-subtext0">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
+                <p className="mt-1 text-label text-fg-2">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
               </div>
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
-                <p className="mt-1 text-xs text-subtext0">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
+                <p className="mt-1 text-label text-fg-2">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
               </div>
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
-                <p className="mt-1 text-xs text-subtext0">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
+                <p className="mt-1 text-label text-fg-2">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
           </Disclosure>
@@ -462,9 +462,9 @@ export function Settings() {
               <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>
-            <p className="mt-1 text-xs text-subtext0">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
+            <p className="mt-1 text-label text-fg-2">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
           </Disclosure>
-          <p className="text-xs text-subtext0">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
+          <p className="text-label text-fg-2">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
 
@@ -512,7 +512,7 @@ export function Settings() {
             Back to start screen
           </Button>
         </div>
-        <p className="mt-2 text-xs text-subtext0">
+        <p className="mt-2 text-label text-fg-2">
           Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
         </p>
       </Card>
@@ -532,24 +532,24 @@ export function Settings() {
                       <StatTile compact label="Active days" value={sum.activeDays} color="green" />
                     </div>
                     <div className="mt-3">
-                      <div className="mb-1 flex justify-between text-xs">
-                        <span className="text-subtext0">Days with data (coverage)</span>
+                      <div className="mb-1 flex justify-between text-label">
+                        <span className="text-fg-2">Days with data (coverage)</span>
                         <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                      <div className="h-2 overflow-hidden rounded-full bg-ink-2">
                         <div className="h-full rounded-full" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
                       </div>
                     </div>
                     {sum.counts.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {sum.counts.map((c) => (
-                          <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-surface0 bg-base px-2 py-0.5 text-xs text-subtext1">
-                            {c.label} <span className="font-medium text-text">{c.count}</span>
+                          <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-line bg-ink-0 px-2 py-0.5 text-label text-fg-1">
+                            {c.label} <span className="font-medium text-fg-1">{c.count}</span>
                           </span>
                         ))}
                       </div>
                     )}
-                    <p className="mt-2 text-xs text-subtext0">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
+                    <p className="mt-2 text-label text-fg-2">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
                   </Card>
                 </Disclosure>
               </section>
@@ -566,7 +566,7 @@ export function Settings() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-subtext1">{label}</span>
+      <span className="text-body text-fg-1">{label}</span>
       {children}
     </div>
   )
@@ -574,7 +574,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex w-full cursor-pointer items-center justify-between text-sm text-subtext1">
+    <label className="flex w-full cursor-pointer items-center justify-between text-body text-fg-1">
       <span>{label}</span>
       <Switch checked={on} onCheckedChange={onChange} />
     </label>
@@ -626,18 +626,18 @@ function AccountCard() {
   return (
     <Card title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
       {recovery && (
-        <div className="mb-3 rounded-lg border border-mauve/40 bg-base p-3">
-          <p className="mb-2 text-sm text-subtext1">Set a new password:</p>
+        <div className="mb-3 rounded-lg border border-mauve/40 bg-ink-0 p-3">
+          <p className="mb-2 text-body text-fg-1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
           <Button variant="default" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
         </div>
       )}
-      <p className="mb-1 text-sm text-subtext1">
-        {signedIn ? <>Signed in as <span className="text-text">{user!.email}</span> · synced to your account.</>
+      <p className="mb-1 text-body text-fg-1">
+        {signedIn ? <>Signed in as <span className="text-fg-1">{user!.email}</span> · synced to your account.</>
           : guest ? <span className="text-peach">Guest · data is on <strong>this device only</strong>, not in any account.</span>
             : <span className="text-peach">On this device only · <strong>no account</strong>, nothing is stored online.</span>}
       </p>
-      {!signedIn && <p className="mb-3 text-xs text-subtext0">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
+      {!signedIn && <p className="mb-3 text-label text-fg-2">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
       {!signedIn && (
         <div className="space-y-2">
           {!user && <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
@@ -650,8 +650,8 @@ function AccountCard() {
               description: 'This replaces what is currently on this device with the copy stored in your account.',
               confirmLabel: 'Load cloud data', destructive: true,
             })) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
-            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-xs text-mauve hover:underline">Forgot password?</button>
-            <button onClick={leave} className="ml-auto text-xs text-subtext0 hover:text-red">Log out / switch</button>
+            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-label text-mauve hover:underline">Forgot password?</button>
+            <button onClick={leave} className="ml-auto text-label text-fg-2 hover:text-red">Log out / switch</button>
           </div>
         </div>
       )}
@@ -666,8 +666,8 @@ function AccountCard() {
           <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={() => run(async () => { await signOut() }, 'Signed out.')}>Sign out</Button>
         </div>
       )}
-      {msg && <p className="mt-2 text-xs text-subtext1">{busy ? '…' : msg}</p>}
-      <p className="mt-2 text-xs text-subtext0">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
+      {msg && <p className="mt-2 text-label text-fg-1">{busy ? '…' : msg}</p>}
+      <p className="mt-2 text-label text-fg-2">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
     </Card>
   )
 }
@@ -717,12 +717,12 @@ function BujoCloudCard() {
         <Button variant="default" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
         <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
       </div>
-      <label className="mt-3 flex cursor-pointer items-center justify-between text-sm text-subtext1">
-        <span>Auto-sync on this device <span className="text-xs text-subtext0">(pull on open · push on change)</span></span>
+      <label className="mt-3 flex cursor-pointer items-center justify-between text-body text-fg-1">
+        <span>Auto-sync on this device <span className="text-label text-fg-2">(pull on open · push on change)</span></span>
         <Switch checked={auto} onCheckedChange={toggleAuto} />
       </label>
-      {msg && <p className="mt-2 text-xs text-subtext1">{msg}</p>}
-      <p className="mt-2 text-xs text-subtext0">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
+      {msg && <p className="mt-2 text-label text-fg-1">{msg}</p>}
+      <p className="mt-2 text-label text-fg-2">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
     </Card>
   )
 }
@@ -743,7 +743,7 @@ function PasscodeCard() {
     <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto, stays on this device)">
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-sm text-green">🔒 Journal is encrypted</span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
           <Button variant="destructive" onClick={async () => { if (await confirm({
             title: 'Remove the passcode?',
             description: 'The journal will be stored unencrypted on this device. Anyone with access to this browser can read it.',
@@ -756,9 +756,9 @@ function PasscodeCard() {
             <Input type="password" value={pc} onChange={(e) => setPc(e.target.value)} placeholder="New passcode" aria-label="New passcode" />
             <Input type="password" value={pc2} onChange={(e) => setPc2(e.target.value)} placeholder="Confirm passcode" aria-label="Confirm passcode" />
           </div>
-          {err && <p className="text-xs text-red">{err}</p>}
+          {err && <p className="text-label text-red">{err}</p>}
           <Button variant="default" onClick={enable}>Encrypt journal</Button>
-          <p className="text-xs text-subtext0">There is no recovery. If you forget the passcode the data cannot be decrypted, so keep a JSON export as a backup.</p>
+          <p className="text-label text-fg-2">There is no recovery. If you forget the passcode the data cannot be decrypted, so keep a JSON export as a backup.</p>
         </div>
       )}
     </Card>
@@ -796,18 +796,18 @@ function SelfHostCard() {
   return (
     <Card title="Self-host sync" subtitle="Sync your journal with your own secured PostgREST API (the Docker stack)">
       <div className="space-y-2">
-        <label className="block text-sm text-subtext1">API URL
+        <label className="block text-body text-fg-1">API URL
           <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="https://localhost:8443" className="mt-1" />
         </label>
-        <label className="block text-sm text-subtext1">Bearer token <span className="text-subtext0">(HS256 JWT · required)</span>
+        <label className="block text-body text-fg-1">Bearer token <span className="text-fg-2">(HS256 JWT · required)</span>
           <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="paste your minted JWT (role=bujo_user, sub=device id)" className="mt-1" />
         </label>
         <div className="flex gap-2">
           <Button variant="default" onClick={test}>Test / Push now</Button>
           <Button variant="secondary" onClick={pull}>Pull from server</Button>
         </div>
-        {msg && <p className="text-xs text-subtext0">{msg}</p>}
-        <p className="text-xs text-subtext0">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
+        {msg && <p className="text-label text-fg-2">{msg}</p>}
+        <p className="text-label text-fg-2">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
       </div>
     </Card>
   )

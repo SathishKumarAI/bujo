@@ -40,11 +40,11 @@ export function Pullups() {
  *  Rendered inside the training-set guide it supports. */
 function AbilityLadderTable() {
   return (
-    <div className="mt-4 border-t border-surface0 pt-3">
-      <p className="mb-2 text-xs text-subtext1">Ability ladder <span className="text-subtext0">· max strict pull-ups → what to train</span></p>
-      <table className="w-full text-left text-xs">
+    <div className="mt-4 border-t border-line pt-3">
+      <p className="mb-2 text-label text-fg-1">Ability ladder <span className="text-fg-2">· max strict pull-ups → what to train</span></p>
+      <table className="w-full text-left text-label">
         <thead>
-          <tr className="text-subtext0">
+          <tr className="text-fg-2">
             <th className="py-1 pr-2 font-normal">Group</th>
             <th className="py-1 pr-2 font-normal">Max</th>
             <th className="py-1 pr-2 font-normal">Set</th>
@@ -53,11 +53,11 @@ function AbilityLadderTable() {
         </thead>
         <tbody>
           {PULLUP_ABILITY.map((a) => (
-            <tr key={a.group} className="border-t border-surface0">
-              <td className="py-1 pr-2 text-subtext1">{a.group}</td>
-              <td className="py-1 pr-2 text-subtext0">{a.range}</td>
+            <tr key={a.group} className="border-t border-line">
+              <td className="py-1 pr-2 text-fg-1">{a.group}</td>
+              <td className="py-1 pr-2 text-fg-2">{a.range}</td>
               <td className="py-1 pr-2" style={{ color: cat('mauve') }}>{a.trainingSet}</td>
-              <td className="py-1 text-subtext0">{a.weekly}</td>
+              <td className="py-1 text-fg-2">{a.weekly}</td>
             </tr>
           ))}
         </tbody>
@@ -75,14 +75,14 @@ function PullupWorkoutsCard() {
         {PULLUP_WORKOUTS.map((w) => {
           const isOpen = open === w.name
           return (
-            <li key={w.name} className="border-t border-surface0 first:border-t-0">
-              <button onClick={() => setOpen(isOpen ? null : w.name)} className="flex w-full items-center justify-between py-1.5 text-left text-sm">
-                <span className={isOpen ? 'text-text' : 'text-subtext1'}>{w.name}</span>
-                <span className="text-[10px] text-subtext0">{isOpen ? '▾' : '▸'}</span>
+            <li key={w.name} className="border-t border-line first:border-t-0">
+              <button onClick={() => setOpen(isOpen ? null : w.name)} className="flex w-full items-center justify-between py-1.5 text-left text-body">
+                <span className={isOpen ? 'text-fg-1' : 'text-fg-1'}>{w.name}</span>
+                <span className="text-micro text-fg-2">{isOpen ? '▾' : '▸'}</span>
               </button>
               {isOpen && (
-                <div className="pb-2 text-xs text-subtext0">
-                  <p className="text-subtext0">{w.profile}</p>
+                <div className="pb-2 text-label text-fg-2">
+                  <p className="text-fg-2">{w.profile}</p>
                   <p className="mt-1">{w.how}</p>
                   <p className="mt-1"><span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}</p>
                 </div>
@@ -101,13 +101,13 @@ function ProgressionsCard() {
     <Card title="Pull-up progressions" subtitle="Build the first rep safely, why & how for each">
       <ul className="space-y-2">
         {PULLUP_PROGRESSIONS.map((p) => (
-          <li key={p.name} className="border-t border-surface0 pt-2 first:border-t-0 first:pt-0">
+          <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-subtext1">{p.name}</p>
+              <p className="text-body text-fg-1">{p.name}</p>
               <VideoLink name={p.name} size={10} />
             </div>
-            <p className="text-xs text-subtext0"><span className="text-mauve">Why:</span> {p.why}</p>
-            <p className="text-xs text-subtext0"><span className="text-green">How:</span> {p.how}</p>
+            <p className="text-label text-fg-2"><span className="text-mauve">Why:</span> {p.why}</p>
+            <p className="text-label text-fg-2"><span className="text-green">How:</span> {p.how}</p>
           </li>
         ))}
       </ul>
@@ -123,17 +123,17 @@ function PullupGuideCard() {
   const set = a.trainingSet
   return (
     <Card title="Pull-up training set" subtitle="From your max strict pull-ups">
-      <label className="mb-3 flex items-center justify-between text-sm text-subtext1">
+      <label className="mb-3 flex items-center justify-between text-body text-fg-1">
         Max strict pull-ups
         <Input type="number" value={max} onChange={(e) => setMax(e.target.value)} className="w-20 py-1 text-right" />
       </label>
-      <div className="space-y-1.5 text-sm">
-        <div className="flex justify-between"><span className="text-subtext0">Ability</span><span className="text-subtext1">{a.group} ({a.range})</span></div>
-        <div className="flex justify-between"><span className="text-subtext0">Training set</span><span style={{ color: cat('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></div>
-        <div className="flex justify-between"><span className="text-subtext0">Ladder</span><span className="font-mono text-subtext1">{ladder(set).join(', ')}</span></div>
-        <div className="flex justify-between"><span className="text-subtext0">Pyramid</span><span className="font-mono text-subtext1">{pyramid(set).join(', ')}</span></div>
-        <div className="flex justify-between border-t border-surface0 pt-1.5"><span className="text-subtext0">Daily</span><span className="text-subtext1">{a.daily}</span></div>
-        <div className="flex justify-between"><span className="text-subtext0">Weekly</span><span className="text-subtext1">{a.weekly}</span></div>
+      <div className="space-y-1.5 text-body">
+        <div className="flex justify-between"><span className="text-fg-2">Ability</span><span className="text-fg-1">{a.group} ({a.range})</span></div>
+        <div className="flex justify-between"><span className="text-fg-2">Training set</span><span style={{ color: cat('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></div>
+        <div className="flex justify-between"><span className="text-fg-2">Ladder</span><span className="font-mono text-fg-1">{ladder(set).join(', ')}</span></div>
+        <div className="flex justify-between"><span className="text-fg-2">Pyramid</span><span className="font-mono text-fg-1">{pyramid(set).join(', ')}</span></div>
+        <div className="flex justify-between border-t border-line pt-1.5"><span className="text-fg-2">Daily</span><span className="text-fg-1">{a.daily}</span></div>
+        <div className="flex justify-between"><span className="text-fg-2">Weekly</span><span className="text-fg-1">{a.weekly}</span></div>
       </div>
       <AbilityLadderTable />
     </Card>

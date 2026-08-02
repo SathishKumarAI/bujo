@@ -1,7 +1,7 @@
 import { HeartPulse } from 'lucide-react'
 import { Card, Empty } from '../ui'
 import { cat } from '../../lib/colors'
-import { muscleNames } from '../MuscleMap'
+import { muscleNames } from '../../lib/muscles'
 import type { MuscleRecovery } from '../../lib/fitness'
 
 /**
@@ -27,12 +27,12 @@ export function RecoveryMap({ recovery, setFocusEx }: { recovery: MuscleRecovery
               <button
                 key={r.muscle}
                 onClick={() => setFocusEx(r.name)}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-label"
                 style={{ background: cat(color) + '22', color: cat(color) }}
                 title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
               >
                 {r.name}
-                <span className="text-[10px] text-subtext0">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
+                <span className="text-micro text-fg-2">{r.daysSince == null ? 'fresh' : `${r.daysSince}d`}</span>
               </button>
             )
           })}

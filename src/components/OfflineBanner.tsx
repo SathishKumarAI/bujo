@@ -29,7 +29,7 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="flex items-center justify-center gap-2 border-b border-surface1 bg-surface0 px-4 py-1.5 text-xs text-subtext1"
+      className="flex items-center justify-center gap-2 border-b border-line-strong bg-ink-2 px-4 py-1.5 text-label text-fg-1"
     >
       <CloudOff size={13} />
       <span>

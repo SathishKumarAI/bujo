@@ -58,9 +58,9 @@ export function HomeWorkout() {
           <div className="space-y-2">
             {items.map((i) => (
               <div key={i.id} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-sm text-subtext1">{i.name}</span>
-                <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-xs" />
-                <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-subtext0 hover:text-red">×</Button>
+                <span className="min-w-0 flex-1 truncate text-body text-fg-1">{i.name}</span>
+                <Input value={i.reps} onChange={(e) => setReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="w-24 py-1 text-right text-label" />
+                <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-fg-2 hover:text-red">×</Button>
               </div>
             ))}
             <div className="grid grid-cols-2 gap-2 pt-1">
@@ -80,19 +80,19 @@ export function HomeWorkout() {
             {sessions.slice(0, 12).map((w) => {
               const open = openId === w.id
               return (
-                <li key={w.id} className="group py-2 text-sm">
+                <li key={w.id} className="group py-2 text-body">
                   <div className="flex items-center justify-between gap-2">
-                    <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-text">
-                      <span className="text-subtext1">{prettyDay(w.date)}</span>
-                      <span className="text-subtext0"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                      <span className="ml-1 text-[10px] text-subtext0">{open ? '▾' : '▸'}</span>
+                    <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-fg-1">
+                      <span className="text-fg-1">{prettyDay(w.date)}</span>
+                      <span className="text-fg-2"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
+                      <span className="ml-1 text-micro text-fg-2">{open ? '▾' : '▸'}</span>
                     </button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                   {open && (
                     <ul className="mt-1.5 ml-1 space-y-0.5">
-                      {w.sets.map((s, i) => <li key={i} className="text-xs text-subtext0">• {s}</li>)}
-                      {w.notes && <li className="mt-1 text-xs text-subtext0 italic">“{w.notes}”</li>}
+                      {w.sets.map((s, i) => <li key={i} className="text-label text-fg-2">• {s}</li>)}
+                      {w.notes && <li className="mt-1 text-label text-fg-2 italic">“{w.notes}”</li>}
                     </ul>
                   )}
                 </li>
@@ -109,24 +109,24 @@ export function HomeWorkout() {
             <button
               key={m}
               onClick={() => setFilter(m)}
-              className="rounded-full border px-2.5 py-1 text-xs capitalize transition-colors"
+              className="rounded-full border px-2.5 py-1 text-label capitalize transition-colors"
               style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
             >{m}</button>
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {lib.map((ex) => (
-            <div key={ex.id} className="rounded-lg border border-surface0 bg-base p-3">
+            <div key={ex.id} className="rounded-lg border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-lg">{ex.emoji}</span>
-                <span className="text-sm font-medium text-text">{ex.name}</span>
-                <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
+                <span className="text-heading">{ex.emoji}</span>
+                <span className="text-body font-medium text-fg-1">{ex.name}</span>
+                <span className="ml-auto rounded-full px-2 py-0.5 text-micro capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
               </div>
-              <p className="text-xs text-subtext0">{ex.how}</p>
+              <p className="text-label text-fg-2">{ex.how}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-red hover:underline"><Play size={11} /> Watch demo</a>
-                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-subtext0 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
-                <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-subtext1 hover:border-mauve hover:text-text"><Plus size={11} /> {ex.reps}</Button>
+                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-red hover:underline"><Play size={11} /> Watch demo</a>
+                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-fg-2 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
+                <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Plus size={11} /> {ex.reps}</Button>
               </div>
             </div>
           ))}

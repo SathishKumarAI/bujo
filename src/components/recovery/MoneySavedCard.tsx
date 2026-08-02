@@ -23,18 +23,18 @@ export function MoneySavedCard({
     <Card title={<span className="inline-flex items-center gap-2"><PiggyBank size={16} className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket" help="Set what the habit used to cost you per day; this multiplies it across your lifetime clean days. A concrete tally of money you didn't spend.">
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-4xl font-extrabold leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wide text-subtext0">saved</div>
+          <div className="text-display font-medium leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
+          <div className="mt-1 text-caption uppercase tracking-wide text-fg-2">saved</div>
         </div>
-        <p className="flex-1 text-sm text-subtext0">
+        <p className="flex-1 text-body text-fg-2">
           {costPerDay
             ? <>Across <strong>{totalClean}</strong> clean day{totalClean === 1 ? '' : 's'} at {currency}{costPerDay}/day.</>
             : <>Set a daily cost to see what you’ve saved across <strong>{totalClean}</strong> clean day{totalClean === 1 ? '' : 's'}.</>}
         </p>
       </div>
       <div className="mt-3 flex items-center gap-2">
-        <label htmlFor="streak-cost" className="text-sm text-subtext1">Cost per day</label>
-        <span className="text-subtext1">{currency}</span>
+        <label htmlFor="streak-cost" className="text-body text-fg-1">Cost per day</label>
+        <span className="text-fg-1">{currency}</span>
         <Input
           id="streak-cost"
           type="number"

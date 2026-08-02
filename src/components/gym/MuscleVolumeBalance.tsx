@@ -1,6 +1,6 @@
 import { Card, Empty } from '../ui'
 import { cat } from '../../lib/colors'
-import { muscleNames } from '../MuscleMap'
+import { muscleNames } from '../../lib/muscles'
 import { MUSCLE_SET_LANDMARK, type MuscleSetCount } from '../../lib/fitness'
 
 /**
@@ -26,15 +26,15 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
           {named.map((c) => {
             const color = zone(c.sets)
             return (
-              <li key={c.muscle} className="flex items-center gap-2 text-sm">
+              <li key={c.muscle} className="flex items-center gap-2 text-body">
                 <button
                   onClick={() => setFocusEx(c.name)}
-                  className="w-20 shrink-0 truncate text-left text-subtext1 hover:text-text"
+                  className="w-20 shrink-0 truncate text-left text-fg-1 hover:text-fg-1"
                   title={`Focus the muscle map on ${c.name}`}
                 >
                   {c.name}
                 </button>
-                <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-surface0">
+                <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-ink-2">
                   {/* landmark band (10–20 sets) shaded behind the bar */}
                   <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
                   <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />
@@ -46,7 +46,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
         </ul>
       )}
       {named.length > 0 && (
-        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-subtext0">
+        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-micro text-fg-2">
           <span style={{ color: cat('peach') }}>● {zoneLabel(0)}</span>
           <span style={{ color: cat('green') }}>● {zoneLabel(min)}</span>
           <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>

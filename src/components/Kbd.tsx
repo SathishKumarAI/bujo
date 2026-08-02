@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 export function Kbd({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <kbd
-      className={`inline-grid h-[18px] min-w-[18px] place-items-center rounded border border-surface1 bg-surface0 px-1 font-mono text-[10px] leading-none text-subtext1 ${className}`}
+      className={`inline-grid h-[18px] min-w-[18px] place-items-center rounded border border-line-strong bg-ink-2 px-1 font-mono text-micro leading-none text-fg-1 ${className}`}
     >
       {children}
     </kbd>

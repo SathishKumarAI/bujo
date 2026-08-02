@@ -182,29 +182,29 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {(templates.length > 0 || val.trim()) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {templates.map((t) => (
-            <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-surface0 px-2 py-0.5 text-xs text-subtext1">
-              <button onClick={() => setVal(t)} className="hover:text-text">{t}</button>
-              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+            <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-ink-2 px-2 py-0.5 text-label text-fg-1">
+              <button onClick={() => setVal(t)} className="hover:text-fg-1">{t}</button>
+              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (
-            <button onClick={saveTemplate} className="rounded-full border border-dashed border-surface2 px-2 py-0.5 text-xs text-subtext0 hover:text-mauve">+ save as template</button>
+            <button onClick={saveTemplate} className="rounded-full border border-dashed border-line-strong px-2 py-0.5 text-label text-fg-2 hover:text-mauve">+ save as template</button>
           )}
         </div>
       )}
 
       {/* Live routed preview: which view it lands in + the parsed values. */}
       {parsed && meta && Icon && (
-        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-subtext0">
+        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-label text-fg-2">
           <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>
             <Icon size={11} /> {meta.label}
           </span>
-          <span className="text-subtext1">{describe(draft ?? parsed) || '…'}</span>
+          <span className="text-fg-1">{describe(draft ?? parsed) || '…'}</span>
           {canEdit(parsed) && (
             <button
               type="button"
               onClick={() => setDraft((d) => d ?? parsed)}
-              className="inline-flex items-center gap-1 text-subtext0 hover:text-mauve"
+              className="inline-flex items-center gap-1 text-fg-2 hover:text-mauve"
             >
               <SlidersHorizontal size={11} /> edit fields
             </button>
@@ -214,7 +214,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
 
       {/* Structured editor · pre-filled from the parse, tap to adjust, no typing. */}
       {draft && (
-        <div className="mt-2 rounded-lg border border-surface0 bg-base p-3">
+        <div className="mt-2 rounded-lg border border-line bg-ink-0 p-3">
           <div className="flex flex-wrap items-end gap-3">
             {draft.kind === 'gym' && (
               <>

@@ -88,7 +88,7 @@ export function SmartInput({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full rounded-lg border border-input bg-background px-3 py-2 pr-9 text-sm text-text placeholder:text-subtext0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+        className={`w-full rounded-lg border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
       />
 
       {/* Duplicate corner badge */}
@@ -99,7 +99,7 @@ export function SmartInput({
           onClick={() => setDupOpen((o) => !o)}
           aria-label={`${dupes.length} possible duplicate${dupes.length === 1 ? '' : 's'}`}
           title="Possible duplicate"
-          className="absolute top-1/2 right-2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full bg-yellow text-[11px] font-bold text-crust"
+          className="absolute top-1/2 right-2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full bg-yellow text-caption font-medium text-crust"
         >
           {dupes.length}
         </button>
@@ -107,41 +107,41 @@ export function SmartInput({
 
       {/* Duplicate popover */}
       {dupOpen && dupes.length > 0 && (
-        <div className="absolute top-full right-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-surface1 bg-mantle shadow-xl">
-          <p className="border-b border-surface0 px-3 py-2 text-xs text-subtext0">Looks similar to:</p>
+        <div className="absolute top-full right-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
+          <p className="border-b border-line px-3 py-2 text-label text-fg-2">Looks similar to:</p>
           <ul className="max-h-56 overflow-y-auto py-1">
             {dupes.map((d) => (
-              <li key={d.id} className="px-3 py-1.5 text-sm">
-                <div className="truncate text-subtext1">{d.text}</div>
-                <div className="mt-1 flex gap-2 text-xs">
+              <li key={d.id} className="px-3 py-1.5 text-body">
+                <div className="truncate text-fg-1">{d.text}</div>
+                <div className="mt-1 flex gap-2 text-label">
                   {onGoToDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onGoToDuplicate(d.id); setDupOpen(false) }} className="text-blue hover:underline">Go to</button>}
                   {onMergeDuplicate && <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onMergeDuplicate(d.id); setDupOpen(false); onChange('') }} className="text-green hover:underline">Merge</button>}
-                  <span className="text-subtext0">{Math.round(d.score * 100)}% match</span>
+                  <span className="text-fg-2">{Math.round(d.score * 100)}% match</span>
                 </div>
               </li>
             ))}
           </ul>
-          <button onMouseDown={(e) => e.preventDefault()} onClick={() => { setDupOpen(false); submit() }} className="w-full border-t border-surface0 px-3 py-2 text-left text-xs text-subtext0 hover:bg-surface0">Add anyway</button>
+          <button onMouseDown={(e) => e.preventDefault()} onClick={() => { setDupOpen(false); submit() }} className="w-full border-t border-line px-3 py-2 text-left text-label text-fg-2 hover:bg-ink-2">Add anyway</button>
         </div>
       )}
 
       {/* Completion popover */}
       {open && suggestions.length > 0 && (
-        <ul className="absolute top-full left-0 z-40 mt-1 w-full overflow-hidden rounded-lg border border-surface1 bg-mantle shadow-xl">
+        <ul className="absolute top-full left-0 z-40 mt-1 w-full overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
           {suggestions.map((s, i) => (
             <li key={`${s.kind}-${s.value}`}>
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); accept(s) }}
                 onMouseEnter={() => setActive(i)}
-                className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-sm ${i === active ? 'bg-surface0 text-text' : 'text-subtext1'}`}
+                className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-body ${i === active ? 'bg-ink-2 text-fg-1' : 'text-fg-1'}`}
               >
                 <span className="truncate">{s.label ?? s.value}</span>
-                {s.hint && <span className="ml-2 shrink-0 text-[10px] text-subtext0">{s.hint}</span>}
+                {s.hint && <span className="ml-2 shrink-0 text-micro text-fg-2">{s.hint}</span>}
               </button>
             </li>
           ))}
-          <li className="border-t border-surface0 px-3 py-1 text-[10px] text-subtext0">↑↓ move · Tab accept · ↵ add</li>
+          <li className="border-t border-line px-3 py-1 text-micro text-fg-2">↑↓ move · Tab accept · ↵ add</li>
         </ul>
       )}
     </div>

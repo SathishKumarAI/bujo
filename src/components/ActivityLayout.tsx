@@ -40,7 +40,7 @@ export function ActivityLayout({
     <div className="space-y-4">
       {cats.map((category) => (
         <div key={category}>
-          <p className="mb-1.5 text-[10px] tracking-wide text-subtext0 uppercase">{category}</p>
+          <p className="mb-1.5 text-micro tracking-wide text-fg-2 uppercase">{category}</p>
           <div className="space-y-1.5">
             {habits
               .filter((h) => h.category === category)
@@ -120,18 +120,18 @@ function ActivityRow({
             onDragStart={reorder.onDragStart}
             onDragEnd={reorder.onDragEnd}
             title="Drag to reorder"
-            className="shrink-0 cursor-grab text-subtext0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+            className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
           ><GripVertical size={11} /></span>
         )}
         <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-subtext0 line-through' : 'text-subtext1'}`}>{h.name}</button>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-subtext0 hover:text-mauve"><Activity size={11} /></button>
+        <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-body hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={11} /></button>
       </div>
-      <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
+      <span className="w-9 shrink-0 text-micro tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
         {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}
       </span>
       {h.weeklyGoal ? (
-        <span className="w-10 shrink-0 text-[10px] tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+        <span className="w-10 shrink-0 text-micro tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
           {weekCount}/{h.weeklyGoal}wk
         </span>
       ) : <span className="w-10 shrink-0" />}
@@ -200,11 +200,11 @@ function TodayControl({
       <button
         onClick={() => onSetValue(today, h.id, next)}
         aria-label={`${h.name}: ${value} of ${target}${h.unit ? ' ' + h.unit : ''}, tap to add`}
-        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-label"
         style={{ borderColor: value > 0 ? accent : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
         title={`Tap to log${h.unit ? ' (' + h.unit + ')' : ''}`}
       >
-        {value}/{target}{h.unit ? <span className="text-subtext0">{h.unit === 'min' ? 'm' : ''}</span> : null}
+        {value}/{target}{h.unit ? <span className="text-fg-2">{h.unit === 'min' ? 'm' : ''}</span> : null}
       </button>
     )
   }
@@ -217,7 +217,7 @@ function TodayControl({
       className="inline-grid h-6 w-6 place-items-center rounded-full border"
       style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
-      {on && <span className="text-[10px]" style={{ color: cat('crust') }}>✓</span>}
+      {on && <span className="text-micro" style={{ color: cat('crust') }}>✓</span>}
     </button>
   )
 }

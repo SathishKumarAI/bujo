@@ -64,7 +64,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
     <Card
       title={p.name}
       subtitle={p.source}
-      right={<span className="text-xs text-subtext0">{doneCount}/{totalDays} days done</span>}
+      right={<span className="text-label text-fg-2">{doneCount}/{totalDays} days done</span>}
     >
       {programs.length > 1 && (
         <div className="mb-3">
@@ -72,47 +72,47 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
         </div>
       )}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-subtext0">{curWeek.label ? 'Block' : 'Week'}</span>
+        <span className="text-label text-fg-2">{curWeek.label ? 'Block' : 'Week'}</span>
         {p.weeks.map((w) => (
-          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-8 min-w-8 place-items-center rounded px-2 text-xs" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
+          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-8 min-w-8 place-items-center rounded px-2 text-label" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
         ))}
-        {curWeek.label && <span className="text-xs text-subtext0">{curWeek.label}</span>}
+        {curWeek.label && <span className="text-label text-fg-2">{curWeek.label}</span>}
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-subtext0">Day</span>
+        <span className="text-label text-fg-2">Day</span>
         {dayNums.map((dn) => (
-          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
+          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-8 items-center gap-1 rounded px-2 text-label" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
             {dayComplete(week, dn) && ''} {dn}
           </button>
         ))}
       </div>
-      {p.note && <p className="mb-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-xs text-subtext0">{p.note}</p>}
+      {p.note && <p className="mb-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{p.note}</p>}
 
       {cur && (
         <>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs tracking-wide text-subtext0 uppercase">{cur.focus}</p>
-            <span className="text-xs text-subtext0">{curDoneCount}/{cur.exercises.length} done</span>
+            <p className="text-label tracking-wide text-fg-2 uppercase">{cur.focus}</p>
+            <span className="text-label text-fg-2">{curDoneCount}/{cur.exercises.length} done</span>
           </div>
           <ul className="space-y-0.5">
             {cur.exercises.map((e, i) => {
               const checked = done.includes(exKey(week, day, i))
               const actual = actuals[exKey(week, day, i)] ?? ''
               return (
-                <li key={i} className={`border-t border-surface0 py-1.5 transition-colors ${checked ? '-ml-2 rounded-r bg-green/5 pl-2' : ''}`} style={checked ? { boxShadow: `inset 2px 0 0 ${cat('green')}` } : undefined}>
-                  <div className="flex items-center gap-2 text-sm">
+                <li key={i} className={`border-t border-line py-1.5 transition-colors ${checked ? '-ml-2 rounded-r bg-green/5 pl-2' : ''}`} style={checked ? { boxShadow: `inset 2px 0 0 ${cat('green')}` } : undefined}>
+                  <div className="flex items-center gap-2 text-body">
                     <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-green" aria-label={`Did ${e.name}`} />
-                    <span className={`flex-1 ${checked ? 'text-subtext0 line-through' : 'text-subtext1'}`}>{e.name}</span>
-                    <VideoLink name={e.name} label="" size={13} className="text-subtext0 hover:text-red" />
-                    <span className="text-subtext0">{e.qty}</span>
-                    <span className="w-8 text-right text-subtext0">×{e.sets}</span>
+                    <span className={`flex-1 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>
+                    <VideoLink name={e.name} label="" size={13} className="text-fg-2 hover:text-red" />
+                    <span className="text-fg-2">{e.qty}</span>
+                    <span className="w-8 text-right text-fg-2">×{e.sets}</span>
                   </div>
                   <input
                     value={actual}
                     onChange={(ev) => setActual(i, ev.target.value)}
                     aria-label={`Actual for ${e.name} (target: ${e.qty} ×${e.sets})`}
                     placeholder={`actual (target: ${e.qty} ×${e.sets})`}
-                    className="mt-1 ml-6 w-[calc(100%-1.5rem)] rounded border border-surface1 bg-base px-2 py-1 text-xs text-text placeholder:text-subtext0 focus:border-mauve focus:outline-none"
+                    className="mt-1 ml-6 w-[calc(100%-1.5rem)] rounded border border-line-strong bg-ink-0 px-2 py-1 text-label text-fg-1 placeholder:text-fg-2 focus:border-mauve focus:outline-none"
                   />
                 </li>
               )

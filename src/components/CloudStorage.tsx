@@ -94,14 +94,14 @@ export function CloudStorage() {
       className="lg:col-span-2"
     >
       {/* Folder */}
-      <div className="rounded-lg border border-surface0 bg-base p-3">
+      <div className="rounded-lg border border-line bg-ink-0 p-3">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm text-subtext1"><FolderOpen size={15} style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
-          {s.storageMode === 'folder' && <span className="text-xs" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
+          <span className="inline-flex items-center gap-2 text-body text-fg-1"><FolderOpen size={15} style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
+          {s.storageMode === 'folder' && <span className="text-label" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
         </div>
-        <p className="mt-1 text-xs text-subtext0">Pick a folder in your Drive/Dropbox/OneDrive sync folder, auto-saves there.</p>
+        <p className="mt-1 text-label text-fg-2">Pick a folder in your Drive/Dropbox/OneDrive sync folder, auto-saves there.</p>
         {!isSupported() ? (
-          <p className="mt-2 text-xs text-red">Needs Chrome / Edge.</p>
+          <p className="mt-2 text-label text-red">Needs Chrome / Edge.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
             <Button variant="secondary" onClick={chooseFolder} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
@@ -112,9 +112,9 @@ export function CloudStorage() {
       </div>
 
       {/* GitHub gist */}
-      <div className="mt-3 rounded-lg border border-surface0 bg-base p-3">
-        <span className="inline-flex items-center gap-2 text-sm text-subtext1"><GitBranch size={15} /> GitHub (private gist)</span>
-        <p className="mt-1 text-xs text-subtext0">
+      <div className="mt-3 rounded-lg border border-line bg-ink-0 p-3">
+        <span className="inline-flex items-center gap-2 text-body text-fg-1"><GitBranch size={15} /> GitHub (private gist)</span>
+        <p className="mt-1 text-label text-fg-2">
           Paste a token with the <code>gist</code> scope (github.com → Settings → Developer settings → Tokens).
         </p>
         <Input
@@ -127,7 +127,7 @@ export function CloudStorage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <Button variant="secondary" onClick={ghBackup} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
           <Button variant="secondary" onClick={ghRestore} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
-          {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-xs text-mauve hover:underline">open gist</a>}
+          {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-label text-mauve hover:underline">open gist</a>}
         </div>
       </div>
     </Card>

@@ -202,7 +202,7 @@ export function Pickleball() {
                 <Tooltip contentStyle={tip()} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-3 text-xs">
+            <div className="flex justify-center gap-3 text-label">
               {wl.map((x) => <span key={x.name} style={{ color: cat(x.color) }}>● {x.name} {x.value}</span>)}
             </div>
           </div>
@@ -241,11 +241,11 @@ export function Pickleball() {
           <ul className="space-y-3">
             {formats.map((fm) => (
               <li key={fm.format}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="capitalize text-subtext1">{fm.format}</span>
-                  <span className="text-subtext0">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
+                <div className="mb-1 flex justify-between text-body">
+                  <span className="capitalize text-fg-1">{fm.format}</span>
+                  <span className="text-fg-2">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-surface0" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
+                <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
                   <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
                 </div>
               </li>
@@ -279,7 +279,7 @@ export function Pickleball() {
             })}
           </div>
         </div>
-        <div className="mt-1 text-center text-[10px] text-subtext0">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+        <div className="mt-1 text-center text-micro text-fg-2">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
       </Card>
     </>
   )
@@ -293,19 +293,19 @@ export function Pickleball() {
           <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Trophy size={14} />} />
           <StatTile compact label="Day streak" value={streak} color="peach" />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <span className="text-subtext0">This week: <span className="text-text">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
-          <label className="ml-auto inline-flex items-center gap-1.5 text-subtext1">Weekly goal
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
+          <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
+          <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">Weekly goal
             <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
-            <span className="text-xs text-subtext0">games</span>
+            <span className="text-label text-fg-2">games</span>
           </label>
         </div>
         {goal > 0 && (
           <div className="mt-2">
-            <div className="h-2.5 overflow-hidden rounded-full bg-surface0">
+            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2">
               <div className="h-full rounded-full" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
             </div>
-            <p className="mt-1 text-xs text-subtext0">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
+            <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
           </div>
         )}
       </Card>
@@ -318,20 +318,20 @@ export function Pickleball() {
             {upcoming.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
                 <span className="min-w-0">
-                  <span className="text-sm font-medium text-text">{e.name}</span>
-                  <span className="block truncate text-xs text-subtext0">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  <span className="text-body font-medium text-fg-1">{e.name}</span>
+                  <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
-                <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
+                <span className="shrink-0 rounded-full px-2.5 py-1 text-label font-medium" style={{ background: cat(e.soon ? 'peach' : 'mauve') + '22', color: cat(e.soon ? 'peach' : 'mauve') }}>
                   {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
                 </span>
               </li>
             ))}
           </ul>
-          <details className="rounded-lg border border-surface0 bg-base p-3">
-            <summary className="cursor-pointer text-sm font-medium text-text">Tournament-day prep checklist</summary>
+          <details className="rounded-lg border border-line bg-ink-0 p-3">
+            <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
             <ul className="mt-2 space-y-1">
               {PREP_CHECKLIST.map((x) => (
-                <li key={x} className="flex gap-1.5 text-xs text-subtext0"><span className="text-peach">•</span> {x}</li>
+                <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
               ))}
             </ul>
           </details>
@@ -340,10 +340,10 @@ export function Pickleball() {
 
       <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-          <div><p className="mb-1 text-sm text-subtext1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
-          <label className="block text-sm text-subtext1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
-          <label className="block text-sm text-subtext1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+          <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
+          <label className="block text-body text-fg-1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
+          <label className="block text-body text-fg-1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
           <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
           <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
           {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
@@ -352,7 +352,7 @@ export function Pickleball() {
           <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
           <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
           <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-body text-foreground">
             <option value="">Scoring</option>
             <option value="11">to 11</option>
             <option value="15">to 15</option>
@@ -374,14 +374,14 @@ export function Pickleball() {
             ))}
           </ul>
         )}
-        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-sm text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
+        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-body text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
 
       {/* ── DUPR rating tracker ── */}
       <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
-          <label className="block text-xs text-subtext1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-xs text-subtext1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
+          <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
           <Button variant="default" onClick={saveDupr} className="press-3d rounded-lg">Log rating</Button>
         </div>
         {duprStats.points.length === 0 ? (
@@ -408,11 +408,11 @@ export function Pickleball() {
             )}
             <ul className="mt-3 divide-y divide-surface0">
               {[...duprStats.points].reverse().slice(0, 8).map((p) => (
-                <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-sm">
-                  <span className="text-subtext1">{prettyDay(p.date)}</span>
+                <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-body">
+                  <span className="text-fg-1">{prettyDay(p.date)}</span>
                   <span className="flex items-center gap-2">
                     <span className="font-medium tabular-nums" style={{ color: cat('mauve') }}>{p.rating}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </span>
                 </li>
               ))}
@@ -430,11 +430,11 @@ export function Pickleball() {
           <StatTile compact label="Medals" value={medals} color="yellow" icon={<Trophy size={14} />} />
         </div>
         {/* log an event */}
-        <div className="grid gap-2 rounded-lg border border-surface0 bg-base p-3 sm:grid-cols-2">
+        <div className="grid gap-2 rounded-lg border border-line bg-ink-0 p-3 sm:grid-cols-2">
           <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
           <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
           <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground">
+          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-md border border-input bg-background px-2 py-2 text-body text-foreground">
             {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
           </select>
           <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
@@ -448,15 +448,15 @@ export function Pickleball() {
         {events.length > 0 && (
           <ul className="mt-3 divide-y divide-surface0">
             {events.map((e) => (
-              <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-sm">
+              <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-body">
                 <span className="min-w-0">
-                  <span className="text-subtext1">{e.name}</span>
-                  <span className="text-subtext0"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  <span className="text-fg-1">{e.name}</span>
+                  <span className="text-fg-2"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  {e.placement && <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
-                  {(e.wins != null || e.losses != null) && <span className="text-subtext0">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                  {e.placement && <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat('yellow') + '22', color: cat('yellow') }}>{e.placement}</span>}
+                  {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
+                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                 </span>
               </li>
             ))}
@@ -469,29 +469,29 @@ export function Pickleball() {
       <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
-          <div className="rounded-lg border border-surface0 bg-base p-3">
+          <div className="rounded-lg border border-line bg-ink-0 p-3">
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-sm font-medium text-text">{drill.name}</span>
-              <span className="rounded-full px-2 py-0.5 text-[10px]" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
+              <span className="text-body font-medium text-fg-1">{drill.name}</span>
+              <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>{drill.focus}</span>
             </div>
-            <p className="text-xs text-subtext0">{drill.how}</p>
-            <p className="mt-2 text-[11px] text-subtext0">New focus each day, log a session below after you drill it.</p>
+            <p className="text-label text-fg-2">{drill.how}</p>
+            <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
-          <div className="rounded-lg border border-surface0 bg-base p-3">
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-text"><Dumbbell size={14} className="text-green" /> Warm up first</p>
+          <div className="rounded-lg border border-line bg-ink-0 p-3">
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Dumbbell size={14} className="text-green" /> Warm up first</p>
             <ul className="space-y-1">
               {WARMUP.map((w) => (
-                <li key={w} className="flex gap-1.5 text-xs text-subtext0"><span className="text-green">•</span> {w}</li>
+                <li key={w} className="flex gap-1.5 text-label text-fg-2"><span className="text-green">•</span> {w}</li>
               ))}
             </ul>
           </div>
         </div>
         {/* External resources */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-surface0 pt-3">
-          <span className="text-xs text-subtext0">Learn more:</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3">
+          <span className="text-label text-fg-2">Learn more:</span>
           {RESOURCES.map((r) => (
-            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue hover:underline">
+            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
               {r.name} <ExternalLink size={11} />
             </a>
           ))}
@@ -548,9 +548,9 @@ export function Pickleball() {
       <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
-            <li key={x.t} className="border-t border-surface0 pt-2 text-sm first:border-t-0 first:pt-0">
-              <p className="text-subtext1">{x.t}</p>
-              <p className="text-xs text-subtext0">{x.d}</p>
+            <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
+              <p className="text-fg-1">{x.t}</p>
+              <p className="text-label text-fg-2">{x.d}</p>
             </li>
           ))}
         </ul>
@@ -560,12 +560,12 @@ export function Pickleball() {
       <Card title={<span className="inline-flex items-center gap-2"><ListChecks size={18} className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-lg border border-surface0 bg-base p-3">
+            <li key={fm.id} className="rounded-lg border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-sm font-medium text-text">{fm.label}</span>
-                <span className="text-[10px] text-subtext0">{fm.size}</span>
+                <span className="text-body font-medium text-fg-1">{fm.label}</span>
+                <span className="text-micro text-fg-2">{fm.size}</span>
               </div>
-              <p className="text-xs text-subtext0">{fm.how}</p>
+              <p className="text-label text-fg-2">{fm.how}</p>
             </li>
           ))}
         </ul>
@@ -598,9 +598,9 @@ function PickleRow({ p, onSave, onDelete }: {
       <li className="space-y-2 py-2.5">
         <Segmented value={d.format} onChange={(v) => setD((c) => ({ ...c, format: v }))} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} />
         <div className="grid grid-cols-3 gap-2">
-          <label className="block text-xs text-subtext1">Won<Input type="number" value={d.gamesWon} onChange={(e) => setD((c) => ({ ...c, gamesWon: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-xs text-subtext1">Lost<Input type="number" value={d.gamesLost} onChange={(e) => setD((c) => ({ ...c, gamesLost: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-xs text-subtext1">Min<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Won<Input type="number" value={d.gamesWon} onChange={(e) => setD((c) => ({ ...c, gamesWon: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Lost<Input type="number" value={d.gamesLost} onChange={(e) => setD((c) => ({ ...c, gamesLost: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Min<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
         </div>
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
@@ -611,12 +611,12 @@ function PickleRow({ p, onSave, onDelete }: {
     )
   }
   return (
-    <li className="group flex items-center justify-between gap-2 py-2 text-sm">
-      <span className="text-subtext1">{prettyDay(p.date)} <span className="text-subtext0">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+    <li className="group flex items-center justify-between gap-2 py-2 text-body">
+      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
-        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
       </span>
     </li>
   )

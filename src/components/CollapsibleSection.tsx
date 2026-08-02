@@ -56,16 +56,16 @@ export function CollapsibleSection({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-subtext0">
+          <span className="text-fg-2">
             {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
           {iconNode}
-          <span className="font-display text-base font-medium text-subtext1">{title}</span>
-          {subtitle && <span className="text-xs text-subtext0">{subtitle}</span>}
+          <span className="font-display text-heading font-medium text-fg-1">{title}</span>
+          {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
           {!open && (
-            <span className="ml-auto text-[10px] uppercase tracking-wide text-subtext0">show</span>
+            <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
           )}
         </button>
         {open && children}
@@ -79,14 +79,14 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
+        className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
         {iconNode}
         <span className="min-w-0">
-          <span className="block font-display text-base font-medium text-text">{title}</span>
-          {subtitle && <span className="block text-xs text-subtext0">{subtitle}</span>}
+          <span className="block font-display text-heading font-medium text-fg-1">{title}</span>
+          {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
         </span>
-        <span className="ml-auto text-subtext0 transition-colors group-hover/sec:text-text">
+        <span className="ml-auto text-fg-2 transition-colors group-hover/sec:text-fg-1">
           {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </span>
       </button>

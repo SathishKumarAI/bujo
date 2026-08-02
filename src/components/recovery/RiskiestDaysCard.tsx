@@ -25,7 +25,7 @@ export function RiskiestDaysCard({ weekdayPattern, peakWeekday }: { weekdayPatte
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-1.5 text-xs text-subtext0">Most resets land on <span className="font-medium" style={{ color: cat('red') }}>{peakWeekday.label}</span> · plan extra support there.</p>
+      <p className="mt-1.5 text-label text-fg-2">Most resets land on <span className="font-medium" style={{ color: cat('red') }}>{peakWeekday.label}</span> · plan extra support there.</p>
     </Card>
   )
 }

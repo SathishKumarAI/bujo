@@ -13,7 +13,7 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
       <div className="grid grid-cols-12 gap-1" role="img" aria-label={`Hour-of-day urge heatmap; peak at ${peakHour.label} with ${peakHour.count} urges`}>
         {hourHist.map((h) => (
           <div key={h.hour} title={`${h.count} urge${h.count === 1 ? '' : 's'} around ${((h.hour % 12) === 0 ? 12 : h.hour % 12)}${h.hour < 12 ? 'am' : 'pm'}`}
-            className="grid aspect-square place-items-center rounded text-[9px]"
+            className="grid aspect-square place-items-center rounded text-micro"
             style={{
               background: h.count > 0 ? cat('peach') + Math.round(38 + h.heat * 217).toString(16).padStart(2, '0') : cat('surface0'),
               color: h.heat > 0.5 ? cat('crust') : cat('overlay0'),
@@ -22,8 +22,8 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
           </div>
         ))}
       </div>
-      <div className="mt-2 flex justify-between text-[10px] text-subtext0"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-      <p className="mt-1.5 text-xs text-subtext0">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
+      <div className="mt-2 flex justify-between text-micro text-fg-2"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+      <p className="mt-1.5 text-label text-fg-2">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
     </Card>
   )
 }

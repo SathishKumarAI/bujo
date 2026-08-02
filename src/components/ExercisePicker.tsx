@@ -38,41 +38,41 @@ export function ExercisePicker({
       <button
         type="button"
         onClick={() => { setOpen((o) => !o); setTimeout(() => inputRef.current?.focus(), 0) }}
-        className="flex w-full items-center justify-between gap-1 rounded-lg border border-surface1 bg-base px-2 py-1.5 text-left text-sm text-text"
+        className="flex w-full items-center justify-between gap-1 rounded-lg border border-line-strong bg-ink-0 px-2 py-1.5 text-left text-body text-fg-1"
       >
-        <span className={value ? 'truncate' : 'text-subtext0'}>{value || 'Pick exercise…'}</span>
-        <ChevronDown size={14} className="shrink-0 text-subtext0" />
+        <span className={value ? 'truncate' : 'text-fg-2'}>{value || 'Pick exercise…'}</span>
+        <ChevronDown size={14} className="shrink-0 text-fg-2" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-surface1 bg-mantle shadow-xl">
-            <div className="flex items-center gap-2 border-b border-surface0 px-2.5 py-2">
-              <Search size={14} className="text-subtext0" />
+          <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
+            <div className="flex items-center gap-2 border-b border-line px-2.5 py-2">
+              <Search size={14} className="text-fg-2" />
               <input
                 ref={inputRef}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') pick(q.trim() || value); if (e.key === 'Escape') setOpen(false) }}
                 placeholder="Search or type a new exercise…"
-                className="w-full bg-transparent text-sm text-text placeholder:text-subtext0 focus:outline-none"
+                className="w-full bg-transparent text-body text-fg-1 placeholder:text-fg-2 focus:outline-none"
               />
             </div>
             <ul className="max-h-64 overflow-y-auto py-1">
               {showCustom && (
                 <li>
-                  <button type="button" onClick={() => pick(q.trim())} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-mauve hover:bg-surface0">
+                  <button type="button" onClick={() => pick(q.trim())} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-body text-mauve hover:bg-ink-2">
                     + Add “{q.trim()}”
                   </button>
                 </li>
               )}
-              {recent.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-subtext0 uppercase">Recent</li>}
+              {recent.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-micro tracking-wide text-fg-2 uppercase">Recent</li>}
               {recent.map((r) => <Item key={`r-${r}`} name={r} active={r === value} onPick={pick} />)}
-              {lib.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-[10px] tracking-wide text-subtext0 uppercase">Library</li>}
+              {lib.length > 0 && <li className="px-3 pt-1.5 pb-0.5 text-micro tracking-wide text-fg-2 uppercase">Library</li>}
               {lib.map((e) => <Item key={`l-${e}`} name={e} active={e === value} onPick={pick} />)}
               {recent.length === 0 && lib.length === 0 && !showCustom && (
-                <li className="px-3 py-2 text-sm text-subtext0">No matches</li>
+                <li className="px-3 py-2 text-body text-fg-2">No matches</li>
               )}
             </ul>
           </div>
@@ -88,7 +88,7 @@ function Item({ name, active, onPick }: { name: string; active: boolean; onPick:
       <button
         type="button"
         onClick={() => onPick(name)}
-        className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-surface0"
+        className="flex w-full items-center justify-between px-3 py-1.5 text-left text-body hover:bg-ink-2"
         style={{ color: active ? cat('mauve') : cat('subtext1') }}
       >
         {name}

@@ -21,7 +21,7 @@ const CATEGORIES = [
 
 type Status = { kind: 'idle' | 'sending' } | { kind: 'sent'; url?: string } | { kind: 'error'; msg: string }
 
-const field = 'w-full rounded-md border border-border bg-surface0 px-3 py-2 text-sm text-text placeholder:text-subtext0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+const field = 'w-full rounded-md border border-line bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
 
 /**
  * In-app feedback → GitHub issue (via the /api/feedback function, which holds
@@ -77,7 +77,7 @@ export function FeedbackButton() {
             </DialogHeader>
             <DialogFooter className="sm:justify-between">
               {status.url && (
-                <a href={status.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-blue hover:underline">
+                <a href={status.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-body text-blue hover:underline">
                   View on GitHub <ExternalLink size={13} />
                 </a>
               )}
@@ -132,7 +132,7 @@ export function FeedbackButton() {
               onChange={(e) => setHp(e.target.value)}
             />
 
-            {status.kind === 'error' && <p className="text-sm text-red">{status.msg}</p>}
+            {status.kind === 'error' && <p className="text-body text-red">{status.msg}</p>}
 
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)} disabled={status.kind === 'sending'}>Cancel</Button>

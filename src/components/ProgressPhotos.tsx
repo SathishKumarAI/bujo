@@ -76,10 +76,10 @@ export function ProgressPhotos() {
       ) : compare && oldest && newest ? (
         <div className="grid grid-cols-2 gap-2">
           {[oldest, newest].map((p, i) => (
-            <figure key={p.id} className="overflow-hidden rounded-xl border border-surface0">
-              <img src={resolved[p.photo]} alt={`${i === 0 ? 'First' : 'Latest'} progress photo`} className="aspect-[3/4] w-full bg-surface0 object-cover" />
-              <figcaption className="bg-mantle px-2 py-1 text-center text-xs text-subtext0">
-                <span className="text-subtext0">{i === 0 ? 'First' : 'Latest'}</span> · {prettyDay(p.date)}{p.weight != null && ` · ${p.weight}`}
+            <figure key={p.id} className="overflow-hidden rounded-xl border border-line">
+              <img src={resolved[p.photo]} alt={`${i === 0 ? 'First' : 'Latest'} progress photo`} className="aspect-[3/4] w-full bg-ink-2 object-cover" />
+              <figcaption className="bg-ink-1 px-2 py-1 text-center text-label text-fg-2">
+                <span className="text-fg-2">{i === 0 ? 'First' : 'Latest'}</span> · {prettyDay(p.date)}{p.weight != null && ` · ${p.weight}`}
               </figcaption>
             </figure>
           ))}
@@ -87,15 +87,15 @@ export function ProgressPhotos() {
       ) : (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {photos.map((p) => (
-            <figure key={p.id} className="group relative overflow-hidden rounded-lg border border-surface0">
-              <img src={resolved[p.photo]} alt={`Progress photo ${prettyDay(p.date)}`} className="aspect-[3/4] w-full bg-surface0 object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-crust/80 px-1.5 py-0.5 text-center text-[10px] text-subtext1">
+            <figure key={p.id} className="group relative overflow-hidden rounded-lg border border-line">
+              <img src={resolved[p.photo]} alt={`Progress photo ${prettyDay(p.date)}`} className="aspect-[3/4] w-full bg-ink-2 object-cover" />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-crust/80 px-1.5 py-0.5 text-center text-micro text-fg-1">
                 {p.date.slice(5)}
               </figcaption>
               <button
                 onClick={() => removePhoto(p.id, p.photo)}
                 aria-label="Remove photo"
-                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-crust/85 text-text opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
+                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-crust/85 text-fg-1 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
               >
                 <X size={13} />
               </button>

@@ -49,7 +49,7 @@ export function TodayHabits() {
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
@@ -75,14 +75,14 @@ export function TodayHabits() {
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (
-            <button onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-xs text-mauve hover:underline">Mark all</button>
+            <button onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-label text-mauve hover:underline">Mark all</button>
           )}
           <span className="inline-flex items-center gap-1.5">
             <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
               <circle cx="11" cy="11" r={R} fill="none" stroke={cat('surface1')} strokeWidth="2.5" />
               <circle cx="11" cy="11" r={R} fill="none" stroke={cat(allDone ? 'green' : 'mauve')} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} transform="rotate(-90 11 11)" style={{ transition: 'stroke-dashoffset 0.3s' }} />
             </svg>
-            <span className="text-xs tabular-nums text-subtext0">{done}/{total}</span>
+            <span className="text-label tabular-nums text-fg-2">{done}/{total}</span>
           </span>
         </span>
       }
@@ -98,9 +98,9 @@ export function TodayHabits() {
           return (
             <div key={s}>
               {grouped && (
-                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-subtext0">
+                <p className="mb-1.5 flex items-center gap-1.5 text-label font-medium text-fg-2">
                   <span>{m.emoji}</span> {m.label}
-                  {sBuild.length > 0 && <span className="text-subtext0">· {sDone}/{sBuild.length}</span>}
+                  {sBuild.length > 0 && <span className="text-fg-2">· {sDone}/{sBuild.length}</span>}
                 </p>
               )}
               <div className="flex flex-wrap gap-2">{hs.map(chip)}</div>
@@ -110,8 +110,8 @@ export function TodayHabits() {
       </div>
 
       {noteFor && (
-        <div className="mt-3 border-t border-surface0 pt-3">
-          <p className="mb-1 inline-flex items-center gap-1 text-xs text-subtext0"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
           <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
         </div>
       )}

@@ -27,7 +27,7 @@ export function Heatmap({ cols, colorFor }: { cols: HeatCell[][]; colorFor?: (c:
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-1 text-xs text-subtext0">
+      <div className="mt-2 flex items-center gap-1 text-label text-fg-2">
         <span>less</span>
         {[0, 1, 2, 3, 4].map((l) => (
           <span key={l} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: cat(LEVEL_BG[l]), opacity: LEVEL_OPACITY[l] }} />

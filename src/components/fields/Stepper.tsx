@@ -54,7 +54,7 @@ export function Stepper({
 
   return (
     <div className={cn('inline-flex flex-col gap-0.5', className)}>
-      {label && <span className="text-[10px] text-subtext0">{label}</span>}
+      {label && <span className="text-micro text-fg-2">{label}</span>}
       <div className="inline-flex items-center gap-1">
         <button
           type="button"
@@ -62,7 +62,7 @@ export function Stepper({
           onPointerDown={() => holdStart(-1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-subtext0 hover:text-text active:scale-95"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
           <Minus size={14} />
         </button>
@@ -71,16 +71,16 @@ export function Stepper({
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? undefined : clamp(Number(e.target.value)))}
           aria-label={ariaLabel ?? label}
-          className="w-14 rounded-lg border border-input bg-base px-1 py-1.5 text-center text-sm text-text focus:border-mauve focus:outline-none"
+          className="num w-14 rounded-lg border border-input bg-ink-0 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
         />
-        {suffix && <span className="text-xs text-subtext0">{suffix}</span>}
+        {suffix && <span className="text-label text-fg-2">{suffix}</span>}
         <button
           type="button"
           aria-label={`Increase ${ariaLabel ?? label ?? ''}`.trim()}
           onPointerDown={() => holdStart(1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-subtext0 hover:text-text active:scale-95"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
           <Plus size={14} />
         </button>

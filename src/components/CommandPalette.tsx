@@ -61,12 +61,22 @@ export function CommandPalette({
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onOpenChange])
 
-  useEffect(() => {
+  // Reset the query when the palette opens. Done during render via the
+  // documented "adjusting state when a prop changes" pattern rather than in an
+  // effect: a synchronous setState in an effect body renders twice, once with
+  // the stale query visible. Focus stays in an effect below — that's a real DOM
+  // side-effect, not state.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) {
       setQ('')
       setActive(0)
-      setTimeout(() => inputRef.current?.focus(), 0)
     }
+  }
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 0)
   }, [open])
 
   function download(name: string, text: string) {
@@ -110,7 +120,7 @@ export function CommandPalette({
       onClick={() => setOpen(false)}
     >
       <div
-        className="card-3d w-full max-w-lg overflow-hidden rounded-xl border border-surface1 bg-mantle"
+        className="card-3d w-full max-w-lg overflow-hidden rounded-xl border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Command palette"
@@ -126,24 +136,24 @@ export function CommandPalette({
           }}
           placeholder="Jump to… or type a command"
           aria-label="Command search"
-          className="w-full border-b border-surface0 bg-transparent px-4 py-3 text-sm text-text placeholder:text-subtext0 focus:outline-none"
+          className="w-full border-b border-line bg-transparent px-4 py-3 text-body text-fg-1 placeholder:text-fg-2 focus:outline-none"
         />
         <ul className="max-h-72 overflow-y-auto py-1">
-          {filtered.length === 0 && <li className="px-4 py-3 text-sm text-subtext0">No matches</li>}
+          {filtered.length === 0 && <li className="px-4 py-3 text-body text-fg-2">No matches</li>}
           {filtered.map((c, i) => (
             <li key={c.id}>
               <button
                 onMouseEnter={() => setActive(i)}
                 onClick={() => { c.run(); setOpen(false) }}
-                className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm ${i === active ? 'bg-surface0 text-text' : 'text-subtext1'}`}
+                className={`flex w-full items-center justify-between px-4 py-2 text-left text-body ${i === active ? 'bg-ink-2 text-fg-1' : 'text-fg-1'}`}
               >
                 <span>{c.label}</span>
-                {c.hint && <span className="text-xs text-subtext0">{c.hint}</span>}
+                {c.hint && <span className="text-label text-fg-2">{c.hint}</span>}
               </button>
             </li>
           ))}
         </ul>
-        <div className="border-t border-surface0 px-4 py-2 text-xs text-subtext0">↑↓ navigate · ↵ run · esc close</div>
+        <div className="border-t border-line px-4 py-2 text-label text-fg-2">↑↓ navigate · ↵ run · esc close</div>
       </div>
     </div>
   )

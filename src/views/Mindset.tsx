@@ -29,35 +29,35 @@ export function Mindset() {
                 <li key={f.id} className="group rounded-lg border border-mauve/40 bg-mauve/5 p-3">
                   <div className="mb-1 flex items-center gap-2">
                     <Check size={14} className="shrink-0 text-mauve" />
-                    <span className="text-sm font-medium text-text">{p.title}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
+                    <span className="text-body font-medium text-fg-1">{p.title}</span>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
                   </div>
-                  <p className="mb-2 text-xs text-subtext0">{p.why}</p>
-                  <Textarea value={f.note ?? ''} onChange={(e) => setMindsetNote(f.id, e.target.value)} placeholder="How will you apply this? (your cue)" rows={2} className="text-xs" />
+                  <p className="mb-2 text-label text-fg-2">{p.why}</p>
+                  <Textarea value={f.note ?? ''} onChange={(e) => setMindsetNote(f.id, e.target.value)} placeholder="How will you apply this? (your cue)" rows={2} className="text-label" />
                 </li>
               )
             })}
           </ul>
         )}
-        {focus.length > 0 && <p className="mt-3 text-xs text-subtext0">Tip: keep it to 1–3 at a time — focus beats breadth.</p>}
+        {focus.length > 0 && <p className="mt-3 text-label text-fg-2">Tip: keep it to 1–3 at a time — focus beats breadth.</p>}
       </Card>
 
       <Card title={<span className="inline-flex items-center gap-2"><Brain size={18} className="text-peach" /> Principle library</span>} subtitle="Tap + to add a principle to your focus" help="A curated set of mental-game and thinking-style principles. Browse by theme; add the ones you want to build into how you think and play.">
         <div className="space-y-4">
           {MINDSET_CATEGORIES.map((catName) => (
             <div key={catName}>
-              <p className="mb-1.5 text-[11px] font-medium tracking-wider text-subtext0 uppercase">{catName}</p>
+              <p className="mb-1.5 text-caption font-medium tracking-wider text-fg-2 uppercase">{catName}</p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {MINDSET_LIBRARY.filter((p) => p.category === catName).map((p) => {
                   const added = focusedIds.has(p.id)
                   return (
-                    <li key={p.id} className="flex items-start gap-2 rounded-lg border border-surface0 bg-base p-2.5">
+                    <li key={p.id} className="flex items-start gap-2 rounded-lg border border-line bg-ink-0 p-2.5">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-text">{p.title}</p>
-                        <p className="text-xs text-subtext0">{p.why}</p>
+                        <p className="text-body font-medium text-fg-1">{p.title}</p>
+                        <p className="text-label text-fg-2">{p.why}</p>
                       </div>
                       <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? 'Already in focus' : `Add ${p.title}`}
-                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-subtext1 hover:bg-mauve hover:text-crust'}`}>
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
                         {added ? <Check size={13} /> : <Plus size={13} />}
                       </button>
                     </li>

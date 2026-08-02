@@ -112,9 +112,9 @@ export function RadialTracker({
       </svg>
 
       {/* legend */}
-      <ul className="space-y-1 text-sm">
+      <ul className="space-y-1 text-body">
         {habits.map((h) => (
-          <li key={h.id} className="flex items-center gap-2 text-subtext1">
+          <li key={h.id} className="flex items-center gap-2 text-fg-1">
             <span className="inline-block h-3 w-3 rounded-sm" style={{ background: cat(h.color) }} />
             {h.name}
           </li>

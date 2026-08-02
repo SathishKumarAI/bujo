@@ -24,12 +24,12 @@ export function AchievementsCard() {
               className={`flex items-center gap-2 rounded-xl border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-lg" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
-                {got ? a.emoji : <Lock size={13} className="text-subtext0" />}
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
+                {got ? a.emoji : <Lock size={13} className="text-fg-2" />}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
-                <p className="truncate text-[10px] text-subtext0">{a.desc}</p>
+                <p className="truncate text-body font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
+                <p className="truncate text-micro text-fg-2">{a.desc}</p>
               </div>
             </div>
           )

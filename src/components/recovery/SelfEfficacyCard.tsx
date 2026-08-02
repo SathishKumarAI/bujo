@@ -17,7 +17,7 @@ export function SelfEfficacyCard({ conversion }: { conversion: Conversion }) {
       <div className="mt-3 h-2.5 overflow-hidden rounded-full" style={{ background: cat('red') + '33' }}>
         <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${conversion.resistRate}%`, background: cat('green') }} />
       </div>
-      <p className="mt-2 text-xs text-subtext0">Each resisted urge is a streak you protected. Keep the green bar climbing.</p>
+      <p className="mt-2 text-label text-fg-2">Each resisted urge is a streak you protected. Keep the green bar climbing.</p>
     </Card>
   )
 }

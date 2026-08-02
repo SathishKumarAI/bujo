@@ -46,11 +46,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div className="grid min-h-screen place-items-center p-6">
-        <div className="w-full max-w-md rounded-xl border border-surface1 bg-mantle p-6 text-center">
-          <div className="text-3xl">✦</div>
-          <h1 className="mt-2 text-lg font-semibold text-text">bujo hit a snag</h1>
-          <p className="mt-1 text-sm text-subtext1">
-            Something in the app crashed. <strong className="text-text">Your journal is safe</strong> —
+        <div className="w-full max-w-md rounded-xl border border-line-strong bg-ink-1 p-6 text-center">
+          <div className="text-display">✦</div>
+          <h1 className="mt-2 text-heading font-medium text-fg-1">bujo hit a snag</h1>
+          <p className="mt-1 text-body text-fg-1">
+            Something in the app crashed. <strong className="text-fg-1">Your journal is safe</strong> —
             it lives in this browser, not in the screen that broke.
           </p>
 
@@ -66,8 +66,8 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <details className="mt-5 text-left">
-            <summary className="cursor-pointer text-xs text-subtext0">Technical details</summary>
-            <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-crust p-3 font-mono text-[11px] text-subtext0">
+            <summary className="cursor-pointer text-label text-fg-2">Technical details</summary>
+            <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-crust p-3 font-mono text-caption text-fg-2">
               {error.message}
             </pre>
           </details>

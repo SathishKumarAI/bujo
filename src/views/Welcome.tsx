@@ -85,18 +85,18 @@ export function Welcome() {
       <div className="relative z-10 w-full max-w-2xl">
         <div className="mb-9 text-center">
           <div className="rise mb-3 flex items-baseline justify-center gap-2">
-            <span className="font-display text-5xl font-semibold tracking-tight text-text">bujo</span>
-            <span className="text-2xl text-mauve">✦</span>
+            <span className="font-display text-display font-medium tracking-tight text-fg-1">bujo</span>
+            <span className="text-title text-mauve">✦</span>
           </div>
-          <p className="rise text-subtext0" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync across your devices, or keep everything on this one.</p>
+          <p className="rise text-fg-2" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync across your devices, or keep everything on this one.</p>
         </div>
 
         {/* Account · recommended when configured: guest now, or log in to sync. */}
         {supabaseEnabled() && (
-          <div className="rise mb-5 rounded-2xl border border-surface0 bg-mantle/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
+          <div className="rise mb-5 rounded-2xl border border-line bg-ink-1/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
             <div className="mb-3 flex items-center gap-2">
               <UserCircle2 size={22} style={{ color: cat('mauve') }} />
-              <h2 className="font-display text-xl text-text">Sync with an account</h2>
+              <h2 className="font-display text-title text-fg-1">Sync with an account</h2>
             </div>
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -104,26 +104,26 @@ export function Welcome() {
                   <Button onClick={google} disabled={busy} variant="default" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
                 )}
                 {googleOk ? (
-                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-sm text-mauve hover:underline"><LogIn size={14} /> Use email</button>
+                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><LogIn size={14} /> Use email</button>
                 ) : (
                   <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><LogIn size={14} /> Sign in with email</Button>
                 )}
-                <span className="text-xs text-subtext0">Signing in creates your journal and keeps it in sync across devices.</span>
+                <span className="text-label text-fg-2">Signing in creates your journal and keeps it in sync across devices.</span>
               </div>
             ) : (
               <div className="space-y-2">
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
-                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
+                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <div className="flex flex-wrap items-center gap-2">
                   <Button onClick={() => account('login')} disabled={busy} variant="default" className="press-3d">Log in</Button>
-                  <Button onClick={() => account('signup')} disabled={busy} variant="outline" className="text-subtext1">Sign up</Button>
-                  <button onClick={forgot} disabled={busy} className="ml-auto text-xs text-subtext0 hover:text-subtext1">Forgot password?</button>
-                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-sm text-subtext0">Back</button>
+                  <Button onClick={() => account('signup')} disabled={busy} variant="outline" className="text-fg-1">Sign up</Button>
+                  <button onClick={forgot} disabled={busy} className="ml-auto text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
+                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-body text-fg-2">Back</button>
                 </div>
               </div>
             )}
-            {notice && <p className="mt-2 text-xs text-green">{notice}</p>}
-            {err && <p className="mt-2 text-xs text-red">{err}</p>}
+            {notice && <p className="mt-2 text-label text-green">{notice}</p>}
+            {err && <p className="mt-2 text-label text-red">{err}</p>}
           </div>
         )}
 
@@ -132,49 +132,49 @@ export function Welcome() {
           <button
             onClick={chooseFolder}
             disabled={!supported || busy}
-            className="card-3d rise group rounded-2xl border border-surface0 bg-mantle/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
+            className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
             style={{ animationDelay: '180ms' }}
           >
             <CloudCog size={28} style={{ color: cat('mauve') }} />
-            <h2 className="mt-3 font-display text-xl text-text">Use my own cloud</h2>
-            <p className="mt-1 text-sm text-subtext0">
+            <h2 className="mt-3 font-display text-title text-fg-1">Use my own cloud</h2>
+            <p className="mt-1 text-body text-fg-2">
               Point bujo at a folder inside your Drive / Dropbox / OneDrive sync
               folder. Your existing cloud syncs it across devices.
             </p>
-            <ul className="mt-3 space-y-1 text-xs text-subtext0">
+            <ul className="mt-3 space-y-1 text-label text-fg-2">
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> No account, no sign-in</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Works with any cloud you already use</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Your files, your control</li>
             </ul>
-            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-mauve">
+            <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-mauve">
               <FolderOpen size={15} /> {busy ? 'Opening…' : 'Choose folder'}
             </span>
-            {!supported && <p className="mt-2 text-xs text-red">Requires Chrome or Edge. Choose “This device only” instead.</p>}
+            {!supported && <p className="mt-2 text-label text-red">Requires Chrome or Edge. Choose “This device only” instead.</p>}
           </button>
 
           {/* Local only */}
           <button
             onClick={() => setSettings({ storageMode: 'local' })}
-            className="card-3d rise group rounded-2xl border border-surface0 bg-mantle/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
+            className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
             style={{ animationDelay: '260ms' }}
           >
             <HardDrive size={28} style={{ color: cat('blue') }} />
-            <h2 className="mt-3 font-display text-xl text-text">This device only</h2>
-            <p className="mt-1 text-sm text-subtext0">
+            <h2 className="mt-3 font-display text-title text-fg-1">This device only</h2>
+            <p className="mt-1 text-body text-fg-2">
               Keep everything in this browser. Nothing leaves the device. You can
               connect a cloud folder later in Settings.
             </p>
-            <ul className="mt-3 space-y-1 text-xs text-subtext0">
+            <ul className="mt-3 space-y-1 text-label text-fg-2">
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Fastest, fully offline</li>
               <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Export backups anytime</li>
             </ul>
-            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-blue">Continue on this device →</span>
+            <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-blue">Continue on this device →</span>
           </button>
         </div>
 
         {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
-        <div className="rise mt-5 rounded-xl border border-dashed border-surface1 p-4 text-center" style={{ animationDelay: '320ms' }}>
-          <p className="mb-2 text-sm text-subtext1">Just looking? <strong className="text-text">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
+        <div className="rise mt-5 rounded-xl border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
+          <p className="mb-2 text-body text-fg-1">Just looking? <strong className="text-fg-1">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
           <Button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}
             variant="secondary"
@@ -182,13 +182,13 @@ export function Welcome() {
           >
             Explore the demo →
           </Button>
-          <p className="mt-2 text-xs text-subtext0">
-            Learn as you go: press <kbd className="rounded bg-surface0 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
+          <p className="mt-2 text-label text-fg-2">
+            Learn as you go: press <kbd className="rounded bg-ink-2 px-1">⌘K</kbd> to jump anywhere, tap the <strong>?</strong> on any page, or open <strong>Help</strong>.
             <br />Changed your mind? Reset or wipe the sample anytime in <strong>Settings → Data &amp; Cloud</strong>.
           </p>
         </div>
 
-        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-subtext0" style={{ animationDelay: '360ms' }}>
+        <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-label text-fg-2" style={{ animationDelay: '360ms' }}>
           <ShieldCheck size={13} /> No tracking. Your data stays yours.
         </p>
       </div>

@@ -174,13 +174,13 @@ export function Goals() {
           <Empty>No goals yet · set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
           <>
-          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm">
-            <span className="inline-flex items-center gap-1.5 text-subtext1">
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body">
+            <span className="inline-flex items-center gap-1.5 text-fg-1">
               <Target size={14} style={{ color: cat('mauve') }} /> Overall progress
-              <span className="font-medium tabular-nums text-text">{avgPct}%</span>
+              <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
             </span>
             {nearly > 0 && (
-              <span className="text-subtext0">{nearly} nearly there <span className="text-subtext0">(80–99%)</span></span>
+              <span className="text-fg-2">{nearly} nearly there <span className="text-fg-2">(80–99%)</span></span>
             )}
           </div>
           </>
@@ -194,15 +194,15 @@ export function Goals() {
               return (
                 <li key={i}>
                   <button onClick={() => navigate(g.to)} className="press-3d w-full text-left">
-                    <div className="mb-1 flex items-center gap-2 text-sm">
+                    <div className="mb-1 flex items-center gap-2 text-body">
                       <Icon size={15} style={{ color: cat(g.color) }} />
-                      <span className="font-medium text-text">{g.label}</span>
-                      <span className="text-xs text-subtext0">{g.detail}</span>
+                      <span className="font-medium text-fg-1">{g.label}</span>
+                      <span className="text-label text-fg-2">{g.detail}</span>
                       <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
                         {g.value}/{g.target}{reached ? ' ✓' : ''}
                       </span>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-surface0">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-ink-2">
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
                     </div>
                   </button>
@@ -214,7 +214,7 @@ export function Goals() {
       </Card>
 
       <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
-        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-surface0 bg-base p-3">
+        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-line bg-ink-0 p-3">
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
           <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="Unit" className="w-24" aria-label="Unit" />
@@ -231,23 +231,23 @@ export function Goals() {
               // #95/#261: deadline pace + ahead/behind indicator (null when no due).
               const pace = goalPace(g.value, g.target, g.createdAt, g.due, today)
               return (
-                <li key={g.id} className="group rounded-lg border border-surface0 bg-base p-3">
-                  <div className="mb-1.5 flex items-center gap-2 text-sm">
-                    <span className="font-medium text-text">{g.label}</span>
+                <li key={g.id} className="group rounded-lg border border-line bg-ink-0 p-3">
+                  <div className="mb-1.5 flex items-center gap-2 text-body">
+                    <span className="font-medium text-fg-1">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
                   </div>
-                  <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface0"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
+                  <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-ink-2"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />
                   {/* Deadline + pace (#95/#261) */}
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                    <label className="inline-flex items-center gap-1.5 text-subtext0">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label">
+                    <label className="inline-flex items-center gap-1.5 text-fg-2">
                       <CalendarClock size={13} /> Deadline
                       <input
                         type="date"
                         value={g.due ?? ''}
                         onChange={(e) => updateCustomGoal(g.id, { due: e.target.value || undefined })}
-                        className="rounded-md border border-surface1 bg-card px-2 py-1 text-foreground"
+                        className="rounded-md border border-line-strong bg-card px-2 py-1 text-foreground"
                         aria-label={`Deadline for ${g.label}`}
                       />
                     </label>
@@ -258,7 +258,7 @@ export function Goals() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="text-subtext1">{pace.perDayNeeded}{g.unit ? ` ${g.unit}` : ''}/day to finish by {prettyDay(g.due!)}</span>
+                          <span className="text-fg-1">{pace.perDayNeeded}{g.unit ? ` ${g.unit}` : ''}/day to finish by {prettyDay(g.due!)}</span>
                           <span className="rounded-full px-1.5 py-0.5 font-medium" style={{ background: cat(pace.onTrack ? 'green' : 'peach') + '22', color: cat(pace.onTrack ? 'green' : 'peach') }}>
                             {pace.onTrack ? 'on track' : 'behind'}
                           </span>

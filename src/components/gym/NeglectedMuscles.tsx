@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
-import { muscleNames } from '../MuscleMap'
+import { muscleNames } from '../../lib/muscles'
 import type { NeglectedMuscle } from '../../lib/fitness'
 
 /**
@@ -20,12 +20,12 @@ export function NeglectedMuscles({ muscles, setFocusEx }: { muscles: NeglectedMu
           <button
             key={m.muscle}
             onClick={() => setFocusEx(m.name)}
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-label"
             style={{ background: cat('peach') + '22', color: cat('peach') }}
             title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
           >
             <AlertTriangle size={12} /> {m.name}
-            <span className="text-[10px] text-subtext0">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
+            <span className="text-micro text-fg-2">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
           </button>
         ))}
       </div>

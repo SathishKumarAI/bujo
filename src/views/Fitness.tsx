@@ -83,14 +83,14 @@ export function Fitness() {
     <Page>
       <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat last</Button> : undefined}>
         <div className="space-y-3">
-          <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-          <label className="block text-sm text-subtext1">Activity
-            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text">
+          <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+          <label className="block text-body text-fg-1">Activity
+            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1">
               {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
             </select>
           </label>
           <MetricFields f={f} set={set} distUnit={dist} />
-          {f.distance && f.duration && <p className="text-xs text-subtext0">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
+          {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
           <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
           <Button variant="default" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
@@ -111,14 +111,14 @@ export function Fitness() {
               return (
                 <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
                   <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                    <span className="truncate font-medium text-text group-hover:text-mauve">{w.activity}</span>
-                    <span className="shrink-0 text-xs text-subtext0">{prettyDay(w.date)}</span>
+                    <span className="truncate font-medium text-fg-1 group-hover:text-mauve">{w.activity}</span>
+                    <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
                   </button>
-                  <div className="flex shrink-0 items-center gap-2 text-xs text-subtext0">
+                  <div className="flex shrink-0 items-center gap-2 text-label text-fg-2">
                     {w.durationMin != null && <span>{w.durationMin}m</span>}
                     {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
                     {p && <span className="text-sky">{p}</span>}
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                 </li>
               )
@@ -176,9 +176,9 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-        <label className="block text-sm text-subtext1">Activity
-          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text">
+        <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+        <label className="block text-body text-fg-1">Activity
+          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1">
             {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
           </select>
         </label>
@@ -215,12 +215,12 @@ function CardioBadgesCard() {
     <Card title="Cardio bests" subtitle="All-time personal bests, with the day you set them" defer>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {earned.map((b) => (
-          <div key={b.key} className="rounded-xl border border-surface0 bg-base px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
-            <div className="flex items-center gap-1.5 text-lg font-bold" style={{ color: cat(tint[b.key]) }}>
+          <div key={b.key} className="rounded-xl border border-line bg-ink-0 px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
+            <div className="flex items-center gap-1.5 text-heading font-medium" style={{ color: cat(tint[b.key]) }}>
               🏅 <span>{fmt(b)}</span>
             </div>
-            <p className="mt-0.5 text-xs text-subtext1">{b.label}</p>
-            {b.date && <p className="text-[10px] text-subtext0">earned {prettyDay(b.date)}</p>}
+            <p className="mt-0.5 text-label text-fg-1">{b.label}</p>
+            {b.date && <p className="text-micro text-fg-2">earned {prettyDay(b.date)}</p>}
           </div>
         ))}
       </div>
@@ -255,7 +255,7 @@ function TrainingHeatmapCard({ today }: { today: string }) {
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-subtext0">
+      <div className="mt-2 flex items-center justify-end gap-1.5 text-micro text-fg-2">
         <span>less</span>
         {[0, 1, 2, 3, 4].map((l) => <span key={l} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: levelColor(l) }} />)}
         <span>more</span>
@@ -301,7 +301,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
         <select
           value=""
           onChange={(e) => { const f = FOODS.find((x) => x.name === e.target.value); if (f) addFood(f) }}
-          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text"
+          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1"
           aria-label="Add a food"
         >
           <option value="">+ Add a food…</option>
@@ -320,16 +320,16 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
           href="https://www.google.com/search?q=calories+macros+"
           target="_blank"
           rel="noreferrer"
-          className="mt-1 inline-block text-xs text-subtext0 hover:text-mauve"
+          className="mt-1 inline-block text-label text-fg-2 hover:text-mauve"
         >Food not listed? Look it up online ↗</a>
       </div>
-      <label className="mb-3 block text-sm text-subtext1">
+      <label className="mb-3 block text-body text-fg-1">
         Calories
         <div className="mt-1"><Stepper value={m?.calories ?? undefined} onChange={(v) => setMetric(date, { calories: v })} step={50} min={0} suffix="kcal" aria-label="Calories" /></div>
       </label>
       <div className="grid grid-cols-3 gap-2">
         {macros.map((mac) => (
-          <label key={mac.k} className="block text-xs text-subtext1">
+          <label key={mac.k} className="block text-label text-fg-1">
             {mac.label} (g)
             <div className="mt-1"><Stepper value={mac.val ?? undefined} onChange={(v) => setMetric(date, { [mac.k]: v })} step={5} min={0} aria-label={`${mac.label} grams`} /></div>
           </label>
@@ -342,7 +342,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
               <div key={mac.k} style={{ width: `${((mac.val ?? 0) / totalG) * 100}%`, background: cat(mac.color) }} />
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-xs text-subtext0">
+          <div className="mt-1 flex justify-between text-label text-fg-2">
             {macros.map((mac) => (
               <span key={mac.k} style={{ color: cat(mac.color) }}>● {mac.label} {mac.val ?? 0}g</span>
             ))}
@@ -350,7 +350,7 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
         </div>
       )}
       {/* Macro-target rings vs a balanced default (protein 120 · carbs 200 · fat 60 g). */}
-      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-surface0 pt-3">
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-3">
         {macros.map((mac) => {
           const target = mac.k === 'protein' ? 120 : mac.k === 'carbs' ? 200 : 60
           const pct = Math.min(100, Math.round(((mac.val ?? 0) / target) * 100))
@@ -360,9 +360,9 @@ function NutritionCard({ date, today }: { date: string; today: string }) {
               <svg width="56" height="56" viewBox="0 0 56 56" role="img" aria-label={`${mac.label}: ${pct}% of ${target} grams`}>
                 <circle cx="28" cy="28" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
                 <circle cx="28" cy="28" r={r} fill="none" stroke={cat(mac.color)} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 28 28)" />
-                <text x="28" y="32" textAnchor="middle" className="fill-text text-[11px] font-bold">{pct}%</text>
+                <text x="28" y="32" textAnchor="middle" className="fill-text text-caption font-medium">{pct}%</text>
               </svg>
-              <span className="text-[10px] text-subtext0">{mac.label}</span>
+              <span className="text-micro text-fg-2">{mac.label}</span>
             </div>
           )
         })}
@@ -385,8 +385,8 @@ function CalorieTrend({ today }: { today: string }) {
   const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
   const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
   return (
-    <div className="mt-4 border-t border-surface0 pt-3">
-      <p className="mb-2 text-xs text-subtext1">Calorie trend <span className="text-subtext0">· last 14 days · avg {avg} kcal on logged days</span></p>
+    <div className="mt-4 border-t border-line pt-3">
+      <p className="mb-2 text-label text-fg-1">Calorie trend <span className="text-fg-2">· last 14 days · avg {avg} kcal on logged days</span></p>
       <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
         {days.map((d) => (
           <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
@@ -394,7 +394,7 @@ function CalorieTrend({ today }: { today: string }) {
           </div>
         ))}
       </div>
-      <p className="mt-1 text-center text-[10px] text-subtext0">peach = today</p>
+      <p className="mt-1 text-center text-micro text-fg-2">peach = today</p>
     </div>
   )
 }

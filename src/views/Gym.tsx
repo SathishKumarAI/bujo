@@ -11,7 +11,8 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { MuscleMap, muscleNames, musclesForSplit } from '../components/MuscleMap'
+import { MuscleMap } from '../components/MuscleMap'
+import { muscleNames, musclesForSplit } from '../lib/muscles'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
@@ -232,7 +233,7 @@ export function Gym() {
               href={`https://www.youtube.com/results?search_query=${encodeURIComponent(focusEx + ' exercise form')}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-red hover:underline"
+              className="inline-flex items-center gap-1.5 text-body text-red hover:underline"
             >
               <Video size={16} /> YouTube
             </a>
@@ -243,18 +244,18 @@ export function Gym() {
       <MuscleMap muscles={activeMuscles} />
 
       {focusEx && exerciseInfo(focusEx) && (
-        <div className="mt-3 space-y-1 rounded-lg border border-surface0 bg-base p-2.5 text-xs">
-          <p className="text-subtext0"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
-          <p className="text-subtext0"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
+        <div className="mt-3 space-y-1 rounded-lg border border-line bg-ink-0 p-2.5 text-label">
+          <p className="text-fg-2"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
+          <p className="text-fg-2"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
         </div>
       )}
 
       <div className="mt-3 flex flex-wrap justify-center gap-1.5">
         {activeMuscles.length === 0 ? (
-          <span className="text-xs text-subtext0">Type an exercise, pick a split, or tap a set row’s target.</span>
+          <span className="text-label text-fg-2">Type an exercise, pick a split, or tap a set row’s target.</span>
         ) : (
           muscleNames(activeMuscles).map((m) => (
-            <span key={m} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
+            <span key={m} className="rounded-full px-2.5 py-0.5 text-label" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
               {m}
             </span>
           ))
@@ -283,9 +284,9 @@ export function Gym() {
       {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
       {prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
-          <div className="celebrate-pop flex items-center gap-2 rounded-2xl border border-surface1 bg-mantle/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
+          <div className="celebrate-pop flex items-center gap-2 rounded-2xl border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
             <Trophy size={20} style={{ color: cat('yellow') }} />
-            <p className="text-sm font-medium text-text">
+            <p className="text-body font-medium text-fg-1">
               New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
               {prParty.weight}{unit}×{prParty.reps} 🎉
             </p>
@@ -295,7 +296,7 @@ export function Gym() {
 
       {/* ── Last session rollup · shown after Finish, until the next edit ── */}
       {summary && summary.sets > 0 && (
-        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-subtext0 hover:text-text"><X size={16} /></Button>}>
+        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-fg-2 hover:text-fg-1"><X size={16} /></Button>}>
           <div className="grid grid-cols-3 gap-3">
             <StatTile icon={<Dumbbell size={16} />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
             <StatTile icon={<Layers size={16} />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
@@ -315,7 +316,7 @@ export function Gym() {
         title="Today's session"
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
         right={
-          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-subtext0 hover:text-text">
+          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-fg-2 hover:text-fg-1">
             {sessionOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </Button>
         }
@@ -328,7 +329,7 @@ export function Gym() {
               <button
                 key={s.id}
                 onClick={() => setSplit(s.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-body"
                 style={{
                   background: split === s.id ? cat(s.color) : cat('surface0'),
                   color: split === s.id ? cat('crust') : cat('subtext1'),
@@ -341,14 +342,14 @@ export function Gym() {
         </div>
 
         <div className="mb-2 flex flex-wrap gap-2">
-          <span className="text-xs text-subtext0">Quick-load:</span>
+          <span className="text-label text-fg-2">Quick-load:</span>
           {PPL_PRESETS.map((p) => (
-            <button key={p.name} onClick={() => loadRoutine(p.exercises, p.split)} className="text-xs text-mauve hover:underline">
+            <button key={p.name} onClick={() => loadRoutine(p.exercises, p.split)} className="text-label text-mauve hover:underline">
               {p.name}
             </button>
           ))}
           {data.routines.map((r) => (
-            <button key={r.id} onClick={() => loadRoutine(r.exercises, r.split)} className="text-xs text-sapphire hover:underline">
+            <button key={r.id} onClick={() => loadRoutine(r.exercises, r.split)} className="text-label text-sapphire hover:underline">
               {r.name}
             </button>
           ))}
@@ -359,7 +360,7 @@ export function Gym() {
         </datalist>
 
         <div className="space-y-2">
-          <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] gap-2 text-xs text-subtext0">
+          <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] gap-2 text-label text-fg-2">
             <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span>RPE</span><span>Type</span><span />
           </div>
           {rows.map((row, i) => {
@@ -393,11 +394,11 @@ export function Gym() {
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-xs font-bold" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-subtext0 hover:text-red"><X size={15} /></Button>
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-fg-2 hover:text-red"><X size={15} /></Button>
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
-                  <div className="mt-0.5 ml-9 flex items-center gap-3 text-[10px] text-subtext0">
+                  <div className="mt-0.5 ml-9 flex items-center gap-3 text-micro text-fg-2">
                     {prev && (
                       <button
                         type="button"
@@ -410,7 +411,7 @@ export function Gym() {
                     )}
                     {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
                     {complete && <span className="inline-flex items-center gap-0.5" style={{ color: cat('green') }}><Check size={11} /> logged</span>}
-                    {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-[10px]" />}
+                    {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-micro" />}
                   </div>
                 )}
                 {/* Auto warm-up ramp · bar/40/60/80% of a working weight. Tap a rung to insert it as a warm-up set. */}
@@ -418,7 +419,7 @@ export function Gym() {
                   const ramp = warmupRamp(Number(row.weight) || 0, defaultBar, warmStep)
                   if (!ramp.length) return null
                   return (
-                    <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-[10px] text-subtext0">
+                    <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-micro text-fg-2">
                       <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
                         <Layers size={11} style={{ color: cat('blue') }} /> Warm-up:
                       </span>
@@ -434,7 +435,7 @@ export function Gym() {
                             })
                           }
                           title={`Add ${r.weight}${unit} warm-up set`}
-                          className="rounded-full px-2 py-0.5 transition-colors hover:text-text"
+                          className="rounded-full px-2 py-0.5 transition-colors hover:text-fg-1"
                           style={{ background: cat('blue') + '22', color: cat('blue') }}
                         >
                           {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
@@ -454,10 +455,10 @@ export function Gym() {
           if (!done.length) return null
           const vol = Math.round(done.reduce((s, r) => s + Number(r.weight) * Number(r.reps), 0))
           return (
-            <div className="mt-2 flex items-center gap-2 text-xs">
+            <div className="mt-2 flex items-center gap-2 text-label">
               <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><Check size={12} /> {done.length} set{done.length === 1 ? '' : 's'}</span>
-              <span className="text-subtext0">·</span>
-              <span className="text-subtext1">{vol.toLocaleString()}{unit} volume</span>
+              <span className="text-fg-2">·</span>
+              <span className="text-fg-1">{vol.toLocaleString()}{unit} volume</span>
             </div>
           )
         })()}
@@ -535,8 +536,8 @@ export function Gym() {
             </ResponsiveContainer>
           </div>
           {focusEx && progression.length > 1 && (
-            <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-              <p className="mb-1 text-xs text-subtext0">{focusEx} · heaviest set per day ({unit})</p>
+            <div className="mt-4 h-40 border-t border-line pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
+              <p className="mb-1 text-label text-fg-2">{focusEx} · heaviest set per day ({unit})</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -549,8 +550,8 @@ export function Gym() {
             </div>
           )}
           {focusEx && e1rmProg.length > 1 && (
-            <div className="mt-4 h-40 border-t border-surface0 pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
-              <p className="mb-1 text-xs text-subtext0">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
+            <div className="mt-4 h-40 border-t border-line pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
+              <p className="mb-1 text-label text-fg-2">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
@@ -630,23 +631,23 @@ function PlateCalculator({ unit }: { unit: string }) {
   return (
     <Card title="Plate calculator" subtitle="What to load on the bar" collapsible defaultCollapsed>
       <div className="mb-3 flex flex-wrap items-end gap-3">
-        <label className="block text-sm text-subtext1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
-        <label className="block text-sm text-subtext1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
+        <label className="block text-body text-fg-1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
+        <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
       </div>
       {barOverTarget ? (
-        <p className="text-sm text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
+        <p className="text-body text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
       ) : plates.length === 0 ? (
-        <p className="text-sm text-subtext0">Just the bar, no plates needed.</p>
+        <p className="text-body text-fg-2">Just the bar, no plates needed.</p>
       ) : (
         <>
-          <p className="mb-2 text-xs text-subtext0">Per side:</p>
+          <p className="mb-2 text-label text-fg-2">Per side:</p>
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-sm font-bold text-crust" style={{ background: plateColor(p) }}>{p}</span>
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
             ))}
           </div>
           <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
-          {loadable !== Number(target) && <p className="mt-2 text-xs text-yellow">Closest loadable: {loadable} {unit}</p>}
+          {loadable !== Number(target) && <p className="mt-2 text-label text-yellow">Closest loadable: {loadable} {unit}</p>}
         </>
       )}
     </Card>
@@ -659,16 +660,16 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
       {prs.length === 0 ? (
         <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
       ) : (
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-1 text-body">
           {prs.map((pr) => (
             <li key={pr.exercise}>
               <button
                 onClick={() => setFocusEx(focusEx === pr.exercise ? null : pr.exercise)}
-                className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-surface0' : 'hover:bg-surface0/50'}`}
+                className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-ink-2' : 'hover:bg-ink-2/50'}`}
                 title="Show this lift on the muscle map"
               >
-                <span className="inline-flex items-center gap-1.5 text-subtext1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
-                <span className="text-subtext0">
+                <span className="inline-flex items-center gap-1.5 text-fg-1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
+                <span className="text-fg-2">
                   <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
                   {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
                 </span>
@@ -687,17 +688,17 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
       {routines.length === 0 ? (
         <Empty>Build a session and “Save routine”. PPL presets are quick-loadable.</Empty>
       ) : (
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-1 text-body">
           {routines.map((r) => {
             const m = splitMeta(r.split)
             const Icon = SPLIT_ICONS[r.split] ?? Activity
             return (
               <li key={r.id} className="group flex items-center justify-between">
-                <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-subtext1 hover:text-text" title="Load into session">
+                <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-fg-1 hover:text-fg-1" title="Load into session">
                   <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
-                  <span className="ml-1 text-subtext0">{r.exercises.length} exercises</span>
+                  <span className="ml-1 text-fg-2">{r.exercises.length} exercises</span>
                 </button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-subtext0 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
               </li>
             )
           })}

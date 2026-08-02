@@ -31,14 +31,14 @@ export function Section({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-surface2"
+        className="flex w-full items-center gap-2 rounded-xl border border-line bg-card px-4 py-3 text-left transition-colors hover:border-line-strong"
       >
-        <span className="text-subtext0" style={{ color: cat('overlay0') }}>
+        <span className="text-fg-2" style={{ color: cat('overlay0') }}>
           {open ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </span>
         {icon}
-        <span className="font-display text-base font-medium text-text sm:text-lg">{title}</span>
-        {hint && <span className="ml-auto hidden text-xs text-subtext0 sm:block">{hint}</span>}
+        <span className="font-display text-heading font-medium text-fg-1 sm:text-heading">{title}</span>
+        {hint && <span className="ml-auto hidden text-label text-fg-2 sm:block">{hint}</span>}
       </button>
       {open && <div className="mt-3 flex flex-col gap-4">{children}</div>}
     </div>
