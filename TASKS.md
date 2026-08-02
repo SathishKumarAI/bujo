@@ -269,12 +269,22 @@ cream. Anything checked in mocha alone is unchecked.
     **10 distinct radii** against a target of 3; and **37 solid-accent buttons**
     (8 explicit `variant="default"` + 29 bare `<Button>`) are what decision 2
     deletes.
-- [ ] **J1 · Stage 1 — shadcn install + token extension.** Blocked on four
-  answers in §"Open questions" of the doc: the bridge approach, the
-  `--accent-wash` move to oklab + a hover step, confirmation that a
-  lucide→Phosphor swap across 85 files is wanted, and how much icon-map
-  guesswork is acceptable. Also adds the missing tokens: `--r-control`,
-  `--r-card`, `--r-pill`, `--h-control`, `--accent-wash-hover`, `--bg-danger`.
+- [x] **J1 · Stage 1 — DONE. Tokens extended, not bridged twice.** All four open
+  questions answered "go with the recommendation". Added `toggle-group`,
+  `toggle`, `command` (+ `cmdk`); added the wash (oklab 14% / 20% hover), the
+  danger wash, three radii (8/14/pill) and three control heights (28/36/44, in
+  rem). Verified in **all five themes** on the rendered kitchen sink.
+  - **The finding:** a tonal primary puts the accent *as text* on the accent *as
+    a wash* — which failed AA in latte (4.39:1) and dawn (4.07:1), and the
+    destructive equivalent failed in latte, vscode and dawn (3.80–4.28:1). §I1
+    arrived early. Fixed at the token: `--color-brand-text` and
+    `--color-danger-text` are per-theme, so nothing downstream has to remember.
+    Everything now measures **5.05–7.00:1**.
+  - Wash visibility ΔE 10.4–16.4 across the five, so no theme needed a local
+    percentage override.
+  - `shadcn add` cannot resolve this repo's `@` alias (solution-style root
+    tsconfig, no `paths`) and writes to a literal `@/` folder. Files copied by
+    hand; `@/` is gitignored + eslint-ignored as a reference copy.
 - [ ] **J2 · Stage 2 — Phosphor + one `Icon` wrapper.** Three rem sizes, weight
   as the state signal, nothing imports Phosphor directly. The bullet glyph
   column stays typographic.
