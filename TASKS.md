@@ -138,7 +138,14 @@ Nothing here is code; each is a click in someone else's dashboard.
 
 - [ ] **G1 ·** Fix or retire the Supabase project (see B1). Sign-in stays hidden until a provider is live.
 - [ ] **G2 ·** Enable Google provider in Supabase — the sign-in button auto-reappears when it's on.
-- [ ] **G3 ·** Enable GitHub Pages: Repo → Settings → Pages → Build and deployment → GitHub Actions.
+- [x] **G3 ·** ~~Enable GitHub Pages~~ — **resolved by disabling instead** (2026-08-02).
+  The `Deploy to GitHub Pages` workflow ran on every push to `main` and failed
+  every time, because Pages was never enabled on the repo. Production already
+  ships to Vercel via `scripts/ship.sh` (see `docs/PIPELINE.md`), so Pages was a
+  second, unused deploy path putting a permanent red X on `main`.
+  Set to `disabled_manually` via `gh workflow disable`; the workflow file is
+  untouched. To bring it back: enable Pages in repo settings, then
+  `gh workflow enable "Deploy to GitHub Pages"`.
 - [ ] **G4 ·** Delete the smoke-test account `bujo-smoketest-260616@example.com`.
 - [ ] **G5 ·** Self-host stack: set `PGRST_JWT_SECRET` + certs, `docker compose up -d`, then paste the API URL + JWT into Settings → Self-host.
 - [ ] **G6 ·** Tauri build prerequisites (Linux box): webkit2gtk/libsoup via sudo script, then `npx @tauri-apps/cli icon` before `npm run tauri:build`.
