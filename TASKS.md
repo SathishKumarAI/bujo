@@ -61,7 +61,12 @@ Everything below is confirmed by running it, not inferred.
 - [ ] **B2 · Duplicate boot probe.** That same `/auth/v1/settings` request fires **twice** per load. Likely a double-invoked effect (StrictMode) with no in-flight guard. Cheap fix, and it halves the failure noise.
 - [ ] **B3 · `npm run smoke` and `npm run shots` crash locally.** Both scripts `require('playwright')`, which is not in `package.json` (CI installs it with `npm i -D --no-save`, so CI is fine). Locally you get a raw `MODULE_NOT_FOUND` stack. Fix: catch the require and print "run `npm i -D --no-save playwright` first", or add it as an optional devDependency.
 - [ ] **B4 · Bundle regression.** `dist/assets/index-*.js` is now **687 kB** (203 kB gzip). BUJO-224 got it to 642 kB; it has grown 45 kB since. Rolldown warns over the 500 kB budget. Worth a chunking pass.
-- [ ] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** (all other 17 views do). It hand-rolls its own heading markup (`Reading.tsx`) — a heading-hierarchy gap for screen readers.
+- [x] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** — **DONE** (PR #87). The cause
+  was not in `Reading.tsx`: `CollapsibleSection` styles its title as a heading and then renders
+  it in a `<span>`. Reading is simply the view where all three sections are collapsible, so it
+  hit zero. Fixed in the shared component (heading wraps button, WAI-ARIA accordion pattern);
+  Trackers, Focus, Fitness, Gym and Recovery gained headings too. Reading's own shelf headers
+  were `<h3>` under no `<h2>` and are now `<h2>`. Reading: 0 → 7 headings in `<main>`.
 
 ---
 
@@ -120,7 +125,14 @@ From `docs/UIUX-CRAFT-BACKLOG.md`. The feedback/keyboard/resilience/button work 
 
 - [ ] **F1 · Hand-rolled buttons still bypassing the button system** — visible drift, since each re-invents padding/radius/hover:
   `Collections.tsx:91,118` · `Insights.tsx:399` · `Onboarding.tsx:57,59` (first-run, highest visibility) · `CaptureBar.tsx:190` · `SmartInput.tsx:118` · `trackers/HabitDetail.tsx:108,109` · `RestTimer.tsx:66,69` · `TodayPlanCard.tsx:66` · `ExercisePicker.tsx:65` · `ExploreBanner.tsx:34` · `ReminderBanner.tsx:54` · `CoachCard.tsx:34`
-- [ ] **F2 · Skip-to-content link** — listed as a known gap in `docs/ACCESSIBILITY.md:39`.
+  **Partly closed by PR #87**, but not the way this line assumed. The named sites in
+  `Collections` and `Insights` were not buttons wanting the button system — they were four
+  hand-copied clones of `QuietSection` (Collections ×2, Plan, Insights' local `Section`),
+  now all replaced by the shared component. The rest of the raw buttons in those views are
+  list rows, tag chips and star ratings: card-shaped targets that `Button` would fight, so
+  they were deliberately left. The remaining files on this line are untouched.
+- [x] **F2 · Skip-to-content link** — already shipped; `AppShell.tsx:75` renders it and it
+  appears in the a11y tree as `link "Skip to content" → #main`. Line was stale.
 - [ ] **F3 · Focus trap in dialogs** + restore focus on close (quick-add, palette, SOS overlay).
 - [ ] **F4 · Palette fuzzy matching** — today it's a plain substring filter (`CommandPalette.tsx:97`); no recent/frequent ranking.
 - [ ] **F5 · Vim-style jumps** — `g t` Today, `g s` Stats, `j`/`k` between entries, `x` toggle status.
