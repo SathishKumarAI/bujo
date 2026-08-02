@@ -1,0 +1,117 @@
+/*
+  ── Purpose tokens ──────────────────────────────────────────────────────────
+
+  A *naming* layer, not a palette. Every token here aliases a variable that
+  already exists in `index.css`, so the five themes (mocha · latte · neon ·
+  vscode · dawn) and the theme-following chart palette (`lib/colors.ts`,
+  `setActiveTheme()`) keep working untouched — the redesign inherits all five
+  for free.
+
+  Decision: remap, don't replace (TASKS.md §H1). The redesign brief shipped a
+  greenfield palette of hex and px literals; those were dropped and only the
+  names kept. If you need to change what a color *is*, edit the theme block in
+  `index.css`. This file only decides what a color is *for*.
+
+  Naming note: `--color-accent` and `--color-text` were already taken by the
+  shadcn/Catppuccin layer and mean something else there (`accent` is a raised
+  *surface*, `text` is the Catppuccin foreground). To avoid a silent collision
+  the roles below use `brand` and `fg-*` instead.
+*/
+
+@theme {
+  /* ── Surfaces ─────────────────────────────────────────────────────────────
+     ink-0 page · ink-1 card · ink-2 inset/raised · ink-3 hover */
+  --color-ink-0: var(--background);
+  --color-ink-1: var(--card);
+  --color-ink-2: var(--muted);
+  --color-ink-3: var(--color-surface1);
+
+  /* ── Lines ────────────────────────────────────────────────────────────────
+     Hairlines, never solid grey. `line-strong` is for a border that has to
+     carry weight on its own (secondary buttons, focused inputs). */
+  --color-line: var(--border);
+  --color-line-strong: var(--color-surface2);
+
+  /* ── Foreground ───────────────────────────────────────────────────────────
+     Three readable tiers. Every one clears WCAG AA (4.5:1) against BOTH the
+     page and the card surface, in all five themes — verified, see the table in
+     docs/redesign/09-redesign-audit.md. `fg-3` is the tier the brief called
+     `--text-3`; its raw value is per-theme because a single grey cannot pass on
+     both near-black and near-white. Nothing a user reads is exempt from AA. */
+  --color-fg-1: var(--foreground);
+  --color-fg-2: var(--color-subtext0);
+  --color-fg-3: var(--fg-3);
+
+  /* ── Brand ────────────────────────────────────────────────────────────────
+     One accent. Exactly one primary action per screen (enforced in the
+     accent-inflation pass, step 9). */
+  --color-brand: var(--primary);
+  --color-brand-ink: var(--primary-foreground);
+  /* A tint, for *selected state* — never for an action. A selected segment
+     filled with the same accent as a primary button competes with it, which is
+     the accent inflation the brief diagnosed. Selection gets the wash; the one
+     primary action per screen keeps the fill. */
+  --color-brand-wash: color-mix(in srgb, var(--primary) 16%, transparent);
+
+  /* ── Type scale ───────────────────────────────────────────────────────────
+     Six steps, in rem, at a 16px root. rem — not px — because the global
+     text-size setting (FONT-1: S/M/L/XL) scales the rem root, and fixed px
+     would break an accessibility feature to satisfy round numbers.
+
+     `.fig-fixed` counter-scales figures so charts keep their natural size. */
+  /* Clear Tailwind's default scale so `text-xs` … `text-6xl` stop resolving and
+     the seven steps below are the only sizes in the app.
+
+     Ordering matters, and not for the reason the plan assumed: Tailwind v4 does
+     NOT fail the build on a stale utility — it exits 0 and silently emits
+     nothing, so the element just inherits its parent's size. Removing the scale
+     first would have broken 955 call sites with no build, test or typecheck
+     catching it. Migration ran first; this reset landed only once the grep gate
+     was clean. Keep that order if you ever redo this. */
+  --text-*: initial;
+
+  --text-display: 2rem; /* 32px */
+  --text-display--line-height: 1.15;
+  --text-title: 1.375rem; /* 22px */
+  --text-title--line-height: 1.25;
+  --text-heading: 1.0625rem; /* 17px */
+  --text-heading--line-height: 1.4;
+  --text-body: 0.9375rem; /* 15px */
+  --text-body--line-height: 1.55;
+  --text-label: 0.8125rem; /* 13px */
+  --text-label--line-height: 1.45;
+  --text-caption: 0.6875rem; /* 11px */
+  --text-caption--line-height: 1.4;
+
+  /* A seventh step, below the brief's floor. 141 call sites were already
+     rendering at 9–11px (`text-[10px]` ×88, `[11px]` ×45, `[9px]` ×8) inside
+     dense data surfaces — heatmap cells, chart axis labels, tracker grids.
+     Rounding those up to `caption` would make 141 pieces of text *larger* in
+     exactly the layouts tuned to be tight. One extra token keeps the rule
+     honest; the alternative was exempting 141 sites from the system forever.
+     Reserved for data chrome — never for prose. */
+  --text-micro: 0.625rem; /* 10px */
+  --text-micro--line-height: 1.3;
+
+  /* ── Containers ───────────────────────────────────────────────────────────
+     Two tiers, deliberately. Reading and capture want a short line; heatmaps,
+     calendars and multi-series charts get worse when squeezed, not more
+     premium. Same rhythm and tokens, different max. */
+  --container-read: 820px;
+  --container-wide: 1180px;
+}
+
+/*
+  Numerals. Family and tabular figures only — never a size, so it composes with
+  the type scale and with `.fig-fixed` instead of competing with them.
+
+  JetBrains Mono is now actually loaded (it was named in `--font-mono` but never
+  fetched, so every "mono" number in the app was silently falling back to
+  Consolas / ui-monospace).
+*/
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.02em;
+}

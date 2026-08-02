@@ -19,6 +19,7 @@ export function CursorProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={{ day, setDay, month, setMonth }}>{children}</Ctx.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context hook co-located with its provider, matching device.tsx/Page.tsx
 export function useCursor() {
   const c = useContext(Ctx)
   if (!c) throw new Error('useCursor must be used within CursorProvider')

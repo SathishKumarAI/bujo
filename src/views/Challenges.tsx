@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Flame, Plus, Trophy, Archive, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Input, Segmented } from '../components/ui'
+import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Page } from '../components/shell/Page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 import type { Challenge } from '../lib/types'
+import { useConfirm } from '../components/ConfirmDialog'
 import {
   CHALLENGE_PRESETS, isDayComplete, progressDay, percentComplete,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -23,9 +25,9 @@ export function Challenges() {
     <Page>
       <Card
         title="Challenges"
-        subtitle="Fixed-length discipline challenges · 75 Hard, 90-day & more"
+        subtitle="Fixed-length discipline challenges, 75 Hard, 90-day & more"
         right={
-          <Button variant="primary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
             {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
           </Button>
         }
@@ -48,20 +50,19 @@ export function Challenges() {
             type="button"
             onClick={() => setArchiveOpen((o) => !o)}
             aria-expanded={archiveOpen}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
           >
-            <span className="text-overlay0">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-            <span className="font-display text-base font-medium text-subtext1">Completed &amp; archived</span>
-            <span className="text-xs text-overlay0">· {archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
-            {!archiveOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+            <span className="text-fg-2">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="font-display text-heading font-medium text-fg-1">Completed &amp; archived</span>
+            <span className="text-label text-fg-2">{archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
           </button>
           {archiveOpen && (
             <Card title="Completed & archived" subtitle="Your past challenges">
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-body">
                 {archived.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
-                    <span className="text-subtext1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
-                    <span className="text-xs text-overlay0">{completedDays(data, c, todayISO())} days done</span>
+                  <li key={c.id} className="flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2">
+                    <span className="text-fg-1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
+                    <span className="text-label text-fg-2">{completedDays(data, c, todayISO())} days done</span>
                   </li>
                 ))}
               </ul>
@@ -74,6 +75,7 @@ export function Challenges() {
 }
 
 function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
+  const confirm = useConfirm()
   const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
   const [calOpen, setCalOpen] = useState(false)
   const today = todayISO()
@@ -86,18 +88,22 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2">{c.name}{c.strict && <span className="rounded-full bg-red/15 px-2 py-0.5 text-[10px] font-medium text-red">strict · resets on a miss</span>}</span>}
+      title={<span className="flex items-center gap-2">{c.name}{c.strict && <span className="rounded-full bg-red/15 px-2 py-0.5 text-micro font-medium text-red">strict · resets on a miss</span>}</span>}
       subtitle={notStarted ? `Starts ${c.startDate}` : `Day ${day} of ${c.durationDays}`}
       right={
         <div className="flex items-center gap-1">
-          <span className="mr-1 inline-flex items-center gap-1 text-xs text-peach" title="Current streak"><Flame size={13} />{streak}</span>
-          <Button onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
-          <Button variant="danger" onClick={() => { if (confirm(`Delete the "${c.name}" challenge and its log?`)) removeChallenge(c.id) }} aria-label="Delete challenge"><Trash2 size={14} /></Button>
+          <span className="mr-1 inline-flex items-center gap-1 text-label text-peach" title="Current streak"><Flame size={13} />{streak}</span>
+          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
+            title: `Delete the “${c.name}” challenge?`,
+            description: 'Its progress log and streak are deleted with it. This cannot be undone.',
+            confirmLabel: 'Delete challenge', destructive: true,
+          })) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Trash2 size={14} /></Button>
         </div>
       }
     >
       {finished && (
-        <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-2 text-sm text-green">
+        <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-2 text-body text-green">
           <Trophy size={15} /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
         </p>
       )}
@@ -106,16 +112,16 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       <div className="mb-4 flex items-center gap-4">
         <ProgressRing pct={pct} />
         <div className="flex-1">
-          <div className="mb-1 flex items-center justify-between text-xs text-overlay0">
+          <div className="mb-1 flex items-center justify-between text-label text-fg-2">
             <span>{completedDays(data, c, today)} of {c.durationDays} days done</span>
             <span>{Math.max(0, c.durationDays - completedDays(data, c, today))} to go</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-surface0">
+          <div className="h-2 overflow-hidden rounded-full bg-ink-2">
             <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
           </div>
-          <div className="mt-2 flex gap-4 text-xs">
+          <div className="mt-2 flex gap-4 text-label">
             <span className="text-peach">🔥 {streak} streak</span>
-            <span className="text-subtext0">Day {day} of {c.durationDays}</span>
+            <span className="text-fg-2">Day {day} of {c.durationDays}</span>
           </div>
         </div>
       </div>
@@ -123,14 +129,14 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       {/* Today's check-in */}
       {!notStarted && !finished && (
         <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-subtext1">Today’s rules <span className="text-overlay0">({todayDone.length}/{c.rules.length})</span></p>
+          <p className="mb-2 text-body font-medium text-fg-1">Today’s rules <span className="text-fg-2">({todayDone.length}/{c.rules.length})</span></p>
           <ul className="space-y-1.5">
             {c.rules.map((rule, i) => {
               const ruleDone = todayDone.includes(i)
               return (
                 <li key={i}>
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <span className={ruleDone ? 'text-overlay1 line-through' : 'text-subtext1'}>{rule}</span>
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-line bg-background px-3 py-2 text-body">
+                    <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
                     <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   </label>
                 </li>
@@ -142,8 +148,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
       {/* Stats block */}
       <div className="mb-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-        <Stat label="Current streak" value={`${streak}`} icon="🔥" color="peach" />
-        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="🏅" color="yellow" />
+        <Stat label="Current streak" value={`${streak}`} icon="" color="peach" />
+        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="" color="yellow" />
         <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
         <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
       </div>
@@ -154,16 +160,15 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           type="button"
           onClick={() => setCalOpen((o) => !o)}
           aria-expanded={calOpen}
-          className="flex w-full items-center gap-1.5 text-sm font-medium text-subtext1 hover:text-text"
+          className="flex w-full items-center gap-1.5 text-body font-medium text-fg-1 hover:text-fg-1"
         >
-          <span className="text-overlay0">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
+          <span className="text-fg-2">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
           Calendar
-          {!calOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
         </button>
         {calOpen && (
           <>
             <div className="mt-2 mb-2 flex items-center justify-end">
-              <div className="flex items-center gap-3 text-[10px] text-overlay0">
+              <div className="flex items-center gap-3 text-micro text-fg-2">
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
@@ -179,8 +184,8 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
                 return (
                   <span
                     key={d}
-                    title={`Day ${i + 1} · ${d}${complete ? ' · done' : past ? ' · missed' : isToday ? ' · today' : ''}`}
-                    className="grid h-7 w-7 place-items-center rounded text-[9px]"
+                    title={`Day ${i + 1}, ${d}${complete ? ', done' : past ? ', missed' : isToday ? ', today' : ''}`}
+                    className="grid h-7 w-7 place-items-center rounded text-micro"
                     style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
                   >
                     {i + 1}
@@ -197,9 +202,9 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
 
 function Stat({ label, value, icon, color }: { label: string; value: string; icon?: string; color: string }) {
   return (
-    <div className="rounded-lg border border-surface0 bg-background py-2">
-      <div className="text-lg font-bold" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
-      <div className="text-[10px] text-overlay0">{label}</div>
+    <div className="rounded-lg border border-line bg-background py-2">
+      <div className="text-heading font-medium" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
+      <div className="text-micro text-fg-2">{label}</div>
     </div>
   )
 }
@@ -212,7 +217,7 @@ function ProgressRing({ pct }: { pct: number }) {
     <svg width="68" height="68" viewBox="0 0 68 68" className="shrink-0">
       <circle cx="34" cy="34" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
       <circle cx="34" cy="34" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 34 34)" />
-      <text x="34" y="38" textAnchor="middle" className="fill-text font-bold" fontSize="15">{pct}%</text>
+      <text x="34" y="38" textAnchor="middle" className="fill-text font-medium" fontSize="15">{pct}%</text>
     </svg>
   )
 }
@@ -242,9 +247,9 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
   }
 
   return (
-    <div className="mb-2 space-y-3 rounded-lg border border-border bg-background p-4">
+    <div className="mb-2 space-y-3 rounded-lg border border-line bg-background p-4">
       <div>
-        <p className="mb-1.5 text-xs text-overlay0">Preset</p>
+        <p className="mb-1.5 text-label text-fg-2">Preset</p>
         <Segmented
           value={presetName}
           onChange={choosePreset}
@@ -252,25 +257,25 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block text-sm text-subtext1">Name<Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My challenge" className="mt-1" /></label>
-        <label className="block text-sm text-subtext1">Days<Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1" /></label>
-        <label className="block text-sm text-subtext1">Start<Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1" /></label>
+        <label className="block text-body text-fg-1">Name<Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My challenge" className="mt-1" /></label>
+        <label className="block text-body text-fg-1">Days<Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1" /></label>
+        <label className="block text-body text-fg-1">Start<Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1" /></label>
       </div>
-      <label className="block text-sm text-subtext1">
+      <label className="block text-body text-fg-1">
         Daily rules (one per line)
         <textarea
           value={rules}
           onChange={(e) => setRules(e.target.value)}
           rows={4}
           placeholder={'Two 45-min workouts\nDrink water\nRead 10 pages'}
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
       </label>
-      <label className="flex cursor-pointer items-center justify-between text-sm text-subtext1">
+      <label className="flex cursor-pointer items-center justify-between text-body text-fg-1">
         <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
-      <Button variant="primary" onClick={submit} className="w-full">Start challenge</Button>
+      <Button variant="secondary" onClick={submit} className="w-full">Start challenge</Button>
     </div>
   )
 }

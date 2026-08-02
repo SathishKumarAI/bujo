@@ -33,28 +33,28 @@ export function StreakVsBestCard({
         <div className="relative h-full rounded-full transition-[width] duration-500"
           style={{ width: `${vsBest.pct}%`, background: vsBest.isRecord ? cat('green') : cat('mauve') }} />
       </div>
-      <div className="mt-2 flex items-center justify-between text-xs">
-        <span style={{ color: vsBest.isRecord ? cat('green') : cat('mauve') }}><span className="font-semibold">{vsBest.current}</span>d now</span>
-        <span className="text-overlay1 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
+      <div className="mt-2 flex items-center justify-between text-label">
+        <span style={{ color: vsBest.isRecord ? cat('green') : cat('mauve') }}><span className="font-medium">{vsBest.current}</span>d now</span>
+        <span className="text-fg-2 inline-flex items-center gap-1"><Trophy size={12} style={{ color: cat('peach') }} /> best {vsBest.best}d</span>
       </div>
       {comeback.isComeback && (
-        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-sm" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
+        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-body" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
           <RotateCcw size={16} style={{ color: cat('green') }} className="shrink-0" />
-          <span className="text-subtext0"><span className="font-semibold" style={{ color: cat('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: cat('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
+          <span className="text-fg-2"><span className="font-medium" style={{ color: cat('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: cat('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
         </div>
       )}
       {/* Pace-to-record projection (#298) · concrete calendar target */}
       {!pace.alreadyRecord && pace.matchDate && (
-        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: cat('mauve') + '12', border: `1px solid ${cat('mauve')}33` }}>
+        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-label" style={{ background: cat('mauve') + '12', border: `1px solid ${cat('mauve')}33` }}>
           <Target size={15} style={{ color: cat('mauve') }} className="shrink-0" />
-          <span className="text-subtext0">Stay clean and you’ll <strong style={{ color: cat('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong> · a new record the very next day ({pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
+          <span className="text-fg-2">Stay clean and you’ll <strong style={{ color: cat('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong> · a new record the very next day ({pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
         </div>
       )}
       {/* Record-approach escalation (#321) · the cost of slipping rises near your best */}
       {approachCopy && (
-        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: cat(approachCopy.color) + '14', border: `1px solid ${cat(approachCopy.color)}44` }}>
+        <div className="mt-3 inline-flex w-full items-center gap-2 rounded-lg p-2.5 text-label" style={{ background: cat(approachCopy.color) + '14', border: `1px solid ${cat(approachCopy.color)}44` }}>
           <AlertTriangle size={15} style={{ color: cat(approachCopy.color) }} className="shrink-0" />
-          <span className="text-subtext0">{approachCopy.text}</span>
+          <span className="text-fg-2">{approachCopy.text}</span>
         </div>
       )}
     </Card>

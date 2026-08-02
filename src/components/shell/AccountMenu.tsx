@@ -30,15 +30,15 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Account" title={`Account · ${label}`} className="relative">
+        <Button variant="ghost" size="icon-sm" aria-label="Account" title={`Account, ${label}`} className="relative">
           <UserCircle2 size={18} style={{ color: signedIn ? 'var(--color-green)' : undefined }} />
           {!signedIn && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-yellow" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <div className="px-2 py-1.5">
-          <p className="truncate text-sm font-medium text-text">{label}</p>
-          <p className="text-xs text-overlay0">{signedIn ? 'Synced to your account' : 'Data on this device only'}</p>
+          <p className="truncate text-body font-medium text-fg-1">{label}</p>
+          <p className="text-label text-fg-2">{signedIn ? 'Synced to your account' : 'Data on this device only'}</p>
         </div>
         <DropdownMenuSeparator />
         {signedIn ? (

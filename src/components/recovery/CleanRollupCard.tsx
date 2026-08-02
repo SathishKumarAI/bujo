@@ -12,7 +12,7 @@ export function CleanRollupCard({ rollup }: { rollup: Rollup }) {
         <StatTile compact label="Clean weeks" value={`${rollup.cleanWeeks}/${rollup.totalWeeks}`} color="teal" icon={<CalendarCheck size={14} />} />
         <StatTile compact label="Clean months" value={`${rollup.cleanMonths}/${rollup.totalMonths}`} color="green" icon={<CalendarRange size={14} />} />
       </div>
-      <p className="mt-2 text-xs text-overlay0">{rollup.cleanWeeks} of {rollup.totalWeeks} weeks and {rollup.cleanMonths} of {rollup.totalMonths} month{rollup.totalMonths === 1 ? '' : 's'} stayed fully reset-free.</p>
+      <p className="mt-2 text-label text-fg-2">{rollup.cleanWeeks} of {rollup.totalWeeks} weeks and {rollup.cleanMonths} of {rollup.totalMonths} month{rollup.totalMonths === 1 ? '' : 's'} stayed fully reset-free.</p>
     </Card>
   )
 }

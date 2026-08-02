@@ -9,7 +9,18 @@
 // Exits non-zero if any view fails.
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
-const { chromium } = require('playwright')
+let chromium
+try {
+  ;({ chromium } = require('playwright'))
+} catch {
+  console.error(
+    'This script needs Playwright, which is deliberately not a dependency ' +
+      '(CI installs it with --no-save to keep it out of the app tree).
+' +
+      'Run:  npm i -D --no-save playwright && npx playwright install chromium',
+  )
+  process.exit(1)
+}
 
 const BASE = process.env.BUJO_URL || 'http://localhost:5173'
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'

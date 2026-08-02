@@ -17,7 +17,7 @@ export function MicButton({ onText, className = '' }: { onText: (text: string) =
       aria-pressed={listening}
       title={listening ? 'Listening… tap to stop' : 'Dictate by voice'}
       className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border transition-colors ${
-        listening ? 'animate-pulse border-red bg-red/15 text-red' : 'border-input text-overlay1 hover:text-text'
+        listening ? 'animate-pulse border-red bg-red/15 text-red' : 'border-input text-fg-2 hover:text-fg-1'
       } ${className}`}
     >
       {listening ? <MicOff size={16} /> : <Mic size={16} />}

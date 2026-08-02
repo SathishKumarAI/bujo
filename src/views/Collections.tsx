@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Cake, ChevronDown, ChevronRight } from 'lucide-react'
-import { Button, Card, Empty, Input } from '../components/ui'
+import { Card, Empty, Input } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
@@ -69,37 +70,37 @@ export function Collections() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-5">
+    <div className="mx-auto flex max-w-wide flex-col gap-5">
     <div className="grid items-start gap-5 lg:grid-cols-2">
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
           title="Index"
-          subtitle="The journal's table of contents · jump to any page"
+          subtitle="The journal's table of contents, jump to any page"
           className="md:col-span-2"
           help="A classic bullet-journal Index: every custom collection and every #tag page in one place, with how many entries each holds. Tap a row to open it below."
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Collections</div>
+              <div className="mb-1.5 text-label tracking-wide text-fg-2 uppercase">Collections</div>
               {collectionIndex.length === 0 ? (
                 <Empty>No collections yet.</Empty>
               ) : (
-                <ul className="space-y-0.5 text-sm">
+                <ul className="space-y-0.5 text-body">
                   {collectionIndex.map((c) => (
                     <li key={c.id}>
-                      <button onClick={() => jumpToCollection(c.id)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
+                      <button onClick={() => jumpToCollection(c.id)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-ink-2">
                         <span>{c.icon}</span>
-                        <span className="flex-1 truncate text-subtext1">{c.name}</span>
+                        <span className="flex-1 truncate text-fg-1">{c.name}</span>
                         {c.tasks > 0 && (
                           <span
-                            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                            className="rounded-full px-1.5 py-0.5 text-micro font-medium"
                             style={{ background: cat('green') + '22', color: cat('green') }}
                             title={`${c.done} of ${c.tasks} tasks done`}
                           >
                             {c.done}/{c.tasks}
                           </span>
                         )}
-                        <span className="w-5 text-right text-overlay0">{c.count}</span>
+                        <span className="w-5 text-right text-fg-2">{c.count}</span>
                       </button>
                     </li>
                   ))}
@@ -107,16 +108,16 @@ export function Collections() {
               )}
             </div>
             <div>
-              <div className="mb-1.5 text-xs tracking-wide text-overlay0 uppercase">Tag pages</div>
+              <div className="mb-1.5 text-label tracking-wide text-fg-2 uppercase">Tag pages</div>
               {tags.length === 0 ? (
                 <Empty>No tags yet.</Empty>
               ) : (
-                <ul className="space-y-0.5 text-sm">
+                <ul className="space-y-0.5 text-body">
                   {tags.slice(0, 20).map(({ tag, entries }) => (
                     <li key={tag}>
-                      <button onClick={() => jumpToTag(tag)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface0">
+                      <button onClick={() => jumpToTag(tag)} className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-ink-2">
                         <span className="flex-1 truncate" style={{ color: cat('sapphire') }}>#{tag}</span>
-                        <span className="text-overlay0">{entries.length}</span>
+                        <span className="text-fg-2">{entries.length}</span>
                       </button>
                     </li>
                   ))}
@@ -148,11 +149,11 @@ export function Collections() {
         {future.length === 0 ? (
           <Empty>Nothing scheduled. Add a future-dated entry from any day.</Empty>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-1 text-body">
             {future.map((e) => (
               <li key={e.id} className="flex gap-2">
-                <span className="w-24 shrink-0 text-overlay0">{e.date}</span>
-                <span className="text-subtext1">
+                <span className="w-24 shrink-0 text-fg-2">{e.date}</span>
+                <span className="text-fg-1">
                   {e.type === 'event' ? '○' : '·'} {e.text}
                 </span>
               </li>
@@ -164,7 +165,7 @@ export function Collections() {
       <span id="bujo-collections" className="-mt-5 block scroll-mt-20 md:col-span-2" aria-hidden />
       <Card
         title="Custom collections"
-        subtitle="Free-form pages · book lists, packing, projects…"
+        subtitle="Free-form pages, book lists, packing, projects…"
         className="md:col-span-2"
       >
         <div className="mb-3 flex flex-wrap gap-2">
@@ -172,10 +173,10 @@ export function Collections() {
             value={colIcon}
             onChange={(e) => setColIcon(e.target.value.slice(0, 2))}
             aria-label="Collection icon"
-            className="w-12 rounded-lg border border-surface1 bg-base px-2 text-center text-lg text-text"
+            className="w-12 rounded-lg border border-line-strong bg-ink-0 px-2 text-center text-heading text-fg-1"
           />
           <Input value={colName} onChange={(e) => setColName(e.target.value)} placeholder="Collection name" className="max-w-xs" />
-          <Button variant="primary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }}>
+          <Button variant="secondary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-lg">
             New collection
           </Button>
         </div>
@@ -187,7 +188,7 @@ export function Collections() {
             {data.collections.map((c) => (
               <span
                 key={c.id}
-                className="group inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
+                className="group inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-body"
                 style={{ borderColor: openCol === c.id ? cat('mauve') : cat('surface1') }}
               >
                 <button onClick={() => setOpenCol(openCol === c.id ? null : c.id)} className="inline-flex items-center gap-2" style={{ color: cat('subtext1') }}>
@@ -196,7 +197,7 @@ export function Collections() {
                 <button
                   onClick={() => { removeCollection(c.id); if (openCol === c.id) setOpenCol(null) }}
                   aria-label={`Delete ${c.name}`}
-                  className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red"
+                  className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"
                 >×</button>
               </span>
             ))}
@@ -204,13 +205,13 @@ export function Collections() {
         )}
 
         {openCol && (
-          <div className="mt-4 border-t border-surface0 pt-3">
+          <div className="mt-4 border-t border-line pt-3">
             <form
               className="mb-2 flex gap-2"
               onSubmit={(e) => { e.preventDefault(); if (colEntry.trim()) { addEntry(todayISO(), colEntry, openCol); setColEntry('') } }}
             >
               <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
-              <Button type="submit" variant="primary">Add</Button>
+              <Button type="submit" variant="secondary" className="press-3d rounded-lg">Add</Button>
             </form>
             {(() => {
               const p = collectionProgress(data.entries, openCol)
@@ -218,11 +219,11 @@ export function Collections() {
               const pct = Math.round(p.rate * 100)
               return (
                 <div className="mb-3" title={`${p.done} of ${p.total} tasks done`}>
-                  <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                  <div className="mb-1 flex items-baseline justify-between text-label text-fg-2">
                     <span>Checklist</span>
                     <span><b style={{ color: cat('green') }}>{p.done}/{p.total}</b> · {pct}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                  <div className="h-2 overflow-hidden rounded-full bg-ink-2">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat('green') }} />
                   </div>
                 </div>
@@ -248,12 +249,11 @@ export function Collections() {
           type="button"
           onClick={() => setPeopleOpen((o) => !o)}
           aria-expanded={peopleOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-overlay0">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-          <span className="font-display text-base font-medium text-subtext1">People</span>
-          <span className="text-xs text-overlay0">· friends &amp; birthdays</span>
-          {!peopleOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          <span className="text-fg-2">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-heading font-medium text-fg-1">People</span>
+          <span className="text-label text-fg-2">friends &amp; birthdays</span>
         </button>
         {peopleOpen && (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -261,24 +261,24 @@ export function Collections() {
             <Card title="Birthdays" subtitle="Never miss one">
               <div className="mb-3 flex flex-wrap gap-2">
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[40%]" />
-                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-lg border border-surface1 bg-base px-2 text-sm text-text">
+                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-lg border border-line-strong bg-ink-0 px-2 text-body text-fg-1">
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
                 </select>
-                <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-surface1 bg-base px-2 text-sm text-text" aria-label="Day" />
-                <Button variant="primary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }}>Add</Button>
+                <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-line-strong bg-ink-0 px-2 text-body text-fg-1" aria-label="Day" />
+                <Button variant="secondary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-lg">Add</Button>
               </div>
               {birthdays.length === 0 ? (
                 <Empty>No birthdays yet.</Empty>
               ) : (
-                <ul className="space-y-1 text-sm">
+                <ul className="space-y-1 text-body">
                   {birthdays.map((b) => (
                     <li key={b.id} className="group flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-subtext1">
+                      <span className="inline-flex items-center gap-1.5 text-fg-1">
                         <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
-                        <span className="ml-1 text-overlay0">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
-                        {b.fromFriend && <span className="text-[10px] text-overlay0">· friend</span>}
+                        <span className="ml-1 text-fg-2">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
+                        {b.fromFriend && <span className="text-micro text-fg-2">· friend</span>}
                       </span>
-                      {!b.fromFriend && <button onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>}
+                      {!b.fromFriend && <Button variant="ghost" size="icon-sm" onClick={() => removeBirthday(b.id)} aria-label={`Remove ${b.name}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>}
                     </li>
                   ))}
                 </ul>
@@ -294,12 +294,11 @@ export function Collections() {
           type="button"
           onClick={() => setAutoPagesOpen((o) => !o)}
           aria-expanded={autoPagesOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-overlay0">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-          <span className="font-display text-base font-medium text-subtext1">Auto-pages</span>
-          <span className="text-xs text-overlay0">· memories &amp; tag pages</span>
-          {!autoPagesOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          <span className="text-fg-2">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-heading font-medium text-fg-1">Auto-pages</span>
+          <span className="text-label text-fg-2">memories &amp; tag pages</span>
         </button>
         {autoPagesOpen && (
           <div className="space-y-5">
@@ -322,7 +321,7 @@ export function Collections() {
             <span id="bujo-tags" className="-mt-5 block scroll-mt-20" aria-hidden />
             <Card
               title="Tags"
-              subtitle="Auto-collections · every #tag, tap to open its page"
+              subtitle="Auto-collections, every #tag, tap to open its page"
               help="Tag pages are built automatically from the #tags in your entries — no setup. Tap a tag to see every entry that mentions it, across days and collections."
             >
               {tags.length === 0 ? (
@@ -333,24 +332,24 @@ export function Collections() {
                     <button
                       key={tag}
                       onClick={() => setOpenTag(openTag === tag ? null : tag)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm"
+                      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-body"
                       style={{
                         borderColor: openTag === tag ? cat('sapphire') : cat('surface1'),
                         color: cat('sapphire'),
                       }}
                     >
                       #{tag}
-                      <span className="text-xs text-overlay0">{entries.length}</span>
+                      <span className="text-label text-fg-2">{entries.length}</span>
                     </button>
                   ))}
                 </div>
               )}
 
               {openTag && (
-                <div className="mt-4 border-t border-surface0 pt-3">
-                  <div className="mb-1 text-sm text-subtext1">
+                <div className="mt-4 border-t border-line pt-3">
+                  <div className="mb-1 text-body text-fg-1">
                     <span style={{ color: cat('sapphire') }}>#{openTag}</span>
-                    <span className="ml-2 text-overlay0">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
+                    <span className="ml-2 text-fg-2">{openTagEntries.length} entr{openTagEntries.length === 1 ? 'y' : 'ies'}</span>
                   </div>
                   {openTagEntries.length === 0 ? (
                     <Empty>No entries with this tag.</Empty>

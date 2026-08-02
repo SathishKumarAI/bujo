@@ -64,11 +64,11 @@ function HabitGridCard({
     <Card className="!p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className="shrink-0">{avoid ? <Ban size={15} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-sm font-medium hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-text'}`}>{h.name}</button>
-        <span className="inline-flex shrink-0 items-center gap-0.5 text-xs tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }}>
+        <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-body font-medium hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
+        <span className="inline-flex shrink-0 items-center gap-0.5 text-label tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }}>
           {streak > 0 ? <>{avoid ? <ShieldCheck size={12} /> : <Flame size={12} />}{streak}</> : '—'}
         </span>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={13} /></button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={13} /></button>
       </div>
       <div className="overflow-x-auto">
         <div
@@ -88,8 +88,8 @@ function HabitGridCard({
                 key={d}
                 disabled={!editable}
                 onClick={() => logDay(d)}
-                aria-label={`${h.name} ${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
-                title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                aria-label={`${h.name} ${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
+                title={`${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
                 className="h-3.5 w-3.5 rounded-[3px] disabled:cursor-default enabled:hover:ring-1 enabled:hover:ring-overlay0"
                 style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
               />

@@ -25,7 +25,7 @@ export function VideoLink({
       href={videoUrl(name, yt)}
       target="_blank"
       rel="noreferrer"
-      className={cn('inline-flex items-center gap-1 text-xs text-red hover:underline', className)}
+      className={cn('inline-flex items-center gap-1 text-label text-red hover:underline', className)}
       onClick={(e) => e.stopPropagation()}
     >
       <Play size={size} /> {label}

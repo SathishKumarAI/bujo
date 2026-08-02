@@ -33,27 +33,27 @@ export function TagManager() {
           {tags.map(([tag, n]) => (
             <li key={tag}>
               {editing === tag ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-mauve bg-base px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full border border-mauve bg-ink-0 px-1.5 py-0.5">
                   <span className="text-sky">#</span>
                   <input
                     autoFocus
                     value={val}
                     onChange={(e) => setVal(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') commit(tag); if (e.key === 'Escape') { setEditing(null); setVal('') } }}
-                    className="w-24 bg-transparent text-sm text-text focus:outline-none"
+                    className="w-24 bg-transparent text-body text-fg-1 focus:outline-none"
                     aria-label={`Rename tag ${tag}`}
                   />
                   <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Check size={13} className="text-green" /></button>
-                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-overlay0" /></button>
+                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-fg-2" /></button>
                 </span>
               ) : (
                 <button
                   onClick={() => { setEditing(tag); setVal(tag) }}
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm hover:ring-1 hover:ring-mauve"
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-body hover:ring-1 hover:ring-mauve"
                   style={{ background: cat('surface0'), color: cat('sapphire') }}
                   title="Click to rename / merge"
                 >
-                  #{tag}<sup className="ml-0.5 text-[10px] text-overlay0">{n}</sup>
+                  #{tag}<sup className="ml-0.5 text-micro text-fg-2">{n}</sup>
                 </button>
               )}
             </li>

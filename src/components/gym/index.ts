@@ -1,4 +1,4 @@
-export { CollapsibleSection } from './CollapsibleSection'
+export { CollapsibleSection } from '../CollapsibleSection'
 export { RepPRCard } from './RepPRCard'
 export { MovementRadar } from './MovementRadar'
 export { RecoveryMap } from './RecoveryMap'

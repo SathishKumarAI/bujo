@@ -5,11 +5,9 @@ import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { Ban, ShieldCheck } from 'lucide-react'
+import { DayGrid } from './ui/day-grid'
 
 const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
-// Habit-colored intensity per level (0 = empty); mirrors Heatmap's opacity ramp.
-const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
-
 /**
  * Activity layout · one row per habit with a GitHub-style intensity heatmap
  * (last 16 weeks) plus a type-aware "today" control. An alternative to the
@@ -40,7 +38,7 @@ export function ActivityLayout({
     <div className="space-y-4">
       {cats.map((category) => (
         <div key={category}>
-          <p className="mb-1.5 text-[10px] tracking-wide text-overlay0 uppercase">{category}</p>
+          <p className="mb-1.5 text-micro tracking-wide text-fg-2 uppercase">{category}</p>
           <div className="space-y-1.5">
             {habits
               .filter((h) => h.category === category)
@@ -91,7 +89,6 @@ function ActivityRow({
   const type = h.type ?? 'check'
   const target = habitTarget(h)
   const avoid = !!h.avoid
-  const accent = avoid ? cat('red') : cat(h.color)
   const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
   const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
   const days = WEEKS * 7
@@ -120,48 +117,49 @@ function ActivityRow({
             onDragStart={reorder.onDragStart}
             onDragEnd={reorder.onDragEnd}
             title="Drag to reorder"
-            className="shrink-0 cursor-grab text-overlay0 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+            className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
           ><GripVertical size={11} /></span>
         )}
         <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-        <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-sm hover:text-text hover:underline ${h.archived ? 'text-overlay0 line-through' : 'text-subtext1'}`}>{h.name}</button>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-overlay0 hover:text-mauve"><Activity size={11} /></button>
+        <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-body hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={11} /></button>
       </div>
-      <span className="w-9 shrink-0 text-[10px] tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
+      <span className="w-9 shrink-0 text-micro tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
         {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}
       </span>
       {h.weeklyGoal ? (
-        <span className="w-10 shrink-0 text-[10px] tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+        <span className="w-10 shrink-0 text-micro tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
           {weekCount}/{h.weeklyGoal}wk
         </span>
       ) : <span className="w-10 shrink-0" />}
 
       <div className="min-w-0 flex-1 overflow-x-auto">
-        <div
-          className="grid grid-flow-col grid-rows-7 gap-0.5"
-          role="img"
-          aria-label={`${h.name} activity heatmap, last ${WEEKS} weeks`}
-        >
-          {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-2.5 w-2.5" />)}
-          {Array.from({ length: days }).map((_, i) => {
+        {/* Shares `DayGrid` with the Stats heatmap — same grid, ramp and cell
+            shape, different data and interactivity. This row stays clickable;
+            rating habits are logged with the control on the right, so their
+            cells render but don't accept a click. */}
+        <DayGrid
+          days={Array.from({ length: days }, (_, i) => {
             const d = addDays(start, i)
-            const future = d > today
-            const before = d < h.startedOn
+            const outside = d > today || d < h.startedOn
             const level = habitIntensity(type, habitValueOn(data, h, d), target)
-            const editable = !future && !before && type !== 'rating'
-            return (
-              <button
-                key={d}
-                disabled={!editable}
-                onClick={() => logDay(d)}
-                aria-label={`${h.name} ${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
-                title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
-                className="h-2.5 w-2.5 rounded-[2px] disabled:cursor-default enabled:hover:ring-1 enabled:hover:ring-overlay0"
-                style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
-              />
-            )
+            const state = level ? (avoid ? ', slip' : ', done') : ''
+            return {
+              date: d,
+              level,
+              blank: outside,
+              disabled: type === 'rating',
+              title: `${d}${state}`,
+              srLabel: `${h.name} ${d}${state}`,
+            }
           })}
-        </div>
+          pad={pad}
+          color={avoid ? 'red' : h.color}
+          size={10}
+          gap={2}
+          label={`${h.name} activity heatmap, last ${WEEKS} weeks`}
+          onDayClick={logDay}
+        />
       </div>
 
       <div className="w-24 shrink-0 text-right">
@@ -200,11 +198,11 @@ function TodayControl({
       <button
         onClick={() => onSetValue(today, h.id, next)}
         aria-label={`${h.name}: ${value} of ${target}${h.unit ? ' ' + h.unit : ''}, tap to add`}
-        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-label"
         style={{ borderColor: value > 0 ? accent : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
         title={`Tap to log${h.unit ? ' (' + h.unit + ')' : ''}`}
       >
-        {value}/{target}{h.unit ? <span className="text-overlay0">{h.unit === 'min' ? 'm' : ''}</span> : null}
+        {value}/{target}{h.unit ? <span className="text-fg-2">{h.unit === 'min' ? 'm' : ''}</span> : null}
       </button>
     )
   }
@@ -217,7 +215,7 @@ function TodayControl({
       className="inline-grid h-6 w-6 place-items-center rounded-full border"
       style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
-      {on && <span className="text-[10px]" style={{ color: cat('crust') }}>✓</span>}
+      {on && <span className="text-micro" style={{ color: cat('crust') }}>✓</span>}
     </button>
   )
 }

@@ -1,0 +1,169 @@
+import { useState } from 'react'
+import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
+import { Ring } from '../components/ui/ring'
+import { Page } from '../components/shell/Page'
+import { Stepper } from '../components/fields/Stepper'
+
+/**
+ * `/kitchen-sink` — every primitive, variant and state on one page.
+ *
+ * Asked for by the redesign brief (step 2) so the design system can be reviewed
+ * in one place instead of hunting for a screen that happens to render a given
+ * variant. Deep-link: `?view=kitchen-sink`.
+ *
+ * Keep this honest: when a primitive gains a variant, add it here. A kitchen
+ * sink that lags the system is worse than none, because it looks authoritative.
+ */
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-line py-3 last:border-b-0">
+      <span className="w-40 shrink-0 text-label text-fg-3">{label}</span>
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
+    </div>
+  )
+}
+
+export function KitchenSink() {
+  const [seg, setSeg] = useState<'a' | 'b' | 'c'>('a')
+  const [n, setN] = useState(3)
+
+  return (
+    <Page width="read">
+      <Card title="Type scale" subtitle="Seven steps. Nothing outside this scale.">
+        <div className="space-y-2">
+          <p className="font-display text-display">Display 32 — Fraunces</p>
+          <p className="font-display text-title">Title 22 — Fraunces</p>
+          <p className="text-heading">Heading 17 — Instrument Sans</p>
+          <p className="text-body">Body 15 — the workhorse. Most prose and UI text lands here.</p>
+          <p className="text-label text-fg-2">Label 13 — form labels, secondary UI</p>
+          <p className="text-caption text-fg-3">Caption 11 — captions and metadata</p>
+          <p className="text-micro text-fg-3">Micro 10 — data chrome only: heatmap cells, axis labels. Never prose.</p>
+        </div>
+      </Card>
+
+      <Card title="Numerals" subtitle="Every number is mono + tabular, so digits never change width.">
+        <div className="space-y-2">
+          <p className="num text-title">01:23:45</p>
+          <p className="num text-body">1,204 steps · 87.5 kg · 12 reps × 3 sets</p>
+          <p className="text-body">Without .num — 1,204 steps · 87.5 kg (proportional, jitters on change)</p>
+        </div>
+      </Card>
+
+      <Card title="Foreground tiers" subtitle="All three clear WCAG AA on both page and card, in all five themes.">
+        <div className="space-y-1">
+          <p className="text-body text-fg-1">fg-1 — primary text</p>
+          <p className="text-body text-fg-2">fg-2 — secondary text</p>
+          <p className="text-body text-fg-3">fg-3 — tertiary text (dawn collapses this to fg-2; see TASKS.md §H14)</p>
+        </div>
+      </Card>
+
+      <Card title="Surfaces">
+        {/* Classes are written out, not interpolated — Tailwind scans source
+            text, so a computed `bg-${s}` produces no CSS at all. */}
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ['ink-0', 'bg-ink-0'],
+              ['ink-1', 'bg-ink-1'],
+              ['ink-2', 'bg-ink-2'],
+              ['ink-3', 'bg-ink-3'],
+            ] as const
+          ).map(([name, cls]) => (
+            <div key={name} className={`grid h-16 w-28 place-items-center rounded-lg border border-line ${cls}`}>
+              <span className="text-caption text-fg-2">{name}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Buttons" subtitle="One system. Exactly one accent-filled primary per screen.">
+        <Row label="variant">
+          <Button>default</Button>
+          <Button variant="secondary">secondary</Button>
+          <Button variant="outline">outline</Button>
+          <Button variant="ghost">ghost</Button>
+          <Button variant="link">link</Button>
+          <Button variant="destructive">destructive</Button>
+        </Row>
+        <Row label="size">
+          <Button size="sm">small</Button>
+          <Button>default</Button>
+          <Button size="lg">large</Button>
+        </Row>
+        <Row label="disabled">
+          <Button disabled>default</Button>
+          <Button variant="secondary" disabled>
+            secondary
+          </Button>
+          <Button variant="destructive" disabled>
+            destructive
+          </Button>
+        </Row>
+        <Row label="keyboard focus">
+          <span className="text-caption text-fg-3">Tab through the row above — every control shows the global focus ring.</span>
+        </Row>
+      </Card>
+
+      <Card title="Inputs">
+        <Row label="Input">
+          <Input placeholder="Placeholder text" />
+        </Row>
+        <Row label="Input (disabled)">
+          <Input placeholder="Disabled" disabled />
+        </Row>
+        <Row label="Textarea">
+          <Textarea placeholder="Multi-line…" rows={2} />
+        </Row>
+        <Row label="Stepper">
+          <Stepper label="Reps" value={n} onChange={(v) => setN(v ?? 0)} min={0} max={20} />
+        </Row>
+        <Row label="Segmented">
+          <Segmented
+            value={seg}
+            onChange={setSeg}
+            options={[
+              { value: 'a', label: 'Day' },
+              { value: 'b', label: 'Week' },
+              { value: 'c', label: 'Month' },
+            ]}
+          />
+        </Row>
+      </Card>
+
+      <Card title="Data display">
+        <Row label="StatTile">
+          <StatTile label="Streak" value="12 days" />
+          <StatTile label="Best ever" value="31 days" color="green" />
+        </Row>
+        <Row label="Ring">
+          <Ring value={72} label="Today" suffix="%" />
+          <Ring value={30} max={100} color="green" label="Week" suffix="%" />
+        </Row>
+        <Row label="Pill">
+          <Pill>neutral</Pill>
+          <Pill color="green">success</Pill>
+          <Pill color="peach">warning</Pill>
+          <Pill color="red">danger</Pill>
+        </Row>
+      </Card>
+
+      <Card title="Empty state">
+        <Empty>Nothing logged yet. Add your first entry to see it here.</Empty>
+      </Card>
+
+      <Card title="Container tiers" subtitle="Two maxima, one rhythm.">
+        <div className="space-y-2 text-body">
+          <p>
+            <span className="num">820px</span> — <code className="text-label">read</code>: journal, plan, logging, prose.
+          </p>
+          <p>
+            <span className="num">1180px</span> — <code className="text-label">wide</code>: Insights, Stats, Monthly, Trackers, Collections, Settings.
+          </p>
+          <p className="text-caption text-fg-3">This page is on the read tier.</p>
+        </div>
+      </Card>
+    </Page>
+  )
+}

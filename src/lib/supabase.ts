@@ -18,7 +18,20 @@ export const supabaseEnabled = () => supabase != null
  * button when its provider isn't configured, so users don't get redirected to
  * a raw "provider is not enabled" error page.
  */
-export async function providerEnabled(provider: string): Promise<boolean> {
+// One probe per provider per page load. React StrictMode double-invokes effects,
+// so this fired `/auth/v1/settings` twice on every boot — two requests, and two
+// identical failures in the console when the project is unreachable.
+const probeCache = new Map<string, Promise<boolean>>()
+
+export function providerEnabled(provider: string): Promise<boolean> {
+  const hit = probeCache.get(provider)
+  if (hit) return hit
+  const run = probeProvider(provider)
+  probeCache.set(provider, run)
+  return run
+}
+
+async function probeProvider(provider: string): Promise<boolean> {
   if (!URL || !ANON) return false
   try {
     const r = await fetch(`${URL}/auth/v1/settings`, { headers: { apikey: ANON } })

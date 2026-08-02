@@ -1,4 +1,4 @@
-export { CollapsibleSection } from './CollapsibleSection'
+export { CollapsibleSection } from '../CollapsibleSection'
 export { StreakVsBestCard } from './StreakVsBestCard'
 export { SelfEfficacyCard } from './SelfEfficacyCard'
 export { StreaksSavedCard } from './StreaksSavedCard'

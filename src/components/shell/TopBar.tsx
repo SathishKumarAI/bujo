@@ -45,31 +45,31 @@ export function TopBar({
   const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
 
   return (
-    <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-card/80 px-4 py-2.5 backdrop-blur">
+    <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-card/80 px-4 py-2.5 backdrop-blur">
       <button onClick={onMenu} aria-label="Toggle menu" className="text-foreground md:hidden">
         <Menu size={20} />
       </button>
 
       <div className="min-w-0">
-        <h1 className="font-display text-lg leading-tight font-semibold text-foreground">{chrome.title}</h1>
-        {chrome.subtitle && <p className="truncate text-xs text-muted-foreground">{chrome.subtitle}</p>}
+        <h1 className="font-display text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
+        {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
       </div>
 
       {/* Contextual help — what this page does, pulled from the view registry. */}
       {chrome.help && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-overlay0 hover:text-foreground">
+            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-fg-2 hover:text-foreground">
               <HelpCircle size={16} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80">
             <div className="px-2 py-1.5">
-              <p className="mb-1 font-display text-sm font-semibold text-foreground">{chrome.title}</p>
-              <p className="text-xs leading-relaxed text-subtext0">{chrome.help}</p>
+              <p className="mb-1 font-display text-body font-medium text-foreground">{chrome.title}</p>
+              <p className="text-label leading-relaxed text-fg-2">{chrome.help}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('help')} className="text-xs text-blue">Open the full guide →</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onNavigate('help')} className="text-label text-blue">Open the full guide →</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -126,14 +126,14 @@ export function TopBar({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" aria-label={`${recs.length} suggestions`} title="Suggestions" className="relative hidden sm:inline-flex">
                 <Lightbulb size={16} className="text-yellow" />
-                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-yellow px-0.5 text-[9px] font-bold text-crust">{recs.length}</span>
+                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
               {recs.map((r) => (
                 <DropdownMenuItem key={r.id} onClick={() => r.action && onNavigate(r.action.view)} className="flex-col items-start gap-1 py-2">
-                  <span className="text-sm text-subtext1">{r.text}</span>
-                  {r.action && <span className="text-xs text-blue">→ {r.action.label}</span>}
+                  <span className="text-body text-fg-1">{r.text}</span>
+                  {r.action && <span className="text-label text-blue">→ {r.action.label}</span>}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -176,7 +176,7 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <div className="px-2 py-1.5 text-[10px] tracking-wider text-overlay0 uppercase">Theme</div>
+            <div className="px-2 py-1.5 text-micro tracking-wider text-fg-2 uppercase">Theme</div>
             {(['mocha', 'latte', 'neon', 'system'] as const).map((th) => (
               <DropdownMenuItem key={th} onClick={() => setSettings({ theme: th })}>
                 <span className={data.settings.theme === th ? 'text-mauve' : ''}>{data.settings.theme === th ? '● ' : '○ '}</span>

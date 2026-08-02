@@ -29,7 +29,7 @@ export function EmojiScale({
 
   return (
     <div className={cn('inline-flex flex-col gap-0.5', className)}>
-      {label && <span className="text-[10px] text-overlay0">{label}</span>}
+      {label && <span className="text-micro text-fg-2">{label}</span>}
       <div className="inline-flex gap-1">
         {FACES.map((f) => (
           <button
@@ -39,7 +39,7 @@ export function EmojiScale({
             aria-pressed={active === f.value}
             onClick={() => onChange(active === f.value ? undefined : f.value)}
             className={cn(
-              'grid h-9 w-9 place-items-center rounded-lg border text-lg transition-transform active:scale-95',
+              'grid h-9 w-9 place-items-center rounded-lg border text-heading transition-transform active:scale-95',
               active === f.value ? 'border-mauve bg-mauve/15 scale-110' : 'border-input opacity-60 hover:opacity-100',
             )}
           >

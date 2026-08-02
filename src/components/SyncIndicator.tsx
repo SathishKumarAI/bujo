@@ -29,7 +29,7 @@ export function SyncIndicator() {
       : { Icon: CloudAlert, color: 'red', text: 'Sync failed' }
   const Icon = meta.Icon
   return (
-    <div className="sheet-up fixed right-3 bottom-20 z-40 inline-flex items-center gap-1.5 rounded-full border border-border bg-card/95 px-3 py-1.5 text-xs shadow-lg backdrop-blur md:bottom-4" style={{ color: cat(meta.color) }}>
+    <div className="sheet-up fixed right-3 bottom-20 z-40 inline-flex items-center gap-1.5 rounded-full border border-line bg-card/95 px-3 py-1.5 text-label shadow-lg backdrop-blur md:bottom-4" style={{ color: cat(meta.color) }}>
       <Icon size={14} className={state === 'syncing' ? 'animate-pulse' : ''} /> {meta.text}
     </div>
   )

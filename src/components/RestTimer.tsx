@@ -46,7 +46,7 @@ export function RestTimer() {
           <circle cx="18" cy="18" r="16" fill="none" stroke={cat('surface0')} strokeWidth="3" />
           <circle cx="18" cy="18" r="16" fill="none" stroke={done ? cat('green') : cat('mauve')} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(pct / 100) * 100.5} 100.5`} />
         </svg>
-        <span className="font-mono text-sm text-text">{mm}:{ss}</span>
+        <span className="font-mono text-body text-fg-1">{mm}:{ss}</span>
       </div>
 
       <div className="flex flex-wrap gap-1">
@@ -54,7 +54,7 @@ export function RestTimer() {
           <button
             key={s}
             onClick={() => start(s)}
-            className="rounded-lg px-2.5 py-1 text-xs"
+            className="rounded-lg px-2.5 py-1 text-label"
             style={{ background: total === s ? cat('mauve') : cat('surface0'), color: total === s ? cat('crust') : cat('subtext1') }}
           >
             {s < 120 ? `${s}s` : `${s / 60}m`}
@@ -63,15 +63,15 @@ export function RestTimer() {
       </div>
 
       <div className="flex gap-1">
-        <button onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="grid h-8 w-8 place-items-center rounded-lg bg-surface0 text-text hover:bg-surface1">
+        <button onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="grid h-8 w-8 place-items-center rounded-lg bg-ink-2 text-fg-1 hover:bg-ink-3">
           {running ? <Pause size={15} /> : <Play size={15} />}
         </button>
-        <button onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="grid h-8 w-8 place-items-center rounded-lg bg-surface0 text-text hover:bg-surface1">
+        <button onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="grid h-8 w-8 place-items-center rounded-lg bg-ink-2 text-fg-1 hover:bg-ink-3">
           <RotateCcw size={15} />
         </button>
       </div>
 
-      {done && <span className="inline-flex items-center gap-1 text-sm" style={{ color: cat('green') }}><Timer size={14} /> Rest done · go!</span>}
+      {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: cat('green') }}><Timer size={14} /> Rest done · go!</span>}
     </div>
   )
 }

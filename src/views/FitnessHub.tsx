@@ -25,15 +25,15 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
   const split = useMemo(() => splitMeta(nextSplit(data)), [data])
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4">
+    <div className="mx-auto max-w-read space-y-4">
       {/* 1) Primary navigation between the two fitness sub-views. */}
       <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
         {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
-              tab === id ? 'bg-primary text-primary-foreground' : 'text-subtext1 hover:text-text'
+            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-body font-medium transition-colors ${
+              tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
             <Icon size={16} /> {label}
@@ -46,15 +46,15 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
         <ActiveMinutesRing minutes={minutes} goal={goal} />
         <button
           onClick={() => setTab('strength')}
-          className="flex items-center gap-3 rounded-xl border border-surface0 bg-base px-4 py-3 text-left transition-colors hover:border-surface2"
+          className="flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
           title="Open the Strength tab on this split"
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg" style={{ background: cat(split.color) + '22' }}>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-heading" style={{ background: cat(split.color) + '22' }}>
             {split.icon}
           </span>
           <span className="min-w-0">
-            <span className="block text-[11px] uppercase tracking-wide text-overlay0">Next up</span>
-            <span className="block truncate font-semibold text-text">
+            <span className="block text-caption uppercase tracking-wide text-fg-2">Next up</span>
+            <span className="block truncate font-medium text-fg-1">
               {split.label} day
             </span>
           </span>
@@ -64,7 +64,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
       {tab === 'cardio' ? (
         <Fitness />
       ) : (
-        <Suspense fallback={<p className="py-10 text-center text-sm text-overlay0">Loading strength tools…</p>}>
+        <Suspense fallback={<p className="py-10 text-center text-body text-fg-2">Loading strength tools…</p>}>
           <Gym />
         </Suspense>
       )}
@@ -85,7 +85,7 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
   const circ = 2 * Math.PI * r
   const color = met ? cat('green') : cat('peach')
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-surface0 bg-base px-4 py-3">
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-4 py-3">
       <div className="relative shrink-0" role="img" aria-label={`This week: ${minutes} of ${goal} active minutes`}>
         <svg width={size} height={size} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={cat('surface0')} strokeWidth={stroke} />
@@ -101,18 +101,18 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
             strokeDashoffset={circ * (1 - pct)}
           />
         </svg>
-        <span className="absolute inset-0 grid place-items-center text-sm font-bold" style={{ color }}>
+        <span className="absolute inset-0 grid place-items-center text-body font-medium" style={{ color }}>
           {Math.round(pct * 100)}%
         </span>
       </div>
       <div className="min-w-0">
-        <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-overlay0">
+        <span className="flex items-center gap-1 text-caption uppercase tracking-wide text-fg-2">
           <Timer size={12} /> This week
         </span>
-        <span className="block font-semibold text-text">
-          {minutes}<span className="text-overlay0"> / {goal} min</span>
+        <span className="block font-medium text-fg-1">
+          {minutes}<span className="text-fg-2"> / {goal} min</span>
         </span>
-        <span className="block text-xs" style={{ color }}>
+        <span className="block text-label" style={{ color }}>
           {met ? 'Goal met 🎉' : `${Math.max(0, goal - minutes)} min to go`}
         </span>
       </div>

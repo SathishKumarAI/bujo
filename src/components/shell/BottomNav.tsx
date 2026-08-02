@@ -42,7 +42,7 @@ export function BottomNav({
   const hidden = useHideOnScroll()
 
   return (
-    <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-border bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {tabs.map((n) => {
         const Icon = n.icon as LucideIcon
         const active = view === n.id
@@ -52,7 +52,7 @@ export function BottomNav({
             onClick={() => onNavigate(n.id)}
             aria-label={n.label}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${active ? 'text-primary' : 'text-overlay1'}`}
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
             <Icon size={20} aria-hidden />

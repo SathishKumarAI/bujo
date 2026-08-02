@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
-import { Button, Card, Input, Textarea } from '../components/ui'
+import { Card, Input, Textarea } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
@@ -29,7 +30,7 @@ export function Monthly() {
       setWeather(todayISO(), w)
       if (city) setMonthly(ym, { location: city })
     } catch {
-      alert('Could not get location/weather · permission denied or offline.')
+      alert('Could not get location/weather, permission denied or offline.')
     } finally {
       setGeoBusy(false)
     }
@@ -92,10 +93,10 @@ export function Monthly() {
   ]
 
   return (
-    <Page>
+    <Page width="wide">
       {/* Compact "this month" summary · a single thin bar. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card/60 px-3 py-1.5 text-xs text-subtext0">
-        <span className="font-medium text-subtext1">This month</span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-card/60 px-3 py-1.5 text-label text-fg-2">
+        <span className="font-medium text-fg-1">This month</span>
         <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
         <span><b style={{ color: cat('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
         <span><b style={{ color: cat('blue') }}>{journaledDays}</b> days</span>
@@ -104,7 +105,7 @@ export function Monthly() {
       </div>
 
       <Card>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-overlay0">
+        <div className="grid grid-cols-7 gap-1 text-center text-label text-fg-2">
             {weekdayLabels(weekStart).map((w) => <div key={w} className="pb-1">{w}</div>)}
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`pad${i}`} />)}
             {days.map((d) => {
@@ -123,7 +124,7 @@ export function Monthly() {
                     background: isToday ? cat('surface0') : moodTint ?? 'transparent',
                   }}
                 >
-                  <div className={`text-sm ${isToday ? 'font-bold text-mauve' : 'text-subtext1'}`}>
+                  <div className={`text-body ${isToday ? 'font-medium text-mauve' : 'text-fg-1'}`}>
                     {Number(d.slice(8))}
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1">
@@ -136,14 +137,14 @@ export function Monthly() {
                       />
                     ))}
                   </div>
-                  <div className="mt-0.5 text-sm leading-tight">
+                  <div className="mt-0.5 text-body leading-tight">
                     {(data.stickers[d] ?? []).slice(0, 4).join('')}
                   </div>
                   {(() => {
                     const { done, total } = habitProgress(d)
                     if (total === 0 || d > today) return null
                     return (
-                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-surface0" title={`${done}/${total} habits`}>
+                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-ink-2" title={`${done}/${total} habits`}>
                         <div className="h-full rounded-full" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
                       </div>
                     )
@@ -163,8 +164,8 @@ export function Monthly() {
             placeholder="e.g. Moab, Utah 🏜️"
           />
           {data.settings.weatherEnabled && (
-            <Button onClick={autoFill} className="mt-2 w-full">
-              {geoBusy ? 'Locating…' : '📍 Auto-fill'}
+            <Button variant="secondary" onClick={autoFill} className="press-3d rounded-lg mt-2 w-full">
+              {geoBusy ? 'Locating…' : 'Auto-fill'}
             </Button>
           )}
         </Card>
@@ -198,12 +199,11 @@ export function Monthly() {
             type="button"
             onClick={() => setAnalyticsOpen((o) => !o)}
             aria-expanded={analyticsOpen}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
           >
-            <span className="text-overlay0">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-            <span className="font-display text-base font-medium text-subtext1">Month analytics</span>
-            <span className="text-xs text-overlay0">· month pulse &amp; trailing-year rhythm</span>
-            {!analyticsOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+            <span className="text-fg-2">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="font-display text-heading font-medium text-fg-1">Month analytics</span>
+            <span className="text-label text-fg-2">month pulse &amp; trailing-year rhythm</span>
           </button>
           {analyticsOpen && (
             <>
@@ -214,7 +214,7 @@ export function Monthly() {
           <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
             {/* Entries-per-day sparkline */}
             <div>
-              <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+              <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
                 <span>Entries per day</span>
                 <span>peak <b style={{ color: cat('mauve') }}>{maxPerDay}</b></span>
               </div>
@@ -235,23 +235,23 @@ export function Monthly() {
             {/* Bullet-type mix + completion */}
             <div className="space-y-3">
               <div>
-                <div className="mb-1 text-xs text-overlay0">Bullet mix</div>
-                <div className="flex flex-wrap gap-3 text-sm">
+                <div className="mb-1 text-label text-fg-2">Bullet mix</div>
+                <div className="flex flex-wrap gap-3 text-body">
                   {TYPE_META.map((t) => (
                     <span key={t.key} className="inline-flex items-baseline gap-1">
                       <span style={{ color: cat(t.color) }}>{t.glyph}</span>
                       <b style={{ color: cat(t.color) }}>{t.n}</b>
-                      <span className="text-overlay0">{t.label}</span>
+                      <span className="text-fg-2">{t.label}</span>
                     </span>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-baseline justify-between text-xs text-overlay0">
+                <div className="mb-1 flex items-baseline justify-between text-label text-fg-2">
                   <span>Tasks done</span>
                   <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-surface0">
+                <div className="h-2 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
                 </div>
               </div>
@@ -259,9 +259,9 @@ export function Monthly() {
           </div>
 
           {/* Logging rhythm by weekday + journaling streak */}
-          <div className="mt-5 grid gap-5 border-t border-surface0 pt-4 sm:grid-cols-[2fr_1fr]">
+          <div className="mt-5 grid gap-5 border-t border-line pt-4 sm:grid-cols-[2fr_1fr]">
             <div>
-              <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+              <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
                 <span>By weekday</span>
                 <span>busiest <b style={{ color: cat('sapphire') }}>{busiestWeekday.count > 0 ? busiestWeekday.label : '—'}</b></span>
               </div>
@@ -278,21 +278,21 @@ export function Monthly() {
                         }}
                       />
                     </div>
-                    <span className="text-[10px] text-overlay0">{w.label[0]}</span>
+                    <span className="text-micro text-fg-2">{w.label[0]}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex flex-col justify-center gap-2">
               <div>
-                <div className="text-xs text-overlay0">Current streak</div>
-                <div className="text-lg font-semibold" style={{ color: cat(streak.current > 0 ? 'green' : 'overlay0') }}>
+                <div className="text-label text-fg-2">Current streak</div>
+                <div className="text-heading font-medium" style={{ color: cat(streak.current > 0 ? 'green' : 'overlay0') }}>
                   {streak.current} day{streak.current === 1 ? '' : 's'}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-overlay0">Longest streak</div>
-                <div className="text-lg font-semibold" style={{ color: cat('mauve') }}>
+                <div className="text-label text-fg-2">Longest streak</div>
+                <div className="text-heading font-medium" style={{ color: cat('mauve') }}>
                   {streak.longest} day{streak.longest === 1 ? '' : 's'}
                 </div>
               </div>
@@ -305,7 +305,7 @@ export function Monthly() {
       {monthlyTotal > 0 && (
         <Card title="Entries per month" subtitle="Your journaling rhythm over the last 12 months"
           help="Each bar is one month's total entries, ending with the month you're viewing. Use it to spot busy seasons and quiet stretches across the year.">
-          <div className="mb-1.5 flex items-baseline justify-between text-xs text-overlay0">
+          <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
             <span>Last 12 months</span>
             <span><b style={{ color: cat('mauve') }}>{monthlyTotal}</b> entries</span>
           </div>
@@ -322,7 +322,7 @@ export function Monthly() {
                     }}
                   />
                 </div>
-                <span className="text-[10px] text-overlay0">{m.label[0]}</span>
+                <span className="text-micro text-fg-2">{m.label[0]}</span>
               </div>
             ))}
           </div>

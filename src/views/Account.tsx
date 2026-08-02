@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { UserCircle2, LogOut, Mail, Lock, Eye, EyeOff, ShieldCheck, Cloud, RefreshCw, Check } from 'lucide-react'
 import { useJournal } from '../store'
+import { Button } from '../components/ui/button'
 import { useNav } from '../components/shell/nav'
 import { migrate } from '../lib/storage'
 import { authFormError, isValidEmail, suggestEmailFix, passwordError } from '../lib/validate'
@@ -47,7 +48,7 @@ export function Account() {
     try {
       if (mode === 'signup') {
         await signUpEmail(email, pw); await pushJournal(data)
-        setMsg('Account created · check your inbox to confirm your email, then sign in.')
+        setMsg('Account created, check your inbox to confirm your email, then sign in.')
       } else {
         await signInEmail(email, pw)
         const r = await pullJournal(); if (r) replaceAll(migrate(r))
@@ -61,7 +62,7 @@ export function Account() {
   async function forgot() {
     if (!isValidEmail(email)) { setErr('Enter a valid email first, then tap “Forgot password”.'); return }
     setBusy(true); setErr(''); setMsg('')
-    try { await resetPassword(email); setMsg('Password-reset link sent · check your inbox.') }
+    try { await resetPassword(email); setMsg('Password-reset link sent, check your inbox.') }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
   async function guest() {
@@ -86,9 +87,9 @@ export function Account() {
     return (
       <Hero>
         <div className="text-center">
-          <Cloud size={30} className="mx-auto text-overlay1" />
-          <h2 className="mt-3 font-display text-xl text-foreground">Accounts aren’t configured</h2>
-          <p className="mt-2 text-sm text-subtext0">
+          <Cloud size={30} className="mx-auto text-fg-2" />
+          <h2 className="mt-3 font-display text-title text-foreground">Accounts aren’t configured</h2>
+          <p className="mt-2 text-body text-fg-2">
             This build has no cloud backend, so the app is fully local. You can still back up and
             sync via a cloud folder, gist, or self-host in{' '}
             <button className="text-primary hover:underline" onClick={() => nav('settings')}>Settings → Data &amp; Cloud</button>.
@@ -107,46 +108,46 @@ export function Account() {
             <UserCircle2 size={30} className={signedIn ? 'text-green' : 'text-yellow'} />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-display text-lg text-foreground">{signedIn ? user!.email : 'Guest session'}</p>
-            <p className="text-xs text-overlay0">{signedIn ? 'Synced across your devices' : 'On this device · not yet synced'}</p>
+            <p className="truncate font-display text-heading text-foreground">{signedIn ? user!.email : 'Guest session'}</p>
+            <p className="text-label text-fg-2">{signedIn ? 'Synced across your devices' : 'On this device · not yet synced'}</p>
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
-          <button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
-            disabled={busy} className="press-3d inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-crust disabled:opacity-50">
+          <Button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
+            disabled={busy} variant="default" className="press-3d flex-1 gap-1.5">
             <RefreshCw size={14} /> {busy ? 'Saving…' : 'Save now'}
-          </button>
-          <button onClick={out} disabled={busy} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-sm text-red disabled:opacity-50">
+          </Button>
+          <Button onClick={out} disabled={busy} variant="outline" className="gap-1.5 text-red hover:text-red">
             <LogOut size={14} /> Sign out
-          </button>
+          </Button>
         </div>
         {signedIn && (
-          <div className="mt-4 border-t border-border pt-4">
+          <div className="mt-4 border-t border-line pt-4">
             {!changing ? (
-              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-xs text-overlay1 hover:text-subtext1">Change password</button>
+              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-label text-fg-2 hover:text-fg-1">Change password</button>
             ) : (
               <div className="space-y-2.5">
                 <Field icon={Lock}>
                   <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); setErr('') }}
                     onKeyDown={(e) => e.key === 'Enter' && changePw()} placeholder="New password (min 6)"
-                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-                  <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="text-overlay0 hover:text-subtext1">
+                    className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
+                  <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-fg-2 hover:text-fg-1">
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                  </Button>
                 </Field>
                 <div className="flex gap-2">
-                  <button onClick={changePw} disabled={busy} className="press-3d inline-flex flex-1 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-medium text-crust disabled:opacity-50">
+                  <Button onClick={changePw} disabled={busy} variant="default" size="sm" className="press-3d flex-1">
                     {busy ? 'Updating…' : 'Update password'}
-                  </button>
-                  <button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} className="rounded-lg border border-border px-3 py-2 text-xs text-subtext0 disabled:opacity-50">Cancel</button>
+                  </Button>
+                  <Button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} variant="outline" size="sm" className="text-fg-2">Cancel</Button>
                 </div>
               </div>
             )}
           </div>
         )}
-        {isGuest && <p className="mt-4 rounded-lg bg-secondary/50 p-3 text-xs text-subtext0">Exploring as a guest. Sign out, then create an account to keep your data safe and synced.</p>}
-        {msg && <p className="mt-3 text-center text-xs text-green">{msg}</p>}
-        {err && <p className="mt-3 text-center text-xs text-red">{err}</p>}
+        {isGuest && <p className="mt-4 rounded-lg bg-secondary/50 p-3 text-label text-fg-2">Exploring as a guest. Sign out, then create an account to keep your data safe and synced.</p>}
+        {msg && <p className="mt-3 text-center text-label text-green">{msg}</p>}
+        {err && <p className="mt-3 text-center text-label text-red">{err}</p>}
       </Hero>
     )
   }
@@ -160,7 +161,7 @@ export function Account() {
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary/60 p-1">
         {(['login', 'signup'] as const).map((m) => (
           <button key={m} onClick={() => { setMode(m); setErr(''); setMsg('') }}
-            className={`rounded-lg py-2 text-sm font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-overlay1 hover:text-subtext1'}`}>
+            className={`rounded-lg py-2 text-body font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-fg-2 hover:text-fg-1'}`}>
             {m === 'login' ? 'Sign in' : 'Sign up'}
           </button>
         ))}
@@ -168,10 +169,10 @@ export function Account() {
 
       {googleOk && (
         <>
-          <button onClick={google} disabled={busy} className="press-3d inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:border-primary disabled:opacity-50">
+          <Button onClick={google} disabled={busy} variant="outline" className="press-3d w-full gap-2 hover:border-primary">
             <GoogleMark /> Continue with Google
-          </button>
-          <div className="my-4 flex items-center gap-3 text-xs text-overlay0">
+          </Button>
+          <div className="my-4 flex items-center gap-3 text-label text-fg-2">
             <span className="h-px flex-1 bg-border" /> or {mode === 'login' ? 'sign in' : 'sign up'} with email <span className="h-px flex-1 bg-border" />
           </div>
         </>
@@ -180,38 +181,38 @@ export function Account() {
       <div className="space-y-2.5">
         <Field icon={Mail}>
           <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr('') }} placeholder="you@email.com"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
+            className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
         </Field>
-        {fix && <button type="button" onClick={() => setEmail(fix)} className="text-xs text-yellow hover:underline">Did you mean <strong>{fix}</strong>?</button>}
+        {fix && <button type="button" onClick={() => setEmail(fix)} className="text-label text-yellow hover:underline">Did you mean <strong>{fix}</strong>?</button>}
         <Field icon={Lock}>
           <input type={showPw ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={pw} onChange={(e) => setPw(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="Password (min 6)"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-overlay0" />
-          <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="text-overlay0 hover:text-subtext1">
+            className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
+          <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-fg-2 hover:text-fg-1">
             {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
+          </Button>
         </Field>
       </div>
 
-      <button onClick={submit} disabled={busy} className="press-3d mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-crust disabled:opacity-50">
+      <Button onClick={submit} disabled={busy} variant="default" className="press-3d mt-4 w-full gap-1.5">
         {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
-      </button>
+      </Button>
 
       {mode === 'login' && (
         <div className="mt-3 text-center">
-          <button onClick={forgot} disabled={busy} className="text-xs text-overlay1 hover:text-subtext1">Forgot password?</button>
+          <button onClick={forgot} disabled={busy} className="text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
         </div>
       )}
 
-      {err && <p className="mt-3 text-center text-xs text-red">{err}</p>}
-      {msg && <p className="mt-3 text-center text-xs text-green">{msg}</p>}
+      {err && <p className="mt-3 text-center text-label text-red">{err}</p>}
+      {msg && <p className="mt-3 text-center text-label text-green">{msg}</p>}
 
-      <div className="mt-5 space-y-2 border-t border-border pt-4 text-center">
-        <button onClick={guest} disabled={busy} className="inline-flex items-center gap-1.5 text-xs text-subtext0 hover:text-foreground disabled:opacity-50">
+      <div className="mt-5 space-y-2 border-t border-line pt-4 text-center">
+        <button onClick={guest} disabled={busy} className="inline-flex items-center gap-1.5 text-label text-fg-2 hover:text-foreground disabled:opacity-50">
           <Check size={13} className="text-green" /> Just explore as a guest · no email needed
         </button>
         <div>
-          <button onClick={() => { setSettings({ storageMode: 'local' }); nav('today') }} className="text-xs text-overlay0 hover:text-subtext1">
+          <button onClick={() => { setSettings({ storageMode: 'local' }); nav('today') }} className="text-label text-fg-2 hover:text-fg-1">
             Continue on this device without an account →
           </button>
         </div>
@@ -227,15 +228,15 @@ function Hero({ children }: { children: React.ReactNode }) {
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-6 text-center">
           <div className="rise flex items-baseline justify-center gap-2">
-            <span className="font-display text-4xl font-semibold tracking-tight text-foreground">bujo</span>
-            <span className="text-2xl text-primary">✦</span>
+            <span className="font-display text-display font-medium tracking-tight text-foreground">bujo</span>
+            <span className="text-title text-primary">✦</span>
           </div>
-          <p className="rise mt-2 text-sm text-subtext0" style={{ animationDelay: '90ms' }}>Sign in to sync your journal everywhere.</p>
+          <p className="rise mt-2 text-body text-fg-2" style={{ animationDelay: '90ms' }}>Sign in to sync your journal everywhere.</p>
         </div>
-        <div className="card-3d rise rounded-2xl border border-border bg-card/80 p-6 backdrop-blur" style={{ animationDelay: '140ms' }}>
+        <div className="card-3d rise rounded-2xl border border-line bg-card/80 p-6 backdrop-blur" style={{ animationDelay: '140ms' }}>
           {children}
         </div>
-        <p className="rise mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-overlay0" style={{ animationDelay: '200ms' }}>
+        <p className="rise mt-5 flex items-center justify-center gap-1.5 text-center text-label text-fg-2" style={{ animationDelay: '200ms' }}>
           <ShieldCheck size={13} /> No tracking. Your data is yours.
         </p>
       </div>
@@ -246,7 +247,7 @@ function Hero({ children }: { children: React.ReactNode }) {
 function Field({ icon: Icon, children }: { icon: typeof Mail; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-input bg-background px-3 py-2.5 focus-within:border-primary">
-      <Icon size={15} className="shrink-0 text-overlay1" />
+      <Icon size={15} className="shrink-0 text-fg-2" />
       {children}
     </div>
   )

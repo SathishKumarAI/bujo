@@ -7,8 +7,9 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Maximize2, X } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Empty, Segmented } from '../components/ui'
-import { CollapsibleSection as Section } from '../components/trackers/CollapsibleSection'
+import { Card, Empty, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
+import { QuietSection as Section } from '../components/CollapsibleSection'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
@@ -62,13 +63,13 @@ export function Stats() {
   // Mood-calendar grid; `large` scales the cells up for the enlarge modal.
   const moodCalGrid = (large = false) => (
     <div className={large ? 'mx-auto max-w-xl' : 'mx-auto max-w-xs'}>
-      <div className={`mb-1 grid grid-cols-7 text-center text-overlay0 ${large ? 'gap-1.5 text-xs' : 'gap-0.5 text-[9px]'}`}>
+      <div className={`mb-1 grid grid-cols-7 text-center text-fg-2 ${large ? 'gap-1.5 text-label' : 'gap-0.5 text-micro'}`}>
         {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
       </div>
       <div className={`grid grid-cols-7 ${large ? 'gap-1.5' : 'gap-0.5'}`}>
         {monthDays(ym).map((d, i) => (
           <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
-            className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-base' : 'text-[10px]'}`}
+            className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-heading' : 'text-micro'}`}
             style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? '#11111b' : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
             {Number(d.slice(8))}
           </div>
@@ -90,7 +91,7 @@ export function Stats() {
             const mm = String(mi + 1).padStart(2, '0')
             return (
               <div key={mi} className="flex items-center gap-1">
-                <span className={`shrink-0 text-overlay0 ${large ? 'w-9 text-xs' : 'w-7 text-[10px]'}`}>{MONTHS[mi].slice(0, 3)}</span>
+                <span className={`shrink-0 text-fg-2 ${large ? 'w-9 text-label' : 'w-7 text-micro'}`}>{MONTHS[mi].slice(0, 3)}</span>
                 <div className="flex gap-[2px]">
                   {Array.from({ length: 31 }, (_, di) => {
                     const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
@@ -107,7 +108,7 @@ export function Stats() {
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-5">
+    <div className="mx-auto max-w-wide space-y-5">
       <Card title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
@@ -115,7 +116,7 @@ export function Stats() {
       <AchievementsCard />
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
-      <Section title="This week" subtitle="7-day averages · see Trackers for live metrics">
+      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics">
         <Card title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
@@ -133,7 +134,7 @@ export function Stats() {
       {/* 3) Sleep & mood correlations — collapsed. */}
       <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus">
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="Sleep vs mood" subtitle="Each dot is a day · see the trend" enlargeable>
+        <Card title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
@@ -171,13 +172,13 @@ export function Stats() {
         </Card>
 
         {focusSleep.r != null && (
-          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before · ${focusSleep.days} paired days`}>
-            <p className="text-4xl font-extrabold tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
+          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
+            <p className="text-display font-medium tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
               {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
-              <span className="ml-1 text-sm text-overlay0">r</span>
+              <span className="ml-1 text-body text-fg-2">r</span>
             </p>
-            <p className="mt-2 text-sm text-subtext1">{focusSleep.note}</p>
-            <p className="mt-2 text-xs text-overlay0">
+            <p className="mt-2 text-body text-fg-1">{focusSleep.note}</p>
+            <p className="mt-2 text-label text-fg-2">
               Pearson correlation: +1 means more sleep always tracks with sharper focus, 0 means no link.
             </p>
           </Card>
@@ -191,14 +192,14 @@ export function Stats() {
       <Card
         enlargeable={false}
         title="Mood calendar"
-        subtitle="Each day tinted by your mood (0–10) · tap ⛶ to enlarge"
+        subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button onClick={() => shift(-1)} aria-label="Previous month">←</Button>
-            <Button onClick={() => setYm(ymOf(todayISO()))}>This month</Button>
-            <Button onClick={() => shift(1)} aria-label="Next month">→</Button>
-            <Button onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge"><Maximize2 size={14} /></Button>
+            <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d rounded-lg">←</Button>
+            <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d rounded-lg">This month</Button>
+            <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d rounded-lg">→</Button>
+            <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d rounded-lg"><Maximize2 size={14} /></Button>
           </div>
         }
       >
@@ -208,28 +209,28 @@ export function Stats() {
           let best: string | null = null
           for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
           return (
-            <p className="mb-3 text-sm text-subtext0">
+            <p className="mb-3 text-body text-fg-2">
               {prettyMonth(ym)} ·{' '}
-              {avg == null ? <span className="text-overlay0">no mood logged yet</span> : (
-                <>avg mood <span className="font-semibold" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
+              {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
+                <>avg mood <span className="font-medium" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
               )}
             </p>
           )
         })()}
         {moodCalGrid(false)}
         {/* Legend */}
-        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-overlay0">
+        <div className="mt-3 flex items-center justify-center gap-2 text-micro text-fg-2">
           <span>low</span>
           {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
           <span>great</span>
         </div>
       </Card>
       ) : (
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)} · one square per day, tinted by mood`} enlargeable={false}
+      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge"><Maximize2 size={14} /></Button>
+            <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d rounded-lg"><Maximize2 size={14} /></Button>
           </div>
         }>
         {yearPixels(false)}
@@ -238,7 +239,7 @@ export function Stats() {
       </Section>
 
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
-      <Section title="Fitness stats" subtitle="workout minutes & split · see Fitness for live logging">
+      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging">
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (
@@ -271,7 +272,7 @@ export function Stats() {
                   <Tooltip contentStyle={tip()} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="flex flex-wrap justify-center gap-2 text-xs">
+              <div className="flex flex-wrap justify-center gap-2 text-label">
                 {splits.map((s, i) => <span key={s.split} style={{ color: cat(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
               </div>
             </div>
@@ -295,7 +296,7 @@ export function Stats() {
                   <Tooltip contentStyle={tip()} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="flex justify-center gap-3 text-xs">
+              <div className="flex justify-center gap-3 text-label">
                 {tasks.map((t) => <span key={t.name} style={{ color: cat(t.color) }}>● {t.name} {t.value}</span>)}
               </div>
             </div>
@@ -312,10 +313,10 @@ export function Stats() {
           viewport, not inside transformed ancestors (book mode / zoom). */}
       {enlarged && createPortal(
         <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-          <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-lg text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
-              <button onClick={() => setEnlarged(null)} aria-label="Close" className="text-overlay1 hover:text-foreground"><X size={20} /></button>
+              <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
+              <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><X size={20} /></Button>
             </div>
             {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
           </div>

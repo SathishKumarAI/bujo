@@ -3,7 +3,8 @@ import { UserPlus, AtSign, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { fetchGithubProfile } from '../lib/enrich'
-import { Button, Card, Empty, Input } from './ui'
+import { Card, Empty, Input } from './ui'
+import { Button } from './ui/button'
 
 /**
  * Friends / contacts collection. Everything is manual; the only network call is
@@ -55,20 +56,20 @@ export function FriendsCard() {
   }
 
   return (
-    <Card title="Friends" subtitle="Manual contacts · optional GitHub profile pull (public, opt-in)">
+    <Card title="Friends" subtitle="Manual contacts, optional GitHub profile pull (public, opt-in)">
       <div className="mb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
           <div className="flex flex-1 items-center gap-1 rounded-lg border border-input bg-background px-2">
-            <AtSign size={14} className="shrink-0 text-overlay0" />
-            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-sm text-text placeholder:text-overlay0 focus:outline-none" />
+            <AtSign size={14} className="shrink-0 text-fg-2" />
+            <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-body text-fg-1 placeholder:text-fg-2 focus:outline-none" />
           </div>
-          <Button variant="primary" onClick={add} className="inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-xs text-overlay0">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-text" /></label>
-        <p className="text-[11px] text-overlay0">GitHub pull uses the official public API · only data they’ve made public. Nothing else is fetched.</p>
+        <label className="flex items-center gap-2 text-label text-fg-2">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-fg-1" /></label>
+        <p className="text-caption text-fg-2">GitHub pull uses the official public API, only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
       {friends.length === 0 ? (
@@ -76,31 +77,31 @@ export function FriendsCard() {
       ) : (
         <ul className="space-y-2">
           {friends.map((f) => (
-            <li key={f.id} className="group flex items-start gap-3 rounded-lg border border-surface0 bg-base p-2">
+            <li key={f.id} className="group flex items-start gap-3 rounded-lg border border-line bg-ink-0 p-2">
               {f.avatar
                 ? <img src={f.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full" />
-                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ background: cat('surface1'), color: cat('subtext0') }}>{f.name.slice(0, 1).toUpperCase()}</span>}
+                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-body font-medium" style={{ background: cat('surface1'), color: cat('subtext0') }}>{f.name.slice(0, 1).toUpperCase()}</span>}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-text">
+                <p className="truncate text-body font-medium text-fg-1">
                   {f.name}
                   {(() => {
                     const d = daysToBirthday(f.birthday)
                     if (d == null) return null
-                    return <span className="ml-1.5 text-xs" style={{ color: d <= 14 ? cat('pink') : cat('overlay0') }}>🎂 {d === 0 ? 'today!' : `${d}d`}</span>
+                    return <span className="ml-1.5 text-label" style={{ color: d <= 14 ? cat('pink') : cat('overlay0') }}>🎂 {d === 0 ? 'today!' : `${d}d`}</span>
                   })()}
                 </p>
-                {f.bio && <p className="truncate text-xs text-subtext0">{f.bio}</p>}
-                {f.company && <p className="truncate text-xs text-overlay0">{f.company}</p>}
-                <div className="mt-0.5 flex flex-wrap gap-2 text-xs">
+                {f.bio && <p className="truncate text-label text-fg-2">{f.bio}</p>}
+                {f.company && <p className="truncate text-label text-fg-2">{f.company}</p>}
+                <div className="mt-0.5 flex flex-wrap gap-2 text-label">
                   {(f.links ?? []).map((l) => (
                     <a key={l} href={l} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-blue hover:underline">
                       <ExternalLink size={11} /> {new URL(l).hostname.replace('www.', '')}
                     </a>
                   ))}
-                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-overlay0 hover:text-mauve">refresh</button>}
+                  {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-fg-2 hover:text-mauve">refresh</button>}
                 </div>
               </div>
-              <button onClick={() => removeFriend(f.id)} aria-label={`Remove ${f.name}`} className="text-overlay0 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+              <button onClick={() => removeFriend(f.id)} aria-label={`Remove ${f.name}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </li>
           ))}
         </ul>

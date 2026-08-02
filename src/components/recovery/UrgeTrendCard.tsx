@@ -11,7 +11,7 @@ type Trend = ReturnType<typeof urgeFrequencyTrend>
 export function UrgeTrendCard({ urgeTrend }: { urgeTrend: Trend }) {
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <TrendingDown size={16} className="text-green" /> : urgeTrend.direction === 'up' ? <TrendingUp size={16} className="text-peach" /> : <Activity size={16} className="text-overlay1" />} Urge trend</span>}
+      title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <TrendingDown size={16} className="text-green" /> : urgeTrend.direction === 'up' ? <TrendingUp size={16} className="text-peach" /> : <Activity size={16} className="text-fg-2" />} Urge trend</span>}
       subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}
       help="Resisted urges bucketed into the last 8 weeks. A falling line is hard evidence that cravings genuinely weaken with abstinence — the brain re-regulates and the waves get smaller.">
       <div className="h-40 w-full" role="img" aria-label={`Weekly urge counts, oldest to newest: ${urgeTrend.weeks.map((w) => w.count).join(', ')}`}>
@@ -34,7 +34,7 @@ export function UrgeTrendCard({ urgeTrend }: { urgeTrend: Trend }) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-1.5 text-xs text-overlay0">Averaging <span className="font-medium" style={{ color: cat('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
+      <p className="mt-1.5 text-label text-fg-2">Averaging <span className="font-medium" style={{ color: cat('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
     </Card>
   )
 }

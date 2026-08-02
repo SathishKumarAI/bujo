@@ -31,15 +31,15 @@ export function CoachCard() {
           const { color, Icon } = TONE[t.tone]
           return (
             <li key={t.id}>
-              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-lg border border-surface0 bg-base p-3 text-left hover:border-mauve">
+              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-lg border border-line bg-ink-0 p-3 text-left hover:border-mauve">
                 <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ background: cat(color) + '22' }}>
                   <Icon size={13} style={{ color: cat(color) }} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-text">{t.title}</span>
-                  <span className="block text-xs text-overlay1">{t.detail}</span>
+                  <span className="block text-body font-medium text-fg-1">{t.title}</span>
+                  <span className="block text-label text-fg-2">{t.detail}</span>
                 </span>
-                <Sparkles size={13} className="mt-1 shrink-0 text-overlay0" />
+                <Sparkles size={13} className="mt-1 shrink-0 text-fg-2" />
               </button>
             </li>
           )

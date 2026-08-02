@@ -26,20 +26,20 @@ export function DateJumpPicker({
     <>
       {/* click-away backdrop */}
       <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
-      <div className="absolute top-full left-1/2 z-50 mt-1.5 w-64 -translate-x-1/2 rounded-xl border border-surface1 bg-mantle p-3 shadow-2xl" role="dialog" aria-label="Jump to date">
+      <div className="absolute top-full left-1/2 z-50 mt-1.5 w-64 -translate-x-1/2 rounded-xl border border-line-strong bg-ink-1 p-3 shadow-2xl" role="dialog" aria-label="Jump to date">
         {mode === 'day' && (
           <input
             type="date"
             value={day}
             onChange={(e) => { if (e.target.value) { onPickDay(e.target.value); onClose() } }}
             aria-label="Pick a day"
-            className="mb-2 w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-text"
+            className="mb-2 w-full rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           />
         )}
         <div className="mb-2 flex items-center justify-between">
-          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-overlay1 hover:text-text"><ChevronLeft size={16} /></button>
-          <span className="font-display text-sm font-medium text-text tabular-nums">{year}</span>
-          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-overlay1 hover:text-text"><ChevronRight size={16} /></button>
+          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-fg-2 hover:text-fg-1"><ChevronLeft size={16} /></button>
+          <span className="font-display text-body font-medium text-fg-1 tabular-nums">{year}</span>
+          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-fg-2 hover:text-fg-1"><ChevronRight size={16} /></button>
         </div>
         <div className="grid grid-cols-3 gap-1">
           {MONTHS.map((m, i) => {
@@ -54,7 +54,7 @@ export function DateJumpPicker({
                   onClose()
                 }}
                 aria-pressed={active}
-                className={`rounded-md px-2 py-1.5 text-xs transition-colors ${active ? 'bg-primary text-primary-foreground' : 'text-subtext1 hover:bg-secondary/60 hover:text-text'}`}
+                className={`rounded-md px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
               >
                 {m.slice(0, 3)}
               </button>
@@ -63,7 +63,7 @@ export function DateJumpPicker({
         </div>
         <button
           onClick={() => { if (mode === 'day') onPickDay(todayISO()); else onPickMonth(ymOf(todayISO())); onClose() }}
-          className="mt-2 w-full rounded-md py-1 text-xs text-overlay0 hover:text-text"
+          className="mt-2 w-full rounded-md py-1 text-label text-fg-2 hover:text-fg-1"
         >
           Jump to today
         </button>

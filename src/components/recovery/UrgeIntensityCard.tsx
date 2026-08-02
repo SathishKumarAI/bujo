@@ -16,18 +16,18 @@ export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
           const pct = intensity9.rated > 0 ? Math.round((c / intensity9.rated) * 100) : 0
           const isMode = intensity9.mode === i + 1
           return (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-overlay0">{i + 1} · {INTENSITY_LABELS[i]}</span>
+            <div key={i} className="flex items-center gap-2 text-label">
+              <span className="w-16 shrink-0 text-fg-2">{i + 1} · {INTENSITY_LABELS[i]}</span>
               <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: cat('surface0') }}>
                 <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
               </div>
-              <span className="w-8 shrink-0 text-right text-overlay1">{c}</span>
+              <span className="w-8 shrink-0 text-right text-fg-2">{c}</span>
             </div>
           )
         })}
       </div>
       {intensity9.rated >= 2 && intensity9.trend !== 0 && (
-        <p className="mt-2.5 inline-flex items-center gap-1.5 text-xs" style={{ color: intensity9.trend < 0 ? cat('green') : cat('peach') }}>
+        <p className="mt-2.5 inline-flex items-center gap-1.5 text-label" style={{ color: intensity9.trend < 0 ? cat('green') : cat('peach') }}>
           {intensity9.trend < 0 ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
           {intensity9.trend < 0
             ? <span>Urges are getting <strong>weaker</strong> · recent ones average {Math.abs(intensity9.trend)} lower.</span>

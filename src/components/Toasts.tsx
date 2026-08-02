@@ -23,10 +23,10 @@ export function Toasts() {
       closeButton
       toastOptions={{
         classNames: {
-          toast: 'border border-surface1 bg-mantle text-text',
-          description: 'text-subtext1',
-          actionButton: 'bg-surface1 text-text',
-          cancelButton: 'bg-surface0 text-subtext1',
+          toast: 'border border-line-strong bg-ink-1 text-fg-1',
+          description: 'text-fg-1',
+          actionButton: 'bg-ink-3 text-fg-1',
+          cancelButton: 'bg-ink-2 text-fg-1',
         },
       }}
     />

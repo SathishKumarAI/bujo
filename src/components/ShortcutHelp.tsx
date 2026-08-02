@@ -40,16 +40,16 @@ export function ShortcutHelp({ open, onClose }: { open: boolean; onClose: () => 
         <div className="flex flex-col gap-4">
           {GROUPS.map((g) => (
             <div key={g.title}>
-              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-overlay0">
+              <div className="mb-1.5 font-mono text-micro uppercase tracking-widest text-fg-2">
                 {g.title}
               </div>
               <div className="flex flex-col gap-0.5">
                 {g.items.map((s) => (
                   <div
                     key={s.desc}
-                    className="flex items-center justify-between gap-4 rounded-md px-2 py-1.5 hover:bg-surface0/60"
+                    className="flex items-center justify-between gap-4 rounded-md px-2 py-1.5 hover:bg-ink-2/60"
                   >
-                    <span className="text-sm text-subtext1">{s.desc}</span>
+                    <span className="text-body text-fg-1">{s.desc}</span>
                     <span className="flex shrink-0 gap-1">
                       {s.keys.map((k, i) => (
                         <Kbd key={i}>{k}</Kbd>

@@ -21,12 +21,14 @@ export function ReminderBanner() {
   const title = urgent?.title ?? 'Time to journal ✦'
   const body = urgent?.body ?? "A couple of minutes for yourself · fill in today's bujo."
 
+  // Suppress only when there's nothing to nudge: logged today AND nothing
+  // urgent. Derived rather than pushed into `show` from the effect — whether
+  // the banner is *allowed* is a function of current props, not a stored fact,
+  // and writing it in the effect body cost a second render each time.
+  const suppressed = !reminderEnabled || (loggedToday && !urgent)
+
   useEffect(() => {
-    // Suppress only when there's nothing to nudge: logged today AND nothing urgent.
-    if (!reminderEnabled || (loggedToday && !urgent)) {
-      setShow(false)
-      return
-    }
+    if (suppressed) return
     const check = () => {
       const now = new Date()
       const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
@@ -42,20 +44,20 @@ export function ReminderBanner() {
     check()
     const id = setInterval(check, 60_000)
     return () => clearInterval(id)
-  }, [reminderEnabled, reminderTime, loggedToday, today, urgent, title, body])
+  }, [suppressed, reminderTime, today, title, body])
 
-  if (!show || dismissed) return null
+  if (suppressed || !show || dismissed) return null
 
   return (
-    <div className="flex items-center gap-3 border-b border-surface0 bg-mantle px-4 py-2 text-sm">
+    <div className="flex items-center gap-3 border-b border-line bg-ink-1 px-4 py-2 text-body">
       <span className="text-mauve">{urgent ? urgent.title.slice(0, 2) : '✦'}</span>
-      <span className="flex-1 text-subtext1">{body}</span>
+      <span className="flex-1 text-fg-1">{body}</span>
       {'Notification' in window && Notification.permission === 'default' && (
-        <button onClick={() => Notification.requestPermission()} className="rounded px-2 py-1 text-xs text-mauve hover:bg-surface0">
+        <button onClick={() => Notification.requestPermission()} className="rounded px-2 py-1 text-label text-mauve hover:bg-ink-2">
           Enable notifications
         </button>
       )}
-      <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-overlay0 hover:text-text">×</button>
+      <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-fg-2 hover:text-fg-1">×</button>
     </div>
   )
 }

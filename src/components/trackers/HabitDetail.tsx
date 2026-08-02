@@ -7,6 +7,7 @@ import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } f
 import { longestStreakEver } from '../../lib/streak'
 import { completionRate30, bestWeekday, perfectWeeks, habitGrade } from '../../lib/habitStats'
 import type { Habit, JournalData } from '../../lib/types'
+import { Button } from '../ui/button'
 
 const WEEKS = 18
 const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
@@ -93,21 +94,21 @@ export function HabitDetail({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
       <div
-        className="card-3d w-full max-w-2xl overflow-hidden rounded-xl border border-surface1 bg-mantle"
+        className="card-3d w-full max-w-2xl overflow-hidden rounded-xl border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={`${h.name} activity`}
       >
-        <div className="flex items-center justify-between border-b border-surface0 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-lg">{avoid ? <Ban size={18} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
-            <h2 className="truncate font-display text-lg text-text">{h.name}</h2>
-            {h.unit && <span className="text-xs text-overlay0">({h.unit})</span>}
+            <span className="text-heading">{avoid ? <Ban size={18} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+            <h2 className="truncate font-display text-heading text-fg-1">{h.name}</h2>
+            {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="inline-flex items-center gap-1 rounded-lg border border-surface1 px-2 py-1 text-xs text-subtext1 hover:text-text"><Share2 size={13} /> Share</button>
-            <button onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="inline-flex items-center gap-1 rounded-lg border border-surface1 px-2 py-1 text-xs text-subtext1 hover:text-text"><Settings2 size={13} /> Edit</button>
-            <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-overlay1 hover:text-text"><X size={18} /></button>
+            <Button variant="outline" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Share2 size={13} /> Share</Button>
+            <Button variant="outline" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Settings2 size={13} /> Edit</Button>
+            <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-fg-2 hover:text-fg-1"><X size={18} /></button>
           </div>
         </div>
 
@@ -125,11 +126,11 @@ export function HabitDetail({
           {/* Habit strength meter (BUJO-243): recency-weighted consistency + grade. */}
           {!avoid && (
             <div>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-overlay0">Habit strength</span>
+              <div className="mb-1 flex items-center justify-between text-label">
+                <span className="text-fg-2">Habit strength</span>
                 <span style={{ color: cat(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface0">
+              <div className="h-2 overflow-hidden rounded-full bg-ink-2">
                 <div className="h-full rounded-full transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
               </div>
             </div>
@@ -137,7 +138,7 @@ export function HabitDetail({
 
           {/* Day heatmap */}
           <div>
-            <p className="mb-1.5 text-xs text-overlay0">Last {WEEKS} weeks · {avoid ? 'clean = empty, slip = filled' : 'greener cells = done'}</p>
+            <p className="mb-1.5 text-label text-fg-2">Last {WEEKS} weeks · {avoid ? 'clean = empty, slip = filled' : 'greener cells = done'}</p>
             <div className="overflow-x-auto">
               <div
                 className="grid grid-flow-col grid-rows-7 gap-0.5"
@@ -152,7 +153,7 @@ export function HabitDetail({
                   return (
                     <span
                       key={d}
-                      title={`${d}${level ? (avoid ? ' · slip' : ' · done') : ''}`}
+                      title={`${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
                       className="h-3 w-3 rounded-[2px]"
                       style={{ background: before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
                     />
@@ -162,7 +163,7 @@ export function HabitDetail({
             </div>
           </div>
 
-          <p className="text-xs text-overlay0">
+          <p className="text-label text-fg-2">
             {r30.done}/{r30.scheduled} scheduled days done in the last 30.
             {h.cue && <> · Cue: {h.cue}</>}
           </p>

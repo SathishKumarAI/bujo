@@ -1,39 +1,31 @@
 import type { HeatCell } from '../lib/viz'
-import { cat } from '../lib/colors'
 import { prettyDay } from '../lib/date'
+import { DayGrid, DayGridLegend, type DayCell } from './ui/day-grid'
 
-const LEVEL_BG = ['surface0', 'mauve', 'mauve', 'mauve', 'mauve'] as const
-const LEVEL_OPACITY = [1, 0.35, 0.55, 0.8, 1]
+/**
+ * GitHub-style activity grid. Columns are weeks, rows are weekdays.
+ *
+ * A thin adapter over the shared `DayGrid` primitive: this file turns
+ * `HeatCell[][]` into day cells and owns the legend. The grid, intensity ramp
+ * and sizing now live in one place with the Trackers per-habit heatmap.
+ *
+ * `buildHeatmap` already starts its first column on a Sunday, so the columns
+ * flatten straight into the grid with no padding.
+ *
+ * (The old `colorFor` escape hatch is gone — it had no call site, and keeping
+ * it meant the adapter had to invent a `count` to satisfy the signature.)
+ */
+export function Heatmap({ cols }: { cols: HeatCell[][] }) {
+  const days: DayCell[] = cols.flat().map((c) => ({
+    date: c.date,
+    level: c.level,
+    title: `${prettyDay(c.date)}, ${c.count} item${c.count === 1 ? '' : 's'}`,
+  }))
 
-/** GitHub-style activity grid. Columns are weeks, rows are weekdays. */
-export function Heatmap({ cols, colorFor }: { cols: HeatCell[][]; colorFor?: (c: HeatCell) => string }) {
   return (
     <div className="overflow-x-auto">
-      <div className="flex gap-[3px]">
-        {cols.map((col, ci) => (
-          <div key={ci} className="flex flex-col gap-[3px]">
-            {col.map((cell) => (
-              <span
-                key={cell.date}
-                title={`${prettyDay(cell.date)} · ${cell.count} item${cell.count === 1 ? '' : 's'}`}
-                className="h-[11px] w-[11px] rounded-[2px]"
-                style={
-                  colorFor
-                    ? { background: colorFor(cell) }
-                    : { background: cat(LEVEL_BG[cell.level]), opacity: LEVEL_OPACITY[cell.level] }
-                }
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex items-center gap-1 text-xs text-overlay0">
-        <span>less</span>
-        {[0, 1, 2, 3, 4].map((l) => (
-          <span key={l} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: cat(LEVEL_BG[l]), opacity: LEVEL_OPACITY[l] }} />
-        ))}
-        <span>more</span>
-      </div>
+      <DayGrid days={days} label={`Activity heatmap, ${days.length} days`} />
+      <DayGridLegend />
     </div>
   )
 }

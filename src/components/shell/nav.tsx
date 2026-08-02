@@ -8,6 +8,7 @@ export function NavProvider({ navigate, children }: { navigate: (id: ViewId) => 
   return <Ctx.Provider value={navigate}>{children}</Ctx.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context hook co-located with its provider, matching device.tsx/Page.tsx
 export function useNav() {
   const n = useContext(Ctx)
   if (!n) throw new Error('useNav must be used within NavProvider')

@@ -5,10 +5,11 @@ import {
 import { Code2, Flame, Keyboard } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
+import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
-import { CollapsibleSection } from '../components/trackers/CollapsibleSection'
+import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { cat } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
@@ -74,17 +75,17 @@ export function Focus() {
           <Stat label="Avg stress" value={`${avgWeighted(data, 'stress')}/10`} color="red" />
         </div>
         {projWeekMin != null && projWeekMin > weekMin && (
-          <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
+          <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
             📈 At this pace, you're on track for <span className="font-medium text-mauve">{hrs(projWeekMin)}</span> this week.
           </p>
         )}
         {longest && (
-          <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">
+          <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
             🏆 Longest session: <span className="font-medium text-peach">{hrs(longest.durationMin)}</span>
-            {longest.project ? <> on <span className="text-text">{longest.project}</span></> : null} · {prettyDay(longest.date)}
+            {longest.project ? <> on <span className="text-fg-1">{longest.project}</span></> : null} · {prettyDay(longest.date)}
           </p>
         )}
-        {insight && <p className="mt-3 rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-subtext1">💡 {insight}</p>}
+        {insight && <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">💡 {insight}</p>}
       </Card>
 
       {/* PRIMARY: timer + log, before analytics (UX IA pass) */}
@@ -92,17 +93,17 @@ export function Focus() {
       <Card title="Log a session" subtitle="Coding / deep-work time">
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
           </div>
-          <label className="block text-sm text-subtext1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
+          <label className="block text-body text-fg-1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
           <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
           <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
           </div>
-          <Button variant="primary" onClick={log} className="w-full">Log session</Button>
+          <Button variant="secondary" onClick={log} className="w-full">Log session</Button>
         </div>
       </Card>
 
@@ -130,7 +131,7 @@ export function Focus() {
         const W = 600, H = 120
         const pts = cum.map((c, i) => `${(i / (cum.length - 1)) * W},${H - (c.hours / max) * H}`).join(' ')
         return (
-          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time · momentum over ${cum.length} days`}>
+          <Card title="Cumulative coding hours" subtitle={`${cum[cum.length - 1].hours}h logged all-time, momentum over ${cum.length} days`}>
             <div className="w-full" role="img" aria-label={`Line chart of cumulative coding hours, reaching ${cum[cum.length - 1].hours} hours`}>
               <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-32 w-full">
                 <polyline points={`0,${H} ${pts} ${W},${H}`} fill={cat('mauve') + '22'} stroke="none" />
@@ -142,7 +143,7 @@ export function Focus() {
       })()}
 
       {heat.max > 0 && (
-        <Card title="Deep-work heatmap" subtitle="Daily coding minutes · last 26 weeks">
+        <Card title="Deep-work heatmap" subtitle="Daily coding minutes, last 26 weeks">
           <div className="overflow-x-auto">
             <div
               className="grid w-max gap-[3px]"
@@ -164,7 +165,7 @@ export function Focus() {
               })}
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-overlay0">
+          <div className="mt-2 flex items-center justify-end gap-1 text-micro text-fg-2">
             <span>less</span>
             {[0, 1, 2, 3, 4].map((lv) => (
               <span key={lv} className="h-2.5 w-2.5 rounded-[2px]"
@@ -183,12 +184,12 @@ export function Focus() {
         <Card title="Focus by project" subtitle="Total deep-work minutes per project">
           <div className="space-y-1.5">
             {byProject.map((p) => (
-              <div key={p.project} className="flex items-center gap-2 text-sm">
-                <span className="w-24 shrink-0 truncate text-subtext1">{p.project}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+              <div key={p.project} className="flex items-center gap-2 text-body">
+                <span className="w-24 shrink-0 truncate text-fg-1">{p.project}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(p.min)}</span>
+                <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(p.min)}</span>
               </div>
             ))}
           </div>
@@ -196,7 +197,7 @@ export function Focus() {
       )}
 
       {intTrend.some((d) => d.count > 0) && (
-        <Card title="Interruptions trend" subtitle="Avg interruptions per session · last 14 days">
+        <Card title="Interruptions trend" subtitle="Avg interruptions per session, last 14 days">
           <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
             aria-label={`Average interruptions per session over the last 14 days: ${intTrend.map((d) => `${d.date} ${d.avg}`).join(', ')}`}>
             {intTrend.map((d) => (
@@ -212,12 +213,12 @@ export function Focus() {
         <Card title="Languages & tools" subtitle="By time logged">
           <div className="space-y-1.5">
             {tags.map((t) => (
-              <div key={t.tag} className="flex items-center gap-2 text-sm">
-                <span className="w-24 shrink-0 truncate text-subtext1">{t.tag}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+              <div key={t.tag} className="flex items-center gap-2 text-body">
+                <span className="w-24 shrink-0 truncate text-fg-1">{t.tag}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${(t.min / maxTag) * 100}%`, background: cat('teal') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(t.min)}</span>
+                <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(t.min)}</span>
               </div>
             ))}
           </div>
@@ -270,7 +271,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
               key={m}
               onClick={() => setMode(m)}
               aria-pressed={showQuality ? m === 'quality' : m === 'volume'}
-              className="rounded-md px-2 py-0.5 text-[11px] capitalize transition-colors"
+              className="rounded-md px-2 py-0.5 text-caption capitalize transition-colors"
               style={{
                 background: (showQuality ? m === 'quality' : m === 'volume') ? cat('surface1') : 'transparent',
                 color: (showQuality ? m === 'quality' : m === 'volume') ? cat('text') : cat('overlay0'),
@@ -285,21 +286,21 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
       <div className="space-y-1.5">
         {showQuality
           ? focusWd.map((w) => (
-              <div key={w.day} className="flex items-center gap-2 text-sm">
-                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+              <div key={w.day} className="flex items-center gap-2 text-body">
+                <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{w.count ? `${w.avg}/10` : '—'}</span>
+                <span className="w-12 shrink-0 text-right text-label text-fg-2">{w.count ? `${w.avg}/10` : '—'}</span>
               </div>
             ))
           : byWeekday.map((w) => (
-              <div key={w.day} className="flex items-center gap-2 text-sm">
-                <span className="w-10 shrink-0 text-subtext1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface0">
+              <div key={w.day} className="flex items-center gap-2 text-body">
+                <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-xs text-overlay0">{hrs(w.min)}</span>
+                <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(w.min)}</span>
               </div>
             ))}
       </div>
@@ -356,41 +357,41 @@ function TypingPractice() {
         {/* Log form */}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="20" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="20" className="mt-1" /></label>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm text-subtext1">WPM<Input type="number" value={f.wpm} onChange={(e) => set({ wpm: e.target.value })} placeholder="75" className="mt-1" /></label>
-            <label className="block text-sm text-subtext1">Accuracy %<Input type="number" value={f.accuracy} onChange={(e) => set({ accuracy: e.target.value })} placeholder="96" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">WPM<Input type="number" value={f.wpm} onChange={(e) => set({ wpm: e.target.value })} placeholder="75" className="mt-1" /></label>
+            <label className="block text-body text-fg-1">Accuracy %<Input type="number" value={f.accuracy} onChange={(e) => set({ accuracy: e.target.value })} placeholder="96" className="mt-1" /></label>
           </div>
-          <label className="block text-sm text-subtext1">Source
+          <label className="block text-body text-fg-1">Source
             <select
               value={f.source}
               onChange={(e) => set({ source: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-surface0 bg-base px-3 py-2 text-sm text-text outline-none focus:border-mauve"
+              className="mt-1 w-full rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1 outline-none focus:border-mauve"
             >
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <Button variant="primary" onClick={log} className="w-full">Add session</Button>
+          <Button variant="secondary" onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
-          <div className="rounded-lg border border-surface0 bg-base px-3 py-2.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-subtext1">
+          <div className="rounded-lg border border-line bg-ink-0 px-3 py-2.5">
+            <div className="flex items-center justify-between text-body">
+              <span className="text-fg-1">
                 {weekday ? "Today's goal" : 'Bonus today'} · {hrs(goal.minutes)} / {hrs(goal.goalMin)}
               </span>
-              <span className={`text-xs ${goal.met ? 'text-green' : 'text-overlay0'}`}>
-                {goal.met ? '✓ met' : weekday ? `${goal.pct}%` : 'optional'}
+              <span className={`text-label ${goal.met ? 'text-green' : 'text-fg-2'}`}>
+                {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}
               </span>
             </div>
-            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface0">
+            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-ink-2">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${goal.pct}%`, background: goal.met ? cat('green') : weekday ? cat('mauve') : cat('teal') }}
               />
             </div>
-            {!weekday && <p className="mt-1 text-[11px] text-overlay0">Weekends are off-schedule — practice counts as bonus and won't break your streak.</p>}
+            {!weekday && <p className="mt-1 text-caption text-fg-2">Weekends are off-schedule — practice counts as bonus and won't break your streak.</p>}
           </div>
         </div>
 
@@ -421,7 +422,7 @@ function TypingPractice() {
 
       {/* Practice sites */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-overlay0">Practice:</span>
+        <span className="text-label text-fg-2">Practice:</span>
         {PRACTICE_SITES.map((site) => (
           <a key={site.name} href={site.url} target="_blank" rel="noreferrer noopener" className="transition-opacity hover:opacity-80">
             <Pill color={site.color}>{site.name}</Pill>
@@ -435,15 +436,15 @@ function TypingPractice() {
       ) : (
         <ul className="mt-4 space-y-2">
           {sessions.slice(0, 12).map((s) => (
-            <li key={s.id} className="group flex items-center justify-between rounded-lg border border-border bg-background p-2.5 text-sm">
+            <li key={s.id} className="group flex items-center justify-between rounded-lg border border-line bg-background p-2.5 text-body">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-medium text-text">{s.source || 'Typing'}</span>
-                <span className="text-xs text-overlay0">{prettyDay(s.date)}</span>
-                <span className="text-subtext0">{hrs(s.durationMin)}</span>
+                <span className="font-medium text-fg-1">{s.source || 'Typing'}</span>
+                <span className="text-label text-fg-2">{prettyDay(s.date)}</span>
+                <span className="text-fg-2">{hrs(s.durationMin)}</span>
                 {s.wpm != null && <span style={{ color: cat('mauve') }}>{s.wpm} wpm</span>}
                 {s.accuracy != null && <span style={{ color: cat('green') }}>{s.accuracy}% acc</span>}
               </div>
-              <button onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-overlay0 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</button>
+              <Button variant="ghost" size="icon-sm" onClick={() => removeTypingSession(s.id)} aria-label="Delete typing session" className="text-fg-2 opacity-0 transition-opacity hover:text-red group-hover:opacity-100">×</Button>
             </li>
           ))}
         </ul>
@@ -476,36 +477,36 @@ function SessionRow({ s, onSave, onDelete }: {
     return (
       <li className="rounded-lg border border-mauve/40 bg-background p-3">
         <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs text-subtext1">Minutes<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-xs text-subtext1">Project<Input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Minutes<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
+          <label className="block text-label text-fg-1">Project<Input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className="mt-1" /></label>
         </div>
         <div className="mt-2"><Slider label="Focus / flow" value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" /></div>
         <div className="mt-2"><Slider label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
-        <label className="mt-2 block text-xs text-subtext1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
+        <label className="mt-2 block text-label text-fg-1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
         <div className="mt-3 flex gap-2">
-          <Button variant="primary" onClick={save} className="flex-1">Save</Button>
-          <Button onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+          <Button variant="secondary" onClick={save} className="flex-1">Save</Button>
+          <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
         </div>
       </li>
     )
   }
   return (
-    <li className="group rounded-lg border border-border bg-background p-3">
+    <li className="group rounded-lg border border-line bg-background p-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-text">{s.project || 'Session'}<span className="ml-2 text-xs text-overlay0">{prettyDay(s.date)}</span></span>
+        <span className="font-medium text-fg-1">{s.project || 'Session'}<span className="ml-2 text-label text-fg-2">{prettyDay(s.date)}</span></span>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-          <button onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-xs text-overlay0 hover:text-mauve">Edit</button>
-          <button onClick={onDelete} aria-label="Delete session" className="text-overlay0 hover:text-red">×</button>
+          <Button variant="ghost" size="sm" onClick={() => { setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="h-auto p-0 text-label text-fg-2 hover:text-mauve">Edit</Button>
+          <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete session" className="text-fg-2 hover:text-red">×</Button>
         </div>
       </div>
-      <div className="mt-1 flex flex-wrap gap-3 text-xs text-subtext0">
+      <div className="mt-1 flex flex-wrap gap-3 text-label text-fg-2">
         <span>{hrsLabel(s.durationMin)}</span>
         <span style={{ color: cat('mauve') }}>focus {s.focus}</span>
         <span style={{ color: cat('red') }}>stress {s.stress}</span>
         {s.interruptions != null && <span>{s.interruptions} interruptions</span>}
         {(s.tags ?? []).map((t) => <span key={t} className="text-teal">#{t}</span>)}
       </div>
-      {s.notes && <p className="mt-1 text-xs text-overlay1 italic">{s.notes}</p>}
+      {s.notes && <p className="mt-1 text-label text-fg-2 italic">{s.notes}</p>}
     </li>
   )
 }

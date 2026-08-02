@@ -49,6 +49,7 @@ const Goals = lazy(() => import('./views/Goals').then((m) => ({ default: m.Goals
 const Insights = lazy(() => import('./views/Insights').then((m) => ({ default: m.Insights })))
 const NoFap = lazy(() => import('./views/NoFap').then((m) => ({ default: m.NoFap })))
 const Help = lazy(() => import('./views/Help').then((m) => ({ default: m.Help })))
+const KitchenSink = lazy(() => import('./views/KitchenSink').then((m) => ({ default: m.KitchenSink })))
 const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m.Settings })))
 
 // Daily pipeline: capture & organise → track health → review.
@@ -87,6 +88,7 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
+  'kitchen-sink': KitchenSink,
   settings: Settings,
 }
 

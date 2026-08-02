@@ -44,14 +44,14 @@ export function MilestoneToast() {
   const emoji = milestoneEmoji(party.streak)
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] grid place-items-center" role="status" aria-live="polite">
-      <div className="celebrate-pop flex flex-col items-center gap-1 rounded-2xl border border-surface1 bg-mantle/95 px-7 py-5 text-center shadow-2xl backdrop-blur">
-        <div className="flex gap-1 text-3xl">
+      <div className="celebrate-pop flex flex-col items-center gap-1 rounded-2xl border border-line-strong bg-ink-1/95 px-7 py-5 text-center shadow-2xl backdrop-blur">
+        <div className="flex gap-1 text-display">
           <span className="celebrate-confetti" style={{ animationDelay: '0ms' }}>{emoji}</span>
-          <span className="text-4xl">{emoji}</span>
+          <span className="text-display">{emoji}</span>
           <span className="celebrate-confetti" style={{ animationDelay: '120ms' }}>{emoji}</span>
         </div>
-        <p className="font-display text-xl text-text">{milestoneLabel(party.streak)}!</p>
-        <p className="text-sm" style={{ color: cat('peach') }}>{party.habit} · keep it going</p>
+        <p className="font-display text-title text-fg-1">{milestoneLabel(party.streak)}!</p>
+        <p className="text-body" style={{ color: cat('peach') }}>{party.habit} · keep it going</p>
       </div>
     </div>
   )

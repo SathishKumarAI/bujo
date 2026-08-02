@@ -10,7 +10,18 @@ import { createRequire } from 'node:module'
 // Playwright may be a local devDep (CI) or globally installed (dev box); resolve
 // either via createRequire rather than a static ESM import.
 const require = createRequire(import.meta.url)
-const { chromium } = require('playwright')
+let chromium
+try {
+  ;({ chromium } = require('playwright'))
+} catch {
+  console.error(
+    'This script needs Playwright, which is deliberately not a dependency ' +
+      '(CI installs it with --no-save to keep it out of the app tree).
+' +
+      'Run:  npm i -D --no-save playwright && npx playwright install chromium',
+  )
+  process.exit(1)
+}
 
 const BASE = process.env.BUJO_URL || 'http://localhost:4173'
 const OUT = 'docs/screenshots'

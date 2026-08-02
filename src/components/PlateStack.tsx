@@ -65,7 +65,7 @@ export function PlateStack({ plates, unit = 'kg' }: { plates: number[]; unit?: s
               x={x + discW / 2}
               y={height / 2 + 3}
               textAnchor="middle"
-              className="font-bold"
+              className="font-medium"
               fill="#11111b" /* Catppuccin Mocha crust — dark label on the colored disc */
               fontSize={8}
             >

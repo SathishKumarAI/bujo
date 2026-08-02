@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
 import { Star } from 'lucide-react'
-import { Button, Card, Empty, Input, Segmented } from '../components/ui'
+import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
@@ -66,11 +67,15 @@ export function Plan() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  // `wide`, not `read`: this view is a CSS multi-column masonry. At 820px the
+  // two columns collapse to ~380px each, which wraps every migration card's
+  // title and stacks its actions vertically — a short measure helps prose, not
+  // a column layout.
   return (
-    <div className="mx-auto max-w-[1400px] columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    <div className="mx-auto max-w-wide columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card
         title="Migration"
-        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'} · the heart of bullet journaling`}
+        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
         right={overdue.length > 1 ? (
           <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
         ) : undefined}
@@ -81,7 +86,7 @@ export function Plan() {
               type="button"
               onClick={() => setAgingOpen((o) => !o)}
               aria-expanded={agingOpen}
-              className="flex w-full items-center gap-1.5 text-xs text-overlay0 hover:text-subtext1"
+              className="flex w-full items-center gap-1.5 text-label text-fg-2 hover:text-fg-1"
               title={`Oldest overdue task: ${aging.oldestDays} days`}
             >
               {agingOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
@@ -90,12 +95,12 @@ export function Plan() {
             </button>
             {agingOpen && (
               <>
-                <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-surface0">
+                <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-ink-2">
                   {agingBuckets.map((b) => (
                     <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
                   ))}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-overlay0">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-caption text-fg-2">
                   {agingBuckets.map((b) => (
                     <span key={b.key} className="inline-flex items-center gap-1">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat(b.color) }} />
@@ -112,7 +117,7 @@ export function Plan() {
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {(showAllOverdue ? overdue : overdue.slice(0, 5)).map((e) => (
-              <li key={e.id} className="flex flex-col gap-1.5 rounded-lg border border-surface0 bg-base p-2 text-sm" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
+              <li key={e.id} className="flex flex-col gap-1.5 rounded-lg border border-line bg-ink-0 p-2 text-body" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
                 <div className="flex items-start gap-1.5">
                   <button
                     onClick={() => toggleImportant(e.id)}
@@ -123,22 +128,22 @@ export function Plan() {
                   >
                     <Star size={14} fill={e.important ? cat('yellow') : 'none'} />
                   </button>
-                  <span className="flex-1 text-text">{e.text}</span>
-                  <span className="shrink-0 text-xs text-overlay0">{prettyDay(e.date)}</span>
+                  <span className="flex-1 text-fg-1">{e.text}</span>
+                  <span className="shrink-0 text-label text-fg-2">{prettyDay(e.date)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <Button onClick={() => migrateEntry(e.id, today)} title="Move to today">→ Today</Button>
-                  <Button onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow">→ Tomorrow</Button>
-                  <Button variant="danger" onClick={() => dropEntry(e.id)} title="Drop it">drop</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, today)} title="Move to today" className="press-3d rounded-lg">→ Today</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow" className="press-3d rounded-lg">→ Tomorrow</Button>
+                  <Button variant="ghost" onClick={() => dropEntry(e.id)} title="Drop it" className="press-3d rounded-lg text-red hover:text-red">drop</Button>
                 </div>
               </li>
             ))}
           </ul>
         )}
         {overdue.length > 5 && (
-          <button onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 text-sm text-mauve hover:underline">
+          <Button variant="link" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
             {showAllOverdue ? 'Show less' : `Show all ${overdue.length}`}
-          </button>
+          </Button>
         )}
       </Card>
 
@@ -148,27 +153,29 @@ export function Plan() {
           subtitle="Tasks you keep migrating — decide: do it or drop it"
           help="Every time you migrate a task forward it counts a hop here. A task pushed several times is a signal: it may be too big, badly timed, or not actually yours to do. Tackle it or let it go."
         >
-          <ul className="space-y-1.5 text-sm">
+          <ul className="space-y-1.5 text-body">
             {deferred.slice(0, 8).map((t) => {
               const open = openThread === t.rootId
               const thread = open ? entryThread(data.entries, t.current.id) : []
               return (
-                <li key={t.rootId} className="rounded-lg border border-surface0 bg-base px-2.5 py-1.5">
+                <li key={t.rootId} className="rounded-lg border border-line bg-ink-0 px-2.5 py-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2 truncate">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => migrateEntry(t.current.id, today)}
                         title="Bring to today"
-                        className="shrink-0 text-overlay0 hover:text-mauve"
+                        className="shrink-0 text-fg-2 hover:text-mauve"
                         aria-label={`Bring "${t.text}" to today`}
-                      >→</button>
-                      <span className="truncate text-subtext1">{t.text}</span>
+                      >→</Button>
+                      <span className="truncate text-fg-1">{t.text}</span>
                     </span>
                     <button
                       onClick={() => setOpenThread(open ? null : t.rootId)}
-                      className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                      className="shrink-0 rounded-full px-2 py-0.5 text-label font-medium"
                       style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
-                      title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'} · tap for history`}
+                      title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                       aria-expanded={open}
                       aria-label={`Migration history for "${t.text}"`}
                     >
@@ -176,7 +183,7 @@ export function Plan() {
                     </button>
                   </div>
                   {open && thread.length > 0 && (
-                    <ol className="mt-2 space-y-0.5 border-t border-surface0 pt-2 text-xs text-overlay0">
+                    <ol className="mt-2 space-y-0.5 border-t border-line pt-2 text-label text-fg-2">
                       {thread.map((h, i) => (
                         <li key={h.id} className="flex items-center gap-2">
                           <span className="w-4 shrink-0 text-right">{i + 1}.</span>
@@ -184,7 +191,7 @@ export function Plan() {
                           <span style={{ color: cat(h.status === 'done' ? 'green' : h.status === 'migrated' ? 'peach' : 'subtext0') }}>
                             {h.status}
                           </span>
-                          {i === thread.length - 1 && <span className="text-overlay0">· now</span>}
+                          {i === thread.length - 1 && <span className="text-fg-2">· now</span>}
                         </li>
                       ))}
                     </ol>
@@ -201,28 +208,27 @@ export function Plan() {
           type="button"
           onClick={() => setSetupOpen((o) => !o)}
           aria-expanded={setupOpen}
-          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-text"
+          className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-overlay0">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-          <span className="font-display text-base font-medium text-subtext1">Setup</span>
-          <span className="text-xs text-overlay0">· recurring rules &amp; calendar import</span>
-          {!setupOpen && <span className="ml-auto text-[10px] tracking-wide text-overlay0 uppercase">show</span>}
+          <span className="text-fg-2">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="font-display text-heading font-medium text-fg-1">Setup</span>
+          <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
         </button>
         {setupOpen && (
           <div className="mt-3 space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
-          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
+          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="task">task</option>
             <option value="event">event</option>
             <option value="note">note</option>
           </select>
-          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-lg border border-surface1 bg-base px-2 py-2 text-sm text-text">
+          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
-          <Button variant="primary" onClick={addRule}>Add rule</Button>
+          <Button variant="secondary" onClick={addRule} className="press-3d rounded-lg">Add rule</Button>
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">
@@ -230,7 +236,7 @@ export function Plan() {
               <button
                 key={w}
                 onClick={() => setWeekdays((cur) => (cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]))}
-                className="rounded px-2 py-1 text-xs"
+                className="rounded px-2 py-1 text-label"
                 style={{ background: weekdays.includes(i) ? cat('mauve') : cat('surface0'), color: weekdays.includes(i) ? cat('crust') : cat('subtext0') }}
               >
                 {w}
@@ -238,26 +244,28 @@ export function Plan() {
             ))}
           </div>
         )}
-        <div className="mt-3 border-t border-surface0 pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           {data.recurrences.length === 0 ? (
             <Empty>No recurring rules yet.</Empty>
           ) : (
-            <ul className="space-y-1 text-sm">
+            <ul className="space-y-1 text-body">
               {data.recurrences.map((r) => (
                 <li key={r.id} className="group flex items-center justify-between">
-                  <span className="text-subtext1">
+                  <span className="text-fg-1">
                     {r.type === 'event' ? '○' : r.type === 'note' ? '–' : '·'} {r.text}
-                    <span className="ml-2 text-overlay0">
+                    <span className="ml-2 text-fg-2">
                       {r.freq === 'daily' ? 'every day' : r.weekdays.map((d) => WEEKDAYS[d]).join(' ')}
                     </span>
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => { const t = prompt('Edit recurring task (updates every future occurrence):', r.text); if (t && t.trim()) updateRecurrence(r.id, { text: t.trim() }) }}
                       aria-label="Edit rule"
-                      className="text-overlay0 hover:text-mauve"
-                    >✎</button>
-                    <button onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-overlay0 hover:text-red">×</button>
+                      className="text-fg-2 hover:text-mauve"
+                    >✎</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeRecurrence(r.id)} aria-label="Remove rule" className="text-fg-2 hover:text-red">×</Button>
                   </div>
                 </li>
               ))}
@@ -267,9 +275,9 @@ export function Plan() {
       </Card>
 
       <Card title="Import calendar (.ics)" subtitle="Bring events from Google/Apple Calendar onto your monthly">
-        <Button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Choose .ics file</Button>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><CalendarPlus size={15} /> Choose .ics file</Button>
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
-        <p className="mt-2 text-xs text-overlay0">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
+        <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
           </div>
         )}

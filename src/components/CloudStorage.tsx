@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { FolderOpen, GitBranch, RefreshCw, Upload, Download, HardDrive } from 'lucide-react'
 import { useJournal } from '../store'
-import { Button, Card, Input } from './ui'
+import { Card, Input } from './ui'
 import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { folderName, isSupported, loadFromFolder, pickFolder, restoreFolder, saveToFolder } from '../lib/fscloud'
 import { pullGist, pushGist, verifyToken } from '../lib/github'
+import { useConfirm } from './ConfirmDialog'
+import { Button } from './ui/button'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
+  const confirm = useConfirm()
   const { data, setSettings, replaceAll } = useJournal()
   const s = data.settings
   const [busy, setBusy] = useState('')
@@ -20,7 +23,11 @@ export function CloudStorage() {
     try {
       const name = await pickFolder()
       const remote = await loadFromFolder()
-      if (remote && confirm('Load the bujo.json already in this folder? (replaces this device’s data)')) {
+      if (remote && await confirm({
+        title: 'Load the journal already in this folder?',
+        description: 'This folder has an existing bujo.json. Loading it replaces everything currently on this device.',
+        confirmLabel: 'Load it', destructive: true,
+      })) {
         replaceAll(migrate(remote))
       } else {
         await saveToFolder(data)
@@ -62,7 +69,11 @@ export function CloudStorage() {
   }
   async function ghRestore() {
     if (!s.githubToken || !s.githubGistId) return alert('Connect + back up to GitHub first.')
-    if (!confirm('Replace this device’s journal with the GitHub copy?')) return
+    if (!await confirm({
+      title: 'Replace this device’s journal with the GitHub copy?',
+      description: 'Everything currently on this device is overwritten by the copy stored in your gist.',
+      confirmLabel: 'Replace my data', destructive: true,
+    })) return
     setBusy('gh')
     try {
       const remote = await pullGist(s.githubToken, s.githubGistId)
@@ -83,27 +94,27 @@ export function CloudStorage() {
       className="lg:col-span-2"
     >
       {/* Folder */}
-      <div className="rounded-lg border border-surface0 bg-base p-3">
+      <div className="rounded-lg border border-line bg-ink-0 p-3">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm text-subtext1"><FolderOpen size={15} style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
-          {s.storageMode === 'folder' && <span className="text-xs" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
+          <span className="inline-flex items-center gap-2 text-body text-fg-1"><FolderOpen size={15} style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
+          {s.storageMode === 'folder' && <span className="text-label" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
         </div>
-        <p className="mt-1 text-xs text-overlay0">Pick a folder in your Drive/Dropbox/OneDrive sync folder · auto-saves there.</p>
+        <p className="mt-1 text-label text-fg-2">Pick a folder in your Drive/Dropbox/OneDrive sync folder, auto-saves there.</p>
         {!isSupported() ? (
-          <p className="mt-2 text-xs text-red">Needs Chrome / Edge.</p>
+          <p className="mt-2 text-label text-red">Needs Chrome / Edge.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button onClick={chooseFolder} className="inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
-            {s.storageMode === 'folder' && <Button onClick={syncFolderNow} className="inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
-            {s.storageMode === 'folder' && <Button variant="danger" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })}>Switch to local</Button>}
+            <Button variant="secondary" onClick={chooseFolder} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><FolderOpen size={14} /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
+            {s.storageMode === 'folder' && <Button variant="secondary" onClick={syncFolderNow} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><RefreshCw size={14} /> Save now</Button>}
+            {s.storageMode === 'folder' && <Button variant="ghost" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })} className="press-3d rounded-lg text-red hover:text-red">Switch to local</Button>}
           </div>
         )}
       </div>
 
       {/* GitHub gist */}
-      <div className="mt-3 rounded-lg border border-surface0 bg-base p-3">
-        <span className="inline-flex items-center gap-2 text-sm text-subtext1"><GitBranch size={15} /> GitHub (private gist)</span>
-        <p className="mt-1 text-xs text-overlay0">
+      <div className="mt-3 rounded-lg border border-line bg-ink-0 p-3">
+        <span className="inline-flex items-center gap-2 text-body text-fg-1"><GitBranch size={15} /> GitHub (private gist)</span>
+        <p className="mt-1 text-label text-fg-2">
           Paste a token with the <code>gist</code> scope (github.com → Settings → Developer settings → Tokens).
         </p>
         <Input
@@ -114,9 +125,9 @@ export function CloudStorage() {
           className="mt-2 font-mono"
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button onClick={ghBackup} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
-          <Button onClick={ghRestore} className="inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
-          {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-xs text-mauve hover:underline">open gist</a>}
+          <Button variant="secondary" onClick={ghBackup} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'gh' ? '…' : 'Back up to GitHub'}</Button>
+          <Button variant="secondary" onClick={ghRestore} disabled={!!busy} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Download size={14} /> Restore from GitHub</Button>
+          {s.githubGistId && <a href={`https://gist.github.com/${s.githubGistId}`} target="_blank" rel="noreferrer" className="self-center text-label text-mauve hover:underline">open gist</a>}
         </div>
       </div>
     </Card>

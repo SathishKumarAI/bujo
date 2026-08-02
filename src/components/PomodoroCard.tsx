@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react'
-import { Card, Button } from './ui'
+import { Card } from './ui'
 import { useJournal } from '../store'
 import { todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
+import { Button } from './ui/button'
 
 // ADHD-friendly defaults: start gentle, scale up. Pomodoro work/break in minutes.
 const PRESETS = [
@@ -68,7 +69,7 @@ export function PomodoroCard() {
   function choose(p: typeof PRESETS[number]) { setRunning(false); setMode('work'); setPreset(p); setLeft(p.w * 60) }
 
   return (
-    <Card title="Focus timer" subtitle={`${mode === 'work' ? 'Work' : 'Break'} · ${blocks} block${blocks === 1 ? '' : 's'} done`}>
+    <Card title="Focus timer" subtitle={`${mode === 'work' ? 'Work' : 'Break'}, ${blocks} block${blocks === 1 ? '' : 's'} done`}>
       <div className="flex flex-col items-center">
         <div className="relative grid place-items-center">
           <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden>
@@ -76,22 +77,30 @@ export function PomodoroCard() {
             <circle cx="70" cy="70" r={R} fill="none" stroke={accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} transform="rotate(-90 70 70)" style={{ transition: 'stroke-dashoffset 1s linear' }} />
           </svg>
           <div className="absolute text-center">
-            <p className="font-display text-3xl tabular-nums text-text">{pad(Math.floor(shown / 60))}:{pad(shown % 60)}</p>
-            <p className="text-xs uppercase tracking-wide text-overlay0">{mode}</p>
+            <p className="font-display text-display tabular-nums text-fg-1">{pad(Math.floor(shown / 60))}:{pad(shown % 60)}</p>
+            <p className="text-label uppercase tracking-wide text-fg-2">{mode}</p>
           </div>
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="primary" onClick={() => setRunning((r) => !r)} className="inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             {running ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Start</>}
           </Button>
-          <Button onClick={skip} aria-label="Skip" title="Skip to next"><SkipForward size={15} /></Button>
-          <Button onClick={reset} aria-label="Reset" title="Reset"><RotateCcw size={15} /></Button>
+          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><SkipForward size={15} /></Button>
+          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d rounded-lg"><RotateCcw size={15} /></Button>
         </div>
 
         <div className="mt-3 flex gap-1.5">
           {PRESETS.map((p) => (
-            <Button key={p.label} variant={preset.label === p.label ? 'primary' : 'ghost'} onClick={() => choose(p)} className="text-xs">{p.label}</Button>
+            <Button
+              key={p.label}
+              variant="secondary"
+              onClick={() => choose(p)}
+              aria-pressed={preset.label === p.label}
+              /* Selected preset gets the accent wash, not the fill — it's a
+                 choice already made, not the primary action on the screen. */
+              className={`press-3d rounded-lg text-label ${preset.label === p.label ? 'bg-brand-wash font-medium text-brand' : ''}`}
+            >{p.label}</Button>
           ))}
         </div>
       </div>

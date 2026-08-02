@@ -25,9 +25,9 @@ export function MovementRadar({ data, unit }: { data: CategoryVolume[]; unit: st
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-overlay0">
+          <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-caption text-fg-2">
             {data.map((c) => (
-              <span key={c.category}>{c.category} <span className="text-subtext1">{c.volume.toLocaleString()}{unit}</span></span>
+              <span key={c.category}>{c.category} <span className="text-fg-1">{c.volume.toLocaleString()}{unit}</span></span>
             ))}
           </div>
         </>

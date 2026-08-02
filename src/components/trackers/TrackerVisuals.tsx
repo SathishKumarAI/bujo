@@ -40,7 +40,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
 
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks · greener = more habits done that day" className="lg:col-span-2" collapsible>
+      <Card title="Completion heatmap" subtitle="Last 13 weeks, greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
@@ -55,45 +55,45 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
             ))}
           </div>
         </div>
-        <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-overlay0">
+        <div className="mt-2 flex items-center justify-end gap-1 text-micro text-fg-2">
           less {[0, 0.25, 0.5, 0.75, 1].map((r) => <span key={r} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: heatColor(r) }} />)} more
         </div>
       </Card>
 
-      <Card title="Streak leaderboard" subtitle="Current streak · faint marker = all-time best">
+      <Card title="Streak leaderboard" subtitle="Current streak, faint marker = all-time best">
         {streaks.length === 0 ? (
           <Empty>No check habits yet.</Empty>
         ) : (
           <ul className="space-y-1.5">
             {streaks.map(({ h, streak, best }) => (
-              <li key={h.id} className="flex items-center gap-2 text-sm">
-                <span className="w-24 shrink-0 truncate text-subtext1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface0">
+              <li key={h.id} className="flex items-center gap-2 text-body">
+                <span className="w-24 shrink-0 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-ink-2">
                   <div className="h-full rounded-full" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
                   {/* All-time best marker (#290): a notch at the personal record. */}
                   {best > streak && (
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
                   )}
                 </div>
-                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak} · best ever ${best}`}><Flame size={12} />{streak}<span className="text-overlay0">/{best}</span></span>
+                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Flame size={12} />{streak}<span className="text-fg-2">/{best}</span></span>
               </li>
             ))}
           </ul>
         )}
       </Card>
 
-      <Card title="Monthly trend" subtitle="Avg completion per month · is it climbing?">
+      <Card title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
           return (
             <div className="flex items-end justify-between gap-2" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion per month over the last 6 months">
               {months.map((m) => (
                 <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-[10px] tabular-nums text-subtext0">{Math.round(m.ratio * 100)}%</span>
+                  <span className="text-micro tabular-nums text-fg-2">{Math.round(m.ratio * 100)}%</span>
                   <div className="flex w-full flex-1 items-end">
                     <div className="w-full rounded-t" style={{ height: `${Math.max(3, m.ratio * 100)}%`, background: cat('green'), opacity: 0.55 + m.ratio * 0.45 }} />
                   </div>
-                  <span className="text-[10px] text-overlay0">{prettyMonth(m.ym).slice(0, 3)}</span>
+                  <span className="text-micro text-fg-2">{prettyMonth(m.ym).slice(0, 3)}</span>
                 </div>
               ))}
             </div>
@@ -108,7 +108,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
               <div className="flex w-full flex-1 items-end">
                 <div className="w-full rounded-t" style={{ height: `${Math.max(3, r * 100)}%`, background: cat('mauve'), opacity: 0.5 + r * 0.5 }} title={`${Math.round(r * 100)}%`} />
               </div>
-              <span className="text-[10px] text-overlay0">{WEEKDAYS[i]}</span>
+              <span className="text-micro text-fg-2">{WEEKDAYS[i]}</span>
             </div>
           ))}
         </div>
@@ -120,7 +120,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
           <StatTile label="perfect days" value={perfect.total} color="green" />
           <StatTile label="current streak" value={perfect.streak} color="peach" />
         </div>
-        <p className="mt-2 text-xs text-overlay0">
+        <p className="mt-2 text-label text-fg-2">
           {perfect.streak > 0
             ? `You're on a ${perfect.streak}-day run of nailing everything scheduled. Keep it rolling.`
             : 'A perfect day = every scheduled habit done. Clear today to start a streak.'}

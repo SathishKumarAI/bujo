@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sun, BarChart3, Compass, Command, ShieldCheck, ArrowRight, X } from 'lucide-react'
 import { useNav } from './shell/nav'
 import type { ViewId } from './shell/viewChrome'
+import { Button } from './ui/button'
 
 const KEY = 'bujo:onboarded'
 
@@ -37,30 +38,30 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-        <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-overlay1 hover:text-text"><X size={18} /></button>
+      <div className="relative w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-2xl">
+        <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-fg-2 hover:text-fg-1"><X size={18} /></button>
         <div className="mb-3 flex items-baseline gap-2">
-          <span className="font-display text-2xl font-semibold tracking-tight text-foreground">bujo</span>
+          <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>
           <span className="text-primary">✦</span>
         </div>
         <div className="grid h-11 w-11 place-items-center rounded-full bg-secondary"><Icon size={22} className="text-primary" /></div>
-        <h2 className="mt-3 font-display text-xl text-foreground">{step.title}</h2>
-        <p className="mt-1.5 text-sm text-subtext0">{step.body}</p>
+        <h2 className="mt-3 font-display text-title text-foreground">{step.title}</h2>
+        <p className="mt-1.5 text-body text-fg-2">{step.body}</p>
 
         <div className="mt-5 flex items-center gap-1.5">
           {STEPS.map((_, n) => (
             <span key={n} className="h-1.5 rounded-full transition-all" style={{ width: n === i ? 18 : 6, background: n === i ? 'var(--color-mauve)' : 'var(--color-surface1)' }} />
           ))}
           <div className="ml-auto flex gap-2">
-            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-xs text-overlay1 hover:text-subtext1">Show me</button>}
+            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-label text-fg-2 hover:text-fg-1">Show me</button>}
             {last ? (
-              <button onClick={done} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">Start journaling</button>
+              <Button onClick={done} className="press-3d gap-1.5">Start journaling</Button>
             ) : (
-              <button onClick={() => setI(i + 1)} className="press-3d inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-crust">Next <ArrowRight size={14} /></button>
+              <Button onClick={() => setI(i + 1)} className="press-3d gap-1.5">Next <ArrowRight size={14} /></Button>
             )}
           </div>
         </div>
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-overlay0"><ShieldCheck size={12} /> Private & local-first. Your data is yours.</p>
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-caption text-fg-2"><ShieldCheck size={12} /> Private & local-first. Your data is yours.</p>
       </div>
     </div>
   )

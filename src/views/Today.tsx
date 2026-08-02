@@ -1,7 +1,8 @@
 import { Utensils, CupSoda, Flame, NotebookPen } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
-import { Button, Card, Empty, Input, Slider } from '../components/ui'
+import { Card, Empty, Input, Slider } from '../components/ui'
+import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
@@ -71,20 +72,25 @@ export function Today() {
           <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
           <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
         </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="mb-2 text-sm text-subtext1">Broke fast with</p>
+        <div className="mt-4 border-t border-line pt-3">
+          <p className="mb-2 text-body text-fg-1">First meal</p>
+          {/* These record a choice, so the selected one gets the accent wash
+              rather than the accent fill — a filled pill here read as the
+              screen's primary action, which it never was. */}
           <div className="flex gap-2">
             <Button
-              variant={metric?.fastBreak === 'food' ? 'primary' : 'ghost'}
+              variant="ghost"
+              aria-pressed={metric?.fastBreak === 'food'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-              className="inline-flex items-center gap-1.5"
+              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Utensils size={14} /> Food
             </Button>
             <Button
-              variant={metric?.fastBreak === 'drink' ? 'primary' : 'ghost'}
+              variant="ghost"
+              aria-pressed={metric?.fastBreak === 'drink'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-              className="inline-flex items-center gap-1.5"
+              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <CupSoda size={14} /> Drink
             </Button>
@@ -113,9 +119,9 @@ export function Today() {
           <CaptureBar date={date} />
         </div>
         {carryover.length > 0 && (
-          <div className="mb-3 flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
-            <span className="text-subtext1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-            <Button onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))}>Carry forward</Button>
+          <div className="mb-3 flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2 text-body">
+            <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
+            <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-lg">Carry forward</Button>
           </div>
         )}
         {dayEntries.length === 0 ? (
@@ -138,7 +144,7 @@ export function Today() {
               ))}
             </ul>
             {taskCount > 0 && (
-              <p className="mt-2 text-right text-xs text-overlay0">{doneCount}/{taskCount} tasks done</p>
+              <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
             )}
           </>
         )}
@@ -165,9 +171,9 @@ export function Today() {
                 setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
               }
               rows={3}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text placeholder:text-overlay0 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
             />
-            <p className="mt-1 text-xs text-overlay0">Saved into today's memory on blur.</p>
+            <p className="mt-1 text-label text-fg-2">Saved into today's memory on blur.</p>
           </Card>
         )}
 
@@ -195,15 +201,15 @@ export function Today() {
       {/* ── 6) Memories (collapsed): on this day from earlier journals ─ */}
       {hasFlash && !hidden.includes('onThisDay') && (
         <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-body">
             {flashbacks.memories.map((m) => (
-              <li key={m.date} className="text-subtext1">
-                <span className="text-overlay0">{m.date}</span> · ▲ {m.text}
+              <li key={m.date} className="text-fg-1">
+                <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
               </li>
             ))}
             {flashbacks.entries.slice(0, 5).map((e) => (
-              <li key={e.id} className="text-subtext1">
-                <span className="text-overlay0">{e.date}</span> · {e.text}
+              <li key={e.id} className="text-fg-1">
+                <span className="text-fg-2">{e.date}</span> · {e.text}
               </li>
             ))}
           </ul>
@@ -238,12 +244,12 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           return (
-            <li key={h.id} className="flex items-center gap-3 rounded-lg border border-surface0 bg-base px-3 py-2">
-              <span className="min-w-0 flex-1 truncate text-sm text-subtext1">
+            <li key={h.id} className="flex items-center gap-3 rounded-lg border border-line bg-ink-0 px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
-                {h.unit && <span className="text-overlay0"> ({h.unit})</span>}
+                {h.unit && <span className="text-fg-2"> ({h.unit})</span>}
               </span>
-              <span className="text-xs tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
+              <span className="text-label tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
                 {val}/{target}{h.type === 'timer' ? 'm' : ''}{met ? ' ✓' : ''}
               </span>
               <div className="flex items-center gap-1">
@@ -251,19 +257,19 @@ function TodayCountHabits({ date }: { date: string }) {
                   onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-full border border-surface1 text-subtext1 transition-colors hover:text-text disabled:opacity-30"
+                  className="grid h-7 w-7 place-items-center rounded-full border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
                 >−</button>
                 <button
                   onClick={() => setHabitValue(date, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-full border text-text transition-colors"
+                  className="grid h-7 w-7 place-items-center rounded-full border text-fg-1 transition-colors"
                   style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
                 >+</button>
                 {step > 1 && (
                   <button
                     onClick={() => setHabitValue(date, h.id, val + step)}
                     aria-label={`Add ${step} to ${h.name}`}
-                    className="rounded-full border border-surface1 px-2 py-0.5 text-[11px] text-subtext1 transition-colors hover:text-text"
+                    className="rounded-full border border-line-strong px-2 py-0.5 text-caption text-fg-1 transition-colors hover:text-fg-1"
                   >+{step}</button>
                 )}
               </div>
@@ -281,12 +287,12 @@ function AtRiskNudge({ date }: { date: string }) {
   const atRisk = atRiskHabits(data, date)
   if (atRisk.length === 0) return null
   return (
-    <Card title="Keep your streaks" subtitle="Scheduled today · streak alive · not logged yet">
+    <Card title="Keep your streaks" subtitle="Scheduled today, streak alive, not logged yet">
       <ul className="flex flex-wrap gap-2">
         {atRisk.map(({ habit, streak }) => (
           <li
             key={habit.id}
-            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-label"
             style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
           >
             <Flame size={12} style={{ color: cat('peach') }} />
@@ -324,9 +330,9 @@ function WeeklyGoalRings({ date }: { date: string }) {
                     transform="rotate(-90 24 24)" style={{ transition: 'stroke-dashoffset 0.3s' }}
                   />
                 </svg>
-                <span className="absolute text-[11px] font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
+                <span className="absolute text-caption font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
               </span>
-              <span className="max-w-full truncate text-center text-[11px] text-overlay1" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+              <span className="max-w-full truncate text-center text-caption text-fg-2" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             </div>
           )
         })}
