@@ -238,6 +238,61 @@ The diagnosis is sound and the reference implementation is real, working code �
 
 ---
 
+## J. Icon & button system — Stage 0 done, Stage 1 needs a go-ahead
+
+Full spec + the Stage 0 audit: **`docs/ICON-BUTTON-SYSTEM.md`**. Three decisions
+are settled and not up for relitigation: Phosphor icons with weight (not colour)
+as the active signal, one **tonal** loud button per screen (no solid accent fill
+anywhere), and shadcn controls with the variants rewritten.
+
+**Verification rule for every stage: all five themes — mocha, latte, neon,
+vscode, dawn.** Not mocha plus a spot check. Three themes redefine the accent
+(dawn's is an *amber*), two invert surface polarity, and dawn renders two text
+tiers where the rest render three. A wash that reads on near-black can vanish on
+cream. Anything checked in mocha alone is unchecked.
+
+- [x] **J0 · Stage 0 audit — DONE.** Headlines, all of which change the plan:
+  - **24 routes**, not ~25. 21 nav rows (2 settings-gated), `gym` is an alias.
+  - **The theme bridge already exists and runs the other way**: `index.css`
+    defines shadcn's vars *from* Catppuccin, and `tokens.css` defines the
+    purpose layer *from* those. Adding the spec's `shadcn-bridge.css` would give
+    the same variables two definitions. Recommend extending the existing layer.
+  - **The Stage 1 hazard does not apply** — themes are already on
+    `:root[data-theme=…]` on `documentElement`, so a `:root` bridge resolves.
+  - **`--text-3` already clears 4.5:1 in all five** (4.74–6.55:1). That stage is
+    done; dawn is the known exception that renders two tiers, not three (§H14).
+  - **Tailwind v4, no config file, zero `.jsx`** — install with TypeScript, and
+    the "content globs" question does not apply.
+  - **Cost is bigger than the spec assumes:** lucide is imported in **85 files**
+    at **16 distinct px sizes** (none rem, so none track the font-scale
+    control); the `Button` cva has **8 sizes** against a target of 3; there are
+    **10 distinct radii** against a target of 3; and **37 solid-accent buttons**
+    (8 explicit `variant="default"` + 29 bare `<Button>`) are what decision 2
+    deletes.
+- [ ] **J1 · Stage 1 — shadcn install + token extension.** Blocked on four
+  answers in §"Open questions" of the doc: the bridge approach, the
+  `--accent-wash` move to oklab + a hover step, confirmation that a
+  lucide→Phosphor swap across 85 files is wanted, and how much icon-map
+  guesswork is acceptable. Also adds the missing tokens: `--r-control`,
+  `--r-card`, `--r-pill`, `--h-control`, `--accent-wash-hover`, `--bg-danger`.
+- [ ] **J2 · Stage 2 — Phosphor + one `Icon` wrapper.** Three rem sizes, weight
+  as the state signal, nothing imports Phosphor directly. The bullet glyph
+  column stays typographic.
+- [ ] **J3 · Stage 3 — four button variants, three heights (28/36/44).** Delete
+  shadcn's solid `default`. Rebuild `Segmented` and `Stepper` on `ToggleGroup`.
+  Dev-only warning when a route mounts more than one `primary`.
+- [ ] **J4 · Stage 4 — kitchen sink** becomes the review surface: every variant ×
+  size × state, every mapped icon in both weights, screenshotted in five themes ×
+  three font scales.
+- [ ] **J5 · Stage 5 — roll out by cluster** (Today → shell → logging → data →
+  reflective → settings/onboarding/empty/error), reporting after each.
+- [ ] **J6 · Stage 6 — sweep**, as a table of counts: zero hex outside theme
+  files, zero direct icon imports, zero solid-accent buttons, zero px sizes,
+  exactly three heights and three radii, focus ring on every stop,
+  `prefers-reduced-motion` honoured.
+
+---
+
 ## I. Contrast & theme — parked 2026-08-02 (do not start without a decision)
 
 Measured, not started. Two separate things, don't conflate them:
