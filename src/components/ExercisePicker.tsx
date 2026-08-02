@@ -1,5 +1,6 @@
+import { CaretDown, MagnifyingGlass } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
-import { ChevronDown, Search } from 'lucide-react'
 import { cat } from '../lib/colors'
 
 /**
@@ -41,7 +42,7 @@ export function ExercisePicker({
         className="flex w-full items-center justify-between gap-1 rounded-lg border border-line-strong bg-ink-0 px-2 py-1.5 text-left text-body text-fg-1"
       >
         <span className={value ? 'truncate' : 'text-fg-2'}>{value || 'Pick exercise…'}</span>
-        <ChevronDown size={14} className="shrink-0 text-fg-2" />
+        <Icon as={CaretDown} size="sm" className="shrink-0 text-fg-2" />
       </button>
 
       {open && (
@@ -49,13 +50,13 @@ export function ExercisePicker({
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
             <div className="flex items-center gap-2 border-b border-line px-2.5 py-2">
-              <Search size={14} className="text-fg-2" />
+              <Icon as={MagnifyingGlass} size="sm" className="text-fg-2" />
               <input
                 ref={inputRef}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') pick(q.trim() || value); if (e.key === 'Escape') setOpen(false) }}
-                placeholder="Search or type a new exercise…"
+                placeholder="MagnifyingGlass or type a new exercise…"
                 className="w-full bg-transparent text-body text-fg-1 placeholder:text-fg-2 focus:outline-none"
               />
             </div>

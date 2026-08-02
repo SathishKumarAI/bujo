@@ -1,5 +1,6 @@
+import { Minus, Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef } from 'react'
-import { Minus, Plus } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
 /**
@@ -64,7 +65,7 @@ export function Stepper({
           onPointerLeave={stop}
           className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
-          <Minus size={14} />
+          <Icon as={Minus} size="sm" />
         </button>
         <input
           type="number"
@@ -82,7 +83,7 @@ export function Stepper({
           onPointerLeave={stop}
           className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
-          <Plus size={14} />
+          <Icon as={Plus} size="sm" />
         </button>
       </div>
     </div>

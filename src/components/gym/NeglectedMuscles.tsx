@@ -1,4 +1,5 @@
-import { AlertTriangle } from 'lucide-react'
+import { Warning } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
 import { muscleNames } from '../../lib/muscles'
@@ -24,7 +25,7 @@ export function NeglectedMuscles({ muscles, setFocusEx }: { muscles: NeglectedMu
             style={{ background: cat('peach') + '22', color: cat('peach') }}
             title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
           >
-            <AlertTriangle size={12} /> {m.name}
+            <Icon as={Warning} size="sm" /> {m.name}
             <span className="text-micro text-fg-2">{m.daysSince == null ? 'never' : `${m.daysSince}d`}</span>
           </button>
         ))}

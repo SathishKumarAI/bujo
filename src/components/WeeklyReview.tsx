@@ -1,5 +1,6 @@
+import { ClipboardText } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { ClipboardCheck } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
@@ -44,7 +45,7 @@ export function WeeklyReview() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><ClipboardCheck size={18} className="text-mauve" /> Weekly review</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={ClipboardText} size="md" className="text-mauve" /> Weekly review</span>}
       subtitle={`Last 7 days, ${score}% covered`}
       right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-lg">{open ? 'Close' : 'Start review'}</Button>}
     >

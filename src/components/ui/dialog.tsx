@@ -1,5 +1,5 @@
 import * as React from "react"
-import { XIcon } from "lucide-react"
+import { X as XIcon } from '@/components/icons'
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/cn"

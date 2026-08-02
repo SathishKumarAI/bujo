@@ -1,6 +1,7 @@
+import { Cake, CaretDown, CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Cake, ChevronDown, ChevronRight } from 'lucide-react'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { EntryRow } from '../components/EntryRow'
@@ -251,7 +252,7 @@ export function Collections() {
           aria-expanded={peopleOpen}
           className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-fg-2">{peopleOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="text-fg-2">{peopleOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
           <span className="font-display text-heading font-medium text-fg-1">People</span>
           <span className="text-label text-fg-2">friends &amp; birthdays</span>
         </button>
@@ -274,7 +275,7 @@ export function Collections() {
                   {birthdays.map((b) => (
                     <li key={b.id} className="group flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 text-fg-1">
-                        <Cake size={14} style={{ color: cat('pink') }} /> {b.name}
+                        <Icon as={Cake} size="sm" style={{ color: cat('pink') }} /> {b.name}
                         <span className="ml-1 text-fg-2">{MONTHS[b.month - 1].slice(0, 3)} {b.day}</span>
                         {b.fromFriend && <span className="text-micro text-fg-2">· friend</span>}
                       </span>
@@ -296,7 +297,7 @@ export function Collections() {
           aria-expanded={autoPagesOpen}
           className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-fg-2">{autoPagesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="text-fg-2">{autoPagesOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
           <span className="font-display text-heading font-medium text-fg-1">Auto-pages</span>
           <span className="text-label text-fg-2">memories &amp; tag pages</span>
         </button>

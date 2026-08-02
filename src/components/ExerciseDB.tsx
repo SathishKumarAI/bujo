@@ -1,5 +1,6 @@
+import { Barbell, Plus, Video, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
-import { Dumbbell, Plus, X, Video } from 'lucide-react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { MuscleMap } from './MuscleMap'
@@ -75,7 +76,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                 {ex.image ? (
                   <img src={ex.image} alt={ex.name} loading="lazy" className="h-full w-full object-contain transition-transform group-hover:scale-105" />
                 ) : (
-                  <Dumbbell size={26} style={{ color: cat('overlay0') }} />
+                  <Icon as={Barbell} size="lg" style={{ color: cat('overlay0') }} />
                 )}
               </div>
               <div className="px-2 py-1.5 text-label text-fg-1">{ex.name}</div>
@@ -92,7 +93,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
           <div ref={trap} className="card-3d w-full max-w-lg overflow-hidden rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={selected.name}>
             <header className="flex items-center justify-between border-b border-line px-4 py-3">
               <h3 className="font-display text-heading text-fg-1">{selected.name}</h3>
-              <Button variant="ghost" size="icon-sm" onClick={() => setSelected(null)} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setSelected(null)} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
             </header>
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -102,7 +103,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                   ) : selected.image ? (
                     <img src={selected.image} alt={selected.name} className="max-h-56 w-full object-contain" />
                   ) : (
-                    <Dumbbell size={48} style={{ color: cat('overlay0') }} />
+                    <Icon as={Barbell} size="lg" style={{ color: cat('overlay0') }} />
                   )}
                 </div>
                 <a
@@ -111,7 +112,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 text-body text-red hover:underline"
                 >
-                  <Video size={16} /> Watch on YouTube
+                  <Icon as={Video} size="md" /> Watch on YouTube
                 </a>
               </div>
               <div>
@@ -133,7 +134,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
             <footer className="flex justify-end gap-2 border-t border-line px-4 py-3">
               <Button variant="secondary" onClick={() => setSelected(null)} className="press-3d rounded-lg">Close</Button>
               <Button variant="default" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-                <Plus size={15} /> Add to session
+                <Icon as={Plus} size="sm" /> Add to session
               </Button>
             </footer>
           </div>

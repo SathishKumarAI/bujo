@@ -1,3 +1,4 @@
+import { ArrowLineUp, ArrowsClockwise, Barbell, BookOpen, Books, Brain, CalendarBlank, ChartBar, ChartPie, Code, Flag, Flower, GraduationCap, PersonSimpleRun, Question, ShieldCheck, SlidersHorizontal, Sparkle, Sun, Target, Trophy } from '@/components/icons'
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
@@ -22,12 +23,6 @@ import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
 import type { NavItem } from './components/shell/Sidebar'
 import type { ViewId } from './components/shell/viewChrome'
-import {
-  Sun, CalendarDays, BarChart3, Activity, Repeat, BookMarked,
-  Sparkles, Flower2, ShieldCheck, HelpCircle, SlidersHorizontal, PieChart, Target, Code2,
-  ArrowUpToLine, Trophy, Dumbbell, Flag, BookOpen, GraduationCap, Brain,
-} from 'lucide-react'
-
 // All non-landing views are code-split so the initial bundle only ships Today +
 // Account (the gate). Each view (and its recharts/feature-card weight) loads on
 // first navigation behind the <Suspense> fallback below.
@@ -63,25 +58,25 @@ const GROUP_ORDER = ['Journal', 'Fitness', 'Sports', 'Habits', 'Wellbeing', 'Lib
 
 const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
-  { id: 'plan', label: 'Plan', icon: Repeat, group: 'Journal' },
-  { id: 'fitness', label: 'Fitness', icon: Activity, group: 'Fitness' },
-  { id: 'pullups', label: 'Pull-ups', icon: ArrowUpToLine, group: 'Fitness' },
-  { id: 'homeworkout', label: 'Home Workout', icon: Dumbbell, group: 'Fitness' },
+  { id: 'plan', label: 'Plan', icon: ArrowsClockwise, group: 'Journal' },
+  { id: 'fitness', label: 'Fitness', icon: PersonSimpleRun, group: 'Fitness' },
+  { id: 'pullups', label: 'Pull-ups', icon: ArrowLineUp, group: 'Fitness' },
+  { id: 'homeworkout', label: 'Home Workout', icon: Barbell, group: 'Fitness' },
   { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Sports' },
   { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Sports' },
-  { id: 'trackers', label: 'Trackers', icon: BarChart3, group: 'Habits' },
+  { id: 'trackers', label: 'Trackers', icon: ChartBar, group: 'Habits' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Habits' },
-  { id: 'focus', label: 'Focus', icon: Code2, group: 'Habits' },
+  { id: 'focus', label: 'Focus', icon: Code, group: 'Habits' },
   { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Wellbeing' },
-  { id: 'cycle', label: 'Cycle', icon: Flower2, group: 'Wellbeing', show: (g) => g.cycle },
+  { id: 'cycle', label: 'Cycle', icon: Flower, group: 'Wellbeing', show: (g) => g.cycle },
   { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Wellbeing', show: (g) => g.nofap },
-  { id: 'collections', label: 'Collections', icon: BookMarked, group: 'Library' },
+  { id: 'collections', label: 'Collections', icon: Books, group: 'Library' },
   { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Library' },
-  { id: 'monthly', label: 'Monthly', icon: CalendarDays, group: 'Library' },
+  { id: 'monthly', label: 'Monthly', icon: CalendarBlank, group: 'Library' },
   { id: 'goals', label: 'Goals', icon: Flag, group: 'Library' },
-  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Review' },
-  { id: 'stats', label: 'Stats', icon: PieChart, group: 'Review' },
-  { id: 'help', label: 'Help', icon: HelpCircle, group: 'System' },
+  { id: 'insights', label: 'Insights', icon: Sparkle, group: 'Review' },
+  { id: 'stats', label: 'Stats', icon: ChartPie, group: 'Review' },
+  { id: 'help', label: 'Help', icon: Question, group: 'System' },
   { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
 ]
 

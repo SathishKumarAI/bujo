@@ -104,7 +104,7 @@ function ProgressionsCard() {
           <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
             <div className="flex items-center justify-between gap-2">
               <p className="text-body text-fg-1">{p.name}</p>
-              <VideoLink name={p.name} size={10} />
+              <VideoLink name={p.name} size="sm" />
             </div>
             <p className="text-label text-fg-2"><span className="text-mauve">Why:</span> {p.why}</p>
             <p className="text-label text-fg-2"><span className="text-green">How:</span> {p.how}</p>

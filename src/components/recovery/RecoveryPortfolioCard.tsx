@@ -1,4 +1,5 @@
-import { ListOrdered } from 'lucide-react'
+import { ListNumbers } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
 import type { addictionPortfolio } from '../../lib/urge'
@@ -8,7 +9,7 @@ type Portfolio = ReturnType<typeof addictionPortfolio>
 /** Multi-addiction overview (#408) · whole recovery portfolio ranked by current streak. */
 export function RecoveryPortfolioCard({ portfolio }: { portfolio: Portfolio }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><ListOrdered size={16} className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding, ranked by current run" help="An at-a-glance ranking of everything you’re quitting — your main streak plus each tracked addiction — by days clean now, with best and reset counts. See your whole recovery in one place.">
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListNumbers} size="md" className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding, ranked by current run" help="An at-a-glance ranking of everything you’re quitting — your main streak plus each tracked addiction — by days clean now, with best and reset counts. See your whole recovery in one place.">
       <ul className="space-y-1.5">
         {portfolio.map((p, i) => (
           <li key={p.id} className="flex items-center gap-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body">

@@ -1,5 +1,6 @@
+import { ArrowLineUp, Barbell, BookOpen, CalendarDot, Flame, PersonSimpleRun, Plus, Sparkle, Target, Trash, Trophy } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
-import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen, Plus, Trash2, Sparkles, CalendarClock } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -59,7 +60,7 @@ export function Goals() {
     value: weeklyActiveMinutes(data, today),
     target: fitGoal,
     color: 'teal',
-    icon: Activity,
+    icon: PersonSimpleRun,
     to: 'fitness',
   })
 
@@ -112,7 +113,7 @@ export function Goals() {
       value: dayDone,
       target: totalDays,
       color: 'green',
-      icon: p.id === 'pullup-zero' ? ArrowUpToLine : Dumbbell,
+      icon: p.id === 'pullup-zero' ? ArrowLineUp : Barbell,
       to: p.id === 'pullup-zero' ? 'pullups' : 'gym',
     })
   }
@@ -176,7 +177,7 @@ export function Goals() {
           <>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body">
             <span className="inline-flex items-center gap-1.5 text-fg-1">
-              <Target size={14} style={{ color: cat('mauve') }} /> Overall progress
+              <AppIcon as={Target} size="sm" style={{ color: cat('mauve') }} /> Overall progress
               <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
             </span>
             {nearly > 0 && (
@@ -195,7 +196,7 @@ export function Goals() {
                 <li key={i}>
                   <button onClick={() => navigate(g.to)} className="press-3d w-full text-left">
                     <div className="mb-1 flex items-center gap-2 text-body">
-                      <Icon size={15} style={{ color: cat(g.color) }} />
+                      <AppIcon as={Icon} size="sm" style={{ color: cat(g.color) }} />
                       <span className="font-medium text-fg-1">{g.label}</span>
                       <span className="text-label text-fg-2">{g.detail}</span>
                       <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
@@ -213,12 +214,12 @@ export function Goals() {
         )}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
+      <Card title={<span className="inline-flex items-center gap-2"><AppIcon as={Sparkle} size="md" className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
         <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-line bg-ink-0 p-3">
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
           <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="Unit" className="w-24" aria-label="Unit" />
-          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
+          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5"><AppIcon as={Plus} size="sm" /> Add</Button>
         </div>
         {customGoals.length === 0 ? (
           <Empty>No custom goals yet · add one above to track anything.</Empty>
@@ -235,14 +236,14 @@ export function Goals() {
                   <div className="mb-1.5 flex items-center gap-2 text-body">
                     <span className="font-medium text-fg-1">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={14} /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-ink-2"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />
                   {/* Deadline + pace (#95/#261) */}
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label">
                     <label className="inline-flex items-center gap-1.5 text-fg-2">
-                      <CalendarClock size={13} /> Deadline
+                      <AppIcon as={CalendarDot} size="sm" /> Deadline
                       <input
                         type="date"
                         value={g.due ?? ''}

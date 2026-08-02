@@ -1,5 +1,6 @@
+import { Compass } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Compass } from 'lucide-react'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { supabaseEnabled, signInGoogle } from '../lib/supabase'
@@ -27,7 +28,7 @@ export function ExploreBanner() {
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-ink-1 px-4 py-2 text-body">
-      <Compass size={15} style={{ color: cat('mauve') }} />
+      <Icon as={Compass} size="sm" style={{ color: cat('mauve') }} />
       <span className="text-fg-1">
         You’re exploring sample data. <strong className="text-fg-1">Sign up to start your own journal</strong> · it syncs across your devices.
       </span>

@@ -1,5 +1,6 @@
+import { Barbell, CheckCircle, Footprints, Heartbeat, PencilSimple, SlidersHorizontal } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
-import { Dumbbell, Footprints, HeartPulse, CheckCircle2, PenLine, SlidersHorizontal } from 'lucide-react'
 import { useJournal } from '../store'
 
 import { SmartInput } from './SmartInput'
@@ -18,13 +19,13 @@ import { Button } from './ui/button'
 // plain journal bullet. The parsing is deterministic and local (lib/capture.ts);
 // this component only renders the preview and dispatches to existing mutators.
 
-type KindMeta = { label: string; color: string; icon: typeof Dumbbell }
+type KindMeta = { label: string; color: string; icon: typeof Barbell }
 const KIND: Record<CaptureResult['kind'], KindMeta> = {
-  gym: { label: 'Gym', color: 'mauve', icon: Dumbbell },
+  gym: { label: 'Gym', color: 'mauve', icon: Barbell },
   cardio: { label: 'Cardio', color: 'peach', icon: Footprints },
-  metric: { label: 'Wellbeing', color: 'green', icon: HeartPulse },
-  habit: { label: 'Habit', color: 'blue', icon: CheckCircle2 },
-  bullet: { label: 'Journal', color: 'subtext1', icon: PenLine },
+  metric: { label: 'Wellbeing', color: 'green', icon: Heartbeat },
+  habit: { label: 'Habit', color: 'blue', icon: CheckCircle },
+  bullet: { label: 'Journal', color: 'subtext1', icon: PencilSimple },
 }
 
 /** Human summary of what a parsed result will create. */
@@ -197,7 +198,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {parsed && meta && Icon && (
         <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-label text-fg-2">
           <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>
-            <Icon size={11} /> {meta.label}
+            <AppIcon as={Icon} size="sm" /> {meta.label}
           </span>
           <span className="text-fg-1">{describe(draft ?? parsed) || '…'}</span>
           {canEdit(parsed) && (
@@ -206,7 +207,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
               onClick={() => setDraft((d) => d ?? parsed)}
               className="inline-flex items-center gap-1 text-fg-2 hover:text-mauve"
             >
-              <SlidersHorizontal size={11} /> edit fields
+              <AppIcon as={SlidersHorizontal} size="sm" /> edit fields
             </button>
           )}
         </p>

@@ -1,5 +1,6 @@
+import { ArrowSquareOut, At, UserPlus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { UserPlus, AtSign, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { fetchGithubProfile } from '../lib/enrich'
@@ -61,11 +62,11 @@ export function FriendsCard() {
         <div className="flex flex-wrap gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
           <div className="flex flex-1 items-center gap-1 rounded-lg border border-input bg-background px-2">
-            <AtSign size={14} className="shrink-0 text-fg-2" />
+            <Icon as={At} size="sm" className="shrink-0 text-fg-2" />
             <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-body text-fg-1 placeholder:text-fg-2 focus:outline-none" />
           </div>
           <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-            <UserPlus size={14} /> {busy ? '…' : 'Add'}
+            <Icon as={UserPlus} size="sm" /> {busy ? '…' : 'Add'}
           </Button>
         </div>
         <label className="flex items-center gap-2 text-label text-fg-2">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-fg-1" /></label>
@@ -95,7 +96,7 @@ export function FriendsCard() {
                 <div className="mt-0.5 flex flex-wrap gap-2 text-label">
                   {(f.links ?? []).map((l) => (
                     <a key={l} href={l} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-blue hover:underline">
-                      <ExternalLink size={11} /> {new URL(l).hostname.replace('www.', '')}
+                      <Icon as={ArrowSquareOut} size="sm" /> {new URL(l).hostname.replace('www.', '')}
                     </a>
                   ))}
                   {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-fg-2 hover:text-mauve">refresh</button>}

@@ -1,4 +1,5 @@
-import { Brain, Plus, Check, Trash2, Sparkles } from 'lucide-react'
+import { Brain, Check, Plus, Sparkle, Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Empty, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -17,7 +18,7 @@ export function Mindset() {
 
   return (
     <Page>
-      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Your focus</span>} subtitle="What you’re working on now" help="The principles you’ve chosen to practise. Add a note on how you’ll apply each — a personal cue you’ll actually use.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Your focus</span>} subtitle="What you’re working on now" help="The principles you’ve chosen to practise. Add a note on how you’ll apply each — a personal cue you’ll actually use.">
         {focus.length === 0 ? (
           <Empty>Pick a principle from the library below to start working on your thinking style.</Empty>
         ) : (
@@ -28,9 +29,9 @@ export function Mindset() {
               return (
                 <li key={f.id} className="group rounded-lg border border-mauve/40 bg-mauve/5 p-3">
                   <div className="mb-1 flex items-center gap-2">
-                    <Check size={14} className="shrink-0 text-mauve" />
+                    <Icon as={Check} size="sm" className="shrink-0 text-mauve" />
                     <span className="text-body font-medium text-fg-1">{p.title}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Icon as={Trash} size="sm" /></Button>
                   </div>
                   <p className="mb-2 text-label text-fg-2">{p.why}</p>
                   <Textarea value={f.note ?? ''} onChange={(e) => setMindsetNote(f.id, e.target.value)} placeholder="How will you apply this? (your cue)" rows={2} className="text-label" />
@@ -42,7 +43,7 @@ export function Mindset() {
         {focus.length > 0 && <p className="mt-3 text-label text-fg-2">Tip: keep it to 1–3 at a time — focus beats breadth.</p>}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Brain size={18} className="text-peach" /> Principle library</span>} subtitle="Tap + to add a principle to your focus" help="A curated set of mental-game and thinking-style principles. Browse by theme; add the ones you want to build into how you think and play.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Brain} size="md" className="text-peach" /> Principle library</span>} subtitle="Tap + to add a principle to your focus" help="A curated set of mental-game and thinking-style principles. Browse by theme; add the ones you want to build into how you think and play.">
         <div className="space-y-4">
           {MINDSET_CATEGORIES.map((catName) => (
             <div key={catName}>
@@ -58,7 +59,7 @@ export function Mindset() {
                       </div>
                       <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? 'Already in focus' : `Add ${p.title}`}
                         className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
-                        {added ? <Check size={13} /> : <Plus size={13} />}
+                        {added ? <Icon as={Check} size="sm" /> : <Icon as={Plus} size="sm" />}
                       </button>
                     </li>
                   )

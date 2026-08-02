@@ -1,5 +1,6 @@
+import { Camera, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
-import { Camera, X } from 'lucide-react'
 import { fileToDataURL } from '../lib/image'
 import { Button } from './ui/button'
 
@@ -47,7 +48,7 @@ export function ImageUpload({
               title="Replace photo"
               className="inline-flex items-center gap-1 rounded-full bg-crust/85 px-2.5 py-1 text-label text-fg-1 hover:text-mauve"
             >
-              <Camera size={13} /> {busy ? '…' : 'Replace'}
+              <Icon as={Camera} size="sm" /> {busy ? '…' : 'Replace'}
             </button>
             <button
               onClick={() => onChange(undefined)}
@@ -55,13 +56,13 @@ export function ImageUpload({
               title="Remove photo"
               className="grid h-7 w-7 place-items-center rounded-full bg-crust/85 text-fg-1 hover:text-red"
             >
-              <X size={15} />
+              <Icon as={X} size="sm" />
             </button>
           </div>
         </div>
       ) : (
         <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-lg flex w-full items-center justify-center gap-2">
-          <Camera size={15} /> {busy ? 'Processing…' : label}
+          <Icon as={Camera} size="sm" /> {busy ? 'Processing…' : label}
         </Button>
       )}
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />

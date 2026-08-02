@@ -1,5 +1,6 @@
+import { Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { PROGRAMS } from '../lib/programs'
@@ -103,7 +104,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
                   <div className="flex items-center gap-2 text-body">
                     <input type="checkbox" checked={checked} onChange={() => toggleEx(i)} className="accent-green" aria-label={`Did ${e.name}`} />
                     <span className={`flex-1 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>
-                    <VideoLink name={e.name} label="" size={13} className="text-fg-2 hover:text-red" />
+                    <VideoLink name={e.name} label="" size="sm" className="text-fg-2 hover:text-red" />
                     <span className="text-fg-2">{e.qty}</span>
                     <span className="w-8 text-right text-fg-2">×{e.sets}</span>
                   </div>
@@ -119,7 +120,7 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
             })}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
-            {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={14} /> Load into session</Button>}
+            {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>}
             <Button variant="secondary" onClick={toggleAll} className="press-3d rounded-lg">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
           </div>
         </>

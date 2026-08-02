@@ -1,4 +1,5 @@
-import { Utensils, CupSoda, Flame, NotebookPen } from 'lucide-react'
+import { Drop, Flame, ForkKnife, NotePencil } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Slider } from '../components/ui'
@@ -84,7 +85,7 @@ export function Today() {
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
               className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
-              <Utensils size={14} /> Food
+              <Icon as={ForkKnife} size="sm" /> Food
             </Button>
             <Button
               variant="ghost"
@@ -92,7 +93,7 @@ export function Today() {
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
               className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
-              <CupSoda size={14} /> Drink
+              <Icon as={Drop} size="sm" /> Drink
             </Button>
           </div>
         </div>
@@ -126,7 +127,7 @@ export function Today() {
         )}
         {dayEntries.length === 0 ? (
           <Empty
-            icon={NotebookPen}
+            icon={NotePencil}
             hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
             action={{
               label: 'Start writing',
@@ -295,7 +296,7 @@ function AtRiskNudge({ date }: { date: string }) {
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-label"
             style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
           >
-            <Flame size={12} style={{ color: cat('peach') }} />
+            <Icon as={Flame} size="sm" style={{ color: cat('peach') }} />
             {habit.emoji ? `${habit.emoji} ` : ''}{habit.name}
             <span style={{ color: cat('peach') }}>· keep your {streak}-day streak</span>
           </li>

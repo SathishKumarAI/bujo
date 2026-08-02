@@ -1,4 +1,5 @@
-import { Scale } from 'lucide-react'
+import { Scales } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Empty, Pill } from '../ui'
 import { cat } from '../../lib/colors'
 import type { RelativeStrength } from '../../lib/fitness'
@@ -23,7 +24,7 @@ export function RelativeStrengthCard({ rows, unit, setFocusEx }: { rows: Relativ
                 title={`${r.exercise}: ${r.weight}${unit} = ${r.ratio}× bodyweight`}
               >
                 <span className="inline-flex min-w-0 items-center gap-1.5 text-fg-1">
-                  <Scale size={14} style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
+                  <Icon as={Scales} size="sm" style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
                 </span>
                 <span className="shrink-0 text-fg-2">
                   <span className="font-medium" style={{ color: cat('text') }}>{r.ratio}×</span>

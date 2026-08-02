@@ -1,6 +1,8 @@
+import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
+import type { Icon as IconGlyph } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp, Info, Maximize2, X, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
@@ -79,7 +81,7 @@ export function Card({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-fg-2 hover:text-fg-1">
-                      <Info size={14} />
+                      <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="max-w-xs text-body leading-snug text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
@@ -93,12 +95,12 @@ export function Card({
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
                 className="text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
-                <Maximize2 size={15} />
+                <AppIcon as={ArrowsOut} size="sm" />
               </button>
             )}
             {collapsible && (
               <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
-                {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
               </button>
             )}
           </div>
@@ -117,7 +119,7 @@ export function Card({
                 {title && <h2 className="truncate font-display text-title font-medium text-fg-1">{title}</h2>}
                 {subtitle && <p className="mt-0.5 text-body text-fg-2">{subtitle}</p>}
               </div>
-              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-fg-2 hover:text-fg-1"><X size={20} /></button>
+              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-fg-2 hover:text-fg-1"><AppIcon as={X} size="lg" /></button>
             </div>
             {/* Charts mark their plot area with role="img"; CARD.modalChartHeight
                 forces it tall so the chart genuinely enlarges, not just widens. */}
@@ -348,7 +350,7 @@ export function Empty({
   action,
 }: {
   children: ReactNode
-  icon?: LucideIcon
+  icon?: IconGlyph
   hint?: string
   action?: { label: string; onClick: () => void }
 }) {
@@ -359,7 +361,7 @@ export function Empty({
     <div className="flex flex-col items-center gap-2 py-10 text-center">
       {Icon && (
         <span className="grid size-10 place-items-center rounded-full bg-ink-2 text-fg-2">
-          <Icon size={18} />
+          <AppIcon as={Icon} size="md" />
         </span>
       )}
       <p className="text-body font-medium text-fg-1">{children}</p>

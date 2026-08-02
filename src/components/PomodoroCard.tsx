@@ -1,5 +1,6 @@
+import { ArrowCounterClockwise, ArrowLineRight, Pause, Play } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
-import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react'
 import { Card } from './ui'
 import { useJournal } from '../store'
 import { todayISO } from '../lib/date'
@@ -84,10 +85,10 @@ export function PomodoroCard() {
 
         <div className="mt-3 flex items-center gap-2">
           <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-            {running ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Start</>}
+            {running ? <><Icon as={Pause} size="sm" /> Pause</> : <><Icon as={Play} size="sm" /> Start</>}
           </Button>
-          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><SkipForward size={15} /></Button>
-          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d rounded-lg"><RotateCcw size={15} /></Button>
+          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><Icon as={ArrowLineRight} size="sm" /></Button>
+          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d rounded-lg"><Icon as={ArrowCounterClockwise} size="sm" /></Button>
         </div>
 
         <div className="mt-3 flex gap-1.5">
