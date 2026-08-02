@@ -173,7 +173,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           aria-label="Smart capture"
         />
         <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
-        <Button type="button" variant="default" onClick={() => add(val)} className="press-3d rounded-lg">
+        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-lg">
           Add
         </Button>
       </div>
@@ -238,7 +238,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             )}
           </div>
           <div className="mt-3 flex gap-2">
-            <Button variant="default" onClick={() => commitAndClear(draft)} className="press-3d rounded-lg">Add</Button>
+            <Button variant="secondary" onClick={() => commitAndClear(draft)} className="press-3d rounded-lg">Add</Button>
             <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-lg">Cancel</Button>
           </div>
         </div>

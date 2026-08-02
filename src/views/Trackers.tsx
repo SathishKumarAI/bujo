@@ -279,7 +279,7 @@ export function Trackers() {
             <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={14} /> Add habit</Button>
+            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={14} /> Add habit</Button>
           </div>
           </>
           )}
@@ -935,7 +935,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
               confirmLabel: 'Delete habit', destructive: true,
             })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
-            <Button onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
+            <Button variant="secondary" onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
           </div>
         </div>
       </div>

@@ -54,7 +54,7 @@ export function DateJumpPicker({
                   onClose()
                 }}
                 aria-pressed={active}
-                className={`rounded-md px-2 py-1.5 text-label transition-colors ${active ? 'bg-primary text-primary-foreground' : 'text-fg-1 hover:bg-secondary/60 hover:text-fg-1'}`}
+                className={`rounded-md px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
               >
                 {m.slice(0, 3)}
               </button>

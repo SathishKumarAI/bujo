@@ -83,7 +83,7 @@ export function PomodoroCard() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="default" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             {running ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Start</>}
           </Button>
           <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><SkipForward size={15} /></Button>
@@ -92,7 +92,15 @@ export function PomodoroCard() {
 
         <div className="mt-3 flex gap-1.5">
           {PRESETS.map((p) => (
-            <Button key={p.label} variant={preset.label === p.label ? 'default' : 'secondary'} onClick={() => choose(p)} className="press-3d rounded-lg text-label">{p.label}</Button>
+            <Button
+              key={p.label}
+              variant="secondary"
+              onClick={() => choose(p)}
+              aria-pressed={preset.label === p.label}
+              /* Selected preset gets the accent wash, not the fill — it's a
+                 choice already made, not the primary action on the screen. */
+              className={`press-3d rounded-lg text-label ${preset.label === p.label ? 'bg-brand-wash font-medium text-brand' : ''}`}
+            >{p.label}</Button>
           ))}
         </div>
       </div>

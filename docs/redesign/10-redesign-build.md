@@ -171,9 +171,119 @@ Two pre-existing `exhaustive-deps` warnings remain in `App.tsx` boot-path effect
 
 ---
 
+---
+
+# Steps 5–9 — accent, motion, and the signature (2026-08-02, appended)
+
+Branch `feat/accent-and-motion`.
+
+## A correction to the verification above
+
+**The "24 views × 5 themes" claim in the step 1–4 record was wrong.** Those
+sweeps drove navigation with `history.replaceState` + a synthetic `popstate`,
+and this app's router does not listen to `popstate` — `?view=` is only read on
+load. Every one of those iterations re-measured **Today**. The earlier sweep
+that clicked sidebar buttons was valid; the deep-link ones were not.
+
+Re-run properly by clicking nav buttons, and confirmed by asserting on 18
+distinct `h1`s per pass. The fixed numbers are in the table below. Two things
+the corrected sweep found that the broken one had hidden are recorded under
+"Found by looking" below.
+
+## Accent-inflation pass
+
+The rule: **`Quick add` in the top bar is the app's one accent-filled primary,
+and it is on every screen — so a view's body gets zero.** Otherwise every screen
+has at least two things claiming to be the primary action, which is exactly the
+"when four things are primary, nothing is" problem the brief diagnosed.
+
+Exception: modals, dialogs and the pre-app screens (Welcome, Account
+signed-out, LockScreen, ErrorBoundary, Onboarding) keep the accent fill. They
+*are* their own screen — Quick add is unreachable behind them.
+
+| | Before | After |
+|---|--:|--:|
+| Views with accent fills in `main` | 6 | **0** |
+| Accent-filled elements in `main` | 19 | **0** |
+
+- **48 action buttons demoted** to `secondary` across 21 files.
+- **Selection state got a new token** rather than the fill. `--color-brand-wash`
+  (16% tint) now marks the selected `Segmented` option, Fitness tab, Pomodoro
+  preset, date-picker month and the First-meal pills. A selected segment filled
+  with the same colour as a primary button competes with it; a wash reads as
+  *a choice already made*, which is what it is.
+- **Left alone deliberately:** the sidebar/bottom-nav active rails (a 2px
+  indicator, not a fill), Reading's progress bar and the Challenges calendar
+  cells — those encode data, and recolouring them would break the encoding.
+
+## Motion pass
+
+Six remaining hardcoded values folded into the existing `--dur-*`/`--ease-*`
+tokens (card hover, `.rise`, `page-in`, both modal animations, staged
+entrance). The stagger delays (45/90/135/180/225/270ms) stay literal — they are
+a sequence, not a duration.
+
+## The signature: the bullet glyph column
+
+Per the brief §5, and the reason this is a bullet journal rather than a tracker.
+It was a 20px gutter, 15px, with an instant swap on status change.
+
+- **24px fixed gutter** so every glyph sits on one axis regardless of how the
+  text wraps. A ragged bullet column reads as a list of rows; a straight one
+  reads as a page of marks.
+- **`glyph-set` animation** — the new glyph crossfades and settles (scale 0.62 →
+  1.08 → 1) instead of being overwritten, so cycling a status feels like making
+  a mark. Keyed on `type-status` so it re-runs each change. Reduced-motion
+  aware. This is the log's one piece of deliberate motion.
+- **Closed lines recede** — done *and* dropped both strike through and drop to
+  `fg-3`, so the eye skips them and lands on what is still open.
+
+## Found by looking, not by measuring
+
+The automated sweep reported these views clean. A screenshot did not.
+
+1. **Plan was broken by my own container-tier call.** It is a CSS multi-column
+   masonry; at the 820px `read` tier the two columns collapse to ~380px each,
+   wrapping every migration card's title and stacking its actions vertically.
+   Moved to `wide`. Measurement said "0 overflow" because nothing overflowed —
+   it was just bad.
+2. **The `!` priority marker rendered on every row** at 45% opacity, so a
+   five-line log showed five amber marks competing with the glyph column for
+   the same job. Now it renders only when the entry *is* important; the
+   affordance appears on row hover, like delete already did.
+3. **Tags rendered twice.** Typing `#travel walk the rim` puts the tag in the
+   text *and* in `entry.tags`, so the row read `#travel walk the rim #travel`.
+   Chips are now only appended for tags not already written in the line.
+4. **Nine elements were still above the weight ceiling** — `<b>`, `<strong>`
+   and `<th>` inherit 700 from the user-agent stylesheet, which a grep for
+   Tailwind classes never sees. Set to 500 at the base.
+
+## Verification (corrected method)
+
+18 views × 5 themes, driven by nav clicks, asserting 18 distinct `h1`s per pass:
+
+| Check | Result |
+|---|---|
+| `npx tsc -b` | ✅ 0 |
+| `npx vitest run` | ✅ 678 tests |
+| `npx eslint .` | ✅ 0 errors |
+| `npm run build` | ✅ 550ms |
+| Blank views | ✅ 0 |
+| Horizontal overflow | ✅ 0 |
+| Accent fills in `main` | ✅ 0 |
+| Font sizes off the scale | ✅ 0 |
+| `font-weight` above 500 | ✅ 0 |
+| Console errors | ✅ 0 |
+
+> Note on the earlier "blank views" reading: nine views looked blank at a 300ms
+> settle. With a 900ms wait it is zero — that was lazy-chunk timing, not a
+> render failure. Worth knowing before trusting a fast sweep.
+
+---
+
 ## Not done
 
-Steps 5–10 of the plan. These are visual-judgement work, not mechanical:
+These remain visual-judgement work:
 
 - **Per-cluster migration** (Plan → habits → logging → sports → library → settings/insights).
   The token and type layers are in place underneath all of them, so this is now restyling

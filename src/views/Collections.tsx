@@ -176,7 +176,7 @@ export function Collections() {
             className="w-12 rounded-lg border border-line-strong bg-ink-0 px-2 text-center text-heading text-fg-1"
           />
           <Input value={colName} onChange={(e) => setColName(e.target.value)} placeholder="Collection name" className="max-w-xs" />
-          <Button variant="default" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-lg">
+          <Button variant="secondary" onClick={() => { if (colName.trim()) { addCollection(colName.trim(), colIcon || '📄'); setColName('') } }} className="press-3d rounded-lg">
             New collection
           </Button>
         </div>
@@ -211,7 +211,7 @@ export function Collections() {
               onSubmit={(e) => { e.preventDefault(); if (colEntry.trim()) { addEntry(todayISO(), colEntry, openCol); setColEntry('') } }}
             >
               <Input value={colEntry} onChange={(e) => setColEntry(e.target.value)} placeholder="Add to this collection… (t/e/n)" />
-              <Button type="submit" variant="default" className="press-3d rounded-lg">Add</Button>
+              <Button type="submit" variant="secondary" className="press-3d rounded-lg">Add</Button>
             </form>
             {(() => {
               const p = collectionProgress(data.entries, openCol)
@@ -265,7 +265,7 @@ export function Collections() {
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
                 </select>
                 <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-lg border border-line-strong bg-ink-0 px-2 text-body text-fg-1" aria-label="Day" />
-                <Button variant="default" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-lg">Add</Button>
+                <Button variant="secondary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-lg">Add</Button>
               </div>
               {birthdays.length === 0 ? (
                 <Empty>No birthdays yet.</Empty>

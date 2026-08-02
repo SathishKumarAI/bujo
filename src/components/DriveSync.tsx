@@ -100,12 +100,12 @@ export function DriveSync() {
 
       <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
         {!connected ? (
-          <Button variant="default" onClick={doConnect} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={doConnect} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <Cloud size={14} /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
           </Button>
         ) : (
           <>
-            <Button variant="default" onClick={backup} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudUpload size={14} /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
+            <Button variant="secondary" onClick={backup} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudUpload size={14} /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
             <Button variant="secondary" onClick={restore} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudDownload size={14} /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
             <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-lg text-red hover:text-red">Disconnect</Button>
           </>

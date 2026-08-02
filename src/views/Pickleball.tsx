@@ -361,7 +361,7 @@ export function Pickleball() {
           </select>
         </div>
         <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
-        <Button variant="default" onClick={log} className="press-3d mt-3 w-full rounded-lg">Log session</Button>
+        <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full rounded-lg">Log session</Button>
       </Card>
 
       <Card title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
@@ -382,7 +382,7 @@ export function Pickleball() {
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-          <Button variant="default" onClick={saveDupr} className="press-3d rounded-lg">Log rating</Button>
+          <Button variant="secondary" onClick={saveDupr} className="press-3d rounded-lg">Log rating</Button>
         </div>
         {duprStats.points.length === 0 ? (
           <Empty>No DUPR ratings logged yet · add one above to start the trend.</Empty>
@@ -442,7 +442,7 @@ export function Pickleball() {
           <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
           <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
           <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-          <Button variant="default" onClick={logEvent} className="press-3d rounded-lg sm:col-span-2">Log event</Button>
+          <Button variant="secondary" onClick={logEvent} className="press-3d rounded-lg sm:col-span-2">Log event</Button>
         </div>
         {/* event list */}
         {events.length > 0 && (
@@ -604,7 +604,7 @@ function PickleRow({ p, onSave, onDelete }: {
         </div>
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
-          <Button variant="default" onClick={save} className="press-3d flex-1 rounded-lg">Save</Button>
+          <Button variant="secondary" onClick={save} className="press-3d flex-1 rounded-lg">Save</Button>
           <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-lg">Cancel</Button>
         </div>
       </li>

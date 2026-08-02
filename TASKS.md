@@ -2,7 +2,11 @@
 
 **Generated:** 2026-08-02 · branch `feat/ui-polish` · commit `dbcdbf3`
 
-> **Redesign steps 1–4 are shipped** — see `docs/redesign/10-redesign-build.md`. eslint is at **0 errors** (was 17), the type scale is live across 113 files, fonts are self-hosted, and `?view=kitchen-sink` shows every primitive. Steps 5–10 (per-cluster restyle, motion, accent-inflation pass) remain.
+> **Redesign steps 1–9 are shipped** — tokens, type scale, accent-inflation pass, motion pass and the bullet-glyph signature. See `docs/redesign/10-redesign-build.md`.
+>
+> ⚠️ **Correction:** the earlier "24 views × 5 themes" verification was invalid — it drove navigation with `popstate`, which this router ignores, so it re-measured Today every time. Re-run by clicking nav buttons and asserting 18 distinct `h1`s. Corrected results are in the build record.
+>
+> **Superseded:** steps 1–4 — see `docs/redesign/10-redesign-build.md`. eslint is at **0 errors** (was 17), the type scale is live across 113 files, fonts are self-hosted, and `?view=kitchen-sink` shows every primitive. Steps 5–10 (per-cluster restyle, motion, accent-inflation pass) remain.
 >
 > **Newest thing here → [§H, the redesign brief in `docs/new/`](#h-redesign-brief--docsnewfiles-new-untracked).** It's the biggest item on this page and it collides with shipped work in four places. Decide H1–H4 and H10 before anything else in it starts.
 

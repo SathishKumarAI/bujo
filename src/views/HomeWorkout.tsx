@@ -67,7 +67,7 @@ export function HomeWorkout() {
               <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
             </div>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
-            <Button variant="default" onClick={logSession} className="press-3d w-full rounded-lg">Log workout</Button>
+            <Button variant="secondary" onClick={logSession} className="press-3d w-full rounded-lg">Log workout</Button>
           </div>
         )}
       </Card>

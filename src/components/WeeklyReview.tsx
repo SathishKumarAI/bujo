@@ -76,7 +76,7 @@ export function WeeklyReview() {
             <p className="mb-2 text-label font-medium tracking-wide text-fg-2 uppercase">3. Reflect</p>
             <Textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="What went well? What will you change next week?" rows={3} />
             <div className="mt-2 flex justify-end">
-              <Button variant="default" onClick={saveReflection} className="press-3d rounded-lg">Save reflection</Button>
+              <Button variant="secondary" onClick={saveReflection} className="press-3d rounded-lg">Save reflection</Button>
             </div>
           </div>
         </div>

@@ -336,7 +336,10 @@ export function Segmented<T extends string | number>({
             onClick={() => onChange(o.value)}
             aria-pressed={active}
             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-body transition-colors ${
-              active ? 'bg-primary text-primary-foreground' : 'text-fg-1 hover:text-fg-1'
+              // Selected state gets the accent *wash*, not the accent fill: a
+              // filled segment reads as "the primary action on this screen",
+              // which it isn't — it's a choice you already made.
+              active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
             {o.label}

@@ -139,6 +139,15 @@ body {
   line-height: var(--text-body--line-height);
 }
 
+/* The scale allows two weights, 400 and 500. `<b>`, `<strong>` and `<th>` still
+   arrive at 700 from the user-agent stylesheet, which a grep for Tailwind
+   classes never sees — they were the last nine elements above the ceiling. */
+b,
+strong,
+th {
+  font-weight: 500;
+}
+
 /* One keyboard-focus ring for the whole app. Without this only the shadcn
    primitives had a visible ring; every hand-rolled button, link and input
    focused invisibly. :focus-visible keeps it off for mouse clicks. */
@@ -182,6 +191,37 @@ body {
   --dur-fast: 0.18s;   /* hovers, sheets */
   --dur-base: 0.28s;   /* page/content transitions */
   --dur-slow: 0.4s;    /* staged entrances */
+}
+
+/* ── The bullet glyph ───────────────────────────────────────────────────────
+   This column is the actual signature of a bullet journal — the thing that
+   makes it this app and not a generic tracker — so it gets the one piece of
+   deliberate motion in the log. Cycling a status crossfades and settles the
+   new glyph rather than swapping it instantly, which makes the state change
+   feel like a mark being made rather than a value being overwritten.
+
+   Keyed on the glyph in React, so the animation re-runs on every change. */
+@keyframes glyph-set {
+  from {
+    opacity: 0;
+    transform: scale(0.62) rotate(-12deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.glyph-set {
+  animation: glyph-set var(--dur-base) var(--ease-emphasis) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glyph-set {
+    animation: none;
+  }
 }
 
 /* ── 3D depth utilities ─────────────────────────────────────────────────── */
@@ -319,7 +359,7 @@ body.handwriting textarea {
 
 /* Hover-zoom: magnify an element (photo, chart) on hover. */
 .hover-zoom {
-  transition: transform 0.25s ease, box-shadow 0.25s ease, z-index 0s;
+  transition: transform var(--dur-base) var(--ease-rise), box-shadow var(--dur-base) var(--ease-rise), z-index 0s;
   cursor: zoom-in;
 }
 .hover-zoom:hover {
@@ -356,7 +396,7 @@ body.handwriting textarea {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
-.rise { animation: rise-in 0.6s var(--ease-rise) both; }
+.rise { animation: rise-in var(--dur-slow) var(--ease-rise) both; }
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; }
 }
@@ -367,7 +407,7 @@ body.handwriting textarea {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .page-in {
-  animation: page-in 0.28s ease both;
+  animation: page-in var(--dur-base) var(--ease-rise) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .page-in { animation: none; }
@@ -379,8 +419,8 @@ body.handwriting textarea {
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.modal-backdrop-in { animation: modal-backdrop-in 0.16s ease both; }
-.modal-panel-in { animation: modal-panel-in 0.22s var(--ease-emphasis) both; }
+.modal-backdrop-in { animation: modal-backdrop-in var(--dur-fast) var(--ease-rise) both; }
+.modal-panel-in { animation: modal-panel-in var(--dur-base) var(--ease-emphasis) both; }
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop-in, .modal-panel-in { animation: none; }
 }
@@ -680,7 +720,7 @@ body.handwriting textarea {
     to { opacity: 1; transform: translateY(0); }
   }
   /* Staggered fade-rise for a page's top-level cards. */
-  .page-enter > * { animation: bujo-rise 0.4s var(--ease-emphasis) both; }
+  .page-enter > * { animation: bujo-rise var(--dur-slow) var(--ease-emphasis) both; }
   .page-enter > *:nth-child(1) { animation-delay: 0ms; }
   .page-enter > *:nth-child(2) { animation-delay: 45ms; }
   .page-enter > *:nth-child(3) { animation-delay: 90ms; }

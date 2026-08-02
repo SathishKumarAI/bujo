@@ -90,7 +90,7 @@ export function Reading() {
         <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)"
           onKeyDown={(e) => e.key === 'Enter' && add()}
           className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
-        <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
+        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
           <Plus size={15} /> Add to shelf
         </Button>
       </div>
@@ -283,7 +283,7 @@ function ReadLater() {
           className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
         <input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Title (optional)"
           className="min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
-        <Button onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
+        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
       </div>
       {links.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No saved links yet, paste an article or book page to read later.</p>
@@ -412,7 +412,7 @@ function BookCard({ book }: { book: Book }) {
             <div className="flex gap-1.5">
               <input value={learn} onChange={(e) => setLearn(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLearning()} placeholder="What did you learn today?"
                 className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
-              <Button onClick={addLearning} size="xs" className="shrink-0">Add</Button>
+              <Button variant="secondary" onClick={addLearning} size="xs" className="shrink-0">Add</Button>
             </div>
           </div>
         </div>

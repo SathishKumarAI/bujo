@@ -93,7 +93,7 @@ export function Fitness() {
           {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
           <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
-          <Button variant="default" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
+          <Button variant="secondary" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
         </div>
       </Card>
 
@@ -187,7 +187,7 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
       <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
-        <Button variant="default" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-lg">Save</Button>
+        <Button variant="secondary" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-lg">Save</Button>
         <Button variant="ghost" onClick={async () => { if (await confirm({
           title: 'Delete this workout?',
           description: 'The workout and its sets are removed from your history. This cannot be undone.',

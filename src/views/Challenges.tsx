@@ -27,7 +27,7 @@ export function Challenges() {
         title="Challenges"
         subtitle="Fixed-length discipline challenges, 75 Hard, 90-day & more"
         right={
-          <Button onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
             {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
           </Button>
         }
@@ -275,7 +275,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
         <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
-      <Button onClick={submit} className="w-full">Start challenge</Button>
+      <Button variant="secondary" onClick={submit} className="w-full">Start challenge</Button>
     </div>
   )
 }

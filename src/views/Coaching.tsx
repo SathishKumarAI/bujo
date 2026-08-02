@@ -46,7 +46,7 @@ export function Coaching() {
         {!start ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-line-strong p-4">
             <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
-            <Button onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
+            <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
           </div>
         ) : (
           <>

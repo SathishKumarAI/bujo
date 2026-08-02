@@ -129,7 +129,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
         )}
       </div>
 
-      <Button onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
+      <Button variant="secondary" onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
     </div>
   )
 }
@@ -337,7 +337,7 @@ export function NoFap() {
             </div>
           </div>
           <div className="mt-3 flex justify-end">
-            <Button onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
+            <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
           </div>
           <div className="mt-3 flex items-center justify-between text-body">
             <span className="text-fg-1">Urges resisted: <span className="font-medium" style={{ color: cat('green') }}>{stats.urges}</span></span>
@@ -400,7 +400,7 @@ export function NoFap() {
         <Card title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
-            <Button onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
+            <Button variant="secondary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
           </div>
           {(data.nofap.addictions ?? []).length === 0 ? (
             <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
@@ -488,7 +488,7 @@ export function NoFap() {
                 <label className="block text-body text-fg-1">Why I quit
                   <Textarea value={commitment?.reason ?? ''} onChange={(e) => setCommitment({ reason: e.target.value })} placeholder="The reason that matters most to you…" rows={2} className="mt-1" aria-label="Reason for quitting" />
                 </label>
-                {editingCommit && <div className="flex justify-end"><Button onClick={() => setEditingCommit(false)}>Done</Button></div>}
+                {editingCommit && <div className="flex justify-end"><Button variant="secondary" onClick={() => setEditingCommit(false)}>Done</Button></div>}
               </div>
             )}
           </Card>
@@ -499,7 +499,7 @@ export function NoFap() {
               <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
               <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
               <Input value={plan.coping} onChange={(e) => setPlan({ ...plan, coping: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && savePlan()} placeholder="Then I will… (e.g. chew gum, walk 10 min)" aria-label="Coping response" className="sm:col-span-2" />
-              <Button onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
+              <Button variant="secondary" onClick={savePlan} className="sm:col-span-2">Add trigger plan</Button>
             </div>
             {plans.length > 0 && (
               <ul className="mt-3 space-y-2">

@@ -224,7 +224,7 @@ export function Gym() {
         />
         <div className="flex flex-wrap items-center gap-2">
           {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="default" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
+            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
               <Plus size={14} /> Add to session
             </Button>
           )}
@@ -465,7 +465,7 @@ export function Gym() {
 
         <div className="mt-3 flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-lg">+ Add set</Button>
-          <Button variant="default" onClick={finish} className="press-3d rounded-lg">Finish session</Button>
+          <Button variant="secondary" onClick={finish} className="press-3d rounded-lg">Finish session</Button>
           <div className="ml-auto flex gap-2">
             <Input value={routineName} onChange={(e) => setRoutineName(e.target.value)} placeholder="Save as routine…" className="max-w-[160px] py-1.5" />
             <Button variant="secondary" onClick={saveAsRoutine} className="press-3d rounded-lg">Save routine</Button>
@@ -479,7 +479,7 @@ export function Gym() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
-            variant="default"
+            variant="secondary"
             className="press-3d rounded-lg"
             onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}
           >

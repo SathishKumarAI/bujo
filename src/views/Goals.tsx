@@ -218,7 +218,7 @@ export function Goals() {
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
           <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="Unit" className="w-24" aria-label="Unit" />
-          <Button variant="default" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
+          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Plus size={15} /> Add</Button>
         </div>
         {customGoals.length === 0 ? (
           <Empty>No custom goals yet · add one above to track anything.</Empty>

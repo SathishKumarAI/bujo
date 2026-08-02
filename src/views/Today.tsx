@@ -73,19 +73,24 @@ export function Today() {
           <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
         </div>
         <div className="mt-4 border-t border-line pt-3">
-          <p className="mb-2 text-body text-fg-1">Broke fast with</p>
+          <p className="mb-2 text-body text-fg-1">First meal</p>
+          {/* These record a choice, so the selected one gets the accent wash
+              rather than the accent fill — a filled pill here read as the
+              screen's primary action, which it never was. */}
           <div className="flex gap-2">
             <Button
-              variant={metric?.fastBreak === 'food' ? 'default' : 'ghost'}
+              variant="ghost"
+              aria-pressed={metric?.fastBreak === 'food'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-              className="press-3d inline-flex items-center gap-1.5 rounded-lg"
+              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Utensils size={14} /> Food
             </Button>
             <Button
-              variant={metric?.fastBreak === 'drink' ? 'default' : 'ghost'}
+              variant="ghost"
+              aria-pressed={metric?.fastBreak === 'drink'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-              className="press-3d inline-flex items-center gap-1.5 rounded-lg"
+              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <CupSoda size={14} /> Drink
             </Button>

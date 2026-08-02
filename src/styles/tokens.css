@@ -47,6 +47,11 @@
      accent-inflation pass, step 9). */
   --color-brand: var(--primary);
   --color-brand-ink: var(--primary-foreground);
+  /* A tint, for *selected state* — never for an action. A selected segment
+     filled with the same accent as a primary button competes with it, which is
+     the accent inflation the brief diagnosed. Selection gets the wash; the one
+     primary action per screen keeps the fill. */
+  --color-brand-wash: color-mix(in srgb, var(--primary) 16%, transparent);
 
   /* ── Type scale ───────────────────────────────────────────────────────────
      Six steps, in rem, at a 16px root. rem — not px — because the global

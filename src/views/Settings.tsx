@@ -397,7 +397,7 @@ export function Settings() {
           return null
         })()}
         <div className="flex flex-wrap gap-2">
-          <Button variant="default" onClick={doExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export JSON</Button>
+          <Button variant="secondary" onClick={doExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export JSON</Button>
           <Button variant="secondary" onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><FileText size={14} /> Export Markdown</Button>
           <Button variant="secondary" onClick={() => download(`bujo-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Export calendar</Button>
           <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
@@ -629,7 +629,7 @@ function AccountCard() {
         <div className="mb-3 rounded-lg border border-mauve/40 bg-ink-0 p-3">
           <p className="mb-2 text-body text-fg-1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
-          <Button variant="default" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
+          <Button variant="secondary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
         </div>
       )}
       <p className="mb-1 text-body text-fg-1">
@@ -644,7 +644,7 @@ function AccountCard() {
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
           <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="default" disabled={busy} onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
             <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && await confirm({
               title: 'Load your cloud data onto this device?',
               description: 'This replaces what is currently on this device with the copy stored in your account.',
@@ -657,7 +657,7 @@ function AccountCard() {
       )}
       {signedIn && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="default" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, 'Saved to your account.')}>Save now</Button>
+          <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, 'Saved to your account.')}>Save now</Button>
           <Button variant="secondary" disabled={busy} onClick={() => run(async () => { const r = await pullJournal(); if (r && await confirm({
               title: 'Replace this device with your cloud data?',
               description: 'Everything currently on this device is overwritten by the copy stored in your account.',
@@ -714,7 +714,7 @@ function BujoCloudCard() {
     <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="default" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
+        <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
         <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
       </div>
       <label className="mt-3 flex cursor-pointer items-center justify-between text-body text-fg-1">
@@ -757,7 +757,7 @@ function PasscodeCard() {
             <Input type="password" value={pc2} onChange={(e) => setPc2(e.target.value)} placeholder="Confirm passcode" aria-label="Confirm passcode" />
           </div>
           {err && <p className="text-label text-red">{err}</p>}
-          <Button variant="default" onClick={enable}>Encrypt journal</Button>
+          <Button variant="secondary" onClick={enable}>Encrypt journal</Button>
           <p className="text-label text-fg-2">There is no recovery. If you forget the passcode the data cannot be decrypted, so keep a JSON export as a backup.</p>
         </div>
       )}
@@ -803,7 +803,7 @@ function SelfHostCard() {
           <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="paste your minted JWT (role=bujo_user, sub=device id)" className="mt-1" />
         </label>
         <div className="flex gap-2">
-          <Button variant="default" onClick={test}>Test / Push now</Button>
+          <Button variant="secondary" onClick={test}>Test / Push now</Button>
           <Button variant="secondary" onClick={pull}>Pull from server</Button>
         </div>
         {msg && <p className="text-label text-fg-2">{msg}</p>}

@@ -103,7 +103,7 @@ export function Focus() {
             <label className="block text-body text-fg-1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
             <label className="block text-body text-fg-1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
           </div>
-          <Button onClick={log} className="w-full">Log session</Button>
+          <Button variant="secondary" onClick={log} className="w-full">Log session</Button>
         </div>
       </Card>
 
@@ -373,7 +373,7 @@ function TypingPractice() {
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <Button onClick={log} className="w-full">Add session</Button>
+          <Button variant="secondary" onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
           <div className="rounded-lg border border-line bg-ink-0 px-3 py-2.5">
@@ -484,7 +484,7 @@ function SessionRow({ s, onSave, onDelete }: {
         <div className="mt-2"><Slider label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
         <label className="mt-2 block text-label text-fg-1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
         <div className="mt-3 flex gap-2">
-          <Button onClick={save} className="flex-1">Save</Button>
+          <Button variant="secondary" onClick={save} className="flex-1">Save</Button>
           <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
         </div>
       </li>

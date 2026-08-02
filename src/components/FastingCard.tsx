@@ -63,12 +63,12 @@ export function FastingCard() {
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
           </div>
           <p className="mt-2 text-label text-fg-2">Started {timeOf(active)}</p>
-          <Button variant="default" onClick={endFast} className="press-3d rounded-lg mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
+          <Button variant="secondary" onClick={endFast} className="press-3d rounded-lg mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between">
-            <Button variant="default" onClick={startFast} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Play size={14} /> Start fast</Button>
+            <Button variant="secondary" onClick={startFast} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Play size={14} /> Start fast</Button>
             {last && (
               <span className="text-body text-fg-1">
                 Last: <span style={{ color: fastHours(last) >= target ? cat('green') : cat('subtext0') }}>{fmtDuration(fastHours(last))}</span>

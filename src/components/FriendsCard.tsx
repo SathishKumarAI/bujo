@@ -64,7 +64,7 @@ export function FriendsCard() {
             <AtSign size={14} className="shrink-0 text-fg-2" />
             <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-body text-fg-1 placeholder:text-fg-2 focus:outline-none" />
           </div>
-          <Button variant="default" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
             <UserPlus size={14} /> {busy ? '…' : 'Add'}
           </Button>
         </div>

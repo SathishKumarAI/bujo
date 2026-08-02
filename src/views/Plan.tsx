@@ -67,8 +67,12 @@ export function Plan() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  // `wide`, not `read`: this view is a CSS multi-column masonry. At 820px the
+  // two columns collapse to ~380px each, which wraps every migration card's
+  // title and stacks its actions vertically — a short measure helps prose, not
+  // a column layout.
   return (
-    <div className="mx-auto max-w-read columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    <div className="mx-auto max-w-wide columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
       <Card
         title="Migration"
         subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
@@ -224,7 +228,7 @@ export function Plan() {
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
-          <Button onClick={addRule} className="press-3d rounded-lg">Add rule</Button>
+          <Button variant="secondary" onClick={addRule} className="press-3d rounded-lg">Add rule</Button>
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">
