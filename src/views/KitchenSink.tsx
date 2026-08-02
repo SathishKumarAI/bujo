@@ -141,11 +141,18 @@ export function KitchenSink() {
           <Ring value={72} label="Today" suffix="%" />
           <Ring value={30} max={100} color="green" label="Week" suffix="%" />
         </Row>
-        <Row label="Pill">
+        <Row label="Pill · tone">
           <Pill>neutral</Pill>
           <Pill color="green">success</Pill>
           <Pill color="peach">warning</Pill>
           <Pill color="red">danger</Pill>
+          <Pill color="mauve" tone="muted">muted</Pill>
+          <Pill color="mauve" tone="solid">solid</Pill>
+        </Row>
+        <Row label="Pill · size">
+          <Pill color="sky" size="micro">micro</Pill>
+          <Pill color="sky" size="caption">caption</Pill>
+          <Pill color="sky">label (default)</Pill>
         </Row>
       </Card>
 

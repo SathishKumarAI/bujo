@@ -269,11 +269,64 @@ export function Slider({
   )
 }
 
-export function Pill({ children, color }: { children: ReactNode; color?: string }) {
+/**
+ * PILL · the small rounded label that says "this thing has a state".
+ *
+ * There were ~30 hand-rolled copies of this across the views, each re-deciding
+ * its padding, its text size and — worse — its own wash opacity (`22` here,
+ * `33` there, for the same visual intent). This is the one implementation.
+ *
+ * `tone` is the axis that actually varies in the app:
+ *
+ * - `wash`  — accent text on a 13% wash of the same accent. The dominant idiom:
+ *             a state that belongs to a colour (streak, band, readiness, tag).
+ * - `muted` — neutral surface, secondary text. Counts and metadata that should
+ *             not compete with content ("HALT 3", "chest").
+ * - `solid` — accent fill, crust text. Rare on purpose: a filled pill reads as
+ *             the loudest thing on the screen, which a label almost never is.
+ *
+ * A pill is not a button. If it is clickable, use `Button` — the two look
+ * similar and have nothing else in common.
+ *
+ * Note: `wash` puts accent colour on a tinted background, which is exactly the
+ * pairing measured as failing AA in latte (see TASKS.md §I1). Now that every
+ * pill reads its colour from here, that is a one-file fix when I1 is decided,
+ * instead of thirty.
+ */
+export function Pill({
+  children,
+  color,
+  tone = 'wash',
+  size = 'label',
+  title,
+  className = '',
+}: {
+  children: ReactNode
+  /** Catppuccin token name (`mauve`, `green`, …). Omit for the neutral pill. */
+  color?: string
+  tone?: 'wash' | 'muted' | 'solid'
+  /** Named for the type step it sits on, so the size is never a guess. */
+  size?: 'micro' | 'caption' | 'label'
+  title?: string
+  className?: string
+}) {
+  const sizes = {
+    micro: 'gap-0.5 px-1.5 py-0.5 text-micro',
+    caption: 'gap-1 px-2 py-0.5 text-caption',
+    label: 'gap-1 px-2 py-0.5 text-label',
+  } as const
+  const accent = color ? cat(color) : null
+  const style =
+    tone === 'solid' && accent
+      ? { background: accent, color: cat('crust') }
+      : tone === 'muted' || !accent
+        ? { background: cat('surface1'), color: cat('subtext0') }
+        : { background: accent + '22', color: accent }
   return (
     <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-label text-fg-1"
-      style={{ background: color ? cat(color) + '33' : cat('surface1') }}
+      title={title}
+      className={cn('inline-flex shrink-0 items-center rounded-full', sizes[size], className)}
+      style={style}
     >
       {children}
     </span>
