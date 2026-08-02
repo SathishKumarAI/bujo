@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <Icon as={ArrowClockwise} size="md" /> Reload the app
             </Button>
             {hasData && (
-              <Button variant="outline" onClick={this.download}>
+              <Button variant="secondary" onClick={this.download}>
                 <Icon as={Download} size="md" /> Download a backup first
               </Button>
             )}

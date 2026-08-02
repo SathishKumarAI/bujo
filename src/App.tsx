@@ -19,6 +19,7 @@ import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fs
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
 import { readDeepLink } from './lib/deepLink'
+import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
 import type { NavItem } from './components/shell/Sidebar'
@@ -205,6 +206,8 @@ export default function App() {
   // so the signed-out sign in / sign up page can't reach the rest of the app.
   const [hasSession, setHasSession] = useState(false)
   useEffect(() => onAuthChange(setHasSession), [])
+  // Names the current screen in the dev-only one-primary-per-screen warning.
+  setPrimaryScope(view)
   const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
   const items = NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]

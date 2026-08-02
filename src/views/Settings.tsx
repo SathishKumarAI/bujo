@@ -287,7 +287,7 @@ export function Settings() {
         <div className="mt-3 border-t border-line pt-3">
           {/* SET-4: one-tap return to the default look. */}
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={async () => { if (await confirm({
               title: 'Reset appearance to defaults?',
               description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
@@ -486,7 +486,7 @@ export function Settings() {
             <Icon as={Sparkle} size="sm" /> Load demo data
           </Button>
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={async () => {
               if (await confirm({
                 title: 'Erase everything and start fresh?',
@@ -744,7 +744,7 @@ function PasscodeCard() {
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
-          <Button variant="destructive" onClick={async () => { if (await confirm({
+          <Button variant="danger" onClick={async () => { if (await confirm({
             title: 'Remove the passcode?',
             description: 'The journal will be stored unencrypted on this device. Anyone with access to this browser can read it.',
             confirmLabel: 'Remove passcode', destructive: true,

@@ -315,9 +315,23 @@ cream. Anything checked in mocha alone is unchecked.
   actions, the demo seeding, the type field and `StickerBar.tsx` are gone, and
   `migrate()` strips `stickers` from any journal it loads. Stickers placed
   before this upgrade survive only in backups taken before it.
-- [ ] **J3 · Stage 3 — four button variants, three heights (28/36/44).** Delete
-  shadcn's solid `default`. Rebuild `Segmented` and `Stepper` on `ToggleGroup`.
-  Dev-only warning when a route mounts more than one `primary`.
+- [x] **J3 · Stage 3 — DONE (except the ToggleGroup rebuild).** Four variants
+  (`primary` tonal / `secondary` / `ghost` / `danger`), three heights in rem
+  (28/36/44), one radius token, no shadows. All 240 call sites migrated:
+  `default`→`primary` (31 solid fills gone), `outline`→`secondary`,
+  `link`→`ghost`, `destructive`→`danger`. Default variant is now `secondary`,
+  so a bare `<Button>` can no longer become an accidental primary.
+  - Selection state (Trackers type / time-of-day) demoted from the solid
+    variant to wash-on-`secondary` — selection is not the screen's action.
+  - `src/lib/onePrimary.ts` warns in dev when a view mounts two primaries,
+    counting *mounted* components rather than grepping source.
+  - **Bug found and fixed by measuring, not reviewing:** tailwind-merge cannot
+    distinguish custom `text-label` (size) from `text-brand-text` (colour), so
+    a small primary rendered in the foreground colour. Sizes now use
+    `text-[length:…]`.
+  - **Still open:** `Segmented` and `Stepper` are not yet rebuilt on
+    `ToggleGroup`, and ~12 call sites still override the radius with
+    `rounded-lg`. Both belong to Stage 5.
 - [ ] **J4 · Stage 4 — kitchen sink** becomes the review surface: every variant ×
   size × state, every mapped icon in both weights, screenshotted in five themes ×
   three font scales.

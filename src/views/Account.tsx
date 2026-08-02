@@ -115,10 +115,10 @@ export function Account() {
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
           <Button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
-            disabled={busy} variant="default" className="press-3d flex-1 gap-1.5">
+            disabled={busy} variant="primary" className="press-3d flex-1 gap-1.5">
             <AppIcon as={ArrowsClockwise} size="sm" /> {busy ? 'Saving…' : 'Save now'}
           </Button>
-          <Button onClick={out} disabled={busy} variant="outline" className="gap-1.5 text-red hover:text-red">
+          <Button onClick={out} disabled={busy} variant="secondary" className="gap-1.5 text-red hover:text-red">
             <AppIcon as={SignOut} size="sm" /> Sign out
           </Button>
         </div>
@@ -137,10 +137,10 @@ export function Account() {
                   </Button>
                 </Field>
                 <div className="flex gap-2">
-                  <Button onClick={changePw} disabled={busy} variant="default" size="sm" className="press-3d flex-1">
+                  <Button onClick={changePw} disabled={busy} variant="primary" size="sm" className="press-3d flex-1">
                     {busy ? 'Updating…' : 'Update password'}
                   </Button>
-                  <Button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} variant="outline" size="sm" className="text-fg-2">Cancel</Button>
+                  <Button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} variant="secondary" size="sm" className="text-fg-2">Cancel</Button>
                 </div>
               </div>
             )}
@@ -170,7 +170,7 @@ export function Account() {
 
       {googleOk && (
         <>
-          <Button onClick={google} disabled={busy} variant="outline" className="press-3d w-full gap-2 hover:border-primary">
+          <Button onClick={google} disabled={busy} variant="secondary" className="press-3d w-full gap-2 hover:border-primary">
             <GoogleMark /> Continue with Google
           </Button>
           <div className="my-4 flex items-center gap-3 text-label text-fg-2">
@@ -195,7 +195,7 @@ export function Account() {
         </Field>
       </div>
 
-      <Button onClick={submit} disabled={busy} variant="default" className="press-3d mt-4 w-full gap-1.5">
+      <Button onClick={submit} disabled={busy} variant="primary" className="press-3d mt-4 w-full gap-1.5">
         {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
       </Button>
 

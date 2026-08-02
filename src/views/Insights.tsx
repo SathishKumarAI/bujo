@@ -250,7 +250,7 @@ export function Insights() {
 
       <p className="text-label text-fg-2">
         Task migration &amp; aging live in{' '}
-        <Button variant="link" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
+        <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
       </p>
 
       {/* 5) Mood analytics — collapsed. */}
@@ -369,7 +369,7 @@ export function Insights() {
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
         <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
-        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="link" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
+        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
             <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />

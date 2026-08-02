@@ -143,7 +143,7 @@ export function Plan() {
           </ul>
         )}
         {overdue.length > 5 && (
-          <Button variant="link" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
+          <Button variant="ghost" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
             {showAllOverdue ? 'Show less' : `Show all ${overdue.length}`}
           </Button>
         )}

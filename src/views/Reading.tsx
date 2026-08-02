@@ -417,7 +417,7 @@ function BookCard({ book }: { book: Book }) {
             <div className="flex gap-1.5">
               <input value={learn} onChange={(e) => setLearn(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLearning()} placeholder="What did you learn today?"
                 className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
-              <Button variant="secondary" onClick={addLearning} size="xs" className="shrink-0">Add</Button>
+              <Button variant="secondary" onClick={addLearning} size="sm" className="shrink-0">Add</Button>
             </div>
           </div>
         </div>
@@ -428,7 +428,7 @@ function BookCard({ book }: { book: Book }) {
 
 function Move({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <Button onClick={onClick} variant="ghost" size="xs" className="border border-line text-fg-2 hover:border-primary hover:text-foreground">
+    <Button onClick={onClick} variant="ghost" size="sm" className="border border-line text-fg-2 hover:border-primary hover:text-foreground">
       → {label}
     </Button>
   )

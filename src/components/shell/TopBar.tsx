@@ -117,7 +117,7 @@ export function TopBar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button variant="default" size="sm" onClick={onQuickAdd} className="gap-1.5">
+        <Button variant="primary" size="sm" onClick={onQuickAdd} className="gap-1.5">
           <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
         </Button>
 

@@ -112,8 +112,8 @@ export function HabitDetail({
             {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Icon as={ShareNetwork} size="sm" /> Share</Button>
-            <Button variant="outline" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Icon as={FadersHorizontal} size="sm" /> Edit</Button>
+            <Button variant="secondary" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Icon as={ShareNetwork} size="sm" /> Share</Button>
+            <Button variant="secondary" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Icon as={FadersHorizontal} size="sm" /> Edit</Button>
             <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
           </div>
         </div>

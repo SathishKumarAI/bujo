@@ -102,12 +102,12 @@ export function Welcome() {
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
                 {googleOk && (
-                  <Button onClick={google} disabled={busy} variant="default" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
+                  <Button onClick={google} disabled={busy} variant="primary" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
                 )}
                 {googleOk ? (
                   <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><Icon as={SignIn} size="sm" /> Use email</button>
                 ) : (
-                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
+                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="primary" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
                 )}
                 <span className="text-label text-fg-2">Signing in creates your journal and keeps it in sync across devices.</span>
               </div>
@@ -116,8 +116,8 @@ export function Welcome() {
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button onClick={() => account('login')} disabled={busy} variant="default" className="press-3d">Log in</Button>
-                  <Button onClick={() => account('signup')} disabled={busy} variant="outline" className="text-fg-1">Sign up</Button>
+                  <Button onClick={() => account('login')} disabled={busy} variant="primary" className="press-3d">Log in</Button>
+                  <Button onClick={() => account('signup')} disabled={busy} variant="secondary" className="text-fg-1">Sign up</Button>
                   <button onClick={forgot} disabled={busy} className="ml-auto text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
                   <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-body text-fg-2">Back</button>
                 </div>

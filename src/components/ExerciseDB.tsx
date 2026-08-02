@@ -133,7 +133,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
             </div>
             <footer className="flex justify-end gap-2 border-t border-line px-4 py-3">
               <Button variant="secondary" onClick={() => setSelected(null)} className="press-3d rounded-lg">Close</Button>
-              <Button variant="default" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+              <Button variant="primary" onClick={() => { onPick(selected.name, selected.muscles); setSelected(null) }} className="press-3d rounded-lg inline-flex items-center gap-1.5">
                 <Icon as={Plus} size="sm" /> Add to session
               </Button>
             </footer>
