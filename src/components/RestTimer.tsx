@@ -1,5 +1,6 @@
+import { ArrowCounterClockwise, Pause, Play, Timer } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
-import { Pause, Play, RotateCcw, Timer } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { Button } from './ui/button'
 
@@ -65,14 +66,14 @@ export function RestTimer() {
 
       <div className="flex gap-1">
         <Button variant="secondary" size="icon-sm" onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="rounded-lg">
-          {running ? <Pause size={15} /> : <Play size={15} />}
+          {running ? <Icon as={Pause} size="sm" /> : <Icon as={Play} size="sm" />}
         </Button>
         <Button variant="secondary" size="icon-sm" onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="rounded-lg">
-          <RotateCcw size={15} />
+          <Icon as={ArrowCounterClockwise} size="sm" />
         </Button>
       </div>
 
-      {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: cat('green') }}><Timer size={14} /> Rest done · go!</span>}
+      {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: cat('green') }}><Icon as={Timer} size="sm" /> Rest done · go!</span>}
     </div>
   )
 }

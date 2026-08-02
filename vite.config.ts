@@ -51,6 +51,14 @@ export default defineConfig({
           if (/node_modules\/(recharts|react-smooth|victory-vendor|d3-|internmap|recharts-scale)/.test(id)) {
             return 'recharts'
           }
+          // The icon set is ~200 kB of path data for 141 glyphs (Phosphor ships
+          // all six weights per icon in one module, and only two of them —
+          // regular and duotone — are used here). It changes only when the
+          // vocabulary changes, so it is worth its own long-lived chunk rather
+          // than invalidating the app bundle on every release.
+          if (/node_modules\/@phosphor-icons/.test(id)) {
+            return 'icons'
+          }
         },
       },
     },

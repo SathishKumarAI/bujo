@@ -1,4 +1,5 @@
-import { Trophy } from 'lucide-react'
+import { Trophy } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Empty } from '../ui'
 import { cat } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
@@ -35,7 +36,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
             ))}
           </div>
           <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
-            <span className="inline-flex items-center gap-1.5 text-body text-fg-1"><Trophy size={15} style={{ color: cat('yellow') }} /> Total</span>
+            <span className="inline-flex items-center gap-1.5 text-body text-fg-1"><Icon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> Total</span>
             <span className="text-title font-medium" style={{ color: cat('yellow') }}>{total.total}{unit}</span>
           </div>
           {!total.complete && <p className="mt-1 text-caption text-fg-2">Log all three for your true total.</p>}

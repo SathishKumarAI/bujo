@@ -1,4 +1,5 @@
-import { Flame, ShieldCheck, Ban, Activity } from 'lucide-react'
+import { Flame, PersonSimpleRun, Prohibit, ShieldCheck } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card } from './ui'
 import type { Habit, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
@@ -63,12 +64,12 @@ function HabitGridCard({
   return (
     <Card className="!p-3">
       <div className="mb-2 flex items-center gap-2">
-        <span className="shrink-0">{avoid ? <Ban size={15} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+        <span className="shrink-0">{avoid ? <Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
         <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-body font-medium hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
         <span className="inline-flex shrink-0 items-center gap-0.5 text-label tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }}>
-          {streak > 0 ? <>{avoid ? <ShieldCheck size={12} /> : <Flame size={12} />}{streak}</> : '—'}
+          {streak > 0 ? <>{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</> : '—'}
         </span>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={13} /></button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></button>
       </div>
       <div className="overflow-x-auto">
         <div

@@ -1,5 +1,6 @@
+import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, ListChecks, Medal, PersonSimpleRun, ShieldPlus, Sword, Target, Trophy } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
@@ -290,7 +291,7 @@ export function Pickleball() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
           <StatTile compact label="Games" value={all.games} color="blue" />
-          <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Trophy size={14} />} />
+          <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
           <StatTile compact label="Day streak" value={streak} color="peach" />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
@@ -313,7 +314,7 @@ export function Pickleball() {
       {/* ── Tournament prep countdown (#345) · conditional top status,
             surfaces only when events exist; collapsed. ── */}
       {upcoming.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><CalendarClock size={18} className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+        <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
           <ul className="mb-3 space-y-2">
             {upcoming.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
@@ -338,7 +339,7 @@ export function Pickleball() {
         </Card>
       )}
 
-      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat</Button> : undefined}>
+      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Icon as={ArrowsClockwise} size="sm" /> ArrowsClockwise</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
@@ -378,7 +379,7 @@ export function Pickleball() {
       </Card>
 
       {/* ── DUPR rating tracker ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
@@ -390,7 +391,7 @@ export function Pickleball() {
           <>
             <div className="mb-3 grid grid-cols-3 gap-2">
               <StatTile compact label="Latest" value={duprStats.latest ?? '—'} color="mauve" />
-              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Trophy size={14} />} />
+              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
               <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} color={duprStats.direction === 'up' ? 'green' : duprStats.direction === 'down' ? 'red' : 'overlay0'} />
             </div>
             {duprStats.points.length >= 2 && (
@@ -423,11 +424,11 @@ export function Pickleball() {
 
       {/* ── Leagues & tournaments · secondary event logging, grouped beside the
             DUPR tracker and collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
-          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Trophy size={14} />} />
+          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
         </div>
         {/* log an event */}
         <div className="grid gap-2 rounded-lg border border-line bg-ink-0 p-3 sm:grid-cols-2">
@@ -466,7 +467,7 @@ export function Pickleball() {
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
             below logging, collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
           <div className="rounded-lg border border-line bg-ink-0 p-3">
@@ -479,7 +480,7 @@ export function Pickleball() {
           </div>
           {/* Warm-up checklist */}
           <div className="rounded-lg border border-line bg-ink-0 p-3">
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Dumbbell size={14} className="text-green" /> Warm up first</p>
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={Barbell} size="sm" className="text-green" /> Warm up first</p>
             <ul className="space-y-1">
               {WARMUP.map((w) => (
                 <li key={w} className="flex gap-1.5 text-label text-fg-2"><span className="text-green">•</span> {w}</li>
@@ -492,7 +493,7 @@ export function Pickleball() {
           <span className="text-label text-fg-2">Learn more:</span>
           {RESOURCES.map((r) => (
             <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
-              {r.name} <ExternalLink size={11} />
+              {r.name} <Icon as={ArrowSquareOut} size="sm" />
             </a>
           ))}
         </div>
@@ -503,7 +504,7 @@ export function Pickleball() {
             groups default collapsed so open analytics don't dominate the view. ── */}
       <Section
         title="Form & momentum"
-        icon={<Activity size={18} className="text-sky" />}
+        icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
         hint="Recent form · forecast · milestones · intensity"
       >
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
@@ -514,7 +515,7 @@ export function Pickleball() {
 
       <Section
         title="Opponents, partners & venues"
-        icon={<Swords size={18} className="text-red" />}
+        icon={<Icon as={Sword} size="md" className="text-red" />}
         hint="Chemistry · courts · rivalries · level matchups"
       >
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
@@ -525,7 +526,7 @@ export function Pickleball() {
 
       <Section
         title="Deeper signals"
-        icon={<BarChart3 size={18} className="text-blue" />}
+        icon={<Icon as={ChartBar} size="md" className="text-blue" />}
         hint="Weekday · points · time · scoring · consistency"
       >
         {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
@@ -539,13 +540,13 @@ export function Pickleball() {
             section so they don't strand on mobile. ── */}
       <Section
         title="Charts"
-        icon={<BarChart3 size={18} className="text-teal" />}
+        icon={<Icon as={ChartBar} size="md" className="text-teal" />}
         hint="Trends · volume · heatmap · tap ⛶ to enlarge"
       >
         {charts}
       </Section>
 
-      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
@@ -557,7 +558,7 @@ export function Pickleball() {
       </Card>
 
       {/* ── Format playbook ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><ListChecks size={18} className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
             <li key={fm.id} className="rounded-lg border border-line bg-ink-0 p-3">

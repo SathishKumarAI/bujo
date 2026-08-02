@@ -1,6 +1,6 @@
+import { CloudSlash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
-import { CloudOff } from 'lucide-react'
-
 /**
  * Persistent "you are offline" bar.
  *
@@ -31,7 +31,7 @@ export function OfflineBanner() {
       role="status"
       className="flex items-center justify-center gap-2 border-b border-line-strong bg-ink-2 px-4 py-1.5 text-label text-fg-1"
     >
-      <CloudOff size={13} />
+      <Icon as={CloudSlash} size="sm" />
       <span>
         You’re offline — keep writing, it all saves on this device. Cloud sync resumes when you’re back.
       </span>

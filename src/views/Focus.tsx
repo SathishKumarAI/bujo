@@ -1,8 +1,9 @@
+import { Code, Flame, Keyboard } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { Code2, Flame, Keyboard } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
@@ -69,8 +70,8 @@ export function Focus() {
       {/* This-week status leads (UX IA pass) */}
       <Card title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-          <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Code2 size={14} />} />
-          <Stat label="Day streak" value={String(streak)} color="peach" icon={<Flame size={14} />} />
+          <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Icon as={Code} size="sm" />} />
+          <Stat label="Day streak" value={String(streak)} color="peach" icon={<Icon as={Flame} size="sm" />} />
           <Stat label="Avg focus" value={`${avgWeighted(data, 'focus')}/10`} color="green" />
           <Stat label="Avg stress" value={`${avgWeighted(data, 'stress')}/10`} color="red" />
         </div>
@@ -398,10 +399,10 @@ function TypingPractice() {
         {/* Stats + trend */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-            <Stat label="Best WPM" value={best ? String(best) : '—'} color="mauve" icon={<Keyboard size={14} />} />
+            <Stat label="Best WPM" value={best ? String(best) : '—'} color="mauve" icon={<Icon as={Keyboard} size="sm" />} />
             <Stat label="Avg WPM" value={avg ? String(avg) : '—'} color="sky" />
             <Stat label="This week" value={hrs(weekMin)} color="green" />
-            <Stat label="Streak" value={String(streak)} color="peach" icon={<Flame size={14} />} />
+            <Stat label="Streak" value={String(streak)} color="peach" icon={<Icon as={Flame} size="sm" />} />
           </div>
 
           {wpmCount >= 2 && trend.length >= 1 && (

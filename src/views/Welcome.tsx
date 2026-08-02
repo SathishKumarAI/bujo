@@ -1,5 +1,6 @@
+import { Check, CloudCheck, FolderOpen, HardDrive, ShieldCheck, SignIn, UserCircle } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState, useEffect } from 'react'
-import { CloudCog, HardDrive, FolderOpen, ShieldCheck, Check, UserCircle2, LogIn } from 'lucide-react'
 import { useJournal } from '../store'
 // (the three choice cards below stay native buttons — card-shaped click targets)
 import { Button } from '../components/ui/button'
@@ -95,7 +96,7 @@ export function Welcome() {
         {supabaseEnabled() && (
           <div className="rise mb-5 rounded-2xl border border-line bg-ink-1/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
             <div className="mb-3 flex items-center gap-2">
-              <UserCircle2 size={22} style={{ color: cat('mauve') }} />
+              <Icon as={UserCircle} size="lg" style={{ color: cat('mauve') }} />
               <h2 className="font-display text-title text-fg-1">Sync with an account</h2>
             </div>
             {!showLogin ? (
@@ -104,9 +105,9 @@ export function Welcome() {
                   <Button onClick={google} disabled={busy} variant="default" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
                 )}
                 {googleOk ? (
-                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><LogIn size={14} /> Use email</button>
+                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><Icon as={SignIn} size="sm" /> Use email</button>
                 ) : (
-                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><LogIn size={14} /> Sign in with email</Button>
+                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="default" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
                 )}
                 <span className="text-label text-fg-2">Signing in creates your journal and keeps it in sync across devices.</span>
               </div>
@@ -135,19 +136,19 @@ export function Welcome() {
             className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
             style={{ animationDelay: '180ms' }}
           >
-            <CloudCog size={28} style={{ color: cat('mauve') }} />
+            <Icon as={CloudCheck} size="lg" style={{ color: cat('mauve') }} />
             <h2 className="mt-3 font-display text-title text-fg-1">Use my own cloud</h2>
             <p className="mt-1 text-body text-fg-2">
               Point bujo at a folder inside your Drive / Dropbox / OneDrive sync
               folder. Your existing cloud syncs it across devices.
             </p>
             <ul className="mt-3 space-y-1 text-label text-fg-2">
-              <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> No account, no sign-in</li>
-              <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Works with any cloud you already use</li>
-              <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Your files, your control</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> No account, no sign-in</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Works with any cloud you already use</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Your files, your control</li>
             </ul>
             <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-mauve">
-              <FolderOpen size={15} /> {busy ? 'Opening…' : 'Choose folder'}
+              <Icon as={FolderOpen} size="sm" /> {busy ? 'Opening…' : 'Choose folder'}
             </span>
             {!supported && <p className="mt-2 text-label text-red">Requires Chrome or Edge. Choose “This device only” instead.</p>}
           </button>
@@ -158,15 +159,15 @@ export function Welcome() {
             className="card-3d rise group rounded-2xl border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
             style={{ animationDelay: '260ms' }}
           >
-            <HardDrive size={28} style={{ color: cat('blue') }} />
+            <Icon as={HardDrive} size="lg" style={{ color: cat('blue') }} />
             <h2 className="mt-3 font-display text-title text-fg-1">This device only</h2>
             <p className="mt-1 text-body text-fg-2">
               Keep everything in this browser. Nothing leaves the device. You can
               connect a cloud folder later in Settings.
             </p>
             <ul className="mt-3 space-y-1 text-label text-fg-2">
-              <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Fastest, fully offline</li>
-              <li className="flex items-center gap-1.5"><Check size={12} style={{ color: cat('green') }} /> Export backups anytime</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Fastest, fully offline</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Export backups anytime</li>
             </ul>
             <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-blue">Continue on this device →</span>
           </button>
@@ -189,7 +190,7 @@ export function Welcome() {
         </div>
 
         <p className="rise mt-6 flex items-center justify-center gap-1.5 text-center text-label text-fg-2" style={{ animationDelay: '360ms' }}>
-          <ShieldCheck size={13} /> No tracking. Your data stays yours.
+          <Icon as={ShieldCheck} size="sm" /> No tracking. Your data stays yours.
         </p>
       </div>
     </div>

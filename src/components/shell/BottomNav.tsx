@@ -1,5 +1,6 @@
+import { Icon as AppIcon } from '@/components/Icon'
+import type { Icon as IconGlyph } from '@/components/icons'
 import { useEffect, useState } from 'react'
-import type { LucideIcon } from 'lucide-react'
 import type { NavItem } from './Sidebar'
 import type { ViewId } from './viewChrome'
 
@@ -44,7 +45,7 @@ export function BottomNav({
   return (
     <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {tabs.map((n) => {
-        const Icon = n.icon as LucideIcon
+        const Icon = n.icon as IconGlyph
         const active = view === n.id
         return (
           <button
@@ -55,7 +56,7 @@ export function BottomNav({
             className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />}
-            <Icon size={20} aria-hidden />
+            <AppIcon as={Icon} size="lg" active={active} />
             {n.label}
           </button>
         )

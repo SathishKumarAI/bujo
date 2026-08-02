@@ -1,5 +1,6 @@
+import { ArrowClockwise, CaretDown, CaretUp, Sword } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Swords, RotateCw, ChevronUp, ChevronDown } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
@@ -33,13 +34,13 @@ export function PenaltyCard() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><Swords size={18} style={{ color: cat(meta.color) }} /> Training penalty</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Training penalty</span>}
       subtitle={open ? 'You skipped something yesterday · pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
       right={
         <span className="inline-flex items-center gap-2">
           <Pill color={meta.color} className="font-medium">{meta.label}</Pill>
           <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
-            {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {open ? <Icon as={CaretUp} size="md" /> : <Icon as={CaretDown} size="md" />}
           </button>
         </span>
       }
@@ -57,7 +58,7 @@ export function PenaltyCard() {
           </div>
           <div className="mt-3 flex items-center gap-3 text-label">
             <button onClick={() => setReroll((r) => r + 1)} className="inline-flex items-center gap-1 text-fg-1 hover:text-fg-1">
-              <RotateCw size={13} /> Re-roll
+              <Icon as={ArrowClockwise} size="sm" /> Re-roll
             </button>
             <button
               onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}

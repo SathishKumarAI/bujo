@@ -1,7 +1,7 @@
+import { CalendarPlus, CaretDown, CaretRight, Star } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
-import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
-import { Star } from 'lucide-react'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
@@ -89,7 +89,7 @@ export function Plan() {
               className="flex w-full items-center gap-1.5 text-label text-fg-2 hover:text-fg-1"
               title={`Oldest overdue task: ${aging.oldestDays} days`}
             >
-              {agingOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              {agingOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}
               <span>Aging</span>
               <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
             </button>
@@ -126,7 +126,9 @@ export function Plan() {
                     className="mt-0.5 shrink-0"
                     style={{ color: e.important ? cat('yellow') : cat('overlay0') }}
                   >
-                    <Star size={14} fill={e.important ? cat('yellow') : 'none'} />
+                    {/* Important is a state, so it reads as a weight change
+                        (duotone) rather than a fill colour. */}
+                    <Icon as={Star} size="sm" active={e.important} />
                   </button>
                   <span className="flex-1 text-fg-1">{e.text}</span>
                   <span className="shrink-0 text-label text-fg-2">{prettyDay(e.date)}</span>
@@ -210,7 +212,7 @@ export function Plan() {
           aria-expanded={setupOpen}
           className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-fg-2">{setupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="text-fg-2">{setupOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
           <span className="font-display text-heading font-medium text-fg-1">Setup</span>
           <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
         </button>
@@ -275,7 +277,7 @@ export function Plan() {
       </Card>
 
       <Card title="Import calendar (.ics)" subtitle="Bring events from Google/Apple Calendar onto your monthly">
-        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><CalendarPlus size={15} /> Choose .ics file</Button>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Icon as={CalendarPlus} size="sm" /> Choose .ics file</Button>
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>

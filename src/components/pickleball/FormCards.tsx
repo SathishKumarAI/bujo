@@ -1,4 +1,5 @@
-import { Activity, Flame, Trophy, TrendingUp, TrendingDown, Minus, Gauge, Award, HeartPulse } from 'lucide-react'
+import { Flame, Gauge, Heartbeat, Medal, Minus, PersonSimpleRun, TrendDown, TrendUp, Trophy } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Pill, StatTile } from '../ui'
 import { cat } from '../../lib/colors'
 import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../../lib/pickleball'
@@ -6,7 +7,7 @@ import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../
 /** Recent form / momentum strip with win-streak chips (#323). */
 export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: { longest: number; current: number } }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Activity size={18} className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'}, newest first`}>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'}, newest first`}>
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
           {form.results.map((r, i) => {
@@ -17,16 +18,16 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
         <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
         {form.momentum !== 'flat' && (
           <Pill color={form.momentum === 'up' ? 'green' : 'red'} size="caption" className="ml-auto">
-            {form.momentum === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {form.momentum === 'up' ? <Icon as={TrendUp} size="sm" /> : <Icon as={TrendDown} size="sm" />}
             {form.momentum === 'up' ? 'Trending up' : 'In a slump'}
           </Pill>
         )}
-        {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-caption text-fg-2"><Minus size={12} /> Steady</span>}
+        {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-caption text-fg-2"><Icon as={Minus} size="sm" /> Steady</span>}
       </div>
       {(streaks.longest > 0 || streaks.current > 0) && (
         <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3 text-label text-fg-2">
-          {streaks.current > 0 && <Pill color="peach"><Flame size={12} /> {streaks.current}-session win streak</Pill>}
-          <Pill color="mauve"><Trophy size={12} /> Longest: {streaks.longest}</Pill>
+          {streaks.current > 0 && <Pill color="peach"><Icon as={Flame} size="sm" /> {streaks.current}-session win streak</Pill>}
+          <Pill color="mauve"><Icon as={Trophy} size="sm" /> Longest: {streaks.longest}</Pill>
         </div>
       )}
     </Card>
@@ -36,15 +37,15 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
 /** Win-rate forecast & rating readiness (#133). */
 export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><TrendingUp size={18} className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={TrendUp} size="md" className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Current win %" value={`${forecast.current}%`} color="green" />
-        <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <TrendingUp size={14} /> : forecast.direction === 'down' ? <TrendingDown size={14} /> : <Minus size={14} />} />
+        <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <Icon as={TrendUp} size="sm" /> : forecast.direction === 'down' ? <Icon as={TrendDown} size="sm" /> : <Icon as={Minus} size="sm" />} />
         <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} color={forecast.slope > 0 ? 'green' : forecast.slope < 0 ? 'red' : 'overlay0'} />
       </div>
       <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
         <Pill color={forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky'} className="px-2.5 py-1 font-medium">
-          <Gauge size={13} /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
+          <Icon as={Gauge} size="sm" /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
         </Pill>
         <p className="text-label text-fg-2">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
       </div>
@@ -55,7 +56,7 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
 /** Pickleball milestones progress bars (#161). */
 export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Award size={18} className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
       <ul className="space-y-3">
         {milestones.map((m) => (
           <li key={m.id}>
@@ -76,7 +77,7 @@ export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }
 /** Session intensity / training load from RPE (#566). */
 export function SessionIntensityCard({ load }: { load: RpeLoad }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><HeartPulse size={18} className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Avg RPE" value={load.avg} color={load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green'} />
         <StatTile compact label="Hardest" value={load.hardest} color="red" />

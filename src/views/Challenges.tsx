@@ -1,5 +1,6 @@
+import { Archive, CaretDown, CaretRight, Flame, Plus, Trash, Trophy, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Flame, Plus, Trophy, Archive, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -28,7 +29,7 @@ export function Challenges() {
         subtitle="Fixed-length discipline challenges, 75 Hard, 90-day & more"
         right={
           <Button variant="secondary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
-            {creating ? <X size={14} /> : <Plus size={14} />} {creating ? 'Cancel' : 'New challenge'}
+            {creating ? <Icon as={X} size="sm" /> : <Icon as={Plus} size="sm" />} {creating ? 'Cancel' : 'New challenge'}
           </Button>
         }
       >
@@ -52,7 +53,7 @@ export function Challenges() {
             aria-expanded={archiveOpen}
             className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
           >
-            <span className="text-fg-2">{archiveOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="text-fg-2">{archiveOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
             <span className="font-display text-heading font-medium text-fg-1">Completed &amp; archived</span>
             <span className="text-label text-fg-2">{archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
           </button>
@@ -61,7 +62,7 @@ export function Challenges() {
               <ul className="space-y-2 text-body">
                 {archived.map((c) => (
                   <li key={c.id} className="flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2">
-                    <span className="text-fg-1"><Trophy size={14} className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
+                    <span className="text-fg-1"><Icon as={Trophy} size="sm" className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
                     <span className="text-label text-fg-2">{completedDays(data, c, todayISO())} days done</span>
                   </li>
                 ))}
@@ -92,19 +93,19 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
       subtitle={notStarted ? `Starts ${c.startDate}` : `Day ${day} of ${c.durationDays}`}
       right={
         <div className="flex items-center gap-1">
-          <span className="mr-1 inline-flex items-center gap-1 text-label text-peach" title="Current streak"><Flame size={13} />{streak}</span>
-          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Archive size={14} /></Button>
+          <span className="mr-1 inline-flex items-center gap-1 text-label text-peach" title="Current streak"><Icon as={Flame} size="sm" />{streak}</span>
+          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Icon as={Archive} size="sm" /></Button>
           <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
             title: `Delete the “${c.name}” challenge?`,
             description: 'Its progress log and streak are deleted with it. This cannot be undone.',
             confirmLabel: 'Delete challenge', destructive: true,
-          })) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Trash2 size={14} /></Button>
+          })) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Icon as={Trash} size="sm" /></Button>
         </div>
       }
     >
       {finished && (
         <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-2 text-body text-green">
-          <Trophy size={15} /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
+          <Icon as={Trophy} size="sm" /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
         </p>
       )}
 
@@ -162,7 +163,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           aria-expanded={calOpen}
           className="flex w-full items-center gap-1.5 text-body font-medium text-fg-1 hover:text-fg-1"
         >
-          <span className="text-fg-2">{calOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</span>
+          <span className="text-fg-2">{calOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}</span>
           Calendar
         </button>
         {calOpen && (

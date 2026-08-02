@@ -1,5 +1,6 @@
+import { Gear, ShareNetwork, SignIn, SignOut, UserCircle } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
-import { UserCircle2, LogIn, LogOut, Share2, Cog } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { useJournal } from '../../store'
@@ -31,7 +32,7 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Account" title={`Account, ${label}`} className="relative">
-          <UserCircle2 size={18} style={{ color: signedIn ? 'var(--color-green)' : undefined }} />
+          <Icon as={UserCircle} size="md" style={{ color: signedIn ? 'var(--color-green)' : undefined }} />
           {!signedIn && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-yellow" />}
         </Button>
       </DropdownMenuTrigger>
@@ -44,13 +45,13 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
         {signedIn ? (
           <>
             <DropdownMenuItem onClick={() => { setBusy(true); pushJournal(data).finally(() => setBusy(false)) }}>{busy ? 'Saving…' : 'Save now'}</DropdownMenuItem>
-            <DropdownMenuItem onClick={out} className="text-red"><LogOut size={14} className="mr-2" /> Sign out</DropdownMenuItem>
+            <DropdownMenuItem onClick={out} className="text-red"><Icon as={SignOut} size="sm" className="mr-2" /> Sign out</DropdownMenuItem>
           </>
         ) : (
-          <DropdownMenuItem onClick={() => onNavigate('account')}><LogIn size={14} className="mr-2" /> Sign in / Sign up</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onNavigate('account')}><Icon as={SignIn} size="sm" className="mr-2" /> Sign in / Sign up</DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={share}><Share2 size={14} className="mr-2" /> Share app</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onNavigate('settings')}><Cog size={14} className="mr-2" /> Account & sync settings</DropdownMenuItem>
+        <DropdownMenuItem onClick={share}><Icon as={ShareNetwork} size="sm" className="mr-2" /> Share app</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onNavigate('settings')}><Icon as={Gear} size="sm" className="mr-2" /> Account & sync settings</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

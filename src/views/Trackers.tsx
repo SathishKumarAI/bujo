@@ -1,5 +1,6 @@
+import { Archive, Clock, DotsSixVertical, FadersHorizontal, Flame, GridFour, Note, PersonSimpleRun, Plus, Prohibit, RadioButton, ShieldCheck, SquaresFour, Trash, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote, Grid3x3 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
@@ -140,10 +141,10 @@ export function Trackers() {
             {!radial && (
               <div className="inline-flex overflow-hidden rounded-lg border border-line-strong">
                 {([
-                  { id: 'classic', icon: <LayoutGrid size={15} />, title: 'Grid' },
-                  { id: 'cards', icon: <Grid3x3 size={15} />, title: 'Cards (heatmap grids)' },
-                  { id: 'activity', icon: <Activity size={15} />, title: 'Activity' },
-                  { id: 'routine', icon: <Clock size={15} />, title: 'Routine (by time of day)' },
+                  { id: 'classic', icon: <Icon as={SquaresFour} size="sm" />, title: 'Grid' },
+                  { id: 'cards', icon: <Icon as={GridFour} size="sm" />, title: 'Cards (heatmap grids)' },
+                  { id: 'activity', icon: <Icon as={PersonSimpleRun} size="sm" />, title: 'PersonSimpleRun' },
+                  { id: 'routine', icon: <Icon as={Clock} size="sm" />, title: 'Routine (by time of day)' },
                 ] as const).map((o) => (
                   <button
                     key={o.id}
@@ -157,8 +158,8 @@ export function Trackers() {
                 ))}
               </div>
             )}
-            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-lg">{radial ? <LayoutGrid size={15} /> : <CircleDot size={15} />}</Button>
-            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-lg"><Settings2 size={15} /></Button>
+            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-lg">{radial ? <Icon as={SquaresFour} size="sm" /> : <Icon as={RadioButton} size="sm" />}</Button>
+            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-lg"><Icon as={FadersHorizontal} size="sm" /></Button>
           </div>
         }
       >
@@ -284,7 +285,7 @@ export function Trackers() {
             <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={14} /> Add habit</Button>
+            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Icon as={Plus} size="sm" /> Add habit</Button>
           </div>
           </>
           )}
@@ -515,9 +516,9 @@ function RoutineTimeline({
                         {h.cue && <span className="block truncate text-caption text-fg-2">{h.cue}</span>}
                       </button>
                       {numeric && !h.avoid && <span className="shrink-0 text-label text-fg-2">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
-                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-label" style={{ color: cat('peach') }}><Flame size={12} /> {streak}</span>}
-                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={14} /></Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-fg-2 hover:text-fg-1'}`}><StickyNote size={14} /></Button>
+                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-label" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" /> {streak}</span>}
+                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-fg-2 hover:text-fg-1'}`}><Icon as={Note} size="sm" /></Button>
                     </div>
                     {(open || note) && (
                       <input
@@ -607,17 +608,17 @@ function CategoryRows({
                   onDragEnd={() => { setDragId(null); setOverId(null) }}
                   title="Drag to reorder"
                   className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
-                ><GripVertical size={11} /></span>
-                {avoid ? <Ban size={12} className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
+                ><Icon as={DotsSixVertical} size="sm" /></span>
+                {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
                 <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={11} /></Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></Button>
                 {h.unit && <span className="shrink-0 text-fg-2">({h.unit})</span>}
                 {avoid ? (
                   <>
                     {/* H4: clean-day chip — staying clean is the win for quit habits. */}
-                    <span title={`${streak} ${streak === 1 ? 'day' : 'days'} clean`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('green') }}><ShieldCheck size={11} />{streak}d clean</span>
+                    <span title={`${streak} ${streak === 1 ? 'day' : 'days'} clean`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('green') }}><Icon as={ShieldCheck} size="sm" />{streak}d clean</span>
                     {/* H4: nearest milestone badge — what to aim for next. */}
                     {milestone && (
                       <span title={`${milestone.daysToGo} ${milestone.daysToGo === 1 ? 'day' : 'days'} to your ${milestone.day}-day milestone`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}>{milestoneEmoji(milestone.day)}{milestone.day}d</span>
@@ -625,7 +626,7 @@ function CategoryRows({
                   </>
                 ) : (
                   <>
-                    {streak > 1 && <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}><Flame size={11} />{streak}</span>}
+                    {streak > 1 && <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" />{streak}</span>}
                     {/* H5: 30-day completion % (scheduled days done), only when any day was scheduled. */}
                     {rate30 && rate30.scheduled > 0 && (
                       <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-micro" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('yellow') : cat('overlay1') }}>{rate30.pct}%30d</span>
@@ -748,7 +749,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
       <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
           <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
         </header>
         <div className="space-y-3 p-4">
           {/* Stats */}
@@ -832,7 +833,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-body text-fg-1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
           <label className="flex items-center justify-between rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
-            <span className="inline-flex items-center gap-1.5"><Ban size={14} style={{ color: cat('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
+            <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
           <label className="block text-body text-fg-1">Weekly goal <span className="text-fg-2">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
@@ -938,12 +939,12 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5 rounded-lg" title="A planned skip won't break your streak">
               {skippedToday ? 'Un-skip today' : 'Skip today'}
             </Button>
-            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Archive size={14} /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
+            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Icon as={Archive} size="sm" /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
             <Button variant="ghost" onClick={async () => { if (await confirm({
               title: `Delete “${habit.name}”?`,
               description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
               confirmLabel: 'Delete habit', destructive: true,
-            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
+            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
             <Button variant="secondary" onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
           </div>
         </div>

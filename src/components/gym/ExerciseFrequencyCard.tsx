@@ -1,4 +1,5 @@
-import { CalendarCheck, Repeat } from 'lucide-react'
+import { ArrowsClockwise, CalendarCheck } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
 import type { ExerciseFreq, TrainRestRatio } from '../../lib/fitness'
@@ -14,13 +15,13 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
   return (
     <Card title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
       <div className="mb-3 flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-3 py-2 text-body">
-        <CalendarCheck size={16} style={{ color: cat('teal') }} />
+        <Icon as={CalendarCheck} size="md" style={{ color: cat('teal') }} />
         <span className="text-fg-1">
           <span className="font-medium text-fg-1">{ratio.trainDays}</span> train ·{' '}
           <span className="font-medium text-fg-1">{ratio.restDays}</span> rest
         </span>
         <span className="ml-auto inline-flex items-center gap-1 text-fg-2" title="Share of days trained in the window">
-          <Repeat size={13} /> {Math.round(ratio.ratio * 100)}% active
+          <Icon as={ArrowsClockwise} size="sm" /> {Math.round(ratio.ratio * 100)}% active
         </span>
       </div>
       <ul className="space-y-2 text-body">

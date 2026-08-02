@@ -1,5 +1,6 @@
+import { ArrowClockwise, Download } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Download, RotateCw } from 'lucide-react'
 import { Button } from './ui/button'
 import { STORAGE_KEY, STORAGE_ENC_KEY } from '../lib/storage'
 
@@ -56,11 +57,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
           <div className="mt-5 flex flex-col gap-2">
             <Button onClick={() => window.location.reload()}>
-              <RotateCw /> Reload the app
+              <Icon as={ArrowClockwise} size="md" /> Reload the app
             </Button>
             {hasData && (
               <Button variant="outline" onClick={this.download}>
-                <Download /> Download a backup first
+                <Icon as={Download} size="md" /> Download a backup first
               </Button>
             )}
           </div>

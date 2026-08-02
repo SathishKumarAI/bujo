@@ -1,4 +1,5 @@
-import { CalendarX } from 'lucide-react'
+import { CalendarX } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
@@ -10,7 +11,7 @@ type PeakWeekday = NonNullable<ReturnType<typeof peakRelapseWeekday>>
 /** Day-of-week relapse pattern (#263) · weekday bar chart from reset dates. */
 export function RiskiestDaysCard({ weekdayPattern, peakWeekday }: { weekdayPattern: WeekdayPattern; peakWeekday: PeakWeekday }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><CalendarX size={16} className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`} help="Resets counted by day of the week. A tall bar means that day repeatedly trips you up — a weekend, a routine, a recurring trigger. Spot it, then build a plan for that day.">
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarX} size="md" className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`} help="Resets counted by day of the week. A tall bar means that day repeatedly trips you up — a weekend, a routine, a recurring trigger. Spot it, then build a plan for that day.">
       <div className="h-44 w-full" role="img" aria-label={`Relapses by weekday: ${weekdayPattern.map((w) => `${w.count} on ${w.label}`).join(', ')}`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={weekdayPattern} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>

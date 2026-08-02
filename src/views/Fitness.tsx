@@ -1,5 +1,6 @@
+import { ArrowsClockwise, Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Repeat, Trash2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
@@ -81,7 +82,7 @@ export function Fitness() {
 
   return (
     <Page>
-      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat last</Button> : undefined}>
+      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Icon as={ArrowsClockwise} size="sm" /> ArrowsClockwise last</Button> : undefined}>
         <div className="space-y-3">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <label className="block text-body text-fg-1">Activity
@@ -192,7 +193,7 @@ function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (
           title: 'Delete this workout?',
           description: 'The workout and its sets are removed from your history. This cannot be undone.',
           confirmLabel: 'Delete workout', destructive: true,
-        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Trash2 size={14} /> Delete</Button>
+        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
       </div>
     </div>
   )

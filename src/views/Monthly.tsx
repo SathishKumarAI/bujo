@@ -1,5 +1,6 @@
+import { CaretDown, CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Card, Input, Textarea } from '../components/ui'
@@ -214,7 +215,7 @@ export function Monthly() {
             aria-expanded={analyticsOpen}
             className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
           >
-            <span className="text-fg-2">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="text-fg-2">{analyticsOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
             <span className="font-display text-heading font-medium text-fg-1">Month analytics</span>
             <span className="text-label text-fg-2">month pulse &amp; trailing-year rhythm</span>
           </button>

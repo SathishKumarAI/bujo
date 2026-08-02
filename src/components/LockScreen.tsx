@@ -1,5 +1,6 @@
+import { Lock } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Lock } from 'lucide-react'
 import { Button } from './ui/button'
 
 /** Full-screen passcode gate shown when the journal is encrypted. */
@@ -27,7 +28,7 @@ export function LockScreen({ onUnlock }: { onUnlock: (passcode: string) => Promi
     <div className="aurora flex min-h-screen items-center justify-center p-4">
       <form onSubmit={submit} className="card-3d w-full max-w-sm rounded-2xl border border-line-strong bg-ink-1 p-6 text-center">
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-ink-2">
-          <Lock size={22} className="text-mauve" />
+          <Icon as={Lock} size="lg" className="text-mauve" />
         </div>
         <h1 className="font-display text-title font-medium text-fg-1">Journal locked</h1>
         <p className="mt-1 text-body text-fg-2">Enter your passcode to unlock.</p>

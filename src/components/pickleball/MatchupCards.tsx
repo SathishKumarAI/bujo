@@ -1,4 +1,5 @@
-import { Users, MapPin, Swords, Gauge } from 'lucide-react'
+import { Gauge, MapPin, Sword, Users } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Pill } from '../ui'
 import { cat } from '../../lib/colors'
 import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../lib/pickleball'
@@ -6,7 +7,7 @@ import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../
 /** Partner chemistry · win rate by doubles partner. */
 export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Users size={18} className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Users} size="md" className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
       <ul className="space-y-3">
         {partners.map((p) => (
           <li key={p.partner}>
@@ -28,7 +29,7 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
 /** Courts & venues · games & win % by location. */
 export function VenuesCard({ venues }: { venues: VenueStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><MapPin size={18} className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={MapPin} size="md" className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
       <ul className="divide-y divide-surface0">
         {venues.map((v) => (
           <li key={v.location} className="flex items-center justify-between gap-2 py-2 text-body">
@@ -48,7 +49,7 @@ export function VenuesCard({ venues }: { venues: VenueStat[] }) {
 /** Rivalry record book · head-to-head game record by opponent. */
 export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Swords size={18} className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
       <ul className="divide-y divide-surface0">
         {opponents.map((o) => (
           <li key={o.opponent} className="flex items-center justify-between gap-2 py-2 text-body">
@@ -70,7 +71,7 @@ export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }
 /** Performance by opponent level (#478). */
 export function LevelMatchupCard({ matchup }: { matchup: LevelBucket[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
       <ul className="space-y-3">
         {matchup.map((m) => (
           <li key={m.bucket}>

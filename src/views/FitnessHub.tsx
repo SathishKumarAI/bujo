@@ -1,5 +1,6 @@
+import { ArrowRight, Barbell, PersonSimpleRun, Timer } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { lazy, Suspense, useMemo } from 'react'
-import { Activity, Dumbbell, Timer, ArrowRight } from 'lucide-react'
 import { Fitness } from './Fitness'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
@@ -33,7 +34,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
     <div className="mx-auto max-w-read space-y-4">
       {/* 1) Primary navigation between the two fitness sub-views. */}
       <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
-        {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
+        {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -41,7 +42,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
               tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
-            <Icon size={16} /> {label}
+            <AppIcon as={Icon} size="md" active={tab === id} /> {label}
           </button>
         ))}
       </div>
@@ -63,7 +64,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
               {split.label} day
             </span>
           </span>
-          <ArrowRight size={18} className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
+          <AppIcon as={ArrowRight} size="md" className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
         </button>
       </div>
       {tab === 'cardio' ? (
@@ -112,7 +113,7 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
       </div>
       <div className="min-w-0">
         <span className="flex items-center gap-1 text-caption uppercase tracking-wide text-fg-2">
-          <Timer size={12} /> This week
+          <AppIcon as={Timer} size="sm" /> This week
         </span>
         <span className="block font-medium text-fg-1">
           {minutes}<span className="text-fg-2"> / {goal} min</span>

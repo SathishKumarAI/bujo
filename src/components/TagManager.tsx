@@ -1,5 +1,6 @@
+import { Check, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { parseTags } from '../lib/bullets'
 import { cat } from '../lib/colors'
@@ -43,8 +44,8 @@ export function TagManager() {
                     className="w-24 bg-transparent text-body text-fg-1 focus:outline-none"
                     aria-label={`Rename tag ${tag}`}
                   />
-                  <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Check size={13} className="text-green" /></button>
-                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-fg-2" /></button>
+                  <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Icon as={Check} size="sm" className="text-green" /></button>
+                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><Icon as={X} size="sm" className="text-fg-2" /></button>
                 </span>
               ) : (
                 <button

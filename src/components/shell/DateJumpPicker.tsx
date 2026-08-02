@@ -1,5 +1,6 @@
+import { CaretLeft, CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MONTHS, todayISO, ymOf } from '../../lib/date'
 
 /**
@@ -37,9 +38,9 @@ export function DateJumpPicker({
           />
         )}
         <div className="mb-2 flex items-center justify-between">
-          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-fg-2 hover:text-fg-1"><ChevronLeft size={16} /></button>
+          <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-fg-2 hover:text-fg-1"><Icon as={CaretLeft} size="md" /></button>
           <span className="font-display text-body font-medium text-fg-1 tabular-nums">{year}</span>
-          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-fg-2 hover:text-fg-1"><ChevronRight size={16} /></button>
+          <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-fg-2 hover:text-fg-1"><Icon as={CaretRight} size="md" /></button>
         </div>
         <div className="grid grid-cols-3 gap-1">
           {MONTHS.map((m, i) => {

@@ -1,5 +1,6 @@
+import { Alarm, ArrowSquareOut, BookOpen, Bookmark, Books, CalendarBlank, CaretDown, Check, CheckCircle, Flame, Lightbulb, Link, MagnifyingGlass, NotePencil, Plus, Sparkle, Star, Target, Trash } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
-import { BookOpen, BookMarked, CheckCircle2, Plus, Star, Trash2, Target, ChevronDown, Link2, NotebookPen, ExternalLink, Check, Bookmark, Flame, Sparkles, CalendarDays, AlarmClock, Lightbulb, Search } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
@@ -10,9 +11,9 @@ import { QuietSection as CollapsibleSection } from '../components/CollapsibleSec
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
-  { id: 'want', label: 'Want to read', icon: BookMarked, color: 'sky' },
+  { id: 'want', label: 'Want to read', icon: Books, color: 'sky' },
   { id: 'reading', label: 'Reading now', icon: BookOpen, color: 'mauve' },
-  { id: 'finished', label: 'Finished', icon: CheckCircle2, color: 'green' },
+  { id: 'finished', label: 'Finished', icon: CheckCircle, color: 'green' },
 ]
 
 export function Reading() {
@@ -50,7 +51,7 @@ export function Reading() {
         <StatTile label="Finished this year" value={sum.finishedThisYear} color="green" />
         <StatTile label="Pages read" value={sum.pages.toLocaleString()} color="peach" />
         <StatTile label="Avg rating" value={sum.avgRating ? sum.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
-        <StatTile label="Reading streak" value={streak ? `${streak}d` : '—'} color="red" icon={<Flame size={14} />} />
+        <StatTile label="Reading streak" value={streak ? `${streak}d` : '—'} color="red" icon={<AppIcon as={Flame} size="sm" />} />
         <StatTile label="Avg days/book" value={avgDays != null ? `${avgDays}d` : '—'} color="sky" />
       </div>
 
@@ -61,7 +62,7 @@ export function Reading() {
               instead of using <Card>, so it was the one view with no <h2> at
               all under the page <h1> — the whole page read as unstructured
               text to a screen reader. */}
-          <h2 className="inline-flex items-center gap-1.5 text-body font-medium text-foreground"><Target size={15} className="text-primary" /> Yearly reading goal</h2>
+          <h2 className="inline-flex items-center gap-1.5 text-body font-medium text-foreground"><AppIcon as={Target} size="sm" className="text-primary" /> Yearly reading goal</h2>
           <div className="flex items-center gap-2 text-body">
             <input type="number" min={0} value={goal || ''} placeholder="0"
               onChange={(e) => setSettings({ readingGoalBooks: Math.max(0, Number(e.target.value) || 0) })}
@@ -95,7 +96,7 @@ export function Reading() {
           onKeyDown={(e) => e.key === 'Enter' && add()}
           className="min-w-[10rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
         <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
-          <Plus size={15} /> Add to shelf
+          <AppIcon as={Plus} size="sm" /> Add to shelf
         </Button>
       </div>
 
@@ -107,7 +108,7 @@ export function Reading() {
           return (
             <div key={s.id} className="space-y-3">
               <h2 className="flex items-center gap-2 text-body font-medium text-foreground">
-                <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
+                <AppIcon as={Icon} size="md" style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
               </h2>
               {list.length === 0 && <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
@@ -121,13 +122,13 @@ export function Reading() {
       {stale.length > 0 && (
         <div className="rounded-2xl border border-line bg-card p-4">
           <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-foreground">
-            <AlarmClock size={16} className="text-peach" /> Stalled books
+            <AppIcon as={Alarm} size="md" className="text-peach" /> Stalled books
             <span className="text-fg-2">({stale.length})</span>
           </h2>
           <ul className="space-y-1.5 text-label">
             {stale.map(({ book, idleDays }) => (
               <li key={book.id} className="flex items-center gap-2">
-                <BookOpen size={12} className="shrink-0 text-fg-2" />
+                <AppIcon as={BookOpen} size="sm" className="shrink-0 text-fg-2" />
                 <span className="min-w-0 flex-1 truncate text-fg-2">{book.title}</span>
                 <span className="shrink-0 text-fg-2">{progressPct(book)}%</span>
                 <span className="shrink-0 tabular-nums" style={{ color: cat('peach') }}>idle {idleDays}d</span>
@@ -148,7 +149,7 @@ export function Reading() {
       {byMonth.some((m) => m.count > 0) && (
         <div className="rounded-2xl border border-line bg-card p-4">
           <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
-            <CalendarDays size={16} className="text-green" /> Finished by month · {today.slice(0, 4)}
+            <AppIcon as={CalendarBlank} size="md" className="text-green" /> Finished by month · {today.slice(0, 4)}
           </h3>
           <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
             aria-label={`Books finished per month: ${byMonth.map((m) => `${m.label} ${m.count}`).join(', ')}`}>
@@ -169,7 +170,7 @@ export function Reading() {
       {wrapped && (
         <div className="rounded-2xl border border-line bg-card p-4">
           <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
-            <Sparkles size={16} className="text-mauve" /> {wrapped.year} in books
+            <AppIcon as={Sparkle} size="md" className="text-mauve" /> {wrapped.year} in books
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Books finished" value={wrapped.count} color="green" />
@@ -181,12 +182,12 @@ export function Reading() {
             <div className="mt-3 space-y-1 text-label text-fg-2">
               {wrapped.topRated && (
                 <p className="flex items-center gap-1.5">
-                  <Star size={12} className="fill-yellow text-yellow" /> Top-rated: <span className="text-fg-2">{wrapped.topRated.title}</span>
+                  <AppIcon as={Star} size="sm" className="fill-yellow text-yellow" /> Top-rated: <span className="text-fg-2">{wrapped.topRated.title}</span>
                 </p>
               )}
               {wrapped.longest && (
                 <p className="flex items-center gap-1.5">
-                  <BookOpen size={12} className="text-sky" /> Longest read: <span className="text-fg-2">{wrapped.longest.title}</span>
+                  <AppIcon as={BookOpen} size="sm" className="text-sky" /> Longest read: <span className="text-fg-2">{wrapped.longest.title}</span>
                 </p>
               )}
             </div>
@@ -198,7 +199,7 @@ export function Reading() {
               <div className="space-y-1">
                 {[...ratingDist].reverse().map((r) => (
                   <div key={r.stars} className="flex items-center gap-2 text-label">
-                    <span className="flex w-12 shrink-0 items-center gap-0.5 text-fg-2">{r.stars}<Star size={10} className="fill-yellow text-yellow" /></span>
+                    <span className="flex w-12 shrink-0 items-center gap-0.5 text-fg-2">{r.stars}<AppIcon as={Star} size="sm" className="fill-yellow text-yellow" /></span>
                     <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-secondary">
                       <div className="h-full rounded-full" style={{ width: `${ratedTotal ? (r.count / ratedTotal) * 100 : 0}%`, background: cat('yellow') }} />
                     </div>
@@ -235,12 +236,12 @@ function LearningLog() {
   return (
     <div className="rounded-2xl border border-line bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
-        <Lightbulb size={16} className="text-yellow" /> Learning log
+        <AppIcon as={Lightbulb} size="md" className="text-yellow" /> Learning log
         <span className="text-fg-2">({total})</span>
       </h3>
       <div className="mb-3 flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
-        <Search size={14} className="shrink-0 text-fg-2" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search learnings & titles…"
+        <AppIcon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-2" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="MagnifyingGlass learnings & titles…"
           className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
       </div>
       {entries.length === 0 ? (
@@ -253,7 +254,7 @@ function LearningLog() {
                 <span className="shrink-0 text-fg-2">{prettyDay(l.date)}</span>
                 <span className="min-w-0 flex-1 text-fg-2">{l.text}</span>
               </div>
-              <span className="ml-[4.5rem] inline-flex items-center gap-1 text-micro text-fg-2"><BookOpen size={9} /> {l.bookTitle}</span>
+              <span className="ml-[4.5rem] inline-flex items-center gap-1 text-micro text-fg-2"><AppIcon as={BookOpen} size="sm" /> {l.bookTitle}</span>
             </li>
           ))}
         </ul>
@@ -279,7 +280,7 @@ function ReadLater() {
   return (
     <div className="rounded-2xl border border-line bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
-        <Bookmark size={16} className="text-sky" /> Read later · saved links
+        <AppIcon as={Bookmark} size="md" className="text-sky" /> Read later · saved links
         <span className="text-fg-2">({links.filter((l) => !l.done).length} to read)</span>
       </h3>
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -287,7 +288,7 @@ function ReadLater() {
           className="min-w-[12rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
         <input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Title (optional)"
           className="min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 py-2 text-body text-foreground" />
-        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Plus size={15} /> Save</Button>
+        <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><AppIcon as={Plus} size="sm" /> Save</Button>
       </div>
       {links.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">No saved links yet, paste an article or book page to read later.</p>
@@ -297,13 +298,13 @@ function ReadLater() {
             <li key={l.id} className="group flex items-center gap-2 py-2 text-body">
               <button onClick={() => store.updateReadLink(l.id, { done: !l.done })} aria-label={l.done ? 'Mark unread' : 'Mark read'}
                 className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${l.done ? 'border-green bg-green text-crust' : 'border-overlay0'}`}>
-                {l.done && <Check size={11} />}
+                {l.done && <AppIcon as={Check} size="sm" />}
               </button>
               <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 truncate ${l.done ? 'text-fg-2 line-through' : 'text-fg-1 hover:text-foreground'}`}>
                 {l.title || l.url}
               </a>
-              <ExternalLink size={12} className="shrink-0 text-fg-2" />
-              <Button variant="ghost" size="icon-sm" onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
+              <AppIcon as={ArrowSquareOut} size="sm" className="shrink-0 text-fg-2" />
+              <Button variant="ghost" size="icon-sm" onClick={() => store.removeReadLink(l.id)} aria-label="Remove" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
             </li>
           ))}
         </ul>
@@ -341,7 +342,7 @@ function BookCard({ book }: { book: Book }) {
           <p className="truncate text-body font-medium text-foreground">{book.title}</p>
           {book.author && <p className="truncate text-label text-fg-2">{book.author}</p>}
         </div>
-        <Button variant="ghost" size="icon-sm" onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-fg-2 hover:text-red"><Trash2 size={14} /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => store.removeBook(book.id)} aria-label="Remove book" className="text-fg-2 hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
       </div>
 
       {book.status === 'reading' && (
@@ -371,7 +372,7 @@ function BookCard({ book }: { book: Book }) {
         <div className="mt-2 flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} onClick={() => store.updateBook(book.id, { rating: n })} aria-label={`Rate ${n} stars`}>
-              <Star size={15} className={n <= (book.rating ?? 0) ? 'fill-yellow text-yellow' : 'text-fg-2'} />
+              <AppIcon as={Star} size="sm" className={n <= (book.rating ?? 0) ? 'fill-yellow text-yellow' : 'text-fg-2'} />
             </button>
           ))}
         </div>
@@ -383,7 +384,7 @@ function BookCard({ book }: { book: Book }) {
         {book.status !== 'reading' && <Move label="Reading" onClick={() => move('reading')} />}
         {book.status !== 'finished' && <Move label="Finished" onClick={() => move('finished')} />}
         <button onClick={() => setOpen((v) => !v)} className="ml-auto inline-flex items-center gap-1 text-caption text-fg-2 hover:text-foreground">
-          <NotebookPen size={12} /> Notes{learnings.length ? ` (${learnings.length})` : ''} <ChevronDown size={12} className={open ? 'rotate-180 transition' : 'transition'} />
+          <AppIcon as={NotePencil} size="sm" /> Notes{learnings.length ? ` (${learnings.length})` : ''} <AppIcon as={CaretDown} size="sm" className={open ? 'rotate-180 transition' : 'transition'} />
         </button>
       </div>
 
@@ -391,10 +392,10 @@ function BookCard({ book }: { book: Book }) {
         <div className="mt-2.5 space-y-2 border-t border-line pt-2.5">
           {/* Link */}
           <div className="flex items-center gap-1.5">
-            <Link2 size={13} className="shrink-0 text-fg-2" />
+            <AppIcon as={Link} size="sm" className="shrink-0 text-fg-2" />
             <input value={book.link ?? ''} onChange={(e) => store.updateBook(book.id, { link: e.target.value || undefined })} placeholder="Link (summary, buy page, author…)"
               className="w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground" />
-            {book.link && <a href={book.link} target="_blank" rel="noreferrer" className="text-mauve"><ExternalLink size={13} /></a>}
+            {book.link && <a href={book.link} target="_blank" rel="noreferrer" className="text-mauve"><AppIcon as={ArrowSquareOut} size="sm" /></a>}
           </div>
           {/* Review */}
           <textarea value={book.notes ?? ''} onChange={(e) => store.updateBook(book.id, { notes: e.target.value || undefined })} placeholder="Your review / overall takeaways…" rows={2}

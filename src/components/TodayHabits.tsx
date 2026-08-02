@@ -1,5 +1,6 @@
+import { Note } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { StickyNote } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
@@ -62,7 +63,7 @@ export function TodayHabits() {
           className="shrink-0 hover:text-mauve"
           style={{ color: hasNote ? cat('mauve') : cat('overlay0') }}
         >
-          <StickyNote size={13} />
+          <Icon as={Note} size="sm" />
         </button>
       </span>
     )
@@ -111,7 +112,7 @@ export function TodayHabits() {
 
       {noteFor && (
         <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Note} size="sm" /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
           <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
         </div>
       )}

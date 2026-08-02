@@ -1,5 +1,6 @@
+import { Camera, Columns, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
-import { Camera, X, Columns2 } from 'lucide-react'
 import { useJournal } from '../store'
 import { fileToDataURL } from '../lib/image'
 import { putImage, getImage, deleteImage } from '../lib/imageStore'
@@ -61,13 +62,13 @@ export function ProgressPhotos() {
       right={
         photos.length >= 2 && (
           <Button variant="secondary" onClick={() => setCompare((c) => !c)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-            <Columns2 size={14} /> {compare ? 'Gallery' : 'Compare'}
+            <Icon as={Columns} size="sm" /> {compare ? 'Gallery' : 'Compare'}
           </Button>
         )
       }
     >
       <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-lg mb-3 flex w-full items-center justify-center gap-2">
-        <Camera size={15} /> {busy ? 'Processing…' : 'Add today’s photo'}
+        <Icon as={Camera} size="sm" /> {busy ? 'Processing…' : 'Add today’s photo'}
       </Button>
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />
 
@@ -97,7 +98,7 @@ export function ProgressPhotos() {
                 aria-label="Remove photo"
                 className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-crust/85 text-fg-1 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
               >
-                <X size={13} />
+                <Icon as={X} size="sm" />
               </button>
             </figure>
           ))}

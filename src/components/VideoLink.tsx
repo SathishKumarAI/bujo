@@ -1,4 +1,5 @@
-import { Play } from 'lucide-react'
+import { Play } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { videoUrl } from '../lib/video'
 import { cn } from '../lib/cn'
 
@@ -11,13 +12,16 @@ export function VideoLink({
   name,
   yt,
   label = 'Watch demo',
-  size = 11,
+  size = 'sm',
   className,
 }: {
   name: string
   yt?: string
   label?: string
-  size?: number
+  /** Was a px number (11 by default, 13 at one call site). Icons come from the
+   *  three-step scale now, so the prop takes a step instead — a caller cannot
+   *  invent a fourteenth icon size any more. */
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
   return (
@@ -28,7 +32,7 @@ export function VideoLink({
       className={cn('inline-flex items-center gap-1 text-label text-red hover:underline', className)}
       onClick={(e) => e.stopPropagation()}
     >
-      <Play size={size} /> {label}
+      <Icon as={Play} size={size} /> {label}
     </a>
   )
 }
