@@ -57,7 +57,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
             <span key={n} className="h-1.5 rounded-full transition-all" style={{ width: n === i ? 18 : 6, background: n === i ? 'var(--color-mauve)' : 'var(--color-surface1)' }} />
           ))}
           <div className="ml-auto flex gap-2">
-            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-label text-fg-2 hover:text-fg-1">Show me</button>}
+            {step.to && <Button variant="link" size="sm" onClick={() => { nav(step.to as ViewId); done() }} className="h-auto p-0 text-label text-fg-2 hover:text-fg-1">Show me</Button>}
             {last ? (
               <Button onClick={done} className="press-3d gap-1.5">Start journaling</Button>
             ) : (

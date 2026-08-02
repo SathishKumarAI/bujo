@@ -113,7 +113,7 @@ export function HabitDetail({
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Share2 size={13} /> Share</Button>
             <Button variant="outline" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Settings2 size={13} /> Edit</Button>
-            <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-fg-2 hover:text-fg-1"><X size={18} /></button>
+            <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>
           </div>
         </div>
 
