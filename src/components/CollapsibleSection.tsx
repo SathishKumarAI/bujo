@@ -1,6 +1,9 @@
-import { useState, isValidElement, type ReactNode } from 'react'
+import { isValidElement, type ReactNode } from 'react'
 import { ChevronDown, ChevronRight, ChevronUp, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
+import { useStickyState } from '../lib/useStickyState'
+
+const OPEN_STATES = ['1', '0'] as const
 
 /**
  * A labelled section header that folds a group of cards away. Keeps the daily-use
@@ -25,6 +28,10 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
+  /** Remember open/closed across reloads under this key. Opt-in: a section
+   *  that is deliberately closed every visit (a rarely-read appendix) should
+   *  not silently start staying open. */
+  stickyKey?: string
   children: ReactNode
 }
 
@@ -35,9 +42,16 @@ export function CollapsibleSection({
   color = 'overlay1',
   variant = 'card',
   defaultOpen = false,
+  stickyKey,
   children,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
+    stickyKey ? `section.${stickyKey}` : null,
+    defaultOpen ? '1' : '0',
+    OPEN_STATES,
+  )
+  const open = openFlag === '1'
+  const setOpen = (next: boolean) => setOpenFlag(next ? '1' : '0')
 
   // A Lucide icon arrives as a component; a pre-rendered node arrives as an element.
   let iconNode: ReactNode = null
@@ -54,7 +68,7 @@ export function CollapsibleSection({
       <section className="space-y-5">
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen(!open)}
           aria-expanded={open}
           className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
         >
@@ -77,7 +91,7 @@ export function CollapsibleSection({
     <section className="flex flex-col gap-5">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
