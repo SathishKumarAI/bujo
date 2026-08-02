@@ -297,3 +297,78 @@ These remain visual-judgement work:
 - **190 raw `<button>`** still bypass the button system, clustered in 8 files (Trackers 16,
   Gym 9, Insights 8, Collections 7, Account 7). Many are legitimately not buttons — heatmap
   cells, glyph toggles, card-shaped targets — so this needs judgement per site, not a codemod.
+
+---
+
+# Step 4 tail — the day/week strip (2026-08-02, appended)
+
+Branch `refactor/daystrip`.
+
+## The audit was wrong about one of the three
+
+`docs/redesign/09-redesign-audit.md` listed `Heatmap`, `ActivityLayout` and
+`TodayHabits` as "three unreconciled variants" of one visual idea. Reading them
+properly:
+
+| File | What it actually is |
+|---|---|
+| `Heatmap` (39 lines) | Read-only week×weekday grid over pre-bucketed `HeatCell[][]`, with a legend. Stats. |
+| `ActivityLayout` (223 lines) | A per-habit **row** — name, streak, weekly goal, today-control, drag-reorder — that *contains* a 16-week grid. Trackers. |
+| `TodayHabits` (120 lines) | **Not a strip at all.** Time-of-day chips with a completion ring and per-habit notes. No day cells, no calendar, no intensity ramp. |
+
+`TodayHabits` shares nothing with the other two beyond the word "habit".
+Merging it would have meant inventing an abstraction over two unrelated things
+to satisfy a tidy-sounding count of three. **Left alone.**
+
+The real duplication was `Heatmap` and the grid *inside* `ActivityLayout`.
+
+## What shipped
+
+`components/ui/day-grid.tsx` — `DayGrid` + `DayGridLegend`. The caller owns
+which days exist and what each level means; the primitive owns the grid, the
+intensity ramp, sizing, and the accessibility shape.
+
+```
+DayGrid({ days, pad?, color?, emptyColor?, colorFor?, size?, gap?, label?, onDayClick? })
+DayCell = { date, level: 0..4, blank?, disabled?, title?, srLabel? }
+```
+
+Both callers keep their differences as props: Stats is read-only with a legend;
+Trackers is interactive, per-habit coloured, and blanks out future/pre-start
+days. Omitting `onDayClick` is what makes a grid read-only — there is no
+`readOnly` flag to get out of sync.
+
+Also folded in: `rounded-[2px]` was an arbitrary value at 13 call sites. It is a
+data-cell radius, not a control or card one, so it now lives in this primitive
+and nowhere else.
+
+Dropped: `Heatmap`'s `colorFor` prop had no call site, and keeping it forced the
+adapter to invent a `count` to satisfy the signature.
+
+## A real bug, found by looking and confirmed by bisecting
+
+The heatmaps were rendering with a **39.5px column pitch around 10px cells** —
+scattered dots rather than a dense grid.
+
+Cause: grid's default `justify-content: normal` stretches auto-sized tracks to
+fill the container, and both grids sit inside a wide `flex-1` parent.
+
+I stashed the refactor to check whether I had introduced it. Pre-change: same
+670px grid, same 39.5px pitch. **Pre-existing in both grids, for as long as they
+have existed.** Fixed once, in the primitive, with `justify-start`. Column pitch
+is now 12px — a 10px cell plus its 2px gap.
+
+Worth noting the automated sweep never caught this: nothing overflowed, nothing
+errored, every size was on-scale. It was just wrong, and only a screenshot said so.
+
+## Verification
+
+| Check | Result |
+|---|---|
+| `npx tsc -b` | ✅ 0 |
+| `npx vitest run` | ✅ 678 tests |
+| `npx eslint .` | ✅ 0 errors |
+| `npm run build` | ✅ 535ms |
+| 18 views × 5 themes | ✅ 0 blank, 0 overflow, 0 accent-in-main, 0 off-scale, 0 heavy, 0 errors |
+| Stats grid | ✅ 183 cells, 0 interactive, legend present |
+| Trackers grids | ✅ 8 grids, 90 clickable cells each |

@@ -5,11 +5,9 @@ import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { Ban, ShieldCheck } from 'lucide-react'
+import { DayGrid } from './ui/day-grid'
 
 const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
-// Habit-colored intensity per level (0 = empty); mirrors Heatmap's opacity ramp.
-const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
-
 /**
  * Activity layout · one row per habit with a GitHub-style intensity heatmap
  * (last 16 weeks) plus a type-aware "today" control. An alternative to the
@@ -91,7 +89,6 @@ function ActivityRow({
   const type = h.type ?? 'check'
   const target = habitTarget(h)
   const avoid = !!h.avoid
-  const accent = avoid ? cat('red') : cat(h.color)
   const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
   const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
   const days = WEEKS * 7
@@ -137,31 +134,32 @@ function ActivityRow({
       ) : <span className="w-10 shrink-0" />}
 
       <div className="min-w-0 flex-1 overflow-x-auto">
-        <div
-          className="grid grid-flow-col grid-rows-7 gap-0.5"
-          role="img"
-          aria-label={`${h.name} activity heatmap, last ${WEEKS} weeks`}
-        >
-          {Array.from({ length: pad }).map((_, i) => <span key={`p${i}`} className="h-2.5 w-2.5" />)}
-          {Array.from({ length: days }).map((_, i) => {
+        {/* Shares `DayGrid` with the Stats heatmap — same grid, ramp and cell
+            shape, different data and interactivity. This row stays clickable;
+            rating habits are logged with the control on the right, so their
+            cells render but don't accept a click. */}
+        <DayGrid
+          days={Array.from({ length: days }, (_, i) => {
             const d = addDays(start, i)
-            const future = d > today
-            const before = d < h.startedOn
+            const outside = d > today || d < h.startedOn
             const level = habitIntensity(type, habitValueOn(data, h, d), target)
-            const editable = !future && !before && type !== 'rating'
-            return (
-              <button
-                key={d}
-                disabled={!editable}
-                onClick={() => logDay(d)}
-                aria-label={`${h.name} ${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
-                title={`${d}${level ? (avoid ? ', slip' : ', done') : ''}`}
-                className="h-2.5 w-2.5 rounded-[2px] disabled:cursor-default enabled:hover:ring-1 enabled:hover:ring-overlay0"
-                style={{ background: future || before ? 'transparent' : level === 0 ? cat('surface0') : accent, opacity: level === 0 ? 1 : LEVEL_OPACITY[level] }}
-              />
-            )
+            const state = level ? (avoid ? ', slip' : ', done') : ''
+            return {
+              date: d,
+              level,
+              blank: outside,
+              disabled: type === 'rating',
+              title: `${d}${state}`,
+              srLabel: `${h.name} ${d}${state}`,
+            }
           })}
-        </div>
+          pad={pad}
+          color={avoid ? 'red' : h.color}
+          size={10}
+          gap={2}
+          label={`${h.name} activity heatmap, last ${WEEKS} weeks`}
+          onDayClick={logDay}
+        />
       </div>
 
       <div className="w-24 shrink-0 text-right">
