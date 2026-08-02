@@ -13,12 +13,9 @@ let chromium
 try {
   ;({ chromium } = require('playwright'))
 } catch {
-  console.error(
-    'This script needs Playwright, which is deliberately not a dependency ' +
-      '(CI installs it with --no-save to keep it out of the app tree).
-' +
-      'Run:  npm i -D --no-save playwright && npx playwright install chromium',
-  )
+  console.error('This script needs Playwright, which is deliberately not a dependency')
+  console.error('(CI installs it with --no-save to keep it out of the app tree).')
+  console.error('Run:  npm i -D --no-save playwright && npx playwright install chromium')
   process.exit(1)
 }
 

@@ -23,6 +23,12 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npx tsc -b
+      # The .mjs scripts sit outside every other gate — tsc ignores them, eslint
+      # doesn't cover them, and the build never imports them. A syntax error in
+      # one shipped to main once and only surfaced when the screenshots workflow
+      # ran. This is the cheapest gate that would have caught it.
+      - name: Syntax-check scripts
+        run: for f in scripts/*.mjs; do node --check "$f"; done
       - name: Lint (soft — repo carries pre-existing debt)
         run: npx eslint . || echo "::warning::eslint reported issues (pre-existing debt tolerated)"
       - name: Tests
