@@ -75,7 +75,7 @@ export function HomeWorkout() {
 
       <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
         {sessions.length === 0 ? (
-          <Empty>No home workouts logged yet.</Empty>
+          <Empty>Finish a session to start building your history.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {sessions.slice(0, 12).map((w) => {

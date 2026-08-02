@@ -104,7 +104,7 @@ export function Fitness() {
         right={workouts.length > 6 ? <Button variant="secondary" onClick={() => setShowAll((v) => !v)} className="press-3d rounded-control">{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
       >
         {workouts.length === 0 ? (
-          <Empty>No workouts logged yet.</Empty>
+          <Empty>Log a session above to start your training history.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {shown.map((w) => {

@@ -84,7 +84,7 @@ export function Collections() {
             <div>
               <div className="mb-1.5 text-label tracking-wide text-fg-2 uppercase">Collections</div>
               {collectionIndex.length === 0 ? (
-                <Empty>No collections yet.</Empty>
+                <Empty>Create a collection above to group related entries.</Empty>
               ) : (
                 <ul className="space-y-0.5 text-body">
                   {collectionIndex.map((c) => (
@@ -111,7 +111,7 @@ export function Collections() {
             <div>
               <div className="mb-1.5 text-label tracking-wide text-fg-2 uppercase">Tag pages</div>
               {tags.length === 0 ? (
-                <Empty>No tags yet.</Empty>
+                <Empty>Tag an entry with #something to file it here.</Empty>
               ) : (
                 <ul className="space-y-0.5 text-body">
                   {tags.slice(0, 20).map(({ tag, entries }) => (
@@ -269,7 +269,7 @@ export function Collections() {
                 <Button variant="secondary" onClick={() => { if (name.trim()) { addBirthday({ name: name.trim(), month, day }); setName('') } }} className="press-3d rounded-control">Add</Button>
               </div>
               {birthdays.length === 0 ? (
-                <Empty>No birthdays yet.</Empty>
+                <Empty>Add a birthday to get it back every year.</Empty>
               ) : (
                 <ul className="space-y-1 text-body">
                   {birthdays.map((b) => (

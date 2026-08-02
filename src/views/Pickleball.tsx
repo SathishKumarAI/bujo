@@ -193,7 +193,7 @@ export function Pickleball() {
         )}
       </Card>
       <Card title="Win / loss" subtitle="All games played" enlargeable>
-        {all.games === 0 ? <Empty>No games yet.</Empty> : (
+        {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
           <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -238,7 +238,7 @@ export function Pickleball() {
         </Card>
       )}
       <Card title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
-        {formats.length === 0 ? <Empty>No games yet.</Empty> : (
+        {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
           <ul className="space-y-3">
             {formats.map((fm) => (
               <li key={fm.format}>
@@ -367,7 +367,7 @@ export function Pickleball() {
 
       <Card title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
         {sessions.length === 0 ? (
-          <Empty>No sessions logged yet.</Empty>
+          <Empty>Log a session above to start your record.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
