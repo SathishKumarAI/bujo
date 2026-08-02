@@ -22,9 +22,17 @@ Update this when you STOP working, not when you start.
   to `main` — five commits landed on local `main` before they were moved onto
   `fix/a11y-gaps` and `main` was reset to `origin/main`. Check `git branch --show-current`
   before committing here.
-- **Next action:** review and merge the stack bottom-up. After that, the open UI
-  work is §I1 — accent-as-text failing AA in latte. That is now a **one-file** fix:
-  every pill reads its colour from `Pill` in `src/components/ui.tsx`.
+- **Next action:** review and merge the stack bottom-up, then answer the four
+  open questions in `docs/ICON-BUTTON-SYSTEM.md` so §J (icon & button system)
+  can start. Stage 0 of that pass is done and already changes the plan — the
+  theme bridge exists and runs the *opposite* way to what the brief assumed, and
+  the contrast stage is already satisfied. §I1 (accent-as-text failing AA in
+  latte) is now a **one-file** fix: every pill reads its colour from `Pill` in
+  `src/components/ui.tsx`.
+- **Standing rule from this session:** UI changes are verified in **all five
+  themes** — mocha, latte, neon, vscode, dawn — not mocha plus a spot check.
+  Three of them redefine the accent (dawn's is an amber), two invert surface
+  polarity, and dawn renders two text tiers where the others render three.
 - **Blocked on:** unchanged. `B1` — the Supabase project at
   `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so every account/cloud-sync
   feature is dead until it is repointed or the env vars are unset. Section H (the
