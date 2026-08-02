@@ -9,6 +9,9 @@ import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRang
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
+// Insights had its own byte-identical copy of this; the shared one is the same
+// component with a heading and a "SHOW" affordance.
+import { QuietSection as Section } from '../components/CollapsibleSection'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
