@@ -61,7 +61,10 @@ Everything below is confirmed by running it, not inferred.
 - [ ] **B2 · Duplicate boot probe.** That same `/auth/v1/settings` request fires **twice** per load. Likely a double-invoked effect (StrictMode) with no in-flight guard. Cheap fix, and it halves the failure noise.
 - [ ] **B3 · `npm run smoke` and `npm run shots` crash locally.** Both scripts `require('playwright')`, which is not in `package.json` (CI installs it with `npm i -D --no-save`, so CI is fine). Locally you get a raw `MODULE_NOT_FOUND` stack. Fix: catch the require and print "run `npm i -D --no-save playwright` first", or add it as an optional devDependency.
 - [ ] **B4 · Bundle regression.** `dist/assets/index-*.js` is now **687 kB** (203 kB gzip). BUJO-224 got it to 642 kB; it has grown 45 kB since. Rolldown warns over the 500 kB budget. Worth a chunking pass.
-- [ ] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** (all other 17 views do). It hand-rolls its own heading markup (`Reading.tsx`) — a heading-hierarchy gap for screen readers.
+- [x] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** — fixed on
+  `fix/a11y-gaps`. Its top-level section titles (three shelves, Stalled books, the yearly
+  goal) are now real `<h2>`s; headings inside the collapsible analytics groups stay `<h3>`.
+  Tag change only — the type scale lives in the class list, so nothing moved visually.
 
 ---
 
@@ -100,7 +103,11 @@ From `docs/TICKETS.md`. These are the only items still marked 🔜/◑ after the
 - [ ] **E1 · R2-7 / BUJO-91 — unified `Goal` data model.** One type spanning habits, challenges, fitness and focus, with a cross-view roll-up. The Goals *view* shipped (A-02); the *model* didn't. Genuine design work, not a mechanical change.
 - [ ] **E2 · R2-10 / P-9 — accounts + E2E-encrypted cloud sync.** Needs a backend, so it's out of the current local-first scope. R2-1's at-rest crypto is the client half. Blocked on a scope decision from you, not on code.
 - [ ] **E3 · BUJO-176 — same-unit tracker combined totals/compare.** Logged as "if that was the intent" — needs you to confirm what you actually wanted.
-- [ ] **E4 · AUD-5 — deferred a11y.** Heatmap/Monthly aria labels, save-toasts, Focus → `ChartCard`.
+- [~] **E4 · AUD-5 — deferred a11y, mostly done.** Monthly day cells now carry a full
+  `aria-label` (date, items, mood, habit progress) + `aria-current="date"`; the weekly
+  reflection and gym-routine saves fire toasts. Heatmap and the Focus charts already had
+  `role="img"` labels, so the remaining piece — "Focus → `ChartCard`" — is a cosmetic
+  refactor, deliberately not done.
 - [ ] **E5 · BUJO-94 tail — axe-core CI job.** Chart text-alternatives are all done; only the CI wiring is left.
 - [ ] **E6 · PRODUCT_GAPS #2 — sync-conflict prompt on silent cloud load.** `updatedAt` stamping exists; the newer/older prompt only fires on first-run folder pick, not on silent reload. Touches the App boot path.
 - [ ] **E7 · PRODUCT_GAPS #7 — Playwright e2e.** Related to B3; CI currently has no e2e gate.
@@ -118,16 +125,42 @@ From `docs/TICKETS.md`. These are the only items still marked 🔜/◑ after the
 
 From `docs/UIUX-CRAFT-BACKLOG.md`. The feedback/keyboard/resilience/button work is done (PRs #77–#79); these survived.
 
-- [ ] **F1 · Hand-rolled buttons still bypassing the button system** — visible drift, since each re-invents padding/radius/hover:
-  `Collections.tsx:91,118` · `Insights.tsx:399` · `Onboarding.tsx:57,59` (first-run, highest visibility) · `CaptureBar.tsx:190` · `SmartInput.tsx:118` · `trackers/HabitDetail.tsx:108,109` · `RestTimer.tsx:66,69` · `TodayPlanCard.tsx:66` · `ExercisePicker.tsx:65` · `ExploreBanner.tsx:34` · `ReminderBanner.tsx:54` · `CoachCard.tsx:34`
-- [ ] **F2 · Skip-to-content link** — listed as a known gap in `docs/ACCESSIBILITY.md:39`.
-- [ ] **F3 · Focus trap in dialogs** + restore focus on close (quick-add, palette, SOS overlay).
+- [x] **F1 · Hand-rolled buttons — judged, not swept** (branch `refactor/button-adoption`).
+  Seven real buttons migrated: `Onboarding` "Show me", `RestTimer` play/pause + reset,
+  `ReminderBanner` enable + dismiss, `SmartInput` Go to / Merge, `HabitDetail` and
+  `ExerciseDB` close ×. Insights also lost a *fourth* private copy of
+  `CollapsibleSection`. **Left raw on purpose**, with reasons in the commit: row and
+  card click-surfaces (Collections rows, Insights results/jump list/topic cards,
+  CoachCard tips, TodayPlanCard banner, ExercisePicker "+ Add"), selection chips
+  (Insights kind filters, RestTimer presets — that is the chip system, consistent with
+  itself), and chip internals (CaptureBar: a 20px pill cannot hold a 24px icon button).
+  `ExploreBanner` was already on `Button` — the list was stale. ~175 raw `<button>`
+  remain and most of them should stay that way.
+- [x] **F2 · Skip-to-content link — already shipped.** `AppShell` has rendered one since
+  the shell work; only `docs/ACCESSIBILITY.md` was stale. Doc corrected.
+- [x] **F3 · Focus trap** — `src/lib/useFocusTrap.ts` (6 tests) + adopted by all eight
+  hand-rolled overlays; Radix dialogs (quick-add, shortcut help, confirm) already trapped.
+  Traps Tab only, no `focusin` guard — these overlays open Radix confirm dialogs that
+  portal outside the trapped node. Verified in-browser: Tab wraps, Escape restores.
 - [ ] **F4 · Palette fuzzy matching** — today it's a plain substring filter (`CommandPalette.tsx:97`); no recent/frequent ranking.
 - [ ] **F5 · Vim-style jumps** — `g t` Today, `g s` Stats, `j`/`k` between entries, `x` toggle status.
-- [ ] **F6 · Persist last-visited tab per view** (Fitness, Trackers, Insights).
-- [ ] **F7 · Deep-link a specific entry/day by URL** so a day is shareable and bookmarkable.
-- [ ] **F8 · Collapse long entry text** with "show more".
-- [ ] **F9 · Single `Pill`/`Badge` component** — inline pill styles still duplicated across views.
+- [x] **F6 · Persist last tab/range/section** — `useStickyState` (localStorage under
+  `bujo.ui.*`, deliberately *not* the journal store: it syncs and it has an undo stack).
+  Applied to FitnessHub tabs, Trackers day/week/month, and Insights' six sections via an
+  opt-in `stickyKey` on `CollapsibleSection`. 5 tests.
+- [x] **F7 · Deep links** — `?view=&day=` now round-trips: written on every navigation,
+  read on boot, day seeds the cursor. `replaceState` not `pushState`, because this router
+  ignores `popstate` and a Back button that silently does nothing is worse than none.
+  **Not done:** entry-level anchors (`&entry=<id>` + scroll/highlight) — day granularity
+  only.
+- [x] **F8 · Collapse long entry text** — entries over 180 chars clamp to two lines with
+  `show more` / `show less`. Character threshold, not rendered height, so the control does
+  not appear and vanish as the column resizes.
+- [x] **F9 · One `Pill`** — rewritten around `tone` (`wash` / `muted` / `solid`) and
+  scale-named `size` (`micro` / `caption` / `label`); 18 hand-rolled sites in 12 files
+  migrated. Two reconciliations toward the majority: `33` washes dropped to `22`, and the
+  `surface0` count pills moved to `surface1`. **Note:** every pill now reads its colour
+  from one file, so §I1 (accent-as-text failing AA in latte) becomes a one-file fix.
 - [ ] **F10 · Decide `SyncIndicator`'s fate** — fold into the toast system, or keep it deliberately as a status pill. Right now both exist by accident.
 
 ---
