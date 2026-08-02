@@ -106,14 +106,15 @@ export function Reading() {
           const list = shelf(books, s.id)
           const Icon = s.icon
           return (
-            <div key={s.id} className="space-y-3">
+            // Each shelf is a landmark of its own, not a bare div.
+            <section key={s.id} className="space-y-3">
               <h2 className="flex items-center gap-2 text-body font-medium text-foreground">
                 <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
               </h2>
               {list.length === 0 && <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
               {list.map((b) => <BookCard key={b.id} book={b} />)}
-            </div>
+            </section>
           )
         })}
       </div>
