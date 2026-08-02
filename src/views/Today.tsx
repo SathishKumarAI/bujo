@@ -88,9 +88,9 @@ export function Today() {
               <CaptureBar date={date} />
             </div>
             {carryover.length > 0 && (
-              <div className="mb-3 flex items-center justify-between rounded-lg border border-line bg-background px-3 py-2 text-body">
+              <div className="mb-3 flex items-center justify-between rounded-card border border-line bg-background px-3 py-2 text-body">
                 <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-                <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-lg">Carry forward</Button>
+                <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-control">Carry forward</Button>
               </div>
             )}
             {dayEntries.length === 0 ? (
@@ -140,7 +140,7 @@ export function Today() {
                     setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
                   }
                   rows={3}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                 />
                 <p className="mt-1 text-label text-fg-2">Saved into today's memory on blur.</p>
               </Card>
@@ -216,7 +216,7 @@ export function Today() {
               variant="ghost"
               aria-pressed={metric?.fastBreak === 'food'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Icon as={ForkKnife} size="sm" /> Food
             </Button>
@@ -224,7 +224,7 @@ export function Today() {
               variant="ghost"
               aria-pressed={metric?.fastBreak === 'drink'}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-              className={`press-3d inline-flex items-center gap-1.5 rounded-lg ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Icon as={Drop} size="sm" /> Drink
             </Button>
@@ -264,7 +264,7 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           return (
-            <li key={h.id} className="flex items-center gap-3 rounded-lg border border-line bg-ink-0 px-3 py-2">
+            <li key={h.id} className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
                 {h.unit && <span className="text-fg-2"> ({h.unit})</span>}
@@ -277,19 +277,19 @@ function TodayCountHabits({ date }: { date: string }) {
                   onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-full border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
+                  className="grid h-7 w-7 place-items-center rounded-pill border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
                 >−</button>
                 <button
                   onClick={() => setHabitValue(date, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-full border text-fg-1 transition-colors"
+                  className="grid h-7 w-7 place-items-center rounded-pill border text-fg-1 transition-colors"
                   style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
                 >+</button>
                 {step > 1 && (
                   <button
                     onClick={() => setHabitValue(date, h.id, val + step)}
                     aria-label={`Add ${step} to ${h.name}`}
-                    className="rounded-full border border-line-strong px-2 py-0.5 text-caption text-fg-1 transition-colors hover:text-fg-1"
+                    className="rounded-pill border border-line-strong px-2 py-0.5 text-caption text-fg-1 transition-colors hover:text-fg-1"
                   >+{step}</button>
                 )}
               </div>
@@ -312,7 +312,7 @@ function AtRiskNudge({ date }: { date: string }) {
         {atRisk.map(({ habit, streak }) => (
           <li
             key={habit.id}
-            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-label"
+            className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label"
             style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
           >
             <Icon as={Flame} size="sm" style={{ color: cat('peach') }} />

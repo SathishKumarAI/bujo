@@ -14,7 +14,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
   const maxDays = Math.max(...rows.map((r) => r.days), 1)
   return (
     <Card title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
-      <div className="mb-3 flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-3 py-2 text-body">
+      <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body">
         <Icon as={CalendarCheck} size="md" style={{ color: cat('teal') }} />
         <span className="text-fg-1">
           <span className="font-medium text-fg-1">{ratio.trainDays}</span> train ·{' '}
@@ -34,8 +34,8 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
             >
               {r.exercise}
             </button>
-            <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-ink-2">
-              <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
+            <div className="relative h-3.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
+              <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
             </div>
             <span className="w-16 shrink-0 text-right text-label text-fg-2">
               {r.days}d · {r.sets} set{r.sets === 1 ? '' : 's'}

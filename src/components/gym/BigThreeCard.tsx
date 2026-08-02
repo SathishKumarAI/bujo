@@ -24,7 +24,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
                 key={l.lift}
                 onClick={() => l.weight > 0 && setFocusEx(l.lift)}
                 disabled={l.weight === 0}
-                className="rounded-xl border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
+                className="rounded-card border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
                 title={l.weight > 0 ? `Best ${l.lift}: ${l.weight}${unit}${l.date ? ` on ${l.date}` : ''}` : `No ${l.lift} logged yet`}
               >
                 <p className="text-label text-fg-1">{l.lift}</p>

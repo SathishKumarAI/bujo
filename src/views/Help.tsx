@@ -28,13 +28,13 @@ export function Help() {
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {BULLET_LEGEND.map((b) => (
-            <li key={b.label} className="flex items-center gap-3 rounded-lg border border-line bg-ink-0 px-3 py-1.5 text-body">
+            <li key={b.label} className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-1.5 text-body">
               <span className="w-5 text-center font-mono" style={{ color: cat('mauve') }}>{b.glyph}</span>
               <span className="text-fg-1">{b.label}</span>
             </li>
           ))}
         </ul>
-        <div className="mt-3 rounded-lg bg-ink-0 p-3 text-body text-fg-2">
+        <div className="mt-3 rounded-card bg-ink-0 p-3 text-body text-fg-2">
           <p className="font-medium text-fg-1">Quick-capture prefixes</p>
           <p className="mt-1"><code>t</code> task · <code>e</code> event · <code>n</code> note · <code>*</code> important · <code>^</code> memory · <code>#tag</code> to tag.</p>
           <p className="mt-1 text-fg-2">For example, <code>* t book the campsite #travel</code> creates an important task tagged travel.</p>

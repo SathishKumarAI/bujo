@@ -101,14 +101,14 @@ export function DriveSync() {
 
       <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
         {!connected ? (
-          <Button variant="secondary" onClick={doConnect} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={doConnect} className="press-3d inline-flex items-center gap-1.5">
             <Icon as={Cloud} size="sm" /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
           </Button>
         ) : (
           <>
-            <Button variant="secondary" onClick={backup} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={CloudArrowUp} size="sm" /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
-            <Button variant="secondary" onClick={restore} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={CloudArrowDown} size="sm" /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
-            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-lg text-red hover:text-red">Disconnect</Button>
+            <Button variant="secondary" onClick={backup} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowUp} size="sm" /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
+            <Button variant="secondary" onClick={restore} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowDown} size="sm" /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
+            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-control text-red hover:text-red">Disconnect</Button>
           </>
         )}
       </div>
@@ -119,14 +119,14 @@ export function DriveSync() {
           <p className="mb-2 text-body text-fg-1">Reference a file from Drive</p>
           <div className="flex gap-2">
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="MagnifyingGlass Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <Button variant="secondary" onClick={search} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> MagnifyingGlass</Button>
+            <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> MagnifyingGlass</Button>
           </div>
           {files.length === 0 ? (
             <Empty>MagnifyingGlass your Drive to list images and documents.</Empty>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((f) => (
-                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-xl border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
+                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-card border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
                   <div className="grid h-24 place-items-center overflow-hidden bg-ink-1">
                     {f.thumbnailLink ? (
                       <img src={f.thumbnailLink} alt={f.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />

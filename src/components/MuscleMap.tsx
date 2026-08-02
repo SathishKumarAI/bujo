@@ -16,7 +16,7 @@ function Figure({ base, ids, label }: { base: string; ids: number[]; label: stri
   const [ok, setOk] = useState(true)
   if (!ok) {
     return (
-      <div className="grid h-64 w-40 place-items-center rounded-xl border border-line text-center text-label text-fg-2">
+      <div className="grid h-64 w-40 place-items-center rounded-card border border-line text-center text-label text-fg-2">
         Muscle diagram needs a connection
       </div>
     )
@@ -48,7 +48,7 @@ export function MuscleMap({ muscles }: { muscles: number[] }) {
   const front = ids.filter((id) => MUSCLES.find((m) => m.id === id)?.side === 'front')
   const back = ids.filter((id) => MUSCLES.find((m) => m.id === id)?.side === 'back')
   return (
-    <div className="flex items-end justify-center gap-8 rounded-2xl border border-line bg-ink-1 py-5">
+    <div className="flex items-end justify-center gap-8 rounded-card border border-line bg-ink-1 py-5">
       <Figure base={BASE_FRONT} ids={front} label="Front" />
       <Figure base={BASE_BACK} ids={back} label="Back" />
     </div>

@@ -123,7 +123,7 @@ export function CommandPalette({
     >
       <div
         ref={trap}
-        className="card-3d w-full max-w-lg overflow-hidden rounded-xl border border-line-strong bg-ink-1"
+        className="card-3d w-full max-w-lg overflow-hidden rounded-card border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

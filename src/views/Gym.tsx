@@ -212,7 +212,7 @@ export function Gym() {
           ? 'Muscles worked by this exercise'
           : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
-      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><AppIcon as={X} size="sm" /> Clear</Button>}
+      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-control"><AppIcon as={X} size="sm" /> Clear</Button>}
       collapsible
       defaultCollapsed
     >
@@ -225,7 +225,7 @@ export function Gym() {
         />
         <div className="flex flex-wrap items-center gap-2">
           {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
+            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-control">
               <AppIcon as={Plus} size="sm" /> Add to session
             </Button>
           )}
@@ -245,7 +245,7 @@ export function Gym() {
       <MuscleMap muscles={activeMuscles} />
 
       {focusEx && exerciseInfo(focusEx) && (
-        <div className="mt-3 space-y-1 rounded-lg border border-line bg-ink-0 p-2.5 text-label">
+        <div className="mt-3 space-y-1 rounded-card border border-line bg-ink-0 p-2.5 text-label">
           <p className="text-fg-2"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
           <p className="text-fg-2"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
         </div>
@@ -285,7 +285,7 @@ export function Gym() {
       {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
       {prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
-          <div className="celebrate-pop flex items-center gap-2 rounded-2xl border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
+          <div className="celebrate-pop flex items-center gap-2 rounded-card border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
             <AppIcon as={Trophy} size="lg" style={{ color: cat('yellow') }} />
             <p className="text-body font-medium text-fg-1">
               New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
@@ -330,7 +330,7 @@ export function Gym() {
               <button
                 key={s.id}
                 onClick={() => setSplit(s.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-body"
+                className="inline-flex items-center gap-1.5 rounded-control px-3 py-1.5 text-body"
                 style={{
                   background: split === s.id ? cat(s.color) : cat('surface0'),
                   color: split === s.id ? cat('crust') : cat('subtext1'),
@@ -374,14 +374,14 @@ export function Gym() {
             // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
             const complete = !!(row.weight.trim() && row.reps.trim())
             return (
-              <div key={i} className={`-ml-2 rounded-lg border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
+              <div key={i} className={`-ml-2 rounded-control border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
                 <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] items-center gap-2">
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
                   disabled={!row.exercise.trim()}
                   aria-label="Focus muscle map on this exercise"
                   title="Show this exercise on the muscle map"
-                  className="grid h-7 w-7 place-items-center rounded-lg disabled:opacity-30"
+                  className="grid h-7 w-7 place-items-center rounded-control disabled:opacity-30"
                   style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? cat('crust') : cat('overlay1') }}
                 >
                   <AppIcon as={Crosshair} size="sm" />
@@ -395,7 +395,7 @@ export function Gym() {
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-control text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
                 <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-fg-2 hover:text-red"><AppIcon as={X} size="sm" /></Button>
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
@@ -436,7 +436,7 @@ export function Gym() {
                             })
                           }
                           title={`Add ${r.weight}${unit} warm-up set`}
-                          className="rounded-full px-2 py-0.5 transition-colors hover:text-fg-1"
+                          className="rounded-pill px-2 py-0.5 transition-colors hover:text-fg-1"
                           style={{ background: cat('blue') + '22', color: cat('blue') }}
                         >
                           {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
@@ -465,11 +465,11 @@ export function Gym() {
         })()}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-lg">+ Add set</Button>
-          <Button variant="secondary" onClick={finish} className="press-3d rounded-lg">Finish session</Button>
+          <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-control">+ Add set</Button>
+          <Button variant="secondary" onClick={finish} className="press-3d">Finish session</Button>
           <div className="ml-auto flex gap-2">
             <Input value={routineName} onChange={(e) => setRoutineName(e.target.value)} placeholder="Save as routine…" className="max-w-[160px] py-1.5" />
-            <Button variant="secondary" onClick={saveAsRoutine} className="press-3d rounded-lg">Save routine</Button>
+            <Button variant="secondary" onClick={saveAsRoutine} className="press-3d">Save routine</Button>
           </div>
         </div>
         </>)}
@@ -481,7 +481,7 @@ export function Gym() {
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
             variant="secondary"
-            className="press-3d rounded-lg"
+            className="press-3d"
             onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}
           >
             Log weight
@@ -644,7 +644,7 @@ function PlateCalculator({ unit }: { unit: string }) {
           <p className="mb-2 text-label text-fg-2">Per side:</p>
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-control px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
             ))}
           </div>
           <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>

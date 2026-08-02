@@ -64,7 +64,7 @@ export function TodayPlanCard() {
   return (
     <Card title="Today’s plan" subtitle="Your whole day at a glance, tap to jump in" right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
-        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
+        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
           🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
         </button>
       )}
@@ -75,7 +75,7 @@ export function TodayPlanCard() {
             <button
               key={c.label}
               onClick={() => navigate(c.to)}
-              className="press-3d inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-body"
+              className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body"
               style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22'), color: c.done ? cat('overlay1') : cat(c.color) }}
             >
               <AppIcon as={Icon} size="sm" /> {c.label}{c.done ? ' ✓' : ''}

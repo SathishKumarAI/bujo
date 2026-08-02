@@ -39,7 +39,7 @@ export function ExercisePicker({
       <button
         type="button"
         onClick={() => { setOpen((o) => !o); setTimeout(() => inputRef.current?.focus(), 0) }}
-        className="flex w-full items-center justify-between gap-1 rounded-lg border border-line-strong bg-ink-0 px-2 py-1.5 text-left text-body text-fg-1"
+        className="flex w-full items-center justify-between gap-1 rounded-card border border-line-strong bg-ink-0 px-2 py-1.5 text-left text-body text-fg-1"
       >
         <span className={value ? 'truncate' : 'text-fg-2'}>{value || 'Pick exercise…'}</span>
         <Icon as={CaretDown} size="sm" className="shrink-0 text-fg-2" />
@@ -48,7 +48,7 @@ export function ExercisePicker({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-lg border border-line-strong bg-ink-1 shadow-xl">
+          <div className="absolute top-full left-0 z-50 mt-1 w-72 overflow-hidden rounded-card border border-line-strong bg-ink-1 shadow-xl">
             <div className="flex items-center gap-2 border-b border-line px-2.5 py-2">
               <Icon as={MagnifyingGlass} size="sm" className="text-fg-2" />
               <input

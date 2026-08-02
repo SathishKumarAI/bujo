@@ -68,7 +68,7 @@ export function HomeWorkout() {
               <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
             </div>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
-            <Button variant="secondary" onClick={logSession} className="press-3d w-full rounded-lg">Log workout</Button>
+            <Button variant="secondary" onClick={logSession} className="press-3d w-full">Log workout</Button>
           </div>
         )}
       </Card>
@@ -110,14 +110,14 @@ export function HomeWorkout() {
             <button
               key={m}
               onClick={() => setFilter(m)}
-              className="rounded-full border px-2.5 py-1 text-label capitalize transition-colors"
+              className="rounded-pill border px-2.5 py-1 text-label capitalize transition-colors"
               style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
             >{m}</button>
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {lib.map((ex) => (
-            <div key={ex.id} className="rounded-lg border border-line bg-ink-0 p-3">
+            <div key={ex.id} className="rounded-card border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-heading">{ex.emoji}</span>
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>

@@ -39,7 +39,7 @@ export function EmojiScale({
             aria-pressed={active === f.value}
             onClick={() => onChange(active === f.value ? undefined : f.value)}
             className={cn(
-              'grid h-9 w-9 place-items-center rounded-lg border text-heading transition-transform active:scale-95',
+              'grid h-9 w-9 place-items-center rounded-control border text-heading transition-transform active:scale-95',
               active === f.value ? 'border-mauve bg-mauve/15 scale-110' : 'border-input opacity-60 hover:opacity-100',
             )}
           >

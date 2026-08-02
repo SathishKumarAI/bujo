@@ -20,10 +20,10 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 // eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
 export const CARD = {
   /** The card container (border, radius, background, padding, 3-D press, hover group). */
-  container: 'card-3d group/card min-w-0 rounded-xl border border-line bg-card p-4 sm:rounded-2xl sm:p-5 lg:p-6',
+  container: 'card-3d group/card min-w-0 rounded-card border border-line bg-card p-4 sm:rounded-card sm:p-5 lg:p-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
-  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl',
+  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
 } as const
@@ -162,7 +162,7 @@ export function StatTile({
       onClick={onClick}
       title={title}
       className={cn(
-        'rounded-xl border border-line bg-ink-0 text-center',
+        'rounded-card border border-line bg-ink-0 text-center',
         compact ? 'py-1.5' : 'py-3',
         onClick && 'press-3d cursor-pointer transition-colors hover:border-line-strong',
         className,
@@ -221,7 +221,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -230,7 +230,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -327,7 +327,7 @@ export function Pill({
   return (
     <span
       title={title}
-      className={cn('inline-flex shrink-0 items-center rounded-full', sizes[size], className)}
+      className={cn('inline-flex shrink-0 items-center rounded-pill', sizes[size], className)}
       style={style}
     >
       {children}
@@ -360,7 +360,7 @@ export function Empty({
   return (
     <div className="flex flex-col items-center gap-2 py-10 text-center">
       {Icon && (
-        <span className="grid size-10 place-items-center rounded-full bg-ink-2 text-fg-2">
+        <span className="grid size-10 place-items-center rounded-pill bg-ink-2 text-fg-2">
           <AppIcon as={Icon} size="md" />
         </span>
       )}
@@ -386,7 +386,7 @@ export function Segmented<T extends string | number>({
   options: { value: T; label: ReactNode }[]
 }) {
   return (
-    <div className="inline-flex rounded-lg bg-secondary p-0.5">
+    <div className="inline-flex rounded-control bg-secondary p-0.5">
       {options.map((o) => {
         const active = o.value === value
         return (
@@ -394,7 +394,7 @@ export function Segmented<T extends string | number>({
             key={String(o.value)}
             onClick={() => onChange(o.value)}
             aria-pressed={active}
-            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-body transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-control px-2.5 py-1 text-body transition-colors ${
               // Selected state gets the accent *wash*, not the accent fill: a
               // filled segment reads as "the primary action on this screen",
               // which it isn't — it's a choice you already made.

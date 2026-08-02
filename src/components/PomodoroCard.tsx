@@ -84,11 +84,11 @@ export function PomodoroCard() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="press-3d rounded-lg inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="press-3d rounded-control inline-flex items-center gap-1.5">
             {running ? <><Icon as={Pause} size="sm" /> Pause</> : <><Icon as={Play} size="sm" /> Start</>}
           </Button>
-          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d rounded-lg"><Icon as={ArrowLineRight} size="sm" /></Button>
-          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d rounded-lg"><Icon as={ArrowCounterClockwise} size="sm" /></Button>
+          <Button variant="secondary" onClick={skip} aria-label="Skip" title="Skip to next" className="press-3d"><Icon as={ArrowLineRight} size="sm" /></Button>
+          <Button variant="secondary" onClick={reset} aria-label="Reset" title="Reset" className="press-3d"><Icon as={ArrowCounterClockwise} size="sm" /></Button>
         </div>
 
         <div className="mt-3 flex gap-1.5">
@@ -100,7 +100,7 @@ export function PomodoroCard() {
               aria-pressed={preset.label === p.label}
               /* Selected preset gets the accent wash, not the fill — it's a
                  choice already made, not the primary action on the screen. */
-              className={`press-3d rounded-lg text-label ${preset.label === p.label ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d rounded-control text-label ${preset.label === p.label ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >{p.label}</Button>
           ))}
         </div>

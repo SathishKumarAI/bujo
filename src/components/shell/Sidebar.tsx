@@ -92,11 +92,11 @@ export function Sidebar({
                       <button
                         onClick={() => onNavigate(n.id)}
                         aria-current={active ? 'page' : undefined}
-                        className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-body transition-colors ${
+                        className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
                           active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
                         }`}
                       >
-                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
+                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
                         <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
                         <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
                       </button>

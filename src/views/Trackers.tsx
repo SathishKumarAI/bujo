@@ -139,7 +139,7 @@ export function Trackers() {
           <div className="flex items-center gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             {!radial && (
-              <div className="inline-flex overflow-hidden rounded-lg border border-line-strong">
+              <div className="inline-flex overflow-hidden rounded-card border border-line-strong">
                 {([
                   { id: 'classic', icon: <Icon as={SquaresFour} size="sm" />, title: 'Grid' },
                   { id: 'cards', icon: <Icon as={GridFour} size="sm" />, title: 'Cards (heatmap grids)' },
@@ -158,14 +158,14 @@ export function Trackers() {
                 ))}
               </div>
             )}
-            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-lg">{radial ? <Icon as={SquaresFour} size="sm" /> : <Icon as={RadioButton} size="sm" />}</Button>
-            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-lg"><Icon as={FadersHorizontal} size="sm" /></Button>
+            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-control">{radial ? <Icon as={SquaresFour} size="sm" /> : <Icon as={RadioButton} size="sm" />}</Button>
+            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-control"><Icon as={FadersHorizontal} size="sm" /></Button>
           </div>
         }
       >
         <TodayStrip habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
         {showSettings && (
-          <div className="mb-3 flex flex-wrap gap-4 rounded-lg border border-line bg-ink-0 p-3 text-body">
+          <div className="mb-3 flex flex-wrap gap-4 rounded-card border border-line bg-ink-0 p-3 text-body">
             <Seg label="Density" options={[['comfortable', 'Comfortable'], ['compact', 'Compact']]} value={s.trackerDensity ?? 'comfortable'} onChange={(v) => setSettings({ trackerDensity: v as 'comfortable' | 'compact' })} />
             <Check label="Hide weekends" on={!!s.trackerHideWeekends} onClick={() => setSettings({ trackerHideWeekends: !s.trackerHideWeekends })} />
             <Check label="Show archived" on={!!s.trackerShowArchived} onClick={() => setSettings({ trackerShowArchived: !s.trackerShowArchived })} />
@@ -264,7 +264,7 @@ export function Trackers() {
                 disabled={habitExists(p.name)}
                 title={habitExists(p.name) ? 'Already added' : undefined}
                 onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
-                className="rounded-full border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
+                className="rounded-pill border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
               >
                 {p.emoji} {p.name}
               </button>
@@ -282,10 +282,10 @@ export function Trackers() {
                 placeholder="New habit / food / stimulant…"
               />
             </div>
-            <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+            <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Icon as={Plus} size="sm" /> Add habit</Button>
+            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
           </div>
           </>
           )}
@@ -331,7 +331,7 @@ function ArchivedHabits() {
     <Card title="Archived habits" subtitle="Out of the grid, restore any time" collapsible defaultCollapsed>
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
-          <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-line bg-ink-0 px-2.5 py-1 text-body">
+          <li key={h.id} className="inline-flex items-center gap-2 rounded-pill border border-line bg-ink-0 px-2.5 py-1 text-body">
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             <Button variant="ghost" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-label text-green">restore</Button>
@@ -363,8 +363,8 @@ function Seg({ label, options, value, onChange }: { label: string; options: [str
 function Check({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} className="flex items-end gap-2 text-body text-fg-1">
-      <span className={`relative h-5 w-9 rounded-full transition-colors ${on ? 'bg-mauve' : 'bg-ink-3'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-crust transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+      <span className={`relative h-5 w-9 rounded-pill transition-colors ${on ? 'bg-mauve' : 'bg-ink-3'}`}>
+        <span className={`absolute top-0.5 h-4 w-4 rounded-pill bg-crust transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>
       {label}
     </button>
@@ -386,7 +386,7 @@ function TodayStrip({
   const done = todays.filter((h) => habitDoneOn(data, h, today)).length
 
   return (
-    <div className="mb-4 rounded-xl border border-line bg-ink-0 p-3">
+    <div className="mb-4 rounded-card border border-line bg-ink-0 p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-body font-medium text-fg-1">Today</span>
         <span className="text-label text-fg-2">{done}/{todays.length} done</span>
@@ -406,7 +406,7 @@ function TodayStrip({
             return (
               <span
                 key={h.id}
-                className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-label"
+                className="inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 text-label"
                 style={{ borderColor: on ? cat(h.color) : cat('surface1'), background: on ? cat(h.color) + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}
               >
                 <span className="pl-1">{h.emoji ?? '●'} {h.name}</span>
@@ -414,13 +414,13 @@ function TodayStrip({
                   onClick={() => onSetValue(today, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-full border border-line-strong text-fg-2 transition-colors hover:text-fg-1 disabled:opacity-30"
+                  className="grid h-5 w-5 place-items-center rounded-pill border border-line-strong text-fg-2 transition-colors hover:text-fg-1 disabled:opacity-30"
                 >−</button>
                 <span className="min-w-[2.5rem] text-center tabular-nums text-fg-2">{val}/{target}{type === 'timer' ? 'm' : ''}</span>
                 <button
                   onClick={() => onSetValue(today, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-full border border-line-strong text-fg-2 transition-colors hover:text-fg-1"
+                  className="grid h-5 w-5 place-items-center rounded-pill border border-line-strong text-fg-2 transition-colors hover:text-fg-1"
                 >+</button>
               </span>
             )
@@ -429,7 +429,7 @@ function TodayStrip({
             <button
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-label transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label transition-colors"
               title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
               style={{
                 borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
@@ -500,12 +500,12 @@ function RoutineTimeline({
                 const note = data.habitNotes?.[today]?.[h.id] ?? ''
                 const open = noting === h.id
                 return (
-                  <li key={h.id} className={`rounded-xl border border-line bg-ink-0 p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
+                  <li key={h.id} className={`rounded-card border border-line bg-ink-0 p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
                         aria-label={`Mark ${h.name}`}
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-body transition-colors"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-pill border text-body transition-colors"
                         style={{
                           borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                           background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
@@ -527,7 +527,7 @@ function RoutineTimeline({
                         onBlur={() => setNoting(null)}
                         autoFocus={open}
                         placeholder="Jot a note for today…"
-                        className="mt-2 w-full rounded-md border border-input bg-card px-2 py-1 text-label text-foreground"
+                        className="mt-2 w-full rounded-card border border-input bg-card px-2 py-1 text-label text-foreground"
                       />
                     )}
                   </li>
@@ -700,7 +700,7 @@ function CategoryRows({
                     onClick={() => onToggle(d, h.id)}
                     aria-label={avoid ? `${h.name} slip on ${d}` : `${h.name} on ${d}`}
                     title={avoid ? (on ? 'Slipped' : 'Clean') : undefined}
-                    className={`grid ${cell} place-items-center rounded-full border disabled:opacity-20`}
+                    className={`grid ${cell} place-items-center rounded-pill border disabled:opacity-20`}
                     style={{ borderColor: avoid && on ? cat('red') : cat('surface1'), background: on ? slipColor : 'transparent' }}
                   />
                 </td>
@@ -746,7 +746,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
-      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
+      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-card border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
           <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
@@ -832,7 +832,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <label className="block text-body text-fg-1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
             <label className="block text-body text-fg-1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
-          <label className="flex items-center justify-between rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
+          <label className="flex items-center justify-between rounded-card border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
             <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
@@ -842,14 +842,14 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <p className="mb-1 text-body text-fg-1">Color</p>
             <div className="flex flex-wrap gap-1.5">
               {HABIT_COLORS.map((c) => (
-                <button key={c} onClick={() => set({ color: c })} aria-label={c} className="h-6 w-6 rounded-full" style={{ background: cat(c), outline: habit.color === c ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+                <button key={c} onClick={() => set({ color: c })} aria-label={c} className="h-6 w-6 rounded-pill" style={{ background: cat(c), outline: habit.color === c ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
               ))}
             </div>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-body text-fg-1">Category</span>
-            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
+            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} className="rounded-card border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -857,10 +857,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           <div className="flex items-center justify-between">
             <span className="text-body text-fg-1">Type</span>
             <div className="flex flex-wrap justify-end gap-1.5">
-              <Button variant={(habit.type ?? 'check') === 'check' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'check' })}>Yes / no</Button>
-              <Button variant={habit.type === 'count' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'count' })}>Count</Button>
-              <Button variant={habit.type === 'timer' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
-              <Button variant={habit.type === 'rating' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'rating' })}>Rating</Button>
+              <Button variant={(habit.type ?? 'check') === 'check' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'check' })}>Yes / no</Button>
+              <Button variant={habit.type === 'count' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'count' })}>Count</Button>
+              <Button variant={habit.type === 'timer' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
+              <Button variant={habit.type === 'rating' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'rating' })}>Rating</Button>
             </div>
           </div>
 
@@ -868,7 +868,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <span className="text-body text-fg-1">Time of day</span>
             <div className="flex flex-wrap justify-end gap-1.5">
               {TIME_SLOTS.map((s) => (
-                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
+                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
               ))}
             </div>
           </div>
@@ -893,7 +893,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
                 <p className="mb-1 text-body text-fg-2">Recent notes</p>
                 <ul className="space-y-1">
                   {recent.map((n) => (
-                    <li key={n.day} className="rounded-lg border border-line bg-ink-0 px-2.5 py-1.5 text-label">
+                    <li key={n.day} className="rounded-card border border-line bg-ink-0 px-2.5 py-1.5 text-label">
                       <span className="text-fg-2">{n.day}</span> · <span className="text-fg-1">{n.text}</span>
                     </li>
                   ))}
@@ -936,16 +936,16 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-line pt-3">
-            <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5 rounded-lg" title="A planned skip won't break your streak">
+            <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5 rounded-control" title="A planned skip won't break your streak">
               {skippedToday ? 'Un-skip today' : 'Skip today'}
             </Button>
-            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><Icon as={Archive} size="sm" /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
+            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-control"><Icon as={Archive} size="sm" /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
             <Button variant="ghost" onClick={async () => { if (await confirm({
               title: `Delete “${habit.name}”?`,
               description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
               confirmLabel: 'Delete habit', destructive: true,
-            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-lg text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
-            <Button variant="secondary" onClick={onClose} className="press-3d ml-auto rounded-lg">Done</Button>
+            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-control text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
+            <Button variant="secondary" onClick={onClose} className="press-3d ml-auto">Done</Button>
           </div>
         </div>
       </div>

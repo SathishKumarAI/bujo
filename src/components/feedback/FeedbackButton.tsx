@@ -22,7 +22,7 @@ const CATEGORIES = [
 
 type Status = { kind: 'idle' | 'sending' } | { kind: 'sent'; url?: string } | { kind: 'error'; msg: string }
 
-const field = 'w-full rounded-md border border-line bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+const field = 'w-full rounded-card border border-line bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
 
 /**
  * In-app feedback → GitHub issue (via the /api/feedback function, which holds

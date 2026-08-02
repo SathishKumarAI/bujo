@@ -27,7 +27,7 @@ export function Mindset() {
               const p = principleById(f.principleId)
               if (!p) return null
               return (
-                <li key={f.id} className="group rounded-lg border border-mauve/40 bg-mauve/5 p-3">
+                <li key={f.id} className="group rounded-control border border-mauve/40 bg-mauve/5 p-3">
                   <div className="mb-1 flex items-center gap-2">
                     <Icon as={Check} size="sm" className="shrink-0 text-mauve" />
                     <span className="text-body font-medium text-fg-1">{p.title}</span>
@@ -52,13 +52,13 @@ export function Mindset() {
                 {MINDSET_LIBRARY.filter((p) => p.category === catName).map((p) => {
                   const added = focusedIds.has(p.id)
                   return (
-                    <li key={p.id} className="flex items-start gap-2 rounded-lg border border-line bg-ink-0 p-2.5">
+                    <li key={p.id} className="flex items-start gap-2 rounded-card border border-line bg-ink-0 p-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="text-body font-medium text-fg-1">{p.title}</p>
                         <p className="text-label text-fg-2">{p.why}</p>
                       </div>
                       <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? 'Already in focus' : `Add ${p.title}`}
-                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-pill ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
                         {added ? <Icon as={Check} size="sm" /> : <Icon as={Plus} size="sm" />}
                       </button>
                     </li>

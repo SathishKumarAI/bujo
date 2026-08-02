@@ -14,7 +14,7 @@ export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
         {weekdays.map((w) => {
           const has = w.games > 0
           return (
-            <div key={w.day} className="rounded-md p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
+            <div key={w.day} className="rounded-control p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
               <div className="text-micro font-medium text-fg-2">{w.day}</div>
               <div className="mt-0.5 text-body font-medium" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
               <div className="text-micro text-fg-2">{has ? `${w.games}g` : ''}</div>
@@ -66,8 +66,8 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
               <span className="text-fg-1">{sc.label}</span>
               <span className="text-fg-2">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
-              <div className="h-full rounded-full" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
+              <div className="h-full rounded-pill" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
             </div>
           </li>
         ))}

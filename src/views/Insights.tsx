@@ -101,7 +101,7 @@ export function Insights() {
                 key={k}
                 onClick={() => setKind(k)}
                 aria-pressed={kind === k}
-                className={`rounded-full px-2.5 py-0.5 text-label capitalize transition-colors ${
+                className={`rounded-pill px-2.5 py-0.5 text-label capitalize transition-colors ${
                   kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
                 }`}
               >
@@ -183,7 +183,7 @@ export function Insights() {
                 <li key={t.id}>
                   <button
                     onClick={() => nav(t.to as Parameters<typeof nav>[0])}
-                    className="w-full rounded-lg border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
+                    className="w-full rounded-card border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
                   >
                     <span className="font-medium text-fg-1">{t.title}</span>
                     <span className="block text-label text-fg-2">{t.detail}</span>
@@ -230,7 +230,7 @@ export function Insights() {
               const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
               const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
               return (
-                <li key={m.key} className="rounded-xl border border-line bg-ink-0 p-3">
+                <li key={m.key} className="rounded-card border border-line bg-ink-0 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-label text-fg-2">{m.label}</span>
                     <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
@@ -336,8 +336,8 @@ export function Insights() {
             ) : (
               <>
                 <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
                 </div>
                 <p className="mt-2 text-label text-fg-2">Recent days count more, so this tracks your momentum — not just a flat average.</p>
               </>
@@ -423,7 +423,7 @@ export function Insights() {
         <Card title="Personal records" subtitle="Your bests so far">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {records.map((r) => (
-              <div key={r.label} className="rounded-xl border border-line bg-ink-0 p-3">
+              <div key={r.label} className="rounded-card border border-line bg-ink-0 p-3">
                 <p className="text-body font-medium text-fg-1">{r.value}</p>
                 <p className="text-label text-fg-2">{r.label}</p>
               </div>
@@ -444,7 +444,7 @@ export function Insights() {
 function PickStat({ label, value, color, trend }: { label: string; value: string; color: string; trend?: 'up' | 'down' | 'flat' | null }) {
   const TrendIcon = trend === 'up' ? TrendUp : trend === 'down' ? TrendDown : Minus
   return (
-    <li className="rounded-xl border border-line bg-ink-0 p-3">
+    <li className="rounded-card border border-line bg-ink-0 p-3">
       <div className="flex items-center justify-between">
         <span className="text-label text-fg-2">{label}</span>
         {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(color) }} />}
@@ -456,7 +456,7 @@ function PickStat({ label, value, color, trend }: { label: string; value: string
 
 function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
   return (
-    <div className="rounded-xl border border-line bg-ink-0 p-3">
+    <div className="rounded-card border border-line bg-ink-0 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
       <p className="flex items-center gap-1.5 text-fg-1">
         <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />

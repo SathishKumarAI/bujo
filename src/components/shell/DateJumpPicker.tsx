@@ -27,14 +27,14 @@ export function DateJumpPicker({
     <>
       {/* click-away backdrop */}
       <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
-      <div className="absolute top-full left-1/2 z-50 mt-1.5 w-64 -translate-x-1/2 rounded-xl border border-line-strong bg-ink-1 p-3 shadow-2xl" role="dialog" aria-label="Jump to date">
+      <div className="absolute top-full left-1/2 z-50 mt-1.5 w-64 -translate-x-1/2 rounded-card border border-line-strong bg-ink-1 p-3 shadow-2xl" role="dialog" aria-label="Jump to date">
         {mode === 'day' && (
           <input
             type="date"
             value={day}
             onChange={(e) => { if (e.target.value) { onPickDay(e.target.value); onClose() } }}
             aria-label="Pick a day"
-            className="mb-2 w-full rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+            className="mb-2 w-full rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           />
         )}
         <div className="mb-2 flex items-center justify-between">
@@ -55,7 +55,7 @@ export function DateJumpPicker({
                   onClose()
                 }}
                 aria-pressed={active}
-                className={`rounded-md px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
+                className={`rounded-control px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
               >
                 {m.slice(0, 3)}
               </button>
@@ -64,7 +64,7 @@ export function DateJumpPicker({
         </div>
         <button
           onClick={() => { if (mode === 'day') onPickDay(todayISO()); else onPickMonth(ymOf(todayISO())); onClose() }}
-          className="mt-2 w-full rounded-md py-1 text-label text-fg-2 hover:text-fg-1"
+          className="mt-2 w-full rounded-control py-1 text-label text-fg-2 hover:text-fg-1"
         >
           Jump to today
         </button>

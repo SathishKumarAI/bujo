@@ -56,7 +56,7 @@ export function RestTimer() {
           <button
             key={s}
             onClick={() => start(s)}
-            className="rounded-lg px-2.5 py-1 text-label"
+            className="rounded-control px-2.5 py-1 text-label"
             style={{ background: total === s ? cat('mauve') : cat('surface0'), color: total === s ? cat('crust') : cat('subtext1') }}
           >
             {s < 120 ? `${s}s` : `${s / 60}m`}
@@ -65,10 +65,10 @@ export function RestTimer() {
       </div>
 
       <div className="flex gap-1">
-        <Button variant="secondary" size="icon-sm" onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="rounded-lg">
+        <Button variant="secondary" size="icon-sm" onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="rounded-control">
           {running ? <Icon as={Pause} size="sm" /> : <Icon as={Play} size="sm" />}
         </Button>
-        <Button variant="secondary" size="icon-sm" onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="rounded-lg">
+        <Button variant="secondary" size="icon-sm" onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="rounded-control">
           <Icon as={ArrowCounterClockwise} size="sm" />
         </Button>
       </div>

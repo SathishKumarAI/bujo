@@ -32,7 +32,7 @@ export function Section({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-xl border border-line bg-card px-4 py-3 text-left transition-colors hover:border-line-strong"
+        className="flex w-full items-center gap-2 rounded-card border border-line bg-card px-4 py-3 text-left transition-colors hover:border-line-strong"
       >
         <span className="text-fg-2" style={{ color: cat('overlay0') }}>
           {open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}

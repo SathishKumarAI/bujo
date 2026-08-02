@@ -1,8 +1,8 @@
 # Icon and button system — spec, audit, stage log
 
-**Status:** Stages 0–3 complete (audit, tokens, icons, buttons). Stage 4
-(kitchen sink at three font scales × five themes) and Stage 5 (per-cluster
-rollout) remain.
+**Status:** Stages 0–4 and the mechanical half of 6 are complete. Stage 5
+(per-cluster copy and layout rollout) and the judgement half of 6 (hex literals,
+ToggleGroup rebuilds) remain — see "What the sweep did not clear".
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 
@@ -396,6 +396,63 @@ Measured on the rendered kitchen sink: radius 8px on every variant, heights
 exactly 28/36/44, `box-shadow: none`, primary background = the oklab wash,
 primary label = `#cba6f7` (mocha `--brand-text`), danger label `#f38ba8`. On
 Today: **one** primary mounted (top bar "Quick add"), no console warning.
+
+
+## Stage 4 — done. The kitchen sink reviews itself
+
+`/kitchen-sink` gained a **Review controls** card: a five-theme switcher and the
+S/M/L/XL text-size control, both driving the *real* settings rather than a local
+preview. That matters — a faked theme switch would leave the JS chart palette on
+the previous theme (§I2) and let a desynced state pass review.
+
+Swept **5 themes × 3 font scales = 15 combinations**, measuring the rendered
+page rather than eyeballing it:
+
+| Checked | Result |
+|---|---|
+| Horizontal page overflow | 0 / 15 |
+| Buttons with clipped text | 0 / 15 |
+| Cards overflowing their container | 0 / 15 |
+| Control heights | 25/32/40 at S · **28/36/44** at M · 35/45/55 at XL |
+
+The heights scaling proportionally is the point: they are rem, so the whole
+control system grows with the accessibility setting instead of the label
+outgrowing its box.
+
+## Stage 6 — sweep
+
+Counts, not prose. Run after the icon, button and radius passes.
+
+| Check | Target | Actual |
+|---|---|---|
+| `lucide` references | 0 | **0** |
+| Phosphor imported outside the registry | 0 | **0** |
+| px icon sizes | 0 | **0** |
+| px font sizes (`text-[13px]`) | 0 | **0** |
+| Solid-accent buttons (`variant="default"`) | 0 | **0** |
+| Distinct control heights | 3 | **3** (28 / 36 / 44) |
+| Distinct radii | 3 | **3 principal** — `card` ×144, `pill` ×143, `control` ×137 |
+| Focus ring on every tab stop | yes | yes — one global `:focus-visible` rule plus the button system's own |
+| `prefers-reduced-motion` honoured | yes | yes — every keyframe animation is behind the query |
+
+### What the sweep did *not* clear
+
+- **34 radius stragglers**, all deliberate or side-specific: `rounded-t-*` ×12
+  (sheets and table headers), `rounded-sm`/`xs` ×11 (heatmap cells, where the
+  radius is geometry rather than chrome), `rounded-xl` ×6 on non-card
+  containers, `rounded-r/l` ×3, `rounded-none` ×2.
+- **~170 hex literals** across components and views. Sampling them shows they
+  are overwhelmingly *data*, not chrome: the Settings theme-swatch previews
+  (which must render another theme's colours while you are looking at this one),
+  chart series palettes, habit colour pickers, streak tiers. The spec's "zero
+  hex outside theme files" check needs the data cases carved out before it can
+  be a gate, which is Stage 5 work.
+- **~174 raw `<button>`** remain, judged per site in an earlier pass: row and
+  card click-surfaces, selection chips, chip internals. They are keyboard
+  visible through the global focus ring.
+- `Segmented` and `Stepper` are **not** rebuilt on `ToggleGroup` yet.
+- Per-view copy work (empty states as invitations, error text that says what to
+  do) has not started.
 
 ## Open questions — answered
 

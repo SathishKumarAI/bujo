@@ -127,7 +127,7 @@ export function TopBar({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" aria-label={`${recs.length} suggestions`} title="Suggestions" className="relative hidden sm:inline-flex">
                 <Icon as={Lightbulb} size="md" className="text-yellow" />
-                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
+                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
