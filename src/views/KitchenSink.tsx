@@ -1,3 +1,5 @@
+import { Plus, Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -127,31 +129,35 @@ export function KitchenSink() {
         </div>
       </Card>
 
-      <Card title="Buttons" subtitle="One system. Exactly one accent-filled primary per screen.">
+      <Card title="Buttons" subtitle="Four variants, three heights, and no solid accent fill anywhere.">
         <Row label="variant">
-          <Button>default</Button>
-          <Button variant="secondary">secondary</Button>
-          <Button variant="outline">outline</Button>
-          <Button variant="ghost">ghost</Button>
-          <Button variant="link">link</Button>
-          <Button variant="destructive">destructive</Button>
+          <Button variant="primary">Primary</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="danger">Delete</Button>
         </Row>
         <Row label="size">
-          <Button size="sm">small</Button>
-          <Button>default</Button>
-          <Button size="lg">large</Button>
+          <Button variant="secondary" size="sm">28 · sm</Button>
+          <Button variant="secondary">36 · md</Button>
+          <Button variant="secondary" size="lg">44 · lg</Button>
+        </Row>
+        <Row label="icon-only">
+          <Button variant="ghost" size="icon-sm" aria-label="Delete entry"><Icon as={Trash} size="sm" /></Button>
+          <Button variant="ghost" size="icon" aria-label="Add entry"><Icon as={Plus} /></Button>
+          <span className="text-caption text-fg-3">Both carry an aria-label — an icon is not a name.</span>
         </Row>
         <Row label="disabled">
-          <Button disabled>default</Button>
-          <Button variant="secondary" disabled>
-            secondary
-          </Button>
-          <Button variant="destructive" disabled>
-            destructive
-          </Button>
+          <Button variant="primary" disabled>Primary</Button>
+          <Button variant="secondary" disabled>Secondary</Button>
+          <Button variant="danger" disabled>Delete</Button>
         </Row>
         <Row label="keyboard focus">
-          <span className="text-caption text-fg-3">Tab through the row above — every control shows the global focus ring.</span>
+          <span className="text-caption text-fg-3">Tab through the rows above — every control shows the focus ring, at 2px offset.</span>
+        </Row>
+        <Row label="the rule">
+          <span className="text-caption text-fg-3">
+            One primary per screen. A dev-only check warns in the console when a route mounts two.
+          </span>
         </Row>
       </Card>
 

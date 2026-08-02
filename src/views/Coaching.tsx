@@ -57,7 +57,7 @@ export function Coaching() {
               <StatTile compact label="Progress" value={`${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`} color="teal" icon={<Icon as={Trophy} size="sm" />} />
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-ink-2"><div className="h-full rounded-full transition-[width]" style={{ width: `${(done.length / ACADEMY_TOTAL_WEEKS) * 100}%`, background: cat('green') }} /></div>
-            <Button variant="link" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+            <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
           </>
         )}
       </Card>

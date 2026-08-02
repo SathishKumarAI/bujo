@@ -334,7 +334,7 @@ function ArchivedHabits() {
           <li key={h.id} className="inline-flex items-center gap-2 rounded-full border border-line bg-ink-0 px-2.5 py-1 text-body">
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-            <Button variant="link" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-label text-green">restore</Button>
+            <Button variant="ghost" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-label text-green">restore</Button>
             <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
               title: `Delete “${h.name}”?`,
               description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
@@ -823,7 +823,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           <div>
             <div className="mb-1 flex items-center justify-between">
               <p className="text-label text-fg-2">{heatYear ? 'Last 12 months' : 'Last 12 weeks'}</p>
-              <Button variant="link" onClick={() => setHeatYear((v) => !v)} className="h-auto p-0 text-label text-mauve">{heatYear ? '12 weeks' : 'Full year'}</Button>
+              <Button variant="ghost" onClick={() => setHeatYear((v) => !v)} className="h-auto p-0 text-label text-mauve">{heatYear ? '12 weeks' : 'Full year'}</Button>
             </div>
             <HabitHeatmap data={data} habit={habit} today={today} weeks={heatYear ? 53 : 12} />
           </div>
@@ -857,10 +857,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           <div className="flex items-center justify-between">
             <span className="text-body text-fg-1">Type</span>
             <div className="flex flex-wrap justify-end gap-1.5">
-              <Button variant={(habit.type ?? 'check') === 'check' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'check' })}>Yes / no</Button>
-              <Button variant={habit.type === 'count' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'count' })}>Count</Button>
-              <Button variant={habit.type === 'timer' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
-              <Button variant={habit.type === 'rating' ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'rating' })}>Rating</Button>
+              <Button variant={(habit.type ?? 'check') === 'check' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'check' })}>Yes / no</Button>
+              <Button variant={habit.type === 'count' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'count' })}>Count</Button>
+              <Button variant={habit.type === 'timer' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
+              <Button variant={habit.type === 'rating' ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ type: 'rating' })}>Rating</Button>
             </div>
           </div>
 
@@ -868,7 +868,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <span className="text-body text-fg-1">Time of day</span>
             <div className="flex flex-wrap justify-end gap-1.5">
               {TIME_SLOTS.map((s) => (
-                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'default' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
+                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'secondary' : 'ghost'} className="press-3d rounded-lg" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
               ))}
             </div>
           </div>

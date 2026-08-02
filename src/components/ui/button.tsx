@@ -3,45 +3,89 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/cn"
+import { registerPrimary } from "@/lib/onePrimary"
 
+/**
+ * BUTTON · four variants, three heights, no solid accent fill anywhere.
+ *
+ * The fill is gone on purpose. This app had 37 solid-accent buttons, an accent
+ * nav rail, accent icons and accent pills all on screen at once — the accent
+ * was competing with itself, so nothing read as *the* action. The one loud
+ * button on a screen is **tonal**: accent wash background, accent-as-text
+ * label, no border. It is unmistakably the primary action without adding
+ * another saturated surface.
+ *
+ * | Variant | Use |
+ * |---|---|
+ * | `primary`   | Exactly one per screen — the thing the user came to do |
+ * | `secondary` | Everything else that needs a boundary |
+ * | `ghost`     | Toolbars, icon-only, inline actions |
+ * | `danger`    | Destructive, in menus and confirmations |
+ *
+ * Heights are the three control tokens (28 / 36 / 44) in rem, so they track the
+ * global text-size setting; `lg` is reserved for a single empty-state call to
+ * action. Radius is `--radius-control`. No shadows: the wash and the press
+ * scale carry the whole interaction.
+ *
+ * The label reads verb-first, sentence case, one to three words — "Start fast",
+ * "Log entry", "Add habit" — and matches the verb in its resulting toast.
+ */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-body font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  [
+    "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap",
+    // No `text-body` here: the body element already sets it, and stating it
+    // would be one more class in the font-size group for the size variants to
+    // fight with.
+    "rounded-control font-medium",
+    "transition-[background-color,border-color,transform] duration-[130ms]",
+    "active:scale-[0.97]",
+    // Never removed. The global :focus-visible rule covers hand-rolled
+    // controls; this keeps the ring identical on the button system itself.
+    "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+    // Disabled is a last resort — prefer keeping a button enabled and
+    // explaining on click. When it is used, it must not swallow pointer events
+    // silently in a way that looks broken.
+    "disabled:pointer-events-none disabled:opacity-40",
+    "aria-invalid:border-destructive",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        primary: "bg-brand-wash text-brand-text hover:bg-brand-wash-hover",
+        secondary: "border border-line-strong bg-transparent text-fg-1 hover:border-brand hover:text-fg-1",
+        ghost: "bg-transparent text-fg-2 hover:bg-ink-2 hover:text-fg-1",
+        danger: "bg-transparent text-danger-text hover:bg-danger-wash",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-label has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        // `text-[length:…]` rather than `text-label`: `cn` runs tailwind-merge,
+        // which cannot tell a custom `text-label` (a size) from a custom
+        // `text-brand-text` (a colour), so the size class silently won and a
+        // small primary button rendered in the foreground colour instead of the
+        // accent. Stating it as an explicit length puts it in the font-size
+        // group, where it belongs, and the variant's colour survives.
+        sm: "h-[var(--h-control-sm)] px-2.5 text-[length:var(--text-label)]",
+        md: "h-[var(--h-control)] px-3.5",
+        lg: "h-[var(--h-control-lg)] px-5",
+        icon: "h-[var(--h-control)] w-[var(--h-control)] px-0",
+        "icon-sm": "h-[var(--h-control-sm)] w-[var(--h-control-sm)] px-0",
+        "icon-lg": "h-[var(--h-control-lg)] w-[var(--h-control-lg)] px-0",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      // Deliberately NOT `primary`. A bare <Button> used to be a solid accent
+      // fill, which is how this app ended up with 31 of them; the safe default
+      // is the quiet one, and a primary has to be asked for.
+      variant: "secondary",
+      size: "md",
     },
   }
 )
 
 function Button({
   className,
-  variant = "default",
-  size = "default",
+  variant = "secondary",
+  size = "md",
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -49,6 +93,13 @@ function Button({
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
+
+  // Dev-only: count mounted primaries per view and warn when a screen has two.
+  // No-op (and tree-shaken) in production.
+  React.useEffect(() => {
+    if (variant !== "primary") return
+    return registerPrimary()
+  }, [variant])
 
   return (
     <Comp

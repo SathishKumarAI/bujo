@@ -127,7 +127,7 @@ export function HomeWorkout() {
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-red hover:underline"><Icon as={Play} size="sm" /> Watch demo</a>
                 <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-fg-2 hover:text-blue hover:underline"><Icon as={MagnifyingGlass} size="sm" /> More on YouTube</a>
-                <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Icon as={Plus} size="sm" /> {ex.reps}</Button>
+                <Button variant="secondary" size="sm" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Icon as={Plus} size="sm" /> {ex.reps}</Button>
               </div>
             </div>
           ))}

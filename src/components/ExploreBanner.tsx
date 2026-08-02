@@ -36,7 +36,7 @@ export function ExploreBanner() {
         <Button variant="secondary" size="sm" onClick={startAccount} disabled={busy} className="press-3d text-label">
           {busy ? '…' : supabaseEnabled() ? 'Continue with Google' : 'Sign up'}
         </Button>
-        <Button variant="link" size="sm" onClick={() => nav('settings')} className="h-auto p-0 text-label">Use email</Button>
+        <Button variant="ghost" size="sm" onClick={() => nav('settings')} className="h-auto p-0 text-label">Use email</Button>
       </div>
     </div>
   )

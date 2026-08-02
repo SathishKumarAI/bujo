@@ -348,6 +348,53 @@ resizable, sonner) imported lucide of their own accord. They point at the
 registry now — but `shadcn add` will reintroduce lucide in anything it
 regenerates, so that is a thing to re-check after any future component add.
 
+
+## Stage 3 — done. Four variants, three heights, no accent fill
+
+`components/ui/button.tsx` rewritten. shadcn's `default` (solid accent) is
+gone, which was the point: the app had **37** of them competing with an accent
+nav rail, accent icons and accent pills.
+
+| Variant | Treatment | Was |
+|---|---|---|
+| `primary` | `--brand-wash` bg, `--brand-text` label, no border | `default` (solid fill) ×31 |
+| `secondary` | transparent, 1px `--line-strong`, `fg-1` | `secondary` ×123 + `outline` ×11 |
+| `ghost` | transparent, `fg-2`, hover `ink-2` | `ghost` ×60 + `link` ×11 |
+| `danger` | transparent, `--danger-text`, hover `--danger-wash` | `destructive` ×6 |
+
+Heights are the three control tokens (28 / 36 / 44) in rem, radius is
+`--radius-control`, and there are no shadows — the wash and a 0.97 press scale
+carry the interaction. The default variant is now `secondary`, not `primary`:
+a bare `<Button>` used to be a solid accent fill, which is exactly how 26 of
+those 31 primaries happened.
+
+**Selection is not primary.** Trackers' type and time-of-day choosers used the
+solid variant to mean "selected". They are `secondary`/`ghost` now — selection
+takes the wash, the same rule `Segmented` and the pills already follow.
+
+### The one-primary rule enforces itself
+
+`src/lib/onePrimary.ts` counts *mounted* primaries per view in dev and warns
+when a screen has two, naming the screen. Mounted, not grepped: a view with two
+primaries behind mutually-exclusive conditions is fine, and no static check can
+tell the difference. Stripped from production builds.
+
+### A bug this pass created and fixed
+
+`cn` runs tailwind-merge, which cannot tell a custom `text-label` (a size) from
+a custom `text-brand-text` (a colour) — they are both `text-*`. The size class
+won, so a **small primary button rendered in the foreground colour instead of
+the accent**. Sizes now state font-size as `text-[length:var(--text-label)]`,
+which lands in the font-size group where it belongs. Caught by reading computed
+styles off the rendered page, not by review.
+
+### Verified
+
+Measured on the rendered kitchen sink: radius 8px on every variant, heights
+exactly 28/36/44, `box-shadow: none`, primary background = the oklab wash,
+primary label = `#cba6f7` (mocha `--brand-text`), danger label `#f38ba8`. On
+Today: **one** primary mounted (top bar "Quick add"), no console warning.
+
 ## Open questions — answered
 
 All four were answered "go with the recommendation":
