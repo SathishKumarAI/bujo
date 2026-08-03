@@ -79,3 +79,19 @@ is set as an aside.
   everything is a list nobody follows; the cap is the idea.
 - **"Your focus" leading the page.** Correct — what you are working on comes
   before what you could work on.
+
+---
+
+## Update — the wall is gone
+
+**2.4 → 2.0 screens.** The 1,575px principle library is now seven category
+cards flowing three across (`CardGrid`, see
+`docs/redesign/12-three-column-grid.md`).
+
+That closes three findings at once: the uncollapsible wall (P1), the missing way
+to reach a category (P2), and the identical-looking blocks (P2) — each theme is
+a real card with a real heading, and all seven are on screen at once. The page
+moved to the `wide` tier to make room.
+
+Still open: principles already in your focus appear in the library too, marked
+with a check rather than hidden.

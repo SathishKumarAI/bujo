@@ -115,6 +115,14 @@ outward, not sand them down.
 | Recovery | The whole tone, and the HALT check |
 | Fitness | The weekly ring — `382 / 150 min · Goal met 🎉` |
 
+## Layout system
+
+Content flows into a **three-column card grid** — see
+[`../redesign/12-three-column-grid.md`](../redesign/12-three-column-grid.md).
+1 column on phones, 2 to 1535px, 3 above; `SPAN_2` and `SPAN_ALL` for tables and
+heatmaps. That is what moved Pickleball from 4.2 screens to 2.6 and Mindset from
+2.4 to 2.0, so the heights below are being re-measured as pages convert.
+
 ## Page heights, for reference
 
 Shortest to longest, at 1440×900 with demo data. Height is not quality, but the
