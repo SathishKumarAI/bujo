@@ -13,11 +13,14 @@ import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
+import type { SectionId } from '../../lib/routes'
+import { HintsProvider } from './hints'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
 export function AppShell({
   items,
-  groupOrder,
+  sections,
+  activeSection,
   view,
   collapsed,
   autoHide,
@@ -27,7 +30,8 @@ export function AppShell({
   children,
 }: {
   items: NavItem[]
-  groupOrder: string[]
+  sections: (SectionId | 'system')[]
+  activeSection: SectionId | 'system' | null
   view: ViewId
   collapsed: boolean
   autoHide: boolean
@@ -63,6 +67,7 @@ export function AppShell({
   })
 
   return (
+    <HintsProvider>
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* First focusable element on the page: a keyboard user lands here and can
@@ -86,8 +91,8 @@ export function AppShell({
       )}
       <Sidebar
         items={items}
-        groupOrder={groupOrder}
-        view={view}
+        sections={sections}
+        activeSection={activeSection}
         collapsed={autoHide ? false : collapsed}
         navOpen={navOpen}
         autoHide={autoHide}
@@ -109,7 +114,7 @@ export function AppShell({
         <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
 
-      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} />}
+      {isMobile && <BottomNav items={items} sections={sections} activeSection={activeSection} onNavigate={onNavigate} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>
@@ -125,5 +130,6 @@ export function AppShell({
       <ServerSync />
     </div>
     </TooltipProvider>
+    </HintsProvider>
   )
 }

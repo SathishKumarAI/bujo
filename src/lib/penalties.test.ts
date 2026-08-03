@@ -30,6 +30,77 @@ describe('penalties', () => {
     expect(r.tier).toBe('heavy')
   })
 
+  it('a clean day on a quit habit is not a miss', () => {
+    const d = emptyJournal()
+    // An avoid habit not in habitLog means you stayed CLEAN — the success
+    // state. `missesFor` used to read the same `!done` it uses for build
+    // habits and report "Missed Alcohol", penalising the win.
+    d.habits = [{ id: 'q', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-01-01', avoid: true }]
+    d.habitLog = {}
+    expect(missesFor(d, '2026-06-12').items).toEqual([])
+    expect(missesFor(d, '2026-06-12').tier).toBeNull()
+  })
+
+  it('a run of slips on a quit habit is never reported as a broken streak', () => {
+    const d = emptyJournal()
+    d.habits = [{ id: 'q', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-01-01', avoid: true }]
+    // Slipped four days running, then stopped. `habitStreak` resolves through
+    // `habitDoneOn`, which for an avoid habit counts SLIPS — so this used to
+    // read as "Missed Alcohol (broke a 4-day streak)", i.e. a heavy penalty
+    // for ending a four-day bender.
+    d.habitLog = {
+      '2026-06-07': ['q'], '2026-06-08': ['q'], '2026-06-09': ['q'], '2026-06-10': ['q'],
+    }
+    expect(missesFor(d, '2026-06-12').items).toEqual([])
+  })
+
+  it('a slip on a quit habit IS a miss', () => {
+    const d = emptyJournal()
+    // Started 06-10, so there is no long clean run to report — an empty log
+    // back to a distant `startedOn` is genuinely months of clean days.
+    d.habits = [{ id: 'q', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-06-10', avoid: true }]
+    // Ticking an avoid habit means "I drank" — the tick is the failure.
+    d.habitLog = { '2026-06-11': ['q'] }
+    const r = missesFor(d, '2026-06-12')
+    expect(r.items).toEqual(['Slipped: Alcohol'])
+    expect(r.tier).toBe('medium')
+  })
+
+  it('a slip that ends a long clean run reports the clean streak, not the slip run', () => {
+    const d = emptyJournal()
+    d.habits = [{ id: 'q', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-06-01', avoid: true }]
+    // Clean 01–10 (10 days), slipped on the 11th → checking on the 12th.
+    d.habitLog = { '2026-06-11': ['q'] }
+    const r = missesFor(d, '2026-06-12')
+    expect(r.items).toEqual(['Slipped: Alcohol (broke a 10-day clean streak)'])
+    expect(r.tier).toBe('heavy')
+  })
+
+  it('a skipped day is not a slip', () => {
+    const d = emptyJournal()
+    d.habits = [{ id: 'q', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-01-01', avoid: true }]
+    d.habitLog = { '2026-06-11': ['q'] }
+    d.habitSkips = { q: ['2026-06-11'] }
+    expect(missesFor(d, '2026-06-12').items).toEqual([])
+  })
+
+  it('quit habits do not inflate the tier of a real miss', () => {
+    const d = emptyJournal()
+    const build: Habit = { id: 'h', name: 'Water', category: 'food', color: 'sky', startedOn: '2026-01-01' }
+    d.habits = [
+      build,
+      { id: 'q1', name: 'Sugar', category: 'food', color: 'pink', startedOn: '2026-01-01', avoid: true },
+      { id: 'q2', name: 'Alcohol', category: 'wellness', color: 'red', startedOn: '2026-01-01', avoid: true },
+    ]
+    d.habitLog = {} // build habit genuinely missed; both quit habits clean
+    const r = missesFor(d, '2026-06-12')
+    expect(r.items).toEqual(['Missed Water'])
+    // One miss, no streak → medium. With the quit habits counted it was three
+    // items, which trips the `items.length >= 3` bump, so a clean day used to
+    // make the penalty worse.
+    expect(r.tier).toBe('medium')
+  })
+
   it('scaleTask reduces the leading count for easier levels', () => {
     expect(scaleTask('30 burpees', 'hard')).toBe('30 burpees')
     expect(scaleTask('30 burpees', 'beginner')).toBe('12 burpees')

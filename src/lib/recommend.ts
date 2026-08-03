@@ -30,8 +30,14 @@ export function recommendations(data: JournalData, today = todayISO()): Recommen
   }
 
   // Per-habit nudges: weekly goal, then challenge-worthy streaks.
+  //
+  // Build habits only. `habitStreak` counts consecutive *slips* for an avoid
+  // habit, so twenty days of drinking read as a twenty-day streak and earned
+  // "Alcohol is on a 20-day streak — turn it into a challenge". Both nudges are
+  // build-shaped besides: a weekly goal is a target number of completions per
+  // week, which for a quit habit would be a quota of relapses.
   for (const h of data.habits) {
-    if (h.archived) continue
+    if (h.archived || h.avoid) continue
     const streak = habitStreak(data, h.id, today)
     if (streak >= 14) {
       recs.push({ id: `chal-${h.id}`, text: `${h.name} is on a ${streak}-day streak — turn it into a challenge.`, action: { label: 'Challenges', view: 'challenges' } })

@@ -25,6 +25,22 @@ export function fromISODay(iso: string): Date {
   return new Date(y, m - 1, d)
 }
 
+/**
+ * Is this a real calendar day in `YYYY-MM-DD`?
+ *
+ * A regex is not enough and `fromISODay` is not either: both accept
+ * "2026-13-45", which `Date` silently rolls forward to 2027-02-14. Round-
+ * tripping through the formatter is the check — if the day that comes back out
+ * is not the one that went in, the input named a day that does not exist.
+ *
+ * The route reads `:date` straight from the address bar, so this is a trust
+ * boundary: anything typed, pasted, or left in an old bookmark arrives here.
+ */
+export function isISODay(iso: string | undefined | null): iso is string {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false
+  return toISODay(fromISODay(iso)) === iso
+}
+
 /** "2026-06" month key from an ISO day or Date. */
 export function ymOf(input: string | Date): string {
   const iso = typeof input === 'string' ? input : toISODay(input)

@@ -1,7 +1,8 @@
 # Icon and button system — spec, audit, stage log
 
-**Status:** Stages 0–6 complete, and 6 is now **enforced by CI** rather than
-checked by eye. The one item left is per-view container tiers.
+**Status:** Stages 0–4 and the mechanical half of 6 are complete. Stage 5
+(per-cluster copy and layout rollout) and the judgement half of 6 (hex literals,
+ToggleGroup rebuilds) remain — see "What the sweep did not clear".
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 

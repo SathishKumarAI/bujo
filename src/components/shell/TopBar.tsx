@@ -16,7 +16,9 @@ import { addDays, prettyDay, prettyMonth, ymOf } from '../../lib/date'
 import { AccountMenu } from './AccountMenu'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { DateJumpPicker } from './DateJumpPicker'
+import { useHints } from './hints'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 function shiftMonth(ym: string, delta: number): string {
   const [y, mo] = ym.split('-').map(Number)
@@ -39,6 +41,7 @@ export function TopBar({
 }) {
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const { day, setDay, month, setMonth } = useCursor()
+  const hints = useHints()
   const [pickerOpen, setPickerOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const recs = recommendations(data)
@@ -47,7 +50,7 @@ export function TopBar({
 
   return (
     <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-card/80 px-4 py-2.5 backdrop-blur">
-      <button onClick={onMenu} aria-label="Toggle menu" className="text-foreground md:hidden">
+      <button onClick={onMenu} aria-label="Toggle menu" className="-ml-2 grid min-h-[44px] min-w-[44px] place-items-center text-foreground md:hidden">
         <Icon as={List} size="lg" />
       </button>
 
@@ -56,12 +59,27 @@ export function TopBar({
         {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
       </div>
 
+      {/* One switch for the whole page. Cards used to carry an ⓘ each — nine of
+          them on Today — and nine help affordances is nine labels that failed.
+          The explainers still exist; this reveals them inline, as text. */}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-pressed={hints.on}
+        onClick={hints.toggle}
+        aria-label={hints.on ? 'Hide inline hints' : 'Explain this page'}
+        title={hints.on ? 'Hide inline hints' : 'Explain this page'}
+        className={`shrink-0 ${hints.on ? 'bg-brand-wash text-brand' : 'text-fg-2 hover:text-foreground'}`}
+      >
+        <Icon as={Question} size="md" />
+      </Button>
+
       {/* Contextual help — what this page does, pulled from the view registry. */}
       {chrome.help && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-fg-2 hover:text-foreground">
-              <Icon as={Question} size="md" />
+              <Icon as={Lightbulb} size="md" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80">
@@ -77,14 +95,26 @@ export function TopBar({
 
       {chrome.dateNav && (
         <div className="relative ml-2 flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Previous"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, -1)) : setMonth(shiftMonth(month, -1)))}
-          >
-            <Icon as={CaretLeft} size="md" />
-          </Button>
+          {/* Day steps are real anchors, not click handlers, so middle-click
+              and cmd-click open the day in a new tab the way any other link
+              would. The month cursor has no route yet (Stage 2), so it stays a
+              button — a link to nowhere would be a worse lie than a button. */}
+          {chrome.dateNav === 'day' ? (
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/day/${addDays(day, -1)}`} aria-label={`Previous day, ${prettyDay(addDays(day, -1))}`}>
+                <Icon as={CaretLeft} size="md" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Previous month"
+              onClick={() => setMonth(shiftMonth(month, -1))}
+            >
+              <Icon as={CaretLeft} size="md" />
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -95,14 +125,22 @@ export function TopBar({
           >
             {chrome.dateNav === 'day' ? prettyDay(day) : prettyMonth(month)}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Next"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, 1)) : setMonth(shiftMonth(month, 1)))}
-          >
-            <Icon as={CaretRight} size="md" />
-          </Button>
+          {chrome.dateNav === 'day' ? (
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/day/${addDays(day, 1)}`} aria-label={`Next day, ${prettyDay(addDays(day, 1))}`}>
+                <Icon as={CaretRight} size="md" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Next month"
+              onClick={() => setMonth(shiftMonth(month, 1))}
+            >
+              <Icon as={CaretRight} size="md" />
+            </Button>
+          )}
           {pickerOpen && (
             <DateJumpPicker
               mode={chrome.dateNav}

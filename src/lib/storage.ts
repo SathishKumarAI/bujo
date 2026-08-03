@@ -73,10 +73,21 @@ export function emptyJournal(): JournalData {
 export function seedJournal(): JournalData {
   const j = emptyJournal()
   const today = todayISO()
-  const starter: { name: string; category: JournalData['habits'][number]['category']; color: string }[] = [
+  // `avoid` is not decoration: it decides what a tick MEANS. For a build habit
+  // a logged day is a win; for an avoid habit it is a slip, and the whole app
+  // branches on it — penalties, dayCompletion, coverage, reminders,
+  // recommendations, streaks. Seeding Sugar and Alcohol without it shipped a
+  // journal in which drinking scored a perfect day and sobriety read as
+  // "Missed Alcohol". `streak.ts` already lists both as quit-tracker presets;
+  // this file disagreed with it.
+  //
+  // Caffeine is deliberately left as a build habit: `demo.ts` gives it the cue
+  // "With breakfast", i.e. it is seeded as something you intend to have. Anyone
+  // quitting it can flip the flag in the tracker.
+  const starter: { name: string; category: JournalData['habits'][number]['category']; color: string; avoid?: boolean }[] = [
     { name: 'Caffeine', category: 'stimulant', color: 'peach' },
-    { name: 'Sugar', category: 'stimulant', color: 'pink' },
-    { name: 'Alcohol', category: 'stimulant', color: 'red' },
+    { name: 'Sugar', category: 'stimulant', color: 'pink', avoid: true },
+    { name: 'Alcohol', category: 'stimulant', color: 'red', avoid: true },
     { name: 'Vegetables', category: 'food', color: 'green' },
     { name: 'Water 2L', category: 'food', color: 'sky' },
     { name: 'Exercise', category: 'movement', color: 'teal' },
@@ -85,6 +96,46 @@ export function seedJournal(): JournalData {
   ]
   j.habits = starter.map((h) => ({ id: uid('habit'), startedOn: today, ...h }))
   return j
+}
+
+/**
+ * The exact fingerprint of a habit this app seeded before it learned to set
+ * `avoid`: the starter name, the starter category, and no explicit polarity.
+ * Anything the user touched — renamed, recategorised, or flagged either way —
+ * fails the match and is left alone.
+ */
+const SEEDED_QUIT_HABITS: { name: string; category: string }[] = [
+  { name: 'Sugar', category: 'stimulant' },
+  { name: 'Alcohol', category: 'stimulant' },
+]
+
+/**
+ * Flip the starter Sugar/Alcohol habits to `avoid: true` on load.
+ *
+ * `seedJournal()` shipped them as ordinary build habits, so every journal
+ * created before that fix asks the app to treat drinking as a goal: the tick
+ * scored a perfect day in `dayCompletion`, a sober day surfaced as "Missed
+ * Alcohol" in the penalty card and "Most missed: Alcohol" in the weekly review,
+ * and `reminderMessage` offered to help keep the streak alive.
+ *
+ * This does NOT rewrite any logged day. `habitLog` already records what the
+ * person actually did — they ticked the box when they drank — so only the
+ * app's reading of those ticks changes, and it changes from wrong to right.
+ * Streaks, completion ratios and penalties for these two habits will therefore
+ * move, in some cases sharply, the first time a migrated journal is opened.
+ *
+ * Deliberately narrow. It matches the seed's own fingerprint rather than the
+ * name alone, so a habit someone renamed, recategorised, or already set a
+ * polarity on is untouched. Idempotent: once `avoid` is set the guard fails and
+ * re-running is a no-op, which matters because `migrate()` runs on every load.
+ */
+function relabelSeededQuitHabits(habits: JournalData['habits']): JournalData['habits'] {
+  return habits.map((h) =>
+    h.avoid === undefined &&
+    SEEDED_QUIT_HABITS.some((s) => s.name === h.name && s.category === h.category)
+      ? { ...h, avoid: true }
+      : h,
+  )
 }
 
 /** Fill in any keys missing from an older/partial payload (forward-compatible load). */
@@ -115,7 +166,7 @@ export function migrate(raw: unknown): JournalData {
     nofap: { ...base.nofap, ...(data.nofap ?? {}) },
     // Core collections the UI iterates — always arrays/objects, never undefined.
     entries: data.entries ?? [],
-    habits: data.habits ?? [],
+    habits: relabelSeededQuitHabits(data.habits ?? []),
     metrics: data.metrics ?? [],
     workouts: data.workouts ?? [],
     gratitude: data.gratitude ?? [],

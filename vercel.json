@@ -3,6 +3,8 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "//": "PAUSED 2026-08-02. Vercel's Git integration will not build on push while this is false. The config below is kept intact so re-enabling is a one-word change, not a rewrite. GitHub Pages (.github/workflows/deploy.yml) is unaffected and remains the live deploy.",
+  "git": { "deploymentEnabled": false },
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
   "headers": [
     {

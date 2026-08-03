@@ -346,7 +346,7 @@ cream. Anything checked in mocha alone is unchecked.
   = 15 combinations**: 0 page overflow, 0 clipped buttons, 0 card overflow, and
   heights scaling 25/32/40 → 28/36/44 → 35/45/55, which is the rem sizing
   proving itself.
-- [x] **J5 · Stage 5 — DONE except per-view container tiers.** Today (weighted three columns, §J7) and the
+- [~] **J5 · Stage 5 — started.** Today (weighted three columns, §J7) and the
   copy rules are done; the per-view container-tier and hex-literal work is not.
   - **Empty states** are invitations now, not status reports: eleven bare "No X
     yet" strings name the action instead ("Log a workout to see which splits you
@@ -354,29 +354,13 @@ cream. Anything checked in mocha alone is unchecked.
   - **Error copy** says what happened *and* what is still true — and Drive's
     eight blocking `alert()` calls became toasts, which also stops a modal
     freezing the in-browser review loop.
-  - **Codemod damage repaired (twice).** The lucide→Phosphor rename hit *prose*:
-    five strings shipped as "MagnifyingGlass your Drive…" and "PersonSimpleRun
-    layout", then three more surfaced later — "Repeat last" was rendering as
-    "ArrowsClockwise last" in Fitness and Pickleball. The second batch hid from
-    my own grep because it skipped lines containing `as={`, which is exactly
-    where a glyph sits beside its label. Both the hazard and the rule are now in
-    the design-system gate.
-  - **Emoji-as-chrome retired** (you caught this): time-of-day slots, training
-    splits, avoid markers, streak flames and WMO weather codes all map to glyphs
-    via `components/glyphs.ts`. Habit/collection emoji, achievement badges,
-    `EmojiScale` and celebration copy stay — there the emoji is content.
-  - **Hex classified, not counted:** 5 real bugs fixed (three chart tooltips
-    pinned to Mocha stayed near-black on latte/dawn; two crust literals). The
-    rest is data — theme-swatch previews, the Google brand mark — and is exempt
-    in the gate, with the reason written down.
-  - **Still open:** per-view container tiers.
-- [x] **J6 · Stage 6 — DONE, and now enforced.** `scripts/check-design-system.mjs`
-  fails CI on: lucide imports, direct Phosphor imports, glyph names rendering as
-  labels, px icon sizes, retired button variants, off-token radii, emoji in the
-  fixed vocabularies, and hardcoded colours. Writing it found six `rounded-xl`
-  stragglers the radius codemod had skipped. `scripts/a11y-axe.mjs` runs axe over
-  eight views (0 serious, 0 moderate) and refuses to trust a view that did not
-  render. Earlier notes: 0 lucide refs, 0 Phosphor imports
+  - **Codemod damage repaired:** the lucide→Phosphor rename hit *prose*. Five
+    user-visible strings shipped as "MagnifyingGlass your Drive…" and
+    "PersonSimpleRun layout" before a grep of every renamed name back out of
+    string literals found them. The hazard is now written into the script:
+    `Search`, `Activity`, `Settings`, `Scale` and `Repeat` are ordinary English
+    words, and an 85-file diff hides this perfectly.
+- [~] **J6 · Stage 6 — mechanical half DONE.** 0 lucide refs, 0 Phosphor imports
   outside the registry, 0 px icon sizes, 0 px font sizes, 0 solid-accent
   buttons, exactly 3 control heights, and the ten radii collapsed to three
   (`card` ×144, `pill` ×143, `control` ×137) by codemod.
@@ -410,3 +394,186 @@ Measured, not started. Two separate things, don't conflate them:
 Note: this also means **any earlier "N low-contrast nodes" figure in this file
 or the build record was measured through a desynced palette** and overstates the
 problem. I1 above is the re-measured, trustworthy version.
+
+---
+
+## K. Information architecture & routing — Stages 0–4 DONE, Stage 5 open
+
+The third pass (`bujo-ia-routing-prompt.md`). Structure, not styling: no new
+visual language, no data-model change. Full contract in **`docs/ROUTING.md`**.
+
+- [x] **K0 · Stage 0 audit — DONE. The headline: there was no router.**
+  `App.tsx` held `useState<ViewId>`; `lib/deepLink.ts` mirrored it into
+  `?view=`/`?day=` with `replaceState`, and its own comment said why — nothing
+  listened for `popstate`, so pushed entries would have built a Back button
+  that silently did nothing. Stage 1 was therefore "add routing to an app that
+  has none", not "put the date in the existing router".
+  - The day was **not** `useState` in Today: `CursorProvider` already owned it,
+    seeded once from `?day=`. The single-source part existed; only its source
+    was wrong.
+  - The sidebar was already data-driven (`NAV`, 21 entries, 17 visible).
+  - **Dead wire found:** `metric.fastBreak` ("First meal") is written by the
+    wellbeing card and read by *nothing*, while `FastingCard`'s own subtitle
+    says "end it at your first meal". Still open — see K6.
+
+- [x] **K1 · Stage 1 — the day is in the URL.** `#/day/:date`, react-router.
+  `HashRouter` on a deployment constraint, not taste: GitHub **project** Pages
+  serves at `/bujo/` with no SPA rewrite, so clean paths need a per-host `base`,
+  a `basename`, a `404.html` shim and a PWA `navigateFallback`. `isISODay`
+  validates by round-tripping the formatter, because `new Date(2026, 12, 45)`
+  rolls `2026-13-45` to 2027-02-14 and a regex would let it through. Chevrons
+  are `<Link>`s so middle-click works. Future days render the capture field
+  disabled ("Nothing to log yet") at an identical 41px, so stepping across
+  today does not resize the card.
+
+- [x] **K2 · Stage 2 — five sections, every view a real URL.** 21 nav entries
+  across 7 groups → 5, headers deleted (they were scaffolding for the count).
+  Paths are data in `src/lib/routes.ts`; `ViewId` was kept so ~30 `useNav()`
+  call sites, the palette and the leader keys never changed. Active state
+  matches the **section**, so `/body/pullups` lights Body. `writeDeepLink`
+  deleted — the URL is the state.
+  - Placement: Focus → Insights (a logging tool, filed by decision not by fit),
+    Cycle + Recovery → Body, Account → `/settings/account`.
+  - **`/plan/week/:isoWeek` dropped** — no week view exists.
+  - `BottomNav` lost its own hand-picked five; it mirrors the rail now.
+
+- [x] **K3 · Stage 3 — Today split by time of day.** Morning (check-in) / Day
+  (the log, alone) / Evening (close-out + one prompt), as a filter over one day
+  record. `TodayHabits` gained `variant="pills" | "checklist"` rather than a
+  twin. Clock picks the surface; `?view=` overrides and survives refresh but is
+  **not** persisted across days. A complete check-in collapses to a read-only
+  summary with Edit.
+  - **Bug fixed on the way:** `TodayHabits` called `todayISO()` internally —
+    harmless while it only rendered on today, live the moment days became
+    routable.
+  - Two deviations from the spec's card lists, both to keep features alive:
+    `PenaltyCard` on Morning (it is prescriptive, which is the plan's job), and
+    `CountHabits` beside the habit row on Day.
+
+- [x] **K4 · Stage 4 — the details.** `SegmentScale` (11 dots, `—` when
+  unanswered) replaces every wellbeing `<input type="range">`; sleep is a
+  half-hour `Stepper`, because hours are not a rating. **Every ⓘ is gone,
+  app-wide** — nine on Today was nine labels admitting they failed — replaced
+  by one `?` in the top bar that reveals the same explainers inline. Week-strip
+  bar height encodes coverage (was seven identical bars). Empty state leads
+  with the live streak or yesterday's open tasks. **"Training penalty" →
+  "Make-up work"**, renamed in Help and Settings too.
+  - Item 5 (three writing prompts → one rotating, with an expander) landed in
+    K3, because "Evening: one writing prompt" required it.
+
+- [x] **K5 · Stage 5 — mobile. DONE.** Capture pins above the tab bar on
+  phones, portalled to `<body>` because `main` computes `overflow-y: auto` (so
+  `sticky` positions against the wrong scrollport — it scrolled off at
+  `top: -512`) and `.book-inner` carries a transform (so a plain `fixed` would
+  take *it* as its containing block). `BottomNav` publishes its measured height
+  as `--bottom-nav` so the bar above clears it without a hard-coded 48px.
+  - **The 44px floor must be absolute px, not `min-h-11`.** The rem version
+    measured **39px**, because this app scales the rem root for its S/M/L/XL
+    text-size setting — a thumb does not shrink when you pick a smaller font.
+  - The spec predicted the habit pills and segment dots would fail; both already
+    passed. What actually failed: per-habit note buttons at **16px**, card
+    chevrons at 18px, `EntryRow`'s glyph/`!`/`×` at 23–24px, mic and Add at
+    36px, plan chips at 37px, sidebar drawer rows at 39px. Fixed at the source —
+    every `Button` size has a mobile floor now.
+  - **The 1180px tier never overflowed.** It is a `max-width`; Insights, Stats,
+    Trackers and Monthly all measure clean at 490px. The thing that overflowed
+    was the Stage 2 section tab strip (Body's six tabs, 545px in a 424px
+    column). It scrolls horizontally now.
+  - Measured after at 390px: Day, Morning, Evening, Body and Insights all report
+    **0** sub-44px targets, no horizontal overflow anywhere.
+  - **Two exceptions left standing:** Trackers' habit dot-grid (29 cells at
+    ~23px — a 365-day grid cannot have 44px cells without ceasing to be one) and
+    one 32px "recurring rules" toggle on Plan.
+  - Fixed on the way: Trackers' layout picker offered **"PersonSimpleRun"** as a
+    user-visible label — the lucide→Phosphor codemod hitting prose again, the
+    hazard §J5 warns about. Now "Activity".
+
+- [ ] **K6 · `metric.fastBreak` is a dead wire.** Written by the wellbeing card,
+  read by nobody. `FastingCard` says "end it at your first meal" but never looks
+  at the field. K3 put both on the Morning surface, which makes the gap more
+  visible, not less. Either wire it (recording a first meal ends the running
+  fast) or drop the control.
+
+- [ ] **K7 · The month cursor is asymmetric.** It is a route on Monthly
+  (`/plan/month/:yearMonth`) but Trackers and Cycle carry a month with no route
+  of their own, so they keep component state — stepping months is in history on
+  one and not the others. Commented in `cursor.tsx` rather than papered over.
+
+## L. Habit polarity — the `avoid` flag was being ignored in six places
+
+Found from a single user report ("why does it say *Missed Alcohol* when I
+stayed sober?"). `habitLog` membership means opposite things by polarity: for a
+build habit a logged day is a win, for an `avoid` habit it is a slip.
+
+- [x] **L1 · The seed was the root cause.** `seedJournal()` shipped Caffeine,
+  Sugar and Alcohol as `stimulant` with **no `avoid` flag**, so the app began
+  life treating "drink alcohol" as a goal — and every fix below keys off that
+  flag, so none of them reached a habit the seed had mislabelled. Sugar and
+  Alcohol are `avoid: true` now; Caffeine is left as a build habit because
+  `demo.ts` gives it the cue "With breakfast". `streak.ts:16` had listed both as
+  quit-tracker presets all along, so two files disagreed about the same names.
+- [x] **L2 · Migration for existing journals.** `relabelSeededQuitHabits()` in
+  `migrate()`, matched on the seed's own fingerprint (starter name + starter
+  category + `avoid` still undefined), so a renamed or recategorised habit is
+  untouched. Idempotent. **Does not rewrite `habitLog`** — the ticks already
+  record what happened; only the reading of them changes. Streaks and ratios
+  for those two move on first load, which is the correction, not a side effect.
+- [x] **L3 · Six read sites fixed**, each with failing-first tests:
+  `penalties.ts` (a clean day read as "Missed Alcohol"; a real slip earned
+  nothing — the tick **is** the miss now, scored off `cleanStreak`),
+  `stats.ts dayCompletion` (drinking scored `ratio: 1`, a perfect day — the
+  widest-reach instance, since the week strip, the habit chips and
+  `weekdayConsistency` all read it), `coverage.ts` ("Most missed: Alcohol" after
+  five sober days), `stats.ts reminderMessage` (*"Log Alcohol today to keep your
+  4-day streak alive"*), `recommend.ts` (*"Alcohol is on a 20-day streak — turn
+  it into a challenge"*), and the two streak-leaderboard reads in
+  `TrackerVisuals` / `Trackers.tsx:732`.
+  - `reminderMessage` and `recommend` **exclude** avoid habits rather than
+    inverting them with `cleanStreak`, which was the original plan: a clean
+    streak is at risk every hour of every day, so inverting would fire daily and
+    crowd out every genuine build-habit streak. `MilestoneToast` already
+    celebrates clean runs.
+- [ ] **K8 · THE THEME SWEEP — owed, not optional.** Everything in §K and §L
+  shipped **unswept**: mocha only, because the theme pass was skipped by
+  explicit instruction while the work was in flight. The standing rule
+  (STATUS.md) is five themes — mocha, latte, neon, vscode, dawn — and this is
+  the largest body of UI to go in without it.
+  - **Why five and not "one dark, one light":** three of them redefine the
+    accent (dawn's is an amber), two invert surface polarity, and **dawn renders
+    two text tiers where the others render three** (§H14). A spot check in latte
+    catches none of those.
+  - **The specific risks this session created**, in rough order of likelihood:
+    - **`SegmentScale`** — an unfilled dot is `cat('surface2')` border on the
+      card background. In dawn's cream surfaces and latte that pairing is the
+      one measured closest to the AA floor; hollow-vs-filled has to stay
+      legible, and it is the *only* channel saying "unanswered".
+    - **`catA(name, role)`** — three fixed alphas (`22`/`14`/`55`) applied over
+      five different surface luminances. `Pill`'s docstring already flags
+      accent-on-wash as the exact pairing that fails AA in latte (§I1). A fixed
+      alpha over a light surface is not the same contrast as over a dark one.
+    - **Inline hints** (`shell/hints.tsx`) — new `bg-ink-0` panel inside a card,
+      i.e. a surface on a surface. Two-tier dawn is where this collapses.
+    - **The week strip** — bar *height* now carries the data, but colour is
+      still the second channel and the green/yellow/peach band was chosen in
+      mocha. Also the `mauve` today-outline against dawn's amber accent.
+    - **`StatusStrip`, the make-up tier pill, the segmented surface control** —
+      all new accent-on-wash surfaces.
+    - **Section tabs** — `TabsList variant="line"`, whose active underline is
+      `after:bg-foreground`; check it is visible on all five, and that the
+      scroll-clipped tab still reads as clipped rather than as missing.
+  - **Method that actually works** (§J4 proved it): `/kitchen-sink` carries its
+    own five-theme switcher and an S/M/L/XL text-size control. Sweep
+    **5 themes × 3 scales**, not 5 × 1 — the 44px floors added in K5 are
+    absolute px on purpose, so text scaling is exactly where they will look
+    wrong even though they measure right.
+  - **Do not trust a contrast number taken through `setActiveTheme`-less
+    switching** — §I2: `cat()` does not follow a direct `data-theme` change, and
+    every earlier "N low-contrast nodes" figure was measured through a desynced
+    palette.
+  - Definition of done: all five themes at all three text scales, on Today's
+    three surfaces plus one section landing, with contrast measured on the new
+    surfaces above rather than eyeballed.
+
+- [ ] **L4 · Open question: should a slip earn a bigger make-up?** Right now a
+  slip is one item at the same weight as a missed habit. Arguably a relapse is
+  the most consequential thing on that card.

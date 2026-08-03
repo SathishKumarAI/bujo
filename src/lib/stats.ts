@@ -188,9 +188,21 @@ export function reminderMessage(
   const dow = new Date(today + 'T00:00').getDay()
 
   // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
+  //
+  // Build habits only. This reminder's entire shape is "you have not logged X
+  // yet, log it" — and for an avoid habit logging it means giving in, so four
+  // days of drinking produced "🔥 4-day Alcohol streak at risk / Log Alcohol
+  // today to keep your 4-day streak alive."
+  //
+  // Inverting the copy with `cleanStreak` was the obvious alternative and is
+  // wrong for a different reason: a clean streak is at risk every hour of every
+  // day, so it would fire daily and, being unbounded, would outrank every real
+  // build-habit streak and crowd them out. There is no action to prompt for a
+  // quit habit — the action is to keep doing nothing. `MilestoneToast` already
+  // celebrates clean runs via `cleanStreak`, which is the right surface for it.
   let risk: { name: string; streak: number } | null = null
   for (const h of data.habits) {
-    if (h.archived) continue
+    if (h.archived || h.avoid) continue
     const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
     if (!scheduled) continue
     const doneToday = habitDoneOn(data, h, today)
@@ -237,7 +249,13 @@ export function dayCompletion(data: JournalData, date: string): { done: number; 
   )
   if (scheduled.length === 0) return { done: 0, total: 0, ratio: null }
   const log = data.habitLog[date] ?? []
-  const done = scheduled.filter((h) => log.includes(h.id)).length
+  // Polarity. You tick an avoid habit on the day you gave in, so for those the
+  // win is *absence* from the log. Counting the tick as "done" meant a relapse
+  // scored a perfect day and a sober one dragged the ratio down — and this
+  // number drives the week strip, the "n habits left" chip and
+  // `weekdayConsistency`, so the error was spread across most of the app's
+  // sense of how a day went.
+  const done = scheduled.filter((h) => (h.avoid ? !log.includes(h.id) : log.includes(h.id))).length
   return { done, total: scheduled.length, ratio: done / scheduled.length }
 }
 

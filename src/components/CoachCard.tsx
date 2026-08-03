@@ -3,7 +3,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { Card } from './ui'
-import { cat } from '../lib/colors'
+import { cat, catA } from '../lib/colors'
 import { coachTips } from '../lib/coach'
 import { todayISO } from '../lib/date'
 import type { ViewId } from './shell/viewChrome'
@@ -33,7 +33,7 @@ export function CoachCard() {
           return (
             <li key={t.id}>
               <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-card border border-line bg-ink-0 p-3 text-left hover:border-mauve">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill" style={{ background: cat(color) + '22' }}>
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill" style={{ background: catA(color, 'wash') }}>
                   <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
                 </span>
                 <span className="min-w-0 flex-1">

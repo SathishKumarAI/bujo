@@ -1,20 +1,20 @@
-import { todayISO } from './date'
-
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * DEEP LINKS · the URL as a bookmarkable pointer at "which view, which day".
+ * LEGACY DEEP LINKS · read-only, and on borrowed time.
  *
- * The app already *read* `?view=` once at boot but never wrote it back, so the
- * address bar drifted out of sync the moment you navigated and no day was ever
- * addressable. A journal whose days cannot be linked is a journal you cannot
- * point anyone (including future you) at.
+ * Before the router, this app addressed itself with `?view=x&day=y` and mirrored
+ * that into the URL with `replaceState` — deliberately replace and not push,
+ * because nothing listened for `popstate`, so pushed entries would have built a
+ * Back button that silently did nothing.
  *
- * Deliberately `replaceState`, not `pushState`: this router does not listen for
- * `popstate` (see TASKS.md — an earlier verification sweep was invalidated by
- * assuming it did), so pushing entries would build a Back button that silently
- * does nothing. Replace keeps the URL truthful and shareable without promising
- * history semantics the app does not implement.
+ * Every one of those is a real route now, so the writer is gone: the URL *is*
+ * the state, and a second copy in the query string could only drift out of step
+ * with it. What survives is the reader, used once by the `Landing` route in
+ * `routes.tsx` to translate an old bookmark into its new path.
+ *
+ * Delete no earlier than one release after Stage 2 ships, along with the
+ * `// legacy redirect` block that calls it.
  */
 export function readDeepLink(search = typeof window === 'undefined' ? '' : window.location.search) {
   const params = new URLSearchParams(search)
@@ -22,22 +22,5 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
   return {
     view: params.get('view'),
     day: day && ISO_DAY.test(day) ? day : null,
-  }
-}
-
-/**
- * Mirror the current view (and the day cursor, when it isn't today) into the
- * URL. Today is omitted on purpose: `?view=today` should keep meaning "today"
- * tomorrow, and a link to the current day is the one link nobody needs.
- */
-export function writeDeepLink(view: string, day: string) {
-  if (typeof window === 'undefined') return
-  const params = new URLSearchParams(window.location.search)
-  params.set('view', view)
-  if (day && day !== todayISO()) params.set('day', day)
-  else params.delete('day')
-  const next = `${window.location.pathname}?${params}${window.location.hash}`
-  if (next !== window.location.pathname + window.location.search + window.location.hash) {
-    window.history.replaceState(null, '', next)
   }
 }

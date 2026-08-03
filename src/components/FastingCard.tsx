@@ -39,7 +39,10 @@ export function FastingCard() {
 
   return (
     <Card
-      title="Intermittent fasting"
+      /* "Fasting", not "Intermittent fasting": in the one-track rail the longer
+         title truncated to "Intermittent fa…", and the subtitle already says
+         which window this is. */
+      title="Fasting"
       subtitle={`${target}:${24 - target} window, track it day to day`}
       right={
         <div className="flex items-center gap-2">

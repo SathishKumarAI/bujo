@@ -2,52 +2,94 @@
 
 Update this when you STOP working, not when you start.
 
-- **Last touched:** 2026-08-02
-- **Where I stopped:** Redesign steps 1–9 done across two stacked branches.
-  `feat/design-system` (PR #80) has the token layer, self-hosted fonts, the
-  seven-step rem type scale, two container tiers, reconciled primitives, the
-  `/kitchen-sink` route and a 2,443-replacement adoption sweep.
-  `feat/accent-and-motion` (PR #81, current) has the accent-inflation pass
-  (accent fills in view bodies: 19 → 0), the motion-token pass, and the bullet
-  glyph column raised to a real signature. eslint 0 errors, 678 tests, build
-  green, 18 views × 5 themes clean.
-- **Also done:** the day/week strip (PR #82). `DayGrid` now backs both the
-  Stats heatmap and the Trackers per-habit grid. `TodayHabits` was left alone —
-  it is chips grouped by time of day, not a strip, and the audit was wrong to
-  group it. Fixed a pre-existing bug while in there: both grids stretched their
-  columns to a 39.5px pitch around 10px cells; now 12px.
-- **Also done:** the pages UI/UX polish pass (PR #87, branch
-  `feat/pages-ui-polish`). Settings no longer renders a second `<h1>` and its
-  tab pills are sized to their text instead of a uniform 209px; Plan,
-  Collections, Reading and Insights are on the `Page` shell, so they finally
-  have the entrance transition and the shared gap rhythm; section headers are
-  real `<h2>`s (Reading went 0 → 7 headings in `<main>`, B5 closed); and four
-  hand-copied clones of `QuietSection` are gone. Every finding was measured by
-  clicking through the running app, never inferred from source — see
-  `docs/redesign/11-pages-ui-polish.md`, which also records three things that
-  were measured and *dismissed*, so nobody re-opens them.
-- **Next action:** two items, both held up only by a file collision with a
-  parallel session — pick them up once that lands:
-  1. Recovery and Stats are the last two views off the `Page` shell.
-  2. `ui.tsx:77` names every titled card's ⓘ `"What is this?"`, so Today alone
-     exposes **34 identically-named buttons** to a screen reader, and it is
-     14×14 against the WCAG 2.5.8 24px floor. Name it from the card title and
-     pad the target — one file, app-wide reach.
+- **Last touched:** 2026-08-03
+- **Where I stopped:** On `feat/today-ux`, an **isolated worktree** at
+  `.claude/worktrees/today-ux`, branched off `99ddbaf` on
+  `feat/icon-button-stage1`. **Nothing pushed, no PR.** 20 commits, all
+  verifying green: `npx tsc -b --force` 0, `npx vitest run` **731 tests**,
+  `npx eslint .` 0 errors / 2 pre-existing warnings, `npm run build` clean.
+  - Work in the worktree, not the main checkout — a second Claude session was
+    editing `C:/Users/PRANAS/Documents/coding/now/bujo` concurrently (it landed
+    `99ddbaf`, the two-weight icon build, mid-session).
+  - Dev server for this branch: **`npx vite --port 5191`** from the worktree.
+    Its `node_modules` is a junction to the main checkout's, so both servers
+    share one Vite dep cache — if the app boots with *"Invalid hook call … more
+    than one copy of React"*, that is the cache, not the code. `vite --force`
+    fixes it; a separate `npm ci` in the worktree fixes it permanently.
 
-  Beyond those, the raw-`<button>` sweep continues in the files PR #87 did not
-  touch (Trackers, Gym, Account). Judgement per site, not a codemod: many are
-  legitimately not buttons.
-- **Blocked on:** a **second session editing this same working tree** — the
-  `useFocusTrap` hook plus wiring into CommandPalette, the Card modal, Stats,
-  ExerciseDB, Onboarding, HabitDetail, NoFap and Trackers. It was mid-edit
-  (`NoFap.tsx:73` calls the hook with no import, so `npx tsc -b` fails on
-  `main`). PR #87 was written in a separate worktree to stay clear of it and
-  touches none of those files. Also `B1` in `TASKS.md`: the
-  Supabase project at `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so
-  every account/cloud-sync feature is dead until it is repointed or the env vars
-  are unset.
+- **Three threads landed, in this order:**
 
-**Read next:** `TASKS.md` (the working board) · `docs/redesign/11-pages-ui-polish.md`
-(the newest pass, with its re-measure method) · `docs/redesign/09-redesign-audit.md`
-(what the codebase actually is) · `docs/redesign/10-redesign-build.md` (what
-shipped, and the four bugs found on the way).
+  1. **Today's layout** (`2ac43af`…`e5f740a`). The log was below the fold at
+     y=917 behind a three-card weight-1 band, and the wide column ran 813px
+     against a 1568px rail — half of it empty. Also: the at-risk streak was
+     stated twice from two rules that disagreed, two different numbers were both
+     labelled "tasks", and the week strip's today-marker was a 1px outline
+     nobody could see. `catA(name, role)` now names the three accent alphas that
+     four surfaces had been spelling five different ways.
+
+  2. **Habit polarity** (`1cb1da8`…`ba57908`) — see TASKS.md §L. Started from
+     "why does it say *Missed Alcohol* when I stayed sober?" and ended at
+     **six** read sites plus the seed. `dayCompletion` was the worst: drinking
+     scored a perfect day. `reminderMessage` was the most embarrassing: *"Log
+     Alcohol today to keep your 4-day streak alive."* The seed was the root
+     cause, and there is a migration for journals already saved.
+
+  3. **The IA/routing pass**, Stages 0–5 (`c34db86`…`959edba`) — see TASKS.md
+     §K and **`docs/ROUTING.md`**. The app had **no router**; it has one now,
+     the sidebar is five sections, Today is three time-of-day surfaces instead
+     of ten cards on one screen, and on a phone the capture bar pins above the
+     tab bar with a 44px floor under every control.
+     - The 44px floor had to be **absolute px**: `min-h-11` measured 39px,
+       because this app scales the rem root for its text-size setting.
+
+- **Also worth knowing:**
+  - **Vercel is paused** (`c51444f`, `git.deploymentEnabled: false`), by
+    request. It does not cancel an in-flight build or take down what is already
+    deployed — those need the dashboard. GitHub Pages is untouched and is now
+    the only live target.
+  - `react-router-dom` was installed into the **shared** `node_modules`, so the
+    main checkout has the package present without it being in that branch's
+    `package.json`. Harmless, but do not be surprised by it.
+  - The theme sweep was **skipped by explicit instruction** this session. The
+    standing five-theme rule below was not applied to any of this work.
+  - I mutated the journal in the `:5191` browser tab repeatedly while testing
+    (habit flags, metrics, five days of `habitLog` to get a coverage spread).
+    Reload with `?demo=1` there for a clean one. The app on `:5173` was never
+    touched.
+
+- **Next action: the theme sweep — TASKS.md §K8.** Everything on this branch
+  shipped mocha-only, because the theme pass was skipped by instruction while
+  the work was in flight. It is the largest body of UI to go in unswept, and the
+  riskiest new surfaces are the ones this session invented: `SegmentScale`'s
+  hollow dots (the only channel saying "unanswered"), `catA`'s three fixed
+  alphas over five surface luminances, and the inline hint panel — a surface on
+  a surface, which is where two-tier dawn collapses. Sweep 5 themes × 3 text
+  scales via `/kitchen-sink`, not 5 × 1.
+
+  Then the rest, all in TASKS.md:
+  - **K6** — `metric.fastBreak` ("First meal") is written by the wellbeing card
+    and read by *nothing*, while `FastingCard` says "end it at your first meal".
+    Both now sit on the Morning surface, which makes the dead wire more visible,
+    not less. Wire it or drop the control.
+  - **K7** — the month cursor is a route on Monthly only; Trackers and Cycle
+    keep component state, so stepping months is in history on one and not the
+    others.
+  - **L4** — should a slip on a quit habit earn a bigger make-up than a missed
+    habit? Right now they weigh the same.
+  - Two tap targets are knowingly under 44px: Trackers' habit dot-grid (a
+    365-day grid cannot have 44px cells) and one toggle on Plan.
+
+- **Standing rule, not applied this session:** UI changes are verified in **all
+  five themes** — mocha, latte, neon, vscode, dawn — not mocha plus a spot
+  check. Three redefine the accent (dawn's is an amber), two invert surface
+  polarity, and dawn renders two text tiers where the others render three.
+  Everything from this session is unswept.
+
+- **Blocked on:** unchanged. `B1` — the Supabase project at
+  `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so every account/cloud-sync
+  feature is dead until it is repointed or the env vars are unset. Section H (the
+  redesign brief) still waits on H5, H6, H7, H9, H11, H13.
+
+**Read next:** `docs/ROUTING.md` (how a screen is reached, and why the router is
+hash-based) · `TASKS.md` §K and §L (the IA pass and the polarity sweep) ·
+`docs/LAYOUT-WEIGHT-ALIGNMENT.md` (weight per surface, now that Today is three).

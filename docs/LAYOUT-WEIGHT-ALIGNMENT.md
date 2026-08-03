@@ -51,19 +51,32 @@ is still a weight-2 card, it is just in quieter company.
 
 ### Today
 
-| Component | Weight | Left | Right |
+**Today is three surfaces now**, not one page — see `ROUTING.md`. The weight
+question therefore asks itself *per surface*, and each surface has exactly one
+weight-1 thing, which is the whole point of splitting it.
+
+| Surface | Weight 1 | Weight 2 | Weight 3 |
 |---|---|---|---|
-| `TodayPlanCard` | 1 | Title + chips | Week % |
-| `CoachCard` | 1 | Tone icon + tip | Affordance sparkle |
-| `PenaltyCard` | 1 (conditional) | Title + drill | Tier pill + collapse |
-| Daily log `Card` | 2 — **two of three tracks** | Date + weather | Task count |
-| `EntryRow` | 2 | Glyph, memory mark, text | `!` and `×`, one cluster |
-| `TodayHabits` / count habits | 2 (rail) | Habit name | Check / stepper |
-| Wellbeing | 2 (rail) | Slider labels | Value chips |
-| `FastingCard` | 3 (rail) | State | Timer |
-| Gratitude · Reflection · Memory | 3 | Field label | — |
-| `WeeklyGoalRings` | 3 (rail, bottom) | — | — |
-| On this day | 3 | Date | Text |
+| **Morning** | `WellbeingCard` — the check-in, two of three tracks | `TodayPlanCard`, `PenaltyCard` | `FastingCard` (rail) |
+| **Day** | The daily log, full width, the only card asking for input | `TodayHabits` (pills), `CountHabits` | `StatusStrip` — read-only |
+| **Evening** | `WritingPrompt` — one prompt, two of three tracks | `TodayHabits` (checklist) | `WeeklyGoalRings`, `CoachCard`, On this day |
+
+Left/right inside each card is unchanged:
+
+| Component | Left | Right |
+|---|---|---|
+| Daily log `Card` | Date + weather | Logged-today count |
+| `EntryRow` | Glyph, memory mark, text | `!` and `×`, one cluster |
+| `TodayHabits` / `CountHabits` | Habit name | Tally pill, then `Stepper` |
+| `WellbeingCard` | Scale labels | Value slot (`—` when unanswered) |
+| `PenaltyCard` | Title + drill | Tier pill + collapse |
+| `TodayPlanCard` | Title + chips | Week % |
+
+**A band must share the grid beneath it.** When plan and coach shared a row
+above the log (the layout before the surface split), a 50/50 band measured 38px
+shorter and was rejected for it: its divide landed at x=1075 while every column
+below split at x=1270, giving one page two column rhythms. If a band ever comes
+back, it goes on the 2:1 tracks.
 
 ### Data views (Trackers, Stats, Fitness, Insights)
 
@@ -95,10 +108,41 @@ is still a weight-2 card, it is just in quieter company.
   are now one right-hand cluster; the text gets that width back.
 - **Today** — was a single 820px stack, so the log sat below a screenful of
   cards on a wide display and every card had the same width whether it was the
-  writing surface or a collapsed appendix. Now: a full-width weight-1 band
-  (plan, coach, penalty), then the log at **two of three tracks**, with the
-  tap-to-log and quiet cards in the third. Collapses to one column below `xl`
-  in the same reading order.
+  writing surface or a collapsed appendix. The first fix gave it a full-width
+  weight-1 band (plan, coach, penalty) above a two-track log.
+- **Today, again — the band was the same bug wearing a different hat.** Measured
+  on 1600×1000: the band was **917px**, so the log still started below the fold,
+  and the wide column ran 813px against the rail's 1568px — nearly half of it
+  empty. Rule 1 says so out loud ("a screen with three weight-1 cards has no
+  weight-1 card") and the page was violating it in writing. Now only the plan is
+  full width; the log is the first thing in the wide column and coach and
+  penalty sit beneath it, because guidance is not more urgent than the day it is
+  about. Measured after: band **417px**, log top **442px**, columns **1313 vs
+  1409**. Page height fell from 2546px to 1887px.
+  - Wellbeing was tried in the reflect grid on the way and overshot the other
+    way (1632 vs 862), so it stayed in the rail — its sliders are tapped and
+    dragged, which is what the rail is for.
+  - **Then the coach came back up, beside the plan.** Same 2:1 tracks, so band
+    and grid share one rhythm: band **397px**, log top **564px**, tracks
+    780/380 matching the columns below to the pixel. The 50/50 version was
+    38px shorter and misaligned, and 38px is not worth a second grid.
+    Columns are 952 vs 1409 as a result — worse than the 96 reached with the
+    coach below the log, better than the 756 this page started at. Demo data
+    has no count/timer habits; a real journal with them narrows it.
+  - **And then the page stopped being one page.** Every measurement above was
+    an argument about how to fit ten cards on one screen; the answer was that
+    ten cards do not belong on one screen. Today is three surfaces over one day
+    record now (`ROUTING.md`), and the column arithmetic no longer needs to be
+    fought — Day carries a single card, so there is nothing to balance it
+    against.
+
+    Kept from that work regardless, because they were right on their own terms:
+    the log comes first, the at-risk streak is stated once from the shared
+    rule, and a band shares the grid beneath it.
+  - The rail's "Keep your streaks" card is gone: `TodayPlanCard` already stated
+    the same fact in its at-risk banner, from a *private* filter that disagreed
+    with the shared one. The banner now reads `atRiskHabits`, which is the wider
+    and tested rule, and the card is deleted. One fact, one source, one place.
 - **Stickers** ("Decorate the day") — removed outright, including the stored
   data (see `TASKS.md` §J7). It was a weight-3 card competing for the same
   vertical space as the day's writing surface.

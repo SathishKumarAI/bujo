@@ -64,11 +64,16 @@ const buttonVariants = cva(
         // small primary button rendered in the foreground colour instead of the
         // accent. Stating it as an explicit length puts it in the font-size
         // group, where it belongs, and the variant's colour survives.
-        sm: "h-[var(--h-control-sm)] px-2.5 text-[length:var(--text-label)]",
-        md: "h-[var(--h-control)] px-3.5",
+        // `max-md:min-h-[44px]` on every size: 44px is the floor for a finger, and
+        // the small sizes render at 28-36px. The height stays whatever the
+        // control system says on desktop, where the pointer is precise — this
+        // only grows the *hit* area on phones, and `min-h` rather than `h` so
+        // the visual weight of a small button does not change with it.
+        sm: "h-[var(--h-control-sm)] max-md:min-h-[44px] px-2.5 text-[length:var(--text-label)]",
+        md: "h-[var(--h-control)] max-md:min-h-[44px] px-3.5",
         lg: "h-[var(--h-control-lg)] px-5",
-        icon: "h-[var(--h-control)] w-[var(--h-control)] px-0",
-        "icon-sm": "h-[var(--h-control-sm)] w-[var(--h-control-sm)] px-0",
+        icon: "h-[var(--h-control)] w-[var(--h-control)] max-md:min-h-[44px] max-md:min-w-[44px] px-0",
+        "icon-sm": "h-[var(--h-control-sm)] w-[var(--h-control-sm)] max-md:min-h-[44px] max-md:min-w-[44px] px-0",
         "icon-lg": "h-[var(--h-control-lg)] w-[var(--h-control-lg)] px-0",
       },
     },

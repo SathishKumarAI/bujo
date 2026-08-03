@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { Card, Empty, StatTile } from '../ui'
 import { addDays, fromISODay, prettyMonth, WEEKDAYS } from '../../lib/date'
 import { cat } from '../../lib/colors'
-import { habitStreak, dayCompletion, weekdayConsistency, monthlyCompletion } from '../../lib/stats'
+import { habitStreak, cleanStreak, dayCompletion, weekdayConsistency, monthlyCompletion } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
 import { perfectDayStats } from '../../lib/habitStats'
 import type { JournalData } from '../../lib/types'
@@ -26,9 +26,15 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
     r == null ? cat('surface0') : r === 0 ? cat('surface1') : `color-mix(in srgb, ${cat('green')} ${Math.round(25 + r * 75)}%, ${cat('surface1')})`
 
   // Streak leaderboard (current streak per check-habit) + all-time best (#290).
+  // A quit habit's current streak is its CLEAN run — `habitStreak` counts
+  // consecutive slips for those, so a drinking spell used to climb the board.
   const streaks = active
     .filter((h) => (h.type ?? 'check') === 'check')
-    .map((h) => ({ h, streak: habitStreak(data, h.id, today), best: longestStreakEver(data, h, today) }))
+    .map((h) => ({
+      h,
+      streak: h.avoid ? cleanStreak(data, h.id, today) : habitStreak(data, h.id, today),
+      best: longestStreakEver(data, h, today),
+    }))
     .sort((a, b) => b.streak - a.streak || b.best - a.best)
     .slice(0, 8)
   const maxStreak = Math.max(1, ...streaks.map((s) => Math.max(s.streak, s.best)))

@@ -144,7 +144,7 @@ export function Trackers() {
                 {([
                   { id: 'classic', icon: <Icon as={SquaresFour} size="sm" />, title: 'Grid' },
                   { id: 'cards', icon: <Icon as={GridFour} size="sm" />, title: 'Cards (heatmap grids)' },
-                  { id: 'activity', icon: <Icon as={PersonSimpleRun} size="sm" />, title: 'PersonSimpleRun' },
+                  { id: 'activity', icon: <Icon as={PersonSimpleRun} size="sm" />, title: 'Activity' },
                   { id: 'routine', icon: <Icon as={Clock} size="sm" />, title: 'Routine (by time of day)' },
                 ] as const).map((o) => (
                   <button
@@ -729,7 +729,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const knownUnits = [...new Set(data.habits.map((h) => h.unit).filter((u): u is string => !!u))].sort()
   const [heatYear, setHeatYear] = useState(false)
   const today = todayISO()
-  const streak = habitStreak(data, habit.id)
+  // Polarity, as at :500 and :579 in this file — `habitStreak` counts
+  // consecutive *slips* for a quit habit, so the detail panel was reporting a
+  // run of relapses as this habit's current streak.
+  const streak = habit.avoid ? cleanStreak(data, habit.id, today) : habitStreak(data, habit.id)
   const bestEver = longestStreakEver(data, habit, today)
   // #85: best/worst weekday by scheduled-day success rate (last 90d).
   const wd = bestWeekday(data, habit, today)

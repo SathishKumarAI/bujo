@@ -1,4 +1,4 @@
-import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Database, Download, FileText, Palette, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
+import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Database, Download, FileText, Palette, SlidersHorizontal, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useRef, useState, useEffect } from 'react'
 import { useJournal } from '../store'
@@ -150,10 +150,17 @@ export function Settings() {
   const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-control border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
     <Page width="wide">
-      {/* No page header here. The top bar already renders `Settings · Theme,
-          profile, data` as the page's h1; a second designed header repeated the
-          word 110px lower and gave the document two h1s — the only view in the
-          app that did. The tab bar is the first thing now. */}
+      {/* Designed header · sets the page apart from a plain card stack. */}
+      <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-card" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
+          <Icon as={SlidersHorizontal} size="lg" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-display text-title text-fg-1">Settings</h1>
+          <p className="text-body text-fg-2">Profile, appearance, reminders, and your data.</p>
+        </div>
+      </div>
+
       <Tabs value={tab} onValueChange={setTab}>
         {/* Horizontal pill bar — every section visible at once, wraps on narrow
             screens. No sidebar rail, no clipped scroller. */}
@@ -244,7 +251,7 @@ export function Settings() {
           <Toggle label="Auto-hide sidebar — reveal on hover (desktop)" on={!!s.sidebarAutoHide} onChange={(v) => setSettings({ sidebarAutoHide: v })} />
         </div>
         <div className="mt-3 border-t border-line pt-3">
-          <Row label="Penalty difficulty">
+          <Row label="Make-up work difficulty">
             <Segmented
               value={s.penaltyLevel ?? 'beginner'}
               onChange={(v) => setSettings({ penaltyLevel: v })}

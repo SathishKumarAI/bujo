@@ -71,4 +71,4 @@ export function Page({
 
 // Re-export so views can grab the cursor from one shell entrypoint.
 // eslint-disable-next-line react-refresh/only-export-components -- shell re-export by design
-export { useCursor } from './cursor'
+export { useCursor, useToday } from './cursor'

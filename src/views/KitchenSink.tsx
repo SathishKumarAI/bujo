@@ -13,7 +13,7 @@ import { Stepper } from '../components/fields/Stepper'
  *
  * Asked for by the redesign brief (step 2) so the design system can be reviewed
  * in one place instead of hunting for a screen that happens to render a given
- * variant. Deep-link: `?view=kitchen-sink`.
+ * variant. Deep-link: `#/kitchen-sink`.
  *
  * Keep this honest: when a primitive gains a variant, add it here. A kitchen
  * sink that lags the system is worse than none, because it looks authoritative.

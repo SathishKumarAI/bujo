@@ -7,17 +7,18 @@ import { useSpeechInput } from '../lib/speech'
  * phrase; the parent appends it. Renders nothing where the Web Speech API is
  * unavailable (e.g. Firefox), so callers don't need to feature-check.
  */
-export function MicButton({ onText, className = '' }: { onText: (text: string) => void; className?: string }) {
+export function MicButton({ onText, className = '', disabled = false }: { onText: (text: string) => void; className?: string; disabled?: boolean }) {
   const { listening, start, stop, supported } = useSpeechInput(onText)
   if (!supported) return null
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => (listening ? stop() : start())}
       aria-label={listening ? 'Stop dictation' : 'Dictate by voice'}
       aria-pressed={listening}
       title={listening ? 'Listening… tap to stop' : 'Dictate by voice'}
-      className={`grid h-9 w-9 shrink-0 place-items-center rounded-control border transition-colors ${
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-control border transition-colors max-md:h-[44px] max-md:w-[44px] disabled:cursor-not-allowed disabled:opacity-60 ${
         listening ? 'animate-pulse border-red bg-red/15 text-red' : 'border-input text-fg-2 hover:text-fg-1'
       } ${className}`}
     >
