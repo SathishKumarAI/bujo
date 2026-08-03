@@ -34,7 +34,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
   return (
     <div className="mx-auto max-w-read space-y-4">
       {/* 1) Primary navigation between the two fitness sub-views. */}
-      <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
+      <div className="flex w-full gap-1 rounded-control bg-secondary p-1">
         {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
