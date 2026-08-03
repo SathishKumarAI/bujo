@@ -44,18 +44,47 @@ same step the `aside` variant already took, so three columns land at ~435px.
 `read` (820px) deliberately does **not** grow. A longer measure does not help
 prose, and the journal, Plan and Reading all live there.
 
-## Applied so far
+## Applied
+
+Every page with **five or more stacked sibling cards** was converted. Pages
+already at 0.9–1.1 screens were left alone.
 
 | Page | Before | After | What changed |
 |---|---|---|---|
-| Pickleball | 4.2 screens | **2.6** | Twelve stacked blocks → three across; "At a glance" spans 2; the six charts inside *Form & momentum* became two rows of three |
-| Mindset | 2.4 screens | **2.0** | The 1,575px principle wall became seven category cards, three across |
-| Insights | 1.5 screens | **1.4** | The two existing two-column groups take a third column at 2xl |
-| Fitness | 1.7 screens | **1.1** | Not the grid — see below |
-| Today | 3.5 screens | **2.1** | Not the grid — the rail, in doc 11 |
+| Pickleball | 4.2 screens | **2.6** | Twelve stacked blocks → three across; "At a glance" spans 2; the six charts in *Form & momentum* became two rows of three |
+| Mindset | 2.4 | **2.0** | The 1,575px principle wall became seven category cards |
+| Pull-ups | 1.5 | **0.9** | Two 620px cards of near-identical weight, side by side |
+| Coaching | 1.4 | **0.9** | Eight blocks — six of them identical collapsed drawers — became a hero spanning 2, the "Today" card beside it, and two rows of three. The whole page now fits one screen |
+| Focus | 1.5 | **1.2** | Six blocks, two of them collapsed strips |
+| Insights | 1.4 | **1.2** | Only the seven drawers grid — see the reversal below |
+| Stats | 1.1 | **1.0** | Eight blocks; the activity heatmap takes `SPAN_ALL` |
+| Home Workout | 0.9 | 0.9 | No height change, but three empty boxes stacked read as three failures; side by side they read as one starting point |
+| Fitness | 1.7 | **1.1** | Not the grid — the nesting bug below |
+| Today | 3.5 | **2.1** | Not the grid — the rail, in doc 11 |
 
-Sweep of all 18 views afterwards: **0 pages overflow horizontally**, and no page
-grew.
+Sweep of all 18 views afterwards: **0 pages overflow horizontally, 0 views
+without an `<h2>`**, and no page is taller than before.
+
+### Deliberately not converted
+
+- **Trackers** — the 31-column habit grid is the page, and it needs the full
+  width. Three columns would squeeze the thing people come here for.
+- **Today, Plan** — the journal column is `read` (820px) on purpose; a grid
+  would work against the measure.
+- **Reading, Goals, Challenges, Collections, Monthly** — already 0.9–1.1
+  screens, and Collections and Monthly already grid internally. Nothing to win.
+- **Recovery** — one 2,059px card. The grid cannot help until it is split.
+
+### One reversal worth recording
+
+Insights got the page-wide grid first and went **1.4 → 1.7 screens — it got
+taller.** Its ritual banner, search and two digests are text-heavy, and at 435px
+they wrap far more than they save. Rolled back to grid *only* the seven
+collapsed analytics drawers, which is where the filing-cabinet problem actually
+was: **1.2 screens**, better than the original.
+
+The lesson generalises: the grid pays off for repeated peer cards and collapsed
+drawers, and works against prose.
 
 ### Mindset is the clearest case for it
 
@@ -77,8 +106,11 @@ The wrapper now follows the active tab: 384 → **908px**.
 
 - **Recovery** (2.1 screens) is a single 2,059px card. The grid cannot help until
   it is split into sections — see `docs/pages/recovery.md`.
-- **Stats** (1.1) and the rest of **Insights**: the remaining stacked groups
-  inside collapsed sections have not been converted.
 - The audit's other Pickleball finding still stands: ~1,000px of static
   reference (physio notes, format playbook) is expanded while the four analytics
-  groups built from the user's own data stay collapsed.
+  groups built from the user's own data stay collapsed. The grid made the page
+  shorter; it did not fix the priority.
+- **Stats still shows zero charts by default** under a subtitle that promises
+  "Charts at a glance". The grid tidied the drawers; it did not open them.
+- Long card titles truncate in a 435px column ("Knee rehab & prehab · ACL / MC…"
+  on Coaching). `Card`'s `h2` has `truncate`; worth allowing two lines.

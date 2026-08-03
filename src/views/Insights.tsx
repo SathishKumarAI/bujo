@@ -9,6 +9,7 @@ import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRang
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
+import { CardGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
@@ -202,6 +203,9 @@ export function Insights() {
         </Card>
       </div>
 
+      {/* The seven analytics drawers DO flow three across: collapsed they are
+          50px strips, and stacked they read as a filing cabinet. */}
+      <CardGrid>
       {/* 4) Correlations — deep read-only analytics, collapsed. */}
       {(found.length > 0 || momentum.length > 0) && (
         <Section stickyKey="insights.correlations" title="Correlations" subtitle="patterns & momentum">
@@ -436,6 +440,7 @@ export function Insights() {
       <Section stickyKey="insights.tags" title="Tag manager" subtitle="merge, rename & retire tags">
         <TagManager />
       </Section>
+      </CardGrid>
     </Page>
   )
 }
