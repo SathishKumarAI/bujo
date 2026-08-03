@@ -43,6 +43,7 @@ export function Card({
   defer = false,
   enlargeable = false,
   help,
+  hideInfo = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -64,6 +65,8 @@ export function Card({
   enlargeable?: boolean
   /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
   help?: ReactNode
+  /** Suppress the ⓘ popover. Required by the page contract. */
+  hideInfo?: boolean
 }) {
   const [openState, setOpenState] = useState(!defaultCollapsed)
   const open = openProp ?? openState
@@ -79,7 +82,14 @@ export function Card({
   const showEnlarge = enlargeable && !!title && !onClick
   // Every titled card gets an always-visible ⓘ that explains what it is
   // (self-documenting UI). Uses `help` if given, else the subtitle text.
-  const info = help ?? subtitle
+  //
+  // `hideInfo` opts out. The page contract bans help icons outright — a label
+  // that needs a "?" gets rewritten instead — and on desktop the popover is
+  // redundant anyway, because it repeats the subtitle rendered right below it.
+  // Scoped to an opt-out rather than removed globally: 42 cards outside the
+  // Body cluster still rely on this, and retiring it app-wide is a decision
+  // about the whole app, not about one cluster.
+  const info = hideInfo ? null : (help ?? subtitle)
   // The whole header folds the card, not just the caret. The caret stays a real
   // <button> — it is the accessible control and carries aria-expanded — and the
   // header row is a pointer convenience layered on top, so anything interactive

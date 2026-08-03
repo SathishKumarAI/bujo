@@ -252,7 +252,7 @@ export function NoFap() {
             button competing with it, because logging an urge and logging a
             reset are two different commitments and neither outranks the
             other. */}
-        <Card className="glow-mauve">
+        <Card hideInfo className="glow-mauve">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative grid h-40 w-40 shrink-0 place-items-center">
               <svg width="160" height="160" viewBox="0 0 128 128" className="-rotate-90">
@@ -294,7 +294,7 @@ export function NoFap() {
 
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
-        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes.">
+        <Card hideInfo title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes.">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
               <button key={u} onClick={() => setUrge(u)}
@@ -396,7 +396,7 @@ export function NoFap() {
         </Card>
 
         {/* Log a reset · moved up from the rail · the second primary action */}
-        <Card title="Log a reset" subtitle="Reflect, learn, restart the counter">
+        <Card hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
           <div className="space-y-3">
             <label className="block text-body text-fg-1">
               Reason <span style={{ color: cat('red') }}>*</span>
@@ -430,11 +430,11 @@ export function NoFap() {
             whether resisting urges is holding the resets down. */}
         <section>
           <h2 className="mb-2 text-label text-fg-2">Urges resisted vs resets</h2>
-          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} today={today} />
+          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
         </section>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
-        <Card title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets">
+        <Card hideInfo title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
             <Button variant="secondary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
@@ -496,7 +496,7 @@ export function NoFap() {
           <h2 className="border-b border-line pb-1 text-label text-fg-2">Setup <span className="text-fg-3">· Your commitment contract & if-then trigger plans</span></h2>
           <div className="mt-2 flex flex-col gap-4">
           {/* My commitment (#316) · quit-date contract + personal "why" */}
-          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
+          <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
             subtitle="Your quit-date contract, the reason you’re doing this"
             right={hasCommitment && !editingCommit ? <Button variant="secondary" size="sm" onClick={() => setEditingCommit(true)} className="text-label">Edit</Button> : undefined}>
             {hasCommitment && !editingCommit ? (
@@ -528,7 +528,7 @@ export function NoFap() {
           </Card>
 
           {/* Trigger plans · if-then for each addiction's trigger points */}
-          <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response">
+          <Card hideInfo title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response">
             <div className="grid gap-2 rounded-card border border-line bg-ink-0 p-3 sm:grid-cols-2">
               <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
               <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
@@ -584,7 +584,7 @@ export function NoFap() {
           )}
           {/* Urges by addiction · moved from the rail (strands on mobile) */}
           {byType.length > 0 && (
-            <Card title="Urges by addiction" subtitle="What you resist most" enlargeable>
+            <Card hideInfo title="Urges by addiction" subtitle="What you resist most" enlargeable>
               <div className="h-52 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
@@ -608,7 +608,7 @@ export function NoFap() {
           <h2 className="border-b border-line pb-1 text-label text-fg-2">Reference <span className="text-fg-3">· Coping techniques, recovery ladder & reset history</span></h2>
           <div className="mt-2 flex flex-col gap-4">
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
-          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min">
+          <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min">
             <ol className="space-y-2 text-body text-fg-1">
               <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
               <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
@@ -627,15 +627,26 @@ export function NoFap() {
           </Card>
 
           {/* Benefits ladder */}
-          <Card title="Recovery ladder" subtitle="What clears as the streak grows">
+          <Card hideInfo title="Recovery ladder" subtitle="What clears as the streak grows">
             <ol className="relative ml-3 space-y-3 border-l border-line-strong pl-5">
               {STREAK_MILESTONES.map((m) => {
                 const reached = stats.current >= m.day
                 const isNext = nextBenefit?.day === m.day
                 return (
                   <li key={m.day} className="relative">
+                    {/* `crust` is the light-on-dark half of a saturated fill.
+                        On the neutral `surface0` chip of an unreached
+                        milestone it was dark-on-dark and failed contrast — the
+                        day numbers you are counting towards, unreadable. Third
+                        instance of this exact pairing in the cluster, so it is
+                        a pattern rather than a slip: a foreground chosen for
+                        one background and then applied to all three. */}
                     <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-pill text-micro"
-                      style={{ background: reached ? cat('green') : isNext ? cat('teal') : cat('surface0'), color: cat('crust') }}>
+                      style={
+                        reached ? { background: cat('green'), color: cat('crust') }
+                          : isNext ? { background: cat('teal'), color: cat('crust') }
+                            : { background: cat('surface0'), color: cat('text') }
+                      }>
                       {reached ? <Icon as={Check} size="sm" /> : m.day}
                     </span>
                     <div className="flex items-baseline gap-2">
@@ -651,7 +662,7 @@ export function NoFap() {
           </Card>
 
           {/* Relapse log */}
-          <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}>
+          <Card hideInfo title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}>
             {s.relapses.length === 0 ? (
               <Empty>No resets logged. Keep going.</Empty>
             ) : (
@@ -682,10 +693,9 @@ export function NoFap() {
  * Neutral fill for urges, and the reset marks carry the only colour, because
  * they are the thing you are looking for.
  */
-function PairedSparkline({ weeks, relapses, today }: {
+function PairedSparkline({ weeks, relapses }: {
   weeks: { weekStart: string; count: number }[]
   relapses: { date: string }[]
-  today: string
 }) {
   const max = Math.max(1, ...weeks.map((w) => w.count))
   const resetsIn = (weekStart: string) => {
@@ -708,13 +718,24 @@ function PairedSparkline({ weeks, relapses, today }: {
               {resets > 0 && (
                 <span className="mx-auto mb-0.5 block h-1.5 w-1.5 rounded-pill" style={{ background: cat('red') }} />
               )}
-              <div className="rounded-t bg-ink-3" style={{ height: `${Math.max(2, (w.count / max) * 100)}%` }} />
+              {/* A zero week draws a visible stub, not a 2%-of-96px hairline.
+                  At `Math.max(2, …)` an empty chart rendered ~2px of `ink-3`
+                  under a baseline and read as a chart that had failed to draw
+                  — the frame was there and said nothing. The stub is the
+                  lighter inset tier so a real one-urge week still reads as
+                  taller and darker than "no urges". */}
+              <div
+                className={`rounded-t ${w.count > 0 ? 'bg-ink-3' : 'bg-ink-2'}`}
+                style={{ height: w.count > 0 ? `${Math.max(6, (w.count / max) * 100)}%` : '6px' }}
+              />
             </div>
           )
         })}
       </div>
       <p className="mt-1 text-micro text-fg-2">
-        Bars are urges resisted per week{today ? '' : ''} · a dot marks a week with a reset
+        {weeks.every((w) => w.count === 0)
+          ? 'No urges logged yet · each column is a week, and bars grow as you log them'
+          : 'Bars are urges resisted per week · a dot marks a week with a reset'}
       </p>
     </div>
   )

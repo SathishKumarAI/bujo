@@ -31,11 +31,16 @@ try {
 }
 
 const BASE = process.env.BUJO_URL ?? 'http://localhost:4173'
-// Nutrition and Coaching added with the Body-cluster restructure: they are new
-// surfaces, and a gate that does not visit a page cannot vouch for it. Recovery
-// is deliberately absent — it is behind an opt-in setting, so the sidebar entry
-// is not there to click on a default journal.
-const VIEWS = ['Today', 'Plan', 'Trackers', 'Fitness', 'Nutrition', 'Coaching', 'Collections', 'Reading', 'Insights', 'Goals']
+// The whole Body cluster, added with its restructure: a gate that does not
+// visit a page cannot vouch for it.
+//
+// Recovery was left out at first on the reasoning that it sits behind an opt-in
+// setting. That was wrong — `nofapEnabled` DEFAULTS to true, so the sidebar
+// entry is there on a fresh journal and always was. Worth remembering as a
+// shape of mistake: the exclusion was argued from the code's shape rather than
+// checked against the rendered page, which is the same error the gate exists to
+// prevent.
+const VIEWS = ['Today', 'Plan', 'Trackers', 'Fitness', 'Nutrition', 'Recovery', 'Coaching', 'Collections', 'Reading', 'Insights', 'Goals']
 
 const browser = await chromium.launch()
 // An explicit context, not `browser.newPage()`: @axe-core/playwright refuses a

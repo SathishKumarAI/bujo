@@ -474,3 +474,76 @@ Full record: `docs/COLLAPSE-PATTERN.md`. Decisions: D-42, D-43, D-44.
 **Deliberate gap:** Trackers' category rows get the rotating caret but no body
 animation — their body is a run of `<tr>`s, which cannot be wrapped in an
 animating element without breaking the table grid.
+
+---
+
+## L. Fitness IA restructure — what's left after the pass (branch `feat/activity-registry`, 2026-08-03)
+
+The restructure brief was worked through end to end. Everything below is what
+was **deliberately not done**, plus what the pass turned up on the way. Nothing
+here is a half-finished edit — the branch verifies green and the tree is clean.
+
+**Shipped, for context (do not redo):** Sport as a third mode with Pickleball
+under it · content-left / form-right column swap, sticky, breakpoint at 960px
+container · History above Analytics, Analytics expanded · every stepper replaced
+with numeric inputs + a segmented 1–10 RPE · Effort and "How did it feel?"
+promoted to fields, calories alone behind "More details" · `Body / Fitness`
+breadcrumb · `?` and 💡 merged · ⌘K into the overflow · top bar down to four
+visible controls · sidebar hairlines + Settings/theme/account pinned to the
+bottom.
+
+### Decisions parked — these need you, not me
+
+- [ ] **L1 · The 1200px / 32px numbers.** The brief asked for `max-width: 1200px`
+  and 32px horizontal padding. The page is on the existing `--container-wide`
+  tier (**1180px**) with 24px padding from `#main`'s `sm:p-6`. Both are global
+  tokens, so moving them restyles all 25 views for a 20px difference. Deliberately
+  left alone. — *decide: move the tokens, or close this as won't-do*
+- [ ] **L2 · The five-tab row (`Train · Programs · Progress · Recovery ·
+  Coaching`).** Declined this pass, on your call. Commit `41f7469` had just
+  deleted the Fitness tab row on the grounds that it mixed a container, an
+  exercise, a routine, a sport and two support areas at one level; Coaching and
+  Recovery are sidebar entries, Programs/Progress are companion links, and
+  Pickleball is now an activity. Re-opening this means re-mixing those levels, or
+  moving the Pullups and HomeWorkout surfaces into panels. — *reopen only with a
+  decision on where those two surfaces live*
+- [ ] **L3 · The five-item sidebar (`Day · Plan · Body · Mind · Insights`).**
+  The brief's list does not match the real rail (15+ items in 6 groups). The
+  *intent* — dividers, and preferences pinned to the bottom — shipped. Cutting to
+  five destinations is a nav change well outside the Fitness page and would need
+  a home for Trackers, Challenges, Focus, Collections, Reading, Monthly, Goals
+  and Stats. — *decide before anyone starts it*
+- [ ] **L4 · Book mode is the "outer card" the brief complained about.** The
+  rounded frame wrapping the page is `.book` / `.book-inner`, a user setting
+  (overflow menu → "Toggle book frame"), not page chrome. The contract pages are
+  designed against a flat background. — *decide: leave it as opt-in, or have the
+  page-contract views opt out of the frame*
+
+### Found on the way — small, unowned
+
+- [ ] **L5 · `StatBar` truncates the "Next up" fact.** On Cardio with the target
+  met it renders `Target met — anything you li…` at 1440px. The fact strings are
+  written in `views/Fitness.tsx` (`NEXT`), the truncation is `truncate` in
+  `components/page/StatBar.tsx`. Either shorten the copy or let that one fact
+  wrap.
+- [ ] **L6 · `npm run a11y` cannot see the new "More details" disclosure.** It is
+  collapsed by default, so the Calories field inside it was never scanned — the
+  same blind spot that shipped a critical `select-name` violation in K9. Re-run
+  the gate with it open before trusting the clean report. (Low risk: it is one
+  labelled input.)
+- [ ] **L7 · The `sport` activity was relabelled `Sport` → `Other sport`** so it
+  reads sensibly next to Pickleball inside the Sport mode. `normalizeActivity`
+  still maps the legacy `'Sport'` string, and tests cover it, but no one has
+  looked at a real journal that contains those rows.
+
+### Process traps this pass hit
+
+- **`.claude/worktrees/today-ux` was serving 5191** while this branch was being
+  worked in the main tree — the documented dev-server trap, live, and it is why
+  the brief describes a Fitness page three commits out of date. That worktree's
+  branch has no `src/components/page/` at all. 5191 has since been restarted from
+  this worktree; the today-ux server is down if you still want it.
+- **Two sessions edited this tree at the same time.** Builds caught half-written
+  files twice (`NumField.tsx` mid-extract, `ModeCopy` mid-field-add) and reported
+  errors that vanished on re-run. If a gate fails on something that looks
+  impossible, re-run it before debugging it.

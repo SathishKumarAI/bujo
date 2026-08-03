@@ -13,8 +13,7 @@ export function UrgeTrendCard({ urgeTrend }: { urgeTrend: Trend }) {
   return (
     <Card
       title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <Icon as={TrendDown} size="md" className="text-green" /> : urgeTrend.direction === 'up' ? <Icon as={TrendUp} size="md" className="text-peach" /> : <Icon as={PersonSimpleRun} size="md" className="text-fg-2" />} Urge trend</span>}
-      subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}
-      help="Resisted urges bucketed into the last 8 weeks. A falling line is hard evidence that cravings genuinely weaken with abstinence — the brain re-regulates and the waves get smaller.">
+      subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}>
       <div className="h-40 w-full" role="img" aria-label={`Weekly urge counts, oldest to newest: ${urgeTrend.weeks.map((w) => w.count).join(', ')}`}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={urgeTrend.weeks} margin={{ top: 6, right: 8, bottom: 0, left: -24 }}>
