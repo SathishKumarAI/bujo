@@ -121,7 +121,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
             <div className="h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
           </div>
           <div className="mt-2 flex gap-4 text-label">
-            <span className="text-peach">🔥 {streak} streak</span>
+            <span className="inline-flex items-center gap-1 text-peach"><Icon as={Flame} size="sm" /> {streak} streak</span>
             <span className="text-fg-2">Day {day} of {c.durationDays}</span>
           </div>
         </div>

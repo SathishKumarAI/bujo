@@ -2,11 +2,13 @@
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime'
 
-export const TIME_SLOTS: { id: TimeOfDay; label: string; emoji: string }[] = [
-  { id: 'morning', label: 'Morning', emoji: '🌅' },
-  { id: 'afternoon', label: 'Afternoon', emoji: '☀️' },
-  { id: 'evening', label: 'Evening', emoji: '🌙' },
-  { id: 'anytime', label: 'Anytime', emoji: '🕐' },
+// Icons live in `components/glyphs.ts` (SLOT_GLYPHS): this module stays pure
+// data so it can be unit-tested without a renderer.
+export const TIME_SLOTS: { id: TimeOfDay; label: string }[] = [
+  { id: 'morning', label: 'Morning' },
+  { id: 'afternoon', label: 'Afternoon' },
+  { id: 'evening', label: 'Evening' },
+  { id: 'anytime', label: 'Anytime' },
 ]
 
 export const slotMeta = (id: TimeOfDay) => TIME_SLOTS.find((s) => s.id === id) ?? TIME_SLOTS[3]

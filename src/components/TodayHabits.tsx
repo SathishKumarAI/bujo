@@ -1,4 +1,4 @@
-import { Note } from '@/components/icons'
+import { Note, Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -6,6 +6,7 @@ import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
+import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
 
 /**
@@ -53,7 +54,7 @@ export function TodayHabits() {
           className="inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
-          {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
+          {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
         </button>
         <button
@@ -100,7 +101,7 @@ export function TodayHabits() {
             <div key={s}>
               {grouped && (
                 <p className="mb-1.5 flex items-center gap-1.5 text-label font-medium text-fg-2">
-                  <span>{m.emoji}</span> {m.label}
+                  <Icon as={slotGlyph(s)} size="sm" /> {m.label}
                   {sBuild.length > 0 && <span className="text-fg-2">· {sDone}/{sBuild.length}</span>}
                 </p>
               )}

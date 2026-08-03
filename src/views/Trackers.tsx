@@ -9,6 +9,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
+import { slotGlyph } from '../components/glyphs'
 import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
@@ -437,7 +438,7 @@ function TodayStrip({
                 color: on ? cat('text') : cat('subtext0'),
               }}
             >
-              <span>{h.avoid ? '🚫' : (h.emoji ?? '●')}</span>
+              <span>{h.avoid ? <Icon as={Prohibit} size="sm" /> : (h.emoji ?? '●')}</span>
               {h.name}
               {h.avoid && <span className="text-micro" style={{ color: on ? cat('red') : cat('green') }}>{on ? 'slip' : 'clean'}</span>}
               {numeric && !h.avoid && <span className="text-fg-2">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
@@ -483,7 +484,7 @@ function RoutineTimeline({
         return (
           <div key={slot}>
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="text-body font-medium text-fg-1">{meta.emoji} {meta.label}</span>
+              <span className="inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={slotGlyph(slot)} size="sm" /> {meta.label}</span>
               {slot === now && <Pill color="mauve" size="micro">now</Pill>}
               <span className="ml-auto text-label text-fg-2">{done}/{scheduled.length || list.length}</span>
             </div>
@@ -510,7 +511,7 @@ function RoutineTimeline({
                           borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                           background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
                         }}
-                      >{on ? (h.avoid ? '🚫' : '') : (h.emoji ?? '○')}</button>
+                      >{on ? (h.avoid ? <Icon as={Prohibit} size="sm" /> : '') : (h.emoji ?? '○')}</button>
                       <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
                         <span className={`block truncate text-body ${on && !h.avoid ? 'text-fg-1' : 'text-fg-1'}`}>{h.name}</span>
                         {h.cue && <span className="block truncate text-caption text-fg-2">{h.cue}</span>}
@@ -868,7 +869,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
             <span className="text-body text-fg-1">Time of day</span>
             <div className="flex flex-wrap justify-end gap-1.5">
               {TIME_SLOTS.map((s) => (
-                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ timeOfDay: s.id })}>{s.emoji} {s.label}</Button>
+                <Button key={s.id} variant={(habit.timeOfDay ?? 'anytime') === s.id ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ timeOfDay: s.id })}><Icon as={slotGlyph(s.id)} size="sm" /> {s.label}</Button>
               ))}
             </div>
           </div>

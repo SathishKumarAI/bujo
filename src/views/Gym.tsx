@@ -1,5 +1,4 @@
-import { ArrowCounterClockwise, ArrowsVertical, Barbell, CaretDoubleDown, CaretDoubleUp, CaretDown, CaretUp, ChartBar, Check, Crosshair, Flame, Footprints, Gauge, Person, PersonSimpleRun, Plus, Stack, Trophy, Video, X } from '@/components/icons'
-import type { Icon as IconGlyph } from '@/components/icons'
+import { ArrowCounterClockwise, Barbell, CaretDown, CaretUp, ChartBar, Check, Crosshair, Gauge, Plus, Stack, Trophy, Video, X } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -12,6 +11,7 @@ import { Page } from '../components/shell/Page'
 import { MuscleMap } from '../components/MuscleMap'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
+import { splitGlyph } from '../components/glyphs'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
@@ -43,11 +43,6 @@ interface SetRow {
   reps: string
   rpe?: string
   kind?: 'warmup' | 'working' | 'drop'
-}
-
-const SPLIT_ICONS: Record<string, IconGlyph> = {
-  push: CaretDoubleUp, pull: CaretDoubleDown, legs: Footprints,
-  upper: Person, lower: ArrowsVertical, full: Flame, other: PersonSimpleRun,
 }
 
 export function Gym() {
@@ -325,7 +320,7 @@ export function Gym() {
         {sessionOpen && (<>
         <div className="mb-3 flex flex-wrap gap-2">
           {SPLITS.filter((s) => s.id !== 'other').map((s) => {
-            const Icon = SPLIT_ICONS[s.id] ?? PersonSimpleRun
+            const Icon = splitGlyph(s.id)
             return (
               <button
                 key={s.id}
@@ -692,7 +687,7 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
         <ul className="space-y-1 text-body">
           {routines.map((r) => {
             const m = splitMeta(r.split)
-            const Icon = SPLIT_ICONS[r.split] ?? PersonSimpleRun
+            const Icon = splitGlyph(r.split)
             return (
               <li key={r.id} className="group flex items-center justify-between">
                 <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-fg-1 hover:text-fg-1" title="Load into session">
