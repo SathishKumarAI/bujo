@@ -19,6 +19,26 @@ describe('tracker visualisations', () => {
     expect(c.ratio).toBeCloseTo(0.5)
   })
 
+  it('dayCompletion counts a clean day on a quit habit as done, not a slip', () => {
+    const d = emptyJournal()
+    // `b` is a quit habit: logging it means you gave in. Staying off it is the
+    // win, so a day with no log at all should be 2/2, not 1/2.
+    d.habits = [habit('a'), { ...habit('b'), avoid: true }]
+    d.habitLog = { '2026-06-10': ['a'] }
+    const c = dayCompletion(d, '2026-06-10')
+    expect(c).toMatchObject({ done: 2, total: 2 })
+    expect(c.ratio).toBeCloseTo(1)
+  })
+
+  it('dayCompletion counts a slip on a quit habit as not done', () => {
+    const d = emptyJournal()
+    d.habits = [habit('a'), { ...habit('b'), avoid: true }]
+    d.habitLog = { '2026-06-10': ['a', 'b'] } // did `a`, slipped on `b`
+    const c = dayCompletion(d, '2026-06-10')
+    expect(c).toMatchObject({ done: 1, total: 2 })
+    expect(c.ratio).toBeCloseTo(0.5)
+  })
+
   it('weekdayConsistency returns 7 values in 0..1', () => {
     const d = emptyJournal()
     d.habits = [habit('a')]

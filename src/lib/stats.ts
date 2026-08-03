@@ -237,7 +237,13 @@ export function dayCompletion(data: JournalData, date: string): { done: number; 
   )
   if (scheduled.length === 0) return { done: 0, total: 0, ratio: null }
   const log = data.habitLog[date] ?? []
-  const done = scheduled.filter((h) => log.includes(h.id)).length
+  // Polarity. You tick an avoid habit on the day you gave in, so for those the
+  // win is *absence* from the log. Counting the tick as "done" meant a relapse
+  // scored a perfect day and a sober one dragged the ratio down — and this
+  // number drives the week strip, the "n habits left" chip and
+  // `weekdayConsistency`, so the error was spread across most of the app's
+  // sense of how a day went.
+  const done = scheduled.filter((h) => (h.avoid ? !log.includes(h.id) : log.includes(h.id))).length
   return { done, total: scheduled.length, ratio: done / scheduled.length }
 }
 
