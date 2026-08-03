@@ -32,15 +32,25 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
   const split = useMemo(() => splitMeta(nextSplit(data)), [data])
 
   return (
-    <div className="mx-auto max-w-read space-y-4">
-      {/* 1) Primary navigation between the two fitness sub-views. */}
-      <div className="flex w-full gap-1 rounded-xl bg-secondary p-1">
+    // Width has to follow the active tab, because each child renders its own
+    // <Page>: Cardio a single `read` column, Strength a `wide` grid with a rail.
+    // This wrapper used to be `max-w-read` for both, so Strength's Page was
+    // capped at 820px and its 416px rail left the *content* 384px — the rail was
+    // wider than the column it supports.
+    <div className={`mx-auto space-y-4 ${tab === 'strength' ? 'max-w-[84rem]' : 'max-w-read'}`}>
+      {/* 1) Primary navigation between the two fitness sub-views. Toggle
+             buttons with `aria-pressed`, not bare buttons: this is the most
+             important control on the page and it announced no state at all.
+             (Not `role="tab"` — that would promise arrow-key tablist
+             semantics this control does not implement.) */}
+      <div className="flex w-fit gap-1 rounded-card bg-secondary p-1">
         {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-control py-2 text-body font-medium transition-colors ${
-              tab === id ? 'bg-brand-wash font-medium text-brand max-md:min-h-[44px]' : 'text-fg-2 hover:text-fg-1 max-md:min-h-[44px]'
+            aria-pressed={tab === id}
+            className={`inline-flex items-center justify-center gap-2 rounded-control px-5 py-2 text-body font-medium transition-colors ${
+              tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
             <AppIcon as={Icon} size="md" active={tab === id} /> {label}

@@ -78,8 +78,9 @@ export function TodayHabits({ date, variant = 'pills' }: { date?: string; varian
           aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
           aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="grid shrink-0 place-items-center hover:text-mauve max-md:min-h-[44px] max-md:min-w-[44px]"
-          style={{ color: hasNote ? cat('mauve') : cat('overlay0') }}
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-pill opacity-45 max-md:min-h-[44px] max-md:min-w-[44px] transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          data-note={hasNote || open ? '' : undefined}
+          style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >
           <Icon as={Note} size="sm" />
         </button>

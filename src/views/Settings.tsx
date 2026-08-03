@@ -144,12 +144,15 @@ export function Settings() {
     reader.readAsText(file)
   }
 
-  const tabClass = 'gap-1.5 whitespace-nowrap rounded-card border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
+  // these five pills to 209px each across the wide tier. They are labels, not
+  // a segmented control — they should be as wide as their text.
+  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-control border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
     <Page width="wide">
       {/* Designed header · sets the page apart from a plain card stack. */}
       <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-card" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
           <Icon as={SlidersHorizontal} size="lg" />
         </span>
         <div className="min-w-0">

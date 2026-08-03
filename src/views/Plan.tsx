@@ -136,7 +136,7 @@ export function Plan() {
               <Button
                 variant="secondary"
                 onClick={() => overdue.forEach((e) => migrateEntry(e.id, today))}
-                className="press-3d rounded-lg"
+                className="press-3d rounded-control"
               >
                 Move all {overdue.length} → Today
               </Button>

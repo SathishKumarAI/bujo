@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "a11y": "node scripts/a11y-axe.mjs",
     "build": "tsc -b && vite build",
     "coverage": "vitest run --coverage",
+    "design": "node scripts/check-design-system.mjs",
     "dev": "vite",
     "icons": "node scripts/build-icons.mjs",
     "lint": "eslint .",
@@ -35,7 +37,6 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-resizable-panels": "^4.11.2",
-    "react-router-dom": "^7.18.2",
     "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
