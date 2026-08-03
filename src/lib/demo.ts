@@ -104,6 +104,30 @@ export function generateDemoData(today = todayISO()): JournalData {
     { id: uid('rec'), text: 'Weekly review', type: 'task', important: false, freq: 'weekly', weekdays: [0], startedOn: today },
   ]
 
+  // ── Plan view: tasks with a real migration history ──────────────────────
+  // "Chronically deferred" only appears once the same task has been pushed
+  // forward more than once, which the generator never did — so the card that
+  // carries the whole point of migration was invisible in the demo. Each of
+  // these is one thread: `hops` copies marked migrated and threaded back to
+  // the root by originId, then a still-open copy landing a few days overdue.
+  const DEFERRED: { text: string; hops: number; important?: boolean }[] = [
+    { text: 'Book the dentist', hops: 4, important: true },
+    { text: 'Fix the shed door', hops: 3 },
+    { text: 'Sort the photo backlog', hops: 2 },
+  ]
+  DEFERRED.forEach(({ text, hops, important = false }, i) => {
+    const rootId = uid('e')
+    const base = { type: 'task' as const, text, important, memory: false, tags: [] as string[] }
+    let date = addDays(today, -(hops * 3 + 4 + i))
+    entries.push({ ...base, id: rootId, date, status: 'migrated', createdAt: date })
+    for (let h = 1; h < hops; h++) {
+      date = addDays(date, 3)
+      entries.push({ ...base, id: uid('e'), date, status: 'migrated', originId: rootId, createdAt: date })
+    }
+    date = addDays(date, 3)
+    entries.push({ ...base, id: uid('e'), date, status: 'open', originId: rootId, createdAt: date })
+  })
+
   j.monthly = [{ ym: ymOf(today), location: 'Moab, Utah 🏜️', goals: '• Finish the trail map\n• Read 2 books\n• Call family weekly', photoCaption: 'Sunrise over the canyon' }]
   j.birthdays = [
     { id: uid('b'), name: 'Baron', month: 3, day: 14 },
