@@ -31,7 +31,11 @@ try {
 }
 
 const BASE = process.env.BUJO_URL ?? 'http://localhost:4173'
-const VIEWS = ['Today', 'Plan', 'Trackers', 'Fitness', 'Collections', 'Reading', 'Insights', 'Goals']
+// Nutrition and Coaching added with the Body-cluster restructure: they are new
+// surfaces, and a gate that does not visit a page cannot vouch for it. Recovery
+// is deliberately absent — it is behind an opt-in setting, so the sidebar entry
+// is not there to click on a default journal.
+const VIEWS = ['Today', 'Plan', 'Trackers', 'Fitness', 'Nutrition', 'Coaching', 'Collections', 'Reading', 'Insights', 'Goals']
 
 const browser = await chromium.launch()
 // An explicit context, not `browser.newPage()`: @axe-core/playwright refuses a

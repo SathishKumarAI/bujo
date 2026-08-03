@@ -1,4 +1,4 @@
-import { activitiesForMode, asks, labelOf, type ActivityKey, type Mode } from '../../domain/activities'
+import { activitiesForMode, asks, labelOf, MODE_COPY, type ActivityKey, type Mode } from '../../domain/activities'
 import { Input, Textarea } from '../ui'
 import { Button } from '../ui/button'
 import { Stepper } from '../fields/Stepper'
@@ -49,7 +49,7 @@ export function ActivityForm({
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-heading font-medium text-fg-1">
-          {mode === 'cardio' ? 'Log a cardio session' : 'Log a strength session'}
+          {MODE_COPY[mode].formHeading}
         </h2>
         {right}
       </div>

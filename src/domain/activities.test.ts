@@ -11,7 +11,7 @@ describe('registry shape', () => {
   it('every activity declares at least one required field', () => {
     for (const k of KEYS) expect(ACTIVITIES[k].required.length).toBeGreaterThan(0)
   })
-  it('both modes have at least one activity, so a mode switch always has a target', () => {
+  it('every mode has at least one activity, so a mode switch always has a target', () => {
     for (const m of MODES) expect(activitiesForMode(m).length).toBeGreaterThan(0)
   })
   it('activitiesForMode returns only that mode', () => {
@@ -29,6 +29,7 @@ describe('modeOf', () => {
     expect(modeOf('run')).toBe('cardio')
     expect(modeOf('push')).toBe('strength')
     expect(modeOf('pullups')).toBe('strength')
+    expect(modeOf('pickleball')).toBe('sport')
   })
   it('falls back to cardio for an unknown key rather than throwing', () => {
     // A journal we cannot classify must still render something loggable.
@@ -49,6 +50,13 @@ describe('asks — the only sanctioned field-visibility test', () => {
     for (const [key] of activitiesForMode('strength')) {
       expect(asks(key, 'sets')).toBe(true)
       expect(asks(key, 'distanceKm')).toBe(false)
+    }
+  })
+  it('asks a sport for its duration and nothing else — a game has no distance', () => {
+    for (const [key] of activitiesForMode('sport')) {
+      expect(asks(key, 'durationMin')).toBe(true)
+      expect(asks(key, 'distanceKm')).toBe(false)
+      expect(asks(key, 'sets')).toBe(false)
     }
   })
 })

@@ -10,7 +10,7 @@ import {
   ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
   draftOf, emptyDraft, workoutOf, type ActivityDraft,
 } from '../components/page'
-import { isActivityKey, labelOf, modeOf, type Mode } from '../domain/activities'
+import { isActivityKey, labelOf, MODE_COPY, MODES, modeOf, modeSegments, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
 import { useNav } from '../components/shell/nav'
 import { bestOf, sessionsInMode, totalTime } from '../domain/sessions'
@@ -18,8 +18,7 @@ import { displayDistance } from '../lib/units'
 import { nextSplit, splitMeta, weeklyActiveMinutes } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
 import type { Workout } from '../lib/types'
-
-const MODES = ['cardio', 'strength'] as const
+import type { ViewId } from '../components/shell/viewChrome'
 
 /**
  * FITNESS · the reference implementation of the page contract.
@@ -92,17 +91,27 @@ export function Fitness() {
   }).length
   const last = sessions[0]
 
-  const facts = mode === 'cardio'
-    ? [
-      { label: 'This week', value: `${minutes} / ${goal} min` },
-      { label: 'Next up', value: minutes >= goal ? 'Target met — anything you like' : `${Math.max(0, goal - minutes)} min to go` },
-      { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
-    ]
-    : [
-      { label: 'This week', value: `${thisWeekSessions} ${thisWeekSessions === 1 ? 'session' : 'sessions'}` },
-      { label: 'Next up', value: `${split.label} day` },
-      { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
-    ]
+  // Keyed off the mode rather than branched on it, so the two are impossible to
+  // let drift apart and a third mode would be one more entry, not one more
+  // ternary at every fact.
+  const sessionCount = `${thisWeekSessions} ${thisWeekSessions === 1 ? 'session' : 'sessions'}`
+  const WEEK: Record<Mode, string> = {
+    cardio: `${minutes} / ${goal} min`,
+    strength: sessionCount,
+    // A game is counted, not measured against a minutes target — you play when
+    // there is a game, and a "you owe 40 minutes" nag would be nonsense.
+    sport: thisWeekSessions === 1 ? '1 game' : `${thisWeekSessions} games`,
+  }
+  const NEXT: Record<Mode, string> = {
+    cardio: minutes >= goal ? 'Target met — anything you like' : `${Math.max(0, goal - minutes)} min to go`,
+    strength: `${split.label} day`,
+    sport: 'Whenever the court is free',
+  }
+  const facts = [
+    { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
+    { label: 'Next up', value: NEXT[mode] },
+    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
+  ]
 
   // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────
   const best = bestOf(sessions, draft.activity, unit)
@@ -131,7 +140,7 @@ export function Fitness() {
         <StatBar
           mode={mode}
           onModeChange={switchMode}
-          segments={[{ value: 'cardio' as Mode, label: 'Cardio' }, { value: 'strength' as Mode, label: 'Strength' }]}
+          segments={modeSegments()}
           facts={facts}
         />
       }
@@ -223,13 +232,19 @@ export function Fitness() {
  * opening the pull-up program is part of acting on a pull-up session rather
  * than reviewing one. It is not a zone 4, and it is never more than one link.
  */
+const COMPANION: Record<string, { view: ViewId; label: string }> = {
+  pullups: { view: 'pullups', label: 'Pull-up program & progressions' },
+  homeWorkout: { view: 'homeworkout', label: 'Bodyweight exercise library' },
+  pickleball: { view: 'pickleball', label: 'Pickleball record & matchups' },
+}
+/** Every strength activity shares one workshop, so it is keyed by mode. */
+const MODE_COMPANION: Partial<Record<Mode, { view: ViewId; label: string }>> = {
+  strength: { view: 'gym', label: 'Strength tools · programs, anatomy, plates' },
+}
+
 function CompanionTool({ activity, mode }: { activity: string; mode: Mode }) {
   const navigate = useNav()
-  const tool = activity === 'pullups' ? { view: 'pullups' as const, label: 'Pull-up program & progressions' }
-    : activity === 'homeWorkout' ? { view: 'homeworkout' as const, label: 'Bodyweight exercise library' }
-      : activity === 'pickleball' ? { view: 'pickleball' as const, label: 'Pickleball record & matchups' }
-        : mode === 'strength' ? { view: 'gym' as const, label: 'Strength tools · programs, anatomy, plates' }
-          : null
+  const tool = COMPANION[activity] ?? MODE_COMPANION[mode]
   if (!tool) return null
   return (
     <Button variant="ghost" onClick={() => navigate(tool.view)} className="mt-2 h-auto justify-start p-0 text-label">

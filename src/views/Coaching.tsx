@@ -2,7 +2,7 @@ import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, ShieldWarning, 
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Pill } from '../components/ui'
+import { Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { cat } from '../lib/colors'
@@ -113,7 +113,21 @@ export function Coaching() {
                 <div className="flex items-start gap-2.5 p-2.5">
                   <button onClick={() => toggleWeek(w.week)} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
                     className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill text-caption font-medium"
-                    style={{ background: isDone ? cat('green') : isNow ? cat('mauve') : cat('surface1'), color: cat('crust') }}>
+                    // `crust` belongs on a saturated fill, where it is the
+                    // light-on-dark half of the pair. On the plain `surface1`
+                    // chip of an untouched week it was dark-on-dark and failed
+                    // contrast outright — invisible, on the numbers that tell
+                    // you which week you are looking at.
+                    //
+                    // It went unseen because this list used to live inside a
+                    // collapsed card, and `npm run a11y` walks the rendered
+                    // page: axe never opened the fold. Promoting the timeline
+                    // to the signature visual is what surfaced it.
+                    style={
+                      isDone ? { background: cat('green'), color: cat('crust') }
+                        : isNow ? { background: cat('mauve'), color: cat('crust') }
+                          : { background: cat('surface1'), color: cat('text') }
+                    }>
                     {isDone ? <Icon as={Check} size="sm" /> : w.week}
                   </button>
                   <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
@@ -141,7 +155,9 @@ export function Coaching() {
       </section>
 
       {/* Skill ladder */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+</span>} subtitle="What to master at each level, in order" collapsible defaultCollapsed help="The skills that define each DUPR level. Master them in order — the soft game before the fast game.">
+      <section>
+        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+ <span className="text-fg-3">· What to master at each level, in order</span></h2>
+        <div className="mt-2">
         <div className="space-y-3">
           {ACADEMY_LEVELS.map((lvl) => (
             <div key={lvl.id} className="rounded-card border border-line bg-ink-0 p-3">
@@ -155,10 +171,13 @@ export function Coaching() {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </section>
 
       {/* Technique guide — the HOW for every shot */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible defaultCollapsed help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
+      <section>
+        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot <span className="text-fg-3">· Tap a shot for step-by-step how-to, cues & common mistakes</span></h2>
+        <div className="mt-2">
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
             <p className="mb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
@@ -200,10 +219,13 @@ export function Coaching() {
             </ul>
           </div>
         ))}
-      </Card>
+      </div>
+      </section>
 
       {/* Drill library */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library</span>} subtitle="By skill — tap a group" collapsible defaultCollapsed help="Concrete drills grouped by skill. Pick 1–2 per session; quality reps beat hours of casual play.">
+      <section>
+        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library <span className="text-fg-3">· By skill — tap a group</span></h2>
+        <div className="mt-2">
         <div className="space-y-2">
           {drillSkills.map((skill) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
@@ -222,10 +244,13 @@ export function Coaching() {
             )
           })}
         </div>
-      </Card>
+      </div>
+      </section>
 
       {/* Knee rehab / prehab (ACL & MCL) */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL</span>} subtitle="Prevent + recover — with or without equipment" collapsible defaultCollapsed help="Prehab builds a court-proof knee; rehab supports recovery in phases. Filter by what gear you have. General education, not medical advice — after an injury, follow your physio.">
+      <section>
+        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL <span className="text-fg-3">· Prevent + recover — with or without equipment</span></h2>
+        <div className="mt-2">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
             <button key={e} onClick={() => setEquip(e)} className="rounded-pill border px-2.5 py-1 text-label transition-colors"
@@ -256,10 +281,13 @@ export function Coaching() {
           )
         })}
         <p className="inline-flex items-start gap-1.5 rounded-control bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-      </Card>
+      </div>
+      </section>
 
       {/* Mental game */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game</span>} subtitle="The mindset that wins close games" collapsible defaultCollapsed help="Pickleball is won between the ears at every level. Pick one principle to focus on this week.">
+      <section>
+        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game <span className="text-fg-3">· The mindset that wins close games</span></h2>
+        <div className="mt-2">
         <ul className="grid gap-2 sm:grid-cols-2">
           {MINDSET.map((m) => (
             <li key={m.title} className="rounded-card border border-line bg-ink-0 p-2.5">
@@ -268,7 +296,8 @@ export function Coaching() {
             </li>
           ))}
         </ul>
-      </Card>
+      </div>
+      </section>
       </>}
     />
   )

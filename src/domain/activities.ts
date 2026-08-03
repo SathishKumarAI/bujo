@@ -19,8 +19,16 @@
  * derives it cannot.
  */
 
-/** Which shape of training this is. Derived, never persisted. */
-export type Mode = 'cardio' | 'strength'
+/**
+ * Which shape of training this is. Derived, never persisted.
+ *
+ * `sport` is the third shape and not a flavour of cardio: a game is bounded by
+ * a scoreboard rather than a distance, so it asks for duration and nothing
+ * else. Pickleball sat under Cardio and was offered a distance field it could
+ * never sensibly fill — the same field-visibility mismatch this registry
+ * exists to prevent, one level up.
+ */
+export type Mode = 'cardio' | 'strength' | 'sport'
 
 /** The numeric/structured fields an activity needs to be worth logging. */
 export type RequiredField = 'durationMin' | 'distanceKm' | 'sets'
@@ -44,6 +52,9 @@ export interface Activity {
  * here because the retired `<select>` offered them and journals already hold
  * them. Dropping them would have made real history unselectable and unlabelled.
  *
+ * Order within a mode is the order the select offers, and the first entry is
+ * what a mode switch lands on — so `pickleball` leads Sport deliberately.
+ *
  * `strength` is the catch-all for a lifting session with no split recorded.
  * Legacy rows exist in exactly that state and guessing push/pull/legs for them
  * would invent a training day that never happened.
@@ -55,11 +66,11 @@ export const ACTIVITIES = {
   row:         { label: 'Row',          mode: 'cardio',   required: ['durationMin', 'distanceKm'], best: 'distance' },
   walk:        { label: 'Walk',         mode: 'cardio',   required: ['durationMin', 'distanceKm'], best: 'distance' },
   hike:        { label: 'Hike',         mode: 'cardio',   required: ['durationMin', 'distanceKm'], best: 'distance' },
-  pickleball:  { label: 'Pickleball',   mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
   yoga:        { label: 'Yoga',         mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
   hiit:        { label: 'HIIT',         mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
-  sport:       { label: 'Sport',        mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
   other:       { label: 'Other',        mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
+  pickleball:  { label: 'Pickleball',   mode: 'sport',    required: ['durationMin'],               best: 'duration' },
+  sport:       { label: 'Other sport',  mode: 'sport',    required: ['durationMin'],               best: 'duration' },
   push:        { label: 'Push day',     mode: 'strength', required: ['sets'],                      best: 'volume' },
   pull:        { label: 'Pull day',     mode: 'strength', required: ['sets'],                      best: 'volume' },
   legs:        { label: 'Leg day',      mode: 'strength', required: ['sets'],                      best: 'volume' },
@@ -73,7 +84,40 @@ export type ActivityKey = keyof typeof ACTIVITIES
 /** Filled less than half the time · these live behind one "More" disclosure. */
 export const OPTIONAL_FIELDS = ['calories', 'rpe', 'notes'] as const
 
-export const MODES: Mode[] = ['cardio', 'strength']
+export const MODES: Mode[] = ['cardio', 'strength', 'sport']
+
+/**
+ * Everything that changes with the mode, in one place.
+ *
+ * The contract requires the copy and the orientation facts to follow the mode —
+ * "Log a cardio session", not "Log a workout" — and the obvious way to write
+ * that is a ternary at each call site. That is the same shape as the field-
+ * visibility bug this registry exists to prevent: a literal mode comparison
+ * scattered across components, where adding a third mode means finding every
+ * one of them.
+ *
+ * So the copy lives here too, and the sweep grep for literal mode comparisons
+ * stays meaningful: a hit in a component is now a genuine finding rather than
+ * one of a dozen legitimate ones nobody reads past. (This comment avoids
+ * spelling the literal for the same reason.)
+ */
+export interface ModeCopy {
+  label: string
+  /** Heading above the log form. */
+  formHeading: string
+  /** Zone-1 label for the weekly-progress fact. */
+  weekLabel: string
+}
+
+export const MODE_COPY: Record<Mode, ModeCopy> = {
+  cardio: { label: 'Cardio', formHeading: 'Log a cardio session', weekLabel: 'This week' },
+  strength: { label: 'Strength', formHeading: 'Log a strength session', weekLabel: 'This week' },
+  sport: { label: 'Sport', formHeading: 'Log a game', weekLabel: 'This week' },
+}
+
+/** The mode segments for a StatBar, in registry order. */
+export const modeSegments = (): { value: Mode; label: string }[] =>
+  MODES.map((m) => ({ value: m, label: MODE_COPY[m].label }))
 
 const KEYS = Object.keys(ACTIVITIES) as ActivityKey[]
 
