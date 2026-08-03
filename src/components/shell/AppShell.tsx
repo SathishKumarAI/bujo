@@ -12,6 +12,7 @@ import { ShortcutHelp } from '../ShortcutHelp'
 import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
+import { useHeaderHeight } from './useHeaderHeight'
 import type { ViewId } from './viewChrome'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
@@ -41,6 +42,7 @@ export function AppShell({
   const [helpOpen, setHelpOpen] = useState(false)
   const { day } = useCursor()
   const isMobile = useDevice() === 'mobile'
+  useHeaderHeight()
 
   // Single-key shortcuts. ⌘K (palette) and ⌘Z (undo) are chords, so they stay
   // where they are — these are the bare keys, which need the typing/dialog

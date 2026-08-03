@@ -7,6 +7,28 @@ import { Button } from '../components/ui/button'
 import { Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
+import {
+  ActivityForm, CalendarHeatmap, DisclosureRow, EmptyFrame, StatBar, SummaryStrip,
+  useActivityDraft,
+} from '../components/page'
+import type { Mode } from '../domain/activities'
+import { addDays, todayISO } from '../lib/date'
+
+/**
+ * Heatmap sample with one deliberate outlier: a single 180-minute day among
+ * 25–40 minute ones. Under linear scaling every ordinary day collapses to the
+ * lightest step; under quartiles the shape of the habit survives. That contrast
+ * is the reason this sample is not just random noise.
+ */
+const demoHeat = (() => {
+  const today = todayISO()
+  const out: { date: string; value: number }[] = []
+  for (let i = 0; i < 84; i += 1) {
+    if (i % 3 === 1) continue // rest days
+    out.push({ date: addDays(today, -i), value: i === 12 ? 180 : 25 + ((i * 7) % 16) })
+  }
+  return out
+})()
 
 /**
  * `/kitchen-sink` — every primitive, variant and state on one page.
@@ -31,6 +53,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function KitchenSink() {
   const [seg, setSeg] = useState<'a' | 'b' | 'c'>('a')
   const [n, setN] = useState(3)
+  const [barMode, setBarMode] = useState<'cardio' | 'strength'>('cardio')
+  const [formMode, setFormMode] = useState<Mode>('cardio')
+  const { draft, patch, reset } = useActivityDraft('cardio')
   const { data, setSettings } = useJournal()
   const theme = data.settings.theme ?? 'mocha'
   const scale = data.settings.fontScale ?? 1
@@ -252,6 +277,106 @@ export function KitchenSink() {
 
       <Card title="Empty state">
         <Empty>Nothing logged yet. Add your first entry to see it here.</Empty>
+      </Card>
+
+      {/* PAGE-CONTRACT PRIMITIVES · every Body-cluster page is built from these
+          six and consumes them unmodified. Each is shown empty, typical and
+          overflowing, because the empty state is a design decision here rather
+          than an afterthought — a zone-3 visual that vanishes at zero data is
+          the bug this set was written to remove. */}
+      <Card title="StatBar · zone 1" subtitle="One bar, at most four facts, neutral active segment.">
+        <div className="space-y-4">
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Typical · mode toggle + three facts</p>
+            <StatBar
+              mode={barMode}
+              onModeChange={setBarMode}
+              segments={[{ value: 'cardio', label: 'Cardio' }, { value: 'strength', label: 'Strength' }]}
+              facts={[
+                { label: 'This week', value: '90 / 150 min' },
+                { label: 'Next up', value: 'Push day' },
+                { label: 'Last session', value: 'Tue' },
+              ]}
+            />
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Empty · no history yet</p>
+            <StatBar facts={[{ label: 'This week', value: '0 / 150 min' }, { label: 'Next up', value: 'Any session' }]} />
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Overflow · long values truncate, they never wrap the bar past 64px</p>
+            <StatBar
+              facts={[
+                { label: 'A very long fact label that will not fit', value: 'An equally unreasonable value' },
+                { label: 'Second', value: '1,234,567' },
+                { label: 'Third', value: 'Interval session — 8×400m' },
+                { label: 'Fourth', value: '42' },
+              ]}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="SummaryStrip · zone 3" subtitle="Exactly three tiles, inset surface, no border, “—” when empty.">
+        <div className="space-y-4">
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Typical</p>
+            <SummaryStrip items={[
+              { label: 'Sessions', value: 12 },
+              { label: 'Total time', value: '6h 20m' },
+              { label: 'Best pace', value: '7:42 /mi' },
+            ]} />
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Empty · an em dash, never a zero</p>
+            <SummaryStrip items={[
+              { label: 'Sessions', value: 0, empty: true },
+              { label: 'Total time', value: 0, empty: true },
+              { label: 'Best pace', value: 0, empty: true },
+            ]} />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="CalendarHeatmap · signature visual" subtitle="12 weeks, quartile intensity, renders its frame at zero data.">
+        <div className="space-y-4">
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Typical · one long session does not flatten the rest</p>
+            <CalendarHeatmap weeks={12} data={demoHeat} unit="min" />
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Empty · the grid still draws, which is the whole point</p>
+            <CalendarHeatmap weeks={12} data={[]} unit="min" />
+            <EmptyFrame>Log a session to start your history.</EmptyFrame>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="DisclosureRow" subtitle="One per page, at the bottom of the form, never above the fold.">
+        <DisclosureRow label="More">
+          <p className="text-body text-fg-2">Fields filled less than half the time live here.</p>
+        </DisclosureRow>
+      </Card>
+
+      <Card title="ActivityForm · zone 2" subtitle="Fields derive from the activity registry — switch the activity and watch them change.">
+        <ActivityForm
+          mode={formMode}
+          draft={draft}
+          onChange={patch}
+          onSubmit={() => {}}
+          unit={data.settings.distanceUnit}
+        />
+        <div className="mt-3 border-t border-line pt-3">
+          <Segmented
+            tone="neutral"
+            value={formMode}
+            onChange={(m) => { setFormMode(m); reset(m) }}
+            options={[{ value: 'cardio' as const, label: 'Cardio' }, { value: 'strength' as const, label: 'Strength' }]}
+          />
+          <p className="mt-1 text-caption text-fg-3">
+            Cardio → duration + distance. Pickleball → duration only. Strength → sets. No component decides this.
+          </p>
+        </div>
       </Card>
 
       <Card title="Container tiers" subtitle="Two maxima, one rhythm.">

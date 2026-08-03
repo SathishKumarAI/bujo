@@ -1,0 +1,59 @@
+/* ── Page contract layout ────────────────────────────────────────────────────
+   The three-zone shell every Body-cluster page is built on. Pages declare which
+   zone content belongs to; they never lay themselves out. Owned by
+   `components/page/PageLayout.tsx` — nothing else should use these classes.
+
+   Why a CONTAINER query and not a media query:
+
+   The sidebar collapses. A media query asks how wide the *viewport* is, which
+   does not change when the nav is hidden — so the layout would stay single
+   column on a wide screen with the sidebar closed, and, worse, would flip the
+   moment someone opened it on a borderline width. The question this layout
+   actually wants to ask is "how much room does this page have", and that is
+   the container's width, not the window's. One breakpoint, no intermediate
+   layout. */
+
+.page-shell {
+  container-type: inline-size;
+}
+
+.page-zones {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Zone 1 spans the full width at every size — it is the page's orientation
+   bar, and a fact that moves into a column stops being a header. */
+.zone-orient {
+  grid-column: 1 / -1;
+}
+
+@container (min-width: 1100px) {
+  .page-zones:not(.page-zones-single) {
+    grid-template-columns: minmax(0, 38fr) minmax(0, 62fr);
+  }
+
+  /* Sticky is applied by a `data-sticky` flag rather than unconditionally:
+     PageLayout measures the act column and drops to static when it is taller
+     than the viewport, because a sticky element taller than its scrollport can
+     never scroll to its own bottom — the submit button becomes unreachable. */
+  .zone-act[data-sticky='true'] {
+    position: sticky;
+    top: calc(var(--header-h, 3.5rem) + 1rem);
+  }
+}
+
+/* No individual control ever exceeds this, whatever room it is given. A text
+   input stretched to 700px is a stranded input: the eye has to travel the
+   whole width to find the caret, and the field's size stops advertising how
+   much you are expected to type. */
+.zone-act :is(input, select, textarea, .control-max) {
+  max-width: 380px;
+}
+
+/* `prefers-reduced-motion` deliberately makes no change here. Sticky
+   positioning is not motion — the element does not animate, the page scrolls
+   under it. Disabling it would remove a layout affordance in the name of a
+   preference about animation. */

@@ -438,11 +438,20 @@ export function Segmented<T extends string | number>({
   value,
   onChange,
   options,
+  tone = 'accent',
 }: {
   value: T
   onChange: (v: T) => void
   options: { value: T; label: ReactNode }[]
+  /**
+   * `accent` — the wash-filled active segment, everywhere outside the Body
+   * cluster. `neutral` — a plain raised fill, for the page-contract StatBar,
+   * where a page is allowed one accent-filled control and spends it on the
+   * primary button. A mode toggle that also fills with accent makes two.
+   */
+  tone?: 'accent' | 'neutral'
 }) {
+  const neutral = tone === 'neutral'
   return (
     <ToggleGroup
       type="single"
@@ -477,8 +486,14 @@ export function Segmented<T extends string | number>({
             // by stylesheet order, not by us. And the `@theme` alias did not
             // track the theme on this element — the raw per-theme variable
             // does, in all five.
-            style={selected ? { color: 'var(--brand-text)' } : undefined}
-            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
+            // The neutral tone keeps the raw-variable lesson above: it just
+            // has no colour to set, so it inherits `--color-fg-1` from the
+            // class list instead of overriding with the brand text colour.
+            style={selected && !neutral ? { color: 'var(--brand-text)' } : undefined}
+            className={cn(
+              'h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium',
+              neutral ? 'data-[state=on]:bg-ink-3 data-[state=on]:text-fg-1' : 'data-[state=on]:bg-brand-wash',
+            )}
           >
             {o.label}
           </ToggleGroupItem>

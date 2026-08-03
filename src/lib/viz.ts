@@ -23,6 +23,47 @@ export function dayActivity(data: JournalData): Map<string, number> {
   return m
 }
 
+/**
+ * Bucket day values into the 0–4 intensity ramp by QUARTILE over the non-zero
+ * values present, rather than by scaling linearly against the maximum.
+ *
+ * Linear scaling reads well only when the values are evenly spread, and
+ * training volume never is. One 90-minute ride among a month of 25-minute runs
+ * puts the max at 90, which drops every ordinary session into the lightest
+ * step — the grid then says "one good day, nothing else", which is the opposite
+ * of what a training history is for. Quartiles rank the days against each
+ * other, so a typical day always lands mid-ramp and the shape of the habit
+ * survives one outlier.
+ *
+ * Zero stays level 0 and is excluded from the quartile maths: a rest day is not
+ * a quiet training day, it is the absence of one, and letting rest days into
+ * the distribution drags every threshold down.
+ */
+export function quartileLevels(values: number[]): (v: number) => 0 | 1 | 2 | 3 | 4 {
+  const nonZero = values.filter((v) => v > 0).sort((a, b) => a - b)
+  if (nonZero.length === 0) return () => 0
+  // Nearest-rank quantiles: index = ceil(q · n) − 1, NOT floor(q · n).
+  // Floor puts the q-th value one rank too high, which pushes the top cut onto
+  // the maximum itself — so the largest value tests as "≤ q3" and level 4 can
+  // never be reached. Caught by the even-distribution test, which expected
+  // 1/2/3/4 and got 1/1/2/3.
+  //
+  // With very few values the cuts collapse onto each other, which is correct —
+  // three sessions cannot express four tiers, and inventing spread would be a
+  // lie about the data.
+  const at = (q: number) => nonZero[Math.max(0, Math.ceil(q * nonZero.length) - 1)]
+  const q1 = at(0.25)
+  const q2 = at(0.5)
+  const q3 = at(0.75)
+  return (v: number) => {
+    if (v <= 0) return 0
+    if (v <= q1) return 1
+    if (v <= q2) return 2
+    if (v <= q3) return 3
+    return 4
+  }
+}
+
 /** Build N weeks of heatmap cells ending today (column-major, Sun-first weeks). */
 export function buildHeatmap(data: JournalData, weeks = 26, today = todayISO()): HeatCell[][] {
   const counts = dayActivity(data)

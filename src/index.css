@@ -13,6 +13,7 @@
 @import '@fontsource-variable/caveat';
 @import 'tailwindcss';
 @import './styles/tokens.css';
+@import './styles/layout.css';
 
 /*
   Catppuccin Mocha palette as Tailwind v4 theme tokens.

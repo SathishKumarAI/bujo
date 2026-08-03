@@ -148,6 +148,19 @@
   --container-wide: 1180px;
 }
 
+/* Height of the sticky app header, for anything that has to sit clear of it
+   (the page contract's sticky act column).
+
+   A fallback, not the value. The header's real height is content-derived AND
+   carries `padding-top: max(0.625rem, env(safe-area-inset-top))`, so on a
+   notched device it is taller by exactly the notch — a hard-coded token would
+   be wrong by that much on the devices where a mis-parked sticky element is
+   most annoying. `useHeaderHeight` measures the element and overwrites this on
+   `:root`. */
+:root {
+  --header-h: 3.5rem;
+}
+
 /*
   Numerals. Family and tabular figures only — never a size, so it composes with
   the type scale and with `.fig-fixed` instead of competing with them.
