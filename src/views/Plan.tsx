@@ -10,7 +10,23 @@ import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
-import { QuietSection } from '../components/CollapsibleSection'
+
+/**
+ * One-tap recurring rules. The Setup card used to open on an empty text box,
+ * which asks people to invent a routine from nothing — these are the rules
+ * almost every journal ends up with anyway. Weekdays are 0=Sun … 6=Sat, to
+ * match `Recurrence`.
+ */
+const RULE_PRESETS: { text: string; type: BulletType; freq: 'daily' | 'weekly'; weekdays: number[] }[] = [
+  { text: 'Take vitamins', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Journal', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Stretch 10 min', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Weekly review', type: 'task', freq: 'weekly', weekdays: [0] },
+  { text: 'Meal prep', type: 'task', freq: 'weekly', weekdays: [0] },
+  { text: 'Laundry', type: 'task', freq: 'weekly', weekdays: [6] },
+  { text: 'Bin night', type: 'task', freq: 'weekly', weekdays: [2] },
+  { text: 'Call family', type: 'task', freq: 'weekly', weekdays: [0] },
+]
 
 export function Plan() {
   const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents, toggleImportant } = useJournal()
@@ -32,6 +48,9 @@ export function Plan() {
     addRecurrence({ text: text.trim(), type, important: false, freq, weekdays, startedOn: today })
     setText('')
   }
+
+  const ruleExists = (t: string) =>
+    data.recurrences.some((r) => r.text.trim().toLowerCase() === t.toLowerCase())
 
   // ── Migration: open tasks dated before today ──
   const overdue = data.entries
@@ -220,22 +239,53 @@ export function Plan() {
       </div>
 
       {/* Page configuration, not page content — it sits under the columns
-          rather than competing with them for one. */}
-      <QuietSection title="Setup" subtitle={<>recurring rules &amp; calendar import</>}>
+          rather than competing with them for one. Not collapsible: a fold
+          only pays for itself when the content is long or rarely wanted, and
+          this is two short cards that people come to this page to reach. */}
+      <section className="flex flex-col gap-5">
+        <h2 className="flex flex-wrap items-baseline gap-2 px-1">
+          <span className="font-display text-heading font-medium text-fg-1">Setup</span>
+          <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
+        </h2>
           <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
-          <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
-          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          {/* Named, not labelled: the row reads as one sentence ("Take vitamins
+              · task · daily") and three visible labels would break that. The
+              names were missing entirely until this section stopped being
+              collapsed — axe never scanned inside a closed fold. */}
+          <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" aria-label="What to repeat" className="max-w-xs" />
+          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} aria-label="Bullet type" className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="task">task</option>
             <option value="event">event</option>
             <option value="note">note</option>
           </select>
-          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} aria-label="How often" className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
           <Button variant="secondary" onClick={addRule} className="press-3d">Add rule</Button>
+        </div>
+        {/* Added on tap, not loaded into the form — a suggestion you have to
+            then press "Add rule" on is two steps for no gain. Already-added
+            ones stay visible but disabled, so the list doesn't reshuffle. */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-label text-fg-2">Suggestions:</span>
+          {RULE_PRESETS.map((p) => {
+            const added = ruleExists(p.text)
+            return (
+              <button
+                key={p.text}
+                disabled={added}
+                title={added ? 'Already a rule' : `Repeat ${p.freq === 'daily' ? 'every day' : `on ${p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}`}`}
+                onClick={() => addRecurrence({ text: p.text, type: p.type, important: false, freq: p.freq, weekdays: p.weekdays, startedOn: today })}
+                className="rounded-pill border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong"
+              >
+                {p.text}
+                <span className="ml-1.5 text-fg-2">{p.freq === 'daily' ? 'daily' : p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}</span>
+              </button>
+            )
+          })}
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">
@@ -287,7 +337,7 @@ export function Plan() {
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
           </div>
-      </QuietSection>
+      </section>
     </div>
   )
 }
