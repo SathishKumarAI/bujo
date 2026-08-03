@@ -1,5 +1,68 @@
 # Worklog
 
+## 2026-08-03 — The Body cluster on a page contract, and mode as a derived fact
+
+**Summary:** Restructured Fitness, Nutrition, Recovery and Coaching onto a
+three-zone page contract (orient → act → review), and made workout *mode* a
+property of the activity rather than a state of the UI. 12 commits on
+`feat/activity-registry` (off `feat/collapsible-header-ux`), all green, **not
+pushed**. Stack is now eight deep.
+
+The load-bearing change is `src/domain/activities.ts`. Four separate things used
+to decide what the workout form showed — a hardcoded `<select>`, a sticky
+`fitness.tab`, the persisted `split` field, and `activity === 'Home'` equality in
+three modules — so Cardio rendered a strength "sets" box and Pickleball was
+offered a distance field. One registry now owns label, mode, required fields,
+best stat and mode copy; `modeOf()` derives the rest and mode is never stored.
+The bug class is gone by construction rather than patched.
+
+Four things worth carrying forward:
+
+- **A type is a better audit than a grep.** Typing `Workout.activity` as
+  `ActivityKey` found every free-form writer in one `tsc -b`, including one in
+  `CaptureBar` that a careful manual audit had missed.
+- **An audit keyed on a prop misses the feature it feeds.** The sweep grepped
+  `help=` and reported the cluster free of help icons; `Card` draws its ⓘ from
+  `help ?? subtitle`, so 22 cards still had one. Second time this shape has bitten
+  — the folds drawn as `▸` were the first.
+- **A gate that does not open a page cannot vouch for it.** Recovery was left off
+  the a11y list on the belief it sat behind an opt-in; `nofapEnabled` defaults to
+  true. Adding it failed immediately on a `crust`-on-`surface0` contrast bug, the
+  second of exactly that pairing.
+- **Silent filters hide regressions.** `BottomNav` resolves a fixed id list
+  against the sidebar and drops misses without error, so retiring `pickleball`
+  and `pullups` as destinations quietly left phones with three tabs.
+
+Two bugs the tests could not have caught, both found by opening the app: labels
+sat *beside* their controls wherever the act column was wider than the 380px
+control cap (form controls are inline-level, so `w-full` sized them without
+taking them off the label's line), and the Recovery sparkline drew 2px bars at
+zero data so an empty chart read as a broken one.
+
+Also fixed en route: `distanceKm` was storing whatever unit was on screen, so
+half the readers divided by 1.60934 and half printed it raw — the same 3.1 showed
+as "3.1 mi" and "1.9 mi" on one screen. Now canonical km with one conversion
+boundary, migrated under a version gate because the conversion is not idempotent.
+
+**Changes:**
+- `src/domain/activities.ts`, `src/domain/sessions.ts` — the registry and its derived reads
+- `src/components/page/*` — PageLayout, StatBar, SummaryStrip, CalendarHeatmap, ActivityForm, DisclosureRow, NumField, EmptyFrame
+- `src/styles/layout.css` — container query, sticky, the 380px control cap
+- `src/components/ui/day-grid.tsx` — `<div role="img">` → `<table>` with headers and per-cell values
+- `src/lib/units.ts`, `src/lib/storage.ts`, `src/lib/types.ts` — canonical km, schema 3
+- `src/views/Fitness.tsx`, `Nutrition.tsx`, `NoFap.tsx`, `Coaching.tsx` — rebuilt on the contract
+- `src/App.tsx`, `src/lib/deepLink.ts` — four Body tabs, retired ids rewritten on read
+- `scripts/a11y-axe.mjs` — gate now visits 11 views including the whole cluster
+- Docs: `DATA_MODEL.md`, `FEATURE_GUIDE.md`, `FEATURES.md`, `ACCESSIBILITY.md`, `DECISIONS.md` (D-45…D-48), `CLAUDE.md` traps
+
+**Verification:** `npx tsc -b`, `npx vitest run` (1474 pass / 95 files),
+`npx eslint .` (0 errors, 2 pre-existing warnings), `npm run build`,
+`npm run a11y` (0 serious across 11 views). Browser pass on Fitness, Nutrition,
+Recovery and Coaching at 1440 and 760, light and dark.
+
+**Not done:** the other three themes, a journal with real data, Recovery still
+over the two-raised-card cap, nothing pushed.
+
 ## 2026-08-03 — The fold: whole-header collapse, one rotating caret, four primitives into two
 
 **Summary:** Started as "the dropdown should open when you click the button, not just

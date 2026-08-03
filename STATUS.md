@@ -6,7 +6,7 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped
 
-**`feat/activity-registry`** — 9 commits, branched off
+**`feat/activity-registry`** — 12 commits, branched off
 `feat/collapsible-header-ux`, **not pushed, no PR open**. The stack is now eight
 deep: `#88 → #89 → #90 → #91 → #92 → #94 → collapsible-header-ux → this`.
 
@@ -14,11 +14,17 @@ Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
 warnings, **1474 tests / 95 files**, `npm run build` clean, `npm run a11y` 0
 serious across 10 views.
 
-**Browser pass done** on Fitness, Nutrition and Coaching at 1440 and 760, light
-theme, fresh journal. Three defects found and fixed (see `9d88835`) — the worst
-was labels sitting *beside* their controls at any width where the act column
-was wider than the 380px control cap. Not seen: dark theme, the other four
-themes, Recovery, and a journal with real data in it.
+**Browser pass done** on Fitness, Nutrition, Recovery and Coaching at 1440 and
+760, light and dark. Seven defects found and fixed across `9d88835` and
+`15fec09` — labels sitting *beside* their controls wherever the act column
+exceeded the 380px cap; the ⓘ popover surviving the Stage 6 sweep on 22 cards
+(`Card` draws it from `help ?? subtitle`, so grepping `help=` proved nothing);
+Recovery missing from the a11y gate and failing on contrast the moment it was
+added; the Recovery sparkline drawing 2px bars at zero data; and `BottomNav`
+silently down to three tabs on phones because its id list still named two
+retired destinations.
+
+Not seen: the other three themes, and a journal with real data in it.
 
 **A dev server on 5191 was serving `.claude/worktrees/today-ux`, not this
 branch** — the documented trap, live. It was killed and 5191 restarted from
@@ -57,15 +63,12 @@ Load-bearing decisions:
 
 ### Next
 
-1. **Look at Recovery, the dark theme, and a journal with real data.** The
-   browser pass covered Fitness, Nutrition and Coaching on a fresh light-theme
-   journal only.
+1. **Look at a journal with real data, and the latte / neon / vscode / dawn
+   themes.** The browser pass used a fresh journal in mocha and latte only.
 2. **Recovery still exceeds the two-raised-card cap.** Its remaining cards are
    genuine objects with their own actions (urge log, reset log, per-addiction
    streaks, commitment, trigger plans), so the cap and the "cards are objects"
    rule pull against each other there. Needs a judgement call.
-3. **Recovery is not in the a11y scan list** — it is behind an opt-in setting, so
-   its sidebar entry is not clickable on a default journal. Needs a fixture.
 4. **Recovery deviates from the brief on purpose** — the brief wanted a sleep +
    soreness sparkline, assuming physical recovery; this app's Recovery is the
    abstinence tracker and has no soreness field anywhere. Built urges-vs-resets

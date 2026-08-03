@@ -23,7 +23,13 @@ function useHideOnScroll(): boolean {
 
 // The five views worth a thumb-tap on a phone (all also live in the sidebar).
 // No FAB — quick-add stays in the top bar. Order matches the daily/training flow.
-const PRIMARY: ViewId[] = ['today', 'trackers', 'fitness', 'pickleball', 'pullups']
+//
+// This list is resolved against the sidebar's items and silently filtered, so an
+// id that leaves the nav takes its tab with it without a word. Collapsing the
+// Body cluster retired `pickleball` and `pullups` as destinations and left this
+// list pointing at both — the bar quietly dropped to three tabs on phones, and
+// nothing failed. If you retire a nav id, check here.
+const PRIMARY: ViewId[] = ['today', 'plan', 'fitness', 'nutrition', 'trackers']
 
 /**
  * Mobile-only bottom tab bar (hidden ≥ md): five primary destinations, equal

@@ -43,6 +43,22 @@ pointed at one of their ports will never show changes made here no matter how
 hard you reload. Check the port's `Get-CimInstance Win32_Process` command line
 before concluding a change did not land.
 
+Trap: **an audit keyed on a prop misses the feature it feeds.** `Card` renders
+its ⓘ from `help ?? subtitle`, so a sweep grepping `help=` reported the Body
+cluster clean while every titled card with a subtitle still drew one. Same shape
+as the six typographic folds that matched neither the caret-icon nor the
+`aria-expanded` grep. Grep the *output*, and confirm on the rendered page.
+
+Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
+not checked, and "0 serious" means only "for the pages that were opened". Add new
+surfaces. Do not argue a page is unreachable from the code's shape — Recovery was
+excluded on the belief it was behind an opt-in, but `nofapEnabled` defaults to
+true, and adding it immediately failed on a contrast bug.
+
+Trap: **`BottomNav`'s `PRIMARY` list is silently filtered** against the sidebar
+items, so retiring a nav id drops its phone tab with no error. Collapsing the
+Body cluster left the bar at three tabs.
+
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.

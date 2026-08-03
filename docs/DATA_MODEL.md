@@ -31,7 +31,7 @@ One object, versioned by `SCHEMA_VERSION`, migrated forward on load by
 | `habitValues` | `Record<day, Record<habitId, number>>` | Count-habit values per day |
 | `habitSkips` | `Record<habitId, day[]>` | Planned skip days (don't break streak) |
 | `metrics` | `DailyMetric[]` | Mood/stress/sleep/nutrition per day |
-| `workouts` | `Workout[]` | Cardio + strength sessions (`setRows`) |
+| `workouts` | `Workout[]` | Every logged session, all modes (`setRows` for strength) |
 | `routines` | `Routine[]` | Saved reusable workout routines |
 | `bodyMetrics` | `BodyMetric[]` | Weight + measurements over time |
 | `progressPhotos` | `ProgressPhoto[]` | Physique photos (downscaled data-URLs) |
@@ -166,3 +166,48 @@ Cloud → **Account**.
 
 **Two sync options ship together:** Supabase accounts (login, recovery, guest)
 *or* the Vercel-Blob passphrase E2E sync (no-account, max privacy). User picks.
+
+## Sessions · the activity registry (schema 3)
+
+`Workout.activity` is a **key from `src/domain/activities.ts`**, never a
+free-form label. Everything else about a session's shape is derived from it:
+
+| Derived | From | Used for |
+|---|---|---|
+| mode (`cardio` / `strength` / `sport`) | `modeOf(activity)` | which activities the select offers, which copy shows |
+| which fields to render | `ACTIVITIES[activity].required` | the log form asks only for what the activity has |
+| which stat headlines | `ACTIVITIES[activity].best` | the summary strip's third tile |
+| human label | `labelOf(activity)` | lists, CSV, calendar export, search |
+
+**Mode is never stored.** A persisted mode could contradict its own activity; a
+derived one cannot. This is why the "cardio session shows a strength sets field"
+class of bug is structurally impossible rather than individually patched.
+
+### Distance is canonical kilometres
+
+`Workout.distanceKm` is metric in storage; the user's `settings.distanceUnit`
+(mi by default) is a display concern converted at the form boundary only, in
+`lib/units.ts`.
+
+Before schema 3 the form wrote its raw value straight through, so the field held
+whatever unit was on screen. Half the readers believed the name and divided by
+1.60934, half believed the value and printed it raw — the same 3.1 showed as
+both "3.1 mi" and "1.9 mi" on one screen.
+
+### Schema 3 migration
+
+Two conversions in `migrate()`, with different rules:
+
+- **Activity normalisation is idempotent** (a key maps to itself), so it runs on
+  every load and stays the tolerant reader for payloads arriving from an older
+  client via cloud sync.
+- **The distance conversion is NOT idempotent** — a second pass multiplies by
+  1.61 again — so it is gated on the stored `version`. That gate is the reason
+  the version was bumped. There is a test that migrates three times and asserts
+  the value never moves; any future data-shape migration here needs the same
+  treatment.
+
+The distance half is unavoidably best-effort: v2 stored no per-row unit, so the
+only signal is the journal's *current* `distanceUnit`. Exact for anyone who
+never touched the toggle; wrong for rows entered before a mid-history switch,
+which are already wrong today. No care here recovers information v2 never wrote.
