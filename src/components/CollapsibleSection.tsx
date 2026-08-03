@@ -30,10 +30,16 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
-  /** Remember open/closed across reloads under this key. Opt-in: a section
-   *  that is deliberately closed every visit (a rarely-read appendix) should
-   *  not silently start staying open. */
+  /** Persist the open/closed choice under `section.<key>` (F6). */
   stickyKey?: string
+  /**
+   * Controlled mode. Pass both to drive the section from outside — Collections
+   * needs it because "jump to tag" has to expand Auto-pages before it scrolls
+   * there. Omit both and the section keeps its own state (sticky when
+   * `stickyKey` is given), which is what nearly every call site wants.
+   */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   children: ReactNode
 }
 
@@ -45,15 +51,23 @@ export function CollapsibleSection({
   variant = 'card',
   defaultOpen = false,
   stickyKey,
+  open: controlledOpen,
+  onOpenChange,
   children,
 }: Props) {
+  // Both sides of the merge are kept: main's sticky persistence (F6) is the
+  // uncontrolled behaviour, and a controlled `open` overrides it so a caller
+  // driving the section from outside is never fighting storage.
   const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
     stickyKey ? `section.${stickyKey}` : null,
     defaultOpen ? '1' : '0',
     OPEN_STATES,
   )
-  const open = openFlag === '1'
-  const setOpen = (next: boolean) => setOpenFlag(next ? '1' : '0')
+  const open = controlledOpen ?? openFlag === '1'
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setOpenFlag(next ? '1' : '0')
+    onOpenChange?.(next)
+  }
 
   // A Lucide icon arrives as a component; a pre-rendered node arrives as an element.
   let iconNode: ReactNode = null
@@ -68,6 +82,13 @@ export function CollapsibleSection({
   if (variant === 'quiet') {
     return (
       <section className="space-y-5">
+        {/* Heading wraps button — the WAI-ARIA accordion pattern. The title is
+            styled as a section heading in both variants, so it has to *be* one:
+            without this the whole group is invisible to a screen reader's
+            heading list, and Reading (all three of its sections are collapsible)
+            rendered zero headings inside <main>. The h2 is layout-neutral —
+            preflight zeroes its margin and size, the button keeps w-full. */}
+        <h2>
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -84,6 +105,7 @@ export function CollapsibleSection({
             <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
           )}
         </button>
+        </h2>
         {open && children}
       </section>
     )
@@ -91,6 +113,7 @@ export function CollapsibleSection({
 
   return (
     <section className="flex flex-col gap-5">
+      <h2>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -106,6 +129,7 @@ export function CollapsibleSection({
           {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
         </span>
       </button>
+      </h2>
       {open && children}
     </section>
   )

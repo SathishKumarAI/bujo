@@ -159,7 +159,7 @@ export function Account() {
   return (
     <Hero>
       {/* Segmented Sign in / Sign up control */}
-      <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary/60 p-1">
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-control bg-secondary/60 p-1">
         {(['login', 'signup'] as const).map((m) => (
           <button key={m} onClick={() => { setMode(m); setErr(''); setMsg('') }}
             className={`rounded-card py-2 text-body font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-fg-2 hover:text-fg-1'}`}>

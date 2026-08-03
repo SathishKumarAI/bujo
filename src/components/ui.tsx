@@ -1,13 +1,13 @@
-import { ArrowsOut, CaretDown, CaretUp, X } from '@/components/icons'
-import { useHints } from './shell/hints'
+import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useState, type ReactNode } from 'react'
+import { isValidElement, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
@@ -27,7 +27,31 @@ export const CARD = {
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
+  /**
+   * The ⓘ / ⛶ / chevron in a card header. All three were bare icons — 14, 15
+   * and 18px — so their hit targets were the glyphs themselves, under the
+   * WCAG 2.5.8 24px floor. The icon size is unchanged; the box around it does
+   * the work, and `-m-1` keeps the header height exactly where it was.
+   */
+  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-md text-fg-2 hover:bg-ink-2 hover:text-fg-1',
 } as const
+
+/**
+ * The readable text inside a ReactNode, for naming a control after it.
+ *
+ * Card titles are `ReactNode` because many carry an icon beside the words
+ * (`<><Flame size={16}/> 75 Hard</>`). A plain `typeof === 'string'` check
+ * missed all of those, which left twenty ⓘ buttons — seven of them on Coaching
+ * alone — still called "What is this?". Walks children, keeps strings and
+ * numbers, ignores the rest.
+ */
+function nodeText(node: ReactNode): string {
+  if (node == null || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeText).join(' ')
+  if (isValidElement<{ children?: ReactNode }>(node)) return nodeText(node.props.children)
+  return ''
+}
 
 export function Card({
   title,
@@ -55,7 +79,7 @@ export function Card({
   defer?: boolean
   /** Show a ⛶ button that opens the card content in a large modal. */
   enlargeable?: boolean
-  /** Longer explainer. Hidden until the page's `?` turns inline hints on. */
+  /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
   help?: ReactNode
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
@@ -65,16 +89,15 @@ export function Card({
   const modalTrap = useFocusTrap<HTMLDivElement>(large)
   // Enlarge affordance: any titled, non-clickable card (charts, calendars…).
   const showEnlarge = enlargeable && !!title && !onClick
-  // Cards used to carry an always-visible ⓘ popover here. Nine of them stacked
-  // up on Today alone, and nine help affordances is nine labels that failed —
-  // each ⓘ is a card admitting its title and subtitle did not land, with the
-  // explanation two taps away where nobody skimming would find it.
-  //
-  // The explainer is still written, and still here; it renders inline when the
-  // page's `?` is on (see `shell/hints.tsx`). `help` only — falling back to
-  // `subtitle` would just print the subtitle twice.
-  const hints = useHints()
-  const info = hints.on ? help : null
+  // Every titled card gets an always-visible ⓘ that explains what it is
+  // (self-documenting UI). Uses `help` if given, else the subtitle text.
+  const info = help ?? subtitle
+  // Name the header controls after their card. All of these used to be called
+  // "What is this?" / "Collapse" / "Enlarge", so Today alone handed a screen
+  // reader 34 identically-named buttons and its control list was useless for
+  // navigating. Titles are ReactNode (often icon + words), hence `nodeText`.
+  const titleText = nodeText(title).replace(/\s+/g, ' ').trim()
+  const infoLabel = titleText ? `What is ${titleText}?` : 'What is this?'
   return (
     <section
       onClick={onClick}
@@ -85,24 +108,33 @@ export function Card({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
+              {title && info && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={CARD.headerButton}>
+                      <AppIcon as={Info} size="sm" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="max-w-xs text-body leading-snug text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
+                </Popover>
+              )}
             </div>
             {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
-            {title && info && (
-              <p className="mt-2 rounded-card border border-line bg-ink-0 px-3 py-2 text-label leading-relaxed text-fg-2">
-                {info}
-              </p>
-            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}
             {showEnlarge && (
-              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
-                className="grid place-items-center text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100 max-md:min-h-[44px] max-md:min-w-[44px]">
+              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }}
+                aria-label={titleText ? `Enlarge ${titleText}` : 'Enlarge'}
+                title="Enlarge"
+                className={`${CARD.headerButton} opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100`}>
                 <AppIcon as={ArrowsOut} size="sm" />
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="grid place-items-center text-fg-2 hover:text-fg-1 max-md:min-h-[44px] max-md:min-w-[44px]">
+              <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+                aria-label={titleText ? (open ? `Collapse ${titleText}` : `Expand ${titleText}`) : (open ? 'Collapse' : 'Expand')}
+                className={CARD.headerButton}>
                 {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
               </button>
             )}
@@ -252,21 +284,28 @@ export function Slider({
   color?: string
   hint?: string
 }) {
+  // Unset is not zero. With `value ?? 0` the handle parks at the far left,
+  // which is exactly where a real 0 sits — so "not rated yet" and "rated 0"
+  // rendered identically while the readout said "–". An unrated slider now
+  // dims its track and sits at the midpoint: clearly untouched, and one drag
+  // from any value rather than biased toward the bottom of the scale.
+  const unset = value == null
   return (
     <label className="block">
       <div className="mb-1 flex items-center justify-between text-body">
         <span className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono" style={{ color: cat(color) }}>
-          {value ?? '–'}
+        <span className="rounded px-1.5 font-mono" style={{ color: unset ? undefined : cat(color) }}>
+          {value ?? 'not set'}
         </span>
       </div>
       <input
         type="range"
         min={0}
         max={10}
-        value={value ?? 0}
+        value={value ?? 5}
+        aria-valuetext={unset ? 'Not set' : undefined}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
+        className={`w-full ${unset ? 'opacity-40' : ''}`}
         style={{ accentColor: cat(color) }}
       />
       {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}
@@ -445,7 +484,7 @@ export function Segmented<T extends string | number>({
             // track the theme on this element — the raw per-theme variable
             // does, in all five.
             style={selected ? { color: 'var(--brand-text)' } : undefined}
-            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 max-md:min-h-[44px] data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
+            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
           >
             {o.label}
           </ToggleGroupItem>

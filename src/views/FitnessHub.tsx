@@ -48,9 +48,12 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
         ))}
       </div>
 
-      {/* 2) Unified this-week status: weekly active-minutes ring + next-split banner. */}
-      <div className="grid items-stretch gap-3 sm:grid-cols-[auto_1fr]">
+      {/* 2) Unified this-week status: weekly active-minutes ring + next-split
+             banner. "Next up · Pull day" is a shortcut *into* Strength, so it
+             only earns its place while you are looking at Cardio. */}
+      <div className={`grid items-stretch gap-3 ${tab === 'cardio' ? 'sm:grid-cols-[auto_1fr]' : ''}`}>
         <ActiveMinutesRing minutes={minutes} goal={goal} />
+        {tab === 'cardio' && (
         <button
           onClick={() => setTab('strength')}
           className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
@@ -67,6 +70,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
           </span>
           <AppIcon as={ArrowRight} size="md" className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
         </button>
+        )}
       </div>
       {tab === 'cardio' ? (
         <Fitness />

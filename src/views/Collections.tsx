@@ -1,9 +1,11 @@
-import { Cake, CaretDown, CaretRight } from '@/components/icons'
+import { Cake } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { Page } from '../components/shell/Page'
+import { QuietSection } from '../components/CollapsibleSection'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
 import { MONTHS, todayISO } from '../lib/date'
@@ -22,8 +24,8 @@ export function Collections() {
   const [colEntry, setColEntry] = useState('')
   // Tag pages (auto-collections): one filtered page per #tag.
   const [openTag, setOpenTag] = useState<string | null>(null)
-  // Collapsed groups: people management + auto-generated pages.
-  const [peopleOpen, setPeopleOpen] = useState(false)
+  // Controlled: "jump to tag" from the index has to expand this section before
+  // it can scroll to the tag inside it.
   const [autoPagesOpen, setAutoPagesOpen] = useState(false)
 
   // Auto-collections: every #tag across the journal, most-used first.
@@ -71,7 +73,7 @@ export function Collections() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="mx-auto flex max-w-wide flex-col gap-5">
+    <Page width="wide">
     <div className="grid items-start gap-5 lg:grid-cols-2">
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
@@ -245,18 +247,7 @@ export function Collections() {
     </div>
 
       {/* People · friends + birthdays, occasional management, collapsed. */}
-      <section className="space-y-5">
-        <button
-          type="button"
-          onClick={() => setPeopleOpen((o) => !o)}
-          aria-expanded={peopleOpen}
-          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-        >
-          <span className="text-fg-2">{peopleOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-          <span className="font-display text-heading font-medium text-fg-1">People</span>
-          <span className="text-label text-fg-2">friends &amp; birthdays</span>
-        </button>
-        {peopleOpen && (
+      <QuietSection title="People" subtitle="friends &amp; birthdays">
           <div className="grid items-start gap-5 lg:grid-cols-2">
             <FriendsCard />
             <Card title="Birthdays" subtitle="Never miss one">
@@ -286,22 +277,10 @@ export function Collections() {
               )}
             </Card>
           </div>
-        )}
-      </section>
+      </QuietSection>
 
       {/* Auto-pages · memories + tags, auto-generated reference, collapsed. */}
-      <section className="space-y-5">
-        <button
-          type="button"
-          onClick={() => setAutoPagesOpen((o) => !o)}
-          aria-expanded={autoPagesOpen}
-          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-        >
-          <span className="text-fg-2">{autoPagesOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-          <span className="font-display text-heading font-medium text-fg-1">Auto-pages</span>
-          <span className="text-label text-fg-2">memories &amp; tag pages</span>
-        </button>
-        {autoPagesOpen && (
+      <QuietSection title="Auto-pages" subtitle="memories &amp; tag pages" open={autoPagesOpen} onOpenChange={setAutoPagesOpen}>
           <div className="space-y-5">
             <Card
               title="Memories"
@@ -368,8 +347,7 @@ export function Collections() {
               )}
             </Card>
           </div>
-        )}
-      </section>
-    </div>
+      </QuietSection>
+    </Page>
   )
 }

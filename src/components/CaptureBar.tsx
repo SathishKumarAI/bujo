@@ -58,7 +58,32 @@ function describe(r: CaptureResult): string {
   }
 }
 
+/**
+ * One example at a time, rotated by date. Each shows a different thing the
+ * parser understands — a lift, a run, a metric, a tagged note, a task — so the
+ * grammar is taught over a week instead of dumped in one line.
+ */
+/** Tiny stable hash of an ISO date, so the same day always picks the same hint. */
+function hashDate(iso: string) {
+  let h = 0
+  for (let i = 0; i < iso.length; i++) h = (h * 31 + iso.charCodeAt(i)) | 0
+  return h
+}
+
+const CAPTURE_HINTS = [
+  'Capture… e.g. t call mum',
+  'Capture… e.g. ran 5k in 28min',
+  'Capture… e.g. bench 80x5',
+  'Capture… e.g. mood 7',
+  'Capture… e.g. n coffee with Sam #friends',
+  'Capture… e.g. water 6',
+  'Capture… e.g. e dentist 3pm',
+]
+
 export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => void }) {
+  // Keyed off the day being logged, not the clock: the hint must not change
+  // under the cursor while someone is mid-sentence.
+  const hintIndex = Math.abs(hashDate(date)) % CAPTURE_HINTS.length
   const { data, addEntry, addWorkout, setMetric, setHabitValue, toggleHabit, setSettings } = useJournal()
   const [val, setVal] = useState('')
   // A frozen, hand-editable copy of the current parse (the "edit fields" panel).
@@ -179,7 +204,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           onSubmit={add}
           suggestCtx={{ tags, recents, habits: habitNames }}
           dupItems={dupItems}
-          placeholder={future ? 'Nothing to log yet' : 'Capture… e.g. bench 80x5, ran 5k 28min, mood 7, water 6, t call mom'}
+          placeholder={future ? 'Nothing to log yet' : CAPTURE_HINTS[hintIndex]}
           aria-label="Smart capture"
           disabled={future}
         />

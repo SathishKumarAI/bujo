@@ -2,7 +2,7 @@ import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, rechartsTooltip } from '../../lib/colors'
 import { prettyMonth } from '../../lib/date'
 
 type MetricsPoint = {
@@ -25,7 +25,7 @@ export function MetricsTrendCard({ chartData, ym }: { chartData: MetricsPoint[];
             <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
             <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
             <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-            <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+            <Tooltip contentStyle={rechartsTooltip()} />
             <Line type="monotone" dataKey="mood" stroke={cat('green')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
             <Line type="monotone" dataKey="stress" stroke={cat('red')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
             <Line type="monotone" dataKey="sleep" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
