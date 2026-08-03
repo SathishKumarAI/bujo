@@ -56,25 +56,40 @@ export function Today() {
      *
      * The layout states the weight instead of implying it:
      *
-     *   weight 1 · the plan — full width, the day in one card
-     *   weight 2 · the log FIRST, at **two** of three tracks: it is where you
-     *              write, and a 370px measure is not a writing surface. Coach
-     *              and penalty sit under it — guidance is not more urgent than
-     *              the day it is about.
+     *   weight 1 · the band — the day summarised, and what to do about it,
+     *              side by side on the SAME 2:1 tracks as everything below
+     *   weight 2 · the log FIRST in the wide column: it is where you write, and
+     *              a 370px measure is not a writing surface. Penalty sits under
+     *              it — guidance is not more urgent than the day it is about.
      *   weight 3 · the rail — logging you tap rather than type, then the quiet
      *              reference cards, at one track
      *
-     * The wide column measured 813px against the rail's 1568px — half of it
-     * empty. Coach and penalty moving down into it, and the duplicated at-risk
-     * card leaving the rail, is what closed that; Wellbeing was tried in the
-     * reflect grid too and overshot to 1632 against 862, so it stayed in the
-     * rail where its sliders belong anyway.
+     * The band's 2:1 split is not decoration. Laid out 50/50 it measured 38px
+     * shorter, but its divide fell at x=1075 while every column below it split
+     * at x=1270 — two competing rhythms on one page, which is the thing
+     * `LAYOUT-WEIGHT-ALIGNMENT.md` exists to stop. The tracks now match to the
+     * pixel (780 / 380).
+     *
+     * Known cost, stated rather than hidden: with the coach in the band instead
+     * of the wide column, the columns run 952 against 1409. That is worse than
+     * the 96px this page reached with the coach below the log, and better than
+     * the 756px it started at. Demo data has no count/timer habits; a journal
+     * with them narrows the gap, since those cards land in the rail.
      *
      * It collapses to a single column below xl, in the same reading order.
      */
     <Page width="wide">
-      {/* ── WEIGHT 1 · the only full-width card. The whole day, summarised. ── */}
-      {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
+      {/* ── WEIGHT 1 · the day in brief, and what to do about it, as one band.
+             `auto-fit` rather than a fixed two-column track on purpose: both
+             cards are conditional — the plan is hideable in settings, and the
+             coach returns null when it has nothing to say — and auto-fit
+             collapses the empty track so whichever survives spans the full
+             width. A fixed `grid-cols-2` would leave a hole. It also drops to
+             one column on its own once 34rem per card no longer fits. ────── */}
+      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-3">
+        <div className="xl:col-span-2">{date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}</div>
+        <div>{date === todayISO() && <CoachCard />}</div>
+      </div>
 
       <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-3">
         {/* ── WEIGHT 2 · the writing surface, two tracks wide ──────────── */}
@@ -131,9 +146,6 @@ export function Today() {
               </>
             )}
           </Card>
-
-          {/* ── Coach: proactive "do this next" prompts from your data ── */}
-          {date === todayISO() && <CoachCard />}
 
           {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
           {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}

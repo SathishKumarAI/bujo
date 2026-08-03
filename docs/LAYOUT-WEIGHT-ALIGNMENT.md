@@ -51,16 +51,21 @@ is still a weight-2 card, it is just in quieter company.
 
 ### Today
 
-`TodayPlanCard` is the **only** full-width card. Coach and penalty were weight 1
-too until the band they formed was measured at 917px on a 1600×1000 viewport —
-see "What this changed already" below.
+The weight-1 band is `TodayPlanCard` + `CoachCard` **on the same 2:1 tracks as
+everything below them** — the day summarised at two tracks, what to do about it
+at one. Penalty was weight 1 too until the band the three of them formed
+measured 917px on a 1600×1000 viewport; see "What this changed already".
+
+**A band must share the grid beneath it.** Splitting the band 50/50 is 38px
+shorter and was rejected for it: the divide landed at x=1075 while every column
+below split at x=1270, giving one page two column rhythms.
 
 | Component | Weight | Left | Right |
 |---|---|---|---|
-| `TodayPlanCard` | 1 — **full width, alone** | Title + chips | Week % |
+| `TodayPlanCard` | 1 — **band, two of three tracks** | Title + chips | Week % |
+| `CoachCard` | 1 — **band, one track** | Tone icon + tip | Affordance sparkle |
 | Daily log `Card` | 2 — **two of three tracks, first** | Date + weather | Logged-today count |
 | `EntryRow` | 2 | Glyph, memory mark, text | `!` and `×`, one cluster |
-| `CoachCard` | 2 (under the log) | Tone icon + tip | Affordance sparkle |
 | `PenaltyCard` | 2 (under the log, conditional) | Title + drill | Tier pill + collapse |
 | `TodayHabits` / count habits | 2 (rail) | Habit name | Tally pill, then `Stepper` |
 | Wellbeing | 2 (rail) | Slider labels | Value chips |
@@ -113,6 +118,13 @@ see "What this changed already" below.
   - Wellbeing was tried in the reflect grid on the way and overshot the other
     way (1632 vs 862), so it stayed in the rail — its sliders are tapped and
     dragged, which is what the rail is for.
+  - **Then the coach came back up, beside the plan.** Same 2:1 tracks, so band
+    and grid share one rhythm: band **397px**, log top **564px**, tracks
+    780/380 matching the columns below to the pixel. The 50/50 version was
+    38px shorter and misaligned, and 38px is not worth a second grid.
+    Columns are 952 vs 1409 as a result — worse than the 96 reached with the
+    coach below the log, better than the 756 this page started at. Demo data
+    has no count/timer habits; a real journal with them narrows it.
   - The rail's "Keep your streaks" card is gone: `TodayPlanCard` already stated
     the same fact in its at-risk banner, from a *private* filter that disagreed
     with the shared one. The banner now reads `atRiskHabits`, which is the wider
