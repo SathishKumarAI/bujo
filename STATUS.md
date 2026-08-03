@@ -14,8 +14,15 @@ Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
 warnings, **1474 tests / 95 files**, `npm run build` clean, `npm run a11y` 0
 serious across 10 views.
 
-**Nothing has been opened in a browser.** Every claim is static or test-level.
-The visual pass is the first thing to do on return.
+**Browser pass done** on Fitness, Nutrition and Coaching at 1440 and 760, light
+theme, fresh journal. Three defects found and fixed (see `9d88835`) — the worst
+was labels sitting *beside* their controls at any width where the act column
+was wider than the 380px control cap. Not seen: dark theme, the other four
+themes, Recovery, and a journal with real data in it.
+
+**A dev server on 5191 was serving `.claude/worktrees/today-ux`, not this
+branch** — the documented trap, live. It was killed and 5191 restarted from
+this worktree. Restart the today-ux one if you still want it.
 
 ### What this branch did — the Body cluster on a page contract
 
@@ -47,8 +54,9 @@ Load-bearing decisions:
 
 ### Next
 
-1. **Open the app and look at it.** Fitness, Nutrition, Recovery, Coaching, at
-   both widths, with the sidebar collapsed and expanded.
+1. **Look at Recovery, the dark theme, and a journal with real data.** The
+   browser pass covered Fitness, Nutrition and Coaching on a fresh light-theme
+   journal only.
 2. **Recovery still exceeds the two-raised-card cap.** Its remaining cards are
    genuine objects with their own actions (urge log, reset log, per-addiction
    streaks, commitment, trigger plans), so the cap and the "cards are objects"
