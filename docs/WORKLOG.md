@@ -44,16 +44,49 @@ half the readers divided by 1.60934 and half printed it raw — the same 3.1 sho
 as "3.1 mi" and "1.9 mi" on one screen. Now canonical km with one conversion
 boundary, migrated under a version gate because the conversion is not idempotent.
 
-**Changes:**
-- `src/domain/activities.ts`, `src/domain/sessions.ts` — the registry and its derived reads
-- `src/components/page/*` — PageLayout, StatBar, SummaryStrip, CalendarHeatmap, ActivityForm, DisclosureRow, NumField, EmptyFrame
-- `src/styles/layout.css` — container query, sticky, the 380px control cap
-- `src/components/ui/day-grid.tsx` — `<div role="img">` → `<table>` with headers and per-cell values
-- `src/lib/units.ts`, `src/lib/storage.ts`, `src/lib/types.ts` — canonical km, schema 3
-- `src/views/Fitness.tsx`, `Nutrition.tsx`, `NoFap.tsx`, `Coaching.tsx` — rebuilt on the contract
-- `src/App.tsx`, `src/lib/deepLink.ts` — four Body tabs, retired ids rewritten on read
-- `scripts/a11y-axe.mjs` — gate now visits 11 views including the whole cluster
-- Docs: `DATA_MODEL.md`, `FEATURE_GUIDE.md`, `FEATURES.md`, `ACCESSIBILITY.md`, `DECISIONS.md` (D-45…D-48), `CLAUDE.md` traps
+**Changes** (80 files, +3,386 / −888):
+
+*Domain*
+- `src/domain/activities.ts` — the registry: 17 activities, three modes, required fields, best stat, mode copy, legacy normalisation
+- `src/domain/sessions.ts` — derived reads keyed off the registry (`sessionsInMode`, `bestOf`, `totalTime`, `volumeOf`)
+- `src/lib/types.ts` — `Workout.activity` typed `ActivityKey`; `SCHEMA_VERSION` 3
+- `src/lib/units.ts` — the only km↔mi boundary
+- `src/lib/storage.ts` — schema-3 migration: activity normalisation (idempotent, every load) and distance conversion (version-gated)
+- `src/lib/viz.ts` — `quartileLevels`, bucketing heatmap intensity by rank rather than against the max
+
+*New primitives*
+- `src/components/page/*` — PageLayout, StatBar, SummaryStrip, CalendarHeatmap, ActivityForm, DisclosureRow, NumField, EmptyFrame, `draft.ts`
+- `src/styles/layout.css` — container query at 960px, measured sticky, the 380px control cap and its block rule
+- `src/styles/tokens.css` — `--header-h` fallback
+- `src/components/shell/useHeaderHeight.ts` — publishes the header's measured height
+
+*Changed primitives*
+- `src/components/ui/day-grid.tsx` — `<div role="img">` → `<table>` with headers and per-cell values (also fixes Stats and Trackers)
+- `src/components/ui.tsx` — `Segmented` gains `tone="neutral"`; `Card` gains `hideInfo`
+- `src/components/recovery/*` (13 files) — `help` props dropped, ⓘ opted out
+
+*Views*
+- `src/views/Fitness.tsx` — rebuilt on the three zones; `FitnessHub.tsx` deleted
+- `src/views/Nutrition.tsx` — new page, promoted out of a Fitness accordion
+- `src/views/NoFap.tsx`, `Coaching.tsx` — restructured onto the contract, folds and card chrome retired
+- `src/views/KitchenSink.tsx` — all six primitives at empty / typical / overflow
+- `src/views/Gym.tsx`, `HomeWorkout.tsx`, `Insights.tsx` — registry keys instead of free-form strings
+
+*Navigation*
+- `src/App.tsx` — Body group of four; `gym` off the tab row
+- `src/lib/deepLink.ts` — retired ids rewritten on read, query string preserved
+- `src/components/shell/BottomNav.tsx` — phone tabs restored after the silent filter dropped two
+- `src/components/shell/viewChrome.ts` — `nutrition` chrome, Fitness/Gym/Pull-ups copy
+
+*Capture*
+- `src/lib/capture.ts`, `src/components/CaptureBar.tsx` — cardio verbs map to registry keys; labels rendered via `labelOf`
+
+*Tests* (+58: 1416 → 1474)
+- `src/domain/activities.test.ts`, `src/lib/units.test.ts`, `src/lib/viz.quartile.test.ts`, `src/lib/deepLink.test.ts`, `src/components/page/CalendarHeatmap.test.tsx`, plus migration cases in `storage.test.ts`
+
+*Gate & docs*
+- `scripts/a11y-axe.mjs` — visits 11 views including the whole cluster
+- `DATA_MODEL.md`, `FEATURE_GUIDE.md`, `FEATURES.md`, `ACCESSIBILITY.md`, `DECISIONS.md` (D-45…D-48), `CLAUDE.md` traps, `STATUS.md`
 
 **Verification:** `npx tsc -b`, `npx vitest run` (1474 pass / 95 files),
 `npx eslint .` (0 errors, 2 pre-existing warnings), `npm run build`,
