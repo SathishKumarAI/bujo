@@ -11,7 +11,7 @@ import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { PomodoroCard } from '../components/PomodoroCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
-import { cat } from '../lib/colors'
+import { cat, rechartsTooltip } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
   minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday,
@@ -412,7 +412,7 @@ function TypingPractice() {
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                   <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Tooltip contentStyle={rechartsTooltip()} />
                   <Line type="monotone" dataKey="wpm" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>

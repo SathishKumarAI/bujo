@@ -74,7 +74,7 @@ export function Stats() {
         {monthDays(ym).map((d, i) => (
           <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
             className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-heading' : 'text-micro'}`}
-            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? '#11111b' : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
+            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? cat('crust') : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
             {Number(d.slice(8))}
           </div>
         ))}
