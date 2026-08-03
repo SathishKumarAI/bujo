@@ -1,5 +1,11 @@
 import {
   ArrowsVertical,
+  Cloud,
+  CloudFog,
+  CloudLightning,
+  CloudRain,
+  CloudSun,
+  CloudSnow,
   CaretDoubleDown,
   CaretDoubleUp,
   Clock,
@@ -10,6 +16,7 @@ import {
   PersonSimpleRun,
   Sun,
   SunHorizon,
+  Thermometer,
   type Icon as IconGlyph,
 } from './icons'
 
@@ -52,3 +59,28 @@ export const SPLIT_GLYPHS: Record<string, IconGlyph> = {
 
 export const splitGlyph = (id: string): IconGlyph => SPLIT_GLYPHS[id] ?? Person
 export const slotGlyph = (id: string): IconGlyph => SLOT_GLYPHS[id] ?? Clock
+
+/**
+ * WMO weather codes → glyph (Today's date subtitle). Was ☀️ 🌤️ ⛅ ☁️ 🌫️ 🌦️ 🌧️
+ * 🌨️ ❄️ ⛈️ 🌡️.
+ *
+ * Keyed on the numeric code, which is what the journal stores — the emoji that
+ * older entries also stored is left in place and simply not rendered, so no
+ * saved record has to be migrated to change how weather looks.
+ *
+ * Ranges rather than 22 entries: open-meteo groups codes by decade (5x drizzle,
+ * 6x rain, 7x snow, 8x showers, 9x thunderstorm), and a lookup that mirrors the
+ * spec is easier to check against it than a flat table.
+ */
+export function weatherGlyph(code: number): IconGlyph {
+  if (code === 0) return Sun
+  if (code === 1 || code === 2) return CloudSun
+  if (code === 3) return Cloud
+  if (code === 45 || code === 48) return CloudFog
+  if (code >= 51 && code <= 67) return CloudRain
+  if (code >= 71 && code <= 77) return CloudSnow
+  if (code >= 80 && code <= 82) return CloudRain
+  if (code >= 85 && code <= 86) return CloudSnow
+  if (code >= 95) return CloudLightning
+  return Thermometer
+}
