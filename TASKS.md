@@ -395,3 +395,125 @@ Measured, not started. Two separate things, don't conflate them:
 Note: this also means **any earlier "N low-contrast nodes" figure in this file
 or the build record was measured through a desynced palette** and overstates the
 problem. I1 above is the re-measured, trustworthy version.
+
+---
+
+## K. Information architecture & routing — Stages 0–4 DONE, Stage 5 open
+
+The third pass (`bujo-ia-routing-prompt.md`). Structure, not styling: no new
+visual language, no data-model change. Full contract in **`docs/ROUTING.md`**.
+
+- [x] **K0 · Stage 0 audit — DONE. The headline: there was no router.**
+  `App.tsx` held `useState<ViewId>`; `lib/deepLink.ts` mirrored it into
+  `?view=`/`?day=` with `replaceState`, and its own comment said why — nothing
+  listened for `popstate`, so pushed entries would have built a Back button
+  that silently did nothing. Stage 1 was therefore "add routing to an app that
+  has none", not "put the date in the existing router".
+  - The day was **not** `useState` in Today: `CursorProvider` already owned it,
+    seeded once from `?day=`. The single-source part existed; only its source
+    was wrong.
+  - The sidebar was already data-driven (`NAV`, 21 entries, 17 visible).
+  - **Dead wire found:** `metric.fastBreak` ("First meal") is written by the
+    wellbeing card and read by *nothing*, while `FastingCard`'s own subtitle
+    says "end it at your first meal". Still open — see K6.
+
+- [x] **K1 · Stage 1 — the day is in the URL.** `#/day/:date`, react-router.
+  `HashRouter` on a deployment constraint, not taste: GitHub **project** Pages
+  serves at `/bujo/` with no SPA rewrite, so clean paths need a per-host `base`,
+  a `basename`, a `404.html` shim and a PWA `navigateFallback`. `isISODay`
+  validates by round-tripping the formatter, because `new Date(2026, 12, 45)`
+  rolls `2026-13-45` to 2027-02-14 and a regex would let it through. Chevrons
+  are `<Link>`s so middle-click works. Future days render the capture field
+  disabled ("Nothing to log yet") at an identical 41px, so stepping across
+  today does not resize the card.
+
+- [x] **K2 · Stage 2 — five sections, every view a real URL.** 21 nav entries
+  across 7 groups → 5, headers deleted (they were scaffolding for the count).
+  Paths are data in `src/lib/routes.ts`; `ViewId` was kept so ~30 `useNav()`
+  call sites, the palette and the leader keys never changed. Active state
+  matches the **section**, so `/body/pullups` lights Body. `writeDeepLink`
+  deleted — the URL is the state.
+  - Placement: Focus → Insights (a logging tool, filed by decision not by fit),
+    Cycle + Recovery → Body, Account → `/settings/account`.
+  - **`/plan/week/:isoWeek` dropped** — no week view exists.
+  - `BottomNav` lost its own hand-picked five; it mirrors the rail now.
+
+- [x] **K3 · Stage 3 — Today split by time of day.** Morning (check-in) / Day
+  (the log, alone) / Evening (close-out + one prompt), as a filter over one day
+  record. `TodayHabits` gained `variant="pills" | "checklist"` rather than a
+  twin. Clock picks the surface; `?view=` overrides and survives refresh but is
+  **not** persisted across days. A complete check-in collapses to a read-only
+  summary with Edit.
+  - **Bug fixed on the way:** `TodayHabits` called `todayISO()` internally —
+    harmless while it only rendered on today, live the moment days became
+    routable.
+  - Two deviations from the spec's card lists, both to keep features alive:
+    `PenaltyCard` on Morning (it is prescriptive, which is the plan's job), and
+    `CountHabits` beside the habit row on Day.
+
+- [x] **K4 · Stage 4 — the details.** `SegmentScale` (11 dots, `—` when
+  unanswered) replaces every wellbeing `<input type="range">`; sleep is a
+  half-hour `Stepper`, because hours are not a rating. **Every ⓘ is gone,
+  app-wide** — nine on Today was nine labels admitting they failed — replaced
+  by one `?` in the top bar that reveals the same explainers inline. Week-strip
+  bar height encodes coverage (was seven identical bars). Empty state leads
+  with the live streak or yesterday's open tasks. **"Training penalty" →
+  "Make-up work"**, renamed in Help and Settings too.
+  - Item 5 (three writing prompts → one rotating, with an expander) landed in
+    K3, because "Evening: one writing prompt" required it.
+
+- [ ] **K5 · Stage 5 — mobile. NOT STARTED.** Bottom tab bar under 768px is
+  already the five sections and its targets are 44px; the scale dots and
+  first-meal buttons are 44px. Still to do: **the sticky log input on mobile**,
+  a full 44px sweep of the habit pills, and the 1180px Insights tier needing a
+  horizontal-scroll wrapper or a stacked fallback under 640px (pick one, apply
+  consistently).
+
+- [ ] **K6 · `metric.fastBreak` is a dead wire.** Written by the wellbeing card,
+  read by nobody. `FastingCard` says "end it at your first meal" but never looks
+  at the field. K3 put both on the Morning surface, which makes the gap more
+  visible, not less. Either wire it (recording a first meal ends the running
+  fast) or drop the control.
+
+- [ ] **K7 · The month cursor is asymmetric.** It is a route on Monthly
+  (`/plan/month/:yearMonth`) but Trackers and Cycle carry a month with no route
+  of their own, so they keep component state — stepping months is in history on
+  one and not the others. Commented in `cursor.tsx` rather than papered over.
+
+## L. Habit polarity — the `avoid` flag was being ignored in six places
+
+Found from a single user report ("why does it say *Missed Alcohol* when I
+stayed sober?"). `habitLog` membership means opposite things by polarity: for a
+build habit a logged day is a win, for an `avoid` habit it is a slip.
+
+- [x] **L1 · The seed was the root cause.** `seedJournal()` shipped Caffeine,
+  Sugar and Alcohol as `stimulant` with **no `avoid` flag**, so the app began
+  life treating "drink alcohol" as a goal — and every fix below keys off that
+  flag, so none of them reached a habit the seed had mislabelled. Sugar and
+  Alcohol are `avoid: true` now; Caffeine is left as a build habit because
+  `demo.ts` gives it the cue "With breakfast". `streak.ts:16` had listed both as
+  quit-tracker presets all along, so two files disagreed about the same names.
+- [x] **L2 · Migration for existing journals.** `relabelSeededQuitHabits()` in
+  `migrate()`, matched on the seed's own fingerprint (starter name + starter
+  category + `avoid` still undefined), so a renamed or recategorised habit is
+  untouched. Idempotent. **Does not rewrite `habitLog`** — the ticks already
+  record what happened; only the reading of them changes. Streaks and ratios
+  for those two move on first load, which is the correction, not a side effect.
+- [x] **L3 · Six read sites fixed**, each with failing-first tests:
+  `penalties.ts` (a clean day read as "Missed Alcohol"; a real slip earned
+  nothing — the tick **is** the miss now, scored off `cleanStreak`),
+  `stats.ts dayCompletion` (drinking scored `ratio: 1`, a perfect day — the
+  widest-reach instance, since the week strip, the habit chips and
+  `weekdayConsistency` all read it), `coverage.ts` ("Most missed: Alcohol" after
+  five sober days), `stats.ts reminderMessage` (*"Log Alcohol today to keep your
+  4-day streak alive"*), `recommend.ts` (*"Alcohol is on a 20-day streak — turn
+  it into a challenge"*), and the two streak-leaderboard reads in
+  `TrackerVisuals` / `Trackers.tsx:732`.
+  - `reminderMessage` and `recommend` **exclude** avoid habits rather than
+    inverting them with `cleanStreak`, which was the original plan: a clean
+    streak is at risk every hour of every day, so inverting would fire daily and
+    crowd out every genuine build-habit streak. `MilestoneToast` already
+    celebrates clean runs.
+- [ ] **L4 · Open question: should a slip earn a bigger make-up?** Right now a
+  slip is one item at the same weight as a missed habit. Arguably a relapse is
+  the most consequential thing on that card.

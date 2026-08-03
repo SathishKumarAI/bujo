@@ -51,28 +51,32 @@ is still a weight-2 card, it is just in quieter company.
 
 ### Today
 
-The weight-1 band is `TodayPlanCard` + `CoachCard` **on the same 2:1 tracks as
-everything below them** — the day summarised at two tracks, what to do about it
-at one. Penalty was weight 1 too until the band the three of them formed
-measured 917px on a 1600×1000 viewport; see "What this changed already".
+**Today is three surfaces now**, not one page — see `ROUTING.md`. The weight
+question therefore asks itself *per surface*, and each surface has exactly one
+weight-1 thing, which is the whole point of splitting it.
 
-**A band must share the grid beneath it.** Splitting the band 50/50 is 38px
-shorter and was rejected for it: the divide landed at x=1075 while every column
-below split at x=1270, giving one page two column rhythms.
-
-| Component | Weight | Left | Right |
+| Surface | Weight 1 | Weight 2 | Weight 3 |
 |---|---|---|---|
-| `TodayPlanCard` | 1 — **band, two of three tracks** | Title + chips | Week % |
-| `CoachCard` | 1 — **band, one track** | Tone icon + tip | Affordance sparkle |
-| Daily log `Card` | 2 — **two of three tracks, first** | Date + weather | Logged-today count |
-| `EntryRow` | 2 | Glyph, memory mark, text | `!` and `×`, one cluster |
-| `PenaltyCard` | 2 (under the log, conditional) | Title + drill | Tier pill + collapse |
-| `TodayHabits` / count habits | 2 (rail) | Habit name | Tally pill, then `Stepper` |
-| Wellbeing | 2 (rail) | Slider labels | Value chips |
-| `FastingCard` | 3 (rail) | State | Timer |
-| Gratitude · Reflection · Memory | 3 | Field label | — |
-| `WeeklyGoalRings` | 3 (rail, bottom) | — | — |
-| On this day | 3 | Date | Text |
+| **Morning** | `WellbeingCard` — the check-in, two of three tracks | `TodayPlanCard`, `PenaltyCard` | `FastingCard` (rail) |
+| **Day** | The daily log, full width, the only card asking for input | `TodayHabits` (pills), `CountHabits` | `StatusStrip` — read-only |
+| **Evening** | `WritingPrompt` — one prompt, two of three tracks | `TodayHabits` (checklist) | `WeeklyGoalRings`, `CoachCard`, On this day |
+
+Left/right inside each card is unchanged:
+
+| Component | Left | Right |
+|---|---|---|
+| Daily log `Card` | Date + weather | Logged-today count |
+| `EntryRow` | Glyph, memory mark, text | `!` and `×`, one cluster |
+| `TodayHabits` / `CountHabits` | Habit name | Tally pill, then `Stepper` |
+| `WellbeingCard` | Scale labels | Value slot (`—` when unanswered) |
+| `PenaltyCard` | Title + drill | Tier pill + collapse |
+| `TodayPlanCard` | Title + chips | Week % |
+
+**A band must share the grid beneath it.** When plan and coach shared a row
+above the log (the layout before the surface split), a 50/50 band measured 38px
+shorter and was rejected for it: its divide landed at x=1075 while every column
+below split at x=1270, giving one page two column rhythms. If a band ever comes
+back, it goes on the 2:1 tracks.
 
 ### Data views (Trackers, Stats, Fitness, Insights)
 
@@ -125,6 +129,16 @@ below split at x=1270, giving one page two column rhythms.
     Columns are 952 vs 1409 as a result — worse than the 96 reached with the
     coach below the log, better than the 756 this page started at. Demo data
     has no count/timer habits; a real journal with them narrows it.
+  - **And then the page stopped being one page.** Every measurement above was
+    an argument about how to fit ten cards on one screen; the answer was that
+    ten cards do not belong on one screen. Today is three surfaces over one day
+    record now (`ROUTING.md`), and the column arithmetic no longer needs to be
+    fought — Day carries a single card, so there is nothing to balance it
+    against.
+
+    Kept from that work regardless, because they were right on their own terms:
+    the log comes first, the at-risk streak is stated once from the shared
+    rule, and a band shares the grid beneath it.
   - The rail's "Keep your streaks" card is gone: `TodayPlanCard` already stated
     the same fact in its at-risk banner, from a *private* filter that disagreed
     with the shared one. The banner now reads `atRiskHabits`, which is the wider
