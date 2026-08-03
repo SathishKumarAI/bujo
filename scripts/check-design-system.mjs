@@ -87,6 +87,21 @@ for (const file of files) {
     if (/\brounded-(lg|md|xl|2xl|full)\b/.test(line)) {
       fail('use rounded-control / rounded-card / rounded-pill', file, n, line.trim().slice(0, 90))
     }
+
+    // 6 · A palette colour written as hex is pinned to whichever theme it was
+    // copied from. Three chart tooltips were hardcoded to Mocha and stayed
+    // near-black on latte and dawn; nobody noticed, because the chart still drew.
+    //
+    // Exempt, because there the hex IS the point: the palette definitions
+    // themselves, the Settings theme-swatch previews (they must show another
+    // theme's colours while you are looking at this one), and third-party brand
+    // marks like the Google "G".
+    const paletteSource = name.endsWith('src/lib/colors.ts')
+    const swatchPreview = /swatch:/.test(line)
+    const brandMark = /fill="#(EA4335|4285F4|FBBC05|34A853)"/.test(line)
+    if (/#[0-9a-fA-F]{6}\b/.test(line) && !paletteSource && !swatchPreview && !brandMark) {
+      fail('hardcoded colour — use cat() or a token', file, n, line.trim().slice(0, 90))
+    }
   })
 }
 

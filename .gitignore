@@ -42,3 +42,6 @@ docker/certs/
 # src/components/ui. Wanted files are copied into place by hand; this stays on
 # disk as a reference copy for diffing the next `shadcn add`, untracked.
 /@/
+
+# Git worktrees other sessions check out inside the repo (see eslint.config.js).
+.claude/worktrees/

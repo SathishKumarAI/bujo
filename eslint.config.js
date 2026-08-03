@@ -13,7 +13,11 @@ export default defineConfig([
   // were wanted are copied into place by hand; what is left is stock upstream
   // output kept for diffing against the next `shadcn add`, and it should not be
   // linted or committed (see .gitignore).
-  globalIgnores(['dist', '@']),
+  // `.claude/worktrees/*` are git worktrees other sessions check out inside the
+  // repo. They contain a full second copy of the app, so linting them doubles
+  // every finding — and because each carries its own tsconfig, typescript-eslint
+  // cannot decide which root it is looking at and errors on every file.
+  globalIgnores(['dist', '@', '.claude/worktrees']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
