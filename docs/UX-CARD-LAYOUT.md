@@ -43,7 +43,14 @@ _Generated 2026-06-23. A per-card arrangement plan for all **272 cards** across 
 
 ### Plan
 
-1) Migration (Aging collapsed inside) -> 2) Chronically deferred (canonical) -> 3) Setup (collapsed): Recurring tasks, Import .ics
+1) Migration (Aging collapsed inside) -> 2) Chronically deferred (canonical) -> 3) Setup (**always open**, full-width footer): Recurring tasks, Import .ics
+
+Grid, not CSS multi-column, and the second column exists **only when
+"Chronically deferred" does** — it renders once a task has been migrated more
+than once, so an unconditional two-column layout left ~800px empty for most
+journals. Full-width Migration takes a third column of task cards at `xl`.
+Setup dropped its fold: page *configuration* sits under page *content* rather
+than competing for a column. See `docs/COLLAPSE-PATTERN.md` (D-44).
 
 ### Monthly
 

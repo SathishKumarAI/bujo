@@ -37,7 +37,7 @@ Signifiers stack: `* t book the campsite #travel`.
 | Challenges | `views/Challenges.tsx` | Fixed-length discipline challenges — 75 Hard/Soft, 90-day, 30-day, custom; daily rule check-in, progress ring + week-grouped calendar, current streak, strict reset (miss → Day 1), whole-number progress. |
 | Focus | `views/Focus.tsx` | Developer work tracker — log coding sessions (time/project/focus/stress/interruptions/tags), weekly hours + streak, 14-day minutes chart, language bars, focus↔stress insight. |
 | Stats | `views/Stats.tsx` | Activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, tag cloud. |
-| Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
+| Plan | `views/Plan.tsx` | Overdue-task migration flow, chronically-deferred roll-up, recurring rules (with one-tap suggestions), .ics calendar import. |
 | Collections | `views/Collections.tsx` | Future log, birthdays, **Friends/contacts** (manual cards + opt-in GitHub public-profile enrich), and custom free-form collection pages. |
 | Goals | `views/Goals.tsx` | **Cross-view roll-up** of every active target — per-habit weekly goals, fitness active-minutes, challenges, training-program days, abstinence streak — as whole-number progress bars; tap a row to jump to its home view. |
 | Insights | `views/Insights.tsx` | Streaks, completion %, correlation insights, year-in-review, index, search. |
@@ -128,9 +128,13 @@ Signifiers stack: `* t book the campsite #travel`.
 ## Compacting & mobile (appended)
 
 - **Collapsible cards** — the shared `Card` supports `collapsible`/`defaultCollapsed`
-  (header chevron). Default-collapsed: Training penalty, Gym "Today's session"
-  (phones), Stickers, On-this-day, Exercise database; the Completion heatmap is
-  collapsible. Keeps the primary action above the fold on phones.
+  plus optional controlled `open`/`onOpenChange`. Default-collapsed: Training penalty,
+  Gym "Today's session" (phones), Stickers, On-this-day, Exercise database; the
+  Completion heatmap is collapsible. Keeps the primary action above the fold on phones.
+  **The whole header folds it**, not just the caret — the caret stays a real button
+  with `aria-expanded`. One caret rotates rather than two glyphs swapping, and bodies
+  fade in on open. 42 cards and 30 sections, all through two primitives. Full pattern:
+  `docs/COLLAPSE-PATTERN.md`.
 - **Today's plan** (`TodayPlanCard`) — one daily command-centre on Today: habits
   left · workout status · tasks due · pull-up day, plus a 7-day coverage strip;
   summary-and-link (no duplicate UIs). Replaced the separate coverage card.
@@ -141,7 +145,10 @@ Signifiers stack: `* t book the campsite #travel`.
   theme toggle on phones to avoid overflow. iOS-style slide-in nav drawer.
 - **Entry-first on phones** — `Page asideFirst` puts the log forms (Fitness,
   Focus) above the charts; charts sink to the bottom on mobile.
-- **Plan migration** — top 5 overdue by default with Show all / Show less.
+- **Plan migration** — top 5 overdue by default with Show all / Show less. The page
+  is a content grid whose second column only exists when "Chronically deferred" does;
+  **Setup** is an always-open full-width footer, and its Recurring card offers eight
+  one-tap rule suggestions instead of an empty text box.
 - **Contextual help** — a `?` per view shows that page's blurb (from the view
   registry) with a link to the full guide.
 

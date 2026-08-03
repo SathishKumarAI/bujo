@@ -304,3 +304,40 @@ is the default entry; email sign-up *links* the guest to keep their data; one
 `journals` jsonb row per user, **RLS** the only access control. *Trade-off:*
 with accounts, data lives on a server (a data-controller duty) — accepted as an
 opt-in path; the passphrase E2E sync stays for the privacy-max path.
+
+**D-42 — The whole header folds a card; the caret stays the accessible control.**
+*Context:* every collapsible surface put the entire fold behind an 18px chevron —
+miss-prone on touch, and a header that looks like one control but answers in one
+corner reads as broken. *Choice:* the header row toggles on click; the caret
+remains a real `<button>` carrying `aria-expanded`, so assistive tech and the
+keyboard still operate a named control rather than a `role="button"` div.
+*Trade-off:* anything interactive in a card's `right` slot ("Mark all",
+segmented controls) has to stop propagation or it would collapse the card
+mid-click — which in turn makes a *non*-interactive `right` (a `Pill`) a dead
+spot. Accepted: collapsing the card when someone reaches for a control in it is
+the worse failure. Cards that already own an `onClick` keep the caret-only
+target, because two meanings for one click beats neither working.
+
+**D-43 — One caret rotated, and open-only animation.**
+*Context:* folds swapped between two glyphs (`CaretUp`/`CaretDown`, `▴`/`▾`),
+which reads as a cut rather than a state change. *Choice:* one glyph, rotated
+via `.caret-turn` + `data-open`; bodies fade in with `.collapse-in`. Both built
+on the existing motion tokens — no new durations or curves. *Trade-off:* **the
+close is instant.** Animating it would mean keeping the body mounted while
+closed, and the collapsed-by-default cards carry real weight (Coaching's drill
+library, Gym's exercise database). An enter-only animation is the honest trade
+at this content size. *Note:* `.caret-turn` is unlayered CSS and beats
+`@layer utilities`, so a Tailwind `transition-*` on the same element silently
+does nothing.
+
+**D-44 — A fold has to earn itself.**
+*Context:* Plan's Setup was collapsed by default, so the two cards people open
+that page to reach were behind a click, in a column of their own, next to 800px
+of nothing. *Choice:* a fold pays for itself when the content is long or rarely
+wanted; Setup is neither, so it is a plain titled section under the columns.
+More generally, page *configuration* sits below page *content* rather than
+competing with it for a column, and a column only exists when something
+conditional is there to fill it. *Trade-off:* the page is longer by default.
+*Consequence worth knowing:* unhiding Setup exposed a critical `select-name`
+violation that had shipped for months — **`npm run a11y` cannot scan inside a
+closed fold**, so every gate result is conditional on what was open when it ran.

@@ -25,6 +25,28 @@ Trap: **Tailwind v4 does not fail the build on a stale utility class.** It exits
 migrate every call site first and only then remove it from the theme, with a
 grep as the gate.
 
+Trap: **`npm run a11y` cannot scan inside a collapsed fold.** axe walks the
+rendered page, so anything behind a closed section is simply not checked — a
+critical `select-name` violation shipped for months this way. Re-run the gate
+with new or changed folds **open**, and read a clean report as "clean for
+whatever was expanded".
+
+Trap: **`vite preview` serves a stale bundle through its service worker.** A
+screenshot can show pre-change markup against a freshly built `dist/`. Before
+believing what you see:
+`navigator.serviceWorker.getRegistrations().then(r => r.forEach(x => x.unregister()))`
+then clear `caches` and reload.
+
+Trap: **a dev server is pinned to the worktree it was started in.** This repo
+has several under `.claude/worktrees/`, each on its own branch, and a tab
+pointed at one of their ports will never show changes made here no matter how
+hard you reload. Check the port's `Get-CimInstance Win32_Process` command line
+before concluding a change did not land.
+
+Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
+changes nothing for an existing journal — re-seed via Settings → Data → Load
+demo data.
+
 ## graphify
 
 This project has a graphify knowledge graph at .graphify/.

@@ -419,3 +419,58 @@ Measured, not started. Two separate things, don't conflate them:
 Note: this also means **any earlier "N low-contrast nodes" figure in this file
 or the build record was measured through a desynced palette** and overstates the
 problem. I1 above is the re-measured, trustworthy version.
+
+---
+
+## K. The fold — ✅ DONE (branch `feat/collapsible-header-ux`, 2026-08-03)
+
+Full record: `docs/COLLAPSE-PATTERN.md`. Decisions: D-42, D-43, D-44.
+
+- [x] **K1 · The whole header folds a card, not just the caret.** An 18px chevron
+  is a miss-prone touch target and a header that answers in one corner reads as
+  broken. The caret stays a real `<button>` with `aria-expanded` — it is still
+  the accessible control; the header click is a pointer convenience. Interactive
+  content in a card's `right` slot stops propagation, or "Mark all" would collapse
+  the card mid-click. Cards that already own an `onClick` keep the caret-only
+  target.
+- [x] **K2 · One caret rotated, bodies fade in.** `.caret-turn` / `.collapse-in`
+  in `src/index.css`, built on the existing motion tokens — no new durations or
+  curves. Close is deliberately instant: the body unmounts while closed and the
+  collapsed-by-default cards carry real weight. Both opt out under
+  `prefers-reduced-motion`.
+- [x] **K3 · Four section primitives became two.** Deleted
+  `components/pickleball/Section.tsx` (copy three) and Settings' `Disclosure`
+  (copy four); moved their 9 call sites, plus 5 more open-coded inline sections
+  (Challenges archived, Collections People + Auto-pages, Monthly analytics, Plan
+  Setup), onto `CollapsibleSection`/`QuietSection`. A fifth private copy went in
+  F1. Both primitives gained optional controlled `open`/`onOpenChange`.
+- [x] **K4 · Two cards had dead titles.** `PenaltyCard` and Gym's "Today's
+  session" hand-rolled a caret into `right` instead of using `Card collapsible`,
+  which is exactly why clicking their titles did nothing. Both on the shared fold
+  now, in controlled mode.
+- [x] **K5 · Six typographic folds found on the second pass.** Coaching week +
+  technique rows, Home Workout history, Pull-up formats, Trackers add-habit +
+  category rows drew `▸ ▾ ▴` in the mono face, so they matched neither the
+  caret-icon grep nor the `aria-expanded` grep. They rotate now and each gained
+  the `aria-expanded` it never had. **Lesson: an audit keyed on how something is
+  drawn misses anything drawn another way.**
+- [x] **K6 · Plan stopped reserving a column for a card that usually isn't there.**
+  "Chronically deferred" is conditional, so the unconditional two-column masonry
+  left ~800px empty for most journals. Grid now, second column only when that card
+  exists, Migration takes a third column of tasks at `xl` when full width.
+- [x] **K7 · Plan's Setup no longer folds, and suggests.** Two short cards people
+  open the page to reach do not need a fold. Its Recurring card offers eight
+  one-tap rule suggestions (added on tap, already-added ones greyed) instead of an
+  empty text box.
+- [x] **K8 · Demo data has a migration history.** The generator never migrated
+  anything, so "Chronically deferred" — the card carrying the whole point of
+  migration — was invisible in the demo. Three threads at 4/3/2 hops, so the badge
+  shows all three of its colours.
+- [x] **K9 · A critical a11y violation that had been shipping.** Unhiding Setup
+  revealed neither `<select>` in the rule form had an accessible name. Fixed with
+  `aria-label` on all three controls. **`npm run a11y` cannot scan inside a closed
+  fold** — see the warning in `docs/ACCESSIBILITY.md`.
+
+**Deliberate gap:** Trackers' category rows get the rotating caret but no body
+animation — their body is a run of `<tr>`s, which cannot be wrapped in an
+animating element without breaking the table grid.

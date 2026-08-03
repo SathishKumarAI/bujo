@@ -46,11 +46,24 @@ important an `!`, dropped a strikethrough.
 | Focus trap in modals | Radix (`ui/dialog`, `ui/alert-dialog`) traps and restores focus for dialogs built on it; every hand-rolled overlay (command palette, card enlarge modal, Stats enlarge, habit editor, habit detail, exercise detail, SOS overlay, onboarding tour) uses `useFocusTrap` — Tab cycles inside, focus returns to the opener on close |
 | Month calendar cells announced as bare numbers | Each `Monthly` day cell carries an `aria-label` with the date, item count, mood and habit progress, plus `aria-current="date"` on today |
 | Saves gave no announcement | Off-screen saves (weekly reflection, gym routine) fire a `notify.success` toast, which sonner announces politely |
+| Six folds drew a state they never announced | The typographic disclosures (`▸ ▾ ▴`) in Coaching, Home Workout, Pull-ups and Trackers now carry `aria-expanded` — they had none, and matched neither the caret-icon nor the `aria-expanded` grep, so two sweeps missed them |
+| Recurring-rule form controls unnamed (**critical**) | Neither `<select>` in Plan's rule form had an accessible name. Fixed with `aria-label` on all three controls — visible labels would break the row's "Take vitamins · task · daily" sentence |
 
 **Rule for new overlays:** if it is a `fixed inset-0` div rather than a Radix
 dialog, it must call `useFocusTrap` (`src/lib/useFocusTrap.ts`). The hook
 deliberately traps Tab only — no `focusin` guard — because these overlays open
 Radix confirm dialogs that portal outside the trapped node.
+
+**Rule for new folds:** the caret is a real `<button>` with `aria-expanded`, and
+it stays the control even though the whole header is clickable — the header
+click is a pointer convenience, never a `role="button"` div standing in for it.
+Full pattern and inventory: `docs/COLLAPSE-PATTERN.md`.
+
+> ⚠️ **The gate cannot see inside a closed fold.** `npm run a11y` scans the
+> rendered page, so anything behind a collapsed section is simply not checked.
+> Unhiding Plan's Setup surfaced a **critical** `select-name` violation that had
+> been shipping for months. When you add or change a fold, re-run the gate with
+> it **open**, and read a clean report as "clean for what was expanded".
 
 ## How to test
 

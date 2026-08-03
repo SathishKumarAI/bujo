@@ -106,11 +106,17 @@ they are, what they're aiming at, and a memento image for the month.
 ### 2.6 Plan
 The bullet-journal "migration" workhorse plus recurring rules. The **Migration**
 card lists overdue open tasks; sort them by **Date or Priority**, **star** the
-important ones, and move each to today/tomorrow or drop it — laid out two columns
-wide so you clear the backlog fast. The **Recurring** card defines daily/weekly
+important ones, and move each to today/tomorrow or drop it — laid out two or three
+columns wide so you clear the backlog fast. **Chronically deferred** appears once
+you have pushed the same task forward more than once, with a badge counting the
+hops; tap it for the full migration history. The **Setup** strip at the bottom is
+always open — no fold to click through. Its **Recurring** card defines daily/weekly
 tasks or events that auto-appear on the days they apply (edits propagate to future
-occurrences). An **.ics import** brings events from Google/Apple Calendar onto
-your Monthly.
+occurrences), and offers eight one-tap **suggestions** — Take vitamins, Journal,
+Stretch 10 min, Weekly review, Meal prep, Laundry, Bin night, Call family — so you
+are not starting from an empty box. A suggestion is added on tap; ones you already
+have stay visible but greyed. An **.ics import** brings events from Google/Apple
+Calendar onto your Monthly.
 
 ### 2.7 Collections
 Free-form pages and reference lists. The **Future Log** automatically gathers

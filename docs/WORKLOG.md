@@ -1,5 +1,72 @@
 # Worklog
 
+## 2026-08-03 — The fold: whole-header collapse, one rotating caret, four primitives into two
+
+**Summary:** Started as "the dropdown should open when you click the button, not just
+the caret" on Today's Training penalty card. That card turned out to be one of two that
+hand-rolled their own caret instead of using `Card collapsible` — which is exactly why
+their titles were dead — and the audit that followed found the app had **four**
+implementations of the same collapsible section and two different answers to what
+clicking a header does. 9 commits on `feat/collapsible-header-ux` (off
+`feat/icon-button-stage1`), all green, **not pushed**.
+
+Two findings mattered more than the feature. Unhiding one collapsed section exposed a
+**critical** `select-name` violation that had been shipping for months, because
+`npm run a11y` cannot scan inside a closed fold. And the first "complete" sweep missed
+six folds that draw their caret as a typographic `▸ ▾ ▴` rather than an icon — an audit
+keyed on how something is drawn misses anything drawn another way.
+
+**Changes:**
+- `src/components/ui.tsx` — `Card`'s whole header now toggles the fold, not just the
+  18px caret. The caret stays a real `<button>` with `aria-expanded` (still the
+  accessible control; the header click is a pointer convenience). Interactive content in
+  the `right` slot is wrapped in a `stopPropagation` span, or "Mark all" and segmented
+  controls would collapse the card mid-click. Cards owning an `onClick` keep the
+  caret-only target. Added optional controlled `open`/`onOpenChange`.
+- `src/index.css` — `.collapse-in` (body fade + 6px slide on open), `.caret-turn`
+  (180°, driven by `data-open`) and `.caret-turn-quarter` (90°), all on the existing
+  motion tokens. Close is deliberately instant: the body unmounts while closed and the
+  collapsed-by-default cards carry real weight. Both opt out under reduced motion.
+- `src/components/CollapsibleSection.tsx` — same rotation and animation, plus controlled
+  mode. Deleted `src/components/pickleball/Section.tsx` and Settings' `Disclosure` —
+  copies three and four of this component — and moved their 9 call sites over, plus 5
+  more open-coded inline sections (Challenges archived, Collections People +
+  Auto-pages, Monthly analytics, Plan Setup), ~15 lines lighter each.
+- `src/components/PenaltyCard.tsx`, `src/views/Gym.tsx` — both hand-rolled a caret into
+  `right` rather than using `Card collapsible`. Moved onto the shared fold in controlled
+  mode (PenaltyCard swaps its subtitle by state; Gym seeds from viewport width).
+- `src/views/Coaching.tsx`, `HomeWorkout.tsx`, `Pullups.tsx`, `Trackers.tsx` — the six
+  typographic folds. They stay typographic (that glyph column is deliberately outside
+  `Icon`) but rotate instead of swapping, and each gained the `aria-expanded` it never
+  had. Trackers' category rows get the caret but no body animation — their body is a run
+  of `<tr>`s.
+- `src/views/Plan.tsx` — the page reserved a column for a card that usually is not
+  there. "Chronically deferred" only renders once a task has been migrated twice, so the
+  unconditional two-column CSS masonry left ~800px empty for most journals. Grid now,
+  second column conditional, Migration takes a third column of tasks at `xl` when
+  full-width. Setup moved out of the column flow into an always-open footer — a fold
+  pays for itself when content is long or rarely wanted, and this is two short cards
+  people open the page to reach. Its Recurring card gained eight one-tap suggestions
+  (added on tap, already-added ones greyed) instead of an empty text box. All three form
+  controls gained `aria-label` — the fix for the critical violation above.
+- `src/lib/demo.ts` — the generator never migrated anything, so "Chronically deferred"
+  was invisible in the demo. Three migration threads at 4/3/2 hops, so the badge shows
+  all three of its colours.
+- `docs/COLLAPSE-PATTERN.md` (new) — the pattern, the two primitives, the CSS, a full
+  inventory of every fold in the app, and the two traps. `docs/DECISIONS.md` D-42/43/44,
+  `docs/ACCESSIBILITY.md` (closed gaps + the gate's blind spot),
+  `docs/ICON-BUTTON-SYSTEM.md` Stage 7, `docs/UX-CARD-LAYOUT.md`, `docs/FEATURES.md`,
+  `docs/FEATURE_GUIDE.md`, `TASKS.md` §K, `STATUS.md`, `CLAUDE.md` (four new traps).
+
+**Verification:** `npx tsc -b` 0 · `npx vitest run` 1416 passed · `npx eslint .` 0
+errors, 2 pre-existing warnings · `npm run build` clean · `npm run design` pass ·
+`npm run a11y` 0 serious (1 critical found and fixed on the way). Every changed view
+checked in-browser.
+
+**Housekeeping:** six stale `vite` processes were running on ports 5173–5176, 5180 and
+5191 from earlier sessions; the one on 5191 served `.claude/worktrees/today-ux` at a
+different branch, which is why changes made here appeared not to land. All six killed.
+
 ## 2026-07-13 21:38 — UI/UX craft backlog: contrast, focus, confirms, one button system
 
 **Summary:** Closed out the UI/UX craft backlog on `feat/ui-polish`. The headline find was
