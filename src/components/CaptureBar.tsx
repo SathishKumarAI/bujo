@@ -7,6 +7,7 @@ import { SmartInput } from './SmartInput'
 import { MicButton } from './MicButton'
 import { Stepper } from './fields/Stepper'
 import { EmojiScale } from './fields/EmojiScale'
+import { todayISO } from '../lib/date'
 import { parseTags } from '../lib/bullets'
 import { parseCapture, type CaptureResult } from '../lib/capture'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
@@ -63,6 +64,10 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
   // A frozen, hand-editable copy of the current parse (the "edit fields" panel).
   const [draft, setDraft] = useState<CaptureResult | null>(null)
   const templates = data.settings.quickTemplates ?? []
+  // Days that have not happened can be opened and read, but not written to.
+  // Guarded here rather than only on the input, because `add()` is also reached
+  // from the template chips and the Enter key.
+  const future = date > todayISO()
 
   function setText(next: string) {
     setVal(next)
@@ -140,6 +145,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
     onAdded?.()
   }
   function add(text: string) {
+    if (future) return
     const t = text.trim()
     if (!t) return
     commitAndClear(draft ?? parseCapture(t, captureCtx))
@@ -163,6 +169,9 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
 
   return (
     <div>
+      {/* A future day can be opened and read, but not written to. The field
+          stays rendered and merely refuses input, so stepping forward and back
+          through days does not make the card resize under the cursor. */}
       <div className="flex items-start gap-2">
         <SmartInput
           value={val}
@@ -170,11 +179,12 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           onSubmit={add}
           suggestCtx={{ tags, recents, habits: habitNames }}
           dupItems={dupItems}
-          placeholder="Capture… e.g. bench 80x5, ran 5k 28min, mood 7, water 6, t call mom"
+          placeholder={future ? 'Nothing to log yet' : 'Capture… e.g. bench 80x5, ran 5k 28min, mood 7, water 6, t call mom'}
           aria-label="Smart capture"
+          disabled={future}
         />
-        <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
-        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-control">
+        <MicButton disabled={future} onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
+        <Button type="button" variant="secondary" disabled={future} onClick={() => add(val)} className="press-3d rounded-control">
           Add
         </Button>
       </div>

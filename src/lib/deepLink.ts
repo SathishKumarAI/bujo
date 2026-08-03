@@ -1,5 +1,3 @@
-import { todayISO } from './date'
-
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
 
 /**
@@ -26,16 +24,25 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
 }
 
 /**
- * Mirror the current view (and the day cursor, when it isn't today) into the
- * URL. Today is omitted on purpose: `?view=today` should keep meaning "today"
- * tomorrow, and a link to the current day is the one link nobody needs.
+ * Mirror the current view into the URL.
+ *
+ * The day is no longer written here — it lives in the hash route (`#/day/…`)
+ * and `CursorProvider` reads it from there. Writing it in both places would be
+ * two sources of truth for one value, and the query-string copy would go stale
+ * the moment the router navigated. `readDeepLink().day` survives for exactly
+ * one purpose: honouring `?day=` bookmarks made before the router existed.
+ *
+ * Still `replaceState`, and now for a smaller reason than before: the view is
+ * not yet a route (Stage 2), so pushing an entry per view switch would build
+ * history the Back button could not honour. The day *is* a route and gets real
+ * pushed history through `navigate()`.
  */
-export function writeDeepLink(view: string, day: string) {
+export function writeDeepLink(view: string) {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
   params.set('view', view)
-  if (day && day !== todayISO()) params.set('day', day)
-  else params.delete('day')
+  // The router owns the day now; drop any stale copy a pre-router session left.
+  params.delete('day')
   const next = `${window.location.pathname}?${params}${window.location.hash}`
   if (next !== window.location.pathname + window.location.search + window.location.hash) {
     window.history.replaceState(null, '', next)

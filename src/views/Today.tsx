@@ -5,7 +5,7 @@ import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Pill, Slider } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Stepper } from '../components/fields/Stepper'
-import { Page, useCursor } from '../components/shell/Page'
+import { Page, useToday } from '../components/shell/Page'
 import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
 import { EntryRow } from '../components/EntryRow'
@@ -22,7 +22,7 @@ import { promptForDay } from '../lib/prompts'
 
 export function Today() {
   const { data, setMetric, setGratitude, setMemory, migrateEntry } = useJournal()
-  const { day: date } = useCursor()
+  const date = useToday()
 
   const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
   const doneCount = dayEntries.filter((e) => e.type === 'task' && e.status === 'done').length

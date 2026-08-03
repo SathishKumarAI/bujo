@@ -23,6 +23,7 @@ export function SmartInput({
   onGoToDuplicate,
   onMergeDuplicate,
   confirmOnDuplicate = false,
+  disabled = false,
 }: {
   value: string
   onChange: (v: string) => void
@@ -35,6 +36,8 @@ export function SmartInput({
   onGoToDuplicate?: (id: string) => void
   onMergeDuplicate?: (id: string) => void
   confirmOnDuplicate?: boolean
+  /** Renders the field but refuses input — used for days that haven't happened. */
+  disabled?: boolean
 }) {
   const confirm = useConfirm()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -83,13 +86,16 @@ export function SmartInput({
       <input
         ref={inputRef}
         value={value}
+        disabled={disabled}
         onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(0) }}
+        // Suggestions are keyed off focus; a disabled input cannot take focus,
+        // so the popup can never open. No extra guard needed.
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 120)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full rounded-control border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+        className={`w-full rounded-control border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
       />
 
       {/* Duplicate corner badge */}

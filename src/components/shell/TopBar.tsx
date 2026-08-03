@@ -17,6 +17,7 @@ import { AccountMenu } from './AccountMenu'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { DateJumpPicker } from './DateJumpPicker'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 function shiftMonth(ym: string, delta: number): string {
   const [y, mo] = ym.split('-').map(Number)
@@ -77,14 +78,26 @@ export function TopBar({
 
       {chrome.dateNav && (
         <div className="relative ml-2 flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Previous"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, -1)) : setMonth(shiftMonth(month, -1)))}
-          >
-            <Icon as={CaretLeft} size="md" />
-          </Button>
+          {/* Day steps are real anchors, not click handlers, so middle-click
+              and cmd-click open the day in a new tab the way any other link
+              would. The month cursor has no route yet (Stage 2), so it stays a
+              button — a link to nowhere would be a worse lie than a button. */}
+          {chrome.dateNav === 'day' ? (
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/day/${addDays(day, -1)}`} aria-label={`Previous day, ${prettyDay(addDays(day, -1))}`}>
+                <Icon as={CaretLeft} size="md" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Previous month"
+              onClick={() => setMonth(shiftMonth(month, -1))}
+            >
+              <Icon as={CaretLeft} size="md" />
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -95,14 +108,22 @@ export function TopBar({
           >
             {chrome.dateNav === 'day' ? prettyDay(day) : prettyMonth(month)}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Next"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, 1)) : setMonth(shiftMonth(month, 1)))}
-          >
-            <Icon as={CaretRight} size="md" />
-          </Button>
+          {chrome.dateNav === 'day' ? (
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to={`/day/${addDays(day, 1)}`} aria-label={`Next day, ${prettyDay(addDays(day, 1))}`}>
+                <Icon as={CaretRight} size="md" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Next month"
+              onClick={() => setMonth(shiftMonth(month, 1))}
+            >
+              <Icon as={CaretRight} size="md" />
+            </Button>
+          )}
           {pickerOpen && (
             <DateJumpPicker
               mode={chrome.dateNav}
