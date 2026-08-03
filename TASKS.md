@@ -534,6 +534,47 @@ build habit a logged day is a win, for an `avoid` habit it is a slip.
     streak is at risk every hour of every day, so inverting would fire daily and
     crowd out every genuine build-habit streak. `MilestoneToast` already
     celebrates clean runs.
+- [ ] **K8 · THE THEME SWEEP — owed, not optional.** Everything in §K and §L
+  shipped **unswept**: mocha only, because the theme pass was skipped by
+  explicit instruction while the work was in flight. The standing rule
+  (STATUS.md) is five themes — mocha, latte, neon, vscode, dawn — and this is
+  the largest body of UI to go in without it.
+  - **Why five and not "one dark, one light":** three of them redefine the
+    accent (dawn's is an amber), two invert surface polarity, and **dawn renders
+    two text tiers where the others render three** (§H14). A spot check in latte
+    catches none of those.
+  - **The specific risks this session created**, in rough order of likelihood:
+    - **`SegmentScale`** — an unfilled dot is `cat('surface2')` border on the
+      card background. In dawn's cream surfaces and latte that pairing is the
+      one measured closest to the AA floor; hollow-vs-filled has to stay
+      legible, and it is the *only* channel saying "unanswered".
+    - **`catA(name, role)`** — three fixed alphas (`22`/`14`/`55`) applied over
+      five different surface luminances. `Pill`'s docstring already flags
+      accent-on-wash as the exact pairing that fails AA in latte (§I1). A fixed
+      alpha over a light surface is not the same contrast as over a dark one.
+    - **Inline hints** (`shell/hints.tsx`) — new `bg-ink-0` panel inside a card,
+      i.e. a surface on a surface. Two-tier dawn is where this collapses.
+    - **The week strip** — bar *height* now carries the data, but colour is
+      still the second channel and the green/yellow/peach band was chosen in
+      mocha. Also the `mauve` today-outline against dawn's amber accent.
+    - **`StatusStrip`, the make-up tier pill, the segmented surface control** —
+      all new accent-on-wash surfaces.
+    - **Section tabs** — `TabsList variant="line"`, whose active underline is
+      `after:bg-foreground`; check it is visible on all five, and that the
+      scroll-clipped tab still reads as clipped rather than as missing.
+  - **Method that actually works** (§J4 proved it): `/kitchen-sink` carries its
+    own five-theme switcher and an S/M/L/XL text-size control. Sweep
+    **5 themes × 3 scales**, not 5 × 1 — the 44px floors added in K5 are
+    absolute px on purpose, so text scaling is exactly where they will look
+    wrong even though they measure right.
+  - **Do not trust a contrast number taken through `setActiveTheme`-less
+    switching** — §I2: `cat()` does not follow a direct `data-theme` change, and
+    every earlier "N low-contrast nodes" figure was measured through a desynced
+    palette.
+  - Definition of done: all five themes at all three text scales, on Today's
+    three surfaces plus one section landing, with contrast measured on the new
+    surfaces above rather than eyeballed.
+
 - [ ] **L4 · Open question: should a slip earn a bigger make-up?** Right now a
   slip is one item at the same weight as a missed habit. Arguably a relapse is
   the most consequential thing on that card.

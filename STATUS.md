@@ -57,8 +57,16 @@ Update this when you STOP working, not when you start.
     Reload with `?demo=1` there for a clean one. The app on `:5173` was never
     touched.
 
-- **Next action:** the IA pass is complete — Stages 0–5 all done. What it left
-  behind, both in TASKS.md:
+- **Next action: the theme sweep — TASKS.md §K8.** Everything on this branch
+  shipped mocha-only, because the theme pass was skipped by instruction while
+  the work was in flight. It is the largest body of UI to go in unswept, and the
+  riskiest new surfaces are the ones this session invented: `SegmentScale`'s
+  hollow dots (the only channel saying "unanswered"), `catA`'s three fixed
+  alphas over five surface luminances, and the inline hint panel — a surface on
+  a surface, which is where two-tier dawn collapses. Sweep 5 themes × 3 text
+  scales via `/kitchen-sink`, not 5 × 1.
+
+  Then the rest, all in TASKS.md:
   - **K6** — `metric.fastBreak` ("First meal") is written by the wellbeing card
     and read by *nothing*, while `FastingCard` says "end it at your first meal".
     Both now sit on the Morning surface, which makes the dead wire more visible,
