@@ -16,7 +16,8 @@ import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
-import { CursorProvider } from './components/shell/cursor'
+import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
+import { readDeepLink } from './lib/deepLink'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
 import type { NavItem } from './components/shell/Sidebar'
@@ -200,7 +201,7 @@ export default function App() {
     }).then((fn) => { off = fn })
     return () => off()
   }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
-  const urlView = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null
+  const urlView = readDeepLink().view
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   const [paletteOpen, setPaletteOpen] = useState(false)
   // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
@@ -270,6 +271,7 @@ export default function App() {
     <DeviceProvider>
     <CursorProvider>
       <NavProvider navigate={setView}>
+      <DeepLinkSync view={view} />
       <CommandPalette
         onNavigate={(id) => setView(id as ViewId)}
         navItems={items.map((n) => ({ id: n.id, label: n.label }))}

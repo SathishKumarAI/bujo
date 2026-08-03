@@ -27,6 +27,9 @@ import { CategoryConsistencyCard } from '../components/trackers/CategoryConsiste
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
+import { useStickyState } from '../lib/useStickyState'
+
+const TRACKER_VIEW_MODES = ['day', 'week', 'month'] as const
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
@@ -80,7 +83,8 @@ export function Trackers() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
+  // Sticky: day / week / month is a habit of reading, not a per-visit choice.
+  const [viewMode, setViewMode] = useStickyState<'day' | 'week' | 'month'>('trackers.viewMode', 'month', TRACKER_VIEW_MODES)
   const layout = data.settings.trackerLayout ?? 'classic'
   const today = todayISO()
 
