@@ -350,27 +350,14 @@ body.handwriting textarea {
     7px 7px 0 -1px var(--color-mantle),
     8px 8px 0 -1px var(--color-surface0);
 }
-/* Center spine: a subtle vertical crease + binding shadow on wide screens. */
-.book::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 50%;
-  width: 28px;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background: linear-gradient(
-    to right,
-    transparent,
-    color-mix(in srgb, var(--color-crust) 55%, transparent),
-    transparent
-  );
-  z-index: 1;
-}
-@media (max-width: 900px) {
-  .book::before { display: none; } /* one page on small screens */
-}
+/* RETIRED · the centre spine (`.book::before`), removed 2026-08-03.
+   A 28px vertical crease down the middle of the spread, behind the content. It
+   reads as a book binding only when two columns of content sit either side of
+   it; every view in the app is a single centred column, so what it actually
+   rendered was a stray full-height line through empty space — most visibly on
+   Fitness, where it ran straight down the gap between the cards.
+   `.book`'s cover shadow and `::after` page edges carry the book metaphor on
+   their own. */
 .book-inner {
   position: relative;
   z-index: 2;
