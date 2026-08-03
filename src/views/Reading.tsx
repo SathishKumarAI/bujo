@@ -57,7 +57,11 @@ export function Reading() {
       {/* Yearly goal */}
       <div className="rounded-2xl border border-line bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 text-body font-medium text-foreground"><Target size={15} className="text-primary" /> Yearly reading goal</span>
+          {/* Real headings, not styled spans: this view hand-rolls its cards
+              instead of using <Card>, so it was the one view with no <h2> at
+              all under the page <h1> — the whole page read as unstructured
+              text to a screen reader. */}
+          <h2 className="inline-flex items-center gap-1.5 text-body font-medium text-foreground"><Target size={15} className="text-primary" /> Yearly reading goal</h2>
           <div className="flex items-center gap-2 text-body">
             <input type="number" min={0} value={goal || ''} placeholder="0"
               onChange={(e) => setSettings({ readingGoalBooks: Math.max(0, Number(e.target.value) || 0) })}
@@ -102,10 +106,10 @@ export function Reading() {
           const Icon = s.icon
           return (
             <div key={s.id} className="space-y-3">
-              <h3 className="flex items-center gap-2 text-body font-medium text-foreground">
+              <h2 className="flex items-center gap-2 text-body font-medium text-foreground">
                 <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
-              </h3>
+              </h2>
               {list.length === 0 && <p className="rounded-xl border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
               {list.map((b) => <BookCard key={b.id} book={b} />)}
             </div>
@@ -116,10 +120,10 @@ export function Reading() {
       {/* Stalled books nudge · pick back up or shelve */}
       {stale.length > 0 && (
         <div className="rounded-2xl border border-line bg-card p-4">
-          <h3 className="mb-2 flex items-center gap-2 text-body font-medium text-foreground">
+          <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-foreground">
             <AlarmClock size={16} className="text-peach" /> Stalled books
             <span className="text-fg-2">({stale.length})</span>
-          </h3>
+          </h2>
           <ul className="space-y-1.5 text-label">
             {stale.map(({ book, idleDays }) => (
               <li key={book.id} className="flex items-center gap-2">

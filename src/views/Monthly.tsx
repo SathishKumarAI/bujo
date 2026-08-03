@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
-import { monthDays, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
+import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Card, Input, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
@@ -113,10 +113,23 @@ export function Monthly() {
               const isToday = d === today
               const mood = data.metrics.find((m) => m.date === d)?.mood
               const moodTint = mood == null ? undefined : `${cat(mood >= 7 ? 'green' : mood >= 4 ? 'yellow' : 'red')}22`
+              // Sighted users read the cell: a number, some dots, a progress
+              // bar. A screen reader got "2" and nothing else, so the whole
+              // month sounded like a list of bare numbers. Spell the cell out.
+              const cellHabits = habitProgress(d)
+              const cellLabel = [
+                prettyDay(d),
+                isToday ? 'today' : null,
+                `${events.length} ${events.length === 1 ? 'item' : 'items'}`,
+                mood != null ? `mood ${mood} of 10` : null,
+                cellHabits.total > 0 && d <= today ? `${cellHabits.done} of ${cellHabits.total} habits` : null,
+              ].filter(Boolean).join(', ')
               return (
                 <button
                   key={d}
                   onClick={() => { setDay(d); nav('today') }}
+                  aria-label={cellLabel}
+                  aria-current={isToday ? 'date' : undefined}
                   title={`Open ${d}`}
                   className="relative min-h-[5.5rem] rounded-lg border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
                   style={{
@@ -141,7 +154,7 @@ export function Monthly() {
                     {(data.stickers[d] ?? []).slice(0, 4).join('')}
                   </div>
                   {(() => {
-                    const { done, total } = habitProgress(d)
+                    const { done, total } = cellHabits
                     if (total === 0 || d > today) return null
                     return (
                       <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-ink-2" title={`${done}/${total} habits`}>

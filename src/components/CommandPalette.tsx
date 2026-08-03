@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useJournal } from '../store'
+import { useFocusTrap } from '../lib/useFocusTrap'
 import { exportJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
@@ -42,7 +43,9 @@ export function CommandPalette({
   const setOpen = onOpenChange
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
+  // Keyboard containment: the palette is a bare overlay, so without this Tab
+  // walks out of it into the page behind, with no visible sign it left.
+  const trap = useFocusTrap<HTMLDivElement>(open)
 
   // Global hotkey.
   useEffect(() => {
@@ -75,9 +78,8 @@ export function CommandPalette({
     }
   }
 
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 0)
-  }, [open])
+  // Opening focus is the trap's job now (the search input is the first tabbable
+  // thing inside), so there is no second owner of focus fighting it.
 
   function download(name: string, text: string) {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
@@ -120,13 +122,14 @@ export function CommandPalette({
       onClick={() => setOpen(false)}
     >
       <div
+        ref={trap}
         className="card-3d w-full max-w-lg overflow-hidden rounded-xl border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Command palette"
       >
         <input
-          ref={inputRef}
           value={q}
           onChange={(e) => { setQ(e.target.value); setActive(0) }}
           onKeyDown={(e) => {

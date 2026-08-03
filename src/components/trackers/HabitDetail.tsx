@@ -8,6 +8,7 @@ import { longestStreakEver } from '../../lib/streak'
 import { completionRate30, bestWeekday, perfectWeeks, habitGrade } from '../../lib/habitStats'
 import type { Habit, JournalData } from '../../lib/types'
 import { Button } from '../ui/button'
+import { useFocusTrap } from '../../lib/useFocusTrap'
 
 const WEEKS = 18
 const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
@@ -26,6 +27,8 @@ export function HabitDetail({
   onClose: () => void
   onEdit: () => void
 }) {
+  // Hand-rolled overlay: it owns its own focus containment.
+  const trap = useFocusTrap<HTMLDivElement>()
   const today = todayISO()
   const type = h.type ?? 'check'
   const target = habitTarget(h)
@@ -94,9 +97,11 @@ export function HabitDetail({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
       <div
+        ref={trap}
         className="card-3d w-full max-w-2xl overflow-hidden rounded-xl border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label={`${h.name} activity`}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
