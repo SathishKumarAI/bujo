@@ -3,7 +3,7 @@
 // brutal the drill is. All are bodyweight/discipline tasks (this is a health app).
 import type { JournalData } from './types'
 import { todayISO, addDays } from './date'
-import { habitStreak } from './stats'
+import { cleanStreak, habitStreak } from './stats'
 
 export type PenaltyTier = 'light' | 'medium' | 'heavy' | 'legendary'
 
@@ -82,32 +82,45 @@ export function missesFor(data: JournalData, today = todayISO()): MissReport {
   const items: string[] = []
   let weight = 0
 
-  // Broken habit streaks (scheduled yesterday, not done, not skipped).
+  // Habits, in the two polarities the app supports. The whole reason this needs
+  // saying out loud: `habitLog` membership means opposite things for the two.
   //
-  // Build habits only. For an `avoid` habit, presence in `habitLog` means you
-  // SLIPPED — so `!done`, the condition this loop calls a miss, is precisely
-  // the success state, and every clean day was being reported as "Missed
-  // Alcohol". The streak clause inverted too: `habitStreak` resolves through
-  // `habitDoneOn`, which counts consecutive *slips* for an avoid habit, so
-  // ending a four-day run of drinking read as "(broke a 4-day streak)" and set
-  // the weight to heavy. Two clean quit habits alongside one real miss also
-  // tripped the `items.length >= 3` bump below, so staying clean made the
-  // penalty worse.
+  //   build habit — logged = you did it       → the MISS is the absence
+  //   avoid habit — logged = you slipped      → the MISS is the presence
   //
-  // Every other habit loop in this directory already guards this — `coach.ts`,
-  // `correlations.ts` (three sites), `habitStats.ts`, `atRiskHabits`. This one
-  // did not, and no test constructed an avoid habit, so it stayed hidden.
-  // `cleanStreak()` in `stats.ts` is the helper to reach for if quit habits
-  // should ever earn a penalty for the slip itself; that would be a feature,
-  // not this fix.
+  // This loop used to apply the build rule to both, so a clean day on a quit
+  // habit reported "Missed Alcohol" — punishing the win — while an actual
+  // relapse passed silently. `TodayHabits.tsx` has always labelled the same
+  // boolean "Slipped today" / "Clean today"; only this file disagreed.
   const yDow = new Date(y + 'T00:00').getDay()
   for (const h of data.habits) {
-    if (h.archived || h.avoid) continue
+    if (h.archived) continue
+    // A day you deliberately marked as skipped is neither a miss nor a slip.
+    const skip = (data.habitSkips?.[h.id] ?? []).includes(y)
+    if (skip) continue
+    const logged = (data.habitLog[y] ?? []).includes(h.id)
+
+    if (h.avoid) {
+      // You tick a quit habit on the day you gave in, so the tick IS the
+      // failure. Nothing to do on a clean day.
+      //
+      // Scheduling is not consulted: "don't drink" has no off-days, and a slip
+      // on an unscheduled day is still a slip.
+      if (!logged) continue
+      // `cleanStreak` counts clean days, so it must be asked about the day
+      // BEFORE the slip — asked about `y` itself it returns 0, the slip having
+      // ended the run. Using `habitStreak` here is what produced "(broke a
+      // 4-day streak)" for someone who had drunk four days straight and then
+      // stopped: for an avoid habit it counts consecutive slips.
+      const clean = cleanStreak(data, h.id, addDays(y, -1))
+      items.push(`Slipped: ${h.name}${clean >= 3 ? ` (broke a ${clean}-day clean streak)` : ''}`)
+      weight = Math.max(weight, clean >= 3 ? 2 : 1)
+      continue
+    }
+
     const scheduled = !h.activeDays?.length || h.activeDays.includes(yDow)
     if (!scheduled) continue
-    const done = (data.habitLog[y] ?? []).includes(h.id)
-    const skip = (data.habitSkips?.[h.id] ?? []).includes(y)
-    if (done || skip) continue
+    if (logged) continue
     const streak = habitStreak(data, h.id, addDays(y, -1))
     items.push(`Missed ${h.name}${streak >= 3 ? ` (broke a ${streak}-day streak)` : ''}`)
     weight = Math.max(weight, streak >= 3 ? 2 : 1)
