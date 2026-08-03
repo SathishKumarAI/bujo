@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useJournal } from '../store'
 import { activeDays, reminderMessage } from '../lib/stats'
 import { todayISO } from '../lib/date'
+import { Button } from './ui/button'
 
 /**
  * Daily nudge to journal. Shows an in-app banner (and fires a browser
@@ -53,11 +54,11 @@ export function ReminderBanner() {
       <span className="text-mauve">{urgent ? urgent.title.slice(0, 2) : '✦'}</span>
       <span className="flex-1 text-fg-1">{body}</span>
       {'Notification' in window && Notification.permission === 'default' && (
-        <button onClick={() => Notification.requestPermission()} className="rounded px-2 py-1 text-label text-mauve hover:bg-ink-2">
+        <Button variant="ghost" size="sm" onClick={() => Notification.requestPermission()} className="text-label text-mauve">
           Enable notifications
-        </button>
+        </Button>
       )}
-      <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-fg-2 hover:text-fg-1">×</button>
+      <Button variant="ghost" size="icon-sm" onClick={() => setDismissed(true)} aria-label="Dismiss" className="text-fg-2 hover:text-fg-1">×</Button>
     </div>
   )
 }
