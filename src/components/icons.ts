@@ -120,6 +120,7 @@ export {
   MicrophoneSlash, // was MicOff
   Minus, // was Minus
   Moon, // was Moon
+  MoonStars, // time-of-day: evening
   Note, // was StickyNote
   NotePencil, // was NotebookPen
   Palette, // was Palette
@@ -151,6 +152,7 @@ export {
   Stack, // was Layers
   Star, // was Star
   Sun, // was Sun
+  SunHorizon, // time-of-day: morning
   Sword, // was Swords
   Target, // was Target
   Timer, // was Timer

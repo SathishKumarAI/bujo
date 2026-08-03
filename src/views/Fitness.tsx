@@ -82,7 +82,7 @@ export function Fitness() {
 
   return (
     <Page>
-      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> ArrowsClockwise last</Button> : undefined}>
+      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
         <div className="space-y-3">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <label className="block text-body text-fg-1">Activity

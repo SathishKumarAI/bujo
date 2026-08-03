@@ -120,7 +120,7 @@ export function DriveSync() {
           <p className="mb-2 text-body text-fg-1">Reference a file from Drive</p>
           <div className="flex gap-2">
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> MagnifyingGlass</Button>
+            <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> Search</Button>
           </div>
           {files.length === 0 ? (
             <Empty>Search your Drive to list images and documents.</Empty>

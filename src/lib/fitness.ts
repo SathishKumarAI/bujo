@@ -1,14 +1,15 @@
 import type { JournalData, Routine, Split } from './types'
 
 /** PPL split metadata: label + accent color token + emoji. */
-export const SPLITS: { id: Split; label: string; color: string; icon: string }[] = [
-  { id: 'push', label: 'Push', color: 'red', icon: '🏋️' },
-  { id: 'pull', label: 'Pull', color: 'blue', icon: '🤸' },
-  { id: 'legs', label: 'Legs', color: 'green', icon: '🦵' },
-  { id: 'upper', label: 'Upper', color: 'peach', icon: '💪' },
-  { id: 'lower', label: 'Lower', color: 'teal', icon: '🦿' },
-  { id: 'full', label: 'Full body', color: 'mauve', icon: '🔥' },
-  { id: 'other', label: 'Other', color: 'subtext0', icon: '🏃' },
+// Icons live in `components/glyphs.ts` (SPLIT_GLYPHS); this stays pure data.
+export const SPLITS: { id: Split; label: string; color: string }[] = [
+  { id: 'push', label: 'Push', color: 'red' },
+  { id: 'pull', label: 'Pull', color: 'blue' },
+  { id: 'legs', label: 'Legs', color: 'green' },
+  { id: 'upper', label: 'Upper', color: 'peach' },
+  { id: 'lower', label: 'Lower', color: 'teal' },
+  { id: 'full', label: 'Full body', color: 'mauve' },
+  { id: 'other', label: 'Other', color: 'subtext0' },
 ]
 
 export function splitMeta(id?: Split) {
