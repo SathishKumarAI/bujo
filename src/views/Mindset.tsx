@@ -3,6 +3,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
+import { CardGrid } from '../components/shell/CardGrid'
 import { MINDSET_LIBRARY, MINDSET_CATEGORIES, principleById } from '../lib/mindset'
 
 /**
@@ -16,7 +17,7 @@ export function Mindset() {
   const focusedIds = new Set(focus.map((f) => f.principleId))
 
   return (
-    <Page>
+    <Page width="wide">
       <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Your focus</span>} subtitle="What you’re working on now" help="The principles you’ve chosen to practise. Add a note on how you’ll apply each — a personal cue you’ll actually use.">
         {focus.length === 0 ? (
           <Empty>Pick a principle from the library below to start working on your thinking style.</Empty>
@@ -42,32 +43,38 @@ export function Mindset() {
         {focus.length > 0 && <p className="mt-3 text-label text-fg-2">Tip: keep it to 1–3 at a time — focus beats breadth.</p>}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><Brain size={18} className="text-peach" /> Principle library</span>} subtitle="Tap + to add a principle to your focus" help="A curated set of mental-game and thinking-style principles. Browse by theme; add the ones you want to build into how you think and play.">
-        <div className="space-y-4">
-          {MINDSET_CATEGORIES.map((catName) => (
-            <div key={catName}>
-              <p className="mb-1.5 text-caption font-medium tracking-wider text-fg-2 uppercase">{catName}</p>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {MINDSET_LIBRARY.filter((p) => p.category === catName).map((p) => {
-                  const added = focusedIds.has(p.id)
-                  return (
-                    <li key={p.id} className="flex items-start gap-2 rounded-lg border border-line bg-ink-0 p-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-body font-medium text-fg-1">{p.title}</p>
-                        <p className="text-label text-fg-2">{p.why}</p>
-                      </div>
-                      <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? 'Already in focus' : `Add ${p.title}`}
-                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
-                        {added ? <Check size={13} /> : <Plus size={13} />}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* The library used to be a single 1,575px card — every principle in the
+          app, one uninterrupted wall, no collapse and no way to reach a
+          category except scrolling past the ones before it. Each theme is its
+          own card now, three across, so the seven categories are visible at
+          once and each is a real heading rather than an uppercase caption. */}
+      <p className="flex items-center gap-2 text-body text-fg-2">
+        <Brain size={18} className="shrink-0 text-peach" />
+        Principle library · tap + to add one to your focus
+      </p>
+      <CardGrid>
+        {MINDSET_CATEGORIES.map((catName) => (
+          <Card key={catName} title={catName}>
+            <ul className="space-y-2">
+              {MINDSET_LIBRARY.filter((p) => p.category === catName).map((p) => {
+                const added = focusedIds.has(p.id)
+                return (
+                  <li key={p.id} className="flex items-start gap-2 rounded-lg border border-line bg-ink-0 p-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-medium text-fg-1">{p.title}</p>
+                      <p className="text-label text-fg-2">{p.why}</p>
+                    </div>
+                    <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? `${p.title} is already in your focus` : `Add ${p.title} to your focus`}
+                      className={`grid size-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
+                      {added ? <Check size={13} /> : <Plus size={13} />}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </Card>
+        ))}
+      </CardGrid>
     </Page>
   )
 }

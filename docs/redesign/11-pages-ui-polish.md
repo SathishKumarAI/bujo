@@ -125,18 +125,32 @@ Do not spend a PR on these — they were measured and are fine:
   deliberately dense. The genuinely too-small target is the card ⓘ (14×14),
   which is deferred below.
 
-## Deferred, with reasons
+## Deferred — now closed
 
-| Item | Why not now |
+Both items were held back because another session was editing those files. That
+session has landed, and both are done:
+
+| Item | Status |
 |---|---|
-| Recovery + Stats onto `Page` | Both files are being edited in a parallel session |
-| Card ⓘ: name from title, pad to 24px | Lives in `src/components/ui.tsx`, same |
-| Settings panel width | Three tabs are `max-w-2xl` inside the `wide` tier, so ~400px sits empty. A layout decision, not a defect |
+| Recovery + Stats onto `Page` | ✅ Done. **18/18 views** now on the shell |
+| Card ⓘ: name from title, pad to 24px | ✅ Done, and widened to all three header controls |
 
-The ⓘ finding is worth keeping: `ui.tsx:77` gives every titled card an ⓘ named
-`"What is this?"`, so **Today alone exposes 34 identically-named buttons** to a
-screen reader, and the box is 14×14 against the WCAG 2.5.8 24px floor. One file,
-app-wide reach.
+The ⓘ was the bigger of the two. Every titled card shipped one named
+`"What is this?"`, so Today alone handed a screen reader **34 identically-named
+buttons**; the ⛶ and the collapse chevron were equally generic, and all three
+were bare 14/15/18px icons under the WCAG 2.5.8 24px floor. They are now named
+after their card ("What is Today's habits?", "Enlarge Activity") and sit in a
+24×24 box. Titles are `ReactNode` and ~20 carry an icon beside the words, so a
+`typeof === 'string'` check missed them — a small `nodeText` walker handles it.
+
+Measured across all 18 views: **92 card-header controls, 0 under 24px, 0 still
+called "What is this?"**.
+
+### Still open
+
+| Item | Why |
+|---|---|
+| Settings panel width | Three tabs are `max-w-2xl` inside the `wide` tier, so ~400px sits empty. A layout decision, not a defect |
 
 ---
 

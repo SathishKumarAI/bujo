@@ -91,7 +91,10 @@ export function Fitness() {
           </label>
           <MetricFields f={f} set={set} distUnit={dist} />
           {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
-          <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
+          {/* Cardio, so the example is a cardio one. This field shared its
+              placeholder with the Strength form and advertised "Bench 5x5 @
+              60kg" underneath Duration and Distance. */}
+          <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Splits or intervals, one per line\n4 × 400m @ 1:45'} rows={3} />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
           <Button variant="secondary" onClick={submit} className="press-3d w-full rounded-lg">Log workout</Button>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, Heart, Hourglass, ShieldCheck } from 'lucide-react'
 import { useJournal } from '../store'
+import { Page } from '../components/shell/Page'
 import { Card, Empty, Input, Pill, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
@@ -220,7 +221,7 @@ export function NoFap() {
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
 
   return (
-    <div className="mx-auto max-w-read items-start">
+    <Page>
       {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
@@ -641,6 +642,6 @@ export function NoFap() {
           </Card>
         </CollapsibleSection>
       </div>
-    </div>
+    </Page>
   )
 }

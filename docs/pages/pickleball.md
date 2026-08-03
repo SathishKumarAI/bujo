@@ -109,3 +109,17 @@ climbs. It is a nice line and slightly overconfident.
   just should not be open by default.
 - **Format playbook as content.** Same: valuable, wrongly prominent.
 - **Games won / lost as the core unit.** Right primitive for the sport.
+
+---
+
+## Update — the grid landed
+
+**4.2 → 2.6 screens.** The twelve stacked blocks now flow three across
+(`CardGrid`, see `docs/redesign/12-three-column-grid.md`); "At a glance" spans
+two columns, and the six charts inside *Form & momentum* became two rows of
+three instead of a six-card column.
+
+**Still open, and still the headline:** the page expands ~1,000px of static
+reference (Play safe, Format playbook) while collapsing all four analytics
+groups built from your own data. The grid made the page shorter; it did not fix
+the priority.

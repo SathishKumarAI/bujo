@@ -9,6 +9,7 @@ import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRang
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
+import { CardGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
@@ -143,7 +144,7 @@ export function Insights() {
       </div>
 
       {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
-      <div className="grid items-start gap-5 md:grid-cols-2">
+      <div className="grid items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3">
         <Card title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
           <ul className="space-y-1.5 text-body">
             {digest.lines.map((l) => (
@@ -202,6 +203,9 @@ export function Insights() {
         </Card>
       </div>
 
+      {/* The seven analytics drawers DO flow three across: collapsed they are
+          50px strips, and stacked they read as a filing cabinet. */}
+      <CardGrid>
       {/* 4) Correlations — deep read-only analytics, collapsed. */}
       {(found.length > 0 || momentum.length > 0) && (
         <Section stickyKey="insights.correlations" title="Correlations" subtitle="patterns & momentum">
@@ -255,7 +259,7 @@ export function Insights() {
       {/* 5) Mood analytics — collapsed. */}
       {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
         <Section stickyKey="insights.mood" title="Mood analytics" subtitle="weekday, split & stability">
-        <div className="grid items-start gap-5 md:grid-cols-2">
+        <div className="grid items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3">
           {moodWd.best && moodWd.worst && (
             <Card title="Best & worst day" subtitle="When your mood runs brightest">
               <div className="mb-3 flex items-center gap-2 text-body">
@@ -389,7 +393,7 @@ export function Insights() {
 
       {/* 8) Lifetime — deep totals & navigation, collapsed. */}
       <Section stickyKey="insights.lifetime" title="Lifetime" subtitle="year in review, records & index">
-      <div className="grid items-start gap-5 md:grid-cols-2">
+      <div className="grid items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3">
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-body text-fg-1">
             <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
@@ -436,6 +440,7 @@ export function Insights() {
       <Section stickyKey="insights.tags" title="Tag manager" subtitle="merge, rename & retire tags">
         <TagManager />
       </Section>
+      </CardGrid>
     </Page>
   )
 }

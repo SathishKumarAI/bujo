@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { isValidElement, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, Info, Maximize2, X, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
@@ -24,7 +24,31 @@ export const CARD = {
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
+  /**
+   * The ⓘ / ⛶ / chevron in a card header. All three were bare icons — 14, 15
+   * and 18px — so their hit targets were the glyphs themselves, under the
+   * WCAG 2.5.8 24px floor. The icon size is unchanged; the box around it does
+   * the work, and `-m-1` keeps the header height exactly where it was.
+   */
+  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-md text-fg-2 hover:bg-ink-2 hover:text-fg-1',
 } as const
+
+/**
+ * The readable text inside a ReactNode, for naming a control after it.
+ *
+ * Card titles are `ReactNode` because many carry an icon beside the words
+ * (`<><Flame size={16}/> 75 Hard</>`). A plain `typeof === 'string'` check
+ * missed all of those, which left twenty ⓘ buttons — seven of them on Coaching
+ * alone — still called "What is this?". Walks children, keeps strings and
+ * numbers, ignores the rest.
+ */
+function nodeText(node: ReactNode): string {
+  if (node == null || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeText).join(' ')
+  if (isValidElement<{ children?: ReactNode }>(node)) return nodeText(node.props.children)
+  return ''
+}
 
 export function Card({
   title,
@@ -65,6 +89,12 @@ export function Card({
   // Every titled card gets an always-visible ⓘ that explains what it is
   // (self-documenting UI). Uses `help` if given, else the subtitle text.
   const info = help ?? subtitle
+  // Name the header controls after their card. All of these used to be called
+  // "What is this?" / "Collapse" / "Enlarge", so Today alone handed a screen
+  // reader 34 identically-named buttons and its control list was useless for
+  // navigating. Titles are ReactNode (often icon + words), hence `nodeText`.
+  const titleText = nodeText(title).replace(/\s+/g, ' ').trim()
+  const infoLabel = titleText ? `What is ${titleText}?` : 'What is this?'
   return (
     <section
       onClick={onClick}
@@ -78,7 +108,7 @@ export function Card({
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-fg-2 hover:text-fg-1">
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={CARD.headerButton}>
                       <Info size={14} />
                     </button>
                   </PopoverTrigger>
@@ -91,13 +121,17 @@ export function Card({
           <div className="flex shrink-0 items-center gap-2">
             {right}
             {showEnlarge && (
-              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
-                className="text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
+              <button onClick={(e) => { e.stopPropagation(); setLarge(true) }}
+                aria-label={titleText ? `Enlarge ${titleText}` : 'Enlarge'}
+                title="Enlarge"
+                className={`${CARD.headerButton} opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100`}>
                 <Maximize2 size={15} />
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
+              <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+                aria-label={titleText ? (open ? `Collapse ${titleText}` : `Expand ${titleText}`) : (open ? 'Collapse' : 'Expand')}
+                className={CARD.headerButton}>
                 {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
             )}
@@ -247,21 +281,28 @@ export function Slider({
   color?: string
   hint?: string
 }) {
+  // Unset is not zero. With `value ?? 0` the handle parks at the far left,
+  // which is exactly where a real 0 sits — so "not rated yet" and "rated 0"
+  // rendered identically while the readout said "–". An unrated slider now
+  // dims its track and sits at the midpoint: clearly untouched, and one drag
+  // from any value rather than biased toward the bottom of the scale.
+  const unset = value == null
   return (
     <label className="block">
       <div className="mb-1 flex items-center justify-between text-body">
         <span className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono" style={{ color: cat(color) }}>
-          {value ?? '–'}
+        <span className="rounded px-1.5 font-mono" style={{ color: unset ? undefined : cat(color) }}>
+          {value ?? 'not set'}
         </span>
       </div>
       <input
         type="range"
         min={0}
         max={10}
-        value={value ?? 0}
+        value={value ?? 5}
+        aria-valuetext={unset ? 'Not set' : undefined}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
+        className={`w-full ${unset ? 'opacity-40' : ''}`}
         style={{ accentColor: cat(color) }}
       />
       {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}
