@@ -144,7 +144,7 @@ export function Trackers() {
                 {([
                   { id: 'classic', icon: <Icon as={SquaresFour} size="sm" />, title: 'Grid' },
                   { id: 'cards', icon: <Icon as={GridFour} size="sm" />, title: 'Cards (heatmap grids)' },
-                  { id: 'activity', icon: <Icon as={PersonSimpleRun} size="sm" />, title: 'PersonSimpleRun' },
+                  { id: 'activity', icon: <Icon as={PersonSimpleRun} size="sm" />, title: 'Activity' },
                   { id: 'routine', icon: <Icon as={Clock} size="sm" />, title: 'Routine (by time of day)' },
                 ] as const).map((o) => (
                   <button

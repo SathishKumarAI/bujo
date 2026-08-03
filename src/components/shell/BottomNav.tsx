@@ -1,6 +1,6 @@
 import { Icon as AppIcon } from '@/components/Icon'
 import type { Icon as IconGlyph } from '@/components/icons'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { NavItem } from './Sidebar'
 import type { ViewId } from './viewChrome'
 import type { SectionId } from '../../lib/routes'
@@ -42,9 +42,23 @@ export function BottomNav({
   onNavigate: (id: ViewId) => void
 }) {
   const hidden = useHideOnScroll()
+  const ref = useRef<HTMLElement>(null)
+
+  // Publish this bar's real height so anything that has to sit above it — the
+  // sticky capture bar on Today — can clear it without hard-coding a number
+  // that drifts the moment this bar's padding or safe-area inset changes.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const publish = () => document.documentElement.style.setProperty('--bottom-nav', `${el.offsetHeight}px`)
+    publish()
+    const ro = new ResizeObserver(publish)
+    ro.observe(el)
+    return () => { ro.disconnect(); document.documentElement.style.removeProperty('--bottom-nav') }
+  }, [])
 
   return (
-    <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav ref={ref} className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {items.map((n, i) => {
         const Icon = n.icon as IconGlyph
         const active = activeSection != null && sections[i] === activeSection
@@ -54,8 +68,11 @@ export function BottomNav({
             onClick={() => onNavigate(n.id)}
             aria-label={n.label}
             aria-current={active ? 'page' : undefined}
-            // min-h-11 is 44px — the floor for a thumb target.
-            className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
+            // Absolute px, not `min-h-11`. This app scales the rem root for its
+            // S/M/L/XL text-size setting, so a rem-based floor shrinks with the
+            // type — measured at 39px on the default scale — and a thumb does
+            // not get smaller when you pick a smaller font.
+            className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-pill bg-primary" />}
             <AppIcon as={Icon} size="lg" active={active} />

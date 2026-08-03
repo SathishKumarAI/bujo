@@ -38,7 +38,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
         onClick={() => cycleStatus(entry.id)}
         aria-label={`Advance status of ${entry.text}`}
         title="Click to cycle: task → done → migrated → dropped"
-        className="mt-px w-6 shrink-0 text-center font-mono text-heading leading-6 text-fg-2 transition-colors hover:text-brand"
+        className="mt-px w-6 shrink-0 text-center font-mono text-heading leading-6 text-fg-2 transition-colors max-md:min-h-[44px] hover:text-brand"
         style={{ color: entry.status === 'done' ? cat('green') : undefined }}
       >
         <span key={`${entry.type}-${entry.status}`} className="glyph-set inline-block">
@@ -109,7 +109,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
           title={entry.important ? 'Important, tap to clear' : 'Mark important'}
           aria-pressed={entry.important}
           aria-label="Toggle important"
-          className={`font-medium transition-opacity ${
+          className={`font-medium transition-opacity max-md:grid max-md:min-h-[44px] max-md:min-w-[44px] max-md:place-items-center ${
             entry.important ? 'opacity-100' : 'opacity-0 group-hover:opacity-60 focus-visible:opacity-100'
           }`}
           style={{ color: entry.important ? cat('yellow') : cat('overlay0') }}
@@ -124,7 +124,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
             notify.undo('Entry deleted', undo)
           }}
           aria-label="Delete entry"
-          className="text-fg-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+          className="text-fg-2 opacity-0 transition-opacity max-md:grid max-md:min-h-[44px] max-md:min-w-[44px] max-md:place-items-center max-md:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
         >
           ×
         </button>

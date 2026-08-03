@@ -61,7 +61,7 @@ export function TodayHabits({ date, variant = 'pills' }: { date?: string; varian
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className={`inline-flex min-h-11 items-center gap-1.5 border text-body transition-colors active:scale-95 ${asChecklist ? 'w-full rounded-control px-3 py-2 text-left' : 'rounded-pill px-3 py-1.5'}`}
+          className={`inline-flex min-h-[44px] items-center gap-1.5 border text-body transition-colors active:scale-95 ${asChecklist ? 'w-full rounded-control px-3 py-2 text-left' : 'rounded-pill px-3 py-1.5'}`}
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
@@ -71,7 +71,7 @@ export function TodayHabits({ date, variant = 'pills' }: { date?: string; varian
           onClick={() => setNoteFor((v) => (v === h.id ? null : h.id))}
           aria-label={`Note for ${h.name}`}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="shrink-0 hover:text-mauve"
+          className="grid shrink-0 place-items-center hover:text-mauve max-md:min-h-[44px] max-md:min-w-[44px]"
           style={{ color: hasNote ? cat('mauve') : cat('overlay0') }}
         >
           <Icon as={Note} size="sm" />

@@ -40,7 +40,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
             key={id}
             onClick={() => setTab(id)}
             className={`inline-flex flex-1 items-center justify-center gap-2 rounded-control py-2 text-body font-medium transition-colors ${
-              tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
+              tab === id ? 'bg-brand-wash font-medium text-brand max-md:min-h-[44px]' : 'text-fg-2 hover:text-fg-1 max-md:min-h-[44px]'
             }`}
           >
             <AppIcon as={Icon} size="md" active={tab === id} /> {label}

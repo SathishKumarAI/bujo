@@ -26,14 +26,24 @@ export function SectionTabs({
   const active = viewForPath(pathname)
 
   return (
-    <Tabs value={active ?? tabs[0].id} className="mb-4 sm:mb-5">
-      <TabsList variant="line">
-        {tabs.map((t) => (
-          <TabsTrigger key={t.id} value={t.id} asChild>
-            <Link to={pathFor(t.id)}>{t.label}</Link>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    /* Body carries six tabs, which measured 545px inside a 424px column on a
+       phone — the strip, not the 1180px container tier, is what actually
+       overflows on this app at mobile widths (the tier is a `max-width`, so it
+       can never force a page wider than the viewport). Scroll the strip rather
+       than wrap it: a wrapped tab row reflows as tabs are gated in and out, and
+       moves the tab you were aiming at. `-mx` + `px` so the scroll runs edge to
+       edge instead of leaving a dead gutter, and the scrollbar is hidden
+       because the cut-off tab is its own affordance. */
+    <div className="-mx-4 mb-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:mb-5 sm:px-0 [&::-webkit-scrollbar]:hidden">
+      <Tabs value={active ?? tabs[0].id}>
+        <TabsList variant="line" className="w-max">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.id} value={t.id} asChild className="max-md:min-h-[44px] shrink-0">
+              <Link to={pathFor(t.id)}>{t.label}</Link>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+    </div>
   )
 }

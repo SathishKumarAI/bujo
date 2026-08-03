@@ -52,7 +52,7 @@ export function SegmentScale({
               aria-label={`${label} ${i}`}
               aria-pressed={answered && i === value}
               title={String(i)}
-              className="grid min-h-11 flex-1 place-items-center rounded-control transition-colors hover:bg-secondary/40"
+              className="grid min-h-[44px] flex-1 place-items-center rounded-control transition-colors hover:bg-secondary/40"
             >
               <span
                 className="block h-3 w-3 rounded-pill border transition-colors"

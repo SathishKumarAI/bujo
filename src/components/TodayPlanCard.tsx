@@ -76,7 +76,7 @@ export function TodayPlanCard() {
             <button
               key={c.label}
               onClick={() => navigate(c.to)}
-              className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body"
+              className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body max-md:min-h-[44px]"
               style={{ borderColor: catA(c.color, 'edge'), background: catA(c.color, c.done ? 'quiet' : 'wash'), color: c.done ? cat('overlay1') : cat(c.color) }}
             >
               <AppIcon as={Icon} size="sm" /> {c.label}{c.done && <AppIcon as={Check} size="sm" />}

@@ -97,12 +97,12 @@ export function Card({
             {right}
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
-                className="text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
+                className="grid place-items-center text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100 max-md:min-h-[44px] max-md:min-w-[44px]">
                 <AppIcon as={ArrowsOut} size="sm" />
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
+              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="grid place-items-center text-fg-2 hover:text-fg-1 max-md:min-h-[44px] max-md:min-w-[44px]">
                 {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
               </button>
             )}
@@ -445,7 +445,7 @@ export function Segmented<T extends string | number>({
             // track the theme on this element — the raw per-theme variable
             // does, in all five.
             style={selected ? { color: 'var(--brand-text)' } : undefined}
-            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
+            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 max-md:min-h-[44px] data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
           >
             {o.label}
           </ToggleGroupItem>

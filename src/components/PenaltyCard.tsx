@@ -45,7 +45,7 @@ export function PenaltyCard() {
       right={
         <span className="inline-flex items-center gap-2">
           <Pill color={meta.color} className="font-medium">{meta.label}</Pill>
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="grid place-items-center text-fg-2 hover:text-fg-1 max-md:min-h-[44px] max-md:min-w-[44px]">
             {open ? <Icon as={CaretUp} size="md" /> : <Icon as={CaretDown} size="md" />}
           </button>
         </span>

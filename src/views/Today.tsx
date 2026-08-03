@@ -1,10 +1,12 @@
 import { NotePencil } from '@/components/icons'
+import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useToday } from '../components/shell/Page'
+import { useDevice } from '../components/shell/device'
 import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
 import { EntryRow } from '../components/EntryRow'
@@ -119,6 +121,7 @@ function DaySurface({
   migrate: (id: string, to: string) => void
 }) {
   const { data } = useJournal()
+  const isMobile = useDevice() === 'mobile'
   const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
   const doneCount = dayEntries.filter((e) => e.type === 'task' && e.status === 'done').length
   const taskCount = dayEntries.filter((e) => e.type === 'task' && e.status !== 'dropped').length
@@ -153,9 +156,15 @@ function DaySurface({
           </span>
         }
       >
-        <div className="mb-3">
-          <CaptureBar date={date} />
-        </div>
+        {/* Desktop: the capture bar sits at the top of the card, as it always
+            has. Mobile: see the portal at the end of this component. Exactly
+            one of the two renders — two `CaptureBar`s would be two input
+            drafts. */}
+        {!isMobile && (
+          <div className="mb-3">
+            <CaptureBar date={date} />
+          </div>
+        )}
         {carryover.length > 0 && (
           <div className="mb-3 flex items-center justify-between rounded-card border border-line bg-background px-3 py-2 text-body">
             <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
@@ -204,6 +213,32 @@ function DaySurface({
       {isToday && <TodayHabits date={date} variant="pills" />}
       {isToday && <CountHabits date={date} />}
       <StatusStrip date={date} />
+
+      {/* On a phone, capture is always one tap away however far down the day
+          you have scrolled — a journal's job is catching the thought before it
+          goes, and a capture bar you have to scroll back up to is a capture bar
+          you stop using.
+
+          Portalled to <body>, and `fixed` rather than `sticky`, because neither
+          works in place here: `main` computes `overflow-y: auto` and
+          `.book-inner` carries a transform, so a sticky element is positioned
+          against a scrollport that is not the one the page scrolls, and a fixed
+          one would take the transformed ancestor as its containing block. The
+          enlarge modal in `ui.tsx` escapes to <body> for exactly this reason.
+
+          `--bottom-nav` is published by `BottomNav` from its own measured
+          height; hard-coding 48px would drift the moment that bar changed. */}
+      {isMobile && createPortal(
+        <div
+          className="fixed inset-x-0 z-30 border-t border-line bg-card px-4 py-3 shadow-2xl"
+          style={{ bottom: 'var(--bottom-nav, 3.5rem)' }}
+        >
+          <CaptureBar date={date} />
+        </div>,
+        document.body,
+      )}
+      {/* Clearance so the last log row is not sitting under that bar. */}
+      {isMobile && <div aria-hidden className="h-24" />}
     </div>
   )
 }

@@ -81,7 +81,7 @@ export function Sidebar({
             onClick={onToggleCollapse}
             aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar'}
             title={collapsed ? 'Pin open' : 'Collapse'}
-            className="hidden text-fg-2 hover:text-foreground md:block"
+            className="hidden place-items-center text-fg-2 hover:text-foreground md:grid"
           >
             {collapsed ? <AppIcon as={SidebarIcon} size="md" /> : <AppIcon as={SidebarSimple} size="md" />}
           </button>
@@ -95,7 +95,7 @@ export function Sidebar({
                 <button
                   onClick={() => onNavigate(n.id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
+                  className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors max-md:min-h-[44px] ${
                     active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
                   }`}
                 >

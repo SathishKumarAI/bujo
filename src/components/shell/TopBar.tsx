@@ -50,7 +50,7 @@ export function TopBar({
 
   return (
     <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-card/80 px-4 py-2.5 backdrop-blur">
-      <button onClick={onMenu} aria-label="Toggle menu" className="text-foreground md:hidden">
+      <button onClick={onMenu} aria-label="Toggle menu" className="-ml-2 grid min-h-[44px] min-w-[44px] place-items-center text-foreground md:hidden">
         <Icon as={List} size="lg" />
       </button>
 

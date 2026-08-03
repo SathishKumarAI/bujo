@@ -89,7 +89,7 @@ export function WellbeingCard({ date }: { date: string }) {
             variant="ghost"
             aria-pressed={metric?.fastBreak === 'food'}
             onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-            className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+            className={`press-3d inline-flex min-h-[44px] items-center gap-1.5 rounded-control ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
           >
             <Icon as={ForkKnife} size="sm" /> Food
           </Button>
@@ -97,7 +97,7 @@ export function WellbeingCard({ date }: { date: string }) {
             variant="ghost"
             aria-pressed={metric?.fastBreak === 'drink'}
             onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-            className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+            className={`press-3d inline-flex min-h-[44px] items-center gap-1.5 rounded-control ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
           >
             <Icon as={Drop} size="sm" /> Drink
           </Button>
