@@ -1,4 +1,4 @@
-import { CalendarPlus, CaretDown, CaretRight, Star } from '@/components/icons'
+import { CalendarPlus, CaretRight, Star } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
@@ -9,6 +9,7 @@ import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
+import { QuietSection } from '../components/CollapsibleSection'
 
 export function Plan() {
   const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents, toggleImportant } = useJournal()
@@ -18,7 +19,6 @@ export function Plan() {
   const [showAllOverdue, setShowAllOverdue] = useState(false)
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [agingOpen, setAgingOpen] = useState(false)
-  const [setupOpen, setSetupOpen] = useState(false)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -89,12 +89,12 @@ export function Plan() {
               className="flex w-full items-center gap-1.5 text-label text-fg-2 hover:text-fg-1"
               title={`Oldest overdue task: ${aging.oldestDays} days`}
             >
-              {agingOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}
+              <span className="caret-turn caret-turn-quarter inline-flex" data-open={agingOpen}><Icon as={CaretRight} size="sm" /></span>
               <span>Aging</span>
               <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
             </button>
             {agingOpen && (
-              <>
+              <div className="collapse-in">
                 <div className="mt-1.5 flex h-2 overflow-hidden rounded-pill bg-ink-2">
                   {agingBuckets.map((b) => (
                     <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
@@ -108,7 +108,7 @@ export function Plan() {
                     </span>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
@@ -205,19 +205,8 @@ export function Plan() {
         </Card>
       )}
 
-      <div>
-        <button
-          type="button"
-          onClick={() => setSetupOpen((o) => !o)}
-          aria-expanded={setupOpen}
-          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-        >
-          <span className="text-fg-2">{setupOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-          <span className="font-display text-heading font-medium text-fg-1">Setup</span>
-          <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
-        </button>
-        {setupOpen && (
-          <div className="mt-3 space-y-5">
+      <QuietSection title="Setup" subtitle={<>recurring rules &amp; calendar import</>}>
+          <div className="space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
@@ -282,8 +271,7 @@ export function Plan() {
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
           </div>
-        )}
-      </div>
+      </QuietSection>
     </div>
   )
 }

@@ -1,5 +1,3 @@
-import { CaretDown, CaretRight } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
@@ -8,6 +6,7 @@ import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
+import { QuietSection } from '../components/CollapsibleSection'
 import { cat } from '../lib/colors'
 import { bulletTypeBreakdown, entriesPerDay, journalingStreak, monthlyEntryCounts, parseTags, taskCompletion, weekdayActivity } from '../lib/bullets'
 import { habitDoneOn } from '../lib/stats'
@@ -18,7 +17,6 @@ export function Monthly() {
   const { month: ym, setDay } = useCursor()
   const nav = useNav()
   const [geoBusy, setGeoBusy] = useState(false)
-  const [analyticsOpen, setAnalyticsOpen] = useState(false)
 
   async function autoFill() {
     setGeoBusy(true)
@@ -205,18 +203,7 @@ export function Monthly() {
 
       {/* Month analytics · deep charts, collapsed by default below the calendar + inputs */}
       {(monthEntries.length > 0 || monthlyTotal > 0) && (
-        <section className="space-y-5">
-          <button
-            type="button"
-            onClick={() => setAnalyticsOpen((o) => !o)}
-            aria-expanded={analyticsOpen}
-            className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-          >
-            <span className="text-fg-2">{analyticsOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-            <span className="font-display text-heading font-medium text-fg-1">Month analytics</span>
-            <span className="text-label text-fg-2">month pulse &amp; trailing-year rhythm</span>
-          </button>
-          {analyticsOpen && (
+        <QuietSection title="Month analytics" subtitle={<>month pulse &amp; trailing-year rhythm</>}>
             <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
       {monthEntries.length > 0 && (
@@ -340,8 +327,7 @@ export function Monthly() {
         </Card>
       )}
             </>
-          )}
-        </section>
+        </QuietSection>
       )}
     </Page>
   )
