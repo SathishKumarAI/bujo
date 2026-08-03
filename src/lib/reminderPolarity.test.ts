@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { reminderMessage } from './stats'
 import { recommendations } from './recommend'
-import { emptyJournal } from './storage'
+import { emptyJournal, seedJournal } from './storage'
 import type { Habit } from './types'
 
 const quit = (id: string, name: string): Habit => ({
@@ -46,5 +46,18 @@ describe('nudges never tell you to keep a bad habit going', () => {
     // challenge" and "Set a weekly goal for Alcohol", which for a quit habit
     // would mean a target number of times per week to drink.
     expect(texts.filter((t) => /Alcohol/.test(t))).toEqual([])
+  })
+})
+
+describe('the starter journal labels its quit habits', () => {
+  it('seeds Sugar and Alcohol as avoid habits', () => {
+    const j = seedJournal()
+    const byName = (n: string) => j.habits.find((h) => h.name === n)
+    // Without this, a new user's journal treats drinking as a goal: the tick
+    // scores a perfect day and staying sober reads as "Missed Alcohol".
+    expect(byName('Alcohol')?.avoid).toBe(true)
+    expect(byName('Sugar')?.avoid).toBe(true)
+    // Caffeine is seeded with the cue "With breakfast" — intended, not quit.
+    expect(byName('Caffeine')?.avoid).toBeUndefined()
   })
 })

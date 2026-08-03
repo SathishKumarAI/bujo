@@ -73,10 +73,21 @@ export function emptyJournal(): JournalData {
 export function seedJournal(): JournalData {
   const j = emptyJournal()
   const today = todayISO()
-  const starter: { name: string; category: JournalData['habits'][number]['category']; color: string }[] = [
+  // `avoid` is not decoration: it decides what a tick MEANS. For a build habit
+  // a logged day is a win; for an avoid habit it is a slip, and the whole app
+  // branches on it — penalties, dayCompletion, coverage, reminders,
+  // recommendations, streaks. Seeding Sugar and Alcohol without it shipped a
+  // journal in which drinking scored a perfect day and sobriety read as
+  // "Missed Alcohol". `streak.ts` already lists both as quit-tracker presets;
+  // this file disagreed with it.
+  //
+  // Caffeine is deliberately left as a build habit: `demo.ts` gives it the cue
+  // "With breakfast", i.e. it is seeded as something you intend to have. Anyone
+  // quitting it can flip the flag in the tracker.
+  const starter: { name: string; category: JournalData['habits'][number]['category']; color: string; avoid?: boolean }[] = [
     { name: 'Caffeine', category: 'stimulant', color: 'peach' },
-    { name: 'Sugar', category: 'stimulant', color: 'pink' },
-    { name: 'Alcohol', category: 'stimulant', color: 'red' },
+    { name: 'Sugar', category: 'stimulant', color: 'pink', avoid: true },
+    { name: 'Alcohol', category: 'stimulant', color: 'red', avoid: true },
     { name: 'Vegetables', category: 'food', color: 'green' },
     { name: 'Water 2L', category: 'food', color: 'sky' },
     { name: 'Exercise', category: 'movement', color: 'teal' },
