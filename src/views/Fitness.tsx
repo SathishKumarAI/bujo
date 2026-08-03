@@ -25,7 +25,7 @@ import type { ViewId } from '../components/shell/viewChrome'
  *
  * Zone 1  orient — mode toggle, this week against the target, what's next.
  * Zone 2  act    — the log form, and the page's only primary button.
- * Zone 3  review — summary strip, the training calendar, the session list.
+ * Zone 3  review — the session list, then the analytics under it.
  *
  * Every fact in zone 1 re-reads on mode change: cardio shows minutes against
  * the weekly minutes target, strength shows sessions completed and the next
@@ -164,20 +164,13 @@ export function Fitness() {
       }
       zone3={
         <>
-          <SummaryStrip items={[
-            { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-            { label: 'Total time', value: time.value, empty: time.empty },
-            { label: best.label, value: best.value, empty: best.empty },
-          ]} />
-
-          <section>
-            <h2 className="mb-2 text-label text-fg-2">Training calendar</h2>
-            <CalendarHeatmap weeks={12} data={heat} unit="min" />
-          </section>
-
+          {/* History first, analytics under it. The list is what someone came
+              to look at — "did I train on Tuesday" is answered by a row, not by
+              a twelve-week heatmap — so the summary and the calendar read as
+              the commentary they are rather than the headline. */}
           <section>
             <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-              <h2 className="text-label text-fg-2">Sessions</h2>
+              <h2 className="text-label text-fg-2">History</h2>
               {sessions.length > 8 && (
                 <Button variant="ghost" onClick={() => setShowAll((v) => !v)} className="h-auto p-0 text-label">
                   {showAll ? 'Show less' : `Show all (${sessions.length})`}
@@ -211,6 +204,21 @@ export function Fitness() {
             )}
           </section>
 
+          {/* Analytics · expanded, never a fold. The training calendar spent a
+              release behind a collapsed "Cardio analytics" accordion, which is
+              how the most useful thing on the page went unseen. */}
+          <section>
+            <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
+            <SummaryStrip items={[
+              { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+              { label: 'Total time', value: time.value, empty: time.empty },
+              { label: best.label, value: best.value, empty: best.empty },
+            ]} />
+            <div className="mt-3">
+              <CalendarHeatmap weeks={12} data={heat} unit="min" />
+            </div>
+          </section>
+
           <EditDialog workout={editing} onClose={() => setEditing(null)} />
         </>
       }
@@ -240,6 +248,7 @@ const COMPANION: Record<string, { view: ViewId; label: string }> = {
 /** Every strength activity shares one workshop, so it is keyed by mode. */
 const MODE_COMPANION: Partial<Record<Mode, { view: ViewId; label: string }>> = {
   strength: { view: 'gym', label: 'Strength tools · programs, anatomy, plates' },
+  sport: { view: 'coaching', label: 'Coaching · drills, skill ladder, program' },
 }
 
 function CompanionTool({ activity, mode }: { activity: string; mode: Mode }) {

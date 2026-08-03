@@ -1,13 +1,49 @@
 import { activitiesForMode, asks, labelOf, MODE_COPY, type ActivityKey, type Mode } from '../../domain/activities'
 import { Input, Textarea } from '../ui'
+import { NumField } from './NumField'
 import { Button } from '../ui/button'
-import { Stepper } from '../fields/Stepper'
 import { DisclosureRow } from './DisclosureRow'
 import type { ActivityDraft } from './draft'
 import type { DistanceUnit } from '../../lib/types'
 
-const num = (s: string) => (s ? Number(s) : undefined)
-const str = (v: number | undefined) => (v != null ? String(v) : '')
+const RPE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+/**
+ * RPE · a bounded 1–10 scale, so it renders as the ten values it actually has.
+ *
+ * A stepper made you press + eight times to say "8", and told you nothing about
+ * where 8 sits on the scale. Pressing the selected value clears it: RPE is
+ * optional, and a control you cannot un-answer turns a stray tap into a
+ * permanent wrong number.
+ */
+function RpeScale({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <fieldset>
+      <legend className="text-body text-fg-1">
+        Effort <span className="text-label text-fg-2">· RPE 1–10</span>
+      </legend>
+      <div className="control-max mt-1 flex w-full gap-0.5">
+        {RPE.map((n) => {
+          const on = value === String(n)
+          return (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={on}
+              aria-label={`Effort ${n} of 10`}
+              onClick={() => onChange(on ? '' : String(n))}
+              className={`num min-w-0 flex-1 rounded-control border py-1.5 text-label transition-colors ${
+                on ? 'border-mauve bg-secondary font-medium text-fg-1' : 'border-input text-fg-2 hover:text-fg-1'
+              }`}
+            >
+              {n}
+            </button>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+}
 
 /**
  * Zone 2. The form derives every visible field from the activity registry.
@@ -19,8 +55,11 @@ const str = (v: number | undefined) => (v != null ? String(v) : '')
  * mode re-renders the fields, so Pickleball drops distance and Run keeps it,
  * without this component knowing what either of them is.
  *
- * Optional fields — calories, RPE, notes — go behind the page's single
- * disclosure, at the bottom, never above the fold.
+ * Effort and notes are fields; calories are what is left behind the page's
+ * single disclosure, at the bottom, never above the fold. All three used to be
+ * hidden together, which was one rule ("optional goes behind the fold")
+ * applied to two different situations: nobody types their calorie burn, and
+ * everybody remembers how the session felt for about an hour.
  *
  * The heading follows the mode: "Log a cardio session", not "Log a workout".
  * A form that will not tell you what it is about makes you read the fields to
@@ -73,18 +112,16 @@ export function ActivityForm({
       </label>
 
       {asks(activity, 'durationMin') && (
-        <Stepper
-          label="Duration" suffix="min" step={5} min={0}
-          value={num(draft.duration)} onChange={(v) => onChange({ duration: str(v) })}
-          aria-label="Duration minutes"
+        <NumField
+          label="Duration" suffix="min" step="1" placeholder="45"
+          value={draft.duration} onChange={(duration) => onChange({ duration })}
         />
       )}
 
       {asks(activity, 'distanceKm') && (
-        <Stepper
-          label="Distance" suffix={unit} step={0.5} min={0}
-          value={num(draft.distance)} onChange={(v) => onChange({ distance: str(v) })}
-          aria-label={`Distance in ${unit}`}
+        <NumField
+          label="Distance" suffix={unit} step="0.1" placeholder="5"
+          value={draft.distance} onChange={(distance) => onChange({ distance })}
         />
       )}
 
@@ -103,27 +140,28 @@ export function ActivityForm({
         </label>
       )}
 
-      <DisclosureRow label="More">
-        <Stepper
-          label="Calories" suffix="kcal" step={50} min={0}
-          value={num(draft.calories)} onChange={(v) => onChange({ calories: str(v) })}
-          aria-label="Calories"
+      {/* Effort and how it felt are the two things you remember on the walk
+          home and forget by tomorrow, so they are fields, not a fold. Calories
+          are usually derived from a watch rather than typed, and stay behind
+          the disclosure with whatever else earns its way in there. */}
+      <RpeScale value={draft.rpe} onChange={(rpe) => onChange({ rpe })} />
+
+      <label className="block text-body text-fg-1">
+        How did it feel?
+        <Textarea
+          value={draft.notes}
+          onChange={(e) => onChange({ notes: e.target.value })}
+          placeholder={MODE_COPY[mode].notesPlaceholder}
+          rows={2}
+          className="mt-1"
         />
-        <Stepper
-          label="RPE" step={1} min={1} max={10}
-          value={num(draft.rpe)} onChange={(v) => onChange({ rpe: str(v) })}
-          aria-label="Perceived exertion, 1 to 10"
+      </label>
+
+      <DisclosureRow label="More details">
+        <NumField
+          label="Calories" suffix="kcal" step="10" placeholder="450"
+          value={draft.calories} onChange={(calories) => onChange({ calories })}
         />
-        <label className="block text-body text-fg-1">
-          Notes
-          <Textarea
-            value={draft.notes}
-            onChange={(e) => onChange({ notes: e.target.value })}
-            placeholder="Legs felt heavy for the first mile"
-            rows={2}
-            className="mt-1"
-          />
-        </label>
       </DisclosureRow>
 
       {/* The page's one accent-filled control. */}

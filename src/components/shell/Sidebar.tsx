@@ -1,7 +1,9 @@
-import { Sidebar as SidebarIcon, SidebarSimple } from '@/components/icons'
+import { Moon, Sidebar as SidebarIcon, SidebarSimple, SlidersHorizontal, Sun } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import { useJournal } from '../../store'
+import { AccountMenu } from './AccountMenu'
 import type { ViewId } from './viewChrome'
 
 export interface NavItem {
@@ -40,6 +42,10 @@ export function Sidebar({
   onNavigate: (id: ViewId) => void
   onToggleCollapse: () => void
 }) {
+  // Only the groups that actually have items, so the divider rule ("every
+  // group but the first") can't draw a rule above the first *rendered* group
+  // when an earlier one was filtered out by a settings gate.
+  const groups = groupOrder.filter((g) => items.some((n) => n.group === g))
   // Auto-hide: a thin left-edge zone reveals the sidebar as a fixed overlay.
   const deskClass = autoHide
     ? 'md:fixed md:top-0 md:left-0 md:z-50 md:h-screen md:w-60 md:-translate-x-full md:border-r md:border-line md:shadow-2xl md:transition-transform md:duration-200 md:ease-out md:peer-hover:translate-x-0 md:hover:translate-x-0'
@@ -59,8 +65,13 @@ export function Sidebar({
         deskClass,
       ].join(' ')}
     >
+      {/* `flex-col` + a `flex-1` scroller so the footer pins to the bottom of
+          the rail instead of trailing the last group. Account, settings and
+          theme are app preferences, not destinations — they sat in the top bar
+          beside Quick add, which put a monthly-use control next to an hourly
+          one. */}
       <div
-        className={`bg-card transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-line ${
+        className={`flex h-full flex-col bg-card transition-[width] duration-200 ease-out md:h-screen md:overflow-x-hidden md:border-r md:border-line ${
           collapsed ? 'md:w-14' : 'md:w-60'
         }`}
       >
@@ -75,12 +86,14 @@ export function Sidebar({
             {collapsed ? <AppIcon as={SidebarIcon} size="md" /> : <AppIcon as={SidebarSimple} size="md" />}
           </button>
         </div>
-        <div className="flex flex-col gap-0.5 px-2.5 pb-3">
-          {groupOrder.map((group) => {
+        <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-3">
+          {groups.map((group, gi) => {
             const groupItems = items.filter((n) => n.group === group)
-            if (groupItems.length === 0) return null
             return (
-              <div key={group}>
+              // A hairline between groups, not just a gap. The uppercase label
+              // named each group but nothing drew the boundary, so fifteen rows
+              // read as one list with headings sprinkled through it.
+              <div key={group} className={gi > 0 ? 'mt-1 border-t border-line pt-1' : undefined}>
                 <p className={`px-3 pt-4 pb-1 text-micro font-medium tracking-wider text-fg-2 uppercase ${collapsed ? 'md:hidden' : ''}`}>
                   {group}
                 </p>
@@ -119,8 +132,56 @@ export function Sidebar({
             )
           })}
         </div>
+        <SidebarFooter view={view} collapsed={collapsed} onNavigate={onNavigate} />
       </div>
     </nav>
     </>
+  )
+}
+
+/**
+ * The rail's pinned base · account, settings, theme.
+ *
+ * These are the app's preferences rather than its destinations, so they sit
+ * below the divider at the bottom edge — the position every desktop app puts
+ * them in — instead of competing with Quick add in the top bar. Theme is a
+ * two-way switch here; the full four-theme picker stays in the overflow menu,
+ * because a rail row is a toggle and a picker is a menu.
+ */
+function SidebarFooter({
+  view, collapsed, onNavigate,
+}: {
+  view: ViewId
+  collapsed: boolean
+  onNavigate: (id: ViewId) => void
+}) {
+  const { data, setSettings } = useJournal()
+  const dark = data.settings.theme === 'mocha'
+  const active = view === 'settings'
+  const row = 'group flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors'
+  return (
+    <div className="mt-auto shrink-0 border-t border-line px-2.5 py-2">
+      <button
+        onClick={() => onNavigate('settings')}
+        aria-current={active ? 'page' : undefined}
+        title="Settings"
+        className={`${row} ${active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'}`}
+      >
+        <AppIcon as={SlidersHorizontal} size="md" active={active} className="shrink-0" />
+        <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>Settings</span>
+      </button>
+      <button
+        onClick={() => setSettings({ theme: dark ? 'latte' : 'mocha' })}
+        title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+        aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+        className={`${row} text-fg-2 hover:bg-secondary/40 hover:text-fg-1`}
+      >
+        <AppIcon as={dark ? Sun : Moon} size="md" className="shrink-0" />
+        <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{dark ? 'Light theme' : 'Dark theme'}</span>
+      </button>
+      {/* Renders nothing when no account backend is configured, so the footer
+          is two rows on a local-only install rather than a dead avatar. */}
+      <div className="px-1 pt-1"><AccountMenu onNavigate={onNavigate} /></div>
+    </div>
   )
 }

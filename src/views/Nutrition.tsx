@@ -3,8 +3,7 @@ import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
-import { Stepper } from '../components/fields/Stepper'
-import { EmptyFrame, PageLayout, StatBar, SummaryStrip } from '../components/page'
+import { EmptyFrame, NumField, PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import { cat } from '../lib/colors'
 
@@ -106,17 +105,17 @@ export function Nutrition() {
             </select>
           </label>
 
-          <Stepper
-            label="Calories" suffix="kcal" step={50} min={0}
-            value={m?.calories} onChange={(v) => setMetric(date, { calories: v })}
-            aria-label="Calories"
+          <NumField
+            label="Calories" suffix="kcal" step="10" placeholder="450"
+            value={m?.calories != null ? String(m.calories) : ''}
+            onChange={(v) => setMetric(date, { calories: v ? Number(v) : undefined })}
           />
           {MACROS.map((mac) => (
-            <Stepper
+            <NumField
               key={mac.key}
-              label={`${mac.label} (g)`} step={5} min={0}
-              value={m?.[mac.key]} onChange={(v) => setMetric(date, { [mac.key]: v })}
-              aria-label={`${mac.label} grams`}
+              label={mac.label} suffix="g" step="1" placeholder="30"
+              value={m?.[mac.key] != null ? String(m[mac.key]) : ''}
+              onChange={(v) => setMetric(date, { [mac.key]: v ? Number(v) : undefined })}
             />
           ))}
 

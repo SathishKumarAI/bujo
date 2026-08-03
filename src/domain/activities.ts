@@ -81,7 +81,7 @@ export const ACTIVITIES = {
 
 export type ActivityKey = keyof typeof ACTIVITIES
 
-/** Filled less than half the time · these live behind one "More" disclosure. */
+/** Never required by an activity · the form decides which are worth showing. */
 export const OPTIONAL_FIELDS = ['calories', 'rpe', 'notes'] as const
 
 export const MODES: Mode[] = ['cardio', 'strength', 'sport']
@@ -107,12 +107,28 @@ export interface ModeCopy {
   formHeading: string
   /** Zone-1 label for the weekly-progress fact. */
   weekLabel: string
+  /**
+   * Example value for the notes field. A real one, per the copy rule — and one
+   * that belongs to the mode: "legs felt heavy for the first mile" is a running
+   * note, and offering it on a lifting form is the copy version of showing a
+   * distance field to a bench press.
+   */
+  notesPlaceholder: string
 }
 
 export const MODE_COPY: Record<Mode, ModeCopy> = {
-  cardio: { label: 'Cardio', formHeading: 'Log a cardio session', weekLabel: 'This week' },
-  strength: { label: 'Strength', formHeading: 'Log a strength session', weekLabel: 'This week' },
-  sport: { label: 'Sport', formHeading: 'Log a game', weekLabel: 'This week' },
+  cardio: {
+    label: 'Cardio', formHeading: 'Log a cardio session', weekLabel: 'This week',
+    notesPlaceholder: 'Legs felt heavy for the first mile',
+  },
+  strength: {
+    label: 'Strength', formHeading: 'Log a strength session', weekLabel: 'This week',
+    notesPlaceholder: 'Bench moved well, left shoulder tight on the last set',
+  },
+  sport: {
+    label: 'Sport', formHeading: 'Log a game', weekLabel: 'This week',
+    notesPlaceholder: 'Third-shot drop finally landing under pressure',
+  },
 }
 
 /** The mode segments for a StatBar, in registry order. */

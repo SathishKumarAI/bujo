@@ -102,6 +102,10 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
         <TopBar
           view={view}
+          // The breadcrumb's first crumb is the nav group the view already
+          // belongs to — read from the same list the rail renders, so the two
+          // cannot disagree about which cluster a page is in.
+          section={items.find((n) => n.id === view)?.group}
           onNavigate={onNavigate}
           onQuickAdd={() => setQuickOpen(true)}
           onCommand={onCommand}

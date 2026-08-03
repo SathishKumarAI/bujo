@@ -30,9 +30,29 @@
   grid-column: 1 / -1;
 }
 
-@container (min-width: 1100px) {
+/* 960px of *container*, not viewport: with the rail open and the page's own
+   padding, that is roughly a 1250px window — a 1440px screen splits, a laptop
+   at 1280 splits, and a tablet does not. Below it everything stacks, and the
+   DOM order (act, then review) puts the log form first on a phone, where the
+   reason you opened the page is to log something. */
+@container (min-width: 960px) {
   .page-zones:not(.page-zones-single) {
-    grid-template-columns: minmax(0, 38fr) minmax(0, 62fr);
+    grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+  }
+
+  /* Review LEFT and act RIGHT, against the DOM order, because the two rules
+     disagree on purpose: status reads before the input form on a wide screen,
+     while a phone still gets the form first. Both are explicitly placed —
+     auto-placement would push `review` to a third row rather than back to
+     column 1, since it only ever moves forward. */
+  .zone-act {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .zone-review {
+    grid-column: 1;
+    grid-row: 2;
   }
 
   /* Sticky is applied by a `data-sticky` flag rather than unconditionally:
@@ -51,6 +71,20 @@
    much you are expected to type. */
 .zone-act :is(input, select, textarea, .control-max) {
   max-width: 380px;
+}
+
+/* …and it starts on its own line. Form controls are inline-level by default, so
+   `width: 100%` sizes them without taking them off the label's text line. While
+   the act column was itself ~380px that was invisible — the control filled the
+   row and wrapped anyway. The moment the column got wider than the cap (any
+   stacked layout below the breakpoint), the cap left room to spare and the
+   label slid up alongside its own field: "Sets" sitting to the left of the
+   sets box, baseline-aligned to its bottom edge.
+
+   Only the controls, NOT `.control-max` — that class is also on a flex row of
+   RPE buttons, and blockifying it would stack ten buttons vertically. */
+.zone-act :is(input, select, textarea) {
+  display: block;
 }
 
 /* `prefers-reduced-motion` deliberately makes no change here. Sticky
