@@ -6,19 +6,93 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped
 
-**`feat/collapsible-header-ux`** — 9 commits, branched off `feat/icon-button-stage1`
-(PR #94), **not pushed, no PR open**. If you push it, base the PR on
-`feat/icon-button-stage1`, not `main`, or the diff shows six other branches'
-commits.
+**`feat/activity-registry`** — 6 commits, branched off
+`feat/collapsible-header-ux`, **not pushed, no PR open**. The stack is now eight
+deep: `#88 → #89 → #90 → #91 → #92 → #94 → collapsible-header-ux → this`.
 
-The stack below it is unchanged and still needs merging bottom-up:
-`#88 → #89 → #90 → #91 → #92 → #94` → this branch.
+Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
+warnings, **1474 tests / 95 files**, `npm run build` clean, `npm run a11y` 0
+serious across 10 views.
 
-Everything verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2
-pre-existing warnings, **1416 tests**, `npm run build` clean, `npm run design`
-pass, `npm run a11y` 0 serious.
+**Nothing has been opened in a browser.** Every claim is static or test-level.
+The visual pass is the first thing to do on return.
 
-## What this branch did — the fold (§K)
+### What this branch did — the Body cluster on a page contract
+
+| Commit | What |
+|---|---|
+| `7d40f8b` | Activity registry (`src/domain/activities.ts`), schema-3 migration, distance-unit fix |
+| `0876b53` | Retired the book spine (`.book::before`) |
+| `1a60ee6` | Page-contract primitives in `src/components/page/` |
+| `41f7469` | Fitness rebuilt on three zones; tab row collapsed to four; Nutrition promoted to a route |
+| `4cd00c7` | Nutrition, Recovery, Coaching onto the contract |
+| `df728f4` | Sweep — folds, help icons, card chrome, a11y gate widened |
+
+Load-bearing decisions:
+
+- **Mode is never stored.** Derived via `modeOf(session.activity)`. The registry
+  owns which fields render, which stat headlines, and all mode copy
+  (`MODE_COPY`). There is nowhere left to write a mode conditional for field
+  visibility, so that bug class is structurally gone rather than patched.
+- **Three modes.** `sport` was added late — a game is bounded by a scoreboard,
+  not a distance, so Pickleball asks for duration alone.
+- **Distance is canonical km**, converted only at `lib/units.ts`. v2 wrote the
+  *display* unit into `distanceKm`, so half the readers divided by 1.60934 and
+  half printed it raw — the same 3.1 showed as "3.1 mi" and "1.9 mi" on one
+  screen.
+- **Container queries, not media queries** (`styles/layout.css`), one breakpoint
+  at 1100px of *container* width, because the sidebar collapses.
+- **Sticky is measured, not declared.** `PageLayout` falls back to static when
+  the act column is taller than the viewport.
+
+### Next
+
+1. **Open the app and look at it.** Fitness, Nutrition, Recovery, Coaching, at
+   both widths, with the sidebar collapsed and expanded.
+2. **Recovery still exceeds the two-raised-card cap.** Its remaining cards are
+   genuine objects with their own actions (urge log, reset log, per-addiction
+   streaks, commitment, trigger plans), so the cap and the "cards are objects"
+   rule pull against each other there. Needs a judgement call.
+3. **Recovery is not in the a11y scan list** — it is behind an opt-in setting, so
+   its sidebar entry is not clickable on a default journal. Needs a fixture.
+4. **Recovery deviates from the brief on purpose** — the brief wanted a sleep +
+   soreness sparkline, assuming physical recovery; this app's Recovery is the
+   abstinence tracker and has no soreness field anywhere. Built urges-vs-resets
+   instead. Physical recovery as its own page is a data-model change.
+5. **`Workout.sets` is still a required `string[]`**, not the optional field the
+   brief's target shape had. Cardio writes `[]`. Changing it breaks
+   `HomeWorkout` and the CSV export.
+6. **Re-seed demo data** to see corrected distances and activity labels.
+7. Push and open the PR against `feat/collapsible-header-ux`. Then merge the
+   eight-deep stack bottom-up — still the biggest risk on the board.
+
+### Traps this branch hit
+
+- **The schema-3 distance conversion is not idempotent.** It is gated on the
+  stored version; running it twice multiplies by 1.61 again. There is a test
+  that migrates three times and asserts the value never moves. Any future
+  data-shape migration in `migrate()` needs the same treatment or the same gate.
+- **`npm run a11y` serves `dist` through `vite preview`** — rebuild before
+  believing a result. A contrast fix looked like it had failed until the bundle
+  was rebuilt.
+- **Folds hide violations from axe, again.** Adding Coaching to the scan list
+  immediately surfaced a `crust`-on-`surface1` contrast failure that had been
+  invisible only because the list lived inside a collapsed card.
+- **A typed field is a better audit than a grep.** Making `Workout.activity` an
+  `ActivityKey` found every free-form writer in one `tsc -b`, including one in
+  `CaptureBar` that the Stage 0 audit had missed.
+- `quartileLevels` shipped with `floor(q·n)` instead of `ceil(q·n)−1`, putting
+  the top cut on the maximum so level 4 was unreachable. Caught by its own test.
+
+---
+
+## Previously — `feat/collapsible-header-ux`
+
+9 commits, branched off `feat/icon-button-stage1` (PR #94), **not pushed, no PR
+open**. If you push it, base the PR on `feat/icon-button-stage1`, not `main`, or
+the diff shows six other branches' commits.
+
+### What that branch did — the fold (§K)
 
 `docs/COLLAPSE-PATTERN.md` is the full record; decisions are D-42/43/44. Short
 version:
@@ -41,9 +115,9 @@ version:
 - **Demo data now has a migration history**, so "Chronically deferred" is
   actually visible in the demo.
 
-## Next
+### Its next steps (still open)
 
-1. **Push this branch and open the PR** against `feat/icon-button-stage1`.
+1. **Push it and open the PR** against `feat/icon-button-stage1`.
 2. **Merge the stack bottom-up.** Seven deep now — the biggest risk on the board.
 3. **`graphify hook-rebuild` is refusing to write** — the new graph has 1782
    nodes against a stored 1784 (deleting `pickleball/Section.tsx` shrank it), so
@@ -55,7 +129,7 @@ version:
 7. **B1/G1/G2** — the Supabase project returns NXDOMAIN, so every account and
    cloud-sync feature is dead until it is repointed or the env vars unset.
 
-## Traps this session hit, so you don't
+### Traps that branch hit, so you don't
 
 - **`npm run a11y` cannot see inside a closed fold.** Unhiding Plan's Setup
   exposed a *critical* `select-name` violation that had been shipping for
