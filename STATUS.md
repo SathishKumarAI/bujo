@@ -5,7 +5,7 @@ Update this when you STOP working, not when you start.
 - **Last touched:** 2026-08-03
 - **Where I stopped:** On `feat/today-ux`, an **isolated worktree** at
   `.claude/worktrees/today-ux`, branched off `99ddbaf` on
-  `feat/icon-button-stage1`. **Nothing pushed, no PR.** 18 commits, all
+  `feat/icon-button-stage1`. **Nothing pushed, no PR.** 20 commits, all
   verifying green: `npx tsc -b --force` 0, `npx vitest run` **731 tests**,
   `npx eslint .` 0 errors / 2 pre-existing warnings, `npm run build` clean.
   - Work in the worktree, not the main checkout — a second Claude session was
@@ -34,10 +34,13 @@ Update this when you STOP working, not when you start.
      Alcohol today to keep your 4-day streak alive."* The seed was the root
      cause, and there is a migration for journals already saved.
 
-  3. **The IA/routing pass**, Stages 0–4 (`c34db86`…`e89ecf3`) — see TASKS.md
+  3. **The IA/routing pass**, Stages 0–5 (`c34db86`…`959edba`) — see TASKS.md
      §K and **`docs/ROUTING.md`**. The app had **no router**; it has one now,
-     the sidebar is five sections, and Today is three time-of-day surfaces
-     instead of ten cards on one screen.
+     the sidebar is five sections, Today is three time-of-day surfaces instead
+     of ten cards on one screen, and on a phone the capture bar pins above the
+     tab bar with a 44px floor under every control.
+     - The 44px floor had to be **absolute px**: `min-h-11` measured 39px,
+       because this app scales the rem root for its text-size setting.
 
 - **Also worth knowing:**
   - **Vercel is paused** (`c51444f`, `git.deploymentEnabled: false`), by
@@ -54,14 +57,19 @@ Update this when you STOP working, not when you start.
     Reload with `?demo=1` there for a clean one. The app on `:5173` was never
     touched.
 
-- **Next action:** **Stage 5 of the IA pass — mobile** (TASKS.md §K5). Partly
-  done already: the bottom tab bar is the five sections and its targets are
-  44px, as are the scale dots and first-meal buttons. Left: the sticky log input
-  on mobile, a 44px sweep of the habit pills, and the 1180px Insights tier,
-  which needs either a horizontal-scroll wrapper or a stacked fallback under
-  640px — pick one and apply it consistently.
-  - Then **K6** (`metric.fastBreak` is written but read by nothing) and **K7**
-    (the month cursor is a route on Monthly only).
+- **Next action:** the IA pass is complete — Stages 0–5 all done. What it left
+  behind, both in TASKS.md:
+  - **K6** — `metric.fastBreak` ("First meal") is written by the wellbeing card
+    and read by *nothing*, while `FastingCard` says "end it at your first meal".
+    Both now sit on the Morning surface, which makes the dead wire more visible,
+    not less. Wire it or drop the control.
+  - **K7** — the month cursor is a route on Monthly only; Trackers and Cycle
+    keep component state, so stepping months is in history on one and not the
+    others.
+  - **L4** — should a slip on a quit habit earn a bigger make-up than a missed
+    habit? Right now they weigh the same.
+  - Two tap targets are knowingly under 44px: Trackers' habit dot-grid (a
+    365-day grid cannot have 44px cells) and one toggle on Plan.
 
 - **Standing rule, not applied this session:** UI changes are verified in **all
   five themes** — mocha, latte, neon, vscode, dawn — not mocha plus a spot

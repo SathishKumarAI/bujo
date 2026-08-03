@@ -462,12 +462,32 @@ visual language, no data-model change. Full contract in **`docs/ROUTING.md`**.
   - Item 5 (three writing prompts → one rotating, with an expander) landed in
     K3, because "Evening: one writing prompt" required it.
 
-- [ ] **K5 · Stage 5 — mobile. NOT STARTED.** Bottom tab bar under 768px is
-  already the five sections and its targets are 44px; the scale dots and
-  first-meal buttons are 44px. Still to do: **the sticky log input on mobile**,
-  a full 44px sweep of the habit pills, and the 1180px Insights tier needing a
-  horizontal-scroll wrapper or a stacked fallback under 640px (pick one, apply
-  consistently).
+- [x] **K5 · Stage 5 — mobile. DONE.** Capture pins above the tab bar on
+  phones, portalled to `<body>` because `main` computes `overflow-y: auto` (so
+  `sticky` positions against the wrong scrollport — it scrolled off at
+  `top: -512`) and `.book-inner` carries a transform (so a plain `fixed` would
+  take *it* as its containing block). `BottomNav` publishes its measured height
+  as `--bottom-nav` so the bar above clears it without a hard-coded 48px.
+  - **The 44px floor must be absolute px, not `min-h-11`.** The rem version
+    measured **39px**, because this app scales the rem root for its S/M/L/XL
+    text-size setting — a thumb does not shrink when you pick a smaller font.
+  - The spec predicted the habit pills and segment dots would fail; both already
+    passed. What actually failed: per-habit note buttons at **16px**, card
+    chevrons at 18px, `EntryRow`'s glyph/`!`/`×` at 23–24px, mic and Add at
+    36px, plan chips at 37px, sidebar drawer rows at 39px. Fixed at the source —
+    every `Button` size has a mobile floor now.
+  - **The 1180px tier never overflowed.** It is a `max-width`; Insights, Stats,
+    Trackers and Monthly all measure clean at 490px. The thing that overflowed
+    was the Stage 2 section tab strip (Body's six tabs, 545px in a 424px
+    column). It scrolls horizontally now.
+  - Measured after at 390px: Day, Morning, Evening, Body and Insights all report
+    **0** sub-44px targets, no horizontal overflow anywhere.
+  - **Two exceptions left standing:** Trackers' habit dot-grid (29 cells at
+    ~23px — a 365-day grid cannot have 44px cells without ceasing to be one) and
+    one 32px "recurring rules" toggle on Plan.
+  - Fixed on the way: Trackers' layout picker offered **"PersonSimpleRun"** as a
+    user-visible label — the lucide→Phosphor codemod hitting prose again, the
+    hazard §J5 warns about. Now "Activity".
 
 - [ ] **K6 · `metric.fastBreak` is a dead wire.** Written by the wellbeing card,
   read by nobody. `FastingCard` says "end it at your first meal" but never looks
