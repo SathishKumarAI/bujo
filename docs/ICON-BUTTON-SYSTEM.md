@@ -1,8 +1,7 @@
 # Icon and button system — spec, audit, stage log
 
-**Status:** Stages 0–4 and the mechanical half of 6 are complete. Stage 5
-(per-cluster copy and layout rollout) and the judgement half of 6 (hex literals,
-ToggleGroup rebuilds) remain — see "What the sweep did not clear".
+**Status:** Stages 0–6 complete, and 6 is now **enforced by CI** rather than
+checked by eye. The one item left is per-view container tiers.
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 
@@ -453,6 +452,95 @@ Counts, not prose. Run after the icon, button and radius passes.
 - `Segmented` and `Stepper` are **not** rebuilt on `ToggleGroup` yet.
 - Per-view copy work (empty states as invitations, error text that says what to
   do) has not started.
+
+
+## Stage 5 — done, bar container tiers
+
+### Emoji were the second icon library
+
+Caught in review, not by me: a time-of-day chip still read "🌙 Evening · 0/1"
+while everything around it was a Phosphor glyph. Stage 2 said to delete every
+other icon source *including emoji used as icons*; I converted lucide and filed
+emoji as "mostly data", which was true of the emoji a user picks for a habit and
+false of the fixed vocabularies. Emoji also ignore `currentColor`, so they stayed
+full-colour beside icons that follow the theme.
+
+Now in `components/glyphs.ts`: time-of-day slots, training splits (which
+consolidated a private second map Gym had grown), avoid markers, streak flames,
+and WMO weather codes. `lib/timeofday.ts` and `lib/fitness.ts` dropped their
+emoji fields and stay pure data — how a slot is *drawn* is a UI decision.
+
+Still emoji, because there it is content: habit and collection emoji, achievement
+badges, `EmojiScale` (the emoji *is* the scale), celebration copy, and the
+typographic bullet column.
+
+### Copy
+
+Eleven empty states became invitations ("Log a workout to see which splits you
+actually train" rather than "No workouts logged yet"). Drive's eight blocking
+`alert()` calls became toasts whose copy says what happened *and* what is still
+true — "Backup did not finish. Your journal on this device is untouched."
+
+### Hex, classified rather than counted
+
+Most remaining hex is genuinely data: the Settings theme swatches must render
+another theme's colours while you are looking at this one, and the Google "G" is
+a brand mark. **Five were bugs** — three chart tooltips hardcoded to Mocha
+(`#181825`/`#313244`/`#cdd6f4`) that stayed near-black on latte and dawn, and two
+`#11111b` label colours. `rechartsTooltip()` already existed and every other
+chart used it; nobody noticed because the chart still drew.
+
+### Codemod damage, twice
+
+The lucide→Phosphor rename used a word-boundary regex, and `Search`, `Activity`,
+`Repeat` and `Scale` are ordinary English words. Five user-visible strings shipped
+as "MagnifyingGlass your Drive…" and "PersonSimpleRun layout". A second batch
+surfaced later — "Repeat last" rendering as "ArrowsClockwise last" — which hid
+from my own grep because it skipped lines containing `as={`, exactly where a
+glyph sits beside its label.
+
+Both the hazard and the rule now live in the gate below.
+
+## Stage 6 — enforced, not audited
+
+Two scripts, both run before they were committed.
+
+**`scripts/check-design-system.mjs`** — source-level, dependency-free, one
+second. Fails CI on: a lucide import, a direct Phosphor import, a glyph name
+rendering as a label, a px icon size, a retired button variant, an off-token
+radius, emoji in the fixed vocabularies, a hardcoded colour. Writing it paid for
+itself immediately — it found six `rounded-xl` stragglers the radius codemod's
+card-shape heuristic had skipped.
+
+**`scripts/a11y-axe.mjs`** — axe-core over eight views against a production
+preview. Serious/critical fail; moderate is reported, because most moderate
+findings are contrast inside chart internals and a gate that always fails is a
+gate everyone learns to ignore. Current: **0 serious, 0 moderate**, 22 rules
+passing on Today.
+
+It asserts each view actually rendered before trusting its score. A clean result
+on a blank page is worse than no gate, because it reads as proof. Running it
+locally is also what caught `@axe-core/playwright` refusing a page created with
+`browser.newPage()`.
+
+## The bundle, after
+
+The icon set cost 413 kB raw / 93 kB gzip because Phosphor ships all six weights
+per glyph in one module and this app renders two. Per-icon entrypoints produced a
+byte-identical chunk, which proved it was the package layout rather than the
+import style.
+
+`scripts/build-icons.mjs` reads the installed package's own defs and emits only
+`regular` and `duotone`, plus the registry that wraps them — nothing hand-copied,
+so an upgrade is a re-run (`npm run icons`).
+
+| | before | after |
+|---|---|---|
+| icons chunk | 413 kB / 93 kB gzip | **134 kB / 25.8 kB** |
+| total assets | 1611 kB / 445 kB | **1339 kB / 381 kB** |
+
+`@phosphor-icons/react` is a devDependency now: after this, nothing imports it at
+runtime.
 
 ## Open questions — answered
 
