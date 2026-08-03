@@ -58,6 +58,10 @@ export function Reading() {
       {/* Yearly goal */}
       <div className="rounded-2xl border border-line bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
+          {/* Real headings, not styled spans: this view hand-rolls its cards
+              instead of using <Card>, so it was the one view with no <h2> at
+              all under the page <h1> — the whole page read as unstructured
+              text to a screen reader. */}
           <h2 className="inline-flex items-center gap-1.5 text-body font-medium text-foreground"><Target size={15} className="text-primary" /> Yearly reading goal</h2>
           <div className="flex items-center gap-2 text-body">
             <input type="number" min={0} value={goal || ''} placeholder="0"

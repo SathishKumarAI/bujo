@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { GraduationCap, Check, Dumbbell, Brain, CalendarDays, Trophy, ListChecks, Target, HeartPulse, ShieldAlert, BookOpen } from 'lucide-react'
 import { useJournal } from '../store'
-import { Card, StatTile } from '../components/ui'
+import { Card, Pill, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
@@ -128,7 +128,7 @@ export function Coaching() {
             <div key={lvl.id} className="rounded-lg border border-line bg-ink-0 p-3">
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="text-body font-medium" style={{ color: cat(lvl.color) }}>{lvl.name}</span>
-                <span className="rounded-full px-2 py-0.5 text-micro" style={{ background: cat(lvl.color) + '22', color: cat(lvl.color) }}>DUPR {lvl.dupr}</span>
+                <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
               </div>
               <ul className="grid gap-1 sm:grid-cols-2">
                 {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: cat(lvl.color) }}>•</span> {sk}</li>)}
@@ -226,7 +226,7 @@ export function Coaching() {
                   <li key={e.name} className="rounded-lg border border-line bg-ink-0 p-2.5">
                     <div className="flex items-center gap-1.5">
                       <span className="text-body font-medium text-fg-1">{e.name}</span>
-                      <span className="rounded-full px-1.5 py-0.5 text-micro" style={{ background: cat('sky') + '22', color: cat('sky') }}>{e.target}</span>
+                      <Pill color="sky" size="micro">{e.target}</Pill>
                       {e.equip !== 'none' && <span className="rounded-full bg-ink-2 px-1.5 py-0.5 text-micro text-fg-2">{e.equip}</span>}
                     </div>
                     <p className="mt-0.5 text-label text-fg-2">{e.how}</p>

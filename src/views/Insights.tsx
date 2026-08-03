@@ -9,14 +9,15 @@ import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRang
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
-// Insights had its own byte-identical copy of this; the shared one is the same
-// component with a heading and a "SHOW" affordance.
-import { QuietSection as Section } from '../components/CollapsibleSection'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
 import { TagManager } from '../components/TagManager'
 import { WeeklyReview } from '../components/WeeklyReview'
+// Insights carried a private copy of this collapsible section header — the
+// same markup, minus the press affordance and the "show" hint. Three copies of
+// CollapsibleSection were already consolidated once; this was a fourth.
+import { QuietSection as Section } from '../components/CollapsibleSection'
 
 export function Insights() {
   const { data } = useJournal()
@@ -203,7 +204,7 @@ export function Insights() {
 
       {/* 4) Correlations — deep read-only analytics, collapsed. */}
       {(found.length > 0 || momentum.length > 0) && (
-        <Section title="Correlations" subtitle="patterns & momentum">
+        <Section stickyKey="insights.correlations" title="Correlations" subtitle="patterns & momentum">
       {found.length > 0 && (
         <Card title="Patterns" subtitle="What your data is telling you">
           <ul className="space-y-2">
@@ -253,7 +254,7 @@ export function Insights() {
 
       {/* 5) Mood analytics — collapsed. */}
       {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
-        <Section title="Mood analytics" subtitle="weekday, split & stability">
+        <Section stickyKey="insights.mood" title="Mood analytics" subtitle="weekday, split & stability">
         <div className="grid items-start gap-5 md:grid-cols-2">
           {moodWd.best && moodWd.worst && (
             <Card title="Best & worst day" subtitle="When your mood runs brightest">
@@ -305,7 +306,7 @@ export function Insights() {
 
       {/* 6) Habit analytics — collapsed. */}
       {(moodImpact.length > 0 || (focusId && focusScore != null) || (focusId && monthly.some((m) => m.done > 0))) && (
-        <Section title="Habit analytics" subtitle="mood impact, consistency & trend">
+        <Section stickyKey="insights.habits" title="Habit analytics" subtitle="mood impact, consistency & trend">
       {moodImpact.length > 0 && (
         <Card title="Habit mood impact" subtitle="How much each habit lifts your mood">
           <ul className="space-y-2">
@@ -366,7 +367,7 @@ export function Insights() {
 
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
-        <Section title="Domain digests" subtitle="cross-domain glances">
+        <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
         <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="link" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
@@ -387,7 +388,7 @@ export function Insights() {
       )}
 
       {/* 8) Lifetime — deep totals & navigation, collapsed. */}
-      <Section title="Lifetime" subtitle="year in review, records & index">
+      <Section stickyKey="insights.lifetime" title="Lifetime" subtitle="year in review, records & index">
       <div className="grid items-start gap-5 md:grid-cols-2">
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-body text-fg-1">
@@ -432,7 +433,7 @@ export function Insights() {
       </Section>
 
       {/* 9) Maintenance — collapsed at the bottom. */}
-      <Section title="Tag manager" subtitle="merge, rename & retire tags">
+      <Section stickyKey="insights.tags" title="Tag manager" subtitle="merge, rename & retire tags">
         <TagManager />
       </Section>
     </Page>

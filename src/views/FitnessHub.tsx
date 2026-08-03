@@ -1,9 +1,10 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { Activity, Dumbbell, Timer, ArrowRight } from 'lucide-react'
 import { Fitness } from './Fitness'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { weeklyActiveMinutes, nextSplit, splitMeta } from '../lib/fitness'
+import { useStickyState } from '../lib/useStickyState'
 
 // Gym is recharts-heavy · load it only when the Strength tab is opened.
 const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
@@ -14,8 +15,12 @@ const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
  * tabs over a shared workout store · no more "which view do I open?" and one
  * fewer nav item. Pull-ups keeps its own dedicated view.
  */
+const FITNESS_TABS = ['cardio', 'strength'] as const
+
 export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 'strength' }) {
-  const [tab, setTab] = useState<'cardio' | 'strength'>(initialTab)
+  // Sticky: the two tabs are different tools, and people live in one of them.
+  // Landing on Cardio every single time is a tax on whoever mostly lifts.
+  const [tab, setTab] = useStickyState<'cardio' | 'strength'>('fitness.tab', initialTab, FITNESS_TABS)
   const { data } = useJournal()
 
   // Read-only weekly active-minutes goal ring (workouts + pickleball).

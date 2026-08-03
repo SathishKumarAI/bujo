@@ -5,12 +5,21 @@ import { notify } from '../lib/notify'
 import { useJournal } from '../store'
 import type { Entry } from '../lib/types'
 
+/** Roughly two lines at the reading width — past this, an entry is a paragraph. */
+const LONG_ENTRY = 180
+
 /** A single rapid-log line: click the glyph to advance status, double-click text to edit. */
 export function EntryRow({ entry }: { entry: Entry }) {
   const { cycleStatus, toggleImportant, deleteEntry, updateEntry, undo } = useJournal()
   const dropped = entry.status === 'dropped'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(entry.text)
+  // A rapid log is meant to be scannable. One pasted paragraph pushes every
+  // other line off the screen, so long entries clamp to two lines with a way
+  // to open them. The threshold is on characters, not rendered height, so the
+  // control appears deterministically rather than depending on column width.
+  const [expanded, setExpanded] = useState(false)
+  const long = entry.text.length > LONG_ENTRY
 
   function commit() {
     setEditing(false)
@@ -65,15 +74,16 @@ export function EntryRow({ entry }: { entry: Entry }) {
           className="flex-1 rounded border border-mauve bg-ink-0 px-1 text-body text-fg-1 focus:outline-none"
         />
       ) : (
+        <span className="flex min-w-0 flex-1 flex-col items-start">
         <span
           onDoubleClick={() => { setDraft(entry.text); setEditing(true) }}
           title="Double-click to edit"
           /* A finished line recedes: struck through and dropped to the tertiary
              tier, so the eye skips it and lands on what is still open. Done and
              dropped read the same way here on purpose — both are closed. */
-          className={`flex-1 cursor-text text-body transition-colors ${
+          className={`w-full cursor-text text-body transition-colors ${
             entry.status === 'done' || dropped ? 'text-fg-3 line-through decoration-fg-3/50' : 'text-fg-1'
-          }`}
+          } ${long && !expanded ? 'line-clamp-2' : ''}`}
         >
           {entry.text}
           {entry.recurringId && <span className="ml-1 align-middle text-label" style={{ color: cat('overlay1') }} title="Repeats, edit the rule in Plan to change every future occurrence">↻</span>}
@@ -87,6 +97,16 @@ export function EntryRow({ entry }: { entry: Entry }) {
                 #{t}
               </span>
             ))}
+        </span>
+        {long && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            className="text-label text-fg-2 underline-offset-2 hover:text-fg-1 hover:underline"
+          >
+            {expanded ? 'show less' : 'show more'}
+          </button>
+        )}
         </span>
       )}
 

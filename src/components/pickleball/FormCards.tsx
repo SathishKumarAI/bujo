@@ -1,5 +1,5 @@
 import { Activity, Flame, Trophy, TrendingUp, TrendingDown, Minus, Gauge, Award, HeartPulse } from 'lucide-react'
-import { Card, StatTile } from '../ui'
+import { Card, Pill, StatTile } from '../ui'
 import { cat } from '../../lib/colors'
 import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../../lib/pickleball'
 
@@ -16,17 +16,17 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
         </div>
         <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
         {form.momentum !== 'flat' && (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption" style={{ background: cat(form.momentum === 'up' ? 'green' : 'red') + '22', color: cat(form.momentum === 'up' ? 'green' : 'red') }}>
+          <Pill color={form.momentum === 'up' ? 'green' : 'red'} size="caption" className="ml-auto">
             {form.momentum === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             {form.momentum === 'up' ? 'Trending up' : 'In a slump'}
-          </span>
+          </Pill>
         )}
         {form.momentum === 'flat' && <span className="ml-auto inline-flex items-center gap-1 text-caption text-fg-2"><Minus size={12} /> Steady</span>}
       </div>
       {(streaks.longest > 0 || streaks.current > 0) && (
         <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3 text-label text-fg-2">
-          {streaks.current > 0 && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('peach') + '22', color: cat('peach') }}><Flame size={12} /> {streaks.current}-session win streak</span>}
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: cat('mauve') + '22', color: cat('mauve') }}><Trophy size={12} /> Longest: {streaks.longest}</span>
+          {streaks.current > 0 && <Pill color="peach"><Flame size={12} /> {streaks.current}-session win streak</Pill>}
+          <Pill color="mauve"><Trophy size={12} /> Longest: {streaks.longest}</Pill>
         </div>
       )}
     </Card>
@@ -43,9 +43,9 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
         <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} color={forecast.slope > 0 ? 'green' : forecast.slope < 0 ? 'red' : 'overlay0'} />
       </div>
       <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
-        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-label font-medium" style={{ background: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') + '22', color: cat(forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky') }}>
+        <Pill color={forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky'} className="px-2.5 py-1 font-medium">
           <Gauge size={13} /> {forecast.readiness === 'ready' ? 'Ready to level up' : forecast.readiness === 'consolidating' ? 'Consolidating' : 'Building'}
-        </span>
+        </Pill>
         <p className="text-label text-fg-2">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
       </div>
     </Card>

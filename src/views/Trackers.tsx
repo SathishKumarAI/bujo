@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote, Grid3x3 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
@@ -26,6 +26,10 @@ import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../components/trackers/CategoryConsistencyCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { useConfirm } from '../components/ConfirmDialog'
+import { useFocusTrap } from '../lib/useFocusTrap'
+import { useStickyState } from '../lib/useStickyState'
+
+const TRACKER_VIEW_MODES = ['day', 'week', 'month'] as const
 
 const CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 
@@ -79,7 +83,8 @@ export function Trackers() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
+  // Sticky: day / week / month is a habit of reading, not a per-visit choice.
+  const [viewMode, setViewMode] = useStickyState<'day' | 'week' | 'month'>('trackers.viewMode', 'month', TRACKER_VIEW_MODES)
   const layout = data.settings.trackerLayout ?? 'classic'
   const today = todayISO()
 
@@ -478,7 +483,7 @@ function RoutineTimeline({
           <div key={slot}>
             <div className="mb-1.5 flex items-center gap-2">
               <span className="text-body font-medium text-fg-1">{meta.emoji} {meta.label}</span>
-              {slot === now && <span className="rounded-full px-1.5 py-0.5 text-micro" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>now</span>}
+              {slot === now && <Pill color="mauve" size="micro">now</Pill>}
               <span className="ml-auto text-label text-fg-2">{done}/{scheduled.length || list.length}</span>
             </div>
             <ul className="space-y-1.5">
@@ -711,6 +716,10 @@ function CategoryRows({
 // ── Per-habit customisation modal ────────────────────────────────────────────
 function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const confirm = useConfirm()
+  // Hand-rolled sheet, so it traps Tab itself. The confirm dialog it opens
+  // portals outside this node — the trap deliberately only guards Tab, so that
+  // still works.
+  const trap = useFocusTrap<HTMLDivElement>()
   const { updateHabit, removeHabit, toggleHabitSkip, setHabitNote, data } = useJournal()
   const set = (p: Partial<Habit>) => updateHabit(habit.id, p)
   // Reuse units already in use so trackers share consistent units (e.g. always
@@ -736,7 +745,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
-      <div className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Edit ${habit.name}`}>
+      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
           <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>

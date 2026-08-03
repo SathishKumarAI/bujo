@@ -8,11 +8,12 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
-import { Card, Empty, Input, StatTile } from '../components/ui'
+import { Card, Empty, Input, Pill, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { MuscleMap } from '../components/MuscleMap'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
+import { notify } from '../lib/notify'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
@@ -180,8 +181,10 @@ export function Gym() {
   function saveAsRoutine() {
     const exercises = rows.map((r) => r.exercise.trim()).filter(Boolean)
     if (!routineName.trim() || exercises.length === 0) return
-    addRoutine({ name: routineName.trim(), split, exercises })
+    const name = routineName.trim()
+    addRoutine({ name, split, exercises })
     setRoutineName('')
+    notify.success(`Routine “${name}” saved`, `${exercises.length} ${exercises.length === 1 ? 'exercise' : 'exercises'}.`)
   }
 
   // Body-weight chart.
@@ -255,9 +258,9 @@ export function Gym() {
           <span className="text-label text-fg-2">Type an exercise, pick a split, or tap a set row’s target.</span>
         ) : (
           muscleNames(activeMuscles).map((m) => (
-            <span key={m} className="rounded-full px-2.5 py-0.5 text-label" style={{ background: cat(splitMeta(split).color) + '33', color: cat(splitMeta(split).color) }}>
+            <Pill key={m} color={splitMeta(split).color} className="px-2.5">
               {m}
-            </span>
+            </Pill>
           ))
         )}
       </div>

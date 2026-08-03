@@ -21,6 +21,7 @@ import {
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
 import { workoutSplitCounts } from '../lib/stats'
 import { sleepDebt, focusSleepCorrelation } from '../lib/correlations'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 const tip = rechartsTooltip
 
@@ -59,6 +60,8 @@ export function Stats() {
 
   // Click-to-enlarge: which widget is shown big in the modal.
   const [enlarged, setEnlarged] = useState<null | 'mood' | 'year'>(null)
+  // Hand-rolled modal (not Radix): trap Tab inside it and restore focus on close.
+  const enlargedTrap = useFocusTrap<HTMLDivElement>(enlarged !== null)
 
   // Mood-calendar grid; `large` scales the cells up for the enlarge modal.
   const moodCalGrid = (large = false) => (
@@ -313,7 +316,7 @@ export function Stats() {
           viewport, not inside transformed ancestors (book mode / zoom). */}
       {enlarged && createPortal(
         <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-          <div className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
               <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><X size={20} /></Button>

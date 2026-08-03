@@ -3,6 +3,7 @@ import { Sun, BarChart3, Compass, Command, ShieldCheck, ArrowRight, X } from 'lu
 import { useNav } from './shell/nav'
 import type { ViewId } from './shell/viewChrome'
 import { Button } from './ui/button'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 const KEY = 'bujo:onboarded'
 
@@ -26,6 +27,9 @@ const STEPS: { icon: typeof Sun; title: string; body: string; to?: ViewId }[] = 
  */
 export function Onboarding({ onClose }: { onClose: () => void }) {
   const nav = useNav()
+  // First-run overlay — the first thing a keyboard user ever meets, so Tab has
+  // to stay inside the tour rather than wander into the app behind it.
+  const trap = useFocusTrap<HTMLDivElement>()
   const [i, setI] = useState(0)
   const step = STEPS[i]
   const last = i === STEPS.length - 1
@@ -38,7 +42,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="relative w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-2xl">
+      <div ref={trap} className="relative w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-2xl">
         <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-fg-2 hover:text-fg-1"><X size={18} /></button>
         <div className="mb-3 flex items-baseline gap-2">
           <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>
@@ -53,7 +57,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
             <span key={n} className="h-1.5 rounded-full transition-all" style={{ width: n === i ? 18 : 6, background: n === i ? 'var(--color-mauve)' : 'var(--color-surface1)' }} />
           ))}
           <div className="ml-auto flex gap-2">
-            {step.to && <button onClick={() => { nav(step.to as ViewId); done() }} className="text-label text-fg-2 hover:text-fg-1">Show me</button>}
+            {step.to && <Button variant="link" size="sm" onClick={() => { nav(step.to as ViewId); done() }} className="h-auto p-0 text-label text-fg-2 hover:text-fg-1">Show me</Button>}
             {last ? (
               <Button onClick={done} className="press-3d gap-1.5">Start journaling</Button>
             ) : (

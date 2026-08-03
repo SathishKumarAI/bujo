@@ -105,7 +105,11 @@ From `docs/TICKETS.md`. These are the only items still marked 🔜/◑ after the
 - [ ] **E1 · R2-7 / BUJO-91 — unified `Goal` data model.** One type spanning habits, challenges, fitness and focus, with a cross-view roll-up. The Goals *view* shipped (A-02); the *model* didn't. Genuine design work, not a mechanical change.
 - [ ] **E2 · R2-10 / P-9 — accounts + E2E-encrypted cloud sync.** Needs a backend, so it's out of the current local-first scope. R2-1's at-rest crypto is the client half. Blocked on a scope decision from you, not on code.
 - [ ] **E3 · BUJO-176 — same-unit tracker combined totals/compare.** Logged as "if that was the intent" — needs you to confirm what you actually wanted.
-- [ ] **E4 · AUD-5 — deferred a11y.** Heatmap/Monthly aria labels, save-toasts, Focus → `ChartCard`.
+- [~] **E4 · AUD-5 — deferred a11y, mostly done.** Monthly day cells now carry a full
+  `aria-label` (date, items, mood, habit progress) + `aria-current="date"`; the weekly
+  reflection and gym-routine saves fire toasts. Heatmap and the Focus charts already had
+  `role="img"` labels, so the remaining piece — "Focus → `ChartCard`" — is a cosmetic
+  refactor, deliberately not done.
 - [ ] **E5 · BUJO-94 tail — axe-core CI job.** Chart text-alternatives are all done; only the CI wiring is left.
 - [ ] **E6 · PRODUCT_GAPS #2 — sync-conflict prompt on silent cloud load.** `updatedAt` stamping exists; the newer/older prompt only fires on first-run folder pick, not on silent reload. Touches the App boot path.
 - [ ] **E7 · PRODUCT_GAPS #7 — Playwright e2e.** Related to B3; CI currently has no e2e gate.
@@ -136,10 +140,23 @@ From `docs/UIUX-CRAFT-BACKLOG.md`. The feedback/keyboard/resilience/button work 
 - [ ] **F3 · Focus trap in dialogs** + restore focus on close (quick-add, palette, SOS overlay).
 - [ ] **F4 · Palette fuzzy matching** — today it's a plain substring filter (`CommandPalette.tsx:97`); no recent/frequent ranking.
 - [ ] **F5 · Vim-style jumps** — `g t` Today, `g s` Stats, `j`/`k` between entries, `x` toggle status.
-- [ ] **F6 · Persist last-visited tab per view** (Fitness, Trackers, Insights).
-- [ ] **F7 · Deep-link a specific entry/day by URL** so a day is shareable and bookmarkable.
-- [ ] **F8 · Collapse long entry text** with "show more".
-- [ ] **F9 · Single `Pill`/`Badge` component** — inline pill styles still duplicated across views.
+- [x] **F6 · Persist last tab/range/section** — `useStickyState` (localStorage under
+  `bujo.ui.*`, deliberately *not* the journal store: it syncs and it has an undo stack).
+  Applied to FitnessHub tabs, Trackers day/week/month, and Insights' six sections via an
+  opt-in `stickyKey` on `CollapsibleSection`. 5 tests.
+- [x] **F7 · Deep links** — `?view=&day=` now round-trips: written on every navigation,
+  read on boot, day seeds the cursor. `replaceState` not `pushState`, because this router
+  ignores `popstate` and a Back button that silently does nothing is worse than none.
+  **Not done:** entry-level anchors (`&entry=<id>` + scroll/highlight) — day granularity
+  only.
+- [x] **F8 · Collapse long entry text** — entries over 180 chars clamp to two lines with
+  `show more` / `show less`. Character threshold, not rendered height, so the control does
+  not appear and vanish as the column resizes.
+- [x] **F9 · One `Pill`** — rewritten around `tone` (`wash` / `muted` / `solid`) and
+  scale-named `size` (`micro` / `caption` / `label`); 18 hand-rolled sites in 12 files
+  migrated. Two reconciliations toward the majority: `33` washes dropped to `22`, and the
+  `surface0` count pills moved to `surface1`. **Note:** every pill now reads its colour
+  from one file, so §I1 (accent-as-text failing AA in latte) becomes a one-file fix.
 - [ ] **F10 · Decide `SyncIndicator`'s fate** — fold into the toast system, or keep it deliberately as a status pill. Right now both exist by accident.
 
 ---
@@ -214,6 +231,61 @@ The diagnosis is sound and the reference implementation is real, working code �
 6. **C1–C5** — lint debt in one mechanical pass; all 17 gone. Good filler while H is being decided.
 7. **D1, B3, B5** — small cleanups.
 8. Then the redesign proper, or pick from **E** / **F** by what you want the product to do.
+
+---
+
+## J. Icon & button system — Stage 0 done, Stage 1 needs a go-ahead
+
+Full spec + the Stage 0 audit: **`docs/ICON-BUTTON-SYSTEM.md`**. Three decisions
+are settled and not up for relitigation: Phosphor icons with weight (not colour)
+as the active signal, one **tonal** loud button per screen (no solid accent fill
+anywhere), and shadcn controls with the variants rewritten.
+
+**Verification rule for every stage: all five themes — mocha, latte, neon,
+vscode, dawn.** Not mocha plus a spot check. Three themes redefine the accent
+(dawn's is an *amber*), two invert surface polarity, and dawn renders two text
+tiers where the rest render three. A wash that reads on near-black can vanish on
+cream. Anything checked in mocha alone is unchecked.
+
+- [x] **J0 · Stage 0 audit — DONE.** Headlines, all of which change the plan:
+  - **24 routes**, not ~25. 21 nav rows (2 settings-gated), `gym` is an alias.
+  - **The theme bridge already exists and runs the other way**: `index.css`
+    defines shadcn's vars *from* Catppuccin, and `tokens.css` defines the
+    purpose layer *from* those. Adding the spec's `shadcn-bridge.css` would give
+    the same variables two definitions. Recommend extending the existing layer.
+  - **The Stage 1 hazard does not apply** — themes are already on
+    `:root[data-theme=…]` on `documentElement`, so a `:root` bridge resolves.
+  - **`--text-3` already clears 4.5:1 in all five** (4.74–6.55:1). That stage is
+    done; dawn is the known exception that renders two tiers, not three (§H14).
+  - **Tailwind v4, no config file, zero `.jsx`** — install with TypeScript, and
+    the "content globs" question does not apply.
+  - **Cost is bigger than the spec assumes:** lucide is imported in **85 files**
+    at **16 distinct px sizes** (none rem, so none track the font-scale
+    control); the `Button` cva has **8 sizes** against a target of 3; there are
+    **10 distinct radii** against a target of 3; and **37 solid-accent buttons**
+    (8 explicit `variant="default"` + 29 bare `<Button>`) are what decision 2
+    deletes.
+- [ ] **J1 · Stage 1 — shadcn install + token extension.** Blocked on four
+  answers in §"Open questions" of the doc: the bridge approach, the
+  `--accent-wash` move to oklab + a hover step, confirmation that a
+  lucide→Phosphor swap across 85 files is wanted, and how much icon-map
+  guesswork is acceptable. Also adds the missing tokens: `--r-control`,
+  `--r-card`, `--r-pill`, `--h-control`, `--accent-wash-hover`, `--bg-danger`.
+- [ ] **J2 · Stage 2 — Phosphor + one `Icon` wrapper.** Three rem sizes, weight
+  as the state signal, nothing imports Phosphor directly. The bullet glyph
+  column stays typographic.
+- [ ] **J3 · Stage 3 — four button variants, three heights (28/36/44).** Delete
+  shadcn's solid `default`. Rebuild `Segmented` and `Stepper` on `ToggleGroup`.
+  Dev-only warning when a route mounts more than one `primary`.
+- [ ] **J4 · Stage 4 — kitchen sink** becomes the review surface: every variant ×
+  size × state, every mapped icon in both weights, screenshotted in five themes ×
+  three font scales.
+- [ ] **J5 · Stage 5 — roll out by cluster** (Today → shell → logging → data →
+  reflective → settings/onboarding/empty/error), reporting after each.
+- [ ] **J6 · Stage 6 — sweep**, as a table of counts: zero hex outside theme
+  files, zero direct icon imports, zero solid-accent buttons, zero px sizes,
+  exactly three heights and three radii, focus ring on every stop,
+  `prefers-reduced-motion` honoured.
 
 ---
 

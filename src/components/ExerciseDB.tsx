@@ -4,8 +4,9 @@ import { searchExercises, type WgerExercise } from '../lib/wger'
 import { cat } from '../lib/colors'
 import { MuscleMap } from './MuscleMap'
 import { muscleNames } from '../lib/muscles'
-import { Empty, Input } from './ui'
+import { Empty, Input, Pill } from './ui'
 import { Button } from './ui/button'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 /** Stable identity, so the derived empty case doesn't churn referentially. */
 const EMPTY_RESULTS: WgerExercise[] = []
@@ -20,6 +21,9 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [progress, setProgress] = useState(0)
   const [selected, setSelected] = useState<WgerExercise | null>(null)
+  // Hand-rolled detail sheet: trap Tab inside it, hand focus back to the
+  // result button that opened it.
+  const trap = useFocusTrap<HTMLDivElement>(selected !== null)
   const abortRef = useRef<AbortController | null>(null)
 
   // A query under two characters isn't a state to store, it's a state to
@@ -85,10 +89,10 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
 
       {selected && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[8vh]" onClick={() => setSelected(null)}>
-          <div className="card-3d w-full max-w-lg overflow-hidden rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={selected.name}>
+          <div ref={trap} className="card-3d w-full max-w-lg overflow-hidden rounded-2xl border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={selected.name}>
             <header className="flex items-center justify-between border-b border-line px-4 py-3">
               <h3 className="font-display text-heading text-fg-1">{selected.name}</h3>
-              <button onClick={() => setSelected(null)} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setSelected(null)} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>
             </header>
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -117,7 +121,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                     <MuscleMap muscles={selected.muscles} />
                     <div className="mt-2 flex flex-wrap gap-1">
                       {muscleNames(selected.muscles).map((m) => (
-                        <span key={m} className="rounded-full px-2 py-0.5 text-label" style={{ background: cat('mauve') + '33', color: cat('mauve') }}>{m}</span>
+                        <Pill key={m} color="mauve">{m}</Pill>
                       ))}
                     </div>
                   </>

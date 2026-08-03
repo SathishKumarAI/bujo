@@ -1,6 +1,9 @@
-import { useState, isValidElement, type ReactNode } from 'react'
+import { isValidElement, type ReactNode } from 'react'
 import { ChevronDown, ChevronRight, ChevronUp, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
+import { useStickyState } from '../lib/useStickyState'
+
+const OPEN_STATES = ['1', '0'] as const
 
 /**
  * A labelled section header that folds a group of cards away. Keeps the daily-use
@@ -25,11 +28,13 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
+  /** Persist the open/closed choice under `section.<key>` (F6). */
+  stickyKey?: string
   /**
    * Controlled mode. Pass both to drive the section from outside — Collections
    * needs it because "jump to tag" has to expand Auto-pages before it scrolls
-   * there. Omit both and the section keeps its own state, which is what nearly
-   * every call site wants.
+   * there. Omit both and the section keeps its own state (sticky when
+   * `stickyKey` is given), which is what nearly every call site wants.
    */
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -43,14 +48,22 @@ export function CollapsibleSection({
   color = 'overlay1',
   variant = 'card',
   defaultOpen = false,
+  stickyKey,
   open: controlledOpen,
   onOpenChange,
   children,
 }: Props) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
-  const open = controlledOpen ?? uncontrolledOpen
+  // Both sides of the merge are kept: main's sticky persistence (F6) is the
+  // uncontrolled behaviour, and a controlled `open` overrides it so a caller
+  // driving the section from outside is never fighting storage.
+  const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
+    stickyKey ? `section.${stickyKey}` : null,
+    defaultOpen ? '1' : '0',
+    OPEN_STATES,
+  )
+  const open = controlledOpen ?? openFlag === '1'
   const setOpen = (next: boolean) => {
-    if (controlledOpen === undefined) setUncontrolledOpen(next)
+    if (controlledOpen === undefined) setOpenFlag(next ? '1' : '0')
     onOpenChange?.(next)
   }
 

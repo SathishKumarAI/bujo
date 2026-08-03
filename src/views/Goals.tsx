@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Target, Dumbbell, Activity, Flame, ArrowUpToLine, Trophy, BookOpen, Plus, Trash2, Sparkles, CalendarClock } from 'lucide-react'
 import { useJournal } from '../store'
-import { Card, Empty, Input } from '../components/ui'
+import { Card, Empty, Input, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Stepper } from '../components/fields/Stepper'
 import { Page } from '../components/shell/Page'
@@ -259,9 +259,9 @@ export function Goals() {
                       ) : (
                         <span className="inline-flex items-center gap-1.5">
                           <span className="text-fg-1">{pace.perDayNeeded}{g.unit ? ` ${g.unit}` : ''}/day to finish by {prettyDay(g.due!)}</span>
-                          <span className="rounded-full px-1.5 py-0.5 font-medium" style={{ background: cat(pace.onTrack ? 'green' : 'peach') + '22', color: cat(pace.onTrack ? 'green' : 'peach') }}>
+                          <Pill color={pace.onTrack ? 'green' : 'peach'} className="px-1.5 font-medium">
                             {pace.onTrack ? 'on track' : 'behind'}
-                          </span>
+                          </Pill>
                         </span>
                       )
                     )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pause, Play, RotateCcw, Timer } from 'lucide-react'
 import { cat } from '../lib/colors'
+import { Button } from './ui/button'
 
 const PRESETS = [60, 90, 120, 180]
 
@@ -63,12 +64,12 @@ export function RestTimer() {
       </div>
 
       <div className="flex gap-1">
-        <button onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="grid h-8 w-8 place-items-center rounded-lg bg-ink-2 text-fg-1 hover:bg-ink-3">
+        <Button variant="secondary" size="icon-sm" onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'} className="rounded-lg">
           {running ? <Pause size={15} /> : <Play size={15} />}
-        </button>
-        <button onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="grid h-8 w-8 place-items-center rounded-lg bg-ink-2 text-fg-1 hover:bg-ink-3">
+        </Button>
+        <Button variant="secondary" size="icon-sm" onClick={() => { setLeft(total); setRunning(false) }} aria-label="Reset" className="rounded-lg">
           <RotateCcw size={15} />
-        </button>
+        </Button>
       </div>
 
       {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: cat('green') }}><Timer size={14} /> Rest done · go!</span>}
