@@ -6,7 +6,7 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped
 
-**`feat/activity-registry`** — 6 commits, branched off
+**`feat/activity-registry`** — 9 commits, branched off
 `feat/collapsible-header-ux`, **not pushed, no PR open**. The stack is now eight
 deep: `#88 → #89 → #90 → #91 → #92 → #94 → collapsible-header-ux → this`.
 
@@ -34,6 +34,7 @@ this worktree. Restart the today-ux one if you still want it.
 | `41f7469` | Fitness rebuilt on three zones; tab row collapsed to four; Nutrition promoted to a route |
 | `4cd00c7` | Nutrition, Recovery, Coaching onto the contract |
 | `df728f4` | Sweep — folds, help icons, card chrome, a11y gate widened |
+| `9d88835` | Browser-pass fixes — label stacking, shared `NumField`, mode-aware placeholder |
 
 Load-bearing decisions:
 
@@ -48,7 +49,9 @@ Load-bearing decisions:
   half printed it raw — the same 3.1 showed as "3.1 mi" and "1.9 mi" on one
   screen.
 - **Container queries, not media queries** (`styles/layout.css`), one breakpoint
-  at 1100px of *container* width, because the sidebar collapses.
+  at 960px of *container* width, because the sidebar collapses. Above it the
+  split is 62/38 with review LEFT and act RIGHT, placed explicitly against DOM
+  order so a phone still gets the log form first.
 - **Sticky is measured, not declared.** `PageLayout` falls back to static when
   the act column is taller than the viewport.
 
