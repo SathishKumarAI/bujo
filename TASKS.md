@@ -60,7 +60,12 @@ Everything below is confirmed by running it, not inferred.
   Fix options: (a) point at a live project, (b) unset the vars so the null-client path kicks in cleanly, (c) surface "cloud unavailable" in the UI instead of failing silently.
 - [ ] **B2 · Duplicate boot probe.** That same `/auth/v1/settings` request fires **twice** per load. Likely a double-invoked effect (StrictMode) with no in-flight guard. Cheap fix, and it halves the failure noise.
 - [ ] **B3 · `npm run smoke` and `npm run shots` crash locally.** Both scripts `require('playwright')`, which is not in `package.json` (CI installs it with `npm i -D --no-save`, so CI is fine). Locally you get a raw `MODULE_NOT_FOUND` stack. Fix: catch the require and print "run `npm i -D --no-save playwright` first", or add it as an optional devDependency.
-- [ ] **B4 · Bundle regression.** `dist/assets/index-*.js` is now **687 kB** (203 kB gzip). BUJO-224 got it to 642 kB; it has grown 45 kB since. Rolldown warns over the 500 kB budget. Worth a chunking pass.
+- [~] **B4 · Bundle.** The icon pass first added 413 kB (93 gzip), then took back
+  more than it spent: Phosphor is rebuilt locally at the two weights this app
+  renders (`npm run icons`), so the icon chunk is **134 kB / 25.8 kB gzip** and
+  total assets are **1339 kB / 381 kB gzip**, down from 1611 / 445. The app
+  chunk is still 658 kB (193 gzip) and over the 500 kB warning — recharts (429
+  kB) is the next lever.
 - [x] **B5 · Reading view renders no `<h1>`/`<h2>` in `<main>`** — fixed on
   `fix/a11y-gaps`. Its top-level section titles (three shelves, Stalled books, the yearly
   goal) are now real `<h2>`s; headings inside the collapsible analytics groups stay `<h3>`.
@@ -108,7 +113,10 @@ From `docs/TICKETS.md`. These are the only items still marked 🔜/◑ after the
   reflection and gym-routine saves fire toasts. Heatmap and the Focus charts already had
   `role="img"` labels, so the remaining piece — "Focus → `ChartCard`" — is a cosmetic
   refactor, deliberately not done.
-- [ ] **E5 · BUJO-94 tail — axe-core CI job.** Chart text-alternatives are all done; only the CI wiring is left.
+- [x] **E5 · BUJO-94 tail — axe-core CI job — DONE.** `scripts/a11y-axe.mjs` +
+  an `a11y` job in `ci.yml`, against a production preview. Serious/critical fail
+  the build; moderate is reported (mostly chart-internal contrast, which wants
+  the data-viz palette decision). Currently 0 of both across eight views.
 - [ ] **E6 · PRODUCT_GAPS #2 — sync-conflict prompt on silent cloud load.** `updatedAt` stamping exists; the newer/older prompt only fires on first-run folder pick, not on silent reload. Touches the App boot path.
 - [ ] **E7 · PRODUCT_GAPS #7 — Playwright e2e.** Related to B3; CI currently has no e2e gate.
 - [ ] **E8 · ~561 unbuilt items in `docs/FEATURE-BACKLOG-500.md`** (582 rows total). Pick a batch if you want more feature volume — otherwise this stays parked.
@@ -347,7 +355,7 @@ cream. Anything checked in mocha alone is unchecked.
   = 15 combinations**: 0 page overflow, 0 clipped buttons, 0 card overflow, and
   heights scaling 25/32/40 → 28/36/44 → 35/45/55, which is the rem sizing
   proving itself.
-- [~] **J5 · Stage 5 — started.** Today (weighted three columns, §J7) and the
+- [x] **J5 · Stage 5 — DONE except per-view container tiers.** Today (weighted three columns, §J7) and the
   copy rules are done; the per-view container-tier and hex-literal work is not.
   - **Empty states** are invitations now, not status reports: eleven bare "No X
     yet" strings name the action instead ("Log a workout to see which splits you
@@ -355,13 +363,29 @@ cream. Anything checked in mocha alone is unchecked.
   - **Error copy** says what happened *and* what is still true — and Drive's
     eight blocking `alert()` calls became toasts, which also stops a modal
     freezing the in-browser review loop.
-  - **Codemod damage repaired:** the lucide→Phosphor rename hit *prose*. Five
-    user-visible strings shipped as "MagnifyingGlass your Drive…" and
-    "PersonSimpleRun layout" before a grep of every renamed name back out of
-    string literals found them. The hazard is now written into the script:
-    `Search`, `Activity`, `Settings`, `Scale` and `Repeat` are ordinary English
-    words, and an 85-file diff hides this perfectly.
-- [~] **J6 · Stage 6 — mechanical half DONE.** 0 lucide refs, 0 Phosphor imports
+  - **Codemod damage repaired (twice).** The lucide→Phosphor rename hit *prose*:
+    five strings shipped as "MagnifyingGlass your Drive…" and "PersonSimpleRun
+    layout", then three more surfaced later — "Repeat last" was rendering as
+    "ArrowsClockwise last" in Fitness and Pickleball. The second batch hid from
+    my own grep because it skipped lines containing `as={`, which is exactly
+    where a glyph sits beside its label. Both the hazard and the rule are now in
+    the design-system gate.
+  - **Emoji-as-chrome retired** (you caught this): time-of-day slots, training
+    splits, avoid markers, streak flames and WMO weather codes all map to glyphs
+    via `components/glyphs.ts`. Habit/collection emoji, achievement badges,
+    `EmojiScale` and celebration copy stay — there the emoji is content.
+  - **Hex classified, not counted:** 5 real bugs fixed (three chart tooltips
+    pinned to Mocha stayed near-black on latte/dawn; two crust literals). The
+    rest is data — theme-swatch previews, the Google brand mark — and is exempt
+    in the gate, with the reason written down.
+  - **Still open:** per-view container tiers.
+- [x] **J6 · Stage 6 — DONE, and now enforced.** `scripts/check-design-system.mjs`
+  fails CI on: lucide imports, direct Phosphor imports, glyph names rendering as
+  labels, px icon sizes, retired button variants, off-token radii, emoji in the
+  fixed vocabularies, and hardcoded colours. Writing it found six `rounded-xl`
+  stragglers the radius codemod had skipped. `scripts/a11y-axe.mjs` runs axe over
+  eight views (0 serious, 0 moderate) and refuses to trust a view that did not
+  render. Earlier notes: 0 lucide refs, 0 Phosphor imports
   outside the registry, 0 px icon sizes, 0 px font sizes, 0 solid-accent
   buttons, exactly 3 control heights, and the ten radii collapsed to three
   (`card` ×144, `pill` ×143, `control` ×137) by codemod.
