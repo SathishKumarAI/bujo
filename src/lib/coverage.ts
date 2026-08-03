@@ -32,8 +32,14 @@ export function dayCoverage(data: JournalData, date: string): DayCoverage {
   )
   const log = data.habitLog[date] ?? []
   const skips = (id: string) => (data.habitSkips?.[id] ?? []).includes(date)
-  const doneHabits = scheduled.filter((h) => log.includes(h.id) || skips(h.id))
-  const missed = scheduled.filter((h) => !log.includes(h.id) && !skips(h.id)).map((h) => h.name)
+  // Polarity, as in `dayCompletion`: an avoid habit in the log means you gave
+  // in, so for those the log entry is the failure and its absence is the win.
+  // Read the build way, a sober week surfaced in the weekly review as
+  // "Most missed: Alcohol (5×)".
+  const ok = (h: (typeof scheduled)[number]) =>
+    skips(h.id) || (h.avoid ? !log.includes(h.id) : log.includes(h.id))
+  const doneHabits = scheduled.filter(ok)
+  const missed = scheduled.filter((h) => !ok(h)).map((h) => h.name)
 
   const c = dayCompletion(data, date)
   const journaled = didJournal(data, date)

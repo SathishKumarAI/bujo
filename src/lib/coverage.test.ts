@@ -18,6 +18,24 @@ describe('coverage', () => {
     expect(c.score).toBeLessThan(1)
   })
 
+  it('a clean day on a quit habit is covered, not missed', () => {
+    const d = emptyJournal()
+    d.habits = [habit('water'), { ...habit('booze'), avoid: true }]
+    d.habitLog = { '2026-06-11': ['water'] } // stayed off the booze
+    const c = dayCoverage(d, '2026-06-11')
+    expect(c.habits.missed).toEqual([])
+    expect(c.habits).toMatchObject({ done: 2, total: 2 })
+  })
+
+  it('a slip on a quit habit is what lands in missed', () => {
+    const d = emptyJournal()
+    d.habits = [habit('water'), { ...habit('booze'), avoid: true }]
+    d.habitLog = { '2026-06-11': ['water', 'booze'] } // gave in
+    const c = dayCoverage(d, '2026-06-11')
+    expect(c.habits.missed).toEqual(['booze'])
+    expect(c.habits).toMatchObject({ done: 1, total: 2 })
+  })
+
   it('a fully covered day scores 1', () => {
     const d = emptyJournal()
     d.habits = [habit('water')]
