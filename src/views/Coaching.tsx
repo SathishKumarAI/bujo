@@ -1,10 +1,10 @@
-import { Barbell, BookOpen, Brain, CalendarBlank, Check, GraduationCap, Heartbeat, ListChecks, ShieldWarning, Target, Trophy } from '@/components/icons'
+import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Pill, StatTile } from '../components/ui'
+import { Card, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { Page } from '../components/shell/Page'
+import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { cat } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import {
@@ -40,51 +40,69 @@ export function Coaching() {
   const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
 
   return (
-    <Page>
-      {/* Program hero */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={GraduationCap} size="md" className="text-mauve" /> 12-week program · beginner → 4.0</span>}
-        subtitle="A structured path to a complete game" help="A research-backed 12-week curriculum. Start it to track your week; each week has a focus + skills. ~3–4 sessions/week, ~80% drilling / 20% play.">
-        {!start ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-line-strong p-4">
-            <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
-            <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 grid grid-cols-3 gap-2">
-              <StatTile compact label="This week" value={`${week}/12`} color="mauve" icon={<Icon as={CalendarBlank} size="sm" />} />
-              <StatTile compact label="Weeks done" value={done.length} color="green" icon={<Icon as={Check} size="sm" />} />
-              <StatTile compact label="Progress" value={`${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`} color="teal" icon={<Icon as={Trophy} size="sm" />} />
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill transition-[width]" style={{ width: `${(done.length / ACADEMY_TOTAL_WEEKS) * 100}%`, background: cat('green') }} /></div>
-            <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
-          </>
-        )}
-      </Card>
+    <PageLayout
+      tier={1180}
+      zone1={
+        <StatBar facts={[
+          { label: 'Program', value: start ? `Week ${week} of 12` : 'Not started' },
+          { label: 'Weeks done', value: `${done.length} / ${ACADEMY_TOTAL_WEEKS}` },
+          { label: `Today · ${WEEKDAYS[todayDow]}`, value: todaySlot.focus },
+        ]} />
+      }
+      zone2={
+        <section className="flex flex-col gap-3">
+          <h2 className="text-heading font-medium text-fg-1">Today: {todaySlot.focus}</h2>
+          <p className="text-body text-fg-1">{todaySlot.detail}</p>
 
-      {/* Today's session */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-teal" /> Today: {todaySlot.focus}</span>} subtitle={`${WEEKDAYS[todayDow]}, your scheduled focus`} help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day.">
-        <p className="text-body text-fg-1">{todaySlot.detail}</p>
-        <details className="mt-3 rounded-card border border-line bg-ink-0 p-3">
-          <summary className="cursor-pointer text-body font-medium text-fg-1">A 45–60 min session</summary>
-          <ul className="mt-2 space-y-1">
+          <ul className="border-t border-line pt-2">
             {SESSION_TEMPLATE.map((b) => (
-              <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
+              <li key={b.mins} className="flex gap-2 py-0.5 text-label">
+                <span className="num w-12 shrink-0 text-fg-2">{b.mins}</span>
+                <span className="text-fg-2">{b.activity}</span>
+              </li>
             ))}
           </ul>
-        </details>
-        <div className="mt-3 grid grid-cols-7 gap-1">
-          {WEEKLY_TEMPLATE.map((d, i) => (
-            <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (todayDow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
-              <div className="font-medium">{d.day}</div>
-              <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
-            </div>
-          ))}
-        </div>
-      </Card>
 
-      {/* 12-week roadmap — tap a week to study it, check to mark done */}
-      <Card title="The 12-week roadmap" subtitle="Tap a week to open it, check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
+          <div className="grid grid-cols-7 gap-1">
+            {WEEKLY_TEMPLATE.map((d, i) => (
+              <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (todayDow + 6) % 7 ? 'bg-ink-3 text-fg-1' : 'bg-ink-2 text-fg-2'}`} title={d.focus}>
+                <div className="font-medium">{d.day}</div>
+                <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* The page's one accent-filled control: either commit, or mark the
+              week you have just finished. */}
+          {!start ? (
+            <>
+              <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
+              <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })} className="press-3d w-full">Start the program</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" onClick={() => toggleWeek(week)} className="press-3d w-full">
+                {done.includes(week) ? `Week ${week} is done — undo` : `Mark week ${week} done`}
+              </Button>
+              <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+            </>
+          )}
+        </section>
+      }
+      zone3={<>
+      <SummaryStrip items={[
+        { label: 'Weeks done', value: done.length, empty: done.length === 0 },
+        { label: 'Progress', value: `${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`, empty: done.length === 0 },
+        { label: 'Drills', value: ACADEMY_DRILLS.length },
+      ]} />
+
+      {/* SIGNATURE VISUAL · the 12-week timeline. It was buried in a
+          collapsed card, which is a strange place for the one thing that
+          shows where you are in the programme and what is still outstanding.
+          Sequence is the whole point, so it reads top to bottom with the
+          current week marked. */}
+      <section>
+        <h2 className="mb-2 text-label text-fg-2">The 12 weeks</h2>
         <ol className="space-y-1.5">
           {TWELVE_WEEK.map((w) => {
             const isDone = done.includes(w.week)
@@ -120,7 +138,7 @@ export function Coaching() {
             )
           })}
         </ol>
-      </Card>
+      </section>
 
       {/* Skill ladder */}
       <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+</span>} subtitle="What to master at each level, in order" collapsible defaultCollapsed help="The skills that define each DUPR level. Master them in order — the soft game before the fast game.">
@@ -251,6 +269,7 @@ export function Coaching() {
           ))}
         </ul>
       </Card>
-    </Page>
+      </>}
+    />
   )
 }

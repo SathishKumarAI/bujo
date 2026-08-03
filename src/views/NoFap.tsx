@@ -1,15 +1,16 @@
-import { CalendarCheck, Check, Flame, HandFist, Heart, Hourglass, Lifebuoy, Shield, ShieldCheck, Sparkle, Trophy, Warning, X } from '@/components/icons'
+import { Check, Flame, HandFist, Heart, Hourglass, Lifebuoy, Shield, ShieldCheck, Sparkle, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, useEffect, useRef } from 'react'
 import { useJournal } from '../store'
-import { Card, Empty, Input, Pill, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
-import { prettyDay, todayISO, dayDiff } from '../lib/date'
+import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
+import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import {
@@ -221,8 +222,11 @@ export function NoFap() {
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
 
   return (
-    <div className="mx-auto max-w-read items-start">
-      {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
+    <>
+      {/* Panic / SOS · floating button + full-screen ride-it-out overlay.
+          Outside the zones on purpose: it is a fixed-position lifeline that has
+          to be reachable from anywhere on the page, which is exactly the case
+          the three-zone rule is not about. */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
         style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
@@ -230,9 +234,25 @@ export function NoFap() {
       </button>
       {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
 
-      <div className="space-y-4">
-        {/* ── Streak status · hero ring + lifetime tiles (daily glance) ──────── */}
-        {/* Hero: progress ring to next milestone */}
+      <PageLayout
+        tier={1180}
+        zone1={
+          <StatBar facts={[
+            { label: 'Days clean', value: stats.current },
+            { label: 'Personal best', value: stats.best },
+            {
+              label: 'Next milestone',
+              value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
+            },
+            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean' },
+          ]} />
+        }
+        zone2={<>
+        {/* The hero ring stays: on this page the streak IS the object, and the
+            ring is the only accent-filled thing here — there is no primary
+            button competing with it, because logging an urge and logging a
+            reset are two different commitments and neither outranks the
+            other. */}
         <Card className="glow-mauve">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative grid h-40 w-40 shrink-0 place-items-center">
@@ -272,14 +292,6 @@ export function NoFap() {
             </div>
           </div>
         </Card>
-
-        {/* Lifetime stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile compact label="Current" value={stats.current} color="mauve" icon={<Icon as={Flame} size="sm" />} />
-          <StatTile compact label="Personal best" value={stats.best} color="peach" icon={<Icon as={Trophy} size="sm" />} />
-          <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<Icon as={CalendarCheck} size="sm" />} />
-          <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<Icon as={HandFist} size="sm" />} />
-        </div>
 
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
@@ -400,6 +412,27 @@ export function NoFap() {
             <p className="text-label text-fg-2">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
         </Card>
+
+        </>}
+        zone3={<>
+        {/* Lifetime totals · the record, not the next action. */}
+        <SummaryStrip items={[
+          { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
+          { label: 'Urges resisted', value: stats.urges, empty: stats.urges === 0 },
+          { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
+        ]} />
+
+        {/* SIGNATURE VISUAL · urges resisted against resets, week by week.
+            The brief specified a paired sleep + soreness sparkline here, on the
+            assumption that Recovery meant physical recovery. In this app it is
+            abstinence recovery, and there is no soreness field in the data
+            model at all — so the pairing that would have been invented is
+            replaced by the correlation this page actually exists to reveal:
+            whether resisting urges is holding the resets down. */}
+        <section>
+          <h2 className="mb-2 text-label text-fg-2">Urges resisted vs resets</h2>
+          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} today={today} />
+        </section>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
@@ -641,7 +674,54 @@ export function NoFap() {
             )}
           </Card>
         </CollapsibleSection>
+        </>}
+      />
+    </>
+  )
+}
+
+/**
+ * Two series over the same eight weeks: urges resisted (bars) and resets
+ * (marks). Paired rather than stacked, because the question is whether one
+ * moves against the other — a stack would hide exactly the comparison.
+ *
+ * Neutral fill for urges, and the reset marks carry the only colour, because
+ * they are the thing you are looking for.
+ */
+function PairedSparkline({ weeks, relapses, today }: {
+  weeks: { weekStart: string; count: number }[]
+  relapses: { date: string }[]
+  today: string
+}) {
+  const max = Math.max(1, ...weeks.map((w) => w.count))
+  const resetsIn = (weekStart: string) => {
+    const end = addDays(weekStart, 6)
+    return relapses.filter((r) => r.date >= weekStart && r.date <= end).length
+  }
+  return (
+    <div>
+      {/* The frame draws at zero data — an empty axis says "this is where the
+          comparison goes", where a hidden chart says nothing at all. */}
+      <div className="flex h-24 items-end gap-1.5 border-b border-line" role="img" aria-label={
+        weeks.length === 0
+          ? 'Urges and resets by week: nothing logged yet'
+          : `Urges resisted and resets over ${weeks.length} weeks: ${weeks.map((w) => `week of ${prettyDay(w.weekStart)}, ${w.count} urges, ${resetsIn(w.weekStart)} resets`).join('; ')}`
+      }>
+        {weeks.map((w) => {
+          const resets = resetsIn(w.weekStart)
+          return (
+            <div key={w.weekStart} className="relative flex flex-1 flex-col justify-end" title={`Week of ${prettyDay(w.weekStart)}: ${w.count} urges resisted, ${resets} reset${resets === 1 ? '' : 's'}`}>
+              {resets > 0 && (
+                <span className="mx-auto mb-0.5 block h-1.5 w-1.5 rounded-pill" style={{ background: cat('red') }} />
+              )}
+              <div className="rounded-t bg-ink-3" style={{ height: `${Math.max(2, (w.count / max) * 100)}%` }} />
+            </div>
+          )
+        })}
       </div>
+      <p className="mt-1 text-micro text-fg-2">
+        Bars are urges resisted per week{today ? '' : ''} · a dot marks a week with a reset
+      </p>
     </div>
   )
 }
