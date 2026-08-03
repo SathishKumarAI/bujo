@@ -1,5 +1,6 @@
-import { ArrowLineUp, ArrowsClockwise, Barbell, BookOpen, Books, Brain, CalendarBlank, ChartBar, ChartPie, Code, Flag, Flower, GraduationCap, PersonSimpleRun, Question, ShieldCheck, SlidersHorizontal, Sparkle, Sun, Target, Trophy } from '@/components/icons'
-import { lazy, Suspense, useState, useEffect, useRef } from 'react'
+import { ArrowsClockwise, Brain, PersonSimpleRun, Sparkle, Sun } from '@/components/icons'
+import { lazy, Suspense, useCallback, useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
@@ -17,8 +18,9 @@ import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
-import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
-import { readDeepLink } from './lib/deepLink'
+import { CursorProvider } from './components/shell/cursor'
+import { SectionTabs } from './components/shell/SectionTabs'
+import { ROUTES, dayInPath, monthInPath, pathFor, sectionForPath, tabsFor, viewForPath, type SectionId } from './lib/routes'
 import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
@@ -49,36 +51,26 @@ const Help = lazy(() => import('./views/Help').then((m) => ({ default: m.Help })
 const KitchenSink = lazy(() => import('./views/KitchenSink').then((m) => ({ default: m.KitchenSink })))
 const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m.Settings })))
 
-// Daily pipeline: capture & organise → track health → review.
-// "System" (Help, Settings) is intentionally NOT here — those live in the top
-// bar (gear + overflow menu) so the sidebar stays focused on daily views.
-// Smaller, job-to-be-done groups so no single section gets unwieldy (Health used
-// to hold 10 items). Order flows: capture → body → skill → discipline → mind →
-// reference → analysis. System (Help/Settings) lives in the top bar, not the rail.
-const GROUP_ORDER = ['Journal', 'Fitness', 'Sports', 'Habits', 'Wellbeing', 'Library', 'Review']
-
-const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
-  { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
-  { id: 'plan', label: 'Plan', icon: ArrowsClockwise, group: 'Journal' },
-  { id: 'fitness', label: 'Fitness', icon: PersonSimpleRun, group: 'Fitness' },
-  { id: 'pullups', label: 'Pull-ups', icon: ArrowLineUp, group: 'Fitness' },
-  { id: 'homeworkout', label: 'Home Workout', icon: Barbell, group: 'Fitness' },
-  { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Sports' },
-  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Sports' },
-  { id: 'trackers', label: 'Trackers', icon: ChartBar, group: 'Habits' },
-  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Habits' },
-  { id: 'focus', label: 'Focus', icon: Code, group: 'Habits' },
-  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Wellbeing' },
-  { id: 'cycle', label: 'Cycle', icon: Flower, group: 'Wellbeing', show: (g) => g.cycle },
-  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Wellbeing', show: (g) => g.nofap },
-  { id: 'collections', label: 'Collections', icon: Books, group: 'Library' },
-  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Library' },
-  { id: 'monthly', label: 'Monthly', icon: CalendarBlank, group: 'Library' },
-  { id: 'goals', label: 'Goals', icon: Flag, group: 'Library' },
-  { id: 'insights', label: 'Insights', icon: Sparkle, group: 'Review' },
-  { id: 'stats', label: 'Stats', icon: ChartPie, group: 'Review' },
-  { id: 'help', label: 'Help', icon: Question, group: 'System' },
-  { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
+/**
+ * FIVE DESTINATIONS.
+ *
+ * This was 21 entries across seven groups — 17 visible by default — which put
+ * Pull-ups at the same level as Fitness while Today carried ten cards. The
+ * grouping existed only to make that count survivable; five items do not need
+ * headers, so `GROUP_ORDER` is gone with them.
+ *
+ * Everything else is a sub-route reached from its section's tab strip. The
+ * paths live in `lib/routes.ts`; this array is just the rail, and it carries
+ * icons because the route table is deliberately icon-free data.
+ *
+ * Help and Settings stay in the top bar (gear + overflow), as before.
+ */
+const SECTIONS: { section: SectionId; label: string; icon: NavItem['icon'] }[] = [
+  { section: 'day', label: 'Day', icon: Sun },
+  { section: 'plan', label: 'Plan', icon: ArrowsClockwise },
+  { section: 'body', label: 'Body', icon: PersonSimpleRun },
+  { section: 'mind', label: 'Mind', icon: Brain },
+  { section: 'insights', label: 'Insights', icon: Sparkle },
 ]
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
@@ -197,8 +189,17 @@ export default function App() {
     }).then((fn) => { off = fn })
     return () => off()
   }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
-  const urlView = readDeepLink().view
-  const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
+  // The route decides which view is showing. `setView` is kept as a name so the
+  // ~30 `useNav()('trackers')` call sites, the command palette and the sidebar
+  // all keep their `(id: ViewId) => void` contract — `pathFor` is the single
+  // place that knows a view id is now a URL.
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const view = viewForPath(pathname) ?? 'today'
+  const setView = useCallback(
+    (id: ViewId) => navigate(pathFor(id, { day: dayInPath(pathname), month: monthInPath(pathname) })),
+    [navigate, pathname],
+  )
   const [paletteOpen, setPaletteOpen] = useState(false)
   // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
   const [showTour, setShowTour] = useState(() => !onboarded())
@@ -208,9 +209,18 @@ export default function App() {
   useEffect(() => onAuthChange(setHasSession), [])
   // Names the current screen in the dev-only one-primary-per-screen warning.
   setPrimaryScope(view)
-  const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
-  const items = NAV.filter((n) => !n.show || n.show(gated))
+  const gated = { cycle: !!data.settings.cycleTrackerEnabled, nofap: !!data.settings.nofapEnabled }
+  // The rail is five fixed sections; each points at its own first tab, carrying
+  // whatever date the current URL already holds.
+  const items: NavItem[] = SECTIONS.map((s) => ({
+    id: tabsFor(s.section, gated)[0]?.id ?? 'today',
+    label: s.label,
+    icon: s.icon,
+    group: '',
+  }))
+  const activeSection = sectionForPath(pathname)
   const Current = VIEWS[view]
+  const section = ROUTES.find((r) => r.id === view)?.section
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
   const mode = data.settings.storageMode
@@ -269,10 +279,12 @@ export default function App() {
     <DeviceProvider>
     <CursorProvider>
       <NavProvider navigate={setView}>
-      <DeepLinkSync view={view} />
+      {/* The palette lists every view, not just the five rail sections — it is
+          the way to reach a sub-route without walking its section first. */}
       <CommandPalette
         onNavigate={(id) => setView(id as ViewId)}
-        navItems={items.map((n) => ({ id: n.id, label: n.label }))}
+        navItems={ROUTES.filter((r) => r.section !== 'system' && (!r.gate || gated[r.gate]))
+          .map((r) => ({ id: r.id, label: r.label }))}
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
@@ -283,7 +295,8 @@ export default function App() {
       <SyncIndicator />
       <AppShell
         items={items}
-        groupOrder={GROUP_ORDER}
+        sections={SECTIONS.map((s) => s.section)}
+        activeSection={activeSection}
         view={view}
         collapsed={collapsed}
         autoHide={!!data.settings.sidebarAutoHide}
@@ -296,11 +309,13 @@ export default function App() {
             {book ? (
               <div className="book">
                 <div key={view} className="book-inner page-in">
+                  {section && section !== 'system' && section !== 'day' && <SectionTabs section={section} gates={gated} />}
                   <Current />
                 </div>
               </div>
             ) : (
               <div key={view} className="page-in">
+                {section && section !== 'system' && section !== 'day' && <SectionTabs section={section} gates={gated} />}
                 <Current />
               </div>
             )}

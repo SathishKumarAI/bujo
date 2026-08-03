@@ -13,11 +13,13 @@ import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
+import type { SectionId } from '../../lib/routes'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
 export function AppShell({
   items,
-  groupOrder,
+  sections,
+  activeSection,
   view,
   collapsed,
   autoHide,
@@ -27,7 +29,8 @@ export function AppShell({
   children,
 }: {
   items: NavItem[]
-  groupOrder: string[]
+  sections: (SectionId | 'system')[]
+  activeSection: SectionId | 'system' | null
   view: ViewId
   collapsed: boolean
   autoHide: boolean
@@ -86,8 +89,8 @@ export function AppShell({
       )}
       <Sidebar
         items={items}
-        groupOrder={groupOrder}
-        view={view}
+        sections={sections}
+        activeSection={activeSection}
         collapsed={autoHide ? false : collapsed}
         navOpen={navOpen}
         autoHide={autoHide}
@@ -109,7 +112,7 @@ export function AppShell({
         <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
 
-      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} />}
+      {isMobile && <BottomNav items={items} sections={sections} activeSection={activeSection} onNavigate={onNavigate} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>

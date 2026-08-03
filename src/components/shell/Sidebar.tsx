@@ -3,6 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import type { ViewId } from './viewChrome'
+import type { SectionId } from '../../lib/routes'
 
 export interface NavItem {
   id: ViewId
@@ -20,11 +21,20 @@ function Brand() {
   )
 }
 
-/** Grouped, collapsible navigation rail. Mobile: shown when navOpen. */
+/**
+ * The navigation rail: five sections, no group headers.
+ *
+ * Headers were scaffolding for a 17-item rail. Five items do not need them, and
+ * a heading above a single row is chrome that says nothing.
+ *
+ * Active state is matched on the **section**, not the view id, so `/body/pullups`
+ * still lights up Body. Matching on the id would have left the rail looking
+ * unselected on every sub-route, which is most of the app.
+ */
 export function Sidebar({
   items,
-  groupOrder,
-  view,
+  sections,
+  activeSection,
   collapsed,
   navOpen,
   autoHide = false,
@@ -32,8 +42,9 @@ export function Sidebar({
   onToggleCollapse,
 }: {
   items: NavItem[]
-  groupOrder: string[]
-  view: ViewId
+  /** Parallel to `items` — which section each rail entry stands for. */
+  sections: (SectionId | 'system')[]
+  activeSection: SectionId | 'system' | null
   collapsed: boolean
   navOpen: boolean
   autoHide?: boolean
@@ -75,49 +86,38 @@ export function Sidebar({
             {collapsed ? <AppIcon as={SidebarIcon} size="md" /> : <AppIcon as={SidebarSimple} size="md" />}
           </button>
         </div>
-        <div className="flex flex-col gap-0.5 px-2.5 pb-3">
-          {groupOrder.map((group) => {
-            const groupItems = items.filter((n) => n.group === group)
-            if (groupItems.length === 0) return null
-            return (
-              <div key={group}>
-                <p className={`px-3 pt-4 pb-1 text-micro font-medium tracking-wider text-fg-2 uppercase ${collapsed ? 'md:hidden' : ''}`}>
-                  {group}
-                </p>
-                <ul>
-                  {groupItems.map((n) => {
-                    const Icon: IconGlyph = n.icon
-                    const active = view === n.id
-                    const btn = (
-                      <button
-                        onClick={() => onNavigate(n.id)}
-                        aria-current={active ? 'page' : undefined}
-                        className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
-                          active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
-                        }`}
-                      >
-                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
-                        <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
-                        <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
-                      </button>
-                    )
-                    return (
-                      <li key={n.id}>
-                        {collapsed ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                            <TooltipContent side="right" sideOffset={8}>{n.label}</TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          btn
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )
-          })}
+        <div className="flex flex-col gap-0.5 px-2.5 pt-2 pb-3">
+          <ul>
+            {items.map((n, i) => {
+              const Icon: IconGlyph = n.icon
+              const active = activeSection != null && sections[i] === activeSection
+              const btn = (
+                <button
+                  onClick={() => onNavigate(n.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
+                    active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
+                  }`}
+                >
+                  {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
+                  <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
+                  <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
+                </button>
+              )
+              return (
+                <li key={n.label}>
+                  {collapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8}>{n.label}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    btn
+                  )}
+                </li>
+              )
+            })}
+          </ul>
         </div>
       </div>
     </nav>

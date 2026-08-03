@@ -3,6 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { useEffect, useState } from 'react'
 import type { NavItem } from './Sidebar'
 import type { ViewId } from './viewChrome'
+import type { SectionId } from '../../lib/routes'
 
 /** Hide the bottom bar when scrolling down, show it when scrolling up. */
 function useHideOnScroll(): boolean {
@@ -21,39 +22,40 @@ function useHideOnScroll(): boolean {
   return hidden
 }
 
-// The five views worth a thumb-tap on a phone (all also live in the sidebar).
-// No FAB — quick-add stays in the top bar. Order matches the daily/training flow.
-const PRIMARY: ViewId[] = ['today', 'trackers', 'fitness', 'pickleball', 'pullups']
-
 /**
- * Mobile-only bottom tab bar (hidden ≥ md): five primary destinations, equal
- * width, no centre FAB. Capture lives in the top bar's Quick add.
+ * Mobile-only bottom tab bar (hidden ≥ md): the same five sections as the rail,
+ * equal width, no centre FAB. Capture lives in the top bar's Quick add.
+ *
+ * This used to keep its own hand-picked list of five view ids, because the
+ * sidebar had seventeen and something had to choose. Now that the rail *is*
+ * five, a second list would only be a way for the two to disagree.
  */
 export function BottomNav({
   items,
-  view,
+  sections,
+  activeSection,
   onNavigate,
 }: {
   items: NavItem[]
-  view: ViewId
+  sections: (SectionId | 'system')[]
+  activeSection: SectionId | 'system' | null
   onNavigate: (id: ViewId) => void
 }) {
-  const byId = new Map(items.map((n) => [n.id, n]))
-  const tabs = PRIMARY.map((id) => byId.get(id)).filter(Boolean) as NavItem[]
   const hidden = useHideOnScroll()
 
   return (
     <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {tabs.map((n) => {
+      {items.map((n, i) => {
         const Icon = n.icon as IconGlyph
-        const active = view === n.id
+        const active = activeSection != null && sections[i] === activeSection
         return (
           <button
-            key={n.id}
+            key={n.label}
             onClick={() => onNavigate(n.id)}
             aria-label={n.label}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
+            // min-h-11 is 44px — the floor for a thumb target.
+            className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-pill bg-primary" />}
             <AppIcon as={Icon} size="lg" active={active} />

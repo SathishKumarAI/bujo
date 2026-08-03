@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { isISODay, todayISO, ymOf } from '../../lib/date'
-import { writeDeepLink } from '../../lib/deepLink'
+import { monthInPath } from '../../lib/routes'
 
 interface Cursor {
   /** ISO day for day-views (Today). Owned by the route, never by a component. */
@@ -30,23 +30,31 @@ const Ctx = createContext<Cursor | null>(null)
  */
 export function CursorProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { date } = useParams()
   // The route is validated by `DayRoute` before this ever renders; the fallback
   // is here because the provider also mounts under the account gate, which is
   // not a day route.
   const day = isISODay(date) ? date : todayISO()
   const setDay = useCallback((d: string) => navigate(`/day/${d}`), [navigate])
-  const [month, setMonth] = useState(() => ymOf(day))
-  return <Ctx.Provider value={{ day, setDay, month, setMonth }}>{children}</Ctx.Provider>
-}
 
-/**
- * Keeps the address bar in step with where you are. Rendered inside the
- * provider so it can read the cursor; renders nothing itself.
- */
-export function DeepLinkSync({ view }: { view: string }) {
-  useEffect(() => { writeDeepLink(view) }, [view])
-  return null
+  // The month is a route only on Monthly (`/plan/month/:yearMonth`). Trackers
+  // and Cycle also carry a month cursor but have no month route of their own,
+  // so they keep component state — hence the fallback pair rather than reading
+  // the URL unconditionally. Stepping months on Monthly navigates and is
+  // therefore in history; stepping them on Trackers is not.
+  const routeMonth = monthInPath(pathname)
+  const [localMonth, setLocalMonth] = useState(() => ymOf(day))
+  const month = routeMonth ?? localMonth
+  const setMonth = useCallback(
+    (m: string) => {
+      if (routeMonth) navigate(`/plan/month/${m}`)
+      else setLocalMonth(m)
+    },
+    [routeMonth, navigate],
+  )
+
+  return <Ctx.Provider value={{ day, setDay, month, setMonth }}>{children}</Ctx.Provider>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- context hook co-located with its provider, matching device.tsx/Page.tsx
