@@ -6,9 +6,15 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped
 
-**`feat/activity-registry`** — 12 commits, branched off
-`feat/collapsible-header-ux`, **not pushed, no PR open**. The stack is now eight
-deep: `#88 → #89 → #90 → #91 → #92 → #94 → collapsible-header-ux → this`.
+**`feat/activity-registry`** — 14 commits, **pushed, PR #100** against
+`feat/collapsible-header-ux` (PR #99). The stack below it has landed: #87–#95
+are merged and #94 merged during this session, so the remaining order is
+**#96 → #99 → #100**.
+
+Both #99 and #100 predate the icon system and page restructure, so they need a
+merge from `main` before they can go in — 19 and 38 conflicts respectively. Do
+that **after #96 merges**, not before: #96 touches `ui.tsx`, `App.tsx` and
+`Today.tsx`, so resolving now means resolving twice.
 
 Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
 warnings, **743 tests / 48 files**, `npm run build` clean, `npm run a11y` 0
@@ -77,8 +83,7 @@ Load-bearing decisions:
    brief's target shape had. Cardio writes `[]`. Changing it breaks
    `HomeWorkout` and the CSV export.
 6. **Re-seed demo data** to see corrected distances and activity labels.
-7. Push and open the PR against `feat/collapsible-header-ux`. Then merge the
-   eight-deep stack bottom-up — still the biggest risk on the board.
+7. Merge #96, then merge `main` into #99 and #100 in that order and resolve.
 
 ### Traps this branch hit
 
