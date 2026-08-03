@@ -3,41 +3,51 @@
 Update this when you STOP working, not when you start.
 
 - **Last touched:** 2026-08-02
-- **Where I stopped:** Four stacked branches, all pushed, all with PRs open —
-  each based on the one below it, so merge **bottom-up** (#88 → #89 → #90 → #91)
-  or the diffs will show each other's commits:
-  1. #88 `fix/a11y-gaps` (off `main`) — `useFocusTrap` + all eight hand-rolled
-     overlays, Reading headings, Monthly cell labels, save toasts, doc update.
-  2. #89 `refactor/pill-badge` — one `Pill` (tone × size), 18 sites in 12 files.
-  3. #90 `refactor/button-adoption` — 7 genuine buttons into the button system,
-     plus a fourth private copy of `CollapsibleSection` deleted from Insights.
-  4. #91 `feat/ux-small` — `useStickyState` (F6), `?view=&day=` deep links (F7),
-     long-entry clamp (F8).
-  All four verify green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
-  warnings, **689 tests** (was 678), `npm run build` clean. F3, F6, F7, F8 and the
-  Pill were also checked in a real browser (Tab wrap + Escape restore in the
-  palette, URL round-trip on reload, sticky Fitness tab, clamp toggle).
-- **Also worth knowing:** a second worktree is checked out on
-  `feat/pages-ui-polish`, and mid-session something switched this checkout's HEAD
-  to `main` — five commits landed on local `main` before they were moved onto
-  `fix/a11y-gaps` and `main` was reset to `origin/main`. Check `git branch --show-current`
-  before committing here.
-- **Next action:** review and merge the stack bottom-up, then answer the four
-  open questions in `docs/ICON-BUTTON-SYSTEM.md` so §J (icon & button system)
-  can start. Stage 0 of that pass is done and already changes the plan — the
-  theme bridge exists and runs the *opposite* way to what the brief assumed, and
-  the contrast stage is already satisfied. §I1 (accent-as-text failing AA in
-  latte) is now a **one-file** fix: every pill reads its colour from `Pill` in
-  `src/components/ui.tsx`.
-- **Standing rule from this session:** UI changes are verified in **all five
-  themes** — mocha, latte, neon, vscode, dawn — not mocha plus a spot check.
-  Three of them redefine the accent (dawn's is an amber), two invert surface
-  polarity, and dawn renders two text tiers where the others render three.
-- **Blocked on:** unchanged. `B1` — the Supabase project at
-  `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so every account/cloud-sync
-  feature is dead until it is repointed or the env vars are unset. Section H (the
-  redesign brief) still waits on H5, H6, H7, H9, H11, H13.
+- **Where I stopped:** Redesign steps 1–9 done across two stacked branches.
+  `feat/design-system` (PR #80) has the token layer, self-hosted fonts, the
+  seven-step rem type scale, two container tiers, reconciled primitives, the
+  `/kitchen-sink` route and a 2,443-replacement adoption sweep.
+  `feat/accent-and-motion` (PR #81, current) has the accent-inflation pass
+  (accent fills in view bodies: 19 → 0), the motion-token pass, and the bullet
+  glyph column raised to a real signature. eslint 0 errors, 678 tests, build
+  green, 18 views × 5 themes clean.
+- **Also done:** the day/week strip (PR #82). `DayGrid` now backs both the
+  Stats heatmap and the Trackers per-habit grid. `TodayHabits` was left alone —
+  it is chips grouped by time of day, not a strip, and the audit was wrong to
+  group it. Fixed a pre-existing bug while in there: both grids stretched their
+  columns to a 39.5px pitch around 10px cells; now 12px.
+- **Also done:** the pages UI/UX polish pass (PR #87, branch
+  `feat/pages-ui-polish`). Settings no longer renders a second `<h1>` and its
+  tab pills are sized to their text instead of a uniform 209px; Plan,
+  Collections, Reading and Insights are on the `Page` shell, so they finally
+  have the entrance transition and the shared gap rhythm; section headers are
+  real `<h2>`s (Reading went 0 → 7 headings in `<main>`, B5 closed); and four
+  hand-copied clones of `QuietSection` are gone. Every finding was measured by
+  clicking through the running app, never inferred from source — see
+  `docs/redesign/11-pages-ui-polish.md`, which also records three things that
+  were measured and *dismissed*, so nobody re-opens them.
+- **Next action:** two items, both held up only by a file collision with a
+  parallel session — pick them up once that lands:
+  1. Recovery and Stats are the last two views off the `Page` shell.
+  2. `ui.tsx:77` names every titled card's ⓘ `"What is this?"`, so Today alone
+     exposes **34 identically-named buttons** to a screen reader, and it is
+     14×14 against the WCAG 2.5.8 24px floor. Name it from the card title and
+     pad the target — one file, app-wide reach.
 
-**Read next:** `TASKS.md` (the working board — F1/F2/F3/F6/F7/F8/F9 and B5 are now
-closed with notes on what was deliberately *not* done) · `docs/ACCESSIBILITY.md`
-(open vs closed gaps, and the rule new overlays must follow).
+  Beyond those, the raw-`<button>` sweep continues in the files PR #87 did not
+  touch (Trackers, Gym, Account). Judgement per site, not a codemod: many are
+  legitimately not buttons.
+- **Blocked on:** a **second session editing this same working tree** — the
+  `useFocusTrap` hook plus wiring into CommandPalette, the Card modal, Stats,
+  ExerciseDB, Onboarding, HabitDetail, NoFap and Trackers. It was mid-edit
+  (`NoFap.tsx:73` calls the hook with no import, so `npx tsc -b` fails on
+  `main`). PR #87 was written in a separate worktree to stay clear of it and
+  touches none of those files. Also `B1` in `TASKS.md`: the
+  Supabase project at `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so
+  every account/cloud-sync feature is dead until it is repointed or the env vars
+  are unset.
+
+**Read next:** `TASKS.md` (the working board) · `docs/redesign/11-pages-ui-polish.md`
+(the newest pass, with its re-measure method) · `docs/redesign/09-redesign-audit.md`
+(what the codebase actually is) · `docs/redesign/10-redesign-build.md` (what
+shipped, and the four bugs found on the way).
