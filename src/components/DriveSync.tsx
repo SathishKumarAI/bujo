@@ -1,5 +1,6 @@
+import { ArrowSquareOut, Cloud, CloudArrowDown, CloudArrowUp, MagnifyingGlass } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Cloud, CloudUpload, CloudDownload, Search, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from './ui'
 import { cat } from '../lib/colors'
@@ -7,6 +8,7 @@ import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
 import { useConfirm } from './ConfirmDialog'
+import { notify } from '../lib/notify'
 import { Button } from './ui/button'
 
 /**
@@ -23,13 +25,13 @@ export function DriveSync() {
   const [q, setQ] = useState('')
 
   async function doConnect() {
-    if (!clientId) return alert('Paste your Google OAuth Client ID first.')
+    if (!clientId) return notify.error('Drive needs a client ID', 'Paste your Google OAuth Client ID above, then connect.')
     setBusy('connect')
     try {
       await connect(clientId)
       setConnected(true)
     } catch (e) {
-      alert('Google sign-in failed: ' + (e as Error).message)
+      notify.error('Google would not sign you in', `${(e as Error).message}. Check the client ID and that this origin is authorised.`)
     } finally {
       setBusy('')
     }
@@ -40,9 +42,9 @@ export function DriveSync() {
     try {
       await pushData(data)
       setSettings({ lastDriveSync: todayISO() })
-      alert('Backed up to Google Drive.')
+      notify.success('Backed up to Google Drive')
     } catch (e) {
-      alert('Backup failed: ' + (e as Error).message)
+      notify.error('Backup did not finish', `${(e as Error).message}. Your journal on this device is untouched — try again.`)
     } finally {
       setBusy('')
     }
@@ -57,11 +59,11 @@ export function DriveSync() {
     setBusy('pull')
     try {
       const remote = await pullData()
-      if (!remote) return alert('No backup found on Drive yet.')
+      if (!remote) return notify.info('Nothing in Drive yet', 'Back up first, then you can restore from it.')
       replaceAll(migrate(remote))
-      alert('Restored from Google Drive.')
+      notify.success('Restored from Google Drive')
     } catch (e) {
-      alert('Restore failed: ' + (e as Error).message)
+      notify.error('Restore did not finish', `${(e as Error).message}. This device still has its own journal.`)
     } finally {
       setBusy('')
     }
@@ -72,7 +74,7 @@ export function DriveSync() {
     try {
       setFiles(await listFiles(q.trim()))
     } catch (e) {
-      alert('Drive search failed: ' + (e as Error).message)
+      notify.error('Drive search did not run', `${(e as Error).message}. Reconnect and try the search again.`)
     } finally {
       setBusy('')
     }
@@ -80,7 +82,7 @@ export function DriveSync() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><Cloud size={18} /> Cloud sync · Google Drive</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Cloud} size="md" /> Cloud sync · Google Drive</span>}
       subtitle="Optional. Store your journal in Drive and reference images/docs from it."
       className="lg:col-span-2"
     >
@@ -100,14 +102,14 @@ export function DriveSync() {
 
       <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
         {!connected ? (
-          <Button variant="secondary" onClick={doConnect} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-            <Cloud size={14} /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
+          <Button variant="secondary" onClick={doConnect} className="press-3d inline-flex items-center gap-1.5">
+            <Icon as={Cloud} size="sm" /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
           </Button>
         ) : (
           <>
-            <Button variant="secondary" onClick={backup} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudUpload size={14} /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
-            <Button variant="secondary" onClick={restore} className="press-3d rounded-lg inline-flex items-center gap-1.5"><CloudDownload size={14} /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
-            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-lg text-red hover:text-red">Disconnect</Button>
+            <Button variant="secondary" onClick={backup} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowUp} size="sm" /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
+            <Button variant="secondary" onClick={restore} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowDown} size="sm" /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
+            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-control text-red hover:text-red">Disconnect</Button>
           </>
         )}
       </div>
@@ -118,14 +120,14 @@ export function DriveSync() {
           <p className="mb-2 text-body text-fg-1">Reference a file from Drive</p>
           <div className="flex gap-2">
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <Button variant="secondary" onClick={search} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Search size={14} /> Search</Button>
+            <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> Search</Button>
           </div>
           {files.length === 0 ? (
             <Empty>Search your Drive to list images and documents.</Empty>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((f) => (
-                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-xl border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
+                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-card border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
                   <div className="grid h-24 place-items-center overflow-hidden bg-ink-1">
                     {f.thumbnailLink ? (
                       <img src={f.thumbnailLink} alt={f.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
@@ -134,7 +136,7 @@ export function DriveSync() {
                     )}
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1.5 text-label text-fg-1">
-                    <ExternalLink size={11} style={{ color: cat('overlay1') }} /> <span className="truncate">{f.name}</span>
+                    <Icon as={ArrowSquareOut} size="sm" style={{ color: cat('overlay1') }} /> <span className="truncate">{f.name}</span>
                   </div>
                 </a>
               ))}

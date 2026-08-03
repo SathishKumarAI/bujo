@@ -1,5 +1,6 @@
+import { CaretDown, CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useJournal } from '../store'
 import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Card, Input, Textarea } from '../components/ui'
@@ -95,7 +96,7 @@ export function Monthly() {
   return (
     <Page width="wide">
       {/* Compact "this month" summary · a single thin bar. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-card/60 px-3 py-1.5 text-label text-fg-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-line bg-card/60 px-3 py-1.5 text-label text-fg-2">
         <span className="font-medium text-fg-1">This month</span>
         <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
         <span><b style={{ color: cat('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
@@ -131,7 +132,7 @@ export function Monthly() {
                   aria-label={cellLabel}
                   aria-current={isToday ? 'date' : undefined}
                   title={`Open ${d}`}
-                  className="relative min-h-[5.5rem] rounded-lg border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
+                  className="relative min-h-[5.5rem] rounded-control border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
                   style={{
                     borderColor: isToday ? cat('mauve') : cat('surface0'),
                     background: isToday ? cat('surface0') : moodTint ?? 'transparent',
@@ -145,20 +146,17 @@ export function Monthly() {
                       <span
                         key={e.id}
                         title={e.text}
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded-pill"
                         style={{ background: e.important ? cat('yellow') : e.type === 'event' ? cat('blue') : cat('green') }}
                       />
                     ))}
-                  </div>
-                  <div className="mt-0.5 text-body leading-tight">
-                    {(data.stickers[d] ?? []).slice(0, 4).join('')}
                   </div>
                   {(() => {
                     const { done, total } = cellHabits
                     if (total === 0 || d > today) return null
                     return (
-                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-full bg-ink-2" title={`${done}/${total} habits`}>
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
+                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-pill bg-ink-2" title={`${done}/${total} habits`}>
+                        <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
                       </div>
                     )
                   })()}
@@ -177,7 +175,7 @@ export function Monthly() {
             placeholder="e.g. Moab, Utah 🏜️"
           />
           {data.settings.weatherEnabled && (
-            <Button variant="secondary" onClick={autoFill} className="press-3d rounded-lg mt-2 w-full">
+            <Button variant="secondary" onClick={autoFill} className="press-3d mt-2 w-full">
               {geoBusy ? 'Locating…' : 'Auto-fill'}
             </Button>
           )}
@@ -212,9 +210,9 @@ export function Monthly() {
             type="button"
             onClick={() => setAnalyticsOpen((o) => !o)}
             aria-expanded={analyticsOpen}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+            className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
           >
-            <span className="text-fg-2">{analyticsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+            <span className="text-fg-2">{analyticsOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
             <span className="font-display text-heading font-medium text-fg-1">Month analytics</span>
             <span className="text-label text-fg-2">month pulse &amp; trailing-year rhythm</span>
           </button>
@@ -264,8 +262,8 @@ export function Monthly() {
                   <span>Tasks done</span>
                   <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
+                <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
                 </div>
               </div>
             </div>

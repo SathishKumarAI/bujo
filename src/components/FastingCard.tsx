@@ -1,5 +1,6 @@
+import { Check, Flame, Play, Square, Timer, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
-import { Timer, Play, Square, Check, Flame, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card } from './ui'
 import { Stepper } from './fields/Stepper'
@@ -44,7 +45,7 @@ export function FastingCard() {
         <div className="flex items-center gap-2">
           {streak > 0 && (
             <span title={`${streak}-day streak hitting ${target}h`} className="inline-flex items-center gap-0.5 text-label" style={{ color: cat('peach') }}>
-              <Flame size={12} />{streak}
+              <Icon as={Flame} size="sm" />{streak}
             </span>
           )}
           <Stepper aria-label="Target hours" value={target} onChange={(v) => setSettings({ fastTargetHours: v ?? DEFAULT_FAST_TARGET })} min={8} max={23} step={1} suffix="h" />
@@ -56,26 +57,26 @@ export function FastingCard() {
           <div className="flex items-baseline justify-between">
             <span className="font-display text-display text-fg-1">{fmtDuration(elapsed)}</span>
             <span className="text-body" style={{ color: hitNow ? cat('green') : cat('overlay1') }}>
-              {hitNow ? <span className="inline-flex items-center gap-1"><Check size={14} /> target met</span> : `of ${target}h`}
+              {hitNow ? <span className="inline-flex items-center gap-1"><Icon as={Check} size="sm" /> target met</span> : `of ${target}h`}
             </span>
           </div>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-ink-2">
-            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
+          <div className="mt-2 h-2.5 overflow-hidden rounded-pill bg-ink-2">
+            <div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(hitNow ? 'green' : 'mauve') }} />
           </div>
           <p className="mt-2 text-label text-fg-2">Started {timeOf(active)}</p>
-          <Button variant="secondary" onClick={endFast} className="press-3d rounded-lg mt-3 inline-flex items-center gap-1.5"><Square size={14} /> End fast</Button>
+          <Button variant="secondary" onClick={endFast} className="press-3d mt-3 inline-flex items-center gap-1.5"><Icon as={Square} size="sm" /> End fast</Button>
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between">
-            <Button variant="secondary" onClick={startFast} className="press-3d rounded-lg inline-flex items-center gap-1.5"><Play size={14} /> Start fast</Button>
+            <Button variant="secondary" onClick={startFast} className="press-3d inline-flex items-center gap-1.5"><Icon as={Play} size="sm" /> Start fast</Button>
             {last && (
               <span className="text-body text-fg-1">
                 Last: <span style={{ color: fastHours(last) >= target ? cat('green') : cat('subtext0') }}>{fmtDuration(fastHours(last))}</span>
               </span>
             )}
           </div>
-          <p className="mt-2 inline-flex items-center gap-1 text-label text-fg-2"><Timer size={12} /> Tap when you stop eating; end it at your first meal.</p>
+          <p className="mt-2 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Timer} size="sm" /> Tap when you stop eating; end it at your first meal.</p>
         </div>
       )}
 
@@ -88,9 +89,9 @@ export function FastingCard() {
               <li key={f.id} className="group flex items-center gap-2 text-body">
                 <span className="w-14 shrink-0 text-fg-2">{dayLabel(f.end)}</span>
                 <span className="w-20 shrink-0 tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{fmtDuration(h)}</span>
-                <span className="shrink-0">{hit ? <Check size={13} style={{ color: cat('green') }} /> : <span className="text-fg-2">·</span>}</span>
+                <span className="shrink-0">{hit ? <Icon as={Check} size="sm" style={{ color: cat('green') }} /> : <span className="text-fg-2">·</span>}</span>
                 <span className="flex-1 truncate text-label text-fg-2">{timeOf(f.start)} → {timeOf(f.end)}</span>
-                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><X size={13} /></button>
+                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Icon as={X} size="sm" /></button>
               </li>
             )
           })}

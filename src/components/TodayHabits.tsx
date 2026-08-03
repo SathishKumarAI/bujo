@@ -1,11 +1,13 @@
+import { Note, Prohibit } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { StickyNote } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
+import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
 
 /**
@@ -55,10 +57,10 @@ export function TodayHabits() {
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-body transition-colors active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
-          {h.avoid ? <span>🚫</span> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
+          {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
         </button>
         {/* 24x24 minimum target (WCAG 2.5.8) — the icon stays 13px, the box
@@ -70,11 +72,11 @@ export function TodayHabits() {
           aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
           aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-full opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-pill opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
           data-note={hasNote || open ? '' : undefined}
           style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >
-          <StickyNote size={13} />
+          <Icon as={Note} size="sm" />
         </button>
       </span>
     )
@@ -88,7 +90,7 @@ export function TodayHabits() {
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (
             <Button
-              variant="link"
+              variant="ghost"
               onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })}
               className="h-auto p-0 text-label text-mauve"
             >
@@ -117,7 +119,7 @@ export function TodayHabits() {
             <div key={s}>
               {grouped && (
                 <p className="mb-1.5 flex items-center gap-1.5 text-label font-medium text-fg-2">
-                  <span>{m.emoji}</span> {m.label}
+                  <Icon as={slotGlyph(s)} size="sm" /> {m.label}
                   {sBuild.length > 0 && <span className="text-fg-2">· {sDone}/{sBuild.length}</span>}
                 </p>
               )}
@@ -129,7 +131,7 @@ export function TodayHabits() {
 
       {noteFor && (
         <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><StickyNote size={12} /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Note} size="sm" /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
           <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
         </div>
       )}

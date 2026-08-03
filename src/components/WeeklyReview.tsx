@@ -1,5 +1,6 @@
+import { ClipboardText } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { ClipboardCheck } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
@@ -44,9 +45,9 @@ export function WeeklyReview() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><ClipboardCheck size={18} className="text-mauve" /> Weekly review</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={ClipboardText} size="md" className="text-mauve" /> Weekly review</span>}
       subtitle={`Last 7 days, ${score}% covered`}
-      right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-lg">{open ? 'Close' : 'Start review'}</Button>}
+      right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-control">{open ? 'Close' : 'Start review'}</Button>}
     >
       {!open ? (
         <p className="text-body text-fg-2">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>
@@ -81,7 +82,7 @@ export function WeeklyReview() {
             <p className="mb-2 text-label font-medium tracking-wide text-fg-2 uppercase">3. Reflect</p>
             <Textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="What went well? What will you change next week?" rows={3} />
             <div className="mt-2 flex justify-end">
-              <Button variant="secondary" onClick={saveReflection} className="press-3d rounded-lg">Save reflection</Button>
+              <Button variant="secondary" onClick={saveReflection} className="press-3d">Save reflection</Button>
             </div>
           </div>
         </div>

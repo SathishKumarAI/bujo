@@ -1,8 +1,9 @@
-import { Mic, MicOff } from 'lucide-react'
+import { Microphone, MicrophoneSlash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useSpeechInput } from '../lib/speech'
 
 /**
- * Mic toggle that dictates speech into text. Calls `onText` with each final
+ * Microphone toggle that dictates speech into text. Calls `onText` with each final
  * phrase; the parent appends it. Renders nothing where the Web Speech API is
  * unavailable (e.g. Firefox), so callers don't need to feature-check.
  */
@@ -16,11 +17,11 @@ export function MicButton({ onText, className = '' }: { onText: (text: string) =
       aria-label={listening ? 'Stop dictation' : 'Dictate by voice'}
       aria-pressed={listening}
       title={listening ? 'Listening… tap to stop' : 'Dictate by voice'}
-      className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border transition-colors ${
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-control border transition-colors ${
         listening ? 'animate-pulse border-red bg-red/15 text-red' : 'border-input text-fg-2 hover:text-fg-1'
       } ${className}`}
     >
-      {listening ? <MicOff size={16} /> : <Mic size={16} />}
+      {listening ? <Icon as={MicrophoneSlash} size="md" /> : <Icon as={Microphone} size="md" />}
     </button>
   )
 }

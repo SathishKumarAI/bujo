@@ -1,11 +1,13 @@
-import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
+import { Sidebar as SidebarIcon, SidebarSimple } from '@/components/icons'
+import type { Icon as IconGlyph } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import type { ViewId } from './viewChrome'
 
 export interface NavItem {
   id: ViewId
   label: string
-  icon: LucideIcon
+  icon: IconGlyph
   group: string
 }
 
@@ -70,7 +72,7 @@ export function Sidebar({
             title={collapsed ? 'Pin open' : 'Collapse'}
             className="hidden text-fg-2 hover:text-foreground md:block"
           >
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            {collapsed ? <AppIcon as={SidebarIcon} size="md" /> : <AppIcon as={SidebarSimple} size="md" />}
           </button>
         </div>
         <div className="flex flex-col gap-0.5 px-2.5 pb-3">
@@ -84,18 +86,18 @@ export function Sidebar({
                 </p>
                 <ul>
                   {groupItems.map((n) => {
-                    const Icon: LucideIcon = n.icon
+                    const Icon: IconGlyph = n.icon
                     const active = view === n.id
                     const btn = (
                       <button
                         onClick={() => onNavigate(n.id)}
                         aria-current={active ? 'page' : undefined}
-                        className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-body transition-colors ${
+                        className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
                           active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
                         }`}
                       >
-                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
-                        <Icon size={17} className={`shrink-0 ${active ? 'text-primary' : 'text-fg-2 group-hover:text-fg-2'}`} aria-hidden />
+                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
+                        <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
                         <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
                       </button>
                     )

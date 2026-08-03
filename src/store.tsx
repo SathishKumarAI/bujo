@@ -215,9 +215,6 @@ interface Store {
   // collections
   addCollection: (name: string, icon: string) => void
   removeCollection: (id: string) => void
-  // stickers
-  addSticker: (date: string, emoji: string) => void
-  removeSticker: (date: string, emoji: string) => void
   // weather
   setWeather: (date: string, w: Weather) => void
   // settings
@@ -866,19 +863,6 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           ...d,
           collections: d.collections.filter((c) => c.id !== id),
           entries: d.entries.filter((e) => e.collection !== id),
-        })),
-
-      addSticker: (date, emoji) =>
-        patch((d) => {
-          const cur = d.stickers[date] ?? []
-          if (cur.includes(emoji)) return d
-          return { ...d, stickers: { ...d.stickers, [date]: [...cur, emoji] } }
-        }),
-
-      removeSticker: (date, emoji) =>
-        patch((d) => ({
-          ...d,
-          stickers: { ...d.stickers, [date]: (d.stickers[date] ?? []).filter((e) => e !== emoji) },
         })),
 
       setWeather: (date, w) =>

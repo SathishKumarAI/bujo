@@ -1,9 +1,6 @@
+import { ArrowCounterClockwise, Barbell, CaretDown, CaretUp, ChartBar, Check, Crosshair, Gauge, Plus, Stack, Trophy, Video, X } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ChevronsUp, ChevronsDown, ChevronUp, ChevronDown, Footprints, PersonStanding, MoveVertical, Flame,
-  Activity, Trophy, Crosshair, X, Plus, Video, RotateCcw, Check, Layers, Dumbbell,
-  BarChart3, Gauge, type LucideIcon,
-} from 'lucide-react'
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
@@ -14,6 +11,7 @@ import { Page } from '../components/shell/Page'
 import { MuscleMap } from '../components/MuscleMap'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
+import { splitGlyph } from '../components/glyphs'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
@@ -45,11 +43,6 @@ interface SetRow {
   reps: string
   rpe?: string
   kind?: 'warmup' | 'working' | 'drop'
-}
-
-const SPLIT_ICONS: Record<string, LucideIcon> = {
-  push: ChevronsUp, pull: ChevronsDown, legs: Footprints,
-  upper: PersonStanding, lower: MoveVertical, full: Flame, other: Activity,
 }
 
 export function Gym() {
@@ -214,7 +207,7 @@ export function Gym() {
           ? 'Muscles worked by this exercise'
           : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
-      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><X size={14} /> Clear</Button>}
+      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-control"><AppIcon as={X} size="sm" /> Clear</Button>}
       collapsible
       defaultCollapsed
     >
@@ -227,8 +220,8 @@ export function Gym() {
         />
         <div className="flex flex-wrap items-center gap-2">
           {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-lg">
-              <Plus size={14} /> Add to session
+            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-control">
+              <AppIcon as={Plus} size="sm" /> Add to session
             </Button>
           )}
           {focusEx && (
@@ -238,7 +231,7 @@ export function Gym() {
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-body text-red hover:underline"
             >
-              <Video size={16} /> YouTube
+              <AppIcon as={Video} size="md" /> YouTube
             </a>
           )}
         </div>
@@ -247,7 +240,7 @@ export function Gym() {
       <MuscleMap muscles={activeMuscles} />
 
       {focusEx && exerciseInfo(focusEx) && (
-        <div className="mt-3 space-y-1 rounded-lg border border-line bg-ink-0 p-2.5 text-label">
+        <div className="mt-3 space-y-1 rounded-card border border-line bg-ink-0 p-2.5 text-label">
           <p className="text-fg-2"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
           <p className="text-fg-2"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
         </div>
@@ -287,8 +280,8 @@ export function Gym() {
       {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
       {prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
-          <div className="celebrate-pop flex items-center gap-2 rounded-2xl border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
-            <Trophy size={20} style={{ color: cat('yellow') }} />
+          <div className="celebrate-pop flex items-center gap-2 rounded-card border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
+            <AppIcon as={Trophy} size="lg" style={{ color: cat('yellow') }} />
             <p className="text-body font-medium text-fg-1">
               New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
               {prParty.weight}{unit}×{prParty.reps} 🎉
@@ -299,12 +292,12 @@ export function Gym() {
 
       {/* ── Last session rollup · shown after Finish, until the next edit ── */}
       {summary && summary.sets > 0 && (
-        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-fg-2 hover:text-fg-1"><X size={16} /></Button>}>
+        <Card title="Session logged" subtitle="Your last finished workout at a glance" right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-fg-2 hover:text-fg-1"><AppIcon as={X} size="md" /></Button>}>
           <div className="grid grid-cols-3 gap-3">
-            <StatTile icon={<Dumbbell size={16} />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
-            <StatTile icon={<Layers size={16} />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
+            <StatTile icon={<AppIcon as={Barbell} size="md" />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
+            <StatTile icon={<AppIcon as={Stack} size="md" />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
             <StatTile
-              icon={<Trophy size={16} />}
+              icon={<AppIcon as={Trophy} size="md" />}
               color="yellow"
               value={summary.topSet ? `${summary.topSet.weight}${unit}` : '—'}
               label={summary.topSet ? `top · ${summary.topSet.exercise}` : 'top set'}
@@ -320,25 +313,25 @@ export function Gym() {
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
         right={
           <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-fg-2 hover:text-fg-1">
-            {sessionOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {sessionOpen ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
           </Button>
         }
       >
         {sessionOpen && (<>
         <div className="mb-3 flex flex-wrap gap-2">
           {SPLITS.filter((s) => s.id !== 'other').map((s) => {
-            const Icon = SPLIT_ICONS[s.id] ?? Activity
+            const Icon = splitGlyph(s.id)
             return (
               <button
                 key={s.id}
                 onClick={() => setSplit(s.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-body"
+                className="inline-flex items-center gap-1.5 rounded-control px-3 py-1.5 text-body"
                 style={{
                   background: split === s.id ? cat(s.color) : cat('surface0'),
                   color: split === s.id ? cat('crust') : cat('subtext1'),
                 }}
               >
-                <Icon size={15} /> {s.label}
+                <AppIcon as={Icon} size="sm" /> {s.label}
               </button>
             )
           })}
@@ -376,17 +369,17 @@ export function Gym() {
             // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
             const complete = !!(row.weight.trim() && row.reps.trim())
             return (
-              <div key={i} className={`-ml-2 rounded-lg border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
+              <div key={i} className={`-ml-2 rounded-control border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
                 <div className="grid grid-cols-[28px_1fr_52px_44px_40px_36px_28px] items-center gap-2">
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
                   disabled={!row.exercise.trim()}
                   aria-label="Focus muscle map on this exercise"
                   title="Show this exercise on the muscle map"
-                  className="grid h-7 w-7 place-items-center rounded-lg disabled:opacity-30"
+                  className="grid h-7 w-7 place-items-center rounded-control disabled:opacity-30"
                   style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? cat('crust') : cat('overlay1') }}
                 >
-                  <Crosshair size={14} />
+                  <AppIcon as={Crosshair} size="sm" />
                 </button>
                 <ExercisePicker
                   value={row.exercise}
@@ -397,8 +390,8 @@ export function Gym() {
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} className="py-1.5" />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" className="py-1.5" />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-lg text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-fg-2 hover:text-red"><X size={15} /></Button>
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-control text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-fg-2 hover:text-red"><AppIcon as={X} size="sm" /></Button>
                 </div>
                 {(prev || oneRM || row.exercise.trim()) && (
                   <div className="mt-0.5 ml-9 flex items-center gap-3 text-micro text-fg-2">
@@ -409,12 +402,12 @@ export function Gym() {
                         title="Repeat last set, fill weight & reps"
                         className="inline-flex items-center gap-1 hover:text-mauve"
                       >
-                        <RotateCcw size={10} /> last: {prev.weight}{unit}×{prev.reps}
+                        <AppIcon as={ArrowCounterClockwise} size="sm" /> last: {prev.weight}{unit}×{prev.reps}
                       </button>
                     )}
                     {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
-                    {complete && <span className="inline-flex items-center gap-0.5" style={{ color: cat('green') }}><Check size={11} /> logged</span>}
-                    {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size={10} className="text-micro" />}
+                    {complete && <span className="inline-flex items-center gap-0.5" style={{ color: cat('green') }}><AppIcon as={Check} size="sm" /> logged</span>}
+                    {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size="sm" className="text-micro" />}
                   </div>
                 )}
                 {/* Auto warm-up ramp · bar/40/60/80% of a working weight. Tap a rung to insert it as a warm-up set. */}
@@ -424,7 +417,7 @@ export function Gym() {
                   return (
                     <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-micro text-fg-2">
                       <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
-                        <Layers size={11} style={{ color: cat('blue') }} /> Warm-up:
+                        <AppIcon as={Stack} size="sm" style={{ color: cat('blue') }} /> Warm-up:
                       </span>
                       {ramp.map((r, ri) => (
                         <button
@@ -438,7 +431,7 @@ export function Gym() {
                             })
                           }
                           title={`Add ${r.weight}${unit} warm-up set`}
-                          className="rounded-full px-2 py-0.5 transition-colors hover:text-fg-1"
+                          className="rounded-pill px-2 py-0.5 transition-colors hover:text-fg-1"
                           style={{ background: cat('blue') + '22', color: cat('blue') }}
                         >
                           {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
@@ -459,7 +452,7 @@ export function Gym() {
           const vol = Math.round(done.reduce((s, r) => s + Number(r.weight) * Number(r.reps), 0))
           return (
             <div className="mt-2 flex items-center gap-2 text-label">
-              <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><Check size={12} /> {done.length} set{done.length === 1 ? '' : 's'}</span>
+              <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><AppIcon as={Check} size="sm" /> {done.length} set{done.length === 1 ? '' : 's'}</span>
               <span className="text-fg-2">·</span>
               <span className="text-fg-1">{vol.toLocaleString()}{unit} volume</span>
             </div>
@@ -467,11 +460,11 @@ export function Gym() {
         })()}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-lg">+ Add set</Button>
-          <Button variant="secondary" onClick={finish} className="press-3d rounded-lg">Finish session</Button>
+          <Button variant="secondary" onClick={() => addRow()} className="press-3d rounded-control">+ Add set</Button>
+          <Button variant="secondary" onClick={finish} className="press-3d">Finish session</Button>
           <div className="ml-auto flex gap-2">
             <Input value={routineName} onChange={(e) => setRoutineName(e.target.value)} placeholder="Save as routine…" className="max-w-[160px] py-1.5" />
-            <Button variant="secondary" onClick={saveAsRoutine} className="press-3d rounded-lg">Save routine</Button>
+            <Button variant="secondary" onClick={saveAsRoutine} className="press-3d">Save routine</Button>
           </div>
         </div>
         </>)}
@@ -483,7 +476,7 @@ export function Gym() {
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
             variant="secondary"
-            className="press-3d rounded-lg"
+            className="press-3d"
             onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}
           >
             Log weight
@@ -511,7 +504,7 @@ export function Gym() {
       <CollapsibleSection
         title="Program & progress"
         subtitle="Training program, progress photos"
-        icon={Layers}
+        icon={Stack}
         color="blue"
       >
         <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
@@ -593,7 +586,7 @@ export function Gym() {
       <CollapsibleSection
         title="Deep analytics"
         subtitle="Strength standards, plateau & neglect alerts, effort trend"
-        icon={BarChart3}
+        icon={ChartBar}
         color="mauve"
       >
         {/* Strength snapshots · big-three total + relative strength */}
@@ -646,7 +639,7 @@ function PlateCalculator({ unit }: { unit: string }) {
           <p className="mb-2 text-label text-fg-2">Per side:</p>
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-md px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-control px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
             ))}
           </div>
           <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
@@ -671,7 +664,7 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
                 className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-ink-2' : 'hover:bg-ink-2/50'}`}
                 title="Show this lift on the muscle map"
               >
-                <span className="inline-flex items-center gap-1.5 text-fg-1"><Trophy size={14} style={{ color: cat('yellow') }} /> {pr.exercise}</span>
+                <span className="inline-flex items-center gap-1.5 text-fg-1"><AppIcon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> {pr.exercise}</span>
                 <span className="text-fg-2">
                   <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
                   {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
@@ -694,11 +687,11 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
         <ul className="space-y-1 text-body">
           {routines.map((r) => {
             const m = splitMeta(r.split)
-            const Icon = SPLIT_ICONS[r.split] ?? Activity
+            const Icon = splitGlyph(r.split)
             return (
               <li key={r.id} className="group flex items-center justify-between">
                 <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-fg-1 hover:text-fg-1" title="Load into session">
-                  <Icon size={14} style={{ color: cat(m.color) }} /> {r.name}
+                  <AppIcon as={Icon} size="sm" style={{ color: cat(m.color) }} /> {r.name}
                   <span className="ml-1 text-fg-2">{r.exercises.length} exercises</span>
                 </button>
                 <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>

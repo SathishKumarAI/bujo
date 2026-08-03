@@ -1,4 +1,5 @@
-import { Flame } from 'lucide-react'
+import { Flame } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Empty, StatTile } from '../ui'
 import { addDays, fromISODay, prettyMonth, WEEKDAYS } from '../../lib/date'
 import { cat } from '../../lib/colors'
@@ -68,14 +69,14 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
             {streaks.map(({ h, streak, best }) => (
               <li key={h.id} className="flex items-center gap-2 text-body">
                 <span className="w-24 shrink-0 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
+                <div className="relative h-2.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
                   {/* All-time best marker (#290): a notch at the personal record. */}
                   {best > streak && (
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
                   )}
                 </div>
-                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Flame size={12} />{streak}<span className="text-fg-2">/{best}</span></span>
+                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Icon as={Flame} size="sm" />{streak}<span className="text-fg-2">/{best}</span></span>
               </li>
             ))}
           </ul>

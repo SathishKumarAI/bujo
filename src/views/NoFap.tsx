@@ -1,5 +1,6 @@
+import { CalendarCheck, Check, Flame, HandFist, Heart, Hourglass, Lifebuoy, Shield, ShieldCheck, Sparkle, Trophy, Warning, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, Shield, Flame, Trophy, CalendarCheck, HandMetal, Sparkles, AlertTriangle, LifeBuoy, Heart, Hourglass, ShieldCheck } from 'lucide-react'
 import { useJournal } from '../store'
 import { Page } from '../components/shell/Page'
 import { Card, Empty, Input, Pill, StatTile, Textarea } from '../components/ui'
@@ -98,17 +99,17 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
     <div ref={trap} role="dialog" aria-modal="true" aria-label="Urge SOS"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6"
       style={{ background: cat('crust') + 'f2', backdropFilter: 'blur(6px)' }}>
-      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-full text-fg-2 hover:text-fg-1" style={{ background: cat('surface0') }}><X size={20} /></Button>
+      <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 rounded-pill text-fg-2 hover:text-fg-1" style={{ background: cat('surface0') }}><Icon as={X} size="lg" /></Button>
 
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 text-body" style={{ color: cat('peach') }}><LifeBuoy size={16} /> Ride it out · this is a wave, not a command</div>
+        <div className="inline-flex items-center gap-2 text-body" style={{ color: cat('peach') }}><Icon as={Lifebuoy} size="md" /> Ride it out · this is a wave, not a command</div>
         <div className="mt-1 font-mono text-display font-medium tabular-nums" style={{ color: done ? cat('green') : cat('text') }}>{mm}:{ss}</div>
         <p className="mt-1 text-label text-fg-2">{done ? 'The peak has passed. You made it.' : 'Stay until the timer ends · the urge will crest and fall.'}</p>
       </div>
 
       {/* Breathing pacer */}
       <div className="grid h-44 w-44 place-items-center">
-        <div className="grid h-32 w-32 place-items-center rounded-full text-center text-body font-medium"
+        <div className="grid h-32 w-32 place-items-center rounded-pill text-center text-body font-medium"
           aria-live="polite"
           style={{
             background: cat(phase.color) + '22',
@@ -125,7 +126,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
       <div className="w-full max-w-md">
         <Input value={trigger} onChange={(e) => setTrigger(e.target.value)} placeholder="What's triggering it? (finds your plan)" aria-label="Current trigger" />
         {matched ? (
-          <div className="mt-2 rounded-lg p-3 text-body" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
+          <div className="mt-2 rounded-control p-3 text-body" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
             <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matched.trigger}”:</span>{' '}
             <span className="text-fg-2">{matched.coping || 'name it and let it pass.'}</span>
           </div>
@@ -134,7 +135,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
         )}
       </div>
 
-      <Button variant="secondary" onClick={onClose} className="inline-flex items-center gap-1.5"><Shield size={15} /> I'm okay now</Button>
+      <Button variant="secondary" onClick={onClose} className="inline-flex items-center gap-1.5"><Icon as={Shield} size="sm" /> I'm okay now</Button>
     </div>
   )
 }
@@ -224,9 +225,9 @@ export function NoFap() {
     <Page>
       {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
         style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
-        <LifeBuoy size={18} /> SOS
+        <Icon as={Lifebuoy} size="md" /> SOS
       </button>
       {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
 
@@ -248,11 +249,11 @@ export function NoFap() {
               </div>
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <div className="inline-flex items-center gap-1.5 text-body text-fg-1"><Shield size={15} style={{ color: ringColor }} /> Your main streak · since {prettyDay(s.startedOn)}</div>
+              <div className="inline-flex items-center gap-1.5 text-body text-fg-1"><Icon as={Shield} size="sm" style={{ color: ringColor }} /> Your main streak · since {prettyDay(s.startedOn)}</div>
               <p className="mt-0.5 text-label text-fg-2">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
               {relapsedToday && (
-                <div className="mt-1.5 rounded-lg p-2 text-left text-label" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
-                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset today · and that’s okay.</span>
+                <div className="mt-1.5 rounded-control p-2 text-left text-label" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
+                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><Icon as={X} size="sm" /> Reset today · and that’s okay.</span>
                   <p className="mt-0.5 text-fg-1">You didn’t lose everything: your <strong style={{ color: cat('green') }}>{stats.totalClean} total clean days</strong> and <strong style={{ color: cat('peach') }}>{stats.best}-day best</strong> are kept. One slip is a stumble, not a restart · log the reason below and keep going.</p>
                 </div>
               )}
@@ -261,8 +262,8 @@ export function NoFap() {
                   <p className="mt-3 text-body text-fg-2">
                     Next: <span className="font-medium" style={{ color: cat('teal') }}>{nextBenefit.label}</span> · <span className="text-fg-2">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
                   </p>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-2">
-                    <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${stats.progressPct}%`, background: cat('teal') }} />
+                  <div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-2">
+                    <div className="h-full rounded-pill transition-[width] duration-500" style={{ width: `${stats.progressPct}%`, background: cat('teal') }} />
                   </div>
                   <p className="mt-2 text-label text-fg-2 italic">“{nextBenefit.benefit}”</p>
                 </>
@@ -275,10 +276,10 @@ export function NoFap() {
 
         {/* Lifetime stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile compact label="Current" value={stats.current} color="mauve" icon={<Flame size={14} />} />
-          <StatTile compact label="Personal best" value={stats.best} color="peach" icon={<Trophy size={14} />} />
-          <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<CalendarCheck size={14} />} />
-          <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<HandMetal size={14} />} />
+          <StatTile compact label="Current" value={stats.current} color="mauve" icon={<Icon as={Flame} size="sm" />} />
+          <StatTile compact label="Personal best" value={stats.best} color="peach" icon={<Icon as={Trophy} size="sm" />} />
+          <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<Icon as={CalendarCheck} size="sm" />} />
+          <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<Icon as={HandFist} size="sm" />} />
         </div>
 
         {/* Urge surfing · pick what it was, log the win with date + time.
@@ -287,7 +288,7 @@ export function NoFap() {
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
               <button key={u} onClick={() => setUrge(u)}
-                className="rounded-full border px-2.5 py-1 text-label transition-colors"
+                className="rounded-pill border px-2.5 py-1 text-label transition-colors"
                 style={{ borderColor: urge === u ? cat('mauve') : cat('surface1'), background: urge === u ? cat('mauve') + '22' : 'transparent', color: urge === u ? cat('text') : cat('subtext0') }}>
                 {u}
               </button>
@@ -299,7 +300,7 @@ export function NoFap() {
           </div>
           {/* Trigger-plan match · surfaced as the user types/picks a trigger (U9) */}
           {matchedPlan && (
-            <div className="mt-2 rounded-lg p-2 text-label" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
+            <div className="mt-2 rounded-control p-2 text-label" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
               <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matchedPlan.trigger}”:</span>{' '}
               <span className="text-fg-2">{matchedPlan.coping || 'name it and let it pass.'}</span>
             </div>
@@ -318,7 +319,7 @@ export function NoFap() {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {TECHNIQUES.map((t) => (
               <button key={t.id} onClick={() => setTechnique(technique === t.id ? undefined : t.id)}
-                className="rounded-full border px-2.5 py-1 text-label transition-colors"
+                className="rounded-pill border px-2.5 py-1 text-label transition-colors"
                 style={{ borderColor: technique === t.id ? cat('teal') : cat('surface1'), background: technique === t.id ? cat('teal') + '22' : 'transparent', color: technique === t.id ? cat('text') : cat('subtext0') }}>
                 {t.label}
               </button>
@@ -333,7 +334,7 @@ export function NoFap() {
                 return (
                   <button key={hs.id} onClick={() => setHalt((cur) => cur.includes(hs.id) ? cur.filter((x) => x !== hs.id) : [...cur, hs.id])}
                     aria-pressed={on}
-                    className="rounded-full border px-2.5 py-1 text-label transition-colors"
+                    className="rounded-pill border px-2.5 py-1 text-label transition-colors"
                     style={{ borderColor: on ? cat('peach') : cat('surface1'), background: on ? cat('peach') + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}>
                     {hs.label}
                   </button>
@@ -342,14 +343,14 @@ export function NoFap() {
             </div>
           </div>
           <div className="mt-3 flex justify-end">
-            <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><HandMetal size={15} /> I resisted it</Button>
+            <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><Icon as={HandFist} size="sm" /> I resisted it</Button>
           </div>
           <div className="mt-3 flex items-center justify-between text-body">
             <span className="text-fg-1">Urges resisted: <span className="font-medium" style={{ color: cat('green') }}>{stats.urges}</span></span>
           </div>
           {/* Most-effective technique tally (U8) */}
           {techRank.length > 0 && (
-            <div className="mt-2 rounded-lg border border-line bg-ink-0 p-2.5 text-label">
+            <div className="mt-2 rounded-card border border-line bg-ink-0 p-2.5 text-label">
               <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: cat('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {techRank.map((t) => (
@@ -360,7 +361,7 @@ export function NoFap() {
           )}
           {/* HALT pattern tally · which unmet need accompanies urges most */}
           {haltRank.length > 0 && (
-            <div className="mt-2 rounded-lg border border-line bg-ink-0 p-2.5 text-label">
+            <div className="mt-2 rounded-card border border-line bg-ink-0 p-2.5 text-label">
               <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: cat('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {haltRank.map((h) => (
@@ -372,8 +373,8 @@ export function NoFap() {
           {urgeLog.length > 0 && (
             <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto">
               {urgeLog.map((u) => (
-                <li key={u.id} className="group flex items-center gap-2 rounded-lg border border-line bg-ink-0 px-2.5 py-1.5 text-body">
-                  <HandMetal size={13} style={{ color: cat('green') }} className="shrink-0" />
+                <li key={u.id} className="group flex items-center gap-2 rounded-card border border-line bg-ink-0 px-2.5 py-1.5 text-body">
+                  <Icon as={HandFist} size="sm" style={{ color: cat('green') }} className="shrink-0" />
                   <span className="text-fg-1">{u.trigger || 'Urge'}</span>
                   <span className="ml-auto text-label text-fg-2">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
                   <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
@@ -396,7 +397,7 @@ export function NoFap() {
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
             </label>
             {err && <p className="text-label" style={{ color: cat('red') }}>{err}</p>}
-            <Button variant="destructive" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
+            <Button variant="danger" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
             <p className="text-label text-fg-2">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
         </Card>
@@ -416,9 +417,9 @@ export function NoFap() {
                 const reset = a.relapses.some((r) => r.date === today)
                 const aSaved = moneySaved(st.totalClean, a.costPerDay)
                 return (
-                  <li key={a.id} className="group rounded-lg border border-line bg-ink-0 px-3 py-2.5">
+                  <li key={a.id} className="group rounded-card border border-line bg-ink-0 px-3 py-2.5">
                     <div className="flex items-center gap-3">
-                      <Flame size={16} style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
+                      <Icon as={Flame} size="md" style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2">
                           <span className="truncate font-medium text-fg-1">{a.name}</span>
@@ -463,10 +464,10 @@ export function NoFap() {
         <CollapsibleSection
           title="Setup"
           subtitle="Your commitment contract & if-then trigger plans"
-          icon={<Heart size={18} className="text-mauve" />}
+          icon={<Icon as={Heart} size="md" className="text-mauve" />}
         >
           {/* My commitment (#316) · quit-date contract + personal "why" */}
-          <Card title={<span className="inline-flex items-center gap-2"><Heart size={16} className="text-mauve" /> My commitment</span>}
+          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
             subtitle="Your quit-date contract, the reason you’re doing this"
             help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
             right={hasCommitment && !editingCommit ? <Button variant="secondary" size="sm" onClick={() => setEditingCommit(true)} className="text-label">Edit</Button> : undefined}>
@@ -500,7 +501,7 @@ export function NoFap() {
 
           {/* Trigger plans · if-then for each addiction's trigger points */}
           <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response" help="Pre-deciding what to do beats willpower in the moment. For each addiction, add a trigger (the situation) and a coping response. When the urge hits, you already have the plan.">
-            <div className="grid gap-2 rounded-lg border border-line bg-ink-0 p-3 sm:grid-cols-2">
+            <div className="grid gap-2 rounded-card border border-line bg-ink-0 p-3 sm:grid-cols-2">
               <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
               <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
               <Input value={plan.coping} onChange={(e) => setPlan({ ...plan, coping: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && savePlan()} placeholder="Then I will… (e.g. chew gum, walk 10 min)" aria-label="Coping response" className="sm:col-span-2" />
@@ -509,7 +510,7 @@ export function NoFap() {
             {plans.length > 0 && (
               <ul className="mt-3 space-y-2">
                 {plans.map((pl) => (
-                  <li key={pl.id} className="group rounded-lg border border-line bg-ink-0 p-2.5 text-body">
+                  <li key={pl.id} className="group rounded-card border border-line bg-ink-0 p-2.5 text-body">
                     <div className="flex items-center gap-2">
                       <Pill color="mauve" size="caption">{pl.addiction}</Pill>
                       <span className="text-fg-1"><span className="text-fg-2">when</span> {pl.trigger}</span>
@@ -528,7 +529,7 @@ export function NoFap() {
         <CollapsibleSection
           title="Insights & progress"
           subtitle="Streak vs. best, self-efficacy, money & time saved"
-          icon={<ShieldCheck size={18} className="text-green" />}
+          icon={<Icon as={ShieldCheck} size="md" className="text-green" />}
         >
           <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
           {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
@@ -544,7 +545,7 @@ export function NoFap() {
         <CollapsibleSection
           title="Deep analytics"
           subtitle="Trends, intensity, clean windows, high-risk hours & days, urge mix"
-          icon={<Hourglass size={18} className="text-teal" />}
+          icon={<Icon as={Hourglass} size="md" className="text-teal" />}
         >
           {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
           {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
@@ -579,10 +580,10 @@ export function NoFap() {
         <CollapsibleSection
           title="Reference"
           subtitle="Coping techniques, recovery ladder & reset history"
-          icon={<Sparkles size={18} className="text-mauve" />}
+          icon={<Icon as={Sparkle} size="md" className="text-mauve" />}
         >
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
-          <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={16} className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
+          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
             <ol className="space-y-2 text-body text-fg-1">
               <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
               <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
@@ -593,11 +594,11 @@ export function NoFap() {
               <li className="flex gap-2"><span className="font-medium text-teal">Log the win</span> · tap <strong>I resisted it</strong> above; evidence beats willpower.</li>
             </ol>
             {plans.length > 0 && (
-              <div className="mt-3 rounded-lg bg-secondary/50 p-2 text-label text-fg-2">
+              <div className="mt-3 rounded-control bg-secondary/50 p-2 text-label text-fg-2">
                 <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(' · ')}
               </div>
             )}
-            {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-peach/10 p-2 text-label text-fg-2"><AlertTriangle size={13} className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
+            {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-control bg-peach/10 p-2 text-label text-fg-2"><Icon as={Warning} size="sm" className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
           </Card>
 
           {/* Benefits ladder */}
@@ -608,9 +609,9 @@ export function NoFap() {
                 const isNext = nextBenefit?.day === m.day
                 return (
                   <li key={m.day} className="relative">
-                    <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-full text-micro"
+                    <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-pill text-micro"
                       style={{ background: reached ? cat('green') : isNext ? cat('teal') : cat('surface0'), color: cat('crust') }}>
-                      {reached ? <Check size={11} /> : m.day}
+                      {reached ? <Icon as={Check} size="sm" /> : m.day}
                     </span>
                     <div className="flex items-baseline gap-2">
                       <span className={`text-body font-medium ${reached ? 'text-fg-1' : isNext ? 'text-teal' : 'text-fg-2'}`}>{m.label}</span>
@@ -631,8 +632,8 @@ export function NoFap() {
             ) : (
               <ul className="space-y-2 text-body">
                 {[...s.relapses].reverse().map((r) => (
-                  <li key={r.id} className="rounded-lg border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
-                    <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><X size={13} /> Reset · {prettyDay(r.date)}</div>
+                  <li key={r.id} className="rounded-control border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
+                    <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}</div>
                     {r.trigger && <div className="mt-0.5 text-fg-1"><span className="text-fg-2">Reason:</span> {r.trigger}</div>}
                     {r.note && <div className="text-fg-2 italic">{r.note}</div>}
                   </li>

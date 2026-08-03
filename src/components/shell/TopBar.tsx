@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Plus, Command, MoreHorizontal, Menu, Sun, Moon, Settings as SettingsIcon, HelpCircle, Lightbulb, PanelLeft } from 'lucide-react'
+import { CaretLeft, CaretRight, Command, DotsThree, Lightbulb, List, Moon, Plus, Question, Sidebar, SlidersHorizontal, Sun } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { recommendations } from '../../lib/recommend'
 import { Button } from '../ui/button'
 import {
@@ -47,7 +48,7 @@ export function TopBar({
   return (
     <header className="app-header sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-card/80 px-4 py-2.5 backdrop-blur">
       <button onClick={onMenu} aria-label="Toggle menu" className="text-foreground md:hidden">
-        <Menu size={20} />
+        <Icon as={List} size="lg" />
       </button>
 
       <div className="min-w-0">
@@ -60,7 +61,7 @@ export function TopBar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-fg-2 hover:text-foreground">
-              <HelpCircle size={16} />
+              <Icon as={Question} size="md" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80">
@@ -82,7 +83,7 @@ export function TopBar({
             aria-label="Previous"
             onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, -1)) : setMonth(shiftMonth(month, -1)))}
           >
-            <ChevronLeft size={16} />
+            <Icon as={CaretLeft} size="md" />
           </Button>
           <Button
             variant="secondary"
@@ -100,7 +101,7 @@ export function TopBar({
             aria-label="Next"
             onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, 1)) : setMonth(shiftMonth(month, 1)))}
           >
-            <ChevronRight size={16} />
+            <Icon as={CaretRight} size="md" />
           </Button>
           {pickerOpen && (
             <DateJumpPicker
@@ -116,8 +117,8 @@ export function TopBar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button variant="default" size="sm" onClick={onQuickAdd} className="gap-1.5">
-          <Plus size={15} /> <span className="hidden sm:inline">Quick add</span>
+        <Button variant="primary" size="sm" onClick={onQuickAdd} className="gap-1.5">
+          <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
         </Button>
 
         {/* Recommendations — small icon + count badge, no wasted vertical space. */}
@@ -125,8 +126,8 @@ export function TopBar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" aria-label={`${recs.length} suggestions`} title="Suggestions" className="relative hidden sm:inline-flex">
-                <Lightbulb size={16} className="text-yellow" />
-                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
+                <Icon as={Lightbulb} size="md" className="text-yellow" />
+                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
@@ -153,7 +154,7 @@ export function TopBar({
           onClick={() => onNavigate('settings')}
           className="hidden sm:inline-flex"
         >
-          <SettingsIcon size={16} />
+          <Icon as={SlidersHorizontal} size="md" />
         </Button>
         <Button
           variant="ghost"
@@ -163,16 +164,16 @@ export function TopBar({
           onClick={() => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' })}
           className="hidden sm:inline-flex"
         >
-          {data.settings.theme === 'mocha' ? <Sun size={16} /> : <Moon size={16} />}
+          {data.settings.theme === 'mocha' ? <Icon as={Sun} size="md" /> : <Icon as={Moon} size="md" />}
         </Button>
         {/* ⌘K is keyboard-only — hide on phones to keep the bar from overflowing. */}
         <Button variant="ghost" size="icon-sm" aria-label="Command palette (⌘K)" title="⌘K" onClick={onCommand} className="hidden sm:inline-flex">
-          <Command size={16} />
+          <Icon as={Command} size="md" />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="More options">
-              <MoreHorizontal size={16} />
+              <Icon as={DotsThree} size="md" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
@@ -185,10 +186,10 @@ export function TopBar({
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('settings')} className="sm:hidden">
-              <SettingsIcon size={15} /> Settings
+              <Icon as={SlidersHorizontal} size="sm" /> Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onNavigate('help')}>
-              <HelpCircle size={15} /> Help &amp; guide
+              <Icon as={Question} size="sm" /> Help &amp; guide
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom - 0.1) })}>Zoom out</DropdownMenuItem>
@@ -199,7 +200,7 @@ export function TopBar({
             <DropdownMenuItem disabled={!canRedo} onClick={redo}>Redo</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ sidebarAutoHide: !data.settings.sidebarAutoHide })}>
-              <PanelLeft size={15} /> {data.settings.sidebarAutoHide ? 'Pin sidebar' : 'Auto-hide sidebar'}
+              <Icon as={Sidebar} size="sm" /> {data.settings.sidebarAutoHide ? 'Pin sidebar' : 'Auto-hide sidebar'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSettings({ paperMode: !data.settings.paperMode })}>Toggle paper</DropdownMenuItem>

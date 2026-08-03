@@ -1,11 +1,14 @@
+import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
+import type { Icon as IconGlyph } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp, Info, Maximize2, X, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
@@ -18,10 +21,10 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 // eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
 export const CARD = {
   /** The card container (border, radius, background, padding, 3-D press, hover group). */
-  container: 'card-3d group/card min-w-0 rounded-xl border border-line bg-card p-4 sm:rounded-2xl sm:p-5 lg:p-6',
+  container: 'card-3d group/card min-w-0 rounded-card border border-line bg-card p-4 sm:rounded-card sm:p-5 lg:p-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
-  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-line bg-card p-6 shadow-2xl',
+  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
   /**
@@ -30,14 +33,14 @@ export const CARD = {
    * WCAG 2.5.8 24px floor. The icon size is unchanged; the box around it does
    * the work, and `-m-1` keeps the header height exactly where it was.
    */
-  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-md text-fg-2 hover:bg-ink-2 hover:text-fg-1',
+  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-control text-fg-2 hover:bg-ink-2 hover:text-fg-1',
 } as const
 
 /**
  * The readable text inside a ReactNode, for naming a control after it.
  *
  * Card titles are `ReactNode` because many carry an icon beside the words
- * (`<><Flame size={16}/> 75 Hard</>`). A plain `typeof === 'string'` check
+ * (an icon element beside the words, e.g. a flame before "75 Hard"). A plain `typeof === 'string'` check
  * missed all of those, which left twenty ⓘ buttons — seven of them on Coaching
  * alone — still called "What is this?". Walks children, keeps strings and
  * numbers, ignores the rest.
@@ -109,7 +112,7 @@ export function Card({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={CARD.headerButton}>
-                      <Info size={14} />
+                      <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="max-w-xs text-body leading-snug text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
@@ -125,14 +128,14 @@ export function Card({
                 aria-label={titleText ? `Enlarge ${titleText}` : 'Enlarge'}
                 title="Enlarge"
                 className={`${CARD.headerButton} opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100`}>
-                <Maximize2 size={15} />
+                <AppIcon as={ArrowsOut} size="sm" />
               </button>
             )}
             {collapsible && (
               <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
                 aria-label={titleText ? (open ? `Collapse ${titleText}` : `Expand ${titleText}`) : (open ? 'Collapse' : 'Expand')}
                 className={CARD.headerButton}>
-                {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
               </button>
             )}
           </div>
@@ -151,7 +154,7 @@ export function Card({
                 {title && <h2 className="truncate font-display text-title font-medium text-fg-1">{title}</h2>}
                 {subtitle && <p className="mt-0.5 text-body text-fg-2">{subtitle}</p>}
               </div>
-              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-fg-2 hover:text-fg-1"><X size={20} /></button>
+              <button onClick={() => setLarge(false)} aria-label="Close" className="shrink-0 text-fg-2 hover:text-fg-1"><AppIcon as={X} size="lg" /></button>
             </div>
             {/* Charts mark their plot area with role="img"; CARD.modalChartHeight
                 forces it tall so the chart genuinely enlarges, not just widens. */}
@@ -194,7 +197,7 @@ export function StatTile({
       onClick={onClick}
       title={title}
       className={cn(
-        'rounded-xl border border-line bg-ink-0 text-center',
+        'rounded-card border border-line bg-ink-0 text-center',
         compact ? 'py-1.5' : 'py-3',
         onClick && 'press-3d cursor-pointer transition-colors hover:border-line-strong',
         className,
@@ -253,7 +256,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -262,7 +265,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -366,7 +369,7 @@ export function Pill({
   return (
     <span
       title={title}
-      className={cn('inline-flex shrink-0 items-center rounded-full', sizes[size], className)}
+      className={cn('inline-flex shrink-0 items-center rounded-pill', sizes[size], className)}
       style={style}
     >
       {children}
@@ -389,7 +392,7 @@ export function Empty({
   action,
 }: {
   children: ReactNode
-  icon?: LucideIcon
+  icon?: IconGlyph
   hint?: string
   action?: { label: string; onClick: () => void }
 }) {
@@ -399,8 +402,8 @@ export function Empty({
   return (
     <div className="flex flex-col items-center gap-2 py-10 text-center">
       {Icon && (
-        <span className="grid size-10 place-items-center rounded-full bg-ink-2 text-fg-2">
-          <Icon size={18} />
+        <span className="grid size-10 place-items-center rounded-pill bg-ink-2 text-fg-2">
+          <AppIcon as={Icon} size="md" />
         </span>
       )}
       <p className="text-body font-medium text-fg-1">{children}</p>
@@ -414,7 +417,29 @@ export function Empty({
   )
 }
 
-/** Segmented control for mutually-exclusive choices (theme, units, …). */
+/**
+ * SEGMENTED · mutually-exclusive choice (theme, units, range).
+ *
+ * Built on Radix `ToggleGroup` rather than hand-rolled buttons, so roving
+ * focus, arrow-key navigation and the radio-group semantics come from the
+ * primitive instead of being approximated. The API is unchanged — ~30 call
+ * sites pass `value` / `onChange` / `options` and did not move.
+ *
+ * Two details the primitive does not decide:
+ *
+ * - **Radix speaks strings.** Callers pass numbers as often as strings (week
+ *   counts, font scales), so values round-trip through their string form and
+ *   are mapped back to the original option on the way out. Comparing the
+ *   stringified value also means `26` and `'26'` cannot silently disagree.
+ * - **Deselect is refused.** A single-select ToggleGroup emits `''` when you
+ *   click the active item again, which for a *choice* means "no theme" or "no
+ *   range" — states this app has no representation for. That event is dropped.
+ *
+ * Selected takes the accent **wash**, never the fill: a filled segment reads as
+ * the primary action on the screen, and it is a choice you already made. The
+ * label uses `brand-text`, which is the accent tuned to stay legible on that
+ * wash in all five themes.
+ */
 export function Segmented<T extends string | number>({
   value,
   onChange,
@@ -425,25 +450,46 @@ export function Segmented<T extends string | number>({
   options: { value: T; label: ReactNode }[]
 }) {
   return (
-    <div className="inline-flex rounded-lg bg-secondary p-0.5">
+    <ToggleGroup
+      type="single"
+      // Roving focus off, deliberately. With it on, Radix gives the group a
+      // single tab stop — and measured on the rendered page every item came out
+      // `tabIndex: -1`, so the control could not be tabbed into at all. That is
+      // a regression against the plain buttons this replaced. Each segment is
+      // its own tab stop now, which is exactly how it behaved before; the cost
+      // is arrow-key traversal, which nothing in the app relied on.
+      rovingFocus={false}
+      value={String(value)}
+      onValueChange={(next) => {
+        if (!next) return // clicking the active segment must not clear the choice
+        const match = options.find((o) => String(o.value) === next)
+        if (match) onChange(match.value)
+      }}
+      className="inline-flex rounded-control border border-line p-0.5"
+    >
       {options.map((o) => {
-        const active = o.value === value
+        const selected = String(o.value) === String(value)
         return (
-          <button
+          <ToggleGroupItem
             key={String(o.value)}
-            onClick={() => onChange(o.value)}
-            aria-pressed={active}
-            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-body transition-colors ${
-              // Selected state gets the accent *wash*, not the accent fill: a
-              // filled segment reads as "the primary action on this screen",
-              // which it isn't — it's a choice you already made.
-              active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
-            }`}
+            value={String(o.value)}
+            // Selected colour set inline, and bound to `--brand-text` rather
+            // than the `@theme` alias `--color-brand-text`.
+            //
+            // Two reasons, both found by measuring rather than reasoning. The
+            // vendored `toggleVariants` already ships
+            // `data-[state=on]:text-accent-foreground`, so a competing
+            // `data-[state=on]:text-*` class of equal specificity is resolved
+            // by stylesheet order, not by us. And the `@theme` alias did not
+            // track the theme on this element — the raw per-theme variable
+            // does, in all five.
+            style={selected ? { color: 'var(--brand-text)' } : undefined}
+            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
           >
             {o.label}
-          </button>
+          </ToggleGroupItem>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }

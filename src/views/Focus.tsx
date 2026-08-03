@@ -1,8 +1,9 @@
+import { Code, Flame, Keyboard } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { Code2, Flame, Keyboard } from 'lucide-react'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
@@ -11,7 +12,7 @@ import { Page } from '../components/shell/Page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { PomodoroCard } from '../components/PomodoroCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
-import { cat } from '../lib/colors'
+import { cat, rechartsTooltip } from '../lib/colors'
 import {
   weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, focusInsight, cumulativeHours, projectedWeeklyMinutes,
   minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday,
@@ -72,23 +73,23 @@ export function Focus() {
       {/* This-week status leads (UX IA pass) */}
       <Card className={SPAN_2} title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-          <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Code2 size={14} />} />
-          <Stat label="Day streak" value={String(streak)} color="peach" icon={<Flame size={14} />} />
+          <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Icon as={Code} size="sm" />} />
+          <Stat label="Day streak" value={String(streak)} color="peach" icon={<Icon as={Flame} size="sm" />} />
           <Stat label="Avg focus" value={`${avgWeighted(data, 'focus')}/10`} color="green" />
           <Stat label="Avg stress" value={`${avgWeighted(data, 'stress')}/10`} color="red" />
         </div>
         {projWeekMin != null && projWeekMin > weekMin && (
-          <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
+          <p className="mt-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
             📈 At this pace, you're on track for <span className="font-medium text-mauve">{hrs(projWeekMin)}</span> this week.
           </p>
         )}
         {longest && (
-          <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
+          <p className="mt-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
             🏆 Longest session: <span className="font-medium text-peach">{hrs(longest.durationMin)}</span>
             {longest.project ? <> on <span className="text-fg-1">{longest.project}</span></> : null} · {prettyDay(longest.date)}
           </p>
         )}
-        {insight && <p className="mt-3 rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">💡 {insight}</p>}
+        {insight && <p className="mt-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">💡 {insight}</p>}
       </Card>
 
       {/* PRIMARY: timer + log, before analytics (UX IA pass) */}
@@ -189,8 +190,8 @@ export function Focus() {
             {byProject.map((p) => (
               <div key={p.project} className="flex items-center gap-2 text-body">
                 <span className="w-24 shrink-0 truncate text-fg-1">{p.project}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
+                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(p.min)}</span>
               </div>
@@ -218,8 +219,8 @@ export function Focus() {
             {tags.map((t) => (
               <div key={t.tag} className="flex items-center gap-2 text-body">
                 <span className="w-24 shrink-0 truncate text-fg-1">{t.tag}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${(t.min / maxTag) * 100}%`, background: cat('teal') }} />
+                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(t.min / maxTag) * 100}%`, background: cat('teal') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(t.min)}</span>
               </div>
@@ -275,7 +276,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
               key={m}
               onClick={() => setMode(m)}
               aria-pressed={showQuality ? m === 'quality' : m === 'volume'}
-              className="rounded-md px-2 py-0.5 text-caption capitalize transition-colors"
+              className="rounded-control px-2 py-0.5 text-caption capitalize transition-colors"
               style={{
                 background: (showQuality ? m === 'quality' : m === 'volume') ? cat('surface1') : 'transparent',
                 color: (showQuality ? m === 'quality' : m === 'volume') ? cat('text') : cat('overlay0'),
@@ -292,8 +293,8 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
           ? focusWd.map((w) => (
               <div key={w.day} className="flex items-center gap-2 text-body">
                 <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
+                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{w.count ? `${w.avg}/10` : '—'}</span>
               </div>
@@ -301,8 +302,8 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
           : byWeekday.map((w) => (
               <div key={w.day} className="flex items-center gap-2 text-body">
                 <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
+                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(w.min)}</span>
               </div>
@@ -372,7 +373,7 @@ function TypingPractice() {
             <select
               value={f.source}
               onChange={(e) => set({ source: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-line bg-ink-0 px-3 py-2 text-body text-fg-1 outline-none focus:border-mauve"
+              className="mt-1 w-full rounded-card border border-line bg-ink-0 px-3 py-2 text-body text-fg-1 outline-none focus:border-mauve"
             >
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -380,7 +381,7 @@ function TypingPractice() {
           <Button variant="secondary" onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
-          <div className="rounded-lg border border-line bg-ink-0 px-3 py-2.5">
+          <div className="rounded-card border border-line bg-ink-0 px-3 py-2.5">
             <div className="flex items-center justify-between text-body">
               <span className="text-fg-1">
                 {weekday ? "Today's goal" : 'Bonus today'} · {hrs(goal.minutes)} / {hrs(goal.goalMin)}
@@ -389,9 +390,9 @@ function TypingPractice() {
                 {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}
               </span>
             </div>
-            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-ink-2">
+            <div className="mt-1.5 h-2.5 overflow-hidden rounded-pill bg-ink-2">
               <div
-                className="h-full rounded-full transition-all"
+                className="h-full rounded-pill transition-all"
                 style={{ width: `${goal.pct}%`, background: goal.met ? cat('green') : weekday ? cat('mauve') : cat('teal') }}
               />
             </div>
@@ -402,10 +403,10 @@ function TypingPractice() {
         {/* Stats + trend */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-            <Stat label="Best WPM" value={best ? String(best) : '—'} color="mauve" icon={<Keyboard size={14} />} />
+            <Stat label="Best WPM" value={best ? String(best) : '—'} color="mauve" icon={<Icon as={Keyboard} size="sm" />} />
             <Stat label="Avg WPM" value={avg ? String(avg) : '—'} color="sky" />
             <Stat label="This week" value={hrs(weekMin)} color="green" />
-            <Stat label="Streak" value={String(streak)} color="peach" icon={<Flame size={14} />} />
+            <Stat label="Streak" value={String(streak)} color="peach" icon={<Icon as={Flame} size="sm" />} />
           </div>
 
           {wpmCount >= 2 && trend.length >= 1 && (
@@ -415,7 +416,7 @@ function TypingPractice() {
                   <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                   <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
                   <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+                  <Tooltip contentStyle={rechartsTooltip()} />
                   <Line type="monotone" dataKey="wpm" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
@@ -440,7 +441,7 @@ function TypingPractice() {
       ) : (
         <ul className="mt-4 space-y-2">
           {sessions.slice(0, 12).map((s) => (
-            <li key={s.id} className="group flex items-center justify-between rounded-lg border border-line bg-background p-2.5 text-body">
+            <li key={s.id} className="group flex items-center justify-between rounded-card border border-line bg-background p-2.5 text-body">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-medium text-fg-1">{s.source || 'Typing'}</span>
                 <span className="text-label text-fg-2">{prettyDay(s.date)}</span>
@@ -479,7 +480,7 @@ function SessionRow({ s, onSave, onDelete }: {
   }
   if (editing) {
     return (
-      <li className="rounded-lg border border-mauve/40 bg-background p-3">
+      <li className="rounded-control border border-mauve/40 bg-background p-3">
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-label text-fg-1">Minutes<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Project<Input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className="mt-1" /></label>
@@ -495,7 +496,7 @@ function SessionRow({ s, onSave, onDelete }: {
     )
   }
   return (
-    <li className="group rounded-lg border border-line bg-background p-3">
+    <li className="group rounded-card border border-line bg-background p-3">
       <div className="flex items-center justify-between">
         <span className="font-medium text-fg-1">{s.project || 'Session'}<span className="ml-2 text-label text-fg-2">{prettyDay(s.date)}</span></span>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">

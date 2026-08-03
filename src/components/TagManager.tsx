@@ -1,5 +1,6 @@
+import { Check, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
 import { useJournal } from '../store'
 import { parseTags } from '../lib/bullets'
 import { cat } from '../lib/colors'
@@ -33,7 +34,7 @@ export function TagManager() {
           {tags.map(([tag, n]) => (
             <li key={tag}>
               {editing === tag ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-mauve bg-ink-0 px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 rounded-pill border border-mauve bg-ink-0 px-1.5 py-0.5">
                   <span className="text-sky">#</span>
                   <input
                     autoFocus
@@ -43,13 +44,13 @@ export function TagManager() {
                     className="w-24 bg-transparent text-body text-fg-1 focus:outline-none"
                     aria-label={`Rename tag ${tag}`}
                   />
-                  <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Check size={13} className="text-green" /></button>
-                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><X size={13} className="text-fg-2" /></button>
+                  <button onClick={() => commit(tag)} title="Save tag" aria-label="Save tag"><Icon as={Check} size="sm" className="text-green" /></button>
+                  <button onClick={() => { setEditing(null); setVal('') }} aria-label="Cancel"><Icon as={X} size="sm" className="text-fg-2" /></button>
                 </span>
               ) : (
                 <button
                   onClick={() => { setEditing(tag); setVal(tag) }}
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-body hover:ring-1 hover:ring-mauve"
+                  className="inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-body hover:ring-1 hover:ring-mauve"
                   style={{ background: cat('surface0'), color: cat('sapphire') }}
                   title="Click to rename / merge"
                 >

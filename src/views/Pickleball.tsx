@@ -1,5 +1,6 @@
+import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, ListChecks, Medal, PersonSimpleRun, ShieldPlus, Sword, Target, Trophy } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Trophy, Repeat, ShieldPlus, Target, ExternalLink, Dumbbell, Medal, ListChecks, Swords, Activity, Gauge, BarChart3, CalendarClock } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
@@ -193,7 +194,7 @@ export function Pickleball() {
         )}
       </Card>
       <Card title="Win / loss" subtitle="All games played" enlargeable>
-        {all.games === 0 ? <Empty>No games yet.</Empty> : (
+        {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
           <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -238,7 +239,7 @@ export function Pickleball() {
         </Card>
       )}
       <Card title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
-        {formats.length === 0 ? <Empty>No games yet.</Empty> : (
+        {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
           <ul className="space-y-3">
             {formats.map((fm) => (
               <li key={fm.format}>
@@ -246,8 +247,8 @@ export function Pickleball() {
                   <span className="capitalize text-fg-1">{fm.format}</span>
                   <span className="text-fg-2">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
-                  <div className="h-full rounded-full" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
+                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
+                  <div className="h-full rounded-pill" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
                 </div>
               </li>
             ))}
@@ -295,7 +296,7 @@ export function Pickleball() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
           <StatTile compact label="Games" value={all.games} color="blue" />
-          <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Trophy size={14} />} />
+          <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
           <StatTile compact label="Day streak" value={streak} color="peach" />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
@@ -307,8 +308,8 @@ export function Pickleball() {
         </div>
         {goal > 0 && (
           <div className="mt-2">
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2">
-              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
+              <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
             </div>
             <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
           </div>
@@ -318,10 +319,10 @@ export function Pickleball() {
       {/* ── Tournament prep countdown (#345) · conditional top status,
             surfaces only when events exist; collapsed. ── */}
       {upcoming.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><CalendarClock size={18} className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+        <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
           <ul className="mb-3 space-y-2">
             {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+              <li key={e.id} className="flex items-center justify-between gap-2 rounded-control border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
                 <span className="min-w-0">
                   <span className="text-body font-medium text-fg-1">{e.name}</span>
                   <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
@@ -332,7 +333,7 @@ export function Pickleball() {
               </li>
             ))}
           </ul>
-          <details className="rounded-lg border border-line bg-ink-0 p-3">
+          <details className="rounded-card border border-line bg-ink-0 p-3">
             <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
             <ul className="mt-2 space-y-1">
               {PREP_CHECKLIST.map((x) => (
@@ -343,7 +344,7 @@ export function Pickleball() {
         </Card>
       )}
 
-      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1 rounded-lg"><Repeat size={13} /> Repeat</Button> : undefined}>
+      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
@@ -357,7 +358,7 @@ export function Pickleball() {
           <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
           <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
           <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-md border border-input bg-background px-2 py-2 text-body text-foreground">
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-control border border-input bg-background px-2 py-2 text-body text-foreground">
             <option value="">Scoring</option>
             <option value="11">to 11</option>
             <option value="15">to 15</option>
@@ -366,12 +367,12 @@ export function Pickleball() {
           </select>
         </div>
         <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
-        <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full rounded-lg">Log session</Button>
+        <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
       </Card>
 
       <Card title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
         {sessions.length === 0 ? (
-          <Empty>No sessions logged yet.</Empty>
+          <Empty>Log a session above to start your record.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
@@ -383,11 +384,11 @@ export function Pickleball() {
       </Card>
 
       {/* ── DUPR rating tracker ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Gauge size={18} className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-          <Button variant="secondary" onClick={saveDupr} className="press-3d rounded-lg">Log rating</Button>
+          <Button variant="secondary" onClick={saveDupr} className="press-3d">Log rating</Button>
         </div>
         {duprStats.points.length === 0 ? (
           <Empty>No DUPR ratings logged yet · add one above to start the trend.</Empty>
@@ -395,7 +396,7 @@ export function Pickleball() {
           <>
             <div className="mb-3 grid grid-cols-3 gap-2">
               <StatTile compact label="Latest" value={duprStats.latest ?? '—'} color="mauve" />
-              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Trophy size={14} />} />
+              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
               <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} color={duprStats.direction === 'up' ? 'green' : duprStats.direction === 'down' ? 'red' : 'overlay0'} />
             </div>
             {duprStats.points.length >= 2 && (
@@ -428,18 +429,18 @@ export function Pickleball() {
 
       {/* ── Leagues & tournaments · secondary event logging, grouped beside the
             DUPR tracker and collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Medal size={18} className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
-          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Trophy size={14} />} />
+          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
         </div>
         {/* log an event */}
-        <div className="grid gap-2 rounded-lg border border-line bg-ink-0 p-3 sm:grid-cols-2">
+        <div className="grid gap-2 rounded-card border border-line bg-ink-0 p-3 sm:grid-cols-2">
           <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
           <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
           <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-md border border-input bg-background px-2 py-2 text-body text-foreground">
+          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-input bg-background px-2 py-2 text-body text-foreground">
             {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
           </select>
           <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
@@ -447,7 +448,7 @@ export function Pickleball() {
           <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
           <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
           <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-          <Button variant="secondary" onClick={logEvent} className="press-3d rounded-lg sm:col-span-2">Log event</Button>
+          <Button variant="secondary" onClick={logEvent} className="press-3d sm:col-span-2">Log event</Button>
         </div>
         {/* event list */}
         {events.length > 0 && (
@@ -471,10 +472,10 @@ export function Pickleball() {
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
             below logging, collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
-          <div className="rounded-lg border border-line bg-ink-0 p-3">
+          <div className="rounded-card border border-line bg-ink-0 p-3">
             <div className="mb-1 flex items-center gap-2">
               <span className="text-body font-medium text-fg-1">{drill.name}</span>
               <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
@@ -483,8 +484,8 @@ export function Pickleball() {
             <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
-          <div className="rounded-lg border border-line bg-ink-0 p-3">
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Dumbbell size={14} className="text-green" /> Warm up first</p>
+          <div className="rounded-card border border-line bg-ink-0 p-3">
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={Barbell} size="sm" className="text-green" /> Warm up first</p>
             <ul className="space-y-1">
               {WARMUP.map((w) => (
                 <li key={w} className="flex gap-1.5 text-label text-fg-2"><span className="text-green">•</span> {w}</li>
@@ -497,7 +498,7 @@ export function Pickleball() {
           <span className="text-label text-fg-2">Learn more:</span>
           {RESOURCES.map((r) => (
             <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
-              {r.name} <ExternalLink size={11} />
+              {r.name} <Icon as={ArrowSquareOut} size="sm" />
             </a>
           ))}
         </div>
@@ -510,7 +511,7 @@ export function Pickleball() {
             groups default collapsed so open analytics don't dominate the view. ── */}
       <Section
         title="Form & momentum"
-        icon={<Activity size={18} className="text-sky" />}
+        icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
         hint="Recent form · forecast · milestones · intensity"
       >
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
@@ -521,7 +522,7 @@ export function Pickleball() {
 
       <Section
         title="Opponents, partners & venues"
-        icon={<Swords size={18} className="text-red" />}
+        icon={<Icon as={Sword} size="md" className="text-red" />}
         hint="Chemistry · courts · rivalries · level matchups"
       >
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
@@ -532,7 +533,7 @@ export function Pickleball() {
 
       <Section
         title="Deeper signals"
-        icon={<BarChart3 size={18} className="text-blue" />}
+        icon={<Icon as={ChartBar} size="md" className="text-blue" />}
         hint="Weekday · points · time · scoring · consistency"
       >
         {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
@@ -546,14 +547,14 @@ export function Pickleball() {
             section so they don't strand on mobile. ── */}
       <Section
         title="Charts"
-        icon={<BarChart3 size={18} className="text-teal" />}
+        icon={<Icon as={ChartBar} size="md" className="text-teal" />}
         hint="Trends · volume · heatmap · tap ⛶ to enlarge"
       >
         {charts}
       </Section>
 
       <CardGrid>
-      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
@@ -565,10 +566,10 @@ export function Pickleball() {
       </Card>
 
       {/* ── Format playbook ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><ListChecks size={18} className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-lg border border-line bg-ink-0 p-3">
+            <li key={fm.id} className="rounded-card border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-body font-medium text-fg-1">{fm.label}</span>
                 <span className="text-micro text-fg-2">{fm.size}</span>
@@ -613,8 +614,8 @@ function PickleRow({ p, onSave, onDelete }: {
         </div>
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={save} className="press-3d flex-1 rounded-lg">Save</Button>
-          <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-lg">Cancel</Button>
+          <Button variant="secondary" onClick={save} className="press-3d flex-1">Save</Button>
+          <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-control">Cancel</Button>
         </div>
       </li>
     )
@@ -624,7 +625,7 @@ function PickleRow({ p, onSave, onDelete }: {
       <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
-        <Button variant="ghost" size="xs" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
         <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
       </span>
     </li>

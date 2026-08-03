@@ -47,11 +47,41 @@
      accent-inflation pass, step 9). */
   --color-brand: var(--primary);
   --color-brand-ink: var(--primary-foreground);
-  /* A tint, for *selected state* — never for an action. A selected segment
-     filled with the same accent as a primary button competes with it, which is
-     the accent inflation the brief diagnosed. Selection gets the wash; the one
-     primary action per screen keeps the fill. */
-  --color-brand-wash: color-mix(in srgb, var(--primary) 16%, transparent);
+  /* The accent *as text*, which is not the same colour as the accent as a
+     surface. Measured on the tonal button's own wash: the raw accent clears AA
+     comfortably on the three dark themes (5.2–7.0:1) and fails on both light
+     ones — latte 4.39:1, dawn 4.07:1 — because a violet or an amber that reads
+     well against near-black is too light against near-white. The two light
+     themes therefore darken it; the dark themes alias the accent unchanged.
+     Anything that renders the accent as text (tonal button label, active nav
+     row, accent pills) reads this, never `--color-brand`. */
+  --color-brand-text: var(--brand-text);
+  /* The wash. Originally a tint for *selected state* only, with the one primary
+     action per screen keeping a solid accent fill. That fill is now gone: the
+     loud button on a screen is **tonal** — wash background, accent text, no
+     border — so the wash carries both selection and primary emphasis, and the
+     app has no saturated accent surface left to compete with itself.
+
+     Mixed in oklab, not srgb: srgb interpolation drags a mix toward grey
+     through the middle of the range, which showed up worst in dawn, whose
+     accent is an amber rather than a violet. oklab keeps the hue.
+
+     14% at rest and 20% on hover are global; a theme whose accent is too
+     low-chroma to show at 14% overrides its own percentage below rather than
+     moving these. */
+  --color-brand-wash: color-mix(in oklab, var(--primary) 14%, transparent);
+  --color-brand-wash-hover: color-mix(in oklab, var(--primary) 20%, transparent);
+
+  /* The same treatment for destructive actions, so a danger button in a menu
+     reads as the danger *variant* of the same shape, not a different system. */
+  --color-danger-wash: color-mix(in oklab, var(--destructive) 14%, transparent);
+  --color-danger-wash-hover: color-mix(in oklab, var(--destructive) 20%, transparent);
+  /* Destructive-as-text, for the same reason as `--color-brand-text`: the red
+     that reads correctly as a *fill* is not legible as a *label* on its own
+     wash. Measured, it failed in three of the five themes — latte 3.87:1,
+     vscode 4.28:1, dawn 3.80:1 — so those three tune it and the other two
+     alias the palette red unchanged. */
+  --color-danger-text: var(--danger-text);
 
   /* ── Type scale ───────────────────────────────────────────────────────────
      Six steps, in rem, at a 16px root. rem — not px — because the global
@@ -92,6 +122,23 @@
      Reserved for data chrome — never for prose. */
   --text-micro: 0.625rem; /* 10px */
   --text-micro--line-height: 1.3;
+
+  /* ── Shape ────────────────────────────────────────────────────────────────
+     Three radii, and only three. The app had ten in circulation
+     (`rounded-lg` ×224, `-full` ×141, `-xl` ×38, `-md` ×33, `-2xl` ×22, and
+     five more with single-digit counts), which is not a rounding *system* —
+     it is ten independent decisions that happen to look similar.
+
+     control · buttons, inputs, segments, steppers — anything you operate
+     card    · cards, sheets, modals, panels — anything you read
+     pill    · pills, chips, avatars — anything shaped by its own text
+
+     Migrate call sites before retiring the old classes: Tailwind v4 exits 0 on
+     a stale utility and silently emits nothing, so a removed class does not
+     fail the build, it just changes the design. */
+  --radius-control: 0.5rem;   /* 8px */
+  --radius-card: 0.875rem;    /* 14px */
+  --radius-pill: 9999px;
 
   /* ── Containers ───────────────────────────────────────────────────────────
      Two tiers, deliberately. Reading and capture want a short line; heatmaps,

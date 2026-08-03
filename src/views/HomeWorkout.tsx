@@ -1,5 +1,6 @@
+import { Barbell, MagnifyingGlass, Play, Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Play, Search, Plus, Dumbbell } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -55,7 +56,7 @@ export function HomeWorkout() {
           stacked they read as three separate failures rather than one start. */}
       <CardGrid>
       {/* PRIMARY: build & log today's session first, before the library/history (UX IA pass) */}
-      <Card title={<span className="inline-flex items-center gap-2"><Dumbbell size={18} className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
         {items.length === 0 ? (
           <Empty>Tap “Add” on an exercise to build your session.</Empty>
         ) : (
@@ -71,14 +72,14 @@ export function HomeWorkout() {
               <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
             </div>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it go?" rows={2} />
-            <Button variant="secondary" onClick={logSession} className="press-3d w-full rounded-lg">Log workout</Button>
+            <Button variant="secondary" onClick={logSession} className="press-3d w-full">Log workout</Button>
           </div>
         )}
       </Card>
 
       <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
         {sessions.length === 0 ? (
-          <Empty>No home workouts logged yet.</Empty>
+          <Empty>Finish a session to start building your history.</Empty>
         ) : (
           <ul className="divide-y divide-surface0">
             {sessions.slice(0, 12).map((w) => {
@@ -113,14 +114,14 @@ export function HomeWorkout() {
             <button
               key={m}
               onClick={() => setFilter(m)}
-              className="rounded-full border px-2.5 py-1 text-label capitalize transition-colors"
+              className="rounded-pill border px-2.5 py-1 text-label capitalize transition-colors"
               style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
             >{m}</button>
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {lib.map((ex) => (
-            <div key={ex.id} className="rounded-lg border border-line bg-ink-0 p-3">
+            <div key={ex.id} className="rounded-card border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-heading">{ex.emoji}</span>
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>
@@ -128,9 +129,9 @@ export function HomeWorkout() {
               </div>
               <p className="text-label text-fg-2">{ex.how}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-red hover:underline"><Play size={11} /> Watch demo</a>
-                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-fg-2 hover:text-blue hover:underline"><Search size={11} /> More on YouTube</a>
-                <Button variant="outline" size="xs" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Plus size={11} /> {ex.reps}</Button>
+                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-red hover:underline"><Icon as={Play} size="sm" /> Watch demo</a>
+                <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-fg-2 hover:text-blue hover:underline"><Icon as={MagnifyingGlass} size="sm" /> More on YouTube</a>
+                <Button variant="secondary" size="sm" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Icon as={Plus} size="sm" /> {ex.reps}</Button>
               </div>
             </div>
           ))}

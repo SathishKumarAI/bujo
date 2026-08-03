@@ -1,4 +1,5 @@
-import { CheckSquare, Dumbbell, ListTodo, ArrowUpToLine, Timer } from 'lucide-react'
+import { Icon as AppIcon } from '@/components/Icon'
+import { ArrowLineUp, Barbell, CheckSquare, ListChecks, Timer, Flame } from '@/components/icons'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat } from '../lib/colors'
@@ -49,10 +50,10 @@ export function TodayPlanCard() {
 
   const chips: { label: string; color: string; icon: typeof CheckSquare; to: Parameters<typeof navigate>[0]; done: boolean }[] = [
     { label: habitsLeft > 0 ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} left` : 'Habits done', color: 'green', icon: CheckSquare, to: 'trackers', done: cov.total > 0 && habitsLeft === 0 },
-    { label: workedOut ? 'Workout logged' : 'No workout yet', color: 'teal', icon: Dumbbell, to: 'fitness', done: workedOut },
-    { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListTodo, to: 'plan', done: tasksDue === 0 },
+    { label: workedOut ? 'Workout logged' : 'No workout yet', color: 'teal', icon: Barbell, to: 'fitness', done: workedOut },
+    { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListChecks, to: 'plan', done: tasksDue === 0 },
   ]
-  if (pullDone > 0 && pullDone < pullTotal) chips.push({ label: `Pull-ups ${pullDone}/${pullTotal}`, color: 'peach', icon: ArrowUpToLine, to: 'pullups', done: false })
+  if (pullDone > 0 && pullDone < pullTotal) chips.push({ label: `Pull-ups ${pullDone}/${pullTotal}`, color: 'peach', icon: ArrowLineUp, to: 'pullups', done: false })
   if (focusMin > 0) chips.push({ label: `${focusMin}m focused`, color: 'lavender', icon: Timer, to: 'focus', done: true })
 
   // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
@@ -63,8 +64,8 @@ export function TodayPlanCard() {
   return (
     <Card title="Today’s plan" subtitle="Your whole day at a glance, tap to jump in" right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
-        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
-          🔥 {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
+        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
+          <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
         </button>
       )}
       <div className="flex flex-wrap gap-2">
@@ -74,10 +75,10 @@ export function TodayPlanCard() {
             <button
               key={c.label}
               onClick={() => navigate(c.to)}
-              className="press-3d inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-body"
+              className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body"
               style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22'), color: c.done ? cat('overlay1') : cat(c.color) }}
             >
-              <Icon size={14} /> {c.label}{c.done ? ' ✓' : ''}
+              <AppIcon as={Icon} size="sm" /> {c.label}{c.done ? ' ✓' : ''}
             </button>
           )
         })}

@@ -70,7 +70,7 @@ export function AppShell({
           until focused. Listed as a known gap in docs/ACCESSIBILITY.md. */}
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-ink-1 focus:px-3 focus:py-2 focus:text-body focus:text-fg-1 focus:outline-2 focus:outline-mauve"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-card focus:bg-ink-1 focus:px-3 focus:py-2 focus:text-body focus:text-fg-1 focus:outline-2 focus:outline-mauve"
       >
         Skip to content
       </a>

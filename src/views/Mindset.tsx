@@ -1,4 +1,5 @@
-import { Brain, Plus, Check, Trash2, Sparkles } from 'lucide-react'
+import { Brain, Check, Plus, Sparkle, Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Empty, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -18,7 +19,7 @@ export function Mindset() {
 
   return (
     <Page width="wide">
-      <Card title={<span className="inline-flex items-center gap-2"><Sparkles size={18} className="text-mauve" /> Your focus</span>} subtitle="What you’re working on now" help="The principles you’ve chosen to practise. Add a note on how you’ll apply each — a personal cue you’ll actually use.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Your focus</span>} subtitle="What you’re working on now" help="The principles you’ve chosen to practise. Add a note on how you’ll apply each — a personal cue you’ll actually use.">
         {focus.length === 0 ? (
           <Empty>Pick a principle from the library below to start working on your thinking style.</Empty>
         ) : (
@@ -27,11 +28,11 @@ export function Mindset() {
               const p = principleById(f.principleId)
               if (!p) return null
               return (
-                <li key={f.id} className="group rounded-lg border border-mauve/40 bg-mauve/5 p-3">
+                <li key={f.id} className="group rounded-control border border-mauve/40 bg-mauve/5 p-3">
                   <div className="mb-1 flex items-center gap-2">
-                    <Check size={14} className="shrink-0 text-mauve" />
+                    <Icon as={Check} size="sm" className="shrink-0 text-mauve" />
                     <span className="text-body font-medium text-fg-1">{p.title}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Trash2 size={13} /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeMindsetFocus(f.id)} aria-label="Remove focus" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Icon as={Trash} size="sm" /></Button>
                   </div>
                   <p className="mb-2 text-label text-fg-2">{p.why}</p>
                   <Textarea value={f.note ?? ''} onChange={(e) => setMindsetNote(f.id, e.target.value)} placeholder="How will you apply this? (your cue)" rows={2} className="text-label" />
@@ -49,7 +50,7 @@ export function Mindset() {
           own card now, three across, so the seven categories are visible at
           once and each is a real heading rather than an uppercase caption. */}
       <p className="flex items-center gap-2 text-body text-fg-2">
-        <Brain size={18} className="shrink-0 text-peach" />
+        <Icon as={Brain} size="md" className="shrink-0 text-peach" />
         Principle library · tap + to add one to your focus
       </p>
       <CardGrid>
@@ -59,14 +60,14 @@ export function Mindset() {
               {MINDSET_LIBRARY.filter((p) => p.category === catName).map((p) => {
                 const added = focusedIds.has(p.id)
                 return (
-                  <li key={p.id} className="flex items-start gap-2 rounded-lg border border-line bg-ink-0 p-2.5">
+                  <li key={p.id} className="flex items-start gap-2 rounded-control border border-line bg-ink-0 p-2.5">
                     <div className="min-w-0 flex-1">
                       <p className="text-body font-medium text-fg-1">{p.title}</p>
                       <p className="text-label text-fg-2">{p.why}</p>
                     </div>
                     <button onClick={() => added ? undefined : addMindsetFocus(p.id)} disabled={added} aria-label={added ? `${p.title} is already in your focus` : `Add ${p.title} to your focus`}
-                      className={`grid size-6 shrink-0 place-items-center rounded-full ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
-                      {added ? <Check size={13} /> : <Plus size={13} />}
+                      className={`grid size-6 shrink-0 place-items-center rounded-pill ${added ? 'bg-green text-crust' : 'bg-secondary text-fg-1 hover:bg-mauve hover:text-crust'}`}>
+                      {added ? <Icon as={Check} size="sm" /> : <Icon as={Plus} size="sm" />}
                     </button>
                   </li>
                 )

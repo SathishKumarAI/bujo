@@ -1,4 +1,5 @@
-import { PiggyBank } from 'lucide-react'
+import { PiggyBank } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Input } from '../ui'
 import { cat } from '../../lib/colors'
 
@@ -20,7 +21,7 @@ export function MoneySavedCard({
   onCostChange: (v: number | undefined) => void
 }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><PiggyBank size={16} className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket" help="Set what the habit used to cost you per day; this multiplies it across your lifetime clean days. A concrete tally of money you didn't spend.">
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={PiggyBank} size="md" className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket" help="Set what the habit used to cost you per day; this multiplies it across your lifetime clean days. A concrete tally of money you didn't spend.">
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-display font-medium leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>

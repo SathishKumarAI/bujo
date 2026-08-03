@@ -1,10 +1,12 @@
+import { ArrowRight, Barbell, PersonSimpleRun, Timer } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { lazy, Suspense, useMemo } from 'react'
-import { Activity, Dumbbell, Timer, ArrowRight } from 'lucide-react'
 import { Fitness } from './Fitness'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { weeklyActiveMinutes, nextSplit, splitMeta } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
+import { splitGlyph } from '../components/glyphs'
 
 // Gym is recharts-heavy · load it only when the Strength tab is opened.
 const Gym = lazy(() => import('./Gym').then((m) => ({ default: m.Gym })))
@@ -41,17 +43,17 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
              important control on the page and it announced no state at all.
              (Not `role="tab"` — that would promise arrow-key tablist
              semantics this control does not implement.) */}
-      <div className="flex w-fit gap-1 rounded-xl bg-secondary p-1">
-        {([['strength', 'Strength', Dumbbell], ['cardio', 'Cardio', Activity]] as const).map(([id, label, Icon]) => (
+      <div className="flex w-fit gap-1 rounded-card bg-secondary p-1">
+        {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             aria-pressed={tab === id}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-body font-medium transition-colors ${
+            className={`inline-flex items-center justify-center gap-2 rounded-control px-5 py-2 text-body font-medium transition-colors ${
               tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
-            <Icon size={16} /> {label}
+            <AppIcon as={Icon} size="md" active={tab === id} /> {label}
           </button>
         ))}
       </div>
@@ -64,11 +66,11 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
         {tab === 'cardio' && (
         <button
           onClick={() => setTab('strength')}
-          className="flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
+          className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
           title="Open the Strength tab on this split"
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-heading" style={{ background: cat(split.color) + '22' }}>
-            {split.icon}
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-pill" style={{ background: cat(split.color) + '22', color: cat(split.color) }}>
+            <AppIcon as={splitGlyph(split.id)} size="lg" />
           </span>
           <span className="min-w-0">
             <span className="block text-caption uppercase tracking-wide text-fg-2">Next up</span>
@@ -76,7 +78,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
               {split.label} day
             </span>
           </span>
-          <ArrowRight size={18} className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
+          <AppIcon as={ArrowRight} size="md" className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
         </button>
         )}
       </div>
@@ -104,7 +106,7 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
   const circ = 2 * Math.PI * r
   const color = met ? cat('green') : cat('peach')
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-ink-0 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-4 py-3">
       <div className="relative shrink-0" role="img" aria-label={`This week: ${minutes} of ${goal} active minutes`}>
         <svg width={size} height={size} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={cat('surface0')} strokeWidth={stroke} />
@@ -126,7 +128,7 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
       </div>
       <div className="min-w-0">
         <span className="flex items-center gap-1 text-caption uppercase tracking-wide text-fg-2">
-          <Timer size={12} /> This week
+          <AppIcon as={Timer} size="sm" /> This week
         </span>
         <span className="block font-medium text-fg-1">
           {minutes}<span className="text-fg-2"> / {goal} min</span>

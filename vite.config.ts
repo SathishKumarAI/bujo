@@ -51,6 +51,13 @@ export default defineConfig({
           if (/node_modules\/(recharts|react-smooth|victory-vendor|d3-|internmap|recharts-scale)/.test(id)) {
             return 'recharts'
           }
+          // Icon path data: 152 glyphs at two weights, generated from Phosphor
+          // by scripts/build-icons.mjs. It changes only when the vocabulary
+          // changes, so it gets its own long-lived chunk rather than
+          // invalidating the app bundle on every release.
+          if (/src[\\/]components[\\/]icon-paths/.test(id)) {
+            return 'icons'
+          }
         },
       },
     },

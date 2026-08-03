@@ -617,8 +617,6 @@ export interface JournalData {
   monthly: MonthlyMeta[]
   collections: Collection[]
   recurrences: Recurrence[]
-  /** Per-day emoji stickers / washi decorations: ISO day -> [emoji, …]. */
-  stickers: Record<string, string[]>
   nofap: Streak
   /** Fixed-duration discipline challenges (75 Hard, 90-day, …). */
   challenges?: Challenge[]

@@ -1,5 +1,6 @@
+import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Database, Download, FileText, Palette, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef, useState, useEffect } from 'react'
-import { Download, Upload, FileText, Sparkles, Trash2, AlertTriangle, UserRound, Palette, Bell, Database, ChevronDown, ChevronRight, RefreshCw, Cloud } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -16,7 +17,6 @@ import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, si
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive, devSessionsCsv, dataSummary, verifyChecksum, withChecksum } from '../lib/csv'
 import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from '../lib/ics'
-import { CalendarDays } from 'lucide-react'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender, ThemeName } from '../lib/types'
@@ -54,9 +54,9 @@ function Disclosure({ title, subtitle, defaultOpen = false, children }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+        className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
       >
-        <span className="text-fg-2">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="text-fg-2">{open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
         <span className="font-display text-heading font-medium text-fg-1">{title}</span>
         {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
       </button>
@@ -147,7 +147,7 @@ export function Settings() {
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these five pills to 209px each across the wide tier. They are labels, not
   // a segmented control — they should be as wide as their text.
-  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-control border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
     <Page width="wide">
       {/* No page header here. The top bar already renders `Settings · Theme,
@@ -158,11 +158,11 @@ export function Settings() {
         {/* Horizontal pill bar — every section visible at once, wraps on narrow
             screens. No sidebar rail, no clipped scroller. */}
         <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-start gap-1.5 bg-transparent p-0">
-          <TabsTrigger value="profile" className={tabClass}><UserRound size={15} /> Profile</TabsTrigger>
-          <TabsTrigger value="feel" className={tabClass}><Palette size={15} /> Appearance</TabsTrigger>
-          <TabsTrigger value="reminders" className={tabClass}><Bell size={15} /> Reminders</TabsTrigger>
-          <TabsTrigger value="sync" className={tabClass}><Cloud size={15} /> Sync &amp; privacy</TabsTrigger>
-          <TabsTrigger value="data" className={tabClass}><Database size={15} /> Data</TabsTrigger>
+          <TabsTrigger value="profile" className={tabClass}><Icon as={User} size="sm" /> Profile</TabsTrigger>
+          <TabsTrigger value="feel" className={tabClass}><Icon as={Palette} size="sm" /> Appearance</TabsTrigger>
+          <TabsTrigger value="reminders" className={tabClass}><Icon as={Bell} size="sm" /> Reminders</TabsTrigger>
+          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> Sync &amp; privacy</TabsTrigger>
+          <TabsTrigger value="data" className={tabClass}><Icon as={Database} size="sm" /> Data</TabsTrigger>
         </TabsList>
 
         <div className="min-w-0">
@@ -172,7 +172,7 @@ export function Settings() {
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
-            className="rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+            className="rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           >
             <option value="prefer-not">Prefer not to say</option>
             <option value="female">Female</option>
@@ -213,9 +213,9 @@ export function Settings() {
                   key={t.value}
                   onClick={() => setSettings({ theme: t.value })}
                   aria-pressed={active}
-                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
+                  className={`flex items-center gap-2 rounded-card border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
                 >
-                  <span className="flex shrink-0 overflow-hidden rounded-md border border-line" aria-hidden>
+                  <span className="flex shrink-0 overflow-hidden rounded-card border border-line" aria-hidden>
                     {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
                   </span>
                   <span className="min-w-0">
@@ -275,7 +275,7 @@ export function Settings() {
             {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
               const active = (s.accent ?? 'mauve') === c
               return (
-                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-full transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-pill transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
               )
             })}
           </div>
@@ -283,7 +283,7 @@ export function Settings() {
         <div className="mt-3 border-t border-line pt-3">
           {/* SET-4: one-tap return to the default look. */}
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={async () => { if (await confirm({
               title: 'Reset appearance to defaults?',
               description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
@@ -291,7 +291,7 @@ export function Settings() {
             })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
             className="inline-flex items-center gap-1.5"
           >
-            <RefreshCw size={14} /> Reset appearance to defaults
+            <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults
           </Button>
         </div>
       </Card>
@@ -307,7 +307,7 @@ export function Settings() {
                 type="time"
                 value={s.reminderTime}
                 onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                className="rounded-lg border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+                className="rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
           )}
@@ -360,8 +360,8 @@ export function Settings() {
                     <span className="text-fg-2">Browser storage used</span>
                     <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
+                  <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+                    <div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
                   </div>
                   {warn && (
                     <p className="mt-1.5 text-label text-peach">
@@ -378,30 +378,30 @@ export function Settings() {
           const stale = daysSinceBackup(s.lastBackup, todayISO())
           if (stale == null) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
-                <AlertTriangle size={14} /> You haven't backed up yet. Browsers can clear local storage · export a copy.
+              <p className="mb-3 flex items-center gap-1.5 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
+                <Icon as={Warning} size="sm" /> You haven't backed up yet. Browsers can clear local storage · export a copy.
               </p>
             )
           }
           if (stale >= 7) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
-                <AlertTriangle size={14} /> Not backed up in {stale} day{stale === 1 ? '' : 's'} · export a fresh copy to be safe.
+              <p className="mb-3 flex items-center gap-1.5 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
+                <Icon as={Warning} size="sm" /> Not backed up in {stale} day{stale === 1 ? '' : 's'} · export a fresh copy to be safe.
               </p>
             )
           }
           return null
         })()}
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={doExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export JSON</Button>
-          <Button variant="secondary" onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><FileText size={14} /> Export Markdown</Button>
-          <Button variant="secondary" onClick={() => download(`bujo-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Export calendar</Button>
-          <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import JSON</Button>
+          <Button variant="secondary" onClick={doExport} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export JSON</Button>
+          <Button variant="secondary" onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><Icon as={FileText} size="sm" /> Export Markdown</Button>
+          <Button variant="secondary" onClick={() => download(`bujo-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Export calendar</Button>
+          <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
         <p className="mt-1.5 text-label text-fg-2">JSON backups omit your sync tokens so the file is safe to share. Calendar export gives an .ics of your events &amp; birthdays.</p>
         <div className="mt-2">
-          <Button variant="secondary" onClick={doRedactedExport} className="inline-flex items-center gap-1.5"><Download size={14} /> Export shareable (redacted) JSON</Button>
+          <Button variant="secondary" onClick={doRedactedExport} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export shareable (redacted) JSON</Button>
           <p className="mt-1 text-label text-fg-2">A privacy-safe copy that omits Recovery &amp; Cycle data and blanks your entry text — for handing to a coach or support tool.</p>
         </div>
         {s.lastBackup && <p className="mt-2 text-label text-fg-2">Last backup: {s.lastBackup}</p>}
@@ -432,30 +432,30 @@ export function Settings() {
               </div>
             )}
             <div className="mt-2">
-              <Button variant="secondary" onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Import metrics CSV</Button>
+              <Button variant="secondary" onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Import metrics CSV</Button>
               <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
             </div>
           </Disclosure>
           <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
             <div className="space-y-2">
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Habit reminders (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Habit reminders (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
               </div>
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Open tasks (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Open tasks (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
               </div>
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Completions feed (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Completions feed (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
           </Disclosure>
           <Disclosure title="Backup integrity" subtitle="checksum & verify a file">
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Download size={14} /> Export checksummed backup</Button>
-              <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Upload size={14} /> Verify a backup file</Button>
+              <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export checksummed backup</Button>
+              <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>
             <p className="mt-1 text-label text-fg-2">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
@@ -479,10 +479,10 @@ export function Settings() {
             }}
             className="inline-flex items-center gap-1.5"
           >
-            <Sparkles size={14} /> Load demo data
+            <Icon as={Sparkle} size="sm" /> Load demo data
           </Button>
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={async () => {
               if (await confirm({
                 title: 'Erase everything and start fresh?',
@@ -494,7 +494,7 @@ export function Settings() {
             }}
             className="inline-flex items-center gap-1.5"
           >
-            <Trash2 size={14} /> Clear all data
+            <Icon as={Trash} size="sm" /> Clear all data
           </Button>
           <Button
             variant="secondary"
@@ -532,14 +532,14 @@ export function Settings() {
                         <span className="text-fg-2">Days with data (coverage)</span>
                         <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-                        <div className="h-full rounded-full" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
+                      <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+                        <div className="h-full rounded-pill" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
                       </div>
                     </div>
                     {sum.counts.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {sum.counts.map((c) => (
-                          <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-line bg-ink-0 px-2 py-0.5 text-label text-fg-1">
+                          <span key={c.label} className="inline-flex items-center gap-1 rounded-pill border border-line bg-ink-0 px-2 py-0.5 text-label text-fg-1">
                             {c.label} <span className="font-medium text-fg-1">{c.count}</span>
                           </span>
                         ))}
@@ -622,7 +622,7 @@ function AccountCard() {
   return (
     <Card title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
       {recovery && (
-        <div className="mb-3 rounded-lg border border-mauve/40 bg-ink-0 p-3">
+        <div className="mb-3 rounded-card border border-mauve/40 bg-ink-0 p-3">
           <p className="mb-2 text-body text-fg-1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
           <Button variant="secondary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
@@ -710,8 +710,8 @@ function BujoCloudCard() {
     <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Upload size={14} /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
-        <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Download size={14} /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
+        <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
+        <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
       </div>
       <label className="mt-3 flex cursor-pointer items-center justify-between text-body text-fg-1">
         <span>Auto-sync on this device <span className="text-label text-fg-2">(pull on open · push on change)</span></span>
@@ -739,8 +739,8 @@ function PasscodeCard() {
     <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto, stays on this device)">
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
-          <Button variant="destructive" onClick={async () => { if (await confirm({
+          <span className="inline-flex items-center gap-1.5 rounded-control border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
+          <Button variant="danger" onClick={async () => { if (await confirm({
             title: 'Remove the passcode?',
             description: 'The journal will be stored unencrypted on this device. Anyone with access to this browser can read it.',
             confirmLabel: 'Remove passcode', destructive: true,

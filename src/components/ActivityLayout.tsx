@@ -1,10 +1,10 @@
+import { DotsSixVertical, Flame, PersonSimpleRun, Prohibit, ShieldCheck, Star } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Flame, Star, GripVertical, Activity } from 'lucide-react'
 import type { Habit, HabitCategory, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
-import { Ban, ShieldCheck } from 'lucide-react'
 import { DayGrid } from './ui/day-grid'
 
 const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
@@ -118,14 +118,14 @@ function ActivityRow({
             onDragEnd={reorder.onDragEnd}
             title="Drag to reorder"
             className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
-          ><GripVertical size={11} /></span>
+          ><Icon as={DotsSixVertical} size="sm" /></span>
         )}
-        <span>{avoid ? <Ban size={13} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+        <span>{avoid ? <Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
         <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-body hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
-        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Activity size={11} /></button>
+        <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></button>
       </div>
       <span className="w-9 shrink-0 text-micro tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }} title={avoid ? `${streak} days clean` : `${streak}-day streak`}>
-        {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={10} /> : <Flame size={10} />}{streak}</span> : '—'}
+        {streak > 0 ? <span className="inline-flex items-center gap-0.5">{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</span> : '—'}
       </span>
       {h.weeklyGoal ? (
         <span className="w-10 shrink-0 text-micro tabular-nums" title={`${weekCount} of ${h.weeklyGoal} this week`} style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
@@ -186,7 +186,11 @@ function TodayControl({
       <div className="inline-flex gap-0.5">
         {[1, 2, 3, 4, 5].map((n) => (
           <button key={n} onClick={() => onSetValue(today, h.id, n === value ? 0 : n)} aria-label={`${h.name}: rate ${n} of 5${n === value ? ' (current)' : ''}`} title={`${n}/5`}>
-            <Star size={13} style={{ color: n <= value ? cat(h.color) : cat('surface2') }} fill={n <= value ? cat(h.color) : 'none'} />
+            {/* Filled vs hollow was the old signal for "this star counts".
+                Weight carries it now: duotone for the rated stars, regular for
+                the rest — the same active/rest rule the whole icon system uses,
+                instead of a per-site `fill`. */}
+            <Icon as={Star} size="sm" active={n <= value} style={{ color: n <= value ? cat(h.color) : cat('surface2') }} />
           </button>
         ))}
       </div>
@@ -198,7 +202,7 @@ function TodayControl({
       <button
         onClick={() => onSetValue(today, h.id, next)}
         aria-label={`${h.name}: ${value} of ${target}${h.unit ? ' ' + h.unit : ''}, tap to add`}
-        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-label"
+        className="inline-flex items-center gap-1 rounded-pill border px-2 py-0.5 text-label"
         style={{ borderColor: value > 0 ? accent : cat('surface1'), color: value > 0 ? cat('text') : cat('subtext0') }}
         title={`Tap to log${h.unit ? ' (' + h.unit + ')' : ''}`}
       >
@@ -212,7 +216,7 @@ function TodayControl({
       onClick={() => onToggle(today, h.id)}
       aria-label={h.avoid ? (on ? 'Slipped today' : 'Clean today') : 'Toggle today'}
       title={h.avoid ? (on ? 'Slipped today' : 'Clean today') : undefined}
-      className="inline-grid h-6 w-6 place-items-center rounded-full border"
+      className="inline-grid h-6 w-6 place-items-center rounded-pill border"
       style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
       {on && <span className="text-micro" style={{ color: cat('crust') }}>✓</span>}

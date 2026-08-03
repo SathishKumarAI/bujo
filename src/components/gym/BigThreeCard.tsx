@@ -1,4 +1,5 @@
-import { Trophy } from 'lucide-react'
+import { Trophy } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, Empty } from '../ui'
 import { cat } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
@@ -23,7 +24,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
                 key={l.lift}
                 onClick={() => l.weight > 0 && setFocusEx(l.lift)}
                 disabled={l.weight === 0}
-                className="rounded-xl border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
+                className="rounded-card border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
                 title={l.weight > 0 ? `Best ${l.lift}: ${l.weight}${unit}${l.date ? ` on ${l.date}` : ''}` : `No ${l.lift} logged yet`}
               >
                 <p className="text-label text-fg-1">{l.lift}</p>
@@ -35,7 +36,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
             ))}
           </div>
           <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
-            <span className="inline-flex items-center gap-1.5 text-body text-fg-1"><Trophy size={15} style={{ color: cat('yellow') }} /> Total</span>
+            <span className="inline-flex items-center gap-1.5 text-body text-fg-1"><Icon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> Total</span>
             <span className="text-title font-medium" style={{ color: cat('yellow') }}>{total.total}{unit}</span>
           </div>
           {!total.complete && <p className="mt-1 text-caption text-fg-2">Log all three for your true total.</p>}

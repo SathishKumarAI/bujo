@@ -1,11 +1,21 @@
+import { Minus, Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef } from 'react'
-import { Minus, Plus } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { Button } from '../ui/button'
 
 /**
  * Tap-to-adjust number field — no keyboard needed. Tap ± to step; press and
  * hold to repeat with acceleration. Typing is still allowed for big jumps.
  * Pure presentational: value/onChange are owned by the parent.
+ *
+ * NOT rebuilt on `ToggleGroup`, which the spec suggested alongside `Segmented`.
+ * A toggle group models "pick one of these"; this models "nudge a number up or
+ * down", with press-and-hold repetition and a free-text escape hatch for big
+ * jumps. The two share a look, not a behaviour, and forcing the primitive would
+ * have meant fighting its roving focus and pressed state to get a plain repeat
+ * button back. The ± controls do go through the `Button` system, so the shape,
+ * height, radius and focus ring come from one place.
  */
 export function Stepper({
   value,
@@ -56,34 +66,36 @@ export function Stepper({
     <div className={cn('inline-flex flex-col gap-0.5', className)}>
       {label && <span className="text-micro text-fg-2">{label}</span>}
       <div className="inline-flex items-center gap-1">
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="icon-sm"
           aria-label={`Decrease ${ariaLabel ?? label ?? ''}`.trim()}
           onPointerDown={() => holdStart(-1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
-          <Minus size={14} />
-        </button>
+          <Icon as={Minus} size="sm" />
+        </Button>
         <input
           type="number"
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? undefined : clamp(Number(e.target.value)))}
           aria-label={ariaLabel ?? label}
-          className="num w-14 rounded-lg border border-input bg-ink-0 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
+          className="num w-14 rounded-control border border-input bg-ink-0 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
         />
         {suffix && <span className="text-label text-fg-2">{suffix}</span>}
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="icon-sm"
           aria-label={`Increase ${ariaLabel ?? label ?? ''}`.trim()}
           onPointerDown={() => holdStart(1)}
           onPointerUp={stop}
           onPointerLeave={stop}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-input text-fg-2 hover:text-fg-1 active:scale-95"
         >
-          <Plus size={14} />
-        </button>
+          <Icon as={Plus} size="sm" />
+        </Button>
       </div>
     </div>
   )

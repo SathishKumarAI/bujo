@@ -1,7 +1,7 @@
+import { CalendarPlus, CaretDown, CaretRight, Star } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
-import { CalendarPlus, ChevronDown, ChevronRight } from 'lucide-react'
-import { Star } from 'lucide-react'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Page } from '../components/shell/Page'
 import { QuietSection } from '../components/CollapsibleSection'
@@ -101,13 +101,13 @@ export function Plan() {
               className="flex w-full items-center gap-1.5 text-label text-fg-2 hover:text-fg-1"
               title={`Oldest overdue task: ${aging.oldestDays} days`}
             >
-              {agingOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              {agingOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}
               <span>Aging</span>
               <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
             </button>
             {agingOpen && (
               <>
-                <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-ink-2">
+                <div className="mt-1.5 flex h-2 overflow-hidden rounded-pill bg-ink-2">
                   {agingBuckets.map((b) => (
                     <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
                   ))}
@@ -115,7 +115,7 @@ export function Plan() {
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-caption text-fg-2">
                   {agingBuckets.map((b) => (
                     <span key={b.key} className="inline-flex items-center gap-1">
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: cat(b.color) }} />
+                      <span className="inline-block h-2 w-2 rounded-pill" style={{ background: cat(b.color) }} />
                       {b.label} <b style={{ color: cat(b.color) }}>{b.n}</b>
                     </span>
                   ))}
@@ -136,7 +136,7 @@ export function Plan() {
               <Button
                 variant="secondary"
                 onClick={() => overdue.forEach((e) => migrateEntry(e.id, today))}
-                className="press-3d rounded-lg"
+                className="press-3d rounded-control"
               >
                 Move all {overdue.length} → Today
               </Button>
@@ -144,7 +144,7 @@ export function Plan() {
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
             {(showAllOverdue ? overdue : overdue.slice(0, 5)).map((e) => (
-              <li key={e.id} className="flex flex-col gap-1.5 rounded-lg border border-line bg-ink-0 p-2 text-body" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
+              <li key={e.id} className="flex flex-col gap-1.5 rounded-card border border-line bg-ink-0 p-2 text-body" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
                 <div className="flex items-start gap-1.5">
                   <button
                     onClick={() => toggleImportant(e.id)}
@@ -153,15 +153,17 @@ export function Plan() {
                     className="mt-0.5 shrink-0"
                     style={{ color: e.important ? cat('yellow') : cat('overlay0') }}
                   >
-                    <Star size={14} fill={e.important ? cat('yellow') : 'none'} />
+                    {/* Important is a state, so it reads as a weight change
+                        (duotone) rather than a fill colour. */}
+                    <Icon as={Star} size="sm" active={e.important} />
                   </button>
                   <span className="flex-1 text-fg-1">{e.text}</span>
                   <span className="shrink-0 text-label text-fg-2">{prettyDay(e.date)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <Button variant="secondary" onClick={() => migrateEntry(e.id, today)} title="Move to today" className="press-3d rounded-lg">→ Today</Button>
-                  <Button variant="secondary" onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow" className="press-3d rounded-lg">→ Tomorrow</Button>
-                  <Button variant="ghost" onClick={() => dropEntry(e.id)} title="Drop it" className="press-3d rounded-lg text-red hover:text-red">drop</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, today)} title="Move to today" className="press-3d rounded-control">→ Today</Button>
+                  <Button variant="secondary" onClick={() => migrateEntry(e.id, addDays(today, 1))} title="Move to tomorrow" className="press-3d rounded-control">→ Tomorrow</Button>
+                  <Button variant="ghost" onClick={() => dropEntry(e.id)} title="Drop it" className="press-3d rounded-control text-red hover:text-red">drop</Button>
                 </div>
               </li>
             ))}
@@ -169,7 +171,7 @@ export function Plan() {
           </>
         )}
         {overdue.length > 5 && (
-          <Button variant="link" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
+          <Button variant="ghost" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
             {showAllOverdue ? 'Show less' : `Show all ${overdue.length}`}
           </Button>
         )}
@@ -186,7 +188,7 @@ export function Plan() {
               const open = openThread === t.rootId
               const thread = open ? entryThread(data.entries, t.current.id) : []
               return (
-                <li key={t.rootId} className="rounded-lg border border-line bg-ink-0 px-2.5 py-1.5">
+                <li key={t.rootId} className="rounded-card border border-line bg-ink-0 px-2.5 py-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2 truncate">
                       <Button
@@ -201,7 +203,7 @@ export function Plan() {
                     </span>
                     <button
                       onClick={() => setOpenThread(open ? null : t.rootId)}
-                      className="shrink-0 rounded-full px-2 py-0.5 text-label font-medium"
+                      className="shrink-0 rounded-pill px-2 py-0.5 text-label font-medium"
                       style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
                       title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                       aria-expanded={open}
@@ -236,16 +238,16 @@ export function Plan() {
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
-          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="task">task</option>
             <option value="event">event</option>
             <option value="note">note</option>
           </select>
-          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-lg border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
-          <Button variant="secondary" onClick={addRule} className="press-3d rounded-lg">Add rule</Button>
+          <Button variant="secondary" onClick={addRule} className="press-3d">Add rule</Button>
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">
@@ -263,7 +265,7 @@ export function Plan() {
         )}
         <div className="mt-3 border-t border-line pt-3">
           {data.recurrences.length === 0 ? (
-            <Empty>No recurring rules yet.</Empty>
+            <Empty>Add a rule above to repeat something without retyping it.</Empty>
           ) : (
             <ul className="space-y-1 text-body">
               {data.recurrences.map((r) => (
@@ -292,7 +294,7 @@ export function Plan() {
       </Card>
 
       <Card title="Import calendar (.ics)" subtitle="Bring events from Google/Apple Calendar onto your monthly">
-        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-lg"><CalendarPlus size={15} /> Choose .ics file</Button>
+        <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d inline-flex items-center gap-1.5 rounded-control"><Icon as={CalendarPlus} size="sm" /> Choose .ics file</Button>
         <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>

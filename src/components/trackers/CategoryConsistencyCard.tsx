@@ -3,7 +3,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
 } from 'recharts'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, rechartsTooltip } from '../../lib/colors'
 import { habitConsistency } from '../../lib/stats'
 import type { Habit, HabitCategory, JournalData } from '../../lib/types'
 
@@ -27,7 +27,7 @@ export function CategoryConsistencyCard({
             <PolarGrid stroke={cat('surface1')} />
             <PolarAngleAxis dataKey="category" tick={{ fill: cat('overlay1'), fontSize: 10 }} />
             <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
-            <Tooltip contentStyle={{ background: '#181825', border: '1px solid #313244', borderRadius: 8, color: '#cdd6f4' }} />
+            <Tooltip contentStyle={rechartsTooltip()} />
           </RadarChart>
         </ResponsiveContainer>
       </div>

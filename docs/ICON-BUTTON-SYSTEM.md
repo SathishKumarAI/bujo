@@ -1,6 +1,7 @@
-# Icon and button system — spec + Stage 0 audit
+# Icon and button system — spec, audit, stage log
 
-**Status:** Stage 0 complete, awaiting go-ahead before Stage 1 (install).
+**Status:** Stages 0–6 complete, and 6 is now **enforced by CI** rather than
+checked by eye. The one item left is per-view container tiers.
 **Scope:** visual and interaction only. No data models, storage, routing or
 business logic changes. Every feature must work identically at the end.
 
@@ -200,7 +201,357 @@ text tiers, not three.
 with no variant defaults to `default`). Those **37 solid-accent buttons** are
 what decision 2 deletes.
 
-## Open questions for Stage 1
+## Stage 1 — done. Token extension, not a second bridge
+
+**Approach taken: extend the existing token layer.** No `shadcn-bridge.css`.
+The bridge already runs Catppuccin → shadcn → purpose tokens, and a second file
+redefining `--background` / `--card` / `--border` would have given every one of
+them two definitions with the winner decided by import order. Everything new
+went into the layer that already exists: `src/index.css` for per-theme raw
+values, `src/styles/tokens.css` for what those values are *for*.
+
+**shadcn additions:** `toggle-group`, `toggle`, `command` (button, tooltip,
+dialog, dropdown-menu were already installed). `cmdk` is a new dependency.
+The CLI could not resolve the `@` alias — the root tsconfig is solution-style
+with no `paths` — so it wrote into a literal `@/` directory at the repo root;
+the wanted files were copied into `src/components/ui/` by hand and `@/` is now
+gitignored and eslint-ignored as a reference copy. Its stock `dialog.tsx` was
+**not** adopted: this app's dialog is customised.
+
+### Tokens added
+
+| Token | Value | Why |
+|---|---|---|
+| `--color-brand-wash` | `color-mix(in oklab, primary 14%, transparent)` | was srgb 16%; oklab keeps the hue instead of dragging the mix toward grey |
+| `--color-brand-wash-hover` | same at 20% | the tonal button needs a hover step that is not a colour change |
+| `--color-danger-wash` / `-hover` | destructive at 14% / 20% | so `danger` is the same shape in a different colour, not a different system |
+| `--color-brand-text` | per theme | the accent as *text* is not the accent as a *surface* — see below |
+| `--color-danger-text` | per theme | same, for destructive |
+| `--radius-control` / `-card` / `-pill` | 8px / 14px / pill | replaces ten radii in circulation |
+| `--h-control-sm` / `--h-control` / `-lg` | 1.75 / 2.25 / 2.75rem | 28 / 36 / 44, in rem so they track the font-scale control |
+
+### The finding that changed the plan
+
+A tonal primary button puts the accent **as text** on the accent **as a wash**.
+Measured on the real rendered surfaces, that pairing failed AA in two themes,
+and the destructive equivalent failed in three:
+
+| Theme | accent on wash (before) | after | destructive on wash (before) | after |
+|---|---|---|---|---|
+| mocha | 7.00 ✅ | unchanged | 6.28 ✅ | unchanged |
+| latte | **4.39 ❌** | 5.94 (`#5733db`) | **3.87 ❌** | 5.32 (`#b2271e`) |
+| neon | 5.94 ✅ | unchanged | 5.66 ✅ | unchanged |
+| vscode | 5.18 ✅ | 5.86 (`#cd92c8`)¹ | **4.28 ❌** | 5.29 (`#f46d6d`) |
+| dawn | **4.07 ❌** | 5.49 (`#964307`) | **3.80 ❌** | 5.35 (`#b21d1d`) |
+
+¹ vscode's accent passed at rest but sat at 4.67:1 on the *hover* wash — 0.17
+above the floor, one surface tweak from failing silently. Lightened for
+headroom.
+
+This is §I1 arriving early. It was parked as "accents fail AA as text"; making
+the loud button tonal turns it from a papercut into the primary action's label,
+so it had to be solved now. It is solved **at the token**, so nothing downstream
+has to remember it — anything rendering the accent as text reads
+`--color-brand-text`, never `--color-brand`.
+
+### Verification — all five themes
+
+Measured in the browser on the rendered kitchen sink, not computed from source.
+ΔE is CIE76 in Lab; a wash is a hue shift, so luminance contrast alone cannot
+say whether it is visible (JND ≈ 2.3).
+
+| Theme | wash vs card ΔE | hover step ΔE | label on wash | label on hover | danger label | radii | heights |
+|---|---|---|---|---|---|---|---|
+| mocha | 13.5 | 5.2 | 7.00 | 6.08 | 6.28 | 8/14/pill | 28/36/44 |
+| latte | 14.3 | 6.4 | 5.94 | 5.44 | 5.32 | 8/14/pill | 28/36/44 |
+| neon | 16.4 | 5.5 | 5.94 | 5.32 | 5.66 | 8/14/pill | 28/36/44 |
+| vscode | 11.1 | 4.3 | 5.86 | 5.24 | 5.29 | 8/14/pill | 28/36/44 |
+| dawn | 10.4 | 4.5 | 5.49 | 5.05 | 5.35 | 8/14/pill | 28/36/44 |
+
+No theme needed a local percentage override: 14% is visible everywhere, by a
+wide margin on the light themes (ΔE ~14) and comfortably on the dark ones
+(ΔE 10–16). Screenshots taken in all five, through the real theme setter rather
+than by poking `data-theme` — that path leaves the JS chart palette on the
+previous theme (§I2), so a screenshot taken that way would be a lie.
+
+**`--text-3` was already passing** in all five (4.74–6.55:1) before this stage,
+so no change was needed there.
+
+### Kitchen sink
+
+Two cards added — *Accent wash* and *Shape & size* — rendering every token this
+stage introduced. Standing rule from here on: **a token that cannot be seen in
+the kitchen sink in all five themes does not count as shipped.** It also makes
+Tailwind emit the new utilities, which is how the first measurement pass caught
+that `rounded-control` did not exist yet.
+
+## Stage 2 — done. One icon library, behind one wrapper
+
+**Two modules, and nothing else touches icons.** `components/icons.ts` is the
+only importer of `@phosphor-icons/react` (144 glyphs, each commented with the
+lucide name it replaces); `components/Icon.tsx` owns size and state.
+
+- **397 JSX icons** converted across **85 files** by codemod, kept in
+  `scripts/codemod/` because it records the mapping better than a diff can.
+  A further **19** were dynamic — a glyph held in a variable — and were done by
+  hand, which is also where the active states got wired.
+- **Sizes: three, in rem.** The app had sixteen px sizes (`size={14}` at 112
+  sites). Boundaries follow where the old sizes actually clustered: ≤15 → `sm`,
+  16–18 → `md`, ≥20 → `lg`.
+- **State is weight, not colour.** Regular at rest, duotone when active. The
+  active nav row no longer needs to be purple *and* filled *and* railed.
+- The bullet glyph column (`· × — ›`) stays typographic, as specified.
+
+Icons that were not in the brief's 23-surface map were chosen by noun and are
+listed in the registry with the lucide name each replaces. The ones worth a
+second opinion, because Phosphor's noun is not the obvious word:
+
+| Was | Now | Why |
+|---|---|---|
+| `Ban` | `Prohibit` | Phosphor has no "ban" |
+| `HelpCircle` | `Question` | |
+| `LifeBuoy` | `Lifebuoy` | spelling differs |
+| `Swords` | `Sword` | no crossed-swords glyph |
+| `CupSoda` | `Drop` | the call site is hydration, not a drink |
+| `Layers` | `Stack` | |
+| `GripVertical` | `DotsSixVertical` | |
+| `Settings` / `Settings2` | `SlidersHorizontal` / `FadersHorizontal` | two distinct controls kept distinct |
+| `Repeat` + `RefreshCw` | both `ArrowsClockwise` | they were the same idea twice |
+
+### Verified in all five themes
+
+Measured on the rendered sidebar, per theme: the active row's glyph renders
+**two paths with an opacity layer** (duotone), the resting row renders **one**
+(regular), both at **1.125rem**, with the active one in that theme's
+`--color-brand-text` — `#cba6f7` mocha, `#5733db` latte, `#c77dff` neon,
+`#cd92c8` vscode, `#964307` dawn.
+
+### Two judgement calls
+
+- Rating stars and the "important" marker used `fill` to mean "this one
+  counts". They use `active` now, so the state reads as duotone like every
+  other state in the app — which is also why `fill` never had to come back.
+- `VideoLink` took a px `size` number. It takes a scale step, so a caller
+  cannot invent a seventeenth icon size.
+
+### The cost, stated rather than absorbed
+
+The icon set is **413 kB raw / 93 kB gzip**, in its own chunk. Phosphor ships
+all six weights per glyph in a single module and this app uses two, so roughly
+two thirds of that is dead weight that tree-shaking cannot reach — confirmed by
+testing per-icon entrypoints, which produced a byte-identical chunk. Chunked
+separately so it does not invalidate the app bundle on every release. Options
+for Stage 6: trim the 144-glyph vocabulary, or generate a local two-weight
+build. Relates to `TASKS.md` B4 (bundle regression).
+
+Also note: the five vendored shadcn primitives (command, dialog, dropdown-menu,
+resizable, sonner) imported lucide of their own accord. They point at the
+registry now — but `shadcn add` will reintroduce lucide in anything it
+regenerates, so that is a thing to re-check after any future component add.
+
+
+## Stage 3 — done. Four variants, three heights, no accent fill
+
+`components/ui/button.tsx` rewritten. shadcn's `default` (solid accent) is
+gone, which was the point: the app had **37** of them competing with an accent
+nav rail, accent icons and accent pills.
+
+| Variant | Treatment | Was |
+|---|---|---|
+| `primary` | `--brand-wash` bg, `--brand-text` label, no border | `default` (solid fill) ×31 |
+| `secondary` | transparent, 1px `--line-strong`, `fg-1` | `secondary` ×123 + `outline` ×11 |
+| `ghost` | transparent, `fg-2`, hover `ink-2` | `ghost` ×60 + `link` ×11 |
+| `danger` | transparent, `--danger-text`, hover `--danger-wash` | `destructive` ×6 |
+
+Heights are the three control tokens (28 / 36 / 44) in rem, radius is
+`--radius-control`, and there are no shadows — the wash and a 0.97 press scale
+carry the interaction. The default variant is now `secondary`, not `primary`:
+a bare `<Button>` used to be a solid accent fill, which is exactly how 26 of
+those 31 primaries happened.
+
+**Selection is not primary.** Trackers' type and time-of-day choosers used the
+solid variant to mean "selected". They are `secondary`/`ghost` now — selection
+takes the wash, the same rule `Segmented` and the pills already follow.
+
+### The one-primary rule enforces itself
+
+`src/lib/onePrimary.ts` counts *mounted* primaries per view in dev and warns
+when a screen has two, naming the screen. Mounted, not grepped: a view with two
+primaries behind mutually-exclusive conditions is fine, and no static check can
+tell the difference. Stripped from production builds.
+
+### A bug this pass created and fixed
+
+`cn` runs tailwind-merge, which cannot tell a custom `text-label` (a size) from
+a custom `text-brand-text` (a colour) — they are both `text-*`. The size class
+won, so a **small primary button rendered in the foreground colour instead of
+the accent**. Sizes now state font-size as `text-[length:var(--text-label)]`,
+which lands in the font-size group where it belongs. Caught by reading computed
+styles off the rendered page, not by review.
+
+### Verified
+
+Measured on the rendered kitchen sink: radius 8px on every variant, heights
+exactly 28/36/44, `box-shadow: none`, primary background = the oklab wash,
+primary label = `#cba6f7` (mocha `--brand-text`), danger label `#f38ba8`. On
+Today: **one** primary mounted (top bar "Quick add"), no console warning.
+
+
+## Stage 4 — done. The kitchen sink reviews itself
+
+`/kitchen-sink` gained a **Review controls** card: a five-theme switcher and the
+S/M/L/XL text-size control, both driving the *real* settings rather than a local
+preview. That matters — a faked theme switch would leave the JS chart palette on
+the previous theme (§I2) and let a desynced state pass review.
+
+Swept **5 themes × 3 font scales = 15 combinations**, measuring the rendered
+page rather than eyeballing it:
+
+| Checked | Result |
+|---|---|
+| Horizontal page overflow | 0 / 15 |
+| Buttons with clipped text | 0 / 15 |
+| Cards overflowing their container | 0 / 15 |
+| Control heights | 25/32/40 at S · **28/36/44** at M · 35/45/55 at XL |
+
+The heights scaling proportionally is the point: they are rem, so the whole
+control system grows with the accessibility setting instead of the label
+outgrowing its box.
+
+## Stage 6 — sweep
+
+Counts, not prose. Run after the icon, button and radius passes.
+
+| Check | Target | Actual |
+|---|---|---|
+| `lucide` references | 0 | **0** |
+| Phosphor imported outside the registry | 0 | **0** |
+| px icon sizes | 0 | **0** |
+| px font sizes (`text-[13px]`) | 0 | **0** |
+| Solid-accent buttons (`variant="default"`) | 0 | **0** |
+| Distinct control heights | 3 | **3** (28 / 36 / 44) |
+| Distinct radii | 3 | **3 principal** — `card` ×144, `pill` ×143, `control` ×137 |
+| Focus ring on every tab stop | yes | yes — one global `:focus-visible` rule plus the button system's own |
+| `prefers-reduced-motion` honoured | yes | yes — every keyframe animation is behind the query |
+
+### What the sweep did *not* clear
+
+- **34 radius stragglers**, all deliberate or side-specific: `rounded-t-*` ×12
+  (sheets and table headers), `rounded-sm`/`xs` ×11 (heatmap cells, where the
+  radius is geometry rather than chrome), `rounded-xl` ×6 on non-card
+  containers, `rounded-r/l` ×3, `rounded-none` ×2.
+- **~170 hex literals** across components and views. Sampling them shows they
+  are overwhelmingly *data*, not chrome: the Settings theme-swatch previews
+  (which must render another theme's colours while you are looking at this one),
+  chart series palettes, habit colour pickers, streak tiers. The spec's "zero
+  hex outside theme files" check needs the data cases carved out before it can
+  be a gate, which is Stage 5 work.
+- **~174 raw `<button>`** remain, judged per site in an earlier pass: row and
+  card click-surfaces, selection chips, chip internals. They are keyboard
+  visible through the global focus ring.
+- `Segmented` and `Stepper` are **not** rebuilt on `ToggleGroup` yet.
+- Per-view copy work (empty states as invitations, error text that says what to
+  do) has not started.
+
+
+## Stage 5 — done, bar container tiers
+
+### Emoji were the second icon library
+
+Caught in review, not by me: a time-of-day chip still read "🌙 Evening · 0/1"
+while everything around it was a Phosphor glyph. Stage 2 said to delete every
+other icon source *including emoji used as icons*; I converted lucide and filed
+emoji as "mostly data", which was true of the emoji a user picks for a habit and
+false of the fixed vocabularies. Emoji also ignore `currentColor`, so they stayed
+full-colour beside icons that follow the theme.
+
+Now in `components/glyphs.ts`: time-of-day slots, training splits (which
+consolidated a private second map Gym had grown), avoid markers, streak flames,
+and WMO weather codes. `lib/timeofday.ts` and `lib/fitness.ts` dropped their
+emoji fields and stay pure data — how a slot is *drawn* is a UI decision.
+
+Still emoji, because there it is content: habit and collection emoji, achievement
+badges, `EmojiScale` (the emoji *is* the scale), celebration copy, and the
+typographic bullet column.
+
+### Copy
+
+Eleven empty states became invitations ("Log a workout to see which splits you
+actually train" rather than "No workouts logged yet"). Drive's eight blocking
+`alert()` calls became toasts whose copy says what happened *and* what is still
+true — "Backup did not finish. Your journal on this device is untouched."
+
+### Hex, classified rather than counted
+
+Most remaining hex is genuinely data: the Settings theme swatches must render
+another theme's colours while you are looking at this one, and the Google "G" is
+a brand mark. **Five were bugs** — three chart tooltips hardcoded to Mocha
+(`#181825`/`#313244`/`#cdd6f4`) that stayed near-black on latte and dawn, and two
+`#11111b` label colours. `rechartsTooltip()` already existed and every other
+chart used it; nobody noticed because the chart still drew.
+
+### Codemod damage, twice
+
+The lucide→Phosphor rename used a word-boundary regex, and `Search`, `Activity`,
+`Repeat` and `Scale` are ordinary English words. Five user-visible strings shipped
+as "MagnifyingGlass your Drive…" and "PersonSimpleRun layout". A second batch
+surfaced later — "Repeat last" rendering as "ArrowsClockwise last" — which hid
+from my own grep because it skipped lines containing `as={`, exactly where a
+glyph sits beside its label.
+
+Both the hazard and the rule now live in the gate below.
+
+## Stage 6 — enforced, not audited
+
+Two scripts, both run before they were committed.
+
+**`scripts/check-design-system.mjs`** — source-level, dependency-free, one
+second. Fails CI on: a lucide import, a direct Phosphor import, a glyph name
+rendering as a label, a px icon size, a retired button variant, an off-token
+radius, emoji in the fixed vocabularies, a hardcoded colour. Writing it paid for
+itself immediately — it found six `rounded-xl` stragglers the radius codemod's
+card-shape heuristic had skipped.
+
+**`scripts/a11y-axe.mjs`** — axe-core over eight views against a production
+preview. Serious/critical fail; moderate is reported, because most moderate
+findings are contrast inside chart internals and a gate that always fails is a
+gate everyone learns to ignore. Current: **0 serious, 0 moderate**, 22 rules
+passing on Today.
+
+It asserts each view actually rendered before trusting its score. A clean result
+on a blank page is worse than no gate, because it reads as proof. Running it
+locally is also what caught `@axe-core/playwright` refusing a page created with
+`browser.newPage()`.
+
+## The bundle, after
+
+The icon set cost 413 kB raw / 93 kB gzip because Phosphor ships all six weights
+per glyph in one module and this app renders two. Per-icon entrypoints produced a
+byte-identical chunk, which proved it was the package layout rather than the
+import style.
+
+`scripts/build-icons.mjs` reads the installed package's own defs and emits only
+`regular` and `duotone`, plus the registry that wraps them — nothing hand-copied,
+so an upgrade is a re-run (`npm run icons`).
+
+| | before | after |
+|---|---|---|
+| icons chunk | 413 kB / 93 kB gzip | **134 kB / 25.8 kB** |
+| total assets | 1611 kB / 445 kB | **1339 kB / 381 kB** |
+
+`@phosphor-icons/react` is a devDependency now: after this, nothing imports it at
+runtime.
+
+## Open questions — answered
+
+All four were answered "go with the recommendation":
+
+1. Extend the existing token layer — **done**, no second bridge.
+2. oklab wash + hover step — **done**, verified in five themes.
+3. lucide → Phosphor across 85 files — **approved**, Stage 2.
+4. Icons outside the map get picked by noun and reported — **approved**.
+
+## Original open questions (for the record)
 
 1. **Bridge approach.** Recommend extending `src/styles/tokens.css` +
    `src/index.css` rather than adding `shadcn-bridge.css`, because the bridge

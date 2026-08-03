@@ -1,5 +1,6 @@
+import { ArrowSquareOut, At, UserPlus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { UserPlus, AtSign, ExternalLink } from 'lucide-react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { fetchGithubProfile } from '../lib/enrich'
@@ -60,15 +61,15 @@ export function FriendsCard() {
       <div className="mb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[45%]" />
-          <div className="flex flex-1 items-center gap-1 rounded-lg border border-input bg-background px-2">
-            <AtSign size={14} className="shrink-0 text-fg-2" />
+          <div className="flex flex-1 items-center gap-1 rounded-control border border-input bg-background px-2">
+            <Icon as={At} size="sm" className="shrink-0 text-fg-2" />
             <input value={gh} onChange={(e) => setGh(e.target.value)} placeholder="github (optional)" aria-label="GitHub username" className="w-full bg-transparent py-2 text-body text-fg-1 placeholder:text-fg-2 focus:outline-none" />
           </div>
-          <Button variant="secondary" onClick={add} className="press-3d rounded-lg inline-flex items-center gap-1.5">
-            <UserPlus size={14} /> {busy ? '…' : 'Add'}
+          <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5">
+            <Icon as={UserPlus} size="sm" /> {busy ? '…' : 'Add'}
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-label text-fg-2">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-lg border border-input bg-background px-2 py-1 text-fg-1" /></label>
+        <label className="flex items-center gap-2 text-label text-fg-2">Birthday<input type="date" value={bday} onChange={(e) => setBday(e.target.value)} className="rounded-control border border-input bg-background px-2 py-1 text-fg-1" /></label>
         <p className="text-caption text-fg-2">GitHub pull uses the official public API, only data they’ve made public. Nothing else is fetched.</p>
       </div>
 
@@ -77,10 +78,10 @@ export function FriendsCard() {
       ) : (
         <ul className="space-y-2">
           {friends.map((f) => (
-            <li key={f.id} className="group flex items-start gap-3 rounded-lg border border-line bg-ink-0 p-2">
+            <li key={f.id} className="group flex items-start gap-3 rounded-card border border-line bg-ink-0 p-2">
               {f.avatar
-                ? <img src={f.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full" />
-                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-body font-medium" style={{ background: cat('surface1'), color: cat('subtext0') }}>{f.name.slice(0, 1).toUpperCase()}</span>}
+                ? <img src={f.avatar} alt="" className="h-9 w-9 shrink-0 rounded-pill" />
+                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill text-body font-medium" style={{ background: cat('surface1'), color: cat('subtext0') }}>{f.name.slice(0, 1).toUpperCase()}</span>}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-body font-medium text-fg-1">
                   {f.name}
@@ -95,7 +96,7 @@ export function FriendsCard() {
                 <div className="mt-0.5 flex flex-wrap gap-2 text-label">
                   {(f.links ?? []).map((l) => (
                     <a key={l} href={l} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-blue hover:underline">
-                      <ExternalLink size={11} /> {new URL(l).hostname.replace('www.', '')}
+                      <Icon as={ArrowSquareOut} size="sm" /> {new URL(l).hostname.replace('www.', '')}
                     </a>
                   ))}
                   {f.github && <button onClick={() => reEnrich(f.id, f.github!)} aria-label="Refresh GitHub data" className="text-fg-2 hover:text-mauve">refresh</button>}

@@ -1,4 +1,5 @@
-import { CalendarRange, Target, Clock, Hash, CalendarCheck } from 'lucide-react'
+import { CalendarBlank, CalendarCheck, Clock, Hash, Target } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Card, StatTile } from '../ui'
 import { cat } from '../../lib/colors'
 import type { PointDiff, PickleHours, ScoringStat, PlayConsistency } from '../../lib/pickleball'
@@ -8,12 +9,12 @@ type Weekday = { day: string; games: number; gamesWon: number; winPct: number }
 /** Win % & games played by day of week. */
 export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><CalendarRange size={18} className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
       <div className="grid grid-cols-7 gap-1.5">
         {weekdays.map((w) => {
           const has = w.games > 0
           return (
-            <div key={w.day} className="rounded-md p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
+            <div key={w.day} className="rounded-control p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
               <div className="text-micro font-medium text-fg-2">{w.day}</div>
               <div className="mt-0.5 text-body font-medium" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
               <div className="text-micro text-fg-2">{has ? `${w.games}g` : ''}</div>
@@ -28,7 +29,7 @@ export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
 /** Point differential · close-game signal. */
 export function PointDifferentialCard({ points }: { points: PointDiff }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Target size={18} className="text-teal" /> Point differential</span>} subtitle={`Across ${points.sessions} ${points.sessions === 1 ? 'session' : 'sessions'} with logged points`} collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-teal" /> Point differential</span>} subtitle={`Across ${points.sessions} ${points.sessions === 1 ? 'session' : 'sessions'} with logged points`} collapsible>
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Points for" value={points.pointsFor} color="green" />
         <StatTile compact label="Points against" value={points.pointsAgainst} color="red" />
@@ -42,7 +43,7 @@ export function PointDifferentialCard({ points }: { points: PointDiff }) {
 /** Time on court (#149 time-allocation). */
 export function TimeOnCourtCard({ hours }: { hours: PickleHours }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Clock size={18} className="text-sky" /> Time on court</span>} subtitle={`From duration on ${hours.timedSessions} ${hours.timedSessions === 1 ? 'session' : 'sessions'}`} collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Clock} size="md" className="text-sky" /> Time on court</span>} subtitle={`From duration on ${hours.timedSessions} ${hours.timedSessions === 1 ? 'session' : 'sessions'}`} collapsible>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile compact label="Total hours" value={hours.hours} color="sky" />
         <StatTile compact label="Last 30d" value={`${hours.recentHours}h`} color="teal" />
@@ -57,7 +58,7 @@ export function TimeOnCourtCard({ hours }: { hours: PickleHours }) {
 /** Performance by scoring system. */
 export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Hash size={18} className="text-peach" /> Performance by scoring</span>} subtitle="Win % &amp; games by scoring system" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Hash} size="md" className="text-peach" /> Performance by scoring</span>} subtitle="Win % &amp; games by scoring system" collapsible>
       <ul className="space-y-3">
         {scoring.map((sc) => (
           <li key={sc.scoring}>
@@ -65,8 +66,8 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
               <span className="text-fg-1">{sc.label}</span>
               <span className="text-fg-2">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-ink-2" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
-              <div className="h-full rounded-full" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
+              <div className="h-full rounded-pill" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />
             </div>
           </li>
         ))}
@@ -79,7 +80,7 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
 /** Play consistency / cadence. */
 export function PlayConsistencyCard({ consistency }: { consistency: PlayConsistency }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><CalendarCheck size={18} className="text-green" /> Play consistency</span>} subtitle="How regularly you get on court" collapsible>
+    <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarCheck} size="md" className="text-green" /> Play consistency</span>} subtitle="How regularly you get on court" collapsible>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile compact label="Days played" value={consistency.daysPlayed} color="green" />
         <StatTile compact label={`Active wks / ${consistency.weeks}`} value={consistency.activeWeeks} color="teal" />

@@ -1,5 +1,6 @@
+import { ArrowSquareOut, ChatCenteredDots } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { MessageSquarePlus, ExternalLink } from 'lucide-react'
 import { Button } from '../ui/button'
 import {
   Dialog,
@@ -21,7 +22,7 @@ const CATEGORIES = [
 
 type Status = { kind: 'idle' | 'sending' } | { kind: 'sent'; url?: string } | { kind: 'error'; msg: string }
 
-const field = 'w-full rounded-md border border-line bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+const field = 'w-full rounded-card border border-line bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
 
 /**
  * In-app feedback → GitHub issue (via the /api/feedback function, which holds
@@ -65,7 +66,7 @@ export function FeedbackButton() {
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Send feedback" title="Send feedback">
-          <MessageSquarePlus size={16} />
+          <Icon as={ChatCenteredDots} size="md" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -78,7 +79,7 @@ export function FeedbackButton() {
             <DialogFooter className="sm:justify-between">
               {status.url && (
                 <a href={status.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-body text-blue hover:underline">
-                  View on GitHub <ExternalLink size={13} />
+                  View on GitHub <Icon as={ArrowSquareOut} size="sm" />
                 </a>
               )}
               <Button onClick={() => setOpen(false)}>Done</Button>

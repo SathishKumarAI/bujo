@@ -1,4 +1,7 @@
+import { Plus, Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState } from 'react'
+import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Ring } from '../components/ui/ring'
@@ -28,9 +31,47 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function KitchenSink() {
   const [seg, setSeg] = useState<'a' | 'b' | 'c'>('a')
   const [n, setN] = useState(3)
+  const { data, setSettings } = useJournal()
+  const theme = data.settings.theme ?? 'mocha'
+  const scale = data.settings.fontScale ?? 1
 
   return (
     <Page width="read">
+      {/* REVIEW CONTROLS · the two axes every stage has to be checked against,
+          on the page being reviewed rather than three clicks away in Settings.
+          They drive the real settings, not a local copy — a theme switcher that
+          only fakes it would let a desynced JS palette (§I2) pass unnoticed. */}
+      <Card title="Review controls" subtitle="Both axes drive the real settings, not a preview.">
+        <Row label="Theme">
+          <Segmented
+            value={theme}
+            onChange={(v) => setSettings({ theme: v })}
+            options={[
+              { value: 'mocha', label: 'Mocha' },
+              { value: 'latte', label: 'Latte' },
+              { value: 'neon', label: 'Neon' },
+              { value: 'vscode', label: 'VS Code' },
+              { value: 'dawn', label: 'Dawn' },
+            ]}
+          />
+        </Row>
+        <Row label="Text size">
+          <Segmented
+            value={scale}
+            onChange={(v) => setSettings({ fontScale: v })}
+            options={[
+              { value: 0.9, label: 'S' },
+              { value: 1, label: 'M' },
+              { value: 1.1, label: 'L' },
+              { value: 1.25, label: 'XL' },
+            ]}
+          />
+          <span className="text-caption text-fg-3">
+            Everything below is sized in rem, so it grows with this. If a control clips at XL, it is wrong.
+          </span>
+        </Row>
+      </Card>
+
       <Card title="Type scale" subtitle="Seven steps. Nothing outside this scale.">
         <div className="space-y-2">
           <p className="font-display text-display">Display 32 — Fraunces</p>
@@ -59,6 +100,55 @@ export function KitchenSink() {
         </div>
       </Card>
 
+      {/* Stage 1 of the icon/button pass. Every token added there is rendered
+          here, because a token you cannot see in all five themes is a token
+          nobody can review. Switch themes in Settings and re-read this card. */}
+      <Card title="Accent wash" subtitle="The tonal surface. There is no solid-fill accent button in this app.">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-control bg-brand-wash px-3 py-2 text-body font-medium text-brand-text">
+              wash 14% · rest
+            </span>
+            <span className="inline-flex items-center rounded-control bg-brand-wash-hover px-3 py-2 text-body font-medium text-brand-text">
+              wash 20% · hover
+            </span>
+            <span className="inline-flex items-center rounded-control bg-danger-wash px-3 py-2 text-body font-medium text-danger-text">
+              danger wash
+            </span>
+          </div>
+          <p className="text-label text-fg-2">
+            Mixed in oklab, not srgb — srgb drags a mix toward grey through the middle of
+            the range, worst in dawn, whose accent is an amber rather than a violet.
+          </p>
+          <p className="text-label text-fg-2">
+            The label uses <span className="text-brand-text">brand-text</span>, not{' '}
+            <span className="text-brand">brand</span>: the accent as a surface and the accent
+            as text are not the same colour. On this wash the raw accent measures 4.39:1 in
+            latte and 4.07:1 in dawn — both under AA — so those two themes darken it.
+          </p>
+        </div>
+      </Card>
+
+      <Card title="Shape & size" subtitle="Three radii, three control heights. Everything else is drift.">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-control border border-line-strong px-3 py-2 text-label">rounded-control · 8px</span>
+            <span className="rounded-card border border-line-strong px-3 py-2 text-label">rounded-card · 14px</span>
+            <span className="rounded-pill border border-line-strong px-3 py-2 text-label">rounded-pill</span>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <span className="inline-flex h-[var(--h-control-sm)] items-center rounded-control bg-ink-2 px-3 text-label">28 · sm</span>
+            <span className="inline-flex h-[var(--h-control)] items-center rounded-control bg-ink-2 px-3 text-label">36 · md</span>
+            <span className="inline-flex h-[var(--h-control-lg)] items-center rounded-control bg-ink-2 px-3 text-label">44 · lg</span>
+          </div>
+          <p className="text-label text-fg-2">
+            Heights are in rem, so they track the global text-size setting. A control sized
+            in px stops matching its own label the moment someone bumps the font scale —
+            which is exactly the person who needs the target to stay big.
+          </p>
+        </div>
+      </Card>
+
       <Card title="Surfaces">
         {/* Classes are written out, not interpolated — Tailwind scans source
             text, so a computed `bg-${s}` produces no CSS at all. */}
@@ -71,38 +161,42 @@ export function KitchenSink() {
               ['ink-3', 'bg-ink-3'],
             ] as const
           ).map(([name, cls]) => (
-            <div key={name} className={`grid h-16 w-28 place-items-center rounded-lg border border-line ${cls}`}>
+            <div key={name} className={`grid h-16 w-28 place-items-center rounded-card border border-line ${cls}`}>
               <span className="text-caption text-fg-2">{name}</span>
             </div>
           ))}
         </div>
       </Card>
 
-      <Card title="Buttons" subtitle="One system. Exactly one accent-filled primary per screen.">
+      <Card title="Buttons" subtitle="Four variants, three heights, and no solid accent fill anywhere.">
         <Row label="variant">
-          <Button>default</Button>
-          <Button variant="secondary">secondary</Button>
-          <Button variant="outline">outline</Button>
-          <Button variant="ghost">ghost</Button>
-          <Button variant="link">link</Button>
-          <Button variant="destructive">destructive</Button>
+          <Button variant="primary">Primary</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="danger">Delete</Button>
         </Row>
         <Row label="size">
-          <Button size="sm">small</Button>
-          <Button>default</Button>
-          <Button size="lg">large</Button>
+          <Button variant="secondary" size="sm">28 · sm</Button>
+          <Button variant="secondary">36 · md</Button>
+          <Button variant="secondary" size="lg">44 · lg</Button>
+        </Row>
+        <Row label="icon-only">
+          <Button variant="ghost" size="icon-sm" aria-label="Delete entry"><Icon as={Trash} size="sm" /></Button>
+          <Button variant="ghost" size="icon" aria-label="Add entry"><Icon as={Plus} /></Button>
+          <span className="text-caption text-fg-3">Both carry an aria-label — an icon is not a name.</span>
         </Row>
         <Row label="disabled">
-          <Button disabled>default</Button>
-          <Button variant="secondary" disabled>
-            secondary
-          </Button>
-          <Button variant="destructive" disabled>
-            destructive
-          </Button>
+          <Button variant="primary" disabled>Primary</Button>
+          <Button variant="secondary" disabled>Secondary</Button>
+          <Button variant="danger" disabled>Delete</Button>
         </Row>
         <Row label="keyboard focus">
-          <span className="text-caption text-fg-3">Tab through the row above — every control shows the global focus ring.</span>
+          <span className="text-caption text-fg-3">Tab through the rows above — every control shows the focus ring, at 2px offset.</span>
+        </Row>
+        <Row label="the rule">
+          <span className="text-caption text-fg-3">
+            One primary per screen. A dev-only check warns in the console when a route mounts two.
+          </span>
         </Row>
       </Card>
 

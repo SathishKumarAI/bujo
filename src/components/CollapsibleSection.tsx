@@ -1,5 +1,7 @@
+import { CaretDown, CaretRight, CaretUp } from '@/components/icons'
+import type { Icon as IconGlyph } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, type ReactNode } from 'react'
-import { ChevronDown, ChevronRight, ChevronUp, type LucideIcon } from 'lucide-react'
 import { cat } from '../lib/colors'
 import { useStickyState } from '../lib/useStickyState'
 
@@ -17,13 +19,13 @@ const OPEN_STATES = ['1', '0'] as const
  *             page that is already a stack of cards (Trackers, Focus, Stats).
  *
  * `icon` takes either a Lucide component (`icon={Layers}`) or a rendered node
- * (`icon={<Heart size={18} />}`) — the three implementations this replaces had
+ * (`icon={<AppIcon as={Heart} size="md" />}`) — the three implementations this replaces had
  * settled on different conventions and both call styles are still in use.
  */
 type Props = {
   title: ReactNode
   subtitle?: ReactNode
-  icon?: LucideIcon | ReactNode
+  icon?: IconGlyph | ReactNode
   color?: string
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
@@ -72,8 +74,8 @@ export function CollapsibleSection({
   if (icon) {
     if (isValidElement(icon)) iconNode = icon
     else {
-      const Icon = icon as LucideIcon
-      iconNode = <Icon size={18} style={{ color: cat(color) }} />
+      const Icon = icon as IconGlyph
+      iconNode = <AppIcon as={Icon} size="md" style={{ color: cat(color) }} />
     }
   }
 
@@ -91,10 +93,10 @@ export function CollapsibleSection({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="press-3d flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left hover:text-fg-1"
+          className="press-3d flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
         >
           <span className="text-fg-2">
-            {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {open ? <AppIcon as={CaretDown} size="md" /> : <AppIcon as={CaretRight} size="md" />}
           </span>
           {iconNode}
           <span className="font-display text-heading font-medium text-fg-1">{title}</span>
@@ -116,7 +118,7 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="press-3d group/sec flex w-full items-center gap-3 rounded-2xl border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
+        className="press-3d group/sec flex w-full items-center gap-3 rounded-card border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
         {iconNode}
         <span className="min-w-0">
@@ -124,7 +126,7 @@ export function CollapsibleSection({
           {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
         </span>
         <span className="ml-auto text-fg-2 transition-colors group-hover/sec:text-fg-1">
-          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
         </span>
       </button>
       </h2>

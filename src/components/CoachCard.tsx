@@ -1,4 +1,5 @@
-import { Compass, ArrowRight, CheckCircle2, Dumbbell, Sparkles } from 'lucide-react'
+import { ArrowRight, Barbell, CheckCircle, Compass, Sparkle } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { Card } from './ui'
@@ -9,8 +10,8 @@ import type { ViewId } from './shell/viewChrome'
 
 const TONE = {
   do: { color: 'mauve', Icon: ArrowRight },
-  win: { color: 'green', Icon: CheckCircle2 },
-  info: { color: 'blue', Icon: Dumbbell },
+  win: { color: 'green', Icon: CheckCircle },
+  info: { color: 'blue', Icon: Barbell },
 } as const
 
 /**
@@ -25,21 +26,21 @@ export function CoachCard() {
   if (tips.length === 0) return null
 
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Compass size={18} className="text-mauve" /> Your coach</span>} subtitle="What to focus on next, from your data">
+    <Card title={<span className="inline-flex items-center gap-2"><AppIcon as={Compass} size="md" className="text-mauve" /> Your coach</span>} subtitle="What to focus on next, from your data">
       <ul className="space-y-2">
         {tips.map((t) => {
           const { color, Icon } = TONE[t.tone]
           return (
             <li key={t.id}>
-              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-lg border border-line bg-ink-0 p-3 text-left hover:border-mauve">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ background: cat(color) + '22' }}>
-                  <Icon size={13} style={{ color: cat(color) }} />
+              <button onClick={() => nav(t.to as ViewId)} className="press-3d flex w-full items-start gap-2.5 rounded-card border border-line bg-ink-0 p-3 text-left hover:border-mauve">
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill" style={{ background: cat(color) + '22' }}>
+                  <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-body font-medium text-fg-1">{t.title}</span>
                   <span className="block text-label text-fg-2">{t.detail}</span>
                 </span>
-                <Sparkles size={13} className="mt-1 shrink-0 text-fg-2" />
+                <AppIcon as={Sparkle} size="sm" className="mt-1 shrink-0 text-fg-2" />
               </button>
             </li>
           )

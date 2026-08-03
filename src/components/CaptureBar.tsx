@@ -1,5 +1,6 @@
+import { Barbell, CheckCircle, Footprints, Heartbeat, PencilSimple, SlidersHorizontal } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
-import { Dumbbell, Footprints, HeartPulse, CheckCircle2, PenLine, SlidersHorizontal } from 'lucide-react'
 import { useJournal } from '../store'
 
 import { SmartInput } from './SmartInput'
@@ -18,13 +19,13 @@ import { Button } from './ui/button'
 // plain journal bullet. The parsing is deterministic and local (lib/capture.ts);
 // this component only renders the preview and dispatches to existing mutators.
 
-type KindMeta = { label: string; color: string; icon: typeof Dumbbell }
+type KindMeta = { label: string; color: string; icon: typeof Barbell }
 const KIND: Record<CaptureResult['kind'], KindMeta> = {
-  gym: { label: 'Gym', color: 'mauve', icon: Dumbbell },
+  gym: { label: 'Gym', color: 'mauve', icon: Barbell },
   cardio: { label: 'Cardio', color: 'peach', icon: Footprints },
-  metric: { label: 'Wellbeing', color: 'green', icon: HeartPulse },
-  habit: { label: 'Habit', color: 'blue', icon: CheckCircle2 },
-  bullet: { label: 'Journal', color: 'subtext1', icon: PenLine },
+  metric: { label: 'Wellbeing', color: 'green', icon: Heartbeat },
+  habit: { label: 'Habit', color: 'blue', icon: CheckCircle },
+  bullet: { label: 'Journal', color: 'subtext1', icon: PencilSimple },
 }
 
 /** Human summary of what a parsed result will create. */
@@ -202,7 +203,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           aria-label="Smart capture"
         />
         <MicButton onText={(t) => { setVal((v) => (v ? `${v} ${t}` : t)); setDraft(null) }} />
-        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-lg">
+        <Button type="button" variant="secondary" onClick={() => add(val)} className="press-3d rounded-control">
           Add
         </Button>
       </div>
@@ -211,13 +212,13 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {(templates.length > 0 || val.trim()) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {templates.map((t) => (
-            <span key={t} className="group inline-flex items-center gap-1 rounded-full bg-ink-2 px-2 py-0.5 text-label text-fg-1">
+            <span key={t} className="group inline-flex items-center gap-1 rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-1">
               <button onClick={() => setVal(t)} className="hover:text-fg-1">{t}</button>
               <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (
-            <Button variant="outline" size="sm" onClick={saveTemplate} className="h-auto rounded-full border-dashed px-2 py-0.5 text-label text-fg-2">+ save as template</Button>
+            <Button variant="secondary" size="sm" onClick={saveTemplate} className="h-auto rounded-pill border-dashed px-2 py-0.5 text-label text-fg-2">+ save as template</Button>
           )}
         </div>
       )}
@@ -226,7 +227,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {parsed && meta && Icon && (
         <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-label text-fg-2">
           <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>
-            <Icon size={11} /> {meta.label}
+            <AppIcon as={Icon} size="sm" /> {meta.label}
           </span>
           <span className="text-fg-1">{describe(draft ?? parsed) || '…'}</span>
           {canEdit(parsed) && (
@@ -235,7 +236,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
               onClick={() => setDraft((d) => d ?? parsed)}
               className="inline-flex items-center gap-1 text-fg-2 hover:text-mauve"
             >
-              <SlidersHorizontal size={11} /> edit fields
+              <AppIcon as={SlidersHorizontal} size="sm" /> edit fields
             </button>
           )}
         </p>
@@ -243,7 +244,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
 
       {/* Structured editor · pre-filled from the parse, tap to adjust, no typing. */}
       {draft && (
-        <div className="mt-2 rounded-lg border border-line bg-ink-0 p-3">
+        <div className="mt-2 rounded-card border border-line bg-ink-0 p-3">
           <div className="flex flex-wrap items-end gap-3">
             {draft.kind === 'gym' && (
               <>
@@ -267,8 +268,8 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
             )}
           </div>
           <div className="mt-3 flex gap-2">
-            <Button variant="secondary" onClick={() => commitAndClear(draft)} className="press-3d rounded-lg">Add</Button>
-            <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-lg">Cancel</Button>
+            <Button variant="secondary" onClick={() => commitAndClear(draft)} className="press-3d rounded-control">Add</Button>
+            <Button variant="secondary" onClick={() => setDraft(null)} className="press-3d rounded-control">Cancel</Button>
           </div>
         </div>
       )}

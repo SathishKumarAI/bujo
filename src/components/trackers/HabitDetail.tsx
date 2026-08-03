@@ -1,5 +1,6 @@
+import { FadersHorizontal, Flame, Prohibit, ShareNetwork, ShieldCheck, X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { createPortal } from 'react-dom'
-import { X, Flame, ShieldCheck, Settings2, Ban, Share2 } from 'lucide-react'
 import { StatTile } from '../ui'
 import { cat } from '../../lib/colors'
 import { addDays, fromISODay, todayISO, WEEKDAYS } from '../../lib/date'
@@ -98,7 +99,7 @@ export function HabitDetail({
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
       <div
         ref={trap}
-        className="card-3d w-full max-w-2xl overflow-hidden rounded-xl border border-line-strong bg-ink-1"
+        className="card-3d w-full max-w-2xl overflow-hidden rounded-card border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -106,21 +107,21 @@ export function HabitDetail({
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-heading">{avoid ? <Ban size={18} style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+            <span className="text-heading">{avoid ? <Icon as={Prohibit} size="md" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
             <h2 className="truncate font-display text-heading text-fg-1">{h.name}</h2>
             {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Share2 size={13} /> Share</Button>
-            <Button variant="outline" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Settings2 size={13} /> Edit</Button>
-            <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><X size={18} /></Button>
+            <Button variant="secondary" size="sm" onClick={shareImage} aria-label="Share grid as image" title="Share grid as image" className="gap-1 text-label"><Icon as={ShareNetwork} size="sm" /> Share</Button>
+            <Button variant="secondary" size="sm" onClick={onEdit} aria-label="Edit habit settings" title="Edit settings" className="gap-1 text-label"><Icon as={FadersHorizontal} size="sm" /> Edit</Button>
+            <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
           </div>
         </div>
 
         <div className="space-y-4 p-5">
           {/* Stat tiles */}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            <StatTile compact label={avoid ? 'clean' : 'streak'} value={<span className="inline-flex items-center gap-0.5">{avoid ? <ShieldCheck size={13} /> : <Flame size={13} />}{streak}</span>} color={avoid ? 'green' : 'peach'} />
+            <StatTile compact label={avoid ? 'clean' : 'streak'} value={<span className="inline-flex items-center gap-0.5">{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</span>} color={avoid ? 'green' : 'peach'} />
             <StatTile compact label="best ever" value={best} color="mauve" />
             <StatTile compact label="30-day" value={`${r30.pct}%`} color="green" />
             <StatTile compact label="90-day" value={`${r90.pct}%`} color="teal" />
@@ -135,8 +136,8 @@ export function HabitDetail({
                 <span className="text-fg-2">Habit strength</span>
                 <span style={{ color: cat(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-ink-2">
-                <div className="h-full rounded-full transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
+              <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
+                <div className="h-full rounded-pill transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
               </div>
             </div>
           )}

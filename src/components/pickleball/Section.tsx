@@ -1,5 +1,6 @@
+import { CaretDown, CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cat } from '../../lib/colors'
 
 /**
@@ -31,10 +32,10 @@ export function Section({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-xl border border-line bg-card px-4 py-3 text-left transition-colors hover:border-line-strong"
+        className="flex w-full items-center gap-2 rounded-card border border-line bg-card px-4 py-3 text-left transition-colors hover:border-line-strong"
       >
         <span className="text-fg-2" style={{ color: cat('overlay0') }}>
-          {open ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+          {open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}
         </span>
         {icon}
         <span className="font-display text-heading font-medium text-fg-1 sm:text-heading">{title}</span>

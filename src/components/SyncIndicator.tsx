@@ -1,5 +1,6 @@
+import { Icon as AppIcon } from '@/components/Icon'
+import { Cloud, CloudCheck, CloudWarning } from '@/components/icons'
 import { useEffect, useState } from 'react'
-import { Cloud, CloudCheck, CloudAlert } from 'lucide-react'
 import { cat } from '../lib/colors'
 import type { SyncState } from '../lib/bujocloud'
 
@@ -26,11 +27,11 @@ export function SyncIndicator() {
     ? { Icon: Cloud, color: 'subtext0', text: 'Syncing…' }
     : state === 'synced'
       ? { Icon: CloudCheck, color: 'green', text: 'Synced' }
-      : { Icon: CloudAlert, color: 'red', text: 'Sync failed' }
+      : { Icon: CloudWarning, color: 'red', text: 'Sync failed' }
   const Icon = meta.Icon
   return (
-    <div className="sheet-up fixed right-3 bottom-20 z-40 inline-flex items-center gap-1.5 rounded-full border border-line bg-card/95 px-3 py-1.5 text-label shadow-lg backdrop-blur md:bottom-4" style={{ color: cat(meta.color) }}>
-      <Icon size={14} className={state === 'syncing' ? 'animate-pulse' : ''} /> {meta.text}
+    <div className="sheet-up fixed right-3 bottom-20 z-40 inline-flex items-center gap-1.5 rounded-pill border border-line bg-card/95 px-3 py-1.5 text-label shadow-lg backdrop-blur md:bottom-4" style={{ color: cat(meta.color) }}>
+      <AppIcon as={Icon} size="sm" className={state === 'syncing' ? 'animate-pulse' : ''} /> {meta.text}
     </div>
   )
 }

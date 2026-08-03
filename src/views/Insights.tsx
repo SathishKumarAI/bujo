@@ -1,5 +1,7 @@
+import { Barbell, BookOpen, Cake, FileText, Flame, Image, Minus, PersonSimpleRun, Smiley, Sparkle, Sun, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
+import type { Icon as IconGlyph } from '@/components/icons'
+import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
-import { FileText, Smile, Dumbbell, Image as ImageIcon, Flame, Cake, BookOpen, TrendingUp, TrendingDown, Minus, Sparkles, Trophy, AlertTriangle, Sun, Activity, type LucideIcon } from 'lucide-react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -101,7 +103,7 @@ export function Insights() {
                 key={k}
                 onClick={() => setKind(k)}
                 aria-pressed={kind === k}
-                className={`rounded-full px-2.5 py-0.5 text-label capitalize transition-colors ${
+                className={`rounded-pill px-2.5 py-0.5 text-label capitalize transition-colors ${
                   kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
                 }`}
               >
@@ -158,13 +160,13 @@ export function Insights() {
             <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-body">
               {digest.win && (
                 <p className="flex items-center gap-2">
-                  <Trophy size={14} style={{ color: cat('green') }} />
+                  <AppIcon as={Trophy} size="sm" style={{ color: cat('green') }} />
                   <span className="text-fg-1">{digest.win}</span>
                 </p>
               )}
               {digest.slip && (
                 <p className="flex items-center gap-2">
-                  <AlertTriangle size={14} style={{ color: cat('peach') }} />
+                  <AppIcon as={Warning} size="sm" style={{ color: cat('peach') }} />
                   <span className="text-fg-1">{digest.slip}</span>
                 </p>
               )}
@@ -174,7 +176,7 @@ export function Insights() {
 
         <Card title="Coach digest" subtitle="What to focus on next">
           <p className="mb-3 flex items-center gap-2 text-body font-medium text-fg-1">
-            <Sparkles size={15} style={{ color: cat('mauve') }} />
+            <AppIcon as={Sparkle} size="sm" style={{ color: cat('mauve') }} />
             {coach.headline}
           </p>
           {coach.tips.length > 0 && (
@@ -183,7 +185,7 @@ export function Insights() {
                 <li key={t.id}>
                   <button
                     onClick={() => nav(t.to as Parameters<typeof nav>[0])}
-                    className="w-full rounded-lg border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
+                    className="w-full rounded-card border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
                   >
                     <span className="font-medium text-fg-1">{t.title}</span>
                     <span className="block text-label text-fg-2">{t.detail}</span>
@@ -230,13 +232,13 @@ export function Insights() {
             {momentum.map((m) => {
               // Stress is inverted: a drop is good. Everything else: up is good.
               const good = m.key === 'stress' ? m.dir === 'down' : m.dir === 'up'
-              const Icon = m.dir === 'up' ? TrendingUp : m.dir === 'down' ? TrendingDown : Minus
+              const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
               const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
               return (
-                <li key={m.key} className="rounded-xl border border-line bg-ink-0 p-3">
+                <li key={m.key} className="rounded-card border border-line bg-ink-0 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-label text-fg-2">{m.label}</span>
-                    <Icon size={14} style={{ color: cat(color) }} />
+                    <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
                   </div>
                   <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
                   <p className="text-label" style={{ color: cat(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
@@ -253,7 +255,7 @@ export function Insights() {
 
       <p className="text-label text-fg-2">
         Task migration &amp; aging live in{' '}
-        <Button variant="link" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
+        <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
       </p>
 
       {/* 5) Mood analytics — collapsed. */}
@@ -263,7 +265,7 @@ export function Insights() {
           {moodWd.best && moodWd.worst && (
             <Card title="Best & worst day" subtitle="When your mood runs brightest">
               <div className="mb-3 flex items-center gap-2 text-body">
-                <Sun size={15} style={{ color: cat('yellow') }} />
+                <AppIcon as={Sun} size="sm" style={{ color: cat('yellow') }} />
                 <span className="text-fg-1">
                   Brightest on <strong className="text-fg-1">{moodWd.best.label}</strong> ({moodWd.best.avg}/10),
                   dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
@@ -339,8 +341,8 @@ export function Insights() {
             ) : (
               <>
                 <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-2">
-                  <div className="h-full rounded-full" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
                 </div>
                 <p className="mt-2 text-label text-fg-2">Recent days count more, so this tracks your momentum — not just a flat average.</p>
               </>
@@ -372,7 +374,7 @@ export function Insights() {
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
         <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
-        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="link" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
+        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
             <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />
@@ -397,9 +399,9 @@ export function Insights() {
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-body text-fg-1">
             <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
-            <ReviewRow icon={Smile} color="green" label={`average mood${avgMood != null ? ' / 10' : ''}`} value={avgMood ?? '—'} />
-            <ReviewRow icon={Dumbbell} color="teal" label="workouts" value={workouts} />
-            <ReviewRow icon={ImageIcon} color="mauve" label="photos kept" value={photos} />
+            <ReviewRow icon={Smiley} color="green" label={`average mood${avgMood != null ? ' / 10' : ''}`} value={avgMood ?? '—'} />
+            <ReviewRow icon={Barbell} color="teal" label="workouts" value={workouts} />
+            <ReviewRow icon={Image} color="mauve" label="photos kept" value={photos} />
             <ReviewRow icon={Flame} color="peach" label="day longest streak" value={best} />
             <ReviewRow icon={Cake} color="pink" label="birthdays tracked" value={data.birthdays.length} />
           </ul>
@@ -407,13 +409,13 @@ export function Insights() {
 
         <Card title="Index" subtitle="Every month with entries">
           {months.length === 0 ? (
-            <Empty>No months logged yet.</Empty>
+            <Empty>Log entries on a few days to fill in the index.</Empty>
           ) : (
             <ul className="grid grid-cols-2 gap-1 text-body">
               {months.map((ym) => (
                 <li key={ym}>
                   <button onClick={() => { setMonth(ym); nav('monthly') }} className="inline-flex w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-fg-1 hover:bg-ink-2 hover:text-fg-1">
-                    <BookOpen size={14} style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
+                    <AppIcon as={BookOpen} size="sm" style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
                   </button>
                 </li>
               ))}
@@ -426,7 +428,7 @@ export function Insights() {
         <Card title="Personal records" subtitle="Your bests so far">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {records.map((r) => (
-              <div key={r.label} className="rounded-xl border border-line bg-ink-0 p-3">
+              <div key={r.label} className="rounded-card border border-line bg-ink-0 p-3">
                 <p className="text-body font-medium text-fg-1">{r.value}</p>
                 <p className="text-label text-fg-2">{r.label}</p>
               </div>
@@ -446,12 +448,12 @@ export function Insights() {
 }
 
 function PickStat({ label, value, color, trend }: { label: string; value: string; color: string; trend?: 'up' | 'down' | 'flat' | null }) {
-  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  const TrendIcon = trend === 'up' ? TrendUp : trend === 'down' ? TrendDown : Minus
   return (
-    <li className="rounded-xl border border-line bg-ink-0 p-3">
+    <li className="rounded-card border border-line bg-ink-0 p-3">
       <div className="flex items-center justify-between">
         <span className="text-label text-fg-2">{label}</span>
-        {trend && <TrendIcon size={13} style={{ color: cat(color) }} />}
+        {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(color) }} />}
       </div>
       <p className="mt-1 text-heading font-medium tabular-nums" style={{ color: cat(color) }}>{value}</p>
     </li>
@@ -460,15 +462,15 @@ function PickStat({ label, value, color, trend }: { label: string; value: string
 
 function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
   return (
-    <div className="rounded-xl border border-line bg-ink-0 p-3">
+    <div className="rounded-card border border-line bg-ink-0 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
       <p className="flex items-center gap-1.5 text-fg-1">
-        <Activity size={14} style={{ color: cat('mauve') }} />
+        <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />
         <strong className="tabular-nums">{habit == null ? '—' : Math.round(habit * 100) + '%'}</strong>
         <span className="text-label text-fg-2">habits</span>
       </p>
       <p className="mt-1 flex items-center gap-1.5 text-fg-1">
-        <Smile size={14} style={{ color: cat('green') }} />
+        <AppIcon as={Smiley} size="sm" style={{ color: cat('green') }} />
         <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
         <span className="text-label text-fg-2">mood</span>
       </p>
@@ -477,10 +479,10 @@ function SplitCol({ label, habit, mood, days }: { label: string; habit: number |
   )
 }
 
-function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; color: string; label: string; value: number | string }) {
+function ReviewRow({ icon: Icon, color, label, value }: { icon: IconGlyph; color: string; label: string; value: number | string }) {
   return (
     <li className="flex items-center gap-2">
-      <Icon size={15} style={{ color: cat(color) }} />
+      <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
       <strong className="text-fg-1">{value}</strong>
       <span>{label}</span>
     </li>
@@ -488,7 +490,7 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: LucideIcon; colo
 }
 
 function Big({ label, value, color, sub, suffix = '', ring, max = 100, trend, trendLabel, onClick }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number; trend?: PeriodTrend; trendLabel?: string; onClick?: () => void }) {
-  const TrendIcon = trend?.dir === 'up' ? TrendingUp : trend?.dir === 'down' ? TrendingDown : Minus
+  const TrendIcon = trend?.dir === 'up' ? TrendUp : trend?.dir === 'down' ? TrendDown : Minus
   const trendColor = trend?.dir === 'up' ? 'green' : trend?.dir === 'down' ? 'red' : 'overlay0'
   return (
     <Card className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
@@ -503,7 +505,7 @@ function Big({ label, value, color, sub, suffix = '', ring, max = 100, trend, tr
       {sub && <div className="text-label text-fg-2">{sub}</div>}
       {trend && (
         <div className="mt-1 flex items-center gap-1 text-label" style={{ color: cat(trendColor) }} title={trendLabel}>
-          <TrendIcon size={13} />
+          <AppIcon as={TrendIcon} size="sm" />
           <span>{trend.dir === 'flat' ? 'flat' : `${trend.pct > 0 ? '+' : ''}${trend.pct}%`}</span>
         </div>
       )}

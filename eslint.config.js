@@ -6,7 +6,18 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `@/` is not source. The shadcn CLI cannot resolve this repo's `@` alias —
+  // the root tsconfig is solution-style (`files: []` + project references) and
+  // carries no `paths` — so `shadcn add` writes its output into a literal `@`
+  // directory at the repo root instead of `src/components/ui`. The files that
+  // were wanted are copied into place by hand; what is left is stock upstream
+  // output kept for diffing against the next `shadcn add`, and it should not be
+  // linted or committed (see .gitignore).
+  // `.claude/worktrees/*` are git worktrees other sessions check out inside the
+  // repo. They contain a full second copy of the app, so linting them doubles
+  // every finding — and because each carries its own tsconfig, typescript-eslint
+  // cannot decide which root it is looking at and errors on every file.
+  globalIgnores(['dist', '@', '.claude/worktrees']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
