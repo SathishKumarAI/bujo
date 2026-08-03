@@ -74,6 +74,28 @@ export function cat(name: string): string {
   return activePalette[name] || CAT[name] || CAT.mauve
 }
 
+/**
+ * The three things an accent is ever asked to do at less than full strength,
+ * named — because call sites were writing `cat('peach') + '66'` next to
+ * `cat(c.color) + '55'` next to `+ '11'` and meaning the same thing by two of
+ * them. `Pill`'s docstring already names this failure ("`22` here, `33` there,
+ * for the same visual intent"); this is the same fix for the surfaces `Pill`
+ * cannot cover, i.e. the ones that are clickable or are not pills.
+ *
+ * - `wash`  — the accent as a background a thing sits *on*. Matches `Pill`.
+ * - `quiet` — the same background for a state that is finished or spent, so it
+ *             recedes without changing hue.
+ * - `edge`  — the accent as a hairline border.
+ *
+ * Alpha is an 8-digit hex suffix, so this requires `cat()` to return 6-digit
+ * hex. It does; every palette above is written that way.
+ */
+const ALPHA = { wash: '22', quiet: '14', edge: '55' } as const
+
+export function catA(name: string, role: keyof typeof ALPHA): string {
+  return cat(name) + ALPHA[role]
+}
+
 /** Theme-aware recharts `<Tooltip contentStyle>`. A function (not a const) so it
  *  reads the live palette each render — otherwise it freezes on load-time Mocha. */
 export function rechartsTooltip() {

@@ -2,7 +2,7 @@ import { ArrowClockwise, CaretDown, CaretUp, Sword } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat } from '../lib/colors'
+import { cat, catA } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTier } from '../lib/penalties'
 import { Card, Pill } from './ui'
@@ -52,7 +52,7 @@ export function PenaltyCard() {
               <li key={i} className="flex gap-2"><span className="text-fg-2">·</span>{it}</li>
             ))}
           </ul>
-          <div className="rounded-xl border p-3" style={{ borderColor: cat(meta.color) + '55', background: cat(meta.color) + '11' }}>
+          <div className="rounded-xl border p-3" style={{ borderColor: catA(meta.color, 'edge'), background: catA(meta.color, 'quiet') }}>
             <p className="font-display text-heading font-medium" style={{ color: cat(meta.color) }}>{penalty.title}</p>
             <p className="text-body text-fg-1">{task} <span className="text-label text-fg-2">{level}</span></p>
           </div>
