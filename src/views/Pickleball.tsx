@@ -11,7 +11,7 @@ import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
-import { Section } from '../components/pickleball/Section'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
@@ -502,49 +502,49 @@ export function Pickleball() {
       {/* ── SECONDARY analytics · grouped under collapsible sections so the
             primary logging + history UI above stays uncluttered. All analytics
             groups default collapsed so open analytics don't dominate the view. ── */}
-      <Section
+      <CollapsibleSection
         title="Form & momentum"
         icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
-        hint="Recent form · forecast · milestones · intensity"
+        subtitle="Recent form · forecast · milestones · intensity"
       >
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
         {forecast.ready && <WinRateForecastCard forecast={forecast} />}
         <MilestonesCard milestones={milestones} />
         {load.sessions > 0 && <SessionIntensityCard load={load} />}
-      </Section>
+      </CollapsibleSection>
 
-      <Section
+      <CollapsibleSection
         title="Opponents, partners & venues"
         icon={<Icon as={Sword} size="md" className="text-red" />}
-        hint="Chemistry · courts · rivalries · level matchups"
+        subtitle="Chemistry · courts · rivalries · level matchups"
       >
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
         {venues.length > 0 && <VenuesCard venues={venues} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-      </Section>
+      </CollapsibleSection>
 
-      <Section
+      <CollapsibleSection
         title="Deeper signals"
         icon={<Icon as={ChartBar} size="md" className="text-blue" />}
-        hint="Weekday · points · time · scoring · consistency"
+        subtitle="Weekday · points · time · scoring · consistency"
       >
         {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
         {points.sessions > 0 && <PointDifferentialCard points={points} />}
         {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
         {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
         {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
-      </Section>
+      </CollapsibleSection>
 
       {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
             section so they don't strand on mobile. ── */}
-      <Section
+      <CollapsibleSection
         title="Charts"
         icon={<Icon as={ChartBar} size="md" className="text-teal" />}
-        hint="Trends · volume · heatmap · tap ⛶ to enlarge"
+        subtitle="Trends · volume · heatmap · tap ⛶ to enlarge"
       >
         {charts}
-      </Section>
+      </CollapsibleSection>
 
       <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">

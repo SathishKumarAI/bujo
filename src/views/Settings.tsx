@@ -1,4 +1,4 @@
-import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Database, Download, FileText, Palette, SlidersHorizontal, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
+import { ArrowsClockwise, Bell, CalendarBlank, Cloud, Database, Download, FileText, Palette, SlidersHorizontal, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useRef, useState, useEffect } from 'react'
 import { useJournal } from '../store'
@@ -21,6 +21,7 @@ import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender, ThemeName } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
+import { QuietSection } from '../components/CollapsibleSection'
 
 /** Selectable themes (swatch = base / surface / accent) for the Settings picker. */
 const THEMES: { value: ThemeName; label: string; hint: string; swatch: [string, string, string] }[] = [
@@ -40,29 +41,6 @@ function download(filename: string, text: string, mime = 'application/json') {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
-}
-
-/** Self-managed collapsible settings section (SET-5) — one disclosure primitive
- *  instead of the three ad-hoc toggle buttons this page used to repeat. */
-function Disclosure({ title, subtitle, defaultOpen = false, children }: {
-  title: string; subtitle?: string; defaultOpen?: boolean; children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <section className="space-y-4">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-      >
-        <span className="text-fg-2">{open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-        <span className="font-display text-heading font-medium text-fg-1">{title}</span>
-        {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
-      </button>
-      {open && children}
-    </section>
-  )
 }
 
 export function Settings() {
@@ -332,13 +310,13 @@ export function Settings() {
           </div>
           {/* Advanced · BYO-storage / self-host, collapsed to cut option overload. */}
           <div className="mt-5">
-            <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage">
+            <QuietSection title="Advanced sync" subtitle="self-host & bring-your-own storage">
               <div className="space-y-5">
                 <SelfHostCard />
                 <CloudStorage />
                 <DriveSync />
               </div>
-            </Disclosure>
+            </QuietSection>
           </div>
         </TabsContent>
 
@@ -411,7 +389,7 @@ export function Settings() {
         {s.lastBackup && <p className="mt-2 text-label text-fg-2">Last backup: {s.lastBackup}</p>}
         {/* SET-2: power-user exports fold away so Export/Import JSON stays the hero. */}
         <div className="mt-3 space-y-3 border-t border-line pt-3">
-          <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
+          <QuietSection title="Export for spreadsheets (CSV)" subtitle="one file per section">
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
               <Button variant="secondary" onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
@@ -439,8 +417,8 @@ export function Settings() {
               <Button variant="secondary" onClick={() => csvRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Import metrics CSV</Button>
               <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
             </div>
-          </Disclosure>
-          <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
+          </QuietSection>
+          <QuietSection title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
             <div className="space-y-2">
               <div>
                 <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Habit reminders (.ics)</Button>
@@ -455,15 +433,15 @@ export function Settings() {
                 <p className="mt-1 text-label text-fg-2">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
-          </Disclosure>
-          <Disclosure title="Backup integrity" subtitle="checksum & verify a file">
+          </QuietSection>
+          <QuietSection title="Backup integrity" subtitle="checksum & verify a file">
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export checksummed backup</Button>
               <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>
             <p className="mt-1 text-label text-fg-2">Stamps an export with a checksum so you can later confirm the file wasn’t truncated or corrupted in storage. Verify reports intact / corrupted without changing your data.</p>
-          </Disclosure>
+          </QuietSection>
           <p className="text-label text-fg-2">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
@@ -523,7 +501,7 @@ export function Settings() {
             if (sum.totalRecords === 0) return null
             return (
               <section className="mt-6 space-y-5">
-                <Disclosure title="Journal summary" subtitle="the span and shape of everything you've tracked">
+                <QuietSection title="Journal summary" subtitle="the span and shape of everything you've tracked">
                   <Card title="Journal summary" subtitle="The span and shape of everything you've tracked">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
@@ -551,7 +529,7 @@ export function Settings() {
                     )}
                     <p className="mt-2 text-label text-fg-2">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
                   </Card>
-                </Disclosure>
+                </QuietSection>
               </section>
             )
           })()}

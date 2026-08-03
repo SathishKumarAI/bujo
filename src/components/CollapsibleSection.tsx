@@ -34,6 +34,11 @@ type Props = {
    *  that is deliberately closed every visit (a rarely-read appendix) should
    *  not silently start staying open. */
   stickyKey?: string
+  /** Drive the fold from the parent — for sections something else has to be
+   *  able to open (Collections jumps to a tag page inside Auto-pages). Pair
+   *  with `onOpenChange`; omit both to let the section own the state. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   children: ReactNode
 }
 
@@ -45,6 +50,8 @@ export function CollapsibleSection({
   variant = 'card',
   defaultOpen = false,
   stickyKey,
+  open: openProp,
+  onOpenChange,
   children,
 }: Props) {
   const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
@@ -52,8 +59,11 @@ export function CollapsibleSection({
     defaultOpen ? '1' : '0',
     OPEN_STATES,
   )
-  const open = openFlag === '1'
-  const setOpen = (next: boolean) => setOpenFlag(next ? '1' : '0')
+  const open = openProp ?? openFlag === '1'
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setOpenFlag(next ? '1' : '0')
+    onOpenChange?.(next)
+  }
 
   // A Lucide icon arrives as a component; a pre-rendered node arrives as an element.
   let iconNode: ReactNode = null
