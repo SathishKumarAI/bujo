@@ -10,17 +10,26 @@ import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
 
 /**
- * Tick today's check-habits without leaving Today. Habitify-style: habits are
- * grouped by time of day (Morning / Afternoon / Evening / Anytime) with the
- * current slot surfaced first, and a completion ring shows the day's progress.
+ * Tick a day's check-habits without leaving it.
+ *
+ * Two presentations of the same component, never two components:
+ *
+ * - `pills`     — the Day surface. A flat row of tappable pills under the log,
+ *                 no time-of-day headers. You are mid-day; you know what time
+ *                 it is.
+ * - `checklist` — the Evening surface. A close-out list, one habit per row,
+ *                 grouped by slot so the sweep down the day reads in order.
+ *
+ * The `date` is a prop rather than `todayISO()` because days are routable now:
+ * reading the clock here would have shown today's habits while the rest of the
+ * page showed some other day.
  */
-export function TodayHabits() {
+export function TodayHabits({ date, variant = 'pills' }: { date?: string; variant?: 'pills' | 'checklist' } = {}) {
   const { data, toggleHabit, setHabitNote } = useJournal()
-  const today = todayISO()
+  const today = date ?? todayISO()
   const [noteFor, setNoteFor] = useState<string | null>(null)
   const notes = data.habitNotes?.[today] ?? {}
-  const now = new Date(today + 'T00:00')
-  const dow = now.getDay()
+  const dow = new Date(today + 'T00:00').getDay()
   const habits = data.habits.filter(
     (h) => !h.archived && (h.type ?? 'check') === 'check' && today >= h.startedOn && (!h.activeDays?.length || h.activeDays.includes(dow)),
   )
@@ -34,6 +43,7 @@ export function TodayHabits() {
   const allDone = done === total
 
   const slots = orderedSlots(new Date().getHours())
+  const asChecklist = variant === 'checklist'
   const bySlot = (s: TimeOfDay) => habits.filter((h) => (h.timeOfDay ?? 'anytime') === s)
   const nonEmpty = slots.filter((s) => bySlot(s).length > 0)
   const grouped = nonEmpty.length > 1 // only show time headers once habits actually span slots
@@ -46,12 +56,12 @@ export function TodayHabits() {
     const accent = h.avoid ? cat('red') : cat(h.color)
     const hasNote = !!notes[h.id]
     return (
-      <span key={h.id} className="inline-flex items-center gap-1">
+      <span key={h.id} className={`inline-flex items-center gap-1 ${asChecklist ? 'w-full' : ''}`}>
         <button
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className="inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
+          className={`inline-flex min-h-11 items-center gap-1.5 border text-body transition-colors active:scale-95 ${asChecklist ? 'w-full rounded-control px-3 py-2 text-left' : 'rounded-pill px-3 py-1.5'}`}
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
@@ -73,7 +83,7 @@ export function TodayHabits() {
   return (
     <Card
       title="Today’s habits"
-      subtitle="Tap to check off, grouped by time of day"
+      subtitle={asChecklist ? 'Close the day out' : 'Tap to check off'}
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (
@@ -99,13 +109,13 @@ export function TodayHabits() {
           const sDone = sBuild.filter((h) => log.includes(h.id)).length
           return (
             <div key={s}>
-              {grouped && (
+              {grouped && asChecklist && (
                 <p className="mb-1.5 flex items-center gap-1.5 text-label font-medium text-fg-2">
                   <Icon as={slotGlyph(s)} size="sm" /> {m.label}
                   {sBuild.length > 0 && <span className="text-fg-2">· {sDone}/{sBuild.length}</span>}
                 </p>
               )}
-              <div className="flex flex-wrap gap-2">{hs.map(chip)}</div>
+              <div className={asChecklist ? 'flex flex-col gap-2' : 'flex flex-wrap gap-2'}>{hs.map(chip)}</div>
             </div>
           )
         })}

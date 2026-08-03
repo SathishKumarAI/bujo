@@ -1,6 +1,6 @@
 // Rotating reflection prompts — local, no API. Picked deterministically by day
 // so the prompt is stable within a day but changes daily.
-import { fromISODay } from './date'
+import { dayDiff, fromISODay } from './date'
 
 export const REFLECTION_PROMPTS = [
   'What went well today, and why?',
@@ -24,4 +24,22 @@ export const REFLECTION_PROMPTS = [
 export function promptForDay(iso: string): string {
   const dayNumber = Math.floor(fromISODay(iso).getTime() / 86_400_000)
   return REFLECTION_PROMPTS[((dayNumber % REFLECTION_PROMPTS.length) + REFLECTION_PROMPTS.length) % REFLECTION_PROMPTS.length]
+}
+
+/**
+ * Which of the three writing prompts a given day leads with.
+ *
+ * Gratitude, Reflection and Daily memory were three blank boxes asking
+ * variations of the same question at once; three empty textareas read as
+ * homework and get skipped, one gets answered. This rotates them.
+ *
+ * Keyed off the date, never random: reopening yesterday must ask yesterday's
+ * question, not a new one.
+ */
+export const PROMPT_FIELDS = ['gratitude', 'reflection', 'memory'] as const
+export type PromptField = (typeof PROMPT_FIELDS)[number]
+
+export function promptFieldFor(iso: string): PromptField {
+  const n = dayDiff('2026-01-01', iso)
+  return PROMPT_FIELDS[((n % 3) + 3) % 3]
 }
