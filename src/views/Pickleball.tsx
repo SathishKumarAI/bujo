@@ -554,7 +554,7 @@ export function Pickleball() {
       </Section>
 
       <CardGrid>
-      <Card title={<span className="inline-flex items-center gap-2"><ShieldPlus size={18} className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">

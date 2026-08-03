@@ -47,7 +47,7 @@ export function Coaching() {
           and the two open cards lead. */}
       <CardGrid>
       {/* Program hero */}
-      <Card className={SPAN_2} title={<span className="inline-flex items-center gap-2"><GraduationCap size={18} className="text-mauve" /> 12-week program · beginner → 4.0</span>}
+      <Card className={SPAN_2} title={<span className="inline-flex items-center gap-2"><Icon as={GraduationCap} size="md" className="text-mauve" /> 12-week program · beginner → 4.0</span>}
         subtitle="A structured path to a complete game" help="A research-backed 12-week curriculum. Start it to track your week; each week has a focus + skills. ~3–4 sessions/week, ~80% drilling / 20% play.">
         {!start ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-line-strong p-4">

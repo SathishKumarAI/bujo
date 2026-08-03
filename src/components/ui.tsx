@@ -33,14 +33,14 @@ export const CARD = {
    * WCAG 2.5.8 24px floor. The icon size is unchanged; the box around it does
    * the work, and `-m-1` keeps the header height exactly where it was.
    */
-  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-md text-fg-2 hover:bg-ink-2 hover:text-fg-1',
+  headerButton: 'grid size-6 shrink-0 -m-1 place-items-center rounded-control text-fg-2 hover:bg-ink-2 hover:text-fg-1',
 } as const
 
 /**
  * The readable text inside a ReactNode, for naming a control after it.
  *
  * Card titles are `ReactNode` because many carry an icon beside the words
- * (`<><Flame size={16}/> 75 Hard</>`). A plain `typeof === 'string'` check
+ * (an icon element beside the words, e.g. a flame before "75 Hard"). A plain `typeof === 'string'` check
  * missed all of those, which left twenty ⓘ buttons — seven of them on Coaching
  * alone — still called "What is this?". Walks children, keeps strings and
  * numbers, ignores the rest.

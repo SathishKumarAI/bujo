@@ -72,7 +72,7 @@ export function TodayHabits() {
           aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
           aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-full opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-pill opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
           data-note={hasNote || open ? '' : undefined}
           style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >

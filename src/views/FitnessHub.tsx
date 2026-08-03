@@ -43,13 +43,13 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
              important control on the page and it announced no state at all.
              (Not `role="tab"` — that would promise arrow-key tablist
              semantics this control does not implement.) */}
-      <div className="flex w-fit gap-1 rounded-xl bg-secondary p-1">
+      <div className="flex w-fit gap-1 rounded-card bg-secondary p-1">
         {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             aria-pressed={tab === id}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-body font-medium transition-colors ${
+            className={`inline-flex items-center justify-center gap-2 rounded-control px-5 py-2 text-body font-medium transition-colors ${
               tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >

@@ -147,7 +147,7 @@ export function Settings() {
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these five pills to 209px each across the wide tier. They are labels, not
   // a segmented control — they should be as wide as their text.
-  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-control border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
     <Page width="wide">
       {/* No page header here. The top bar already renders `Settings · Theme,
