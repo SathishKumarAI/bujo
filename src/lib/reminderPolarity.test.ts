@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { reminderMessage } from './stats'
 import { recommendations } from './recommend'
-import { emptyJournal, seedJournal } from './storage'
+import { emptyJournal, migrate, seedJournal } from './storage'
 import type { Habit } from './types'
 
 const quit = (id: string, name: string): Habit => ({
@@ -59,5 +59,41 @@ describe('the starter journal labels its quit habits', () => {
     expect(byName('Sugar')?.avoid).toBe(true)
     // Caffeine is seeded with the cue "With breakfast" — intended, not quit.
     expect(byName('Caffeine')?.avoid).toBeUndefined()
+  })
+})
+
+describe('migrating a journal seeded before avoid existed', () => {
+  const seeded = (name: string, extra: Partial<Habit> = {}): Habit => ({
+    id: name, name, category: 'stimulant', color: 'red', startedOn: '2026-01-01', ...extra,
+  })
+
+  it('flips the starter Sugar and Alcohol to avoid habits', () => {
+    const m = migrate({ habits: [seeded('Sugar'), seeded('Alcohol'), seeded('Caffeine')] })
+    expect(m.habits.find((h) => h.name === 'Sugar')?.avoid).toBe(true)
+    expect(m.habits.find((h) => h.name === 'Alcohol')?.avoid).toBe(true)
+    // Caffeine is seeded as something you intend to have, so it is not touched.
+    expect(m.habits.find((h) => h.name === 'Caffeine')?.avoid).toBeUndefined()
+  })
+
+  it('leaves a habit the user already gave a polarity', () => {
+    const m = migrate({ habits: [seeded('Alcohol', { avoid: false })] })
+    expect(m.habits[0].avoid).toBe(false)
+  })
+
+  it('leaves a same-named habit the user recategorised', () => {
+    const m = migrate({ habits: [seeded('Sugar', { category: 'food' })] })
+    expect(m.habits[0].avoid).toBeUndefined()
+  })
+
+  it('is idempotent — migrate() runs on every load', () => {
+    const once = migrate({ habits: [seeded('Alcohol')] })
+    const twice = migrate(once)
+    expect(twice.habits).toEqual(once.habits)
+  })
+
+  it('does not touch habitLog — the ticks already say what happened', () => {
+    const log = { '2026-06-11': ['Alcohol'] }
+    const m = migrate({ habits: [seeded('Alcohol')], habitLog: log })
+    expect(m.habitLog).toEqual(log)
   })
 })
