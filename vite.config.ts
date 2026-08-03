@@ -67,5 +67,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
+    // `.claude/worktrees/*` are git worktrees other sessions check out inside
+    // the repo. Each holds a full second copy of the app, so vitest was
+    // discovering both suites and reporting their sum: 743 tests here read as
+    // 1474 while a worktree existed, and the number moved whenever an unrelated
+    // session added or removed one. A count that changes with what else is
+    // checked out is worse than no count — it was quoted in commit messages
+    // before anyone noticed. eslint already ignores this path for the same
+    // reason (see eslint.config.js).
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
   },
 })

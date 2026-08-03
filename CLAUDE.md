@@ -43,6 +43,14 @@ pointed at one of their ports will never show changes made here no matter how
 hard you reload. Check the port's `Get-CimInstance Win32_Process` command line
 before concluding a change did not land.
 
+Trap: **git worktrees inside the repo inflate `vitest`.** Each holds a full
+second copy of the app, so vitest discovered both suites and reported their sum
+— 743 tests read as 1474 while `.claude/worktrees/today-ux` existed, and the
+number moved whenever an unrelated session added or removed a worktree. Fixed by
+excluding the path in `vite.config.ts`; eslint already ignored it. A count that
+changes with what else is checked out is worse than no count, and this one was
+quoted in commit messages before anyone noticed.
+
 Trap: **an audit keyed on a prop misses the feature it feeds.** `Card` renders
 its ⓘ from `help ?? subtitle`, so a sweep grepping `help=` reported the Body
 cluster clean while every titled card with a subtitle still drew one. Same shape

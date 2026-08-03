@@ -81,14 +81,14 @@ boundary, migrated under a version gate because the conversion is not idempotent
 *Capture*
 - `src/lib/capture.ts`, `src/components/CaptureBar.tsx` — cardio verbs map to registry keys; labels rendered via `labelOf`
 
-*Tests* (+58: 1416 → 1474)
+*Tests* (+58: 685 → 743)
 - `src/domain/activities.test.ts`, `src/lib/units.test.ts`, `src/lib/viz.quartile.test.ts`, `src/lib/deepLink.test.ts`, `src/components/page/CalendarHeatmap.test.tsx`, plus migration cases in `storage.test.ts`
 
 *Gate & docs*
 - `scripts/a11y-axe.mjs` — visits 11 views including the whole cluster
 - `DATA_MODEL.md`, `FEATURE_GUIDE.md`, `FEATURES.md`, `ACCESSIBILITY.md`, `DECISIONS.md` (D-45…D-48), `CLAUDE.md` traps, `STATUS.md`
 
-**Verification:** `npx tsc -b`, `npx vitest run` (1474 pass / 95 files),
+**Verification:** `npx tsc -b`, `npx vitest run` (743 pass / 48 files),
 `npx eslint .` (0 errors, 2 pre-existing warnings), `npm run build`,
 `npm run a11y` (0 serious across 11 views). Browser pass on Fitness, Nutrition,
 Recovery and Coaching at 1440 and 760, light and dark.

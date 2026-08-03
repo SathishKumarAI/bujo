@@ -11,7 +11,7 @@ Update this when you STOP working, not when you start.
 deep: `#88 → #89 → #90 → #91 → #92 → #94 → collapsible-header-ux → this`.
 
 Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
-warnings, **1474 tests / 95 files**, `npm run build` clean, `npm run a11y` 0
+warnings, **743 tests / 48 files**, `npm run build` clean, `npm run a11y` 0
 serious across 10 views.
 
 **Browser pass done** on Fitness, Nutrition, Recovery and Coaching at 1440 and
