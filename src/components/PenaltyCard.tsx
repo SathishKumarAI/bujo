@@ -4,7 +4,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTier } from '../lib/penalties'
-import { Card } from './ui'
+import { Card, Pill } from './ui'
 
 /**
  * Anime-style "training penalty" surfaced when yesterday's tasks/habits/challenges
@@ -37,7 +37,7 @@ export function PenaltyCard() {
       subtitle={open ? 'You skipped something yesterday · pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
       right={
         <span className="inline-flex items-center gap-2">
-          <span className="rounded-full px-2 py-0.5 text-label font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>{meta.label}</span>
+          <Pill color={meta.color} className="font-medium">{meta.label}</Pill>
           <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
             {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>

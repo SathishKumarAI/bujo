@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Flame, X, Settings2, Plus, Archive, Trash2, LayoutGrid, CircleDot, GripVertical, Activity, Ban, ShieldCheck, Clock, StickyNote, Grid3x3 } from 'lucide-react'
 import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
-import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
 import { SmartInput } from '../components/SmartInput'
@@ -479,7 +479,7 @@ function RoutineTimeline({
           <div key={slot}>
             <div className="mb-1.5 flex items-center gap-2">
               <span className="text-body font-medium text-fg-1">{meta.emoji} {meta.label}</span>
-              {slot === now && <span className="rounded-full px-1.5 py-0.5 text-micro" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>now</span>}
+              {slot === now && <Pill color="mauve" size="micro">now</Pill>}
               <span className="ml-auto text-label text-fg-2">{done}/{scheduled.length || list.length}</span>
             </div>
             <ul className="space-y-1.5">

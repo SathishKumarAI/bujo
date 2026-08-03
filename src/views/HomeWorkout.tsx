@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Play, Search, Plus, Dumbbell } from 'lucide-react'
 import { useJournal } from '../store'
-import { Card, Empty, Input, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { cat } from '../lib/colors'
@@ -120,7 +120,7 @@ export function HomeWorkout() {
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-heading">{ex.emoji}</span>
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>
-                <span className="ml-auto rounded-full px-2 py-0.5 text-micro capitalize" style={{ background: cat('surface1'), color: cat('subtext0') }}>{ex.muscle}</span>
+                <Pill tone="muted" size="micro" className="ml-auto px-2 capitalize">{ex.muscle}</Pill>
               </div>
               <p className="text-label text-fg-2">{ex.how}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
