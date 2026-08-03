@@ -28,15 +28,13 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
-  /** Remember open/closed across reloads under this key. Opt-in: a section
-   *  that is deliberately closed every visit (a rarely-read appendix) should
-   *  not silently start staying open. */
+  /** Persist the open/closed choice under `section.<key>` (F6). */
   stickyKey?: string
   /**
    * Controlled mode. Pass both to drive the section from outside — Collections
    * needs it because "jump to tag" has to expand Auto-pages before it scrolls
-   * there. Omit both and the section keeps its own state (sticky or not),
-   * which is what nearly every call site wants.
+   * there. Omit both and the section keeps its own state (sticky when
+   * `stickyKey` is given), which is what nearly every call site wants.
    */
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -55,13 +53,14 @@ export function CollapsibleSection({
   onOpenChange,
   children,
 }: Props) {
+  // Both sides of the merge are kept: main's sticky persistence (F6) is the
+  // uncontrolled behaviour, and a controlled `open` overrides it so a caller
+  // driving the section from outside is never fighting storage.
   const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
     stickyKey ? `section.${stickyKey}` : null,
     defaultOpen ? '1' : '0',
     OPEN_STATES,
   )
-  // A controlled `open` wins over the internal (optionally sticky) flag, so a
-  // caller that drives the section from outside is never fighting storage.
   const open = controlledOpen ?? openFlag === '1'
   const setOpen = (next: boolean) => {
     if (controlledOpen === undefined) setOpenFlag(next ? '1' : '0')

@@ -106,8 +106,9 @@ export function Reading() {
           const list = shelf(books, s.id)
           const Icon = s.icon
           return (
-            // Each shelf is a landmark of its own, not a bare div.
             <section key={s.id} className="space-y-3">
+              {/* h2, not h3: each shelf is a top-level section of the page, and
+                  the page's h1 lives in the top bar. */}
               <h2 className="flex items-center gap-2 text-body font-medium text-foreground">
                 <Icon size={16} style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
