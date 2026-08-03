@@ -433,6 +433,27 @@ body.handwriting textarea {
   .page-in { animation: none; }
 }
 
+/* Collapse motion: the two halves of every fold in the app (Card `collapsible`,
+   CollapsibleSection). The body is mounted only while open — collapsed-by-default
+   cards carry heavy content (Coaching, Gym) and keeping it in the DOM to animate
+   a close is not worth it — so this is an enter animation, plus a caret that
+   turns both ways because it is always mounted. */
+@keyframes collapse-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.collapse-in { animation: collapse-in var(--dur-fast) var(--ease-rise) both; }
+/* One caret, rotated — not two glyphs swapped — so the state change is a turn
+   rather than a cut. Pair with a CaretDown at rest. */
+.caret-turn { transition: transform var(--dur-base) var(--ease-emphasis); }
+.caret-turn[data-open='true'] { transform: rotate(180deg); }
+/* Quarter turn, for the ▸ disclosure look (quiet sections) rather than the ⌄ one. */
+.caret-turn-quarter[data-open='true'] { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .collapse-in { animation: none; }
+  .caret-turn { transition: none; }
+}
+
 /* Enlarge-modal motion: backdrop fades, panel scales up (used by every viz card). */
 @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-panel-in {

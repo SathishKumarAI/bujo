@@ -1,7 +1,7 @@
-import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
+import { ArrowsOut, CaretDown, Info, X } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useState, type ReactNode } from 'react'
+import { useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
@@ -38,6 +38,8 @@ export function Card({
   onClick,
   collapsible = false,
   defaultCollapsed = false,
+  open: openProp,
+  onOpenChange,
   defer = false,
   enlargeable = false,
   help,
@@ -51,6 +53,11 @@ export function Card({
   /** Add a header chevron that collapses the body (reusable compacting pattern). */
   collapsible?: boolean
   defaultCollapsed?: boolean
+  /** Drive the fold from the parent — for cards whose header content depends on
+   *  whether they are open (PenaltyCard swaps its subtitle). Pair with
+   *  `onOpenChange`; omit both to let the card own the state. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   /** On phones, sink this card to the bottom of its column (charts below content). */
   defer?: boolean
   /** Show a ⛶ button that opens the card content in a large modal. */
@@ -58,7 +65,12 @@ export function Card({
   /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
   help?: ReactNode
 }) {
-  const [open, setOpen] = useState(!defaultCollapsed)
+  const [openState, setOpenState] = useState(!defaultCollapsed)
+  const open = openProp ?? openState
+  const toggle = () => {
+    if (openProp === undefined) setOpenState((o) => !o)
+    onOpenChange?.(!open)
+  }
   const [large, setLarge] = useState(false)
   // The enlarge modal is hand-rolled (not Radix), so it owns its own focus
   // containment: trap Tab inside it, hand focus back to the ⛶ button on close.
@@ -68,13 +80,28 @@ export function Card({
   // Every titled card gets an always-visible ⓘ that explains what it is
   // (self-documenting UI). Uses `help` if given, else the subtitle text.
   const info = help ?? subtitle
+  // The whole header folds the card, not just the caret. The caret stays a real
+  // <button> — it is the accessible control and carries aria-expanded — and the
+  // header row is a pointer convenience layered on top, so anything interactive
+  // sitting in `right` has to keep its clicks out of it. Skipped when the card
+  // already owns a click (`onClick`), where two meanings for one click is worse
+  // than a small target.
+  const headerToggles = collapsible && !onClick
+  const stopBubble = headerToggles ? (e: MouseEvent) => e.stopPropagation() : undefined
   return (
     <section
       onClick={onClick}
       className={`${CARD.container} ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
-        <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-3 sm:mb-4'}`}>
+        <header
+          onClick={headerToggles ? toggle : undefined}
+          className={cn(
+            'flex items-start justify-between gap-3',
+            collapsible && !open ? '' : 'mb-3 sm:mb-4',
+            headerToggles && 'cursor-pointer select-none',
+          )}
+        >
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
@@ -92,7 +119,7 @@ export function Card({
             {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {right}
+            {right && <span className="contents" onClick={stopBubble}>{right}</span>}
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }} aria-label="Enlarge" title="Enlarge"
                 className="text-fg-2 opacity-70 transition-all duration-200 hover:scale-110 hover:text-mauve group-hover/card:opacity-100">
@@ -100,14 +127,22 @@ export function Card({
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
-                {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggle() }}
+                aria-expanded={open}
+                aria-label={open ? 'Collapse' : 'Expand'}
+                className="text-fg-2 hover:text-fg-1"
+              >
+                <span className="caret-turn inline-flex" data-open={open}><AppIcon as={CaretDown} size="md" /></span>
               </button>
             )}
           </div>
         </header>
       )}
-      {(!collapsible || open) && children}
+      {collapsible
+        ? open && <div className="collapse-in">{children}</div>
+        : children}
       {/* Portal to <body>: cards live inside transformed ancestors (book mode,
           zoom, page-in animation) which would otherwise make `position:fixed`
           relative to the card, not the screen · so the modal must escape them

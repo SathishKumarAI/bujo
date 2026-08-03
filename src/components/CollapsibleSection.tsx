@@ -1,4 +1,4 @@
-import { CaretDown, CaretRight, CaretUp } from '@/components/icons'
+import { CaretDown, CaretRight } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, type ReactNode } from 'react'
@@ -74,8 +74,8 @@ export function CollapsibleSection({
           aria-expanded={open}
           className="press-3d flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
         >
-          <span className="text-fg-2">
-            {open ? <AppIcon as={CaretDown} size="md" /> : <AppIcon as={CaretRight} size="md" />}
+          <span className="caret-turn caret-turn-quarter inline-flex text-fg-2" data-open={open}>
+            <AppIcon as={CaretRight} size="md" />
           </span>
           {iconNode}
           <span className="font-display text-heading font-medium text-fg-1">{title}</span>
@@ -84,7 +84,7 @@ export function CollapsibleSection({
             <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
           )}
         </button>
-        {open && children}
+        {open && <div className="collapse-in space-y-5">{children}</div>}
       </section>
     )
   }
@@ -102,11 +102,11 @@ export function CollapsibleSection({
           <span className="block font-display text-heading font-medium text-fg-1">{title}</span>
           {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
         </span>
-        <span className="ml-auto text-fg-2 transition-colors group-hover/sec:text-fg-1">
-          {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
+        <span className="caret-turn ml-auto inline-flex text-fg-2 group-hover/sec:text-fg-1" data-open={open}>
+          <AppIcon as={CaretDown} size="md" />
         </span>
       </button>
-      {open && children}
+      {open && <div className="collapse-in flex flex-col gap-5">{children}</div>}
     </section>
   )
 }
