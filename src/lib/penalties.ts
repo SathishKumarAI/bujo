@@ -83,9 +83,26 @@ export function missesFor(data: JournalData, today = todayISO()): MissReport {
   let weight = 0
 
   // Broken habit streaks (scheduled yesterday, not done, not skipped).
+  //
+  // Build habits only. For an `avoid` habit, presence in `habitLog` means you
+  // SLIPPED — so `!done`, the condition this loop calls a miss, is precisely
+  // the success state, and every clean day was being reported as "Missed
+  // Alcohol". The streak clause inverted too: `habitStreak` resolves through
+  // `habitDoneOn`, which counts consecutive *slips* for an avoid habit, so
+  // ending a four-day run of drinking read as "(broke a 4-day streak)" and set
+  // the weight to heavy. Two clean quit habits alongside one real miss also
+  // tripped the `items.length >= 3` bump below, so staying clean made the
+  // penalty worse.
+  //
+  // Every other habit loop in this directory already guards this — `coach.ts`,
+  // `correlations.ts` (three sites), `habitStats.ts`, `atRiskHabits`. This one
+  // did not, and no test constructed an avoid habit, so it stayed hidden.
+  // `cleanStreak()` in `stats.ts` is the helper to reach for if quit habits
+  // should ever earn a penalty for the slip itself; that would be a feature,
+  // not this fix.
   const yDow = new Date(y + 'T00:00').getDay()
   for (const h of data.habits) {
-    if (h.archived) continue
+    if (h.archived || h.avoid) continue
     const scheduled = !h.activeDays?.length || h.activeDays.includes(yDow)
     if (!scheduled) continue
     const done = (data.habitLog[y] ?? []).includes(h.id)
