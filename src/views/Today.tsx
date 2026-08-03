@@ -1,9 +1,10 @@
-import { Drop, Flame, ForkKnife, NotePencil } from '@/components/icons'
+import { Check, Drop, ForkKnife, NotePencil } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
-import { Card, Empty, Input, Slider } from '../components/ui'
+import { Card, Empty, Input, Pill, Slider } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { Stepper } from '../components/fields/Stepper'
 import { Page, useCursor } from '../components/shell/Page'
 import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
@@ -15,7 +16,7 @@ import { TodayHabits } from '../components/TodayHabits'
 import { CoachCard } from '../components/CoachCard'
 import { onThisDay, habitTarget, habitValueOn, habitDoneOn } from '../lib/stats'
 import { isScheduledOn } from '../lib/habitStats'
-import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
+import { weeklyGoalProgress } from '../lib/streak'
 import { cat } from '../lib/colors'
 import { promptForDay } from '../lib/prompts'
 
@@ -45,32 +46,40 @@ export function Today() {
      * below a screenful of cards on a wide display, and every card got the same
      * width whether it was the day's writing surface or a collapsed appendix.
      *
-     * The layout now states the weight instead of implying it:
+     * The first pass at that put plan, coach and penalty in a full-width band
+     * above the grid — which measured **917px** on a 1600×1000 viewport, so the
+     * log was still below the fold, just for a new reason. Three full-width
+     * cards is what `docs/LAYOUT-WEIGHT-ALIGNMENT.md` calls "a screen with three
+     * weight-1 cards", i.e. no weight-1 card at all. Only the plan stays up
+     * there now: it summarises the whole day, and its week strip is the one
+     * thing on this page that genuinely wants the full measure.
      *
-     *   weight 1 · the day's command centre — full width, above everything
-     *   weight 2 · the log, at **two** of three tracks: it is where you write,
-     *              and a 370px measure is not a writing surface
+     * The layout states the weight instead of implying it:
+     *
+     *   weight 1 · the plan — full width, the day in one card
+     *   weight 2 · the log FIRST, at **two** of three tracks: it is where you
+     *              write, and a 370px measure is not a writing surface. Coach
+     *              and penalty sit under it — guidance is not more urgent than
+     *              the day it is about.
      *   weight 3 · the rail — logging you tap rather than type, then the quiet
      *              reference cards, at one track
+     *
+     * The wide column measured 813px against the rail's 1568px — half of it
+     * empty. Coach and penalty moving down into it, and the duplicated at-risk
+     * card leaving the rail, is what closed that; Wellbeing was tried in the
+     * reflect grid too and overshot to 1632 against 862, so it stayed in the
+     * rail where its sliders belong anyway.
      *
      * It collapses to a single column below xl, in the same reading order.
      */
     <Page width="wide">
-      {/* ── WEIGHT 1 · full width. Plan, coach and penalty are the "what should
-             I do today" band, and they read across the whole page. ───────── */}
-      {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
+      {/* ── WEIGHT 1 · the only full-width card. The whole day, summarised. ── */}
       {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
-
-      {/* ── Coach: proactive "do this next" prompts from your data ── */}
-      {date === todayISO() && <CoachCard />}
-
-      {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
-      {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
 
       <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-3">
         {/* ── WEIGHT 2 · the writing surface, two tracks wide ──────────── */}
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5 xl:col-span-2">
-      {/* ── 3) The day: Daily log (primary, above the fold) ─────── */}
+          {/* ── The day: the daily log, first thing on the page ─────── */}
           <Card
             title={prettyDay(date)}
             subtitle={
@@ -113,13 +122,23 @@ export function Today() {
                   ))}
                 </ul>
                 {taskCount > 0 && (
-                  <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
+                  /* "…logged today", not "…tasks done": the plan card's chip
+                     counts every open task dated on or before today, which is a
+                     backlog, and two different numbers both labelled "tasks"
+                     sat one screen apart. */
+                  <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} logged today</p>
                 )}
               </>
             )}
           </Card>
 
-          {/* ── 4) Reflect (2-col): light daily journaling rituals ─── */}
+          {/* ── Coach: proactive "do this next" prompts from your data ── */}
+          {date === todayISO() && <CoachCard />}
+
+          {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
+          {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
+
+          {/* ── Reflect: the day as you'd describe it — written, or rated ─ */}
           <div className="grid gap-5 sm:grid-cols-2">
             <Card title="Gratitude" subtitle="One thing you're grateful for today">
               <Input
@@ -163,11 +182,15 @@ export function Today() {
             </Card>
 
           </div>
-          {/* ── 6) Memories (collapsed): on this day from earlier journals ─ */}
+
+          {/* ── Memories (collapsed): on this day from earlier journals ─ */}
           {hasFlash && !hidden.includes('onThisDay') && (
             <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
               <ul className="space-y-2 text-body">
                 {flashbacks.memories.map((m) => (
+                  /* ▲ is the rapid-logging signifier for a memory (lib/bullets.ts),
+                     the same vocabulary as • task and ○ event — notation, not
+                     chrome, so it stays a character. */
                   <li key={m.date} className="text-fg-1">
                     <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
                   </li>
@@ -184,56 +207,54 @@ export function Today() {
 
         {/* ── WEIGHT 3 · the rail: tap-not-type logging, then quiet cards ── */}
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-      {/* ── 2) Daily actions: one unified habit block — boolean check-offs,
-             count/timer steppers, and at-risk streak chips sit together,
-             then Wellbeing logging and the gated Fasting card. ──────── */}
-      {date === todayISO() && (
-        <section className="flex flex-col gap-3">
-          {/* Quick-check today's check habits without leaving Today */}
-          {!hidden.includes('habits') && <TodayHabits />}
-          {/* Count/timer habits: +/- quick adjust */}
-          {!hidden.includes('habits') && <TodayCountHabits date={date} />}
-          {/* At-risk streak nudge: don't break a live streak */}
-          <AtRiskNudge date={date} />
-        </section>
-      )}
+          {/* ── Daily actions: boolean check-offs and count/timer tallies,
+                 logged with a tap so they never take you off Today. The
+                 at-risk streak nudge used to be a third card here and is
+                 now stated once, in the plan card. ─────────────────── */}
+          {date === todayISO() && !hidden.includes('habits') && (
+            <>
+              <TodayHabits />
+              <TodayCountHabits date={date} />
+            </>
+          )}
 
-      {/* ── Wellbeing: mood/sleep/energy logging is a primary daily action ─ */}
-      <Card title="Wellbeing" subtitle="Rate today 0–10">
-        <div className="space-y-4">
-          <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
-          <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
-          <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
-          <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
-        </div>
-        <div className="mt-4 border-t border-line pt-3">
-          <p className="mb-2 text-body text-fg-1">First meal</p>
-          {/* These record a choice, so the selected one gets the accent wash
-              rather than the accent fill — a filled pill here read as the
-              screen's primary action, which it never was. */}
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              aria-pressed={metric?.fastBreak === 'food'}
-              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
-              className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
-            >
-              <Icon as={ForkKnife} size="sm" /> Food
-            </Button>
-            <Button
-              variant="ghost"
-              aria-pressed={metric?.fastBreak === 'drink'}
-              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
-              className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
-            >
-              <Icon as={Drop} size="sm" /> Drink
-            </Button>
-          </div>
-        </div>
-      </Card>
+          {/* ── Wellbeing: four sliders and a two-button choice — tapped and
+                 dragged, never typed, which is what the rail is for. ── */}
+          <Card title="Wellbeing" subtitle="Rate today 0–10">
+            <div className="space-y-4">
+              <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
+              <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
+              <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
+              <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
+            </div>
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="mb-2 text-body text-fg-1">First meal</p>
+              {/* These record a choice, so the selected one gets the accent wash
+                  rather than the accent fill — a filled pill here read as the
+                  screen's primary action, which it never was. */}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  aria-pressed={metric?.fastBreak === 'food'}
+                  onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'food' ? undefined : 'food' })}
+                  className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'food' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+                >
+                  <Icon as={ForkKnife} size="sm" /> Food
+                </Button>
+                <Button
+                  variant="ghost"
+                  aria-pressed={metric?.fastBreak === 'drink'}
+                  onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === 'drink' ? undefined : 'drink' })}
+                  className={`press-3d inline-flex items-center gap-1.5 rounded-control ${metric?.fastBreak === 'drink' ? 'bg-brand-wash font-medium text-brand' : ''}`}
+                >
+                  <Icon as={Drop} size="sm" /> Drink
+                </Button>
+              </div>
+            </div>
+          </Card>
 
-      {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
-      <FastingCard />
+          {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
+          <FastingCard />
 
           {/* ── Weekly goal rings: a look back, so it sits under the
                  logging it summarises rather than above it. ─────────── */}
@@ -245,9 +266,13 @@ export function Today() {
 }
 
 /**
- * Count/timer habits scheduled today, each with −/+ steppers (and a quick +step)
- * so you can log progress without leaving Today. Reuses the existing
- * setHabitValue store action; values are clamped at 0.
+ * Count/timer habits scheduled today, each with a `Stepper` so progress is
+ * logged without leaving Today — and, because the stepper keeps a real number
+ * input, "8" can be typed in one go instead of tapping `+` eight times.
+ *
+ * The hand-rolled ± buttons this replaces carried a third `+{step}` button that
+ * called `setHabitValue(val + step)` — byte-identical to what `+` beside it
+ * already did. It is deleted rather than ported.
  */
 function TodayCountHabits({ date }: { date: string }) {
   const { data, setHabitValue } = useJournal()
@@ -256,7 +281,7 @@ function TodayCountHabits({ date }: { date: string }) {
   )
   if (habits.length === 0) return null
   return (
-    <Card title="Count habits" subtitle="Tap −/+ to log your tally for today">
+    <Card title="Count habits" subtitle="Tap −/+ or type today's tally">
       <ul className="space-y-2">
         {habits.map((h) => {
           const target = habitTarget(h)
@@ -264,62 +289,25 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           return (
-            <li key={h.id} className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2">
+            <li key={h.id} className="flex flex-wrap items-center gap-2 rounded-card border border-line bg-ink-0 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
                 {h.unit && <span className="text-fg-2"> ({h.unit})</span>}
               </span>
-              <span className="text-label tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
-                {val}/{target}{h.type === 'timer' ? 'm' : ''}{met ? ' ✓' : ''}
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
-                  disabled={val <= 0}
-                  aria-label={`Decrease ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-pill border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
-                >−</button>
-                <button
-                  onClick={() => setHabitValue(date, h.id, val + step)}
-                  aria-label={`Increase ${h.name}`}
-                  className="grid h-7 w-7 place-items-center rounded-pill border text-fg-1 transition-colors"
-                  style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
-                >+</button>
-                {step > 1 && (
-                  <button
-                    onClick={() => setHabitValue(date, h.id, val + step)}
-                    aria-label={`Add ${step} to ${h.name}`}
-                    className="rounded-pill border border-line-strong px-2 py-0.5 text-caption text-fg-1 transition-colors hover:text-fg-1"
-                  >+{step}</button>
-                )}
-              </div>
+              <Pill color={met ? 'green' : undefined} tone={met ? 'wash' : 'muted'} className="tabular-nums">
+                {met && <Icon as={Check} size="sm" />}
+                {val}/{target}{h.type === 'timer' ? 'm' : ''}
+              </Pill>
+              <Stepper
+                value={val}
+                onChange={(v) => setHabitValue(date, h.id, Math.max(0, v ?? 0))}
+                step={step}
+                min={0}
+                aria-label={h.name}
+              />
             </li>
           )
         })}
-      </ul>
-    </Card>
-  )
-}
-
-/** A small "keep your N-day streak — not logged yet" nudge for build habits. */
-function AtRiskNudge({ date }: { date: string }) {
-  const { data } = useJournal()
-  const atRisk = atRiskHabits(data, date)
-  if (atRisk.length === 0) return null
-  return (
-    <Card title="Keep your streaks" subtitle="Scheduled today, streak alive, not logged yet">
-      <ul className="flex flex-wrap gap-2">
-        {atRisk.map(({ habit, streak }) => (
-          <li
-            key={habit.id}
-            className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label"
-            style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
-          >
-            <Icon as={Flame} size="sm" style={{ color: cat('peach') }} />
-            {habit.emoji ? `${habit.emoji} ` : ''}{habit.name}
-            <span style={{ color: cat('peach') }}>· keep your {streak}-day streak</span>
-          </li>
-        ))}
       </ul>
     </Card>
   )

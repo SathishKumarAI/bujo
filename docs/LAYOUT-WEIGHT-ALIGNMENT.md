@@ -51,14 +51,18 @@ is still a weight-2 card, it is just in quieter company.
 
 ### Today
 
+`TodayPlanCard` is the **only** full-width card. Coach and penalty were weight 1
+too until the band they formed was measured at 917px on a 1600×1000 viewport —
+see "What this changed already" below.
+
 | Component | Weight | Left | Right |
 |---|---|---|---|
-| `TodayPlanCard` | 1 | Title + chips | Week % |
-| `CoachCard` | 1 | Tone icon + tip | Affordance sparkle |
-| `PenaltyCard` | 1 (conditional) | Title + drill | Tier pill + collapse |
-| Daily log `Card` | 2 — **two of three tracks** | Date + weather | Task count |
+| `TodayPlanCard` | 1 — **full width, alone** | Title + chips | Week % |
+| Daily log `Card` | 2 — **two of three tracks, first** | Date + weather | Logged-today count |
 | `EntryRow` | 2 | Glyph, memory mark, text | `!` and `×`, one cluster |
-| `TodayHabits` / count habits | 2 (rail) | Habit name | Check / stepper |
+| `CoachCard` | 2 (under the log) | Tone icon + tip | Affordance sparkle |
+| `PenaltyCard` | 2 (under the log, conditional) | Title + drill | Tier pill + collapse |
+| `TodayHabits` / count habits | 2 (rail) | Habit name | Tally pill, then `Stepper` |
 | Wellbeing | 2 (rail) | Slider labels | Value chips |
 | `FastingCard` | 3 (rail) | State | Timer |
 | Gratitude · Reflection · Memory | 3 | Field label | — |
@@ -95,10 +99,24 @@ is still a weight-2 card, it is just in quieter company.
   are now one right-hand cluster; the text gets that width back.
 - **Today** — was a single 820px stack, so the log sat below a screenful of
   cards on a wide display and every card had the same width whether it was the
-  writing surface or a collapsed appendix. Now: a full-width weight-1 band
-  (plan, coach, penalty), then the log at **two of three tracks**, with the
-  tap-to-log and quiet cards in the third. Collapses to one column below `xl`
-  in the same reading order.
+  writing surface or a collapsed appendix. The first fix gave it a full-width
+  weight-1 band (plan, coach, penalty) above a two-track log.
+- **Today, again — the band was the same bug wearing a different hat.** Measured
+  on 1600×1000: the band was **917px**, so the log still started below the fold,
+  and the wide column ran 813px against the rail's 1568px — nearly half of it
+  empty. Rule 1 says so out loud ("a screen with three weight-1 cards has no
+  weight-1 card") and the page was violating it in writing. Now only the plan is
+  full width; the log is the first thing in the wide column and coach and
+  penalty sit beneath it, because guidance is not more urgent than the day it is
+  about. Measured after: band **417px**, log top **442px**, columns **1313 vs
+  1409**. Page height fell from 2546px to 1887px.
+  - Wellbeing was tried in the reflect grid on the way and overshot the other
+    way (1632 vs 862), so it stayed in the rail — its sliders are tapped and
+    dragged, which is what the rail is for.
+  - The rail's "Keep your streaks" card is gone: `TodayPlanCard` already stated
+    the same fact in its at-risk banner, from a *private* filter that disagreed
+    with the shared one. The banner now reads `atRiskHabits`, which is the wider
+    and tested rule, and the card is deleted. One fact, one source, one place.
 - **Stickers** ("Decorate the day") — removed outright, including the stored
   data (see `TASKS.md` §J7). It was a weight-3 card competing for the same
   vertical space as the day's writing surface.
