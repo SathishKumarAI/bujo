@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Input } from '../components/ui'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Page } from '../components/shell/Page'
+import { CardGrid } from '../components/shell/CardGrid'
 import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'
 import { cat } from '../lib/colors'
@@ -17,7 +18,10 @@ import {
  */
 export function Pullups() {
   return (
-    <Page>
+    <Page width="wide">
+      {/* Three across: the program and the ability calculator were two 620px
+          cards of near-identical weight, stacked. */}
+      <CardGrid>
       {/* 1) The trackable program is the headline · check off days right here. */}
       <ProgramTracker only="pullup-zero" />
 
@@ -32,6 +36,7 @@ export function Pullups() {
           <ProgressionsCard />
         </div>
       </CollapsibleSection>
+      </CardGrid>
     </Page>
   )
 }

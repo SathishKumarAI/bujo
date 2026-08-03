@@ -5,6 +5,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
+import { Button } from './ui/button'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
 import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
@@ -45,8 +46,13 @@ export function TodayHabits() {
     const on = log.includes(h.id)
     const accent = h.avoid ? cat('red') : cat(h.color)
     const hasNote = !!notes[h.id]
+    const open = noteFor === h.id
     return (
-      <span key={h.id} className="inline-flex items-center gap-1">
+      // The habit and its note are one unit, so they sit in a group that shares
+      // a hover state — previously the note button was a bare 13px glyph
+      // floating beside the chip, reading as an eighth unexplained icon rather
+      // than as part of the habit.
+      <span key={h.id} className="group/habit inline-flex items-center">
         <button
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
@@ -57,12 +63,18 @@ export function TodayHabits() {
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
         </button>
+        {/* 24x24 minimum target (WCAG 2.5.8) — the icon stays 13px, the box
+            around it does the work. Quiet until it holds a note, is open, or
+            the habit is hovered/focused; always reachable on touch, where
+            there is no hover to reveal it. */}
         <button
           onClick={() => setNoteFor((v) => (v === h.id ? null : h.id))}
-          aria-label={`Note for ${h.name}`}
+          aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
+          aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="shrink-0 hover:text-mauve"
-          style={{ color: hasNote ? cat('mauve') : cat('overlay0') }}
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-full opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          data-note={hasNote || open ? '' : undefined}
+          style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >
           <Icon as={Note} size="sm" />
         </button>
@@ -77,7 +89,13 @@ export function TodayHabits() {
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (
-            <button onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })} className="text-label text-mauve hover:underline">Mark all</button>
+            <Button
+              variant="ghost"
+              onClick={() => buildHabits.forEach((h) => { if (!log.includes(h.id)) toggleHabit(today, h.id) })}
+              className="h-auto p-0 text-label text-mauve"
+            >
+              Mark {total - done} left
+            </Button>
           )}
           <span className="inline-flex items-center gap-1.5">
             <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>

@@ -8,6 +8,8 @@ import {
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useJournal } from '../store'
+import { Page } from '../components/shell/Page'
+import { CardGrid, SPAN_ALL } from '../components/shell/CardGrid'
 import { Card, Empty, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { QuietSection as Section } from '../components/CollapsibleSection'
@@ -112,8 +114,11 @@ export function Stats() {
   }
 
   return (
-    <div className="mx-auto max-w-wide space-y-5">
-      <Card title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
+    <Page width="wide">
+      {/* Three across. Eight blocks — the heatmap, achievements and six
+          collapsed analytics groups — used to be one tall column. */}
+      <CardGrid>
+      <Card className={SPAN_ALL} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
 
@@ -327,6 +332,7 @@ export function Stats() {
         </div>,
         document.body,
       )}
-    </div>
+      </CardGrid>
+    </Page>
   )
 }

@@ -3,6 +3,8 @@ import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Page } from '../components/shell/Page'
+import { QuietSection } from '../components/CollapsibleSection'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
@@ -15,10 +17,14 @@ export function Plan() {
   const today = todayISO()
   const fileRef = useRef<HTMLInputElement>(null)
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date')
-  const [showAllOverdue, setShowAllOverdue] = useState(false)
+  // Both default open now that the page is one column and fits. Showing 5 of 14
+  // while the subtitle already said 14 meant the page stated the number twice
+  // and showed a third of it; hiding the aging histogram hid the one thing that
+  // answers the question the page is asking (a task 26 days overdue usually
+  // wants dropping, not migrating).
+  const [showAllOverdue, setShowAllOverdue] = useState(true)
   const [openThread, setOpenThread] = useState<string | null>(null)
-  const [agingOpen, setAgingOpen] = useState(false)
-  const [setupOpen, setSetupOpen] = useState(false)
+  const [agingOpen, setAgingOpen] = useState(true)
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -72,10 +78,16 @@ export function Plan() {
   // title and stacks its actions vertically — a short measure helps prose, not
   // a column layout.
   return (
-    <div className="mx-auto max-w-wide columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    // The two-column masonry is gone. It only ever had two children — the
+    // Migration card and a collapsed 32px header — so CSS columns put a 594px
+    // card on the left and a strip of text alone in ~600px of dark space on the
+    // right. Multi-column pays off when both stacks have comparable mass. One
+    // `read` column, and the wide tier goes with it: that width existed to stop
+    // the masonry collapsing, and there is no masonry to protect now.
+    <Page>
       <Card
         title="Migration"
-        subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
+        subtitle={`${overdue.length} task${overdue.length === 1 ? '' : 's'} waiting on a decision`}
         right={overdue.length > 1 ? (
           <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'date', label: 'Date' }, { value: 'priority', label: 'Priority' }]} />
         ) : undefined}
@@ -115,6 +127,21 @@ export function Plan() {
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (
+          <>
+          {/* The page exists to clear a backlog and could only ever clear it one
+              task at a time — fourteen overdue tasks meant fourteen decisions.
+              No confirm: this moves dates, destroys nothing, and undo covers it. */}
+          {overdue.length > 1 && (
+            <div className="mb-3 flex items-center justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => overdue.forEach((e) => migrateEntry(e.id, today))}
+                className="press-3d rounded-lg"
+              >
+                Move all {overdue.length} → Today
+              </Button>
+            </div>
+          )}
           <ul className="grid gap-2 sm:grid-cols-2">
             {(showAllOverdue ? overdue : overdue.slice(0, 5)).map((e) => (
               <li key={e.id} className="flex flex-col gap-1.5 rounded-card border border-line bg-ink-0 p-2 text-body" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
@@ -141,6 +168,7 @@ export function Plan() {
               </li>
             ))}
           </ul>
+          </>
         )}
         {overdue.length > 5 && (
           <Button variant="ghost" onClick={() => setShowAllOverdue((v) => !v)} className="mt-3 h-auto p-0 text-body text-mauve">
@@ -205,18 +233,7 @@ export function Plan() {
         </Card>
       )}
 
-      <div>
-        <button
-          type="button"
-          onClick={() => setSetupOpen((o) => !o)}
-          aria-expanded={setupOpen}
-          className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-        >
-          <span className="text-fg-2">{setupOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-          <span className="font-display text-heading font-medium text-fg-1">Setup</span>
-          <span className="text-label text-fg-2">recurring rules &amp; calendar import</span>
-        </button>
-        {setupOpen && (
+      <QuietSection title="Setup" subtitle="recurring rules &amp; calendar import">
           <div className="mt-3 space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
@@ -282,8 +299,7 @@ export function Plan() {
         <p className="mt-2 text-label text-fg-2">Events appear as dots on the Monthly calendar. Duplicates are skipped.</p>
       </Card>
           </div>
-        )}
-      </div>
-    </div>
+      </QuietSection>
+    </Page>
   )
 }

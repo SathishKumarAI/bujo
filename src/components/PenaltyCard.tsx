@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTier } from '../lib/penalties'
-import { Card, Pill } from './ui'
+import { CARD, Card, Pill } from './ui'
 
 /**
  * Anime-style "training penalty" surfaced when yesterday's tasks/habits/challenges
@@ -39,7 +39,9 @@ export function PenaltyCard() {
       right={
         <span className="inline-flex items-center gap-2">
           <Pill color={meta.color} className="font-medium">{meta.label}</Pill>
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse' : 'Expand'} className="text-fg-2 hover:text-fg-1">
+          {/* Hand-rolled header, so it borrows Card's header-button target
+              rather than shipping another bare 18px icon. */}
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Collapse training penalty' : 'Expand training penalty'} className={CARD.headerButton}>
             {open ? <Icon as={CaretUp} size="md" /> : <Icon as={CaretDown} size="md" />}
           </button>
         </span>

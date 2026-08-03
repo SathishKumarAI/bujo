@@ -8,6 +8,7 @@ import { shelf, progressPct, readingSummary, projectedBooksThisYear, estimatedFi
 import { StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
+import { Page } from '../components/shell/Page'
 import type { Book, BookStatus } from '../lib/types'
 
 const SHELVES: { id: BookStatus; label: string; icon: typeof BookOpen; color: string }[] = [
@@ -44,7 +45,7 @@ export function Reading() {
   }
 
   return (
-    <div className="mx-auto max-w-read space-y-6">
+    <Page>
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Reading now" value={sum.reading} color="mauve" />
@@ -106,14 +107,16 @@ export function Reading() {
           const list = shelf(books, s.id)
           const Icon = s.icon
           return (
-            <div key={s.id} className="space-y-3">
+            <section key={s.id} className="space-y-3">
+              {/* h2, not h3: each shelf is a top-level section of the page, and
+                  the page's h1 lives in the top bar. */}
               <h2 className="flex items-center gap-2 text-body font-medium text-foreground">
                 <AppIcon as={Icon} size="md" style={{ color: cat(s.color) }} /> {s.label}
                 <span className="text-fg-2">({list.length})</span>
               </h2>
               {list.length === 0 && <p className="rounded-card border border-dashed border-line-strong p-4 text-center text-label text-fg-2">Nothing here yet.</p>}
               {list.map((b) => <BookCard key={b.id} book={b} />)}
-            </div>
+            </section>
           )
         })}
       </div>
@@ -217,7 +220,7 @@ export function Reading() {
       <CollapsibleSection title="Read later" subtitle="saved links">
         <ReadLater />
       </CollapsibleSection>
-    </div>
+    </Page>
   )
 }
 
