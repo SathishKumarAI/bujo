@@ -1,4 +1,4 @@
-import { ArrowCounterClockwise, Barbell, CaretDown, CaretUp, ChartBar, Check, Crosshair, Gauge, Plus, Stack, Trophy, Video, X } from '@/components/icons'
+import { ArrowCounterClockwise, Barbell, ChartBar, Check, Crosshair, Gauge, Plus, Stack, Trophy, Video, X } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -311,13 +311,11 @@ export function Gym() {
       <Card
         title="Today's session"
         subtitle={<span>Suggested next: <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span></span>}
-        right={
-          <Button variant="ghost" size="icon-sm" onClick={() => setSessionOpen((o) => !o)} aria-expanded={sessionOpen} aria-label={sessionOpen ? 'Collapse session' : 'Expand session'} className="text-fg-2 hover:text-fg-1">
-            {sessionOpen ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
-          </Button>
-        }
+        collapsible
+        open={sessionOpen}
+        onOpenChange={setSessionOpen}
       >
-        {sessionOpen && (<>
+        <>
         <div className="mb-3 flex flex-wrap gap-2">
           {SPLITS.filter((s) => s.id !== 'other').map((s) => {
             const Icon = splitGlyph(s.id)
@@ -467,7 +465,7 @@ export function Gym() {
             <Button variant="secondary" onClick={saveAsRoutine} className="press-3d">Save routine</Button>
           </div>
         </div>
-        </>)}
+        </>
       </Card>
 
       {/* ── Body weight · canonical bodyweight log/chart (Cardio tab merges here) ── */}
