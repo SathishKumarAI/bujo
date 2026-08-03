@@ -31,7 +31,41 @@ jobs:
         run: for f in scripts/*.mjs; do node --check "$f"; done
       - name: Lint (soft — repo carries pre-existing debt)
         run: npx eslint . || echo "::warning::eslint reported issues (pre-existing debt tolerated)"
+      # Rules that typecheck, tests and the build are all happy to violate: a
+      # solid accent button, a px icon size, a retired variant, a glyph name
+      # rendering as a label. Each one is a regression that actually happened
+      # during the icon/button pass and was caught by eye — one of them by the
+      # user, in a shipped view.
+      - name: Design system
+        run: node scripts/check-design-system.mjs
       - name: Tests
         run: npm test -- --run
       - name: Build
         run: npm run build
+
+  # Accessibility gate (BUJO-94 tail). Runs against a production preview and
+  # fails on serious/critical axe violations only — the moderate ones are mostly
+  # colour-contrast findings on chart internals, which need the data-viz palette
+  # decision rather than a blanket fix.
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Playwright stays out of the app tree deliberately (see scripts/*.mjs):
+      # installed here with --no-save so it never reaches a user's bundle.
+      - name: Install Playwright
+        run: |
+          npm i -D --no-save playwright @axe-core/playwright
+          npx playwright install --with-deps chromium
+      - name: Serve preview
+        run: npx vite preview --port 4173 &
+      - name: Wait for preview
+        run: npx wait-on http://localhost:4173 --timeout 60000
+      - name: axe-core
+        run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs

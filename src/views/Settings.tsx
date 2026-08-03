@@ -149,7 +149,7 @@ export function Settings() {
     <Page width="wide">
       {/* Designed header · sets the page apart from a plain card stack. */}
       <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control" style={{ background: cat('mauve') + '22', color: cat('mauve') }}>
           <Icon as={SlidersHorizontal} size="lg" />
         </span>
         <div className="min-w-0">

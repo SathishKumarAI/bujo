@@ -22,7 +22,7 @@ export function AchievementsCard() {
             <div
               key={a.id}
               title={a.desc}
-              className={`flex items-center gap-2 rounded-xl border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
+              className={`flex items-center gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>

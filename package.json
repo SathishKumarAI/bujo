@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "a11y": "node scripts/a11y-axe.mjs",
     "build": "tsc -b && vite build",
     "coverage": "vitest run --coverage",
+    "design": "node scripts/check-design-system.mjs",
     "dev": "vite",
     "icons": "node scripts/build-icons.mjs",
     "lint": "eslint .",
