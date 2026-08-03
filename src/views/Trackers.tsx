@@ -253,10 +253,12 @@ export function Trackers() {
             aria-expanded={showAdd}
             className="mb-2 flex items-center gap-1.5 text-label tracking-wide text-fg-2 uppercase hover:text-fg-1"
           >
-            {showAdd ? '▾' : '▸'} Add a habit
+            {/* Typographic glyph, not an Icon — this is the app's disclosure
+                mark. Rotated rather than swapped, same as every other fold. */}
+            <span className="caret-turn caret-turn-quarter inline-block" data-open={showAdd}>▸</span> Add a habit
           </button>
           {showAdd && (
-          <>
+          <div className="collapse-in">
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <span className="text-label text-fg-2">Quick add:</span>
             {HABIT_PRESETS.map((p) => (
@@ -288,7 +290,7 @@ export function Trackers() {
             </select>
             <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
           </div>
-          </>
+          </div>
           )}
         </div>
       </Card>
@@ -566,8 +568,10 @@ function CategoryRows({
     <>
       <tr>
         <td colSpan={days.length + 2} className="pt-3 pb-1">
-          <button onClick={onToggleCollapse} className="text-micro tracking-wide text-fg-2 uppercase hover:text-fg-1">
-            {collapsed ? '▸' : '▾'} {category} {collapsed && <span className="text-fg-2">({habits.length})</span>}
+          {/* No enter animation here: the body is table rows, which cannot be
+              wrapped in an animating element without breaking the grid. */}
+          <button onClick={onToggleCollapse} aria-expanded={!collapsed} className="text-micro tracking-wide text-fg-2 uppercase hover:text-fg-1">
+            <span className="caret-turn caret-turn-quarter inline-block" data-open={!collapsed}>▸</span> {category} {collapsed && <span className="text-fg-2">({habits.length})</span>}
           </button>
         </td>
       </tr>

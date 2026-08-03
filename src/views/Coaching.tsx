@@ -102,10 +102,10 @@ export function Coaching() {
                     <span className="text-body font-medium text-fg-1">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
                     <span className="block truncate text-label text-fg-2">{w.skills}</span>
                   </button>
-                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
+                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2"><span className="caret-turn inline-block" data-open={isOpen}>▾</span></button>
                 </div>
                 {isOpen && (
-                  <div className="space-y-2 border-t border-line px-3 py-2.5 text-body">
+                  <div className="collapse-in space-y-2 border-t border-line px-3 py-2.5 text-body">
                     <p className="text-fg-1">{w.doThis}</p>
                     <div>
                       <p className="mb-1 text-label font-medium text-fg-2">Drills</p>
@@ -149,15 +149,15 @@ export function Coaching() {
                 const open = openTech === t.name
                 return (
                   <li key={t.name} className="rounded-card border border-line bg-ink-0">
-                    <button onClick={() => setOpenTech(open ? null : t.name)} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
+                    <button onClick={() => setOpenTech(open ? null : t.name)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
                         <span className="block truncate text-label text-fg-2">{t.what}</span>
                       </span>
-                      <span className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
+                      <span className="caret-turn inline-block shrink-0 text-fg-2" data-open={open}>▾</span>
                     </button>
                     {open && (
-                      <div className="space-y-2.5 border-t border-line px-3 py-2.5">
+                      <div className="collapse-in space-y-2.5 border-t border-line px-3 py-2.5">
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-1">How to do it</p>
                           <ol className="space-y-1">
