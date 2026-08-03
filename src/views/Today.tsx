@@ -19,6 +19,7 @@ import { CountHabits } from '../components/today/CountHabits'
 import { WeeklyGoalRings } from '../components/today/WeeklyGoalRings'
 import { isSurface, surfaceForHour, type Surface } from '../lib/daySurface'
 import { onThisDay } from '../lib/stats'
+import { atRiskHabits } from '../lib/streak'
 
 /**
  * TODAY · one day record, three surfaces.
@@ -127,6 +128,16 @@ function DaySurface({
     (e) => e.date === addDays(date, -1) && e.type === 'task' && e.status === 'open' && !e.collection,
   )
 
+  // What an empty day leads with. A streak worth protecting is the strongest
+  // reason to write the first line; failing that, an invitation — never the
+  // "you have logged nothing" status report this used to be.
+  const topStreak = atRiskHabits(data, date)[0]
+  const emptyLead = topStreak
+    ? `Your ${topStreak.streak}-day ${topStreak.habit.name} streak is still live`
+    : carryover.length > 0
+      ? 'Start with what yesterday left open'
+      : 'This day is yours to write'
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <Card
@@ -152,6 +163,12 @@ function DaySurface({
           </div>
         )}
         {dayEntries.length === 0 ? (
+          /* An empty day used to read "Nothing logged for this day" over five
+             blank inputs and a 0/6 — a status report telling you that you had
+             not done anything yet, which you knew. It carries something
+             actionable now: yesterday's unfinished tasks (rendered above, with
+             a one-tap carry-forward), the streak you are protecting, and a
+             focused input. */
           <Empty
             icon={NotePencil}
             hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
@@ -161,7 +178,7 @@ function DaySurface({
                 document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
             }}
           >
-            Nothing logged for this day
+            {emptyLead}
           </Empty>
         ) : (
           <>

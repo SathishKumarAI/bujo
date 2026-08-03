@@ -1,4 +1,5 @@
-import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
+import { ArrowsOut, CaretDown, CaretUp, X } from '@/components/icons'
+import { useHints } from './shell/hints'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
@@ -7,7 +8,6 @@ import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
-import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
@@ -55,7 +55,7 @@ export function Card({
   defer?: boolean
   /** Show a ⛶ button that opens the card content in a large modal. */
   enlargeable?: boolean
-  /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
+  /** Longer explainer. Hidden until the page's `?` turns inline hints on. */
   help?: ReactNode
 }) {
   const [open, setOpen] = useState(!defaultCollapsed)
@@ -65,9 +65,16 @@ export function Card({
   const modalTrap = useFocusTrap<HTMLDivElement>(large)
   // Enlarge affordance: any titled, non-clickable card (charts, calendars…).
   const showEnlarge = enlargeable && !!title && !onClick
-  // Every titled card gets an always-visible ⓘ that explains what it is
-  // (self-documenting UI). Uses `help` if given, else the subtitle text.
-  const info = help ?? subtitle
+  // Cards used to carry an always-visible ⓘ popover here. Nine of them stacked
+  // up on Today alone, and nine help affordances is nine labels that failed —
+  // each ⓘ is a card admitting its title and subtitle did not land, with the
+  // explanation two taps away where nobody skimming would find it.
+  //
+  // The explainer is still written, and still here; it renders inline when the
+  // page's `?` is on (see `shell/hints.tsx`). `help` only — falling back to
+  // `subtitle` would just print the subtitle twice.
+  const hints = useHints()
+  const info = hints.on ? help : null
   return (
     <section
       onClick={onClick}
@@ -78,18 +85,13 @@ export function Card({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
-              {title && info && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label="What is this?" title="What is this?" className="shrink-0 text-fg-2 hover:text-fg-1">
-                      <AppIcon as={Info} size="sm" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="max-w-xs text-body leading-snug text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
-                </Popover>
-              )}
             </div>
             {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
+            {title && info && (
+              <p className="mt-2 rounded-card border border-line bg-ink-0 px-3 py-2 text-label leading-relaxed text-fg-2">
+                {info}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}

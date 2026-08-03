@@ -248,7 +248,7 @@ export function Settings() {
           <Toggle label="Auto-hide sidebar — reveal on hover (desktop)" on={!!s.sidebarAutoHide} onChange={(v) => setSettings({ sidebarAutoHide: v })} />
         </div>
         <div className="mt-3 border-t border-line pt-3">
-          <Row label="Penalty difficulty">
+          <Row label="Make-up work difficulty">
             <Segmented
               value={s.penaltyLevel ?? 'beginner'}
               onChange={(v) => setSettings({ penaltyLevel: v })}

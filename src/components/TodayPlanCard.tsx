@@ -84,14 +84,19 @@ export function TodayPlanCard() {
           )
         })}
       </div>
-      {/* Week at a glance. Today used to be marked with `outline: 1px solid
-          mauve`, which against a filled bar is invisible — seven identical
-          pastel blocks that read as a loading skeleton. It now gets a 2px
-          outline held off the bar, *and* its weekday label goes bold and
-          accented, so the marker is not carried by colour alone. Each day
-          carries its own accessible name; `title` alone reaches no screen
-          reader and no touch device. */}
-      <div className="mt-3 flex gap-2 border-t border-line pt-3">
+      {/* Week at a glance — and it now encodes something.
+          Every bar used to be the same height, with only a colour band varying,
+          so seven identical pastel blocks read as a loading skeleton rather
+          than as data. Height is the day's habit coverage now, off a 28px
+          track, with a floor of 3px so a zero day is still a visible tick
+          rather than nothing at all. Colour stays as the second channel.
+
+          Today used to be marked with `outline: 1px solid mauve`, invisible
+          against a filled bar. It gets a 2px outline held off the bar, *and* a
+          bold accented weekday label, so the marker is not carried by colour
+          alone. Each day carries its own accessible name; `title` alone reaches
+          no screen reader and no touch device. */}
+      <div className="mt-3 flex items-end gap-2 border-t border-line pt-3">
         {week.map((d) => {
           const isToday = d.date === today
           const pct = Math.round(d.score * 100)
@@ -103,14 +108,17 @@ export function TodayPlanCard() {
               className="flex flex-1 flex-col items-center gap-1"
               title={`${prettyDay(d.date)}: ${pct}% covered`}
             >
-              <div
-                className="h-6 w-full rounded"
-                style={{
-                  background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'),
-                  outline: isToday ? `2px solid ${cat('mauve')}` : 'none',
-                  outlineOffset: isToday ? '2px' : undefined,
-                }}
-              />
+              <div className="flex h-7 w-full items-end">
+                <div
+                  className="w-full rounded"
+                  style={{
+                    height: `${Math.max(3, Math.round(d.score * 28))}px`,
+                    background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'),
+                    outline: isToday ? `2px solid ${cat('mauve')}` : 'none',
+                    outlineOffset: isToday ? '2px' : undefined,
+                  }}
+                />
+              </div>
               <span
                 className={`text-micro ${isToday ? 'font-semibold' : 'text-fg-2'}`}
                 style={isToday ? { color: cat('mauve') } : undefined}

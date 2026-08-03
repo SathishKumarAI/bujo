@@ -16,6 +16,7 @@ import { addDays, prettyDay, prettyMonth, ymOf } from '../../lib/date'
 import { AccountMenu } from './AccountMenu'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { DateJumpPicker } from './DateJumpPicker'
+import { useHints } from './hints'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -40,6 +41,7 @@ export function TopBar({
 }) {
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const { day, setDay, month, setMonth } = useCursor()
+  const hints = useHints()
   const [pickerOpen, setPickerOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const recs = recommendations(data)
@@ -57,12 +59,27 @@ export function TopBar({
         {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
       </div>
 
+      {/* One switch for the whole page. Cards used to carry an ⓘ each — nine of
+          them on Today — and nine help affordances is nine labels that failed.
+          The explainers still exist; this reveals them inline, as text. */}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-pressed={hints.on}
+        onClick={hints.toggle}
+        aria-label={hints.on ? 'Hide inline hints' : 'Explain this page'}
+        title={hints.on ? 'Hide inline hints' : 'Explain this page'}
+        className={`shrink-0 ${hints.on ? 'bg-brand-wash text-brand' : 'text-fg-2 hover:text-foreground'}`}
+      >
+        <Icon as={Question} size="md" />
+      </Button>
+
       {/* Contextual help — what this page does, pulled from the view registry. */}
       {chrome.help && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-fg-2 hover:text-foreground">
-              <Icon as={Question} size="md" />
+              <Icon as={Lightbulb} size="md" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80">

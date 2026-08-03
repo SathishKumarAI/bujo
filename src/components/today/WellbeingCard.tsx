@@ -2,7 +2,9 @@ import { Drop, ForkKnife, PencilSimple } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { Card, Pill, Slider } from '../ui'
+import { Card, Pill } from '../ui'
+import { SegmentScale } from '../fields/SegmentScale'
+import { Stepper } from '../fields/Stepper'
 import { Button } from '../ui/button'
 import { morningComplete } from '../../lib/daySurface'
 
@@ -12,11 +14,14 @@ import { morningComplete } from '../../lib/daySurface'
  * Lifted out of `Today.tsx` rather than copied, because it appears on more than
  * one surface and two copies of a form is two places for it to drift.
  *
- * Once all four ratings are answered it collapses to a read-only summary with
- * an edit affordance. Re-showing four empty-looking sliders to someone who has
- * already answered them is the app asking the same question twice — and a
- * slider parked at the left reads as "0" whether you meant zero or never
- * touched it, so the summary is also the clearer statement of what you said.
+ * Once all four are answered it collapses to a read-only summary with an edit
+ * affordance. Asking someone who has already answered to look at the same four
+ * empty-looking controls again is the app asking twice.
+ *
+ * Mood, stress and energy are `SegmentScale` (eleven dots, `—` when
+ * unanswered); sleep is a `Stepper` in half-hours. No `<input type="range">`
+ * remains here — a range input has to sit somewhere, and somewhere is the left
+ * edge, so a day you never rated looked exactly like a day you rated 0.
  */
 export function WellbeingCard({ date }: { date: string }) {
   const { data, setMetric } = useJournal()
@@ -29,6 +34,7 @@ export function WellbeingCard({ date }: { date: string }) {
       <Card
         title="Wellbeing"
         subtitle="Logged for today"
+        help="Tap Edit to change any of these. They feed the weekly review, the mood/sleep charts in Insights, and the correlations between how you feel and what you did."
         right={
           <Button variant="ghost" size="sm" onClick={() => setEditing(true)} className="gap-1.5">
             <Icon as={PencilSimple} size="sm" /> Edit
@@ -52,12 +58,26 @@ export function WellbeingCard({ date }: { date: string }) {
   }
 
   return (
-    <Card title="Wellbeing" subtitle="Rate today 0–10">
+    <Card title="Wellbeing" subtitle="How today went" help="Mood, stress and energy are 0–10 — tap a dot. Sleep is hours, in half-hour steps. Leave anything blank and it stays blank rather than reading as zero.">
       <div className="space-y-4">
-        <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
-        <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
-        <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
-        <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
+        <SegmentScale label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
+        <SegmentScale label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
+        <SegmentScale label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
+        {/* Sleep is hours, not a rating. A 0–10 scale asked people to score
+            their sleep out of ten and then stored the answer as a duration —
+            two different quantities sharing one control. Half-hour steps. */}
+        <div>
+          <p className="mb-1 text-body text-fg-1">Sleep</p>
+          <Stepper
+            value={metric?.sleep}
+            onChange={(v) => setMetric(date, { sleep: v })}
+            step={0.5}
+            min={0}
+            max={24}
+            suffix="hrs"
+            aria-label="Sleep hours"
+          />
+        </div>
       </div>
       <div className="mt-4 border-t border-line pt-3">
         <p className="mb-2 text-body text-fg-1">First meal</p>

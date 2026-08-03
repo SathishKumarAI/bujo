@@ -73,8 +73,8 @@ export function Help() {
         body="Challenges runs fixed-length disciplines (75 Hard, 90-day, custom) with a progress ring and streak. Focus is a developer work tracker · log coding sessions (time, project, flow, stress, interruptions, languages) and see weekly hours, a minutes chart and a focus↔stress insight."
       />
       <Section
-        title="Training penalties"
-        body="Skip a habit streak, an overdue task, or a challenge day and the Today page surfaces an anime-style 'training penalty' scaled to how badly you slipped · a fun, dismissible nudge to keep the chain alive. Re-roll for a different drill."
+        title="Make-up work"
+        body="Skip a habit streak, an overdue task, or a challenge day and Today offers a short make-up drill, scaled to how much slipped · a dismissible nudge to keep the chain alive, not a punishment. Re-roll for a different drill."
       />
       <Section
         title="Plan"

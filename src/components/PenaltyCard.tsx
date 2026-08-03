@@ -8,9 +8,9 @@ import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTie
 import { Card, Pill } from './ui'
 
 /**
- * Anime-style "training penalty" surfaced when yesterday's tasks/habits/challenges
- * were skipped. Tier scales with how badly you slipped; the drill is a stable
- * daily pick you can re-roll. Dismissible for the day. Hidden when nothing missed.
+ * Make-up work surfaced when yesterday's tasks/habits/challenges were skipped.
+ * Tier scales with how much slipped; the drill is a stable daily pick you can
+ * re-roll. Dismissible for the day. Hidden when nothing was missed.
  */
 export function PenaltyCard() {
   const { data } = useJournal()
@@ -34,8 +34,14 @@ export function PenaltyCard() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Training penalty</span>}
-      subtitle={open ? 'You skipped something yesterday · pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
+      /* "Make-up work", not "Training penalty", and not "pay the toll". Loss
+         framing outperforms reward framing for about a week and then loses
+         badly, because the app becomes the thing that punishes you and you
+         stop opening it. Same mechanic, same tiers, same drills — it just
+         stops taking an adversarial stance toward the person using it. */
+      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Make-up work</span>}
+      subtitle={open ? 'Yesterday left something undone — here’s how to square it.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
+      help="Built from what yesterday actually missed: skipped habits, overdue tasks and unfinished challenge days. The more that slipped, the bigger the make-up. Re-roll for a different one, or dismiss it for the day."
       right={
         <span className="inline-flex items-center gap-2">
           <Pill color={meta.color} className="font-medium">{meta.label}</Pill>
@@ -64,7 +70,7 @@ export function PenaltyCard() {
               onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
               className="ml-auto text-fg-2 hover:text-fg-1"
             >
-              Served it / dismiss
+              Done / dismiss
             </button>
           </div>
         </>

@@ -14,6 +14,7 @@ import { useCursor } from './cursor'
 import { useDevice } from './device'
 import type { ViewId } from './viewChrome'
 import type { SectionId } from '../../lib/routes'
+import { HintsProvider } from './hints'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
 export function AppShell({
@@ -66,6 +67,7 @@ export function AppShell({
   })
 
   return (
+    <HintsProvider>
     <TooltipProvider delayDuration={150}>
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* First focusable element on the page: a keyboard user lands here and can
@@ -128,5 +130,6 @@ export function AppShell({
       <ServerSync />
     </div>
     </TooltipProvider>
+    </HintsProvider>
   )
 }
