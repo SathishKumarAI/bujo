@@ -5,6 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
+import { cn } from '../lib/cn'
 import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
@@ -67,12 +68,22 @@ export function Plan() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  // `wide`, not `read`: this view is a CSS multi-column masonry. At 820px the
-  // two columns collapse to ~380px each, which wraps every migration card's
-  // title and stacks its actions vertically — a short measure helps prose, not
-  // a column layout.
+  // The second column only exists when there is something to put in it.
+  // "Chronically deferred" is conditional, so an unconditional two-column
+  // layout left Migration alone on the left and ~800px of nothing on the
+  // right for anyone who doesn't repeatedly migrate the same task.
+  const twoUp = deferred.length > 0
+
+  // `wide`, not `read`: at 820px two columns collapse to ~380px each, which
+  // wraps every migration card's title and stacks its actions vertically —
+  // a short measure helps prose, not a column layout.
   return (
-    <div className="mx-auto max-w-wide columns-1 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    <div className="mx-auto flex max-w-wide flex-col gap-5">
+      {/* Grid, not CSS multi-column: with at most two cards the masonry
+          balancing bought nothing, and `break-inside-avoid` meant it could
+          only ever put one card per column anyway. `items-start` keeps the
+          shorter card its own height instead of stretching to match. */}
+      <div className={cn('grid items-start gap-5', twoUp && 'lg:grid-cols-2')}>
       <Card
         title="Migration"
         subtitle={`${overdue.length} overdue open task${overdue.length === 1 ? '' : 's'}, the heart of bullet journaling`}
@@ -112,10 +123,12 @@ export function Plan() {
             )}
           </div>
         )}
+        {/* Full-width Migration gets a third column rather than three very
+            wide task cards; alongside "Chronically deferred" it stays 2-up. */}
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className={cn('grid gap-2 sm:grid-cols-2', !twoUp && 'xl:grid-cols-3')}>
             {(showAllOverdue ? overdue : overdue.slice(0, 5)).map((e) => (
               <li key={e.id} className="flex flex-col gap-1.5 rounded-card border border-line bg-ink-0 p-2 text-body" style={e.important ? { borderColor: cat('yellow') + '66' } : undefined}>
                 <div className="flex items-start gap-1.5">
@@ -204,9 +217,12 @@ export function Plan() {
           </ul>
         </Card>
       )}
+      </div>
 
+      {/* Page configuration, not page content — it sits under the columns
+          rather than competing with them for one. */}
       <QuietSection title="Setup" subtitle={<>recurring rules &amp; calendar import</>}>
-          <div className="space-y-5">
+          <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
           <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
