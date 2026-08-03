@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate, seedJournal } from './storage'
+import { SCHEMA_VERSION } from './types'
 
 describe('migrate', () => {
   it('fills missing keys from an empty base', () => {
@@ -17,6 +18,61 @@ describe('migrate', () => {
     const m = migrate({ settings: { theme: 'latte' } })
     expect(m.settings.theme).toBe('latte')
     expect(m.settings.tempUnit).toBe('F') // default kept
+  })
+})
+
+describe('migrate — schema 3 workouts', () => {
+  const v2 = (unit: 'km' | 'mi', workouts: Record<string, unknown>[]) => ({
+    version: 2, settings: { distanceUnit: unit }, workouts,
+  })
+  const run = (distanceKm?: number) => ({ id: 'w1', date: '2026-06-10', activity: 'Run', sets: [], notes: '', distanceKm })
+
+  it('normalises free-form activity labels to registry keys', () => {
+    const m = migrate(v2('km', [
+      { id: 'a', date: '2026-06-10', activity: 'Run', sets: [], notes: '' },
+      { id: 'b', date: '2026-06-10', activity: 'Home', sets: [], notes: '' },
+      { id: 'c', date: '2026-06-10', activity: 'Push day', split: 'push', sets: [], notes: '' },
+    ]))
+    expect(m.workouts.map((w) => w.activity)).toEqual(['run', 'homeWorkout', 'push'])
+  })
+
+  it('normalises activity even on an already-versioned journal (old clients still sync)', () => {
+    const m = migrate({ version: 3, settings: { distanceUnit: 'km' }, workouts: [
+      { id: 'a', date: '2026-06-10', activity: 'Run', sets: [], notes: '' },
+    ] })
+    expect(m.workouts[0].activity).toBe('run')
+  })
+
+  it('converts a v2 mi journal to canonical kilometres', () => {
+    const m = migrate(v2('mi', [run(3)]))
+    expect(m.workouts[0].distanceKm).toBeCloseTo(4.828, 2)
+  })
+
+  it('leaves a v2 km journal alone — its values were already metric', () => {
+    expect(migrate(v2('km', [run(3)])).workouts[0].distanceKm).toBe(3)
+  })
+
+  it('does NOT re-convert a v3 journal, however many times it is loaded', () => {
+    // The whole reason the conversion is version-gated: it is not idempotent,
+    // and a second pass would multiply by 1.61 again on every app start.
+    const once = migrate(v2('mi', [run(3)]))
+    const twice = migrate(once)
+    const thrice = migrate(twice)
+    expect(twice.workouts[0].distanceKm).toBe(once.workouts[0].distanceKm)
+    expect(thrice.workouts[0].distanceKm).toBe(once.workouts[0].distanceKm)
+  })
+
+  it('stamps the current schema version so the gate closes behind it', () => {
+    expect(migrate(v2('mi', [run(3)])).version).toBe(SCHEMA_VERSION)
+  })
+
+  it('leaves a distance-less session untouched', () => {
+    expect(migrate(v2('mi', [run(undefined)])).workouts[0].distanceKm).toBeUndefined()
+  })
+
+  it('treats a versionless legacy journal as pre-v3', () => {
+    const m = migrate({ settings: { distanceUnit: 'mi' }, workouts: [run(3)] })
+    expect(m.workouts[0].distanceKm).toBeCloseTo(4.828, 2)
   })
 })
 

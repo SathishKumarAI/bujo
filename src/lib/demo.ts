@@ -82,7 +82,7 @@ export function generateDemoData(today = todayISO()): JournalData {
 
     // A few workouts.
     if (rand() > 0.7) {
-      const acts = ['Run', 'Strength', 'Yoga', 'Walk', 'Cycling']
+      const acts = ['run', 'strength', 'yoga', 'walk', 'cycle'] as const
       j.workouts.push({
         id: uid('w'), date, activity: acts[Math.floor(rand() * acts.length)],
         durationMin: 20 + Math.floor(rand() * 50), distanceKm: rand() > 0.5 ? Math.round(rand() * 10 * 10) / 10 : undefined,
@@ -146,7 +146,7 @@ export function generateDemoData(today = todayISO()): JournalData {
     const day = addDays(today, -i * 2 - 1)
     const w = ppl[i % 3]
     j.workouts.push({
-      id: uid('w'), date: day, activity: `${w.split} day`, split: w.split,
+      id: uid('w'), date: day, activity: w.split, split: w.split,
       durationMin: 55 + Math.floor(rand() * 20), sets: w.sets, rpe: 7 + Math.floor(rand() * 3), notes: '',
     })
   }

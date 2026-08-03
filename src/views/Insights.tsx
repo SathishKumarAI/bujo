@@ -6,6 +6,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
+import { labelOf } from '../domain/activities'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
 import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
@@ -72,7 +73,7 @@ export function Insights() {
   const records: { label: string; value: string }[] = []
   if (best > 0) records.push({ label: 'Longest streak', value: `${best} days` })
   if (bestMood?.mood != null) records.push({ label: 'Best mood', value: `${bestMood.mood}/10 · ${prettyDay(bestMood.date)}` })
-  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${bigWorkout.activity}` })
+  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${labelOf(bigWorkout.activity)}` })
   if (pickBest) records.push({ label: 'Best pickleball', value: `${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}` })
   if (busiest) records.push({ label: 'Busiest day', value: `${busiest[1]} entries · ${prettyDay(busiest[0])}` })
 

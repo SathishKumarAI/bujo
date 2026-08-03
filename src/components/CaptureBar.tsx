@@ -9,6 +9,7 @@ import { Stepper } from './fields/Stepper'
 import { EmojiScale } from './fields/EmojiScale'
 import { parseTags } from '../lib/bullets'
 import { parseCapture, type CaptureResult } from '../lib/capture'
+import { labelOf } from '../domain/activities'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { cat } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
@@ -40,7 +41,7 @@ function describe(r: CaptureResult): string {
       ].filter(Boolean).join(' ')
     case 'cardio':
       return [
-        r.activity,
+        labelOf(r.activity),
         r.distanceKm != null ? `${r.distanceKm}km` : null,
         r.durationMin != null ? `${r.durationMin}min` : null,
       ].filter(Boolean).join(' · ')
@@ -95,7 +96,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
         const line = describe(r)
         addWorkout({
           date,
-          activity: 'Strength',
+          activity: 'strength',
           sets: [line],
           setRows: [{ exercise: r.exercise, weight: r.weight, reps: r.reps, rpe: r.rpe, kind: 'working' }],
           rpe: r.rpe,

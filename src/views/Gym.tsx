@@ -22,6 +22,7 @@ import {
   CollapsibleSection, RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
   MuscleVolumeBalance, BigThreeCard, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
 } from '../components/gym'
+import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
 import { cat, rechartsTooltip } from '../lib/colors'
 import { todayISO } from '../lib/date'
@@ -160,7 +161,7 @@ export function Gym() {
     }
     addWorkout({
       date: todayISO(),
-      activity: `${splitMeta(split).label} day`,
+      activity: activityForSplit(split),
       split,
       sets,
       setRows: structured,

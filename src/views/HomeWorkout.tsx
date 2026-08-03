@@ -29,7 +29,7 @@ export function HomeWorkout() {
   const [openId, setOpenId] = useState<string | null>(null)
 
   const lib = filter === 'all' ? HOME_EXERCISES : HOME_EXERCISES.filter((e) => e.muscle === filter)
-  const sessions = (data.workouts ?? []).filter((w) => w.activity === 'Home').sort((a, b) => (a.date < b.date ? 1 : -1))
+  const sessions = (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1))
 
   function add(ex: HomeExercise) {
     setItems((cur) => (cur.some((i) => i.id === ex.id) ? cur : [...cur, { id: ex.id, name: ex.name, reps: ex.reps }]))
@@ -41,7 +41,7 @@ export function HomeWorkout() {
     if (items.length === 0) return
     addWorkout({
       date: today,
-      activity: 'Home',
+      activity: 'homeWorkout',
       durationMin: dur ? Number(dur) : undefined,
       sets: items.map((i) => `${i.name} ${i.reps}`),
       notes: notes.trim(),

@@ -1,4 +1,5 @@
 import type { Habit, HabitType, JournalData } from './types'
+import { labelOf } from '../domain/activities'
 import { addDays, dayDiff, todayISO } from './date'
 
 // ── Habit completion (single source of truth across all layouts) ─────────────
@@ -273,7 +274,7 @@ export function moodByWeekday(data: JournalData): (number | null)[] {
 export function workoutSplitCounts(data: JournalData): { split: string; count: number }[] {
   const tally: Record<string, number> = {}
   for (const w of data.workouts) {
-    const key = w.split ?? (w.activity ? w.activity.toLowerCase() : 'other')
+    const key = w.split ?? w.activity
     tally[key] = (tally[key] ?? 0) + 1
   }
   const pickle = (data.pickleball ?? []).length
@@ -374,8 +375,10 @@ export function search(data: JournalData, q: string) {
     if (g.text.toLowerCase().includes(needle)) out.push({ date: g.date, kind: 'gratitude', text: g.text })
   })
   data.workouts.forEach((w) => {
-    const blob = `${w.activity} ${w.notes} ${w.sets.join(' ')}`.toLowerCase()
-    if (blob.includes(needle)) out.push({ date: w.date, kind: 'workout', text: `${w.activity} — ${w.notes}` })
+    // Search the *label*, not the key: someone looking for "home workout" or
+    // "pull-ups" is typing what the UI showed them, not `homeWorkout`.
+    const blob = `${labelOf(w.activity)} ${w.notes} ${w.sets.join(' ')}`.toLowerCase()
+    if (blob.includes(needle)) out.push({ date: w.date, kind: 'workout', text: `${labelOf(w.activity)} — ${w.notes}` })
   })
   return out.sort((a, b) => (a.date < b.date ? 1 : -1))
 }

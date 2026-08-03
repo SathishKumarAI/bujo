@@ -1,6 +1,7 @@
 // Plain-CSV exporters for spreadsheet/analysis use. Each returns a CSV string;
 // the caller downloads it. Kept dependency-free and defensive about commas/quotes.
 import type { JournalData } from './types'
+import { labelOf } from '../domain/activities'
 import { personalRecords, cardioPBs, epley1RM } from './fitness'
 
 function esc(v: unknown): string {
@@ -67,7 +68,7 @@ export function parseMetricsCsv(text: string): { date: string; patch: Record<str
 export function workoutsCsv(data: JournalData): string {
   return toCsv(
     ['date', 'activity', 'split', 'durationMin', 'distanceKm', 'calories', 'rpe', 'sets'],
-    [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1)).map((w) => [w.date, w.activity, w.split ?? '', w.durationMin, w.distanceKm, w.calories, w.rpe, w.sets.join(' | ')]),
+    [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1)).map((w) => [w.date, labelOf(w.activity), w.split ?? '', w.durationMin, w.distanceKm, w.calories, w.rpe, w.sets.join(' | ')]),
   )
 }
 

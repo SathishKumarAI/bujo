@@ -1,6 +1,7 @@
 // Minimal .ics (iCalendar) parser + exporter — round-trips VEVENT summary +
 // start date. Handles line folding and both DATE and DATE-TIME DTSTART forms.
 import type { JournalData } from './types'
+import { labelOf } from '../domain/activities'
 
 export interface IcsEvent {
   date: string // ISO day
@@ -182,7 +183,7 @@ export function completionsToICS(data: JournalData): string {
   // Logged workouts.
   for (const w of data.workouts) {
     if (!w.date) continue
-    const v = vevent(`bujo-workout-${w.id}`, w.date, `✓ ${w.activity}${w.durationMin ? ` (${w.durationMin}m)` : ''}`)
+    const v = vevent(`bujo-workout-${w.id}`, w.date, `✓ ${labelOf(w.activity)}${w.durationMin ? ` (${w.durationMin}m)` : ''}`)
     if (v) events.push(v)
   }
   return calendar(events)

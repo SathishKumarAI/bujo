@@ -11,48 +11,70 @@ import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
 import { cat } from '../lib/colors'
 import { pace, cardioPBs, trainingHeatmap, cardioBadges } from '../lib/fitness'
+import { activitiesForMode, asks, defaultActivityFor, labelOf, modeOf, type ActivityKey } from '../domain/activities'
+import { displayDistance, fromKm, toKm } from '../lib/units'
+import type { DistanceUnit } from '../lib/types'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import type { Workout } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
 
-const ACTIVITIES = ['Run', 'Walk', 'Strength', 'Cycling', 'Yoga', 'Swim', 'HIIT', 'Sport', 'Other']
-type Form = { date: string; activity: string; duration: string; distance: string; calories: string; rpe: string; sets: string; notes: string }
-const emptyForm: Form = { date: todayISO(), activity: 'Run', duration: '', distance: '', calories: '', rpe: '', sets: '', notes: '' }
+/** Which activities this surface offers. Cardio today; Stage 3 merges Strength
+ *  in from Gym and this becomes a function of the mode segment. */
+const FORM_MODE = 'cardio' as const
+
+type Form = { date: string; activity: ActivityKey; duration: string; distance: string; calories: string; rpe: string; sets: string; notes: string }
+const emptyForm = (): Form => ({ date: todayISO(), activity: defaultActivityFor(FORM_MODE), duration: '', distance: '', calories: '', rpe: '', sets: '', notes: '' })
 
 // Form fields are strings (free-typing kept); these bridge to the numeric Stepper.
 const numOf = (s: string) => (s ? Number(s) : undefined)
 const strOf = (v: number | undefined) => (v != null ? String(v) : '')
 
-/** The four tap-to-adjust workout numbers, shared by the log + edit forms. */
-function MetricFields({ f, set, distUnit = 'km' }: { f: Form; set: (p: Partial<Form>) => void; distUnit?: string }) {
+/**
+ * The tap-to-adjust numbers. Which of them exist is the registry's decision,
+ * not this component's: Run asks for duration + distance, Pickleball asks for
+ * duration alone. There is deliberately no literal mode comparison here — that
+ * conditional is what put a strength sets box on a cardio form in the first
+ * place, and there is now nowhere to write it. (Kept free of the literal so the
+ * Stage 6 sweep grep does not trip on its own documentation.)
+ *
+ * Calories and RPE are optional for every activity; they move behind the shared
+ * "More" disclosure when that primitive lands (Stage 2).
+ */
+function MetricFields({ f, set, distUnit = 'km' }: { f: Form; set: (p: Partial<Form>) => void; distUnit?: DistanceUnit }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Stepper label="Duration" suffix="min" step={5} min={0} value={numOf(f.duration)} onChange={(v) => set({ duration: strOf(v) })} aria-label="Duration minutes" />
-      <Stepper label="Distance" suffix={distUnit} step={0.5} min={0} value={numOf(f.distance)} onChange={(v) => set({ distance: strOf(v) })} aria-label="Distance" />
+      {asks(f.activity, 'durationMin') && (
+        <Stepper label="Duration" suffix="min" step={5} min={0} value={numOf(f.duration)} onChange={(v) => set({ duration: strOf(v) })} aria-label="Duration minutes" />
+      )}
+      {asks(f.activity, 'distanceKm') && (
+        <Stepper label="Distance" suffix={distUnit} step={0.5} min={0} value={numOf(f.distance)} onChange={(v) => set({ distance: strOf(v) })} aria-label="Distance" />
+      )}
       <Stepper label="Calories" suffix="kcal" step={50} min={0} value={numOf(f.calories)} onChange={(v) => set({ calories: strOf(v) })} aria-label="Calories" />
       <Stepper label="RPE" step={1} min={1} max={10} value={numOf(f.rpe)} onChange={(v) => set({ rpe: strOf(v) })} aria-label="RPE" />
     </div>
   )
 }
-const formToPayload = (f: Form): Omit<Workout, 'id'> => ({
+/** Distance leaves the form in the user's unit and is stored as canonical km. */
+const formToPayload = (f: Form, unit: DistanceUnit): Omit<Workout, 'id'> => ({
   date: f.date, activity: f.activity,
   durationMin: f.duration ? Number(f.duration) : undefined,
-  distanceKm: f.distance ? Number(f.distance) : undefined,
+  distanceKm: f.distance ? toKm(Number(f.distance), unit) : undefined,
   calories: f.calories ? Number(f.calories) : undefined,
   rpe: f.rpe ? Number(f.rpe) : undefined,
   sets: f.sets.split('\n').map((s) => s.trim()).filter(Boolean),
   notes: f.notes.trim(),
 })
-const workoutToForm = (w: Workout): Form => ({
+const workoutToForm = (w: Workout, unit: DistanceUnit): Form => ({
   date: w.date, activity: w.activity,
-  duration: w.durationMin?.toString() ?? '', distance: w.distanceKm?.toString() ?? '',
+  duration: w.durationMin?.toString() ?? '',
+  distance: w.distanceKm != null ? String(Math.round(fromKm(w.distanceKm, unit) * 100) / 100) : '',
   calories: w.calories?.toString() ?? '', rpe: w.rpe?.toString() ?? '',
   sets: w.sets.join('\n'), notes: w.notes,
 })
 
 export function Fitness() {
   const { data, addWorkout, removeWorkout } = useJournal()
-  const [f, setF] = useState(emptyForm)
+  const [f, setF] = useState(emptyForm)  // lazy init · emptyForm reads todayISO()
   const [editing, setEditing] = useState<Workout | null>(null)
   const [range, setRange] = useState<'week' | 'all'>('all')
   const [showAll, setShowAll] = useState(false)
@@ -68,14 +90,14 @@ export function Fitness() {
 
   function submit() {
     if (!f.activity) return
-    addWorkout(formToPayload(f))
-    setF(emptyForm)
+    addWorkout(formToPayload(f, dist))
+    setF(emptyForm())
   }
 
   function repeatLast() {
     const last = workouts[0]
     if (!last) return
-    setF({ ...workoutToForm(last), date: today, rpe: '', notes: '' })
+    setF({ ...workoutToForm(last, dist), date: today, rpe: '', notes: '' })
   }
 
   const shown = showAll ? workouts : workouts.slice(0, 6)
@@ -86,14 +108,16 @@ export function Fitness() {
         <div className="space-y-3">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <label className="block text-body text-fg-1">Activity
-            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
-              {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
+            <select value={f.activity} onChange={(e) => set({ activity: e.target.value as ActivityKey })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
+              {activitiesForMode(FORM_MODE).map(([key, a]) => <option key={key} value={key}>{a.label}</option>)}
             </select>
           </label>
           <MetricFields f={f} set={set} distUnit={dist} />
-          {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
-          <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Sets, one per line\nBench 5x5 @ 60kg'} rows={3} />
-          <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
+          {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(toKm(Number(f.distance), dist), Number(f.duration), dist)}</p>}
+          {asks(f.activity, 'sets') && (
+            <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Bench 5x5 @ 60kg'} rows={3} />
+          )}
+          <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Legs felt heavy for the first mile" rows={2} />
           <Button variant="secondary" onClick={submit} className="press-3d w-full">Log workout</Button>
         </div>
       </Card>
@@ -112,12 +136,12 @@ export function Fitness() {
               return (
                 <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
                   <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                    <span className="truncate font-medium text-fg-1 group-hover:text-mauve">{w.activity}</span>
+                    <span className="truncate font-medium text-fg-1 group-hover:text-mauve">{labelOf(w.activity)}</span>
                     <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
                   </button>
                   <div className="flex shrink-0 items-center gap-2 text-label text-fg-2">
                     {w.durationMin != null && <span>{w.durationMin}m</span>}
-                    {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
+                    {w.distanceKm != null && <span>{displayDistance(w.distanceKm, dist)}{dist}</span>}
                     {p && <span className="text-sky">{p}</span>}
                     <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
@@ -141,8 +165,8 @@ export function Fitness() {
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             <Stat label="Workouts" value={inRange.length} color="teal" />
             <Stat label="Minutes" value={totalMin} color="peach" />
-            <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={Math.round(totalKm * 10) / 10} color="sky" />
-            <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
+            <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={displayDistance(totalKm, dist)} color="sky" />
+            <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={displayDistance(pbs.longestKm, dist)} color="green" />
             <Stat label="Best kcal" value={pbs.mostCalories} color="red" />
             <Stat label="Best min" value={pbs.mostMinutes} color="lavender" />
           </div>
@@ -172,23 +196,29 @@ function WorkoutEditDialog({ workout, onClose }: { workout: Workout | null; onCl
 
 function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (p: Omit<Workout, 'id'>) => void; onDelete: () => void }) {
   const confirm = useConfirm()
-  const [f, setF] = useState<Form>(() => workoutToForm(workout))
+  const { data } = useJournal()
+  const dist = data.settings.distanceUnit
+  const [f, setF] = useState<Form>(() => workoutToForm(workout, dist))
   const set = (p: Partial<Form>) => setF((cur) => ({ ...cur, ...p }))
+  // Offer the activities of *this session's* mode. Editing a push day should
+  // let you correct it to a pull day, not silently reclassify it as a Run.
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
         <label className="block text-body text-fg-1">Activity
-          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
-            {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
+          <select value={f.activity} onChange={(e) => set({ activity: e.target.value as ActivityKey })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
+            {activitiesForMode(modeOf(f.activity)).map(([key, a]) => <option key={key} value={key}>{a.label}</option>)}
           </select>
         </label>
       </div>
-      <MetricFields f={f} set={set} />
-      <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
+      <MetricFields f={f} set={set} distUnit={dist} />
+      {asks(f.activity, 'sets') && (
+        <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Bench 5x5 @ 60kg" rows={3} />
+      )}
       <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
       <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-control">Save</Button>
+        <Button variant="secondary" onClick={() => onSave(formToPayload(f, dist))} className="press-3d flex-1 rounded-control">Save</Button>
         <Button variant="ghost" onClick={async () => { if (await confirm({
           title: 'Delete this workout?',
           description: 'The workout and its sets are removed from your history. This cannot be undone.',
@@ -207,7 +237,7 @@ function CardioBadgesCard() {
   const earned = badges.filter((b) => b.value > 0)
   if (earned.length === 0) return null
   const fmt = (b: (typeof badges)[number]) => {
-    if (b.key === 'longestKm') return `${Math.round((dist === 'mi' ? b.value / 1.60934 : b.value) * 10) / 10} ${dist}`
+    if (b.key === 'longestKm') return `${displayDistance(b.value, dist)} ${dist}`
     if (b.key === 'mostMinutes') return `${b.value} min`
     return `${b.value} kcal`
   }
