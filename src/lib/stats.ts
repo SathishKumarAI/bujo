@@ -188,9 +188,21 @@ export function reminderMessage(
   const dow = new Date(today + 'T00:00').getDay()
 
   // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
+  //
+  // Build habits only. This reminder's entire shape is "you have not logged X
+  // yet, log it" — and for an avoid habit logging it means giving in, so four
+  // days of drinking produced "🔥 4-day Alcohol streak at risk / Log Alcohol
+  // today to keep your 4-day streak alive."
+  //
+  // Inverting the copy with `cleanStreak` was the obvious alternative and is
+  // wrong for a different reason: a clean streak is at risk every hour of every
+  // day, so it would fire daily and, being unbounded, would outrank every real
+  // build-habit streak and crowd them out. There is no action to prompt for a
+  // quit habit — the action is to keep doing nothing. `MilestoneToast` already
+  // celebrates clean runs via `cleanStreak`, which is the right surface for it.
   let risk: { name: string; streak: number } | null = null
   for (const h of data.habits) {
-    if (h.archived) continue
+    if (h.archived || h.avoid) continue
     const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
     if (!scheduled) continue
     const doneToday = habitDoneOn(data, h, today)
