@@ -38,18 +38,36 @@ describe('the five sections', () => {
   })
 
   /**
-   * The gap this catches is the one that shipped: Strength tools was a real
-   * view with no rail entry, reachable only from a conditional link inside
-   * Fitness. Anything with page chrome is a destination and needs a door.
+   * The gap this catches is the one that shipped twice: Strength tools was a
+   * real view with no rail entry, reachable only from a conditional link
+   * inside Fitness. Anything with page chrome is a destination and needs a
+   * door.
+   *
+   * The exempt list is the loophole, so keep it short and justify each entry.
+   * Pickleball sat on it — "redirected onto Fitness" — and the redirect landed
+   * on a form that asks for a duration and nothing else, so the exemption was
+   * hiding a page that had effectively been deleted.
    */
   it('gives every non-preference view a section', () => {
     const exempt = new Set<ViewId>([
       'settings', 'help', 'account', 'kitchen-sink',
       // Redirected onto Fitness with the activity preselected (deepLink.ts).
-      'pullups', 'homeworkout', 'pickleball',
+      // Both are genuine activities: their session IS a `Workout`, so nothing
+      // is lost by logging them on the Fitness form.
+      'pullups', 'homeworkout',
     ])
     const orphans = (Object.keys(VIEW_CHROME) as ViewId[]).filter((v) => !exempt.has(v) && !MEMBERS[v])
     expect(orphans).toEqual([])
+  })
+
+  /**
+   * A view may only be redirected onto another if the target can actually hold
+   * its data. Pickleball's record has fields no `Workout` has, which is what
+   * made its redirect a deletion.
+   */
+  it('keeps Pickleball a destination, because its record is not a Workout', () => {
+    expect(sectionOf('pickleball')).toBe('body')
+    expect(tabsOf('body', ALL).map((t) => t.view)).toContain('pickleball')
   })
 
   it('reaches every tab in at most two clicks', () => {

@@ -63,6 +63,7 @@ const VIEWS = [
   ['Plan', 'Goals'],
   ['Body', 'Fitness'],
   ['Body', 'Strength'],
+  ['Body', 'Pickleball'],
   ['Body', 'Nutrition'],
   ['Body', 'Recovery'],
   ['Body', 'Coaching'],

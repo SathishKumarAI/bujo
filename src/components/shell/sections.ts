@@ -20,10 +20,28 @@ import type { ViewId } from './viewChrome'
  * `lib/deepLink.ts`). The tab is therefore in the URL, not in local state —
  * which is the property the tabs had to have.
  *
- * **Pull-ups, Home workout and Pickleball are deliberately not tabs.** They are
- * activities you pick inside Fitness, not surfaces you navigate to; `deepLink`
- * still redirects their old ids. `MEMBERS` maps them to Body anyway so that
- * arriving on one lights the right rail row.
+ * **Pull-ups and Home workout are deliberately not tabs.** They are activities
+ * you pick inside Fitness, not surfaces you navigate to; `deepLink` still
+ * redirects their old ids. `MEMBERS` maps them to Body anyway so that arriving
+ * on one lights the right rail row.
+ *
+ * **Pickleball is a tab, and was wrongly grouped with them.** The test for
+ * "activity or surface" is not whether you can do the thing — it is whether it
+ * has a record of its own. A pull-up session IS a `Workout`, so Pull-ups is an
+ * activity. A pickleball session is a `PickleballSession`: format
+ * (singles/doubles), games won and lost, scoring format, partner, opponent,
+ * level, points for and against — none of which a `Workout` can hold.
+ *
+ * Redirecting it into Fitness therefore did not move the page, it deleted it.
+ * `ACTIVITIES.pickleball` is `mode: 'sport'` with `required: ['durationMin']`,
+ * so the form you land on asks for a duration and nothing else, and the whole
+ * record — win rate, singles-vs-doubles, tournaments, leagues — became
+ * unreachable except through a companion link that only appears once you have
+ * already picked Pickleball on the Fitness activity select. Reported as
+ * "options are not available", which is exactly what it was.
+ *
+ * The Fitness activity stays, so a quick "played for 45 minutes" still logs
+ * from there without a score. The two are different records on purpose.
  */
 export type SectionId = 'today' | 'plan' | 'body' | 'mind' | 'insights'
 
@@ -77,9 +95,11 @@ export const SECTIONS: Section[] = [
       // photos were all behind a conditional. A whole workshop should not need
       // a mode to be set before it has a door.
       { view: 'gym', label: 'Strength' },
+      // Pickleball is a surface, not an activity — see the note below.
+      { view: 'pickleball', label: 'Pickleball' },
+      { view: 'coaching', label: 'Coaching' },
       { view: 'nutrition', label: 'Nutrition' },
       { view: 'nofap', label: 'Recovery', gate: 'nofap' },
-      { view: 'coaching', label: 'Coaching' },
       { view: 'cycle', label: 'Cycle', gate: 'cycle' },
     ],
   },
@@ -117,12 +137,11 @@ export const SECTIONS: Section[] = [
 export const MEMBERS: Partial<Record<ViewId, SectionId>> = (() => {
   const m: Partial<Record<ViewId, SectionId>> = {}
   for (const s of SECTIONS) for (const t of s.tabs) m[t.view] = s.id
-  // Companions: reachable, not tabbed. The three activity views are redirected
-  // by `deepLink` onto Fitness with the activity preselected, and are listed
-  // here only so an in-flight link lights the right rail row.
+  // Companions: reachable, not tabbed. Both are redirected by `deepLink` onto
+  // Fitness with the activity preselected, and are listed here only so an
+  // in-flight link lights the right rail row.
   m.pullups = 'body'
   m.homeworkout = 'body'
-  m.pickleball = 'body'
   return m
 })()
 

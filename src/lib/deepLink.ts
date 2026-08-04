@@ -23,21 +23,29 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
 /**
  * Retired destinations → where they live now.
  *
- * Pull-ups, Home workout and Pickleball were nav entries sitting as peers of
- * Coaching and Recovery, which mixed two levels of taxonomy: the first three
- * are *activities* and the last two are *surfaces*. An activity is something
- * you choose inside Fitness, not somewhere you navigate to.
+ * Pull-ups and Home workout were nav entries sitting as peers of Coaching and
+ * Recovery, which mixed two levels of taxonomy: those two are *activities* and
+ * the others are *surfaces*. An activity is something you choose inside
+ * Fitness, not somewhere you navigate to.
  *
  * This is the app's equivalent of a 301. There is no path router — navigation
  * is a `view` state plus a `?view=` parameter — so the rewrite happens on read,
  * and the query string survives it. Old bookmarks keep working and land on the
  * activity they meant.
+ *
+ * **Pickleball was in this table and should not have been.** The test is not
+ * whether you can do the thing, it is whether it has a record of its own: a
+ * pull-up session IS a `Workout`, whereas a pickleball session is a
+ * `PickleballSession` with format, games won/lost, scoring format, partner and
+ * points. The Fitness sport form asks for `durationMin` and nothing else, so
+ * this redirect did not relocate the page — it made every one of those fields
+ * unreachable from a link. Alias removed; `?view=pickleball` opens Pickleball,
+ * which is a Body tab again.
  */
 const VIEW_ALIASES: Record<string, { view: string; activity: string }> = {
   pullups: { view: 'fitness', activity: 'pullups' },
   homeworkout: { view: 'fitness', activity: 'homeWorkout' },
   'home-workout': { view: 'fitness', activity: 'homeWorkout' },
-  pickleball: { view: 'fitness', activity: 'pickleball' },
   body: { view: 'fitness', activity: '' },
 }
 

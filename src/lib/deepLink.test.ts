@@ -2,10 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { readDeepLink } from './deepLink'
 
 describe('readDeepLink — retired destinations', () => {
-  it('rewrites the three activity views onto Fitness with the activity preselected', () => {
+  it('rewrites the two activity views onto Fitness with the activity preselected', () => {
     expect(readDeepLink('?view=pullups')).toMatchObject({ view: 'fitness', activity: 'pullups' })
     expect(readDeepLink('?view=homeworkout')).toMatchObject({ view: 'fitness', activity: 'homeWorkout' })
-    expect(readDeepLink('?view=pickleball')).toMatchObject({ view: 'fitness', activity: 'pickleball' })
+  })
+
+  /**
+   * Pickleball was in that table and should not have been. A pull-up session
+   * IS a `Workout`; a pickleball session is a `PickleballSession` with format,
+   * games won/lost, scoring format, partner and points. The Fitness sport form
+   * asks for `durationMin` alone, so the redirect did not relocate the page,
+   * it made all of those fields unreachable from a link.
+   */
+  it('leaves Pickleball alone — it is a surface with its own record, not an activity', () => {
+    expect(readDeepLink('?view=pickleball')).toMatchObject({ view: 'pickleball', activity: null })
   })
 
   it('accepts the hyphenated spelling the brief used', () => {
