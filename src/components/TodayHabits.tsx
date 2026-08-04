@@ -11,13 +11,31 @@ import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
 
 /**
- * Tick today's check-habits without leaving Today. Habitify-style: habits are
+ * Tick a day's check-habits without leaving Today. Habitify-style: habits are
  * grouped by time of day (Morning / Afternoon / Evening / Anytime) with the
  * current slot surfaced first, and a completion ring shows the day's progress.
+ *
+ * **One component, three renderings**, because the Today surfaces each want the
+ * habits in a different shape and a second copy would drift within a week:
+ *
+ * - `card` — the full card with slot headings and the ring. Classic Today.
+ * - `row` — a bare pill row, no card, no headings. Sits under the rapid log on
+ *   the Day surface, where the log is the only card by design.
+ * - `checklist` — a vertical close-out list for the Evening surface, where the
+ *   job is "walk the list once", not "spot the one you forgot".
+ *
+ * `date` defaults to today but is passed from the cursor, so the habits shown
+ * belong to the day you are looking at rather than to the wall clock.
  */
-export function TodayHabits() {
+export function TodayHabits({
+  date = todayISO(),
+  variant = 'card',
+}: {
+  date?: string
+  variant?: 'card' | 'row' | 'checklist'
+} = {}) {
   const { data, toggleHabit, setHabitNote } = useJournal()
-  const today = todayISO()
+  const today = date
   const [noteFor, setNoteFor] = useState<string | null>(null)
   const notes = data.habitNotes?.[today] ?? {}
   const now = new Date(today + 'T00:00')
@@ -57,7 +75,9 @@ export function TodayHabits() {
           onClick={() => toggleHabit(today, h.id)}
           aria-pressed={on}
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
-          className="inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
+          // `min-h-11` — 44px (WCAG 2.5.5). `py-1.5` on a 15px line put these
+          // at 34px, and they are the most-tapped control on a phone.
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
@@ -82,10 +102,70 @@ export function TodayHabits() {
     )
   }
 
+  /** The note editor, shared by all three renderings. */
+  const noteEditor = noteFor && (
+    <div className="mt-3 border-t border-line pt-3">
+      <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Note} size="sm" /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
+      <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
+    </div>
+  )
+
+  // ── row · the Day surface. No card, no slot headings, no ring: the rapid log
+  //    is the only card on that surface, and headings over six pills is
+  //    furniture. The count moves to the end of the row as one quiet chip.
+  if (variant === 'row') {
+    return (
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          {habits.map(chip)}
+          <span className="ml-auto text-label tabular-nums text-fg-2">{done}/{total}</span>
+        </div>
+        {noteEditor}
+      </div>
+    )
+  }
+
+  // ── checklist · the Evening surface. Closing the day is a walk down a list,
+  //    so it reads as one: a row per habit, state on the left, full width.
+  if (variant === 'checklist') {
+    return (
+      <Card title="Close out your habits" hideInfo>
+        <ul className="divide-y divide-line">
+          {habits.map((h) => {
+            const on = log.includes(h.id)
+            const accent = h.avoid ? cat('red') : cat(h.color)
+            return (
+              <li key={h.id}>
+                <button
+                  onClick={() => toggleHabit(today, h.id)}
+                  aria-pressed={on}
+                  className="flex min-h-11 w-full items-center gap-3 py-2 text-left text-body"
+                >
+                  <span
+                    aria-hidden
+                    className="grid size-5 shrink-0 place-items-center rounded-control border text-caption"
+                    style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: accent }}
+                  >
+                    {on ? '✓' : ''}
+                  </span>
+                  <span className={on ? 'text-fg-2 line-through' : 'text-fg-1'}>
+                    {h.emoji ? `${h.emoji} ` : ''}{h.name}
+                  </span>
+                  {h.avoid && <span className="ml-auto text-label text-fg-2">{on ? 'slip' : 'clean'}</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        <p className="mt-3 text-label text-fg-2">{done} of {total} done{allDone ? ' · all of them' : ''}.</p>
+      </Card>
+    )
+  }
+
   return (
     <Card
       title="Today’s habits"
-      subtitle="Tap to check off, grouped by time of day"
+      hideInfo
       right={
         <span className="inline-flex items-center gap-2">
           {!allDone && total > 0 && (
@@ -129,12 +209,7 @@ export function TodayHabits() {
         })}
       </div>
 
-      {noteFor && (
-        <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-1 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Note} size="sm" /> Note · {data.habits.find((h) => h.id === noteFor)?.name}</p>
-          <Textarea value={notes[noteFor] ?? ''} onChange={(e) => setHabitNote(today, noteFor, e.target.value)} placeholder="How did it go today?" rows={2} autoFocus />
-        </div>
-      )}
+      {noteEditor}
     </Card>
   )
 }
