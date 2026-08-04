@@ -76,6 +76,49 @@ wrong.
   computed `overflow-y` to `auto`, drawing a vertical scrollbar on a row of
   five tabs.
 
+### The "what else is missing?" audit
+
+Run mechanically after Pickleball turned up, because the same mistake had
+already been made twice and eyeballing it is what let it through.
+
+**Four checks, and only one real finding.**
+
+1. *Views with no section* — now a test (`sections.test.ts`). Clean.
+2. *Components nothing imports* — `resizable` and `scroll-area`, both
+   unused vendored shadcn files. Harmless.
+3. *Store actions with no UI caller* — `renameHabit` (superseded by
+   `updateHabit(id, {name})`, which the habit editor uses) and
+   `removeBodyMetric`. Neither is a missing feature.
+4. *Exported lib functions with no consumer* — 13 hits, and **they are
+   duplicates of things already on screen, not features waiting to ship**:
+
+   | Orphan | Already shipped as |
+   |---|---|
+   | `taskAging` | `overdueBuckets`, in Plan's aging histogram |
+   | `migrationAnalytics` | `migrationCounts`, Plan's "chronically deferred" |
+   | `trainingHeatmap` | Fitness's `CalendarHeatmap`, 12 weeks |
+   | `recoveryState` | `RecoveryMap` in Strength tools, per-muscle |
+   | `categoryRollup` | `CategoryConsistencyCard` in Trackers |
+   | `habitWeekdayPerformance` | `bestWeekday` in Trackers |
+   | `cardioBadges` | deliberately removed — it returned `null` until you had earned a badge, so it was invisible to exactly the people it was meant to motivate |
+
+   Plus `strengthBand`, `dayCoverage`, `focusStressCorrelation`,
+   `periodTrend`, `bodyweightSeries`, `activeDayStreak`.
+
+   **They are worth deleting, and that is not done.** Left alone on purpose:
+   it is ~13 functions plus their tests, some may be someone's in-flight
+   work, and this branch is already eight commits deep. The risk of leaving
+   them is that the next audit re-flags them and someone wires up a second
+   aging histogram next to the first.
+
+So: no features were missing beyond Pickleball. What the audit actually
+found is that **this repo's failure mode is a page losing its door, not a
+feature never being built** — three times now (Strength tools, Pickleball,
+and `pickleball/Section.tsx` recorded as dead code when its only importer
+was simply unreachable). The orphan test covers views. Nothing covers a card
+that renders only behind a condition nobody meets, which is how Strength
+tools hid.
+
 ### Not done
 
 1. **Not pushed, no PR.** And the `#96 → #99 → #100` order below is unchanged
