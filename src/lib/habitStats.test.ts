@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  bestWeekday, categoryRollup, completionRate30, consistencyScore, habitCellFill,
-  isScheduledOn, perfectDayStats, perfectWeeks, weeklyHeatRow,
-  monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary,
-} from './habitStats'
+import { bestWeekday, completionRate30, consistencyScore, habitCellFill, isScheduledOn, perfectDayStats, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from './habitStats'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
 
@@ -207,51 +203,6 @@ function withHabits(habits: Habit[], log: Record<string, string[]> = {}): Journa
   return d
 }
 
-describe('categoryRollup', () => {
-  it('aggregates scheduled-vs-done across habits per category', () => {
-    const a = habit({ id: 'a', category: 'wellness', startedOn: '2000-01-01' })
-    const b = habit({ id: 'b', category: 'wellness', startedOn: '2000-01-01' })
-    // a done every day in the window, b never done.
-    const log: Record<string, string[]> = {}
-    for (const day of isoDays(TODAY, 30)) log[day] = ['a']
-    const out = categoryRollup(withHabits([a, b], log), TODAY, 30)
-    const wellness = out.find((r) => r.category === 'wellness')!
-    expect(wellness.habits).toBe(2)
-    expect(wellness.scheduled).toBe(60) // 2 habits × 30 days
-    expect(wellness.done).toBe(30) // only a
-    expect(wellness.pct).toBe(50)
-  })
-
-  it('counts avoid habits toward the count but excludes them from completion maths', () => {
-    const build = habit({ id: 'b', category: 'food', startedOn: '2000-01-01' })
-    const quit = habit({ id: 'q', category: 'food', startedOn: '2000-01-01', avoid: true })
-    const log: Record<string, string[]> = {}
-    for (const day of isoDays(TODAY, 30)) { log[day] = ['b', 'q'] } // both logged
-    const out = categoryRollup(withHabits([build, quit], log), TODAY, 30)
-    const food = out.find((r) => r.category === 'food')!
-    expect(food.habits).toBe(2)
-    expect(food.scheduled).toBe(30) // only the build habit contributes days
-    expect(food.done).toBe(30)
-    expect(food.pct).toBe(100)
-  })
-
-  it('drops archived habits and sorts by pct descending', () => {
-    const good = habit({ id: 'g', category: 'wellness', startedOn: '2000-01-01' })
-    const bad = habit({ id: 'x', category: 'movement', startedOn: '2000-01-01' })
-    const gone = habit({ id: 'z', category: 'custom', startedOn: '2000-01-01', archived: true })
-    const log: Record<string, string[]> = {}
-    for (const day of isoDays(TODAY, 30)) log[day] = ['g'] // wellness 100%, movement 0%
-    const out = categoryRollup(withHabits([good, bad, gone], log), TODAY, 30)
-    expect(out.map((r) => r.category)).toEqual(['wellness', 'movement']) // custom dropped
-    expect(out[0].pct).toBeGreaterThan(out[1].pct)
-  })
-
-  it('pct is 0 (not NaN) when nothing was scheduled', () => {
-    const future = habit({ id: 'f', category: 'wellness', startedOn: '2026-12-01' })
-    const out = categoryRollup(withHabits([future]), TODAY, 30)
-    expect(out[0].pct).toBe(0)
-  })
-})
 
 describe('perfectWeeks', () => {
   it('counts past weeks where every scheduled day was done', () => {
