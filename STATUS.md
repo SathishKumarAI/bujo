@@ -4,7 +4,102 @@ Update this when you STOP working, not when you start.
 
 - **Last touched:** 2026-08-03
 
-## Where I stopped
+## Where I stopped — `feat/ia-routing`
+
+Six commits off `feat/activity-registry`, **not pushed, no PR**. The third
+redesign pass: information architecture and routing. Base it on
+`feat/activity-registry` (#100) when you open the PR, not on `main`.
+
+Verifies green: `npx tsc -b` 0, `npx vitest run` **755 tests / 50 files**,
+`npx eslint .` 0 errors / 2 pre-existing warnings, `npm run build` clean,
+`npm run a11y` **0 serious across 15 surfaces**.
+
+Browser pass done at 1440 and 390, mocha, on both layouts.
+
+### Both layouts ship — `settings.layout`
+
+This was asked for mid-pass and is the load-bearing decision of the branch.
+`focused` (default) is the five-section rail plus the split Today; `classic`
+is the seventeen-destination rail plus the one-page Today. Settings → Journal
+feel → Layout. **They share their cards** (`src/views/today/cards.tsx`), so
+the fixes below landed in both and neither can drift into being the stale one.
+
+One key covers both the rail and Today deliberately: the two changes answer
+the same complaint from opposite ends, and someone who wants the old rail
+back almost certainly wants the old Today with it. Split it if that proves
+wrong.
+
+### What changed
+
+| Area | What |
+|---|---|
+| Routing | `writeDeepLink` pushes history; `onRouteChange` listens for `popstate`; day chevrons and rail rows are real anchors |
+| Nav | Five sections (`components/shell/sections.ts`), views inside them are tabs; no group headers; `BottomNav` renders the rail straight through |
+| Today | Morning / Day / Evening surfaces, `?surface=` for the override |
+| Fields | `SegmentScale` (11 dots, `—` for unset) replaced `Slider`, which is deleted; sleep is a half-hour stepper |
+| Copy | Zero ⓘ on Today; "Training penalty" → "Make-up work"; three writing prompts → one rotating |
+| Gate | `scripts/a11y-axe.mjs` navigates by link *and* button, walks `[section, tab]` pairs, waits on `getAnimations()` |
+
+### Things worth knowing before you touch this
+
+- **Strength tools had no door.** `gym` is a full view — exercise picker,
+  program tracker, plate calculator, muscle map, progress photos — and was
+  reachable only from a link inside Fitness that renders when the mode is
+  `strength`. It was never in `NAV`, so it had also never been scanned by the
+  a11y gate. It is a Body tab now, and `sections.test.ts` asserts every view
+  in `VIEW_CHROME` has a section or is an explicitly exempt preference page.
+- **The a11y gate had silently stopped navigating.** Its selector was
+  `nav button, aside button`; the rail rows became `<a>`. Every click matched
+  nothing, and the render-length assert does not catch it because Today
+  renders plenty of text — twelve views would have been scored as Today and
+  reported clean. This is the third variant of the same failure this gate has
+  had. Assume the selector is wrong after any nav change.
+- **The gate was also measuring mid-animation.** Insights "failed" contrast at
+  `#797d91`, a colour in no theme — `fg-2` composited at ~0.68 opacity because
+  the fixed 500ms wait was not always enough on a loaded machine. It waits on
+  `document.getAnimations()` now. It produced a false failure this time; the
+  same artefact hides real ones just as easily, which is the worse direction.
+- **`Tabs` was the wrong primitive** and the brief asked for it. Radix `Tabs`
+  implements the ARIA tabs pattern, where a trigger owns a `tabpanel` in the
+  same document. These tabs are separate pages, so it emitted `aria-controls`
+  naming a panel that never renders — `axe` critical. The tab row is a `<nav>`
+  of links with `aria-current="page"` instead. If someone "fixes" it back to
+  `Tabs`, that violation returns.
+- **`TodayHabits` was reading the wall clock, not the cursor.** It hardcoded
+  `todayISO()` while the rest of the page took the day from the route, so on
+  any day but today it showed the wrong day's habits. Fixed as part of the
+  split; would have been a real bug in classic too.
+- **`h-auto!` in the tab row is load-bearing** — was, before the primitive was
+  dropped; the same shape will recur. The vendored `TabsList` ships
+  `group-data-[orientation=horizontal]/tabs:h-9`, which beats a plain
+  `h-auto`, so 44px triggers overflowed a 36px box and `overflow-x-auto`
+  computed `overflow-y` to `auto`, drawing a vertical scrollbar on a row of
+  five tabs.
+
+### Not done
+
+1. **Not pushed, no PR.** And the `#96 → #99 → #100` order below is unchanged
+   and still blocking — this branch sits on top of all of it.
+2. **44px is met for what this pass touched, not app-wide.** Habit pills,
+   segment dots, count steppers, rail rows, section tabs, bottom tabs and the
+   surface switcher are all ≥44. The top bar's six icon buttons are 28px and
+   `Segmented` is 31px at its default size in ~30 other call sites. Both
+   predate this pass; both need a visual decision, not a sweep.
+3. **Only mocha was checked.** latte / neon / vscode / dawn unseen, as before.
+4. **A journal with real data was not used.** Everything above was verified on
+   a fresh journal, so the long-list and dense-day cases are unproven — in
+   particular the sticky capture box on the Day surface, which cannot be seen
+   working until the log is taller than the viewport.
+5. **The sticky capture is sticky-top, not a sticky footer** as the brief
+   asked. The bottom of a phone screen already holds `BottomNav`, so a footer
+   capture would sit on top of it. It pins under the header instead.
+6. **Insights has no horizontal-scroll wrapper under 640px yet** — the brief's
+   last mobile item. Nothing was observed overflowing on the pages checked,
+   but it was not tested with real chart data, which is when it would.
+
+---
+
+## Previously — `feat/activity-registry`
 
 **`feat/activity-registry`** — 15 commits, PR #100 against
 `feat/collapsible-header-ux` (PR #99). **`origin/main` is merged in** as of
