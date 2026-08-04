@@ -9,6 +9,7 @@ import { prettyDay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { PomodoroCard } from '../components/PomodoroCard'
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { cat, rechartsTooltip } from '../lib/colors'
@@ -66,9 +67,11 @@ export function Focus() {
   const hrs = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
 
   return (
-    <Page>
+    <Page width="wide">
+      {/* Three across: six blocks in one column, two of them collapsed strips. */}
+      <CardGrid>
       {/* This-week status leads (UX IA pass) */}
-      <Card title="This week" subtitle="Coding time & wellbeing">
+      <Card className={SPAN_2} title="This week" subtitle="Coding time & wellbeing">
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
           <Stat label="This week" value={hrs(weekMin)} color="mauve" icon={<Icon as={Code} size="sm" />} />
           <Stat label="Day streak" value={String(streak)} color="peach" icon={<Icon as={Flame} size="sm" />} />
@@ -239,6 +242,7 @@ export function Focus() {
           </ul>
         )}
       </Card>
+      </CardGrid>
     </Page>
   )
 }

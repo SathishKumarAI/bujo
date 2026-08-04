@@ -5,6 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
+import { CardGrid } from '../components/shell/CardGrid'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { HOME_EXERCISES, demoUrl, searchUrl, type HomeExercise, type Muscle } from '../lib/homeExercises'
@@ -50,7 +51,10 @@ export function HomeWorkout() {
   }
 
   return (
-    <Page>
+    <Page width="wide">
+      {/* Three across. All three cards are empty until you build a session, and
+          stacked they read as three separate failures rather than one start. */}
+      <CardGrid>
       {/* PRIMARY: build & log today's session first, before the library/history (UX IA pass) */}
       <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
         {items.length === 0 ? (
@@ -133,6 +137,7 @@ export function HomeWorkout() {
           ))}
         </div>
       </Card>
+      </CardGrid>
     </Page>
   )
 }

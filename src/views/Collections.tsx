@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { Page } from '../components/shell/Page'
+import { QuietSection } from '../components/CollapsibleSection'
 import { EntryRow } from '../components/EntryRow'
 import { FriendsCard } from '../components/FriendsCard'
-import { QuietSection } from '../components/CollapsibleSection'
 import { MONTHS, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 import { collectionBreakdown, collectionProgress, inboxEntries, memoryBullets, tagIndex } from '../lib/bullets'
@@ -23,8 +24,8 @@ export function Collections() {
   const [colEntry, setColEntry] = useState('')
   // Tag pages (auto-collections): one filtered page per #tag.
   const [openTag, setOpenTag] = useState<string | null>(null)
-  // Auto-pages is driven from here, not by the section: jumping to a tag page
-  // from the Index has to open it before it can scroll to it.
+  // Controlled: "jump to tag" from the index has to expand this section before
+  // it can scroll to the tag inside it.
   const [autoPagesOpen, setAutoPagesOpen] = useState(false)
 
   // Auto-collections: every #tag across the journal, most-used first.
@@ -72,7 +73,7 @@ export function Collections() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <div className="mx-auto flex max-w-wide flex-col gap-5">
+    <Page width="wide">
     <div className="grid items-start gap-5 lg:grid-cols-2">
       {(collectionIndex.length > 0 || tags.length > 0) && (
         <Card
@@ -246,7 +247,7 @@ export function Collections() {
     </div>
 
       {/* People · friends + birthdays, occasional management, collapsed. */}
-      <QuietSection title="People" subtitle={<>friends &amp; birthdays</>}>
+      <QuietSection title="People" subtitle="friends &amp; birthdays">
           <div className="grid items-start gap-5 lg:grid-cols-2">
             <FriendsCard />
             <Card title="Birthdays" subtitle="Never miss one">
@@ -279,7 +280,7 @@ export function Collections() {
       </QuietSection>
 
       {/* Auto-pages · memories + tags, auto-generated reference, collapsed. */}
-      <QuietSection title="Auto-pages" subtitle={<>memories &amp; tag pages</>} open={autoPagesOpen} onOpenChange={setAutoPagesOpen}>
+      <QuietSection title="Auto-pages" subtitle="memories &amp; tag pages" open={autoPagesOpen} onOpenChange={setAutoPagesOpen}>
           <div className="space-y-5">
             <Card
               title="Memories"
@@ -347,6 +348,6 @@ export function Collections() {
             </Card>
           </div>
       </QuietSection>
-    </div>
+    </Page>
   )
 }

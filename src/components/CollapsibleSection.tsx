@@ -30,13 +30,14 @@ type Props = {
   variant?: 'card' | 'quiet'
   /** Deep-analytics groups default to collapsed. */
   defaultOpen?: boolean
-  /** Remember open/closed across reloads under this key. Opt-in: a section
-   *  that is deliberately closed every visit (a rarely-read appendix) should
-   *  not silently start staying open. */
+  /** Persist the open/closed choice under `section.<key>` (F6). */
   stickyKey?: string
-  /** Drive the fold from the parent — for sections something else has to be
-   *  able to open (Collections jumps to a tag page inside Auto-pages). Pair
-   *  with `onOpenChange`; omit both to let the section own the state. */
+  /**
+   * Controlled mode. Pass both to drive the section from outside — Collections
+   * needs it because "jump to tag" has to expand Auto-pages before it scrolls
+   * there. Omit both and the section keeps its own state (sticky when
+   * `stickyKey` is given), which is what nearly every call site wants.
+   */
   open?: boolean
   onOpenChange?: (open: boolean) => void
   children: ReactNode
@@ -54,6 +55,9 @@ export function CollapsibleSection({
   onOpenChange,
   children,
 }: Props) {
+  // Both sides of the merge are kept: main's sticky persistence (F6) is the
+  // uncontrolled behaviour, and a controlled `open` overrides it so a caller
+  // driving the section from outside is never fighting storage.
   const [openFlag, setOpenFlag] = useStickyState<'1' | '0'>(
     stickyKey ? `section.${stickyKey}` : null,
     defaultOpen ? '1' : '0',
@@ -78,6 +82,13 @@ export function CollapsibleSection({
   if (variant === 'quiet') {
     return (
       <section className="space-y-5">
+        {/* Heading wraps button — the WAI-ARIA accordion pattern. The title is
+            styled as a section heading in both variants, so it has to *be* one:
+            without this the whole group is invisible to a screen reader's
+            heading list, and Reading (all three of its sections are collapsible)
+            rendered zero headings inside <main>. The h2 is layout-neutral —
+            preflight zeroes its margin and size, the button keeps w-full. */}
+        <h2>
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -94,6 +105,7 @@ export function CollapsibleSection({
             <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
           )}
         </button>
+        </h2>
         {open && <div className="collapse-in space-y-5">{children}</div>}
       </section>
     )
@@ -101,6 +113,7 @@ export function CollapsibleSection({
 
   return (
     <section className="flex flex-col gap-5">
+      <h2>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -112,10 +125,11 @@ export function CollapsibleSection({
           <span className="block font-display text-heading font-medium text-fg-1">{title}</span>
           {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
         </span>
-        <span className="caret-turn ml-auto inline-flex text-fg-2 group-hover/sec:text-fg-1" data-open={open}>
+        <span className="caret-turn ml-auto inline-flex text-fg-2 transition-colors group-hover/sec:text-fg-1" data-open={open}>
           <AppIcon as={CaretDown} size="md" />
         </span>
       </button>
+      </h2>
       {open && <div className="collapse-in flex flex-col gap-5">{children}</div>}
     </section>
   )

@@ -1,10 +1,11 @@
-import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, ShieldWarning, Target } from '@/components/icons'
+import { Barbell, BookOpen, Brain, CalendarBlank, Check, GraduationCap, Heartbeat, ListChecks, ShieldWarning, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Pill } from '../components/ui'
+import { Card, Pill, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { PageLayout, StatBar, SummaryStrip } from '../components/page'
+import { Page } from '../components/shell/Page'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { cat } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import {
@@ -40,69 +41,55 @@ export function Coaching() {
   const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
 
   return (
-    <PageLayout
-      tier={1180}
-      zone1={
-        <StatBar facts={[
-          { label: 'Program', value: start ? `Week ${week} of 12` : 'Not started' },
-          { label: 'Weeks done', value: `${done.length} / ${ACADEMY_TOTAL_WEEKS}` },
-          { label: `Today · ${WEEKDAYS[todayDow]}`, value: todaySlot.focus },
-        ]} />
-      }
-      zone2={
-        <section className="flex flex-col gap-3">
-          <h2 className="text-heading font-medium text-fg-1">Today: {todaySlot.focus}</h2>
-          <p className="text-body text-fg-1">{todaySlot.detail}</p>
+    <Page width="wide">
+      {/* Three across. Eight blocks in one 820px column meant six identical
+          collapsed drawers stacked vertically; as a grid they are two tidy rows
+          and the two open cards lead. */}
+      <CardGrid>
+      {/* Program hero */}
+      <Card className={SPAN_2} title={<span className="inline-flex items-center gap-2"><Icon as={GraduationCap} size="md" className="text-mauve" /> 12-week program · beginner → 4.0</span>}
+        subtitle="A structured path to a complete game" help="A research-backed 12-week curriculum. Start it to track your week; each week has a focus + skills. ~3–4 sessions/week, ~80% drilling / 20% play.">
+        {!start ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-line-strong p-4">
+            <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
+            <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              <StatTile compact label="This week" value={`${week}/12`} color="mauve" icon={<Icon as={CalendarBlank} size="sm" />} />
+              <StatTile compact label="Weeks done" value={done.length} color="green" icon={<Icon as={Check} size="sm" />} />
+              <StatTile compact label="Progress" value={`${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`} color="teal" icon={<Icon as={Trophy} size="sm" />} />
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill transition-[width]" style={{ width: `${(done.length / ACADEMY_TOTAL_WEEKS) * 100}%`, background: cat('green') }} /></div>
+            <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+          </>
+        )}
+      </Card>
 
-          <ul className="border-t border-line pt-2">
+      {/* Today's session */}
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-teal" /> Today: {todaySlot.focus}</span>} subtitle={`${WEEKDAYS[todayDow]}, your scheduled focus`} help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day.">
+        <p className="text-body text-fg-1">{todaySlot.detail}</p>
+        <details className="mt-3 rounded-card border border-line bg-ink-0 p-3">
+          <summary className="cursor-pointer text-body font-medium text-fg-1">A 45–60 min session</summary>
+          <ul className="mt-2 space-y-1">
             {SESSION_TEMPLATE.map((b) => (
-              <li key={b.mins} className="flex gap-2 py-0.5 text-label">
-                <span className="num w-12 shrink-0 text-fg-2">{b.mins}</span>
-                <span className="text-fg-2">{b.activity}</span>
-              </li>
+              <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
             ))}
           </ul>
+        </details>
+        <div className="mt-3 grid grid-cols-7 gap-1">
+          {WEEKLY_TEMPLATE.map((d, i) => (
+            <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (todayDow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
+              <div className="font-medium">{d.day}</div>
+              <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
-          <div className="grid grid-cols-7 gap-1">
-            {WEEKLY_TEMPLATE.map((d, i) => (
-              <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (todayDow + 6) % 7 ? 'bg-ink-3 text-fg-1' : 'bg-ink-2 text-fg-2'}`} title={d.focus}>
-                <div className="font-medium">{d.day}</div>
-                <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* The page's one accent-filled control: either commit, or mark the
-              week you have just finished. */}
-          {!start ? (
-            <>
-              <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
-              <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })} className="press-3d w-full">Start the program</Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={() => toggleWeek(week)} className="press-3d w-full">
-                {done.includes(week) ? `Week ${week} is done — undo` : `Mark week ${week} done`}
-              </Button>
-              <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
-            </>
-          )}
-        </section>
-      }
-      zone3={<>
-      <SummaryStrip items={[
-        { label: 'Weeks done', value: done.length, empty: done.length === 0 },
-        { label: 'Progress', value: `${Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)}%`, empty: done.length === 0 },
-        { label: 'Drills', value: ACADEMY_DRILLS.length },
-      ]} />
-
-      {/* SIGNATURE VISUAL · the 12-week timeline. It was buried in a
-          collapsed card, which is a strange place for the one thing that
-          shows where you are in the programme and what is still outstanding.
-          Sequence is the whole point, so it reads top to bottom with the
-          current week marked. */}
-      <section>
-        <h2 className="mb-2 text-label text-fg-2">The 12 weeks</h2>
+      {/* 12-week roadmap — tap a week to study it, check to mark done */}
+      <Card title="The 12-week roadmap" subtitle="Tap a week to open it, check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
         <ol className="space-y-1.5">
           {TWELVE_WEEK.map((w) => {
             const isDone = done.includes(w.week)
@@ -113,16 +100,8 @@ export function Coaching() {
                 <div className="flex items-start gap-2.5 p-2.5">
                   <button onClick={() => toggleWeek(w.week)} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
                     className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill text-caption font-medium"
-                    // `crust` belongs on a saturated fill, where it is the
-                    // light-on-dark half of the pair. On the plain `surface1`
-                    // chip of an untouched week it was dark-on-dark and failed
-                    // contrast outright — invisible, on the numbers that tell
-                    // you which week you are looking at.
-                    //
-                    // It went unseen because this list used to live inside a
-                    // collapsed card, and `npm run a11y` walks the rendered
-                    // page: axe never opened the fold. Promoting the timeline
-                    // to the signature visual is what surfaced it.
+                    // The untaken weeks are a surface tone, not a brand fill, so
+                    // crust-on-surface1 was the failing pair — those get `text`.
                     style={
                       isDone ? { background: cat('green'), color: cat('crust') }
                         : isNow ? { background: cat('mauve'), color: cat('crust') }
@@ -134,10 +113,10 @@ export function Coaching() {
                     <span className="text-body font-medium text-fg-1">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
                     <span className="block truncate text-label text-fg-2">{w.skills}</span>
                   </button>
-                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2"><span className="caret-turn inline-block" data-open={isOpen}>▾</span></button>
+                  <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
                 </div>
                 {isOpen && (
-                  <div className="collapse-in space-y-2 border-t border-line px-3 py-2.5 text-body">
+                  <div className="space-y-2 border-t border-line px-3 py-2.5 text-body">
                     <p className="text-fg-1">{w.doThis}</p>
                     <div>
                       <p className="mb-1 text-label font-medium text-fg-2">Drills</p>
@@ -152,12 +131,10 @@ export function Coaching() {
             )
           })}
         </ol>
-      </section>
+      </Card>
 
       {/* Skill ladder */}
-      <section>
-        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+ <span className="text-fg-3">· What to master at each level, in order</span></h2>
-        <div className="mt-2">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+</span>} subtitle="What to master at each level, in order" collapsible defaultCollapsed help="The skills that define each DUPR level. Master them in order — the soft game before the fast game.">
         <div className="space-y-3">
           {ACADEMY_LEVELS.map((lvl) => (
             <div key={lvl.id} className="rounded-card border border-line bg-ink-0 p-3">
@@ -171,13 +148,10 @@ export function Coaching() {
             </div>
           ))}
         </div>
-      </div>
-      </section>
+      </Card>
 
       {/* Technique guide — the HOW for every shot */}
-      <section>
-        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot <span className="text-fg-3">· Tap a shot for step-by-step how-to, cues & common mistakes</span></h2>
-        <div className="mt-2">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible defaultCollapsed help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
             <p className="mb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
@@ -191,10 +165,10 @@ export function Coaching() {
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
                         <span className="block truncate text-label text-fg-2">{t.what}</span>
                       </span>
-                      <span className="caret-turn inline-block shrink-0 text-fg-2" data-open={open}>▾</span>
+                      <span className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
                     </button>
                     {open && (
-                      <div className="collapse-in space-y-2.5 border-t border-line px-3 py-2.5">
+                      <div className="space-y-2.5 border-t border-line px-3 py-2.5">
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-1">How to do it</p>
                           <ol className="space-y-1">
@@ -219,13 +193,10 @@ export function Coaching() {
             </ul>
           </div>
         ))}
-      </div>
-      </section>
+      </Card>
 
       {/* Drill library */}
-      <section>
-        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library <span className="text-fg-3">· By skill — tap a group</span></h2>
-        <div className="mt-2">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library</span>} subtitle="By skill — tap a group" collapsible defaultCollapsed help="Concrete drills grouped by skill. Pick 1–2 per session; quality reps beat hours of casual play.">
         <div className="space-y-2">
           {drillSkills.map((skill) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
@@ -244,13 +215,10 @@ export function Coaching() {
             )
           })}
         </div>
-      </div>
-      </section>
+      </Card>
 
       {/* Knee rehab / prehab (ACL & MCL) */}
-      <section>
-        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL <span className="text-fg-3">· Prevent + recover — with or without equipment</span></h2>
-        <div className="mt-2">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL</span>} subtitle="Prevent + recover — with or without equipment" collapsible defaultCollapsed help="Prehab builds a court-proof knee; rehab supports recovery in phases. Filter by what gear you have. General education, not medical advice — after an injury, follow your physio.">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
             <button key={e} onClick={() => setEquip(e)} className="rounded-pill border px-2.5 py-1 text-label transition-colors"
@@ -281,13 +249,10 @@ export function Coaching() {
           )
         })}
         <p className="inline-flex items-start gap-1.5 rounded-control bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-      </div>
-      </section>
+      </Card>
 
       {/* Mental game */}
-      <section>
-        <h2 className="flex items-center gap-2 border-b border-line pb-1 text-label text-fg-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game <span className="text-fg-3">· The mindset that wins close games</span></h2>
-        <div className="mt-2">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game</span>} subtitle="The mindset that wins close games" collapsible defaultCollapsed help="Pickleball is won between the ears at every level. Pick one principle to focus on this week.">
         <ul className="grid gap-2 sm:grid-cols-2">
           {MINDSET.map((m) => (
             <li key={m.title} className="rounded-card border border-line bg-ink-0 p-2.5">
@@ -296,9 +261,8 @@ export function Coaching() {
             </li>
           ))}
         </ul>
-      </div>
-      </section>
-      </>}
-    />
+      </Card>
+      </CardGrid>
+    </Page>
   )
 }

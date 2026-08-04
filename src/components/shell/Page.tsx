@@ -40,7 +40,11 @@ export function Page({
       <div
         className={cn(
           'page-enter mx-auto flex w-full flex-col gap-4 sm:gap-5',
-          width === 'wide' ? 'max-w-wide' : 'max-w-read',
+          // The `wide` tier grows past 1536px for the same reason the aside
+          // variant does: at 1,180px a three-column CardGrid gives 380px per
+          // column, which is under what a chart axis needs. At 1,344px it is
+          // ~435px. `read` never grows — a longer measure does not help prose.
+          width === 'wide' ? 'max-w-wide 2xl:max-w-[84rem]' : 'max-w-read',
           className,
         )}
       >
@@ -49,9 +53,13 @@ export function Page({
     )
   }
   return (
+    // At 1920 the 1180px cap left ~245px of dead gutter on *each* side while the
+    // rail was only 352px wide and half-empty. Past 1536px the container grows
+    // to 1344px and the rail to 26rem: the extra width goes to the rail, not to
+    // the reading column, which stays near its comfortable measure.
     <div
       className={cn(
-        'mx-auto grid w-full max-w-wide items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]',
+        'mx-auto grid w-full max-w-wide items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:max-w-[84rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]',
         className,
       )}
     >

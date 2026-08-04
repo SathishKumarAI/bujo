@@ -1,7 +1,7 @@
 import { Drop, Flame, ForkKnife, NotePencil } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
-import { addDays, prettyDay, todayISO } from '../lib/date'
+import { addDays, fromISODay, todayISO } from '../lib/date'
 import { Card, Empty, Input, Slider } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page, useCursor } from '../components/shell/Page'
@@ -9,6 +9,7 @@ import { CaptureBar } from '../components/CaptureBar'
 import { FastingCard } from '../components/FastingCard'
 import { EntryRow } from '../components/EntryRow'
 import { ImageUpload } from '../components/ImageUpload'
+import { Field } from '../components/fields/Field'
 import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
 import { TodayHabits } from '../components/TodayHabits'
@@ -38,152 +39,119 @@ export function Today() {
   const hidden = data.settings.hideToday ?? []
   const hasFlash = flashbacks.entries.length + flashbacks.memories.length > 0
 
-  return (
-    /* THREE COLUMNS, WEIGHTED — not three equal columns.
-     *
-     * Today was one 820px stack, so the log (the reason the page exists) sat
-     * below a screenful of cards on a wide display, and every card got the same
-     * width whether it was the day's writing surface or a collapsed appendix.
-     *
-     * The layout now states the weight instead of implying it:
-     *
-     *   weight 1 · the day's command centre — full width, above everything
-     *   weight 2 · the log, at **two** of three tracks: it is where you write,
-     *              and a 370px measure is not a writing surface
-     *   weight 3 · the rail — logging you tap rather than type, then the quiet
-     *              reference cards, at one track
-     *
-     * It collapses to a single column below xl, in the same reading order.
-     */
-    <Page width="wide">
-      {/* ── WEIGHT 1 · full width. Plan, coach and penalty are the "what should
-             I do today" band, and they read across the whole page. ───────── */}
-      {/* ── Today's plan: one daily command-centre (chips + week strip) ─ */}
-      {date === todayISO() && !hidden.includes('plan') && <TodayPlanCard />}
+  const isToday = date === todayISO()
 
-      {/* ── Coach: proactive "do this next" prompts from your data ── */}
-      {date === todayISO() && <CoachCard />}
-
-      {/* ── Penalty for yesterday's skips (only when relevant) ──── */}
-      {date === todayISO() && !hidden.includes('penalty') && <PenaltyCard />}
-
-      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-3">
-        {/* ── WEIGHT 2 · the writing surface, two tracks wide ──────────── */}
-        <div className="flex min-w-0 flex-col gap-4 sm:gap-5 xl:col-span-2">
-      {/* ── 3) The day: Daily log (primary, above the fold) ─────── */}
-          <Card
-            title={prettyDay(date)}
-            subtitle={
-              <span className="flex items-center gap-2">
-                {date === todayISO() ? 'Today' : ''}
-                {metric?.weather && (
-                  <span title={metric.weather.label}>
-                    {metric.weather.icon} {metric.weather.tempC}°C
-                  </span>
-                )}
-              </span>
-            }
-          >
-            <div className="mb-3">
-              <CaptureBar date={date} />
-            </div>
-            {carryover.length > 0 && (
-              <div className="mb-3 flex items-center justify-between rounded-card border border-line bg-background px-3 py-2 text-body">
-                <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-                <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-control">Carry forward</Button>
-              </div>
-            )}
-            {dayEntries.length === 0 ? (
-              <Empty
-                icon={NotePencil}
-                hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
-                action={{
-                  label: 'Start writing',
-                  onClick: () =>
-                    document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
-                }}
-              >
-                Nothing logged for this day
-              </Empty>
-            ) : (
-              <>
-                <ul>
-                  {dayEntries.map((e) => (
-                    <EntryRow key={e.id} entry={e} />
-                  ))}
-                </ul>
-                {taskCount > 0 && (
-                  <p className="mt-2 text-right text-label text-fg-2">{doneCount}/{taskCount} tasks done</p>
-                )}
-              </>
-            )}
-          </Card>
-
-          {/* ── 4) Reflect (2-col): light daily journaling rituals ─── */}
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Card title="Gratitude" subtitle="One thing you're grateful for today">
-              <Input
-                value={gratitude}
-                onChange={(e) => setGratitude(date, e.target.value)}
-                placeholder="Today I'm grateful for…"
-              />
-            </Card>
-
-            {data.settings.reflectionPrompts && (
-              <Card title="Reflection" subtitle={promptForDay(date)}>
-                <textarea
-                  key={`reflect-${date}`}
-                  defaultValue=""
-                  placeholder="Write a few honest lines…"
-                  onBlur={(e) =>
-                    e.target.value.trim() &&
-                    setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
-                  }
-                  rows={3}
-                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                />
-                <p className="mt-1 text-label text-fg-2">Saved into today's memory on blur.</p>
-              </Card>
-            )}
-
-            <Card title="Daily memory" subtitle="One line to remember this day by">
-              <Input
-                value={memory}
-                onChange={(e) => setMemory(date, { text: e.target.value })}
-                placeholder="A single memorable moment…"
-              />
-              <div className="mt-3">
-                <ImageUpload
-                  value={memoryRec?.photo}
-                  onChange={(photo) => setMemory(date, { photo })}
-                  label="Add a photo of the day"
-                  className={memoryRec?.photo ? 'taped' : ''}
-                />
-              </div>
-            </Card>
-
-          </div>
-          {/* ── 6) Memories (collapsed): on this day from earlier journals ─ */}
-          {hasFlash && !hidden.includes('onThisDay') && (
-            <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
-              <ul className="space-y-2 text-body">
-                {flashbacks.memories.map((m) => (
-                  <li key={m.date} className="text-fg-1">
-                    <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
-                  </li>
-                ))}
-                {flashbacks.entries.slice(0, 5).map((e) => (
-                  <li key={e.id} className="text-fg-1">
-                    <span className="text-fg-2">{e.date}</span> · {e.text}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+  /** The log itself: dateline, capture box, carry-forward, the day's entries. */
+  const dayLog = (
+    <Card>
+      <DayMasthead
+        date={date}
+        isToday={isToday}
+        weather={metric?.weather}
+        entryCount={dayEntries.length}
+        openTasks={taskCount - doneCount}
+        taskCount={taskCount}
+      />
+      <div className="mb-3">
+        <CaptureBar date={date} />
+      </div>
+      {carryover.length > 0 && (
+        <div className="mb-3 flex items-center justify-between rounded-control border border-line bg-background px-3 py-2 text-body">
+          <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
+          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d rounded-control">Carry forward</Button>
         </div>
+      )}
+      {dayEntries.length === 0 ? (
+        <Empty
+          icon={NotePencil}
+          hint="Rapid-log it: • task, ○ event, – note. Type it the way you'd say it — “gym 7am”, “call mum”."
+          action={{
+            label: 'Start writing',
+            onClick: () =>
+              document.querySelector<HTMLInputElement>('input[aria-label="Smart capture"]')?.focus(),
+          }}
+        >
+          Nothing logged for this day
+        </Empty>
+      ) : (
+        <>
+          <ul>
+            {dayEntries.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
+          {/* The task count used to be repeated here as "1/4 tasks done" while
+              the masthead said "3 still open" — the same fact in two framings,
+              300px apart. The masthead owns it now. */}
+        </>
+      )}
+    </Card>
+  )
 
-        {/* ── WEIGHT 3 · the rail: tap-not-type logging, then quiet cards ── */}
-        <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
+  /**
+   * WHICH SIDE A CARD GOES ON
+   *
+   * One rule, applied to every card on this page: **the left column is the
+   * journal entry you are writing; the right rail is everything that reports
+   * on it or sits beside it.** Weights below are how strongly each card earns
+   * its place, and they also set the order within each column.
+   *
+   * | Card                | Weight | Side  | Why |
+   * |---------------------|--------|-------|-----|
+   * | Day log + capture   | 10     | left  | The page exists for this |
+   * | Today's habits      | 9      | left  | The other thing you tick every day |
+   * | Wellbeing           | 8      | left  | Four ratings, part of the entry |
+   * | Close the day       | 6      | left  | Gratitude, reflection, memory |
+   * | Today's plan        | 7      | right | Orientation, but read-only |
+   * | Your coach          | 6      | right | Advice derived from your data |
+   * | Training penalty    | 4      | right | Status, conditional, read-only |
+   * | Intermittent fasting| 4      | right | A timer widget, not a journal entry |
+   * | Weekly goals        | 3      | right | Collapsed, derived |
+   * | On this day         | 3      | right | Read-only, from past journals |
+   * | Stickers            | 1      | right | Decoration |
+   *
+   * The rail also fills the ~600px of dead gutter this page used to leave at
+   * desktop widths, and it now runs to roughly the column's own length instead
+   * of stopping a third of the way down.
+   *
+   * Undefined on any day but today, so Page falls back to its single-column
+   * `read` tier rather than rendering an empty rail.
+   */
+  const rail = isToday ? (
+    <>
+      {!hidden.includes('plan') && <TodayPlanCard />}
+      <CoachCard />
+      {!hidden.includes('penalty') && <PenaltyCard />}
+      <FastingCard />
+      <WeeklyGoalRings date={date} />
+      {hasFlash && !hidden.includes('onThisDay') && (
+        <Card title="On this day" subtitle="From earlier in your journal" collapsible defaultCollapsed>
+          <ul className="space-y-2 text-body">
+            {flashbacks.memories.map((m) => (
+              <li key={m.date} className="text-fg-1">
+                <span className="text-fg-2">{m.date}</span> · ▲ {m.text}
+              </li>
+            ))}
+            {flashbacks.entries.slice(0, 5).map((e) => (
+              <li key={e.id} className="text-fg-1">
+                <span className="text-fg-2">{e.date}</span> · {e.text}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+    </>
+  ) : undefined
+
+  return (
+    // `asideFirst` stays off: on phones the rail drops *below* the log, so the
+    // capture box is the first thing on the screen at every width.
+    <Page aside={rail}>
+      {/* ── 1) The day: capture first. This is a bullet journal; writing a line
+             is the point of the page, so the log leads and everything that
+             summarises it follows. ─────────────────────────────────── */}
+      {dayLog}
+
       {/* ── 2) Daily actions: one unified habit block — boolean check-offs,
              count/timer steppers, and at-risk streak chips sit together,
              then Wellbeing logging and the gated Fasting card. ──────── */}
@@ -203,7 +171,9 @@ export function Today() {
         <div className="space-y-4">
           <Slider label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
           <Slider label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
-          <Slider label="Sleep (hrs)" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" />
+          {/* Every other slider carries its anchors; this one did not, so the
+              column of hints had a hole in it and "8" had no stated unit. */}
+          <Slider label="Sleep" value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} color="blue" hint="hours slept · 0–10" />
           <Slider label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
         </div>
         <div className="mt-4 border-t border-line pt-3">
@@ -232,15 +202,118 @@ export function Today() {
         </div>
       </Card>
 
-      {/* ── Fasting: loggable but niche — keep gated to its own card ─ */}
-      <FastingCard />
+      {/* ── 4) Close the day: one card, three fields.
+             This was three separate bordered cards — Gratitude, Reflection and
+             Daily memory — each holding a single input, laid out in a two-column
+             grid that left one cell empty. Three containers for one act, and
+             the emptiest 460px on the page. They are one ritual, so they are
+             one card, with each field carrying its own label and prompt. ─── */}
+      <Card title="Close the day" subtitle="Three lines, then you're done">
+        <div className="space-y-5">
+          <Field label="Grateful for" hint="One thing, however small">
+            <Input
+              value={gratitude}
+              onChange={(e) => setGratitude(date, e.target.value)}
+              placeholder="Today I'm grateful for…"
+            />
+          </Field>
 
-          {/* ── Weekly goal rings: a look back, so it sits under the
-                 logging it summarises rather than above it. ─────────── */}
-          {date === todayISO() && <WeeklyGoalRings date={date} />}
+          {data.settings.reflectionPrompts && (
+            <Field label="Reflection" hint={promptForDay(date)}>
+              <textarea
+                key={`reflect-${date}`}
+                defaultValue=""
+                placeholder="Write a few honest lines…"
+                onBlur={(e) =>
+                  e.target.value.trim() &&
+                  setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
+                }
+                rows={3}
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              />
+              <p className="mt-1 text-label text-fg-2">Saved into today's memory when you click away.</p>
+            </Field>
+          )}
+
+          <Field label="Memory of the day" hint="One line to remember it by">
+            <Input
+              value={memory}
+              onChange={(e) => setMemory(date, { text: e.target.value })}
+              placeholder="A single memorable moment…"
+            />
+            <div className="mt-3">
+              <ImageUpload
+                value={memoryRec?.photo}
+                onChange={(photo) => setMemory(date, { photo })}
+                label="Add a photo of the day"
+                className={memoryRec?.photo ? 'taped' : ''}
+              />
+            </div>
+          </Field>
         </div>
-      </div>
+      </Card>
+
     </Page>
+  )
+}
+
+/**
+ * DAY MASTHEAD · the dateline at the top of the daily log.
+ *
+ * A paper bullet journal opens every daily log by writing the date at the top
+ * of the page. That is the artifact this app is a version of, and it was
+ * rendered as a small card title — so the page read as a widget rather than as
+ * a dated page you are about to write on.
+ *
+ * The one flourish is **№ 214**: bullet journals number and index their pages,
+ * so the day-of-year is a real page number in the method's own vocabulary. It
+ * is set in the mono face, kept small, and appears exactly once.
+ *
+ * Everything else stays quiet — no new colours, no new motion, nothing that
+ * would fight the five themes.
+ */
+function DayMasthead({
+  date, isToday, weather, entryCount, openTasks, taskCount,
+}: {
+  date: string
+  isToday: boolean
+  weather?: { icon: string; label: string; tempC: number }
+  entryCount: number
+  openTasks: number
+  taskCount: number
+}) {
+  const d = fromISODay(date)
+  const weekday = d.toLocaleDateString(undefined, { weekday: 'long' })
+  const dayMonth = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+  // Day of the year — the journal's page number for this day. `round`, not
+  // `floor`: across a spring-forward boundary the span is 213.96 days, and
+  // flooring that printed Aug 2 as № 213 instead of 214.
+  const pageNo = Math.round((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86_400_000)
+
+  // One sentence about where the day stands. An empty page is an invitation,
+  // not a report of nothing.
+  let line: string
+  if (entryCount === 0) line = 'Blank page. Start with anything.'
+  else if (taskCount > 0 && openTasks === 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today, every task closed.`
+  else if (openTasks > 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today · ${openTasks} still open.`
+  else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
+
+  return (
+    <header className="mb-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-title leading-tight font-medium text-fg-1 sm:text-display">{weekday}</h2>
+        <span className="shrink-0 font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
+          № {pageNo}
+        </span>
+      </div>
+      <p className="mt-0.5 flex items-center gap-2 text-body text-fg-2">
+        {dayMonth}
+        {isToday && <span className="text-fg-2">· today</span>}
+        {weather && <span title={weather.label}>· {weather.icon} {weather.tempC}°C</span>}
+      </p>
+      <hr className="mt-3 mb-2.5 border-line" />
+      <p className="text-body text-fg-1">{line}</p>
+    </header>
   )
 }
 
@@ -264,7 +337,7 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           return (
-            <li key={h.id} className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2">
+            <li key={h.id} className="flex items-center gap-3 rounded-control border border-line bg-ink-0 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
                 {h.unit && <span className="text-fg-2"> ({h.unit})</span>}

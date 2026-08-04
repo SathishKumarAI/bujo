@@ -6,12 +6,13 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { cat, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
-import { CollapsibleSection } from '../components/CollapsibleSection'
+import { Section } from '../components/pickleball/Section'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
@@ -176,7 +177,7 @@ export function Pickleball() {
   // (formerly a right rail) so the seven visualizations don't strand on mobile
   // and the primary logging + coaching content stays uncluttered.
   const charts = (
-    <>
+    <CardGrid>
       <Card title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
           <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
@@ -282,12 +283,16 @@ export function Pickleball() {
         </div>
         <div className="mt-1 text-center text-micro text-fg-2">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
       </Card>
-    </>
+    </CardGrid>
   )
 
   return (
-    <Page>
-      <Card title="At a glance" subtitle="Your pickleball record">
+    <Page width="wide">
+      {/* Three across instead of one tall stack. This page was 4.2 screens over
+          twelve blocks, and most of them — the record, the log form, DUPR —
+          never needed the full width. */}
+      <CardGrid>
+      <Card title="At a glance" subtitle="Your pickleball record" className={SPAN_2}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
           <StatTile compact label="Games" value={all.games} color="blue" />
@@ -499,53 +504,56 @@ export function Pickleball() {
         </div>
       </Card>
 
+      </CardGrid>
+
       {/* ── SECONDARY analytics · grouped under collapsible sections so the
             primary logging + history UI above stays uncluttered. All analytics
             groups default collapsed so open analytics don't dominate the view. ── */}
-      <CollapsibleSection
+      <Section
         title="Form & momentum"
         icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
-        subtitle="Recent form · forecast · milestones · intensity"
+        hint="Recent form · forecast · milestones · intensity"
       >
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
         {forecast.ready && <WinRateForecastCard forecast={forecast} />}
         <MilestonesCard milestones={milestones} />
         {load.sessions > 0 && <SessionIntensityCard load={load} />}
-      </CollapsibleSection>
+      </Section>
 
-      <CollapsibleSection
+      <Section
         title="Opponents, partners & venues"
         icon={<Icon as={Sword} size="md" className="text-red" />}
-        subtitle="Chemistry · courts · rivalries · level matchups"
+        hint="Chemistry · courts · rivalries · level matchups"
       >
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
         {venues.length > 0 && <VenuesCard venues={venues} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-      </CollapsibleSection>
+      </Section>
 
-      <CollapsibleSection
+      <Section
         title="Deeper signals"
         icon={<Icon as={ChartBar} size="md" className="text-blue" />}
-        subtitle="Weekday · points · time · scoring · consistency"
+        hint="Weekday · points · time · scoring · consistency"
       >
         {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
         {points.sessions > 0 && <PointDifferentialCard points={points} />}
         {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
         {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
         {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
-      </CollapsibleSection>
+      </Section>
 
       {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
             section so they don't strand on mobile. ── */}
-      <CollapsibleSection
+      <Section
         title="Charts"
         icon={<Icon as={ChartBar} size="md" className="text-teal" />}
-        subtitle="Trends · volume · heatmap · tap ⛶ to enlarge"
+        hint="Trends · volume · heatmap · tap ⛶ to enlarge"
       >
         {charts}
-      </CollapsibleSection>
+      </Section>
 
+      <CardGrid>
       <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
@@ -571,6 +579,7 @@ export function Pickleball() {
           ))}
         </ul>
       </Card>
+      </CardGrid>
     </Page>
   )
 }
