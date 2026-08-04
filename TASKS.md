@@ -59,6 +59,18 @@ Everything below is confirmed by running it, not inferred.
   `VITE_SUPABASE_URL` in `.env` points at `ueahhgqxshfvkjgcwtnh.supabase.co`. DNS returns **NXDOMAIN** while `supabase.co` itself resolves (`76.76.21.21`) — so the project was deleted or its ref changed, this is not a local network problem. The app fires `/auth/v1/settings` twice on boot (`src/lib/supabase.ts:24`), both fail `ERR_NAME_NOT_RESOLVED`, and the failure is silent: no user-facing message, sign-in just never appears.
   Fix options: (a) point at a live project, (b) unset the vars so the null-client path kicks in cleanly, (c) surface "cloud unavailable" in the UI instead of failing silently.
 - [ ] **B2 · Duplicate boot probe.** That same `/auth/v1/settings` request fires **twice** per load. Likely a double-invoked effect (StrictMode) with no in-flight guard. Cheap fix, and it halves the failure noise.
+- [ ] **B6 · Legacy activity deep links drop the activity.** `?view=pullups` lands on
+  Fitness in **Cardio / Run**, not **Strength / Pull-ups**. Same for `?view=homeworkout`
+  and `?view=pickleball`. `readDeepLink()` is correct — `VIEW_ALIASES` returns
+  `{view:'fitness', activity:'pullups'}` (`src/lib/deepLink.ts:32`). The loss is a
+  timing one: `Fitness` is a `lazy()` chunk (`src/App.tsx:36`) and reads
+  `readDeepLink().activity` at render (`src/views/Fitness.tsx:58`), but `writeDeepLink`
+  has already rewritten the URL to `?view=fitness` — with no `activity` param to carry
+  the alias — before the chunk mounts. The documented form
+  `?view=fitness&activity=pullups` works. **Predates the main merge** (same `lazy()`
+  line on `f5af2cd`), so it is a live bug in PR #100, not merge fallout.
+  Fix: resolve the alias once at App level and pass it down, or have `writeDeepLink`
+  preserve the resolved `activity` when it rewrites.
 - [ ] **B3 · `npm run smoke` and `npm run shots` crash locally.** Both scripts `require('playwright')`, which is not in `package.json` (CI installs it with `npm i -D --no-save`, so CI is fine). Locally you get a raw `MODULE_NOT_FOUND` stack. Fix: catch the require and print "run `npm i -D --no-save playwright` first", or add it as an optional devDependency.
 - [~] **B4 · Bundle.** The icon pass first added 413 kB (93 gzip), then took back
   more than it spent: Phosphor is rebuilt locally at the two weights this app
@@ -478,6 +490,25 @@ animating element without breaking the table grid.
 The restructure brief was worked through end to end. Everything below is what
 was **deliberately not done**, plus what the pass turned up on the way. Nothing
 here is a half-finished edit — the branch verifies green and the tree is clean.
+
+> **Updated 2026-08-03 · `origin/main` is now merged into this branch**
+> (`1aedf67`, local only, not pushed). ~110 conflict hunks across 38 files,
+> resolved as *main wins page-level layout, this branch wins the content
+> inside, shared primitives take both*. See `STATUS.md` for the per-file
+> record. Two things this opened, both blocking a clean PR:
+>
+> - **L0a · PR #100's diff is 131 files.** Its base `feat/collapsible-header-ux`
+>   is still 76 behind main, so the PR reads as if this branch authored all of
+>   main. Merge main into #99 first, or retarget #100 to `main`. **Do this
+>   before pushing.**
+> - **L0b · #96 will force a second resolution.** `feat/today-ux` is still open
+>   and touches `ui.tsx`, `App.tsx`, `Today.tsx` — the three costliest files
+>   here. Expect to re-resolve them when it lands.
+> - **`npm run a11y` has not been re-run since the merge**, which changed folds
+>   and card headers. Re-run it with the new folds **open**.
+> - **`FitnessHub.tsx` and `pickleball/Section.tsx` were restored from main**
+>   after this branch deleted them. Nothing imports either — dead code until
+>   wired up, or delete them again.
 
 **Shipped, for context (do not redo):** Sport as a third mode with Pickleball
 under it · content-left / form-right column swap, sticky, breakpoint at 960px

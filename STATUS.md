@@ -6,15 +6,64 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped
 
-**`feat/activity-registry`** — 14 commits, **pushed, PR #100** against
-`feat/collapsible-header-ux` (PR #99). The stack below it has landed: #87–#95
-are merged and #94 merged during this session, so the remaining order is
-**#96 → #99 → #100**.
+**`feat/activity-registry`** — 15 commits, PR #100 against
+`feat/collapsible-header-ux` (PR #99). **`origin/main` is merged in** as of
+`1aedf67`; the branch is 0 behind main. **Not pushed** — the merge commit is
+local only, so PR #100 still shows the pre-merge branch.
 
-Both #99 and #100 predate the icon system and page restructure, so they need a
-merge from `main` before they can go in — 19 and 38 conflicts respectively. Do
-that **after #96 merges**, not before: #96 touches `ui.tsx`, `App.tsx` and
-`Today.tsx`, so resolving now means resolving twice.
+### Read this before touching the stack
+
+The merge was done **against the advice this file gave last session**, on
+request. Two consequences, both live:
+
+1. **#96 is still open, so the double-resolution it warned about is now
+   likely.** `feat/today-ux` (#96) touches `ui.tsx`, `App.tsx` and `Today.tsx`
+   — the three files that cost the most to resolve here. When #96 lands on
+   main, this branch merges main again and re-resolves them.
+2. **PR #100's diff is now 131 files.** Its base, `feat/collapsible-header-ux`,
+   is still **76 behind main**, so the PR now reads as if this branch authored
+   all of main's 76 commits. It is not reviewable in that state. Before
+   pushing, either merge main into #99 first, or retarget #100 to `main`.
+
+Remaining order is unchanged: **#96 → #99 → #100**.
+
+### The merge — how ~110 conflict hunks across 38 files were resolved
+
+Both sides had restructured the same views: main brought the layout redesign
+(#95, capture-first Today + column grid) and the token/icon system (#94), this
+branch brought the activity registry and the Body-cluster page contract.
+
+The rule, decided in-session: **main wins page-level layout, this branch wins
+the content inside, shared primitives take both.**
+
+- **`ui.tsx` / `CollapsibleSection` — union, not a pick.** This branch's
+  `hideInfo`, header-folds-the-card and animated `.caret-turn` kept; main's
+  per-card accessible names (`Collapse Today's habits`, not `Collapse`),
+  `CARD.headerButton` and the `<h2>` wrapper kept. Neither side's `Card`
+  survived alone.
+- **`TopBar` / `Sidebar`** — this branch's nine-controls-to-five reduction
+  stands. The doc comment arguing it survived the merge as context, which is
+  what settled it.
+- **`App.tsx` NAV** — activity registry wins; Pull-ups / Home workout /
+  Pickleball stay presets inside Fitness, not nav peers.
+- **Today, Plan, Coaching, Collections, Settings, Pickleball** — main's
+  `<Page>` shell and `CardGrid`. Where that meant taking main's file whole,
+  this branch's a11y work was re-applied by hand: Coaching kept its
+  `aria-expanded` and the `surface1` contrast fix, which main did not have.
+- **NoFap kept this branch's file** — main's only change there was the icon
+  migration this branch had already done, plus the `<Page>` wrapper.
+- **Recovery's help prose from main is gone on purpose.** This branch retired
+  the ⓘ in that cluster, so the text would have been unreachable.
+- **`FitnessHub.tsx` and `pickleball/Section.tsx` restored from main** on
+  request, after this branch had deleted both. **Nothing imports either — they
+  are dead code until something wires them up.**
+
+Verifies green after the merge: `npx tsc -b` 0, `npx eslint .` 0 errors / 2
+pre-existing warnings, **743 tests / 48 files**, `npm run build` clean.
+Today, Plan, Fitness and Recovery checked in the browser at 1440, no console
+errors. **`npm run a11y` was NOT re-run after the merge** — it was 0 serious
+across 10 views before it, and the merge changed folds and card headers, which
+is exactly what that gate cannot see through when closed.
 
 Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
 warnings, **743 tests / 48 files**, `npm run build` clean, `npm run a11y` 0
@@ -47,6 +96,7 @@ this worktree. Restart the today-ux one if you still want it.
 | `4cd00c7` | Nutrition, Recovery, Coaching onto the contract |
 | `df728f4` | Sweep — folds, help icons, card chrome, a11y gate widened |
 | `9d88835` | Browser-pass fixes — label stacking, shared `NumField`, mode-aware placeholder |
+| `1aedf67` | Merge `origin/main` — the layout redesign and icon system, reconciled |
 
 Load-bearing decisions:
 
@@ -69,7 +119,18 @@ Load-bearing decisions:
 
 ### Next
 
-1. **Look at a journal with real data, and the latte / neon / vscode / dawn
+1. **Unblock PR #100 before pushing** — merge main into `feat/collapsible-header-ux`,
+   or retarget #100 to `main`. Right now its diff is 131 files (see above).
+2. **Fix the legacy activity deep link.** `?view=pullups` resolves the view but
+   drops the activity — you land on Fitness / Cardio / Run instead of Strength /
+   Pull-ups. `deepLink.ts` returns `{view:'fitness', activity:'pullups'}`
+   correctly; the loss is downstream, because `Fitness` is a `lazy()` chunk and
+   `writeDeepLink` rewrites the URL to `?view=fitness` before it mounts and
+   reads it. The documented form `?view=fitness&activity=pullups` works.
+   **Predates the merge** — same `lazy()` line on `f5af2cd`.
+3. **Re-run `npm run a11y` with the new and changed folds open.** Not run since
+   the merge.
+4. **Look at a journal with real data, and the latte / neon / vscode / dawn
    themes.** The browser pass used a fresh journal in mocha and latte only.
 2. **Recovery still exceeds the two-raised-card cap.** Its remaining cards are
    genuine objects with their own actions (urge log, reset log, per-addiction
