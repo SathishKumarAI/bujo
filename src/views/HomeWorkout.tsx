@@ -108,7 +108,7 @@ export function HomeWorkout() {
       </Card>
 
       {/* Catalog is reference · folded below the active session builder + history. */}
-      <Card title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible defaultCollapsed>
+      <Card title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {MUSCLES.map((m) => (
             <button

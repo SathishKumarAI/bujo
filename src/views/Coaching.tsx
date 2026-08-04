@@ -89,7 +89,7 @@ export function Coaching() {
       </Card>
 
       {/* 12-week roadmap — tap a week to study it, check to mark done */}
-      <Card title="The 12-week roadmap" subtitle="Tap a week to open it, check to mark it done" collapsible defaultCollapsed help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
+      <Card title="The 12-week roadmap" subtitle="Tap a week to open it, check to mark it done" collapsible help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal.">
         <ol className="space-y-1.5">
           {TWELVE_WEEK.map((w) => {
             const isDone = done.includes(w.week)
@@ -134,7 +134,7 @@ export function Coaching() {
       </Card>
 
       {/* Skill ladder */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+</span>} subtitle="What to master at each level, in order" collapsible defaultCollapsed help="The skills that define each DUPR level. Master them in order — the soft game before the fast game.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-sky" /> Skill ladder · 2.0 → 4.5+</span>} subtitle="What to master at each level, in order" collapsible help="The skills that define each DUPR level. Master them in order — the soft game before the fast game.">
         <div className="space-y-3">
           {ACADEMY_LEVELS.map((lvl) => (
             <div key={lvl.id} className="rounded-card border border-line bg-ink-0 p-3">
@@ -151,7 +151,7 @@ export function Coaching() {
       </Card>
 
       {/* Technique guide — the HOW for every shot */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible defaultCollapsed help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={BookOpen} size="md" className="text-mauve" /> How to play every shot</span>} subtitle="Tap a shot for step-by-step how-to, cues & common mistakes" collapsible help="The full how-to for every core shot — so this is the only place you need. Each opens to: what it is, how to do it step-by-step, key cues to remember, and the common mistakes to avoid.">
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
             <p className="mb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
@@ -196,7 +196,7 @@ export function Coaching() {
       </Card>
 
       {/* Drill library */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library</span>} subtitle="By skill — tap a group" collapsible defaultCollapsed help="Concrete drills grouped by skill. Pick 1–2 per session; quality reps beat hours of casual play.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-green" /> Drill library</span>} subtitle="By skill — tap a group" collapsible help="Concrete drills grouped by skill. Pick 1–2 per session; quality reps beat hours of casual play.">
         <div className="space-y-2">
           {drillSkills.map((skill) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
@@ -218,7 +218,7 @@ export function Coaching() {
       </Card>
 
       {/* Knee rehab / prehab (ACL & MCL) */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL</span>} subtitle="Prevent + recover — with or without equipment" collapsible defaultCollapsed help="Prehab builds a court-proof knee; rehab supports recovery in phases. Filter by what gear you have. General education, not medical advice — after an injury, follow your physio.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL</span>} subtitle="Prevent + recover — with or without equipment" collapsible help="Prehab builds a court-proof knee; rehab supports recovery in phases. Filter by what gear you have. General education, not medical advice — after an injury, follow your physio.">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
             <button key={e} onClick={() => setEquip(e)} className="rounded-pill border px-2.5 py-1 text-label transition-colors"
@@ -252,7 +252,7 @@ export function Coaching() {
       </Card>
 
       {/* Mental game */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game</span>} subtitle="The mindset that wins close games" collapsible defaultCollapsed help="Pickleball is won between the ears at every level. Pick one principle to focus on this week.">
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Brain} size="md" className="text-peach" /> Mental game</span>} subtitle="The mindset that wins close games" collapsible help="Pickleball is won between the ears at every level. Pick one principle to focus on this week.">
         <ul className="grid gap-2 sm:grid-cols-2">
           {MINDSET.map((m) => (
             <li key={m.title} className="rounded-card border border-line bg-ink-0 p-2.5">

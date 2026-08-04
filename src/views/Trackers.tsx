@@ -331,7 +331,7 @@ function ArchivedHabits() {
   const archived = data.habits.filter((h) => h.archived)
   if (archived.length === 0) return null
   return (
-    <Card title="Archived habits" subtitle="Out of the grid, restore any time" collapsible defaultCollapsed>
+    <Card title="Archived habits" subtitle="Out of the grid, restore any time" collapsible>
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-pill border border-line bg-ink-0 px-2.5 py-1 text-body">

@@ -3,7 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { cat } from '../lib/colors'
+import { cat, onAccent, over, readableOn } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
@@ -370,12 +370,18 @@ export function Pill({
     label: 'gap-1 px-2 py-0.5 text-label',
   } as const
   const accent = color ? cat(color) : null
+  // I1, decided. The wash tone paints `accent` at 13% over the card and then
+  // sets the text to the same accent — which pulls the background toward the
+  // text and cost this pairing AA in every light theme. Both tones now derive
+  // their text colour from the background they actually land on, rather than
+  // assuming. See `readableOn` / `onAccent` in lib/colors.
+  const washBg = accent ? over(accent, cat('base'), 0x22 / 255) : null
   const style =
     tone === 'solid' && accent
-      ? { background: accent, color: cat('crust') }
+      ? { background: accent, color: onAccent(accent) }
       : tone === 'muted' || !accent
-        ? { background: cat('surface1'), color: cat('subtext0') }
-        : { background: accent + '22', color: accent }
+        ? { background: cat('surface1'), color: readableOn(cat('subtext0'), cat('surface1')) }
+        : { background: accent + '22', color: readableOn(accent, washBg!, 4.6) }
   return (
     <span
       title={title}

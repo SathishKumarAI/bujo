@@ -232,7 +232,7 @@ export function Focus() {
       </CollapsibleSection>
 
       {/* History — editable session list, collapsed at the bottom */}
-      <Card title="History" collapsible defaultCollapsed>
+      <Card title="History" collapsible>
         {sessions.length === 0 ? (
           <Empty>No sessions yet. Log your first coding block.</Empty>
         ) : (

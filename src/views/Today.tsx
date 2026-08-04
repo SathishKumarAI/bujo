@@ -129,7 +129,7 @@ function TodayClassic() {
       <FastingCard />
       <WeeklyGoalRings date={date} />
       {hasFlash && !hidden.includes('onThisDay') && (
-        <Card title="On this day" subtitle="From earlier in your journal" hideInfo collapsible defaultCollapsed>
+        <Card title="On this day" subtitle="From earlier in your journal" hideInfo collapsible>
           <ul className="space-y-2 text-body">
             {flashbacks.memories.map((m) => (
               <li key={m.date} className="text-fg-1">
@@ -261,7 +261,7 @@ function WeeklyGoalRings({ date }: { date: string }) {
   const R = 16
   const C = 2 * Math.PI * R
   return (
-    <Card title="Weekly goals" subtitle="This week's completions vs your goal" hideInfo collapsible defaultCollapsed>
+    <Card title="Weekly goals" subtitle="This week's completions vs your goal" hideInfo collapsible>
       <div className="flex flex-wrap gap-4">
         {habits.map((h) => {
           const { done, goal, pct } = weeklyGoalProgress(data, h, date, data.settings.weekStart ?? 0)
