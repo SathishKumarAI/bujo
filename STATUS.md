@@ -6,12 +6,12 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped — `chore/real-data-pass`
 
-Three commits off `feat/ia-routing`, **not pushed**. The job was the thing
+Seven commits off `feat/ia-routing`, **not pushed**. The job was the thing
 every prior pass skipped: **look at it with data in it.**
 
-`npx tsc -b` 0, **757 tests / 50 files**, `npx eslint .` 0 errors / 2
-pre-existing warnings, `npm run build` clean.
-**`npm run a11y` FAILS — 15 serious, on purpose. See below.**
+`npx tsc -b` 0, **738 tests / 50 files**, `npx eslint .` 0 errors / 2
+pre-existing warnings, `npm run build` clean, **`npm run a11y` 0 serious across
+80 scans** (5 themes x 16 surfaces, every fold open).
 
 ### The real-data walk found four defects, all invisible on a fresh journal
 
@@ -33,17 +33,65 @@ and 390, plus both layouts.
 Also: no horizontal overflow on any of 18 views at 390px with real data, which
 settles the brief's last mobile item empirically rather than by argument.
 
-### The a11y gate now runs all five themes, and it fails
+### The a11y gate runs all five themes, every fold open — and it is clean
 
-"Only mocha was checked" sat in this file for several sessions — the tell that
-a manual step never happens. The gate loops the themes now and asserts the root
-attribute actually changed before believing a result.
+"Only mocha was checked" had sat in this file for several sessions, which is
+the tell that a manual step never happens. The gate loops the themes now and
+**asserts the root attribute actually changed** before believing a result.
 
-80 scans. **mocha and neon clean; 15 serious in latte, dawn and vscode.** They
-are pre-existing: this branch made them visible, it did not cause them.
+It found 15 serious violations on the first run. All fixed. **80 scans, 0
+serious.** Two halves to the fix, and the second matters more:
 
-| Root cause | Worst measured |
-|---|---|
+- **The palette.** The light accents were too light to read at body size even
+  on plain white (`#e8710a` on `#ffffff` = 3.08:1). Darkened to values solved
+  by `scripts/solve-contrast.mjs`. vscode's greys went the other way.
+  **Yellow is deliberately untouched** — it never failed, and yellow at 4.5:1
+  on white is not darker yellow, it is brown.
+- **Point of use.** `readableOn` / `onAccent` / `over` in `lib/colors` derive a
+  text colour from the background it actually lands on; `Pill` uses them. This
+  is the fix the `Pill` doc predicted — "a one-file fix when I1 is decided" —
+  and it decides I1. Darkening accents far enough to fix this in the palette
+  alone would also darken every chart fill, and a non-text graphic only needs
+  3:1.
+
+Two things that will bite again: the threshold is **4.6, not 4.5** because
+`toHex` rounds each channel; and `onAccent` cannot just pick the better of a
+theme's two neutrals, because dawn's yellow beats both.
+
+**Never hand-roll a contrast check to shortcut this.** One written during this
+session reported ~50 failures per theme, every one an artefact of reading
+`rgba(r, g, b, 0.08)` tints as opaque. axe composites the stack. Use axe.
+
+### Every fold is open by default now
+
+Requested. 18 `defaultCollapsed` call sites dropped, and the three collapse
+primitives default to open. Still collapsible — the fold is a choice you make,
+not the state you are handed.
+
+**Opening them exposed three bugs that had been hiding.** CLAUDE.md already
+documents the trap ("`npm run a11y` cannot scan inside a collapsed fold ... a
+critical `select-name` violation shipped for months this way") and it was still
+true, three times over: an unnamed `<select>` in Collections, `VideoLink`
+rendering a nameless anchor when `ProgramTracker` passes `label=""`, and the
+plate badges' hardcoded `text-crust` at 2.02:1 on yellow.
+
+The lesson is not "remember to open folds before running the gate" — that is
+what the old note said and it did not work. **A default-collapsed card is a
+place bugs go to survive.**
+
+### The archive is done
+
+Eight orphaned lib functions moved to `archive/src/lib/*.txt`, commented out,
+each with a note on what supersedes it. Tests 757 -> 738; the 19 that went only
+pinned archived code.
+
+**The list was 13 and is 8** — five had callers *inside their own module*,
+which the first sweep missed by excluding the defining file. Any future run of
+that check has to include it. Removing them stranded three more things reachable
+only from the code that left (`rollingAverage`, an `Entry` import, a `task()`
+fixture).
+
+---|---|
 | accent-on-wash (TASKS §I1, predicted) | `#1e8e3e` on `#e1f0e5` = 3.56 |
 | accent-on-page — light accents too light at body size | `#e8710a` on `#ffffff` = 3.08 |
 | muted grey, **including vscode on its own dark surface** | `#858585` on `#262125` = 4.28 |
@@ -57,22 +105,6 @@ the worse of the two options.
 **Do not hand-roll a contrast check to shortcut this.** One written during this
 session reported ~50 failures per theme, every one an artefact of reading
 `rgba(r, g, b, 0.08)` tints as opaque. axe composites the stack properly.
-
-### Archiving the duplicate lib code — NOT done, and the list shrank
-
-The plan was to archive the 13 orphaned lib functions (`archive/<path>.txt`,
-the existing convention). On re-checking each one for callers **including
-inside its own module**, five turned out to be live: `recoveryState`,
-`strengthBand`, `dayCoverage`, `focusStressCorrelation`, `periodTrend`.
-
-Provably safe, 0 non-test references: `trainingHeatmap`, `cardioBadges`,
-`taskAging`, `habitWeekdayPerformance`, `migrationAnalytics`, `categoryRollup`,
-`bodyweightSeries`, `activeDayStreak`. Each also has a test file whose relevant
-`describe` block has to go with it.
-
-Not started, on purpose: it is surgery across six source files and six test
-files, and the earlier "13 orphans" number was itself wrong by five. Worth
-doing carefully at the start of a session, not at the end of one.
 
 ---
 
@@ -200,7 +232,6 @@ tools hid.
    surface switcher are all ≥44. The top bar's six icon buttons are 28px and
    `Segmented` is 31px at its default size in ~30 other call sites. Both
    predate this pass; both need a visual decision, not a sweep.
-3. **Only mocha was checked.** latte / neon / vscode / dawn unseen, as before.
 4. **A journal with real data was not used.** Everything above was verified on
    a fresh journal, so the long-list and dense-day cases are unproven — in
    particular the sticky capture box on the Day surface, which cannot be seen
