@@ -91,21 +91,6 @@ that check has to include it. Removing them stranded three more things reachable
 only from the code that left (`rollingAverage`, an `Entry` import, a `task()`
 fixture).
 
----|---|
-| accent-on-wash (TASKS §I1, predicted) | `#1e8e3e` on `#e1f0e5` = 3.56 |
-| accent-on-page — light accents too light at body size | `#e8710a` on `#ffffff` = 3.08 |
-| muted grey, **including vscode on its own dark surface** | `#858585` on `#262125` = 4.28 |
-
-**Left failing deliberately.** The fix is a token change across three palettes
-in `lib/colors.ts` — the "one-file fix when I1 is decided" the `Pill` doc
-anticipated — and deciding it changes how three themes look, which is a design
-call, not mine. Muting a gate that is correctly reporting fifteen real bugs is
-the worse of the two options.
-
-**Do not hand-roll a contrast check to shortcut this.** One written during this
-session reported ~50 failures per theme, every one an artefact of reading
-`rgba(r, g, b, 0.08)` tints as opaque. axe composites the stack properly.
-
 ---
 
 ## Where I stopped — `feat/ia-routing`
