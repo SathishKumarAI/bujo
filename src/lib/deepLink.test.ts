@@ -20,7 +20,7 @@ describe('readDeepLink — retired destinations', () => {
     // The day cursor is the reason this matters: a link to a specific day on a
     // retired view must still land on that day.
     expect(readDeepLink('?view=pullups&day=2026-06-10')).toEqual({
-      view: 'fitness', day: '2026-06-10', activity: 'pullups',
+      view: 'fitness', day: '2026-06-10', activity: 'pullups', surface: null,
     })
   })
 
@@ -35,5 +35,32 @@ describe('readDeepLink — retired destinations', () => {
 
   it('still rejects a malformed day', () => {
     expect(readDeepLink('?view=today&day=nope').day).toBeNull()
+  })
+})
+
+describe('readDeepLink — sections', () => {
+  it('resolves a section id to its first view', () => {
+    expect(readDeepLink('?view=mind').view).toBe('mindset')
+    expect(readDeepLink('?view=review').view).toBe('insights')
+    expect(readDeepLink('?view=day').view).toBe('today')
+  })
+
+  it('leaves `body` on the older activity alias, not the section', () => {
+    // `body` predates the five sections as a Fitness alias; the alias wins so
+    // an existing bookmark keeps landing where it always did.
+    expect(readDeepLink('?view=body')).toMatchObject({ view: 'fitness', activity: null })
+  })
+})
+
+describe('readDeepLink — Today surface', () => {
+  it('accepts the three surfaces', () => {
+    expect(readDeepLink('?surface=morning').surface).toBe('morning')
+    expect(readDeepLink('?surface=day').surface).toBe('day')
+    expect(readDeepLink('?surface=evening').surface).toBe('evening')
+  })
+
+  it('rejects anything else, so a bad link falls back to the clock', () => {
+    expect(readDeepLink('?surface=afternoon').surface).toBeNull()
+    expect(readDeepLink('').surface).toBeNull()
   })
 })

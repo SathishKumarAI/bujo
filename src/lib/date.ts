@@ -72,6 +72,11 @@ export function weekColumn(iso: string, weekStart: 0 | 1): number {
   return weekStart === 1 ? (dow + 6) % 7 : dow
 }
 
+/** True for a day that has not happened yet, in local time. */
+export function isFutureDay(iso: string, today = todayISO()): boolean {
+  return iso > today
+}
+
 /** Difference in whole days between two ISO days (b - a). */
 export function dayDiff(a: string, b: string): number {
   return Math.round((fromISODay(b).getTime() - fromISODay(a).getTime()) / 86_400_000)
