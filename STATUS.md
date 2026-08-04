@@ -2,7 +2,79 @@
 
 Update this when you STOP working, not when you start.
 
-- **Last touched:** 2026-08-03
+- **Last touched:** 2026-08-04
+
+## Where I stopped — `chore/real-data-pass`
+
+Three commits off `feat/ia-routing`, **not pushed**. The job was the thing
+every prior pass skipped: **look at it with data in it.**
+
+`npx tsc -b` 0, **757 tests / 50 files**, `npx eslint .` 0 errors / 2
+pre-existing warnings, `npm run build` clean.
+**`npm run a11y` FAILS — 15 serious, on purpose. See below.**
+
+### The real-data walk found four defects, all invisible on a fresh journal
+
+Demo data loaded through Settings → Data, then every surface walked at 1440
+and 390, plus both layouts.
+
+1. **The week strip encoded nothing.** Seven fixed-height blocks tinted from a
+   three-bucket colour scale, so any week whose days land in one bucket drew
+   seven identical bars — and on a real journal that is most weeks. Height
+   carries the score now, colour stays as the redundant cue.
+2. **The habit close-out called a slip a success.** For an `avoid` habit a
+   tick means you slipped; the Evening checklist struck it through with a ✓.
+   The demo has no avoid habits, so this needed two to be added by hand before
+   it could be seen. **Worth repeating: the demo data does not cover `avoid`,
+   `count` or `timer` habits well. Add them before trusting a habit sweep.**
+3. **The footer count did not reconcile** — "5 of 8" under ten rows.
+4. **Achievements were a wall of ellipses** — "First w…", "Centur…", "Unbro…".
+
+Also: no horizontal overflow on any of 18 views at 390px with real data, which
+settles the brief's last mobile item empirically rather than by argument.
+
+### The a11y gate now runs all five themes, and it fails
+
+"Only mocha was checked" sat in this file for several sessions — the tell that
+a manual step never happens. The gate loops the themes now and asserts the root
+attribute actually changed before believing a result.
+
+80 scans. **mocha and neon clean; 15 serious in latte, dawn and vscode.** They
+are pre-existing: this branch made them visible, it did not cause them.
+
+| Root cause | Worst measured |
+|---|---|
+| accent-on-wash (TASKS §I1, predicted) | `#1e8e3e` on `#e1f0e5` = 3.56 |
+| accent-on-page — light accents too light at body size | `#e8710a` on `#ffffff` = 3.08 |
+| muted grey, **including vscode on its own dark surface** | `#858585` on `#262125` = 4.28 |
+
+**Left failing deliberately.** The fix is a token change across three palettes
+in `lib/colors.ts` — the "one-file fix when I1 is decided" the `Pill` doc
+anticipated — and deciding it changes how three themes look, which is a design
+call, not mine. Muting a gate that is correctly reporting fifteen real bugs is
+the worse of the two options.
+
+**Do not hand-roll a contrast check to shortcut this.** One written during this
+session reported ~50 failures per theme, every one an artefact of reading
+`rgba(r, g, b, 0.08)` tints as opaque. axe composites the stack properly.
+
+### Archiving the duplicate lib code — NOT done, and the list shrank
+
+The plan was to archive the 13 orphaned lib functions (`archive/<path>.txt`,
+the existing convention). On re-checking each one for callers **including
+inside its own module**, five turned out to be live: `recoveryState`,
+`strengthBand`, `dayCoverage`, `focusStressCorrelation`, `periodTrend`.
+
+Provably safe, 0 non-test references: `trainingHeatmap`, `cardioBadges`,
+`taskAging`, `habitWeekdayPerformance`, `migrationAnalytics`, `categoryRollup`,
+`bodyweightSeries`, `activeDayStreak`. Each also has a test file whose relevant
+`describe` block has to go with it.
+
+Not started, on purpose: it is surgery across six source files and six test
+files, and the earlier "13 orphans" number was itself wrong by five. Worth
+doing carefully at the start of a session, not at the end of one.
+
+---
 
 ## Where I stopped — `feat/ia-routing`
 
