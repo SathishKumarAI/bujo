@@ -4,13 +4,22 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useJournal } from '../../store'
 import { AccountMenu } from './AccountMenu'
+import { hrefFor } from '../../lib/deepLink'
+import { sectionOf, type SectionId } from './sections'
 import type { ViewId } from './viewChrome'
 
 export interface NavItem {
   id: ViewId
   label: string
   icon: IconGlyph
+  /** Rail grouping. Empty in the five-section layout, which needs no headers. */
   group: string
+  /**
+   * Section this row stands for, in the five-section layout. Present means
+   * "light this row for any view in the section", so `?view=nutrition` lights
+   * Body — `id` alone would only match the section's landing view.
+   */
+  section?: SectionId
 }
 
 function Brand() {
@@ -45,7 +54,11 @@ export function Sidebar({
   // Only the groups that actually have items, so the divider rule ("every
   // group but the first") can't draw a rule above the first *rendered* group
   // when an earlier one was filtered out by a settings gate.
-  const groups = groupOrder.filter((g) => items.some((n) => n.group === g))
+  //
+  // An empty `groupOrder` means the five-section layout: one flat list, no
+  // headers. Seven group headers over seventeen rows were scaffolding for the
+  // row count, and five items do not need them.
+  const groups = groupOrder.length ? groupOrder.filter((g) => items.some((n) => n.group === g)) : ['']
   // Auto-hide: a thin left-edge zone reveals the sidebar as a fixed overlay.
   const deskClass = autoHide
     ? 'md:fixed md:top-0 md:left-0 md:z-50 md:h-screen md:w-60 md:-translate-x-full md:border-r md:border-line md:shadow-2xl md:transition-transform md:duration-200 md:ease-out md:peer-hover:translate-x-0 md:hover:translate-x-0'
@@ -94,25 +107,37 @@ export function Sidebar({
               // named each group but nothing drew the boundary, so fifteen rows
               // read as one list with headings sprinkled through it.
               <div key={group} className={gi > 0 ? 'mt-1 border-t border-line pt-1' : undefined}>
-                <p className={`px-3 pt-4 pb-1 text-micro font-medium tracking-wider text-fg-2 uppercase ${collapsed ? 'md:hidden' : ''}`}>
-                  {group}
-                </p>
+                {group && (
+                  <p className={`px-3 pt-4 pb-1 text-micro font-medium tracking-wider text-fg-2 uppercase ${collapsed ? 'md:hidden' : ''}`}>
+                    {group}
+                  </p>
+                )}
                 <ul>
                   {groupItems.map((n) => {
                     const Icon: IconGlyph = n.icon
-                    const active = view === n.id
+                    // Section rows match on the *section*, not the landing view,
+                    // so Body stays lit on `?view=nutrition`.
+                    const active = n.section ? sectionOf(view) === n.section : view === n.id
                     const btn = (
-                      <button
-                        onClick={() => onNavigate(n.id)}
+                      <a
+                        href={hrefFor(n.id)}
+                        onClick={(e) => {
+                          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+                          e.preventDefault()
+                          onNavigate(n.id)
+                        }}
                         aria-current={active ? 'page' : undefined}
-                        className={`group relative flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
+                        // `min-h-11` — these are the mobile drawer's rows as
+                        // well as the desktop rail's, and 39px is under the
+                        // 44px target guide (WCAG 2.5.5).
+                        className={`group relative flex min-h-11 w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
                           active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
                         }`}
                       >
                         {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
                         <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
                         <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
-                      </button>
+                      </a>
                     )
                     return (
                       <li key={n.id}>
@@ -158,7 +183,7 @@ function SidebarFooter({
   const { data, setSettings } = useJournal()
   const dark = data.settings.theme === 'mocha'
   const active = view === 'settings'
-  const row = 'group flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors'
+  const row = 'group flex min-h-11 w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors'
   return (
     <div className="mt-auto shrink-0 border-t border-line px-2.5 py-2">
       <button

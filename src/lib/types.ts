@@ -511,6 +511,23 @@ export interface Settings {
   hideToday?: string[]
   /** Difficulty of the training-penalty drills: beginner (default) · intermediate · hard. */
   penaltyLevel?: 'beginner' | 'intermediate' | 'hard'
+  /**
+   * INFORMATION ARCHITECTURE · which shape the app takes.
+   *
+   * Both layouts are real and maintained; this picks between them rather than
+   * migrating anyone.
+   *
+   * - `focused` (default) — five sections in the rail with the views as tabs,
+   *   and Today split into Morning / Day / Evening surfaces.
+   * - `classic` — the seventeen-destination rail under six group headers, and
+   *   Today as one long page of every card.
+   *
+   * Kept as one key on purpose: the two changes answer the same complaint from
+   * opposite ends (nav too wide, Today too tall), and someone who wants the old
+   * rail back almost certainly wants the old Today with it. Split into two keys
+   * if that turns out to be wrong.
+   */
+  layout?: 'focused' | 'classic'
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */
