@@ -374,16 +374,16 @@ export function StatusStrip({ date, onNavigate }: { date: string; onNavigate?: (
     return () => clearInterval(t)
   }, [active])
 
-  const log = data.habitLog[date] ?? []
-  const habits = data.habits.filter((h) => !h.archived && !h.avoid && (h.type ?? 'check') === 'check')
-  const done = habits.filter((h) => log.includes(h.id)).length
   const workouts = data.workouts.filter((w) => w.date === date)
 
+  // No habit count here. The pill row directly above already ends with one,
+  // and two copies of `5/8` a few hundred pixels apart is the same fact in two
+  // framings — the thing the day masthead was rewritten to stop doing. The
+  // strip carries what has no other home on this surface.
   const items: { icon: typeof Timer; label: string; tone?: string }[] = [
     active
       ? { icon: Timer, label: `Fasting ${fmtDuration(elapsedHours(active, now))} of ${target}h`, tone: 'mauve' }
       : { icon: Timer, label: 'No fast running' },
-    { icon: NotePencil, label: `Habits ${done}/${habits.length}`, tone: habits.length > 0 && done === habits.length ? 'green' : undefined },
     workouts.length > 0
       ? { icon: Barbell, label: `${workouts.length} session${workouts.length === 1 ? '' : 's'} logged`, tone: 'green' }
       : { icon: Barbell, label: 'No training logged' },
