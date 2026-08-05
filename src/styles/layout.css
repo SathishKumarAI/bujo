@@ -82,8 +82,17 @@
    sets box, baseline-aligned to its bottom edge.
 
    Only the controls, NOT `.control-max` — that class is also on a flex row of
-   RPE buttons, and blockifying it would stack ten buttons vertically. */
-.zone-act :is(input, select, textarea) {
+   RPE buttons, and blockifying it would stack ten buttons vertically.
+
+   And never a control that is *deliberately* hidden. This rule is unlayered, so
+   it beats Tailwind's `.hidden` in `@layer utilities` — which is how the .ics
+   file input, `<input type="file" class="hidden">` behind its own styled
+   button, reappeared as a raw "Choose File / No file chosen" the moment the
+   import moved into an act zone. The control had been hidden for as long as it
+   had existed; nothing about it changed except the ancestor it sat under. A
+   blanket `display` on a whole element type will eventually meet something that
+   had a reason to be invisible. */
+.zone-act :is(input, select, textarea):not(.hidden, [hidden], [type='hidden']) {
   display: block;
 }
 

@@ -18,7 +18,8 @@ import { Welcome } from './views/Welcome'
 import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fscloud'
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
-import { readDeepLink } from './lib/deepLink'
+import { readDeepLink, onRouteChange } from './lib/deepLink'
+import { SECTIONS, landingOf, type SectionGates } from './components/shell/sections'
 import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
@@ -59,7 +60,19 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 // reference → analysis. System (Help/Settings) lives in the top bar, not the rail.
 const GROUP_ORDER = ['Journal', 'Body', 'Habits', 'Wellbeing', 'Library', 'Review']
 
-const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
+/**
+ * TWO RAILS, ONE SETTING.
+ *
+ * `settings.layout` picks between them and both stay maintained:
+ *
+ * - **focused** (default) — five sections, no group headers, the views inside
+ *   each reached as tabs (`components/shell/sections.ts`).
+ * - **classic** — the seventeen destinations under six headers, below.
+ *
+ * The classic list is not dead code kept "for later": it is the other half of a
+ * choice the person using the app makes in Settings → Journal feel.
+ */
+const NAV: (NavItem & { show?: (g: SectionGates) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
   { id: 'plan', label: 'Plan', icon: ArrowsClockwise, group: 'Journal' },
   // BODY · four entries, and they are all the same kind of thing: a surface.
@@ -207,6 +220,16 @@ export default function App() {
   }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
   const urlView = readDeepLink().view
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
+  // Back / Forward. `writeDeepLink` pushes entries now, so this is what makes
+  // them mean something; without it the button would move the URL and not the
+  // app, which is why the URL used to be written with `replaceState`.
+  useEffect(
+    () =>
+      onRouteChange((link) => {
+        setView((link.view && link.view in VIEWS ? link.view : 'today') as ViewId)
+      }),
+    [],
+  )
   const [paletteOpen, setPaletteOpen] = useState(false)
   // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
   const [showTour, setShowTour] = useState(() => !onboarded())
@@ -216,8 +239,11 @@ export default function App() {
   useEffect(() => onAuthChange(setHasSession), [])
   // Names the current screen in the dev-only one-primary-per-screen warning.
   setPrimaryScope(view)
-  const gated = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
-  const items = NAV.filter((n) => !n.show || n.show(gated))
+  const gated: SectionGates = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
+  const focused = (data.settings.layout ?? 'focused') === 'focused'
+  const items: NavItem[] = focused
+    ? SECTIONS.map((s) => ({ id: landingOf(s.id, gated), label: s.label, icon: s.icon, group: '', section: s.id }))
+    : NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
@@ -291,7 +317,9 @@ export default function App() {
       <SyncIndicator />
       <AppShell
         items={items}
-        groupOrder={GROUP_ORDER}
+        groupOrder={focused ? [] : GROUP_ORDER}
+        gates={gated}
+        sectionTabs={focused}
         view={view}
         collapsed={collapsed}
         autoHide={!!data.settings.sidebarAutoHide}

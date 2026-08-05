@@ -70,7 +70,7 @@ export function Nutrition() {
       tier={1180}
       zone1={
         <StatBar facts={[
-          { label: 'Logging', value: date === today ? 'Today' : prettyDay(date) },
+          { label: 'Logging', value: date === today ? 'Today' : prettyDay(date), prose: true },
           { label: 'Calories', value: kcal > 0 ? `${kcal} / ${TARGET.calories}` : `— / ${TARGET.calories}` },
           { label: 'Protein', value: protein > 0 ? `${protein} / ${TARGET.protein} g` : `— / ${TARGET.protein} g` },
         ]} />
@@ -105,6 +105,27 @@ export function Nutrition() {
             </select>
           </label>
 
+          {/* Two jobs under one heading, now labelled and ordered as two.
+              The select and this button ADD a food's macros to the day. The four
+              fields below SET the day's running totals — they read the stored
+              metric, so they show 1996 kcal rather than an empty "what did you
+              eat" form, and typing in one replaces the total rather than adding
+              to it. Same heading, opposite mental models, and the button sat
+              *below* the fields it has nothing to do with, greyed out, with
+              nothing saying why. It belongs to the select, so it sits with it. */}
+          <Button
+            variant="secondary"
+            className="press-3d w-full"
+            disabled={!pick}
+            onClick={() => {
+              const f = FOODS.find((x) => x.name === pick)
+              if (f) { addFood(f); setPick('') }
+            }}
+          >Add food</Button>
+          {!pick && <p className="text-label text-fg-2">Pick a food above and its macros are added to today.</p>}
+
+          <p className="mt-1 border-t border-line pt-3 text-label text-fg-2">Or set the day’s totals directly</p>
+
           <NumField
             label="Calories" suffix="kcal" step="10" placeholder="450"
             value={m?.calories != null ? String(m.calories) : ''}
@@ -118,17 +139,6 @@ export function Nutrition() {
               onChange={(v) => setMetric(date, { [mac.key]: v ? Number(v) : undefined })}
             />
           ))}
-
-          {/* The page's one accent-filled control. */}
-          <Button
-            variant="secondary"
-            className="press-3d w-full"
-            disabled={!pick}
-            onClick={() => {
-              const f = FOODS.find((x) => x.name === pick)
-              if (f) { addFood(f); setPick('') }
-            }}
-          >Add food</Button>
 
           <Button
             variant="ghost"

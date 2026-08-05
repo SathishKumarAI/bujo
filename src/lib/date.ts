@@ -72,6 +72,25 @@ export function weekColumn(iso: string, weekStart: 0 | 1): number {
   return weekStart === 1 ? (dow + 6) % 7 : dow
 }
 
+/**
+ * The seven ISO days of the calendar week containing `iso`, in display order.
+ *
+ * Lives here, not inline in the Plan view, because it is the one piece of that
+ * page with a real off-by-one available to it: on a Sunday with `weekStart: 1`
+ * the naive `-getDay()` puts you at the *start of the week that is ending*, so
+ * the week shown is the previous one and today is its last cell. `weekColumn`
+ * already knows the shift; this reuses it rather than restating it.
+ */
+export function weekDaysOf(iso: string, weekStart: 0 | 1): string[] {
+  const start = addDays(iso, -weekColumn(iso, weekStart))
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i))
+}
+
+/** True for a day that has not happened yet, in local time. */
+export function isFutureDay(iso: string, today = todayISO()): boolean {
+  return iso > today
+}
+
 /** Difference in whole days between two ISO days (b - a). */
 export function dayDiff(a: string, b: string): number {
   return Math.round((fromISODay(b).getTime() - fromISODay(a).getTime()) / 86_400_000)

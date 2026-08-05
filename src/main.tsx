@@ -5,6 +5,11 @@ import App from './App.tsx'
 import { JournalProvider } from './store.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { ConfirmProvider } from './components/ConfirmDialog.tsx'
+import { canonicalizeDeepLink } from './lib/deepLink.ts'
+
+// Before the first render, so every reader — including the lazy view chunks that
+// mount long after the address bar has been rewritten — sees one canonical URL.
+canonicalizeDeepLink()
 
 // The boundary sits *outside* the provider so a crash in the store itself still
 // lands on the rescue screen instead of a blank page.

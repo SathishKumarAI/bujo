@@ -8,9 +8,20 @@ import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTie
 import { Card, Pill } from './ui'
 
 /**
- * Anime-style "training penalty" surfaced when yesterday's tasks/habits/challenges
- * were skipped. Tier scales with how badly you slipped; the drill is a stable
- * daily pick you can re-roll. Dismissible for the day. Hidden when nothing missed.
+ * MAKE-UP WORK · a drill offered when yesterday's tasks, habits or challenges
+ * were skipped. Tier scales with how much was missed; the drill is a stable
+ * daily pick you can re-roll. Dismissible for the day, hidden when nothing was
+ * missed.
+ *
+ * **The mechanic is unchanged; the frame is not.** This was "Training penalty",
+ * and loss framing does beat reward framing — for about a week. After that the
+ * app is the thing that punishes you for a bad Tuesday, and the way people stop
+ * being punished by an app is by not opening it. "Make-up work" asks for the
+ * same set of push-ups without the app taking an adversarial stance toward the
+ * person using it.
+ *
+ * The storage key, the `penalties` module and `settings.penaltyLevel` keep
+ * their names: renaming them would migrate data to change a word on screen.
  */
 export function PenaltyCard() {
   const { data } = useJournal()
@@ -34,9 +45,10 @@ export function PenaltyCard() {
 
   return (
     <Card
-      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Training penalty</span>}
-      subtitle={open ? 'You skipped something yesterday · pay the toll.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Make-up work</span>}
+      subtitle={open ? 'Yesterday left something undone · here is the catch-up.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
       right={<Pill color={meta.color} className="font-medium">{meta.label}</Pill>}
+      hideInfo
       collapsible
       open={open}
       onOpenChange={setOpen}
@@ -58,7 +70,7 @@ export function PenaltyCard() {
           onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
           className="ml-auto text-fg-2 hover:text-fg-1"
         >
-          Served it / dismiss
+          Done it / dismiss
         </button>
       </div>
     </Card>

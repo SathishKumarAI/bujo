@@ -3,7 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { cat } from '../lib/colors'
+import { cat, onAccent, over, readableOn } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
@@ -137,14 +137,22 @@ export function Card({
         <header
           onClick={headerToggles ? toggle : undefined}
           className={cn(
-            'flex items-start justify-between gap-3',
+            // `flex-wrap` + a real basis on the title column, because the right
+            // cluster is `shrink-0`: with a nowrap header the title column is
+            // the only thing that can give, so a wide cluster (Mood views ships
+            // six controls) squeezed it to nothing and `truncate` rendered the
+            // card title as the single character "M…". Below ~12rem the cluster
+            // drops to its own line instead, and the title keeps its width.
+            'flex flex-wrap items-start justify-between gap-x-3 gap-y-2',
             collapsible && !open ? '' : 'mb-3 sm:mb-4',
             headerToggles && 'cursor-pointer select-none',
           )}
         >
-          <div className="min-w-0">
+          <div className="min-w-0 grow basis-48">
             <div className="flex items-center gap-1.5">
-              {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
+              {/* Wraps, never truncates. A title clipped to "Workout mi…" costs
+                  more than a second line does — and these are 2–4 words. */}
+              {title && <h2 className="min-w-0 font-display text-heading leading-tight font-medium text-balance text-fg-1 sm:text-title">{title}</h2>}
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -314,47 +322,14 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 /** A 0–10 slider with a colored value chip. */
-export function Slider({
-  label,
-  value,
-  onChange,
-  color = 'mauve',
-  hint,
-}: {
-  label: string
-  value: number | undefined
-  onChange: (v: number) => void
-  color?: string
-  hint?: string
-}) {
-  // Unset is not zero. With `value ?? 0` the handle parks at the far left,
-  // which is exactly where a real 0 sits — so "not rated yet" and "rated 0"
-  // rendered identically while the readout said "–". An unrated slider now
-  // dims its track and sits at the midpoint: clearly untouched, and one drag
-  // from any value rather than biased toward the bottom of the scale.
-  const unset = value == null
-  return (
-    <label className="block">
-      <div className="mb-1 flex items-center justify-between text-body">
-        <span className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono" style={{ color: unset ? undefined : cat(color) }}>
-          {value ?? 'not set'}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={10}
-        value={value ?? 5}
-        aria-valuetext={unset ? 'Not set' : undefined}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`w-full ${unset ? 'opacity-40' : ''}`}
-        style={{ accentColor: cat(color) }}
-      />
-      {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}
-    </label>
-  )
-}
+/*
+ * `Slider` lived here. It is gone, replaced everywhere by
+ * `components/fields/SegmentScale` — a range input cannot represent "not
+ * answered", and every rating field in this app is unanswered most of the
+ * time. The mitigation (park unset at the midpoint, dim the track) traded a
+ * wrong reading for a confusing one; eleven dots and a `—` do not have the
+ * problem at all.
+ */
 
 /**
  * PILL · the small rounded label that says "this thing has a state".
@@ -403,12 +378,18 @@ export function Pill({
     label: 'gap-1 px-2 py-0.5 text-label',
   } as const
   const accent = color ? cat(color) : null
+  // I1, decided. The wash tone paints `accent` at 13% over the card and then
+  // sets the text to the same accent — which pulls the background toward the
+  // text and cost this pairing AA in every light theme. Both tones now derive
+  // their text colour from the background they actually land on, rather than
+  // assuming. See `readableOn` / `onAccent` in lib/colors.
+  const washBg = accent ? over(accent, cat('base'), 0x22 / 255) : null
   const style =
     tone === 'solid' && accent
-      ? { background: accent, color: cat('crust') }
+      ? { background: accent, color: onAccent(accent) }
       : tone === 'muted' || !accent
-        ? { background: cat('surface1'), color: cat('subtext0') }
-        : { background: accent + '22', color: accent }
+        ? { background: cat('surface1'), color: readableOn(cat('subtext0'), cat('surface1')) }
+        : { background: accent + '22', color: readableOn(accent, washBg!, 4.6) }
   return (
     <span
       title={title}
@@ -488,10 +469,19 @@ export function Segmented<T extends string | number>({
   onChange,
   options,
   tone = 'accent',
+  size = 'default',
 }: {
   value: T
   onChange: (v: T) => void
   options: { value: T; label: ReactNode }[]
+  /**
+   * `touch` raises each segment to a 44px target (WCAG 2.5.5). Opt-in rather
+   * than the default because ~30 call sites are desktop-dense surfaces where a
+   * 44px row would be the tallest thing in a stat header — but any segmented
+   * control that is a *primary* control on a phone should ask for it. The Today
+   * surface switcher is the first.
+   */
+  size?: 'default' | 'touch'
   /**
    * `accent` — the wash-filled active segment, everywhere outside the Body
    * cluster. `neutral` — a plain raised fill, for the page-contract StatBar,
@@ -541,6 +531,7 @@ export function Segmented<T extends string | number>({
             style={selected && !neutral ? { color: 'var(--brand-text)' } : undefined}
             className={cn(
               'h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium',
+              size === 'touch' && 'min-h-11 px-4',
               neutral ? 'data-[state=on]:bg-ink-3 data-[state=on]:text-fg-1' : 'data-[state=on]:bg-brand-wash',
             )}
           >

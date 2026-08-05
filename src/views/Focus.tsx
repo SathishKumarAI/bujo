@@ -6,7 +6,8 @@ import {
 } from 'recharts'
 import { useJournal } from '../store'
 import { prettyDay, todayISO } from '../lib/date'
-import { Card, Empty, Input, Pill, Slider, StatTile } from '../components/ui'
+import { Card, Empty, Input, Pill, StatTile } from '../components/ui'
+import { SegmentScale } from '../components/fields/SegmentScale'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
@@ -101,8 +102,8 @@ export function Focus() {
             <label className="block text-body text-fg-1">Minutes<Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="90" className="mt-1" /></label>
           </div>
           <label className="block text-body text-fg-1">Project<Input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className="mt-1" /></label>
-          <Slider label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
-          <Slider label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
+          <SegmentScale label="Focus / flow" value={f.focus} onChange={(v) => set({ focus: v })} color="mauve" hint="0 scattered · 10 deep flow" />
+          <SegmentScale label="Stress" value={f.stress} onChange={(v) => set({ stress: v })} color="red" hint="0 calm · 10 high" />
           <div className="grid grid-cols-2 gap-2">
             <label className="block text-body text-fg-1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
             <label className="block text-body text-fg-1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
@@ -231,7 +232,7 @@ export function Focus() {
       </CollapsibleSection>
 
       {/* History — editable session list, collapsed at the bottom */}
-      <Card title="History" collapsible defaultCollapsed>
+      <Card title="History" collapsible>
         {sessions.length === 0 ? (
           <Empty>No sessions yet. Log your first coding block.</Empty>
         ) : (
@@ -485,8 +486,8 @@ function SessionRow({ s, onSave, onDelete }: {
           <label className="block text-label text-fg-1">Minutes<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Project<Input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className="mt-1" /></label>
         </div>
-        <div className="mt-2"><Slider label="Focus / flow" value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" /></div>
-        <div className="mt-2"><Slider label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
+        <div className="mt-2"><SegmentScale label="Focus / flow" value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" /></div>
+        <div className="mt-2"><SegmentScale label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" /></div>
         <label className="mt-2 block text-label text-fg-1">Notes<Input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className="mt-1" /></label>
         <div className="mt-3 flex gap-2">
           <Button variant="secondary" onClick={save} className="flex-1">Save</Button>

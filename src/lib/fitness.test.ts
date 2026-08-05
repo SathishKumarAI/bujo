@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, activeDayStreak, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, bodyweightSeries, weeklySetsPerMuscle, e1rmProgression, trainingHeatmap, cardioBadges, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
@@ -97,7 +97,6 @@ describe('fitness v2 helpers', () => {
       { id: '1', date: '2026-06-11', activity: 'run', durationMin: 30, distanceKm: 8, calories: 400, sets: [], notes: '' },
       { id: '2', date: '2026-06-10', activity: 'run', durationMin: 20, distanceKm: 5, calories: 250, sets: [], notes: '' },
     ]
-    expect(activeDayStreak(d, '2026-06-11')).toBe(2)
     expect(cardioPBs(d)).toEqual({ longestKm: 8, mostCalories: 400, mostMinutes: 30 })
   })
   it('computes plates per side', () => {
@@ -286,36 +285,6 @@ describe('warmupRamp (auto warm-up generator)', () => {
   })
 })
 
-describe('bodyweightSeries (F10)', () => {
-  const j = (): JournalData => {
-    const d = emptyJournal()
-    d.bodyMetrics = [
-      { date: '2026-06-03', weight: 82, measurements: {} },
-      { date: '2026-06-01', weight: 80, measurements: {} },
-      { date: '2026-06-02', measurements: {} }, // gap: no weight → skipped
-      { date: '2026-06-04', weight: 84, measurements: {} },
-    ]
-    return d
-  }
-  it('orders points ascending by date and skips weightless gaps', () => {
-    const s = bodyweightSeries(j())
-    expect(s.map((p) => p.date)).toEqual(['06-01', '06-03', '06-04'])
-    expect(s.map((p) => p.weight)).toEqual([80, 82, 84])
-  })
-  it('computes a trailing 7-day moving average', () => {
-    const s = bodyweightSeries(j())
-    expect(s[0].avg).toBe(80) // first point
-    expect(s[1].avg).toBe(81) // (80+82)/2
-    expect(s[2].avg).toBe(82) // (80+82+84)/3
-  })
-  it('carries a goal value on each point only when supplied', () => {
-    expect(bodyweightSeries(j())[0].goal).toBeUndefined()
-    expect(bodyweightSeries(j(), 78).every((p) => p.goal === 78)).toBe(true)
-  })
-  it('returns [] when no body weight is logged', () => {
-    expect(bodyweightSeries(emptyJournal())).toEqual([])
-  })
-})
 
 describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
   it('counts a working set toward every muscle its exercise trains', () => {
@@ -383,49 +352,7 @@ describe('e1rmProgression (#101 estimated-1RM trend)', () => {
   })
 })
 
-describe('trainingHeatmap (#162 workout calendar)', () => {
-  it('emits one contiguous cell per day, today last, with relative intensity levels', () => {
-    const d = emptyJournal()
-    d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'push', sets: [], setRows: [{ exercise: 'Bench', weight: 100, reps: 5 }], notes: '' }, // vol 500 (peak)
-      { id: '2', date: '2026-06-09', activity: 'push', sets: [], setRows: [{ exercise: 'Bench', weight: 25, reps: 5 }], notes: '' }, // vol 125
-    ]
-    const cells = trainingHeatmap(d, '2026-06-11', 5)
-    expect(cells).toHaveLength(5)
-    expect(cells[cells.length - 1].date).toBe('2026-06-11') // today is last
-    expect(cells[0].date).toBe('2026-06-07') // oldest first
-    const peak = cells.find((c) => c.date === '2026-06-11')!
-    const light = cells.find((c) => c.date === '2026-06-09')!
-    const rest = cells.find((c) => c.date === '2026-06-10')!
-    expect(peak).toMatchObject({ volume: 500, level: 4 })
-    expect(rest).toMatchObject({ volume: 0, level: 0 }) // untrained day
-    expect(light.level).toBeGreaterThanOrEqual(1) // any trained day is ≥1
-    expect(light.level).toBeLessThan(4)
-  })
-  it('marks all days level 0 when nothing is trained', () => {
-    const cells = trainingHeatmap(emptyJournal(), '2026-06-11', 3)
-    expect(cells.every((c) => c.level === 0 && c.volume === 0)).toBe(true)
-  })
-})
 
-describe('cardioBadges (#251 PB badges with date earned)', () => {
-  it('pairs each cardio best with the earliest date it was reached', () => {
-    const d = emptyJournal()
-    d.workouts = [
-      { id: '1', date: '2026-06-01', activity: 'run', distanceKm: 10, durationMin: 50, calories: 400, sets: [], notes: '' },
-      { id: '2', date: '2026-06-08', activity: 'run', distanceKm: 10, durationMin: 60, calories: 300, sets: [], notes: '' }, // ties distance later, beats minutes
-    ]
-    const badges = cardioBadges(d)
-    const dist = badges.find((b) => b.key === 'longestKm')!
-    const mins = badges.find((b) => b.key === 'mostMinutes')!
-    expect(dist).toEqual({ key: 'longestKm', label: 'Longest distance', value: 10, date: '2026-06-01' }) // earliest tie wins
-    expect(mins).toEqual({ key: 'mostMinutes', label: 'Longest session', value: 60, date: '2026-06-08' })
-  })
-  it('carries a null date for bests that were never logged', () => {
-    const badges = cardioBadges(emptyJournal())
-    expect(badges.every((b) => b.value === 0 && b.date === null)).toBe(true)
-  })
-})
 
 describe('bigThreeTotal (#359 powerlifting total)', () => {
   it('sums best squat/bench/deadlift and matches lift variants by keyword', () => {

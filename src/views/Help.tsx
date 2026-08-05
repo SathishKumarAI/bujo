@@ -74,7 +74,7 @@ export function Help() {
       />
       <Section
         title="Training penalties"
-        body="Skip a habit streak, an overdue task, or a challenge day and the Today page surfaces an anime-style 'training penalty' scaled to how badly you slipped · a fun, dismissible nudge to keep the chain alive. Re-roll for a different drill."
+        body="Skip a habit streak, an overdue task, or a challenge day and the Today page offers make-up work · a short drill scaled to how much was missed, dismissible, and re-rollable if you want a different one."
       />
       <Section
         title="Plan"

@@ -1,4 +1,4 @@
-import type { JournalData, Habit, Entry } from './types'
+import type { JournalData, Habit } from './types'
 import { habitDoneOn, currentStreak, taskCompletion, habitStreak } from './stats'
 import { addDays, prettyDay, todayISO, dayDiff, ymOf, prettyMonth, WEEKDAYS } from './date'
 
@@ -323,52 +323,6 @@ export interface HabitWeekdayReport {
   worst: WeekdayPerf | null
 }
 
-/**
- * Per-weekday success RATE for a single habit, so you can see which days it
- * actually sticks vs. slips — to inform rescheduling. Unlike a raw completion
- * count (biased by how often each weekday has occurred since you started), this
- * divides done-days by SCHEDULED days for that weekday, respecting `activeDays`
- * and `startedOn`. Best/worst pick the extreme rates among weekdays that were
- * ever scheduled, requiring the two to actually differ (else both null — no
- * signal). Pure + deterministic.
- */
-export function habitWeekdayPerformance(
-  data: JournalData,
-  habitId: string,
-  today = todayISO(),
-): HabitWeekdayReport {
-  const h = findHabit(data, habitId)
-  const scheduled = [0, 0, 0, 0, 0, 0, 0]
-  const done = [0, 0, 0, 0, 0, 0, 0]
-  if (h && !h.archived) {
-    const span = dayDiff(h.startedOn, today)
-    for (let i = 0; i <= span; i++) {
-      const day = addDays(h.startedOn, i)
-      const wd = new Date(day + 'T00:00:00').getDay()
-      if (h.activeDays?.length && !h.activeDays.includes(wd)) continue
-      scheduled[wd] += 1
-      if (habitDoneOn(data, h, day)) done[wd] += 1
-    }
-  }
-  const rows: WeekdayPerf[] = scheduled.map((s, wd) => ({
-    weekday: wd,
-    label: WEEKDAYS[wd],
-    scheduled: s,
-    done: done[wd],
-    rate: s ? Math.round((done[wd] / s) * 100) / 100 : null,
-  }))
-  const rated = rows.filter((r) => r.rate != null)
-  let best: WeekdayPerf | null = null
-  let worst: WeekdayPerf | null = null
-  if (rated.length >= 2) {
-    const sorted = [...rated].sort((a, b) => b.rate! - a.rate!)
-    if (sorted[0].rate !== sorted[sorted.length - 1].rate) {
-      best = sorted[0]
-      worst = sorted[sorted.length - 1]
-    }
-  }
-  return { rows, best, worst }
-}
 
 export interface StreakLeader {
   habitId: string
@@ -782,49 +736,6 @@ export interface MigrationReport {
   migratedChains: number
 }
 
-/**
- * Migration analytics: the BuJo "is this task actually worth doing?" read. A
- * task that gets carried forward day after day forms an `originId` chain; the
- * length of that chain is how many times you deferred it. We walk every chain to
- * its live tip, count the hops, and surface still-open tasks that have been
- * migrated `minMigrations`+ times — the chronically-deferred work that wants a
- * "do it or drop it" decision. Pure + deterministic, read-only over entries.
- */
-export function migrationAnalytics(data: JournalData, minMigrations = 2): MigrationReport {
-  const byId = new Map<string, Entry>()
-  for (const e of data.entries) byId.set(e.id, e)
-  // Entries that are someone's origin are mid-chain, not the live tip.
-  const isOrigin = new Set<string>()
-  for (const e of data.entries) if (e.originId) isOrigin.add(e.originId)
-
-  let totalMigrations = 0
-  let migratedChains = 0
-  const chronic: DeferredTask[] = []
-
-  for (const e of data.entries) {
-    if (e.type !== 'task') continue
-    if (isOrigin.has(e.id)) continue // not the tip of its chain
-    // Walk back through originId to count hops (guard against cycles).
-    let hops = 0
-    let cur: Entry | undefined = e
-    const seen = new Set<string>()
-    while (cur?.originId && byId.has(cur.originId) && !seen.has(cur.originId)) {
-      seen.add(cur.originId)
-      hops += 1
-      cur = byId.get(cur.originId)
-    }
-    if (hops > 0) {
-      totalMigrations += hops
-      migratedChains += 1
-    }
-    const open = e.status === 'open' || e.status === 'migrated' || e.status === 'scheduled'
-    if (hops >= minMigrations && open && e.status !== 'dropped' && e.status !== 'done') {
-      chronic.push({ id: e.id, text: e.text, migrations: hops, date: e.date, open })
-    }
-  }
-  chronic.sort((a, b) => b.migrations - a.migrations || (a.date < b.date ? -1 : 1))
-  return { chronic, totalMigrations, migratedChains }
-}
 
 export interface TaskAgingBucket {
   /** Bucket label, e.g. "8–14d". */
@@ -843,36 +754,6 @@ export interface TaskAgingReport {
   oldest: { text: string; age: number } | null
 }
 
-/**
- * Task-aging report: how long your open tasks have been sitting, bucketed by
- * age (today, this week, 1–2 weeks, 2+ weeks). Stale open tasks are the silent
- * backlog a tracker never confronts; bucketing them makes the pile legible and
- * nudges a cleanup. Age is measured from the entry's live date to `today`.
- * Only genuinely open tasks (not done/dropped) count. Pure + deterministic.
- */
-export function taskAging(data: JournalData, today = todayISO()): TaskAgingReport {
-  const defs: { label: string; max: number; color: string }[] = [
-    { label: 'Today', max: 0, color: 'green' },
-    { label: '1–7d', max: 7, color: 'teal' },
-    { label: '8–14d', max: 14, color: 'yellow' },
-    { label: '15+d', max: Infinity, color: 'peach' },
-  ]
-  const counts = defs.map(() => 0)
-  let open = 0
-  let oldest: { text: string; age: number } | null = null
-  for (const e of data.entries) {
-    if (e.type !== 'task') continue
-    if (e.status !== 'open' && e.status !== 'migrated' && e.status !== 'scheduled') continue
-    if (!e.date) continue
-    const age = Math.max(0, dayDiff(e.date, today))
-    open += 1
-    const bi = defs.findIndex((d) => age <= d.max)
-    counts[bi >= 0 ? bi : defs.length - 1] += 1
-    if (!oldest || age > oldest.age) oldest = { text: e.text, age }
-  }
-  const buckets = defs.map((d, i) => ({ label: d.label, count: counts[i], color: d.color }))
-  return { buckets, open, oldest }
-}
 
 export interface PickleballInsights {
   /** Lifetime games won ÷ total games, 0–1, or null if no games logged. */

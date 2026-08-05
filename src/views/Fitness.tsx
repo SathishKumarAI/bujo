@@ -57,7 +57,16 @@ export function Fitness() {
   // round, because the activity is the fact and the mode is derived from it.
   const linked = readDeepLink().activity
   const initialActivity = linked && isActivityKey(linked) ? linked : null
-  const [mode, setMode] = useStickyState<Mode>('fitness.mode', initialActivity ? modeOf(initialActivity) : 'cardio', MODES)
+  // `useStickyState` reads localStorage FIRST, so passing the linked mode as its
+  // default did nothing once a mode had ever been chosen: arriving on
+  // `?view=fitness&activity=run` left the toggle on the stored `sport` while the
+  // draft took `run`. The activity `<select>` then held a value absent from its
+  // own option list, which a browser renders as the *first* option — the form
+  // said "Pickleball", carried `run`, and would have logged one as the other.
+  // The link wins until the user picks a mode by hand, which clears it.
+  const [stickyMode, setStickyMode] = useStickyState<Mode>('fitness.mode', 'cardio', MODES)
+  const [linkMode, setLinkMode] = useState<Mode | null>(initialActivity ? modeOf(initialActivity) : null)
+  const mode = linkMode ?? stickyMode
   const [draft, setDraft] = useState<ActivityDraft>(() => {
     const base = emptyDraft(initialActivity ? modeOf(initialActivity) : mode)
     return initialActivity ? { ...base, activity: initialActivity } : base
@@ -72,7 +81,8 @@ export function Fitness() {
   // Switching mode resets the activity to that mode's first entry — an
   // activity from the other mode would render the wrong fields.
   function switchMode(next: Mode) {
-    setMode(next)
+    setLinkMode(null)
+    setStickyMode(next)
     setDraft(emptyDraft(next))
   }
 
@@ -107,10 +117,14 @@ export function Fitness() {
     strength: `${split.label} day`,
     sport: 'Whenever the court is free',
   }
+  // `prose` on the two facts that are sentences. Zone 1 rendered every value in
+  // the mono face, so "Whenever the court is free" and "Target met — anything
+  // you like" came out in the typewriter — mono is this app's signature on
+  // numerals, and spending it on prose spends it on nothing.
   const facts = [
     { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
-    { label: 'Next up', value: NEXT[mode] },
-    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
+    { label: 'Next up', value: NEXT[mode], prose: true },
+    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
   ]
 
   // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────
@@ -207,17 +221,24 @@ export function Fitness() {
           {/* Analytics · expanded, never a fold. The training calendar spent a
               release behind a collapsed "Cardio analytics" accordion, which is
               how the most useful thing on the page went unseen. */}
-          <section>
-            <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
-            <SummaryStrip items={[
-              { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-              { label: 'Total time', value: time.value, empty: time.empty },
-              { label: best.label, value: best.value, empty: best.empty },
-            ]} />
-            <div className="mt-3">
-              <CalendarHeatmap weeks={12} data={heat} unit="min" />
-            </div>
-          </section>
+          {/* Hidden entirely with no sessions in this mode, rather than drawn
+              as three "—" tiles over twelve blank weeks. That much furniture
+              around no data does not read as "nothing logged yet", it reads as
+              a page that failed to load — and the History section directly
+              above already says the true thing in one line. */}
+          {sessions.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
+              <SummaryStrip items={[
+                { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+                { label: 'Total time', value: time.value, empty: time.empty },
+                { label: best.label, value: best.value, empty: best.empty },
+              ]} />
+              <div className="mt-3">
+                <CalendarHeatmap weeks={12} data={heat} unit="min" />
+              </div>
+            </section>
+          )}
 
           <EditDialog workout={editing} onClose={() => setEditing(null)} />
         </>

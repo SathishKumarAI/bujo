@@ -49,7 +49,7 @@ export function CollapsibleSection({
   icon,
   color = 'overlay1',
   variant = 'card',
-  defaultOpen = false,
+  defaultOpen = true,
   stickyKey,
   open: openProp,
   onOpenChange,

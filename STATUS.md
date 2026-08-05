@@ -2,9 +2,472 @@
 
 Update this when you STOP working, not when you start.
 
-- **Last touched:** 2026-08-03
+- **Last touched:** 2026-08-05
 
-## Where I stopped
+## Where I stopped — `feat/ui-ux-backlog`
+
+Ten commits off `fix/ui-ux-page-pass`, **pushed, PR #102**. Builds all eight
+improvements the page pass had documented and declined to build, then clears the
+legacy deep-link bug that had been carried for three sessions. The session is
+written up in `docs/sessions/2026-08-05-ui-ux-backlog/README.md`, and each entry
+in the previous session's `BACKLOG.md` now carries what was actually built.
+
+Gates re-run at the tip: `npx tsc -b` 0, **751 tests / 51 files**, `npx eslint .`
+0 errors / 2 pre-existing warnings, `npm run build` clean. `npm run a11y` was
+**0 serious across 80 scans** as of `d931ff2` and has not been re-run since —
+what followed is two tests, a routing fix that changes no markup, and markdown.
+
+### The legacy deep link is fixed — `?view=pullups` keeps its activity
+
+Carried since `feat/ia-routing`. `readDeepLink` resolved the alias correctly and
+the activity was lost anyway, because it lived only in the parsed result and
+never in the URL: `Fitness` is a `lazy()` chunk, so by the time it mounts and
+reads `readDeepLink().activity`, `DeepLinkSync` has rewritten the address bar to
+`?view=fitness`. `hrefFor` builds from `window.location.search`, which is why the
+documented `?view=fitness&activity=pullups` always worked — that form has the
+activity as a real parameter and survives the rewrite.
+
+`canonicalizeDeepLink()` now runs in `main.tsx` before the first render and
+rewrites the retired URL into the documented one, so **there is one shape of URL
+downstream instead of two**. Fixed where both paths meet rather than by teaching
+the reader to look somewhere else.
+
+**Its tests are the lesson.** Every existing deep-link test passed a search
+string — `readDeepLink('?view=pullups')` was never the broken part, which is
+exactly how the bug survived a file full of tests about itself. The new ones go
+through `window.location`, and one replays the real sequence: land, let the sync
+effect write, then read as the lazy chunk does on mount.
+
+### Two of the eight entries were wrong, and that is the useful part
+
+**B-8's premise was stale.** It was written from a screenshot as "~20 cards,
+needs grouping into three zones". The Stage 0 audit found Recovery already on
+`PageLayout` with all three zones, its review zone already divided into titled
+sections, and ten cards rather than twenty. The grouping the entry asked for
+existed before the entry was written; what was left was the card cap, a smaller
+and better-defined job. **A brief written from the outside is often right about
+the intent and wrong about the nouns** — including one's own, written yesterday,
+from a screenshot. Say it before Stage 3, not halfway through it.
+
+**B-5's fix does not fully land, and the code says so.** RPE segments are 44px
+tall and **38px wide**. The width cannot reach 44 inside a ~380px act column
+whatever the row asks for — that needs a wider column or fewer segments, which is
+a layout decision, not a class. Written into the comment rather than rounded up.
+
+### Two deviations from the page contract, on purpose
+
+- **Plan's zone 1 carries the week agenda as well as the fact bar**, against "one
+  horizontal bar, at most four facts, ~64px". At 62% of the tier the seven columns
+  are ~94px each and every task title truncates to "Back up p…". The cap exists to
+  stop a fact bar growing into a stats card; the agenda is a different object, and
+  it is the thing the page was missing.
+- **Recovery stays above the two-raised-card cap**, at five. Three reference
+  blocks were demoted — they were prose pretending to be objects — but the rest
+  are genuinely separately-actionable. The contract anticipates one page per
+  cluster like this.
+
+### Things that will bite again
+
+- **An unlayered blanket `display` beats Tailwind's `.hidden`.**
+  `.zone-act :is(input, select, textarea) { display: block }` is unlayered, so it
+  wins against `@layer utilities`. Nothing about the .ics file input changed — it
+  had been hidden behind its own styled button since it was written — but moving
+  the import into an act zone made it reappear as a raw "Choose File / No file
+  chosen". Fixed at the rule with a `:not()`, not at the call site. General form:
+  **a blanket `display` on an element type will eventually meet something that
+  had a reason to be invisible.** Same family as `.caret-turn`.
+- **The week agenda's off-by-one is real and now pinned.** On a Sunday with
+  `weekStart: 1` the naive `-getDay()` returns that Sunday as its own week start,
+  so the agenda draws the week that is *ending*. `weekDaysOf` in `lib/date` reuses
+  `weekColumn` rather than restating the shift, and its test was checked against
+  the naive form — two cases fail, so it holds the bug rather than just passing.
+
+## The stack is untangled — read this before believing the notes below
+
+Six sessions of this file said the stack was deep, unpushed and blocked. **Two
+of those three were wrong**, and the check that settles it is one command:
+
+```
+git merge-base --is-ancestor <lower> <upper>
+```
+
+**The chain is perfectly linear** — `icon-button-stage1 → collapsible-header-ux
+→ activity-registry → ia-routing → real-data-pass → ui-ux-page-pass →
+ui-ux-backlog`, each an ancestor of the next, and the tip is **0 behind main**.
+There was never a conflict to resolve. `activity-registry` merged main in months
+ago and everything above it inherited that.
+
+**Most of it was already pushed.** `collapsible-header-ux`, `real-data-pass`,
+`ui-ux-page-pass` and `today-ux` were all in sync with origin while this file
+said otherwise. Exactly one branch was genuinely stale — `activity-registry`,
+78 commits behind its local — and that single stale pointer is the whole reason
+`#100`'s diff read as 131 files: the main-merge landed in `#100` but not in its
+base `#99`, so the three-dot diff attributed all of main to it.
+
+Fixed with no merges and no file edits: push the one stale branch, retarget
+`#100` to `main` (131 → 90 files), push the two branches that had none, and open
+the three missing PRs. **The stack now merges bottom-up in this order:**
+
+| PR | Branch | Base | Diff |
+|---|---|---|---|
+| #99 | `collapsible-header-ux` | `main` | 159 files / 30 commits |
+| #100 | `activity-registry` | `main` | 90 / 47 |
+| #103 | `ia-routing` | #100 | 30 / 9 |
+| #104 | `real-data-pass` | #103 | 32 / 8 |
+| #101 | `ui-ux-page-pass` | #104 | 18 / 7 |
+| #102 | `ui-ux-backlog` | #101 | 20 / 10 |
+
+`#96` (`today-ux`, 41 commits) is **not in the chain** and was left alone. It is
+the one that genuinely conflicts — `ui.tsx`, `App.tsx`, `Today.tsx` — and
+whichever of it and the stack lands second pays that cost. Decide with the diff
+in front of you.
+
+**A base that looks wrong is not always wrong.** Retargeting `#101` to `main`
+was on the plan and would have taken it from 18 files to 133 — for a linear
+stack the tightest diff comes from basing each PR on its *parent*, not on main.
+`#100` is the exception only because it carries the main-merge. Measure with
+`git diff --stat <base>...<head>` before retargeting anything.
+
+### Not done
+
+1. **Nothing is merged.** Every PR is open and reviewable; none has landed on
+   `main`. That was the deliberate stopping point — untangling and merging are
+   different decisions.
+2. **Themes other than mocha** were not looked at, beyond the a11y gate's sweep.
+3. **Insights and Mindset were not checked at 390** after the masonry change.
+   `columns-1` below `md` means they render as a single stack, same as before —
+   but that was reasoned, not looked at.
+4. **Only the week arithmetic has a test.** The other seven items are held by
+   screenshots, same as the page pass before it.
+
+The deep-link fix **was** checked in a browser, after a first attempt could not
+reach one: `?view=pullups` on the dev server lands on Strength / Pull-ups with
+the address bar already reading `?view=fitness&activity=pullups`, and the
+activity `<select>` holds `pullups` with `valueInOptions: true` — the invariant
+F-01 added, asserted on the path that used to break it.
+
+**Chrome needs launching with `--remote-debugging-port=9333` and its own
+`--user-data-dir`** for the devtools MCP to attach; an already-running Chrome
+has no debug port and the MCP just reports "Could not connect".
+
+**`TaskStop` kills the `npx` wrapper, not the `vite` node child.** The port
+stayed bound after the task was stopped and a later `--strictPort` start failed
+with "Port 5199 is already in use". Check
+`Get-NetTCPConnection -LocalPort <p>` → `Get-CimInstance Win32_Process` before
+assuming a stale server belongs to another worktree — this one was ours.
+
+---
+
+## Where I stopped — `fix/ui-ux-page-pass`
+
+Seven commits off `chore/real-data-pass`. A page-by-page UI/UX walk of the whole
+app with demo data loaded, run as a fixed loop — observe, diagnose, write the
+fix as a prompt, apply, validate, record. **The whole session is written up in
+`docs/sessions/2026-08-04-ui-ux-page-pass/`**: `PROMPTS.md` has the prompt that
+produced each fix, `FINDINGS.md` the ranked list with the two withdrawn
+findings and why, `OBSERVATIONS.md` the per-page walk, `BACKLOG.md` the eight
+improvements deliberately not built, `VALIDATION.md` the gates and what was
+*not* checked.
+
+Gates: `npx tsc -b` 0, **741 tests / 51 files**, `npx eslint .` 0 errors / 2
+pre-existing warnings, `npm run build` clean, `npm run a11y` **0 serious across
+80 scans**.
+
+Scope was agreed as 1440 desktop, mocha, defects fixed and improvements only
+documented. 19 views walked plus the three Today surfaces and five Settings
+tabs; Cycle is gated off in Profile and was not reachable.
+
+### The one that could have corrupted data
+
+`?view=fitness&activity=run` — the *documented working* form of the link — left
+the form in an impossible state. `useStickyState` reads localStorage before the
+default it is handed, so the linked mode had been dead since the first time any
+mode was chosen. The draft took `run` while the toggle stayed on the stored
+mode, and the activity `<select>` then held a value absent from its own option
+list. **A browser renders that as the first option rather than failing**, so the
+form displayed "Pickleball", carried `run`, and would have logged one as the
+other. That silent fallback is the entire reason it survived previous visual
+passes, and it is what the new regression test asserts against — not "the select
+says Run" but "the select's value is among its options".
+
+### One shape caused four of the defects
+
+A flex row where the secondary content is `shrink-0` and the *name* is the only
+shrinkable child. Flexbox then resolves the whole deficit against the name.
+Stats rendered a card titled `M…`, Trackers rendered habit rows as `W.` and one
+with **no name at all**, Insights clipped two titles. Fixed at the root in
+`Card`'s header and in the Trackers name cell: the identifying label is capped
+and un-shrinkable, the badges and controls wrap instead. Worth remembering as a
+rule — **whatever names the thing must be the last item allowed to shrink.**
+
+### Two findings were withdrawn, on purpose, in writing
+
+Plan's unconfirmed "Move all 20 → Today" (undo is in the top-bar menu and the
+palette, and the forEach coalesces into one history step) and the right-aligned
+`!` on entry rows (moving it right reclaimed a permanent indent column on every
+row). Both are documented decisions in the code. They are recorded as withdrawn
+rather than deleted so the next pass does not spend the same hour re-finding
+them.
+
+### Things that will bite again
+
+- **A full-page screenshot does not capture a lazily-rendered chart.** Pickleball,
+  Trackers and Stats all looked like they shipped empty chart bodies; every one
+  drew correctly once scrolled into the viewport. Four findings were nearly filed
+  against charts that work. Use a viewport screenshot after `scrollIntoView`.
+- **The demo fixture only exercised `check` habits.** All eight were the same
+  shape, so the avoid, count and timer renderings were unreachable from demo
+  data — which is why the avoid-habit bug shipped last pass. Fixed: the demo now
+  seeds one habit of every shape, with logs of the right *shape* (an avoid habit
+  is mostly absent from `habitLog`, since present means slipped).
+- **Two folds were still collapsed by default**, third variant of the same trap:
+  one was a *controlled* `QuietSection` holding its own `false`, the other a
+  hand-rolled caret button. The sweep that opened eighteen folds could see
+  neither.
+- **jsdom has no `ResizeObserver`**, and `PageLayout` builds one on mount, so
+  rendering any page-contract view threw before a single assertion. Polyfilled in
+  `src/test/setup.ts` — that is what unblocks view tests generally.
+- **`npm run a11y` needs `npx vite preview --port 4173` already running.** It
+  does not start one, and dies with `ERR_CONNECTION_REFUSED`.
+
+### Not done
+
+1. **Not pushed at the time of writing.** Stack order below is unchanged and
+   still blocking.
+2. **Only the F-01 fix has a test.** The seven layout fixes are held by
+   screenshots.
+3. **Eight improvements are in `BACKLOG.md`, not built** — the big one is that
+   Plan's "Week" tab is a migration queue with sixty controls and no week agenda.
+
+---
+
+## Where I stopped — `chore/real-data-pass`
+
+Seven commits off `feat/ia-routing`, **not pushed**. The job was the thing
+every prior pass skipped: **look at it with data in it.**
+
+`npx tsc -b` 0, **738 tests / 50 files**, `npx eslint .` 0 errors / 2
+pre-existing warnings, `npm run build` clean, **`npm run a11y` 0 serious across
+80 scans** (5 themes x 16 surfaces, every fold open).
+
+### The real-data walk found four defects, all invisible on a fresh journal
+
+Demo data loaded through Settings → Data, then every surface walked at 1440
+and 390, plus both layouts.
+
+1. **The week strip encoded nothing.** Seven fixed-height blocks tinted from a
+   three-bucket colour scale, so any week whose days land in one bucket drew
+   seven identical bars — and on a real journal that is most weeks. Height
+   carries the score now, colour stays as the redundant cue.
+2. **The habit close-out called a slip a success.** For an `avoid` habit a
+   tick means you slipped; the Evening checklist struck it through with a ✓.
+   The demo has no avoid habits, so this needed two to be added by hand before
+   it could be seen. **Worth repeating: the demo data does not cover `avoid`,
+   `count` or `timer` habits well. Add them before trusting a habit sweep.**
+3. **The footer count did not reconcile** — "5 of 8" under ten rows.
+4. **Achievements were a wall of ellipses** — "First w…", "Centur…", "Unbro…".
+
+Also: no horizontal overflow on any of 18 views at 390px with real data, which
+settles the brief's last mobile item empirically rather than by argument.
+
+### The a11y gate runs all five themes, every fold open — and it is clean
+
+"Only mocha was checked" had sat in this file for several sessions, which is
+the tell that a manual step never happens. The gate loops the themes now and
+**asserts the root attribute actually changed** before believing a result.
+
+It found 15 serious violations on the first run. All fixed. **80 scans, 0
+serious.** Two halves to the fix, and the second matters more:
+
+- **The palette.** The light accents were too light to read at body size even
+  on plain white (`#e8710a` on `#ffffff` = 3.08:1). Darkened to values solved
+  by `scripts/solve-contrast.mjs`. vscode's greys went the other way.
+  **Yellow is deliberately untouched** — it never failed, and yellow at 4.5:1
+  on white is not darker yellow, it is brown.
+- **Point of use.** `readableOn` / `onAccent` / `over` in `lib/colors` derive a
+  text colour from the background it actually lands on; `Pill` uses them. This
+  is the fix the `Pill` doc predicted — "a one-file fix when I1 is decided" —
+  and it decides I1. Darkening accents far enough to fix this in the palette
+  alone would also darken every chart fill, and a non-text graphic only needs
+  3:1.
+
+Two things that will bite again: the threshold is **4.6, not 4.5** because
+`toHex` rounds each channel; and `onAccent` cannot just pick the better of a
+theme's two neutrals, because dawn's yellow beats both.
+
+**Never hand-roll a contrast check to shortcut this.** One written during this
+session reported ~50 failures per theme, every one an artefact of reading
+`rgba(r, g, b, 0.08)` tints as opaque. axe composites the stack. Use axe.
+
+### Every fold is open by default now
+
+Requested. 18 `defaultCollapsed` call sites dropped, and the three collapse
+primitives default to open. Still collapsible — the fold is a choice you make,
+not the state you are handed.
+
+**Opening them exposed three bugs that had been hiding.** CLAUDE.md already
+documents the trap ("`npm run a11y` cannot scan inside a collapsed fold ... a
+critical `select-name` violation shipped for months this way") and it was still
+true, three times over: an unnamed `<select>` in Collections, `VideoLink`
+rendering a nameless anchor when `ProgramTracker` passes `label=""`, and the
+plate badges' hardcoded `text-crust` at 2.02:1 on yellow.
+
+The lesson is not "remember to open folds before running the gate" — that is
+what the old note said and it did not work. **A default-collapsed card is a
+place bugs go to survive.**
+
+### The archive is done
+
+Eight orphaned lib functions moved to `archive/src/lib/*.txt`, commented out,
+each with a note on what supersedes it. Tests 757 -> 738; the 19 that went only
+pinned archived code.
+
+**The list was 13 and is 8** — five had callers *inside their own module*,
+which the first sweep missed by excluding the defining file. Any future run of
+that check has to include it. Removing them stranded three more things reachable
+only from the code that left (`rollingAverage`, an `Entry` import, a `task()`
+fixture).
+
+---
+
+## Where I stopped — `feat/ia-routing`
+
+Six commits off `feat/activity-registry`, **not pushed, no PR**. The third
+redesign pass: information architecture and routing. Base it on
+`feat/activity-registry` (#100) when you open the PR, not on `main`.
+
+Verifies green: `npx tsc -b` 0, `npx vitest run` **755 tests / 50 files**,
+`npx eslint .` 0 errors / 2 pre-existing warnings, `npm run build` clean,
+`npm run a11y` **0 serious across 15 surfaces**.
+
+Browser pass done at 1440 and 390, mocha, on both layouts.
+
+### Both layouts ship — `settings.layout`
+
+This was asked for mid-pass and is the load-bearing decision of the branch.
+`focused` (default) is the five-section rail plus the split Today; `classic`
+is the seventeen-destination rail plus the one-page Today. Settings → Journal
+feel → Layout. **They share their cards** (`src/views/today/cards.tsx`), so
+the fixes below landed in both and neither can drift into being the stale one.
+
+One key covers both the rail and Today deliberately: the two changes answer
+the same complaint from opposite ends, and someone who wants the old rail
+back almost certainly wants the old Today with it. Split it if that proves
+wrong.
+
+### What changed
+
+| Area | What |
+|---|---|
+| Routing | `writeDeepLink` pushes history; `onRouteChange` listens for `popstate`; day chevrons and rail rows are real anchors |
+| Nav | Five sections (`components/shell/sections.ts`), views inside them are tabs; no group headers; `BottomNav` renders the rail straight through |
+| Today | Morning / Day / Evening surfaces, `?surface=` for the override |
+| Fields | `SegmentScale` (11 dots, `—` for unset) replaced `Slider`, which is deleted; sleep is a half-hour stepper |
+| Copy | Zero ⓘ on Today; "Training penalty" → "Make-up work"; three writing prompts → one rotating |
+| Gate | `scripts/a11y-axe.mjs` navigates by link *and* button, walks `[section, tab]` pairs, waits on `getAnimations()` |
+
+### Things worth knowing before you touch this
+
+- **Strength tools had no door.** `gym` is a full view — exercise picker,
+  program tracker, plate calculator, muscle map, progress photos — and was
+  reachable only from a link inside Fitness that renders when the mode is
+  `strength`. It was never in `NAV`, so it had also never been scanned by the
+  a11y gate. It is a Body tab now, and `sections.test.ts` asserts every view
+  in `VIEW_CHROME` has a section or is an explicitly exempt preference page.
+- **The a11y gate had silently stopped navigating.** Its selector was
+  `nav button, aside button`; the rail rows became `<a>`. Every click matched
+  nothing, and the render-length assert does not catch it because Today
+  renders plenty of text — twelve views would have been scored as Today and
+  reported clean. This is the third variant of the same failure this gate has
+  had. Assume the selector is wrong after any nav change.
+- **The gate was also measuring mid-animation.** Insights "failed" contrast at
+  `#797d91`, a colour in no theme — `fg-2` composited at ~0.68 opacity because
+  the fixed 500ms wait was not always enough on a loaded machine. It waits on
+  `document.getAnimations()` now. It produced a false failure this time; the
+  same artefact hides real ones just as easily, which is the worse direction.
+- **`Tabs` was the wrong primitive** and the brief asked for it. Radix `Tabs`
+  implements the ARIA tabs pattern, where a trigger owns a `tabpanel` in the
+  same document. These tabs are separate pages, so it emitted `aria-controls`
+  naming a panel that never renders — `axe` critical. The tab row is a `<nav>`
+  of links with `aria-current="page"` instead. If someone "fixes" it back to
+  `Tabs`, that violation returns.
+- **`TodayHabits` was reading the wall clock, not the cursor.** It hardcoded
+  `todayISO()` while the rest of the page took the day from the route, so on
+  any day but today it showed the wrong day's habits. Fixed as part of the
+  split; would have been a real bug in classic too.
+- **`h-auto!` in the tab row is load-bearing** — was, before the primitive was
+  dropped; the same shape will recur. The vendored `TabsList` ships
+  `group-data-[orientation=horizontal]/tabs:h-9`, which beats a plain
+  `h-auto`, so 44px triggers overflowed a 36px box and `overflow-x-auto`
+  computed `overflow-y` to `auto`, drawing a vertical scrollbar on a row of
+  five tabs.
+
+### The "what else is missing?" audit
+
+Run mechanically after Pickleball turned up, because the same mistake had
+already been made twice and eyeballing it is what let it through.
+
+**Four checks, and only one real finding.**
+
+1. *Views with no section* — now a test (`sections.test.ts`). Clean.
+2. *Components nothing imports* — `resizable` and `scroll-area`, both
+   unused vendored shadcn files. Harmless.
+3. *Store actions with no UI caller* — `renameHabit` (superseded by
+   `updateHabit(id, {name})`, which the habit editor uses) and
+   `removeBodyMetric`. Neither is a missing feature.
+4. *Exported lib functions with no consumer* — 13 hits, and **they are
+   duplicates of things already on screen, not features waiting to ship**:
+
+   | Orphan | Already shipped as |
+   |---|---|
+   | `taskAging` | `overdueBuckets`, in Plan's aging histogram |
+   | `migrationAnalytics` | `migrationCounts`, Plan's "chronically deferred" |
+   | `trainingHeatmap` | Fitness's `CalendarHeatmap`, 12 weeks |
+   | `recoveryState` | `RecoveryMap` in Strength tools, per-muscle |
+   | `categoryRollup` | `CategoryConsistencyCard` in Trackers |
+   | `habitWeekdayPerformance` | `bestWeekday` in Trackers |
+   | `cardioBadges` | deliberately removed — it returned `null` until you had earned a badge, so it was invisible to exactly the people it was meant to motivate |
+
+   Plus `strengthBand`, `dayCoverage`, `focusStressCorrelation`,
+   `periodTrend`, `bodyweightSeries`, `activeDayStreak`.
+
+   **They are worth deleting, and that is not done.** Left alone on purpose:
+   it is ~13 functions plus their tests, some may be someone's in-flight
+   work, and this branch is already eight commits deep. The risk of leaving
+   them is that the next audit re-flags them and someone wires up a second
+   aging histogram next to the first.
+
+So: no features were missing beyond Pickleball. What the audit actually
+found is that **this repo's failure mode is a page losing its door, not a
+feature never being built** — three times now (Strength tools, Pickleball,
+and `pickleball/Section.tsx` recorded as dead code when its only importer
+was simply unreachable). The orphan test covers views. Nothing covers a card
+that renders only behind a condition nobody meets, which is how Strength
+tools hid.
+
+### Not done
+
+1. **Not pushed, no PR.** And the `#96 → #99 → #100` order below is unchanged
+   and still blocking — this branch sits on top of all of it.
+2. **44px is met for what this pass touched, not app-wide.** Habit pills,
+   segment dots, count steppers, rail rows, section tabs, bottom tabs and the
+   surface switcher are all ≥44. The top bar's six icon buttons are 28px and
+   `Segmented` is 31px at its default size in ~30 other call sites. Both
+   predate this pass; both need a visual decision, not a sweep.
+4. **A journal with real data was not used.** Everything above was verified on
+   a fresh journal, so the long-list and dense-day cases are unproven — in
+   particular the sticky capture box on the Day surface, which cannot be seen
+   working until the log is taller than the viewport.
+5. **The sticky capture is sticky-top, not a sticky footer** as the brief
+   asked. The bottom of a phone screen already holds `BottomNav`, so a footer
+   capture would sit on top of it. It pins under the header instead.
+6. **Insights has no horizontal-scroll wrapper under 640px yet** — the brief's
+   last mobile item. Nothing was observed overflowing on the pages checked,
+   but it was not tested with real chart data, which is when it would.
+
+---
+
+## Previously — `feat/activity-registry`
 
 **`feat/activity-registry`** — 15 commits, PR #100 against
 `feat/collapsible-header-ux` (PR #99). **`origin/main` is merged in** as of
@@ -121,7 +584,10 @@ Load-bearing decisions:
 
 1. **Unblock PR #100 before pushing** — merge main into `feat/collapsible-header-ux`,
    or retarget #100 to `main`. Right now its diff is 131 files (see above).
-2. **Fix the legacy activity deep link.** `?view=pullups` resolves the view but
+2. ~~**Fix the legacy activity deep link.**~~ **Done 2026-08-05** on
+   `feat/ui-ux-backlog` — `canonicalizeDeepLink()` in `main.tsx`. The diagnosis
+   below was right and is kept because it names the mechanism.
+   `?view=pullups` resolves the view but
    drops the activity — you land on Fitness / Cardio / Run instead of Strength /
    Pull-ups. `deepLink.ts` returns `{view:'fitness', activity:'pullups'}`
    correctly; the loss is downstream, because `Fitness` is a `lazy()` chunk and
@@ -199,9 +665,10 @@ version:
 
 1. **Push it and open the PR** against `feat/icon-button-stage1`.
 2. **Merge the stack bottom-up.** Seven deep now — the biggest risk on the board.
-3. **`graphify hook-rebuild` is refusing to write** — the new graph has 1782
-   nodes against a stored 1784 (deleting `pickleball/Section.tsx` shrank it), so
-   it wants `force=true`. Left alone because it overwrites tracked state.
+3. ~~**`graphify hook-rebuild` is refusing to write**~~ — **resolved 2026-08-05.**
+   It rebuilds clean now (1965 nodes, 5245 edges, 99 communities), and the
+   second half of the worry was wrong anyway: `.graphify/` is not tracked, so
+   there was no tracked state for it to overwrite.
 4. **Per-view container tiers** — the one Stage 5 item left.
 5. **B4** — the app chunk is still 658 kB (193 gzip); recharts at 429 kB is the
    next lever.

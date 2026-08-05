@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend, habitWeekdayPerformance, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator } from './correlations'
+import { moodImpactRanking, weeklyDigest, sleepDebt, periodTrend, weeklyHabitTrend, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator } from './correlations'
 import { emptyJournal } from './storage'
 import type { JournalData } from './types'
 
@@ -140,46 +140,6 @@ describe('periodTrend / weeklyHabitTrend', () => {
   })
 })
 
-describe('habitWeekdayPerformance', () => {
-  // 2026-06-29 is a Monday; use a window that covers several of each weekday.
-  it('picks the strongest and weakest weekday by success rate', () => {
-    const d = emptyJournal()
-    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
-    const today = '2026-06-30' // Tuesday
-    // Always done on Mondays (1), never on Sundays (0).
-    let day = '2026-06-01'
-    while (day <= today) {
-      const wd = new Date(day + 'T00:00:00').getDay()
-      if (wd === 1) logHabit(d, 'h', day)
-      day = addDays(day, 1)
-    }
-    const rep = habitWeekdayPerformance(d, 'h', today)
-    expect(rep.best?.weekday).toBe(1) // Monday: rate 1
-    expect(rep.best?.rate).toBe(1)
-    // Several never-done weekdays tie at 0; worst is just one of them at rate 0.
-    expect(rep.worst?.rate).toBe(0)
-    expect(rep.rows).toHaveLength(7)
-  })
-
-  it('returns no best/worst when every weekday has the same rate', () => {
-    const d = emptyJournal()
-    d.habits.push({ id: 'h', name: 'Walk', category: 'movement', color: 'green', startedOn: '2026-06-01' })
-    const today = '2026-06-30'
-    let day = '2026-06-01'
-    while (day <= today) { logHabit(d, 'h', day); day = addDays(day, 1) } // done every day → all rates 1
-    const rep = habitWeekdayPerformance(d, 'h', today)
-    expect(rep.best).toBeNull()
-    expect(rep.worst).toBeNull()
-  })
-
-  it('respects activeDays so off-days are never scheduled', () => {
-    const d = emptyJournal()
-    d.habits.push({ id: 'h', name: 'Gym', category: 'movement', color: 'teal', startedOn: '2026-06-01', activeDays: [1, 3, 5] })
-    const rep = habitWeekdayPerformance(d, 'h', '2026-06-30')
-    expect(rep.rows[0].scheduled).toBe(0) // Sunday never scheduled
-    expect(rep.rows[1].scheduled).toBeGreaterThan(0) // Monday is active
-  })
-})
 
 describe('streakLeaderboard', () => {
   it('ranks habits by current streak then best, excluding avoid/archived and zero-streak', () => {
@@ -402,79 +362,10 @@ describe('momentumIndicator', () => {
   })
 })
 
-import { migrationAnalytics, taskAging, pickleballInsights, focusSleepCorrelation } from './correlations'
+import { pickleballInsights, focusSleepCorrelation } from './correlations'
 
-function task(d: JournalData, id: string, date: string, opts: Partial<JournalData['entries'][number]> = {}) {
-  d.entries.push({
-    id, date, type: 'task', text: opts.text ?? id, status: opts.status ?? 'open',
-    important: false, memory: false, tags: [], createdAt: date + 'T00:00:00.000Z',
-    originId: opts.originId,
-  })
-}
 
-describe('migrationAnalytics', () => {
-  it('counts origin-chain hops and surfaces chronically-deferred open tasks', () => {
-    const d = emptyJournal()
-    // A chain migrated 3 times: t0 → t1 → t2 → t3 (live tip, still open).
-    task(d, 't0', '2026-06-01', { status: 'migrated' })
-    task(d, 't1', '2026-06-02', { status: 'migrated', originId: 't0' })
-    task(d, 't2', '2026-06-03', { status: 'migrated', originId: 't1' })
-    task(d, 't3', '2026-06-04', { status: 'open', originId: 't2', text: 'Call dentist' })
-    // A once-migrated chain (below the default threshold of 2).
-    task(d, 'a0', '2026-06-01', { status: 'migrated' })
-    task(d, 'a1', '2026-06-02', { status: 'open', originId: 'a0' })
-    // A migrated-but-now-done chain → excluded from chronic.
-    task(d, 'b0', '2026-06-01', { status: 'migrated' })
-    task(d, 'b1', '2026-06-02', { status: 'migrated', originId: 'b0' })
-    task(d, 'b2', '2026-06-03', { status: 'done', originId: 'b1' })
 
-    const rep = migrationAnalytics(d)
-    expect(rep.totalMigrations).toBe(3 + 1 + 2) // hops across all three chains
-    expect(rep.migratedChains).toBe(3)
-    expect(rep.chronic).toHaveLength(1)
-    expect(rep.chronic[0].id).toBe('t3')
-    expect(rep.chronic[0].migrations).toBe(3)
-    expect(rep.chronic[0].text).toBe('Call dentist')
-  })
-
-  it('returns an empty report when no tasks were migrated', () => {
-    const d = emptyJournal()
-    task(d, 'x', '2026-06-01')
-    const rep = migrationAnalytics(d)
-    expect(rep.totalMigrations).toBe(0)
-    expect(rep.migratedChains).toBe(0)
-    expect(rep.chronic).toEqual([])
-  })
-})
-
-describe('taskAging', () => {
-  it('buckets open tasks by age and finds the oldest', () => {
-    const d = emptyJournal()
-    const today = '2026-06-20'
-    task(d, 'today', today)
-    task(d, 'week', '2026-06-15') // 5d → 1–7d
-    task(d, 'two', '2026-06-10') // 10d → 8–14d
-    task(d, 'old', '2026-06-01', { text: 'Ancient', status: 'migrated' }) // 19d → 15+d
-    task(d, 'done', '2026-05-01', { status: 'done' }) // excluded
-
-    const rep = taskAging(d, today)
-    expect(rep.open).toBe(4)
-    const by = Object.fromEntries(rep.buckets.map((b) => [b.label, b.count]))
-    expect(by['Today']).toBe(1)
-    expect(by['1–7d']).toBe(1)
-    expect(by['8–14d']).toBe(1)
-    expect(by['15+d']).toBe(1)
-    expect(rep.oldest?.text).toBe('Ancient')
-    expect(rep.oldest?.age).toBe(19)
-  })
-
-  it('reports no open tasks cleanly', () => {
-    const d = emptyJournal()
-    const rep = taskAging(d, '2026-06-20')
-    expect(rep.open).toBe(0)
-    expect(rep.oldest).toBeNull()
-  })
-})
 
 describe('pickleballInsights', () => {
   it('computes win rate, weekly games, play streak and recent form', () => {

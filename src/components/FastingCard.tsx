@@ -41,6 +41,7 @@ export function FastingCard() {
     <Card
       title="Intermittent fasting"
       subtitle={`${target}:${24 - target} window, track it day to day`}
+      hideInfo
       right={
         <div className="flex items-center gap-2">
           {streak > 0 && (

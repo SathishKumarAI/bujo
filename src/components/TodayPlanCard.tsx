@@ -62,7 +62,7 @@ export function TodayPlanCard() {
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
 
   return (
-    <Card title="Today’s plan" subtitle="Your whole day at a glance, tap to jump in" right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
+    <Card title="Today’s plan" hideInfo right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
@@ -83,13 +83,50 @@ export function TodayPlanCard() {
           )
         })}
       </div>
-      <div className="mt-3 flex gap-1.5 border-t border-line pt-3">
-        {week.map((d) => (
-          <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${Math.round(d.score * 100)}% covered`}>
-            <div className="h-6 w-full rounded" style={{ background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'), outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }} />
-            <span className="text-micro text-fg-2">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
-          </div>
-        ))}
+      {/* WEEK STRIP · height carries the score, colour repeats it.
+
+          This was seven fixed-height blocks tinted from a three-bucket scale,
+          which reads as "seven identical bars" for any week where the days
+          land in one bucket — on a real journal that is most weeks, and it
+          took loading demo data to see it. A chart whose marks are all the
+          same size is not a chart.
+
+          Height is the primary encoding now (position/length beats colour for
+          comparing magnitudes), with a 2px floor so a zero day still shows
+          where it sits rather than vanishing into the track. Colour stays as
+          the redundant cue, which is what keeps it readable for anyone who
+          cannot separate the hues. */}
+      <div
+        className="mt-3 flex gap-1.5 border-t border-line pt-3"
+        role="img"
+        aria-label={`Coverage this week: ${week.map((d) => `${WEEKDAYS[new Date(d.date + 'T00:00').getDay()]} ${Math.round(d.score * 100)}%`).join(', ')}`}
+      >
+        {week.map((d) => {
+          const pct = Math.round(d.score * 100)
+          return (
+            <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${pct}% covered`}>
+              <div
+                className="flex h-10 w-full items-end rounded"
+                style={{ background: cat('surface1') + '80', outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }}
+              >
+                <div
+                  className="w-full rounded transition-[height] duration-300"
+                  style={{
+                    height: `max(2px, ${pct}%)`,
+                    background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'),
+                  }}
+                />
+              </div>
+              {/* The number, because height alone cannot separate a lived-in
+                  week. A real journal sits between 70% and 100%, and across a
+                  32px track that whole range was 9px — seven bars that looked
+                  identical for the second pass running. A taller track buys
+                  resolution; printing the value ends the argument. */}
+              <span className="text-micro tabular-nums text-fg-2">{pct}</span>
+              <span className="text-micro text-fg-2">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
+            </div>
+          )
+        })}
       </div>
     </Card>
   )

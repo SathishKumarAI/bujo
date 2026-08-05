@@ -13,12 +13,16 @@ import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import { useHeaderHeight } from './useHeaderHeight'
+import { SectionTabs } from './SectionTabs'
+import { SECTIONS, sectionOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
 /** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
 export function AppShell({
   items,
   groupOrder,
+  gates,
+  sectionTabs = false,
   view,
   collapsed,
   autoHide,
@@ -29,6 +33,9 @@ export function AppShell({
 }: {
   items: NavItem[]
   groupOrder: string[]
+  gates: SectionGates
+  /** Five-section layout: draw the section tab row under the top bar. */
+  sectionTabs?: boolean
   view: ViewId
   collapsed: boolean
   autoHide: boolean
@@ -102,15 +109,22 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
         <TopBar
           view={view}
-          // The breadcrumb's first crumb is the nav group the view already
-          // belongs to — read from the same list the rail renders, so the two
-          // cannot disagree about which cluster a page is in.
-          section={items.find((n) => n.id === view)?.group}
+          // The breadcrumb's first crumb is the cluster the view already
+          // belongs to — read from the same source the rail renders from, so
+          // the two cannot disagree about which cluster a page is in. In the
+          // five-section layout that is the section (`Body / Nutrition`); in
+          // the classic one it is the group header.
+          section={
+            sectionTabs
+              ? SECTIONS.find((s) => s.id === sectionOf(view))?.label
+              : items.find((n) => n.id === view)?.group
+          }
           onNavigate={onNavigate}
           onQuickAdd={() => setQuickOpen(true)}
           onCommand={onCommand}
           onMenu={() => setNavOpen((o) => !o)}
         />
+        {sectionTabs && <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />}
         {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
         <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
       </div>
