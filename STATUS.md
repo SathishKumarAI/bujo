@@ -579,9 +579,10 @@ version:
 
 1. **Push it and open the PR** against `feat/icon-button-stage1`.
 2. **Merge the stack bottom-up.** Seven deep now — the biggest risk on the board.
-3. **`graphify hook-rebuild` is refusing to write** — the new graph has 1782
-   nodes against a stored 1784 (deleting `pickleball/Section.tsx` shrank it), so
-   it wants `force=true`. Left alone because it overwrites tracked state.
+3. ~~**`graphify hook-rebuild` is refusing to write**~~ — **resolved 2026-08-05.**
+   It rebuilds clean now (1965 nodes, 5245 edges, 99 communities), and the
+   second half of the worry was wrong anyway: `.graphify/` is not tracked, so
+   there was no tracked state for it to overwrite.
 4. **Per-view container tiers** — the one Stage 5 item left.
 5. **B4** — the app chunk is still 658 kB (193 gzip); recharts at 429 kB is the
    next lever.
