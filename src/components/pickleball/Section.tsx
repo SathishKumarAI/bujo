@@ -16,7 +16,7 @@ export function Section({
   title,
   icon,
   hint,
-  defaultOpen = false,
+  defaultOpen = true,
   children,
 }: {
   title: ReactNode

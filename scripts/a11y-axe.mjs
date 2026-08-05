@@ -87,6 +87,23 @@ const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 const page = await context.newPage()
 
+/**
+ * THEMES · contrast is a per-theme property, and this gate only ever saw one.
+ *
+ * "Only mocha was checked" sat in STATUS.md as an open item for several
+ * sessions, which is the tell that a manual step never happens. Four themes
+ * were shipping unverified — and contrast is exactly the class of bug that
+ * differs between them, since the token values are what change.
+ *
+ * Do not hand-roll a contrast check to cover this. An ad-hoc pass written
+ * during this session reported ~50 failures per theme that were all artefacts:
+ * it read `rgba(r, g, b, 0.08)` tints as opaque and compared text against a
+ * colour that is never painted. axe composites the stack properly. Use axe.
+ *
+ * `BUJO_THEMES=mocha` narrows it while iterating.
+ */
+const THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
+
 // Skip the first-run gate: pick local storage so the app boots into the shell.
 await page.addInitScript(() => {
   localStorage.setItem('bujo:onboarded', '1')
@@ -100,6 +117,29 @@ await page.goto(BASE, { waitUntil: 'networkidle' })
 
 let serious = 0
 const summary = []
+let theme = THEMES[0]
+
+/**
+ * Switch theme through the store the app actually reads, then assert the
+ * attribute the stylesheets key on actually changed. Writing localStorage and
+ * hoping is how you scan mocha five times and report five clean themes.
+ */
+async function setTheme(next) {
+  await page.evaluate((t) => {
+    const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
+    d.settings = { ...(d.settings ?? {}), storageMode: 'local', theme: t }
+    localStorage.setItem('bujo:data', JSON.stringify(d))
+  }, next)
+  await page.reload({ waitUntil: 'networkidle' })
+  const applied = await page.evaluate(() => document.documentElement.getAttribute('data-theme') ?? document.documentElement.className)
+  if (!String(applied).includes(next)) {
+    console.error(`\n[${next}] theme did not apply — the root says "${applied}".`)
+    console.error('  Every result for this theme would actually be the previous one.')
+    await browser.close()
+    process.exit(1)
+  }
+  theme = next
+}
 
 /**
  * Click a destination by its visible name, anywhere in the shell chrome.
@@ -171,7 +211,7 @@ async function scan(label) {
   const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
   const meh = results.violations.filter((v) => v.impact === 'moderate' || v.impact === 'minor')
   serious += bad.length
-  summary.push({ view: label, serious: bad.length, other: meh.length })
+  summary.push({ view: `${theme} · ${label}`, serious: bad.length, other: meh.length })
 
   for (const v of bad) {
     console.error(`\n[${label}] ${v.impact}: ${v.id} — ${v.help}`)
@@ -181,17 +221,20 @@ async function scan(label) {
   }
 }
 
-for (const [section, tab] of VIEWS) {
-  await goOrDie(section, 'no rail row with that name — the gate could not reach it.')
-  if (tab) await goOrDie(tab, `no tab with that name inside ${section}.`)
-  const label = tab ? `${section} · ${tab}` : section
-  await scan(label)
+for (const t of THEMES) {
+  await setTheme(t)
+  for (const [section, tab] of VIEWS) {
+    await goOrDie(section, 'no rail row with that name — the gate could not reach it.')
+    if (tab) await goOrDie(tab, `no tab with that name inside ${section}.`)
+    const label = tab ? `${section} · ${tab}` : section
+    await scan(label)
 
-  // Today is three screens behind one name.
-  if (section === 'Today') {
-    for (const s of SURFACES) {
-      await goOrDie(s, 'no surface control with that name on Today.')
-      await scan(`Today · ${s}`)
+    // Today is three screens behind one name.
+    if (section === 'Today') {
+      for (const s of SURFACES) {
+        await goOrDie(s, 'no surface control with that name on Today.')
+        await scan(`Today · ${s}`)
+      }
     }
   }
 }
@@ -199,7 +242,7 @@ for (const [section, tab] of VIEWS) {
 await browser.close()
 
 console.log('\nView            serious  other')
-for (const s of summary) console.log(`  ${s.view.padEnd(14)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)}`)
+for (const s of summary) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)}`)
 
 if (serious > 0) {
   console.error(`\n${serious} serious/critical accessibility violation(s).`)

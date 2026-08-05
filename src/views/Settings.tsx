@@ -44,7 +44,7 @@ function download(filename: string, text: string, mime = 'application/json') {
 
 /** Self-managed collapsible settings section (SET-5) — one disclosure primitive
  *  instead of the three ad-hoc toggle buttons this page used to repeat. */
-function Disclosure({ title, subtitle, defaultOpen = false, children }: {
+function Disclosure({ title, subtitle, defaultOpen = true, children }: {
   title: string; subtitle?: string; defaultOpen?: boolean; children: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)

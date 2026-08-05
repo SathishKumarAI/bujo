@@ -133,6 +133,13 @@ export function TodayHabits({
         <ul className="divide-y divide-line">
           {habits.map((h) => {
             const on = log.includes(h.id)
+            // For an AVOID habit, ticked means you slipped — not that you did
+            // the thing. So it gets none of the done treatment: no tick, no
+            // strike-through, and a red mark instead. Struck-through-with-a-
+            // check on "Alcohol" reads as "well done, that's handled", which
+            // is the opposite of what the tick records.
+            const slipped = h.avoid && on
+            const cleared = !h.avoid && on
             const accent = h.avoid ? cat('red') : cat(h.color)
             return (
               <li key={h.id}>
@@ -144,20 +151,34 @@ export function TodayHabits({
                   <span
                     aria-hidden
                     className="grid size-5 shrink-0 place-items-center rounded-control border text-caption"
-                    style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: accent }}
+                    style={{
+                      borderColor: on ? accent : cat('surface1'),
+                      background: on ? accent + '22' : 'transparent',
+                      color: accent,
+                    }}
                   >
-                    {on ? '✓' : ''}
+                    {slipped ? '✕' : cleared ? '✓' : ''}
                   </span>
-                  <span className={on ? 'text-fg-2 line-through' : 'text-fg-1'}>
+                  <span className={cleared ? 'text-fg-2 line-through' : 'text-fg-1'}>
                     {h.emoji ? `${h.emoji} ` : ''}{h.name}
                   </span>
-                  {h.avoid && <span className="ml-auto text-label text-fg-2">{on ? 'slip' : 'clean'}</span>}
+                  {h.avoid && (
+                    <span className="ml-auto text-label" style={{ color: slipped ? cat('red') : cat('green') }}>
+                      {slipped ? 'slipped' : 'clean'}
+                    </span>
+                  )}
                 </button>
               </li>
             )
           })}
         </ul>
-        <p className="mt-3 text-label text-fg-2">{done} of {total} done{allDone ? ' · all of them' : ''}.</p>
+        {/* Counted over build habits only, and said so. `done`/`total` exclude
+            avoid habits (a clean day on "no alcohol" is not a tick), so an
+            unqualified "5 of 8" against a list of ten rows would not add up. */}
+        <p className="mt-3 text-label text-fg-2">
+          {done} of {total} done{allDone ? ' · all of them' : ''}.
+          {habits.length > total && ` ${habits.length - total} to avoid, tracked separately.`}
+        </p>
       </Card>
     )
   }

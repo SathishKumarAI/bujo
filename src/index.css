@@ -463,7 +463,7 @@ body.handwriting textarea {
   --color-subtext1: #3c4043;
   --color-subtext0: #5f6368;
   --color-overlay2: #9aa0a6;
-  --color-overlay1: #80868b;
+  --color-overlay1: #656a6e;
   --color-overlay0: #5f6368;
   --color-surface2: #dadce0;
   --color-surface1: #e8eaed;
@@ -478,14 +478,14 @@ body.handwriting textarea {
   /* Accents tuned for legibility on light surfaces. */
   --color-mauve: #6c4cf0;   /* primary accent: calm violet, AA on white */
   --color-lavender: #7c5cff;
-  --color-blue: #1a73e8;    /* Google blue — links, info */
+  --color-blue: #165fc1;    /* Google blue, darkened for AA as text */
   --color-sapphire: #1967d2;
-  --color-sky: #1a73e8;
-  --color-teal: #00897b;
-  --color-green: #1e8e3e;   /* success */
-  --color-red: #d93025;     /* destructive */
+  --color-sky: #165fc1;
+  --color-teal: #006d62;
+  --color-green: #187232;   /* success */
+  --color-red: #b8291f;     /* destructive */
   --color-maroon: #c5221f;
-  --color-peach: #e8710a;   /* warning */
+  --color-peach: #9b4c07;   /* warning */
   --color-yellow: #f29900;
   --color-pink: #d01884;
 
@@ -610,8 +610,8 @@ body.handwriting textarea {
   --color-subtext1: #cccccc;
   --color-subtext0: #b5b5b5;
   --color-overlay2: #9d9d9d;
-  --color-overlay1: #858585;
-  --color-overlay0: #6e7681;
+  --color-overlay1: #9b9b9b;
+  --color-overlay0: #979ca4;
   --color-surface2: #3e3e42;
   --color-surface1: #333337;
   --color-surface0: #2a2a2e;
@@ -664,7 +664,7 @@ body.handwriting textarea {
   --color-subtext1: #574d40;
   --color-subtext0: #6f6354;
   --color-overlay2: #8a7d6b;
-  --color-overlay1: #9c8f7c;
+  --color-overlay1: #6a6154;
   --color-overlay0: #6f6354;
   --color-surface2: #ddc9ad;
   --color-surface1: #ecdcc4;
@@ -675,16 +675,16 @@ body.handwriting textarea {
 
   --border-hairline: #e4d6bf;
 
-  --color-mauve: #b45309;     /* primary accent: warm amber, AA on cream */
+  --color-mauve: #974608;     /* primary accent: warm amber, AA on cream */
   --color-lavender: #7c3aed;
   --color-blue: #2563eb;      /* links/info */
   --color-sapphire: #1e40af;
   --color-sky: #0369a1;
-  --color-teal: #0f766e;
-  --color-green: #15803d;     /* success */
-  --color-red: #dc2626;       /* destructive */
+  --color-teal: #0d6962;
+  --color-green: #126c33;     /* success */
+  --color-red: #b21f1f;       /* destructive */
   --color-maroon: #9f1239;
-  --color-peach: #ea580c;     /* warning */
+  --color-peach: #a13d08;     /* warning */
   --color-yellow: #ca8a04;
   --color-pink: #be185d;
 

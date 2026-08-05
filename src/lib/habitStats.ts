@@ -159,47 +159,6 @@ export interface CategoryRollup {
   pct: number
 }
 
-/**
- * Per-category completion roll-up over the last `window` days (30 by default),
- * summing scheduled-vs-done habit-days across every non-archived habit in each
- * category (BUJO trackers · category roll-up stats). Each habit contributes its
- * own scheduled days (respecting activeDays/startedOn), so a category's pct is
- * the share of all its scheduled habit-days that were completed — a single
- * glanceable health number per group. Avoid habits are excluded from the
- * completion maths (a logged day is a *slip*, not a win, so counting them would
- * invert the metric); they still count toward `habits`. Categories with no
- * habits are dropped. Pure; sorted by pct descending then category name.
- */
-export function categoryRollup(
-  data: JournalData,
-  today = todayISO(),
-  window = 30,
-): CategoryRollup[] {
-  const groups = new Map<HabitCategory, { habits: number; scheduled: number; done: number }>()
-  for (const h of data.habits) {
-    if (h.archived) continue
-    const g = groups.get(h.category) ?? { habits: 0, scheduled: 0, done: 0 }
-    g.habits += 1
-    if (!h.avoid) {
-      for (let i = 0; i < window; i++) {
-        const day = addDays(today, -i)
-        if (!isScheduledOn(h, day)) continue
-        g.scheduled += 1
-        if (habitDoneOn(data, h, day)) g.done += 1
-      }
-    }
-    groups.set(h.category, g)
-  }
-  return [...groups.entries()]
-    .map(([category, g]) => ({
-      category,
-      habits: g.habits,
-      scheduled: g.scheduled,
-      done: g.done,
-      pct: g.scheduled ? Math.round((g.done / g.scheduled) * 100) : 0,
-    }))
-    .sort((a, b) => b.pct - a.pct || a.category.localeCompare(b.category))
-}
 
 /**
  * Count of fully-complete weeks for a build habit (BUJO #322 · week rollup):

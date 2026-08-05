@@ -15,22 +15,30 @@ export function AchievementsCard() {
   const earned = new Set(earnedAchievements(data).map((a) => a.id))
   return (
     <Card title="Achievements" subtitle={`${earned.size} of ${ACHIEVEMENTS.length} unlocked`}>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {/* Two columns, never three. At three the tile is ~120px inside this
+          card's column, and `truncate` turned every badge into "First w…",
+          "Centur…", "Unbro…" — a wall of ellipses that names none of them.
+          A badge you cannot read is not a reward.
+
+          The label wraps instead of truncating (they are two or three words),
+          and the description is clamped to two lines rather than one, so the
+          tile grows a little instead of hiding what it is for. */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {ACHIEVEMENTS.map((a) => {
           const got = earned.has(a.id)
           return (
             <div
               key={a.id}
               title={a.desc}
-              className={`flex items-center gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
+              className={`flex items-start gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
                 {got ? a.emoji : <Icon as={Lock} size="sm" className="text-fg-2" />}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-body font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
-                <p className="truncate text-micro text-fg-2">{a.desc}</p>
+                <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
+                <p className="line-clamp-2 text-micro leading-snug text-fg-2">{a.desc}</p>
               </div>
             </div>
           )

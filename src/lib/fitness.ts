@@ -153,7 +153,6 @@ export function epley1RM(weight: number, reps: number): number {
 
 // ── Cardio / activity analytics (v2) ─────────────────────────────────────────
 import { addDays, dayDiff, todayISO } from './date'
-import { rollingAverage } from './correlations'
 
 /** Pace as "m:ss /unit" from distance + duration. '' if not derivable. */
 export function pace(distanceKm?: number, durationMin?: number, unit: 'km' | 'mi' = 'km'): string {
@@ -174,14 +173,6 @@ export function weeklyActiveMinutes(data: JournalData, today = todayISO(), days 
   return workout + pickle
 }
 
-/** Consecutive days ending today/yesterday with at least one workout or pickleball session. */
-export function activeDayStreak(data: JournalData, today = todayISO()): number {
-  const has = (d: string) => data.workouts.some((w) => w.date === d) || (data.pickleball ?? []).some((p) => p.date === d)
-  let cursor = has(today) ? today : addDays(today, -1)
-  let streak = 0
-  while (has(cursor)) { streak += 1; cursor = addDays(cursor, -1) }
-  return streak
-}
 
 export interface CardioPBs {
   longestKm: number
@@ -345,27 +336,6 @@ export function isNewPR(data: JournalData, exercise: string, weight: number, rep
   return epley1RM(weight, reps) > epley1RM(cur.weight, cur.reps)
 }
 
-/**
- * Dated body-weight series (ascending) with a trailing 7-day moving average and
- * an optional goal line. Reuses correlations.rollingAverage for the MA so the
- * smoothing matches the rest of the app. `goal` is carried on every point (for a
- * flat recharts reference line) only when a numeric target is supplied.
- */
-export function bodyweightSeries(
-  data: JournalData,
-  goal?: number,
-): { date: string; weight: number; avg: number | null; goal?: number }[] {
-  const rows = data.bodyMetrics
-    .filter((b) => b.weight != null)
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
-  const ma = rollingAverage(rows.map((b) => b.weight), 7)
-  return rows.map((b, i) => ({
-    date: b.date.slice(5),
-    weight: b.weight as number,
-    avg: ma[i],
-    ...(goal != null ? { goal } : {}),
-  }))
-}
 
 // ── Weekly hard-sets per muscle (F: #158) ────────────────────────────────────
 /** Hypertrophy landmark: a productive weekly hard-set range per muscle group. */
@@ -444,27 +414,6 @@ export interface HeatCell {
   level: 0 | 1 | 2 | 3 | 4
 }
 
-/**
- * A contiguous day-by-day heatmap of training volume for the last `days`
- * (oldest→newest, today last), each cell carrying its workout volume and a 0–4
- * intensity level. Levels are relative to the busiest day in the window so the
- * ramp always spans 1–4 (any trained day is ≥1). Rest days are level 0. Volume
- * sums workoutVolume across all sessions that day. Pure.
- */
-export function trainingHeatmap(data: JournalData, today = todayISO(), days = 119): HeatCell[] {
-  const vol = new Map<string, number>()
-  for (const w of data.workouts) vol.set(w.date, (vol.get(w.date) ?? 0) + workoutVolume(w))
-  const cells: { date: string; volume: number }[] = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = addDays(today, -i)
-    cells.push({ date, volume: Math.round(vol.get(date) ?? 0) })
-  }
-  const peak = Math.max(0, ...cells.map((c) => c.volume))
-  return cells.map((c) => ({
-    ...c,
-    level: (c.volume <= 0 ? 0 : peak <= 0 ? 1 : Math.min(4, Math.ceil((c.volume / peak) * 4))) as HeatCell['level'],
-  }))
-}
 
 // ── Cardio PB badges with the date earned (F: #251) ──────────────────────────
 export interface CardioBadge {
@@ -475,27 +424,6 @@ export interface CardioBadge {
   date: string | null
 }
 
-/**
- * Cardio personal bests (longest distance, most minutes, most calories) each
- * paired with the date it was first achieved. The earliest session reaching a
- * value wins the date so a later equal effort doesn't "steal" the badge. Bests
- * of 0 (never logged) carry a null date so the UI can hide or grey them. Pure.
- */
-export function cardioBadges(data: JournalData): CardioBadge[] {
-  const pbs = cardioPBs(data)
-  const earliestFor = (pick: (w: import('./types').Workout) => number, target: number): string | null => {
-    if (target <= 0) return null
-    return data.workouts
-      .filter((w) => pick(w) === target)
-      .map((w) => w.date)
-      .sort()[0] ?? null
-  }
-  return [
-    { key: 'longestKm', label: 'Longest distance', value: pbs.longestKm, date: earliestFor((w) => w.distanceKm ?? 0, pbs.longestKm) },
-    { key: 'mostMinutes', label: 'Longest session', value: pbs.mostMinutes, date: earliestFor((w) => w.durationMin ?? 0, pbs.mostMinutes) },
-    { key: 'mostCalories', label: 'Most calories', value: pbs.mostCalories, date: earliestFor((w) => w.calories ?? 0, pbs.mostCalories) },
-  ]
-}
 
 // ── Big-three powerlifting total (F: #359) ───────────────────────────────────
 export interface BigThreeLift {

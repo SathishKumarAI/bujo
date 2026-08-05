@@ -83,13 +83,40 @@ export function TodayPlanCard() {
           )
         })}
       </div>
+      {/* WEEK STRIP · height carries the score, colour repeats it.
+
+          This was seven fixed-height blocks tinted from a three-bucket scale,
+          which reads as "seven identical bars" for any week where the days
+          land in one bucket — on a real journal that is most weeks, and it
+          took loading demo data to see it. A chart whose marks are all the
+          same size is not a chart.
+
+          Height is the primary encoding now (position/length beats colour for
+          comparing magnitudes), with a 2px floor so a zero day still shows
+          where it sits rather than vanishing into the track. Colour stays as
+          the redundant cue, which is what keeps it readable for anyone who
+          cannot separate the hues. */}
       <div className="mt-3 flex gap-1.5 border-t border-line pt-3">
-        {week.map((d) => (
-          <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${Math.round(d.score * 100)}% covered`}>
-            <div className="h-6 w-full rounded" style={{ background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'), outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }} />
-            <span className="text-micro text-fg-2">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
-          </div>
-        ))}
+        {week.map((d) => {
+          const pct = Math.round(d.score * 100)
+          return (
+            <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${pct}% covered`}>
+              <div
+                className="flex h-8 w-full items-end rounded"
+                style={{ background: cat('surface1') + '80', outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }}
+              >
+                <div
+                  className="w-full rounded transition-[height] duration-300"
+                  style={{
+                    height: `max(2px, ${pct}%)`,
+                    background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'),
+                  }}
+                />
+              </div>
+              <span className="text-micro text-fg-2">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
+            </div>
+          )
+        })}
       </div>
     </Card>
   )

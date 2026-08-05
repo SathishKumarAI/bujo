@@ -24,7 +24,7 @@ import {
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
-import { cat, rechartsTooltip } from '../lib/colors'
+import { cat, onAccent, rechartsTooltip } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
@@ -210,7 +210,6 @@ export function Gym() {
       }
       right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-control"><AppIcon as={X} size="sm" /> Clear</Button>}
       collapsible
-      defaultCollapsed
     >
       <div className="mb-3 space-y-2">
         <ExercisePicker
@@ -272,7 +271,7 @@ export function Gym() {
           {anatomyCard}
           <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
           <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
-          <Card title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session" collapsible defaultCollapsed>
+          <Card title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session" collapsible>
             <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
           </Card>
         </>
@@ -470,7 +469,7 @@ export function Gym() {
       </Card>
 
       {/* ── Body weight · canonical bodyweight log/chart (Cardio tab merges here) ── */}
-      <Card title="Body weight" subtitle="Faint = daily, bold = 7-day average" defer enlargeable collapsible defaultCollapsed>
+      <Card title="Body weight" subtitle="Faint = daily, bold = 7-day average" defer enlargeable collapsible>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} className="max-w-[200px]" />
           <Button
@@ -624,7 +623,7 @@ function PlateCalculator({ unit }: { unit: string }) {
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
   const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
   return (
-    <Card title="Plate calculator" subtitle="What to load on the bar" collapsible defaultCollapsed>
+    <Card title="Plate calculator" subtitle="What to load on the bar" collapsible>
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <label className="block text-body text-fg-1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
         <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
@@ -636,9 +635,12 @@ function PlateCalculator({ unit }: { unit: string }) {
       ) : (
         <>
           <p className="mb-2 text-label text-fg-2">Per side:</p>
+          {/* `text-crust` is near-white in the light themes, so a plate sitting
+              on the yellow fill measured 2.02:1. `onAccent` picks whichever
+              neutral actually contrasts with the fill it lands on. */}
           <div className="flex flex-wrap items-center gap-1.5">
             {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-control px-2 text-body font-medium text-crust" style={{ background: plateColor(p) }}>{p}</span>
+              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-control px-2 text-body font-medium" style={{ background: plateColor(p), color: onAccent(plateColor(p)) }}>{p}</span>
             ))}
           </div>
           <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
@@ -651,7 +653,7 @@ function PlateCalculator({ unit }: { unit: string }) {
 
 function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../lib/fitness').PR[]; focusEx: string | null; setFocusEx: (e: string | null) => void; unit: string }) {
   return (
-    <Card title="Personal records" subtitle="Heaviest logged lift per exercise" collapsible defaultCollapsed>
+    <Card title="Personal records" subtitle="Heaviest logged lift per exercise" collapsible>
       {prs.length === 0 ? (
         <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
       ) : (
@@ -679,7 +681,7 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
 
 function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; onRemove: (id: string) => void; onLoad: (exs: string[], split: Split) => void }) {
   return (
-    <Card title="Saved routines" collapsible defaultCollapsed>
+    <Card title="Saved routines" collapsible>
       {routines.length === 0 ? (
         <Empty>Build a session and “Save routine”. PPL presets are quick-loadable.</Empty>
       ) : (

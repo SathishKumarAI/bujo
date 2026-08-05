@@ -472,7 +472,7 @@ export function Pickleball() {
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
             below logging, collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible defaultCollapsed>
+      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
           <div className="rounded-card border border-line bg-ink-0 p-3">

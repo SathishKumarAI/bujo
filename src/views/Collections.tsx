@@ -253,7 +253,7 @@ export function Collections() {
             <Card title="Birthdays" subtitle="Never miss one">
               <div className="mb-3 flex flex-wrap gap-2">
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="max-w-[40%]" />
-                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-card border border-line-strong bg-ink-0 px-2 text-body text-fg-1">
+                <select aria-label="Birthday month" value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-card border border-line-strong bg-ink-0 px-2 text-body text-fg-1">
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m.slice(0, 3)}</option>)}
                 </select>
                 <input type="number" min={1} max={31} value={day} onChange={(e) => setDay(Number(e.target.value))} className="w-16 rounded-card border border-line-strong bg-ink-0 px-2 text-body text-fg-1" aria-label="Day" />
