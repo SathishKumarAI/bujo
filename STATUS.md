@@ -2,7 +2,78 @@
 
 Update this when you STOP working, not when you start.
 
-- **Last touched:** 2026-08-04
+- **Last touched:** 2026-08-05
+
+## Where I stopped — `feat/ui-ux-backlog`
+
+Five commits off `fix/ui-ux-page-pass`, **not pushed, no PR**. Builds all eight
+improvements the page pass had documented and declined to build. The session is
+written up in `docs/sessions/2026-08-05-ui-ux-backlog/README.md`, and each entry
+in the previous session's `BACKLOG.md` now carries what was actually built.
+
+Gates re-run at the tip: `npx tsc -b` 0, **745 tests / 51 files**, `npx eslint .`
+0 errors / 2 pre-existing warnings, `npm run build` clean. `npm run a11y` was
+**0 serious across 80 scans** as of `d931ff2` and has not been re-run since —
+the two commits after it are a test and two markdown files, so nothing it can
+see has changed.
+
+### Two of the eight entries were wrong, and that is the useful part
+
+**B-8's premise was stale.** It was written from a screenshot as "~20 cards,
+needs grouping into three zones". The Stage 0 audit found Recovery already on
+`PageLayout` with all three zones, its review zone already divided into titled
+sections, and ten cards rather than twenty. The grouping the entry asked for
+existed before the entry was written; what was left was the card cap, a smaller
+and better-defined job. **A brief written from the outside is often right about
+the intent and wrong about the nouns** — including one's own, written yesterday,
+from a screenshot. Say it before Stage 3, not halfway through it.
+
+**B-5's fix does not fully land, and the code says so.** RPE segments are 44px
+tall and **38px wide**. The width cannot reach 44 inside a ~380px act column
+whatever the row asks for — that needs a wider column or fewer segments, which is
+a layout decision, not a class. Written into the comment rather than rounded up.
+
+### Two deviations from the page contract, on purpose
+
+- **Plan's zone 1 carries the week agenda as well as the fact bar**, against "one
+  horizontal bar, at most four facts, ~64px". At 62% of the tier the seven columns
+  are ~94px each and every task title truncates to "Back up p…". The cap exists to
+  stop a fact bar growing into a stats card; the agenda is a different object, and
+  it is the thing the page was missing.
+- **Recovery stays above the two-raised-card cap**, at five. Three reference
+  blocks were demoted — they were prose pretending to be objects — but the rest
+  are genuinely separately-actionable. The contract anticipates one page per
+  cluster like this.
+
+### Things that will bite again
+
+- **An unlayered blanket `display` beats Tailwind's `.hidden`.**
+  `.zone-act :is(input, select, textarea) { display: block }` is unlayered, so it
+  wins against `@layer utilities`. Nothing about the .ics file input changed — it
+  had been hidden behind its own styled button since it was written — but moving
+  the import into an act zone made it reappear as a raw "Choose File / No file
+  chosen". Fixed at the rule with a `:not()`, not at the call site. General form:
+  **a blanket `display` on an element type will eventually meet something that
+  had a reason to be invisible.** Same family as `.caret-turn`.
+- **The week agenda's off-by-one is real and now pinned.** On a Sunday with
+  `weekStart: 1` the naive `-getDay()` returns that Sunday as its own week start,
+  so the agenda draws the week that is *ending*. `weekDaysOf` in `lib/date` reuses
+  `weekColumn` rather than restating the shift, and its test was checked against
+  the naive form — two cases fail, so it holds the bug rather than just passing.
+
+### Not done
+
+1. **Not pushed, no PR.** Stack order `#96 → #99 → #100 → #101 → this` is
+   unchanged and still blocking; `#100` is still unreviewable at 131 files until
+   `#99` merges main or `#100` retargets. Deliberately not adding a sixth layer.
+2. **Themes other than mocha** were not looked at, beyond the a11y gate's sweep.
+3. **Insights and Mindset were not checked at 390** after the masonry change.
+   `columns-1` below `md` means they render as a single stack, same as before —
+   but that was reasoned, not looked at.
+4. **Only the week arithmetic has a test.** The other seven items are held by
+   screenshots, same as the page pass before it.
+
+---
 
 ## Where I stopped — `fix/ui-ux-page-pass`
 
