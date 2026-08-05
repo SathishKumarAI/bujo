@@ -6,7 +6,7 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped — `feat/ui-ux-backlog`
 
-Six commits off `fix/ui-ux-page-pass`, **not pushed, no PR**. Builds all eight
+Ten commits off `fix/ui-ux-page-pass`, **pushed, PR #102**. Builds all eight
 improvements the page pass had documented and declined to build, then clears the
 legacy deep-link bug that had been carried for three sessions. The session is
 written up in `docs/sessions/2026-08-05-ui-ux-backlog/README.md`, and each entry
@@ -82,11 +82,57 @@ a layout decision, not a class. Written into the comment rather than rounded up.
   `weekColumn` rather than restating the shift, and its test was checked against
   the naive form — two cases fail, so it holds the bug rather than just passing.
 
+## The stack is untangled — read this before believing the notes below
+
+Six sessions of this file said the stack was deep, unpushed and blocked. **Two
+of those three were wrong**, and the check that settles it is one command:
+
+```
+git merge-base --is-ancestor <lower> <upper>
+```
+
+**The chain is perfectly linear** — `icon-button-stage1 → collapsible-header-ux
+→ activity-registry → ia-routing → real-data-pass → ui-ux-page-pass →
+ui-ux-backlog`, each an ancestor of the next, and the tip is **0 behind main**.
+There was never a conflict to resolve. `activity-registry` merged main in months
+ago and everything above it inherited that.
+
+**Most of it was already pushed.** `collapsible-header-ux`, `real-data-pass`,
+`ui-ux-page-pass` and `today-ux` were all in sync with origin while this file
+said otherwise. Exactly one branch was genuinely stale — `activity-registry`,
+78 commits behind its local — and that single stale pointer is the whole reason
+`#100`'s diff read as 131 files: the main-merge landed in `#100` but not in its
+base `#99`, so the three-dot diff attributed all of main to it.
+
+Fixed with no merges and no file edits: push the one stale branch, retarget
+`#100` to `main` (131 → 90 files), push the two branches that had none, and open
+the three missing PRs. **The stack now merges bottom-up in this order:**
+
+| PR | Branch | Base | Diff |
+|---|---|---|---|
+| #99 | `collapsible-header-ux` | `main` | 159 files / 30 commits |
+| #100 | `activity-registry` | `main` | 90 / 47 |
+| #103 | `ia-routing` | #100 | 30 / 9 |
+| #104 | `real-data-pass` | #103 | 32 / 8 |
+| #101 | `ui-ux-page-pass` | #104 | 18 / 7 |
+| #102 | `ui-ux-backlog` | #101 | 20 / 10 |
+
+`#96` (`today-ux`, 41 commits) is **not in the chain** and was left alone. It is
+the one that genuinely conflicts — `ui.tsx`, `App.tsx`, `Today.tsx` — and
+whichever of it and the stack lands second pays that cost. Decide with the diff
+in front of you.
+
+**A base that looks wrong is not always wrong.** Retargeting `#101` to `main`
+was on the plan and would have taken it from 18 files to 133 — for a linear
+stack the tightest diff comes from basing each PR on its *parent*, not on main.
+`#100` is the exception only because it carries the main-merge. Measure with
+`git diff --stat <base>...<head>` before retargeting anything.
+
 ### Not done
 
-1. **Not pushed, no PR.** Stack order `#96 → #99 → #100 → #101 → this` is
-   unchanged and still blocking; `#100` is still unreviewable at 131 files until
-   `#99` merges main or `#100` retargets. Deliberately not adding a sixth layer.
+1. **Nothing is merged.** Every PR is open and reviewable; none has landed on
+   `main`. That was the deliberate stopping point — untangling and merging are
+   different decisions.
 2. **Themes other than mocha** were not looked at, beyond the a11y gate's sweep.
 3. **Insights and Mindset were not checked at 390** after the masonry change.
    `columns-1` below `md` means they render as a single stack, same as before —
