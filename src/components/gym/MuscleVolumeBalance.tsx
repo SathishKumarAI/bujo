@@ -34,7 +34,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
                 >
                   {c.name}
                 </button>
-                <div className="relative h-4 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                <div className="relative h-4 overflow-hidden rounded-pill bg-ink-2">
                   {/* landmark band (10–20 sets) shaded behind the bar */}
                   <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
                   <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />

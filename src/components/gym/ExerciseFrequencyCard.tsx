@@ -56,7 +56,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
               {r.exercise}
             </button>
             <div
-              className="relative h-3.5 flex-1 overflow-hidden rounded-pill bg-ink-2"
+              className="relative h-3.5 overflow-hidden rounded-pill bg-ink-2"
               role="img"
               aria-label={`${r.exercise}: trained on ${r.days} of ${denom} training days, ${r.sets} set${r.sets === 1 ? '' : 's'}`}
             >

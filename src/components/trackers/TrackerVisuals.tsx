@@ -61,22 +61,25 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         </div>
       </Card>
 
+      {/* Subgrid: the habit name column fits the longest name rather than a
+          guessed `w-24`. Habit names are user-supplied, so this list had no
+          business assuming a width at all. */}
       <Card title="Streak leaderboard" subtitle="Current streak, faint marker = all-time best">
         {streaks.length === 0 ? (
           <Empty>No check habits yet.</Empty>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="grid grid-cols-[auto_1fr_auto] gap-y-1.5">
             {streaks.map(({ h, streak, best }) => (
-              <li key={h.id} className="flex items-center gap-2 text-body">
-                <span className="w-24 shrink-0 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="relative h-2.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
+              <li key={h.id} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
+                <span className="max-w-48 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
+                <div className="relative h-2.5 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
                   {/* All-time best marker (#290): a notch at the personal record. */}
                   {best > streak && (
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
                   )}
                 </div>
-                <span className="inline-flex w-14 shrink-0 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Icon as={Flame} size="sm" />{streak}<span className="text-fg-2">/{best}</span></span>
+                <span className="inline-flex min-w-14 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Icon as={Flame} size="sm" />{streak}<span className="text-fg-2">/{best}</span></span>
               </li>
             ))}
           </ul>
