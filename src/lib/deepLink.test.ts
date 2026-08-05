@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { readDeepLink } from './deepLink'
+import { todayISO } from './date'
+import { canonicalizeDeepLink, readDeepLink, writeDeepLink } from './deepLink'
 
 describe('readDeepLink — retired destinations', () => {
   it('rewrites the two activity views onto Fitness with the activity preselected', () => {
@@ -72,5 +73,58 @@ describe('readDeepLink — Today surface', () => {
   it('rejects anything else, so a bad link falls back to the clock', () => {
     expect(readDeepLink('?surface=afternoon').surface).toBeNull()
     expect(readDeepLink('').surface).toBeNull()
+  })
+})
+
+/**
+ * The tests above all pass a search string, which is exactly how the bug
+ * survived them: `readDeepLink('?view=pullups')` was always right. What was
+ * wrong was the URL by the time the *lazy* Fitness chunk called it with no
+ * argument, long after `DeepLinkSync` had rewritten the address bar. These go
+ * through `window.location` for that reason.
+ */
+describe('canonicalizeDeepLink', () => {
+  const at = (search: string) => window.history.replaceState(null, '', `/${search}`)
+
+  it('writes the alias activity into the URL, so a later reader can still see it', () => {
+    at('?view=pullups')
+    canonicalizeDeepLink()
+    expect(readDeepLink()).toMatchObject({ view: 'fitness', activity: 'pullups' })
+    expect(window.location.search).toBe('?view=fitness&activity=pullups')
+  })
+
+  it('survives the rewrite that used to eat it', () => {
+    // The actual defect, end to end: land on the retired link, let the sync
+    // effect write `?view=fitness`, then read as the lazy chunk does on mount.
+    at('?view=pullups')
+    canonicalizeDeepLink()
+    writeDeepLink('fitness', todayISO())
+    expect(readDeepLink().activity).toBe('pullups')
+  })
+
+  it('keeps the day cursor across the redirect', () => {
+    at('?view=homeworkout&day=2026-06-10')
+    canonicalizeDeepLink()
+    expect(readDeepLink()).toMatchObject({ day: '2026-06-10', activity: 'homeWorkout' })
+  })
+
+  it('adds no activity for an alias that names none', () => {
+    at('?view=body')
+    canonicalizeDeepLink()
+    expect(window.location.search).toBe('?view=fitness')
+  })
+
+  it('leaves a URL that is not an alias exactly as it found it', () => {
+    at('?view=today&day=2026-06-10')
+    canonicalizeDeepLink()
+    expect(window.location.search).toBe('?view=today&day=2026-06-10')
+  })
+
+  it('replaces rather than pushes, so Back does not land on the retired URL', () => {
+    at('?view=today')
+    const before = window.history.length
+    at('?view=pullups')
+    canonicalizeDeepLink()
+    expect(window.history.length).toBe(before)
   })
 })

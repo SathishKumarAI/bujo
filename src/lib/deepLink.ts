@@ -83,6 +83,35 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
 }
 
 /**
+ * Finish the redirect: rewrite a retired `?view=` into its canonical form, once,
+ * before anything else reads or writes the URL.
+ *
+ * `readDeepLink` resolved `?view=pullups` to `{view:'fitness', activity:'pullups'}`
+ * correctly, and the activity was still lost. It lived only in the parsed result,
+ * never in the URL — and `Fitness` is a `lazy()` chunk, so by the time it mounts
+ * and calls `readDeepLink().activity`, `DeepLinkSync` has already rewritten the
+ * address bar to `?view=fitness`. The alias-carried activity is gone by then and
+ * you land on Cardio / Run instead of Strength / Pull-ups.
+ *
+ * Canonicalising collapses the two forms into one: the old bookmark becomes the
+ * documented `?view=fitness&activity=pullups` before any reader runs, so there is
+ * only one shape of URL downstream and no second place for this to go wrong.
+ *
+ * `replaceState`, not push — a 301 should not leave the retired URL in history
+ * for Back to land on, where it would redirect forward again.
+ */
+export function canonicalizeDeepLink() {
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams(window.location.search)
+  const raw = params.get('view')
+  const alias = raw ? VIEW_ALIASES[raw] : undefined
+  if (!alias) return
+  params.set('view', alias.view)
+  if (alias.activity) params.set('activity', alias.activity)
+  window.history.replaceState(null, '', `${window.location.pathname}?${params}${window.location.hash}`)
+}
+
+/**
  * Build the URL for a (view, day) pair without navigating — so the day chevrons
  * can be real `<a href>` and middle-click / ⌘-click open a day in a new tab.
  * Same omit-today rule as `writeDeepLink`.
