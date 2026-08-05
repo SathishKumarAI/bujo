@@ -4,6 +4,89 @@ Update this when you STOP working, not when you start.
 
 - **Last touched:** 2026-08-04
 
+## Where I stopped — `fix/ui-ux-page-pass`
+
+Seven commits off `chore/real-data-pass`. A page-by-page UI/UX walk of the whole
+app with demo data loaded, run as a fixed loop — observe, diagnose, write the
+fix as a prompt, apply, validate, record. **The whole session is written up in
+`docs/sessions/2026-08-04-ui-ux-page-pass/`**: `PROMPTS.md` has the prompt that
+produced each fix, `FINDINGS.md` the ranked list with the two withdrawn
+findings and why, `OBSERVATIONS.md` the per-page walk, `BACKLOG.md` the eight
+improvements deliberately not built, `VALIDATION.md` the gates and what was
+*not* checked.
+
+Gates: `npx tsc -b` 0, **741 tests / 51 files**, `npx eslint .` 0 errors / 2
+pre-existing warnings, `npm run build` clean, `npm run a11y` **0 serious across
+80 scans**.
+
+Scope was agreed as 1440 desktop, mocha, defects fixed and improvements only
+documented. 19 views walked plus the three Today surfaces and five Settings
+tabs; Cycle is gated off in Profile and was not reachable.
+
+### The one that could have corrupted data
+
+`?view=fitness&activity=run` — the *documented working* form of the link — left
+the form in an impossible state. `useStickyState` reads localStorage before the
+default it is handed, so the linked mode had been dead since the first time any
+mode was chosen. The draft took `run` while the toggle stayed on the stored
+mode, and the activity `<select>` then held a value absent from its own option
+list. **A browser renders that as the first option rather than failing**, so the
+form displayed "Pickleball", carried `run`, and would have logged one as the
+other. That silent fallback is the entire reason it survived previous visual
+passes, and it is what the new regression test asserts against — not "the select
+says Run" but "the select's value is among its options".
+
+### One shape caused four of the defects
+
+A flex row where the secondary content is `shrink-0` and the *name* is the only
+shrinkable child. Flexbox then resolves the whole deficit against the name.
+Stats rendered a card titled `M…`, Trackers rendered habit rows as `W.` and one
+with **no name at all**, Insights clipped two titles. Fixed at the root in
+`Card`'s header and in the Trackers name cell: the identifying label is capped
+and un-shrinkable, the badges and controls wrap instead. Worth remembering as a
+rule — **whatever names the thing must be the last item allowed to shrink.**
+
+### Two findings were withdrawn, on purpose, in writing
+
+Plan's unconfirmed "Move all 20 → Today" (undo is in the top-bar menu and the
+palette, and the forEach coalesces into one history step) and the right-aligned
+`!` on entry rows (moving it right reclaimed a permanent indent column on every
+row). Both are documented decisions in the code. They are recorded as withdrawn
+rather than deleted so the next pass does not spend the same hour re-finding
+them.
+
+### Things that will bite again
+
+- **A full-page screenshot does not capture a lazily-rendered chart.** Pickleball,
+  Trackers and Stats all looked like they shipped empty chart bodies; every one
+  drew correctly once scrolled into the viewport. Four findings were nearly filed
+  against charts that work. Use a viewport screenshot after `scrollIntoView`.
+- **The demo fixture only exercised `check` habits.** All eight were the same
+  shape, so the avoid, count and timer renderings were unreachable from demo
+  data — which is why the avoid-habit bug shipped last pass. Fixed: the demo now
+  seeds one habit of every shape, with logs of the right *shape* (an avoid habit
+  is mostly absent from `habitLog`, since present means slipped).
+- **Two folds were still collapsed by default**, third variant of the same trap:
+  one was a *controlled* `QuietSection` holding its own `false`, the other a
+  hand-rolled caret button. The sweep that opened eighteen folds could see
+  neither.
+- **jsdom has no `ResizeObserver`**, and `PageLayout` builds one on mount, so
+  rendering any page-contract view threw before a single assertion. Polyfilled in
+  `src/test/setup.ts` — that is what unblocks view tests generally.
+- **`npm run a11y` needs `npx vite preview --port 4173` already running.** It
+  does not start one, and dies with `ERR_CONNECTION_REFUSED`.
+
+### Not done
+
+1. **Not pushed at the time of writing.** Stack order below is unchanged and
+   still blocking.
+2. **Only the F-01 fix has a test.** The seven layout fixes are held by
+   screenshots.
+3. **Eight improvements are in `BACKLOG.md`, not built** — the big one is that
+   Plan's "Week" tab is a migration queue with sixty controls and no week agenda.
+
+---
+
 ## Where I stopped — `chore/real-data-pass`
 
 Seven commits off `feat/ia-routing`, **not pushed**. The job was the thing
