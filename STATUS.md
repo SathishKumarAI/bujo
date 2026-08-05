@@ -93,10 +93,22 @@ a layout decision, not a class. Written into the comment rather than rounded up.
    but that was reasoned, not looked at.
 4. **Only the week arithmetic has a test.** The other seven items are held by
    screenshots, same as the page pass before it.
-5. **The deep-link fix was not seen in a browser.** Chrome was not reachable
-   from the session that made it — neither the extension nor devtools on 9333.
-   It is held by jsdom tests that were checked against a no-op implementation.
-   Worth one look at `?view=pullups` landing on Strength / Pull-ups.
+
+The deep-link fix **was** checked in a browser, after a first attempt could not
+reach one: `?view=pullups` on the dev server lands on Strength / Pull-ups with
+the address bar already reading `?view=fitness&activity=pullups`, and the
+activity `<select>` holds `pullups` with `valueInOptions: true` — the invariant
+F-01 added, asserted on the path that used to break it.
+
+**Chrome needs launching with `--remote-debugging-port=9333` and its own
+`--user-data-dir`** for the devtools MCP to attach; an already-running Chrome
+has no debug port and the MCP just reports "Could not connect".
+
+**`TaskStop` kills the `npx` wrapper, not the `vite` node child.** The port
+stayed bound after the task was stopped and a later `--strictPort` start failed
+with "Port 5199 is already in use". Check
+`Get-NetTCPConnection -LocalPort <p>` → `Get-CimInstance Win32_Process` before
+assuming a stale server belongs to another worktree — this one was ours.
 
 ---
 
