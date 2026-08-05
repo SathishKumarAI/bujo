@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, dayDiff, daysInMonth, monthDays, prettyMonth, toISODay, ymOf } from './date'
+import {
+  addDays, dayDiff, daysInMonth, monthDays, prettyMonth, toISODay, weekDaysOf, ymOf,
+} from './date'
 
 describe('date helpers', () => {
   it('formats a local ISO day without UTC shift', () => {
@@ -30,5 +32,30 @@ describe('date helpers', () => {
   })
   it('pretty-prints a month', () => {
     expect(prettyMonth('2026-06')).toBe('June 2026')
+  })
+})
+
+describe('weekDaysOf', () => {
+  // 2026-08-09 is a Sunday — the day the naive `-getDay()` gets wrong.
+  it('puts a Sunday LAST when the week starts on Monday', () => {
+    const week = weekDaysOf('2026-08-09', 1)
+    expect(week).toHaveLength(7)
+    expect(week[0]).toBe('2026-08-03')
+    expect(week[6]).toBe('2026-08-09')
+  })
+  it('puts the same Sunday FIRST when the week starts on Sunday', () => {
+    const week = weekDaysOf('2026-08-09', 0)
+    expect(week[0]).toBe('2026-08-09')
+    expect(week[6]).toBe('2026-08-15')
+  })
+  it('crosses the year boundary', () => {
+    // 2026-01-01 is a Thursday, so its Monday week starts in December.
+    expect(weekDaysOf('2026-01-01', 1)[0]).toBe('2025-12-29')
+  })
+  it('always contains the day it was asked about', () => {
+    for (const iso of ['2026-08-03', '2026-08-05', '2026-08-09', '2026-02-28']) {
+      expect(weekDaysOf(iso, 0)).toContain(iso)
+      expect(weekDaysOf(iso, 1)).toContain(iso)
+    }
   })
 })

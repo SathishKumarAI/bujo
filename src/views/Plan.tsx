@@ -6,7 +6,7 @@ import { Card, Empty, Input, Segmented } from '../components/ui'
 import { PageLayout, StatBar } from '../components/page'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
-import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
+import { addDays, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
 import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
@@ -80,9 +80,7 @@ export function Plan() {
     data.recurrences.some((r) => r.text.trim().toLowerCase() === t.toLowerCase())
 
   // ── The week itself · seven days from the user's week start ──
-  const dow = new Date(today + 'T00:00').getDay()
-  const offset = data.settings.weekStart === 1 ? (dow + 6) % 7 : dow
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(today, i - offset))
+  const weekDays = weekDaysOf(today, data.settings.weekStart)
   const onDay = (iso: string) => data.entries.filter((e) => e.date === iso)
   const weekOpen = weekDays.reduce(
     (n, d) => n + onDay(d).filter((e) => e.type === 'task' && e.status === 'open').length,
