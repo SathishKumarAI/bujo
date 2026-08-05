@@ -373,9 +373,22 @@ function BookCard({ book }: { book: Book }) {
 
       {book.status === 'finished' && (
         <div className="mt-2 flex items-center gap-1">
+          {/* `fill-yellow` did nothing here: these glyphs are drawn at two
+              weights only (see `Icon`), and the regular Star is an outline ring
+              — filling it colours the ring, not the star. A 5-star book drew
+              five hollow stars, identical to an unrated one. Weight carries the
+              state now, which is the rule the icon system already states.
+              `aria-pressed` says the same thing to a screen reader, which had
+              no way at all to hear the current rating. */}
           {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} onClick={() => store.updateBook(book.id, { rating: n })} aria-label={`Rate ${n} stars`}>
-              <AppIcon as={Star} size="sm" className={n <= (book.rating ?? 0) ? 'fill-yellow text-yellow' : 'text-fg-2'} />
+            <button
+              key={n}
+              onClick={() => store.updateBook(book.id, { rating: n })}
+              aria-label={`Rate ${n} star${n === 1 ? '' : 's'}`}
+              aria-pressed={n <= (book.rating ?? 0)}
+              className="grid size-6 place-items-center"
+            >
+              <AppIcon as={Star} size="sm" active={n <= (book.rating ?? 0)} className={n <= (book.rating ?? 0) ? 'text-yellow' : 'text-fg-2'} />
             </button>
           ))}
         </div>

@@ -605,8 +605,15 @@ function CategoryRows({
           >
             <td className="sticky left-0 z-10 bg-ink-1 py-0.5 pr-2 text-left text-fg-1">
               {/* Cap the sticky name column so long habit names truncate instead
-                  of widening the column and overlapping the day cells on mobile. */}
-              <div className="flex max-w-[44vw] items-center gap-0.5 sm:max-w-[220px]">
+                  of widening the column and overlapping the day cells on mobile.
+                  Every badge below is `shrink-0` and the name was the one
+                  `min-w-0 truncate` child, so the name absorbed the entire
+                  deficit: six badges on one habit rendered the row as "W." and
+                  one as a bare bullet with no name at all. The name is capped
+                  and un-shrinkable now, and the badges wrap under it — which is
+                  the right way round, because the row is useless without the
+                  one thing it is naming. */}
+              <div className="flex max-w-[44vw] flex-wrap items-center gap-0.5 sm:max-w-[260px]">
                 <span
                   draggable
                   onDragStart={() => setDragId(h.id)}
@@ -617,7 +624,7 @@ function CategoryRows({
                 {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`min-w-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
+                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`max-w-[10rem] shrink-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
                 <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></Button>
                 {h.unit && <span className="shrink-0 text-fg-2">({h.unit})</span>}
                 {avoid ? (
