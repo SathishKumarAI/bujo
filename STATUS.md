@@ -6,16 +6,37 @@ Update this when you STOP working, not when you start.
 
 ## Where I stopped — `feat/ui-ux-backlog`
 
-Five commits off `fix/ui-ux-page-pass`, **not pushed, no PR**. Builds all eight
-improvements the page pass had documented and declined to build. The session is
+Six commits off `fix/ui-ux-page-pass`, **not pushed, no PR**. Builds all eight
+improvements the page pass had documented and declined to build, then clears the
+legacy deep-link bug that had been carried for three sessions. The session is
 written up in `docs/sessions/2026-08-05-ui-ux-backlog/README.md`, and each entry
 in the previous session's `BACKLOG.md` now carries what was actually built.
 
-Gates re-run at the tip: `npx tsc -b` 0, **745 tests / 51 files**, `npx eslint .`
+Gates re-run at the tip: `npx tsc -b` 0, **751 tests / 51 files**, `npx eslint .`
 0 errors / 2 pre-existing warnings, `npm run build` clean. `npm run a11y` was
 **0 serious across 80 scans** as of `d931ff2` and has not been re-run since —
-the two commits after it are a test and two markdown files, so nothing it can
-see has changed.
+what followed is two tests, a routing fix that changes no markup, and markdown.
+
+### The legacy deep link is fixed — `?view=pullups` keeps its activity
+
+Carried since `feat/ia-routing`. `readDeepLink` resolved the alias correctly and
+the activity was lost anyway, because it lived only in the parsed result and
+never in the URL: `Fitness` is a `lazy()` chunk, so by the time it mounts and
+reads `readDeepLink().activity`, `DeepLinkSync` has rewritten the address bar to
+`?view=fitness`. `hrefFor` builds from `window.location.search`, which is why the
+documented `?view=fitness&activity=pullups` always worked — that form has the
+activity as a real parameter and survives the rewrite.
+
+`canonicalizeDeepLink()` now runs in `main.tsx` before the first render and
+rewrites the retired URL into the documented one, so **there is one shape of URL
+downstream instead of two**. Fixed where both paths meet rather than by teaching
+the reader to look somewhere else.
+
+**Its tests are the lesson.** Every existing deep-link test passed a search
+string — `readDeepLink('?view=pullups')` was never the broken part, which is
+exactly how the bug survived a file full of tests about itself. The new ones go
+through `window.location`, and one replays the real sequence: land, let the sync
+effect write, then read as the lazy chunk does on mount.
 
 ### Two of the eight entries were wrong, and that is the useful part
 
@@ -72,6 +93,10 @@ a layout decision, not a class. Written into the comment rather than rounded up.
    but that was reasoned, not looked at.
 4. **Only the week arithmetic has a test.** The other seven items are held by
    screenshots, same as the page pass before it.
+5. **The deep-link fix was not seen in a browser.** Chrome was not reachable
+   from the session that made it — neither the extension nor devtools on 9333.
+   It is held by jsdom tests that were checked against a no-op implementation.
+   Worth one look at `?view=pullups` landing on Strength / Pull-ups.
 
 ---
 
@@ -501,7 +526,10 @@ Load-bearing decisions:
 
 1. **Unblock PR #100 before pushing** — merge main into `feat/collapsible-header-ux`,
    or retarget #100 to `main`. Right now its diff is 131 files (see above).
-2. **Fix the legacy activity deep link.** `?view=pullups` resolves the view but
+2. ~~**Fix the legacy activity deep link.**~~ **Done 2026-08-05** on
+   `feat/ui-ux-backlog` — `canonicalizeDeepLink()` in `main.tsx`. The diagnosis
+   below was right and is kept because it names the mechanism.
+   `?view=pullups` resolves the view but
    drops the activity — you land on Fitness / Cardio / Run instead of Strength /
    Pull-ups. `deepLink.ts` returns `{view:'fitness', activity:'pullups'}`
    correctly; the loss is downstream, because `Fitness` is a `lazy()` chunk and
