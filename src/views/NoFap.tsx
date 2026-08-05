@@ -1,6 +1,6 @@
 import { Check, Flame, HandFist, Heart, Lifebuoy, Shield, Sparkle, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -609,7 +609,10 @@ export function NoFap() {
           <h2 className="border-b border-line pb-1 text-label text-fg-2">Reference <span className="text-fg-3">· Coping techniques, recovery ladder & reset history</span></h2>
           <div className="mt-2 flex flex-col gap-4">
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
-          <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min">
+          <RefBlock
+            title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>}
+            subtitle="Proven techniques, an urge peaks and passes in ~15–20 min"
+          >
             <ol className="space-y-2 text-body text-fg-1">
               <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
               <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
@@ -625,10 +628,10 @@ export function NoFap() {
               </div>
             )}
             {nextBenefit && <p className="mt-2 inline-flex items-center gap-1.5 rounded-control bg-peach/10 p-2 text-label text-fg-2"><Icon as={Warning} size="sm" className="text-peach" /> You’re {stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} from {nextBenefit.label}. Don’t trade weeks of progress for 10 minutes.</p>}
-          </Card>
+          </RefBlock>
 
           {/* Benefits ladder */}
-          <Card hideInfo title="Recovery ladder" subtitle="What clears as the streak grows">
+          <RefBlock title="Recovery ladder" subtitle="What clears as the streak grows">
             <ol className="relative ml-3 space-y-3 border-l border-line-strong pl-5">
               {STREAK_MILESTONES.map((m) => {
                 const reached = stats.current >= m.day
@@ -660,10 +663,10 @@ export function NoFap() {
                 )
               })}
             </ol>
-          </Card>
+          </RefBlock>
 
           {/* Relapse log */}
-          <Card hideInfo title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}>
+          <RefBlock title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}>
             {s.relapses.length === 0 ? (
               <Empty>No resets logged. Keep going.</Empty>
             ) : (
@@ -677,12 +680,40 @@ export function NoFap() {
                 ))}
               </ul>
             )}
-          </Card>
+          </RefBlock>
         </div>
         </section>
         </>}
       />
     </>
+  )
+}
+
+/**
+ * A reference block — a heading and a hairline, not a box.
+ *
+ * "Cards are objects, not sections": a raised card says *this thing has its own
+ * state and its own actions*. Recovery's three reference blocks — the coping
+ * techniques, the milestone ladder, the reset log — have none. They are text
+ * and a list, and the chrome was telling the reader they were interactive.
+ *
+ * The five cards that remain on this page do own actions (urge surfing, the
+ * reset form, per-addiction streaks, the commitment contract, trigger plans),
+ * so Recovery stays over the two-raised-card cap on purpose. The contract
+ * anticipates exactly one page in a cluster whose subject really is a
+ * collection of separately-actionable objects, and an abstinence tracker is
+ * that page. Dissolving a real object into a section to hit a number would cost
+ * more than the number is worth.
+ */
+function RefBlock({ title, subtitle, children }: { title: ReactNode; subtitle?: ReactNode; children: ReactNode }) {
+  return (
+    <section>
+      <h3 className="flex flex-wrap items-baseline gap-x-2 border-b border-line pb-1 text-body font-medium text-fg-1">
+        {title}
+        {subtitle && <span className="text-label font-normal text-fg-2">{subtitle}</span>}
+      </h3>
+      <div className="mt-2">{children}</div>
+    </section>
   )
 }
 
