@@ -96,13 +96,17 @@ export function TodayPlanCard() {
           where it sits rather than vanishing into the track. Colour stays as
           the redundant cue, which is what keeps it readable for anyone who
           cannot separate the hues. */}
-      <div className="mt-3 flex gap-1.5 border-t border-line pt-3">
+      <div
+        className="mt-3 flex gap-1.5 border-t border-line pt-3"
+        role="img"
+        aria-label={`Coverage this week: ${week.map((d) => `${WEEKDAYS[new Date(d.date + 'T00:00').getDay()]} ${Math.round(d.score * 100)}%`).join(', ')}`}
+      >
         {week.map((d) => {
           const pct = Math.round(d.score * 100)
           return (
             <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${pct}% covered`}>
               <div
-                className="flex h-8 w-full items-end rounded"
+                className="flex h-10 w-full items-end rounded"
                 style={{ background: cat('surface1') + '80', outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }}
               >
                 <div
@@ -113,6 +117,12 @@ export function TodayPlanCard() {
                   }}
                 />
               </div>
+              {/* The number, because height alone cannot separate a lived-in
+                  week. A real journal sits between 70% and 100%, and across a
+                  32px track that whole range was 9px — seven bars that looked
+                  identical for the second pass running. A taller track buys
+                  resolution; printing the value ends the argument. */}
+              <span className="text-micro tabular-nums text-fg-2">{pct}</span>
               <span className="text-micro text-fg-2">{WEEKDAYS[new Date(d.date + 'T00:00').getDay()]}</span>
             </div>
           )
