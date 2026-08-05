@@ -110,8 +110,8 @@ describe('personalRecordsCsv', () => {
   it('emits the best set per exercise with an Epley 1RM, plus cardio PBs', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: 'w1', date: '2026-06-10', activity: 'Strength', sets: ['Bench 5x5 @ 80', 'Bench 8x8 @ 70'], distanceKm: 5, calories: 400, durationMin: 30, notes: '' },
-      { id: 'w2', date: '2026-06-11', activity: 'Run', sets: [], distanceKm: 10, calories: 700, durationMin: 60, notes: '' },
+      { id: 'w1', date: '2026-06-10', activity: 'strength', sets: ['Bench 5x5 @ 80', 'Bench 8x8 @ 70'], distanceKm: 5, calories: 400, durationMin: 30, notes: '' },
+      { id: 'w2', date: '2026-06-11', activity: 'run', sets: [], distanceKm: 10, calories: 700, durationMin: 60, notes: '' },
     ]
     const csv = personalRecordsCsv(d)
     // Best Bench set is the heaviest (80kg @ 5 reps) → Epley 80*(1+5/30)=93.33 → rounded to .5 = 93.5
@@ -125,7 +125,7 @@ describe('personalRecordsCsv', () => {
 
   it('omits zero cardio PB rows', () => {
     const d = emptyJournal()
-    d.workouts = [{ id: 'w1', date: '2026-06-10', activity: 'Strength', sets: ['Squat 3x3 @ 100'], distanceKm: 0, calories: 0, durationMin: 0, notes: '' }]
+    d.workouts = [{ id: 'w1', date: '2026-06-10', activity: 'strength', sets: ['Squat 3x3 @ 100'], distanceKm: 0, calories: 0, durationMin: 0, notes: '' }]
     const csv = personalRecordsCsv(d)
     expect(csv).toContain('strength,Squat,100,3')
     expect(csv).not.toContain('cardio')

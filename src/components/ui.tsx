@@ -1,7 +1,7 @@
-import { ArrowsOut, CaretDown, CaretUp, Info, X } from '@/components/icons'
+import { ArrowsOut, CaretDown, Info, X } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { isValidElement, useState, type ReactNode } from 'react'
+import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cat } from '../lib/colors'
 import { cn } from '../lib/cn'
@@ -62,9 +62,12 @@ export function Card({
   onClick,
   collapsible = false,
   defaultCollapsed = false,
+  open: openProp,
+  onOpenChange,
   defer = false,
   enlargeable = false,
   help,
+  hideInfo = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -75,14 +78,26 @@ export function Card({
   /** Add a header chevron that collapses the body (reusable compacting pattern). */
   collapsible?: boolean
   defaultCollapsed?: boolean
+  /** Drive the fold from the parent — for cards whose header content depends on
+   *  whether they are open (PenaltyCard swaps its subtitle). Pair with
+   *  `onOpenChange`; omit both to let the card own the state. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   /** On phones, sink this card to the bottom of its column (charts below content). */
   defer?: boolean
   /** Show a ⛶ button that opens the card content in a large modal. */
   enlargeable?: boolean
   /** Explainer shown in the header ⓘ popover. Falls back to `subtitle`. */
   help?: ReactNode
+  /** Suppress the ⓘ popover. Required by the page contract. */
+  hideInfo?: boolean
 }) {
-  const [open, setOpen] = useState(!defaultCollapsed)
+  const [openState, setOpenState] = useState(!defaultCollapsed)
+  const open = openProp ?? openState
+  const toggle = () => {
+    if (openProp === undefined) setOpenState((o) => !o)
+    onOpenChange?.(!open)
+  }
   const [large, setLarge] = useState(false)
   // The enlarge modal is hand-rolled (not Radix), so it owns its own focus
   // containment: trap Tab inside it, hand focus back to the ⛶ button on close.
@@ -91,7 +106,22 @@ export function Card({
   const showEnlarge = enlargeable && !!title && !onClick
   // Every titled card gets an always-visible ⓘ that explains what it is
   // (self-documenting UI). Uses `help` if given, else the subtitle text.
-  const info = help ?? subtitle
+  //
+  // `hideInfo` opts out. The page contract bans help icons outright — a label
+  // that needs a "?" gets rewritten instead — and on desktop the popover is
+  // redundant anyway, because it repeats the subtitle rendered right below it.
+  // Scoped to an opt-out rather than removed globally: 42 cards outside the
+  // Body cluster still rely on this, and retiring it app-wide is a decision
+  // about the whole app, not about one cluster.
+  const info = hideInfo ? null : (help ?? subtitle)
+  // The whole header folds the card, not just the caret. The caret stays a real
+  // <button> — it is the accessible control and carries aria-expanded — and the
+  // header row is a pointer convenience layered on top, so anything interactive
+  // sitting in `right` has to keep its clicks out of it. Skipped when the card
+  // already owns a click (`onClick`), where two meanings for one click is worse
+  // than a small target.
+  const headerToggles = collapsible && !onClick
+  const stopBubble = headerToggles ? (e: MouseEvent) => e.stopPropagation() : undefined
   // Name the header controls after their card. All of these used to be called
   // "What is this?" / "Collapse" / "Enlarge", so Today alone handed a screen
   // reader 34 identically-named buttons and its control list was useless for
@@ -104,7 +134,14 @@ export function Card({
       className={`${CARD.container} ${defer ? 'order-last xl:order-none' : ''} ${className}`}
     >
       {(title || right || collapsible) && (
-        <header className={`flex items-start justify-between gap-3 ${collapsible && !open ? '' : 'mb-3 sm:mb-4'}`}>
+        <header
+          onClick={headerToggles ? toggle : undefined}
+          className={cn(
+            'flex items-start justify-between gap-3',
+            collapsible && !open ? '' : 'mb-3 sm:mb-4',
+            headerToggles && 'cursor-pointer select-none',
+          )}
+        >
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
@@ -122,7 +159,7 @@ export function Card({
             {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {right}
+            {right && <span className="contents" onClick={stopBubble}>{right}</span>}
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }}
                 aria-label={titleText ? `Enlarge ${titleText}` : 'Enlarge'}
@@ -132,16 +169,22 @@ export function Card({
               </button>
             )}
             {collapsible && (
-              <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggle() }}
+                aria-expanded={open}
                 aria-label={titleText ? (open ? `Collapse ${titleText}` : `Expand ${titleText}`) : (open ? 'Collapse' : 'Expand')}
-                className={CARD.headerButton}>
-                {open ? <AppIcon as={CaretUp} size="md" /> : <AppIcon as={CaretDown} size="md" />}
+                className={CARD.headerButton}
+              >
+                <span className="caret-turn inline-flex" data-open={open}><AppIcon as={CaretDown} size="md" /></span>
               </button>
             )}
           </div>
         </header>
       )}
-      {(!collapsible || open) && children}
+      {collapsible
+        ? open && <div className="collapse-in">{children}</div>
+        : children}
       {/* Portal to <body>: cards live inside transformed ancestors (book mode,
           zoom, page-in animation) which would otherwise make `position:fixed`
           relative to the card, not the screen · so the modal must escape them
@@ -444,11 +487,20 @@ export function Segmented<T extends string | number>({
   value,
   onChange,
   options,
+  tone = 'accent',
 }: {
   value: T
   onChange: (v: T) => void
   options: { value: T; label: ReactNode }[]
+  /**
+   * `accent` — the wash-filled active segment, everywhere outside the Body
+   * cluster. `neutral` — a plain raised fill, for the page-contract StatBar,
+   * where a page is allowed one accent-filled control and spends it on the
+   * primary button. A mode toggle that also fills with accent makes two.
+   */
+  tone?: 'accent' | 'neutral'
 }) {
+  const neutral = tone === 'neutral'
   return (
     <ToggleGroup
       type="single"
@@ -483,8 +535,14 @@ export function Segmented<T extends string | number>({
             // by stylesheet order, not by us. And the `@theme` alias did not
             // track the theme on this element — the raw per-theme variable
             // does, in all five.
-            style={selected ? { color: 'var(--brand-text)' } : undefined}
-            className="h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:bg-brand-wash data-[state=on]:font-medium"
+            // The neutral tone keeps the raw-variable lesson above: it just
+            // has no colour to set, so it inherits `--color-fg-1` from the
+            // class list instead of overriding with the brand text colour.
+            style={selected && !neutral ? { color: 'var(--brand-text)' } : undefined}
+            className={cn(
+              'h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium',
+              neutral ? 'data-[state=on]:bg-ink-3 data-[state=on]:text-fg-1' : 'data-[state=on]:bg-brand-wash',
+            )}
           >
             {o.label}
           </ToggleGroupItem>

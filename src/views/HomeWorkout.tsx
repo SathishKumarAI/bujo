@@ -30,7 +30,7 @@ export function HomeWorkout() {
   const [openId, setOpenId] = useState<string | null>(null)
 
   const lib = filter === 'all' ? HOME_EXERCISES : HOME_EXERCISES.filter((e) => e.muscle === filter)
-  const sessions = (data.workouts ?? []).filter((w) => w.activity === 'Home').sort((a, b) => (a.date < b.date ? 1 : -1))
+  const sessions = (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1))
 
   function add(ex: HomeExercise) {
     setItems((cur) => (cur.some((i) => i.id === ex.id) ? cur : [...cur, { id: ex.id, name: ex.name, reps: ex.reps }]))
@@ -42,7 +42,7 @@ export function HomeWorkout() {
     if (items.length === 0) return
     addWorkout({
       date: today,
-      activity: 'Home',
+      activity: 'homeWorkout',
       durationMin: dur ? Number(dur) : undefined,
       sets: items.map((i) => `${i.name} ${i.reps}`),
       notes: notes.trim(),
@@ -87,15 +87,15 @@ export function HomeWorkout() {
               return (
                 <li key={w.id} className="group py-2 text-body">
                   <div className="flex items-center justify-between gap-2">
-                    <button onClick={() => setOpenId(open ? null : w.id)} className="min-w-0 flex-1 text-left hover:text-fg-1">
+                    <button onClick={() => setOpenId(open ? null : w.id)} aria-expanded={open} className="min-w-0 flex-1 text-left hover:text-fg-1">
                       <span className="text-fg-1">{prettyDay(w.date)}</span>
                       <span className="text-fg-2"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                      <span className="ml-1 text-micro text-fg-2">{open ? '▾' : '▸'}</span>
+                      <span className="caret-turn caret-turn-quarter ml-1 inline-block text-micro text-fg-2" data-open={open}>▸</span>
                     </button>
                     <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </div>
                   {open && (
-                    <ul className="mt-1.5 ml-1 space-y-0.5">
+                    <ul className="collapse-in mt-1.5 ml-1 space-y-0.5">
                       {w.sets.map((s, i) => <li key={i} className="text-label text-fg-2">• {s}</li>)}
                       {w.notes && <li className="mt-1 text-label text-fg-2 italic">“{w.notes}”</li>}
                     </ul>

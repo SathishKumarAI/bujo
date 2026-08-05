@@ -9,7 +9,7 @@ type Conversion = ReturnType<typeof urgeConversion>
 /** Urge-to-relapse conversion (#76) · self-efficacy win-rate from the urge log. */
 export function SelfEfficacyCard({ conversion }: { conversion: Conversion }) {
   return (
-    <Card title="Self-efficacy" subtitle={`${conversion.resistRate}% of urge moments ended in a win, not a reset`} help="Every logged urge you surfed is a win; every reset is the rare miss. This is how often, when an urge showed up, you chose your streak — a direct measure of growing self-control.">
+    <Card hideInfo title="Self-efficacy" subtitle={`${conversion.resistRate}% of urge moments ended in a win, not a reset`}>
       <div className="grid grid-cols-3 gap-3">
         <StatTile compact label="Resisted" value={conversion.resisted} color="green" icon={<Icon as={ShieldCheck} size="sm" />} />
         <StatTile compact label="Resets" value={conversion.relapses} color="red" icon={<Icon as={X} size="sm" />} />

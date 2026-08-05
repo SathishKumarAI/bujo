@@ -1,5 +1,168 @@
 # Worklog
 
+## 2026-08-03 — The Body cluster on a page contract, and mode as a derived fact
+
+**Summary:** Restructured Fitness, Nutrition, Recovery and Coaching onto a
+three-zone page contract (orient → act → review), and made workout *mode* a
+property of the activity rather than a state of the UI. 12 commits on
+`feat/activity-registry` (off `feat/collapsible-header-ux`), all green, **not
+pushed**. Stack is now eight deep.
+
+The load-bearing change is `src/domain/activities.ts`. Four separate things used
+to decide what the workout form showed — a hardcoded `<select>`, a sticky
+`fitness.tab`, the persisted `split` field, and `activity === 'Home'` equality in
+three modules — so Cardio rendered a strength "sets" box and Pickleball was
+offered a distance field. One registry now owns label, mode, required fields,
+best stat and mode copy; `modeOf()` derives the rest and mode is never stored.
+The bug class is gone by construction rather than patched.
+
+Four things worth carrying forward:
+
+- **A type is a better audit than a grep.** Typing `Workout.activity` as
+  `ActivityKey` found every free-form writer in one `tsc -b`, including one in
+  `CaptureBar` that a careful manual audit had missed.
+- **An audit keyed on a prop misses the feature it feeds.** The sweep grepped
+  `help=` and reported the cluster free of help icons; `Card` draws its ⓘ from
+  `help ?? subtitle`, so 22 cards still had one. Second time this shape has bitten
+  — the folds drawn as `▸` were the first.
+- **A gate that does not open a page cannot vouch for it.** Recovery was left off
+  the a11y list on the belief it sat behind an opt-in; `nofapEnabled` defaults to
+  true. Adding it failed immediately on a `crust`-on-`surface0` contrast bug, the
+  second of exactly that pairing.
+- **Silent filters hide regressions.** `BottomNav` resolves a fixed id list
+  against the sidebar and drops misses without error, so retiring `pickleball`
+  and `pullups` as destinations quietly left phones with three tabs.
+
+Two bugs the tests could not have caught, both found by opening the app: labels
+sat *beside* their controls wherever the act column was wider than the 380px
+control cap (form controls are inline-level, so `w-full` sized them without
+taking them off the label's line), and the Recovery sparkline drew 2px bars at
+zero data so an empty chart read as a broken one.
+
+Also fixed en route: `distanceKm` was storing whatever unit was on screen, so
+half the readers divided by 1.60934 and half printed it raw — the same 3.1 showed
+as "3.1 mi" and "1.9 mi" on one screen. Now canonical km with one conversion
+boundary, migrated under a version gate because the conversion is not idempotent.
+
+**Changes** (80 files, +3,386 / −888):
+
+*Domain*
+- `src/domain/activities.ts` — the registry: 17 activities, three modes, required fields, best stat, mode copy, legacy normalisation
+- `src/domain/sessions.ts` — derived reads keyed off the registry (`sessionsInMode`, `bestOf`, `totalTime`, `volumeOf`)
+- `src/lib/types.ts` — `Workout.activity` typed `ActivityKey`; `SCHEMA_VERSION` 3
+- `src/lib/units.ts` — the only km↔mi boundary
+- `src/lib/storage.ts` — schema-3 migration: activity normalisation (idempotent, every load) and distance conversion (version-gated)
+- `src/lib/viz.ts` — `quartileLevels`, bucketing heatmap intensity by rank rather than against the max
+
+*New primitives*
+- `src/components/page/*` — PageLayout, StatBar, SummaryStrip, CalendarHeatmap, ActivityForm, DisclosureRow, NumField, EmptyFrame, `draft.ts`
+- `src/styles/layout.css` — container query at 960px, measured sticky, the 380px control cap and its block rule
+- `src/styles/tokens.css` — `--header-h` fallback
+- `src/components/shell/useHeaderHeight.ts` — publishes the header's measured height
+
+*Changed primitives*
+- `src/components/ui/day-grid.tsx` — `<div role="img">` → `<table>` with headers and per-cell values (also fixes Stats and Trackers)
+- `src/components/ui.tsx` — `Segmented` gains `tone="neutral"`; `Card` gains `hideInfo`
+- `src/components/recovery/*` (13 files) — `help` props dropped, ⓘ opted out
+
+*Views*
+- `src/views/Fitness.tsx` — rebuilt on the three zones; `FitnessHub.tsx` deleted
+- `src/views/Nutrition.tsx` — new page, promoted out of a Fitness accordion
+- `src/views/NoFap.tsx`, `Coaching.tsx` — restructured onto the contract, folds and card chrome retired
+- `src/views/KitchenSink.tsx` — all six primitives at empty / typical / overflow
+- `src/views/Gym.tsx`, `HomeWorkout.tsx`, `Insights.tsx` — registry keys instead of free-form strings
+
+*Navigation*
+- `src/App.tsx` — Body group of four; `gym` off the tab row
+- `src/lib/deepLink.ts` — retired ids rewritten on read, query string preserved
+- `src/components/shell/BottomNav.tsx` — phone tabs restored after the silent filter dropped two
+- `src/components/shell/viewChrome.ts` — `nutrition` chrome, Fitness/Gym/Pull-ups copy
+
+*Capture*
+- `src/lib/capture.ts`, `src/components/CaptureBar.tsx` — cardio verbs map to registry keys; labels rendered via `labelOf`
+
+*Tests* (+58: 685 → 743)
+- `src/domain/activities.test.ts`, `src/lib/units.test.ts`, `src/lib/viz.quartile.test.ts`, `src/lib/deepLink.test.ts`, `src/components/page/CalendarHeatmap.test.tsx`, plus migration cases in `storage.test.ts`
+
+*Gate & docs*
+- `scripts/a11y-axe.mjs` — visits 11 views including the whole cluster
+- `DATA_MODEL.md`, `FEATURE_GUIDE.md`, `FEATURES.md`, `ACCESSIBILITY.md`, `DECISIONS.md` (D-45…D-48), `CLAUDE.md` traps, `STATUS.md`
+
+**Verification:** `npx tsc -b`, `npx vitest run` (743 pass / 48 files),
+`npx eslint .` (0 errors, 2 pre-existing warnings), `npm run build`,
+`npm run a11y` (0 serious across 11 views). Browser pass on Fitness, Nutrition,
+Recovery and Coaching at 1440 and 760, light and dark.
+
+**Not done:** the other three themes, a journal with real data, Recovery still
+over the two-raised-card cap, nothing pushed.
+
+## 2026-08-03 — The fold: whole-header collapse, one rotating caret, four primitives into two
+
+**Summary:** Started as "the dropdown should open when you click the button, not just
+the caret" on Today's Training penalty card. That card turned out to be one of two that
+hand-rolled their own caret instead of using `Card collapsible` — which is exactly why
+their titles were dead — and the audit that followed found the app had **four**
+implementations of the same collapsible section and two different answers to what
+clicking a header does. 9 commits on `feat/collapsible-header-ux` (off
+`feat/icon-button-stage1`), all green, **not pushed**.
+
+Two findings mattered more than the feature. Unhiding one collapsed section exposed a
+**critical** `select-name` violation that had been shipping for months, because
+`npm run a11y` cannot scan inside a closed fold. And the first "complete" sweep missed
+six folds that draw their caret as a typographic `▸ ▾ ▴` rather than an icon — an audit
+keyed on how something is drawn misses anything drawn another way.
+
+**Changes:**
+- `src/components/ui.tsx` — `Card`'s whole header now toggles the fold, not just the
+  18px caret. The caret stays a real `<button>` with `aria-expanded` (still the
+  accessible control; the header click is a pointer convenience). Interactive content in
+  the `right` slot is wrapped in a `stopPropagation` span, or "Mark all" and segmented
+  controls would collapse the card mid-click. Cards owning an `onClick` keep the
+  caret-only target. Added optional controlled `open`/`onOpenChange`.
+- `src/index.css` — `.collapse-in` (body fade + 6px slide on open), `.caret-turn`
+  (180°, driven by `data-open`) and `.caret-turn-quarter` (90°), all on the existing
+  motion tokens. Close is deliberately instant: the body unmounts while closed and the
+  collapsed-by-default cards carry real weight. Both opt out under reduced motion.
+- `src/components/CollapsibleSection.tsx` — same rotation and animation, plus controlled
+  mode. Deleted `src/components/pickleball/Section.tsx` and Settings' `Disclosure` —
+  copies three and four of this component — and moved their 9 call sites over, plus 5
+  more open-coded inline sections (Challenges archived, Collections People +
+  Auto-pages, Monthly analytics, Plan Setup), ~15 lines lighter each.
+- `src/components/PenaltyCard.tsx`, `src/views/Gym.tsx` — both hand-rolled a caret into
+  `right` rather than using `Card collapsible`. Moved onto the shared fold in controlled
+  mode (PenaltyCard swaps its subtitle by state; Gym seeds from viewport width).
+- `src/views/Coaching.tsx`, `HomeWorkout.tsx`, `Pullups.tsx`, `Trackers.tsx` — the six
+  typographic folds. They stay typographic (that glyph column is deliberately outside
+  `Icon`) but rotate instead of swapping, and each gained the `aria-expanded` it never
+  had. Trackers' category rows get the caret but no body animation — their body is a run
+  of `<tr>`s.
+- `src/views/Plan.tsx` — the page reserved a column for a card that usually is not
+  there. "Chronically deferred" only renders once a task has been migrated twice, so the
+  unconditional two-column CSS masonry left ~800px empty for most journals. Grid now,
+  second column conditional, Migration takes a third column of tasks at `xl` when
+  full-width. Setup moved out of the column flow into an always-open footer — a fold
+  pays for itself when content is long or rarely wanted, and this is two short cards
+  people open the page to reach. Its Recurring card gained eight one-tap suggestions
+  (added on tap, already-added ones greyed) instead of an empty text box. All three form
+  controls gained `aria-label` — the fix for the critical violation above.
+- `src/lib/demo.ts` — the generator never migrated anything, so "Chronically deferred"
+  was invisible in the demo. Three migration threads at 4/3/2 hops, so the badge shows
+  all three of its colours.
+- `docs/COLLAPSE-PATTERN.md` (new) — the pattern, the two primitives, the CSS, a full
+  inventory of every fold in the app, and the two traps. `docs/DECISIONS.md` D-42/43/44,
+  `docs/ACCESSIBILITY.md` (closed gaps + the gate's blind spot),
+  `docs/ICON-BUTTON-SYSTEM.md` Stage 7, `docs/UX-CARD-LAYOUT.md`, `docs/FEATURES.md`,
+  `docs/FEATURE_GUIDE.md`, `TASKS.md` §K, `STATUS.md`, `CLAUDE.md` (four new traps).
+
+**Verification:** `npx tsc -b` 0 · `npx vitest run` 1416 passed · `npx eslint .` 0
+errors, 2 pre-existing warnings · `npm run build` clean · `npm run design` pass ·
+`npm run a11y` 0 serious (1 critical found and fixed on the way). Every changed view
+checked in-browser.
+
+**Housekeeping:** six stale `vite` processes were running on ports 5173–5176, 5180 and
+5191 from earlier sessions; the one on 5191 served `.claude/worktrees/today-ux` at a
+different branch, which is why changes made here appeared not to land. All six killed.
+
 ## 2026-07-13 21:38 — UI/UX craft backlog: contrast, focus, confirms, one button system
 
 **Summary:** Closed out the UI/UX craft backlog on `feat/ui-polish`. The headline find was

@@ -11,7 +11,7 @@ const INTENSITY_LABELS = ['Faint', 'Mild', 'Moderate', 'Strong', 'Intense']
 /** Urge-intensity distribution (#74) · how strong, and whether it's weakening. */
 export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`} help="Your self-rated urge strengths (1 faint … 5 intense). A falling trend means the urges themselves are getting weaker over time, not just less frequent — the strongest signal that recovery is working.">
+    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`}>
       <div className="space-y-1.5">
         {intensity9.buckets.map((c, i) => {
           const pct = intensity9.rated > 0 ? Math.round((c / intensity9.rated) * 100) : 0

@@ -16,12 +16,37 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
  * does nothing. Replace keeps the URL truthful and shareable without promising
  * history semantics the app does not implement.
  */
+/**
+ * Retired destinations → where they live now.
+ *
+ * Pull-ups, Home workout and Pickleball were nav entries sitting as peers of
+ * Coaching and Recovery, which mixed two levels of taxonomy: the first three
+ * are *activities* and the last two are *surfaces*. An activity is something
+ * you choose inside Fitness, not somewhere you navigate to.
+ *
+ * This is the app's equivalent of a 301. There is no router to issue a real
+ * one — navigation is a `view` state plus a `?view=` parameter written with
+ * `replaceState` — so the rewrite happens on read, and the query string
+ * survives it. Old bookmarks keep working and land on the activity they meant.
+ */
+const VIEW_ALIASES: Record<string, { view: string; activity: string }> = {
+  pullups: { view: 'fitness', activity: 'pullups' },
+  homeworkout: { view: 'fitness', activity: 'homeWorkout' },
+  'home-workout': { view: 'fitness', activity: 'homeWorkout' },
+  pickleball: { view: 'fitness', activity: 'pickleball' },
+  body: { view: 'fitness', activity: '' },
+}
+
 export function readDeepLink(search = typeof window === 'undefined' ? '' : window.location.search) {
   const params = new URLSearchParams(search)
   const day = params.get('day')
+  const raw = params.get('view')
+  const alias = raw ? VIEW_ALIASES[raw] : undefined
   return {
-    view: params.get('view'),
+    view: alias ? alias.view : raw,
     day: day && ISO_DAY.test(day) ? day : null,
+    /** Preselect this activity on arrival, and set the mode from `modeOf()`. */
+    activity: alias?.activity || params.get('activity') || null,
   }
 }
 

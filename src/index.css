@@ -13,6 +13,7 @@
 @import '@fontsource-variable/caveat';
 @import 'tailwindcss';
 @import './styles/tokens.css';
+@import './styles/layout.css';
 
 /*
   Catppuccin Mocha palette as Tailwind v4 theme tokens.
@@ -350,27 +351,14 @@ body.handwriting textarea {
     7px 7px 0 -1px var(--color-mantle),
     8px 8px 0 -1px var(--color-surface0);
 }
-/* Center spine: a subtle vertical crease + binding shadow on wide screens. */
-.book::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 50%;
-  width: 28px;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background: linear-gradient(
-    to right,
-    transparent,
-    color-mix(in srgb, var(--color-crust) 55%, transparent),
-    transparent
-  );
-  z-index: 1;
-}
-@media (max-width: 900px) {
-  .book::before { display: none; } /* one page on small screens */
-}
+/* RETIRED · the centre spine (`.book::before`), removed 2026-08-03.
+   A 28px vertical crease down the middle of the spread, behind the content. It
+   reads as a book binding only when two columns of content sit either side of
+   it; every view in the app is a single centred column, so what it actually
+   rendered was a stray full-height line through empty space — most visibly on
+   Fitness, where it ran straight down the gap between the cards.
+   `.book`'s cover shadow and `::after` page edges carry the book metaphor on
+   their own. */
 .book-inner {
   position: relative;
   z-index: 2;
@@ -431,6 +419,27 @@ body.handwriting textarea {
 }
 @media (prefers-reduced-motion: reduce) {
   .page-in { animation: none; }
+}
+
+/* Collapse motion: the two halves of every fold in the app (Card `collapsible`,
+   CollapsibleSection). The body is mounted only while open — collapsed-by-default
+   cards carry heavy content (Coaching, Gym) and keeping it in the DOM to animate
+   a close is not worth it — so this is an enter animation, plus a caret that
+   turns both ways because it is always mounted. */
+@keyframes collapse-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.collapse-in { animation: collapse-in var(--dur-fast) var(--ease-rise) both; }
+/* One caret, rotated — not two glyphs swapped — so the state change is a turn
+   rather than a cut. Pair with a CaretDown at rest. */
+.caret-turn { transition: transform var(--dur-base) var(--ease-emphasis); }
+.caret-turn[data-open='true'] { transform: rotate(180deg); }
+/* Quarter turn, for the ▸ disclosure look (quiet sections) rather than the ⌄ one. */
+.caret-turn-quarter[data-open='true'] { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .collapse-in { animation: none; }
+  .caret-turn { transition: none; }
 }
 
 /* Enlarge-modal motion: backdrop fades, panel scales up (used by every viz card). */

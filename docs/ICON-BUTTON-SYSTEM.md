@@ -568,3 +568,34 @@ All four were answered "go with the recommendation":
 4. **Icon map coverage.** The map names 23 surfaces; this app has 24 routes and
    many more icon sites (badges, states, empty states, chart legends). Choices
    for everything unlisted get reported for review in Stage 2.
+
+---
+
+## Stage 7 — the caret (2026-08-03)
+
+Split into its own page — **`docs/COLLAPSE-PATTERN.md`** — because it is as much
+about component consolidation and hit targets as about icons. What belongs here
+is the glyph rule it settled:
+
+**A state change rotates one glyph; it never swaps two.** Every fold in the app
+had been drawing `CaretUp` when open and `CaretDown` when closed, which renders
+as a cut — the icon is simply a different icon on the next frame. One
+`CaretDown` under `.caret-turn` + `data-open` rotates 180° instead, so the
+change is something you watch happen. `.caret-turn-quarter` does 90° for the `▸`
+disclosure look.
+
+This extends **weight, not colour, signals state** (Stage 2) to a third axis:
+*rotation, not substitution, signals direction.*
+
+Two consequences worth carrying forward:
+
+- **The typographic marks stay typographic.** Six folds drew their caret as
+  `▸ ▾ ▴` in the mono face rather than as an `Icon`. They still do — that glyph
+  column is the app's signature and Stage 5 deliberately kept it outside `Icon`.
+  They rotate now like everything else. They also matched neither the
+  caret-icon grep nor the `aria-expanded` grep, which is why the first sweep
+  missed them: **an audit keyed on how something is drawn will miss anything
+  drawn another way.**
+- **`.caret-turn` is unlayered CSS**, so it beats `@layer utilities`. A Tailwind
+  `transition-colors` on the same element silently loses. `npm run design`
+  does not catch this — nothing errors, the transition just never runs.

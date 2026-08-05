@@ -1,5 +1,7 @@
 // ── Core domain types for the bullet journal ────────────────────────────────
 
+import type { ActivityKey } from '../domain/activities'
+
 /** Ryder Carroll rapid-logging bullet kinds. */
 export type BulletType = 'task' | 'event' | 'note'
 
@@ -135,11 +137,23 @@ export interface Fast {
 export interface Workout {
   id: string
   date: string // ISO day
-  /** e.g. "Run", "Strength", "Yoga", "Cycling", "Walk", "Swim". */
-  activity: string
-  /** Training-split tag for gym sessions (push/pull/legs…). */
+  /**
+   * A key from the activity registry (`domain/activities.ts`) — never a
+   * free-form label. Mode is *derived* from this via `modeOf()` and is
+   * deliberately not a field: a stored mode could contradict its own activity.
+   *
+   * Legacy journals hold free-form strings ("Run", "Home", "Push day"); they
+   * are normalised once in `migrate()`, which is the only tolerant reader.
+   */
+  activity: ActivityKey
+  /**
+   * Training-split tag for gym sessions. Push/pull/legs are also activity keys
+   * now; this stays because the strength analytics group by upper/lower/full
+   * too, which the registry does not name as separate activities.
+   */
   split?: Split
   durationMin?: number
+  /** Canonical kilometres. Convert at the form boundary with `lib/units.ts`. */
   distanceKm?: number
   /** Strength sets: each is "exercise xReps @ weight". Free-form lines (legacy + display). */
   sets: string[]
@@ -647,4 +661,10 @@ export interface JournalData {
   settings: Settings
 }
 
-export const SCHEMA_VERSION = 2
+/**
+ * 3 · workout `activity` normalised to registry keys, and `distanceKm` made
+ *     genuinely metric (v2 wrote the user's display unit into the field).
+ *     Both conversions are one-shot and gated on the stored version, so a v3
+ *     journal is never re-converted. See `migrate()` in `lib/storage.ts`.
+ */
+export const SCHEMA_VERSION = 3

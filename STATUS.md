@@ -2,52 +2,241 @@
 
 Update this when you STOP working, not when you start.
 
-- **Last touched:** 2026-08-02
-- **Where I stopped:** Redesign steps 1–9 done across two stacked branches.
-  `feat/design-system` (PR #80) has the token layer, self-hosted fonts, the
-  seven-step rem type scale, two container tiers, reconciled primitives, the
-  `/kitchen-sink` route and a 2,443-replacement adoption sweep.
-  `feat/accent-and-motion` (PR #81, current) has the accent-inflation pass
-  (accent fills in view bodies: 19 → 0), the motion-token pass, and the bullet
-  glyph column raised to a real signature. eslint 0 errors, 678 tests, build
-  green, 18 views × 5 themes clean.
-- **Also done:** the day/week strip (PR #82). `DayGrid` now backs both the
-  Stats heatmap and the Trackers per-habit grid. `TodayHabits` was left alone —
-  it is chips grouped by time of day, not a strip, and the audit was wrong to
-  group it. Fixed a pre-existing bug while in there: both grids stretched their
-  columns to a 39.5px pitch around 10px cells; now 12px.
-- **Also done:** the pages UI/UX polish pass (PR #87, branch
-  `feat/pages-ui-polish`). Settings no longer renders a second `<h1>` and its
-  tab pills are sized to their text instead of a uniform 209px; Plan,
-  Collections, Reading and Insights are on the `Page` shell, so they finally
-  have the entrance transition and the shared gap rhythm; section headers are
-  real `<h2>`s (Reading went 0 → 7 headings in `<main>`, B5 closed); and four
-  hand-copied clones of `QuietSection` are gone. Every finding was measured by
-  clicking through the running app, never inferred from source — see
-  `docs/redesign/11-pages-ui-polish.md`, which also records three things that
-  were measured and *dismissed*, so nobody re-opens them.
-- **Next action:** two items, both held up only by a file collision with a
-  parallel session — pick them up once that lands:
-  1. Recovery and Stats are the last two views off the `Page` shell.
-  2. `ui.tsx:77` names every titled card's ⓘ `"What is this?"`, so Today alone
-     exposes **34 identically-named buttons** to a screen reader, and it is
-     14×14 against the WCAG 2.5.8 24px floor. Name it from the card title and
-     pad the target — one file, app-wide reach.
+- **Last touched:** 2026-08-03
 
-  Beyond those, the raw-`<button>` sweep continues in the files PR #87 did not
-  touch (Trackers, Gym, Account). Judgement per site, not a codemod: many are
-  legitimately not buttons.
-- **Blocked on:** a **second session editing this same working tree** — the
-  `useFocusTrap` hook plus wiring into CommandPalette, the Card modal, Stats,
-  ExerciseDB, Onboarding, HabitDetail, NoFap and Trackers. It was mid-edit
-  (`NoFap.tsx:73` calls the hook with no import, so `npx tsc -b` fails on
-  `main`). PR #87 was written in a separate worktree to stay clear of it and
-  touches none of those files. Also `B1` in `TASKS.md`: the
-  Supabase project at `ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, so
-  every account/cloud-sync feature is dead until it is repointed or the env vars
-  are unset.
+## Where I stopped
 
-**Read next:** `TASKS.md` (the working board) · `docs/redesign/11-pages-ui-polish.md`
-(the newest pass, with its re-measure method) · `docs/redesign/09-redesign-audit.md`
-(what the codebase actually is) · `docs/redesign/10-redesign-build.md` (what
-shipped, and the four bugs found on the way).
+**`feat/activity-registry`** — 15 commits, PR #100 against
+`feat/collapsible-header-ux` (PR #99). **`origin/main` is merged in** as of
+`1aedf67`; the branch is 0 behind main. **Not pushed** — the merge commit is
+local only, so PR #100 still shows the pre-merge branch.
+
+### Read this before touching the stack
+
+The merge was done **against the advice this file gave last session**, on
+request. Two consequences, both live:
+
+1. **#96 is still open, so the double-resolution it warned about is now
+   likely.** `feat/today-ux` (#96) touches `ui.tsx`, `App.tsx` and `Today.tsx`
+   — the three files that cost the most to resolve here. When #96 lands on
+   main, this branch merges main again and re-resolves them.
+2. **PR #100's diff is now 131 files.** Its base, `feat/collapsible-header-ux`,
+   is still **76 behind main**, so the PR now reads as if this branch authored
+   all of main's 76 commits. It is not reviewable in that state. Before
+   pushing, either merge main into #99 first, or retarget #100 to `main`.
+
+Remaining order is unchanged: **#96 → #99 → #100**.
+
+### The merge — how ~110 conflict hunks across 38 files were resolved
+
+Both sides had restructured the same views: main brought the layout redesign
+(#95, capture-first Today + column grid) and the token/icon system (#94), this
+branch brought the activity registry and the Body-cluster page contract.
+
+The rule, decided in-session: **main wins page-level layout, this branch wins
+the content inside, shared primitives take both.**
+
+- **`ui.tsx` / `CollapsibleSection` — union, not a pick.** This branch's
+  `hideInfo`, header-folds-the-card and animated `.caret-turn` kept; main's
+  per-card accessible names (`Collapse Today's habits`, not `Collapse`),
+  `CARD.headerButton` and the `<h2>` wrapper kept. Neither side's `Card`
+  survived alone.
+- **`TopBar` / `Sidebar`** — this branch's nine-controls-to-five reduction
+  stands. The doc comment arguing it survived the merge as context, which is
+  what settled it.
+- **`App.tsx` NAV** — activity registry wins; Pull-ups / Home workout /
+  Pickleball stay presets inside Fitness, not nav peers.
+- **Today, Plan, Coaching, Collections, Settings, Pickleball** — main's
+  `<Page>` shell and `CardGrid`. Where that meant taking main's file whole,
+  this branch's a11y work was re-applied by hand: Coaching kept its
+  `aria-expanded` and the `surface1` contrast fix, which main did not have.
+- **NoFap kept this branch's file** — main's only change there was the icon
+  migration this branch had already done, plus the `<Page>` wrapper.
+- **Recovery's help prose from main is gone on purpose.** This branch retired
+  the ⓘ in that cluster, so the text would have been unreachable.
+- **`FitnessHub.tsx` and `pickleball/Section.tsx` restored from main** on
+  request, after this branch had deleted both. **Nothing imports either — they
+  are dead code until something wires them up.**
+
+Verifies green after the merge: `npx tsc -b` 0, `npx eslint .` 0 errors / 2
+pre-existing warnings, **743 tests / 48 files**, `npm run build` clean.
+Today, Plan, Fitness and Recovery checked in the browser at 1440, no console
+errors. **`npm run a11y` was NOT re-run after the merge** — it was 0 serious
+across 10 views before it, and the merge changed folds and card headers, which
+is exactly what that gate cannot see through when closed.
+
+Verifies green: `npx tsc -b` 0, `npx eslint .` 0 errors / 2 pre-existing
+warnings, **743 tests / 48 files**, `npm run build` clean, `npm run a11y` 0
+serious across 10 views.
+
+**Browser pass done** on Fitness, Nutrition, Recovery and Coaching at 1440 and
+760, light and dark. Seven defects found and fixed across `9d88835` and
+`15fec09` — labels sitting *beside* their controls wherever the act column
+exceeded the 380px cap; the ⓘ popover surviving the Stage 6 sweep on 22 cards
+(`Card` draws it from `help ?? subtitle`, so grepping `help=` proved nothing);
+Recovery missing from the a11y gate and failing on contrast the moment it was
+added; the Recovery sparkline drawing 2px bars at zero data; and `BottomNav`
+silently down to three tabs on phones because its id list still named two
+retired destinations.
+
+Not seen: the other three themes, and a journal with real data in it.
+
+**A dev server on 5191 was serving `.claude/worktrees/today-ux`, not this
+branch** — the documented trap, live. It was killed and 5191 restarted from
+this worktree. Restart the today-ux one if you still want it.
+
+### What this branch did — the Body cluster on a page contract
+
+| Commit | What |
+|---|---|
+| `7d40f8b` | Activity registry (`src/domain/activities.ts`), schema-3 migration, distance-unit fix |
+| `0876b53` | Retired the book spine (`.book::before`) |
+| `1a60ee6` | Page-contract primitives in `src/components/page/` |
+| `41f7469` | Fitness rebuilt on three zones; tab row collapsed to four; Nutrition promoted to a route |
+| `4cd00c7` | Nutrition, Recovery, Coaching onto the contract |
+| `df728f4` | Sweep — folds, help icons, card chrome, a11y gate widened |
+| `9d88835` | Browser-pass fixes — label stacking, shared `NumField`, mode-aware placeholder |
+| `1aedf67` | Merge `origin/main` — the layout redesign and icon system, reconciled |
+
+Load-bearing decisions:
+
+- **Mode is never stored.** Derived via `modeOf(session.activity)`. The registry
+  owns which fields render, which stat headlines, and all mode copy
+  (`MODE_COPY`). There is nowhere left to write a mode conditional for field
+  visibility, so that bug class is structurally gone rather than patched.
+- **Three modes.** `sport` was added late — a game is bounded by a scoreboard,
+  not a distance, so Pickleball asks for duration alone.
+- **Distance is canonical km**, converted only at `lib/units.ts`. v2 wrote the
+  *display* unit into `distanceKm`, so half the readers divided by 1.60934 and
+  half printed it raw — the same 3.1 showed as "3.1 mi" and "1.9 mi" on one
+  screen.
+- **Container queries, not media queries** (`styles/layout.css`), one breakpoint
+  at 960px of *container* width, because the sidebar collapses. Above it the
+  split is 62/38 with review LEFT and act RIGHT, placed explicitly against DOM
+  order so a phone still gets the log form first.
+- **Sticky is measured, not declared.** `PageLayout` falls back to static when
+  the act column is taller than the viewport.
+
+### Next
+
+1. **Unblock PR #100 before pushing** — merge main into `feat/collapsible-header-ux`,
+   or retarget #100 to `main`. Right now its diff is 131 files (see above).
+2. **Fix the legacy activity deep link.** `?view=pullups` resolves the view but
+   drops the activity — you land on Fitness / Cardio / Run instead of Strength /
+   Pull-ups. `deepLink.ts` returns `{view:'fitness', activity:'pullups'}`
+   correctly; the loss is downstream, because `Fitness` is a `lazy()` chunk and
+   `writeDeepLink` rewrites the URL to `?view=fitness` before it mounts and
+   reads it. The documented form `?view=fitness&activity=pullups` works.
+   **Predates the merge** — same `lazy()` line on `f5af2cd`.
+3. **Re-run `npm run a11y` with the new and changed folds open.** Not run since
+   the merge.
+4. **Look at a journal with real data, and the latte / neon / vscode / dawn
+   themes.** The browser pass used a fresh journal in mocha and latte only.
+2. **Recovery still exceeds the two-raised-card cap.** Its remaining cards are
+   genuine objects with their own actions (urge log, reset log, per-addiction
+   streaks, commitment, trigger plans), so the cap and the "cards are objects"
+   rule pull against each other there. Needs a judgement call.
+4. **Recovery deviates from the brief on purpose** — the brief wanted a sleep +
+   soreness sparkline, assuming physical recovery; this app's Recovery is the
+   abstinence tracker and has no soreness field anywhere. Built urges-vs-resets
+   instead. Physical recovery as its own page is a data-model change.
+5. **`Workout.sets` is still a required `string[]`**, not the optional field the
+   brief's target shape had. Cardio writes `[]`. Changing it breaks
+   `HomeWorkout` and the CSV export.
+6. **Re-seed demo data** to see corrected distances and activity labels.
+7. Merge #96, then merge `main` into #99 and #100 in that order and resolve.
+
+### Traps this branch hit
+
+- **The schema-3 distance conversion is not idempotent.** It is gated on the
+  stored version; running it twice multiplies by 1.61 again. There is a test
+  that migrates three times and asserts the value never moves. Any future
+  data-shape migration in `migrate()` needs the same treatment or the same gate.
+- **`npm run a11y` serves `dist` through `vite preview`** — rebuild before
+  believing a result. A contrast fix looked like it had failed until the bundle
+  was rebuilt.
+- **Folds hide violations from axe, again.** Adding Coaching to the scan list
+  immediately surfaced a `crust`-on-`surface1` contrast failure that had been
+  invisible only because the list lived inside a collapsed card.
+- **A typed field is a better audit than a grep.** Making `Workout.activity` an
+  `ActivityKey` found every free-form writer in one `tsc -b`, including one in
+  `CaptureBar` that the Stage 0 audit had missed.
+- `quartileLevels` shipped with `floor(q·n)` instead of `ceil(q·n)−1`, putting
+  the top cut on the maximum so level 4 was unreachable. Caught by its own test.
+
+---
+
+## Previously — `feat/collapsible-header-ux`
+
+9 commits, branched off `feat/icon-button-stage1` (PR #94), **not pushed, no PR
+open**. If you push it, base the PR on `feat/icon-button-stage1`, not `main`, or
+the diff shows six other branches' commits.
+
+### What that branch did — the fold (§K)
+
+`docs/COLLAPSE-PATTERN.md` is the full record; decisions are D-42/43/44. Short
+version:
+
+- **The whole header folds a card**, not just an 18px caret. The caret stays a
+  real `<button>` with `aria-expanded` — still the accessible control; the header
+  click is a pointer convenience on top. 42 cards and 30 sections inherit it.
+- **One caret rotates**; two glyphs no longer swap. Bodies fade in on open.
+  Close is deliberately instant — the body unmounts while closed and the
+  collapsed-by-default cards carry real weight.
+- **Four section primitives became two.** `pickleball/Section` and Settings'
+  `Disclosure` deleted; they plus five open-coded inline sections moved onto
+  `CollapsibleSection` / `QuietSection`.
+- **Two cards had dead titles** — `PenaltyCard` and Gym's "Today's session" both
+  hand-rolled a caret into `right` rather than using `Card collapsible`.
+- **Plan stopped reserving an empty column.** "Chronically deferred" is
+  conditional, so the unconditional two-column masonry left ~800px empty for
+  most journals. Setup lost its fold and became an always-open footer with
+  eight one-tap rule suggestions.
+- **Demo data now has a migration history**, so "Chronically deferred" is
+  actually visible in the demo.
+
+### Its next steps (still open)
+
+1. **Push it and open the PR** against `feat/icon-button-stage1`.
+2. **Merge the stack bottom-up.** Seven deep now — the biggest risk on the board.
+3. **`graphify hook-rebuild` is refusing to write** — the new graph has 1782
+   nodes against a stored 1784 (deleting `pickleball/Section.tsx` shrank it), so
+   it wants `force=true`. Left alone because it overwrites tracked state.
+4. **Per-view container tiers** — the one Stage 5 item left.
+5. **B4** — the app chunk is still 658 kB (193 gzip); recharts at 429 kB is the
+   next lever.
+6. **§H redesign decisions** — H5, H6, H7, H9, H11, H13 still open.
+7. **B1/G1/G2** — the Supabase project returns NXDOMAIN, so every account and
+   cloud-sync feature is dead until it is repointed or the env vars unset.
+
+### Traps that branch hit, so you don't
+
+- **`npm run a11y` cannot see inside a closed fold.** Unhiding Plan's Setup
+  exposed a *critical* `select-name` violation that had been shipping for
+  months — axe scans the rendered page, and collapsed content is not on it.
+  Read every clean report as "clean for whatever was expanded".
+- **`vite preview` serves a stale bundle through its service worker.** Twice a
+  screenshot showed pre-change markup against a freshly built `dist/`.
+  Unregister the worker and clear caches before believing what you see.
+- **A dev server pinned to a worktree keeps serving that worktree's branch.**
+  Six stale `vite` processes were running on 5173–5176, 5180 and 5191; the one
+  on 5191 served `.claude/worktrees/today-ux` at `feat/today-ux`, so changes
+  made here could never appear in the tab pointed at it. All six killed. Check
+  which port and which worktree before concluding a change did not land.
+- **An audit keyed on how something is drawn misses anything drawn another way.**
+  Six folds using typographic `▸ ▾ ▴` matched neither the caret-icon grep nor
+  the `aria-expanded` grep, and survived a sweep that claimed to be complete.
+- **Demo data is persisted, not regenerated.** Changing `src/lib/demo.ts` does
+  nothing for an existing journal — re-seed via Settings → Data → Load demo data.
+- **`.caret-turn` is unlayered CSS and beats `@layer utilities`.** A Tailwind
+  `transition-*` on the same element silently never runs, and `npm run design`
+  does not catch it.
+
+Older traps that still hold — theme flips not invalidating inherited custom
+properties, regex renames rewriting prose, `.claude/worktrees/` carrying other
+sessions' checkouts, verifying UI in all five themes — are in the git history of
+this file (`913f8df`).
+
+**Read next:** `TASKS.md` (the board, §K is this branch) ·
+`docs/COLLAPSE-PATTERN.md` (the fold) · `docs/ICON-BUTTON-SYSTEM.md` (the pass
+this grew out of) · `docs/ACCESSIBILITY.md` (the rules and the gate's blind spot).

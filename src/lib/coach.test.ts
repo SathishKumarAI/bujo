@@ -28,7 +28,7 @@ describe('coach', () => {
     const d = emptyJournal()
     d.metrics.push({ date: '2026-06-18', mood: 7 })
     d.settings.fitnessGoalMin = 30
-    d.workouts.push({ id: 'w1', date: '2026-06-18', activity: 'Run', durationMin: 60, sets: [], notes: '' })
+    d.workouts.push({ id: 'w1', date: '2026-06-18', activity: 'run', durationMin: 60, sets: [], notes: '' })
     const tips = coachTips(d, '2026-06-18')
     expect(tips.find((t) => t.id === 'fit-win')).toBeTruthy()
   })

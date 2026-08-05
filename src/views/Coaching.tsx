@@ -100,7 +100,13 @@ export function Coaching() {
                 <div className="flex items-start gap-2.5 p-2.5">
                   <button onClick={() => toggleWeek(w.week)} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
                     className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill text-caption font-medium"
-                    style={{ background: isDone ? cat('green') : isNow ? cat('mauve') : cat('surface1'), color: cat('crust') }}>
+                    // The untaken weeks are a surface tone, not a brand fill, so
+                    // crust-on-surface1 was the failing pair — those get `text`.
+                    style={
+                      isDone ? { background: cat('green'), color: cat('crust') }
+                        : isNow ? { background: cat('mauve'), color: cat('crust') }
+                          : { background: cat('surface1'), color: cat('text') }
+                    }>
                     {isDone ? <Icon as={Check} size="sm" /> : w.week}
                   </button>
                   <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
@@ -154,7 +160,7 @@ export function Coaching() {
                 const open = openTech === t.name
                 return (
                   <li key={t.name} className="rounded-card border border-line bg-ink-0">
-                    <button onClick={() => setOpenTech(open ? null : t.name)} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
+                    <button onClick={() => setOpenTech(open ? null : t.name)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
                         <span className="block truncate text-label text-fg-2">{t.what}</span>

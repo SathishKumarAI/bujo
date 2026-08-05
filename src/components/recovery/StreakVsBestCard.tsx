@@ -26,7 +26,7 @@ export function StreakVsBestCard({
   approachCopy: { color: string; text: string } | null
 }) {
   return (
-    <Card title="Current vs your best" subtitle={vsBest.isRecord ? 'You’re writing a new record right now' : `${vsBest.daysToBeat} day${vsBest.daysToBeat === 1 ? '' : 's'} to match your best`} help="The faint bar is your longest streak ever; the solid bar is your current run climbing toward it. Once it fills, you’re in record territory.">
+    <Card hideInfo title="Current vs your best" subtitle={vsBest.isRecord ? 'You’re writing a new record right now' : `${vsBest.daysToBeat} day${vsBest.daysToBeat === 1 ? '' : 's'} to match your best`}>
       <div className="relative h-4 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
         {/* ghost = personal best (full width reference) */}
         <div className="absolute inset-0 rounded-pill" style={{ background: cat('peach') + '2e' }} />

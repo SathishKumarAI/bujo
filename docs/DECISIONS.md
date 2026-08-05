@@ -304,3 +304,90 @@ is the default entry; email sign-up *links* the guest to keep their data; one
 `journals` jsonb row per user, **RLS** the only access control. *Trade-off:*
 with accounts, data lives on a server (a data-controller duty) — accepted as an
 opt-in path; the passphrase E2E sync stays for the privacy-max path.
+
+**D-42 — The whole header folds a card; the caret stays the accessible control.**
+*Context:* every collapsible surface put the entire fold behind an 18px chevron —
+miss-prone on touch, and a header that looks like one control but answers in one
+corner reads as broken. *Choice:* the header row toggles on click; the caret
+remains a real `<button>` carrying `aria-expanded`, so assistive tech and the
+keyboard still operate a named control rather than a `role="button"` div.
+*Trade-off:* anything interactive in a card's `right` slot ("Mark all",
+segmented controls) has to stop propagation or it would collapse the card
+mid-click — which in turn makes a *non*-interactive `right` (a `Pill`) a dead
+spot. Accepted: collapsing the card when someone reaches for a control in it is
+the worse failure. Cards that already own an `onClick` keep the caret-only
+target, because two meanings for one click beats neither working.
+
+**D-43 — One caret rotated, and open-only animation.**
+*Context:* folds swapped between two glyphs (`CaretUp`/`CaretDown`, `▴`/`▾`),
+which reads as a cut rather than a state change. *Choice:* one glyph, rotated
+via `.caret-turn` + `data-open`; bodies fade in with `.collapse-in`. Both built
+on the existing motion tokens — no new durations or curves. *Trade-off:* **the
+close is instant.** Animating it would mean keeping the body mounted while
+closed, and the collapsed-by-default cards carry real weight (Coaching's drill
+library, Gym's exercise database). An enter-only animation is the honest trade
+at this content size. *Note:* `.caret-turn` is unlayered CSS and beats
+`@layer utilities`, so a Tailwind `transition-*` on the same element silently
+does nothing.
+
+**D-44 — A fold has to earn itself.**
+*Context:* Plan's Setup was collapsed by default, so the two cards people open
+that page to reach were behind a click, in a column of their own, next to 800px
+of nothing. *Choice:* a fold pays for itself when the content is long or rarely
+wanted; Setup is neither, so it is a plain titled section under the columns.
+More generally, page *configuration* sits below page *content* rather than
+competing with it for a column, and a column only exists when something
+conditional is there to fill it. *Trade-off:* the page is longer by default.
+*Consequence worth knowing:* unhiding Setup exposed a critical `select-name`
+violation that had shipped for months — **`npm run a11y` cannot scan inside a
+closed fold**, so every gate result is conditional on what was open when it ran.
+
+**D-45 — Mode is a property of the activity, not a state of the UI.**
+*Context:* four separate things decided what the workout form showed — a
+hardcoded `<select>`, a sticky `fitness.tab` string, the persisted `split`
+field, and `activity === 'Home'` equality in three modules. Nothing tied them
+together, so Cardio rendered a strength "sets" box and Pickleball was offered a
+distance field. *Choice:* one declarative registry (`src/domain/activities.ts`)
+owns label, mode, required fields, best stat and mode copy; mode is derived via
+`modeOf()` and never stored. *Trade-off:* adding an activity means editing a
+table rather than a component, and legacy free-form values need a migration.
+*Consequence worth knowing:* typing `Workout.activity` as `ActivityKey` found
+every remaining free-form writer in a single `tsc -b`, including one in
+`CaptureBar` a manual audit had missed — **a type is a better audit than a
+grep**.
+
+**D-46 — The Body cluster is four surfaces, and activities are not surfaces.**
+*Context:* Pull-ups, Home workout and Pickleball sat in the nav as peers of
+Coaching and Recovery, mixing two levels of taxonomy. *Choice:* collapse to
+Fitness · Nutrition · Recovery · Coaching; the three activities become entries
+on the activity select, with the retired ids rewritten in `readDeepLink` so old
+bookmarks resolve. *Trade-off:* there is no router, so this is a read-time
+rewrite rather than a real 301. *Consequence worth knowing:* the tools behind
+those pages are not deleted — Pickleball's data is a different type entirely —
+so each keeps one contextual link from zone 2 when its activity is selected.
+
+**D-47 — Every page is at most three zones, and there is no fourth.**
+*Context:* Body pages were flat stacks of 4–15 cards, with the most useful
+visual (the training calendar) folded away and streak badges accreting at the
+bottom. *Choice:* orient → act → review, one signature visual per page, at most
+two raised cards, and content fitting none of the three belongs on another page.
+Layout is a **container query**, not a viewport one, because the sidebar
+collapses and viewport width is the wrong question. *Trade-off:* Recovery does
+not fit the two-card cap — its remaining cards are genuine objects with their
+own actions — and is knowingly left over it. *Consequence worth knowing:*
+sticky cannot be declared unconditionally; a sticky column taller than the
+viewport never scrolls to its own bottom, so `PageLayout` measures and falls
+back to static.
+
+**D-48 — An audit must test the feature, not the prop that feeds it.**
+*Context:* the sweep grepped for `help=` and reported the Body cluster free of
+help icons. But `Card` renders its ⓘ from `help ?? subtitle`, so removing the
+prop only changed the popover text — every titled card with a subtitle still had
+one, and the component directories were never globbed at all. *Choice:* a
+`hideInfo` opt-out on `Card`, applied across the cluster, rather than deleting an
+affordance 42 other cards rely on. *Trade-off:* two ways to render a card header
+until someone decides about the app as a whole. *Consequence worth knowing:*
+this is the second time a grep keyed on *how something is written* passed while
+the thing itself was still drawn — the first was the six typographic folds. Both
+were caught by looking at the page.
+

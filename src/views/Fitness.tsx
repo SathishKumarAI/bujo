@@ -1,408 +1,320 @@
+import { useMemo, useState } from 'react'
 import { ArrowsClockwise, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
 import { useJournal } from '../store'
-import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
-import { Card, Empty, Input, Segmented, StatTile, Textarea } from '../components/ui'
+import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
-import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Page } from '../components/shell/Page'
-import { Stepper } from '../components/fields/Stepper'
-import { cat } from '../lib/colors'
-import { pace, cardioPBs, trainingHeatmap, cardioBadges } from '../lib/fitness'
-import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
-import type { Workout } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
+import {
+  ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
+  draftOf, emptyDraft, workoutOf, type ActivityDraft,
+} from '../components/page'
+import { isActivityKey, labelOf, MODE_COPY, MODES, modeOf, modeSegments, type Mode } from '../domain/activities'
+import { readDeepLink } from '../lib/deepLink'
+import { useNav } from '../components/shell/nav'
+import { bestOf, sessionsInMode, totalTime } from '../domain/sessions'
+import { displayDistance } from '../lib/units'
+import { nextSplit, splitMeta, weeklyActiveMinutes } from '../lib/fitness'
+import { useStickyState } from '../lib/useStickyState'
+import type { Workout } from '../lib/types'
+import type { ViewId } from '../components/shell/viewChrome'
 
-const ACTIVITIES = ['Run', 'Walk', 'Strength', 'Cycling', 'Yoga', 'Swim', 'HIIT', 'Sport', 'Other']
-type Form = { date: string; activity: string; duration: string; distance: string; calories: string; rpe: string; sets: string; notes: string }
-const emptyForm: Form = { date: todayISO(), activity: 'Run', duration: '', distance: '', calories: '', rpe: '', sets: '', notes: '' }
-
-// Form fields are strings (free-typing kept); these bridge to the numeric Stepper.
-const numOf = (s: string) => (s ? Number(s) : undefined)
-const strOf = (v: number | undefined) => (v != null ? String(v) : '')
-
-/** The four tap-to-adjust workout numbers, shared by the log + edit forms. */
-function MetricFields({ f, set, distUnit = 'km' }: { f: Form; set: (p: Partial<Form>) => void; distUnit?: string }) {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <Stepper label="Duration" suffix="min" step={5} min={0} value={numOf(f.duration)} onChange={(v) => set({ duration: strOf(v) })} aria-label="Duration minutes" />
-      <Stepper label="Distance" suffix={distUnit} step={0.5} min={0} value={numOf(f.distance)} onChange={(v) => set({ distance: strOf(v) })} aria-label="Distance" />
-      <Stepper label="Calories" suffix="kcal" step={50} min={0} value={numOf(f.calories)} onChange={(v) => set({ calories: strOf(v) })} aria-label="Calories" />
-      <Stepper label="RPE" step={1} min={1} max={10} value={numOf(f.rpe)} onChange={(v) => set({ rpe: strOf(v) })} aria-label="RPE" />
-    </div>
-  )
-}
-const formToPayload = (f: Form): Omit<Workout, 'id'> => ({
-  date: f.date, activity: f.activity,
-  durationMin: f.duration ? Number(f.duration) : undefined,
-  distanceKm: f.distance ? Number(f.distance) : undefined,
-  calories: f.calories ? Number(f.calories) : undefined,
-  rpe: f.rpe ? Number(f.rpe) : undefined,
-  sets: f.sets.split('\n').map((s) => s.trim()).filter(Boolean),
-  notes: f.notes.trim(),
-})
-const workoutToForm = (w: Workout): Form => ({
-  date: w.date, activity: w.activity,
-  duration: w.durationMin?.toString() ?? '', distance: w.distanceKm?.toString() ?? '',
-  calories: w.calories?.toString() ?? '', rpe: w.rpe?.toString() ?? '',
-  sets: w.sets.join('\n'), notes: w.notes,
-})
-
+/**
+ * FITNESS · the reference implementation of the page contract.
+ *
+ * Zone 1  orient — mode toggle, this week against the target, what's next.
+ * Zone 2  act    — the log form, and the page's only primary button.
+ * Zone 3  review — the session list, then the analytics under it.
+ *
+ * Every fact in zone 1 re-reads on mode change: cardio shows minutes against
+ * the weekly minutes target, strength shows sessions completed and the next
+ * split day. A mode switch that only moved a highlight was the bug this whole
+ * pass exists to remove.
+ *
+ * What used to be here and is gone:
+ *
+ * - the six-tile "At a glance" card, in six different hues — one insight and
+ *   five distractions competing for the same glance;
+ * - the "Cardio analytics" accordion, which hid the training calendar (the
+ *   single most useful thing on the page) behind a fold;
+ * - the Nutrition accordion, which was a whole other subject wearing a
+ *   collapsed section, and now has its own page;
+ * - the 2×2 stepper grid, which rendered duration, distance, calories and RPE
+ *   for every activity regardless of whether the activity had any use for them;
+ * - the cardio-bests badge card, which returned `null` until you had earned a
+ *   badge, so it was invisible to exactly the people it was meant to motivate.
+ *
+ * The weekly-target ring is gone rather than recoloured. The contract allows
+ * one accent-filled control per page and spends it on "Log session"; a ring is
+ * a fifth appearance even in neutral, and the ratio it drew ("90 / 150 min")
+ * says the same thing in less space and more precisely.
+ */
 export function Fitness() {
   const { data, addWorkout, removeWorkout } = useJournal()
-  const [f, setF] = useState(emptyForm)
+  // Arriving with `?activity=` (including via a retired /pullups-style link)
+  // preselects that activity and takes the mode from it — never the other way
+  // round, because the activity is the fact and the mode is derived from it.
+  const linked = readDeepLink().activity
+  const initialActivity = linked && isActivityKey(linked) ? linked : null
+  const [mode, setMode] = useStickyState<Mode>('fitness.mode', initialActivity ? modeOf(initialActivity) : 'cardio', MODES)
+  const [draft, setDraft] = useState<ActivityDraft>(() => {
+    const base = emptyDraft(initialActivity ? modeOf(initialActivity) : mode)
+    return initialActivity ? { ...base, activity: initialActivity } : base
+  })
   const [editing, setEditing] = useState<Workout | null>(null)
-  const [range, setRange] = useState<'week' | 'all'>('all')
   const [showAll, setShowAll] = useState(false)
-  const set = (p: Partial<Form>) => setF((cur) => ({ ...cur, ...p }))
 
-  const dist = data.settings.distanceUnit
+  const unit = data.settings.distanceUnit
   const today = todayISO()
-  const workouts = [...data.workouts].sort((a, b) => (a.date < b.date ? 1 : -1))
-  const inRange = range === 'week' ? data.workouts.filter((w) => { const d = dayDiff(w.date, today); return d >= 0 && d < 7 }) : data.workouts
-  const totalMin = inRange.reduce((s, w) => s + (w.durationMin ?? 0), 0)
-  const totalKm = inRange.reduce((s, w) => s + (w.distanceKm ?? 0), 0)
-  const pbs = cardioPBs(data)
+  const patch = (p: Partial<ActivityDraft>) => setDraft((cur) => ({ ...cur, ...p }))
+
+  // Switching mode resets the activity to that mode's first entry — an
+  // activity from the other mode would render the wrong fields.
+  function switchMode(next: Mode) {
+    setMode(next)
+    setDraft(emptyDraft(next))
+  }
+
+  const sessions = useMemo(
+    () => sessionsInMode(data, mode).sort((a, b) => (a.date < b.date ? 1 : -1)),
+    [data, mode],
+  )
+
+  // ── Zone 1 facts, all of which re-read on mode change ─────────────────────
+  const goal = data.settings.fitnessGoalMin ?? 150
+  const minutes = useMemo(() => weeklyActiveMinutes(data), [data])
+  const split = useMemo(() => splitMeta(nextSplit(data)), [data])
+  const thisWeekSessions = sessions.filter((s) => {
+    const d = dayDiff(s.date, today)
+    return d >= 0 && d < 7
+  }).length
+  const last = sessions[0]
+
+  // Keyed off the mode rather than branched on it, so the two are impossible to
+  // let drift apart and a third mode would be one more entry, not one more
+  // ternary at every fact.
+  const sessionCount = `${thisWeekSessions} ${thisWeekSessions === 1 ? 'session' : 'sessions'}`
+  const WEEK: Record<Mode, string> = {
+    cardio: `${minutes} / ${goal} min`,
+    strength: sessionCount,
+    // A game is counted, not measured against a minutes target — you play when
+    // there is a game, and a "you owe 40 minutes" nag would be nonsense.
+    sport: thisWeekSessions === 1 ? '1 game' : `${thisWeekSessions} games`,
+  }
+  const NEXT: Record<Mode, string> = {
+    cardio: minutes >= goal ? 'Target met — anything you like' : `${Math.max(0, goal - minutes)} min to go`,
+    strength: `${split.label} day`,
+    sport: 'Whenever the court is free',
+  }
+  const facts = [
+    { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
+    { label: 'Next up', value: NEXT[mode] },
+    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
+  ]
+
+  // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────
+  const best = bestOf(sessions, draft.activity, unit)
+  const time = totalTime(sessions)
+  const heat = useMemo(
+    () => sessions.map((s) => ({ date: s.date, value: s.durationMin ?? 0 })),
+    [sessions],
+  )
 
   function submit() {
-    if (!f.activity) return
-    addWorkout(formToPayload(f))
-    setF(emptyForm)
+    addWorkout(workoutOf(draft, unit))
+    setDraft(emptyDraft(mode))
   }
 
   function repeatLast() {
-    const last = workouts[0]
     if (!last) return
-    setF({ ...workoutToForm(last), date: today, rpe: '', notes: '' })
+    setDraft({ ...draftOf(last, unit), date: today, rpe: '', notes: '' })
   }
 
-  const shown = showAll ? workouts : workouts.slice(0, 6)
+  const shown = showAll ? sessions : sessions.slice(0, 8)
 
   return (
-    <Page>
-      <Card title="Log a workout" right={workouts.length > 0 ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
-        <div className="space-y-3">
-          <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-          <label className="block text-body text-fg-1">Activity
-            <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
-              {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
-            </select>
-          </label>
-          <MetricFields f={f} set={set} distUnit={dist} />
-          {f.distance && f.duration && <p className="text-label text-fg-2">Pace: {pace(Number(f.distance) * (dist === 'mi' ? 1.60934 : 1), Number(f.duration), dist)}</p>}
-          {/* Cardio, so the example is a cardio one. This field shared its
-              placeholder with the Strength form and advertised "Bench 5x5 @
-              60kg" underneath Duration and Distance. */}
-          <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder={'Splits or intervals, one per line\n4 × 400m @ 1:45'} rows={3} />
-          <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it feel?" rows={2} />
-          <Button variant="secondary" onClick={submit} className="press-3d w-full">Log workout</Button>
-        </div>
-      </Card>
+    <PageLayout
+      tier={1180}
+      zone1={
+        <StatBar
+          mode={mode}
+          onModeChange={switchMode}
+          segments={modeSegments()}
+          facts={facts}
+        />
+      }
+      zone2={
+        <>
+        <ActivityForm
+          mode={mode}
+          draft={draft}
+          onChange={patch}
+          onSubmit={submit}
+          unit={unit}
+          submitLabel="Log session"
+          right={last ? (
+            <Button variant="ghost" onClick={repeatLast} className="inline-flex items-center gap-1 text-label">
+              <Icon as={ArrowsClockwise} size="sm" /> Repeat last
+            </Button>
+          ) : undefined}
+        />
+        <CompanionTool activity={draft.activity} mode={mode} />
+        </>
+      }
+      zone3={
+        <>
+          {/* History first, analytics under it. The list is what someone came
+              to look at — "did I train on Tuesday" is answered by a row, not by
+              a twelve-week heatmap — so the summary and the calendar read as
+              the commentary they are rather than the headline. */}
+          <section>
+            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
+              <h2 className="text-label text-fg-2">History</h2>
+              {sessions.length > 8 && (
+                <Button variant="ghost" onClick={() => setShowAll((v) => !v)} className="h-auto p-0 text-label">
+                  {showAll ? 'Show less' : `Show all (${sessions.length})`}
+                </Button>
+              )}
+            </div>
+            {sessions.length === 0 ? (
+              <EmptyFrame>Log a session to start your history.</EmptyFrame>
+            ) : (
+              <ul>
+                {shown.map((w) => (
+                  <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
+                    <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+                      <span className="truncate font-medium text-fg-1">{labelOf(w.activity)}</span>
+                      <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
+                    </button>
+                    <div className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
+                      {w.durationMin != null && <span>{w.durationMin}m</span>}
+                      {w.distanceKm != null && <span>{displayDistance(w.distanceKm, unit)}{unit}</span>}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removeWorkout(w.id)}
+                        aria-label={`Delete ${labelOf(w.activity)} on ${prettyDay(w.date)}`}
+                        className="text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+                      >×</Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-      <Card
-        title="History"
-        subtitle="Tap a workout to edit"
-        right={workouts.length > 6 ? <Button variant="secondary" onClick={() => setShowAll((v) => !v)} className="press-3d rounded-control">{showAll ? 'Show less' : `Show all (${workouts.length})`}</Button> : undefined}
-      >
-        {workouts.length === 0 ? (
-          <Empty>Log a session above to start your training history.</Empty>
-        ) : (
-          <ul className="divide-y divide-surface0">
-            {shown.map((w) => {
-              const p = pace(w.distanceKm, w.durationMin, dist)
-              return (
-                <li key={w.id} className="group flex items-center justify-between gap-2 py-2">
-                  <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                    <span className="truncate font-medium text-fg-1 group-hover:text-mauve">{w.activity}</span>
-                    <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
-                  </button>
-                  <div className="flex shrink-0 items-center gap-2 text-label text-fg-2">
-                    {w.durationMin != null && <span>{w.durationMin}m</span>}
-                    {w.distanceKm != null && <span>{w.distanceKm}{dist}</span>}
-                    {p && <span className="text-sky">{p}</span>}
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Delete workout" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Card>
+          {/* Analytics · expanded, never a fold. The training calendar spent a
+              release behind a collapsed "Cardio analytics" accordion, which is
+              how the most useful thing on the page went unseen. */}
+          <section>
+            <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
+            <SummaryStrip items={[
+              { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+              { label: 'Total time', value: time.value, empty: time.empty },
+              { label: best.label, value: best.value, empty: best.empty },
+            ]} />
+            <div className="mt-3">
+              <CalendarHeatmap weeks={12} data={heat} unit="min" />
+            </div>
+          </section>
 
-      {/* Nutrition is a secondary logging surface · collapse so cardio logging
-          leads. The calorie-trend chart lives inside the card it analyses. */}
-      <NutritionCard date={f.date} today={today} />
-
-      {/* Deep cardio analytics · folded below logging (collapsed by default),
-          mirroring the Gym deep-analytics pattern. Bodyweight now lives only in
-          the shared Gym card. */}
-      <CollapsibleSection title="Cardio analytics" subtitle="Totals, bests & training calendar">
-        {/* Totals + bests in one compact 6-tile card · no scrolling to read them. */}
-        <Card title="At a glance" right={<Segmented value={range} onChange={setRange} options={[{ value: 'week', label: 'Wk' }, { value: 'all', label: 'All' }]} />}>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            <Stat label="Workouts" value={inRange.length} color="teal" />
-            <Stat label="Minutes" value={totalMin} color="peach" />
-            <Stat label={dist === 'mi' ? 'Miles' : 'Km'} value={Math.round(totalKm * 10) / 10} color="sky" />
-            <Stat label={dist === 'mi' ? 'Best mi' : 'Best km'} value={Math.round((dist === 'mi' ? pbs.longestKm / 1.60934 : pbs.longestKm) * 10) / 10} color="green" />
-            <Stat label="Best kcal" value={pbs.mostCalories} color="red" />
-            <Stat label="Best min" value={pbs.mostMinutes} color="lavender" />
-          </div>
-        </Card>
-
-        <CardioBadgesCard />
-        <TrainingHeatmapCard today={today} />
-      </CollapsibleSection>
-
-      <WorkoutEditDialog workout={editing} onClose={() => setEditing(null)} />
-    </Page>
+          <EditDialog workout={editing} onClose={() => setEditing(null)} />
+        </>
+      }
+    />
   )
 }
 
-/** In-place edit window for a logged workout (no scrolling to the form). */
-function WorkoutEditDialog({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
+/**
+ * The one contextual door out of this page.
+ *
+ * Collapsing Pull-ups, Home workout and Pickleball off the tab row relocated
+ * them; it did not delete the tools behind them. The pull-up program, the
+ * bodyweight exercise library and the pickleball match record are real
+ * surfaces with their own data — Pickleball's is a different type entirely —
+ * and folding them into a log form would have lost them.
+ *
+ * So the *activity* is the relocation, and this is the door: one link, shown
+ * only when the selected activity has a companion, inside zone 2 because
+ * opening the pull-up program is part of acting on a pull-up session rather
+ * than reviewing one. It is not a zone 4, and it is never more than one link.
+ */
+const COMPANION: Record<string, { view: ViewId; label: string }> = {
+  pullups: { view: 'pullups', label: 'Pull-up program & progressions' },
+  homeWorkout: { view: 'homeworkout', label: 'Bodyweight exercise library' },
+  pickleball: { view: 'pickleball', label: 'Pickleball record & matchups' },
+}
+/** Every strength activity shares one workshop, so it is keyed by mode. */
+const MODE_COMPANION: Partial<Record<Mode, { view: ViewId; label: string }>> = {
+  strength: { view: 'gym', label: 'Strength tools · programs, anatomy, plates' },
+  sport: { view: 'coaching', label: 'Coaching · drills, skill ladder, program' },
+}
+
+function CompanionTool({ activity, mode }: { activity: string; mode: Mode }) {
+  const navigate = useNav()
+  const tool = COMPANION[activity] ?? MODE_COMPANION[mode]
+  if (!tool) return null
+  return (
+    <Button variant="ghost" onClick={() => navigate(tool.view)} className="mt-2 h-auto justify-start p-0 text-label">
+      {tool.label} ›
+    </Button>
+  )
+}
+
+/** In-place edit for a logged session, so correcting one costs no scrolling. */
+function EditDialog({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
   const { updateWorkout, removeWorkout } = useJournal()
   return (
     <Dialog open={!!workout} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Edit workout</DialogTitle></DialogHeader>
-        {workout && <EditFields workout={workout} onSave={(p) => { updateWorkout(workout.id, p); onClose() }} onDelete={() => { removeWorkout(workout.id); onClose() }} />}
+        <DialogHeader><DialogTitle>Edit session</DialogTitle></DialogHeader>
+        {workout && (
+          <EditFields
+            workout={workout}
+            onSave={(p) => { updateWorkout(workout.id, p); onClose() }}
+            onDelete={() => { removeWorkout(workout.id); onClose() }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
 }
 
-function EditFields({ workout, onSave, onDelete }: { workout: Workout; onSave: (p: Omit<Workout, 'id'>) => void; onDelete: () => void }) {
+function EditFields({ workout, onSave, onDelete }: {
+  workout: Workout
+  onSave: (p: Omit<Workout, 'id'>) => void
+  onDelete: () => void
+}) {
   const confirm = useConfirm()
-  const [f, setF] = useState<Form>(() => workoutToForm(workout))
-  const set = (p: Partial<Form>) => setF((cur) => ({ ...cur, ...p }))
+  const { data } = useJournal()
+  const unit = data.settings.distanceUnit
+  const [draft, setDraft] = useState(() => draftOf(workout, unit))
+  const patch = (p: Partial<ActivityDraft>) => setDraft((cur) => ({ ...cur, ...p }))
+  // The session's own mode, not the page's: editing a push day should let you
+  // correct it to a pull day, never silently reclassify it as a Run.
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-        <label className="block text-body text-fg-1">Activity
-          <select value={f.activity} onChange={(e) => set({ activity: e.target.value })} className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1">
-            {ACTIVITIES.map((a) => <option key={a}>{a}</option>)}
-          </select>
-        </label>
-      </div>
-      <MetricFields f={f} set={set} />
-      <Textarea value={f.sets} onChange={(e) => set({ sets: e.target.value })} placeholder="Sets, one per line" rows={3} />
-      <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Notes" rows={2} />
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => onSave(formToPayload(f))} className="press-3d flex-1 rounded-control">Save</Button>
-        <Button variant="ghost" onClick={async () => { if (await confirm({
-          title: 'Delete this workout?',
-          description: 'The workout and its sets are removed from your history. This cannot be undone.',
-          confirmLabel: 'Delete workout', destructive: true,
-        })) onDelete() }} className="press-3d inline-flex items-center gap-1.5 rounded-control text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
-      </div>
+      <ActivityForm
+        mode={modeOf(draft.activity)}
+        draft={draft}
+        onChange={patch}
+        onSubmit={() => onSave(workoutOf(draft, unit))}
+        unit={unit}
+        submitLabel="Save session"
+      />
+      <Button
+        variant="ghost"
+        onClick={async () => {
+          if (await confirm({
+            title: 'Delete this session?',
+            description: 'The session and its sets are removed from your history. This cannot be undone.',
+            confirmLabel: 'Delete session',
+            destructive: true,
+          })) onDelete()
+        }}
+        className="inline-flex items-center gap-1.5 text-red hover:text-red"
+      ><Icon as={Trash} size="sm" /> Delete</Button>
     </div>
   )
-}
-
-/** Cardio personal-best badges (distance · duration · calories) + date earned. */
-function CardioBadgesCard() {
-  const { data } = useJournal()
-  const dist = data.settings.distanceUnit
-  const badges = cardioBadges(data)
-  const earned = badges.filter((b) => b.value > 0)
-  if (earned.length === 0) return null
-  const fmt = (b: (typeof badges)[number]) => {
-    if (b.key === 'longestKm') return `${Math.round((dist === 'mi' ? b.value / 1.60934 : b.value) * 10) / 10} ${dist}`
-    if (b.key === 'mostMinutes') return `${b.value} min`
-    return `${b.value} kcal`
-  }
-  const tint: Record<string, string> = { longestKm: 'green', mostMinutes: 'lavender', mostCalories: 'red' }
-  return (
-    <Card title="Cardio bests" subtitle="All-time personal bests, with the day you set them" defer>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {earned.map((b) => (
-          <div key={b.key} className="rounded-card border border-line bg-ink-0 px-3 py-2.5" title={`${b.label}: ${fmt(b)} on ${b.date}`}>
-            <div className="flex items-center gap-1.5 text-heading font-medium" style={{ color: cat(tint[b.key]) }}>
-              🏅 <span>{fmt(b)}</span>
-            </div>
-            <p className="mt-0.5 text-label text-fg-1">{b.label}</p>
-            {b.date && <p className="text-micro text-fg-2">earned {prettyDay(b.date)}</p>}
-          </div>
-        ))}
-      </div>
-    </Card>
-  )
-}
-
-/** GitHub-style 17-week training calendar · cell intensity scales with volume. */
-function TrainingHeatmapCard({ today }: { today: string }) {
-  const { data } = useJournal()
-  const cells = trainingHeatmap(data, today, 119) // 17 weeks × 7 days
-  const trained = cells.filter((c) => c.volume > 0).length
-  if (trained === 0) return null
-  // Column-major weeks so each column is a Mon→Sun-ish week (oldest left).
-  const weeks: typeof cells[] = []
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
-  const levelColor = (level: number) =>
-    level === 0 ? cat('surface0') : cat('green') + ['', '55', '88', 'bb', 'ff'][level]
-  return (
-    <Card title="Training calendar" subtitle={`${trained} training days in the last 17 weeks, darker = more volume`} defer>
-      <div className="flex gap-[3px] overflow-x-auto pb-1" role="img" aria-label={`Training-day heatmap: ${trained} days trained in the last 17 weeks, shaded by workout volume`}>
-        {weeks.map((week, wi) => (
-          <div key={wi} className="flex flex-col gap-[3px]">
-            {week.map((c) => (
-              <div
-                key={c.date}
-                className="h-3 w-3 rounded-[3px]"
-                style={{ background: levelColor(c.level) }}
-                title={`${c.date}: ${c.volume > 0 ? `${c.volume.toLocaleString()} volume` : 'rest day'}`}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex items-center justify-end gap-1.5 text-micro text-fg-2">
-        <span>less</span>
-        {[0, 1, 2, 3, 4].map((l) => <span key={l} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: levelColor(l) }} />)}
-        <span>more</span>
-      </div>
-    </Card>
-  )
-}
-
-function NutritionCard({ date, today }: { date: string; today: string }) {
-  const { data, setMetric } = useJournal()
-  const m = data.metrics.find((x) => x.date === date)
-  const macros = [
-    { k: 'protein' as const, label: 'Protein', color: 'red', val: m?.protein },
-    { k: 'carbs' as const, label: 'Carbs', color: 'yellow', val: m?.carbs },
-    { k: 'fat' as const, label: 'Fat', color: 'sky', val: m?.fat },
-  ]
-  const totalG = macros.reduce((s, x) => s + (x.val ?? 0), 0)
-
-  // Add a food's macros to the running day total.
-  function addFood(food: Food) {
-    setMetric(date, {
-      calories: (m?.calories ?? 0) + food.kcal,
-      protein: (m?.protein ?? 0) + food.protein,
-      carbs: (m?.carbs ?? 0) + food.carbs,
-      fat: (m?.fat ?? 0) + food.fat,
-    })
-  }
-  function fillSample() {
-    const t = sumFoods(SAMPLE_DAY)
-    setMetric(date, t)
-  }
-
-  return (
-    <Card
-      title="Nutrition"
-      subtitle="Calories & macros, add foods or type your own"
-      collapsible
-      defaultCollapsed
-      right={<Button variant="secondary" onClick={fillSample} title="Fill a typical ~1800 kcal day" className="press-3d">Sample day</Button>}
-    >
-      {/* Quick-add from the food DB (American + Indian staples). */}
-      <div className="mb-3">
-        <select
-          value=""
-          onChange={(e) => { const f = FOODS.find((x) => x.name === e.target.value); if (f) addFood(f) }}
-          className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1"
-          aria-label="Add a food"
-        >
-          <option value="">+ Add a food…</option>
-          <optgroup label="Indian">
-            {FOODS.filter((f) => f.cuisine === 'indian').map((f) => (
-              <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
-            ))}
-          </optgroup>
-          <optgroup label="American">
-            {FOODS.filter((f) => f.cuisine === 'american').map((f) => (
-              <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
-            ))}
-          </optgroup>
-        </select>
-        <a
-          href="https://www.google.com/search?q=calories+macros+"
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 inline-block text-label text-fg-2 hover:text-mauve"
-        >Food not listed? Look it up online ↗</a>
-      </div>
-      <label className="mb-3 block text-body text-fg-1">
-        Calories
-        <div className="mt-1"><Stepper value={m?.calories ?? undefined} onChange={(v) => setMetric(date, { calories: v })} step={50} min={0} suffix="kcal" aria-label="Calories" /></div>
-      </label>
-      <div className="grid grid-cols-3 gap-2">
-        {macros.map((mac) => (
-          <label key={mac.k} className="block text-label text-fg-1">
-            {mac.label} (g)
-            <div className="mt-1"><Stepper value={mac.val ?? undefined} onChange={(v) => setMetric(date, { [mac.k]: v })} step={5} min={0} aria-label={`${mac.label} grams`} /></div>
-          </label>
-        ))}
-      </div>
-      {totalG > 0 && (
-        <div className="mt-3">
-          <div className="flex h-3 overflow-hidden rounded-pill">
-            {macros.map((mac) => (
-              <div key={mac.k} style={{ width: `${((mac.val ?? 0) / totalG) * 100}%`, background: cat(mac.color) }} />
-            ))}
-          </div>
-          <div className="mt-1 flex justify-between text-label text-fg-2">
-            {macros.map((mac) => (
-              <span key={mac.k} style={{ color: cat(mac.color) }}>● {mac.label} {mac.val ?? 0}g</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* Macro-target rings vs a balanced default (protein 120 · carbs 200 · fat 60 g). */}
-      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-3">
-        {macros.map((mac) => {
-          const target = mac.k === 'protein' ? 120 : mac.k === 'carbs' ? 200 : 60
-          const pct = Math.min(100, Math.round(((mac.val ?? 0) / target) * 100))
-          const r = 20, circ = 2 * Math.PI * r
-          return (
-            <div key={mac.k} className="flex flex-col items-center" title={`${mac.val ?? 0} of ${target}g ${mac.label}`}>
-              <svg width="56" height="56" viewBox="0 0 56 56" role="img" aria-label={`${mac.label}: ${pct}% of ${target} grams`}>
-                <circle cx="28" cy="28" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
-                <circle cx="28" cy="28" r={r} fill="none" stroke={cat(mac.color)} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 28 28)" />
-                <text x="28" y="32" textAnchor="middle" className="fill-text text-caption font-medium">{pct}%</text>
-              </svg>
-              <span className="text-micro text-fg-2">{mac.label}</span>
-            </div>
-          )
-        })}
-      </div>
-      <CalorieTrend today={today} />
-    </Card>
-  )
-}
-
-/** 14-day calorie trend with a 7-day average line · momentum, not just today.
- *  Rendered inside the Nutrition card it analyses. */
-function CalorieTrend({ today }: { today: string }) {
-  const { data } = useJournal()
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const date = addDays(today, -(13 - i))
-    return { date, kcal: data.metrics.find((x) => x.date === date)?.calories ?? 0 }
-  })
-  if (days.every((d) => d.kcal === 0)) return null
-  const logged = days.filter((d) => d.kcal > 0)
-  const avg = logged.length ? Math.round(logged.reduce((a, d) => a + d.kcal, 0) / logged.length) : 0
-  const max = Math.max(avg, ...days.map((d) => d.kcal), 1)
-  return (
-    <div className="mt-4 border-t border-line pt-3">
-      <p className="mb-2 text-label text-fg-1">Calorie trend <span className="text-fg-2">· last 14 days · avg {avg} kcal on logged days</span></p>
-      <div className="flex items-end gap-1" style={{ height: 90 }} role="img" aria-label={`Bar chart of daily calories over 14 days, averaging ${avg} on logged days`}>
-        {days.map((d) => (
-          <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.kcal || '—'} kcal`}>
-            <div className="rounded-t" style={{ height: `${Math.max(2, (d.kcal / max) * 100)}%`, background: d.date === today ? cat('peach') : cat('surface2') }} />
-          </div>
-        ))}
-      </div>
-      <p className="mt-1 text-center text-micro text-fg-2">peach = today</p>
-    </div>
-  )
-}
-
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return <StatTile label={label} value={value} color={color} compact />
 }

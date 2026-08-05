@@ -6,6 +6,8 @@
 // plain journal bullet (lossless fallback — input is never dropped). Add a new
 // value type by adding a matcher; nothing else changes.
 
+import type { ActivityKey } from '../domain/activities'
+
 export type CaptureKind = 'gym' | 'cardio' | 'metric' | 'habit' | 'bullet'
 
 interface Base {
@@ -24,7 +26,8 @@ export interface GymCapture extends Base {
 }
 export interface CardioCapture extends Base {
   kind: 'cardio'
-  activity: string
+  activity: ActivityKey
+  /** Already canonical km — `matchCardio` converts a spoken "5 mi" on the way in. */
   distanceKm?: number
   durationMin?: number
 }
@@ -209,11 +212,14 @@ function matchGym(text: string, ctx: CaptureCtx): GymCapture | null {
   }
 }
 
-const CARDIO_WORDS: Record<string, string> = {
-  ran: 'Run', run: 'Run', running: 'Run', jog: 'Run', jogged: 'Run',
-  walk: 'Walk', walked: 'Walk', walking: 'Walk',
-  cycle: 'Cycling', cycled: 'Cycling', cycling: 'Cycling', bike: 'Cycling', biked: 'Cycling',
-  swim: 'Swim', swam: 'Swim', swimming: 'Swim',
+/** Spoken/typed verb → activity registry key. */
+const CARDIO_WORDS: Record<string, ActivityKey> = {
+  ran: 'run', run: 'run', running: 'run', jog: 'run', jogged: 'run',
+  walk: 'walk', walked: 'walk', walking: 'walk',
+  cycle: 'cycle', cycled: 'cycle', cycling: 'cycle', bike: 'cycle', biked: 'cycle',
+  swim: 'swim', swam: 'swim', swimming: 'swim',
+  row: 'row', rowed: 'row', rowing: 'row',
+  hike: 'hike', hiked: 'hike', hiking: 'hike',
 }
 
 /** `ran 5k 28min`, `walk 30min`, `cycled 12km`. */

@@ -1,4 +1,4 @@
-import { CalendarPlus, CaretDown, CaretRight, Star } from '@/components/icons'
+import { CalendarPlus, CaretRight, Star } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
@@ -11,6 +11,23 @@ import { addDays, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
 import type { BulletType } from '../lib/types'
+
+/**
+ * One-tap recurring rules. The Setup card used to open on an empty text box,
+ * which asks people to invent a routine from nothing — these are the rules
+ * almost every journal ends up with anyway. Weekdays are 0=Sun … 6=Sat, to
+ * match `Recurrence`.
+ */
+const RULE_PRESETS: { text: string; type: BulletType; freq: 'daily' | 'weekly'; weekdays: number[] }[] = [
+  { text: 'Take vitamins', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Journal', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Stretch 10 min', type: 'task', freq: 'daily', weekdays: [] },
+  { text: 'Weekly review', type: 'task', freq: 'weekly', weekdays: [0] },
+  { text: 'Meal prep', type: 'task', freq: 'weekly', weekdays: [0] },
+  { text: 'Laundry', type: 'task', freq: 'weekly', weekdays: [6] },
+  { text: 'Bin night', type: 'task', freq: 'weekly', weekdays: [2] },
+  { text: 'Call family', type: 'task', freq: 'weekly', weekdays: [0] },
+]
 
 export function Plan() {
   const { data, addRecurrence, updateRecurrence, removeRecurrence, migrateEntry, dropEntry, bulkAddEvents, toggleImportant } = useJournal()
@@ -37,6 +54,9 @@ export function Plan() {
     addRecurrence({ text: text.trim(), type, important: false, freq, weekdays, startedOn: today })
     setText('')
   }
+
+  const ruleExists = (t: string) =>
+    data.recurrences.some((r) => r.text.trim().toLowerCase() === t.toLowerCase())
 
   // ── Migration: open tasks dated before today ──
   const overdue = data.entries
@@ -73,10 +93,6 @@ export function Plan() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  // `wide`, not `read`: this view is a CSS multi-column masonry. At 820px the
-  // two columns collapse to ~380px each, which wraps every migration card's
-  // title and stacks its actions vertically — a short measure helps prose, not
-  // a column layout.
   return (
     // The two-column masonry is gone. It only ever had two children — the
     // Migration card and a collapsed 32px header — so CSS columns put a 594px
@@ -101,12 +117,12 @@ export function Plan() {
               className="flex w-full items-center gap-1.5 text-label text-fg-2 hover:text-fg-1"
               title={`Oldest overdue task: ${aging.oldestDays} days`}
             >
-              {agingOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}
+              <span className="caret-turn caret-turn-quarter inline-flex" data-open={agingOpen}><Icon as={CaretRight} size="sm" /></span>
               <span>Aging</span>
               <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
             </button>
             {agingOpen && (
-              <>
+              <div className="collapse-in">
                 <div className="mt-1.5 flex h-2 overflow-hidden rounded-pill bg-ink-2">
                   {agingBuckets.map((b) => (
                     <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
@@ -120,10 +136,12 @@ export function Plan() {
                     </span>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
+        {/* Full-width Migration gets a third column rather than three very
+            wide task cards; alongside "Chronically deferred" it stays 2-up. */}
         {overdue.length === 0 ? (
           <Empty>Nothing overdue. You're on top of it. 🎉</Empty>
         ) : (
@@ -237,17 +255,42 @@ export function Plan() {
           <div className="mt-3 space-y-5">
       <Card title="Recurring tasks & events" subtitle="Auto-added to each day they apply">
         <div className="flex flex-wrap items-center gap-2">
-          <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" className="max-w-xs" />
-          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          {/* Named, not labelled: the row reads as one sentence ("Take vitamins
+              · task · daily") and three visible labels would break that. The
+              names were missing entirely until this section stopped being
+              collapsed — axe never scanned inside a closed fold. */}
+          <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" aria-label="What to repeat" className="max-w-xs" />
+          <select value={type} onChange={(e) => setType(e.target.value as BulletType)} aria-label="Bullet type" className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="task">task</option>
             <option value="event">event</option>
             <option value="note">note</option>
           </select>
-          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+          <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} aria-label="How often" className="rounded-card border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
             <option value="daily">daily</option>
             <option value="weekly">weekly</option>
           </select>
           <Button variant="secondary" onClick={addRule} className="press-3d">Add rule</Button>
+        </div>
+        {/* Added on tap, not loaded into the form — a suggestion you have to
+            then press "Add rule" on is two steps for no gain. Already-added
+            ones stay visible but disabled, so the list doesn't reshuffle. */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-label text-fg-2">Suggestions:</span>
+          {RULE_PRESETS.map((p) => {
+            const added = ruleExists(p.text)
+            return (
+              <button
+                key={p.text}
+                disabled={added}
+                title={added ? 'Already a rule' : `Repeat ${p.freq === 'daily' ? 'every day' : `on ${p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}`}`}
+                onClick={() => addRecurrence({ text: p.text, type: p.type, important: false, freq: p.freq, weekdays: p.weekdays, startedOn: today })}
+                className="rounded-pill border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong"
+              >
+                {p.text}
+                <span className="ml-1.5 text-fg-2">{p.freq === 'daily' ? 'daily' : p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}</span>
+              </button>
+            )
+          })}
         </div>
         {freq === 'weekly' && (
           <div className="mt-2 flex gap-1">

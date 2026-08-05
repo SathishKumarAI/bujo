@@ -1,4 +1,4 @@
-import { CaretLeft, CaretRight, Command, DotsThree, Lightbulb, List, Moon, Plus, Question, Sidebar, SlidersHorizontal, Sun } from '@/components/icons'
+import { CaretLeft, CaretRight, Command, DotsThree, Lightbulb, List, Plus, Question, Sidebar, SlidersHorizontal } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { recommendations } from '../../lib/recommend'
 import { Button } from '../ui/button'
@@ -13,7 +13,6 @@ import { useJournal } from '../../store'
 import { useCursor } from './cursor'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 import { addDays, prettyDay, prettyMonth, ymOf } from '../../lib/date'
-import { AccountMenu } from './AccountMenu'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { DateJumpPicker } from './DateJumpPicker'
 import { useState } from 'react'
@@ -23,15 +22,36 @@ function shiftMonth(ym: string, delta: number): string {
   return ymOf(new Date(y, mo - 1 + delta, 1))
 }
 
-/** Sticky header: view title, hoisted date-nav, quick-add, ⌘K, overflow menu. */
+/**
+ * Sticky header · breadcrumb + title, hoisted date-nav, and at most five
+ * controls on the right.
+ *
+ * It used to carry nine, ungrouped: page actions, content tools and app
+ * preferences at one level, all unlabelled icons. The rule now is that the bar
+ * holds what acts on *this page*, in two groups separated by a hairline —
+ * content tools, then the one accented button and the overflow.
+ *
+ * What left, and where it went:
+ *
+ * - **account, settings, theme** → the bottom of the sidebar. They are app
+ *   preferences, reached a few times a month, and they were sitting next to
+ *   Quick add, which is reached a few times an hour.
+ * - **⌘K** → the overflow. The shortcut is the interface; the button was a
+ *   permanent reminder that a shortcut exists.
+ * - **help + suggestions** → merged. Two adjacent icons both answering "what
+ *   should I do here?" is one affordance wearing two hats.
+ */
 export function TopBar({
   view,
+  section,
   onNavigate,
   onQuickAdd,
   onCommand,
   onMenu,
 }: {
   view: ViewId
+  /** Nav group of the current view — the breadcrumb's first crumb. */
+  section?: string
   onNavigate: (id: ViewId) => void
   onQuickAdd: () => void
   onCommand: () => void
@@ -51,29 +71,19 @@ export function TopBar({
         <Icon as={List} size="lg" />
       </button>
 
+      {/* Breadcrumb over the title, not a subtitle under it. "Cardio &
+          strength" restated what the page already showed; "Body / Fitness"
+          says where you are, which the title alone cannot. Views with no nav
+          entry (the Body companions) keep their subtitle. */}
       <div className="min-w-0">
+        {section ? (
+          <p className="truncate text-micro text-fg-2">
+            {section} <span aria-hidden>/</span> <span className="text-fg-1">{chrome.title}</span>
+          </p>
+        ) : null}
         <h1 className="font-display text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
-        {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
+        {!section && chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
       </div>
-
-      {/* Contextual help — what this page does, pulled from the view registry. */}
-      {chrome.help && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`What is ${chrome.title}?`} title={`What is ${chrome.title}?`} className="shrink-0 text-fg-2 hover:text-foreground">
-              <Icon as={Question} size="md" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-80">
-            <div className="px-2 py-1.5">
-              <p className="mb-1 font-display text-body font-medium text-foreground">{chrome.title}</p>
-              <p className="text-label leading-relaxed text-fg-2">{chrome.help}</p>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('help')} className="text-label text-blue">Open the full guide →</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
 
       {chrome.dateNav && (
         <div className="relative ml-2 flex items-center gap-1">
@@ -117,59 +127,65 @@ export function TopBar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button variant="primary" size="sm" onClick={onQuickAdd} className="gap-1.5">
-          <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
-        </Button>
+        {/* ── Content tools ───────────────────────────────────────────────── */}
 
-        {/* Recommendations — small icon + count badge, no wasted vertical space. */}
-        {recs.length > 0 && (
+        {/* Help and suggestions, merged. Both answer "what should I do on this
+            page?" — the blurb statically, the recommendations from your data —
+            so they share one door, with the count badge on it when there is
+            something waiting. */}
+        {(chrome.help || recs.length > 0) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={`${recs.length} suggestions`} title="Suggestions" className="relative hidden sm:inline-flex">
-                <Icon as={Lightbulb} size="md" className="text-yellow" />
-                <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={recs.length > 0 ? `Help and ${recs.length} suggestions` : `What is ${chrome.title}?`}
+                title={recs.length > 0 ? 'Help & suggestions' : `What is ${chrome.title}?`}
+                className="relative shrink-0 text-fg-2 hover:text-foreground"
+              >
+                <Icon as={Question} size="md" />
+                {recs.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{recs.length}</span>
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              {recs.map((r) => (
-                <DropdownMenuItem key={r.id} onClick={() => r.action && onNavigate(r.action.view)} className="flex-col items-start gap-1 py-2">
-                  <span className="text-body text-fg-1">{r.text}</span>
-                  {r.action && <span className="text-label text-blue">→ {r.action.label}</span>}
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align="end" className="w-80">
+              {chrome.help && (
+                <>
+                  <div className="px-2 py-1.5">
+                    <p className="mb-1 font-display text-body font-medium text-foreground">{chrome.title}</p>
+                    <p className="text-label leading-relaxed text-fg-2">{chrome.help}</p>
+                  </div>
+                  <DropdownMenuItem onClick={() => onNavigate('help')} className="text-label text-blue">Open the full guide →</DropdownMenuItem>
+                </>
+              )}
+              {recs.length > 0 && (
+                <>
+                  {chrome.help && <DropdownMenuSeparator />}
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-micro tracking-wider text-fg-2 uppercase">
+                    <Icon as={Lightbulb} size="sm" className="text-yellow" /> Suggestions
+                  </div>
+                  {recs.map((r) => (
+                    <DropdownMenuItem key={r.id} onClick={() => r.action && onNavigate(r.action.view)} className="flex-col items-start gap-1 py-2">
+                      <span className="text-body text-fg-1">{r.text}</span>
+                      {r.action && <span className="text-label text-blue">→ {r.action.label}</span>}
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
         {/* Feedback is secondary — keep it off phones so the bar fits. */}
         <span className="hidden sm:inline-flex"><FeedbackButton /></span>
-        <AccountMenu onNavigate={onNavigate} />
-        {/* Settings gear hidden on phones (it's in the ⋯ menu there) to keep the
-            header within the viewport. */}
-        <Button
-          variant={view === 'settings' ? 'secondary' : 'ghost'}
-          size="icon-sm"
-          aria-label="Settings"
-          aria-current={view === 'settings' ? 'page' : undefined}
-          title="Settings"
-          onClick={() => onNavigate('settings')}
-          className="hidden sm:inline-flex"
-        >
-          <Icon as={SlidersHorizontal} size="md" />
+
+        {/* ── Page action, then everything else ───────────────────────────── */}
+        <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-line" />
+
+        <Button variant="primary" size="sm" onClick={onQuickAdd} className="gap-1.5">
+          <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={data.settings.theme === 'mocha' ? 'Switch to light theme' : 'Switch to dark theme'}
-          title="Toggle theme"
-          onClick={() => setSettings({ theme: data.settings.theme === 'mocha' ? 'latte' : 'mocha' })}
-          className="hidden sm:inline-flex"
-        >
-          {data.settings.theme === 'mocha' ? <Icon as={Sun} size="md" /> : <Icon as={Moon} size="md" />}
-        </Button>
-        {/* ⌘K is keyboard-only — hide on phones to keep the bar from overflowing. */}
-        <Button variant="ghost" size="icon-sm" aria-label="Command palette (⌘K)" title="⌘K" onClick={onCommand} className="hidden sm:inline-flex">
-          <Icon as={Command} size="md" />
-        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="More options">
@@ -177,6 +193,14 @@ export function TopBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
+            {/* ⌘K lives here rather than as its own icon: the palette is a
+                keyboard surface, and a permanent button for it spent a slot in
+                the bar advertising a shortcut to people already using it. */}
+            <DropdownMenuItem onClick={onCommand}>
+              <Icon as={Command} size="sm" /> Command palette
+              <span className="ml-auto text-micro text-fg-2">⌘K</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <div className="px-2 py-1.5 text-micro tracking-wider text-fg-2 uppercase">Theme</div>
             {(['mocha', 'latte', 'neon', 'system'] as const).map((th) => (
               <DropdownMenuItem key={th} onClick={() => setSettings({ theme: th })}>
@@ -185,7 +209,7 @@ export function TopBar({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('settings')} className="sm:hidden">
+            <DropdownMenuItem onClick={() => onNavigate('settings')}>
               <Icon as={SlidersHorizontal} size="sm" /> Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onNavigate('help')}>

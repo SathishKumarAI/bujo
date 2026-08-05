@@ -1,4 +1,4 @@
-import { Archive, CaretDown, CaretRight, Flame, Plus, Trash, Trophy, X } from '@/components/icons'
+import { Archive, CaretRight, Flame, Plus, Trash, Trophy, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -10,6 +10,7 @@ import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat } from '../lib/colors'
 import type { Challenge } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
+import { QuietSection } from '../components/CollapsibleSection'
 import {
   CHALLENGE_PRESETS, isDayComplete, progressDay, percentComplete,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -18,7 +19,6 @@ import {
 export function Challenges() {
   const { data, addChallenge } = useJournal()
   const [creating, setCreating] = useState(false)
-  const [archiveOpen, setArchiveOpen] = useState(false)
   const active = (data.challenges ?? []).filter((c) => !c.archived)
   const archived = (data.challenges ?? []).filter((c) => c.archived)
 
@@ -46,18 +46,10 @@ export function Challenges() {
       )}
 
       {archived.length > 0 && (
-        <section className="space-y-5">
-          <button
-            type="button"
-            onClick={() => setArchiveOpen((o) => !o)}
-            aria-expanded={archiveOpen}
-            className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
-          >
-            <span className="text-fg-2">{archiveOpen ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-            <span className="font-display text-heading font-medium text-fg-1">Completed &amp; archived</span>
-            <span className="text-label text-fg-2">{archived.length} past challenge{archived.length === 1 ? '' : 's'}</span>
-          </button>
-          {archiveOpen && (
+        <QuietSection
+          title={<>Completed &amp; archived</>}
+          subtitle={`${archived.length} past challenge${archived.length === 1 ? '' : 's'}`}
+        >
             <Card title="Completed & archived" subtitle="Your past challenges">
               <ul className="space-y-2 text-body">
                 {archived.map((c) => (
@@ -68,8 +60,7 @@ export function Challenges() {
                 ))}
               </ul>
             </Card>
-          )}
-        </section>
+        </QuietSection>
       )}
     </Page>
   )
@@ -163,11 +154,11 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           aria-expanded={calOpen}
           className="flex w-full items-center gap-1.5 text-body font-medium text-fg-1 hover:text-fg-1"
         >
-          <span className="text-fg-2">{calOpen ? <Icon as={CaretDown} size="sm" /> : <Icon as={CaretRight} size="sm" />}</span>
+          <span className="caret-turn caret-turn-quarter inline-flex text-fg-2" data-open={calOpen}><Icon as={CaretRight} size="sm" /></span>
           Calendar
         </button>
         {calOpen && (
-          <>
+          <div className="collapse-in">
             <div className="mt-2 mb-2 flex items-center justify-end">
               <div className="flex items-center gap-3 text-micro text-fg-2">
                 <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
@@ -194,7 +185,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
                 )
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </Card>

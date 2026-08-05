@@ -1,4 +1,4 @@
-import { ArrowLineUp, ArrowsClockwise, Barbell, BookOpen, Books, Brain, CalendarBlank, ChartBar, ChartPie, Code, Flag, Flower, GraduationCap, PersonSimpleRun, Question, ShieldCheck, SlidersHorizontal, Sparkle, Sun, Target, Trophy } from '@/components/icons'
+import { ArrowsClockwise, BookOpen, Books, Brain, CalendarBlank, ChartBar, ChartPie, Code, Flag, Flower, ForkKnife, GraduationCap, PersonSimpleRun, Question, ShieldCheck, SlidersHorizontal, Sparkle, Sun, Target } from '@/components/icons'
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
@@ -33,7 +33,9 @@ const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats
 const Pullups = lazy(() => import('./views/Pullups').then((m) => ({ default: m.Pullups })))
 const Pickleball = lazy(() => import('./views/Pickleball').then((m) => ({ default: m.Pickleball })))
 const Monthly = lazy(() => import('./views/Monthly').then((m) => ({ default: m.Monthly })))
-const FitnessHub = lazy(() => import('./views/FitnessHub').then((m) => ({ default: m.FitnessHub })))
+const Fitness = lazy(() => import('./views/Fitness').then((m) => ({ default: m.Fitness })))
+const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
+const Nutrition = lazy(() => import('./views/Nutrition').then((m) => ({ default: m.Nutrition })))
 const HomeWorkout = lazy(() => import('./views/HomeWorkout').then((m) => ({ default: m.HomeWorkout })))
 const Challenges = lazy(() => import('./views/Challenges').then((m) => ({ default: m.Challenges })))
 const Focus = lazy(() => import('./views/Focus').then((m) => ({ default: m.Focus })))
@@ -55,22 +57,28 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 // Smaller, job-to-be-done groups so no single section gets unwieldy (Health used
 // to hold 10 items). Order flows: capture → body → skill → discipline → mind →
 // reference → analysis. System (Help/Settings) lives in the top bar, not the rail.
-const GROUP_ORDER = ['Journal', 'Fitness', 'Sports', 'Habits', 'Wellbeing', 'Library', 'Review']
+const GROUP_ORDER = ['Journal', 'Body', 'Habits', 'Wellbeing', 'Library', 'Review']
 
 const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolean })[] = [
   { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
   { id: 'plan', label: 'Plan', icon: ArrowsClockwise, group: 'Journal' },
-  { id: 'fitness', label: 'Fitness', icon: PersonSimpleRun, group: 'Fitness' },
-  { id: 'pullups', label: 'Pull-ups', icon: ArrowLineUp, group: 'Fitness' },
-  { id: 'homeworkout', label: 'Home Workout', icon: Barbell, group: 'Fitness' },
-  { id: 'pickleball', label: 'Pickleball', icon: Trophy, group: 'Sports' },
-  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Sports' },
+  // BODY · four entries, and they are all the same kind of thing: a surface.
+  //
+  // Pull-ups, Home workout and Pickleball used to sit here as peers of Coaching
+  // and Recovery, which mixed two taxonomy levels — the first three are
+  // *activities*, and an activity is something you pick inside Fitness, not a
+  // place you navigate to. They are now presets on the activity select, reached
+  // by `?view=fitness&activity=pullups`; `deepLink.ts` keeps the old ids
+  // working so existing bookmarks resolve.
+  { id: 'fitness', label: 'Fitness', icon: PersonSimpleRun, group: 'Body' },
+  { id: 'nutrition', label: 'Nutrition', icon: ForkKnife, group: 'Body' },
+  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Body', show: (g) => g.nofap },
+  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Body' },
   { id: 'trackers', label: 'Trackers', icon: ChartBar, group: 'Habits' },
   { id: 'challenges', label: 'Challenges', icon: Target, group: 'Habits' },
   { id: 'focus', label: 'Focus', icon: Code, group: 'Habits' },
   { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Wellbeing' },
   { id: 'cycle', label: 'Cycle', icon: Flower, group: 'Wellbeing', show: (g) => g.cycle },
-  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Wellbeing', show: (g) => g.nofap },
   { id: 'collections', label: 'Collections', icon: Books, group: 'Library' },
   { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Library' },
   { id: 'monthly', label: 'Monthly', icon: CalendarBlank, group: 'Library' },
@@ -83,7 +91,7 @@ const NAV: (NavItem & { show?: (g: { cycle: boolean; nofap: boolean }) => boolea
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: FitnessHub, gym: () => <FitnessHub initialTab="strength" />, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
+  fitness: Fitness, nutrition: Nutrition, gym: Gym, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
   'kitchen-sink': KitchenSink,
   settings: Settings,

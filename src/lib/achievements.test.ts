@@ -7,7 +7,7 @@ const entry = (i: number): Entry => ({
   id: `e${i}`, date: '2026-06-10', type: 'note', text: `t${i}`, status: 'open',
   important: false, memory: false, tags: [], createdAt: '2026-06-10',
 })
-const workout = (i: number, activity = 'Strength'): Workout => ({
+const workout = (i: number, activity: Workout['activity'] = 'strength'): Workout => ({
   id: `w${i}`, date: '2026-06-10', activity, sets: [], notes: '',
 })
 

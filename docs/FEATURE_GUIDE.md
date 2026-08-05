@@ -32,7 +32,7 @@ Settings, keeping the rail focused on what you actually use.
 
 ### 1.3 Bottom tab bar (mobile)
 On phones the sidebar is replaced by a thumb-friendly bottom bar with the five
-most-used destinations — **Today · Trackers · Fitness · Pickleball · Pull-ups** —
+most-used destinations — **Today · Trackers · Fitness** —
 spread equal-width across the bar. There is **no centre FAB**: quick-add lives in
 the top bar, so the bottom bar is purely for navigation. It is hidden on tablets
 and desktops (≥ md width) and **auto-hides on scroll-down** (re-appears on
@@ -106,11 +106,17 @@ they are, what they're aiming at, and a memento image for the month.
 ### 2.6 Plan
 The bullet-journal "migration" workhorse plus recurring rules. The **Migration**
 card lists overdue open tasks; sort them by **Date or Priority**, **star** the
-important ones, and move each to today/tomorrow or drop it — laid out two columns
-wide so you clear the backlog fast. The **Recurring** card defines daily/weekly
+important ones, and move each to today/tomorrow or drop it — laid out two or three
+columns wide so you clear the backlog fast. **Chronically deferred** appears once
+you have pushed the same task forward more than once, with a badge counting the
+hops; tap it for the full migration history. The **Setup** strip at the bottom is
+always open — no fold to click through. Its **Recurring** card defines daily/weekly
 tasks or events that auto-appear on the days they apply (edits propagate to future
-occurrences). An **.ics import** brings events from Google/Apple Calendar onto
-your Monthly.
+occurrences), and offers eight one-tap **suggestions** — Take vitamins, Journal,
+Stretch 10 min, Weekly review, Meal prep, Laundry, Bin night, Call family — so you
+are not starting from an empty box. A suggestion is added on tap; ones you already
+have stay visible but greyed. An **.ics import** brings events from Google/Apple
+Calendar onto your Monthly.
 
 ### 2.7 Collections
 Free-form pages and reference lists. The **Future Log** automatically gathers
@@ -144,23 +150,38 @@ target's home view. It stays empty (zero clutter) until you actually have goals,
 and the header tallies how many are on track.
 
 ### 3.3 Fitness
-Cardio and general-workout logging. The right rail holds the **log form** (date,
-activity, duration, distance, calories, RPE, free-form sets, notes) with a
-**repeat-last** shortcut, and the full **history** beneath it (tap to edit;
-show-all/less). The main column shows a weekly **active-minutes goal ring** with
-an 8-week trend and active-day streak, a compact **6-tile at-a-glance** card
-(totals + personal bests, no scrolling), a **14-day calorie trend**, and the
-**Nutrition** card. Distance honours your km/mi setting throughout.
+Record today's session and see whether the week is on track. The page is three
+zones: an **orient bar** (mode toggle, this week against your target, what's
+next), the **log form**, and the **review** column (summary, a 12-week training
+calendar, the session list).
 
-### 3.4 Nutrition (inside Fitness)
-A lightweight macro diary for the day. Type calories and protein/carbs/fat
-directly, or **add foods** from a built-in database focused on **American and
-Indian** staples — picking a food adds its macros to the running total. A
-**"Sample day"** button fills a realistic ~1800 kcal template, and an
-**online-lookup** link covers anything not in the list. A stacked bar shows the
-macro split; three **target rings** show protein/carbs/fat against a balanced
-default. The separate **calorie-trend** card plots the last 14 days with a
-logged-day average.
+The **mode toggle** — Cardio · Strength · Sport — filters rather than
+highlights. It changes which fields the form asks for, which activities the
+select offers, which stat the summary headlines, and the copy. Cardio asks for
+duration and distance; Sport asks for duration only (a game is bounded by a
+scoreboard, not a distance); Strength asks for sets. None of that is decided by
+the page — it comes from the **activity registry** (`src/domain/activities.ts`),
+which is the single source for what you can log.
+
+**Pull-ups, Home workout and Pickleball are activities on the select**, not
+separate destinations. Each keeps a single contextual link to its deeper tool
+when selected. Optional fields (calories) sit behind one **"More details"**
+disclosure at the foot of the form.
+
+Distance is stored in kilometres and displayed in your km/mi setting, converted
+at the form boundary only.
+
+### 3.4 Nutrition
+Its own page, not a card inside Fitness. Log what you ate — **add foods** from a
+built-in database focused on **American and Indian** staples, or type calories
+and protein/carbs/fat directly. A **"Fill a typical day"** button loads a
+realistic template.
+
+The signature visual is a **stacked macro bar with the target ratio drawn
+beneath it**, because totals alone cannot answer the question the page exists
+for: 2,000 calories at 30% protein and 2,000 at 10% are the same number and
+completely different days. Recent logged days are listed beneath; tap one to
+jump to it.
 
 ### 3.5 Gym
 Structured strength training. Log sessions with a **searchable exercise picker**,
@@ -182,14 +203,15 @@ browser. It's built for the "share a weekly physique update" habit from coaching
 plans, minus the sharing.
 
 ### 3.7 Home Workout
-No-equipment, bodyweight training for days you can't get to a gym. Log a
-**home/bodyweight session** (the exercises you did, duration, notes) and it's
-saved as a normal workout under the hood — it reuses the same **`Workout` type**
-as Fitness/Gym with `activity = 'Home'`, so home sessions roll into your overall
-totals, active-minutes goal, and history rather than living in a silo. Tap a
-**saved session** to open its detail and review/edit what you logged. It lives in
-the **Fitness area** of the Health group (its own nav entry, "Home Workout"), and
-suits travel days, rest-day mobility, or anyone training without weights.
+No-equipment, bodyweight training for days you can't get to a gym. Browse the
+curated library (form cues, a demo video and a search fallback per exercise),
+build a session, and log it.
+
+It is reached by selecting **Home workout** on the Fitness activity select,
+which links through to this library; it is no longer a separate nav entry.
+Sessions save as a normal `Workout` with `activity = 'homeWorkout'`, so they
+roll into your overall totals, active-minutes goal and history rather than
+living in a silo.
 
 ### 3.8 Pull-ups
 A dedicated pull-up hub. The headline is the **"Starting From Zero" program

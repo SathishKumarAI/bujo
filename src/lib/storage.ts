@@ -1,5 +1,7 @@
-import { SCHEMA_VERSION, type JournalData, type Settings } from './types'
+import { SCHEMA_VERSION, type JournalData, type Settings, type Workout } from './types'
 import { todayISO } from './date'
+import { normalizeActivity } from '../domain/activities'
+import { toKm } from './units'
 
 export const STORAGE_KEY = 'bujo:data'
 
@@ -87,6 +89,37 @@ export function seedJournal(): JournalData {
   return j
 }
 
+/**
+ * SCHEMA 3 · workouts.
+ *
+ * Two one-shot conversions, both gated on the *incoming* version so a journal
+ * is never converted twice:
+ *
+ * 1. `activity` becomes a registry key. Free-form labels ("Run", "Home",
+ *    "Push day") came from a retired `<select>` and a Gym template literal.
+ *
+ * 2. `distanceKm` becomes actual kilometres. v2 wrote the form value straight
+ *    through with no conversion, so the field held whatever unit was on screen
+ *    — miles, by default.
+ *
+ * The distance half is unavoidably best-effort and worth being blunt about:
+ * v2 stored no per-row unit, so the only signal available is the journal's
+ * *current* `distanceUnit`. For the overwhelming case — someone who never
+ * touched the toggle — that is exact. For someone who switched units mid-
+ * history, rows entered before the switch convert wrong. Those rows are
+ * already wrong today (that is the bug), and no amount of care here can
+ * recover information v2 never wrote down.
+ */
+function migrateWorkoutsToV3(workouts: Workout[], convertDistanceFrom?: Settings['distanceUnit']): Workout[] {
+  return workouts.map((w) => {
+    const next: Workout = { ...w, activity: normalizeActivity(w.activity, w.split) }
+    if (next.distanceKm != null && convertDistanceFrom === 'mi') {
+      next.distanceKm = Math.round(toKm(next.distanceKm, 'mi') * 1000) / 1000
+    }
+    return next
+  })
+}
+
 /** Fill in any keys missing from an older/partial payload (forward-compatible load). */
 export function migrate(raw: unknown): JournalData {
   const base = emptyJournal()
@@ -106,10 +139,21 @@ export function migrate(raw: unknown): JournalData {
   // and they cannot be recovered from that file. Backups taken *before* the
   // upgrade still hold them.
   delete (clean as Record<string, unknown>).stickers
+  const settings = { ...base.settings, ...(data.settings ?? {}) }
+  // Activity normalisation is idempotent (a key maps to itself), so it runs on
+  // every load and stays the tolerant reader for anything arriving from an old
+  // client via cloud sync. The distance conversion is NOT idempotent — running
+  // it twice would multiply by 1.61 again — so it is gated on the stored
+  // version, which is exactly why it needed a version bump to hang off.
+  const storedVersion = typeof data.version === 'number' ? data.version : 0
+  const workouts = migrateWorkoutsToV3(
+    data.workouts ?? [],
+    storedVersion < 3 ? settings.distanceUnit : undefined,
+  )
   return {
     ...base,
     ...clean,
-    settings: { ...base.settings, ...(data.settings ?? {}) },
+    settings,
     // nofap is nested state — deep-merge so a malformed/partial nofap can't
     // break logRelapse/streakStats (missing best/relapses/startedOn).
     nofap: { ...base.nofap, ...(data.nofap ?? {}) },
@@ -117,7 +161,7 @@ export function migrate(raw: unknown): JournalData {
     entries: data.entries ?? [],
     habits: data.habits ?? [],
     metrics: data.metrics ?? [],
-    workouts: data.workouts ?? [],
+    workouts,
     gratitude: data.gratitude ?? [],
     memories: data.memories ?? [],
     birthdays: data.birthdays ?? [],

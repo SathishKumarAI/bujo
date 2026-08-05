@@ -33,11 +33,11 @@ Signifiers stack: `* t book the campsite #travel`.
 | Trackers | `views/Trackers.tsx` | Habit dot-grid (drag-reorder, rename/remove, 30-day %), today focus strip, presets, emoji + weekly-goal, detail drawer (streak/30-90%/best weekday/skip-day), mood·stress·sleep chart + category radar, and a **visualizations row**: 13-week completion heatmap, streak leaderboard, weekday consistency, monthly trend. |
 | Fitness | `views/Fitness.tsx` | Cardio/general workout log + edit + repeat-last (form **and** history on the right rail), weekly active-minutes goal ring, 8-week trend, active-day streak, **compact 6-tile at-a-glance metrics** (totals + bests, no scroll), auto-pace, and a **nutrition diary** with an American+Indian **food picker** that auto-sums macros (`lib/foods.ts`) plus a sample-day fill. |
 | Gym | `views/Gym.tsx` | Dashboard with the anatomy lookup pinned to the **right rail**. **Quick exercise picker** (searchable). PPL split + next-day suggestion, routines, **structured `setRows`** with **previous-session + live-1RM hints**, **training-volume + per-exercise progression charts**, PRs + 1RM, rest timer, **plate calculator (unit-aware kg/lb)**, body weight, muscle map with **per-exercise form-cue + injury-watch guidance** (`lib/exerciseInfo.ts`), wger DB, the **12-week hypertrophy program tracker** (`ProgramTracker only="hyper12"`), and **progress photos** (dated upload, gallery, first-vs-latest compare). Units honour the kg/lb toggle. |
-| Pull-ups | `views/Pullups.tsx` | Dedicated pull-up hub: the **"Starting From Zero" program tracker** (day-by-day check-off, load-into-session), an **ability/training-set calculator** (max → set, ladder & pyramid), the **ability ladder**, a **workout-format library** (Ladders, Pyramids, EMOMs, Elevators…), and **progression exercises** with why/how form cues. Data in `lib/programs.ts`. |
+| Pull-ups | `views/Pullups.tsx` | Reached from Fitness (Pull-ups is an activity on the select), not a nav entry. Dedicated pull-up reference: the **"Starting From Zero" program tracker** (day-by-day check-off, load-into-session), an **ability/training-set calculator** (max → set, ladder & pyramid), the **ability ladder**, a **workout-format library** (Ladders, Pyramids, EMOMs, Elevators…), and **progression exercises** with why/how form cues. Data in `lib/programs.ts`. |
 | Challenges | `views/Challenges.tsx` | Fixed-length discipline challenges — 75 Hard/Soft, 90-day, 30-day, custom; daily rule check-in, progress ring + week-grouped calendar, current streak, strict reset (miss → Day 1), whole-number progress. |
 | Focus | `views/Focus.tsx` | Developer work tracker — log coding sessions (time/project/focus/stress/interruptions/tags), weekly hours + streak, 14-day minutes chart, language bars, focus↔stress insight. |
 | Stats | `views/Stats.tsx` | Activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, tag cloud. |
-| Plan | `views/Plan.tsx` | Recurring tasks, overdue-task migration flow, .ics calendar import. |
+| Plan | `views/Plan.tsx` | Overdue-task migration flow, chronically-deferred roll-up, recurring rules (with one-tap suggestions), .ics calendar import. |
 | Collections | `views/Collections.tsx` | Future log, birthdays, **Friends/contacts** (manual cards + opt-in GitHub public-profile enrich), and custom free-form collection pages. |
 | Goals | `views/Goals.tsx` | **Cross-view roll-up** of every active target — per-habit weekly goals, fitness active-minutes, challenges, training-program days, abstinence streak — as whole-number progress bars; tap a row to jump to its home view. |
 | Insights | `views/Insights.tsx` | Streaks, completion %, correlation insights, year-in-review, index, search. |
@@ -128,20 +128,27 @@ Signifiers stack: `* t book the campsite #travel`.
 ## Compacting & mobile (appended)
 
 - **Collapsible cards** — the shared `Card` supports `collapsible`/`defaultCollapsed`
-  (header chevron). Default-collapsed: Training penalty, Gym "Today's session"
-  (phones), Stickers, On-this-day, Exercise database; the Completion heatmap is
-  collapsible. Keeps the primary action above the fold on phones.
+  plus optional controlled `open`/`onOpenChange`. Default-collapsed: Training penalty,
+  Gym "Today's session" (phones), Stickers, On-this-day, Exercise database; the
+  Completion heatmap is collapsible. Keeps the primary action above the fold on phones.
+  **The whole header folds it**, not just the caret — the caret stays a real button
+  with `aria-expanded`. One caret rotates rather than two glyphs swapping, and bodies
+  fade in on open. 42 cards and 30 sections, all through two primitives. Full pattern:
+  `docs/COLLAPSE-PATTERN.md`.
 - **Today's plan** (`TodayPlanCard`) — one daily command-centre on Today: habits
   left · workout status · tasks due · pull-up day, plus a 7-day coverage strip;
   summary-and-link (no duplicate UIs). Replaced the separate coverage card.
 - **Penalty difficulty** — Settings → Journal feel sets Beginner (default) /
   Intermediate / Hard; drills scale to a doable level.
-- **5-tab bottom nav** (phones) — Today · Trackers · Fitness · Plan · Pull-ups,
+- **5-tab bottom nav** (phones) — Today · Plan · Fitness · Nutrition · Trackers,
   no FAB (quick-add lives in the top bar). Top bar hides keyboard-only ⌘K + the
   theme toggle on phones to avoid overflow. iOS-style slide-in nav drawer.
 - **Entry-first on phones** — `Page asideFirst` puts the log forms (Fitness,
   Focus) above the charts; charts sink to the bottom on mobile.
-- **Plan migration** — top 5 overdue by default with Show all / Show less.
+- **Plan migration** — top 5 overdue by default with Show all / Show less. The page
+  is a content grid whose second column only exists when "Chronically deferred" does;
+  **Setup** is an always-open full-width footer, and its Recurring card offers eight
+  one-tap rule suggestions instead of an empty text box.
 - **Contextual help** — a `?` per view shows that page's blurb (from the view
   registry) with a link to the full guide.
 

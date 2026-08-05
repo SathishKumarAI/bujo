@@ -21,7 +21,7 @@ export interface Achievement {
 }
 
 const workouts = (d: JournalData) => d.workouts.length
-const homeWorkouts = (d: JournalData) => d.workouts.filter((w) => w.activity === 'Home').length
+const homeWorkouts = (d: JournalData) => d.workouts.filter((w) => w.activity === 'homeWorkout').length
 const moodDays = (d: JournalData) => d.metrics.filter((m) => m.mood != null).length
 const activeHabits = (d: JournalData) => d.habits.filter((h) => !h.archived).length
 const fasts = (d: JournalData) => d.fasts ?? []

@@ -1,20 +1,19 @@
-import { CalendarCheck, Check, Flame, HandFist, Heart, Hourglass, Lifebuoy, Shield, ShieldCheck, Sparkle, Trophy, Warning, X } from '@/components/icons'
+import { Check, Flame, HandFist, Heart, Lifebuoy, Shield, Sparkle, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, useEffect, useRef } from 'react'
 import { useJournal } from '../store'
-import { Page } from '../components/shell/Page'
-import { Card, Empty, Input, Pill, StatTile, Textarea } from '../components/ui'
+import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
-import { prettyDay, todayISO, dayDiff } from '../lib/date'
+import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
+import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import {
-  CollapsibleSection,
   StreakVsBestCard,
   SelfEfficacyCard,
   StreaksSavedCard,
@@ -222,8 +221,11 @@ export function NoFap() {
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
 
   return (
-    <Page>
-      {/* Panic / SOS · floating button + full-screen ride-it-out overlay */}
+    <>
+      {/* Panic / SOS · floating button + full-screen ride-it-out overlay.
+          Outside the zones on purpose: it is a fixed-position lifeline that has
+          to be reachable from anywhere on the page, which is exactly the case
+          the three-zone rule is not about. */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
         style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
@@ -231,10 +233,26 @@ export function NoFap() {
       </button>
       {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
 
-      <div className="space-y-4">
-        {/* ── Streak status · hero ring + lifetime tiles (daily glance) ──────── */}
-        {/* Hero: progress ring to next milestone */}
-        <Card className="glow-mauve">
+      <PageLayout
+        tier={1180}
+        zone1={
+          <StatBar facts={[
+            { label: 'Days clean', value: stats.current },
+            { label: 'Personal best', value: stats.best },
+            {
+              label: 'Next milestone',
+              value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
+            },
+            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean' },
+          ]} />
+        }
+        zone2={<>
+        {/* The hero ring stays: on this page the streak IS the object, and the
+            ring is the only accent-filled thing here — there is no primary
+            button competing with it, because logging an urge and logging a
+            reset are two different commitments and neither outranks the
+            other. */}
+        <Card hideInfo className="glow-mauve">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative grid h-40 w-40 shrink-0 place-items-center">
               <svg width="160" height="160" viewBox="0 0 128 128" className="-rotate-90">
@@ -274,17 +292,9 @@ export function NoFap() {
           </div>
         </Card>
 
-        {/* Lifetime stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile compact label="Current" value={stats.current} color="mauve" icon={<Icon as={Flame} size="sm" />} />
-          <StatTile compact label="Personal best" value={stats.best} color="peach" icon={<Icon as={Trophy} size="sm" />} />
-          <StatTile compact label="Total clean days" value={stats.totalClean} color="green" icon={<Icon as={CalendarCheck} size="sm" />} />
-          <StatTile compact label="Urges resisted" value={stats.urges} color="teal" icon={<Icon as={HandFist} size="sm" />} />
-        </div>
-
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
-        <Card title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes." help="Tap a type (or type your own) then log it. Each win is saved with the day and time, so you can see exactly what you resisted and when · and spot your high-risk hours.">
+        <Card hideInfo title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes.">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {URGE_PRESETS.map((u) => (
               <button key={u} onClick={() => setUrge(u)}
@@ -386,7 +396,7 @@ export function NoFap() {
         </Card>
 
         {/* Log a reset · moved up from the rail · the second primary action */}
-        <Card title="Log a reset" subtitle="Reflect, learn, restart the counter">
+        <Card hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
           <div className="space-y-3">
             <label className="block text-body text-fg-1">
               Reason <span style={{ color: cat('red') }}>*</span>
@@ -402,8 +412,29 @@ export function NoFap() {
           </div>
         </Card>
 
+        </>}
+        zone3={<>
+        {/* Lifetime totals · the record, not the next action. */}
+        <SummaryStrip items={[
+          { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
+          { label: 'Urges resisted', value: stats.urges, empty: stats.urges === 0 },
+          { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
+        ]} />
+
+        {/* SIGNATURE VISUAL · urges resisted against resets, week by week.
+            The brief specified a paired sleep + soreness sparkline here, on the
+            assumption that Recovery meant physical recovery. In this app it is
+            abstinence recovery, and there is no soreness field in the data
+            model at all — so the pairing that would have been invented is
+            replaced by the correlation this page actually exists to reveal:
+            whether resisting urges is holding the resets down. */}
+        <section>
+          <h2 className="mb-2 text-label text-fg-2">Urges resisted vs resets</h2>
+          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
+        </section>
+
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
-        <Card title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets" help="The ring above is your main streak. Add any other addiction here to give it its own independent counter, personal best and reset log — quitting two things at once shouldn't share one streak.">
+        <Card hideInfo title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
             <Button variant="secondary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
@@ -460,16 +491,13 @@ export function NoFap() {
           )}
         </Card>
 
-        {/* ── Setup · set-once contract + if-then plans · default COLLAPSED ──── */}
-        <CollapsibleSection
-          title="Setup"
-          subtitle="Your commitment contract & if-then trigger plans"
-          icon={<Icon as={Heart} size="md" className="text-mauve" />}
-        >
+        {/* ── Setup · set-once contract + if-then plans──── */}
+        <section>
+          <h2 className="border-b border-line pb-1 text-label text-fg-2">Setup <span className="text-fg-3">· Your commitment contract & if-then trigger plans</span></h2>
+          <div className="mt-2 flex flex-col gap-4">
           {/* My commitment (#316) · quit-date contract + personal "why" */}
-          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
+          <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
             subtitle="Your quit-date contract, the reason you’re doing this"
-            help="Set the day you committed and a personal reason in your own words. Seeing your own ‘why’ — and how long you’ve held the line — is one of the strongest defenses against an urge."
             right={hasCommitment && !editingCommit ? <Button variant="secondary" size="sm" onClick={() => setEditingCommit(true)} className="text-label">Edit</Button> : undefined}>
             {hasCommitment && !editingCommit ? (
               <div>
@@ -500,7 +528,7 @@ export function NoFap() {
           </Card>
 
           {/* Trigger plans · if-then for each addiction's trigger points */}
-          <Card title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response" help="Pre-deciding what to do beats willpower in the moment. For each addiction, add a trigger (the situation) and a coping response. When the urge hits, you already have the plan.">
+          <Card hideInfo title="Trigger plans" subtitle="Name each addiction’s trigger point + your if-then response">
             <div className="grid gap-2 rounded-card border border-line bg-ink-0 p-3 sm:grid-cols-2">
               <Input value={plan.addiction} onChange={(e) => setPlan({ ...plan, addiction: e.target.value })} placeholder="Addiction (e.g. Smoking)" list="urge-presets" aria-label="Addiction" />
               <Input value={plan.trigger} onChange={(e) => setPlan({ ...plan, trigger: e.target.value })} placeholder="Trigger point (e.g. after meals)" aria-label="Trigger point" />
@@ -522,15 +550,14 @@ export function NoFap() {
               </ul>
             )}
           </Card>
-        </CollapsibleSection>
+        </div>
+        </section>
 
-        {/* ── Secondary analytics, grouped + collapsible (card-density UX) ──── */}
-        {/* Insights · motivational / progress cards · default COLLAPSED */}
-        <CollapsibleSection
-          title="Insights & progress"
-          subtitle="Streak vs. best, self-efficacy, money & time saved"
-          icon={<Icon as={ShieldCheck} size="md" className="text-green" />}
-        >
+        {/* ── Secondary analytics, grouped + (card-density UX) ──── */}
+        {/* Insights · motivational / progress cards */}
+        <section>
+          <h2 className="border-b border-line pb-1 text-label text-fg-2">Insights & progress <span className="text-fg-3">· Streak vs. best, self-efficacy, money & time saved</span></h2>
+          <div className="mt-2 flex flex-col gap-4">
           <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
           {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
           {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
@@ -539,14 +566,13 @@ export function NoFap() {
           )}
           <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
           {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
-        </CollapsibleSection>
+        </div>
+        </section>
 
-        {/* Deep analytics · trends, distributions, heatmaps, patterns · default COLLAPSED */}
-        <CollapsibleSection
-          title="Deep analytics"
-          subtitle="Trends, intensity, clean windows, high-risk hours & days, urge mix"
-          icon={<Icon as={Hourglass} size="md" className="text-teal" />}
-        >
+        {/* Deep analytics · trends, distributions, heatmaps, patterns */}
+        <section>
+          <h2 className="border-b border-line pb-1 text-label text-fg-2">Deep analytics <span className="text-fg-3">· Trends, intensity, clean windows, high-risk hours & days, urge mix</span></h2>
+          <div className="mt-2 flex flex-col gap-4">
           {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
           {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
           {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
@@ -558,7 +584,7 @@ export function NoFap() {
           )}
           {/* Urges by addiction · moved from the rail (strands on mobile) */}
           {byType.length > 0 && (
-            <Card title="Urges by addiction" subtitle="What you resist most" enlargeable help="Every logged urge counted by type. Tall bars are your battleground habits; a steady count means you're catching and surfing them, not giving in.">
+            <Card hideInfo title="Urges by addiction" subtitle="What you resist most" enlargeable>
               <div className="h-52 w-full" role="img" aria-label={`Bar chart of urges resisted by type: ${byType.map((b) => `${b.count} ${b.type}`).join(', ')}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={byType} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
@@ -574,16 +600,15 @@ export function NoFap() {
               </div>
             </Card>
           )}
-        </CollapsibleSection>
+        </div>
+        </section>
 
-        {/* ── Reference · static guides & history · default COLLAPSED ────────── */}
-        <CollapsibleSection
-          title="Reference"
-          subtitle="Coping techniques, recovery ladder & reset history"
-          icon={<Icon as={Sparkle} size="md" className="text-mauve" />}
-        >
+        {/* ── Reference · static guides & history────────── */}
+        <section>
+          <h2 className="border-b border-line pb-1 text-label text-fg-2">Reference <span className="text-fg-3">· Coping techniques, recovery ladder & reset history</span></h2>
+          <div className="mt-2 flex flex-col gap-4">
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
-          <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min" help="Urges are waves, not commands. They crest and fall whether or not you act. These are evidence-based techniques; pick one and start the clock.">
+          <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>} subtitle="Proven techniques, an urge peaks and passes in ~15–20 min">
             <ol className="space-y-2 text-body text-fg-1">
               <li className="flex gap-2"><span className="font-medium text-teal">Surf it</span> · name it (“this is an urge, it will pass”) and watch it rise and fall without acting.</li>
               <li className="flex gap-2"><span className="font-medium text-teal">Delay 10 min</span> · set a timer; move, cold water, walk, push-ups. The peak passes.</li>
@@ -602,15 +627,26 @@ export function NoFap() {
           </Card>
 
           {/* Benefits ladder */}
-          <Card title="Recovery ladder" subtitle="What clears as the streak grows" help="A motivational timeline of what typically improves at each milestone. Reached rungs are lit; the next is highlighted.">
+          <Card hideInfo title="Recovery ladder" subtitle="What clears as the streak grows">
             <ol className="relative ml-3 space-y-3 border-l border-line-strong pl-5">
               {STREAK_MILESTONES.map((m) => {
                 const reached = stats.current >= m.day
                 const isNext = nextBenefit?.day === m.day
                 return (
                   <li key={m.day} className="relative">
+                    {/* `crust` is the light-on-dark half of a saturated fill.
+                        On the neutral `surface0` chip of an unreached
+                        milestone it was dark-on-dark and failed contrast — the
+                        day numbers you are counting towards, unreadable. Third
+                        instance of this exact pairing in the cluster, so it is
+                        a pattern rather than a slip: a foreground chosen for
+                        one background and then applied to all three. */}
                     <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-pill text-micro"
-                      style={{ background: reached ? cat('green') : isNext ? cat('teal') : cat('surface0'), color: cat('crust') }}>
+                      style={
+                        reached ? { background: cat('green'), color: cat('crust') }
+                          : isNext ? { background: cat('teal'), color: cat('crust') }
+                            : { background: cat('surface0'), color: cat('text') }
+                      }>
                       {reached ? <Icon as={Check} size="sm" /> : m.day}
                     </span>
                     <div className="flex items-baseline gap-2">
@@ -626,7 +662,7 @@ export function NoFap() {
           </Card>
 
           {/* Relapse log */}
-          <Card title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'} collapsible defaultCollapsed={s.relapses.length > 4}>
+          <Card hideInfo title="Reset history" subtitle={s.relapses.length ? `${s.relapses.length} reset${s.relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}>
             {s.relapses.length === 0 ? (
               <Empty>No resets logged. Keep going.</Empty>
             ) : (
@@ -641,8 +677,66 @@ export function NoFap() {
               </ul>
             )}
           </Card>
-        </CollapsibleSection>
+        </div>
+        </section>
+        </>}
+      />
+    </>
+  )
+}
+
+/**
+ * Two series over the same eight weeks: urges resisted (bars) and resets
+ * (marks). Paired rather than stacked, because the question is whether one
+ * moves against the other — a stack would hide exactly the comparison.
+ *
+ * Neutral fill for urges, and the reset marks carry the only colour, because
+ * they are the thing you are looking for.
+ */
+function PairedSparkline({ weeks, relapses }: {
+  weeks: { weekStart: string; count: number }[]
+  relapses: { date: string }[]
+}) {
+  const max = Math.max(1, ...weeks.map((w) => w.count))
+  const resetsIn = (weekStart: string) => {
+    const end = addDays(weekStart, 6)
+    return relapses.filter((r) => r.date >= weekStart && r.date <= end).length
+  }
+  return (
+    <div>
+      {/* The frame draws at zero data — an empty axis says "this is where the
+          comparison goes", where a hidden chart says nothing at all. */}
+      <div className="flex h-24 items-end gap-1.5 border-b border-line" role="img" aria-label={
+        weeks.length === 0
+          ? 'Urges and resets by week: nothing logged yet'
+          : `Urges resisted and resets over ${weeks.length} weeks: ${weeks.map((w) => `week of ${prettyDay(w.weekStart)}, ${w.count} urges, ${resetsIn(w.weekStart)} resets`).join('; ')}`
+      }>
+        {weeks.map((w) => {
+          const resets = resetsIn(w.weekStart)
+          return (
+            <div key={w.weekStart} className="relative flex flex-1 flex-col justify-end" title={`Week of ${prettyDay(w.weekStart)}: ${w.count} urges resisted, ${resets} reset${resets === 1 ? '' : 's'}`}>
+              {resets > 0 && (
+                <span className="mx-auto mb-0.5 block h-1.5 w-1.5 rounded-pill" style={{ background: cat('red') }} />
+              )}
+              {/* A zero week draws a visible stub, not a 2%-of-96px hairline.
+                  At `Math.max(2, …)` an empty chart rendered ~2px of `ink-3`
+                  under a baseline and read as a chart that had failed to draw
+                  — the frame was there and said nothing. The stub is the
+                  lighter inset tier so a real one-urge week still reads as
+                  taller and darker than "no urges". */}
+              <div
+                className={`rounded-t ${w.count > 0 ? 'bg-ink-3' : 'bg-ink-2'}`}
+                style={{ height: w.count > 0 ? `${Math.max(6, (w.count / max) * 100)}%` : '6px' }}
+              />
+            </div>
+          )
+        })}
       </div>
-    </Page>
+      <p className="mt-1 text-micro text-fg-2">
+        {weeks.every((w) => w.count === 0)
+          ? 'No urges logged yet · each column is a week, and bars grow as you log them'
+          : 'Bars are urges resisted per week · a dot marks a week with a reset'}
+      </p>
+    </div>
   )
 }

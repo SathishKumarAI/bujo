@@ -81,12 +81,12 @@ function PullupWorkoutsCard() {
           const isOpen = open === w.name
           return (
             <li key={w.name} className="border-t border-line first:border-t-0">
-              <button onClick={() => setOpen(isOpen ? null : w.name)} className="flex w-full items-center justify-between py-1.5 text-left text-body">
+              <button onClick={() => setOpen(isOpen ? null : w.name)} aria-expanded={isOpen} className="flex w-full items-center justify-between py-1.5 text-left text-body">
                 <span className={isOpen ? 'text-fg-1' : 'text-fg-1'}>{w.name}</span>
-                <span className="text-micro text-fg-2">{isOpen ? '▾' : '▸'}</span>
+                <span className="caret-turn caret-turn-quarter inline-block text-micro text-fg-2" data-open={isOpen}>▸</span>
               </button>
               {isOpen && (
-                <div className="pb-2 text-label text-fg-2">
+                <div className="collapse-in pb-2 text-label text-fg-2">
                   <p className="text-fg-2">{w.profile}</p>
                   <p className="mt-1">{w.how}</p>
                   <p className="mt-1"><span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}</p>

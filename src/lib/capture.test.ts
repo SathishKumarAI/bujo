@@ -71,7 +71,7 @@ describe('parseCapture — gym sets', () => {
 describe('parseCapture — cardio', () => {
   it('ran 5k 28min → Run with distance + duration', () => {
     const r = parseCapture('ran 5k 28min', ctx)
-    expect(r).toMatchObject({ kind: 'cardio', activity: 'Run', distanceKm: 5, durationMin: 28 })
+    expect(r).toMatchObject({ kind: 'cardio', activity: 'run', distanceKm: 5, durationMin: 28 })
   })
   it('converts miles to km', () => {
     const r = parseCapture('ran 3mi', ctx)
@@ -80,7 +80,7 @@ describe('parseCapture — cardio', () => {
   })
   it('walk 1h 30min → 90 minutes', () => {
     const r = parseCapture('walk 1h 30min', ctx)
-    expect(r).toMatchObject({ kind: 'cardio', activity: 'Walk', durationMin: 90 })
+    expect(r).toMatchObject({ kind: 'cardio', activity: 'walk', durationMin: 90 })
   })
   it('bare activity word still matches, lower confidence', () => {
     const r = parseCapture('cycled today', ctx)
@@ -172,7 +172,7 @@ describe('parseCapture — dictated (voice) input', () => {
     expect(parseCapture('squat hundred by five rpe eight', ctx)).toMatchObject({ kind: 'gym', weight: 100, reps: 5, rpe: 8 })
   })
   it('"ran five k" → cardio 5km', () => {
-    expect(parseCapture('ran five k', ctx)).toMatchObject({ kind: 'cardio', activity: 'Run', distanceKm: 5 })
+    expect(parseCapture('ran five k', ctx)).toMatchObject({ kind: 'cardio', activity: 'run', distanceKm: 5 })
   })
   it('"mood seven" → metric mood 7', () => {
     expect(parseCapture('mood seven', ctx)).toMatchObject({ kind: 'metric', mood: 7 })

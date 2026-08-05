@@ -165,7 +165,7 @@ describe('completionsToICS', () => {
 
   it('emits an event for each logged workout with its duration', () => {
     const d = emptyJournal()
-    d.workouts = [{ id: 'wk', date: '2026-06-12', activity: 'Run', durationMin: 30, sets: [], notes: '' }]
+    d.workouts = [{ id: 'wk', date: '2026-06-12', activity: 'run', durationMin: 30, sets: [], notes: '' }]
     const ics = completionsToICS(d)
     expect(ics).toContain('DTSTART;VALUE=DATE:20260612')
     expect(ics).toContain('SUMMARY:✓ Run (30m)')

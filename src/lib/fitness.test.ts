@@ -5,7 +5,7 @@ import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
 const workout = (p: Partial<Workout>): Workout => ({
-  id: p.id ?? 'w1', date: p.date ?? '2026-06-10', activity: 'session',
+  id: p.id ?? 'w1', date: p.date ?? '2026-06-10', activity: 'strength',
   sets: p.sets ?? [], notes: '', ...p,
 })
 
@@ -85,17 +85,17 @@ describe('fitness v2 helpers', () => {
   it('sums weekly active minutes within the window', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'Run', durationMin: 30, sets: [], notes: '' },
-      { id: '2', date: '2026-06-09', activity: 'Run', durationMin: 20, sets: [], notes: '' },
-      { id: '3', date: '2026-06-01', activity: 'Run', durationMin: 99, sets: [], notes: '' },
+      { id: '1', date: '2026-06-11', activity: 'run', durationMin: 30, sets: [], notes: '' },
+      { id: '2', date: '2026-06-09', activity: 'run', durationMin: 20, sets: [], notes: '' },
+      { id: '3', date: '2026-06-01', activity: 'run', durationMin: 99, sets: [], notes: '' },
     ]
     expect(weeklyActiveMinutes(d, '2026-06-11')).toBe(50)
   })
   it('counts active-day streak and all-time PBs', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'Run', durationMin: 30, distanceKm: 8, calories: 400, sets: [], notes: '' },
-      { id: '2', date: '2026-06-10', activity: 'Run', durationMin: 20, distanceKm: 5, calories: 250, sets: [], notes: '' },
+      { id: '1', date: '2026-06-11', activity: 'run', durationMin: 30, distanceKm: 8, calories: 400, sets: [], notes: '' },
+      { id: '2', date: '2026-06-10', activity: 'run', durationMin: 20, distanceKm: 5, calories: 250, sets: [], notes: '' },
     ]
     expect(activeDayStreak(d, '2026-06-11')).toBe(2)
     expect(cardioPBs(d)).toEqual({ longestKm: 8, mostCalories: 400, mostMinutes: 30 })
@@ -112,8 +112,8 @@ describe('fitness v2 helpers', () => {
   it('finds the last set + computes volume + progression', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-01', activity: 'Push day', sets: [], setRows: [{ exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }], notes: '' },
-      { id: '2', date: '2026-06-08', activity: 'Push day', sets: [], setRows: [{ exercise: 'Bench Press', weight: 65, reps: 5 }, { exercise: 'Bench Press', weight: 40, reps: 10, kind: 'warmup' }], notes: '' },
+      { id: '1', date: '2026-06-01', activity: 'push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }], notes: '' },
+      { id: '2', date: '2026-06-08', activity: 'push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 65, reps: 5 }, { exercise: 'Bench Press', weight: 40, reps: 10, kind: 'warmup' }], notes: '' },
     ]
     expect(lastSetFor(d, 'bench press')).toEqual({ weight: 65, reps: 5, date: '2026-06-08' })
     expect(sessionVolume(d.workouts[1].setRows!)).toBe(325) // 65*5; warmup excluded
@@ -124,7 +124,7 @@ describe('fitness v2 helpers', () => {
     // Same day: heaviest is the FIRST working set (80), but the last logged
     // working set is the back-off at 70. "Repeat last" must return 70, not 80.
     d.workouts = [
-      { id: '1', date: '2026-06-08', activity: 'Push day', sets: [], setRows: [
+      { id: '1', date: '2026-06-08', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 80, reps: 3, kind: 'working' },
         { exercise: 'Bench Press', weight: 70, reps: 8, kind: 'working' },
       ], notes: '' },
@@ -134,7 +134,7 @@ describe('fitness v2 helpers', () => {
   it('lastSetFor falls back to the last matching legacy string (BUJO-211)', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-08', activity: 'Push day', sets: [
+      { id: '1', date: '2026-06-08', activity: 'push', sets: [
         'Bench Press 1x5 @ 80kg', 'Bench Press 1x8 @ 70kg',
       ], notes: '' },
     ]
@@ -147,8 +147,8 @@ describe('lastSetFor — ghost prefill (F1)', () => {
   const d = (): JournalData => {
     const j = emptyJournal()
     j.workouts = [
-      { id: '1', date: '2026-06-01', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }], notes: '' },
-      { id: '2', date: '2026-06-08', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' }], notes: '' },
+      { id: '1', date: '2026-06-01', activity: 'push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }], notes: '' },
+      { id: '2', date: '2026-06-08', activity: 'push', sets: [], setRows: [{ exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' }], notes: '' },
     ]
     return j
   }
@@ -169,7 +169,7 @@ describe('isNewPR (F2)', () => {
   const withBench = (weight: number, reps: number): JournalData => {
     const j = emptyJournal()
     // personalRecords() reads legacy `sets` strings, so seed the record that way.
-    j.workouts = [{ id: '1', date: '2026-06-01', activity: 'Push', sets: [`Bench Press 1x${reps} @ ${weight}kg`], notes: '' }]
+    j.workouts = [{ id: '1', date: '2026-06-01', activity: 'push', sets: [`Bench Press 1x${reps} @ ${weight}kg`], notes: '' }]
     return j
   }
   it('counts the first-ever set for an exercise as a PR', () => {
@@ -321,7 +321,7 @@ describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
   it('counts a working set toward every muscle its exercise trains', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+      { id: '1', date: '2026-06-11', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // 4,2,5
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
         { exercise: 'Bench Press', weight: 40, reps: 10, kind: 'warmup' }, // excluded
@@ -336,12 +336,12 @@ describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
   it('only counts sets inside the window and sorts by count desc', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'Pull', sets: [], setRows: [
+      { id: '1', date: '2026-06-11', activity: 'pull', sets: [], setRows: [
         { exercise: 'Bicep Curl', weight: 15, reps: 10 }, // 1,13
         { exercise: 'Bicep Curl', weight: 15, reps: 10 },
         { exercise: 'Pull-up', weight: 0, reps: 8 }, // 12,1,9
       ], notes: '' },
-      { id: '2', date: '2026-06-01', activity: 'old', sets: [], setRows: [
+      { id: '2', date: '2026-06-01', activity: 'strength', sets: [], setRows: [
         { exercise: 'Squat', weight: 100, reps: 5 }, // outside 7-day window
       ], notes: '' },
     ]
@@ -353,7 +353,7 @@ describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
   })
   it('falls back to legacy set strings when there are no structured rows', () => {
     const d = emptyJournal()
-    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'Push', sets: ['Bench Press 5x5 @ 60kg'], notes: '' }]
+    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'push', sets: ['Bench Press 5x5 @ 60kg'], notes: '' }]
     const counts = weeklySetsPerMuscle(d, '2026-06-11')
     expect(counts.find((c) => c.muscle === 4)?.sets).toBe(1)
   })
@@ -363,11 +363,11 @@ describe('e1rmProgression (#101 estimated-1RM trend)', () => {
   it('plots the best estimated 1RM per day, ascending, crediting rep PRs', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-08', activity: 'Push', sets: [], setRows: [
+      { id: '1', date: '2026-06-08', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // e1RM 70
         { exercise: 'Bench Press', weight: 70, reps: 1, kind: 'working' }, // e1RM 70 (tie)
       ], notes: '' },
-      { id: '2', date: '2026-06-01', activity: 'Push', sets: [], setRows: [
+      { id: '2', date: '2026-06-01', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' }, // e1RM 75.5
         { exercise: 'Bench Press', weight: 50, reps: 5, kind: 'warmup' }, // excluded
       ], notes: '' },
@@ -387,8 +387,8 @@ describe('trainingHeatmap (#162 workout calendar)', () => {
   it('emits one contiguous cell per day, today last, with relative intensity levels', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench', weight: 100, reps: 5 }], notes: '' }, // vol 500 (peak)
-      { id: '2', date: '2026-06-09', activity: 'Push', sets: [], setRows: [{ exercise: 'Bench', weight: 25, reps: 5 }], notes: '' }, // vol 125
+      { id: '1', date: '2026-06-11', activity: 'push', sets: [], setRows: [{ exercise: 'Bench', weight: 100, reps: 5 }], notes: '' }, // vol 500 (peak)
+      { id: '2', date: '2026-06-09', activity: 'push', sets: [], setRows: [{ exercise: 'Bench', weight: 25, reps: 5 }], notes: '' }, // vol 125
     ]
     const cells = trainingHeatmap(d, '2026-06-11', 5)
     expect(cells).toHaveLength(5)
@@ -412,8 +412,8 @@ describe('cardioBadges (#251 PB badges with date earned)', () => {
   it('pairs each cardio best with the earliest date it was reached', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-01', activity: 'Run', distanceKm: 10, durationMin: 50, calories: 400, sets: [], notes: '' },
-      { id: '2', date: '2026-06-08', activity: 'Run', distanceKm: 10, durationMin: 60, calories: 300, sets: [], notes: '' }, // ties distance later, beats minutes
+      { id: '1', date: '2026-06-01', activity: 'run', distanceKm: 10, durationMin: 50, calories: 400, sets: [], notes: '' },
+      { id: '2', date: '2026-06-08', activity: 'run', distanceKm: 10, durationMin: 60, calories: 300, sets: [], notes: '' }, // ties distance later, beats minutes
     ]
     const badges = cardioBadges(d)
     const dist = badges.find((b) => b.key === 'longestKm')!
@@ -496,7 +496,7 @@ describe('neglectedMuscles (#297 alert)', () => {
   it('flags library muscles with no working sets in the window', () => {
     const d = emptyJournal()
     // Only a push session this week → pull/leg muscles are neglected.
-    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'push', sets: [], setRows: [
       { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // 4,2,5
     ], notes: '' }]
     const neglected = neglectedMuscles(d, '2026-06-11', 10).map((n) => n.muscle)
@@ -509,10 +509,10 @@ describe('neglectedMuscles (#297 alert)', () => {
   it('excludes warm-up-only work and reports daysSince for prior training', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-04', activity: 'Pull', sets: [], setRows: [
+      { id: '1', date: '2026-06-04', activity: 'pull', sets: [], setRows: [
         { exercise: 'Barbell Row', weight: 60, reps: 5, kind: 'working' }, // 12,9,1
       ], notes: '' },
-      { id: '2', date: '2026-06-11', activity: 'Push', sets: [], setRows: [
+      { id: '2', date: '2026-06-11', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
       ], notes: '' },
     ]
@@ -529,7 +529,7 @@ describe('neglectedMuscles (#297 alert)', () => {
 
 describe('stalledLifts (#479 plateau detector)', () => {
   const rowDay = (date: string, weight: number): Workout => ({
-    id: date, date, activity: 'Push', sets: [],
+    id: date, date, activity: 'push', sets: [],
     setRows: [{ exercise: 'Bench Press', weight, reps: 5, kind: 'working' }], notes: '',
   })
   it('flags a lift with no new top weight across the last N sessions', () => {
@@ -557,7 +557,7 @@ describe('stalledLifts (#479 plateau detector)', () => {
 
 describe('repPRs (#426 rep records)', () => {
   const benchDay = (date: string, weight: number, reps: number): Workout => ({
-    id: date, date, activity: 'Push', sets: [],
+    id: date, date, activity: 'push', sets: [],
     setRows: [{ exercise: 'Bench Press', weight, reps, kind: 'working' }], notes: '',
   })
   it('keeps the most reps at each weight', () => {
@@ -581,7 +581,7 @@ describe('repPRs (#426 rep records)', () => {
   it('excludes warm-ups and parses legacy strings', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: 'w', date: '2026-06-02', activity: 'Push', sets: [], setRows: [
+      { id: 'w', date: '2026-06-02', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 40, reps: 20, kind: 'warmup' }, // ignored
         { exercise: 'Bench Press', weight: 70, reps: 6, kind: 'working' },
       ], notes: '' },
@@ -604,7 +604,7 @@ describe('volumeByCategory (#419 movement radar)', () => {
     ({ exercise, weight, reps, kind })
   it('attributes working volume to push/pull/legs/core in fixed order', () => {
     const d = emptyJournal()
-    d.workouts = [{ id: '1', date: '2026-06-20', activity: 'Full', sets: [], setRows: [
+    d.workouts = [{ id: '1', date: '2026-06-20', activity: 'strength', sets: [], setRows: [
       set('Bench Press', 60, 5), // Push: 300
       set('Pull-up', 80, 5),     // Pull: 400
       set('Plank', 0, 30),       // Core: 0 volume (no weight) → ignored
@@ -619,7 +619,7 @@ describe('volumeByCategory (#419 movement radar)', () => {
   })
   it('counts a multi-category lift (deadlift) toward both pull and legs', () => {
     const d = emptyJournal()
-    d.workouts = [{ id: '1', date: '2026-06-21', activity: 'Pull', sets: [], setRows: [
+    d.workouts = [{ id: '1', date: '2026-06-21', activity: 'pull', sets: [], setRows: [
       set('Deadlift', 100, 5), // 500 volume, hits hams/glutes (legs) + lats/traps (pull)
     ], notes: '' }]
     const v = volumeByCategory(d, '2026-06-22', 7)
@@ -629,8 +629,8 @@ describe('volumeByCategory (#419 movement radar)', () => {
   it('ignores sets outside the window and warm-ups', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: 'old', date: '2026-06-01', activity: 'Push', sets: [], setRows: [set('Bench Press', 60, 5)], notes: '' },
-      { id: 'warm', date: '2026-06-21', activity: 'Push', sets: [], setRows: [set('Bench Press', 60, 5, 'warmup')], notes: '' },
+      { id: 'old', date: '2026-06-01', activity: 'push', sets: [], setRows: [set('Bench Press', 60, 5)], notes: '' },
+      { id: 'warm', date: '2026-06-21', activity: 'push', sets: [], setRows: [set('Bench Press', 60, 5, 'warmup')], notes: '' },
     ]
     expect(volumeByCategory(d, '2026-06-22', 7).every((c) => c.volume === 0)).toBe(true)
   })
@@ -646,10 +646,10 @@ describe('muscleRecovery / recoveryState (#467)', () => {
   it('reports days since each muscle was last trained, freshest first', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: 'chest', date: '2026-06-22', activity: 'Push', sets: [], setRows: [
+      { id: 'chest', date: '2026-06-22', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' }, // chest 4,2,5
       ], notes: '' },
-      { id: 'back', date: '2026-06-19', activity: 'Pull', sets: [], setRows: [
+      { id: 'back', date: '2026-06-19', activity: 'pull', sets: [], setRows: [
         { exercise: 'Barbell Row', weight: 60, reps: 5, kind: 'working' }, // lats 12 etc.
       ], notes: '' },
     ]
@@ -672,12 +672,12 @@ describe('exerciseFrequency / trainRestRatio (#102 / #474)', () => {
   it('counts distinct training days and working sets per exercise', () => {
     const d = emptyJournal()
     d.workouts = [
-      { id: '1', date: '2026-06-20', activity: 'Push', sets: [], setRows: [
+      { id: '1', date: '2026-06-20', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
         { exercise: 'Bench Press', weight: 60, reps: 5, kind: 'working' },
         { exercise: 'Squat', weight: 80, reps: 5, kind: 'warmup' }, // warm-up excluded
       ], notes: '' },
-      { id: '2', date: '2026-06-22', activity: 'Push', sets: [], setRows: [
+      { id: '2', date: '2026-06-22', activity: 'push', sets: [], setRows: [
         { exercise: 'Bench Press', weight: 65, reps: 5, kind: 'working' },
       ], notes: '' },
     ]
