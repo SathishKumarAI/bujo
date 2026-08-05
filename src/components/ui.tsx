@@ -314,47 +314,14 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 /** A 0–10 slider with a colored value chip. */
-export function Slider({
-  label,
-  value,
-  onChange,
-  color = 'mauve',
-  hint,
-}: {
-  label: string
-  value: number | undefined
-  onChange: (v: number) => void
-  color?: string
-  hint?: string
-}) {
-  // Unset is not zero. With `value ?? 0` the handle parks at the far left,
-  // which is exactly where a real 0 sits — so "not rated yet" and "rated 0"
-  // rendered identically while the readout said "–". An unrated slider now
-  // dims its track and sits at the midpoint: clearly untouched, and one drag
-  // from any value rather than biased toward the bottom of the scale.
-  const unset = value == null
-  return (
-    <label className="block">
-      <div className="mb-1 flex items-center justify-between text-body">
-        <span className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono" style={{ color: unset ? undefined : cat(color) }}>
-          {value ?? 'not set'}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={10}
-        value={value ?? 5}
-        aria-valuetext={unset ? 'Not set' : undefined}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`w-full ${unset ? 'opacity-40' : ''}`}
-        style={{ accentColor: cat(color) }}
-      />
-      {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}
-    </label>
-  )
-}
+/*
+ * `Slider` lived here. It is gone, replaced everywhere by
+ * `components/fields/SegmentScale` — a range input cannot represent "not
+ * answered", and every rating field in this app is unanswered most of the
+ * time. The mitigation (park unset at the midpoint, dim the track) traded a
+ * wrong reading for a confusing one; eleven dots and a `—` do not have the
+ * problem at all.
+ */
 
 /**
  * PILL · the small rounded label that says "this thing has a state".
@@ -488,10 +455,19 @@ export function Segmented<T extends string | number>({
   onChange,
   options,
   tone = 'accent',
+  size = 'default',
 }: {
   value: T
   onChange: (v: T) => void
   options: { value: T; label: ReactNode }[]
+  /**
+   * `touch` raises each segment to a 44px target (WCAG 2.5.5). Opt-in rather
+   * than the default because ~30 call sites are desktop-dense surfaces where a
+   * 44px row would be the tallest thing in a stat header — but any segmented
+   * control that is a *primary* control on a phone should ask for it. The Today
+   * surface switcher is the first.
+   */
+  size?: 'default' | 'touch'
   /**
    * `accent` — the wash-filled active segment, everywhere outside the Body
    * cluster. `neutral` — a plain raised fill, for the page-contract StatBar,
@@ -541,6 +517,7 @@ export function Segmented<T extends string | number>({
             style={selected && !neutral ? { color: 'var(--brand-text)' } : undefined}
             className={cn(
               'h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium',
+              size === 'touch' && 'min-h-11 px-4',
               neutral ? 'data-[state=on]:bg-ink-3 data-[state=on]:text-fg-1' : 'data-[state=on]:bg-brand-wash',
             )}
           >

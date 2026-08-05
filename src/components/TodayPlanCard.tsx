@@ -62,7 +62,7 @@ export function TodayPlanCard() {
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
 
   return (
-    <Card title="Today’s plan" subtitle="Your whole day at a glance, tap to jump in" right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
+    <Card title="Today’s plan" hideInfo right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive

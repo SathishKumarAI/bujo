@@ -203,6 +203,23 @@ export function Settings() {
 
         <TabsContent value="feel" className="max-w-2xl">
       <Card title="Journal feel" subtitle="Make it look & behave like real paper">
+        {/* Two information architectures, both maintained. Not a migration and
+            not an experiment — some people want every destination in the rail
+            and the whole day on one page, and that is a legitimate way to run a
+            journal. See `Settings.layout` in lib/types.ts. */}
+        <div className="mb-3 border-b border-line pb-3">
+          <p className="mb-2 text-body text-fg-1">Layout</p>
+          <Segmented
+            value={s.layout ?? 'focused'}
+            onChange={(v) => setSettings({ layout: v })}
+            options={[{ value: 'focused', label: 'Focused' }, { value: 'classic', label: 'Classic' }]}
+          />
+          <p className="mt-1 text-label text-fg-2">
+            <b className="font-medium text-fg-1">Focused</b> · five sections in the sidebar, the rest as tabs, and
+            Today split into Morning / Day / Evening. <b className="font-medium text-fg-1">Classic</b> · every
+            destination in the sidebar and the whole day on one page.
+          </p>
+        </div>
         <div className="mb-3 border-b border-line pb-3">
           <p className="mb-2 text-body text-fg-1">Theme</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -251,12 +268,12 @@ export function Settings() {
               options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Inter' }, { value: 'hard', label: 'Hard' }]}
             />
           </Row>
-          <p className="mt-1 text-label text-fg-2">Scales the training-penalty drills to a doable level.</p>
+          <p className="mt-1 text-label text-fg-2">Scales the make-up drills to a doable level.</p>
         </div>
         <div className="mt-3 border-t border-line pt-3">
           <p className="mb-2 text-body text-fg-1">Today dashboard cards</p>
           <div className="space-y-2">
-            {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Training penalty'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
+            {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Make-up work'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
               const hidden = s.hideToday ?? []
               return (
                 <Toggle

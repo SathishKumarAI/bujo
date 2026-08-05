@@ -13,6 +13,7 @@ import { useJournal } from '../../store'
 import { useCursor } from './cursor'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 import { addDays, prettyDay, prettyMonth, ymOf } from '../../lib/date'
+import { hrefFor } from '../../lib/deepLink'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { DateJumpPicker } from './DateJumpPicker'
 import { useState } from 'react'
@@ -76,7 +77,9 @@ export function TopBar({
           says where you are, which the title alone cannot. Views with no nav
           entry (the Body companions) keep their subtitle. */}
       <div className="min-w-0">
-        {section ? (
+        {/* `Today / Today` is not a trail, it is the same word twice: a
+            single-tab section is its own page, so it gets no crumb. */}
+        {section && section !== chrome.title ? (
           <p className="truncate text-micro text-fg-2">
             {section} <span aria-hidden>/</span> <span className="text-fg-1">{chrome.title}</span>
           </p>
@@ -87,13 +90,32 @@ export function TopBar({
 
       {chrome.dateNav && (
         <div className="relative ml-2 flex items-center gap-1">
+          {/* Real anchors on day views, so ⌘-click and middle-click open a day
+              in a new tab — the thing a date you can link to is for. Month
+              views have no addressable URL of their own yet, so they stay
+              buttons rather than pretending to be links. */}
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label="Previous"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, -1)) : setMonth(shiftMonth(month, -1)))}
+            {...(chrome.dateNav === 'day'
+              ? { asChild: true }
+              : { onClick: () => setMonth(shiftMonth(month, -1)) })}
           >
-            <Icon as={CaretLeft} size="md" />
+            {chrome.dateNav === 'day' ? (
+              <a
+                href={hrefFor(view, addDays(day, -1))}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+                  e.preventDefault()
+                  setDay(addDays(day, -1))
+                }}
+              >
+                <Icon as={CaretLeft} size="md" />
+              </a>
+            ) : (
+              <Icon as={CaretLeft} size="md" />
+            )}
           </Button>
           <Button
             variant="secondary"
@@ -109,9 +131,24 @@ export function TopBar({
             variant="ghost"
             size="icon-sm"
             aria-label="Next"
-            onClick={() => (chrome.dateNav === 'day' ? setDay(addDays(day, 1)) : setMonth(shiftMonth(month, 1)))}
+            {...(chrome.dateNav === 'day'
+              ? { asChild: true }
+              : { onClick: () => setMonth(shiftMonth(month, 1)) })}
           >
-            <Icon as={CaretRight} size="md" />
+            {chrome.dateNav === 'day' ? (
+              <a
+                href={hrefFor(view, addDays(day, 1))}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+                  e.preventDefault()
+                  setDay(addDays(day, 1))
+                }}
+              >
+                <Icon as={CaretRight} size="md" />
+              </a>
+            ) : (
+              <Icon as={CaretRight} size="md" />
+            )}
           </Button>
           {pickerOpen && (
             <DateJumpPicker
