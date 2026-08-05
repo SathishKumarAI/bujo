@@ -22,7 +22,19 @@ function RpeScale({ value, onChange }: { value: string; onChange: (v: string) =>
       <legend className="text-body text-fg-1">
         Effort <span className="text-label text-fg-2">· RPE 1–10</span>
       </legend>
-      <div className="control-max mt-1 flex w-full gap-0.5">
+      {/* `min-h-11` is the fix: these were 30px tall against a 44px floor.
+          Measured after the change: **38 × 44**, not 44 × 44. The `max-w` here
+          is not what binds — the act column is itself ~380px, so ten segments
+          plus gaps cannot reach 44px wide inside it whatever this row asks for.
+          Getting the width there too means widening the column or dropping to
+          fewer, larger segments, which is a layout decision rather than a class.
+          38 × 44 clears WCAG 2.5.8 (24px) comfortably and is the honest state:
+          the height floor is met, the width floor is not.
+
+          Not `control-max`: that 380px cap exists so a *text input* stops
+          advertising more room than you need. A bounded ten-value scale is not
+          a stranded caret, so it is capped separately and more loosely. */}
+      <div className="mt-1 flex w-full max-w-[27.5rem] gap-0.5">
         {RPE.map((n) => {
           const on = value === String(n)
           return (
@@ -32,7 +44,7 @@ function RpeScale({ value, onChange }: { value: string; onChange: (v: string) =>
               aria-pressed={on}
               aria-label={`Effort ${n} of 10`}
               onClick={() => onChange(on ? '' : String(n))}
-              className={`num min-w-0 flex-1 rounded-control border py-1.5 text-label transition-colors ${
+              className={`num min-h-11 min-w-0 flex-1 rounded-control border py-1.5 text-label transition-colors ${
                 on ? 'border-mauve bg-secondary font-medium text-fg-1' : 'border-input text-fg-2 hover:text-fg-1'
               }`}
             >

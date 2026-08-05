@@ -242,8 +242,9 @@ export function NoFap() {
             {
               label: 'Next milestone',
               value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
+              prose: true,
             },
-            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean' },
+            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean', prose: true },
           ]} />
         }
         zone2={<>

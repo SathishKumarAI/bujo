@@ -6,6 +6,20 @@ export interface StatFact {
   value: ReactNode
   /** Optional destination — a fact you can act on becomes a button. */
   onClick?: () => void
+  /**
+   * This fact is a sentence, not a figure — render it in the body face.
+   *
+   * `.num` sets the mono family and tabular figures, which is right for
+   * "203 / 150 min" and wrong for "Whenever the court is free" or "Target met —
+   * anything you like". It was applied to every fact unconditionally, so a third
+   * of zone 1 read as a different application: mono is the app's signature on
+   * *numerals*, and spending it on prose spends it on nothing.
+   *
+   * Declared rather than sniffed. A heuristic over the rendered string would
+   * have to decide what "Walk · Tue, Jul 28" is, and the call site already
+   * knows.
+   */
+  prose?: boolean
 }
 
 /**
@@ -58,7 +72,7 @@ function Fact({ fact, first }: { fact: StatFact; first: boolean }) {
   const body = (
     <>
       <span className="block truncate text-micro text-fg-2">{fact.label}</span>
-      <span className="num block truncate text-body font-medium text-fg-1">{fact.value}</span>
+      <span className={`block truncate text-body font-medium text-fg-1 ${fact.prose ? '' : 'num'}`}>{fact.value}</span>
     </>
   )
   // The divider is a left border on every fact but the first, so the bar never

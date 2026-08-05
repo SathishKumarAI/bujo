@@ -117,10 +117,14 @@ export function Fitness() {
     strength: `${split.label} day`,
     sport: 'Whenever the court is free',
   }
+  // `prose` on the two facts that are sentences. Zone 1 rendered every value in
+  // the mono face, so "Whenever the court is free" and "Target met — anything
+  // you like" came out in the typewriter — mono is this app's signature on
+  // numerals, and spending it on prose spends it on nothing.
   const facts = [
     { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
-    { label: 'Next up', value: NEXT[mode] },
-    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet' },
+    { label: 'Next up', value: NEXT[mode], prose: true },
+    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
   ]
 
   // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────

@@ -177,7 +177,13 @@ export function Reading() {
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Books finished" value={wrapped.count} color="green" />
-            <StatTile label="Pages read" value={wrapped.pages.toLocaleString()} color="peach" />
+            {/* "Pages finished", not "Pages read" — the strip at the top of this
+                page already says "Pages read" and means something else: it is
+                `pagesRead`, all-time, counting how far into the current book you
+                are. This one counts finished books only, this year. Both were
+                right and both were labelled the same, so the page showed 440 and
+                320 under one name and cost more trust than either number gave. */}
+            <StatTile label="Pages finished" value={wrapped.pages.toLocaleString()} color="peach" />
             <StatTile label="Avg rating" value={wrapped.avgRating ? wrapped.avgRating.toFixed(1) + '★' : '—'} color="yellow" />
             <StatTile label="Longest" value={wrapped.longest?.totalPages ? `${wrapped.longest.totalPages}p` : '—'} color="sky" />
           </div>

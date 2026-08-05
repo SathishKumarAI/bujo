@@ -11,7 +11,19 @@ import type { ExerciseFreq, TrainRestRatio } from '../../lib/fitness'
  */
 export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: ExerciseFreq[]; ratio: TrainRestRatio; setFocusEx: (e: string | null) => void }) {
   if (rows.length === 0) return null
-  const maxDays = Math.max(...rows.map((r) => r.days), 1)
+  // Scaled against TRAINING DAYS, not against the tallest row.
+  //
+  // Normalising to the max means the top row is always full width and, when
+  // every value is equal — which is the common case here, since most people do
+  // most movements on most training days — *every* row is full width. Eight
+  // identical bars is not a chart; it is a chart that has lost its encoding, the
+  // same failure the Today week strip had.
+  //
+  // "3 of your 13 training days" is an absolute scale: comparable between
+  // exercises, comparable between windows, and it still draws equal bars when
+  // the answer genuinely is equal — the difference being that the bar is then
+  // short and says so.
+  const denom = Math.max(ratio.trainDays, ...rows.map((r) => r.days), 1)
   return (
     <Card title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
       <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body">
@@ -34,11 +46,15 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
             >
               {r.exercise}
             </button>
-            <div className="relative h-3.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
-              <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${(r.days / maxDays) * 100}%`, background: cat('blue') }} />
+            <div
+              className="relative h-3.5 flex-1 overflow-hidden rounded-pill bg-ink-2"
+              role="img"
+              aria-label={`${r.exercise}: trained on ${r.days} of ${denom} training days, ${r.sets} set${r.sets === 1 ? '' : 's'}`}
+            >
+              <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${(r.days / denom) * 100}%`, background: cat('blue') }} />
             </div>
-            <span className="w-16 shrink-0 text-right text-label text-fg-2">
-              {r.days}d · {r.sets} set{r.sets === 1 ? '' : 's'}
+            <span className="w-20 shrink-0 text-right text-label text-fg-2">
+              {r.days}/{denom}d · {r.sets} set{r.sets === 1 ? '' : 's'}
             </span>
           </li>
         ))}

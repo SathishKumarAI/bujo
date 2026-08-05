@@ -4,7 +4,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid } from '../components/shell/CardGrid'
+import { MasonryGrid } from '../components/shell/CardGrid'
 import { MINDSET_LIBRARY, MINDSET_CATEGORIES, principleById } from '../lib/mindset'
 
 /**
@@ -53,7 +53,7 @@ export function Mindset() {
         <Icon as={Brain} size="md" className="shrink-0 text-peach" />
         Principle library · tap + to add one to your focus
       </p>
-      <CardGrid>
+      <MasonryGrid>
         {MINDSET_CATEGORIES.map((catName) => (
           <Card key={catName} title={catName}>
             <ul className="space-y-2">
@@ -75,7 +75,7 @@ export function Mindset() {
             </ul>
           </Card>
         ))}
-      </CardGrid>
+      </MasonryGrid>
     </Page>
   )
 }
