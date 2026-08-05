@@ -108,7 +108,7 @@ export function Focus() {
             <label className="block text-body text-fg-1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
             <label className="block text-body text-fg-1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
           </div>
-          <Button variant="secondary" onClick={log} className="w-full">Log session</Button>
+          <Button variant="secondary" size="lg" onClick={log} className="w-full">Log session</Button>
         </div>
       </Card>
 
@@ -381,7 +381,7 @@ function TypingPractice() {
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <Button variant="secondary" onClick={log} className="w-full">Add session</Button>
+          <Button variant="secondary" size="lg" onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
           <div className="rounded-card border border-line bg-ink-0 px-3 py-2.5">
