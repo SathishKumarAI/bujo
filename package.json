@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "a11y": "node scripts/a11y-axe.mjs",
+    "clipped": "node scripts/clipped-text.mjs",
     "build": "tsc -b && vite build",
     "coverage": "vitest run --coverage",
     "design": "node scripts/check-design-system.mjs",

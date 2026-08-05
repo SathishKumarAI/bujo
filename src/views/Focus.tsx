@@ -108,7 +108,7 @@ export function Focus() {
             <label className="block text-body text-fg-1">Interruptions<Input type="number" value={f.interruptions} onChange={(e) => set({ interruptions: e.target.value })} placeholder="0" className="mt-1" /></label>
             <label className="block text-body text-fg-1">Tags<Input value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="typescript, react" className="mt-1" /></label>
           </div>
-          <Button variant="secondary" onClick={log} className="w-full">Log session</Button>
+          <Button variant="secondary" size="lg" onClick={log} className="w-full">Log session</Button>
         </div>
       </Card>
 
@@ -187,14 +187,16 @@ export function Focus() {
 
       {byProject.length > 0 && (
         <Card title="Focus by project" subtitle="Total deep-work minutes per project">
-          <div className="space-y-1.5">
+          {/* Subgrid so the project column fits the longest name — `w-24` cut
+              "pickleball-vision" to 96px of the 112px it needed. */}
+          <div className="grid grid-cols-[auto_1fr_auto] gap-y-1.5">
             {byProject.map((p) => (
-              <div key={p.project} className="flex items-center gap-2 text-body">
-                <span className="w-24 shrink-0 truncate text-fg-1">{p.project}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+              <div key={p.project} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
+                <span className="max-w-48 truncate text-fg-1">{p.project}</span>
+                <div className="h-3 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${(p.min / maxProj) * 100}%`, background: p.min === maxProj ? cat('mauve') : cat('surface2') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(p.min)}</span>
+                <span className="min-w-12 text-right text-label whitespace-nowrap text-fg-2">{hrs(p.min)}</span>
               </div>
             ))}
           </div>
@@ -216,14 +218,14 @@ export function Focus() {
 
       {tags.length > 0 && (
         <Card title="Languages & tools" subtitle="By time logged">
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-[auto_1fr_auto] gap-y-1.5">
             {tags.map((t) => (
-              <div key={t.tag} className="flex items-center gap-2 text-body">
-                <span className="w-24 shrink-0 truncate text-fg-1">{t.tag}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+              <div key={t.tag} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
+                <span className="max-w-48 truncate text-fg-1">{t.tag}</span>
+                <div className="h-3 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${(t.min / maxTag) * 100}%`, background: cat('teal') }} />
                 </div>
-                <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(t.min)}</span>
+                <span className="min-w-12 text-right text-label whitespace-nowrap text-fg-2">{hrs(t.min)}</span>
               </div>
             ))}
           </div>
@@ -294,7 +296,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
           ? focusWd.map((w) => (
               <div key={w.day} className="flex items-center gap-2 text-body">
                 <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                <div className="h-3 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${(w.avg / maxFocusWd) * 100}%`, background: w.avg === maxFocusWd && w.avg > 0 ? cat('green') : cat('teal') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{w.count ? `${w.avg}/10` : '—'}</span>
@@ -303,7 +305,7 @@ function WeekdayFocusCard({ byWeekday, maxWd, focusWd, maxFocusWd, hrs }: {
           : byWeekday.map((w) => (
               <div key={w.day} className="flex items-center gap-2 text-body">
                 <span className="w-10 shrink-0 text-fg-1">{w.label}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                <div className="h-3 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${(w.min / maxWd) * 100}%`, background: w.min === maxWd ? cat('mauve') : cat('surface2') }} />
                 </div>
                 <span className="w-12 shrink-0 text-right text-label text-fg-2">{hrs(w.min)}</span>
@@ -379,7 +381,7 @@ function TypingPractice() {
               {TYPING_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <Button variant="secondary" onClick={log} className="w-full">Add session</Button>
+          <Button variant="secondary" size="lg" onClick={log} className="w-full">Add session</Button>
 
           {/* Today's goal progress */}
           <div className="rounded-card border border-line bg-ink-0 px-3 py-2.5">

@@ -408,7 +408,7 @@ export function NoFap() {
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
             </label>
             {err && <p className="text-label" style={{ color: cat('red') }}>{err}</p>}
-            <Button variant="danger" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
+            <Button variant="danger" size="lg" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
             <p className="text-label text-fg-2">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
         </Card>

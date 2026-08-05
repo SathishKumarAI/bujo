@@ -23,9 +23,18 @@ import { registerPrimary } from "@/lib/onePrimary"
  * | `danger`    | Destructive, in menus and confirmations |
  *
  * Heights are the three control tokens (28 / 36 / 44) in rem, so they track the
- * global text-size setting; `lg` is reserved for a single empty-state call to
- * action. Radius is `--radius-control`. No shadows: the wash and the press
- * scale carry the whole interaction.
+ * global text-size setting. `lg` is the only one that meets the 44px touch
+ * floor, so it is used for empty-state calls to action **and for the full-width
+ * submit at the foot of a form** — the button a phone user actually aims at.
+ * Radius is `--radius-control`. No shadows: the wash and the press scale carry
+ * the whole interaction.
+ *
+ * **`icon-sm` is 28px and cannot simply be grown to 44.** Measured across the
+ * app, small icon buttons sit 0–6px apart — 338 pairs closer than 16px on
+ * Trackers alone. Expanding their hit areas to 44px would make each target
+ * overlap its neighbour's glyph, so taps would land on the wrong control. A
+ * target that is small but accurate beats one that is large and wrong. Fixing
+ * this needs spacing decisions per cluster, not a sweep over the primitive.
  *
  * The label reads verb-first, sentence case, one to three words — "Start fast",
  * "Log entry", "Add habit" — and matches the verb in its resulting toast.

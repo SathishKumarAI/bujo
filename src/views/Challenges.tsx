@@ -277,7 +277,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
         <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
-      <Button variant="secondary" onClick={submit} className="w-full">Start challenge</Button>
+      <Button variant="secondary" size="lg" onClick={submit} className="w-full">Start challenge</Button>
     </div>
   )
 }
