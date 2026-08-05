@@ -36,12 +36,21 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
           <Icon as={ArrowsClockwise} size="sm" /> {Math.round(ratio.ratio * 100)}% active
         </span>
       </div>
-      <ul className="space-y-2 text-body">
+      {/*
+        Subgrid, not a fixed label width: the name column sizes to the longest
+        name and the bars still line up. `w-28` cut "Romanian Deadlift" to
+        "Romanian Deadlif…" — 112px of the 128px it needed — and the same fixed
+        width is what clips every other bar list in the app.
+
+        `max-w-48` on the label is the ceiling, so one pathological name cannot
+        squeeze the bars to nothing; `truncate` only bites past that.
+      */}
+      <ul className="grid grid-cols-[auto_1fr_auto] gap-y-2 text-body">
         {rows.slice(0, 8).map((r) => (
-          <li key={r.exercise} className="flex items-center gap-2">
+          <li key={r.exercise} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2">
             <button
               onClick={() => setFocusEx(r.exercise)}
-              className="w-28 shrink-0 truncate text-left text-fg-1 hover:text-fg-1"
+              className="max-w-48 truncate text-left text-fg-1 hover:text-fg-1"
               title={`Focus the muscle map on ${r.exercise}`}
             >
               {r.exercise}
@@ -53,7 +62,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
             >
               <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${(r.days / denom) * 100}%`, background: cat('blue') }} />
             </div>
-            <span className="w-20 shrink-0 text-right text-label text-fg-2">
+            <span className="text-right text-label whitespace-nowrap text-fg-2">
               {r.days}/{denom}d · {r.sets} set{r.sets === 1 ? '' : 's'}
             </span>
           </li>

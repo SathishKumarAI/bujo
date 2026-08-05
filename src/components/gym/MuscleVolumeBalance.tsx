@@ -22,14 +22,14 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
       {named.length === 0 ? (
         <Empty>Log some working sets this week to see your per-muscle volume.</Empty>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-[auto_1fr_auto] gap-y-2">
           {named.map((c) => {
             const color = zone(c.sets)
             return (
-              <li key={c.muscle} className="flex items-center gap-2 text-body">
+              <li key={c.muscle} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
                 <button
                   onClick={() => setFocusEx(c.name)}
-                  className="w-20 shrink-0 truncate text-left text-fg-1 hover:text-fg-1"
+                  className="max-w-48 truncate text-left text-fg-1 hover:text-fg-1"
                   title={`Focus the muscle map on ${c.name}`}
                 >
                   {c.name}
@@ -39,7 +39,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
                   <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
                   <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />
                 </div>
-                <span className="w-7 shrink-0 text-right font-medium" style={{ color: cat(color) }}>{c.sets}</span>
+                <span className="min-w-7 text-right font-medium tabular-nums" style={{ color: cat(color) }}>{c.sets}</span>
               </li>
             )
           })}
