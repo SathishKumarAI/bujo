@@ -1,4 +1,4 @@
-import type { Entry, JournalData } from './types'
+import type { Entry, Habit, JournalData } from './types'
 import { seedJournal, uid } from './storage'
 import { addDays, todayISO, ymOf } from './date'
 
@@ -249,6 +249,38 @@ export function generateDemoData(today = todayISO()): JournalData {
     Read: { t: 'evening', cue: 'Before bed' },
   }
   j.habits.forEach((h) => { const m = SLOT[h.name]; if (m) { h.timeOfDay = m.t; h.cue = m.cue } })
+
+  // ── One habit of every shape, because the demo only had `check` habits ─────
+  //
+  // Three of the four renderings were therefore unreachable from demo data: the
+  // avoid slip/clean path, the count stepper and the timer. The previous pass
+  // had to hand-add two habits before it could see that the Evening close-out
+  // was striking a *slip* through with a ✓ — a bug that shipped precisely
+  // because no seeded journal could draw it. Demo data that exercises one code
+  // path is a fixture that agrees with itself.
+  //
+  // The seeded eight are all `check`, so these are appended with the same
+  // 90-day `startedOn` and then given logs of the right SHAPE: an avoid habit
+  // is mostly absent from the log (present = you slipped), and count/timer
+  // habits live in `habitValues`, not `habitLog`.
+  const shaped: Habit[] = [
+    { id: uid('habit'), name: 'Doomscrolling', category: 'wellness', color: 'red', startedOn: addDays(today, -(HIST_DAYS - 1)), avoid: true, emoji: '📱', timeOfDay: 'evening', cue: 'In bed' },
+    { id: uid('habit'), name: 'Water', category: 'food', color: 'sky', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'count', target: 8, floor: 4, unit: 'glasses', timeOfDay: 'anytime' },
+    { id: uid('habit'), name: 'Meditation', category: 'wellness', color: 'lavender', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'timer', target: 15, floor: 5, unit: 'min', timeOfDay: 'morning', cue: 'Before the first meeting' },
+  ]
+  j.habits.push(...shaped)
+  const [avoidH, countH, timerH] = shaped
+  j.habitValues ??= {}
+  for (let i = HIST_DAYS - 1; i >= 0; i--) {
+    const d = addDays(today, -i)
+    // Slips get rarer as the run goes on, so the streak and the comeback chips
+    // both have something real to describe rather than uniform noise.
+    if (rand() < 0.28 - (HIST_DAYS - i) * 0.002) (j.habitLog[d] ??= []).push(avoidH.id)
+    const vals = (j.habitValues[d] ??= {})
+    vals[countH.id] = Math.round(3 + rand() * 6) // 3–9 glasses against a target of 8
+    if (rand() > 0.35) vals[timerH.id] = Math.round(5 + rand() * 15) // 5–20 min, some days skipped
+  }
+
   j.settings.fitnessGoalMin = 150
 
   // ── Reading log: one of each shelf so the view + stats demo nicely ──
