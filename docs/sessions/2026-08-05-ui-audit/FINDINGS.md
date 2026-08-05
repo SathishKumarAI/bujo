@@ -94,6 +94,62 @@ elements narrower than ~2px**, which are screen-reader-only labels sized
 110 on Fitness, and every one of them is noise — which is how a real signal
 gets buried.
 
+## Outcome
+
+All three clipping defects are fixed, the gate exists, and one requested fix was
+refused with evidence.
+
+| | Outcome |
+|---|---|
+| A-1 Coaching | Both lines wrap. The full sentence renders in two lines. |
+| A-2 Strength tools | Subgrid; "Romanian Deadlift" now renders at its full 128px. |
+| A-3 Focus | Subgrid, both lists. |
+| Gate | `npm run clipped` — 23 views, fails on the originals |
+| Touch floor | Four full-width form submits raised to 44px; the icon sweep **refused** |
+
+**The audit under-reported itself.** Fixing A-2 turned up the same fixed-width
+label column in **five** lists, not two — `ExerciseFrequencyCard` (`w-28`),
+`MuscleVolumeBalance` (`w-20`), `Focus` twice (`w-24`), and Trackers' streak
+leaderboard (`w-24`). Only two were clipping, because the demo names in the
+other three happened to fit. Trackers is the one that matters: **habit names are
+typed by the user**, so its `w-24` was a guess about someone else's words, one
+ordinary name like "Read before bed" away from clipping.
+
+All five now use a subgrid — the `<ul>` owns three columns, each row spans them
+with `grid-cols-subgrid`, and the label column sizes to the longest label while
+the bars stay aligned. `max-w-48` caps it so one pathological name cannot
+squeeze the bars to nothing.
+
+Subgrid rather than `display: contents`, which would also have worked: that
+property has a history of dropping elements out of the accessibility tree, and
+dropping `<li>` out of a `<ul>` is precisely the regression the a11y gate cannot
+see.
+
+### The 28 × 28 sweep was refused, and the measurement is why
+
+The ask was to raise the `×` dismiss button to 44px across all nine views. It
+would have been a regression. Measured spacing between small buttons:
+
+| View | Small buttons | Closest gap | Pairs < 16px apart |
+|---|---|---|---|
+| Trackers | 378 | **0px** | 338 |
+| Reading | 17 | 4px | 5 |
+| Plan | 34 | 4px | 7 |
+| Pickleball | 50 | 6px | 1 |
+
+At those distances a 44px hit area on a 28px button covers its neighbour's
+glyph, so taps land on the wrong control — and these controls *discard things*.
+**A target that is small but accurate beats one that is large and wrong.**
+
+What shipped instead: the four full-width submits at the foot of a form
+("Log session", "Add session", "Start challenge", "Log reset & restart") went
+from 36px to 44px. They are what a phone user actually aims at and they have no
+neighbours to collide with. The numbers above are now in the `Button` doc, so
+the next person to attempt the sweep reads them before starting.
+
+`STATUS.md` has said this "needs a visual decision, not a sweep" for several
+sessions. That was a hunch. It is now measured, and it was right.
+
 ## Not covered by this pass
 
 - **1440 only.** No 390 pass, no other themes.
