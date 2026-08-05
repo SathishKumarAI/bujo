@@ -69,7 +69,10 @@ export function Challenges() {
 function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
   const confirm = useConfirm()
   const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
-  const [calOpen, setCalOpen] = useState(false)
+  // Open by default, like every other fold in the app. This one is hand-rolled
+  // (a caret button, not one of the three collapse primitives), which is why the
+  // sweep that opened the rest walked straight past it.
+  const [calOpen, setCalOpen] = useState(true)
   const today = todayISO()
   const day = progressDay(data, c, today)
   const pct = percentComplete(data, c, today)
@@ -113,7 +116,14 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           </div>
           <div className="mt-2 flex gap-4 text-label">
             <span className="inline-flex items-center gap-1 text-peach"><Icon as={Flame} size="sm" /> {streak} streak</span>
-            <span className="text-fg-2">Day {day} of {c.durationDays}</span>
+            {/* Say WHICH day this is. For a strict challenge `progressDay` is
+                the current run (streak + 1), so the card was showing "Day 5",
+                "7 of 75 days done" and "Elapsed 9/75" together and reading as
+                three contradictory counts of the same thing. They are three
+                different facts; only the label was missing. */}
+            <span className="text-fg-2" title={c.strict ? 'Days since your last reset' : 'Days since the challenge started'}>
+              Day {day} of {c.durationDays}{c.strict ? ' · since last reset' : ''}
+            </span>
           </div>
         </div>
       </div>

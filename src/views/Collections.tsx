@@ -26,7 +26,11 @@ export function Collections() {
   const [openTag, setOpenTag] = useState<string | null>(null)
   // Controlled: "jump to tag" from the index has to expand this section before
   // it can scroll to the tag inside it.
-  const [autoPagesOpen, setAutoPagesOpen] = useState(false)
+  // Open, like every other fold. This one is a *controlled* `QuietSection` —
+  // "jump to tag" has to expand it before scrolling — so it kept its own `false`
+  // and slipped through the sweep that opened the eighteen uncontrolled ones.
+  // A controlled fold is still a fold; the default belongs on the same side.
+  const [autoPagesOpen, setAutoPagesOpen] = useState(true)
 
   // Auto-collections: every #tag across the journal, most-used first.
   const tags = tagIndex(data.entries)
@@ -68,8 +72,15 @@ export function Collections() {
       return { id: `friend:${f.id}`, name: f.name, month: m, day: d, fromFriend: true }
     })
     .filter((b) => b.month >= 1 && b.month <= 12 && b.day >= 1 && b.day <= 31)
-  const birthdays = [...data.birthdays.map((b) => ({ ...b, fromFriend: false })), ...friendBirthdays]
+  // Deduped on person + date. The two sources were simply concatenated, so
+  // anyone recorded as a friend *and* on the birthday list appeared twice on the
+  // same day — "Sam Nov 27" directly above "Sam Nov 27 · friend". The friend
+  // record wins: it is the one that carries the profile the row links to.
+  const birthdayKey = (b: { name: string; month: number; day: number }) =>
+    `${b.name.trim().toLowerCase()}|${b.month}|${b.day}`
+  const birthdays = [...friendBirthdays, ...data.birthdays.map((b) => ({ ...b, fromFriend: false }))]
     .filter((b) => b.month >= 1 && b.month <= 12 && b.day >= 1 && b.day <= 31)
+    .filter((b, i, all) => all.findIndex((o) => birthdayKey(o) === birthdayKey(b)) === i)
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
