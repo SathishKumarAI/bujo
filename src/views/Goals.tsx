@@ -194,16 +194,24 @@ export function Goals() {
               const Icon = g.icon
               return (
                 <li key={i}>
-                  <button onClick={() => navigate(g.to)} className="press-3d w-full text-left">
+                  {/* `h-full` + `mt-auto` so the bars share a baseline across the
+                      row. Without it a label that wraps to two lines ("Active
+                      minutes") pushed its own bar ~23px below its row-mates and
+                      the row read as two rows. Grid stretches the `li`; the
+                      button has to take that height for it to mean anything. */}
+                  <button onClick={() => navigate(g.to)} className="press-3d flex h-full w-full flex-col text-left">
                     <div className="mb-1 flex items-center gap-2 text-body">
-                      <AppIcon as={Icon} size="sm" style={{ color: cat(g.color) }} />
-                      <span className="font-medium text-fg-1">{g.label}</span>
-                      <span className="text-label text-fg-2">{g.detail}</span>
-                      <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
+                      <AppIcon as={Icon} size="sm" className="shrink-0" style={{ color: cat(g.color) }} />
+                      <span className="min-w-0 font-medium text-fg-1">{g.label}</span>
+                      {/* Wraps rather than truncating: `mt-auto` on the bar
+                          already holds the baseline, so a second line here
+                          costs nothing and "this w…" reads as a bug. */}
+                      <span className="min-w-0 text-label text-fg-2">{g.detail}</span>
+                      <span className="ml-auto shrink-0 tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>
                         {g.value}/{g.target}{reached ? ' ✓' : ''}
                       </span>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
+                    <div className="mt-auto h-2.5 overflow-hidden rounded-pill bg-ink-2">
                       <div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
                     </div>
                   </button>

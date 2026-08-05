@@ -137,14 +137,22 @@ export function Card({
         <header
           onClick={headerToggles ? toggle : undefined}
           className={cn(
-            'flex items-start justify-between gap-3',
+            // `flex-wrap` + a real basis on the title column, because the right
+            // cluster is `shrink-0`: with a nowrap header the title column is
+            // the only thing that can give, so a wide cluster (Mood views ships
+            // six controls) squeezed it to nothing and `truncate` rendered the
+            // card title as the single character "M…". Below ~12rem the cluster
+            // drops to its own line instead, and the title keeps its width.
+            'flex flex-wrap items-start justify-between gap-x-3 gap-y-2',
             collapsible && !open ? '' : 'mb-3 sm:mb-4',
             headerToggles && 'cursor-pointer select-none',
           )}
         >
-          <div className="min-w-0">
+          <div className="min-w-0 grow basis-48">
             <div className="flex items-center gap-1.5">
-              {title && <h2 className="min-w-0 truncate font-display text-heading leading-tight font-medium text-fg-1 sm:text-title">{title}</h2>}
+              {/* Wraps, never truncates. A title clipped to "Workout mi…" costs
+                  more than a second line does — and these are 2–4 words. */}
+              {title && <h2 className="min-w-0 font-display text-heading leading-tight font-medium text-balance text-fg-1 sm:text-title">{title}</h2>}
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
