@@ -111,7 +111,9 @@ export function Coaching() {
                   </button>
                   <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
                     <span className="text-body font-medium text-fg-1">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
-                    <span className="block truncate text-label text-fg-2">{w.skills}</span>
+                    {/* Wraps rather than truncates — see the note on `t.what` below.
+                        This line is the only place `w.skills` renders at all. */}
+                    <span className="block text-label text-fg-2">{w.skills}</span>
                   </button>
                   <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
                 </div>
@@ -163,7 +165,19 @@ export function Coaching() {
                     <button onClick={() => setOpenTech(open ? null : t.name)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
-                        <span className="block truncate text-label text-fg-2">{t.what}</span>
+                        {/*
+                          Wraps rather than truncates. `t.what` is the definition of
+                          the shot and this row is the ONLY place it renders — opening
+                          the fold shows the how-to steps, cues and mistakes, but never
+                          this sentence. Truncated, six of them lost the end of the
+                          sentence; the worst showed 436px of the 662px it needed, so a
+                          third of the definition was unreachable anywhere in the app.
+
+                          A name can survive an ellipsis because you can still tell
+                          which one it is. A definition cannot: the part that explains
+                          it is the part that gets cut.
+                        */}
+                        <span className="block text-label text-fg-2">{t.what}</span>
                       </span>
                       <span className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
                     </button>
