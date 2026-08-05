@@ -82,7 +82,18 @@ a layout decision, not a class. Written into the comment rather than rounded up.
   `weekColumn` rather than restating the shift, and its test was checked against
   the naive form — two cases fail, so it holds the bug rather than just passing.
 
-## The stack is untangled — read this before believing the notes below
+## The whole stack is on `main` — read this before believing the notes below
+
+Everything below this section was written while the stack was still open. It is
+kept because the reasoning is still worth having, but **the branch state it
+describes no longer exists**. `main` is at `d86c183` and contains all of it.
+
+Also on `main` now: a UI audit of all 24 views and its fixes (#105) — three
+clipped-text defects, five bar lists moved onto subgrid, and `npm run clipped`,
+a gate for the one defect class `npm run a11y` structurally cannot see. See
+`docs/sessions/2026-08-05-ui-audit/FINDINGS.md`, including the 28×28 touch-target
+sweep that was **refused with a measurement** rather than shipped.
+
 
 Six sessions of this file said the stack was deep, unpushed and blocked. **Two
 of those three were wrong**, and the check that settles it is one command:
@@ -106,16 +117,26 @@ base `#99`, so the three-dot diff attributed all of main to it.
 
 Fixed with no merges and no file edits: push the one stale branch, retarget
 `#100` to `main` (131 → 90 files), push the two branches that had none, and open
-the three missing PRs. **The stack now merges bottom-up in this order:**
+the three missing PRs. **All six then merged bottom-up, and `main` is at
+`d86c183`.**
 
-| PR | Branch | Base | Diff |
-|---|---|---|---|
-| #99 | `collapsible-header-ux` | `main` | 159 files / 30 commits |
-| #100 | `activity-registry` | `main` | 90 / 47 |
-| #103 | `ia-routing` | #100 | 30 / 9 |
-| #104 | `real-data-pass` | #103 | 32 / 8 |
-| #101 | `ui-ux-page-pass` | #104 | 18 / 7 |
-| #102 | `ui-ux-backlog` | #101 | 20 / 10 |
+| PR | Branch | Result |
+|---|---|---|
+| #100 | `activity-registry` | merged |
+| #99 | `collapsible-header-ux` | **auto-closed as MERGED** — its commits came in with #100 |
+| #103 | `ia-routing` | merged |
+| #104 | `real-data-pass` | merged |
+| #101 | `ui-ux-page-pass` | merged |
+| #102 | `ui-ux-backlog` | merged |
+| #105 | `ui-audit-2026-08-05` | merged |
+
+**Merging a stacked PR does not retarget its children.** `#103`, `#104` and
+`#101` were merged while their bases were still branches, so each landed in its
+*parent branch* rather than on `main` — GitHub only auto-retargets a child when
+the parent's head branch is deleted. Nothing was lost, because the tip still
+subsumed everything and retargeting `#102` to `main` brought all of it, but the
+residue is three empty merge commits sitting on dead branches. **Retarget each
+child explicitly after its parent merges; do not assume GitHub did it.**
 
 `#96` (`today-ux`, 41 commits) is **not in the chain** and was left alone. It is
 the one that genuinely conflicts — `ui.tsx`, `App.tsx`, `Today.tsx` — and
@@ -130,9 +151,9 @@ stack the tightest diff comes from basing each PR on its *parent*, not on main.
 
 ### Not done
 
-1. **Nothing is merged.** Every PR is open and reviewable; none has landed on
-   `main`. That was the deliberate stopping point — untangling and merging are
-   different decisions.
+1. **`#96` (`today-ux`) is the only PR still open** — 41 commits, outside the
+   chain, and the one that genuinely conflicts. It has been open across every
+   session in this file.
 2. **Themes other than mocha** were not looked at, beyond the a11y gate's sweep.
 3. **Insights and Mindset were not checked at 390** after the masonry change.
    `columns-1` below `md` means they render as a single stack, same as before —
