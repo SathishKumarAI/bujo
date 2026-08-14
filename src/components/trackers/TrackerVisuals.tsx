@@ -89,8 +89,11 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
       <Card title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
+          // `items-stretch`, not `items-end`: cross-axis `end` collapses each
+          // column to its text, leaving the `flex-1` bar track at 0px and the
+          // whole chart flat. See `views/Insights.tsx`.
           return (
-            <div className="flex items-end justify-between gap-2" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion per month over the last 6 months">
+            <div className="flex items-stretch justify-between gap-2" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion per month over the last 6 months">
               {months.map((m) => (
                 <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
                   <span className="text-micro tabular-nums text-fg-2">{Math.round(m.ratio * 100)}%</span>
@@ -106,7 +109,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
       </Card>
 
       <Card title="Best weekdays" subtitle="Avg completion by day (last 90 days)">
-        <div className="flex items-end justify-between gap-1.5" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion by weekday over 90 days">
+        <div className="flex items-stretch justify-between gap-1.5" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion by weekday over 90 days">
           {wd.map((r, i) => (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
               <div className="flex w-full flex-1 items-end">

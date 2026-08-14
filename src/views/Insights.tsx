@@ -272,7 +272,16 @@ export function Insights() {
                   dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
                 </span>
               </div>
-              <div className="flex items-end justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
+              {/* `items-stretch`, not `items-end`. Cross-axis `end` sizes each
+                  column to its own content — two lines of text, 34px — so the
+                  `flex-1` bar track below got zero height and every bar in the
+                  chart rendered at 0px. The row is 100px tall and drew nothing
+                  but its numbers and its day labels. Stretched, the column
+                  takes the row's full height and the track has something for
+                  the percentage to resolve against. The bars still sit on the
+                  baseline: that is the track's own `items-end`, one level in.
+                  Six charts across four files had this exact bug. */}
+              <div className="flex items-stretch justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
                 {moodWd.rows.map((r) => (
                   <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
                     <span className="text-micro tabular-nums text-fg-2">{r.avg == null ? '–' : r.avg}</span>
@@ -353,7 +362,8 @@ export function Insights() {
 
       {focusId && monthly.some((m) => m.done > 0) && (
         <Card title="Month over month" subtitle={`${focusName}, completions per month`}>
-          <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
+          {/* `items-stretch` — see the note on the weekday chart above. */}
+          <div className="flex items-stretch justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
             {monthly.map((m) => (
               <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
                 <span className="text-micro tabular-nums" style={{ color: m.delta > 0 ? cat('green') : m.delta < 0 ? cat('red') : cat('overlay0') }}>

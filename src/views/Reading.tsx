@@ -154,7 +154,10 @@ export function Reading() {
           <h3 className="mb-3 flex items-center gap-2 text-body font-medium text-foreground">
             <AppIcon as={CalendarBlank} size="md" className="text-green" /> Finished by month · {today.slice(0, 4)}
           </h3>
-          <div className="flex items-end gap-1" style={{ height: 72 }} role="img"
+          {/* `items-stretch`, not `items-end`: cross-axis `end` collapses each
+              column to its label, leaving the `flex-1` bar track at 0px and the
+              chart flat. See `views/Insights.tsx`. */}
+          <div className="flex items-stretch gap-1" style={{ height: 72 }} role="img"
             aria-label={`Books finished per month: ${byMonth.map((m) => `${m.label} ${m.count}`).join(', ')}`}>
             {byMonth.map((m) => (
               <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
