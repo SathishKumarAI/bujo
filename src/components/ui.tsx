@@ -114,6 +114,18 @@ export function Card({
   // Body cluster still rely on this, and retiring it app-wide is a decision
   // about the whole app, not about one cluster.
   const info = hideInfo ? null : (help ?? subtitle)
+  // …but when the fallback is what fired, the popover says exactly what the
+  // line below the title already says, so it is only worth a button where that
+  // line is not drawn. The subtitle is `hidden … sm:block` (see below), which
+  // makes the answer precise rather than a judgement call: keep the ⓘ on
+  // phones, where it is the only way to read the subtitle, and drop it from
+  // `sm` up, where it is a button that repeats the sentence beneath it.
+  //
+  // Counted on Insights at 1440px: seventeen ⓘ in one column of cards, none of
+  // which told you anything the card had not already said. An audit grepping
+  // `help=` reported that page clean, because not one of them was passed a
+  // `help` — this line generated all seventeen.
+  const infoOnlyRepeatsSubtitle = help === undefined && !!subtitle
   // The whole header folds the card, not just the caret. The caret stays a real
   // <button> — it is the accessible control and carries aria-expanded — and the
   // header row is a pointer convenience layered on top, so anything interactive
@@ -156,7 +168,7 @@ export function Card({
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={CARD.headerButton}>
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={`${CARD.headerButton} ${infoOnlyRepeatsSubtitle ? 'sm:hidden' : ''}`}>
                       <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>

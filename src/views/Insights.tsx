@@ -12,7 +12,7 @@ import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRang
 import { coachDigest } from '../lib/coach'
 import { CountUp, Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
-import { CardGrid, MASONRY } from '../components/shell/CardGrid'
+import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
@@ -147,7 +147,7 @@ export function Insights() {
       </div>
 
       {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
-      <div className={MASONRY}>
+      <MasonryGrid>
         <Card title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
           <ul className="space-y-1.5 text-body">
             {digest.lines.map((l) => (
@@ -204,7 +204,7 @@ export function Insights() {
             </p>
           )}
         </Card>
-      </div>
+      </MasonryGrid>
 
       {/* The seven analytics drawers DO flow three across: collapsed they are
           50px strips, and stacked they read as a filing cabinet. */}
@@ -262,7 +262,7 @@ export function Insights() {
       {/* 5) Mood analytics — collapsed. */}
       {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
         <Section stickyKey="insights.mood" title="Mood analytics" subtitle="weekday, split & stability">
-        <div className={MASONRY}>
+        <MasonryGrid>
           {moodWd.best && moodWd.worst && (
             <Card title="Best & worst day" subtitle="When your mood runs brightest">
               <div className="mb-3 flex items-center gap-2 text-body">
@@ -272,7 +272,16 @@ export function Insights() {
                   dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
                 </span>
               </div>
-              <div className="flex items-end justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
+              {/* `items-stretch`, not `items-end`. Cross-axis `end` sizes each
+                  column to its own content — two lines of text, 34px — so the
+                  `flex-1` bar track below got zero height and every bar in the
+                  chart rendered at 0px. The row is 100px tall and drew nothing
+                  but its numbers and its day labels. Stretched, the column
+                  takes the row's full height and the track has something for
+                  the percentage to resolve against. The bars still sit on the
+                  baseline: that is the track's own `items-end`, one level in.
+                  Six charts across four files had this exact bug. */}
+              <div className="flex items-stretch justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
                 {moodWd.rows.map((r) => (
                   <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
                     <span className="text-micro tabular-nums text-fg-2">{r.avg == null ? '–' : r.avg}</span>
@@ -307,7 +316,7 @@ export function Insights() {
               <p className="mt-2 text-label text-fg-2">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
             </Card>
           )}
-        </div>
+        </MasonryGrid>
         </Section>
       )}
 
@@ -353,7 +362,8 @@ export function Insights() {
 
       {focusId && monthly.some((m) => m.done > 0) && (
         <Card title="Month over month" subtitle={`${focusName}, completions per month`}>
-          <div className="flex items-end justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
+          {/* `items-stretch` — see the note on the weekday chart above. */}
+          <div className="flex items-stretch justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
             {monthly.map((m) => (
               <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
                 <span className="text-micro tabular-nums" style={{ color: m.delta > 0 ? cat('green') : m.delta < 0 ? cat('red') : cat('overlay0') }}>
@@ -396,7 +406,7 @@ export function Insights() {
 
       {/* 8) Lifetime — deep totals & navigation, collapsed. */}
       <Section stickyKey="insights.lifetime" title="Lifetime" subtitle="year in review, records & index">
-      <div className={MASONRY}>
+      <MasonryGrid>
         <Card title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-body text-fg-1">
             <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
@@ -423,7 +433,7 @@ export function Insights() {
             </ul>
           )}
         </Card>
-      </div>
+      </MasonryGrid>
 
       {records.length > 0 && (
         <Card title="Personal records" subtitle="Your bests so far">

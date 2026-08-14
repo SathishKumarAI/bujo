@@ -814,7 +814,10 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
           {!habit.avoid && months.length >= 2 && (
             <div>
               <p className="mb-1 text-label text-fg-2">Monthly completion (trailing year)</p>
-              <div className="flex items-end justify-between gap-1" style={{ height: 72 }} role="img" aria-label="Bar chart of monthly completion percentage over the trailing year">
+              {/* `items-stretch`, not `items-end`: cross-axis `end` collapses
+                  each column to its label, leaving the `flex-1` bar track at
+                  0px and the chart flat. See `views/Insights.tsx`. */}
+              <div className="flex items-stretch justify-between gap-1" style={{ height: 72 }} role="img" aria-label="Bar chart of monthly completion percentage over the trailing year">
                 {months.map((m) => (
                   <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
                     <div className="flex w-full flex-1 items-end">

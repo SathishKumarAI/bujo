@@ -63,12 +63,33 @@ export function CardGrid({ children, className }: { children: ReactNode; classNa
  * across the column boundary mid-content, which looks exactly like a rendering
  * bug. `gap` does not apply to multi-column, hence the explicit
  * `[column-gap]` + bottom margin on children.
+ *
+ * **Breakpoints query the container, not the viewport.** `md:columns-2` asks
+ * how wide the *window* is, which is the wrong question the moment a masonry
+ * is not full-bleed. On Insights the sections lay out two-up, so each masonry
+ * sat in a 446px column, read "the viewport is 1440, that is ≥ md" and split
+ * 446 into two 213px columns — on a desktop screen. At 213px "Best & worst
+ * day" wrapped its title across three lines and its weekday axis rendered as
+ * seven unreadable numbers. `@container` + `@3xl:` asks how wide *this* is, so
+ * the same component gives one column at 446px and three at full width without
+ * any call site knowing where it has been placed.
  */
-export const MASONRY =
-  'columns-1 gap-4 sm:gap-5 md:columns-2 2xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid sm:[&>*]:mb-5'
+const MASONRY_COLUMNS =
+  'columns-1 gap-4 sm:gap-5 @3xl:columns-2 @7xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid sm:[&>*]:mb-5'
 
+/**
+ * The container query needs a wrapper: an element cannot be its own
+ * `@container`, so the marker and the `@`-variants that read it cannot live on
+ * the same div. Hence a component rather than an exported class string — the
+ * old `MASONRY` export could not carry this and every call site using it would
+ * have silently kept the viewport behaviour.
+ */
 export function MasonryGrid({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn(MASONRY, className)}>{children}</div>
+  return (
+    <div className="@container">
+      <div className={cn(MASONRY_COLUMNS, className)}>{children}</div>
+    </div>
+  )
 }
 
 /** Two of the three columns — tables, wide charts, anything with an x-axis. */

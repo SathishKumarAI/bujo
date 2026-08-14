@@ -472,9 +472,19 @@ function WeekAgenda({
                     ) : (
                       <ul className="space-y-0.5">
                         {shown.map((e) => (
+                          // Two lines, not one with an ellipsis. `truncate` cut
+                          // every title to about eighteen characters at this
+                          // column width — "Get camp new fo…", "Find something
+                          // r…", "#travel walk the …" — so the week you came
+                          // here to read was a column of prefixes. The card
+                          // header two files over already states the rule this
+                          // follows: wraps, never truncates, because a second
+                          // line costs less than a clipped word. `line-clamp-2`
+                          // keeps the cell bounded, and the fourth item plus the
+                          // "+n more" row still cap the cell's height.
                           <li
                             key={e.id}
-                            className={`truncate text-label ${e.status === 'done' ? 'text-fg-2 line-through' : 'text-fg-1'}`}
+                            className={`line-clamp-2 text-label ${e.status === 'done' ? 'text-fg-2 line-through' : 'text-fg-1'}`}
                             title={e.text}
                           >
                             <span className="num text-fg-2">{GLYPH[e.type]}</span> {e.text}

@@ -1,5 +1,157 @@
 # Worklog
 
+## 2026-08-06 — The stack lands on main, a three-session bug closes, and one refusal
+
+**Summary:** Closed out the backlog pass, fixed the legacy deep link that had
+been carried for three sessions, untangled and **merged the entire branch stack
+into `main`** (six PRs, 121 commits), then audited all 24 views and shipped the
+fixes plus a gate for the defect class they belong to. `main` is at `198725c`:
+`tsc -b` 0, **751 tests / 51 files**, eslint 0 errors / 2 pre-existing warnings,
+build clean, `npm run a11y` 0 serious across 80 scans, `npm run clipped` 0
+across 23 views.
+
+### The stack was never what this file said it was
+
+Six sessions of `STATUS.md` described the stack as deep, unpushed and blocked on
+conflict resolution. Two of those three were wrong, and one command settles it:
+
+```
+git merge-base --is-ancestor <lower> <upper>
+```
+
+The chain was **perfectly linear** and the tip was **0 behind main** —
+`activity-registry` had merged main in long ago and everything above inherited
+it. There was no conflict to resolve. Four branches were already in sync with
+origin while the file insisted they were not.
+
+Exactly one pointer was stale: `activity-registry`, 78 commits behind its local.
+That alone explains the "#100 is 131 files and unreviewable" note — the
+main-merge landed in #100 but not in its base #99, so the three-dot diff
+attributed all of main to it. A push and a retarget took it to 90 files with no
+file edited.
+
+**A base that looks wrong is not always wrong.** Retargeting #101 to `main` was
+on the plan and would have taken it from 18 files to 133. For a linear stack the
+tightest diff comes from basing each PR on its *parent*; #100 was the exception
+only because it carried the main-merge. Measure with
+`git diff --stat <base>...<head>` before retargeting anything.
+
+### Two bugs, and both tests were checked against a broken implementation
+
+- **`weekDaysOf`** — the week agenda's off-by-one. On a Sunday with
+  `weekStart: 1` the naive `-getDay()` returns that Sunday as its own week start,
+  so the agenda draws the week that is *ending*. Extracted to `lib/date`, reusing
+  `weekColumn` rather than restating the shift.
+- **`canonicalizeDeepLink`** — `?view=pullups` resolved to
+  `{view:'fitness', activity:'pullups'}` correctly and still landed on Cardio /
+  Run. The activity lived only in the parsed result, never in the URL, and
+  `Fitness` is a `lazy()` chunk — by the time it mounts and reads
+  `readDeepLink().activity`, `DeepLinkSync` has rewritten the bar to
+  `?view=fitness`. Now canonicalised before the first render, so the retired link
+  and the documented one are the same URL before anything reads either.
+
+Every pre-existing deep-link test passed a search string, which is exactly how
+the bug survived a file full of tests about itself: `readDeepLink('?view=pullups')`
+was never the broken part. The new tests go through `window.location` and one
+replays the real sequence — land, let the sync effect write, read as the lazy
+chunk does.
+
+### The audit found less than the fix did
+
+24 views, seeded demo journal, measured rather than eyeballed. Clean on
+horizontal overflow, empty cards and console errors. Three clipped-text defects
+— Coaching, Strength tools, Focus.
+
+Fixing them turned up the same fixed-width label column in **five** bar lists,
+not two. Only two clipped, because demo names in the other three happened to
+fit. **Trackers was the one that mattered and the audit missed it entirely:**
+habit names are typed by the user, so a `w-24` there is a guess about someone
+else's words, one ordinary name like "Read before bed" from clipping.
+
+All five moved to a subgrid — the `<ul>` owns three columns, each row spans them
+with `grid-cols-subgrid`, and the label column sizes to the longest label while
+the bars stay aligned. Subgrid rather than `display: contents`, which would also
+have worked and would have risked list semantics; that property has a history of
+dropping elements out of the accessibility tree, and dropping `<li>` out of a
+`<ul>` is precisely what the a11y gate cannot see.
+
+Coaching is different in kind and wraps instead. `t.what` is the *definition* of
+the shot and that row is the only place it renders — opening the fold gives the
+how-to, cues and mistakes, never that sentence — so a third of six definitions
+was unreachable anywhere in the app.
+
+### `npm run clipped` — a gate for what axe cannot see
+
+Clipped text is not an accessibility violation. The string stays in the
+accessibility tree and a screen reader reads it in full, so axe is right to stay
+quiet, and the family walks past the one gate that looks at rendered pages. Five
+sessions have now found five instances of one bug by squinting at screenshots:
+`M…` on Stats, `W.` on Trackers, "First w…" / "Centur…" on Achievements,
+"Romanian Deadlif…" in Strength tools, and the Coaching descriptions.
+
+The check is `scrollWidth > clientWidth`. The two filters are the whole
+difficulty: skip anything under 2px (screen-reader-only labels are `width: 1px`
+by design — without this the raw count is 221 on Stats and 110 on Fitness, all
+noise) and skip a deliberate `-webkit-line-clamp`. Anything meant to truncate
+opts out with `data-clip-ok`, so the exception lives in the markup rather than in
+a reviewer's memory.
+
+**Decisions:**
+
+- **Merged the stack, left #96 alone.** `feat/today-ux` is outside the chain and
+  is the one that genuinely conflicts (`ui.tsx`, `App.tsx`, `Today.tsx`).
+  Whichever of it and the stack landed second pays that cost; that is a decision
+  to make with the diff in front of you.
+- **Refused the 28×28 touch-target sweep, with a measurement.** Raising the `×`
+  to 44px across nine views was asked for and would have been a regression: small
+  buttons sit 0–6px apart, 338 pairs under 16px on Trackers alone, so a 44px hit
+  area covers the neighbouring glyph and taps land on the wrong control — and
+  these controls discard things. **A target that is small but accurate beats one
+  that is large and wrong.** Shipped the safe subset instead: four full-width form
+  submits, 36px → 44px, no neighbours. `STATUS.md` had called this "a visual
+  decision, not a sweep" for several sessions; that was a hunch, and it was right.
+- **Both new tests were verified against a deliberately broken implementation.**
+  The week arithmetic fails 2 cases on the naive `-getDay()`; the routing fix
+  fails 3 on a no-op `canonicalizeDeepLink`, including `expected null to be
+  'pullups'`, which is the shipped bug. A test that passes against both
+  implementations pins nothing.
+- **The clipped gate refuses to report a clean run on an empty journal.** A sweep
+  measured on no data is the trap that shipped the avoid-habit bug.
+
+**Traps:**
+
+- **Merging a stacked PR does not retarget its children.** #103, #104 and #101
+  were merged while their bases were still branches, so each landed in its
+  *parent branch* rather than on `main` — GitHub only auto-retargets when the
+  parent's head branch is deleted. Nothing was lost, since the tip still subsumed
+  everything, but three empty merge commits now sit on dead branches. Retarget
+  each child explicitly.
+- **A fresh browser profile lands on the storage-mode start screen**, which
+  swallows `?view=` entirely: no `h1`, no tabs, every locator silently finding
+  nothing. "Explore the demo" both picks a mode and seeds the journal. The first
+  sweep scored all 24 views on an empty journal and the only tell was a 1.8 KB
+  storage blob.
+- **The demo confirm is a React dialog, not `window.confirm`**, so a
+  `page.on('dialog')` handler never fires and the seed silently no-ops.
+- **`TaskStop` kills the `npx` wrapper, not the `vite` child.** The port stayed
+  bound after the task was stopped. Check
+  `Get-NetTCPConnection -LocalPort <p>` → `Get-CimInstance Win32_Process` before
+  concluding a stale server belongs to another worktree.
+- **The devtools MCP cannot attach to an already-running Chrome.** It needs
+  `--remote-debugging-port=9333` and its own `--user-data-dir`.
+
+**Follow-ups:**
+
+- [ ] **#96 (`feat/today-ux`)** — the only open PR, 41 commits, and the one that
+      conflicts. Open across every session this file covers.
+- [ ] **~13 orphan lib functions** still flagged "worth deleting, not done".
+- [ ] **Themes other than mocha** unchecked beyond the a11y gate's sweep;
+      **Insights and Mindset unchecked at 390** after the masonry change.
+- [ ] **`npm run clipped` is not in CI** and visits a fixed `VIEWS` list — same
+      blind spot as `a11y-axe.mjs`. A page not on the list is not checked.
+- [ ] **Seven of the eight backlog items have no test**, held by screenshots.
+- [ ] **Supabase host still NXDOMAIN**; recharts still 429 kB of a 658 kB chunk.
+
 ## 2026-08-03 — The Body cluster on a page contract, and mode as a derived fact
 
 **Summary:** Restructured Fitness, Nutrition, Recovery and Coaching onto a

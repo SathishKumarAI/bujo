@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { hrefFor } from '../../lib/deepLink'
 import { tabsOf, sectionOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
@@ -36,6 +37,50 @@ export function SectionTabs({
   gates: SectionGates
   onNavigate: (id: ViewId) => void
 }) {
+  const rowRef = useRef<HTMLElement>(null)
+  const activeRef = useRef<HTMLAnchorElement>(null)
+
+  // Bring the current tab into view. Body's six tabs measure 571px against a
+  // 491px row, and the row opened at `scrollLeft: 0` — so arriving on
+  // `?view=nofap` from a link, the rail or a redirect showed Fitness…Coaching
+  // with Recovery clipped off the right edge, entirely invisible at 390px. The
+  // page said Recovery and the tab row said Fitness, which is the one thing a
+  // tab row must never do.
+  //
+  // Setting `scrollLeft` rather than calling `scrollIntoView`: the latter walks
+  // every scrollable ancestor, so on a short viewport it also scrolls the page
+  // itself — landing on a tab would jump you past the header. This touches only
+  // the row.
+  //
+  // Measured from `getBoundingClientRect`, not `offsetLeft`, and run after
+  // paint. Two reasons, both found by measuring rather than reasoning:
+  //
+  // 1. The row is not `position: relative`, so an `offsetLeft` is relative to
+  //    `<body>` and stops agreeing with the row the moment either one moves.
+  // 2. On a cold load the variable fonts have not resolved when the effect
+  //    fires. The row measured 80px narrower than its settled width, the scroll
+  //    clamped to that stale maximum, and Recovery came to rest still clipped —
+  //    a fix that moved the row and did not finish the job. `fonts.ready`
+  //    re-runs it once the real widths exist.
+  //
+  // Rect maths is position-aware, so running it twice is idempotent rather than
+  // cumulative.
+  useEffect(() => {
+    const row = rowRef.current
+    const a = activeRef.current
+    if (!row || !a) return
+    const centre = () => {
+      const rr = row.getBoundingClientRect()
+      const ar = a.getBoundingClientRect()
+      if (ar.left >= rr.left && ar.right <= rr.right) return // already in view
+      row.scrollLeft += ar.left - rr.left - (rr.width - ar.width) / 2
+    }
+    const id = requestAnimationFrame(centre)
+    let live = true
+    void document.fonts?.ready.then(() => { if (live) centre() })
+    return () => { live = false; cancelAnimationFrame(id) }
+  }, [view, gates.cycle, gates.nofap])
+
   const section = sectionOf(view)
   if (!section) return null
   const tabs = tabsOf(section, gates)
@@ -43,6 +88,7 @@ export function SectionTabs({
 
   return (
     <nav
+      ref={rowRef}
       aria-label="Section"
       // Horizontal scroll rather than wrap: six tabs at 360px would stack into
       // two rows and shove the page down on every phone.
@@ -56,6 +102,7 @@ export function SectionTabs({
         return (
           <a
             key={t.view}
+            ref={active ? activeRef : undefined}
             href={hrefFor(t.view)}
             aria-current={active ? 'page' : undefined}
             onClick={(e) => {

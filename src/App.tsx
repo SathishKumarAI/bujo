@@ -1,4 +1,3 @@
-import { ArrowsClockwise, BookOpen, Books, Brain, CalendarBlank, ChartBar, ChartPie, Code, Flag, Flower, ForkKnife, GraduationCap, PersonSimpleRun, Question, ShieldCheck, SlidersHorizontal, Sparkle, Sun, Target } from '@/components/icons'
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
@@ -20,6 +19,7 @@ import { AppShell } from './components/shell/AppShell'
 import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
 import { readDeepLink, onRouteChange } from './lib/deepLink'
 import { SECTIONS, landingOf, type SectionGates } from './components/shell/sections'
+import { CLASSIC_NAV, CLASSIC_GROUP_ORDER } from './components/shell/classicNav'
 import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
@@ -51,56 +51,6 @@ const NoFap = lazy(() => import('./views/NoFap').then((m) => ({ default: m.NoFap
 const Help = lazy(() => import('./views/Help').then((m) => ({ default: m.Help })))
 const KitchenSink = lazy(() => import('./views/KitchenSink').then((m) => ({ default: m.KitchenSink })))
 const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m.Settings })))
-
-// Daily pipeline: capture & organise → track health → review.
-// "System" (Help, Settings) is intentionally NOT here — those live in the top
-// bar (gear + overflow menu) so the sidebar stays focused on daily views.
-// Smaller, job-to-be-done groups so no single section gets unwieldy (Health used
-// to hold 10 items). Order flows: capture → body → skill → discipline → mind →
-// reference → analysis. System (Help/Settings) lives in the top bar, not the rail.
-const GROUP_ORDER = ['Journal', 'Body', 'Habits', 'Wellbeing', 'Library', 'Review']
-
-/**
- * TWO RAILS, ONE SETTING.
- *
- * `settings.layout` picks between them and both stay maintained:
- *
- * - **focused** (default) — five sections, no group headers, the views inside
- *   each reached as tabs (`components/shell/sections.ts`).
- * - **classic** — the seventeen destinations under six headers, below.
- *
- * The classic list is not dead code kept "for later": it is the other half of a
- * choice the person using the app makes in Settings → Journal feel.
- */
-const NAV: (NavItem & { show?: (g: SectionGates) => boolean })[] = [
-  { id: 'today', label: 'Today', icon: Sun, group: 'Journal' },
-  { id: 'plan', label: 'Plan', icon: ArrowsClockwise, group: 'Journal' },
-  // BODY · four entries, and they are all the same kind of thing: a surface.
-  //
-  // Pull-ups, Home workout and Pickleball used to sit here as peers of Coaching
-  // and Recovery, which mixed two taxonomy levels — the first three are
-  // *activities*, and an activity is something you pick inside Fitness, not a
-  // place you navigate to. They are now presets on the activity select, reached
-  // by `?view=fitness&activity=pullups`; `deepLink.ts` keeps the old ids
-  // working so existing bookmarks resolve.
-  { id: 'fitness', label: 'Fitness', icon: PersonSimpleRun, group: 'Body' },
-  { id: 'nutrition', label: 'Nutrition', icon: ForkKnife, group: 'Body' },
-  { id: 'nofap', label: 'Recovery', icon: ShieldCheck, group: 'Body', show: (g) => g.nofap },
-  { id: 'coaching', label: 'Coaching', icon: GraduationCap, group: 'Body' },
-  { id: 'trackers', label: 'Trackers', icon: ChartBar, group: 'Habits' },
-  { id: 'challenges', label: 'Challenges', icon: Target, group: 'Habits' },
-  { id: 'focus', label: 'Focus', icon: Code, group: 'Habits' },
-  { id: 'mindset', label: 'Mindset', icon: Brain, group: 'Wellbeing' },
-  { id: 'cycle', label: 'Cycle', icon: Flower, group: 'Wellbeing', show: (g) => g.cycle },
-  { id: 'collections', label: 'Collections', icon: Books, group: 'Library' },
-  { id: 'reading', label: 'Reading', icon: BookOpen, group: 'Library' },
-  { id: 'monthly', label: 'Monthly', icon: CalendarBlank, group: 'Library' },
-  { id: 'goals', label: 'Goals', icon: Flag, group: 'Library' },
-  { id: 'insights', label: 'Insights', icon: Sparkle, group: 'Review' },
-  { id: 'stats', label: 'Stats', icon: ChartPie, group: 'Review' },
-  { id: 'help', label: 'Help', icon: Question, group: 'System' },
-  { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: 'System' },
-]
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
@@ -243,7 +193,7 @@ export default function App() {
   const focused = (data.settings.layout ?? 'focused') === 'focused'
   const items: NavItem[] = focused
     ? SECTIONS.map((s) => ({ id: landingOf(s.id, gated), label: s.label, icon: s.icon, group: '', section: s.id }))
-    : NAV.filter((n) => !n.show || n.show(gated))
+    : CLASSIC_NAV.filter((n) => !n.show || n.show(gated))
   const Current = VIEWS[view]
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
@@ -317,7 +267,7 @@ export default function App() {
       <SyncIndicator />
       <AppShell
         items={items}
-        groupOrder={focused ? [] : GROUP_ORDER}
+        groupOrder={focused ? [] : CLASSIC_GROUP_ORDER}
         gates={gated}
         sectionTabs={focused}
         view={view}
