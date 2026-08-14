@@ -22,16 +22,26 @@ balances *within* a masonry, but nothing balances the sections against each othe
 Now much less painful than it was, because the cards inside are no longer 213px
 wide, but the raggedness is structural.
 
-## B3 · Five different stat treatments on one page
+## B3 · Five different stat treatments on one page — **colour half done**
 
 Counted on Insights: streak tiles (big number + label + delta), a donut, a plain
 number, pill badges (`+1.2`), monospace momentum figures, `53/100` with a pill, and
 `65/100` with a gradient bar. Fitness and Nutrition share a *sixth* style (filled
 box, big number, small caption), and Plan a seventh (label above, plain number).
 
-One `Stat` primitive with two or three documented variants would replace all of it.
-That is a design-system change, not a fix — it touches every page and needs the
-before/after snapshot discipline the repo already mandates for shared markup.
+**Update — the colour axis is fixed** (`refactor(ui): a figure is neutral unless
+its colour is computed from its value`). Measuring the rendered page turned out to
+sharpen the finding: the structure was already near-consistent (radius 14, 1px
+border, tile background), and what varied was mostly *colour* — 13 figures in 7
+colours on Insights, and `StatTile` tinting its value at 85 of 86 call sites
+app-wide. Those accents were a rotation, not a reading, and they competed with the
+colour that does carry meaning. Figures are now `fg-1`; `color` tints the icon.
+
+**Still open:** the size and structure axis. Two value sizes (32px and 17px), two
+font families (Instrument Sans vs Fraunces in the ring), and two alignments
+(centre vs start) remain in play, and `Big` / `PickStat` / `StatTile` /
+`SplitCol` are still four components doing one job. Consolidating them is the
+part that needs the before/after render snapshot.
 
 ## B4 · Two tab-row visual languages
 
