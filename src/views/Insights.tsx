@@ -140,10 +140,10 @@ export function Insights() {
 
       {/* 2) Big-stat row. */}
       <div className="grid grid-cols-2 items-start gap-3 sm:gap-5 lg:grid-cols-4">
-        <Big label="Current streak" value={streak} suffix="d" color="peach" trend={habitTrend} trendLabel="habits vs last week" onClick={() => nav('trackers')} />
-        <Big label="Longest streak" value={best} suffix="d" color="mauve" onClick={() => nav('trackers')} />
-        <Big label="Tasks done" value={tasks.pct} suffix="%" color="green" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
-        <Big label="Entries" value={data.entries.length} color="sky" onClick={() => nav('today')} />
+        <Big label="Current streak" value={streak} suffix="d" trend={habitTrend} trendLabel="habits vs last week" onClick={() => nav('trackers')} />
+        <Big label="Longest streak" value={best} suffix="d" onClick={() => nav('trackers')} />
+        <Big label="Tasks done" value={tasks.pct} suffix="%" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
+        <Big label="Entries" value={data.entries.length} onClick={() => nav('today')} />
       </div>
 
       {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
@@ -387,13 +387,17 @@ export function Insights() {
         <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
         <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} color="green" />
-            <PickStat label="Games this week" value={String(pickle.weekGames)} color="sky" />
-            <PickStat label="Play streak" value={`${pickle.playStreak}d`} color="peach" />
+            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} />
+            <PickStat label="Games this week" value={String(pickle.weekGames)} />
+            <PickStat label="Play streak" value={`${pickle.playStreak}d`} />
             <PickStat
               label="Recent form"
               value={pickle.recentWinRate == null ? '—' : `${Math.round(pickle.recentWinRate * 100)}%`}
-              color={pickle.formDir === 'up' ? 'green' : pickle.formDir === 'down' ? 'red' : 'overlay0'}
+              // The formDir colour moved onto the arrow, where `PickStat`
+              // derives it from `trend` with the same mapping. It used to tint
+              // the figure too, which meant a flat run rendered "67%" in
+              // `overlay0` — a number greyed to near-invisible for the crime of
+              // not having changed.
               trend={pickle.formDir}
             />
           </ul>
@@ -458,15 +462,22 @@ export function Insights() {
   )
 }
 
-function PickStat({ label, value, color, trend }: { label: string; value: string; color: string; trend?: 'up' | 'down' | 'flat' | null }) {
+/**
+ * A figure in a card's stat grid.
+ *
+ * The value is `fg-1`, never a per-instance accent — see the note on `Big`.
+ * The trend arrow keeps its colour, because there the colour *is* the reading.
+ */
+function PickStat({ label, value, trend }: { label: string; value: string; trend?: 'up' | 'down' | 'flat' | null }) {
   const TrendIcon = trend === 'up' ? TrendUp : trend === 'down' ? TrendDown : Minus
+  const trendColor = trend === 'up' ? 'green' : trend === 'down' ? 'red' : 'overlay0'
   return (
     <li className="rounded-card border border-line bg-ink-0 p-3">
       <div className="flex items-center justify-between">
         <span className="text-label text-fg-2">{label}</span>
-        {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(color) }} />}
+        {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(trendColor) }} />}
       </div>
-      <p className="mt-1 text-heading font-medium tabular-nums" style={{ color: cat(color) }}>{value}</p>
+      <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{value}</p>
     </li>
   )
 }
@@ -500,15 +511,40 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: IconGlyph; color
   )
 }
 
-function Big({ label, value, color, sub, suffix = '', ring, max = 100, trend, trendLabel, onClick }: { label: string; value: number; color: string; sub?: string; suffix?: string; ring?: boolean; max?: number; trend?: PeriodTrend; trendLabel?: string; onClick?: () => void }) {
+/**
+ * A headline figure at the top of the page.
+ *
+ * **The value is `fg-1`. There is no per-instance colour prop, on purpose.**
+ *
+ * These four tiles used to take one each: Current streak peach, Longest streak
+ * mauve, Tasks done green, Entries sky — and the pickleball grid below cycled
+ * the same four in the same order. The colour was a rotation, not a reading.
+ * Nothing about "Entries" is sky, and a longest streak is not mauve for being
+ * a record; the fifth tile would simply have started the cycle again.
+ *
+ * Four differently-coloured numbers side by side promise the reader four
+ * different kinds of thing. All four are counts. So the colour was not merely
+ * decorative — it was actively misleading, and it competed with the colour on
+ * the same page that *does* carry a reading: the trend delta below each tile
+ * (green up, red down, grey flat), the consistency score banded at 70 and 40,
+ * the stability band, the habit-impact badges. Those all still colour, and they
+ * are legible now that nothing shouts over them.
+ *
+ * The rule this page now follows: **a figure is `fg-1` unless its colour is
+ * computed from its value.** If you cannot name the threshold, it does not get
+ * a colour.
+ */
+function Big({ label, value, sub, suffix = '', ring, max = 100, trend, trendLabel, onClick }: { label: string; value: number; sub?: string; suffix?: string; ring?: boolean; max?: number; trend?: PeriodTrend; trendLabel?: string; onClick?: () => void }) {
   const TrendIcon = trend?.dir === 'up' ? TrendUp : trend?.dir === 'down' ? TrendDown : Minus
   const trendColor = trend?.dir === 'up' ? 'green' : trend?.dir === 'down' ? 'red' : 'overlay0'
   return (
     <Card className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
       {ring ? (
-        <Ring value={value} max={max} color={color} suffix={suffix} />
+        // The ring keeps a fill — a progress arc with no colour is not a
+        // progress arc — but one fill for every ring, not one per call site.
+        <Ring value={value} max={max} color="mauve" suffix={suffix} />
       ) : (
-        <div className="text-display font-medium" style={{ color: cat(color) }}>
+        <div className="text-display font-medium text-fg-1">
           <CountUp value={value} suffix={suffix} />
         </div>
       )}

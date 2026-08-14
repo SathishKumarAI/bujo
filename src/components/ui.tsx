@@ -231,9 +231,32 @@ export function Card({
 }
 
 /**
- * A bordered metric tile: a big colored number/value over a small label.
+ * A bordered metric tile: a big number/value over a small label.
  * Replaces the ad-hoc `Stat` blocks scattered across Fitness/Focus/Trackers.
  * Becomes a button (with press affordance) when `onClick` is given.
+ *
+ * **The figure is `fg-1`. `color` tints the icon, not the number.**
+ *
+ * It used to tint the number, and 85 of the 86 call sites pass a colour, so
+ * almost every tile in the app rendered its value in an accent. Read across a
+ * row, those accents are a rotation and not a reading: Focus goes mauve, peach,
+ * green; Gym goes mauve, blue; Coaching goes mauve, green, teal; Challenges
+ * goes peach, blue, mauve. Nothing about "Days left" is blue. The next tile
+ * added to any of those rows would simply take the next colour in the cycle.
+ *
+ * Four differently-coloured numbers side by side promise four different kinds
+ * of thing, and these are all just figures — so the colour was not merely
+ * decorative, it competed with the colour on the same screens that *is* a
+ * reading: a trend arrow, a score banded at a threshold, a warning. Those are
+ * legible now that nothing shouts over them.
+ *
+ * Moving the tint to the icon rather than deleting it keeps the tiles from
+ * going grey and, more usefully, puts the decoration somewhere the eye already
+ * reads as decoration. No call site changed — the prop means what it always
+ * meant, it just applies where it does no harm.
+ *
+ * The rule: **a figure is `fg-1` unless its colour is computed from its value.**
+ * If you cannot name the threshold, it does not get a colour.
  */
 export function StatTile({
   label,
@@ -270,10 +293,9 @@ export function StatTile({
           and stops jittering as it changes. Family only, never a size, so the
           type scale still owns how big it is. */}
       <div
-        className={cn('num flex items-center justify-center gap-1 font-medium', compact ? 'text-heading' : 'text-title sm:text-title')}
-        style={{ color: cat(color) }}
+        className={cn('num flex items-center justify-center gap-1 font-medium text-fg-1', compact ? 'text-heading' : 'text-title sm:text-title')}
       >
-        {icon}
+        {icon && <span style={{ color: cat(color) }}>{icon}</span>}
         {value}
       </div>
       <div className={cn('text-fg-2', compact ? 'text-micro' : 'mt-0.5 text-label')}>{label}</div>
