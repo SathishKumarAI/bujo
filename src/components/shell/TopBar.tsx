@@ -219,7 +219,12 @@ export function TopBar({
         {/* ── Page action, then everything else ───────────────────────────── */}
         <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-line" />
 
-        <Button variant="primary" size="sm" onClick={onQuickAdd} className="gap-1.5">
+        {/* `aria-label` because the words are `hidden` below `sm`, which left
+            the app's primary action as a button containing one decorative icon
+            — announced as "button", on every screen, on every phone. The label
+            has to live on the element rather than in the span, since the span
+            is what disappears. */}
+        <Button variant="primary" size="sm" onClick={onQuickAdd} aria-label="Quick add" className="gap-1.5">
           <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
         </Button>
 
