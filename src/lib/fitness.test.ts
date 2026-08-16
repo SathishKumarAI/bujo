@@ -66,6 +66,22 @@ describe('musclesForExercise', () => {
   it('returns empty for an unknown exercise', () => {
     expect(musclesForExercise('Meditation')).toEqual([])
   })
+  // "chin" (lats + biceps) was matching inside "ma-chin-e", so every machine
+  // exercise highlighted the back. A push day mapped to Lats and Biceps.
+  it('does not read a keyword out of the middle of a word', () => {
+    expect(musclesForExercise('Machine chest press').sort()).toEqual([2, 4, 5])
+    expect(musclesForExercise('Machine chest press')).not.toContain(12) // lats
+    expect(musclesForExercise('Machine chest press')).not.toContain(1) // biceps
+  })
+  it('still matches the plurals the keyword table relies on', () => {
+    expect(musclesForExercise('Tricep pushdown')).toEqual([5])
+    expect(musclesForExercise('Cable tricep ext (rope)')).toEqual([5])
+    expect(musclesForExercise('Lat Pulldown').sort()).toEqual([1, 12])
+    expect(musclesForExercise('Barbell Shrugs')).toEqual([9])
+  })
+  it('keeps a real chin-up on lats and biceps', () => {
+    expect(musclesForExercise('Chin-up').sort()).toEqual([1, 12])
+  })
 })
 
 describe('presets & meta', () => {
