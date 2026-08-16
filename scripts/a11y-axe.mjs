@@ -67,6 +67,7 @@ const VIEWS = [
   ['Body', 'Nutrition'],
   ['Body', 'Recovery'],
   ['Body', 'Coaching'],
+  ['Mind', 'Mindset'],
   ['Mind', 'Reading'],
   ['Mind', 'Collections'],
   ['Insights', null],
