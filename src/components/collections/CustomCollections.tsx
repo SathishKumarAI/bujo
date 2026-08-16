@@ -40,7 +40,9 @@ export function CustomCollections({
   const progress = openId ? collectionProgress(entries, openId) : null
 
   return (
-    <Band id="bujo-collections" className="scroll-mt-24 py-6">
+    // Measured header clearance, not a literal — see the note on the same class
+    // in `TagPages.tsx`.
+    <Band id="bujo-collections" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
         <h2 className="font-display text-heading font-medium text-fg-1">Collections</h2>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">

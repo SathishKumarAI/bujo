@@ -88,8 +88,18 @@ export function AppShell({
         onQuickAdd={() => setQuickOpen(true)}
         onCommand={onCommand}
       />
-      {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
-      <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
+      {/* `overflow-x-clip`, NOT `overflow-x-hidden`. `hidden` on one axis forces
+          the other to compute `auto`, which made `<main>` a scroll container —
+          and a `position: sticky` child sticks to its nearest scrolling
+          ancestor, not the viewport. `<main>` grows with its content instead of
+          scrolling, so that scrollport never moves and every sticky-under-the-
+          header element in the app was silently inert: Mindset's `LibraryBar`,
+          Today's mobile `CaptureBar`, and the page contract's act column.
+          Measured, not read: the bar sat at -544px after scrolling past it,
+          instead of clamping to `--header-h`. `clip` does the same visual job
+          without creating a scrollport.
+          Extra bottom padding on mobile clears the fixed bottom nav. */}
+      <main id="main" className={`flex-1 overflow-x-clip p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
 
       {isMobile && <BottomNav view={view} gates={gates} onNavigate={onNavigate} />}
 
