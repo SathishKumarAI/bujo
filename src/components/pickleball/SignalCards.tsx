@@ -10,7 +10,12 @@ type Weekday = { day: string; games: number; gamesWon: number; winPct: number }
 export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
   return (
     <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
-      <div className="grid grid-cols-7 gap-1.5">
+      {/* Seven columns is a week, but a week does not fit on a phone: 358px
+          across seven cells leaves 24px of content each, and "100%" needs 38.
+          The gate caught three of these showing a fraction of their own value.
+          Four-up wraps to 4+3, which costs the week its shape and buys back
+          every figure — and an unreadable week has no shape either. */}
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
         {weekdays.map((w) => {
           const has = w.games > 0
           return (

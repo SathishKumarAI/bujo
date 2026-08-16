@@ -67,8 +67,22 @@ Plan's migration list renders 20 rows of `→ Today / → Tomorrow / drop`, and
 Nutrition's "Recent days" renders 14 rows of date + kcal with no bar to compare
 against. Both are correct and both are unreadable in bulk.
 
-## B8 · Verify at a real 390px
+## B8 · Verify at a real 390px — **done**
 
-Chrome's minimum window width on this machine is ~501px, so nothing this session was
-measured at a true phone width. Either drive CDP device emulation from
-`scripts/`, or add a viewport to the existing screenshot script.
+Chrome's minimum window width on this machine is ~501px, so nothing in the
+2026-08-14 session was measured at a true phone width. The fix was not to work
+around the window: Playwright sets a viewport directly, so the gates could always
+have done this and simply never did. `npm run a11y` and `npm run clipped` now
+sweep desktop **and** 390×844.
+
+It paid for itself on the first run:
+
+- `critical: button-name` on **every phone screen** — Quick add's label is
+  `hidden` below `sm`, leaving the app's primary action as an unlabelled icon
+  button. 16 of 16 phone scans; 0 of 16 desktop scans could ever have seen it.
+- **32 clipped strings**, desktop clean. `StatBar` gave each fact **7px** at
+  390px, so "Target met — anything you like" showed 7 of the 213px it needs.
+
+Both fixed. What this says about the other backlog items: they were all written
+from desktop observation, so any of them may have a phone half nobody has looked
+at yet.
