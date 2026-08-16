@@ -254,25 +254,41 @@ export function collectionProgress(
  *   ancient — 30+ days (the "do it or drop it" pile)
  * Returns counts plus the oldest entry's age in days (0 if none).
  */
+export type OverdueBucket = 'recent' | 'week' | 'stale' | 'ancient'
+
+/**
+ * The staleness boundaries, in one place.
+ *
+ * The histogram counts these buckets and the migration list groups its rows by
+ * them, so they have to be the same boundaries or the page shows a legend that
+ * disagrees with the list under it. They were previously an inline if/else here
+ * and nothing else could reach them without copying the numbers.
+ */
+export function overdueBucketOf(ageDays: number): OverdueBucket {
+  if (ageDays <= 2) return 'recent'
+  if (ageDays <= 7) return 'week'
+  if (ageDays <= 30) return 'stale'
+  return 'ancient'
+}
+
+/** True for the tasks the migration list is about: open, dated, and in the past. */
+export function isOverdueTask(e: Entry, today: string): boolean {
+  return e.type === 'task' && e.status === 'open' && !!e.date && e.date < today
+}
+
 export function overdueBuckets(
   entries: Entry[],
   today: string,
 ): { recent: number; week: number; stale: number; ancient: number; total: number; oldestDays: number } {
-  let recent = 0
-  let week = 0
-  let stale = 0
-  let ancient = 0
+  const counts = { recent: 0, week: 0, stale: 0, ancient: 0 }
   let oldestDays = 0
   for (const e of entries) {
-    if (e.type !== 'task' || e.status !== 'open' || !e.date || e.date >= today) continue
+    if (!isOverdueTask(e, today)) continue
     const age = dayDiff(e.date, today)
-    if (age <= 2) recent++
-    else if (age <= 7) week++
-    else if (age <= 30) stale++
-    else ancient++
+    counts[overdueBucketOf(age)]++
     if (age > oldestDays) oldestDays = age
   }
-  return { recent, week, stale, ancient, total: recent + week + stale + ancient, oldestDays }
+  return { ...counts, total: counts.recent + counts.week + counts.stale + counts.ancient, oldestDays }
 }
 
 /**

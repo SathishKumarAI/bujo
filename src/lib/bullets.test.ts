@@ -12,13 +12,16 @@ import {
   migrationCounts,
   monthlyEntryCounts,
   nextStatus,
+  overdueBucketOf,
   overdueBuckets,
+  isOverdueTask,
   parseQuickCapture,
   parseTags,
   tagIndex,
   taskCompletion,
   weekdayActivity,
 } from './bullets'
+import { dayDiff } from './date'
 import type { Collection, Entry } from './types'
 
 function entry(over: Partial<Entry> = {}): Entry {
@@ -340,6 +343,38 @@ describe('collectionProgress', () => {
   })
   it('returns rate 0 for an empty collection', () => {
     expect(collectionProgress([], 'pack')).toEqual({ done: 0, total: 0, rate: 0 })
+  })
+})
+
+describe('overdueBucketOf', () => {
+  // Plan's histogram counts these buckets and its migration list groups its
+  // rows by them. If the two ever use different boundaries the page shows a
+  // legend that disagrees with the list directly beneath it, so both call this
+  // and this pins the edges.
+  it('puts each age on the side of the boundary the legend claims', () => {
+    expect(overdueBucketOf(0)).toBe('recent')
+    expect(overdueBucketOf(2)).toBe('recent')
+    expect(overdueBucketOf(3)).toBe('week')
+    expect(overdueBucketOf(7)).toBe('week')
+    expect(overdueBucketOf(8)).toBe('stale')
+    expect(overdueBucketOf(30)).toBe('stale')
+    expect(overdueBucketOf(31)).toBe('ancient')
+  })
+
+  it('agrees with the counts overdueBuckets reports', () => {
+    const today = '2026-06-30'
+    const entries = [
+      entry({ type: 'task', status: 'open', date: '2026-06-29' }), // 1d
+      entry({ type: 'task', status: 'open', date: '2026-06-28' }), // 2d
+      entry({ type: 'task', status: 'open', date: '2026-06-25' }), // 5d
+      entry({ type: 'task', status: 'open', date: '2026-06-10' }), // 20d
+      entry({ type: 'task', status: 'open', date: '2026-05-01' }), // 60d
+    ]
+    const counts = overdueBuckets(entries, today)
+    const grouped = entries.filter((e) => isOverdueTask(e, today))
+    for (const k of ['recent', 'week', 'stale', 'ancient'] as const) {
+      expect(grouped.filter((e) => overdueBucketOf(dayDiff(e.date, today)) === k)).toHaveLength(counts[k])
+    }
   })
 })
 
