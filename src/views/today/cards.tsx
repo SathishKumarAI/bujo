@@ -109,7 +109,7 @@ export function DayLogCard({ date, sticky = false }: { date: string; sticky?: bo
   const future = isFutureDay(date)
 
   return (
-    <Card hideInfo>
+    <Card band hideInfo>
       <DayMasthead
         date={date}
         isToday={date === todayISO()}
@@ -123,7 +123,7 @@ export function DayLogCard({ date, sticky = false }: { date: string; sticky?: bo
           makes the page jump — and the disabled field explains itself, which
           an absent one cannot. */}
       {future ? (
-        <div className="mb-3 rounded-control border border-dashed border-line px-3 py-3 text-body text-fg-2">
+        <div className="mb-3 border border-dashed border-line px-3 py-3 text-body text-fg-2">
           Nothing to log yet
         </div>
       ) : (
@@ -132,9 +132,9 @@ export function DayLogCard({ date, sticky = false }: { date: string; sticky?: bo
         </div>
       )}
       {carryover.length > 0 && (
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-control border border-line bg-background px-3 py-2 text-body">
+        <div className="mb-3 flex items-center justify-between gap-3 border-y border-line px-3 py-2 text-body">
           <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d shrink-0 rounded-control">Carry forward</Button>
+          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d shrink-0 rounded-none">Carry forward</Button>
         </div>
       )}
       {dayEntries.length === 0 ? (
@@ -197,7 +197,7 @@ export function WellbeingCard({ date }: { date: string }) {
 
   if (complete && !editing) {
     return (
-      <Card
+      <Card band
         title="How today went"
         hideInfo
         right={
@@ -233,7 +233,7 @@ export function WellbeingCard({ date }: { date: string }) {
   }
 
   return (
-    <Card title="How is today going?" hideInfo>
+    <Card band title="How is today going?" hideInfo>
       <div className="space-y-4">
         <SegmentScale label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
         <SegmentScale label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
@@ -263,7 +263,7 @@ export function WellbeingCard({ date }: { date: string }) {
               variant="ghost"
               aria-pressed={metric?.fastBreak === kind}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === kind ? undefined : kind })}
-              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-none ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Icon as={glyph} size="sm" /> {label}
             </Button>
@@ -294,7 +294,7 @@ export function WritingCard({ date }: { date: string }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <Card title="Write one line" hideInfo>
+    <Card band title="Write one line" hideInfo>
       <Field label={promptForDay(date)}>
         <textarea
           key={`reflect-${date}`}
@@ -305,7 +305,7 @@ export function WritingCard({ date }: { date: string }) {
             setMemory(date, { text: `${memory ? memory + ' · ' : ''}${e.target.value.trim()}` })
           }
           rows={3}
-          className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="w-full border-0 border-b border-line bg-transparent px-0 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
         <p className="mt-1 text-label text-fg-2">Saved into today’s memory when you click away.</p>
       </Field>
@@ -390,7 +390,7 @@ export function StatusStrip({ date, onNavigate }: { date: string; onNavigate?: (
   ]
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-control border border-line bg-ink-0 px-3 py-2 text-label">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line px-0 py-2 text-label">
       {items.map((it) => (
         <span key={it.label} className="inline-flex items-center gap-1.5" style={{ color: it.tone ? cat(it.tone) : undefined }}>
           <Icon as={it.icon} size="sm" className={it.tone ? undefined : 'text-fg-2'} />

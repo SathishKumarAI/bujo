@@ -26,7 +26,7 @@ export function CoachCard() {
   if (tips.length === 0) return null
 
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><AppIcon as={Compass} size="md" className="text-mauve" /> Your coach</span>} hideInfo>
+    <Card band title={<span className="inline-flex items-center gap-2"><AppIcon as={Compass} size="md" className="text-mauve" /> Your coach</span>} hideInfo>
       <ul className="space-y-2">
         {tips.map((t) => {
           const { color, Icon } = TONE[t.tone]

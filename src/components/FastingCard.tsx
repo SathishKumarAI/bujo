@@ -38,7 +38,7 @@ export function FastingCard() {
   const last = recent[0]
 
   return (
-    <Card
+    <Card band
       title="Intermittent fasting"
       subtitle={`${target}:${24 - target} window, track it day to day`}
       hideInfo

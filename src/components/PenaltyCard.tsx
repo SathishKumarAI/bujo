@@ -44,7 +44,7 @@ export function PenaltyCard() {
   const task = scaleTask(penalty.task, level) // doable for the user's chosen level
 
   return (
-    <Card
+    <Card band
       title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Make-up work</span>}
       subtitle={open ? 'Yesterday left something undone · here is the catch-up.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
       right={<Pill color={meta.color} className="font-medium">{meta.label}</Pill>}
