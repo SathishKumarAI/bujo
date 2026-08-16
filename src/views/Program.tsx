@@ -28,6 +28,10 @@ export function Program() {
     <Page>
       <ProgramTracker
         only="hyper12"
+        // Strength shows the muscle map in its right rail, driven by the lift
+        // you are logging. This page has no rail, and a checklist alone never
+        // shows what the day works — so the tracker maps the whole day here.
+        anatomy
         // The logger lives on another tab now, and its rows are local state, so
         // this hands the day's lifts over and follows them there. See
         // `lib/pendingSession`.
