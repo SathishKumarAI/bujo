@@ -70,6 +70,7 @@ const VIEWS = [
   ['Mind', 'Mindset'],
   ['Mind', 'Reading'],
   ['Mind', 'Collections'],
+  ['Mind', 'Focus'],
   ['Insights', null],
   ['Insights', 'Trackers'],
 ]
