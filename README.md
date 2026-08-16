@@ -162,7 +162,7 @@ features and design:
 - **GRIT (by 8sujan6)** · https://github.com/8sujan6/GRIT
   — fitness features: fast set logging, custom routines, exercise library, personal records, body-metrics, offline-first
 - **wger** · https://wger.de/en/software/features · https://wger.de/en/exercise/overview/
-  — nutrition / macro diary, body-weight tracking, and the **exercise database + images** (used via wger's public API, CC-BY-SA)
+  — nutrition / macro diary, body-weight tracking, the **exercise database** (wger's public API) and the **anatomical muscle diagrams** (bundled in `public/muscles/` so they work offline) · both CC-BY-SA
 
 Full credits, library licenses (React, Recharts, lucide, Tailwind, Catppuccin,
 fonts) and network-service attributions are in **[CREDITS.md](CREDITS.md)**.
