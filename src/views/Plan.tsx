@@ -6,10 +6,10 @@ import { Card, Empty, Input, Segmented } from '../components/ui'
 import { PageLayout, StatBar } from '../components/page'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
-import { addDays, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
+import { addDays, dayDiff, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
 import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
-import { entryThread, migrationCounts, overdueBuckets } from '../lib/bullets'
+import { entryThread, migrationCounts, overdueBucketOf, overdueBuckets } from '../lib/bullets'
 import type { BulletType, Entry } from '../lib/types'
 
 /**
@@ -107,6 +107,45 @@ export function Plan() {
     { key: 'stale', label: '1–4wk', n: aging.stale, color: 'maroon' as const },
     { key: 'ancient', label: '30d+', n: aging.ancient, color: 'red' as const },
   ].filter((b) => b.n > 0)
+
+  // The migration list, cut by the same boundaries the histogram above it
+  // counts. Twenty rows of an identical `→ Today / → Tomorrow / drop` triad is
+  // one undifferentiated wall, and the legend directly above it was already
+  // naming the groups the list refused to use — so the page showed you that
+  // fourteen tasks were 1–4 weeks old and then made you find them by reading
+  // dates. Grouped, "clear the ancient ones" is a decision you can act on.
+  //
+  // Order is oldest-first: the 30d+ tasks are the ones actually rotting, and
+  // burying them under three fresher groups is how they stay buried.
+  const overdueGroups = agingBuckets
+    .slice()
+    .reverse()
+    .map((b) => ({
+      ...b,
+      items: overdue.filter((e) => overdueBucketOf(dayDiff(e.date, today)) === b.key),
+    }))
+    .filter((g) => g.items.length > 0)
+
+  // Collapsed, the list still shows 8 rows total — the cap is on rows, not on
+  // groups, so grouping cannot quietly turn 8 visible tasks into 32. Groups are
+  // filled in order until the budget runs out, which means the oldest tasks are
+  // the ones you see before pressing "Show all".
+  //
+  // A `reduce` rather than a `map` over a mutable counter: the lint rule that
+  // rejected the counter is right, since a closure reassigning a local during
+  // render is exactly the shape that misbehaves when React re-runs it. Carrying
+  // the remaining budget through the accumulator says the same thing without a
+  // variable that changes under the renderer.
+  const OVERDUE_PREVIEW = 8
+  const visibleGroups = overdueGroups
+    .reduce<{ left: number; groups: typeof overdueGroups }>(
+      ({ left, groups }, g) => {
+        const items = g.items.slice(0, left)
+        return { left: left - items.length, groups: items.length ? [...groups, { ...g, items }] : groups }
+      },
+      { left: showAllOverdue ? overdue.length : OVERDUE_PREVIEW, groups: [] },
+    )
+    .groups
 
   // ── ICS import ──
   function onIcs(e: React.ChangeEvent<HTMLInputElement>) {
@@ -315,8 +354,22 @@ export function Plan() {
                     decision. The three decisions are unchanged and all three stay
                     visible: hiding them behind hover would make the page's entire
                     purpose invisible on a touch screen. */}
+                {visibleGroups.map((g) => (
+                  <div key={g.key} className="mb-3 last:mb-0">
+                    {/* The group heading is the histogram's own legend row,
+                        repeated as a divider — same label, same colour dot — so
+                        the bar above and the list below are visibly one thing.
+                        Rendered only when there is more than one group, because
+                        a single heading over the whole list names nothing. */}
+                    {overdueGroups.length > 1 && (
+                      <p className="flex items-center gap-1.5 border-b border-line pb-1 text-label text-fg-2">
+                        <span className="inline-block size-2 shrink-0 rounded-pill" style={{ background: cat(g.color) }} />
+                        {g.label}
+                        <span className="text-fg-3">{g.items.length}</span>
+                      </p>
+                    )}
                 <ul className="divide-y divide-line">
-                  {(showAllOverdue ? overdue : overdue.slice(0, 8)).map((e) => (
+                  {g.items.map((e) => (
                     <li key={e.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 text-body">
                       <button
                         onClick={() => toggleImportant(e.id)}
@@ -339,6 +392,8 @@ export function Plan() {
                     </li>
                   ))}
                 </ul>
+                  </div>
+                ))}
               </>
             )}
             {overdue.length > 8 && (

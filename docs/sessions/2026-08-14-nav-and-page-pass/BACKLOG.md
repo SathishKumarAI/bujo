@@ -80,18 +80,21 @@ Measured: at 378g vs a 380g target the bars are 655px and 658px; with the day
 halved to 190g, 329px and 658px. The 329 is the number that could not previously
 exist.
 
-## B7 · Two walls of identical rows — **half done**
+## B7 · Two walls of identical rows — **done**
 
-Nutrition's "Recent days" now carries a bar per row: length is the day against
-the busiest day or the target, whichever is larger; colour is over target or
-under. Scaling to the target alone was the first attempt and wasted the length —
-most days run over 2000, so every bar clamped to full width, which is the same
-problem as fourteen identical rows.
+Nutrition's "Recent days" carries a bar per row: length is the day against the
+busiest day or the target, whichever is larger; colour is over target or under.
 
-**Still open:** Plan's migration list, 20 rows of an identical
-`→ Today / → Tomorrow / drop` triad. The aging legend above it already names the
-buckets (1-2d, 3-7d, 1-4wk); grouping the rows under those headings would connect
-the two and turn one wall into three short lists.
+Plan's migration list is now grouped by the same staleness buckets the aging
+histogram directly above it already counts — same labels, same colour dots —
+oldest group first, because the 30d+ tasks are the ones actually rotting and
+burying them under three fresher groups is how they stay buried. The boundaries
+moved into one `overdueBucketOf` that both the histogram and the list call, with
+a test pinning each edge and asserting the two agree; shifting the `week` edge
+by a day fails it with `expected 'stale' to be 'week'`.
+
+The collapsed preview still caps at 8 **rows**, not 8 groups, so grouping cannot
+quietly turn 8 visible tasks into 32.
 
 ## B8 · Verify at a real 390px — **done**
 
