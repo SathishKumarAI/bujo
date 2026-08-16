@@ -35,12 +35,24 @@ Smaller, still open:
 2. `PageLayout.tsx`'s `window.innerHeight - 64` slack is a second, independent
    model of header height. Still conservative against the ~55px folded header,
    so it was left alone.
-3. `TodayPlanCard.tsx` hardcodes `pullup-zero` for program progress, so the
-   hypertrophy block never reaches Today's chip — more visible now that it is a
-   tab of its own. `Goals.tsx` already loops all `PROGRAMS` and is fine.
-4. `lib/programs.ts` holds both programmes *and* the pull-up-only reference data
+3. `lib/programs.ts` holds both programmes *and* the pull-up-only reference data
    (`PULLUP_WORKOUTS`, `PULLUP_PROGRESSIONS`, `PULLUP_ABILITY`). Two concerns,
    one file, now that programmes have their own view.
+4. **`scripts/a11y-axe.mjs` cannot reach a companion view.** Its `VIEWS` list is
+   `[section, tab]` pairs that it clicks, so Pull-ups and Home workout — now
+   linkable by URL again — are still unscanned. Extending the script to visit a
+   bare `?view=` would close the last hole in that gate.
+5. A third training programme would need a line in three places that currently
+   branch on `p.id === 'pullup-zero'`: `Goals`'s icon and route,
+   `TodayPlanCard`'s chip label and route, and `ProgramTracker`'s picker label.
+   Fine for two, a tax at three — the short name and home view want to live on
+   the `Program` record itself.
+
+Closed this session (was 3 and the two follow-ups):
+
+- `TodayPlanCard` now loops `PROGRAMS`, so the hypertrophy block reaches Today.
+- `?view=pullups` / `?view=homeworkout` resolve again instead of redirecting to
+  Fitness. Both pages were linked in-app but unreachable by URL.
 
 ## Traps hit on the way (the ones not already in CLAUDE.md)
 
@@ -63,6 +75,13 @@ Smaller, still open:
   measured 27.4px, so the row folded 44 → 34.7 and stopped.
 - **`settings.layout` was two decisions in one key** (which nav *and* which
   Today). Read every consumer before changing a flag.
+- **A page can be reachable in-app and unreachable by URL.** In-app navigation
+  sets React state and never consults `VIEW_ALIASES`; only the URL does. So
+  Pull-ups and Home workout rendered perfectly when you clicked through from
+  Fitness, Goals or Today, and bounced to Fitness the moment you reloaded or
+  shared the link. Nothing in a click-through test can see that — check the
+  address bar and reload. Third time the alias table has had this bug; the rule
+  is now written above it.
 - **An effect that keys on navigation misses resize.** `SectionTabs` centred the
   active tab on `[view, gates]` and never on the row changing width, so a
   rotation left the page saying one thing and the tab row showing another. A
