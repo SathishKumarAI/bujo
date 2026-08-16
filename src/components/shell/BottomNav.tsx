@@ -1,25 +1,8 @@
 import { Icon as AppIcon } from '@/components/Icon'
-import { useEffect, useState } from 'react'
 import { hrefFor } from '../../lib/deepLink'
+import { useHideOnScroll } from './useHideOnScroll'
 import { SECTIONS, landingOf, sectionOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
-
-/** Hide the bottom bar when scrolling down, show it when scrolling up. */
-function useHideOnScroll(): boolean {
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => {
-    let last = window.scrollY
-    const onScroll = () => {
-      const y = window.scrollY
-      if (Math.abs(y - last) < 8) return
-      setHidden(y > last && y > 64) // down & past the top → hide
-      last = y
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  return hidden
-}
 
 /**
  * Mobile-only bottom tab bar (hidden ≥ md): the five sections, equal width, no
@@ -33,6 +16,10 @@ function useHideOnScroll(): boolean {
  *
  * This is the whole of navigation on a phone: the top bar hides its section row
  * below `md` precisely because this bar is the reachable copy.
+ *
+ * It slides away on scroll-down and back on scroll-up, sharing
+ * `useHideOnScroll` with the top bar's fold so the two edges move on the same
+ * rule rather than on two copies of it.
  */
 export function BottomNav({
   view,
@@ -49,7 +36,7 @@ export function BottomNav({
   return (
     <nav
       aria-label="Sections"
-      className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
+      className={`nav-slide fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {SECTIONS.map((s) => {
