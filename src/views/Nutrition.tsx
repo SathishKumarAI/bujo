@@ -64,6 +64,9 @@ export function Nutrition() {
 
   const logged = recent.length
   const avg = logged ? Math.round(recent.reduce((a, d) => a + d.kcal, 0) / logged) : 0
+  // Denominator for the Recent-days bars. `TARGET.calories` is the floor so a
+  // fortnight of light days does not stretch itself to look like a full one.
+  const recentScale = Math.max(TARGET.calories, ...recent.map((d) => d.kcal))
 
   return (
     <PageLayout
@@ -168,15 +171,43 @@ export function Nutrition() {
             {logged === 0 ? (
               <EmptyFrame>Nothing logged in the last two weeks.</EmptyFrame>
             ) : (
+              // Fourteen rows of a date and a number, with nothing to read them
+              // against, is a table pretending to be a chart. Each row now
+              // carries a bar, using both channels rather than one:
+              //
+              //   length — the day's calories against the busiest day *or* the
+              //            target, whichever is larger
+              //   colour — over target, or under it
+              //
+              // Scaling purely to the target was the first attempt and wasted
+              // the length: most days here run over 2000, every one of them
+              // clamped to full width, and fourteen identical bars are the same
+              // problem as fourteen identical rows. Scaling to the range keeps
+              // the days distinguishable from each other, and the colour still
+              // says which side of the target each one fell.
               <ul>
-                {recent.map((d) => (
-                  <li key={d.date} className="flex items-center justify-between border-b border-line py-2 last:border-b-0">
-                    <button onClick={() => setDate(d.date)} className="text-left text-body text-fg-1 hover:underline">
-                      {prettyDay(d.date)}
-                    </button>
-                    <span className="num text-label text-fg-2">{d.kcal} kcal</span>
-                  </li>
-                ))}
+                {recent.map((d) => {
+                  const over = d.kcal > TARGET.calories
+                  return (
+                    <li key={d.date} className="relative border-b border-line last:border-b-0">
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0 left-0 rounded-r-control"
+                        style={{
+                          width: `${(d.kcal / recentScale) * 100}%`,
+                          background: cat(over ? 'peach' : 'green'),
+                          opacity: 0.14,
+                        }}
+                      />
+                      <div className="relative flex items-center justify-between py-2">
+                        <button onClick={() => setDate(d.date)} className="text-left text-body text-fg-1 hover:underline">
+                          {prettyDay(d.date)}
+                        </button>
+                        <span className="num text-label text-fg-2">{d.kcal} kcal</span>
+                      </div>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
@@ -193,7 +224,24 @@ export function Nutrition() {
  */
 function MacroBar({ metric, totalG }: { metric?: { protein?: number; carbs?: number; fat?: number }; totalG: number }) {
   const targetTotal = TARGET.protein + TARGET.carbs + TARGET.fat
-  const pct = (v: number, total: number) => (total > 0 ? (v / total) * 100 : 0)
+  /**
+   * ONE denominator for both bars, or the comparison the card is named for
+   * cannot happen.
+   *
+   * Each bar used to be normalised against its own total, so both were always
+   * exactly full width. Eat a third of your target of everything and the two
+   * bars render *identically* — the card said "against target" and drew a
+   * picture in which hitting the target and missing it by 200g look the same.
+   * Only the split was comparable, and the split is the thing that survives a
+   * bad day unchanged.
+   *
+   * Scaling both to `max(today, target)` makes length mean amount again: short
+   * bar means under, equal-length means on it, and the longer bar is whichever
+   * is bigger. The segment proportions still carry the split, so nothing is
+   * lost — the axis was simply missing.
+   */
+  const scale = Math.max(totalG, targetTotal) || 1
+  const pct = (v: number) => (v / scale) * 100
   return (
     <div className="space-y-2">
       <Bar
@@ -202,7 +250,7 @@ function MacroBar({ metric, totalG }: { metric?: { protein?: number; carbs?: num
           key: mac.key,
           label: mac.label,
           grams: metric?.[mac.key] ?? 0,
-          width: pct(metric?.[mac.key] ?? 0, totalG),
+          width: pct(metric?.[mac.key] ?? 0),
           color: mac.color,
         }))}
         empty={totalG === 0}
@@ -213,7 +261,7 @@ function MacroBar({ metric, totalG }: { metric?: { protein?: number; carbs?: num
           key: mac.key,
           label: mac.label,
           grams: TARGET[mac.key],
-          width: pct(TARGET[mac.key], targetTotal),
+          width: pct(TARGET[mac.key]),
           color: mac.color,
         }))}
         muted
@@ -241,9 +289,13 @@ function Bar({ label, segments, empty = false, muted = false }: {
       <p className="mb-0.5 text-micro text-fg-3">{label}</p>
       {/* The frame draws at zero data — an empty track still says "this is
           where the ratio goes", where a hidden bar says nothing at all. */}
+      {/* Grams, not the rendered percentage. Now that both bars share one
+          denominator, a segment's width is its share of whichever total is
+          larger — a number that means nothing said out loud. Grams are what the
+          legend below states and what the reader actually wants. */}
       <div className="flex h-4 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={
         empty ? `${label}: nothing logged yet`
-          : `${label}: ${segments.map((s) => `${s.label} ${Math.round(s.width)}%`).join(', ')}`
+          : `${label}: ${segments.map((s) => `${s.label} ${Math.round(s.grams)} g`).join(', ')}`
       }>
         {!empty && segments.map((s) => (
           <div key={s.key} style={{ width: `${s.width}%`, background: cat(s.color), opacity: muted ? 0.35 : 1 }} />
