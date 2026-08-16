@@ -63,9 +63,11 @@ surfaces. Do not argue a page is unreachable from the code's shape — Recovery 
 excluded on the belief it was behind an opt-in, but `nofapEnabled` defaults to
 true, and adding it immediately failed on a contrast bug.
 
-Trap: **`BottomNav`'s `PRIMARY` list is silently filtered** against the sidebar
-items, so retiring a nav id drops its phone tab with no error. Collapsing the
-Body cluster left the bar at three tabs.
+Trap (retired): `BottomNav`'s `PRIMARY` list used to be silently filtered
+against the sidebar items, so retiring a nav id dropped its phone tab with no
+error — collapsing the Body cluster left the bar at three. There is no list any
+more: both nav bars read `SECTIONS` directly. Kept as a warning against
+re-introducing a hand-written id list that resolves against another source.
 
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load

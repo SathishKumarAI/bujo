@@ -58,7 +58,7 @@ src/
 ├── components/
 │   ├── ui/         shadcn primitives (button, switch, dialog, …)
 │   ├── ui.tsx      bespoke kit (Card, Button, Input, Slider, Segmented) — wraps shadcn
-│   └── shell/      app shell: AppShell, Sidebar, TopBar, Page, cursor, viewChrome
+│   └── shell/      app shell: AppShell, TopBar, SectionTabs, BottomNav, Page, cursor, viewChrome
 ├── views/          one file per screen (Today, Monthly, Trackers, …)
 ├── store.tsx       JournalProvider + useJournal() context
 ├── App.tsx         view switch + shell composition (no router)
@@ -69,11 +69,16 @@ src/
 
 `components/shell/` wraps the `view` switch without adding a router:
 
-- **`AppShell`** owns the grid (sidebar + topbar/content) and the global
-  quick-add dialog.
-- **`TopBar`** renders the view title/subtitle (from `viewChrome.ts`), a
-  contextual date-nav, quick-add, ⌘K, and an overflow menu (theme/zoom/undo/
-  paper/handwriting/book). It replaces the old floating control clusters.
+- **`AppShell`** owns the page frame (header + `<main>`) and the global
+  quick-add dialog. There is no rail: navigation is the top bar on desktop and
+  the top bar plus `BottomNav` on phones.
+- **`TopBar`** is the whole of the desktop chrome, in two rows. Row one: brand,
+  the five `SECTIONS`, `WeekStrip`, quick-add, account, and an overflow menu
+  (⌘K/theme/zoom/undo/paper/handwriting/book). Row two: `SectionTabs`, or the
+  view title/subtitle (from `viewChrome.ts`) when the section has one surface,
+  plus the contextual date-nav.
+- **`BottomNav`** repeats those five sections within thumb reach below `md`,
+  which is why row one hides its section list there.
 - **`cursor.tsx`** is a `DateCursor` context holding shared `day`/`month` state
   so the top bar can drive Today/Monthly/Trackers/Cycle.
 - **`Page`** is the responsive `main`/`aside` grid every view opts into.

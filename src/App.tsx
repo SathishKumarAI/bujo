@@ -18,12 +18,10 @@ import { hasFolder, restoreFolder, saveToFolder, loadFromFolder } from './lib/fs
 import { AppShell } from './components/shell/AppShell'
 import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
 import { readDeepLink, onRouteChange } from './lib/deepLink'
-import { SECTIONS, landingOf, type SectionGates } from './components/shell/sections'
-import { CLASSIC_NAV, CLASSIC_GROUP_ORDER } from './components/shell/classicNav'
+import { SECTIONS, tabsOf, type SectionGates } from './components/shell/sections'
 import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
-import type { NavItem } from './components/shell/Sidebar'
 import type { ViewId } from './components/shell/viewChrome'
 // All non-landing views are code-split so the initial bundle only ships Today +
 // Account (the gate). Each view (and its recharts/feature-card weight) loads on
@@ -190,15 +188,14 @@ export default function App() {
   // Names the current screen in the dev-only one-primary-per-screen warning.
   setPrimaryScope(view)
   const gated: SectionGates = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
-  const focused = (data.settings.layout ?? 'focused') === 'focused'
-  const items: NavItem[] = focused
-    ? SECTIONS.map((s) => ({ id: landingOf(s.id, gated), label: s.label, icon: s.icon, group: '', section: s.id }))
-    : CLASSIC_NAV.filter((n) => !n.show || n.show(gated))
+  // Every tab of every section, not the five section landings. The palette is
+  // the one surface with room for all of them, and when the rail went it became
+  // the only way to reach Nutrition or Goals without going via their section.
+  const destinations = SECTIONS.flatMap((s) => tabsOf(s.id, gated).map((t) => ({ id: t.view as string, label: t.label })))
   const Current = VIEWS[view]
   const book = data.settings.bookMode
   const zoom = data.settings.zoom ?? 1
   const mode = data.settings.storageMode
-  const collapsed = !!data.settings.sidebarCollapsed
 
   // Restore the picked folder handle on mount (silent — no permission prompt).
   useEffect(() => {
@@ -235,7 +232,7 @@ export default function App() {
   if (!mode) return <Welcome />
 
   // Auth gate: on the Account page while signed out (and a backend exists), take
-  // over the whole screen — no sidebar/top bar — so sign in / sign up can't
+  // over the whole screen — no top bar, no bottom nav — so sign in / sign up can't
   // navigate into the rest of the app until the user is signed in.
   if (view === 'account' && supabaseEnabled() && !hasSession) {
     return (
@@ -256,7 +253,7 @@ export default function App() {
       <DeepLinkSync view={view} />
       <CommandPalette
         onNavigate={(id) => setView(id as ViewId)}
-        navItems={items.map((n) => ({ id: n.id, label: n.label }))}
+        navItems={destinations}
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
@@ -266,15 +263,9 @@ export default function App() {
       <ReminderBanner />
       <SyncIndicator />
       <AppShell
-        items={items}
-        groupOrder={focused ? [] : CLASSIC_GROUP_ORDER}
         gates={gated}
-        sectionTabs={focused}
         view={view}
-        collapsed={collapsed}
-        autoHide={!!data.settings.sidebarAutoHide}
         onNavigate={setView}
-        onToggleCollapse={() => setSettings({ sidebarCollapsed: !collapsed })}
         onCommand={() => setPaletteOpen(true)}
       >
         <div className="mx-auto max-w-[1600px]" style={{ zoom }}>

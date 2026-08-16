@@ -203,21 +203,20 @@ export function Settings() {
 
         <TabsContent value="feel" className="max-w-2xl">
       <Card band title="Journal feel" subtitle="Make it look & behave like real paper">
-        {/* Two information architectures, both maintained. Not a migration and
-            not an experiment — some people want every destination in the rail
-            and the whole day on one page, and that is a legitimate way to run a
-            journal. See `Settings.layout` in lib/types.ts. */}
+        {/* Two shapes for Today, both maintained. Not a migration and not an
+            experiment — some people want the whole day on one page, and that is
+            a legitimate way to run a journal. It stopped choosing a navigation
+            when the sidebar was deleted; see `Settings.layout` in lib/types.ts. */}
         <div className="mb-3 border-b border-line pb-3">
-          <p className="mb-2 text-body text-fg-1">Layout</p>
+          <p className="mb-2 text-body text-fg-1">Today layout</p>
           <Segmented
             value={s.layout ?? 'focused'}
             onChange={(v) => setSettings({ layout: v })}
             options={[{ value: 'focused', label: 'Focused' }, { value: 'classic', label: 'Classic' }]}
           />
           <p className="mt-1 text-label text-fg-2">
-            <b className="font-medium text-fg-1">Focused</b> · five sections in the sidebar, the rest as tabs, and
-            Today split into Morning / Day / Evening. <b className="font-medium text-fg-1">Classic</b> · every
-            destination in the sidebar and the whole day on one page.
+            <b className="font-medium text-fg-1">Focused</b> · Today split into Morning / Day / Evening.{' '}
+            <b className="font-medium text-fg-1">Classic</b> · the whole day on one page.
           </p>
         </div>
         <div className="mb-3 border-b border-line pb-3">
@@ -258,7 +257,6 @@ export function Settings() {
           <Toggle label="Dot-grid paper texture" on={s.paperMode} onChange={(v) => setSettings({ paperMode: v })} />
           <Toggle label="Handwriting font" on={s.handwriting} onChange={(v) => setSettings({ handwriting: v })} />
           <Toggle label="Daily reflection prompt" on={s.reflectionPrompts} onChange={(v) => setSettings({ reflectionPrompts: v })} />
-          <Toggle label="Auto-hide sidebar — reveal on hover (desktop)" on={!!s.sidebarAutoHide} onChange={(v) => setSettings({ sidebarAutoHide: v })} />
         </div>
         <div className="mt-3 border-t border-line pt-3">
           <Row label="Penalty difficulty">

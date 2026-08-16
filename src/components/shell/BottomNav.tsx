@@ -1,8 +1,7 @@
 import { Icon as AppIcon } from '@/components/Icon'
-import type { Icon as IconGlyph } from '@/components/icons'
 import { useEffect, useState } from 'react'
-import type { NavItem } from './Sidebar'
-import { sectionOf } from './sections'
+import { hrefFor } from '../../lib/deepLink'
+import { SECTIONS, landingOf, sectionOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
 /** Hide the bottom bar when scrolling down, show it when scrolling up. */
@@ -22,59 +21,61 @@ function useHideOnScroll(): boolean {
   return hidden
 }
 
-// The five views worth a thumb-tap on a phone, for the CLASSIC rail only.
-// No FAB — quick-add stays in the top bar. Order matches the daily/training flow.
-//
-// This list is resolved against the sidebar's items and silently filtered, so an
-// id that leaves the nav takes its tab with it without a word. Collapsing the
-// Body cluster retired `pickleball` and `pullups` as destinations and left this
-// list pointing at both — the bar quietly dropped to three tabs on phones, and
-// nothing failed. If you retire a nav id, check here.
-//
-// The five-section rail has no such problem and needs no such list: it is
-// already exactly five items, so the bar renders it straight through. That is
-// part of why it is five.
-const PRIMARY: ViewId[] = ['today', 'plan', 'fitness', 'nutrition', 'trackers']
-
 /**
- * Mobile-only bottom tab bar (hidden ≥ md): five primary destinations, equal
- * width, no centre FAB. Capture lives in the top bar's Quick add.
+ * Mobile-only bottom tab bar (hidden ≥ md): the five sections, equal width, no
+ * centre FAB. Capture lives in the top bar's Quick add.
+ *
+ * It reads `SECTIONS` directly. It used to take the rail's items and resolve a
+ * hand-written `PRIMARY` list of five ids against them, which failed silently:
+ * retiring a nav id dropped its tab with no error, and collapsing the Body
+ * cluster once left the bar at three. There is no list to fall out of sync now
+ * — the sections *are* the tabs, which is part of why there are five of them.
+ *
+ * This is the whole of navigation on a phone: the top bar hides its section row
+ * below `md` precisely because this bar is the reachable copy.
  */
 export function BottomNav({
-  items,
   view,
+  gates,
   onNavigate,
 }: {
-  items: NavItem[]
   view: ViewId
+  gates: SectionGates
   onNavigate: (id: ViewId) => void
 }) {
-  // Section rows carry `section`; when they do, the rail IS the tab bar.
-  const byId = new Map(items.map((n) => [n.id, n]))
-  const tabs = items.some((n) => n.section)
-    ? items
-    : (PRIMARY.map((id) => byId.get(id)).filter(Boolean) as NavItem[])
   const hidden = useHideOnScroll()
+  const current = sectionOf(view)
 
   return (
-    <nav className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {tabs.map((n) => {
-        const Icon = n.icon as IconGlyph
-        const active = n.section ? sectionOf(view) === n.section : view === n.id
+    <nav
+      aria-label="Sections"
+      className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur transition-transform duration-300 md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      {SECTIONS.map((s) => {
+        const active = current === s.id
+        // The section's first *visible* tab, so a gated-off Cycle never makes
+        // Body land on a page that is not there.
+        const target = landingOf(s.id, gates)
         return (
-          <button
-            key={n.id}
-            onClick={() => onNavigate(n.id)}
-            aria-label={n.label}
+          <a
+            key={s.id}
+            href={hrefFor(target)}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+              e.preventDefault()
+              onNavigate(target)
+            }}
+            aria-label={s.label}
             aria-current={active ? 'page' : undefined}
             // 44px minimum target (WCAG 2.5.5) — `py-1.5` around a 20px icon
             // and a micro label came out at 40 on a phone.
             className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
           >
             {active && <span className="absolute top-0 h-0.5 w-8 rounded-pill bg-primary" />}
-            <AppIcon as={Icon} size="lg" active={active} />
-            {n.label}
-          </button>
+            <AppIcon as={s.icon} size="lg" active={active} />
+            {s.label}
+          </a>
         )
       })}
     </nav>
