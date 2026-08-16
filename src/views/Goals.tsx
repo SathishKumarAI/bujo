@@ -114,7 +114,10 @@ export function Goals() {
       target: totalDays,
       color: 'green',
       icon: p.id === 'pullup-zero' ? ArrowLineUp : Barbell,
-      to: p.id === 'pullup-zero' ? 'pullups' : 'gym',
+      // The hypertrophy block left Strength for its own Body tab, so this row
+      // has to follow it — pointing at `gym` now lands on a page whose
+      // "Program & progress" fold no longer holds a programme.
+      to: p.id === 'pullup-zero' ? 'pullups' : 'program',
     })
   }
 
