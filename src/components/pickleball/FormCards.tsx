@@ -7,12 +7,12 @@ import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../
 /** Recent form / momentum strip with win-streak chips (#323). */
 export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: { longest: number; current: number } }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'}, newest first`}>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-sky" /> Recent form</span>} subtitle={`Last ${form.results.length} ${form.results.length === 1 ? 'session' : 'sessions'}, newest first`}>
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
           {form.results.map((r, i) => {
             const c = r === 'W' ? 'green' : r === 'L' ? 'red' : 'overlay0'
-            return <span key={i} className="grid h-6 w-6 place-items-center rounded-control text-caption font-medium" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
+            return <span key={i} className="grid h-6 w-6 place-items-center rounded-none text-caption font-medium" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
           })}
         </div>
         <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
@@ -37,7 +37,7 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
 /** Win-rate forecast & rating readiness (#133). */
 export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={TrendUp} size="md" className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={TrendUp} size="md" className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Current win %" value={`${forecast.current}%`} color="green" />
         <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <Icon as={TrendUp} size="sm" /> : forecast.direction === 'down' ? <Icon as={TrendDown} size="sm" /> : <Icon as={Minus} size="sm" />} />
@@ -56,7 +56,7 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
 /** Pickleball milestones progress bars (#161). */
 export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Milestones</span>} subtitle="Next badges to unlock from your sessions" collapsible>
       <ul className="space-y-3">
         {milestones.map((m) => (
           <li key={m.id}>
@@ -64,8 +64,8 @@ export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }
               <span className="text-fg-1">{m.label}{m.done && <span className="ml-1.5 text-green">✓</span>}</span>
               <span className="text-fg-2">{Math.min(m.current, m.target)} / {m.target}</span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
-              <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
+            <div className="h-2.5 overflow-hidden rounded-none bg-ink-2" role="img" aria-label={`${m.label}: ${m.current} of ${m.target}`}>
+              <div className="h-full rounded-none" style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%`, background: cat(m.done ? 'green' : 'yellow') }} />
             </div>
           </li>
         ))}
@@ -77,7 +77,7 @@ export function MilestonesCard({ milestones }: { milestones: PickleMilestone[] }
 /** Session intensity / training load from RPE (#566). */
 export function SessionIntensityCard({ load }: { load: RpeLoad }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Avg RPE" value={load.avg} color={load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green'} />
         <StatTile compact label="Hardest" value={load.hardest} color="red" />

@@ -339,6 +339,7 @@ export function ChartCard({
   label,
   height = 'h-56',
   className = '',
+  band = false,
   children,
 }: {
   title?: ReactNode
@@ -347,13 +348,15 @@ export function ChartCard({
   label: string
   height?: string
   className?: string
+  /** Render as a Modernist band. Passed straight to `Card`. */
+  band?: boolean
   children: ReactNode
 }) {
   // Enlargeable by definition: every ChartCard gets the ⛶ → large-modal
   // behaviour from one place. CARD.modalChartHeight grows the role="img" plot
   // area in the modal so the chart truly enlarges.
   return (
-    <Card title={title} subtitle={subtitle} right={right} className={className} enlargeable>
+    <Card title={title} subtitle={subtitle} right={right} className={className} band={band} enlargeable>
       <div className={`${height} w-full fig-fixed`} role="img" aria-label={label}>
         {children}
       </div>

@@ -21,7 +21,7 @@ export function MoneySavedCard({
   onCostChange: (v: number | undefined) => void
 }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PiggyBank} size="md" className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket">
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PiggyBank} size="md" className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket">
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-display font-medium leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>

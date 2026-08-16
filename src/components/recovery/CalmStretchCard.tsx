@@ -10,7 +10,7 @@ type Quiet = ReturnType<typeof urgeQuietStretch>
 /** Urge-quiet stretch · days since even a craving worth logging showed up. */
 export function CalmStretchCard({ quiet }: { quiet: Quiet }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Wind} size="md" className="text-sky" /> Calm stretch</span>} subtitle="Days since your last logged urge">
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Wind} size="md" className="text-sky" /> Calm stretch</span>} subtitle="Days since your last logged urge">
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-display font-medium leading-none" style={{ color: cat('sky') }}>{quiet.days}</div>

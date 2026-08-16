@@ -11,7 +11,7 @@ import type { CategoryVolume } from '../../lib/fitness'
 export function MovementRadar({ data, unit }: { data: CategoryVolume[]; unit: string }) {
   const total = data.reduce((s, c) => s + c.volume, 0)
   return (
-    <Card title="Movement balance" subtitle="Weekly volume by push / pull / legs / core" defer>
+    <Card band title="Movement balance" subtitle="Weekly volume by push / pull / legs / core" defer>
       {total === 0 ? (
         <Empty>Log some working sets this week to see your movement balance.</Empty>
       ) : (

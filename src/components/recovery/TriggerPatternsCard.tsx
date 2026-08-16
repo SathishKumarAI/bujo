@@ -12,7 +12,7 @@ export function TriggerPatternsCard({
   avgGap: number
 }) {
   return (
-    <Card hideInfo title="Trigger patterns" subtitle="Your most common reasons, name them to beat them">
+    <Card band hideInfo title="Trigger patterns" subtitle="Your most common reasons, name them to beat them">
       <ul className="space-y-2">
         {topTriggers.map((t) => {
           const pct = Math.round((t.count / relapseCount) * 100)
@@ -22,7 +22,7 @@ export function TriggerPatternsCard({
                 <span className="capitalize text-fg-1">{t.trigger}</span>
                 <span className="text-fg-2">{t.count}× · {pct}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
+              <div className="h-2 overflow-hidden rounded-none bg-ink-2"><div className="h-full rounded-none" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
             </li>
           )
         })}

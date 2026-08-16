@@ -43,13 +43,13 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
              important control on the page and it announced no state at all.
              (Not `role="tab"` — that would promise arrow-key tablist
              semantics this control does not implement.) */}
-      <div className="flex w-fit gap-1 rounded-card bg-secondary p-1">
+      <div className="flex w-fit gap-1 rounded-none bg-secondary p-1">
         {([['strength', 'Strength', Barbell], ['cardio', 'Cardio', PersonSimpleRun]] as const).map(([id, label, Icon]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             aria-pressed={tab === id}
-            className={`inline-flex items-center justify-center gap-2 rounded-control px-5 py-2 text-body font-medium transition-colors ${
+            className={`inline-flex items-center justify-center gap-2 rounded-none px-5 py-2 text-body font-medium transition-colors ${
               tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
@@ -66,10 +66,10 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
         {tab === 'cardio' && (
         <button
           onClick={() => setTab('strength')}
-          className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
+          className="flex items-center gap-3 rounded-none border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
           title="Open the Strength tab on this split"
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-pill" style={{ background: cat(split.color) + '22', color: cat(split.color) }}>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-none" style={{ background: cat(split.color) + '22', color: cat(split.color) }}>
             <AppIcon as={splitGlyph(split.id)} size="lg" />
           </span>
           <span className="min-w-0">
@@ -106,7 +106,7 @@ function ActiveMinutesRing({ minutes, goal }: { minutes: number; goal: number })
   const circ = 2 * Math.PI * r
   const color = met ? cat('green') : cat('peach')
   return (
-    <div className="flex items-center gap-3 rounded-card border border-line bg-ink-0 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-none border border-line bg-ink-0 px-4 py-3">
       <div className="relative shrink-0" role="img" aria-label={`This week: ${minutes} of ${goal} active minutes`}>
         <svg width={size} height={size} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={cat('surface0')} strokeWidth={stroke} />

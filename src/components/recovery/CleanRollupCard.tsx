@@ -8,7 +8,7 @@ type Rollup = ReturnType<typeof cleanRollup>
 /** Relapse-free week / month rollup (#322) · reward sustained clean windows. */
 export function CleanRollupCard({ rollup }: { rollup: Rollup }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-teal" /> Clean weeks &amp; months</span>} subtitle="Fully reset-free windows across your whole journey">
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-teal" /> Clean weeks &amp; months</span>} subtitle="Fully reset-free windows across your whole journey">
       <div className="grid grid-cols-2 gap-3">
         <StatTile compact label="Clean weeks" value={`${rollup.cleanWeeks}/${rollup.totalWeeks}`} color="teal" icon={<Icon as={CalendarCheck} size="sm" />} />
         <StatTile compact label="Clean months" value={`${rollup.cleanMonths}/${rollup.totalMonths}`} color="green" icon={<Icon as={CalendarBlank} size="sm" />} />

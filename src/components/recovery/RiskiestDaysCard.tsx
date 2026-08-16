@@ -11,7 +11,7 @@ type PeakWeekday = NonNullable<ReturnType<typeof peakRelapseWeekday>>
 /** Day-of-week relapse pattern (#263) · weekday bar chart from reset dates. */
 export function RiskiestDaysCard({ weekdayPattern, peakWeekday }: { weekdayPattern: WeekdayPattern; peakWeekday: PeakWeekday }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={CalendarX} size="md" className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`}>
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={CalendarX} size="md" className="text-red" /> Riskiest days</span>} subtitle={`${peakWeekday.label} is your highest-reset weekday`}>
       <div className="h-44 w-full" role="img" aria-label={`Relapses by weekday: ${weekdayPattern.map((w) => `${w.count} on ${w.label}`).join(', ')}`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={weekdayPattern} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>

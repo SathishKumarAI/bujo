@@ -18,7 +18,7 @@ import {
  */
 export function Pullups() {
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* Three across: the program and the ability calculator were two 620px
           cards of near-identical weight, stacked. */}
       <CardGrid>
@@ -75,7 +75,7 @@ function AbilityLadderTable() {
 function PullupWorkoutsCard() {
   const [open, setOpen] = useState<string | null>(PULLUP_WORKOUTS[0].name)
   return (
-    <Card title="Pull-up workouts" subtitle="Session formats, tap one for how to run it">
+    <Card band title="Pull-up workouts" subtitle="Session formats, tap one for how to run it">
       <ul className="space-y-1">
         {PULLUP_WORKOUTS.map((w) => {
           const isOpen = open === w.name
@@ -103,7 +103,7 @@ function PullupWorkoutsCard() {
 /** How to build toward a first pull-up · progression exercises with form cues. */
 function ProgressionsCard() {
   return (
-    <Card title="Pull-up progressions" subtitle="Build the first rep safely, why & how for each">
+    <Card band title="Pull-up progressions" subtitle="Build the first rep safely, why & how for each">
       <ul className="space-y-2">
         {PULLUP_PROGRESSIONS.map((p) => (
           <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
@@ -127,7 +127,7 @@ function PullupGuideCard() {
   const a = pullupAbility(n)
   const set = a.trainingSet
   return (
-    <Card title="Pull-up training set" subtitle="From your max strict pull-ups">
+    <Card band title="Pull-up training set" subtitle="From your max strict pull-ups">
       <label className="mb-3 flex items-center justify-between text-body text-fg-1">
         Max strict pull-ups
         <Input type="number" value={max} onChange={(e) => setMax(e.target.value)} className="w-20 py-1 text-right" />

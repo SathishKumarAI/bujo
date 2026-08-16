@@ -178,7 +178,7 @@ export function Pickleball() {
   // and the primary logging + coaching content stays uncluttered.
   const charts = (
     <CardGrid>
-      <Card title="Win-rate trend" subtitle="Win % per session" enlargeable>
+      <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
           <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
             <ResponsiveContainer width="100%" height="100%">
@@ -193,7 +193,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card title="Win / loss" subtitle="All games played" enlargeable>
+      <Card band title="Win / loss" subtitle="All games played" enlargeable>
         {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
           <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
             <ResponsiveContainer width="100%" height="100%">
@@ -210,7 +210,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card title="Games per week" subtitle="Last 8 weeks" enlargeable>
+      <Card band title="Games per week" subtitle="Last 8 weeks" enlargeable>
         <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeks.map((g, i) => ({ wk: `w${i + 1}`, games: g }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -224,7 +224,7 @@ export function Pickleball() {
         </div>
       </Card>
       {monthsPlayed && (
-        <Card title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
+        <Card band title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
           <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={months.map((m) => ({ m: m.label.slice(0, 3), games: m.games, winPct: m.winPct }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -238,7 +238,7 @@ export function Pickleball() {
           </div>
         </Card>
       )}
-      <Card title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
+      <Card band title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
         {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
           <ul className="space-y-3">
             {formats.map((fm) => (
@@ -247,15 +247,15 @@ export function Pickleball() {
                   <span className="capitalize text-fg-1">{fm.format}</span>
                   <span className="text-fg-2">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
-                  <div className="h-full rounded-pill" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
+                <div className="h-2.5 overflow-hidden rounded-none bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
+                  <div className="h-full rounded-none" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
                 </div>
               </li>
             ))}
           </ul>
         )}
       </Card>
-      <Card title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
+      <Card band title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
         {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
           <div className="h-40" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
             <ResponsiveContainer width="100%" height="100%">
@@ -270,7 +270,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card title="Play heatmap" subtitle="Last 13 weeks, darker = more games" enlargeable>
+      <Card band title="Play heatmap" subtitle="Last 13 weeks, darker = more games" enlargeable>
         <div className="overflow-x-auto">
           <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
             {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
@@ -287,12 +287,12 @@ export function Pickleball() {
   )
 
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* Three across instead of one tall stack. This page was 4.2 screens over
           twelve blocks, and most of them — the record, the log form, DUPR —
           never needed the full width. */}
       <CardGrid>
-      <Card title="At a glance" subtitle="Your pickleball record" className={SPAN_2}>
+      <Card band title="At a glance" subtitle="Your pickleball record" className={SPAN_2}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
           <StatTile compact label="Games" value={all.games} color="blue" />
@@ -308,8 +308,8 @@ export function Pickleball() {
         </div>
         {goal > 0 && (
           <div className="mt-2">
-            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
-              <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
+            <div className="h-2.5 overflow-hidden rounded-none bg-ink-2">
+              <div className="h-full rounded-none" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
             </div>
             <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
           </div>
@@ -319,10 +319,10 @@ export function Pickleball() {
       {/* ── Tournament prep countdown (#345) · conditional top status,
             surfaces only when events exist; collapsed. ── */}
       {upcoming.length > 0 && (
-        <Card title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+        <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
           <ul className="mb-3 space-y-2">
             {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 rounded-control border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+              <li key={e.id} className="flex items-center justify-between gap-2 rounded-none border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
                 <span className="min-w-0">
                   <span className="text-body font-medium text-fg-1">{e.name}</span>
                   <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
@@ -333,7 +333,7 @@ export function Pickleball() {
               </li>
             ))}
           </ul>
-          <details className="rounded-card border border-line bg-ink-0 p-3">
+          <details className="rounded-none border border-line bg-ink-0 p-3">
             <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
             <ul className="mt-2 space-y-1">
               {PREP_CHECKLIST.map((x) => (
@@ -344,7 +344,7 @@ export function Pickleball() {
         </Card>
       )}
 
-      <Card title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
+      <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
@@ -358,7 +358,7 @@ export function Pickleball() {
           <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
           <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
           <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-control border border-input bg-background px-2 py-2 text-body text-foreground">
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-none border border-input bg-background px-2 py-2 text-body text-foreground">
             <option value="">Scoring</option>
             <option value="11">to 11</option>
             <option value="15">to 15</option>
@@ -370,7 +370,7 @@ export function Pickleball() {
         <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
       </Card>
 
-      <Card title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
+      <Card band title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
         {sessions.length === 0 ? (
           <Empty>Log a session above to start your record.</Empty>
         ) : (
@@ -384,7 +384,7 @@ export function Pickleball() {
       </Card>
 
       {/* ── DUPR rating tracker ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
           <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
@@ -429,18 +429,18 @@ export function Pickleball() {
 
       {/* ── Leagues & tournaments · secondary event logging, grouped beside the
             DUPR tracker and collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} color="mauve" />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
           <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
         </div>
         {/* log an event */}
-        <div className="grid gap-2 rounded-card border border-line bg-ink-0 p-3 sm:grid-cols-2">
+        <div className="grid gap-2 rounded-none border border-line bg-ink-0 p-3 sm:grid-cols-2">
           <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
           <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
           <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-input bg-background px-2 py-2 text-body text-foreground">
+          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-none border border-input bg-background px-2 py-2 text-body text-foreground">
             {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
           </select>
           <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
@@ -472,10 +472,10 @@ export function Pickleball() {
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
             below logging, collapsed. ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Today's rotating practice focus */}
-          <div className="rounded-card border border-line bg-ink-0 p-3">
+          <div className="rounded-none border border-line bg-ink-0 p-3">
             <div className="mb-1 flex items-center gap-2">
               <span className="text-body font-medium text-fg-1">{drill.name}</span>
               <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
@@ -484,7 +484,7 @@ export function Pickleball() {
             <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
-          <div className="rounded-card border border-line bg-ink-0 p-3">
+          <div className="rounded-none border border-line bg-ink-0 p-3">
             <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={Barbell} size="sm" className="text-green" /> Warm up first</p>
             <ul className="space-y-1">
               {WARMUP.map((w) => (
@@ -554,7 +554,7 @@ export function Pickleball() {
       </Section>
 
       <CardGrid>
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
@@ -566,10 +566,10 @@ export function Pickleball() {
       </Card>
 
       {/* ── Format playbook ── */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-card border border-line bg-ink-0 p-3">
+            <li key={fm.id} className="rounded-none border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-body font-medium text-fg-1">{fm.label}</span>
                 <span className="text-micro text-fg-2">{fm.size}</span>
@@ -615,7 +615,7 @@ function PickleRow({ p, onSave, onDelete }: {
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
           <Button variant="secondary" onClick={save} className="press-3d flex-1">Save</Button>
-          <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-control">Cancel</Button>
+          <Button variant="secondary" onClick={() => setEditing(false)} className="press-3d flex-1 rounded-none">Cancel</Button>
         </div>
       </li>
     )

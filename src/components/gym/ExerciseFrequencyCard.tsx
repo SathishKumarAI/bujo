@@ -25,8 +25,8 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
   // short and says so.
   const denom = Math.max(ratio.trainDays, ...rows.map((r) => r.days), 1)
   return (
-    <Card title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
-      <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-body">
+    <Card band title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
+      <div className="mb-3 flex items-center gap-3 rounded-none border border-line bg-ink-0 px-3 py-2 text-body">
         <Icon as={CalendarCheck} size="md" style={{ color: cat('teal') }} />
         <span className="text-fg-1">
           <span className="font-medium text-fg-1">{ratio.trainDays}</span> train ·{' '}
@@ -56,11 +56,11 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
               {r.exercise}
             </button>
             <div
-              className="relative h-3.5 overflow-hidden rounded-pill bg-ink-2"
+              className="relative h-3.5 overflow-hidden rounded-none bg-ink-2"
               role="img"
               aria-label={`${r.exercise}: trained on ${r.days} of ${denom} training days, ${r.sets} set${r.sets === 1 ? '' : 's'}`}
             >
-              <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${(r.days / denom) * 100}%`, background: cat('blue') }} />
+              <div className="absolute inset-y-0 left-0 rounded-none" style={{ width: `${(r.days / denom) * 100}%`, background: cat('blue') }} />
             </div>
             <span className="text-right text-label whitespace-nowrap text-fg-2">
               {r.days}/{denom}d · {r.sets} set{r.sets === 1 ? '' : 's'}

@@ -17,7 +17,7 @@ export function RecoveryMap({ recovery, setFocusEx }: { recovery: MuscleRecovery
   const stateColor: Record<string, string> = { fresh: 'green', recovering: 'yellow', fatigued: 'red' }
   const stateLabel: Record<string, string> = { fresh: 'ready', recovering: 'recovering', fatigued: 'fatigued' }
   return (
-    <Card title="Recovery readiness" subtitle="Time since each muscle was last trained, green = ready" defer right={<Icon as={Heartbeat} size="md" style={{ color: cat('green') }} />}>
+    <Card band title="Recovery readiness" subtitle="Time since each muscle was last trained, green = ready" defer right={<Icon as={Heartbeat} size="md" style={{ color: cat('green') }} />}>
       {named.length === 0 ? (
         <Empty>Log some working sets to see what's recovered and ready.</Empty>
       ) : (
@@ -28,7 +28,7 @@ export function RecoveryMap({ recovery, setFocusEx }: { recovery: MuscleRecovery
               <button
                 key={r.muscle}
                 onClick={() => setFocusEx(r.name)}
-                className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-label"
+                className="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-label"
                 style={{ background: cat(color) + '22', color: cat(color) }}
                 title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
               >
