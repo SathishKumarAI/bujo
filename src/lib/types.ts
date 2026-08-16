@@ -675,6 +675,13 @@ export interface JournalData {
   customGoals?: CustomGoal[]
   /** Mindset principles the user is actively working on. */
   mindsetFocus?: MindsetFocus[]
+  /** ISO days each principle was practised, keyed by MINDSET_LIBRARY id.
+   *
+   *  Keyed by principle, NOT by focus row, and deliberately: a focus row dies
+   *  when you clear its slot, and the practice grid would then lose history for
+   *  a principle you simply rotated out — the one chart whose whole job is to
+   *  show the long run. Picking the same principle back up rejoins its record. */
+  mindsetPractice?: Record<string, string[]>
   settings: Settings
 }
 

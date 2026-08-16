@@ -197,6 +197,8 @@ interface Store {
   addMindsetFocus: (principleId: string) => void
   setMindsetNote: (id: string, note: string) => void
   removeMindsetFocus: (id: string) => void
+  /** Mark / unmark a principle as practised on a day (defaults to today). */
+  toggleMindsetPractice: (principleId: string, date?: string) => void
   // challenges
   addChallenge: (c: Omit<Challenge, 'id'>) => void
   removeChallenge: (id: string) => void
@@ -775,6 +777,20 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
       removeMindsetFocus: (id) =>
         patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).filter((m) => m.id !== id) })),
+
+      toggleMindsetPractice: (principleId, date = todayISO()) =>
+        patch((d) => {
+          const log = d.mindsetPractice ?? {}
+          const days = log[principleId] ?? []
+          const next = days.includes(date) ? days.filter((x) => x !== date) : [...days, date].sort()
+          // An emptied list is dropped rather than left as `[]`: the journal is
+          // serialised whole, and a key per principle you once tried and never
+          // marked is noise every sync carries forever.
+          const rest = { ...log }
+          if (next.length) rest[principleId] = next
+          else delete rest[principleId]
+          return { ...d, mindsetPractice: rest }
+        }),
 
       addChallenge: (c) =>
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),

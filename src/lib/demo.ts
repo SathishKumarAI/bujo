@@ -306,6 +306,23 @@ export function generateDemoData(today = todayISO()): JournalData {
     { id: uid('mf'), principleId: 'short-memory', note: 'Deep breath + paddle tap after every miss. Next point only.', createdAt: addDays(today, -5) },
     { id: uid('mf'), principleId: 'process', note: 'Grade myself on shot selection, not the scoreboard.', createdAt: addDays(today, -2) },
   ]
+  // Practice marks over the same 12 weeks the practice grid draws. Three
+  // principles that are no longer in focus keep their history — that is the
+  // point of keying the log by principle rather than by focus row, and the
+  // category-balance chart is the only place it shows.
+  j.mindsetPractice = Object.fromEntries(
+    ([
+      ['short-memory', 0.55, 70],
+      ['process', 0.45, 60],
+      ['breathe', 0.3, 84],
+      ['systems', 0.25, 84],
+      ['self-talk', 0.18, 45],
+      ['single-task', 0.15, 84],
+    ] as const).map(([id, rate, span]) => [
+      id,
+      Array.from({ length: span }, (_, i) => addDays(today, -(span - 1 - i))).filter(() => rand() < rate),
+    ]),
+  )
 
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
