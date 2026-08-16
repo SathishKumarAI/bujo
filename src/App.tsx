@@ -34,6 +34,7 @@ const Pickleball = lazy(() => import('./views/Pickleball').then((m) => ({ defaul
 const Monthly = lazy(() => import('./views/Monthly').then((m) => ({ default: m.Monthly })))
 const Fitness = lazy(() => import('./views/Fitness').then((m) => ({ default: m.Fitness })))
 const Gym = lazy(() => import('./views/Gym').then((m) => ({ default: m.Gym })))
+const Program = lazy(() => import('./views/Program').then((m) => ({ default: m.Program })))
 const Nutrition = lazy(() => import('./views/Nutrition').then((m) => ({ default: m.Nutrition })))
 const HomeWorkout = lazy(() => import('./views/HomeWorkout').then((m) => ({ default: m.HomeWorkout })))
 const Challenges = lazy(() => import('./views/Challenges').then((m) => ({ default: m.Challenges })))
@@ -52,7 +53,7 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
-  fitness: Fitness, nutrition: Nutrition, gym: Gym, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
+  fitness: Fitness, nutrition: Nutrition, gym: Gym, program: Program, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
   insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
   'kitchen-sink': KitchenSink,
   settings: Settings,
