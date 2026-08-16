@@ -19,8 +19,11 @@ import { cn } from '../../lib/cn'
  * chart palette, and one pinned ink value would break all five. The rules are
  * the identity, which is what the handoff itself says.
  */
-export function Band({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn('border-b-2 border-line', className)}>{children}</section>
+export function Band({ children, className, id }: { children: ReactNode; className?: string; id?: string }) {
+  // `id` so a jump link can target a band directly — the Index on Collections
+  // scrolls to one. A wrapper span with the id would work and is what the old
+  // page did; the band already exists, so it can carry its own name.
+  return <section id={id} className={cn('border-b-2 border-line', className)}>{children}</section>
 }
 
 /**
