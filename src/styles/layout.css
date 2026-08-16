@@ -30,12 +30,30 @@
   grid-column: 1 / -1;
 }
 
-/* 960px of *container*, not viewport: with the rail open and the page's own
-   padding, that is roughly a 1250px window — a 1440px screen splits, a laptop
-   at 1280 splits, and a tablet does not. Below it everything stacks, and the
-   DOM order (act, then review) puts the log form first on a phone, where the
-   reason you opened the page is to log something. */
-@container (min-width: 960px) {
+/* 900px of *container*, not viewport. Below it everything stacks, and the DOM
+   order (act, then review) puts the log form first on a phone, where the reason
+   you opened the page is to log something.
+
+   This was 960, with a comment claiming it meant "roughly a 1250px window — a
+   laptop at 1280 splits". It did not. Measured, with the rail open:
+
+     viewport  1024 → container  673   stacks
+     viewport  1200 → container  838   stacks
+     viewport  1280 → container  918   stacks   ← the case the comment promised
+     viewport  1366 → container 1004   splits
+
+   The rail is 240px and the page's own padding takes the rest, so 1280 lands 42
+   short of the old threshold. The effect was not subtle: at 1280 — the most
+   common laptop width there is — Fitness and Nutrition rendered as one 918px
+   column with the log form capped at 380px inside it, leaving ~538px of the
+   page empty while History and Analytics sat below the fold.
+
+   900 delivers what the old comment described. Tablets still stack (1024 is
+   673, nowhere near), and 1200 still stacks at 838, so the boundary lands
+   between a tablet and a laptop where it was always meant to. At 1280 the
+   columns come out ~554 and ~340; 340 is wider than the 358 a phone gives the
+   same form, which it handles. */
+@container (min-width: 900px) {
   .page-zones:not(.page-zones-single) {
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
   }
