@@ -3,15 +3,21 @@
 Scope was "build defects, document redesigns". Everything here is a redesign or a
 judgement call, so it stayed out of the diff.
 
-## B1 · Fitness and Nutrition are one zone doing one job
+## B1 · Fitness and Nutrition are one zone doing one job — **done, and the note was wrong**
 
-At 1440px the form fields cap at 380px inside a 912px zone, so roughly 530px of the
-page is empty while `History` and `Analytics` sit stacked *below* the fold instead
-of beside the form.
+Recorded as "at 1440px the form caps at 380px inside a 912px zone, so ~530px is
+empty". Measuring the whole range rather than the one width in the ticket showed
+the split has **always** worked at 1440 — the note was written from a window
+reporting 1440 while handing the page a 1280-sized container.
 
-The 380px cap is right and should stay. The fix is a two-column act/review split —
-form left, history and analytics right — not a wider input. Both pages have the
-same shape, and `page-contract` is the tool for it.
+The real defect was at **1280**, the most common laptop width. The zone split is
+a container query that was set at 960px, under a comment claiming that meant "a
+laptop at 1280 splits". It did not: the rail takes 240px and 1280 lands at a
+918px container, 42 short. Threshold to 900; 1280 now splits 554/343, 1200 and
+below still stack.
+
+Lesson worth keeping: the page structure was right the whole time. One number was
+wrong, and a comment asserting otherwise kept anyone from checking.
 
 ## B2 · Insights column bottoms are ragged
 
@@ -43,10 +49,20 @@ font families (Instrument Sans vs Fraunces in the ring), and two alignments
 `SplitCol` are still four components doing one job. Consolidating them is the
 part that needs the before/after render snapshot.
 
-## B4 · Two tab-row visual languages
+## B4 · Two tab-row visual languages — **withdrawn**
 
-Settings uses pill tabs with icons; the section tab row uses underlined text tabs.
-Both are fine; having both is not. Pick one.
+Settings uses pill tabs with icons; the section tab row uses underlined text. The
+difference is not drift, it is meaning.
+
+Settings is Radix `Tabs` with real `TabsContent` panels — the ARIA tabs pattern,
+in-page state, panels in the same document. `SectionTabs` is deliberately *not*
+that: it is a `<nav>` of links, each to a different page, with
+`aria-current="page"`, and its own doc records that axe flagged
+`critical: aria-valid-attr-value` when Radix Tabs was tried there.
+
+Making them look the same would promise that the same gesture does the same
+thing. One changes the URL and lets Back walk it; the other does not. Leave them
+distinct.
 
 ## B5 · No scroll affordance on the section tab row
 
@@ -54,18 +70,28 @@ Both are fine; having both is not. Pick one.
 at the edges and that is arguably enough — but an edge fade (a CSS mask that
 disappears at the ends) would make it explicit. Low value, non-zero risk.
 
-## B6 · Nutrition's "macro split against target" cannot be read
+## B6 · Nutrition's "macro split against target" cannot be read — **done**
 
-Both bars normalise to 100% width, so "today" and "target" are the same length and
-the comparison the card is named after is invisible — you cannot see that protein
-is 127/120 (over) while carbs are 162/200 (under). Needs a shared scale, not a
-second full-width bar.
+Both bars were normalised against their own total, so both were always exactly
+full width: eat a third of your target of everything and the two bars render
+identically. Now share one denominator, `max(today, target)`.
 
-## B7 · Two walls of identical rows
+Measured: at 378g vs a 380g target the bars are 655px and 658px; with the day
+halved to 190g, 329px and 658px. The 329 is the number that could not previously
+exist.
 
-Plan's migration list renders 20 rows of `→ Today / → Tomorrow / drop`, and
-Nutrition's "Recent days" renders 14 rows of date + kcal with no bar to compare
-against. Both are correct and both are unreadable in bulk.
+## B7 · Two walls of identical rows — **half done**
+
+Nutrition's "Recent days" now carries a bar per row: length is the day against
+the busiest day or the target, whichever is larger; colour is over target or
+under. Scaling to the target alone was the first attempt and wasted the length —
+most days run over 2000, so every bar clamped to full width, which is the same
+problem as fourteen identical rows.
+
+**Still open:** Plan's migration list, 20 rows of an identical
+`→ Today / → Tomorrow / drop` triad. The aging legend above it already names the
+buckets (1-2d, 3-7d, 1-4wk); grouping the rows under those headings would connect
+the two and turn one wall into three short lists.
 
 ## B8 · Verify at a real 390px — **done**
 
