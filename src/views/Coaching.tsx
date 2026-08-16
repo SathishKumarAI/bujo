@@ -78,7 +78,10 @@ export function Coaching() {
             ))}
           </ul>
         </details>
-        <div className="mt-3 grid grid-cols-7 gap-1">
+        {/* 4-up on a phone — see `pickleball/SignalCards.tsx`. At seven columns
+            each cell held 26px and the focus words ("Dinking", "Transition")
+            lost half their letters. */}
+        <div className="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7">
           {WEEKLY_TEMPLATE.map((d, i) => (
             <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (todayDow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
               <div className="font-medium">{d.day}</div>

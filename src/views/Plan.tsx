@@ -329,7 +329,7 @@ export function Plan() {
                             (duotone) rather than a fill colour. */}
                         <Icon as={Star} size="sm" active={e.important} />
                       </button>
-                      <span className="min-w-0 flex-1 truncate text-fg-1" title={e.text}>{e.text}</span>
+                      <span className="min-w-0 flex-1 text-fg-1" title={e.text}>{e.text}</span>
                       <span className="shrink-0 text-label text-fg-2">{prettyDay(e.date)}</span>
                       <span className="flex shrink-0 items-center gap-1">
                         <Button variant="secondary" size="sm" onClick={() => migrateEntry(e.id, today)} aria-label={`Move "${e.text}" to today`} className="press-3d rounded-control">→ Today</Button>
@@ -361,7 +361,7 @@ export function Plan() {
                   return (
                     <li key={t.rootId} className="rounded-card border border-line bg-ink-0 px-2.5 py-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2 truncate">
+                        <span className="flex min-w-0 items-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon-sm"
@@ -370,7 +370,7 @@ export function Plan() {
                             className="shrink-0 text-fg-2 hover:text-mauve"
                             aria-label={`Bring "${t.text}" to today`}
                           >→</Button>
-                          <span className="truncate text-fg-1">{t.text}</span>
+                          <span className="min-w-0 text-fg-1">{t.text}</span>
                         </span>
                         <button
                           onClick={() => setOpenThread(open ? null : t.rootId)}

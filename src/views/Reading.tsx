@@ -312,7 +312,7 @@ function ReadLater() {
                 className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${l.done ? 'border-green bg-green text-crust' : 'border-overlay0'}`}>
                 {l.done && <AppIcon as={Check} size="sm" />}
               </button>
-              <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 truncate ${l.done ? 'text-fg-2 line-through' : 'text-fg-1 hover:text-foreground'}`}>
+              <a href={l.url} target="_blank" rel="noreferrer" className={`min-w-0 flex-1 ${l.done ? 'text-fg-2 line-through' : 'text-fg-1 hover:text-foreground'}`}>
                 {l.title || l.url}
               </a>
               <AppIcon as={ArrowSquareOut} size="sm" className="shrink-0 text-fg-2" />

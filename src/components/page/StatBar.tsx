@@ -55,11 +55,27 @@ export function StatBar<T extends string>({
   }
   const shown = facts.slice(0, 4)
   return (
-    <div className="flex max-h-16 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-2 sm:flex-nowrap">
+    // The 64px cap is a desktop rule. Below `sm` the facts are two rows, so
+    // capping the height there just clips the second one.
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-2 sm:max-h-16 sm:flex-nowrap">
       {segments && mode !== undefined && onModeChange && (
         <Segmented tone="neutral" value={mode} onChange={onModeChange} options={segments} />
       )}
-      <div className="flex min-w-0 flex-1 items-center">
+      {/*
+        Two columns on a phone, one row from `sm` up.
+
+        Four facts sharing one 390px row — beside a Segmented control, which
+        takes its width first — left each fact **7px wide**. The clipped-text
+        gate found "Push day · Sat, Aug 15" showing 7px of the 146px it needs,
+        and "Target met — anything you like" 7px of 213px: an orientation bar
+        rendering none of the orientation, on Fitness, Pull-ups and Home workout
+        at once. It had never been measured at this width.
+
+        A grid rather than `flex-wrap` because wrapping flex items with
+        `flex-1` still lets them collapse below their content; a 2-column grid
+        gives each fact a real, equal share.
+      */}
+      <div className="grid w-full grid-cols-2 gap-y-2 sm:flex sm:w-auto sm:min-w-0 sm:flex-1 sm:items-center">
         {shown.map((f, i) => (
           <Fact key={f.label} fact={f} first={i === 0} />
         ))}
@@ -72,12 +88,20 @@ function Fact({ fact, first }: { fact: StatFact; first: boolean }) {
   const body = (
     <>
       <span className="block truncate text-micro text-fg-2">{fact.label}</span>
-      <span className={`block truncate text-body font-medium text-fg-1 ${fact.prose ? '' : 'num'}`}>{fact.value}</span>
+      {/*
+        A prose fact wraps; a figure truncates. "Target met — anything you like"
+        is a sentence and needs 213px it will never get on a phone, so nowrap +
+        ellipsis could only ever hide it. A figure is short enough to fit once
+        the column is real, and truncating it is the safer failure.
+      */}
+      <span className={`block text-body font-medium text-fg-1 ${fact.prose ? '' : 'num truncate'}`}>{fact.value}</span>
     </>
   )
   // The divider is a left border on every fact but the first, so the bar never
   // ends on a trailing rule and the count of dividers is always facts - 1.
-  const shell = `min-w-0 flex-1 px-3 text-left ${first ? '' : 'border-l border-line'}`
+  // Only from `sm`: in the phone grid it would draw down the middle of the two
+  // columns and on the wrong items.
+  const shell = `min-w-0 px-3 text-left sm:flex-1 ${first ? '' : 'sm:border-l sm:border-line'}`
   return fact.onClick ? (
     <button onClick={fact.onClick} className={`${shell} rounded-control transition-colors hover:bg-ink-2`}>
       {body}
