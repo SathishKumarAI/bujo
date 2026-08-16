@@ -1,5 +1,16 @@
 # Modernist redesign — plan
 
+> **Shipped 2026-08-16 as PRs #113–#119.** The plan below is what was agreed
+> before any code; two things changed on contact and are worth recording:
+>
+> 1. **Phases 4–6 stopped hand-writing bands.** Phases 1–2 wrote every band by
+>    hand, which decided the primitives but does not scale to twenty more pages
+>    — rewriting a card's markup risks losing what is inside it. `<Card band>`
+>    (phase 3) converts a page by adding one prop per call site instead.
+> 2. **Radius went to 0 app-wide in phase 7, not per page.** It is the one rule
+>    of the four that cannot be staged: a flat page holding eight rounded
+>    controls reads as a mistake rather than a migration.
+
 Source: `~/Downloads/Luke's redesign scope/design_handoff_mindset_redesign`
 (`Mindset - Modernist v3.dc.html` is the design; v1/v2 are context only).
 

@@ -1,6 +1,6 @@
 import type { Habit, HabitType, JournalData } from './types'
 import { labelOf } from '../domain/activities'
-import { addDays, dayDiff, todayISO } from './date'
+import { addDays, dayDiff, isFutureDay, todayISO, weekDaysOf } from './date'
 
 // ── Habit completion (single source of truth across all layouts) ─────────────
 
@@ -72,6 +72,27 @@ export function activeDays(data: JournalData): Set<string> {
   ;(data.pickleball ?? []).forEach((p) => days.add(p.date))
   Object.entries(data.habitLog).forEach(([d, ids]) => ids.length && days.add(d))
   return days
+}
+
+/**
+ * The seven days of `today`'s week, each marked logged or not — the rail's
+ * week strip.
+ *
+ * A future day is never logged, even though `activeDays` contains it: a task or
+ * event dated ahead of today makes that date "active", so on a Sunday, Friday's
+ * dinner plan lit Friday's cell and the strip claimed a day that had not
+ * happened yet. Scheduling is not logging.
+ */
+export function loggedWeek(
+  data: JournalData,
+  today = todayISO(),
+  weekStart: 0 | 1 = 0,
+): { date: string; logged: boolean; future: boolean }[] {
+  const days = activeDays(data)
+  return weekDaysOf(today, weekStart).map((date) => {
+    const future = isFutureDay(date, today)
+    return { date, future, logged: !future && days.has(date) }
+  })
 }
 
 /** Current consecutive-day logging streak ending today (or yesterday). */

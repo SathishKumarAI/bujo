@@ -1,3 +1,4 @@
+import { WeekStrip } from './WeekStrip'
 import { Moon, Sidebar as SidebarIcon, SidebarSimple, SlidersHorizontal, Sun } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
@@ -26,7 +27,10 @@ function Brand() {
   return (
     <div className="flex items-baseline gap-2">
       <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>
-      <span className="text-primary">✦</span>
+      {/* A 6px accent square, not the ✦ glyph it replaces. The redesign spends
+          its accent on state and one mark of identity; a star reads as
+          decoration, and decoration is what the flat treatment removes. */}
+      <span className="size-1.5 bg-brand" aria-hidden />
     </div>
   )
 }
@@ -130,11 +134,14 @@ export function Sidebar({
                         // `min-h-11` — these are the mobile drawer's rows as
                         // well as the desktop rail's, and 39px is under the
                         // 44px target guide (WCAG 2.5.5).
-                        className={`group relative flex min-h-11 w-full items-center gap-3 rounded-control px-3 py-2 text-left text-body transition-colors ${
-                          active ? 'bg-secondary/70 font-medium text-foreground' : 'text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
+                        // Active is a 3px accent rule on the leading edge and
+                        // full-strength ink — no filled pill. A fill makes the
+                        // current row a raised object; the rule marks it and
+                        // leaves the rail flat, which is the whole treatment.
+                        className={`group relative flex min-h-11 w-full items-center gap-3 border-l-[3px] px-3 py-2 text-left text-body transition-colors ${
+                          active ? 'border-brand font-medium text-foreground' : 'border-transparent text-fg-2 hover:bg-secondary/40 hover:text-fg-1'
                         }`}
                       >
-                        {active && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-pill bg-primary" aria-hidden />}
                         <AppIcon as={Icon} size="md" active={active} className={`shrink-0 ${active ? 'text-brand-text' : 'text-fg-2 group-hover:text-fg-2'}`} />
                         <span className={`whitespace-nowrap ${collapsed ? 'md:hidden' : ''}`}>{n.label}</span>
                       </a>
@@ -157,6 +164,7 @@ export function Sidebar({
             )
           })}
         </div>
+        <WeekStrip collapsed={collapsed} />
         <SidebarFooter view={view} collapsed={collapsed} onNavigate={onNavigate} />
       </div>
     </nav>
