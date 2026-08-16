@@ -36,24 +36,46 @@ export function TodayPlanCard() {
   const workedOut = data.workouts.some((w) => w.date === today) || (data.pickleball ?? []).some((p) => p.date === today)
   const focusMin = (data.devSessions ?? []).filter((s) => s.date === today).reduce((a, s) => a + s.durationMin, 0)
 
-  // Pull-up program progress (days fully checked off).
+  // Program progress (days fully checked off), for EVERY built-in program.
+  //
+  // This used to look up `pullup-zero` by id and nothing else, so the 12-week
+  // hypertrophy block never reached Today no matter how far through it you
+  // were — a gap that only got more obvious once it became a Body tab of its
+  // own. `Goals` already loops `PROGRAMS`; this now matches it.
+  //
+  // Rest days are excluded from the total for the same reason Goals excludes
+  // them: a day with no exercises can never be completed, so counting it made
+  // 100% unreachable. That bug was fixed on Goals and left here.
   const done = data.settings.programDone ?? []
-  const pullup = PROGRAMS.find((p) => p.id === 'pullup-zero')
-  let pullDone = 0
-  let pullTotal = 0
-  if (pullup) {
-    for (const w of pullup.weeks) for (const d of w.days) {
-      pullTotal++
-      if (d.exercises.length && d.exercises.every((_, i) => done.includes(`${pullup.id}-w${w.week}d${d.day}-e${i}`))) pullDone++
+  const programs = PROGRAMS.map((p) => {
+    let dayDone = 0
+    let dayTotal = 0
+    for (const w of p.weeks) for (const d of w.days) {
+      if (!d.exercises.length) continue
+      dayTotal++
+      if (d.exercises.every((_, i) => done.includes(`${p.id}-w${w.week}d${d.day}-e${i}`))) dayDone++
     }
-  }
+    return { p, dayDone, dayTotal }
+  }).filter(({ dayDone, dayTotal }) => dayDone > 0 && dayDone < dayTotal)
 
   const chips: { label: string; color: string; icon: typeof CheckSquare; to: Parameters<typeof navigate>[0]; done: boolean }[] = [
     { label: habitsLeft > 0 ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} left` : 'Habits done', color: 'green', icon: CheckSquare, to: 'trackers', done: cov.total > 0 && habitsLeft === 0 },
     { label: workedOut ? 'Workout logged' : 'No workout yet', color: 'teal', icon: Barbell, to: 'fitness', done: workedOut },
     { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListChecks, to: 'plan', done: tasksDue === 0 },
   ]
-  if (pullDone > 0 && pullDone < pullTotal) chips.push({ label: `Pull-ups ${pullDone}/${pullTotal}`, color: 'peach', icon: ArrowLineUp, to: 'pullups', done: false })
+  // Short labels and destinations are keyed by program id, the same two-way
+  // split `ProgramTracker` and `Goals` use. A third program would need a line
+  // here — the chip has room for a word, not for "12-Week Hypertrophy Block".
+  for (const { p, dayDone, dayTotal } of programs) {
+    const isPullup = p.id === 'pullup-zero'
+    chips.push({
+      label: `${isPullup ? 'Pull-ups' : 'Hypertrophy'} ${dayDone}/${dayTotal}`,
+      color: 'peach',
+      icon: isPullup ? ArrowLineUp : Barbell,
+      to: isPullup ? 'pullups' : 'program',
+      done: false,
+    })
+  }
   if (focusMin > 0) chips.push({ label: `${focusMin}m focused`, color: 'lavender', icon: Timer, to: 'focus', done: true })
 
   // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
