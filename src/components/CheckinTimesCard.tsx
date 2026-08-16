@@ -16,7 +16,7 @@ export function CheckinTimesCard() {
   const max = Math.max(1, ...hours)
 
   return (
-    <Card title="When you check in" subtitle={peak != null ? `You’re most consistent around ${fmtHour(peak)}` : 'Time-of-day pattern of your habit check-ins'}>
+    <Card band title="When you check in" subtitle={peak != null ? `You’re most consistent around ${fmtHour(peak)}` : 'Time-of-day pattern of your habit check-ins'}>
       {total === 0 ? (
         <Empty>Check off some habits and your time-of-day pattern shows up here.</Empty>
       ) : (

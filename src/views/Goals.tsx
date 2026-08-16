@@ -169,13 +169,13 @@ export function Goals() {
   }
 
   return (
-    <Page>
-      <Card title="Goals" subtitle={goals.length ? `${hit} of ${goals.length} on track` : 'Your active targets, all in one place'}>
+    <Page className="gap-0 sm:gap-0">
+      <Card band title="Goals" subtitle={goals.length ? `${hit} of ${goals.length} on track` : 'Your active targets, all in one place'}>
         {goals.length === 0 ? (
           <Empty>No goals yet · set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
           <>
-          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-line bg-ink-0 px-3 py-2 text-body">
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-none border border-line bg-ink-0 px-3 py-2 text-body">
             <span className="inline-flex items-center gap-1.5 text-fg-1">
               <AppIcon as={Target} size="sm" style={{ color: cat('mauve') }} /> Overall progress
               <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
@@ -211,8 +211,8 @@ export function Goals() {
                         {g.value}/{g.target}{reached ? ' ✓' : ''}
                       </span>
                     </div>
-                    <div className="mt-auto h-2.5 overflow-hidden rounded-pill bg-ink-2">
-                      <div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
+                    <div className="mt-auto h-2.5 overflow-hidden rounded-none bg-ink-2">
+                      <div className="h-full rounded-none transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
                     </div>
                   </button>
                 </li>
@@ -222,8 +222,8 @@ export function Goals() {
         )}
       </Card>
 
-      <Card title={<span className="inline-flex items-center gap-2"><AppIcon as={Sparkle} size="md" className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
-        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-card border border-line bg-ink-0 p-3">
+      <Card band title={<span className="inline-flex items-center gap-2"><AppIcon as={Sparkle} size="md" className="text-mauve" /> Custom goals</span>} subtitle="Your own targets, track anything with manual progress" help="Goals not derived from another view (e.g. ‘Save $500’, ‘Drink 8 glasses’). Use the stepper to update progress; they roll up here.">
+        <div className="mb-3 flex flex-wrap items-end gap-2 rounded-none border border-line bg-ink-0 p-3">
           <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Goal (e.g. Save $500)" className="min-w-[10rem] flex-1" aria-label="Goal" />
           <Input type="number" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Target" className="w-24" aria-label="Target" />
           <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="Unit" className="w-24" aria-label="Unit" />
@@ -240,13 +240,13 @@ export function Goals() {
               // #95/#261: deadline pace + ahead/behind indicator (null when no due).
               const pace = goalPace(g.value, g.target, g.createdAt, g.due, today)
               return (
-                <li key={g.id} className="group rounded-card border border-line bg-ink-0 p-3">
+                <li key={g.id} className="group rounded-none border border-line bg-ink-0 p-3">
                   <div className="mb-1.5 flex items-center gap-2 text-body">
                     <span className="font-medium text-fg-1">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
                     <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
                   </div>
-                  <div className="mb-2 h-2.5 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
+                  <div className="mb-2 h-2.5 overflow-hidden rounded-none bg-ink-2"><div className="h-full rounded-none transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />
                   {/* Deadline + pace (#95/#261) */}
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label">
@@ -256,7 +256,7 @@ export function Goals() {
                         type="date"
                         value={g.due ?? ''}
                         onChange={(e) => updateCustomGoal(g.id, { due: e.target.value || undefined })}
-                        className="rounded-card border border-line-strong bg-card px-2 py-1 text-foreground"
+                        className="rounded-none border border-line-strong bg-card px-2 py-1 text-foreground"
                         aria-label={`Deadline for ${g.label}`}
                       />
                     </label>

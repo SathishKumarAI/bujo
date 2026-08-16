@@ -99,7 +99,7 @@ export function HabitDetail({
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
       <div
         ref={trap}
-        className="card-3d w-full max-w-2xl overflow-hidden rounded-card border border-line-strong bg-ink-1"
+        className="card-3d w-full max-w-2xl overflow-hidden rounded-none border border-line-strong bg-ink-1"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -136,8 +136,8 @@ export function HabitDetail({
                 <span className="text-fg-2">Habit strength</span>
                 <span style={{ color: cat(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-                <div className="h-full rounded-pill transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
+              <div className="h-2 overflow-hidden rounded-none bg-ink-2">
+                <div className="h-full rounded-none transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />
               </div>
             </div>
           )}

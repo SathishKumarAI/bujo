@@ -41,7 +41,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
 
   return (
     <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-2">
-      <Card title="Completion heatmap" subtitle="Last 13 weeks, greener = more habits done that day" className="lg:col-span-2" collapsible>
+      <Card band title="Completion heatmap" subtitle="Last 13 weeks, greener = more habits done that day" className="lg:col-span-2" collapsible>
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
@@ -64,7 +64,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
       {/* Subgrid: the habit name column fits the longest name rather than a
           guessed `w-24`. Habit names are user-supplied, so this list had no
           business assuming a width at all. */}
-      <Card title="Streak leaderboard" subtitle="Current streak, faint marker = all-time best">
+      <Card band title="Streak leaderboard" subtitle="Current streak, faint marker = all-time best">
         {streaks.length === 0 ? (
           <Empty>No check habits yet.</Empty>
         ) : (
@@ -72,8 +72,8 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
             {streaks.map(({ h, streak, best }) => (
               <li key={h.id} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
                 <span className="max-w-48 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="relative h-2.5 overflow-hidden rounded-pill bg-ink-2">
-                  <div className="h-full rounded-pill" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
+                <div className="relative h-2.5 overflow-hidden rounded-none bg-ink-2">
+                  <div className="h-full rounded-none" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
                   {/* All-time best marker (#290): a notch at the personal record. */}
                   {best > streak && (
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
@@ -86,7 +86,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         )}
       </Card>
 
-      <Card title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
+      <Card band title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
         {(() => {
           const months = monthlyCompletion(data, 6, today)
           // `items-stretch`, not `items-end`: cross-axis `end` collapses each
@@ -108,7 +108,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         })()}
       </Card>
 
-      <Card title="Best weekdays" subtitle="Avg completion by day (last 90 days)">
+      <Card band title="Best weekdays" subtitle="Avg completion by day (last 90 days)">
         <div className="flex items-stretch justify-between gap-1.5" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion by weekday over 90 days">
           {wd.map((r, i) => (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
@@ -122,7 +122,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
       </Card>
 
       {/* Perfect days: every scheduled build habit done. Rewards full days, not single habits. */}
-      <Card title="Perfect days" subtitle="Days you completed every scheduled habit (90 days)">
+      <Card band title="Perfect days" subtitle="Days you completed every scheduled habit (90 days)">
         <div className="grid grid-cols-2 gap-2">
           <StatTile label="perfect days" value={perfect.total} color="green" />
           <StatTile label="current streak" value={perfect.streak} color="peach" />
