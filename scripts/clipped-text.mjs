@@ -72,8 +72,19 @@ function findClipped() {
   return out
 }
 
+/**
+ * Both widths. This gate only ever ran at 1440 — the width at which text is
+ * least likely to be clipped — and never at the one where it is most likely.
+ * A pass at desktop says nothing about a phone: the columns are a third as
+ * wide and the strings are identical.
+ */
+const VIEWPORTS = [
+  { name: 'desktop', width: 1440, height: 900 },
+  { name: 'phone', width: 390, height: 844 },
+]
+
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const page = await browser.newPage({ viewport: VIEWPORTS[0] })
 
 // A fresh profile lands on the storage-mode start screen, which swallows
 // `?view=` entirely and leaves every page unmeasured. "Explore the demo" both
@@ -96,14 +107,17 @@ if (bytes < 20000) {
 }
 
 let failures = 0
-for (const view of VIEWS) {
-  await page.goto(`${BASE}/?view=${view}`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(300)
-  const clipped = await page.evaluate(findClipped)
-  if (clipped.length) {
-    failures += clipped.length
-    console.error(`\n${view} — ${clipped.length} clipped`)
-    for (const c of clipped) console.error(`  "${c.text}"  ${c.shown}px shown, ${c.needed}px needed`)
+for (const vp of VIEWPORTS) {
+  await page.setViewportSize({ width: vp.width, height: vp.height })
+  for (const view of VIEWS) {
+    await page.goto(`${BASE}/?view=${view}`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(300)
+    const clipped = await page.evaluate(findClipped)
+    if (clipped.length) {
+      failures += clipped.length
+      console.error(`\n${vp.name} · ${view} — ${clipped.length} clipped`)
+      for (const c of clipped) console.error(`  "${c.text}"  ${c.shown}px shown, ${c.needed}px needed`)
+    }
   }
 }
 
@@ -115,4 +129,4 @@ if (failures) {
   console.error('`data-clip-ok` if the truncation is genuinely intended.')
   process.exit(1)
 }
-console.log(`No clipped text across ${VIEWS.length} views.`)
+console.log(`No clipped text across ${VIEWS.length} views at ${VIEWPORTS.map((v) => v.width).join('px and ')}px.`)

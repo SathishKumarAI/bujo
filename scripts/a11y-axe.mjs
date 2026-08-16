@@ -81,10 +81,28 @@ const VIEWS = [
  */
 const SURFACES = ['Morning', 'Day', 'Evening']
 
+/**
+ * VIEWPORTS · this gate only ever saw a desktop.
+ *
+ * Every scan ran at 1280 wide, so the phone layout has never been checked —
+ * and it is not the same page with narrower columns. Below `md` the rail is an
+ * off-canvas drawer and a bottom tab bar appears; below `sm` card subtitles are
+ * not rendered at all and the ⓘ popover that carries them *only exists there*.
+ * Whole controls exist at 390 and nowhere else, which is precisely the shape of
+ * thing that ships unchecked. Same class of hole as "only mocha was checked",
+ * and it sat in a backlog file for the same reason: a manual step never happens.
+ *
+ * 390×844 is a small iPhone, the narrowest width the app claims to support.
+ */
+const VIEWPORTS = [
+  { name: 'desktop', width: 1280, height: 900 },
+  { name: 'phone', width: 390, height: 844 },
+]
+
 const browser = await chromium.launch()
 // An explicit context, not `browser.newPage()`: @axe-core/playwright refuses a
 // page created straight off the browser ("Please use browser.newContext()").
-const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+const context = await browser.newContext({ viewport: VIEWPORTS[0] })
 const page = await context.newPage()
 
 /**
@@ -104,6 +122,21 @@ const page = await context.newPage()
  */
 const THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 
+/**
+ * Themes to re-scan at phone width. Not all five, by default.
+ *
+ * Contrast is a per-theme property and the desktop pass covers all five of them.
+ * What the phone pass adds is *structural*: controls that exist only below a
+ * breakpoint, targets that shrink, a drawer and a tab bar that desktop never
+ * renders. Those do not vary by theme, so running five themes at 390 would
+ * roughly double the gate's runtime to re-prove the same structure five times.
+ *
+ * Mocha and latte — one dark, one light — because the handful of phone findings
+ * that *would* be theme-dependent are contrast ones, and those split along that
+ * axis. Widen with `BUJO_PHONE_THEMES` when touching theme tokens.
+ */
+const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')
+
 // Skip the first-run gate: pick local storage so the app boots into the shell.
 await page.addInitScript(() => {
   localStorage.setItem('bujo:onboarded', '1')
@@ -118,6 +151,7 @@ await page.goto(BASE, { waitUntil: 'networkidle' })
 let serious = 0
 const summary = []
 let theme = THEMES[0]
+let viewport = VIEWPORTS[0].name
 
 /**
  * Switch theme through the store the app actually reads, then assert the
@@ -169,14 +203,60 @@ async function settle() {
   await page.waitForTimeout(120)
 }
 
+/**
+ * Pick the copy of a control that is actually on screen.
+ *
+ * At phone width the rail is still in the DOM — it is a drawer, parked
+ * off-canvas with `-translate-x-full` — so every section name matches twice,
+ * once in the hidden drawer and once in the bottom tab bar. `.first()` picks
+ * the drawer copy and the click times out.
+ *
+ * Playwright's `visible` filter does **not** exclude it: the element has a box
+ * and is not `display:none` or `visibility:hidden`, so by that definition it is
+ * visible. It is merely at `x: -288`. The only thing that separates the two
+ * copies is where they are, so that is what this tests — the failure message
+ * said `element is outside of the viewport`, and that is the predicate.
+ */
+async function onScreen(locator) {
+  const vp = page.viewportSize()
+  const n = await locator.count()
+  const offscreen = []
+  for (let i = 0; i < n; i++) {
+    const el = locator.nth(i)
+    const box = await el.boundingBox()
+    if (!box) continue // detached or display:none
+    const out = box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
+    if (out) { offscreen.push(el); continue }
+    return el
+  }
+  // Nothing on screen, but something exists. That is not automatically the
+  // parked drawer: at 390px the Body tab row is 571px of tabs in a 358px row,
+  // so Recovery and Cycle sit off the *right* edge and a user reaches them by
+  // scrolling the row. Refusing to scroll would have dropped two real views
+  // from the phone pass and reported the rest as complete coverage.
+  //
+  // `scrollIntoViewIfNeeded` scrolls the nearest scrollable ancestor, which is
+  // the tab row for a tab and the whole page for nothing else — the drawer has
+  // no scrollable ancestor that can bring it in, so it stays rejected below.
+  for (const el of offscreen) {
+    await el.scrollIntoViewIfNeeded({ timeout: 1000 }).catch(() => {})
+    const box = await el.boundingBox()
+    if (!box) continue
+    const out = box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
+    if (!out) return el
+  }
+  return null
+}
+
 async function go(name) {
-  const target = page
-    // Rail rows and section tabs are links; the Today surface switcher is a
-    // Radix ToggleGroup whose items are buttons inside `main`.
-    .locator('nav a, nav button, aside a, aside button, main [data-slot="toggle-group"] button')
-    .filter({ hasText: new RegExp(`^${name}$`) })
-    .first()
-  if (!(await target.count())) return false
+  const target = await onScreen(
+    page
+      // Rail rows and section tabs are links; the Today surface switcher is a
+      // Radix ToggleGroup whose items are buttons inside `main`.
+      .locator('nav a, nav button, aside a, aside button, main [data-slot="toggle-group"] button')
+      .filter({ hasText: new RegExp(`^${name}$`) }),
+  )
+  if (!target) return false
   await target.click()
   await page.waitForTimeout(300)
   await settle()
@@ -211,29 +291,38 @@ async function scan(label) {
   const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
   const meh = results.violations.filter((v) => v.impact === 'moderate' || v.impact === 'minor')
   serious += bad.length
-  summary.push({ view: `${theme} · ${label}`, serious: bad.length, other: meh.length })
+  summary.push({ view: `${viewport} · ${theme} · ${label}`, serious: bad.length, other: meh.length })
 
   for (const v of bad) {
-    console.error(`\n[${label}] ${v.impact}: ${v.id} — ${v.help}`)
+    console.error(`\n[${viewport} · ${theme} · ${label}] ${v.impact}: ${v.id} — ${v.help}`)
     console.error(`  ${v.helpUrl}`)
     for (const node of v.nodes.slice(0, 3)) console.error(`  ${node.html.slice(0, 120)}
     DATA ${JSON.stringify(node.any?.[0]?.data)}`)
   }
 }
 
-for (const t of THEMES) {
-  await setTheme(t)
-  for (const [section, tab] of VIEWS) {
-    await goOrDie(section, 'no rail row with that name — the gate could not reach it.')
-    if (tab) await goOrDie(tab, `no tab with that name inside ${section}.`)
-    const label = tab ? `${section} · ${tab}` : section
-    await scan(label)
+for (const vp of VIEWPORTS) {
+  viewport = vp.name
+  await page.setViewportSize({ width: vp.width, height: vp.height })
+  // Reload rather than trusting a resize. The shell reads its breakpoint on
+  // mount as well as through media queries, and a bottom tab bar that only
+  // appears after a re-render is a bar this gate would scan the absence of.
+  await page.reload({ waitUntil: 'networkidle' })
+  const themes = vp.name === 'phone' ? PHONE_THEMES : THEMES
+  for (const t of themes) {
+    await setTheme(t)
+    for (const [section, tab] of VIEWS) {
+      await goOrDie(section, 'no rail row with that name — the gate could not reach it.')
+      if (tab) await goOrDie(tab, `no tab with that name inside ${section}.`)
+      const label = tab ? `${section} · ${tab}` : section
+      await scan(label)
 
-    // Today is three screens behind one name.
-    if (section === 'Today') {
-      for (const s of SURFACES) {
-        await goOrDie(s, 'no surface control with that name on Today.')
-        await scan(`Today · ${s}`)
+      // Today is three screens behind one name.
+      if (section === 'Today') {
+        for (const s of SURFACES) {
+          await goOrDie(s, 'no surface control with that name on Today.')
+          await scan(`Today · ${s}`)
+        }
       }
     }
   }
