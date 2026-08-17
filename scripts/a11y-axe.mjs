@@ -86,6 +86,26 @@ const VIEWS = [
 const SURFACES = ['Morning', 'Day', 'Evening']
 
 /**
+ * COMPANIONS · views with no tab of their own.
+ *
+ * `VIEWS` above is `[section, tab]` pairs that this gate *clicks*, which means
+ * it can only ever reach something the tab row names. Pull-ups and Home workout
+ * are companions — reached from a link inside Fitness, deliberately not tabs —
+ * so no amount of clicking section rows finds them, and they have never been
+ * scanned. That is the same hole `Strength` and `Recovery` were in, and it is
+ * invisible from the report: a page that is never visited cannot fail.
+ *
+ * They are reachable by URL again (their `VIEW_ALIASES` redirects were removed
+ * once it turned out both pages held things the Fitness activity form does
+ * not), so this pass navigates straight to `?view=<id>` rather than hunting a
+ * control that by design does not exist.
+ */
+const COMPANIONS = [
+  ['Pull-ups', 'pullups'],
+  ['Home workout', 'homeworkout'],
+]
+
+/**
  * VIEWPORTS · this gate only ever saw a desktop.
  *
  * Every scan ran at 1280 wide, so the phone layout has never been checked —
@@ -328,6 +348,24 @@ for (const vp of VIEWPORTS) {
           await scan(`Today · ${s}`)
         }
       }
+    }
+
+    // Companion views, reached by URL because they have no tab to click.
+    // `setTheme` persists to the journal in localStorage, which survives the
+    // navigation, so these are scanned under the theme of the current pass.
+    for (const [label, view] of COMPANIONS) {
+      await page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle' })
+      // The alias table used to bounce these to Fitness. If that ever comes
+      // back, the URL will silently be a different page and `scan` would
+      // happily grade Fitness under this label — so check where we landed.
+      const landed = await page.evaluate(() => new URLSearchParams(location.search).get('view'))
+      if (landed !== view) {
+        console.error(`\n[${label}] asked for ?view=${view} and landed on ?view=${landed}.`)
+        console.error('  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
+        await browser.close()
+        process.exit(1)
+      }
+      await scan(label)
     }
   }
 }
