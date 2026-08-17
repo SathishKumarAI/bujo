@@ -8,8 +8,10 @@ synced. The authoritative types live in [`src/lib/types.ts`](../src/lib/types.ts
 > **Why it stays that way, and what is wrong around it:**
 > [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md) measures the blob at ten
 > years (~2.35 MB, ~47% of quota — no database is warranted), counts the
-> **eleven** places that accept journal bytes, and records five silent-loss
-> defects in the sync periphery. Read it before changing any persistence path.
+> **eleven** places that accept journal bytes, and records ten silent-loss
+> defects in the sync periphery — seven now fixed, one (photos never syncing)
+> still open and blocked on a payload-size decision. Read it before changing any
+> persistence path.
 
 ## Where data lives
 
@@ -56,8 +58,21 @@ One object, versioned by `SCHEMA_VERSION`, migrated forward on load by
 | `settings` | `Settings` | Units, theme, accent, reminders, storage mode, … |
 
 Images (memory photos, monthly photos, progress photos) are downscaled to a
-≤1024px JPEG **data-URL** before storage (`lib/image.ts`) to keep `localStorage`
-within budget.
+≤1024px JPEG data-URL (`lib/image.ts`, quality 0.72), then **stored in IndexedDB
+`bujo-images`** with only an `img:<id>` reference left in the journal
+(`lib/imageStore.ts`). They are therefore *not* in `bujo:data` and *not* on the
+~5 MB localStorage budget — which is why the storage meter, which measures that
+budget, does not count them.
+
+Two consequences worth knowing:
+
+- **IndexedDB is canonical for photo bytes**, and it is the one part of the
+  journal that is not covered by a JSON export unless the export inlines them.
+  `inlineImages` does that for the download buttons.
+- **Photo bytes do not sync.** Every push ships the `img:` id, so a second
+  device holds a reference to an image it has never seen. Open, tracked as F-1
+  in [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md) — the naive fix breaks
+  the size-limited sync paths, so it needs a decision, not a patch.
 
 ## Built-in reference data (not user data)
 

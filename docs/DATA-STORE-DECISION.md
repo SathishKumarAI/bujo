@@ -20,15 +20,28 @@ canonical journal at it.
 
 Two things must change, because both are silent-loss bugs, not preferences:
 
-| # | Change | Why it is not optional |
-|---|---|---|
-| 1 | **IndexedDB `bujo-images` must stop being canonical.** Sync paths must inline photos the way export already does. | Today photo *bytes* exist in exactly one place and never sync. See §8 F-1. |
-| 2 | **One sync target at a time**, and every adopt path must merge. | Four writers of the same blob can be live at once; two of them adopt a remote *without* merging. See §8 F-2, F-3. |
+| # | Change | Why it is not optional | State |
+|---|---|---|---|
+| 1 | **IndexedDB `bujo-images` must stop being canonical.** Photo bytes must travel with a sync. | Today they exist in exactly one place and never sync. See §8 F-1. | **Open.** Inlining alone is not the answer — it breaks the two size-limited paths. Draft PR #126 |
+| 2 | **Every adopt path must merge**, and ideally one sync target at a time. | Four writers of the same blob can be live at once; two adopted a remote *without* merging. See §8 F-2, F-3. | **Done** (PR #125). The "one target at a time" half is still open — F-7 |
 
 For query: a **derived SQLite file, built outside the browser from an exported
 backup, by a script that can be re-run at any time.** It is a cache. It is never
 written back. It buys real SQL over ten years of journal without adding a byte
 to the app's runtime.
+
+> **Status.** §2, §3, §4 and §8 describe the state **at audit time** and are
+> left as written — they are the evidence, not a to-do list.
+>
+> | | |
+> |---|---|
+> | **Fixed** (PR #125) | F-2, F-3, F-4, F-5, F-6 (partly), F-9, F-10 |
+> | **Still open, blocked** | **F-1 · photos never sync.** The fix is written and held as draft PR #126: on the two size-limited paths it converts silent partial loss into total sync failure. See F-1 in §8 for the numbers and the three ways out |
+> | **Still open, by choice** | F-7 (four writers, four debounce windows), F-8 (`bujo:sync` passphrase in plaintext) — see §9 |
+> | **Not built** | Step 7, the SQLite exporter. Deliberate: it was gated on F-1 → F-4, and F-1 is not done |
+>
+> `tsc -b` 0 · **764 tests pass** (757 → 764, 7 new) · eslint 0 errors, 2
+> pre-existing warnings · `npm run build` green.
 
 ---
 
@@ -253,19 +266,38 @@ effort on §8 instead.
 change, no rewrite of stored data. That is the strongest property of this
 decision: a journal in the wild is already in the target format.
 
-| Step | Touches | Effect on an existing journal |
-|---|---|---|
-| 1. Inline photos before every push (reuse `inlineImages`, already written) | 6 sync call sites + `DriveSync`, `CloudStorage` | None locally. Next sync carries photos for the first time |
-| 2. Route the blob and folder adopt paths through `resolveIncoming` | `App.tsx:92`, `App.tsx:221` | None until a conflict; then items are unioned instead of dropped |
-| 3. Add the missing collections to `conflict.ts` | `ID_ARRAYS` + a settings-merge rule | None until a conflict; then three collections stop vanishing |
-| 4. Give `serverSync` the same pull-first guard | `ServerSync.tsx:42` | None until two devices; then no blind clobber |
-| 5. Surface `save()` failure in the UI | `storage.ts:190`, one banner | None until quota is hit; then the user is told |
-| 6. Make the *default* Export JSON checksummed | `Settings.tsx:120` | Backups gain an integrity line. `verifyChecksum` already treats unstamped files as valid, so **every old backup still imports** |
-| 7. Add `scripts/journal-to-sqlite.mjs` | new file, runs in Node | Nothing. Reads a backup, writes a `.sqlite` |
+| Step | Touches | Effect on an existing journal | Status |
+|---|---|---|---|
+| 1. Inline photos on push, re-externalise on pull | `inlineImages` + new `externalizeImages`, wired into the push *and* pull of all 6 sync modules | None locally. Next sync carries photo bytes for the first time | **Shipped** |
+| 2. Route the blob and folder adopt paths through `resolveIncoming` | `App.tsx` | None until a conflict; then items are unioned instead of dropped | **Shipped** |
+| 3. Add the missing collections to `conflict.ts` + union the settings data logs | `ID_ARRAYS`, new `unionScalars`, settings merge | None until a conflict; then three collections and `duprLog` stop vanishing | **Shipped** |
+| 4. Give `serverSync` the same pull-first guard | `ServerSync.tsx` | None until two devices; then no blind clobber | **Shipped** |
+| 5. Surface `save()` failure in the UI | `storage.ts` returns `boolean` + emits `bujo:persist`; new `StorageBanner` | None until quota is hit; then the user is told | **Shipped** |
+| 5b. Ask for storage persistence | `main.tsx`, one line | Reduces the chance of silent eviction | **Shipped** |
+| 6. ~~Make the *default* Export JSON checksummed~~ | — | — | **Rejected on implementation — see below** |
+| 7. Add `scripts/journal-to-sqlite.mjs` | new file, runs in Node | Nothing. Reads a backup, writes a `.sqlite` | Not started |
 
-Steps 1–5 are bug fixes and should ship before step 7. **No user is asked to do
-anything, and no stored byte changes shape.** A user who never updates keeps a
-working app; a user who does gets the same journal with fewer ways to lose it.
+**No user is asked to do anything, and no stored byte changes shape.** A user who
+never updates keeps a working app; a user who does gets the same journal with
+fewer ways to lose it.
+
+### Step 6 was wrong, and is withdrawn
+
+Writing the change revealed it contradicts this document's own first criterion.
+`withChecksum` prepends a `bujo-checksum:<hex>` line, which makes the file **no
+longer valid JSON** — that is why the existing button writes `.json.txt`. Making
+it the default would trade "readable by `jq`, Python, or a text editor in ten
+years" for truncation detection on a file that `importJSON` can already reject
+by failing to parse.
+
+Durability beats integrity-checking here, because the failure the checksum
+catches (a truncated file) is one that `JSON.parse` catches anyway, while the
+failure the format change causes (an archive no standard tool will open) is
+silent and permanent. **The default export stays pure JSON.** The checksummed
+export remains available for anyone moving a backup over a lossy channel.
+
+Recorded rather than quietly dropped: the doc recommended it, implementation
+disproved it, and the reasoning is worth more than the consistency.
 
 The one irreversible act already happened and is worth knowing about:
 `migrate()` deletes the retired `stickers` key on every load (`storage.ts:141`).
@@ -287,11 +319,11 @@ Backups taken before 2026-08-02 still hold them; the live journal does not.
 Tiers 1, 2 and 3 are all caches. Only Tier 0 is canonical.
 
 The nudge already exists and works: `daysSinceBackup` + `recommend.ts:23` flag a
-backup older than 7 days, and Settings renders the warning. What is missing is
-that the **primary** Export JSON button is not the checksummed one — the
-integrity feature is built, tested and wired to a *secondary* button inside a
-fold (`Settings.tsx:474`). Swap them. There is no reason for the default backup
-to be the unverifiable one.
+backup older than 7 days, and Settings renders the warning.
+
+Tier 2 stays **pure JSON**, not the checksummed format — see §6 "Step 6 was
+wrong". Truncation is caught by `JSON.parse` failing on import; the checksummed
+variant stays available in the fold for moving a backup over a lossy channel.
 
 Retention: keep weekly for 3 months, then one per quarter. At 2.35 MB a decade
 of quarterly backups is under 100 MB — do not build pruning.
@@ -333,9 +365,13 @@ happen.
 
 ## 8. Failure modes
 
-Ordered by how quietly they lose data.
+Ordered by how quietly they lose data. **F-2 to F-6, F-9 and F-10 are fixed**
+(PR #125). **F-1 is NOT** — see its entry. The descriptions below are kept as
+the record of what was wrong and how it was found, which is the part worth
+keeping.
 
-**F-1 · Photos exist in exactly one place and never sync.**
+**F-1 · NOT FIXED · BLOCKED on payload size · Photos exist in exactly one place
+and never sync.**
 `inlineImages` is called by three download buttons in `Settings.tsx` and
 **nowhere else**. All 19 push call sites send raw `data` holding `img:` ids.
 A second device receives ids that resolve to nothing; if the first device's
@@ -343,7 +379,33 @@ storage is cleared, the ids dangle forever with no error anywhere.
 *Detected by:* rehearsal step 6. *Also by:* comparing the "Photos" tile against
 the count of images that actually render.
 
-**F-2 · The blob and folder paths adopt a newer remote without merging.**
+> **Why this one is still open.** The obvious fix — inline photos on every push,
+> re-externalise on every pull — is written and works, and is held as a draft on
+> PR #126 rather than merged, because on two of the six paths it turns silent
+> *partial* loss into *total* sync failure.
+>
+> Photos are 1024px JPEG q0.72 (`lib/image.ts`): ~120 KB each, ~160 KB base64.
+> Progress photos are a weekly feature, so a year is ~52 of them — about 8 MB
+> inlined, before the journal and before encryption's base64 overhead. But
+> `api/sync.ts` rejects `payload.length > 8_000_000`, and **Vercel's platform
+> request-body limit is 4.5 MB**, hit before the handler runs.
+>
+> A photo user would go from "journal syncs, photos quietly missing" to "nothing
+> syncs at all". The folder, Drive and gist paths have no such limit.
+>
+> Three ways out, in the order I would take them:
+>
+> 1. **Upload photos separately** — blob-per-photo, ids stay in the journal.
+>    Correct, and the only option that still works in year three.
+> 2. **Inline only on the unlimited paths** (folder / Drive / gist) and say
+>    plainly in the UI that blob sync excludes photos.
+> 3. **Inline under a size budget**, and above it push without photos and warn.
+>    Cheapest; still leaves photos unsynced for the people who have most of them.
+>
+> The prerequisite is already merged: F-10, the id collision that a batch mint
+> would have triggered.
+
+**F-2 · FIXED · The blob and folder paths adopt a newer remote without merging.**
 `App.tsx:92` and `App.tsx:221` call `replaceAll(rm)` directly. Supabase, at
 `App.tsx:144`, calls `resolveIncoming` and unions. Concretely: device A logs
 entries offline, never syncs; device B edits later; A comes online, sees a newer
@@ -353,7 +415,7 @@ paths.
 *Detected by:* nothing today. A unit test asserting all three adopt paths union
 is one file.
 
-**F-3 · `mergeJournals` silently drops three collections and all of settings.**
+**F-3 · FIXED · `mergeJournals` silently drops three collections and all of settings.**
 Verified by running `mergeJournals` on two journals:
 
 ```
@@ -376,14 +438,14 @@ does not survive a merge.
 a collection is added and the merge list is not.
 *Root cause:* the merge list is maintained by hand against a type that grows.
 
-**F-4 · A failed local save is invisible.**
+**F-4 · FIXED · A failed local save is invisible.**
 `storage.ts:193` catches and logs. The comment claims it is "surfaced by the
 UI's backup nudge" — it is not; the nudge is driven by `lastBackup`, which has
 nothing to do with whether the write succeeded. On quota exhaustion or Safari
 private mode, the app keeps working from memory and loses everything on reload.
 *Detected by:* nothing. Needs `save()` to return a boolean and a banner.
 
-**F-5 · The storage meter measures the wrong bytes.**
+**F-5 · FIXED (copy) · The storage meter measures the wrong bytes.**
 `Settings.tsx` computes `JSON.stringify(data).length / 5 MB` and warns "photos
 use the most space". Photos moved to IndexedDB and are **not** in that number,
 and IndexedDB is not on the 5 MB budget. The meter under-reports the thing its
@@ -391,7 +453,7 @@ own warning text blames.
 *Detected by:* comparing it to `navigator.storage.estimate()`, which the app
 does not call.
 
-**F-6 · `serverSync` pushes blind, and it is not sync.**
+**F-6 · PARTLY FIXED · `serverSync` pushes blind, and it is not sync.**
 The push effect has no pull-first guard. Separately, rows are keyed by
 `deviceId()` and pulls filter `?id=eq.${deviceId()}` — device A can never read
 device B's row. The self-host path is a **per-device backup labelled as sync**.
@@ -412,7 +474,20 @@ is a bare `localStorage` key, not a `settings` field, so `SYNC_SECRET_KEYS`
 XSS reads both the ciphertext location and the key that opens it.
 *Detected by:* review only.
 
-**F-9 · Browser eviction.**
+**F-10 · FIXED · `putImage` minted colliding ids, so a batch of photos ate
+itself.** Found while fixing F-1, and caused *by* fixing F-1. Ids were
+`Date.now()` + `Math.floor(performance.now() % 1e6)` — both whole milliseconds —
+so everything minted in one tick got the same id. Measured: **50 calls in one
+tick produced 2 distinct ids.** Harmless for four years because photos were only
+ever added one at a time by hand; instantly fatal once `externalizeImages`
+started minting a batch inside a single `Promise.all`, where 48 of 50 photos
+would have silently overwritten each other. A monotonic counter now carries the
+uniqueness; the clocks only keep ids sortable.
+*Detected by:* `imageStore.test.ts` — 500 ids in a tight loop must all differ.
+*Lesson:* the fix for a silent-loss bug is itself a silent-loss risk. The batch
+path exercised a latent flaw the one-at-a-time path never could.
+
+**F-9 · FIXED · Browser eviction.**
 `navigator.storage.persist()` is never called, so the origin is evictable under
 pressure. This is the ordinary local-first risk and is exactly what Tier 2
 backups exist for — but one line would reduce it.
