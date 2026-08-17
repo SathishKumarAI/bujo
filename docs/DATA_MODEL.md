@@ -5,6 +5,12 @@ is one JSON object (`JournalData`) kept in the browser's `localStorage`. This do
 is the source-of-truth map of that model and how it's persisted, hosted, and
 synced. The authoritative types live in [`src/lib/types.ts`](../src/lib/types.ts).
 
+> **Why it stays that way, and what is wrong around it:**
+> [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md) measures the blob at ten
+> years (~2.35 MB, ~47% of quota — no database is warranted), counts the
+> **eleven** places that accept journal bytes, and records five silent-loss
+> defects in the sync periphery. Read it before changing any persistence path.
+
 ## Where data lives
 
 | Key | Contents | Written by |
