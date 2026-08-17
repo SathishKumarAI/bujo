@@ -3,6 +3,7 @@
 // passphrase before upload, and the path is a *hash* of the passphrase — so the
 // server (and anyone with the URL) only ever sees ciphertext. No accounts.
 import { encryptString, decryptString } from './crypto'
+import { inlineImages, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
 export type SyncState = 'syncing' | 'synced' | 'error'
@@ -21,7 +22,8 @@ export async function pushCloud(passphrase: string, data: JournalData): Promise<
   emit('syncing')
   try {
     const code = await pathCode(passphrase)
-    const blob = await encryptString(JSON.stringify(data), passphrase)
+    // Inline photos so their bytes actually travel; the puller re-externalises.
+    const blob = await encryptString(JSON.stringify(await inlineImages(data)), passphrase)
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,5 +43,5 @@ export async function pullCloud(passphrase: string): Promise<JournalData | null>
   const { payload } = await res.json()
   const blob = JSON.parse(payload)
   const json = await decryptString(blob, passphrase) // throws on wrong passphrase
-  return JSON.parse(json) as JournalData
+  return externalizeImages(JSON.parse(json) as JournalData)
 }

@@ -6,6 +6,8 @@
 // The directory handle is persisted in IndexedDB (handles can't go in
 // localStorage). Re-granting permission needs a user gesture after reload.
 
+import { inlineImages, externalizeImages } from './imageStore'
+
 const FILE = 'bujo.json'
 const IDB_NAME = 'bujo-fs'
 const STORE = 'handles'
@@ -98,7 +100,9 @@ export async function loadFromFolder(): Promise<unknown | null> {
   try {
     const fh = await fileHandle(false)
     const text = await (await fh.getFile()).text()
-    return text ? JSON.parse(text) : null
+    if (!text) return null
+    // Re-externalise inline photos so they don't bloat this device's blob.
+    return externalizeImages(JSON.parse(text) as { progressPhotos?: { photo: string }[] })
   } catch {
     return null
   }
@@ -106,8 +110,10 @@ export async function loadFromFolder(): Promise<unknown | null> {
 
 /** Write the journal to bujo.json in the folder. */
 export async function saveToFolder(obj: unknown): Promise<void> {
+  // Inline photos so their bytes actually travel; the loader re-externalises.
+  const payload = await inlineImages(obj as { progressPhotos?: { photo: string }[] })
   const fh = await fileHandle(true)
   const w = await fh.createWritable()
-  await w.write(JSON.stringify(obj, null, 2))
+  await w.write(JSON.stringify(payload, null, 2))
   await w.close()
 }
