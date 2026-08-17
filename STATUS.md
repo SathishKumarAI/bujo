@@ -11,7 +11,7 @@ Three branches, each stacked on the one above:
 |---|---|---|
 | `refactor/one-nav-bar` | #120 | Rail deleted; navigation is a two-row top bar |
 | `feat/header-scroll-collapse` | #121 | Row 1 folds on scroll; `TopBar` split into `topbar/` |
-| `feat/hypertrophy-tab` | — | Program + Challenges become Body tabs |
+| `feat/hypertrophy-tab` | #122 | Program + Challenges become Body tabs; anatomy bundled |
 
 Reasoning lives in the commit bodies and in
 `docs/sessions/2026-08-16-one-nav-bar/` (PROMPTS.md + PLAN.md) — not repeated
@@ -19,8 +19,15 @@ here.
 
 ## Next action
 
-Open the PR for `feat/hypertrophy-tab` against `feat/header-scroll-collapse`,
-then merge the stack bottom-up: #120, #121, this.
+**Merge the stack.** All three PRs are open and mergeable, but they sit on top
+of the seven modernist PRs (#113–#119), which are also still open — ten in a
+chain, each based on the one below, none merged. Squash-merging bottom-up from
+#113 retargets each next PR automatically; merging out of order will not work.
+
+Two older PRs are unrelated to the chain and want a decision of their own:
+`#107` (docs worklog, clean, +152) and `#96` (Today UX / IA pass, **DIRTY** —
+conflicted since 2026-08-03, +2620/-767, and largely superseded by the
+modernist and nav work since).
 
 **Body is now eight tabs** (Fitness · Strength · Program · Pickleball ·
 Coaching · Nutrition · Challenges · Recovery, plus Cycle when gated on). At
