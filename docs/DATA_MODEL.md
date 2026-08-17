@@ -69,10 +69,15 @@ Two consequences worth knowing:
 - **IndexedDB is canonical for photo bytes**, and it is the one part of the
   journal that is not covered by a JSON export unless the export inlines them.
   `inlineImages` does that for the download buttons.
-- **Photo bytes do not sync.** Every push ships the `img:` id, so a second
-  device holds a reference to an image it has never seen. Open, tracked as F-1
-  in [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md) — the naive fix breaks
-  the size-limited sync paths, so it needs a decision, not a patch.
+- **Photo bytes sync within a size budget, not beyond it.** Pushes inline the
+  photos and pulls re-externalise them, so the bytes travel and the receiving
+  device's blob stays small. The three *network* paths cap that at
+  `SYNC_INLINE_BUDGET` (2.8 MB of JSON), because Vercel's request-body limit is
+  4.5 MB and a year of weekly progress photos is ~8 MB inlined — over the cap
+  they push ids as before and the UI says "Synced without photos", which beats
+  the whole push failing. Folder, Drive and gist have no limit and always
+  inline. The unbounded fix is blob-per-photo; tracked as F-1 in
+  [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md).
 
 ## Built-in reference data (not user data)
 

@@ -15,7 +15,7 @@
 // The token is a pre-minted HS256 JWT — mint it with the helper in the hardening
 // doc; its `sub` should equal this device's `deviceId()` so it owns its row.
 
-import { inlineImages, externalizeImages } from './imageStore'
+import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
 const DEVICE_KEY = 'bujo:device-id'
@@ -46,8 +46,11 @@ export function serverConfigured(apiUrl?: string, token?: string): boolean {
 export async function pushJournalToServer(apiUrl: string, data: unknown, token?: string): Promise<boolean> {
   if (!serverConfigured(apiUrl, token)) return false
   try {
-    // Inline photos so their bytes actually travel; the puller re-externalises.
-    data = await inlineImages(data as { progressPhotos?: { photo: string }[] })
+    // Inline photos so their bytes actually travel, within the budget the
+    // request body allows; over it the journal still syncs without them.
+    const inlined = await inlineImagesWithinBudget(data as { progressPhotos?: { photo: string }[] })
+    data = inlined.payload as JournalData
+    notePhotosSkipped(inlined.skipped)
     const r = await fetch(`${base(apiUrl)}/journals`, {
       method: 'POST',
       headers: {

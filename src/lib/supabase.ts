@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
-import { inlineImages, externalizeImages } from './imageStore'
+import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
 // Optional Supabase backend: real login (guest/anonymous + email) and per-user
@@ -166,8 +166,11 @@ export async function pushJournal(journal: JournalData): Promise<void> {
   const sb = client()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Not signed in.')
-  // Inline photos so their bytes actually travel; the puller re-externalises.
-  const payload = await inlineImages(journal)
+  // Inline photos so their bytes actually travel, within the budget the request
+  // body allows; over it the journal still syncs without them. See
+  // `inlineImagesWithinBudget` for why all-or-nothing rather than partial.
+  const { payload, skipped } = await inlineImagesWithinBudget(journal)
   const { error } = await sb.from('journals').upsert({ user_id: user.id, data: payload, updated_at: new Date().toISOString() })
   if (error) throw error
+  notePhotosSkipped(skipped)
 }

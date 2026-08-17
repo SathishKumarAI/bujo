@@ -103,6 +103,56 @@ export async function externalizeImages<T extends { progressPhotos?: { photo: st
   return clone
 }
 
+/**
+ * How much inlined JSON a network sync push may carry, before encryption.
+ *
+ * `/api/sync` runs on Vercel, whose **request body limit is 4.5 MB** — enforced
+ * by the platform before the handler runs, so `api/sync.ts`'s own 8 MB check
+ * never sees an oversized push. Between here and that limit the payload is
+ * base64-encoded by `encryptString` (×~1.34) and then embedded as a JSON string
+ * (×~1.05), so ~3 MB of JSON is ~4.2 MB on the wire. 2.8 MB leaves room.
+ *
+ * Photos are the only thing that can approach this: the journal itself is
+ * ~2.35 MB at *ten years* (see `docs/DATA-STORE-DECISION.md` §3), while one
+ * 1024px JPEG is ~160 KB base64 and progress photos are a weekly habit.
+ */
+export const SYNC_INLINE_BUDGET = 2_800_000
+
+/**
+ * Inline photos for a network push, but only if the result still fits.
+ *
+ * Inlining unconditionally is the obvious fix for "photos never sync" and it is
+ * wrong on its own: a year of weekly progress photos is ~8 MB, which exceeds
+ * every limit above, so the push would fail outright. That trades silent
+ * *partial* loss (journal syncs, photos missing) for *total* failure, which is
+ * worse — the text is the part you cannot re-take.
+ *
+ * So: inline when it fits, fall back to ids when it does not, and tell the
+ * caller which happened so it can say so. All-or-nothing rather than "inline
+ * the newest that fit" — a partial set means the receiving device shows some
+ * photos and dangling references for the rest, with no way to know which.
+ *
+ * File-based targets (folder, Drive, gist) have no such limit and call
+ * {@link inlineImages} directly.
+ */
+export async function inlineImagesWithinBudget<T extends { progressPhotos?: { photo: string }[] }>(
+  data: T,
+  maxBytes = SYNC_INLINE_BUDGET,
+): Promise<{ payload: T; skipped: number }> {
+  const photos = data?.progressPhotos?.length ?? 0
+  if (!photos) return { payload: data, skipped: 0 }
+  const inlined = await inlineImages(data)
+  if (JSON.stringify(inlined).length <= maxBytes) return { payload: inlined, skipped: 0 }
+  return { payload: data, skipped: photos }
+}
+
+/** Tell the UI that a push went out without its photos. `SyncIndicator` shows it. */
+export function notePhotosSkipped(count: number): void {
+  if (count > 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('bujo:sync', { detail: 'photos-skipped' }))
+  }
+}
+
 export async function deleteImage(id: string | undefined): Promise<void> {
   if (!isImageId(id)) return
   const store = await tx('readwrite')

@@ -22,7 +22,7 @@ Two things must change, because both are silent-loss bugs, not preferences:
 
 | # | Change | Why it is not optional | State |
 |---|---|---|---|
-| 1 | **IndexedDB `bujo-images` must stop being canonical.** Photo bytes must travel with a sync. | Today they exist in exactly one place and never sync. See §8 F-1. | **Open.** Inlining alone is not the answer — it breaks the two size-limited paths. Draft PR #126 |
+| 1 | **IndexedDB `bujo-images` must stop being canonical.** Photo bytes must travel with a sync. | They existed in exactly one place and never synced. See §8 F-1. | **Done, bounded** (PR #126). Photos travel within a budget; over it the journal syncs without them and says so. Unbounded needs blob-per-photo |
 | 2 | **Every adopt path must merge**, and ideally one sync target at a time. | Four writers of the same blob can be live at once; two adopted a remote *without* merging. See §8 F-2, F-3. | **Done** (PR #125). The "one target at a time" half is still open — F-7 |
 
 For query: a **derived SQLite file, built outside the browser from an exported
@@ -36,7 +36,7 @@ to the app's runtime.
 > | | |
 > |---|---|
 > | **Fixed** (PR #125) | F-2, F-3, F-4, F-5, F-6 (partly), F-9, F-10 |
-> | **Still open, blocked** | **F-1 · photos never sync.** The fix is written and held as draft PR #126: on the two size-limited paths it converts silent partial loss into total sync failure. See F-1 in §8 for the numbers and the three ways out |
+> | **Fixed, bounded** (PR #126) | **F-1 · photos never sync.** They now travel with every push *within a size budget*; over it the journal still syncs and the UI says "Synced without photos". The unbounded answer (blob-per-photo) is still the right end state for heavy photo users — see F-1 in §8 |
 > | **Still open, by choice** | F-7 (four writers, four debounce windows), F-8 (`bujo:sync` passphrase in plaintext) — see §9 |
 > | **Not built** | Step 7, the SQLite exporter. Deliberate: it was gated on F-1 → F-4, and F-1 is not done |
 >
@@ -370,8 +370,7 @@ Ordered by how quietly they lose data. **F-2 to F-6, F-9 and F-10 are fixed**
 the record of what was wrong and how it was found, which is the part worth
 keeping.
 
-**F-1 · NOT FIXED · BLOCKED on payload size · Photos exist in exactly one place
-and never sync.**
+**F-1 · FIXED (bounded) · Photos existed in exactly one place and never synced.**
 `inlineImages` is called by three download buttons in `Settings.tsx` and
 **nowhere else**. All 19 push call sites send raw `data` holding `img:` ids.
 A second device receives ids that resolve to nothing; if the first device's
@@ -379,31 +378,36 @@ storage is cleared, the ids dangle forever with no error anywhere.
 *Detected by:* rehearsal step 6. *Also by:* comparing the "Photos" tile against
 the count of images that actually render.
 
-> **Why this one is still open.** The obvious fix — inline photos on every push,
-> re-externalise on every pull — is written and works, and is held as a draft on
-> PR #126 rather than merged, because on two of the six paths it turns silent
-> *partial* loss into *total* sync failure.
+> **How it was fixed, and why not the obvious way.** Every push now inlines
+> photos and every pull re-externalises them, so the bytes travel and the
+> receiving device's blob stays small. But inlining *unconditionally* — the
+> first attempt — would have been a worse bug than the one it fixed.
 >
 > Photos are 1024px JPEG q0.72 (`lib/image.ts`): ~120 KB each, ~160 KB base64.
-> Progress photos are a weekly feature, so a year is ~52 of them — about 8 MB
+> Progress photos are a weekly feature, so a year is ~52 of them, about 8 MB
 > inlined, before the journal and before encryption's base64 overhead. But
 > `api/sync.ts` rejects `payload.length > 8_000_000`, and **Vercel's platform
-> request-body limit is 4.5 MB**, hit before the handler runs.
+> request-body limit is 4.5 MB**, hit before the handler ever runs.
 >
-> A photo user would go from "journal syncs, photos quietly missing" to "nothing
-> syncs at all". The folder, Drive and gist paths have no such limit.
+> That version passed the whole suite. It would have taken a photo user from
+> "journal syncs, photos quietly missing" to "nothing syncs at all" — trading
+> partial loss for total, and losing the half you cannot re-take.
 >
-> Three ways out, in the order I would take them:
+> So the three network paths inline **within `SYNC_INLINE_BUDGET`** (2.8 MB of
+> JSON — 4.5 MB less base64's ×1.34 and JSON-string escaping's ×1.05). Over it
+> they push ids as before, and `SyncIndicator` says *"Synced without photos"*
+> rather than failing or lying. All-or-nothing, never a partial set: a partial
+> set means the far device shows some photos and dangling references for the
+> rest with no way to tell which. The file-based targets — folder, Drive, gist —
+> have no such limit and inline unconditionally.
 >
-> 1. **Upload photos separately** — blob-per-photo, ids stay in the journal.
->    Correct, and the only option that still works in year three.
-> 2. **Inline only on the unlimited paths** (folder / Drive / gist) and say
->    plainly in the UI that blob sync excludes photos.
-> 3. **Inline under a size budget**, and above it push without photos and warn.
->    Cheapest; still leaves photos unsynced for the people who have most of them.
+> **Still bounded, deliberately.** A user with years of photos still will not
+> sync them over the network paths; they will get the honest banner and their
+> folder/Drive backups. The unbounded answer is **blob-per-photo — upload each
+> photo once, keep ids in the journal** — which is the right end state and a
+> larger piece of work. Tracked here rather than pretended away.
 >
-> The prerequisite is already merged: F-10, the id collision that a batch mint
-> would have triggered.
+> Prerequisite, already fixed: F-10, the id collision a batch mint triggers.
 
 **F-2 · FIXED · The blob and folder paths adopt a newer remote without merging.**
 `App.tsx:92` and `App.tsx:221` call `replaceAll(rm)` directly. Supabase, at
