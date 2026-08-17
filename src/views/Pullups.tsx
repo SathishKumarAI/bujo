@@ -8,7 +8,7 @@ import { VideoLink } from '../components/VideoLink'
 import { cat } from '../lib/colors'
 import {
   pullupAbility, ladder, pyramid, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_ABILITY,
-} from '../lib/programs'
+} from '../lib/pullups'
 
 /**
  * Dedicated pull-up hub: the "Starting From Zero" program tracker, your
