@@ -12,6 +12,7 @@ Three branches, each stacked on the one above:
 | `refactor/one-nav-bar` | #120 | Rail deleted; navigation is a two-row top bar |
 | `feat/header-scroll-collapse` | #121 | Row 1 folds on scroll; `TopBar` split into `topbar/` |
 | `feat/hypertrophy-tab` | #122 | Program + Challenges become Body tabs; anatomy bundled |
+| `chore/tab-work-followups` | — | The five follow-ups; a11y reaches companion views |
 
 Reasoning lives in the commit bodies and in
 `docs/sessions/2026-08-16-one-nav-bar/` (PROMPTS.md + PLAN.md) — not repeated
@@ -35,31 +36,24 @@ Coaching · Nutrition · Challenges · Recovery, plus Cycle when gated on). At
 centred, so it works — but this is the width at which the section is worth
 splitting rather than extending again. Do not add a ninth without deciding that.
 
-Smaller, still open:
+**Nothing is open in the code.** The five follow-ups are done on
+`chore/tab-work-followups` (branch 4 of the stack) — see below. What remains is
+merging.
 
-1. `src/components/shell/` has 16 files and no README, while five other
-   component dirs have one. The new `topbar/` has one.
-2. `PageLayout.tsx`'s `window.innerHeight - 64` slack is a second, independent
-   model of header height. Still conservative against the ~55px folded header,
-   so it was left alone.
-3. `lib/programs.ts` holds both programmes *and* the pull-up-only reference data
-   (`PULLUP_WORKOUTS`, `PULLUP_PROGRESSIONS`, `PULLUP_ABILITY`). Two concerns,
-   one file, now that programmes have their own view.
-4. **`scripts/a11y-axe.mjs` cannot reach a companion view.** Its `VIEWS` list is
-   `[section, tab]` pairs that it clicks, so Pull-ups and Home workout — now
-   linkable by URL again — are still unscanned. Extending the script to visit a
-   bare `?view=` would close the last hole in that gate.
-5. A third training programme would need a line in three places that currently
-   branch on `p.id === 'pullup-zero'`: `Goals`'s icon and route,
-   `TodayPlanCard`'s chip label and route, and `ProgramTracker`'s picker label.
-   Fine for two, a tax at three — the short name and home view want to live on
-   the `Program` record itself.
+Closed this session:
 
-Closed this session (was 3 and the two follow-ups):
-
-- `TodayPlanCard` now loops `PROGRAMS`, so the hypertrophy block reaches Today.
+- `TodayPlanCard` loops `PROGRAMS`, so the hypertrophy block reaches Today.
 - `?view=pullups` / `?view=homeworkout` resolve again instead of redirecting to
   Fitness. Both pages were linked in-app but unreachable by URL.
+- `Program` carries its own `short` and `home`; three id-branching call sites
+  gone, so a third program is a data change.
+- `lib/pullups.ts` split out of `lib/programs.ts` (212 → 127 lines).
+- `a11y-axe.mjs` reaches companion views by URL. Pull-ups and Home workout were
+  never scanned; both now clean across every theme.
+- `shell/README.md` written — the last component dir over ~4 files without one.
+- `PageLayout` measures `--header-h` instead of guessing 64px. This **fixed a
+  live bug**: Plan's 563px act column was sticky against a 99px header, so its
+  last 35px was unreachable — the exact failure that function guards against.
 
 ## Traps hit on the way (the ones not already in CLAUDE.md)
 
