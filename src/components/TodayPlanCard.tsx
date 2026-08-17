@@ -63,16 +63,15 @@ export function TodayPlanCard() {
     { label: workedOut ? 'Workout logged' : 'No workout yet', color: 'teal', icon: Barbell, to: 'fitness', done: workedOut },
     { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListChecks, to: 'plan', done: tasksDue === 0 },
   ]
-  // Short labels and destinations are keyed by program id, the same two-way
-  // split `ProgramTracker` and `Goals` use. A third program would need a line
-  // here — the chip has room for a word, not for "12-Week Hypertrophy Block".
+  // `short` and `home` come off the program record, so adding a third program
+  // is a data change and nothing here needs finding. The chip has room for a
+  // word, not for "12-Week Hypertrophy Block" — that is what `short` is for.
   for (const { p, dayDone, dayTotal } of programs) {
-    const isPullup = p.id === 'pullup-zero'
     chips.push({
-      label: `${isPullup ? 'Pull-ups' : 'Hypertrophy'} ${dayDone}/${dayTotal}`,
+      label: `${p.short} ${dayDone}/${dayTotal}`,
       color: 'peach',
-      icon: isPullup ? ArrowLineUp : Barbell,
-      to: isPullup ? 'pullups' : 'program',
+      icon: p.home === 'pullups' ? ArrowLineUp : Barbell,
+      to: p.home,
       done: false,
     })
   }
