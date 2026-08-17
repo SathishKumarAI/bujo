@@ -48,9 +48,27 @@ export function PageLayout({
     const el = act.current
     if (!el) return
     const measure = () => {
-      // 64px of slack for the header and the top offset; being conservative
-      // costs a little stickiness, being wrong costs a usable form.
-      setSticky(el.scrollHeight < window.innerHeight - 64)
+      // Slack for the header and the 1rem top offset the CSS adds. Read from
+      // `--header-h` rather than the 64px literal that used to sit here: the
+      // header is not a fixed height — it grows by the notch inset, wraps at
+      // narrow widths, and folds its first row away on scroll. 64 happened to
+      // be conservative against all of those, but only by luck, and it was the
+      // second place in the app modelling the same number.
+      //
+      // This changes behaviour, and in the right direction. At 643px viewport
+      // the real header is 99px, so a column may only be ~528px to stay
+      // reachable — Plan's is 563px. Under the 64px guess it qualified as
+      // sticky and its bottom 35px could never be scrolled to, which is the
+      // precise failure the note above describes.
+      //
+      // Read at measure time, so it reflects the header expanded rather than
+      // folded. That is the conservative end and the one to be on: costing a
+      // little stickiness is cheaper than an unreachable submit button.
+      //
+      // The fallback matches `styles/tokens.css`, for the frame before
+      // `useHeaderHeight` has published a measurement.
+      const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 56
+      setSticky(el.scrollHeight < window.innerHeight - header - 16)
     }
     measure()
     const ro = new ResizeObserver(measure)
