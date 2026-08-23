@@ -11,6 +11,7 @@ import { SyncIndicator } from './components/SyncIndicator'
 import { ExploreBanner } from './components/ExploreBanner'
 import { SkeletonView } from './components/Skeleton'
 import { OfflineBanner } from './components/OfflineBanner'
+import { StorageBanner } from './components/StorageBanner'
 import { CommandPalette } from './components/CommandPalette'
 import { Onboarding, onboarded } from './components/Onboarding'
 import { Welcome } from './views/Welcome'
@@ -90,8 +91,14 @@ export default function App() {
         if (remote) {
           const rm = migrate(remote)
           if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
-            cloudLastSync.current = JSON.stringify(rm)
-            replaceAll(rm)
+            // UNION, don't clobber. A raw `replaceAll(rm)` here dropped every
+            // local-only item this device had never synced (offline edits made
+            // before the remote's newer write). `resolveIncoming` cannot prompt
+            // on this branch — we already know the remote is strictly newer —
+            // so it merges silently, matching the Supabase path below.
+            const merged = resolveIncoming(dataRef.current, rm)
+            if (merged) { cloudLastSync.current = JSON.stringify(merged); replaceAll(merged) }
+            else cloudLastSync.current = JSON.stringify(rm)
             return // adopted remote; do NOT push over it
           }
         }
@@ -219,8 +226,11 @@ export default function App() {
         if (remote) {
           const rm = migrate(remote)
           if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
-            folderLastSync.current = JSON.stringify(rm)
-            replaceAll(rm)
+            // UNION, don't clobber — same fix as the blob path above. Adopting
+            // the folder copy raw discarded unsynced local items with no prompt.
+            const merged = resolveIncoming(dataRef.current, rm)
+            if (merged) { folderLastSync.current = JSON.stringify(merged); replaceAll(merged) }
+            else folderLastSync.current = JSON.stringify(rm)
             return // folder copy is newer → adopt, don't overwrite
           }
         }
@@ -261,6 +271,7 @@ export default function App() {
         onOpenChange={setPaletteOpen}
       />
       {showTour && !data.settings.explore && <Onboarding onClose={() => setShowTour(false)} />}
+      <StorageBanner />
       <OfflineBanner />
       <ExploreBanner />
       <ReminderBanner />
