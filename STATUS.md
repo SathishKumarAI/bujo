@@ -27,7 +27,7 @@ automatically; **merging out of order will not work.**
 |---|---|---|
 | #124 | `feat/data-engineer-agent` | `data-engineer` subagent + `docs/DATA-STORE-DECISION.md` |
 | #125 | `fix/sync-data-loss` | Four silent data-loss defects fixed |
-| #126 | `fix/photo-sync-payload` | **DRAFT, blocked** — photo sync |
+| #126 | `fix/photo-sync-payload` | Photos sync, within a budget that cannot break the push |
 
 Independent of line 1. #124 can merge to `main` on its own.
 
@@ -35,38 +35,45 @@ Independent of line 1. #124 can merge to `main` on its own.
 
 1. **Merge line 1 bottom-up from #113.** It is eleven deep and every day it sits
    is a day of drift against `main`.
-2. **Merge #124 → #125.** These fix live data loss.
-3. **Decide F-1** (below) and finish or close #126.
+2. **Merge #124 → #125 → #126.** These fix live data loss.
+3. Then the two remaining items below are yours to choose, not defects to patch.
 
-## The one open decision
+Eight of the ten defects in `DATA-STORE-DECISION.md` §8 are fixed. The two that
+are not are **design choices with real trade-offs**, which is why they were not
+taken unilaterally:
 
-**Photos never sync**, and the obvious fix makes it worse. Photos are canonical
-in IndexedDB as `img:` ids; every push ships bare ids, so a second device gets
-references resolving to nothing.
+### F-7 · four sync writers can be live at once
 
-Inlining them on push breaks the size-limited paths: photos are 1024px JPEG
-q0.72 (~120 KB, ~160 KB base64), progress photos are weekly, so a year is ~52 ≈
-8 MB — against `api/sync.ts`'s 8 MB reject and **Vercel's 4.5 MB body limit**.
-A photo user would go from "photos quietly missing" to "nothing syncs".
+The blob, folder, Supabase and PostgREST paths can all be enabled together, with
+debounce windows of 1500 / 2500 / 4000 / 4000 ms. They no longer *lose* data —
+every adopt path merges now — but they still interleave, and a slow round trip
+can make one overwrite another's newer push.
 
-Options, in the order I would take them, written up in `DATA-STORE-DECISION.md`
-§8 F-1: blob-per-photo · inline only on the unlimited paths · inline under a
-budget. The work is preserved on #126.
+The clean fix is **one sync target at a time**, which means a settings change
+and a decision about what happens to anyone who currently has two enabled. The
+cheap partial fix is a single shared debounce window so they at least stop
+racing each other on every keystroke.
+
+### F-8 · the sync passphrase sits in plaintext
+
+`bujo:sync` holds it in `localStorage`, beside the data it unlocks. Anything
+with DOM access on that origin can read both.
+
+There is no clean client-side fix: the passphrase *is* the decryption key, so
+anywhere the app can read it unattended, so can an attacker. The real options
+are to stop persisting it and prompt each session (worse UX, genuinely safer),
+or accept it and say so in the UI. Both are product calls.
 
 ## Smaller, still open
 
-1. **F-7** — four sync writers with four debounce windows (1500/2500/4000/4000).
-   Making them mutually exclusive is the cheap fix.
-2. **F-8** — `bujo:sync` holds the sync passphrase in plaintext localStorage,
-   beside the data it unlocks.
-3. **The SQLite exporter** (step 7 of the decision doc) is not built, gated on
-   F-1 deliberately: a query surface over data that still loses rows just draws
-   confident charts of wrong numbers.
-4. **PR #96** (Today UX, +2620/−767) has been conflicted since 2026-08-03 and is
+1. **The SQLite exporter** (step 7 of the decision doc) is not built. It was
+   gated on the data-loss fixes; **that precondition is now met**, so it is
+   ready to build whenever you want real SQL over the journal.
+2. **PR #96** (Today UX, +2620/−767) has been conflicted since 2026-08-03 and is
    largely superseded. Probably a close, but it is 3.4k lines and not my call.
-5. **Body is eight tabs.** It works — the row scrolls and the active tab centres
+3. **Body is eight tabs.** It works — the row scrolls and the active tab centres
    — but that is the ceiling. A ninth needs a decision to split the section.
-6. `data-engineer` is not invocable until a session restart; the agent registry
+4. `data-engineer` is not invocable until a session restart; the agent registry
    is read at start-up.
 
 ## Traps found this session

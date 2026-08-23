@@ -27,7 +27,12 @@ export function SyncIndicator() {
     ? { Icon: Cloud, color: 'subtext0', text: 'Syncing…' }
     : state === 'synced'
       ? { Icon: CloudCheck, color: 'green', text: 'Synced' }
-      : { Icon: CloudWarning, color: 'red', text: 'Sync failed' }
+      // The journal went, the photos did not fit. Said plainly, because the
+      // alternative designs are a silent half-sync or a failed push — and this
+      // one is recoverable by the folder/Drive backups, which have no limit.
+      : state === 'photos-skipped'
+        ? { Icon: CloudWarning, color: 'peach', text: 'Synced without photos' }
+        : { Icon: CloudWarning, color: 'red', text: 'Sync failed' }
   const Icon = meta.Icon
   return (
     <div className="sheet-up fixed right-3 bottom-20 z-40 inline-flex items-center gap-1.5 rounded-pill border border-line bg-card/95 px-3 py-1.5 text-label shadow-lg backdrop-blur md:bottom-4" style={{ color: cat(meta.color) }}>
