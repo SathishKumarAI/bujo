@@ -83,7 +83,15 @@ export function SectionTabs({
     const id = requestAnimationFrame(centre)
     let live = true
     void document.fonts?.ready.then(() => { if (live) centre() })
-    return () => { live = false; cancelAnimationFrame(id) }
+    // Re-centre when the row itself changes width. The effect keys on `view`
+    // and the gates, so a rotation or a window resize re-clipped the active tab
+    // and nothing put it back: measured at 390px with Body's eight tabs, the
+    // row held 734px of content and `aria-current` sat outside the visible
+    // 471px. A fresh load at the same width centres fine, which is what makes
+    // this easy to miss — you have to resize to see it.
+    const ro = new ResizeObserver(centre)
+    ro.observe(row)
+    return () => { live = false; cancelAnimationFrame(id); ro.disconnect() }
   }, [view, gates.cycle, gates.nofap])
 
   const section = sectionOf(view)

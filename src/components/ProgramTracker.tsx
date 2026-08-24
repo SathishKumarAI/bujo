@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
 import { PROGRAMS } from '../lib/programs'
+import { musclesForExercise } from '../lib/fitness'
+import { muscleNames } from '../lib/muscles'
 import { Card, Segmented } from './ui'
+import { MuscleMap } from './MuscleMap'
 import { VideoLink } from './VideoLink'
 import { Button } from './ui/button'
 
@@ -15,9 +18,17 @@ import { Button } from './ui/button'
  * / `programActuals`, so the tracker can appear in more than one view.
  *
  * `only` restricts it to a single program id (hides the program picker) · used to
- * keep the pull-up program in the Pull-ups view and hypertrophy in the Gym.
+ * keep the pull-up program in the Pull-ups view and hypertrophy in the Program
+ * view.
+ *
+ * `anatomy` adds the muscle map for the selected day. Opt-in because it only
+ * earns its space where the tracker is the page: on Strength the map already
+ * lives in the right rail, driven by the exercise you are logging. The Program
+ * view has no rail, and a bare checklist of eighteen lifts tells you what to do
+ * without ever showing what it works — so there it maps the whole day, which is
+ * the question that page answers ("today is PUSH — what does that hit?").
  */
-export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]) => void; only?: string }) {
+export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (exercises: string[]) => void; only?: string; anatomy?: boolean }) {
   const { data, setSettings } = useJournal()
   const programs = only ? PROGRAMS.filter((p) => p.id === only) : PROGRAMS
   const [pid, setPid] = useState(programs[0].id)
@@ -43,6 +54,11 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
   }
   const doneCount = p.weeks.reduce((acc, w) => acc + w.days.filter((x) => dayComplete(w.week, x.day)).length, 0)
   const curDoneCount = cur ? cur.exercises.filter((_, i) => done.includes(exKey(week, cur.day, i))).length : 0
+  // Every muscle the selected day touches, deduped. Unmapped names (cardio,
+  // "Sprints", the pull-up programme's assessments) simply contribute nothing,
+  // which is why the block below hides itself on an empty result rather than
+  // drawing a blank body.
+  const dayMuscles = anatomy && cur ? [...new Set(cur.exercises.flatMap((e) => musclesForExercise(e.name)))] : []
 
   function pickProgram(id: string) {
     setPid(id)
@@ -119,6 +135,17 @@ export function ProgramTracker({ onLoad, only }: { onLoad?: (exercises: string[]
               )
             })}
           </ul>
+          {anatomy && dayMuscles.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="mb-2 text-label tracking-wide text-fg-2 uppercase">What {cur.focus} hits</p>
+              <MuscleMap muscles={dayMuscles} />
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {muscleNames(dayMuscles).map((m) => (
+                  <span key={m} className="border border-line px-2.5 py-0.5 text-label text-fg-2">{m}</span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-control inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>}
             <Button variant="secondary" onClick={toggleAll} className="press-3d">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>

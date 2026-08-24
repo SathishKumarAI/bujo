@@ -21,32 +21,56 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
  * entry it just walked back to is not immediately re-added.
  */
 /**
- * Retired destinations → where they live now.
- *
- * Pull-ups and Home workout were nav entries sitting as peers of Coaching and
- * Recovery, which mixed two levels of taxonomy: those two are *activities* and
- * the others are *surfaces*. An activity is something you choose inside
- * Fitness, not somewhere you navigate to.
+ * Retired spellings → where they live now.
  *
  * This is the app's equivalent of a 301. There is no path router — navigation
  * is a `view` state plus a `?view=` parameter — so the rewrite happens on read,
- * and the query string survives it. Old bookmarks keep working and land on the
- * activity they meant.
+ * and the query string survives it. Old bookmarks keep working.
  *
- * **Pickleball was in this table and should not have been.** The test is not
- * whether you can do the thing, it is whether it has a record of its own: a
- * pull-up session IS a `Workout`, whereas a pickleball session is a
- * `PickleballSession` with format, games won/lost, scoring format, partner and
- * points. The Fitness sport form asks for `durationMin` and nothing else, so
- * this redirect did not relocate the page — it made every one of those fields
- * unreachable from a link. Alias removed; `?view=pickleball` opens Pickleball,
- * which is a Body tab again.
+ * **The table has been wrong three times in the same way, so the test is worth
+ * stating once.** An id belongs here only when the page it names no longer
+ * exists. It does NOT belong here merely because the thing is an *activity* you
+ * pick inside Fitness rather than a nav destination — that is an argument about
+ * the tab row, and it says nothing about whether the id should resolve.
+ *
+ * Ask instead: does the target hold anything the Fitness activity form does
+ * not? Every time the answer was yes, the redirect was deleting a page rather
+ * than relocating it.
+ *
+ * - **Pickleball** — a session is a `PickleballSession` (format, games won and
+ *   lost, scoring, partner, points), not a `Workout`. The sport form asks for
+ *   `durationMin` and nothing else, so the alias made every one of those fields
+ *   unreachable from a link. Removed; it is a Body tab again.
+ * - **Pull-ups** — `views/Pullups.tsx` holds the "Starting From Zero" program
+ *   tracker, the ability/training-set calculator, the ability ladder, the
+ *   workout-format library and the progression exercises. Removed.
+ * - **Home workout** — `views/HomeWorkout.tsx` holds the bodyweight library and
+ *   its demos. Removed.
+ *
+ * The last two were doubly wrong, because the app never agreed with them:
+ * `Fitness`'s companion links, `Goals`'s program row and `TodayPlanCard`'s chip
+ * all navigate to `pullups` and `homeworkout` in-app — and that works, because
+ * in-app navigation sets state and never consults this table. Only the URL
+ * disagreed, so those pages rendered perfectly until you reloaded or shared the
+ * link, and then bounced to Fitness. A page you can open but cannot link to is
+ * the shape of bug that survives every click-through test.
+ *
+ * Neither is a tab, and neither needs to be: both stay companions reached from
+ * Fitness, and `MEMBERS` in `shell/sections.ts` already maps them to Body so
+ * the rail lights correctly when you land on one.
+ *
+ * `home-workout` (hyphenated) stays: a genuine legacy spelling with no view id
+ * of its own, so it still needs somewhere to land — now the view it meant.
+ *
+ * **An alias is now just `id → view`.** It used to carry an `activity` to
+ * preselect, which existed solely for the two entries above; with those gone
+ * every remaining alias set it to `''`, so both the field and the branches
+ * reading it were dead. An explicit `?activity=` still works and is untouched —
+ * that is the documented way to land on a Fitness activity.
  */
-const VIEW_ALIASES: Record<string, { view: string; activity: string }> = {
-  pullups: { view: 'fitness', activity: 'pullups' },
-  homeworkout: { view: 'fitness', activity: 'homeWorkout' },
-  'home-workout': { view: 'fitness', activity: 'homeWorkout' },
-  body: { view: 'fitness', activity: '' },
+const VIEW_ALIASES: Record<string, string> = {
+  'home-workout': 'homeworkout',
+  body: 'fitness',
 }
 
 /**
@@ -73,10 +97,10 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
   const alias = raw ? VIEW_ALIASES[raw] : undefined
   const surface = params.get('surface')
   return {
-    view: alias ? alias.view : raw ? (SECTION_ALIASES[raw] ?? raw) : null,
+    view: alias ?? (raw ? (SECTION_ALIASES[raw] ?? raw) : null),
     day: day && ISO_DAY.test(day) ? day : null,
     /** Preselect this activity on arrival, and set the mode from `modeOf()`. */
-    activity: alias?.activity || params.get('activity') || null,
+    activity: params.get('activity') || null,
     /** Which Today surface to open. Null → pick from the clock. */
     surface: surface && (SURFACES as string[]).includes(surface) ? (surface as Surface) : null,
   }
@@ -86,19 +110,19 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
  * Finish the redirect: rewrite a retired `?view=` into its canonical form, once,
  * before anything else reads or writes the URL.
  *
- * `readDeepLink` resolved `?view=pullups` to `{view:'fitness', activity:'pullups'}`
- * correctly, and the activity was still lost. It lived only in the parsed result,
- * never in the URL — and `Fitness` is a `lazy()` chunk, so by the time it mounts
- * and calls `readDeepLink().activity`, `DeepLinkSync` has already rewritten the
- * address bar to `?view=fitness`. The alias-carried activity is gone by then and
- * you land on Cardio / Run instead of Strength / Pull-ups.
- *
- * Canonicalising collapses the two forms into one: the old bookmark becomes the
- * documented `?view=fitness&activity=pullups` before any reader runs, so there is
- * only one shape of URL downstream and no second place for this to go wrong.
+ * Collapses the two spellings into one, so there is a single shape of URL
+ * downstream rather than every reader having to resolve the alias again.
  *
  * `replaceState`, not push — a 301 should not leave the retired URL in history
  * for Back to land on, where it would redirect forward again.
+ *
+ * This used to also write the alias's `activity` into the URL, and the reason
+ * is worth keeping even though the code is gone: resolving an activity in the
+ * parsed *result* was not enough. `Fitness` is a `lazy()` chunk, so by the time
+ * it mounted and read `activity`, `DeepLinkSync` had already rewritten the
+ * address bar — and an activity that lives only in a parsed object, never in
+ * the URL, is gone by then. If an alias ever needs to carry a parameter again,
+ * it has to be written here, not returned from `readDeepLink`.
  */
 export function canonicalizeDeepLink() {
   if (typeof window === 'undefined') return
@@ -106,8 +130,7 @@ export function canonicalizeDeepLink() {
   const raw = params.get('view')
   const alias = raw ? VIEW_ALIASES[raw] : undefined
   if (!alias) return
-  params.set('view', alias.view)
-  if (alias.activity) params.set('activity', alias.activity)
+  params.set('view', alias)
   window.history.replaceState(null, '', `${window.location.pathname}?${params}${window.location.hash}`)
 }
 

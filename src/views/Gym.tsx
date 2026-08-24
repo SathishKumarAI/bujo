@@ -5,6 +5,7 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { useJournal } from '../store'
+import { clearPendingSession, peekPendingSession } from '../lib/pendingSession'
 import { Card, Empty, Input, Pill, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
@@ -16,7 +17,6 @@ import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
-import { ProgramTracker } from '../components/ProgramTracker'
 import { VideoLink } from '../components/VideoLink'
 import {
   CollapsibleSection, RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
@@ -49,8 +49,19 @@ interface SetRow {
 export function Gym() {
   const { data, addWorkout, addRoutine, removeRoutine, setBodyMetric } = useJournal()
   const suggested = useMemo(() => nextSplit(data), [data])
-  const [split, setSplit] = useState<Split>(suggested)
-  const [rows, setRows] = useState<SetRow[]>([{ exercise: '', weight: '', reps: '' }])
+  // "Load into session" on the Program tab stashes the day's lifts and
+  // navigates here — the logger's rows are local state, so there is nothing it
+  // could call across the view switch. Seeded into the initialisers rather than
+  // applied from an effect: the logger paints already filled, and no `setState`
+  // runs during mount. Cleared below, once it has been read.
+  const handoff = peekPendingSession()
+  const [split, setSplit] = useState<Split>(handoff ? 'other' : suggested)
+  const [rows, setRows] = useState<SetRow[]>(
+    handoff?.length
+      ? handoff.map((exercise) => ({ exercise, weight: '', reps: '' }))
+      : [{ exercise: '', weight: '', reps: '' }],
+  )
+  useEffect(() => clearPendingSession(), [])
   const [routineName, setRoutineName] = useState('')
   // Ephemeral PR celebration after a set is saved (local state, auto-dismisses).
   const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
@@ -501,14 +512,18 @@ export function Gym() {
         )}
       </Card>
 
-      {/* ── Program & progress · secondary inputs, folded below logging ── */}
+      {/* ── Progress photos · secondary input, folded below logging ──
+          The 12-week hypertrophy tracker used to share this fold. It is a Body
+          tab of its own now (`views/Program.tsx`) — a twelve-week commitment
+          should not live behind a collapsible on the log-today page. Photos
+          stayed: they are not programme data, and moving a feature because its
+          neighbour moved is how content goes missing. */}
       <CollapsibleSection
-        title="Program & progress"
-        subtitle="Training program, progress photos"
+        title="Progress photos"
+        subtitle="Dated shots, side by side"
         icon={Stack}
         color="blue"
       >
-        <ProgramTracker only="hyper12" onLoad={(exs) => loadRoutine(exs, 'other')} />
         <ProgressPhotos />
       </CollapsibleSection>
 

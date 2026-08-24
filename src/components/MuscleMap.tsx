@@ -4,20 +4,33 @@ import { MUSCLES } from '../lib/muscles'
 // Professional anatomical muscle diagrams from wger (CC-BY-SA): a base body
 // image with per-muscle highlight overlays stacked on top · the same technique
 // wger uses on its own site. Credited in CREDITS.md / README.
-const WGER = 'https://wger.de/static/images/muscles'
-const BASE_FRONT = `${WGER}/muscular_system_front.svg`
-const BASE_BACK = `${WGER}/muscular_system_back.svg`
-const overlay = (id: number) => `${WGER}/main/muscle-${id}.svg`
+//
+// Served from `public/muscles/`, not hot-linked from wger. This is a PWA, and
+// the anatomy was the one thing in it that needed the network: offline, every
+// figure fell back to "needs a connection" — on Strength's rail, and on the
+// Program tab where the map is the only picture on the page. Vendored, they are
+// picked up by the workbox precache (`globPatterns` already covers `svg`) and
+// work in a tunnel.
+//
+// CC-BY-SA travels with the copies, which is why the attribution in CREDITS.md
+// now names them as bundled rather than remote. The two base bodies are ~725KB
+// of the ~776KB total; the fifteen overlays are ~3KB each.
+const MUSCLES_DIR = `${import.meta.env.BASE_URL}muscles`
+const BASE_FRONT = `${MUSCLES_DIR}/muscular_system_front.svg`
+const BASE_BACK = `${MUSCLES_DIR}/muscular_system_back.svg`
+const overlay = (id: number) => `${MUSCLES_DIR}/main/muscle-${id}.svg`
 
 // Muscle data + the pure lookups live in `lib/muscles.ts` — domain data, and
 // exporting them beside a component broke Fast Refresh. Import from there.
 
 function Figure({ base, ids, label }: { base: string; ids: number[]; label: string }) {
   const [ok, setOk] = useState(true)
+  // Kept as a safety net now the files are bundled: this can only fire if the
+  // asset is genuinely missing from the build, not because you are offline.
   if (!ok) {
     return (
       <div className="grid h-64 w-40 place-items-center rounded-card border border-line text-center text-label text-fg-2">
-        Muscle diagram needs a connection
+        Muscle diagram unavailable
       </div>
     )
   }

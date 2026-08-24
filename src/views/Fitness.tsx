@@ -268,7 +268,10 @@ const COMPANION: Record<string, { view: ViewId; label: string }> = {
 }
 /** Every strength activity shares one workshop, so it is keyed by mode. */
 const MODE_COMPANION: Partial<Record<Mode, { view: ViewId; label: string }>> = {
-  strength: { view: 'gym', label: 'Strength tools · programs, anatomy, plates' },
+  // "programs" left the label with the 12-week block: it is a Body tab of its
+  // own now, so promising it here would send you to a page that no longer has
+  // one. Strength kept the workshop.
+  strength: { view: 'gym', label: 'Strength tools · anatomy, plates, analytics' },
   sport: { view: 'coaching', label: 'Coaching · drills, skill ladder, program' },
 }
 

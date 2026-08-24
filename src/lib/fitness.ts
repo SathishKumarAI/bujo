@@ -63,16 +63,25 @@ const MUSCLE_KEYWORDS: [string, number[]][] = [
 
 /**
  * wger muscle ids worked by an exercise name (best-effort keyword match).
- * Keywords are ordered specific→general; a matched keyword is blanked out so a
+ * Keywords are ordered specific→general; a matched keyword is consumed so a
  * shorter substring (e.g. "curl" inside "leg curl") can't double-match.
+ *
+ * **Matched at a word boundary, not as a bare substring.** A plain `includes`
+ * read "chin" out of the middle of "ma·chin·e", so every machine exercise
+ * reported Lats and Biceps — "Machine chest press" highlighted the back on a
+ * push day. Only the *leading* edge is anchored, so the plurals the table
+ * relies on ("triceps", "lats", "delts", "pecs") still match.
  */
+const boundary = (kw: string) => new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
+
 export function musclesForExercise(name: string): number[] {
   let n = name.toLowerCase()
   const ids = new Set<number>()
   for (const [kw, m] of MUSCLE_KEYWORDS) {
-    if (n.includes(kw)) {
+    const consumed = n.replace(boundary(kw), ' ')
+    if (consumed !== n) {
       m.forEach((id) => ids.add(id))
-      n = n.split(kw).join(' ') // consume the match
+      n = consumed
     }
   }
   return [...ids]

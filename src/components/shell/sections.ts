@@ -95,10 +95,22 @@ export const SECTIONS: Section[] = [
       // photos were all behind a conditional. A whole workshop should not need
       // a mode to be set before it has a door.
       { view: 'gym', label: 'Strength' },
+      // The 12-week hypertrophy block, by the same test that made Pickleball a
+      // tab. It was one line inside Strength's "Program & progress" fold, so a
+      // twelve-week commitment sat behind a collapsible on a page whose job is
+      // logging today's sets — invisible unless you went looking for it. What
+      // you follow six days a week for three months is a destination.
+      { view: 'program', label: 'Program' },
       // Pickleball is a surface, not an activity — see the note below.
       { view: 'pickleball', label: 'Pickleball' },
       { view: 'coaching', label: 'Coaching' },
       { view: 'nutrition', label: 'Nutrition' },
+      // Moved out of Insights. 75 Hard and the 90-day blocks are disciplines you
+      // *run*, checking in against rules each day — not analytics you read. They
+      // sat beside Stats and Trackers because they produce a streak, which is a
+      // fact about their output, not about what the page is for. Insights keeps
+      // the three surfaces that only ever look backwards.
+      { view: 'challenges', label: 'Challenges' },
       { view: 'nofap', label: 'Recovery', gate: 'nofap' },
       { view: 'cycle', label: 'Cycle', gate: 'cycle' },
     ],
@@ -122,7 +134,6 @@ export const SECTIONS: Section[] = [
       { view: 'insights', label: 'Insights' },
       { view: 'stats', label: 'Stats' },
       { view: 'trackers', label: 'Trackers' },
-      { view: 'challenges', label: 'Challenges' },
     ],
   },
 ]

@@ -47,7 +47,14 @@ an issue and it will be corrected.
 | Open-Meteo | https://open-meteo.com/ | Weather (no key) |
 | BigDataCloud reverse geocode | https://www.bigdatacloud.com/ | City label from coordinates |
 
-The anatomical muscle diagrams shown in the Gym view are **wger's muscle SVG
-images** (base body + per-muscle overlays), loaded from wger's public static
-assets and used under **CC-BY-SA**. All surrounding code, layout, and the
-split→muscle mapping are original to this project.
+The anatomical muscle diagrams shown on Strength and Program are **wger's muscle
+SVG images** (base body + per-muscle overlays), used under **CC-BY-SA**.
+
+They are **bundled with this app** (`public/muscles/`, 17 files) rather than
+hot-linked from wger's static assets. This is a PWA and the anatomy was the only
+thing in it that required the network — offline, every figure fell back to a
+placeholder. CC-BY-SA permits redistribution with attribution and share-alike,
+which this notice provides; the files are unmodified.
+
+All surrounding code, layout, and the split→muscle mapping are original to this
+project.
