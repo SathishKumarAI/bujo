@@ -188,12 +188,42 @@ export function load(): JournalData {
   }
 }
 
-export function save(data: JournalData): void {
+/**
+ * Fires when the outcome of a local write CHANGES (ok → failed, failed → ok).
+ * `StorageBanner` listens. Edge-triggered on purpose: `save()` runs on every
+ * keystroke, and an event per keystroke would be a re-render per keystroke.
+ */
+let lastSaveOk = true
+function emitPersist(ok: boolean): void {
+  if (ok === lastSaveOk) return
+  lastSaveOk = ok
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('bujo:persist', { detail: ok }))
+  }
+}
+
+/** True if the most recent local write succeeded. */
+export const persistOk = (): boolean => lastSaveOk
+
+/**
+ * Persist the journal. Returns false when the write failed.
+ *
+ * The old version swallowed the throw with a `console.error` and a comment
+ * claiming the backup nudge surfaced it — it did not. The nudge keys on
+ * `settings.lastBackup`, which says nothing about whether the write landed. On
+ * a full quota or in Safari private mode the app kept running from memory and
+ * lost everything on reload, with no signal anywhere. Now it says so.
+ */
+export function save(data: JournalData): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    emitPersist(true)
+    return true
   } catch (e) {
-    // Quota or privacy-mode failure — surfaced by the UI's backup nudge.
+    // Quota exhausted, or a privacy mode that refuses writes.
     console.error('bujo: failed to persist', e)
+    emitPersist(false)
+    return false
   }
 }
 

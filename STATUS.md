@@ -1,101 +1,119 @@
 # STATUS
 
-**Stopped:** 2026-08-16, on `feat/hypertrophy-tab` — third in a stack. All gates
-green, nothing in flight.
+**Stopped:** 2026-08-16. Nothing half-built, nothing uncommitted. Every branch
+below is pushed with an open PR and green gates.
 
-## Where the work stopped
+## Where things are
 
-Three branches, each stacked on the one above:
+Two independent lines of work. **Neither has merged, and that is now the
+bottleneck** — thirteen open PRs, most of them in one chain.
 
-| Branch | PR | What |
+### Line 1 · the nav / UI chain (11 PRs, merge bottom-up from #113)
+
+| PR | Branch | What |
 |---|---|---|
-| `refactor/one-nav-bar` | #120 | Rail deleted; navigation is a two-row top bar |
-| `feat/header-scroll-collapse` | #121 | Row 1 folds on scroll; `TopBar` split into `topbar/` |
-| `feat/hypertrophy-tab` | #122 | Program + Challenges become Body tabs; anatomy bundled |
-| `chore/tab-work-followups` | — | The five follow-ups; a11y reaches companion views |
+| #113–#119 | `feat/modernist-*` | The Modernist redesign, page cluster by cluster |
+| #120 | `refactor/one-nav-bar` | Rail deleted; navigation is a two-row top bar |
+| #121 | `feat/header-scroll-collapse` | Row 1 folds on scroll; `TopBar` split into `topbar/` |
+| #122 | `feat/hypertrophy-tab` | Program + Challenges become Body tabs; anatomy bundled offline |
+| #123 | `chore/tab-work-followups` | Five follow-ups; a11y gate reaches companion views |
 
-Reasoning lives in the commit bodies and in
-`docs/sessions/2026-08-16-one-nav-bar/` (PROMPTS.md + PLAN.md) — not repeated
-here.
+Each is based on the one above it. Squash-merging bottom-up retargets the next
+automatically; **merging out of order will not work.**
+
+### Line 2 · data storage (3 PRs, off `main`)
+
+| PR | Branch | What |
+|---|---|---|
+| #124 | `feat/data-engineer-agent` | `data-engineer` subagent + `docs/DATA-STORE-DECISION.md` |
+| #125 | `fix/sync-data-loss` | Four silent data-loss defects fixed |
+| #126 | `fix/photo-sync-payload` | Photos sync, within a budget that cannot break the push |
+
+Independent of line 1. #124 can merge to `main` on its own.
 
 ## Next action
 
-**Merge the stack.** All three PRs are open and mergeable, but they sit on top
-of the seven modernist PRs (#113–#119), which are also still open — ten in a
-chain, each based on the one below, none merged. Squash-merging bottom-up from
-#113 retargets each next PR automatically; merging out of order will not work.
+1. **Merge line 1 bottom-up from #113.** It is eleven deep and every day it sits
+   is a day of drift against `main`.
+2. **Merge #124 → #125 → #126.** These fix live data loss.
+3. Then the two remaining items below are yours to choose, not defects to patch.
 
-Two older PRs are unrelated to the chain and want a decision of their own:
-`#107` (docs worklog, clean, +152) and `#96` (Today UX / IA pass, **DIRTY** —
-conflicted since 2026-08-03, +2620/-767, and largely superseded by the
-modernist and nav work since).
+Eight of the ten defects in `DATA-STORE-DECISION.md` §8 are fixed. The two that
+are not are **design choices with real trade-offs**, which is why they were not
+taken unilaterally:
 
-**Body is now eight tabs** (Fitness · Strength · Program · Pickleball ·
-Coaching · Nutrition · Challenges · Recovery, plus Cycle when gated on). At
-390px that is 734px of content in a 471px row. It scrolls and the active tab is
-centred, so it works — but this is the width at which the section is worth
-splitting rather than extending again. Do not add a ninth without deciding that.
+### F-7 · four sync writers can be live at once
 
-**Nothing is open in the code.** The five follow-ups are done on
-`chore/tab-work-followups` (branch 4 of the stack) — see below. What remains is
-merging.
+The blob, folder, Supabase and PostgREST paths can all be enabled together, with
+debounce windows of 1500 / 2500 / 4000 / 4000 ms. They no longer *lose* data —
+every adopt path merges now — but they still interleave, and a slow round trip
+can make one overwrite another's newer push.
 
-Closed this session:
+The clean fix is **one sync target at a time**, which means a settings change
+and a decision about what happens to anyone who currently has two enabled. The
+cheap partial fix is a single shared debounce window so they at least stop
+racing each other on every keystroke.
 
-- `TodayPlanCard` loops `PROGRAMS`, so the hypertrophy block reaches Today.
-- `?view=pullups` / `?view=homeworkout` resolve again instead of redirecting to
-  Fitness. Both pages were linked in-app but unreachable by URL.
-- `Program` carries its own `short` and `home`; three id-branching call sites
-  gone, so a third program is a data change.
-- `lib/pullups.ts` split out of `lib/programs.ts` (212 → 127 lines).
-- `a11y-axe.mjs` reaches companion views by URL. Pull-ups and Home workout were
-  never scanned; both now clean across every theme.
-- `shell/README.md` written — the last component dir over ~4 files without one.
-- `PageLayout` measures `--header-h` instead of guessing 64px. This **fixed a
-  live bug**: Plan's 563px act column was sticky against a 99px header, so its
-  last 35px was unreachable — the exact failure that function guards against.
+### F-8 · the sync passphrase sits in plaintext
 
-## Traps hit on the way (the ones not already in CLAUDE.md)
+`bujo:sync` holds it in `localStorage`, beside the data it unlocks. Anything
+with DOM access on that origin can read both.
+
+There is no clean client-side fix: the passphrase *is* the decryption key, so
+anywhere the app can read it unattended, so can an attacker. The real options
+are to stop persisting it and prompt each session (worse UX, genuinely safer),
+or accept it and say so in the UI. Both are product calls.
+
+## Smaller, still open
+
+1. **The SQLite exporter** (step 7 of the decision doc) is not built. It was
+   gated on the data-loss fixes; **that precondition is now met**, so it is
+   ready to build whenever you want real SQL over the journal.
+2. **PR #96** (Today UX, +2620/−767) has been conflicted since 2026-08-03 and is
+   largely superseded. Probably a close, but it is 3.4k lines and not my call.
+3. **Body is eight tabs.** It works — the row scrolls and the active tab centres
+   — but that is the ceiling. A ninth needs a decision to split the section.
+4. `data-engineer` is not invocable until a session restart; the agent registry
+   is read at start-up.
+
+## Traps found this session
 
 - **`overflow-x-hidden` makes an element a scroll container.** Non-`visible` on
-  one axis forces the other to `auto`. `<main>` had it, so every
-  `position: sticky` child stuck to a scrollport that never scrolls — Mindset's
-  `LibraryBar`, Today's mobile `CaptureBar` and the page contract's act column
-  were all inert, for months, while reading `--header-h` correctly. Use
-  `overflow-x: clip` when you only want clipping. Symptom: the bar reads
-  -544px instead of clamping.
-- **A header that changes height fights scroll anchoring.** Collapsing chrome
-  that sits in flow shortens the content above the reader; the browser moves
-  `scrollY` to compensate; a scroll listener reads that as the user scrolling
-  the other way and flips back. The result oscillates forever off one scroll
-  (`44 → 25 → 9 → 35 → 24 …`). Fixed with a 450ms settle window in
-  `useHideOnScroll`, not by disabling `overflow-anchor` — this app lazy-loads
-  charts everywhere and anchoring is what keeps them from shoving content.
+  one axis forces the other to `auto`, and `position: sticky` sticks to the
+  nearest *scrolling* ancestor. `<main>` had it, so every sticky-under-header
+  element was inert for months while reading `--header-h` correctly. Use
+  `overflow-x: clip`. Symptom: the bar reads -544px instead of clamping.
+- **A collapsing in-flow header fights scroll anchoring.** Shrinking content
+  above the reader makes the browser move `scrollY`; a scroll listener reads
+  that as the user and flips back, forever (`44 → 25 → 9 → 35 → 24 …`). Fixed
+  with a settle window, not by disabling `overflow-anchor` — this app
+  lazy-loads charts and anchoring is what stops them shoving content.
 - **`grid-template-rows: 0fr` does not collapse without `min-height: 0`.** Grid
-  items default to `min-height: auto`, which floors the track at min-content —
-  measured 27.4px, so the row folded 44 → 34.7 and stopped.
-- **`settings.layout` was two decisions in one key** (which nav *and* which
-  Today). Read every consumer before changing a flag.
-- **A page can be reachable in-app and unreachable by URL.** In-app navigation
-  sets React state and never consults `VIEW_ALIASES`; only the URL does. So
-  Pull-ups and Home workout rendered perfectly when you clicked through from
-  Fitness, Goals or Today, and bounced to Fitness the moment you reloaded or
-  shared the link. Nothing in a click-through test can see that — check the
-  address bar and reload. Third time the alias table has had this bug; the rule
-  is now written above it.
-- **An effect that keys on navigation misses resize.** `SectionTabs` centred the
-  active tab on `[view, gates]` and never on the row changing width, so a
-  rotation left the page saying one thing and the tab row showing another. A
-  fresh load at the small width looked perfect, which is what hid it — you have
-  to resize to see it. Now on a `ResizeObserver`.
-- **`react-hooks/set-state-in-effect` was right, not in the way.** The
-  cross-view session handoff first applied itself from a mount effect; the rule
-  rejected it, and the fix (seed the `useState` initialisers from a pure read,
-  clear from an effect that sets nothing) is also StrictMode-safe and paints
-  filled instead of flashing empty. Read the rule before disabling it.
+  items default to `min-height: auto`, flooring the track at min-content.
+- **A page can be reachable in-app and broken by URL.** In-app navigation sets
+  state and never consults `VIEW_ALIASES`. Pull-ups and Home workout rendered
+  fine when clicked and bounced to Fitness on reload. No click-through test can
+  see it — check the address bar and reload.
+- **A hand-maintained list against a growing type will drift.** `mergeJournals`
+  covered 28 keys and `JournalData` had more, so three collections were dropped
+  silently on every merge. The guard now derives from `emptyJournal()`.
+- **An effect keyed on navigation misses resize.** `SectionTabs` re-centred on
+  `[view, gates]` only, so rotating left the page saying one thing and the tab
+  row showing another — and a fresh load at the same width looked perfect.
+- **A constant standing in for a measured value will be wrong.**
+  `PageLayout` used 64px for a 99px header, so a 563px act column was sticky
+  with its last 35px unreachable — the exact bug that code guards against.
+- **Green tests do not mean shippable.** The photo-sync draft passed 764 tests
+  and would have broken sync for every photo user; no test went near the payload
+  limit. Read what the change *enables*, not just what it asserts.
 - **The devtools screenshot can return a stale frame.** Two inline captures
-  showed an unfolded header while the DOM measured folded; writing the
-  screenshot to a file gave the true frame. Trust the measurement, and save to
-  disk when the picture matters.
-- Dev server on 5200 this session (other worktrees hold 4173/5174/5199). The
-  Chrome extension MCP was not connected; `chrome-devtools` MCP worked.
+  showed an unfolded header while the DOM measured folded. Save to disk when the
+  picture matters; trust the measurement over the image.
+
+## Environment
+
+- Dev server was on :5200 this session; other worktrees hold 4173/5174/5199.
+  The a11y gate spawns its own preview on :4173.
+- `chrome-devtools` MCP worked; the `claude-in-chrome` extension was not
+  connected.
+- Demo data is persisted, not regenerated — re-seed via Settings → Data.
