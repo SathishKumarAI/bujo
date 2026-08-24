@@ -89,13 +89,13 @@ export function CloudStorage() {
   }
 
   return (
-    <Card
+    <Card band
       title={<span className="inline-flex items-center gap-2"><Icon as={HardDrive} size="md" /> Your cloud storage</span>}
       subtitle="Sync your journal through storage you own. No accounts, no servers."
       className="lg:col-span-2"
     >
       {/* Folder */}
-      <div className="rounded-card border border-line bg-ink-0 p-3">
+      <div className="rounded-none border border-line bg-ink-0 p-3">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-2 text-body text-fg-1"><Icon as={FolderOpen} size="sm" style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
           {s.storageMode === 'folder' && <span className="text-label" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
@@ -107,13 +107,13 @@ export function CloudStorage() {
           <div className="mt-2 flex flex-wrap gap-2">
             <Button variant="secondary" onClick={chooseFolder} disabled={!!busy} className="press-3d inline-flex items-center gap-1.5"><Icon as={FolderOpen} size="sm" /> {s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}</Button>
             {s.storageMode === 'folder' && <Button variant="secondary" onClick={syncFolderNow} disabled={!!busy} className="press-3d inline-flex items-center gap-1.5"><Icon as={ArrowsClockwise} size="sm" /> Save now</Button>}
-            {s.storageMode === 'folder' && <Button variant="ghost" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })} className="press-3d rounded-control text-red hover:text-red">Switch to local</Button>}
+            {s.storageMode === 'folder' && <Button variant="ghost" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })} className="press-3d rounded-none text-red hover:text-red">Switch to local</Button>}
           </div>
         )}
       </div>
 
       {/* GitHub gist */}
-      <div className="mt-3 rounded-card border border-line bg-ink-0 p-3">
+      <div className="mt-3 rounded-none border border-line bg-ink-0 p-3">
         <span className="inline-flex items-center gap-2 text-body text-fg-1"><Icon as={GitBranch} size="sm" /> GitHub (private gist)</span>
         <p className="mt-1 text-label text-fg-2">
           Paste a token with the <code>gist</code> scope (github.com → Settings → Developer settings → Tokens).

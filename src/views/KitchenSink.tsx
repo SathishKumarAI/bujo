@@ -193,6 +193,24 @@ export function KitchenSink() {
         </div>
       </Card>
 
+      {/* The band variant, shown as itself. This page stays cards elsewhere on
+          purpose — it is the reference for both looks while the Modernist
+          redesign lands one page at a time, and a showcase that only shows the
+          new thing cannot answer "what did this replace?". */}
+      <Card title="Card vs band" subtitle="Same component, two chromes. `<Card band>` is the Modernist section.">
+        <div className="space-y-4">
+          <Card title="A card" subtitle="Radius, fill, border, padding. An object on the page.">
+            <p className="text-label text-fg-2">Cards are for things that compete for attention.</p>
+          </Card>
+          <Card band title="A band" subtitle="No radius, no fill, one 2px rule, flush left. A section of the page.">
+            <p className="text-label text-fg-2">
+              Bands are for a page that reads top to bottom. The heading stays at `heading` on every
+              width, and a band never draws the ⓘ — a label that needs a “?” gets rewritten instead.
+            </p>
+          </Card>
+        </div>
+      </Card>
+
       <Card title="Buttons" subtitle="Four variants, three heights, and no solid accent fill anywhere.">
         <Row label="variant">
           <Button variant="primary">Primary</Button>

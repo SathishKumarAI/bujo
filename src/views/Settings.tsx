@@ -54,7 +54,7 @@ function Disclosure({ title, subtitle, defaultOpen = true, children }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
+        className="flex w-full items-center gap-2 rounded-none px-1 py-1 text-left hover:text-fg-1"
       >
         <span className="text-fg-2">{open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
         <span className="font-display text-heading font-medium text-fg-1">{title}</span>
@@ -147,9 +147,9 @@ export function Settings() {
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these five pills to 209px each across the wide tier. They are labels, not
   // a segmented control — they should be as wide as their text.
-  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-control border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-none border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* No page header here. The top bar already renders `Settings · Theme,
           profile, data` as the page's h1; a second designed header repeated the
           word 110px lower and gave the document two h1s — the only view in the
@@ -167,12 +167,12 @@ export function Settings() {
 
         <div className="min-w-0">
         <TabsContent value="profile" className="max-w-2xl">
-      <Card title="Profile" subtitle="Tailors the wellbeing tools shown">
+      <Card band title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
-            className="rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+            className="rounded-none border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           >
             <option value="prefer-not">Prefer not to say</option>
             <option value="female">Female</option>
@@ -202,7 +202,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="feel" className="max-w-2xl">
-      <Card title="Journal feel" subtitle="Make it look & behave like real paper">
+      <Card band title="Journal feel" subtitle="Make it look & behave like real paper">
         {/* Two information architectures, both maintained. Not a migration and
             not an experiment — some people want every destination in the rail
             and the whole day on one page, and that is a legitimate way to run a
@@ -230,9 +230,9 @@ export function Settings() {
                   key={t.value}
                   onClick={() => setSettings({ theme: t.value })}
                   aria-pressed={active}
-                  className={`flex items-center gap-2 rounded-card border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
+                  className={`flex items-center gap-2 rounded-none border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
                 >
-                  <span className="flex shrink-0 overflow-hidden rounded-card border border-line" aria-hidden>
+                  <span className="flex shrink-0 overflow-hidden rounded-none border border-line" aria-hidden>
                     {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
                   </span>
                   <span className="min-w-0">
@@ -292,7 +292,7 @@ export function Settings() {
             {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
               const active = (s.accent ?? 'mauve') === c
               return (
-                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-pill transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-none transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
               )
             })}
           </div>
@@ -315,7 +315,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="reminders" className="max-w-2xl">
-      <Card title="Reminders & weather" subtitle="Weather is off until you turn it on">
+      <Card band title="Reminders & weather" subtitle="Weather is off until you turn it on">
         <div className="space-y-3">
           <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
           {s.reminderEnabled && (
@@ -324,7 +324,7 @@ export function Settings() {
                 type="time"
                 value={s.reminderTime}
                 onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                className="rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+                className="rounded-none border border-input bg-background px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
           )}
@@ -356,7 +356,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="data">
-          <Card title="Your data at a glance" subtitle="Everything stored on this device" className="mb-5">
+          <Card band title="Your data at a glance" subtitle="Everything stored on this device" className="mb-5">
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
               <StatTile compact label="Entries" value={data.entries.length} color="mauve" />
               <StatTile compact label="Habits" value={data.habits.filter((h) => !h.archived).length} color="green" />
@@ -381,8 +381,8 @@ export function Settings() {
                     <span className="text-fg-2">Browser storage used</span>
                     <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-                    <div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
+                  <div className="h-2 overflow-hidden rounded-none bg-ink-2">
+                    <div className="h-full rounded-none" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
                   </div>
                   {warn && (
                     <p className="mt-1.5 text-label text-peach">
@@ -395,19 +395,19 @@ export function Settings() {
             })()}
           </Card>
           <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
-      <Card title="Backup & data" subtitle="Back it up regularly">
+      <Card band title="Backup & data" subtitle="Back it up regularly">
         {(() => {
           const stale = daysSinceBackup(s.lastBackup, todayISO())
           if (stale == null) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
+              <p className="mb-3 flex items-center gap-1.5 rounded-none border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
                 <Icon as={Warning} size="sm" /> You haven't backed up yet. Browsers can clear local storage · export a copy.
               </p>
             )
           }
           if (stale >= 7) {
             return (
-              <p className="mb-3 flex items-center gap-1.5 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
+              <p className="mb-3 flex items-center gap-1.5 rounded-none border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
                 <Icon as={Warning} size="sm" /> Not backed up in {stale} day{stale === 1 ? '' : 's'} · export a fresh copy to be safe.
               </p>
             )
@@ -486,7 +486,7 @@ export function Settings() {
         </div>
       </Card>
 
-      <Card title="Demo & reset" subtitle="Sample data, or start fresh">
+      <Card band title="Demo & reset" subtitle="Sample data, or start fresh">
         <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
@@ -542,7 +542,7 @@ export function Settings() {
             return (
               <section className="mt-6 space-y-5">
                 <Disclosure title="Journal summary" subtitle="the span and shape of everything you've tracked">
-                  <Card title="Journal summary" subtitle="The span and shape of everything you've tracked">
+                  <Card band title="Journal summary" subtitle="The span and shape of everything you've tracked">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
                       <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} color="lavender" />
@@ -554,14 +554,14 @@ export function Settings() {
                         <span className="text-fg-2">Days with data (coverage)</span>
                         <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-                        <div className="h-full rounded-pill" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
+                      <div className="h-2 overflow-hidden rounded-none bg-ink-2">
+                        <div className="h-full rounded-none" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
                       </div>
                     </div>
                     {sum.counts.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {sum.counts.map((c) => (
-                          <span key={c.label} className="inline-flex items-center gap-1 rounded-pill border border-line bg-ink-0 px-2 py-0.5 text-label text-fg-1">
+                          <span key={c.label} className="inline-flex items-center gap-1 rounded-none border border-line bg-ink-0 px-2 py-0.5 text-label text-fg-1">
                             {c.label} <span className="font-medium text-fg-1">{c.count}</span>
                           </span>
                         ))}
@@ -642,9 +642,9 @@ function AccountCard() {
   }
 
   return (
-    <Card title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
+    <Card band title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
       {recovery && (
-        <div className="mb-3 rounded-card border border-mauve/40 bg-ink-0 p-3">
+        <div className="mb-3 rounded-none border border-mauve/40 bg-ink-0 p-3">
           <p className="mb-2 text-body text-fg-1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
           <Button variant="secondary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
@@ -729,7 +729,7 @@ function BujoCloudCard() {
   }
 
   return (
-    <Card title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
+    <Card band title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
@@ -758,10 +758,10 @@ function PasscodeCard() {
     setPasscode(pc); setPc(''); setPc2(''); setErr('')
   }
   return (
-    <Card title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto, stays on this device)">
+    <Card band title="Passcode lock" subtitle="Encrypt this journal at rest (Web Crypto, stays on this device)">
       {encrypted ? (
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-control border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
+          <span className="inline-flex items-center gap-1.5 rounded-none border border-green/30 bg-green/10 px-3 py-1.5 text-body text-green">🔒 Journal is encrypted</span>
           <Button variant="danger" onClick={async () => { if (await confirm({
             title: 'Remove the passcode?',
             description: 'The journal will be stored unencrypted on this device. Anyone with access to this browser can read it.',
@@ -812,7 +812,7 @@ function SelfHostCard() {
   }
 
   return (
-    <Card title="Self-host sync" subtitle="Sync your journal with your own secured PostgREST API (the Docker stack)">
+    <Card band title="Self-host sync" subtitle="Sync your journal with your own secured PostgREST API (the Docker stack)">
       <div className="space-y-2">
         <label className="block text-body text-fg-1">API URL
           <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="https://localhost:8443" className="mt-1" />

@@ -81,7 +81,7 @@ export function DriveSync() {
   }
 
   return (
-    <Card
+    <Card band
       title={<span className="inline-flex items-center gap-2"><Icon as={Cloud} size="md" /> Cloud sync · Google Drive</span>}
       subtitle="Optional. Store your journal in Drive and reference images/docs from it."
       className="lg:col-span-2"
@@ -109,7 +109,7 @@ export function DriveSync() {
           <>
             <Button variant="secondary" onClick={backup} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowUp} size="sm" /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
             <Button variant="secondary" onClick={restore} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowDown} size="sm" /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
-            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-control text-red hover:text-red">Disconnect</Button>
+            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d rounded-none text-red hover:text-red">Disconnect</Button>
           </>
         )}
       </div>
@@ -127,7 +127,7 @@ export function DriveSync() {
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((f) => (
-                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-card border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
+                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-none border border-line bg-ink-0 transition-colors hover:border-mauve" title={f.name}>
                   <div className="grid h-24 place-items-center overflow-hidden bg-ink-1">
                     {f.thumbnailLink ? (
                       <img src={f.thumbnailLink} alt={f.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />

@@ -56,18 +56,18 @@ export function ProgressPhotos() {
   const newest = photos[0]
 
   return (
-    <Card
+    <Card band
       title="Progress photos"
       subtitle="Weekly physique check, private, on-device"
       right={
         photos.length >= 2 && (
-          <Button variant="secondary" onClick={() => setCompare((c) => !c)} className="press-3d rounded-control inline-flex items-center gap-1.5">
+          <Button variant="secondary" onClick={() => setCompare((c) => !c)} className="press-3d rounded-none inline-flex items-center gap-1.5">
             <Icon as={Columns} size="sm" /> {compare ? 'Gallery' : 'Compare'}
           </Button>
         )
       }
     >
-      <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-control mb-3 flex w-full items-center justify-center gap-2">
+      <Button variant="secondary" onClick={() => ref.current?.click()} className="press-3d rounded-none mb-3 flex w-full items-center justify-center gap-2">
         <Icon as={Camera} size="sm" /> {busy ? 'Processing…' : 'Add today’s photo'}
       </Button>
       <input ref={ref} type="file" accept="image/*" onChange={pick} className="hidden" />
@@ -77,7 +77,7 @@ export function ProgressPhotos() {
       ) : compare && oldest && newest ? (
         <div className="grid grid-cols-2 gap-2">
           {[oldest, newest].map((p, i) => (
-            <figure key={p.id} className="overflow-hidden rounded-card border border-line">
+            <figure key={p.id} className="overflow-hidden rounded-none border border-line">
               <img src={resolved[p.photo]} alt={`${i === 0 ? 'First' : 'Latest'} progress photo`} className="aspect-[3/4] w-full bg-ink-2 object-cover" />
               <figcaption className="bg-ink-1 px-2 py-1 text-center text-label text-fg-2">
                 <span className="text-fg-2">{i === 0 ? 'First' : 'Latest'}</span> · {prettyDay(p.date)}{p.weight != null && ` · ${p.weight}`}
@@ -88,7 +88,7 @@ export function ProgressPhotos() {
       ) : (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {photos.map((p) => (
-            <figure key={p.id} className="group relative overflow-hidden rounded-card border border-line">
+            <figure key={p.id} className="group relative overflow-hidden rounded-none border border-line">
               <img src={resolved[p.photo]} alt={`Progress photo ${prettyDay(p.date)}`} className="aspect-[3/4] w-full bg-ink-2 object-cover" />
               <figcaption className="absolute inset-x-0 bottom-0 bg-crust/80 px-1.5 py-0.5 text-center text-micro text-fg-1">
                 {p.date.slice(5)}
@@ -96,7 +96,7 @@ export function ProgressPhotos() {
               <button
                 onClick={() => removePhoto(p.id, p.photo)}
                 aria-label="Remove photo"
-                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-pill bg-crust/85 text-fg-1 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
+                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-none bg-crust/85 text-fg-1 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
               >
                 <Icon as={X} size="sm" />
               </button>
