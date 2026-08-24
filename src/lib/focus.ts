@@ -207,3 +207,14 @@ export function focusInsight(data: JournalData): string | null {
 }
 
 export type { DevSession }
+
+/**
+ * Minutes as "1h 30m" / "45m".
+ *
+ * Lived three times in `views/Focus.tsx` — twice as `hrs`, once as `hrsLabel`,
+ * all three identical. One definition, so a change to the format is a change
+ * everywhere it is read.
+ */
+export function formatMinutes(min: number): string {
+  return min >= 60 ? `${Math.floor(min / 60)}h ${min % 60}m` : `${min}m`
+}
