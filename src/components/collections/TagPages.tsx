@@ -23,8 +23,13 @@ export function TagPages({
 }) {
   const open = tags.find((t) => t.tag === openTag)
 
+  // `scroll-mt` clears the sticky header for `Collections`'s
+  // `scrollIntoView({block:'start'})`. Measured, not a literal: it was
+  // `scroll-mt-24` (96px) against a 99px header, so the jump already landed
+  // under it — and the header now folds on scroll, so no constant can be right.
+  // See `shell/useHeaderHeight`.
   return (
-    <Band id="bujo-tags" className="scroll-mt-24 py-6">
+    <Band id="bujo-tags" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h2 className="font-display text-heading font-medium text-fg-1">Tag pages</h2>
         <Eyebrow className="tracking-[0.1em]">{tags.length} in this journal</Eyebrow>

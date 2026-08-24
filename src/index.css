@@ -446,6 +446,56 @@ body.handwriting textarea {
   .caret-turn { transition: none; }
 }
 
+/* The header's first row folds away while you read, and the bottom nav slides
+   off its edge. Two bars, one rule — `shell/useHideOnScroll`.
+
+   The fold animates a GRID TRACK, not a transform, and that is load-bearing:
+   `useHeaderHeight` republishes `--header-h` from `.app-header`'s measured box,
+   and three sticky bars park against it (the page contract's act column,
+   Mindset's LibraryBar, Today's mobile CaptureBar). A transform keeps the
+   measured height at its full value while only half the header is on screen,
+   which drops all three ~46px low and opens a slit that content scrolls
+   through. Shrinking the real box drags them up in step, for free.
+
+   `1fr → 0fr` rather than a height, because the row's height is content-derived
+   (it grows with the notch inset, wraps at narrow widths) and `auto` does not
+   transition. */
+.header-rail {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur-base) var(--ease-emphasis);
+}
+.header-rail > * {
+  overflow: hidden;
+  /* `min-height: 0` is not defensive, it is required. A grid item defaults to
+     `min-height: auto`, which floors the track at the item's min-content
+     height — measured at 27.4px here, so the row folded 44px → 34.7px and
+     stopped, leaving a strip of clipped controls pinned under the tabs. */
+  min-height: 0;
+  opacity: 1;
+  transition: opacity var(--dur-fast) var(--ease-rise);
+}
+.header-rail[data-collapsed='true'] { grid-template-rows: 0fr; }
+.header-rail[data-collapsed='true'] > * { opacity: 0; }
+/* Tabbing into a folded row must open it, or focus lands on a control with zero
+   height and no one can see where they are. Quick add stays keyboard-reachable
+   while scrolled — as does `n`, which opens it from anywhere. */
+.header-rail[data-collapsed='true']:focus-within { grid-template-rows: 1fr; }
+.header-rail[data-collapsed='true']:focus-within > * { opacity: 1; }
+
+/* The bottom nav's half of the same rule. It used to carry a literal
+   `duration-300` and no reduced-motion guard — the one motion site in the app
+   that routed around both the tokens and the convention. */
+.nav-slide { transition: transform var(--dur-base) var(--ease-emphasis); }
+
+@media (prefers-reduced-motion: reduce) {
+  .header-rail,
+  .header-rail > *,
+  .nav-slide {
+    transition: none;
+  }
+}
+
 /* Enlarge-modal motion: backdrop fades, panel scales up (used by every viz card). */
 @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-panel-in {
