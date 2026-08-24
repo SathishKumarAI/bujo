@@ -3,6 +3,8 @@
 // gist they own. api.github.com sends CORS headers, so this works client-side.
 // The token is the user's own and kept in their localStorage (their choice).
 
+import { inlineImages, externalizeImages } from './imageStore'
+
 const API = 'https://api.github.com'
 const FILE = 'bujo.json'
 
@@ -16,10 +18,12 @@ function headers(token: string): HeadersInit {
 
 /** Create or update the gist. Returns the gist id. */
 export async function pushGist(token: string, gistId: string | undefined, obj: unknown): Promise<string> {
+  // Inline photos so their bytes actually travel; the puller re-externalises.
+  const payload = await inlineImages(obj as { progressPhotos?: { photo: string }[] })
   const body = JSON.stringify({
     description: 'bujo journal (private)',
     public: false,
-    files: { [FILE]: { content: JSON.stringify(obj) } },
+    files: { [FILE]: { content: JSON.stringify(payload) } },
   })
   const res = await fetch(gistId ? `${API}/gists/${gistId}` : `${API}/gists`, {
     method: gistId ? 'PATCH' : 'POST',
@@ -40,7 +44,8 @@ export async function pullGist(token: string, gistId: string): Promise<unknown |
   if (!file) return null
   // Gist content is truncated above ~1 MB; fall back to the raw URL.
   const content = file.truncated ? await (await fetch(file.raw_url)).text() : file.content
-  return content ? JSON.parse(content) : null
+  if (!content) return null
+  return externalizeImages(JSON.parse(content) as { progressPhotos?: { photo: string }[] })
 }
 
 /** Verify a token works and has gist access. */
