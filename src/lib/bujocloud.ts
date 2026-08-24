@@ -3,9 +3,11 @@
 // passphrase before upload, and the path is a *hash* of the passphrase — so the
 // server (and anyone with the URL) only ever sees ciphertext. No accounts.
 import { encryptString, decryptString } from './crypto'
+import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
-export type SyncState = 'syncing' | 'synced' | 'error'
+/** `photos-skipped` = the journal synced, but it was too big to carry its photos. */
+export type SyncState = 'syncing' | 'synced' | 'error' | 'photos-skipped'
 function emit(state: SyncState) {
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('bujo:sync', { detail: state }))
 }
@@ -21,14 +23,19 @@ export async function pushCloud(passphrase: string, data: JournalData): Promise<
   emit('syncing')
   try {
     const code = await pathCode(passphrase)
-    const blob = await encryptString(JSON.stringify(data), passphrase)
+    // Inline photos so their bytes actually travel — but only within the budget
+    // Vercel's 4.5 MB body limit allows. Over it, the journal still syncs and
+    // the photos stay behind, which beats the whole push failing.
+    const { payload: toSend, skipped } = await inlineImagesWithinBudget(data)
+    const blob = await encryptString(JSON.stringify(toSend), passphrase)
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, payload: JSON.stringify(blob) }),
     })
     if (!res.ok) throw new Error(`Cloud push failed (${res.status})`)
-    emit('synced')
+    if (skipped) notePhotosSkipped(skipped)
+    else emit('synced')
   } catch (e) { emit('error'); throw e }
 }
 
@@ -41,5 +48,5 @@ export async function pullCloud(passphrase: string): Promise<JournalData | null>
   const { payload } = await res.json()
   const blob = JSON.parse(payload)
   const json = await decryptString(blob, passphrase) // throws on wrong passphrase
-  return JSON.parse(json) as JournalData
+  return externalizeImages(JSON.parse(json) as JournalData)
 }

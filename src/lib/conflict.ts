@@ -1,10 +1,17 @@
 import type { JournalData } from './types'
 
 // Collections keyed by a stable `id` — unioned by id on merge.
+//
+// MUST list every id-keyed array in `JournalData`. A collection missing here is
+// NOT merged — it falls through to the winner's copy and the loser's items are
+// silently dropped. `typingSessions`, `customGoals` and `mindsetFocus` were
+// missing for exactly that reason; `conflict.test.ts` now derives the list from
+// `emptyJournal()` so the next one added fails a test instead of losing data.
 const ID_ARRAYS = [
   'entries', 'habits', 'workouts', 'fasts', 'routines', 'progressPhotos',
   'pickleball', 'friends', 'books', 'readLinks', 'pickleballEvents',
   'birthdays', 'challenges', 'devSessions', 'recurrences', 'collections',
+  'typingSessions', 'customGoals', 'mindsetFocus',
 ] as const
 
 // Collections keyed by a calendar field — unioned by that key on merge.
@@ -37,6 +44,14 @@ function unionByKey(winner: unknown, loser: unknown, key: string): unknown[] {
   return [...w, ...l.filter((x) => !seen.has((x as Dict)?.[key]))]
 }
 
+/** Union two arrays of primitives (program day keys, week numbers), order-stable. */
+function unionScalars(winner: unknown, loser: unknown): unknown[] {
+  const w = Array.isArray(winner) ? winner : []
+  const l = Array.isArray(loser) ? loser : []
+  const seen = new Set(w)
+  return [...w, ...l.filter((x) => !seen.has(x))]
+}
+
 function fillMap(winner: unknown, loser: unknown): Dict {
   const w = (winner && typeof winner === 'object' ? winner : {}) as Dict
   const l = (loser && typeof loser === 'object' ? loser : {}) as Dict
@@ -62,6 +77,29 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
   for (const k of ID_ARRAYS) out[k] = unionById(w[k], l[k])
   for (const [k, key] of KEYED_ARRAYS) out[k] = unionByKey(w[k], l[k], key)
   for (const k of MAPS) out[k] = fillMap(w[k], l[k])
+
+  // settings: winner wins every scalar, but four fields inside settings are
+  // actually DATA LOGS, not preferences — a whole-object take from the winner
+  // silently drops a DUPR rating or a finished program day logged on the other
+  // device. Union those four; everything else is last-write-wins as before.
+  const ws = (w.settings ?? {}) as Dict
+  const ls = (l.settings ?? {}) as Dict
+  out.settings = {
+    ...ls, ...ws,
+    duprLog: unionByKey(ws.duprLog, ls.duprLog, 'date'),
+    programDone: unionScalars(ws.programDone, ls.programDone),
+    coachingWeeksDone: unionScalars(ws.coachingWeeksDone, ls.coachingWeeksDone),
+    programActuals: fillMap(ws.programActuals, ls.programActuals),
+  }
+  // Drop the keys we just synthesised if BOTH sides lacked them, so a merge
+  // can't invent `duprLog: []` on a journal that never had one.
+  for (const k of ['duprLog', 'programDone', 'coachingWeeksDone'] as const) {
+    if (!(out.settings as Dict)[k]) continue
+    if (((out.settings as Dict)[k] as unknown[]).length === 0 && ws[k] == null && ls[k] == null) {
+      delete (out.settings as Dict)[k]
+    }
+  }
+  if (ws.programActuals == null && ls.programActuals == null) delete (out.settings as Dict).programActuals
 
   // nofap: keep the winner's scalars (startedOn/best) but union the dated logs so
   // a relapse/urge logged on the other device isn't lost.
