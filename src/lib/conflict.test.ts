@@ -83,3 +83,54 @@ describe('mergeJournals', () => {
     expect(out.nofap.relapses.map((r) => r.id).sort()).toEqual(['r1', 'r2']) // union
   })
 })
+
+describe('mergeJournals · no collection is left behind', () => {
+  /**
+   * The regression guard for the bug this was written after: `ID_ARRAYS` is a
+   * hand-maintained list, `JournalData` grows feature by feature, and a
+   * collection missing from the list is not merged — it falls through to the
+   * winner and the loser's rows vanish with no error. `typingSessions`,
+   * `customGoals` and `mindsetFocus` were all missing at once.
+   *
+   * Derived from `emptyJournal()` rather than a hand-written fixture, so a
+   * collection added tomorrow is covered without anyone remembering to.
+   */
+  it('keeps a loser-only item in EVERY array collection of an empty journal', () => {
+    const winner = { ...emptyJournal(), updatedAt: '2026-06-15T12:00:00.000Z' }
+    const loser = { ...emptyJournal(), updatedAt: '2026-06-15T10:00:00.000Z' } as Record<string, unknown>
+
+    // One synthetic row per array collection, carrying every key the merge might
+    // join on (`id`, `date`, `ym`) so it is unique whichever rule applies.
+    const arrayKeys = Object.entries(loser)
+      .filter(([, v]) => Array.isArray(v))
+      .map(([k]) => k)
+    expect(arrayKeys.length).toBeGreaterThan(15) // sanity: we found the collections
+
+    for (const k of arrayKeys) {
+      loser[k] = [{ id: `only-${k}`, date: '2026-01-01', ym: '2026-01', flags: [] }]
+    }
+
+    const out = mergeJournals(winner, loser as never) as unknown as Record<string, unknown[]>
+
+    const dropped = arrayKeys.filter((k) => (out[k] ?? []).length === 0)
+    expect(dropped, `mergeJournals dropped loser-only rows from: ${dropped.join(', ')}. Add them to ID_ARRAYS or KEYED_ARRAYS in conflict.ts`).toEqual([])
+  })
+
+  it('unions the data logs hidden inside settings', () => {
+    const winner = { ...emptyJournal(), updatedAt: '2026-06-15T12:00:00.000Z' }
+    winner.settings = { ...winner.settings, duprLog: [{ date: '2026-06-15', rating: 4.0 }], programDone: ['w1d1'] }
+    const loser = { ...emptyJournal(), updatedAt: '2026-06-15T10:00:00.000Z' }
+    loser.settings = { ...loser.settings, duprLog: [{ date: '2026-06-14', rating: 3.75 }], programDone: ['w1d2'] }
+
+    const out = mergeJournals(winner, loser)
+    expect(out.settings.duprLog?.map((d) => d.date).sort()).toEqual(['2026-06-14', '2026-06-15'])
+    expect(out.settings.programDone?.sort()).toEqual(['w1d1', 'w1d2'])
+  })
+
+  it('does not invent settings log keys on journals that never had them', () => {
+    const out = mergeJournals(emptyJournal(), emptyJournal())
+    expect(out.settings.duprLog).toBeUndefined()
+    expect(out.settings.programDone).toBeUndefined()
+    expect(out.settings.programActuals).toBeUndefined()
+  })
+})

@@ -1,14 +1,14 @@
 name: CI
 
-# Quality gate for pull requests and feature branches: typecheck, tests, build.
-# (Pushes to `main` are already covered by deploy.yml; this fills the gap so
-# every PR/branch is verified before it lands.) Production deploys to Vercel are
-# driven from a dev box via `scripts/ship.sh` — see docs/PIPELINE.md.
+# Quality gate for every branch, every PR, and `main`: typecheck, tests, build.
+# `main` used to be excluded here because deploy.yml ran the same gate on it.
+# deploy.yml is gone (D-49 — it never once deployed), so excluding `main` would
+# have left it with no gate at all. Production deploys to Vercel are driven from
+# a dev box via `scripts/ship.sh` — see docs/PIPELINE.md.
 
 on:
   pull_request:
   push:
-    branches-ignore: [main]
   workflow_dispatch:
 
 jobs:

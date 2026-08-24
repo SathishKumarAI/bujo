@@ -34,11 +34,13 @@ What each step does:
 design). Building locally with `--prod` inlines them, so the deployed app has a
 working login. The build step warns if they're missing.
 
-## 2. `.github/workflows/ci.yml` — automated tests on every PR/branch
+## 2. `.github/workflows/ci.yml` — automated tests on every PR, branch and `main`
 
-Runs typecheck + soft lint + tests + build on every pull request and non-`main`
-push. `deploy.yml` already runs tests/build on `main` and publishes to GitHub
-Pages. So: CI proves green on the way in; `ship.sh` ships to Vercel.
+Runs typecheck + soft lint + tests + build on every pull request and every push,
+`main` included. `main` used to be excluded because `deploy.yml` ran the same
+gate there; that workflow was retired in D-49, so the exclusion went with it —
+otherwise `main` would be the one branch with no gate. So: CI proves green on
+the way in; `ship.sh` ships to Vercel.
 
 ## Typical loop for a future session
 

@@ -366,7 +366,11 @@ export function Settings() {
               <StatTile compact label="KB stored" value={Math.round((JSON.stringify(data).length / 1024))} color="teal" />
             </div>
             {(() => {
-              // localStorage budget is ~5 MB; photos are the main consumer.
+              // localStorage budget is ~5 MB. This measures the JSON blob only,
+              // which is the right number for THAT budget — photos moved to
+              // IndexedDB (`imageStore.ts`) and are neither in this count nor on
+              // this quota. The old copy here blamed photos for filling a bar
+              // they no longer contribute a byte to.
               const bytes = JSON.stringify(data).length
               const budget = 5 * 1024 * 1024
               const pct = Math.min(100, Math.round((bytes / budget) * 100))
@@ -382,7 +386,8 @@ export function Settings() {
                   </div>
                   {warn && (
                     <p className="mt-1.5 text-label text-peach">
-                      Getting full, photos use the most space. Export a backup, and remove old progress photos if needed.
+                      Getting full. Export a backup now. Photos are NOT counted here — they live in
+                      IndexedDB, off this budget — so this is journal text: trim old collections or entries.
                     </p>
                   )}
                 </div>

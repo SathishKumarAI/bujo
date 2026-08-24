@@ -6,6 +6,8 @@
 //
 // Requires a Google Cloud OAuth 2.0 Client ID (Web). See docs/GOOGLE_DRIVE.md.
 
+import { inlineImages, externalizeImages } from './imageStore'
+
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file'
 const DATA_FILE = 'bujo.json'
@@ -84,6 +86,8 @@ async function findDataFileId(): Promise<string | null> {
 
 /** Upload the journal JSON to appDataFolder (create or update). */
 export async function pushData(obj: unknown): Promise<void> {
+  // Inline photos so their bytes actually travel; the puller re-externalises.
+  obj = await inlineImages(obj as { progressPhotos?: { photo: string }[] })
   const id = await findDataFileId()
   const boundary = 'bujo-' + Math.abs(hash(JSON.stringify(obj).slice(0, 64))).toString(36)
   const metadata = id ? {} : { name: DATA_FILE, parents: ['appDataFolder'] }
@@ -107,7 +111,7 @@ export async function pullData(): Promise<unknown | null> {
   if (!id) return null
   const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`Drive download failed (${res.status})`)
-  return res.json()
+  return externalizeImages((await res.json()) as { progressPhotos?: { photo: string }[] })
 }
 
 export interface DriveFile {

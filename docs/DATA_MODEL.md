@@ -5,6 +5,14 @@ is one JSON object (`JournalData`) kept in the browser's `localStorage`. This do
 is the source-of-truth map of that model and how it's persisted, hosted, and
 synced. The authoritative types live in [`src/lib/types.ts`](../src/lib/types.ts).
 
+> **Why it stays that way, and what is wrong around it:**
+> [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md) measures the blob at ten
+> years (~2.35 MB, ~47% of quota — no database is warranted), counts the
+> **eleven** places that accept journal bytes, and records ten silent-loss
+> defects in the sync periphery — seven now fixed, one (photos never syncing)
+> still open and blocked on a payload-size decision. Read it before changing any
+> persistence path.
+
 ## Where data lives
 
 | Key | Contents | Written by |
@@ -50,8 +58,26 @@ One object, versioned by `SCHEMA_VERSION`, migrated forward on load by
 | `settings` | `Settings` | Units, theme, accent, reminders, storage mode, … |
 
 Images (memory photos, monthly photos, progress photos) are downscaled to a
-≤1024px JPEG **data-URL** before storage (`lib/image.ts`) to keep `localStorage`
-within budget.
+≤1024px JPEG data-URL (`lib/image.ts`, quality 0.72), then **stored in IndexedDB
+`bujo-images`** with only an `img:<id>` reference left in the journal
+(`lib/imageStore.ts`). They are therefore *not* in `bujo:data` and *not* on the
+~5 MB localStorage budget — which is why the storage meter, which measures that
+budget, does not count them.
+
+Two consequences worth knowing:
+
+- **IndexedDB is canonical for photo bytes**, and it is the one part of the
+  journal that is not covered by a JSON export unless the export inlines them.
+  `inlineImages` does that for the download buttons.
+- **Photo bytes sync within a size budget, not beyond it.** Pushes inline the
+  photos and pulls re-externalise them, so the bytes travel and the receiving
+  device's blob stays small. The three *network* paths cap that at
+  `SYNC_INLINE_BUDGET` (2.8 MB of JSON), because Vercel's request-body limit is
+  4.5 MB and a year of weekly progress photos is ~8 MB inlined — over the cap
+  they push ids as before and the UI says "Synced without photos", which beats
+  the whole push failing. Folder, Drive and gist have no limit and always
+  inline. The unbounded fix is blob-per-photo; tracked as F-1 in
+  [`DATA-STORE-DECISION.md`](./DATA-STORE-DECISION.md).
 
 ## Built-in reference data (not user data)
 
@@ -91,11 +117,19 @@ Static-only. `vite build` emits `dist/`; any static host works because
 `vite.config.ts` sets `base: './'` (relative asset paths) and routing is
 query-param based (`?view=`), so no SPA rewrite rules are needed.
 
-- **GitHub Pages** — `.github/workflows/deploy.yml` builds + publishes on push to
-  `main`. Enable once under *Repo → Settings → Pages → Build and deployment:
-  GitHub Actions*.
-- **Vercel / Netlify / Cloudflare Pages** — point at the repo, build command
-  `npm run build`, output `dist`. No env vars required.
+**Nothing is currently hosted.** The Pages workflow was retired in D-49 — it ran
+eight times and failed eight times, because Pages was never enabled in repo
+settings. Options if you want a deployed build back:
+
+- **Vercel** — the only target that can serve `api/sync.ts` and `api/feedback.ts`
+  and apply the security headers in `vercel.json`. Driven from a dev box via
+  `scripts/ship.sh`.
+- **GitHub Pages / Netlify / Cloudflare Pages** — build command `npm run build`,
+  output `dist`, no env vars. Static only: the `/api/` functions will 404 and the
+  `vercel.json` headers (CSP, HSTS, `X-Frame-Options`, COOP/CORP) do not apply,
+  so `bujocloud` sync and the feedback button stop working. For Pages
+  specifically, enable it under *Repo → Settings → Pages → Build and deployment:
+  GitHub Actions* **before** restoring a deploy workflow, or it fails with a 404.
 
 Because there is no backend, hosting never sees user data — it only serves the
 app shell. A true multi-device account/sync backend is intentionally out of

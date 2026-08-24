@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
+import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
 // Optional Supabase backend: real login (guest/anonymous + email) and per-user
@@ -141,7 +142,8 @@ export async function pullJournal(): Promise<JournalData | null> {
   if (!user) return null
   const { data, error } = await sb.from('journals').select('data').eq('user_id', user.id).maybeSingle()
   if (error) throw error
-  return (data?.data as JournalData) ?? null
+  if (!data?.data) return null
+  return externalizeImages(data.data as JournalData)
 }
 
 /** Live-subscribe to this user's journal row; calls `onRemote` on every change
@@ -154,7 +156,7 @@ export async function subscribeJournal(onRemote: (data: JournalData) => void): P
   const channel = sb
     .channel(`journal:${user.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'journals', filter: `user_id=eq.${user.id}` },
-      (payload) => { const row = payload.new as { data?: JournalData }; if (row?.data) onRemote(row.data) })
+      (payload) => { const row = payload.new as { data?: JournalData }; if (row?.data) void externalizeImages(row.data).then(onRemote) })
     .subscribe()
   return () => { sb.removeChannel(channel) }
 }
@@ -164,6 +166,11 @@ export async function pushJournal(journal: JournalData): Promise<void> {
   const sb = client()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Not signed in.')
-  const { error } = await sb.from('journals').upsert({ user_id: user.id, data: journal, updated_at: new Date().toISOString() })
+  // Inline photos so their bytes actually travel, within the budget the request
+  // body allows; over it the journal still syncs without them. See
+  // `inlineImagesWithinBudget` for why all-or-nothing rather than partial.
+  const { payload, skipped } = await inlineImagesWithinBudget(journal)
+  const { error } = await sb.from('journals').upsert({ user_id: user.id, data: payload, updated_at: new Date().toISOString() })
   if (error) throw error
+  notePhotosSkipped(skipped)
 }
