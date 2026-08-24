@@ -70,12 +70,29 @@ Three increments, each shippable alone:
 | # | What | Status |
 |---|---|---|
 | 281a | Tag manager → Settings → Data | ✅ done |
-| 281b | Mood / Habit / Lifetime analytics → Stats | 🔜 |
+| 281b | Mood / Habit / Lifetime analytics → Stats | ✅ done |
 | 281c | Drop the Pickleball digest; dissolve the four remaining action-less cards into headed regions | 🔜 |
 
-**281b's constraint, stated up front:** the three groups merge into Stats'
-existing folds. Moving them across unchanged would take Stats from six drawers
-to nine, which is the failure this document exists to avoid.
+**281b's constraint, stated up front and held:** the three groups merge into
+Stats' existing folds. Moving them across unchanged would take Stats from six
+drawers to nine, which is the failure this document exists to avoid.
+
+**Where each landed.** Mood analytics into Stats' *Mood views* fold; Habit
+analytics into *Habit timing*, renamed *Habits*; Lifetime **open** beside
+Achievements, because lifetime totals are the subject Achievements already
+covers. **Insights went 6 folds → 2. Stats stayed at 6.**
+
+They were extracted to `components/stats/{MoodAnalytics,HabitAnalytics,
+LifetimeCards}.tsx` rather than pasted into `Stats.tsx`, which would have taken
+it past the 500-line ceiling. Each reads `useJournal()` itself and gates on its
+own data, so the host fold degrades cleanly on an empty journal.
+
+**How the move was proved.** Each panel's rendered HTML was dumped from Insights
+on the parent commit and from Stats on this one, and diffed: **all nine
+byte-identical**. Worth doing rather than eyeballing — the first draft of
+`SplitCol` silently dropped its two accent icons while being "the same markup",
+which is exactly the failure `CLAUDE.md` records about extracting a duplicated
+banner and replacing a phone number with 911.
 
 The end state is Insights at **2 cards and 0 folds** — Weekly review and Search,
 both of which genuinely have their own state — with the digests, the coach and

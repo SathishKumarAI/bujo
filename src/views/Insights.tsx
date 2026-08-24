@@ -1,20 +1,18 @@
-import { Barbell, BookOpen, Cake, FileText, Flame, Image, Minus, PersonSimpleRun, Smiley, Sparkle, Sun, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
-import type { Icon as IconGlyph } from '@/components/icons'
+import { Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
-import { labelOf } from '../domain/activities'
-import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights } from '../lib/correlations'
+import { currentStreak, search, taskCompletion } from '../lib/stats'
+import { insights, weeklyDigest, digestRangeLabel, momentumIndicator, pickleballInsights } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { PageLayout, StatBar } from '../components/page'
 import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
-import { prettyDay, prettyMonth } from '../lib/date'
+import { prettyDay } from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
 // Insights carried a private copy of this collapsible section header — the
 // same markup, minus the press affordance and the "show" hint. Three copies of
@@ -24,64 +22,19 @@ import { QuietSection as Section } from '../components/CollapsibleSection'
 export function Insights() {
   const { data } = useJournal()
   const nav = useNav()
-  const { setDay, setMonth } = useCursor()
+  const { setDay } = useCursor()
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('all')
   const streak = currentStreak(data)
-  const best = longestStreak(data)
   const tasks = taskCompletion(data)
   const allResults = search(data, q)
   const kinds = ['all', ...new Set(allResults.map((r) => r.kind))]
   const results = kind === 'all' ? allResults : allResults.filter((r) => r.kind === kind)
   const found = insights(data)
-  const moodImpact = moodImpactRanking(data)
   const digest = weeklyDigest(data)
   const coach = coachDigest(data)
-
-  // Cross-domain mood/metric reads.
-  const moodWd = bestWorstWeekday(data, 'mood')
-  const split = weekdayWeekendSplit(data)
-  const moodVol = metricVolatility(data, 'mood')
   const momentum = momentumIndicator(data)
-
-  // Cross-domain pickleball.
   const pickle = pickleballInsights(data)
-
-  // Habit deep-dives — anchored to your hottest build habit (top of the
-  // streak leaderboard) so the weekday/consistency/month cards always have a
-  // meaningful subject without a picker.
-  const leaders = streakLeaderboard(data)
-  const focusId = leaders[0]?.habitId
-  const focusName = focusId ? `${leaders[0].emoji ? leaders[0].emoji + ' ' : ''}${leaders[0].name}` : ''
-  const focusScore = focusId ? habitConsistencyScore(data, focusId) : null
-  const monthly = focusId ? habitMonthlyDeltas(data, focusId) : []
-  const maxMonthly = Math.max(1, ...monthly.map((m) => m.done))
-
-  // Year-in-review aggregates.
-  const moods = data.metrics.map((m) => m.mood).filter((v): v is number => v != null)
-  const avgMood = moods.length ? Math.round((moods.reduce((a, b) => a + b, 0) / moods.length) * 10) / 10 : null
-  const workouts = data.workouts.length
-  const photos = data.memories.filter((m) => m.photo).length + data.monthly.filter((m) => m.photo).length
-
-  // Personal records · bests across domains.
-  const bestMood = [...data.metrics].filter((m) => m.mood != null).sort((a, b) => (b.mood! - a.mood!))[0]
-  const bigWorkout = [...data.workouts].filter((w) => w.durationMin).sort((a, b) => (b.durationMin! - a.durationMin!))[0]
-  const pickBest = [...(data.pickleball ?? [])].sort((a, b) => b.gamesWon - a.gamesWon)[0]
-  const entriesByDay = data.entries.reduce<Record<string, number>>((m, e) => { if (e.date) m[e.date] = (m[e.date] ?? 0) + 1; return m }, {})
-  const busiest = Object.entries(entriesByDay).sort((a, b) => b[1] - a[1])[0]
-  const records: { label: string; value: string }[] = []
-  if (best > 0) records.push({ label: 'Longest streak', value: `${best} days` })
-  if (bestMood?.mood != null) records.push({ label: 'Best mood', value: `${bestMood.mood}/10 · ${prettyDay(bestMood.date)}` })
-  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${labelOf(bigWorkout.activity)}` })
-  if (pickBest) records.push({ label: 'Best pickleball', value: `${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}` })
-  if (busiest) records.push({ label: 'Busiest day', value: `${busiest[1]} entries · ${prettyDay(busiest[0])}` })
-
-  // Index: months that have any data + collections.
-  const months = [...new Set([
-    ...data.entries.filter((e) => e.date).map((e) => e.date.slice(0, 7)),
-    ...data.monthly.map((m) => m.ym),
-    ...data.metrics.map((m) => m.date.slice(0, 7)),
-  ])].sort().reverse()
 
   return (
     <PageLayout
@@ -274,129 +227,6 @@ export function Insights() {
         <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
       </p>
 
-      {/* 5) Mood analytics — collapsed. */}
-      {(moodWd.best || split.habitWeekday != null || moodVol.band) && (
-        <Section stickyKey="insights.mood" title="Mood analytics" subtitle="weekday, split & stability">
-        <MasonryGrid>
-          {moodWd.best && moodWd.worst && (
-            <Card band title="Best & worst day" subtitle="When your mood runs brightest">
-              <div className="mb-3 flex items-center gap-2 text-body">
-                <AppIcon as={Sun} size="sm" style={{ color: cat('yellow') }} />
-                <span className="text-fg-1">
-                  Brightest on <strong className="text-fg-1">{moodWd.best.label}</strong> ({moodWd.best.avg}/10),
-                  dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
-                </span>
-              </div>
-              {/* `items-stretch`, not `items-end`. Cross-axis `end` sizes each
-                  column to its own content — two lines of text, 34px — so the
-                  `flex-1` bar track below got zero height and every bar in the
-                  chart rendered at 0px. The row is 100px tall and drew nothing
-                  but its numbers and its day labels. Stretched, the column
-                  takes the row's full height and the track has something for
-                  the percentage to resolve against. The bars still sit on the
-                  baseline: that is the track's own `items-end`, one level in.
-                  Six charts across four files had this exact bug. */}
-              <div className="flex items-stretch justify-between gap-2" style={{ height: 100 }} role="img" aria-label="Average mood by weekday">
-                {moodWd.rows.map((r) => (
-                  <div key={r.weekday} className="flex flex-1 flex-col items-center gap-1">
-                    <span className="text-micro tabular-nums text-fg-2">{r.avg == null ? '–' : r.avg}</span>
-                    <div className="flex w-full flex-1 items-end">
-                      <div className="w-full rounded-t" style={{ height: `${r.avg == null ? 2 : Math.max(2, (r.avg / 10) * 100)}%`, background: r.avg == null ? cat('surface0') : r.weekday === moodWd.best!.weekday ? cat('green') : r.weekday === moodWd.worst!.weekday ? cat('peach') : cat('surface1') }} title={r.days ? `${r.avg}/10 over ${r.days}d` : 'no data'} />
-                    </div>
-                    <span className="text-micro text-fg-2">{r.label}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {(split.habitWeekday != null || split.moodWeekday != null) && (
-            <Card band title="Weekday vs weekend" subtitle="How your week splits in two">
-              <div className="grid grid-cols-2 gap-3 text-body">
-                <SplitCol label="Weekdays" habit={split.habitWeekday} mood={split.moodWeekday} days={split.weekdayDays} />
-                <SplitCol label="Weekends" habit={split.habitWeekend} mood={split.moodWeekend} days={split.weekendDays} />
-              </div>
-            </Card>
-          )}
-
-          {moodVol.band && (
-            <Card band title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
-              <p className="text-display font-medium" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
-                {moodVol.stability}<span className="text-heading text-fg-2">/100</span>
-              </p>
-              <p className="mt-1 text-body capitalize text-fg-1">
-                <span className="mr-1.5 rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: moodVol.band === 'steady' ? cat('green') : moodVol.band === 'volatile' ? cat('peach') : cat('subtext0') }}>{moodVol.band}</span>
-                avg {moodVol.mean}/10 · swing ±{moodVol.sd}
-              </p>
-              <p className="mt-2 text-label text-fg-2">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
-            </Card>
-          )}
-        </MasonryGrid>
-        </Section>
-      )}
-
-      {/* 6) Habit analytics — collapsed. */}
-      {(moodImpact.length > 0 || (focusId && focusScore != null) || (focusId && monthly.some((m) => m.done > 0))) && (
-        <Section stickyKey="insights.habits" title="Habit analytics" subtitle="mood impact, consistency & trend">
-      {moodImpact.length > 0 && (
-        <Card band title="Habit mood impact" subtitle="How much each habit lifts your mood">
-          <ul className="space-y-2">
-            {moodImpact.map((h) => (
-              <li key={h.habitId} className="flex items-center gap-2 text-body">
-                <span
-                  className="w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-label font-medium"
-                  style={{ background: cat('surface0'), color: h.lift >= 0 ? cat('green') : cat('red') }}
-                >
-                  {h.lift >= 0 ? '+' : ''}{h.lift}
-                </span>
-                <span className="text-fg-1">{h.emoji ? h.emoji + ' ' : ''}{h.name}</span>
-                <span className="text-fg-2">
-                  {h.doneMood} vs {h.skipMood} mood · {h.doneDays}d
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {focusId && (
-          <Card band title="Consistency score" subtitle={`${focusName}, recency-weighted, last 30 days`}>
-            {focusScore == null ? (
-              <Empty>Not enough scheduled days yet.</Empty>
-            ) : (
-              <>
-                <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-none bg-ink-2">
-                  <div className="h-full rounded-none" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
-                </div>
-                <p className="mt-2 text-label text-fg-2">Recent days count more, so this tracks your momentum — not just a flat average.</p>
-              </>
-            )}
-          </Card>
-      )}
-
-      {focusId && monthly.some((m) => m.done > 0) && (
-        <Card band title="Month over month" subtitle={`${focusName}, completions per month`}>
-          {/* `items-stretch` — see the note on the weekday chart above. */}
-          <div className="flex items-stretch justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
-            {monthly.map((m) => (
-              <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-micro tabular-nums" style={{ color: m.delta > 0 ? cat('green') : m.delta < 0 ? cat('red') : cat('overlay0') }}>
-                  {m.delta > 0 ? `+${m.delta}` : m.delta < 0 ? m.delta : '–'}
-                </span>
-                <span className="text-caption font-medium tabular-nums text-fg-1">{m.done}</span>
-                <div className="flex w-full flex-1 items-end">
-                  <div className="w-full rounded-t" style={{ height: `${Math.max(2, (m.done / maxMonthly) * 100)}%`, background: cat('mauve') }} title={`${m.label}: ${m.done} done`} />
-                </div>
-                <span className="text-micro text-fg-2">{m.label.split(' ')[0]}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-        </Section>
-      )}
-
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
         <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
@@ -423,51 +253,11 @@ export function Insights() {
         </Section>
       )}
 
-      {/* 8) Lifetime — deep totals & navigation, collapsed. */}
-      <Section stickyKey="insights.lifetime" title="Lifetime" subtitle="year in review, records & index">
-      <MasonryGrid>
-        <Card band title="Year in review" subtitle="Your journal so far">
-          <ul className="space-y-1.5 text-body text-fg-1">
-            <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
-            <ReviewRow icon={Smiley} color="green" label={`average mood${avgMood != null ? ' / 10' : ''}`} value={avgMood ?? '—'} />
-            <ReviewRow icon={Barbell} color="teal" label="workouts" value={workouts} />
-            <ReviewRow icon={Image} color="mauve" label="photos kept" value={photos} />
-            <ReviewRow icon={Flame} color="peach" label="day longest streak" value={best} />
-            <ReviewRow icon={Cake} color="pink" label="birthdays tracked" value={data.birthdays.length} />
-          </ul>
-        </Card>
-
-        <Card band title="Index" subtitle="Every month with entries">
-          {months.length === 0 ? (
-            <Empty>Log entries on a few days to fill in the index.</Empty>
-          ) : (
-            <ul className="grid grid-cols-2 gap-1 text-body">
-              {months.map((ym) => (
-                <li key={ym}>
-                  <button onClick={() => { setMonth(ym); nav('monthly') }} className="inline-flex w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-fg-1 hover:bg-ink-2 hover:text-fg-1">
-                    <AppIcon as={BookOpen} size="sm" style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </MasonryGrid>
-
-      {records.length > 0 && (
-        <Card band title="Personal records" subtitle="Your bests so far">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {records.map((r) => (
-              <div key={r.label} className="rounded-none border border-line bg-ink-0 p-3">
-                <p className="text-body font-medium text-fg-1">{r.value}</p>
-                <p className="text-label text-fg-2">{r.label}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-      </Section>
-
+      {/* Mood analytics, Habit analytics and Lifetime moved to Stats
+          (BUJO-281). Insights answers what changed and what to do next;
+          a weekday average, a completion history and a lifetime total are
+          the record, which is what Stats is. They went into Stats existing
+          Mood views / Habits folds rather than beside them. */}
       {/* Tag manager used to be a seventh drawer here. It moved to Settings →
           Data (BUJO-281): it is the only thing on this page that *changes*
           anything — renaming a tag rewrites every entry carrying it — and a
@@ -498,33 +288,3 @@ function PickStat({ label, value, trend }: { label: string; value: string; trend
     </li>
   )
 }
-
-function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
-  return (
-    <div className="rounded-none border border-line bg-ink-0 p-3">
-      <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
-      <p className="flex items-center gap-1.5 text-fg-1">
-        <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />
-        <strong className="tabular-nums">{habit == null ? '—' : Math.round(habit * 100) + '%'}</strong>
-        <span className="text-label text-fg-2">habits</span>
-      </p>
-      <p className="mt-1 flex items-center gap-1.5 text-fg-1">
-        <AppIcon as={Smiley} size="sm" style={{ color: cat('green') }} />
-        <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
-        <span className="text-label text-fg-2">mood</span>
-      </p>
-      {days > 0 && <p className="mt-1 text-micro text-fg-2">{days} scheduled day{days === 1 ? '' : 's'}</p>}
-    </div>
-  )
-}
-
-function ReviewRow({ icon: Icon, color, label, value }: { icon: IconGlyph; color: string; label: string; value: number | string }) {
-  return (
-    <li className="flex items-center gap-2">
-      <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
-      <strong className="text-fg-1">{value}</strong>
-      <span>{label}</span>
-    </li>
-  )
-}
-
