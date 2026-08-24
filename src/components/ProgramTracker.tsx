@@ -85,7 +85,7 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
     >
       {programs.length > 1 && (
         <div className="mb-3">
-          <Segmented value={pid} onChange={pickProgram} options={programs.map((x) => ({ value: x.id, label: x.id === 'pullup-zero' ? 'Pull-up' : 'Hypertrophy' }))} />
+          <Segmented value={pid} onChange={pickProgram} options={programs.map((x) => ({ value: x.id, label: x.short }))} />
         </div>
       )}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">

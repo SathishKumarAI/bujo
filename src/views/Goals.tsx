@@ -113,11 +113,11 @@ export function Goals() {
       value: dayDone,
       target: totalDays,
       color: 'green',
-      icon: p.id === 'pullup-zero' ? ArrowLineUp : Barbell,
-      // The hypertrophy block left Strength for its own Body tab, so this row
-      // has to follow it — pointing at `gym` now lands on a page whose
-      // "Program & progress" fold no longer holds a programme.
-      to: p.id === 'pullup-zero' ? 'pullups' : 'program',
+      // `home` lives on the program record. It used to be derived here from the
+      // id, which is how this row kept pointing at Strength after the
+      // hypertrophy block moved to its own Body tab.
+      icon: p.home === 'pullups' ? ArrowLineUp : Barbell,
+      to: p.home,
     })
   }
 
