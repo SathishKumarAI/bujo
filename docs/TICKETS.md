@@ -728,3 +728,24 @@ props are removed.
 | BUJO-280 | **The Activity heatmap leaves ~800px dead.** Measured at 1440: at the 6mo default the grid is ~370px of fixed-size cells inside a `SPAN_ALL` card running the full ~1180. `SPAN_ALL` exists for the 1yr range (~730px), so the card cannot simply be narrowed — the range control changes its content width threefold. The fix is a cell that stretches to the width it is given, or a card that sizes to its content. **This is the real version of what BUJO-274 wrongly claimed** | 🔜 |
 | BUJO-281 | **Insights is still a six-drawer cabinet** — 16 Cards against a cap of 2, 14 of them inside six collapsed `Section`s where the contract allows one disclosure. Deciding what Insights is *for* is an IA decision, not a refactor | 🔜 |
 | BUJO-282 | `weeklyRadar` mixes scales — Mood/Calm/Habits/Consistency are 0–10, Sleep is raw hours, all plotted on one radar labelled "0–10". A 7h night reads as a 7/10 axis | 🔜 |
+
+**Today: assessed, deliberately not converted.**
+
+| ID | Outcome |
+|---|---|
+| BUJO-264 | ⊘ **Not converted, on purpose.** Today already implements the contract's intent by a different route: the morning/day/evening `Segmented` *is* the orient control, the capture bar *is* the act, and entries plus habit pills are the review. It also has the lowest counts in the app — 4 Cards and 2 accents, against Insights' 16 and 6 |
+
+Two further reasons, both worth writing down rather than rediscovering:
+
+- **Today is two layouts**, `TodayFocused` and `TodayClassic`, chosen by
+  `settings.layout`. Converting one and not the other is exactly the
+  half-migration behind a flag that `CLAUDE.md` forbids, and converting both
+  doubles the blast radius on the app's most-used surface.
+- **Its narrow column is not dead space.** Measured at 1440: content sits in a
+  centred ~820px column. That is the 820 tier behaving as documented — *"the
+  820 tier stays single column at every width; its gutters are the point"* —
+  not the full-width page failing to fill itself.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-283 | If Today is ever converted, do **both** layouts in one change, and use `StatBar`'s `mode`/`segments` for the surface toggle — that is the Fitness pattern and the surface toggle is already exactly it | 🔜 |
