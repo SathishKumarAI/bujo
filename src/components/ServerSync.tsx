@@ -38,12 +38,25 @@ export function ServerSync() {
     return () => { cancelled = true }
   }, [url, token, replaceAll])
 
-  // Debounced push on change.
+  // Debounced push on change, pull-first so a newer server copy is adopted
+  // rather than clobbered. Every other sync path already did this; this one
+  // upserted blind, so whichever device happened to save last simply won.
   useEffect(() => {
     if (!serverConfigured(url, token)) return
-    const t = setTimeout(() => { void pushJournalToServer(url!, latest.current, token) }, 2500)
+    const t = setTimeout(async () => {
+      const remote = await pullJournalFromServer(url!, token)
+      if (remote) {
+        const rm = migrate(remote)
+        if (rm.updatedAt && (!latest.current.updatedAt || rm.updatedAt > latest.current.updatedAt)) {
+          const merged = resolveIncoming(latest.current, rm)
+          if (merged) replaceAll(merged)
+          return // adopted the server copy; do NOT push over it
+        }
+      }
+      await pushJournalToServer(url!, latest.current, token)
+    }, 2500)
     return () => clearTimeout(t)
-  }, [data, url, token])
+  }, [data, url, token, replaceAll])
 
   // Flush on tab close / hide.
   useEffect(() => {

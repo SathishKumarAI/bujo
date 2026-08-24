@@ -391,3 +391,34 @@ this is the second time a grep keyed on *how something is written* passed while
 the thing itself was still drawn — the first was the six typographic folds. Both
 were caught by looking at the page.
 
+**D-49 — No hosted deploy target; the Pages workflow is retired, Vercel's code
+stays.**
+*Context:* `.github/workflows/deploy.yml` had run 8 times since 2026-06-24 and
+failed 8 times. Every failure was the same one, and it was never a build
+problem — the `build` job passed every time and `deploy` died on
+`Failed to create deployment (status: 404) … Ensure GitHub Pages has been
+enabled`. Pages was never switched on in repo settings, which is the step the
+workflow's own header comment names. Someone eventually set the workflow to
+`disabled_manually` to stop the noise, so it read as dormant rather than broken.
+The `github-pages` environment still shows "last deployed 2026-08-02" because
+`actions/deploy-pages` registers the deployment *before* calling the API — that
+record was written 30 seconds before the run failed. **There has never been a
+site behind it.**
+*Choice:* delete `deploy.yml`. Do **not** touch `vercel.json` or `api/`.
+*Why not delete those too:* Pages could not have hosted them anyway. `api/sync.ts`
+and `api/feedback.ts` are serverless functions, and `vercel.json` carries the
+entire security header set — CSP, HSTS, `X-Frame-Options`, COOP/CORP,
+`Permissions-Policy`. GitHub Pages serves static files and **cannot set HTTP
+headers at all**. Deleting them would strip those headers and break `bujocloud`
+sync (`lib/bujocloud.ts:31,45`) and the feedback button
+(`FeedbackButton.tsx:49`) — a feature removal, not a cleanup. They are inert
+with nothing deployed, so they cost nothing to keep and stay ready to revive.
+*Trade-off:* no hosted build of any kind right now; the app is dev-server and
+local only. Reviving Pages means enabling it in settings **first**, then
+restoring this file from git history. Reviving Vercel needs nothing but a
+deploy.
+*Consequence worth knowing:* `/api/sync`'s 4.5 MB Vercel body limit is the whole
+subject of D-40 and of the photo-sync budget in `lib/imageStore.ts` — whatever
+replaces Vercel inherits that constraint, or invalidates the budget built
+around it.
+
