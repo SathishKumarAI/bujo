@@ -8,7 +8,7 @@ import {
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useJournal } from '../store'
-import { Page } from '../components/shell/Page'
+import { PageLayout, StatBar } from '../components/page'
 import { CardGrid, SPAN_ALL } from '../components/shell/CardGrid'
 import { Card, Empty, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -119,8 +119,30 @@ export function Stats() {
     )
   }
 
+  // Zone 1 reads the figures the radar already computes rather than averaging
+  // the same seven days a second time. Sleep is in hours; the other two are the
+  // radar's 0–10 scale, so they are labelled differently on purpose.
+  const radarAt = (axis: string) => radar.find((r) => r.axis === axis)?.value
+
   return (
-    <Page width="wide" className="gap-0 sm:gap-0">
+    <PageLayout
+      tier={1180}
+      /* Stacked. Every panel here is a chart and the activity heatmap spans the
+         full width by design; a 38% column would have nothing to hold. */
+      stacked
+      /* No zone 2. Stats is the one page in the cluster with nothing to do on
+         it — it is entirely a record being read back, and the contract says a
+         zone you have no content for is omitted, not filled. */
+      zone1={
+        <StatBar
+          facts={[
+            { label: 'mood · 7d', value: `${radarAt('Mood') ?? 0}/10` },
+            { label: 'sleep · 7d', value: `${radarAt('Sleep') ?? 0}h` },
+            { label: 'habits · 7d', value: `${radarAt('Habits') ?? 0}/10` },
+          ]}
+        />
+      }
+      zone3={<>
       {/* Three across. Eight blocks — the heatmap, achievements and six
           collapsed analytics groups — used to be one tall column. */}
       <CardGrid>
@@ -339,6 +361,7 @@ export function Stats() {
         document.body,
       )}
       </CardGrid>
-    </Page>
+      </>}
+    />
   )
 }

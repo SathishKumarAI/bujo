@@ -714,3 +714,17 @@ props are removed.
 |---|---|---|
 | BUJO-278 | **`StatTile`'s `color` prop silently does nothing without an `icon`.** Either colour the value, or make the prop require an icon in the type. Every call site passing `color` and no icon is currently a no-op — audit them all | 🔜 |
 | BUJO-279 | The "today done" tile's green/yellow/peach threshold was intended as a status signal and has never rendered. Decide whether it should — it is the one number on this strip with an unambiguous direction | 🔜 |
+
+**2026-08-24, Phase B part 2 + Phase E — the contract rollout.**
+
+| ID | Outcome |
+|---|---|
+| BUJO-254/255 | ✅ Trackers on `PageLayout`. `PageLayout` gained `stacked`; a latent `layout.css` placement bug fixed with it. PR #132 |
+| BUJO-262 | ✅ Insights on `PageLayout`. The four-`Big` row deleted — its "Longest streak" tile duplicated the Personal records card further down the same page. PR #133 |
+| BUJO-263 | ✅ Stats on `PageLayout`. No zone 2: it is the one page in the cluster with nothing to do on it |
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-280 | **The Activity heatmap leaves ~800px dead.** Measured at 1440: at the 6mo default the grid is ~370px of fixed-size cells inside a `SPAN_ALL` card running the full ~1180. `SPAN_ALL` exists for the 1yr range (~730px), so the card cannot simply be narrowed — the range control changes its content width threefold. The fix is a cell that stretches to the width it is given, or a card that sizes to its content. **This is the real version of what BUJO-274 wrongly claimed** | 🔜 |
+| BUJO-281 | **Insights is still a six-drawer cabinet** — 16 Cards against a cap of 2, 14 of them inside six collapsed `Section`s where the contract allows one disclosure. Deciding what Insights is *for* is an IA decision, not a refactor | 🔜 |
+| BUJO-282 | `weeklyRadar` mixes scales — Mood/Calm/Habits/Consistency are 0–10, Sleep is raw hours, all plotted on one radar labelled "0–10". A 7h night reads as a 7/10 axis | 🔜 |
