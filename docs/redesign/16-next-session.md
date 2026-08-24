@@ -22,11 +22,14 @@ NoFap, KitchenSink, **Trackers, Insights, Stats**.
 
 ## Do next, in order
 
-1. **BUJO-281 — Insights is still a six-drawer cabinet.** 16 Cards against a cap
-   of 2, fourteen of them inside six collapsed `Section`s where the contract
-   allows one disclosure. This is the largest remaining gap in the cluster, and
-   it is an IA decision about what Insights is *for* — not a refactor. Decide
-   before coding.
+1. **BUJO-281 — Insights is still a six-drawer cabinet.** **Decided: split by
+   question** — see [`17-insights-ia.md`](17-insights-ia.md). Insights answers
+   "what changed, what next"; Stats is the record. The audit found the problem
+   is a cluster one: **Stats has six folds too**, over the same subjects, so
+   fixing Insights alone would move drawers between two cabinets. **281a done**
+   (Tag manager → Settings → Data). **281b** moves Mood/Habit/Lifetime analytics
+   into Stats' *existing* folds; **281c** drops the Pickleball digest and
+   dissolves the four remaining action-less cards into headed regions.
 2. ~~**BUJO-280 — the Activity heatmap leaves ~800px dead.**~~ **Half done.**
    The card now sizes to its range, so dead width went 978 → 378 (3mo) and
    796 → 196 (6mo), measured at 1440, and Achievements moved up into the freed
