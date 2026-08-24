@@ -114,11 +114,11 @@ export function Stats() {
   }
 
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* Three across. Eight blocks — the heatmap, achievements and six
           collapsed analytics groups — used to be one tall column. */}
       <CardGrid>
-      <Card className={SPAN_ALL} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
+      <Card band className={SPAN_ALL} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
 
@@ -126,7 +126,7 @@ export function Stats() {
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
       <Section title="This week" subtitle="7-day averages, see Trackers for live metrics">
-        <Card title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
+        <Card band title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radar} outerRadius="72%">
@@ -143,7 +143,7 @@ export function Stats() {
       {/* 3) Sleep & mood correlations — collapsed. */}
       <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus">
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
+        <Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
           ) : (
@@ -162,7 +162,7 @@ export function Stats() {
           )}
         </Card>
 
-        <Card title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
+        <Card band title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
           {!hasSleep ? (
             <Empty>Log a few nights of sleep to track your running debt.</Empty>
           ) : (
@@ -181,7 +181,7 @@ export function Stats() {
         </Card>
 
         {focusSleep.r != null && (
-          <Card title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
+          <Card band title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
             <p className="text-display font-medium tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
               {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
               <span className="ml-1 text-body text-fg-2">r</span>
@@ -198,17 +198,17 @@ export function Stats() {
       {/* 4) Mood views — merged calendar / year-in-pixels toggle, collapsed. */}
       <Section title="Mood views" subtitle="calendar & year-in-pixels">
       {moodView === 'calendar' ? (
-      <Card
+      <Card band
         enlargeable={false}
         title="Mood calendar"
         subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d rounded-control">←</Button>
-            <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d rounded-control">This month</Button>
-            <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d rounded-control">→</Button>
-            <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d rounded-control"><Icon as={ArrowsOut} size="sm" /></Button>
+            <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d rounded-none">←</Button>
+            <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d rounded-none">This month</Button>
+            <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d rounded-none">→</Button>
+            <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d rounded-none"><Icon as={ArrowsOut} size="sm" /></Button>
           </div>
         }
       >
@@ -235,11 +235,11 @@ export function Stats() {
         </div>
       </Card>
       ) : (
-      <Card title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
+      <Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
         right={
           <div className="flex gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d rounded-control"><Icon as={ArrowsOut} size="sm" /></Button>
+            <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d rounded-none"><Icon as={ArrowsOut} size="sm" /></Button>
           </div>
         }>
         {yearPixels(false)}
@@ -250,7 +250,7 @@ export function Stats() {
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
       <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging">
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Card title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
+        <Card band title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (
             <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
           ) : (
@@ -268,7 +268,7 @@ export function Stats() {
           )}
         </Card>
 
-        <Card title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
+        <Card band title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
           {splits.length === 0 ? (
             <Empty>Log a workout to see which splits you actually train.</Empty>
           ) : (
@@ -292,7 +292,7 @@ export function Stats() {
 
       {/* 6) Tasks — collapsed. */}
       <Section title="Tasks" subtitle="where your tasks land">
-        <Card title="Task breakdown" subtitle="Where your tasks land" enlargeable>
+        <Card band title="Task breakdown" subtitle="Where your tasks land" enlargeable>
           {tasks.length === 0 ? (
             <Empty>Add a task on Today to see how your week breaks down.</Empty>
           ) : (
@@ -322,7 +322,7 @@ export function Stats() {
           viewport, not inside transformed ancestors (book mode / zoom). */}
       {enlarged && createPortal(
         <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-          <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-none border border-line bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
               <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><Icon as={X} size="lg" /></Button>

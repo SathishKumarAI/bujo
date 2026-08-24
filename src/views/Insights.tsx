@@ -87,11 +87,11 @@ export function Insights() {
   ])].sort().reverse()
 
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* 1) The ritual + search utility lead, above all read-only analytics. */}
       <WeeklyReview />
 
-      <Card title="Search" subtitle="Find anything across your journal">
+      <Card band title="Search" subtitle="Find anything across your journal">
         <Input value={q} onChange={(e) => { setQ(e.target.value); setKind('all') }} placeholder="Search entries, memories, gratitude, workouts…" />
         {q && kinds.length > 2 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -104,7 +104,7 @@ export function Insights() {
                 key={k}
                 onClick={() => setKind(k)}
                 aria-pressed={kind === k}
-                className={`rounded-pill px-2.5 py-0.5 text-label capitalize transition-colors ${
+                className={`rounded-none px-2.5 py-0.5 text-label capitalize transition-colors ${
                   kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
                 }`}
               >
@@ -148,7 +148,7 @@ export function Insights() {
 
       {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
       <MasonryGrid>
-        <Card title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
+        <Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
           <ul className="space-y-1.5 text-body">
             {digest.lines.map((l) => (
               <li key={l.label} className="flex items-center justify-between gap-2">
@@ -175,7 +175,7 @@ export function Insights() {
           )}
         </Card>
 
-        <Card title="Coach digest" subtitle="What to focus on next">
+        <Card band title="Coach digest" subtitle="What to focus on next">
           <p className="mb-3 flex items-center gap-2 text-body font-medium text-fg-1">
             <AppIcon as={Sparkle} size="sm" style={{ color: cat('mauve') }} />
             {coach.headline}
@@ -186,7 +186,7 @@ export function Insights() {
                 <li key={t.id}>
                   <button
                     onClick={() => nav(t.to as Parameters<typeof nav>[0])}
-                    className="w-full rounded-card border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
+                    className="w-full rounded-none border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
                   >
                     <span className="font-medium text-fg-1">{t.title}</span>
                     <span className="block text-label text-fg-2">{t.detail}</span>
@@ -213,7 +213,7 @@ export function Insights() {
       {(found.length > 0 || momentum.length > 0) && (
         <Section stickyKey="insights.correlations" title="Correlations" subtitle="patterns & momentum">
       {found.length > 0 && (
-        <Card title="Patterns" subtitle="What your data is telling you">
+        <Card band title="Patterns" subtitle="What your data is telling you">
           <ul className="space-y-2">
             {found.map((ins, i) => (
               <li key={i} className="flex items-center gap-2 text-body">
@@ -228,7 +228,7 @@ export function Insights() {
       )}
 
       {momentum.length > 0 && (
-        <Card title="Momentum" subtitle="Where each metric is trending vs. the week before">
+        <Card band title="Momentum" subtitle="Where each metric is trending vs. the week before">
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {momentum.map((m) => {
               // Stress is inverted: a drop is good. Everything else: up is good.
@@ -236,7 +236,7 @@ export function Insights() {
               const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
               const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
               return (
-                <li key={m.key} className="rounded-card border border-line bg-ink-0 p-3">
+                <li key={m.key} className="rounded-none border border-line bg-ink-0 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-label text-fg-2">{m.label}</span>
                     <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
@@ -264,7 +264,7 @@ export function Insights() {
         <Section stickyKey="insights.mood" title="Mood analytics" subtitle="weekday, split & stability">
         <MasonryGrid>
           {moodWd.best && moodWd.worst && (
-            <Card title="Best & worst day" subtitle="When your mood runs brightest">
+            <Card band title="Best & worst day" subtitle="When your mood runs brightest">
               <div className="mb-3 flex items-center gap-2 text-body">
                 <AppIcon as={Sun} size="sm" style={{ color: cat('yellow') }} />
                 <span className="text-fg-1">
@@ -296,7 +296,7 @@ export function Insights() {
           )}
 
           {(split.habitWeekday != null || split.moodWeekday != null) && (
-            <Card title="Weekday vs weekend" subtitle="How your week splits in two">
+            <Card band title="Weekday vs weekend" subtitle="How your week splits in two">
               <div className="grid grid-cols-2 gap-3 text-body">
                 <SplitCol label="Weekdays" habit={split.habitWeekday} mood={split.moodWeekday} days={split.weekdayDays} />
                 <SplitCol label="Weekends" habit={split.habitWeekend} mood={split.moodWeekend} days={split.weekendDays} />
@@ -305,7 +305,7 @@ export function Insights() {
           )}
 
           {moodVol.band && (
-            <Card title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
+            <Card band title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
               <p className="text-display font-medium" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
                 {moodVol.stability}<span className="text-heading text-fg-2">/100</span>
               </p>
@@ -324,7 +324,7 @@ export function Insights() {
       {(moodImpact.length > 0 || (focusId && focusScore != null) || (focusId && monthly.some((m) => m.done > 0))) && (
         <Section stickyKey="insights.habits" title="Habit analytics" subtitle="mood impact, consistency & trend">
       {moodImpact.length > 0 && (
-        <Card title="Habit mood impact" subtitle="How much each habit lifts your mood">
+        <Card band title="Habit mood impact" subtitle="How much each habit lifts your mood">
           <ul className="space-y-2">
             {moodImpact.map((h) => (
               <li key={h.habitId} className="flex items-center gap-2 text-body">
@@ -345,14 +345,14 @@ export function Insights() {
       )}
 
       {focusId && (
-          <Card title="Consistency score" subtitle={`${focusName}, recency-weighted, last 30 days`}>
+          <Card band title="Consistency score" subtitle={`${focusName}, recency-weighted, last 30 days`}>
             {focusScore == null ? (
               <Empty>Not enough scheduled days yet.</Empty>
             ) : (
               <>
                 <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-pill bg-ink-2">
-                  <div className="h-full rounded-pill" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-none bg-ink-2">
+                  <div className="h-full rounded-none" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
                 </div>
                 <p className="mt-2 text-label text-fg-2">Recent days count more, so this tracks your momentum — not just a flat average.</p>
               </>
@@ -361,7 +361,7 @@ export function Insights() {
       )}
 
       {focusId && monthly.some((m) => m.done > 0) && (
-        <Card title="Month over month" subtitle={`${focusName}, completions per month`}>
+        <Card band title="Month over month" subtitle={`${focusName}, completions per month`}>
           {/* `items-stretch` — see the note on the weekday chart above. */}
           <div className="flex items-stretch justify-between gap-2" style={{ height: 130 }} role="img" aria-label={`Monthly completions of ${focusName} with month-over-month change`}>
             {monthly.map((m) => (
@@ -385,7 +385,7 @@ export function Insights() {
       {/* 7) Domain digests — compact, link-out, collapsed. */}
       {pickle.sessions > 0 && (
         <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
-        <Card title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
+        <Card band title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} />
             <PickStat label="Games this week" value={String(pickle.weekGames)} />
@@ -411,7 +411,7 @@ export function Insights() {
       {/* 8) Lifetime — deep totals & navigation, collapsed. */}
       <Section stickyKey="insights.lifetime" title="Lifetime" subtitle="year in review, records & index">
       <MasonryGrid>
-        <Card title="Year in review" subtitle="Your journal so far">
+        <Card band title="Year in review" subtitle="Your journal so far">
           <ul className="space-y-1.5 text-body text-fg-1">
             <ReviewRow icon={FileText} color="sky" label="entries logged" value={data.entries.length} />
             <ReviewRow icon={Smiley} color="green" label={`average mood${avgMood != null ? ' / 10' : ''}`} value={avgMood ?? '—'} />
@@ -422,7 +422,7 @@ export function Insights() {
           </ul>
         </Card>
 
-        <Card title="Index" subtitle="Every month with entries">
+        <Card band title="Index" subtitle="Every month with entries">
           {months.length === 0 ? (
             <Empty>Log entries on a few days to fill in the index.</Empty>
           ) : (
@@ -440,10 +440,10 @@ export function Insights() {
       </MasonryGrid>
 
       {records.length > 0 && (
-        <Card title="Personal records" subtitle="Your bests so far">
+        <Card band title="Personal records" subtitle="Your bests so far">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {records.map((r) => (
-              <div key={r.label} className="rounded-card border border-line bg-ink-0 p-3">
+              <div key={r.label} className="rounded-none border border-line bg-ink-0 p-3">
                 <p className="text-body font-medium text-fg-1">{r.value}</p>
                 <p className="text-label text-fg-2">{r.label}</p>
               </div>
@@ -472,7 +472,7 @@ function PickStat({ label, value, trend }: { label: string; value: string; trend
   const TrendIcon = trend === 'up' ? TrendUp : trend === 'down' ? TrendDown : Minus
   const trendColor = trend === 'up' ? 'green' : trend === 'down' ? 'red' : 'overlay0'
   return (
-    <li className="rounded-card border border-line bg-ink-0 p-3">
+    <li className="rounded-none border border-line bg-ink-0 p-3">
       <div className="flex items-center justify-between">
         <span className="text-label text-fg-2">{label}</span>
         {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(trendColor) }} />}
@@ -484,7 +484,7 @@ function PickStat({ label, value, trend }: { label: string; value: string; trend
 
 function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
   return (
-    <div className="rounded-card border border-line bg-ink-0 p-3">
+    <div className="rounded-none border border-line bg-ink-0 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
       <p className="flex items-center gap-1.5 text-fg-1">
         <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />
@@ -538,7 +538,7 @@ function Big({ label, value, sub, suffix = '', ring, max = 100, trend, trendLabe
   const TrendIcon = trend?.dir === 'up' ? TrendUp : trend?.dir === 'down' ? TrendDown : Minus
   const trendColor = trend?.dir === 'up' ? 'green' : trend?.dir === 'down' ? 'red' : 'overlay0'
   return (
-    <Card className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
+    <Card band className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
       {ring ? (
         // The ring keeps a fill — a progress arc with no colour is not a
         // progress arc — but one fill for every ring, not one per call site.

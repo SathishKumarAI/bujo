@@ -44,10 +44,10 @@ export function WeeklyReview() {
   }
 
   return (
-    <Card
+    <Card band
       title={<span className="inline-flex items-center gap-2"><Icon as={ClipboardText} size="md" className="text-mauve" /> Weekly review</span>}
       subtitle={`Last 7 days, ${score}% covered`}
-      right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-control">{open ? 'Close' : 'Start review'}</Button>}
+      right={<Button variant="secondary" onClick={() => setOpen((o) => !o)} className="press-3d rounded-none">{open ? 'Close' : 'Start review'}</Button>}
     >
       {!open ? (
         <p className="text-body text-fg-2">A 1-minute Sunday ritual: clear overdue tasks, see what slipped, and write one reflection.</p>

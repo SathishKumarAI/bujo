@@ -18,7 +18,7 @@ type MetricsPoint = {
 /** Mood / stress / sleep line chart: faint = daily, bold = 7-day rolling avg. */
 export function MetricsTrendCard({ chartData, ym }: { chartData: MetricsPoint[]; ym: string }) {
   return (
-    <Card title="Mood. Stress. Sleep" subtitle={`${prettyMonth(ym)}, faint = daily, bold = 7-day avg`} className="lg:col-span-2">
+    <Card band title="Mood. Stress. Sleep" subtitle={`${prettyMonth(ym)}, faint = daily, bold = 7-day avg`} className="lg:col-span-2">
       <div className="h-64 w-full" role="img" aria-label={`Line chart of daily and 7-day-average mood, stress and sleep across ${prettyMonth(ym)}, each on a 0 to 10 scale`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>

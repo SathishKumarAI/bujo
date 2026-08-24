@@ -14,7 +14,7 @@ export function AchievementsCard() {
   const { data } = useJournal()
   const earned = new Set(earnedAchievements(data).map((a) => a.id))
   return (
-    <Card title="Achievements" subtitle={`${earned.size} of ${ACHIEVEMENTS.length} unlocked`}>
+    <Card band title="Achievements" subtitle={`${earned.size} of ${ACHIEVEMENTS.length} unlocked`}>
       {/* Two columns, never three. At three the tile is ~120px inside this
           card's column, and `truncate` turned every badge into "First w…",
           "Centur…", "Unbro…" — a wall of ellipses that names none of them.
@@ -30,10 +30,10 @@ export function AchievementsCard() {
             <div
               key={a.id}
               title={a.desc}
-              className={`flex items-start gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
+              className={`flex items-start gap-2 rounded-none border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-none text-heading" style={{ background: got ? cat(a.color) + '22' : cat('surface0') }}>
                 {got ? a.emoji : <Icon as={Lock} size="sm" className="text-fg-2" />}
               </span>
               <div className="min-w-0">

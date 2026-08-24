@@ -16,7 +16,7 @@ export function CategoryConsistencyCard({
   data: JournalData
 }) {
   return (
-    <Card title="Category consistency" subtitle="30-day avg per category">
+    <Card band title="Category consistency" subtitle="30-day avg per category">
       <div className="h-56 w-full" role="img" aria-label="Radar chart of 30-day habit consistency averaged per category">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={categories.filter((category) => habits.some((h) => h.category === category)).map((category) => {

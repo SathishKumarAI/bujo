@@ -92,9 +92,9 @@ export function Monthly() {
   ]
 
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* Compact "this month" summary · a single thin bar. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-line bg-card/60 px-3 py-1.5 text-label text-fg-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-none border border-line bg-card/60 px-3 py-1.5 text-label text-fg-2">
         <span className="font-medium text-fg-1">This month</span>
         <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
         <span><b style={{ color: cat('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
@@ -103,7 +103,7 @@ export function Monthly() {
         {topTags.slice(0, 3).map(([t, n]) => <span key={t} style={{ color: cat('sapphire') }}>#{t} {n}</span>)}
       </div>
 
-      <Card>
+      <Card band>
         <div className="grid grid-cols-7 gap-1 text-center text-label text-fg-2">
             {weekdayLabels(weekStart).map((w) => <div key={w} className="pb-1">{w}</div>)}
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`pad${i}`} />)}
@@ -130,7 +130,7 @@ export function Monthly() {
                   aria-label={cellLabel}
                   aria-current={isToday ? 'date' : undefined}
                   title={`Open ${d}`}
-                  className="relative min-h-[5.5rem] rounded-control border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
+                  className="relative min-h-[5.5rem] rounded-none border p-1.5 pb-3 text-left transition-colors hover:border-mauve sm:min-h-24"
                   style={{
                     borderColor: isToday ? cat('mauve') : cat('surface0'),
                     background: isToday ? cat('surface0') : moodTint ?? 'transparent',
@@ -144,7 +144,7 @@ export function Monthly() {
                       <span
                         key={e.id}
                         title={e.text}
-                        className="h-2 w-2 rounded-pill"
+                        className="h-2 w-2 rounded-none"
                         style={{ background: e.important ? cat('yellow') : e.type === 'event' ? cat('blue') : cat('green') }}
                       />
                     ))}
@@ -153,8 +153,8 @@ export function Monthly() {
                     const { done, total } = cellHabits
                     if (total === 0 || d > today) return null
                     return (
-                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-pill bg-ink-2" title={`${done}/${total} habits`}>
-                        <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
+                      <div className="absolute right-1.5 bottom-1.5 left-1.5 h-1 overflow-hidden rounded-none bg-ink-2" title={`${done}/${total} habits`}>
+                        <div className="h-full rounded-none" style={{ width: `${Math.min(100, (done / total) * 100)}%`, background: cat('green') }} />
                       </div>
                     )
                   })()}
@@ -166,7 +166,7 @@ export function Monthly() {
 
       {/* Location · Goals · Photo · 3 across, below the calendar */}
       <div className="grid items-start gap-5 lg:grid-cols-3">
-        <Card title="Location" subtitle="Where are you this month?">
+        <Card band title="Location" subtitle="Where are you this month?">
           <Input
             value={meta?.location ?? ''}
             onChange={(e) => setMonthly(ym, { location: e.target.value })}
@@ -178,7 +178,7 @@ export function Monthly() {
             </Button>
           )}
         </Card>
-        <Card title="Goals" subtitle="What matters this month">
+        <Card band title="Goals" subtitle="What matters this month">
           <Textarea
             rows={3}
             value={meta?.goals ?? ''}
@@ -186,7 +186,7 @@ export function Monthly() {
             placeholder={'• Finish the trail map\n• Read 2 books'}
           />
         </Card>
-        <Card title="Photo of the month" subtitle="One image">
+        <Card band title="Photo of the month" subtitle="One image">
           <ImageUpload
             value={meta?.photo}
             onChange={(photo) => setMonthly(ym, { photo })}
@@ -207,7 +207,7 @@ export function Monthly() {
             <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
       {monthEntries.length > 0 && (
-        <Card title="Month pulse" subtitle="The shape of this month — when you logged, what you logged, what got done"
+        <Card band title="Month pulse" subtitle="The shape of this month — when you logged, what you logged, what got done"
           help="A read-only snapshot of the current month. The sparkline is entries per day (taller = busier). The mix is your task/event/note balance, and the bar is the share of this month's tasks you've completed.">
           <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
             {/* Entries-per-day sparkline */}
@@ -249,8 +249,8 @@ export function Monthly() {
                   <span>Tasks done</span>
                   <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-                  <div className="h-full rounded-pill" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
+                <div className="h-2 overflow-hidden rounded-none bg-ink-2">
+                  <div className="h-full rounded-none" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
                 </div>
               </div>
             </div>
@@ -301,7 +301,7 @@ export function Monthly() {
 
       {/* Trailing year · entries per month over the last 12 months */}
       {monthlyTotal > 0 && (
-        <Card title="Entries per month" subtitle="Your journaling rhythm over the last 12 months"
+        <Card band title="Entries per month" subtitle="Your journaling rhythm over the last 12 months"
           help="Each bar is one month's total entries, ending with the month you're viewing. Use it to spot busy seasons and quiet stretches across the year.">
           <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
             <span>Last 12 months</span>
