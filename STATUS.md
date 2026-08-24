@@ -1,28 +1,57 @@
 # STATUS
 
-**Stopped:** 2026-08-24. **Phase 0 and Phase A shipped, all gates green.**
+**Stopped:** 2026-08-24. **Phase 0, Phase A and the first half of Phase B
+shipped.** All merged. **Zero open PRs, zero stale branches** — the repo is
+clean for the first time in this sequence.
 
 ## Start here next session
 
-Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` still
-holds the open decisions — Q3 (deploy) and Q4 (shadcn depth) are the two that
-still matter. **Q6 was answered by measurement, not by choosing.**
+Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` holds the
+two decisions that still matter — Q3 (deploy) and Q4 (shadcn depth). **Q6 was
+answered by measurement, not by choosing.**
 
 | # | Task | Command / file | Blocks |
 |---|---|---|---|
-| 1 | Merge **#129** — Phase A, all gates green | `gh pr merge 129 --merge` | — |
-| 2 | Delete the twelve merged branches — never `--delete-branch` while a child PR still targets one | `git push origin --delete <branch>` | — |
-| 3 | **Phase B** — Trackers on the page contract. Slot table first. Four named defects in doc 16 | BUJO-254/255, 273..276 | Phase C |
-| 4 | Answer Q3 (does "spin up" mean localhost or a public URL) and Q4 (how far to push shadcn) | `docs/QUESTIONS.md` | Phase E |
-| 5 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
-| 6 | `smoke-views.mjs` never tests `program` or `nutrition` | BUJO-277 | — |
+| 1 | **Phase B, second half** — `Trackers.tsx` onto `PageLayout`. Slot table first. This is the one that visibly changes the page | BUJO-254/255 | Phase C |
+| 2 | **BUJO-278** — `StatTile`'s `color` prop is a no-op without an `icon`. Audit **every** call site passing `color` and no icon; some of them think they are showing a status signal | — | — |
+| 3 | Answer Q3 (does "spin up" mean localhost or a public URL) and Q4 (how far to push shadcn) | `docs/QUESTIONS.md` | Phase E |
+| 4 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
+| 5 | `smoke-views.mjs` never tests `program` or `nutrition` | BUJO-277 | — |
+
+**Before starting task 1, re-read what Phase B part 1 found** (below). The page's
+accent count, its card count and two of its four "defects" were all wrong in the
+same direction: measured off source or off a bad screenshot rather than off the
+running page.
 
 ## What changed this session
 
-**The Modernist chain landed — all twelve.** #127 and #113–#123, plus #107 and
-#128. **#96 is closed** (3.4k lines, conflicted three weeks, superseded by Phase
-E). **#129 is open**: Trackers moved into Body as "Tracking", Stats added to the
-a11y gate, and the contrast bug that addition exposed, fixed.
+**The Modernist chain landed — all twelve.** #127 and #113–#123, plus #107,
+#128, **#129** (Phase A) and **#130** (Phase B part 1). **#96 is closed** (3.4k
+lines, conflicted three weeks, superseded by Phase E). Fifteen branches deleted.
+
+**Phase B part 1 — two visible defects fixed, and three findings worth more.**
+
+A wrapped metadata badge started at the name cell's left edge (**x=137**) while
+the habit name it describes starts at **x=158**, so `2/7wk` under Sugar sat
+outdented from its own row and level with the gap above the next one — it read
+as the *next* habit's number. Fixed with `pl-7` on the cell and `-ml-7` on its
+first child, so wrapped lines indent to the name and rows that already fit do
+not move: nine of eleven rows stayed at 32px.
+
+The fourth stat tile read `10 +1🚫` — three quantities where its siblings each
+carry one. `StatTile` gained a `hint` slot rather than the call site forking.
+
+**Three of the four accents on that page were never drawn.** `StatTile`'s
+`color` prop tints its `icon`, and `TrackerSummaryCard` passes no icon — so
+`mauve`, `peach` and `sapphire` were no-ops, and so was the green/yellow/peach
+threshold on "today done" that was meant to be a real status signal. **The
+audited "9 accents on Trackers" counted a prop, not a pixel.** Same shape as the
+`help ?? subtitle` trap already in `CLAUDE.md`. BUJO-278 and BUJO-279 filed.
+
+**Two of my own tickets were withdrawn.** BUJO-274 (dead space beside the
+heatmap) and BUJO-275 (a gap above the table) were misread off a screenshot
+taken **through the onboarding overlay**. Everything on the page ends at
+x≈1310 and the band beyond it is the page gutter, identical on every row.
 
 **Phase A shipped with evidence, and it overturned two written assumptions.**
 The eight-tab ceiling was a count nobody had measured — 9 tabs report
