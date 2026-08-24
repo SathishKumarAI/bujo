@@ -657,3 +657,38 @@ about conflict order, not about doing the work.
 | ID | Title | Status |
 |---|---|---|
 | BUJO-272 | **An adoption count is evidence about the branch it was taken on, and nothing else.** Doc 13 measured the chain tip and concluded something about `main`. One `git ls-tree` would have caught it. Fold this into the "judge a UI on the right branch" trap, which already existed and still did not prevent it | 🔜 |
+
+### Epic FIT-IA — progress log (appended; do not overwrite)
+
+**2026-08-24, Phase 0 + Phase A shipped.**
+
+| ID | Outcome |
+|---|---|
+| BUJO-245 | ✅ All twelve merged — #127 and #113–#123. Only `STATUS.md` ever conflicted |
+| BUJO-246 | ✅ |
+| BUJO-247 | 🔜 twelve merged branches still to delete |
+| BUJO-248 | ✅ #96 closed — superseded by Phase E |
+| BUJO-249 | ✅ #107 merged |
+| BUJO-250 | ✅ Trackers → Body, labelled "Tracking", after Fitness. PR #129 |
+| BUJO-251 | ✅ No list to fix — #120 deleted `BottomNav`'s `PRIMARY`, so the sections *are* the tabs |
+| BUJO-252 | ✅ `?view=trackers` loaded in the address bar **and reloaded** at 1280/1440/1920 → Body › Tracking |
+| BUJO-253 | ✅ **No split.** Measured: 8 tabs before, 9 after, `scrollWidth === clientWidth` at all three widths. The eight-tab ceiling was a count, never a width |
+| BUJO-268 | ✅ `['Insights','Stats']` added — Stats had **never** been scanned. It failed immediately on contrast |
+
+**The bug BUJO-268 exposed, fixed in the same PR:** the mood calendar drew an
+unlogged day's date at 10px in `overlay0` on the empty-cell surface — 2.57:1 in
+mocha, 2.67:1 in neon, against a 4.5:1 floor. Now `subtext0`. `npm run a11y`
+reports no serious or critical violations across five themes and two viewports.
+
+### Phase B — measured from the rendered page, not from source
+
+Screenshot of Body › Tracking at 1440×900 with demo data. These are the
+"scattered boxes" symptom, named:
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-273 | **The habit table's left column is too narrow, so metadata wraps out of the row.** "2/7wk" lands on its own line under Sugar, "◆60 · 5d clean" under Vegetables — the badge escapes its row and reads as belonging to the next habit. Content-weighted columns, §10 | 🔜 |
+| BUJO-274 | **Dead space at the right edge of the heatmap.** The month grid stops at day 31 near x≈1300 while the card runs to x≈1420. The cell track is fixed-width rather than distributed, so a 31-day month leaves a gap and a 28-day month leaves four | 🔜 |
+| BUJO-275 | **A vertical gap between the "Today" chip row and the habit table** that belongs to neither. Cells should fill their allotted height rather than top-anchoring, §10 | 🔜 |
+| BUJO-276 | **The fourth stat tile reads "10 +1 🚫"** — three unrelated quantities crushed into one line while the other three tiles carry a single number. Either it is one stat or it is two | 🔜 |
+| BUJO-277 | `smoke-views.mjs`'s fixed `VIEWS` list is missing **`program`** and **`nutrition`** — both are Body tabs and neither is smoke-tested. Found during the BUJO-251 audit, out of scope for #129 | 🔜 |
