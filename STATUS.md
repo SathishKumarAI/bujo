@@ -1,27 +1,57 @@
 # STATUS
 
-**Stopped:** 2026-08-24. **Phase 0, Phase A and the first half of Phase B
-shipped.** All merged. **Zero open PRs, zero stale branches** — the repo is
-clean for the first time in this sequence.
+**Stopped:** 2026-08-24. **Phase 0, Phase A, Phase B and most of Phase E
+shipped** - six PRs, all merged. **Zero open PRs, zero stale branches.**
 
 ## Start here next session
 
-Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` holds the
-two decisions that still matter — Q3 (deploy) and Q4 (shadcn depth). **Q6 was
-answered by measurement, not by choosing.**
+Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` has two
+decisions left: **Q3 (deploy)** and **Q4 (shadcn depth)**.
 
-| # | Task | Command / file | Blocks |
-|---|---|---|---|
-| 1 | **Phase B, second half** — `Trackers.tsx` onto `PageLayout`. Slot table first. This is the one that visibly changes the page | BUJO-254/255 | Phase C |
-| 2 | **BUJO-278** — `StatTile`'s `color` prop is a no-op without an `icon`. Audit **every** call site passing `color` and no icon; some of them think they are showing a status signal | — | — |
-| 3 | Answer Q3 (does "spin up" mean localhost or a public URL) and Q4 (how far to push shadcn) | `docs/QUESTIONS.md` | Phase E |
-| 4 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
-| 5 | `smoke-views.mjs` never tests `program` or `nutrition` | BUJO-277 | — |
+**Contract adoption: 8 of 28 views**, up from 4 - Fitness, Plan, Nutrition,
+NoFap, KitchenSink, plus **Trackers, Insights and Stats**.
 
-**Before starting task 1, re-read what Phase B part 1 found** (below). The page's
-accent count, its card count and two of its four "defects" were all wrong in the
-same direction: measured off source or off a bad screenshot rather than off the
-running page.
+| # | Task | Ticket |
+|---|---|---|
+| 1 | **Insights is still a six-drawer cabinet** - 16 Cards against a cap of 2, fourteen inside six collapsed Sections where the contract allows one. An IA decision, not a refactor: decide before coding | BUJO-281 |
+| 2 | **The Activity heatmap leaves ~800px dead.** Cannot just be narrowed - `SPAN_ALL` exists for the 1yr range, so the range control changes content width threefold | BUJO-280 |
+| 3 | **`StatTile.color` is a no-op without an `icon`** - audit every call site passing one and not the other | BUJO-278 |
+| 4 | The remaining 20 views. By size: Gym (709), Pickleball (633), then Monthly, Goals, Mindset, Reading | - |
+| 5 | Answer Q3 and Q4 | - |
+| 6 | Print fix; `smoke-views.mjs` misses `program` and `nutrition`; `weeklyRadar` mixes hours with 0-10 | BUJO-270/277/282 |
+
+**Today is not on that list on purpose.** It was assessed and deliberately left:
+its surface toggle already *is* the orient control, it has the lowest counts in
+the app (4 Cards, 2 accents), it is two layouts behind a setting, and its narrow
+column is the 820 tier behaving as documented rather than a page failing to fill
+itself. See BUJO-264.
+
+## The rollout, in one place
+
+Six PRs merged: **#129** Trackers → Body · **#130** row legibility · **#131**
+status · **#132** Trackers on the contract · **#133** Insights · **#134** Stats.
+
+**`PageLayout` needed a variant and the contract predicted it.** The 62/38 split
+assumes a narrow form beside a list. Trackers' review is a 31-column grid
+needing ~910px, which in a 62% column would scroll horizontally and hide the
+last week of the month — the page's whole subject. `stacked` keeps the wide
+container and does not split. Per Stage 2's own rule it went in the primitive,
+not as a fork at the call site.
+
+**That surfaced a latent CSS bug.** `.zone-act { grid-column: 2 }` and
+`.zone-review { grid-column: 1 }` were never scoped to the splitting case, so a
+single-column page carrying both zones would place its act in a column the grid
+does not declare and the browser would invent an implicit second one. Latent
+only because every converted page was tier 1180.
+
+**Two duplicated facts, found by converting rather than by grepping.** Insights
+printed "Longest streak" both as a top-row tile *and* inside Personal records
+further down the same page. Trackers wrapped `TodayStrip`'s own bordered "Today"
+box inside a card titled "Today" — two frames, one subject.
+
+**A page with no act is allowed no zone 2.** Stats is that case: every panel is
+a record being read back. The contract says an empty zone is omitted, not
+filled to justify itself.
 
 ## What changed this session
 
