@@ -501,10 +501,6 @@ export interface Settings {
   /** Habit tracker layout: classic month-grid, activity-heatmap rows, or a
    *  time-of-day routine timeline ("run your day"). */
   trackerLayout?: 'classic' | 'activity' | 'routine' | 'cards'
-  /** Collapse the sidebar to an icon rail that expands on hover. */
-  sidebarCollapsed?: boolean
-  /** Fully hide the sidebar for max screen; reveal by hovering the left edge. */
-  sidebarAutoHide?: boolean
   /** Saved quick-add snippets, inserted with one tap on the capture field. */
   quickTemplates?: string[]
   /** Optional Today cards the user has hidden (keys: penalty, coverage, onThisDay). */
@@ -512,20 +508,17 @@ export interface Settings {
   /** Difficulty of the training-penalty drills: beginner (default) · intermediate · hard. */
   penaltyLevel?: 'beginner' | 'intermediate' | 'hard'
   /**
-   * INFORMATION ARCHITECTURE · which shape the app takes.
+   * WHICH TODAY · one long page, or three surfaces split by time of day.
    *
-   * Both layouts are real and maintained; this picks between them rather than
-   * migrating anyone.
+   * - `focused` (default) — Today split into Morning / Day / Evening.
+   * - `classic` — Today as one page of every card.
    *
-   * - `focused` (default) — five sections in the rail with the views as tabs,
-   *   and Today split into Morning / Day / Evening surfaces.
-   * - `classic` — the seventeen-destination rail under six group headers, and
-   *   Today as one long page of every card.
-   *
-   * Kept as one key on purpose: the two changes answer the same complaint from
-   * opposite ends (nav too wide, Today too tall), and someone who wants the old
-   * rail back almost certainly wants the old Today with it. Split into two keys
-   * if that turns out to be wrong.
+   * **It no longer picks a navigation.** It used to choose between the
+   * five-section rail and the seventeen-destination one, because the two
+   * changes answered the same complaint from opposite ends (nav too wide, Today
+   * too tall). The rail is gone — navigation is the top bar's five sections for
+   * everyone — so this is down to the half that was still a real choice. The
+   * key and its values are unchanged, so nobody's saved preference flips.
    */
   layout?: 'focused' | 'classic'
 }

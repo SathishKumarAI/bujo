@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { TooltipProvider } from '../ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Sidebar, type NavItem } from './Sidebar'
 import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
@@ -13,39 +12,38 @@ import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import { useHeaderHeight } from './useHeaderHeight'
-import { SectionTabs } from './SectionTabs'
-import { SECTIONS, sectionOf, type SectionGates } from './sections'
+import type { SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
-/** Owns the shell grid (sidebar + topbar/content) and the global quick-add dialog. */
+/**
+ * Owns the page frame and the global quick-add dialog.
+ *
+ * There is no rail: navigation is the two rows of `TopBar` on desktop and
+ * `TopBar` + `BottomNav` on phones, so the shell is a header and a `<main>`
+ * rather than a grid. What that deleted, and why:
+ *
+ * - **the docked sidebar** — a third chrome layer holding the same five
+ *   sections the header now holds.
+ * - **collapse and auto-hide** — two settings and a hover-edge overlay that
+ *   existed only to win back the 240px the rail was spending.
+ * - **the mobile drawer and its scrim** — `BottomNav` already puts all five
+ *   sections one thumb-tap away, so the drawer was a second way to the same
+ *   place, behind an extra tap.
+ */
 export function AppShell({
-  items,
-  groupOrder,
   gates,
-  sectionTabs = false,
   view,
-  collapsed,
-  autoHide,
   onNavigate,
-  onToggleCollapse,
   onCommand,
   children,
 }: {
-  items: NavItem[]
-  groupOrder: string[]
   gates: SectionGates
-  /** Five-section layout: draw the section tab row under the top bar. */
-  sectionTabs?: boolean
   view: ViewId
-  collapsed: boolean
-  autoHide: boolean
   onNavigate: (id: ViewId) => void
-  onToggleCollapse: () => void
   onCommand: () => void
   children: ReactNode
 }) {
   const [quickOpen, setQuickOpen] = useState(false)
-  const [navOpen, setNavOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const { day } = useCursor()
   const isMobile = useDevice() === 'mobile'
@@ -73,63 +71,27 @@ export function AppShell({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen flex-col">
       {/* First focusable element on the page: a keyboard user lands here and can
-          jump straight past the sidebar and top bar to the content. Off-screen
-          until focused. Listed as a known gap in docs/ACCESSIBILITY.md. */}
+          jump straight past the top bar to the content. Off-screen until
+          focused. Listed as a known gap in docs/ACCESSIBILITY.md. */}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-card focus:bg-ink-1 focus:px-3 focus:py-2 focus:text-body focus:text-fg-1 focus:outline-2 focus:outline-mauve"
       >
         Skip to content
       </a>
-      {/* Dim scrim behind the mobile drawer — tap to close (iOS-style). */}
-      {isMobile && (
-        <div
-          onClick={() => setNavOpen(false)}
-          aria-hidden
-          className={`fixed inset-0 z-40 bg-crust/55 backdrop-blur-sm transition-opacity duration-300 ${
-            navOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
-        />
-      )}
-      <Sidebar
-        items={items}
-        groupOrder={groupOrder}
+      <TopBar
         view={view}
-        collapsed={autoHide ? false : collapsed}
-        navOpen={navOpen}
-        autoHide={autoHide}
-        onNavigate={(id) => {
-          onNavigate(id)
-          setNavOpen(false)
-        }}
-        onToggleCollapse={onToggleCollapse}
+        gates={gates}
+        onNavigate={onNavigate}
+        onQuickAdd={() => setQuickOpen(true)}
+        onCommand={onCommand}
       />
-      <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
-        <TopBar
-          view={view}
-          // The breadcrumb's first crumb is the cluster the view already
-          // belongs to — read from the same source the rail renders from, so
-          // the two cannot disagree about which cluster a page is in. In the
-          // five-section layout that is the section (`Body / Nutrition`); in
-          // the classic one it is the group header.
-          section={
-            sectionTabs
-              ? SECTIONS.find((s) => s.id === sectionOf(view))?.label
-              : items.find((n) => n.id === view)?.group
-          }
-          onNavigate={onNavigate}
-          onQuickAdd={() => setQuickOpen(true)}
-          onCommand={onCommand}
-          onMenu={() => setNavOpen((o) => !o)}
-        />
-        {sectionTabs && <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />}
-        {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
-        <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
-      </div>
+      {/* Extra bottom padding on mobile clears the fixed bottom nav. */}
+      <main id="main" className={`flex-1 overflow-x-hidden p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
 
-      {isMobile && <BottomNav items={items} view={view} onNavigate={onNavigate} />}
+      {isMobile && <BottomNav view={view} gates={gates} onNavigate={onNavigate} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>

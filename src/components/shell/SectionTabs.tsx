@@ -4,11 +4,16 @@ import { tabsOf, sectionOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
 /**
- * The tab row for a section landing page.
+ * The tab row for a section landing page — the second row of the top bar.
  *
  * Rendered once in the shell rather than in each of the fifteen views it sits
  * above — a tab row is a property of *where you are*, and putting it in the
  * views would mean fifteen copies that drift.
+ *
+ * It draws no border and no padding of its own: it is a cell inside the
+ * header's second row, which owns the rule under it and the gutter beside it.
+ * The active underline still lands on that rule, because the row stretches its
+ * children to full height.
  *
  * **The tab is in the URL, not in state.** Each tab is a real `<a href>`
  * pointing at `?view=<id>`, so ⌘-click opens it in a new browser tab and Back
@@ -92,7 +97,12 @@ export function SectionTabs({
       aria-label="Section"
       // Horizontal scroll rather than wrap: six tabs at 360px would stack into
       // two rows and shove the page down on every phone.
-      className="flex gap-1 overflow-x-auto border-b border-line px-4 sm:px-6"
+      // `-ml-3` cancels the first tab's own `px-3`, so its label starts on the
+      // header's 16px gutter — level with the brand above it and with the page
+      // title this row shows when a section has only one surface. Measured: the
+      // label sat at 28px and the title at 16px, and the two rows visibly
+      // stepped.
+      className="-ml-3 flex min-w-0 flex-1 gap-1 overflow-x-auto"
     >
       {tabs.map((t) => {
         // Companion views (Strength's deeper tools, the retired activity views)
