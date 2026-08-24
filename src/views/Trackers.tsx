@@ -5,7 +5,8 @@ import { useJournal } from '../store'
 import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn, WEEKDAYS } from '../lib/date'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { Page, useCursor } from '../components/shell/Page'
+import { useCursor } from '../components/shell/Page'
+import { DisclosureRow, PageLayout, StatBar } from '../components/page'
 import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
@@ -14,7 +15,7 @@ import { cat, HABIT_COLORS } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30, habitCellFill, consistencyScore, bestWeekday, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade } from '../lib/habitStats'
+import { completionRate30, habitCellFill, consistencyScore, bestWeekday, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
@@ -22,7 +23,6 @@ import type { Habit, HabitCategory, HabitType } from '../lib/types'
 import { ActivityLayout } from '../components/ActivityLayout'
 import { GridCardsLayout } from '../components/GridCardsLayout'
 import { HabitDetail } from '../components/trackers/HabitDetail'
-import { TrackerSummaryCard } from '../components/trackers/TrackerSummaryCard'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { MetricsTrendCard } from '../components/trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../components/trackers/CategoryConsistencyCard'
@@ -83,7 +83,6 @@ export function Trackers() {
   const [viewing, setViewing] = useState<string | null>(null)
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set())
   const [showSettings, setShowSettings] = useState(false)
-  const [showAdd, setShowAdd] = useState(false)
   const [radial, setRadial] = useState(typeof window !== 'undefined' && window.location.search.includes('wheel'))
   // Sticky: day / week / month is a habit of reading, not a per-visit choice.
   const [viewMode, setViewMode] = useStickyState<'day' | 'week' | 'month'>('trackers.viewMode', 'month', TRACKER_VIEW_MODES)
@@ -130,9 +129,75 @@ export function Trackers() {
     setNewHabit('')
   }
 
+  const sum = trackerSummary(data, (id, t) => habitStreak(data, id, t), today)
+  const hasHabits = visibleHabits.length > 0
+  // Same filter TodayStrip applies, so the header count and the chips agree.
+  const todaysHabits = visibleHabits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
+  const todayDone = todaysHabits.filter((h) => habitDoneOn(data, h, today)).length
+
   return (
-    <Page width="wide" className="gap-0 sm:gap-0">
-      <TrackerSummaryCard data={data} today={today} />
+    <>
+    <PageLayout
+      tier={1180}
+      /* Stacked, not split. The 62/38 columns assume the review is a list; this
+         one is a 31-column grid needing ~910px, which would gain a horizontal
+         scrollbar in a 62% column and hide the last week of the month — the
+         page's whole subject. The act is a horizontal chip strip and has no use
+         for the 380px form column either. */
+      stacked
+      zone1={hasHabits ? (
+        <StatBar
+          facts={[
+            { label: 'today done', value: `${sum.todayPct}%` },
+            { label: sum.topStreakHabit ?? 'top streak', value: `${sum.topStreak}d` },
+            { label: 'avg consistency', value: sum.avgConsistency },
+          ]}
+        />
+      ) : undefined}
+      zone2={
+        <Card band
+          title="Today"
+          subtitle="tap to mark the day"
+          right={todaysHabits.length ? <span className="text-label text-fg-2">{todayDone}/{todaysHabits.length} done</span> : undefined}
+        >
+          <TodayStrip habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
+          <DisclosureRow label="Add a habit">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-label text-fg-2">Quick add:</span>
+              {HABIT_PRESETS.map((p) => (
+                <button
+                  key={p.name}
+                  disabled={habitExists(p.name)}
+                  title={habitExists(p.name) ? 'Already added' : undefined}
+                  onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
+                  className="rounded-none border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
+                >
+                  {p.emoji} {p.name}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="w-full max-w-xs">
+                <SmartInput
+                  value={newHabit}
+                  onChange={setNewHabit}
+                  onSubmit={() => add()}
+                  suggestCtx={{ tags: [], recents: [], habits: data.habits.map((h) => h.name) }}
+                  dupItems={data.habits.map((h) => ({ id: h.id, text: h.name }))}
+                  onGoToDuplicate={(id) => { setEditing(id); setNewHabit('') }}
+                  placeholder="New habit / food / stimulant…"
+                />
+              </div>
+              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              {/* The page's single primary button. */}
+              <Button onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
+            </div>
+          </DisclosureRow>
+        </Card>
+      }
+      zone3={<>
       <Card band
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)}, tap a cell to mark the day`}
@@ -154,7 +219,11 @@ export function Trackers() {
                     aria-pressed={layout === o.id}
                     title={o.title}
                     className="px-2 py-1.5"
-                    style={{ background: layout === o.id ? cat('mauve') : 'transparent', color: layout === o.id ? cat('crust') : cat('subtext1') }}
+                    /* Neutral fill, not mauve. The page is allowed one
+                       accent-filled control and it belongs to "Add habit"; a
+                       layout switcher that also fills with accent makes two,
+                       and then neither reads as the thing to do. */
+                    style={{ background: layout === o.id ? cat('surface1') : 'transparent', color: layout === o.id ? cat('text') : cat('subtext1') }}
                   >{o.icon}</button>
                 ))}
               </div>
@@ -164,7 +233,6 @@ export function Trackers() {
           </div>
         }
       >
-        <TodayStrip habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
         {showSettings && (
           <div className="mb-3 flex flex-wrap gap-4 rounded-none border border-line bg-ink-0 p-3 text-body">
             <Seg label="Density" options={[['comfortable', 'Comfortable'], ['compact', 'Compact']]} value={s.trackerDensity ?? 'comfortable'} onChange={(v) => setSettings({ trackerDensity: v as 'comfortable' | 'compact' })} />
@@ -247,80 +315,42 @@ export function Trackers() {
           </div>
         )}
 
-        <div className="mt-4 border-t border-line pt-3">
-          <button
-            onClick={() => setShowAdd((v) => !v)}
-            aria-expanded={showAdd}
-            className="mb-2 flex items-center gap-1.5 text-label tracking-wide text-fg-2 uppercase hover:text-fg-1"
-          >
-            {/* Typographic glyph, not an Icon — this is the app's disclosure
-                mark. Rotated rather than swapped, same as every other fold. */}
-            <span className="caret-turn caret-turn-quarter inline-block" data-open={showAdd}>▸</span> Add a habit
-          </button>
-          {showAdd && (
-          <div className="collapse-in">
-          <div className="mb-2 flex flex-wrap items-center gap-1.5">
-            <span className="text-label text-fg-2">Quick add:</span>
-            {HABIT_PRESETS.map((p) => (
-              <button
-                key={p.name}
-                disabled={habitExists(p.name)}
-                title={habitExists(p.name) ? 'Already added' : undefined}
-                onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
-                className="rounded-none border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
-              >
-                {p.emoji} {p.name}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="w-full max-w-xs">
-              <SmartInput
-                value={newHabit}
-                onChange={setNewHabit}
-                onSubmit={() => add()}
-                suggestCtx={{ tags: [], recents: [], habits: data.habits.map((h) => h.name) }}
-                dupItems={data.habits.map((h) => ({ id: h.id, text: h.name }))}
-                onGoToDuplicate={(id) => { setEditing(id); setNewHabit('') }}
-                placeholder="New habit / food / stimulant…"
-              />
-            </div>
-            <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <Button variant="secondary" onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
-          </div>
-          </div>
-          )}
-        </div>
       </Card>
 
-      {/* Secondary analytics: kept below the primary tracker UI and grouped under
-          collapsible sections so the daily-use controls stay front-and-centre.
-          Trends default open; the deep-analytics group defaults collapsed. */}
-      <CollapsibleSection title="This week / Trends" subtitle="mood, sleep & category consistency">
-        <div className="grid items-start gap-5 max-xl:order-last lg:grid-cols-3">
-          <MetricsTrendCard chartData={chartData} ym={ym} />
-          <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
-        </div>
-      </CollapsibleSection>
+      {/* Trends are no longer behind a fold. They were inside a section that
+          happened to default open, which is a fold you have not noticed yet —
+          and the same accordion pattern that hid Fitness's training calendar,
+          the single most useful thing on that page, for months. Zone 3 is where
+          recorded things belong, so they are simply here. */}
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        <MetricsTrendCard chartData={chartData} ym={ym} />
+        <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
+      </div>
 
+      {/* The one *region* fold. `CollapsibleSection` rather than a second
+          `DisclosureRow`: the codebase distinguishes them deliberately — a
+          disclosure is a quiet row for optional form fields, a section folds a
+          whole titled region with card chrome. Zone 2 spends the page's single
+          DisclosureRow on "Add a habit". */}
       <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns">
         <TrackerVisuals data={data} today={today} />
+        <ArchivedHabits />
       </CollapsibleSection>
+      </>}
+    />
 
-      <ArchivedHabits />
-
-      {viewing && data.habits.find((h) => h.id === viewing) && (
-        <HabitDetail
-          habit={data.habits.find((h) => h.id === viewing)!}
-          data={data}
-          onClose={() => setViewing(null)}
-          onEdit={() => { setEditing(viewing); setViewing(null) }}
-        />
-      )}
-      {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
-    </Page>
+    {/* Overlays, not page content — siblings of the zones rather than inside
+        one, so neither the sticky measurement nor the zone grid ever sees them. */}
+    {viewing && data.habits.find((h) => h.id === viewing) && (
+      <HabitDetail
+        habit={data.habits.find((h) => h.id === viewing)!}
+        data={data}
+        onClose={() => setViewing(null)}
+        onEdit={() => { setEditing(viewing); setViewing(null) }}
+      />
+    )}
+    {editing && <HabitEditor habit={data.habits.find((h) => h.id === editing)!} onClose={() => setEditing(null)} />}
+    </>
   )
 }
 
@@ -386,15 +416,13 @@ function TodayStrip({
 }) {
   const todays = habits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
   if (todays.length === 0) return null
-  const done = todays.filter((h) => habitDoneOn(data, h, today)).length
 
+  // No wrapper box and no "Today" heading: this is zone 2's whole content now,
+  // and the Card around it supplies both — a bordered box titled "Today" inside
+  // a card titled "Today" was two frames and one subject. The done count moved
+  // to the card header, where every other panel on the page puts its state.
   return (
-    <div className="mb-4 rounded-none border border-line bg-ink-0 p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-body font-medium text-fg-1">Today</span>
-        <span className="text-label text-fg-2">{done}/{todays.length} done</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5">
         {todays.map((h) => {
           const type = h.type ?? 'check'
           const numeric = type === 'count' || type === 'timer' || type === 'rating'
@@ -447,7 +475,6 @@ function TodayStrip({
             </button>
           )
         })}
-      </div>
     </div>
   )
 }

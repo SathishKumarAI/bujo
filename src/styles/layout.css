@@ -63,12 +63,18 @@
      while a phone still gets the form first. Both are explicitly placed —
      auto-placement would push `review` to a third row rather than back to
      column 1, since it only ever moves forward. */
-  .zone-act {
+  /* Scoped to the splitting case. These were unscoped, so a single-column page
+     carrying both zones would still place its act at `grid-column: 2` — of a
+     grid that only declares one — and the browser would invent an implicit
+     second column to hold it, silently re-splitting the layout that
+     `page-zones-single` exists to prevent. Latent rather than live: all four
+     converted pages are tier 1180, so nothing had ever set the class. */
+  .page-zones:not(.page-zones-single) .zone-act {
     grid-column: 2;
     grid-row: 2;
   }
 
-  .zone-review {
+  .page-zones:not(.page-zones-single) .zone-review {
     grid-column: 1;
     grid-row: 2;
   }
@@ -77,7 +83,7 @@
      PageLayout measures the act column and drops to static when it is taller
      than the viewport, because a sticky element taller than its scrollport can
      never scroll to its own bottom — the submit button becomes unreachable. */
-  .zone-act[data-sticky='true'] {
+  .page-zones:not(.page-zones-single) .zone-act[data-sticky='true'] {
     position: sticky;
     top: calc(var(--header-h, 3.5rem) + 1rem);
   }
