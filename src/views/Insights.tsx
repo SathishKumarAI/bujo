@@ -6,7 +6,7 @@ import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { currentStreak, search, taskCompletion } from '../lib/stats'
-import { insights, weeklyDigest, digestRangeLabel, momentumIndicator, pickleballInsights } from '../lib/correlations'
+import { insights, weeklyDigest, digestRangeLabel, momentumIndicator } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
 import { PageLayout, StatBar } from '../components/page'
 import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
@@ -14,10 +14,10 @@ import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay } from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
-// Insights carried a private copy of this collapsible section header — the
-// same markup, minus the press affordance and the "show" hint. Three copies of
-// CollapsibleSection were already consolidated once; this was a fourth.
-import { QuietSection as Section } from '../components/CollapsibleSection'
+// No `QuietSection` import any more: Insights has no folds. It used to carry a
+// private copy of that collapsible header too — the same markup, minus the
+// press affordance and the "show" hint — which was the fourth copy of a
+// component that had already been consolidated once.
 
 export function Insights() {
   const { data } = useJournal()
@@ -34,14 +34,13 @@ export function Insights() {
   const digest = weeklyDigest(data)
   const coach = coachDigest(data)
   const momentum = momentumIndicator(data)
-  const pickle = pickleballInsights(data)
 
   return (
     <PageLayout
       tier={1180}
-      /* Stacked: zone 3 is a masonry of analytics panels and a six-drawer
-         cabinet, all of which want the full width. There is no narrow form
-         here to justify the 62/38 split. */
+      /* Stacked: zone 3 is four full-width read-backs. There is no narrow form
+         here to justify the 62/38 split. (It used to say "and a six-drawer
+         cabinet" — the drawers are gone, BUJO-281.) */
       stacked
       zone1={
         <StatBar
@@ -174,12 +173,12 @@ export function Insights() {
         </Card>
       </MasonryGrid>
 
-      {/* The seven analytics drawers DO flow three across: collapsed they are
-          50px strips, and stacked they read as a filing cabinet. */}
+      {/* Patterns and Momentum are open. They were behind a "Correlations"
+          drawer, which put the two things the app worked out that you did not
+          already know — the whole reason this page exists — one click further
+          away than the analytics that have now left for Stats. A page with
+          nothing hidden also stops teaching people that anything might be. */}
       <CardGrid>
-      {/* 4) Correlations — deep read-only analytics, collapsed. */}
-      {(found.length > 0 || momentum.length > 0) && (
-        <Section stickyKey="insights.correlations" title="Correlations" subtitle="patterns & momentum">
       {found.length > 0 && (
         <Card band title="Patterns" subtitle="What your data is telling you">
           <ul className="space-y-2">
@@ -219,39 +218,19 @@ export function Insights() {
           </ul>
         </Card>
       )}
-        </Section>
-      )}
 
       <p className="text-label text-fg-2">
         Task migration &amp; aging live in{' '}
         <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
       </p>
 
-      {/* 7) Domain digests — compact, link-out, collapsed. */}
-      {pickle.sessions > 0 && (
-        <Section stickyKey="insights.digests" title="Domain digests" subtitle="cross-domain glances">
-        <Card band title="Pickleball" subtitle="Your game at a glance" right={<Button variant="ghost" size="sm" onClick={() => nav('pickleball')} className="h-auto p-0 text-label">Open →</Button>}>
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <PickStat label="Win rate" value={pickle.winRate == null ? '—' : `${Math.round(pickle.winRate * 100)}%`} />
-            <PickStat label="Games this week" value={String(pickle.weekGames)} />
-            <PickStat label="Play streak" value={`${pickle.playStreak}d`} />
-            <PickStat
-              label="Recent form"
-              value={pickle.recentWinRate == null ? '—' : `${Math.round(pickle.recentWinRate * 100)}%`}
-              // The formDir colour moved onto the arrow, where `PickStat`
-              // derives it from `trend` with the same mapping. It used to tint
-              // the figure too, which meant a flat run rendered "67%" in
-              // `overlay0` — a number greyed to near-invisible for the crime of
-              // not having changed.
-              trend={pickle.formDir}
-            />
-          </ul>
-          <p className="mt-3 border-t border-line pt-3 text-label text-fg-2">
-            {pickle.sessions} session{pickle.sessions === 1 ? '' : 's'} logged · {pickle.doubles} doubles / {pickle.singles} singles.
-          </p>
-        </Card>
-        </Section>
-      )}
+      {/* The Pickleball domain digest was here. Deleted rather than moved
+          (BUJO-281): all four of its figures are on the Pickleball page and
+          better there — win rate, day streak and recent form as tiles, and
+          "This week: N games" with a goal bar instead of a bare count. It was
+          also the only domain that had one, which made it an accretion rather
+          than a feature: there was never a fitness or reading digest beside
+          it. A link-out glance is not what changed and not what to do next. */}
 
       {/* Mood analytics, Habit analytics and Lifetime moved to Stats
           (BUJO-281). Insights answers what changed and what to do next;
@@ -268,23 +247,4 @@ export function Insights() {
     />
   )
 }
-
-/**
- * A figure in a card's stat grid.
- *
- * The value is `fg-1`, never a per-instance accent — see the note on `Big`.
- * The trend arrow keeps its colour, because there the colour *is* the reading.
- */
-function PickStat({ label, value, trend }: { label: string; value: string; trend?: 'up' | 'down' | 'flat' | null }) {
-  const TrendIcon = trend === 'up' ? TrendUp : trend === 'down' ? TrendDown : Minus
-  const trendColor = trend === 'up' ? 'green' : trend === 'down' ? 'red' : 'overlay0'
-  return (
-    <li className="rounded-none border border-line bg-ink-0 p-3">
-      <div className="flex items-center justify-between">
-        <span className="text-label text-fg-2">{label}</span>
-        {trend && <AppIcon as={TrendIcon} size="sm" style={{ color: cat(trendColor) }} />}
-      </div>
-      <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{value}</p>
-    </li>
-  )
-}
+

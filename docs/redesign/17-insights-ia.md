@@ -71,7 +71,7 @@ Three increments, each shippable alone:
 |---|---|---|
 | 281a | Tag manager → Settings → Data | ✅ done |
 | 281b | Mood / Habit / Lifetime analytics → Stats | ✅ done |
-| 281c | Drop the Pickleball digest; dissolve the four remaining action-less cards into headed regions | 🔜 |
+| 281c | Drop the Pickleball digest; open the Correlations fold | ✅ done |
 
 **281b's constraint, stated up front and held:** the three groups merge into
 Stats' existing folds. Moving them across unchanged would take Stats from six
@@ -94,7 +94,39 @@ byte-identical**. Worth doing rather than eyeballing — the first draft of
 which is exactly the failure `CLAUDE.md` records about extracting a duplicated
 banner and replacing a phone number with 911.
 
-The end state is Insights at **2 cards and 0 folds** — Weekly review and Search,
-both of which genuinely have their own state — with the digests, the coach and
-the correlations as open headed regions above the fold, where the thing you did
-not already know should have been all along.
+## The correction 281c produced
+
+The plan above says "dissolve the action-less cards into headed regions". **There
+was nothing to dissolve.** Measured on the rendered page rather than read off the
+source, every card on Insights already computed to:
+
+```
+background: rgba(0, 0, 0, 0)   border-radius: 0px
+borders: 0px / 0px / 2px / 0px  box-shadow: none
+```
+
+That *is* a heading and a hairline. `CARD.band` — which every card on this page
+already passed — renders flat, ruled and flush-left with no box at all.
+
+**So "16 Cards against a cap of 2" counted `<Card>` elements in the source, not
+raised cards on the screen.** The contract's cap is on chrome, and there was
+none. This is the third time in one session that an audit counted a prop and not
+a pixel: BUJO-278's `StatTile.color` accents that never drew, the `help ??
+subtitle` trap already in `CLAUDE.md`, and now this. **The rule that keeps
+earning its keep: grep the output, not the input.**
+
+What actually needed doing was smaller and different — delete one accreted
+digest, and open a fold that was hiding the page's whole point.
+
+## Where it landed
+
+Insights is **0 folds, 5 bands, 530 → 249 lines**, and 1,300px at 1440 — one
+screen and a bit, with nothing hidden. The two things the app worked out that you
+did not already know, Patterns and Momentum, are on the screen instead of one
+click away.
+
+One defect fell out of opening the fold, filed as **BUJO-283**: Coach digest
+closes with the same correlation Patterns opens with, because `coachDigest` picks
+its `insight` from the same ranking Patterns lists in full. Both were visible at
+once for the first time. Opening a drawer is a good way to find what was rotting
+in it.
