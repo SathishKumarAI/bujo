@@ -1,232 +1,113 @@
 # STATUS
 
-**Stopped:** 2026-08-24. **Phase 0, Phase A, Phase B and most of Phase E
-shipped** - six PRs, all merged. **Zero open PRs, zero stale branches.**
+**Stopped:** 2026-08-24. **BUJO-278, BUJO-280 (half) and BUJO-281 (all three
+increments) shipped** — **five PRs, all merged. Zero open PRs, zero stale
+branches.**
 
 ## Start here next session
 
-Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` has two
-decisions left: **Q3 (deploy)** and **Q4 (shadcn depth)**.
-
-**Contract adoption: 8 of 28 views**, up from 4 - Fitness, Plan, Nutrition,
-NoFap, KitchenSink, plus **Trackers, Insights and Stats**.
+`docs/QUESTIONS.md` still has **Q3 (deploy)** and **Q4 (shadcn depth)**. Then:
 
 | # | Task | Ticket |
 |---|---|---|
-| 1 | **Insights is still a six-drawer cabinet** - 16 Cards against a cap of 2, fourteen inside six collapsed Sections where the contract allows one. An IA decision, not a refactor: decide before coding | BUJO-281 |
-| 2 | **The Activity heatmap leaves ~800px dead.** Cannot just be narrowed - `SPAN_ALL` exists for the 1yr range, so the range control changes content width threefold | BUJO-280 |
-| 3 | **`StatTile.color` is a no-op without an `icon`** - audit every call site passing one and not the other | BUJO-278 |
-| 4 | The remaining 20 views. By size: Gym (709), Pickleball (633), then Monthly, Goals, Mindset, Reading | - |
-| 5 | Answer Q3 and Q4 | - |
-| 6 | Print fix; `smoke-views.mjs` misses `program` and `nutrition`; `weeklyRadar` mixes hours with 0-10 | BUJO-270/277/282 |
+| 1 | **The remaining 20 views.** By size: Gym (709), Pickleball (633), then Monthly, Goals, Mindset, Reading | — |
+| 2 | **1yr heatmap still leaves 432px.** Needs a stretching cell in `DayGrid`, which has three callers | BUJO-280b |
+| 3 | **The same correlation prints twice on Insights**, 300px apart — found by opening the fold | BUJO-283 |
+| 4 | **Stats is now the cluster's only cabinet** — six folds, and it absorbed nine panels. It is the next Insights | — |
+| 5 | Answer Q3 and Q4 | — |
+| 6 | Print fix · `smoke-views.mjs` misses `program`/`nutrition` · `weeklyRadar` mixes hours with 0–10 | BUJO-270/277/282 |
 
-**Today is not on that list on purpose.** It was assessed and deliberately left:
-its surface toggle already *is* the orient control, it has the lowest counts in
-the app (4 Cards, 2 accents), it is two layouts behind a setting, and its narrow
-column is the 820 tier behaving as documented rather than a page failing to fill
-itself. See BUJO-264.
+**Today is still deliberately untouched.** See BUJO-264, unchanged.
 
-## The rollout, in one place
+## What shipped
 
-Six PRs merged: **#129** Trackers → Body · **#130** row legibility · **#131**
-status · **#132** Trackers on the contract · **#133** Insights · **#134** Stats.
-
-**`PageLayout` needed a variant and the contract predicted it.** The 62/38 split
-assumes a narrow form beside a list. Trackers' review is a 31-column grid
-needing ~910px, which in a 62% column would scroll horizontally and hide the
-last week of the month — the page's whole subject. `stacked` keeps the wide
-container and does not split. Per Stage 2's own rule it went in the primitive,
-not as a fork at the call site.
-
-**That surfaced a latent CSS bug.** `.zone-act { grid-column: 2 }` and
-`.zone-review { grid-column: 1 }` were never scoped to the splitting case, so a
-single-column page carrying both zones would place its act in a column the grid
-does not declare and the browser would invent an implicit second one. Latent
-only because every converted page was tier 1180.
-
-**Two duplicated facts, found by converting rather than by grepping.** Insights
-printed "Longest streak" both as a top-row tile *and* inside Personal records
-further down the same page. Trackers wrapped `TodayStrip`'s own bordered "Today"
-box inside a card titled "Today" — two frames, one subject.
-
-**A page with no act is allowed no zone 2.** Stats is that case: every panel is
-a record being read back. The contract says an empty zone is omitted, not
-filled to justify itself.
-
-## What changed this session
-
-**The Modernist chain landed — all twelve.** #127 and #113–#123, plus #107,
-#128, **#129** (Phase A) and **#130** (Phase B part 1). **#96 is closed** (3.4k
-lines, conflicted three weeks, superseded by Phase E). Fifteen branches deleted.
-
-**Phase B part 1 — two visible defects fixed, and three findings worth more.**
-
-A wrapped metadata badge started at the name cell's left edge (**x=137**) while
-the habit name it describes starts at **x=158**, so `2/7wk` under Sugar sat
-outdented from its own row and level with the gap above the next one — it read
-as the *next* habit's number. Fixed with `pl-7` on the cell and `-ml-7` on its
-first child, so wrapped lines indent to the name and rows that already fit do
-not move: nine of eleven rows stayed at 32px.
-
-The fourth stat tile read `10 +1🚫` — three quantities where its siblings each
-carry one. `StatTile` gained a `hint` slot rather than the call site forking.
-
-**Three of the four accents on that page were never drawn.** `StatTile`'s
-`color` prop tints its `icon`, and `TrackerSummaryCard` passes no icon — so
-`mauve`, `peach` and `sapphire` were no-ops, and so was the green/yellow/peach
-threshold on "today done" that was meant to be a real status signal. **The
-audited "9 accents on Trackers" counted a prop, not a pixel.** Same shape as the
-`help ?? subtitle` trap already in `CLAUDE.md`. BUJO-278 and BUJO-279 filed.
-
-**Two of my own tickets were withdrawn.** BUJO-274 (dead space beside the
-heatmap) and BUJO-275 (a gap above the table) were misread off a screenshot
-taken **through the onboarding overlay**. Everything on the page ends at
-x≈1310 and the band beyond it is the page gutter, identical on every row.
-
-**Phase A shipped with evidence, and it overturned two written assumptions.**
-The eight-tab ceiling was a count nobody had measured — 9 tabs report
-`scrollWidth === clientWidth` at 1280/1440/1920, so the planned *Train*/*Body*
-rail split was dropped. And `BottomNav` needed no change at all, because #120
-had already deleted the hand-written `PRIMARY` list the audit was worried about.
-
-Gates, quoted: `npx tsc -b` exit 0 · `npx vitest run` 798 passed (55 files) ·
-`npx eslint .` 0 errors, 2 pre-existing warnings · `npm run build` emitted ·
-`npm run design` passed (273 files) · `npm run clipped` clean across 23 views at
-1440 and 390 · `npm run a11y` **no serious or critical violations**, five themes
-× two viewports, with Stats included for the first time.
-
-**Twelve PRs, one conflicting file.** Across the whole chain the only conflict
-was `STATUS.md` — this file — and only because each merge rewrites it. **No code
-conflict anywhere.** The "the stack is scary" framing was one doc.
-
-**They are fully stacked**, each PR targeting its parent's branch, so each needs
-`gh pr edit <n> --base main` as its parent lands. Auto-merge is disabled on this
-repo, so each also has to wait for CI (~5 min) before `gh pr merge` will take it.
-
-Four new documents:
-
-| File | What |
-|---|---|
-| `docs/redesign/14-dashboard-inspiration.md` | The ShadcnStore reference, and the nine patterns **not** to copy |
-| `docs/redesign/15-fitness-consolidation.md` | The six-phase plan, and two corrections to the record |
-| `docs/redesign/16-next-session.md` | The handoff |
-| `docs/QUESTIONS.md` | Ten open decisions with recommendations |
-
-Plus `docs/TICKETS.md` Epic **FIT-IA**, BUJO-245..272, and a correction banner on
-`docs/redesign/13-page-contract-rollout.md`.
-
-## The two things this repo believed that were not true
-
-**1. The rollout was never blocked.** `13-page-contract-rollout.md:85` and this
-file's previous revision both said `PageLayout` and every page primitive lived
-only inside PRs #113–#123, so Phase 2 had nothing to import. All eleven files in
-`src/components/page/` have been on `main` throughout, and Fitness, Plan,
-Nutrition, NoFap and KitchenSink import them there. What the chain actually
-carries is the Modernist *look* — bands, radius 0, shell and nav.
-
-One command disproves it:
-
-```
-git ls-tree -r --name-only origin/main -- src/components/page
-```
-
-**2. Merging the chain does not do the redesign.** Today, Insights, Stats and
-Trackers have **zero** `components/page` imports on the chain tip. It restyles
-them 34–58 lines each and restructures none of them. The conversion is owed
-either way; merging first was about conflict order — #120–#122 edit
-`sections.ts`, #117 edits all four target views.
-
-**The lesson, now BUJO-272:** an adoption count is evidence about the branch it
-was taken on and nothing else. The previous session's own last trap — *judge a
-UI on the right branch* — existed, was written down, and still did not prevent
-this, because it was aimed at screenshots and the failure came through a grep.
-
-## The fitness question, answered
-
-**Body is already the fitness hub.** `src/components/shell/sections.ts` files
-Fitness, Strength, Pickleball, Coaching and Nutrition under it, with Program and
-Challenges arriving in #122 and Recovery/Cycle gated.
-
-The genuinely misfiled thing is **Trackers** — 1013 lines, the largest view in
-the app, filed under *Insights* while being where gym attendance, protein and
-steps actually get logged. That splits the daily loop across two rail sections.
-It is a move, not a rebuild — Phase A, BUJO-250.
-
-**Consequence to decide:** moving it makes Body ten tabs against a recorded
-ceiling of eight. QUESTIONS Q6 recommends splitting the rail into *Train* and
-*Body* rather than nesting — nesting is how Pickleball got buried once already,
-and `sections.ts`'s own docstring says that redirect "did not move the page, it
-deleted it".
-
-## Two hand-maintained datasets worth retiring
-
-Both replace a list in this repo, both are keyless, neither adds a dependency,
-and both stay **enrichment-only** so the app still works offline.
-
-| Source | License | Replaces |
+| PR | What | Evidence |
 |---|---|---|
-| Open Food Facts search + barcode | ODbL, no key, CORS-enabled | `src/lib/foods.ts` — 50 typed-out items whose own header admits it sends you to a web search for anything else |
-| free-exercise-db | Unlicense (public domain) | `EXERCISE_LIBRARY`, `src/lib/fitness.ts:100` |
+| **#136** | `StatTile.color` is a type error without an `icon` | 45 dead call sites across 8 files, deleted |
+| **#137** | The Activity card sizes to its heatmap range; `SPAN_ALL` deleted | dead width 978→378 · 796→196 |
+| **#138** | Tag manager → Settings → Data, and the BUJO-281 decision | rendered-page check |
+| **#139** | Nine analytics panels → Stats | **all nine byte-identical** |
+| **#141** | Pickleball digest deleted, Correlations opened | 0 folds, 530→249 lines |
 
-Rejected with reasons, so it is not relitigated: **wger** needs a self-hosted
-Django backend this local-first PWA deliberately lacks; **Nutritionix / Edamam /
-USDA FoodData Central** all require an API key, and a key in a client-side PWA
-is a published key; **any charting library** undoes the accent discipline.
+**Insights is done.** 6 folds → **0**, 530 → **249 lines**, 1,300px at 1440 —
+one screen and a bit with nothing hidden. Stats holds the record; Insights
+answers what changed and what to do next. The decision and its rejected
+alternative are in `docs/redesign/17-insights-ia.md`.
 
-`fitness.test.ts` must be extended *before* the exercise swap —
-`musclesForExercise` feeds the muscle map and is what breaks silently.
+## The one thing this session was really about
 
-## shadcn is already installed
+**Three separate audits had counted a prop instead of a pixel.** They are the
+same bug wearing three faces:
 
-`components.json` plus 17 primitives in `src/components/ui/` (button, dialog,
-command, popover, tabs, tooltip, scroll-area, switch, toggle-group, sonner…).
-"Use shadcn" is therefore not an adoption decision but a question of how far —
-see QUESTIONS Q4. The recommendation is to add only the primitives the rebuilt
-pages need (`card`, `badge`, `table`, `select`) rather than migrating the
-hand-rolled `ui.tsx`, because a repo-wide primitive sweep is exactly the change
-that silently alters content.
+| Audit said | Measurement said |
+|---|---|
+| "9 accents on Trackers" | 3 of them were `color` with no `icon` — **props, never drawn** |
+| "16 Cards against a cap of 2" on Insights | every one already `background: transparent, radius 0, borders 0/0/2px/0` — **`CARD.band` IS a heading and a hairline** |
+| `help=` sweep found the Body cluster clean | `Card` renders its ⓘ from `help ?? subtitle` (already in `CLAUDE.md`) |
 
-## Deploy: there is none, on purpose
+Each was written down confidently, and each was wrong in the same direction —
+**source greps over-count features that render as nothing.** BUJO-278 now makes
+its case impossible: `StatTile`'s props are a union, so `color` without `icon`
+is a *type error* rather than an invisible one. `npx tsc -b` found all 45 sites;
+no grep could have told a live tint from a dead one.
 
-Unchanged, and #127 (merged) retires the workflow. Pages ran 8 times and failed
-8 times — it was never enabled, and it could not serve this app anyway:
-`api/sync.ts` and `api/feedback.ts` are serverless functions, and Pages cannot
-set the CSP/HSTS/XFO/COOP headers. `vercel.json` and `api/` are kept for that
-reason. **The Environments tab lies** — `actions/deploy-pages` registers the
-deployment before calling the API, so the record predates the failure by 30
-seconds. There has never been a site behind it. See D-49, and QUESTIONS Q3.
+**The rule, third time earned: grep the output, not the input.** Computed styles
+from the running page take one script and settle it.
+
+## The check that paid for itself immediately
+
+Moving nine panels between two views, each panel's rendered HTML was dumped from
+Insights on the parent commit and from Stats on the child, then diffed. **All
+nine byte-identical.**
+
+That was not ceremony. The first draft of `SplitCol` silently dropped its two
+accent icons while looking like a faithful copy — the same shape as the
+extracted banner that once replaced an office phone number with 911. The diff
+caught it before it was committed. Do this for every move; "it is the same
+markup" is the claim this repo keeps being wrong about.
+
+## Traps added or confirmed
+
+- **`gh pr merge --delete-branch` permanently closes any PR stacked on it.**
+  #140 targeted #139's branch; merging #139 deleted that branch, GitHub closed
+  #140, and it **cannot be reopened** — "Cannot change the base branch of a
+  closed pull request". Had to re-create it as #141. **Retarget the child to
+  `main` *before* merging the parent**, not after.
+- **`npm run smoke` cannot run on Windows without `CHROME_PATH`.** Its default
+  is `/usr/bin/google-chrome-stable`. Use
+  `CHROME_PATH=$(node -e "const{chromium}=require('playwright');console.log(chromium.executablePath())")`.
+  It then passes 22/23 — `account` fails on `ERR_NAME_NOT_RESOLVED` because
+  there is no DNS to Supabase here. Environmental, not a regression.
+- **`[aria-expanded]` counted over the whole document includes nav chrome.**
+  Insights reported "4 folds" with zero folds on the page. Scope the query to
+  `<main>`.
+- **`SPAN_ALL` and `SPAN_2` were identical below 1536px** — `CardGrid` only has
+  two columns there, so `2xl:col-span-3` did nothing at the 1,180px tier every
+  converted page renders at. `SPAN_ALL` is deleted; do not reintroduce a helper
+  whose name claims more than its classes do.
+- **`npm run design`'s file count moves on its own** (272 → 275 across this
+  session as files were added). Do not quote it as a stable number — same
+  disease as the vitest count already documented in `CLAUDE.md`.
+
+Everything in `CLAUDE.md` still applies, including the worktree/port,
+service-worker and collapsed-fold traps.
 
 ## Still open, unchanged
 
 - **F-7** four sync writers can be live at once — a product call, not a defect.
 - **F-8** sync passphrase in plaintext `localStorage` — a product call.
 - **SQLite exporter** not built; its precondition is met.
-- **PR #96** (+2620/−767) conflicted since 2026-08-03, superseded by Phase E.
-
-## Traps
-
-Everything in `CLAUDE.md` still applies. Added or re-confirmed this session:
-
-- **`:5173` was not this working copy.** The dev server for this branch came up
-  on **`:5174`** because something else already held 5173. Check the port's
-  process command line before treating a screenshot as evidence — this is the
-  worktree trap, and it fired on the first command of the session.
-- **`gh pr merge` reads a cached mergeability state.** Immediately after a push
-  it still reports "Pull Request has merge conflicts". Wait for GitHub to
-  recompute rather than concluding the resolution failed.
-- **Auto-merge is disabled on this repo** — `enablePullRequestAutoMerge` errors
-  with "Auto merge is not allowed for this repository". Every merge must wait on
-  CI in the foreground.
-- **Merging a stacked PR does not advance `main`** unless you retarget it first.
-  Without `gh pr edit <n> --base main` it merges into its parent's branch.
-- **Merging main into each branch separately breaks the ancestry**, so the tip
-  stops containing its siblings and you cannot shortcut by merging only the last
-  one. Merge them in order.
+- The two hand-maintained datasets worth retiring (Open Food Facts,
+  free-exercise-db) — unchanged, and `fitness.test.ts` must be extended
+  *before* the exercise swap.
+- **Deploy: there is none, on purpose.** Unchanged. See D-49 and QUESTIONS Q3.
 
 ## Environment
 
-- Dev server **:5174**, root repo, branch `docs/page-contract-rollout-plan`.
-  Something unidentified holds :5173.
-- `.claude/worktrees/` holds three empty orphan dirs — gitignored, safe to leave.
-- `chrome-devtools` MCP needs Chrome started with `--remote-debugging-port=9333`.
-- Demo data is persisted, not regenerated — re-seed via Settings → Data.
+- Dev server **:5173**, preview **:4173**, both this working copy (checked via
+  `Get-CimInstance Win32_Process`). :5174 is a second dev server on this repo.
+- Demo data is persisted, not regenerated — re-seed via Settings → **Data** tab
+  (a tab, not a fold) → Load demo data.
+- Playwright scripts run from the scratchpad need
+  `createRequire('file:///…/bujo/package.json')` — module resolution is relative
+  to the script, not the cwd.

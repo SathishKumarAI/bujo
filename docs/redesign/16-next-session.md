@@ -1,12 +1,13 @@
 # 16 · Next session — start here
 
-**Updated:** 2026-08-24, after the page-contract rollout.
-**Open decisions:** `docs/QUESTIONS.md` — **Q3 (deploy)** and **Q4 (shadcn depth)**
-are the only two left. Q1, Q2, Q6 were answered or settled by measurement.
+**Superseded for the Insights/Stats cluster by
+[`17-insights-ia.md`](17-insights-ia.md), 2026-08-24.** Items 1–3 below are
+done or reduced; read `STATUS.md` for the current list. Kept as the record of
+what the page-contract rollout left behind.
 
 ## State
 
-`main` is clean: **zero open PRs, zero stale branches.** Servers: dev `:5174`,
+`main` is clean: **zero open PRs, zero stale branches.** Servers: dev `:5173`,
 preview `:4173` (the a11y gate needs the preview running or it dies on
 `ERR_CONNECTION_REFUSED`).
 
@@ -16,20 +17,21 @@ NoFap, KitchenSink, **Trackers, Insights, Stats**.
 | Page | Cards | Zones | Note |
 |---|---|---|---|
 | Trackers | 17 → **3** | 1·2·3 | `PageLayout` gained `stacked` for it |
-| Insights | 17 → **16** | 1·2·3 | Shape fixed; the six-drawer cabinet is not |
-| Stats | 11 | 1·—·3 | No zone 2, deliberately: nothing to *do* here |
+| Insights | 17 → **5** | 1·2·3 | **0 folds now** — BUJO-281, 530 → 249 lines |
+| Stats | 11 → **20** | 1·—·3 | Absorbed nine panels; still 6 folds. Next cabinet |
 | Today | **4** | — | Assessed, deliberately **not** converted |
 
 ## Do next, in order
 
-1. **BUJO-281 — Insights is still a six-drawer cabinet.** **Decided: split by
-   question** — see [`17-insights-ia.md`](17-insights-ia.md). Insights answers
-   "what changed, what next"; Stats is the record. The audit found the problem
-   is a cluster one: **Stats has six folds too**, over the same subjects, so
-   fixing Insights alone would move drawers between two cabinets. **281a done**
-   (Tag manager → Settings → Data). **281b** moves Mood/Habit/Lifetime analytics
-   into Stats' *existing* folds; **281c** drops the Pickleball digest and
-   dissolves the four remaining action-less cards into headed regions.
+1. ~~**BUJO-281 — Insights is still a six-drawer cabinet.**~~ **Done, all three
+   increments.** Decided *split by question* — see
+   [`17-insights-ia.md`](17-insights-ia.md). Insights answers "what changed,
+   what next"; Stats is the record. The audit found the problem was a cluster
+   one — **Stats had six folds too**, over the same subjects — so fixing
+   Insights alone would have moved drawers between two cabinets. Tag manager →
+   Settings, nine analytics panels → Stats' existing folds, Pickleball digest
+   deleted, Correlations opened. **And the premise was wrong: every card was
+   already flat and ruled. "16 Cards" counted source elements, not chrome.**
 2. ~~**BUJO-280 — the Activity heatmap leaves ~800px dead.**~~ **Half done.**
    The card now sizes to its range, so dead width went 978 → 378 (3mo) and
    796 → 196 (6mo), measured at 1440, and Achievements moved up into the freed
