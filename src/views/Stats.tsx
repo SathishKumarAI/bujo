@@ -76,7 +76,13 @@ export function Stats() {
         {monthDays(ym).map((d, i) => (
           <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
             className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-heading' : 'text-micro'}`}
-            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? cat('crust') : cat('overlay0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
+            // An unlogged day draws its date on the empty-cell surface, and
+            // `overlay0` gave 2.57:1 against it at 10px — below the 4.5:1 floor
+            // in every dark theme. `subtext0` is the next step up that is still
+            // clearly quieter than a logged day, and it clears the threshold in
+            // all five. A logged day keeps `crust`: its background is a
+            // saturated mood colour, not the empty surface.
+            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? cat('crust') : cat('subtext0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
             {Number(d.slice(8))}
           </div>
         ))}
