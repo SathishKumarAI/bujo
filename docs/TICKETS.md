@@ -692,3 +692,25 @@ Screenshot of Body › Tracking at 1440×900 with demo data. These are the
 | BUJO-275 | **A vertical gap between the "Today" chip row and the habit table** that belongs to neither. Cells should fill their allotted height rather than top-anchoring, §10 | 🔜 |
 | BUJO-276 | **The fourth stat tile reads "10 +1 🚫"** — three unrelated quantities crushed into one line while the other three tiles carry a single number. Either it is one stat or it is two | 🔜 |
 | BUJO-277 | `smoke-views.mjs`'s fixed `VIEWS` list is missing **`program`** and **`nutrition`** — both are Body tabs and neither is smoke-tested. Found during the BUJO-251 audit, out of scope for #129 | 🔜 |
+
+**2026-08-24, Phase B part 1 — the stat strip and the row wrap.**
+
+| ID | Outcome |
+|---|---|
+| BUJO-273 | ✅ Wrapped badge lines now start at the habit name's x, not the cell's. `pl-7` on the cell + `-ml-7` on its first child, so rows whose badges already fit are untouched |
+| BUJO-274 | ⊘ **Misread, not a defect.** The stat tiles, the chip strip and the `%` column all end at x≈1310; 1310→1420 is the page gutter, identical on every row. The first screenshot was read through the onboarding overlay |
+| BUJO-275 | ⊘ **Misread, not a defect.** Ordinary section spacing between the chip row and the table |
+| BUJO-276 | ✅ `10 +1🚫` split into value `10` and hint `+1 to avoid`. `StatTile` gained an optional `hint` slot rather than the call site forking |
+
+**Found while fixing BUJO-276: three of the four accents on this page were
+never drawn.** `StatTile`'s `color` prop tints its `icon` only, and
+`TrackerSummaryCard` passes no icon — so `mauve`, `peach` and `sapphire` there
+rendered nothing at all, and the fourth (`todayPct` green/yellow/peach, a
+genuine directional signal) never rendered either. The audited "9 accents on
+Trackers" is therefore partly phantom: it counted a prop, not a pixel. The dead
+props are removed.
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-278 | **`StatTile`'s `color` prop silently does nothing without an `icon`.** Either colour the value, or make the prop require an icon in the type. Every call site passing `color` and no icon is currently a no-op — audit them all | 🔜 |
+| BUJO-279 | The "today done" tile's green/yellow/peach threshold was intended as a status signal and has never rendered. Decide whether it should — it is the one number on this strip with an unambiguous direction | 🔜 |
