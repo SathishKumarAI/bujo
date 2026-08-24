@@ -117,11 +117,19 @@ Static-only. `vite build` emits `dist/`; any static host works because
 `vite.config.ts` sets `base: './'` (relative asset paths) and routing is
 query-param based (`?view=`), so no SPA rewrite rules are needed.
 
-- **GitHub Pages** — `.github/workflows/deploy.yml` builds + publishes on push to
-  `main`. Enable once under *Repo → Settings → Pages → Build and deployment:
-  GitHub Actions*.
-- **Vercel / Netlify / Cloudflare Pages** — point at the repo, build command
-  `npm run build`, output `dist`. No env vars required.
+**Nothing is currently hosted.** The Pages workflow was retired in D-49 — it ran
+eight times and failed eight times, because Pages was never enabled in repo
+settings. Options if you want a deployed build back:
+
+- **Vercel** — the only target that can serve `api/sync.ts` and `api/feedback.ts`
+  and apply the security headers in `vercel.json`. Driven from a dev box via
+  `scripts/ship.sh`.
+- **GitHub Pages / Netlify / Cloudflare Pages** — build command `npm run build`,
+  output `dist`, no env vars. Static only: the `/api/` functions will 404 and the
+  `vercel.json` headers (CSP, HSTS, `X-Frame-Options`, COOP/CORP) do not apply,
+  so `bujocloud` sync and the feedback button stop working. For Pages
+  specifically, enable it under *Repo → Settings → Pages → Build and deployment:
+  GitHub Actions* **before** restoring a deploy workflow, or it fails with a 404.
 
 Because there is no backend, hosting never sees user data — it only serves the
 app shell. A true multi-device account/sync backend is intentionally out of
