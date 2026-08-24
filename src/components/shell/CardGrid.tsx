@@ -25,9 +25,16 @@ import { cn } from '../../lib/cn'
  * <CardGrid>
  *   <Card title="Sessions">…</Card>
  *   <Card title="History" className={SPAN_2}>…</Card>   // a table
- *   <Card title="Heatmap" className={SPAN_ALL}>…</Card> // full bleed
  * </CardGrid>
  * ```
+ *
+ * There used to be a third helper, `SPAN_ALL` (`2xl:col-span-3`), for "full
+ * bleed". It had one call site — the Stats activity heatmap — and below 1536px
+ * it was byte-identical to `SPAN_2`, because the grid only has two columns
+ * there. So it read as a stronger claim than it made, and the one card using it
+ * spent 432–978px of its width empty (BUJO-280). Deleted rather than kept for a
+ * caller that does not exist: a card wanting the full row at 2xl can say
+ * `2xl:col-span-3` and be measured on it.
  *
  * `items-start`, not stretch: a short card next to a tall one should stay
  * short rather than grow a pocket of empty space to match its neighbour.
@@ -56,8 +63,8 @@ export function CardGrid({ children, className }: { children: ReactNode; classNa
  * 1. **Reading order becomes column-major.** Fine for a set of peer cards in no
  *    particular order — a principle library, a shelf of analytics. Wrong for
  *    anything sequenced, and wrong for anything paginated by eye.
- * 2. **`SPAN_2` / `SPAN_ALL` do not work.** There are no grid columns to span.
- *    Use `CardGrid` for any section that needs them.
+ * 2. **`SPAN_2` does not work.** There are no grid columns to span. Use
+ *    `CardGrid` for any section that needs it.
  *
  * `break-inside-avoid` on the children is load-bearing: without it a card splits
  * across the column boundary mid-content, which looks exactly like a rendering
@@ -94,6 +101,3 @@ export function MasonryGrid({ children, className }: { children: ReactNode; clas
 
 /** Two of the three columns — tables, wide charts, anything with an x-axis. */
 export const SPAN_2 = 'md:col-span-2 2xl:col-span-2'
-
-/** The full row at every step — heatmaps, calendars, the widest tables. */
-export const SPAN_ALL = 'md:col-span-2 2xl:col-span-3'

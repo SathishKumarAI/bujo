@@ -27,14 +27,18 @@ NoFap, KitchenSink, **Trackers, Insights, Stats**.
    allows one disclosure. This is the largest remaining gap in the cluster, and
    it is an IA decision about what Insights is *for* — not a refactor. Decide
    before coding.
-2. **BUJO-280 — the Activity heatmap leaves ~800px dead.** At 6mo its grid is
-   ~370px of fixed cells inside a `SPAN_ALL` card running ~1180. It cannot just
-   be narrowed: `SPAN_ALL` exists for the 1yr range at ~730px, so the range
-   control changes content width threefold. Needs a stretching cell or a
-   content-sized card.
-3. **BUJO-278 — `StatTile.color` is a no-op without an `icon`.** Audit every
-   call site passing `color` and no icon; some of them believe they are showing
-   a status signal and are not.
+2. ~~**BUJO-280 — the Activity heatmap leaves ~800px dead.**~~ **Half done.**
+   The card now sizes to its range, so dead width went 978 → 378 (3mo) and
+   796 → 196 (6mo), measured at 1440, and Achievements moved up into the freed
+   column. `SPAN_ALL` was deleted with it — one call site, and identical to
+   `SPAN_2` below 1536px. **BUJO-280b is what is left:** 1yr is unchanged at 432
+   because 53 fixed 11px cells cannot fill 1180 without a cell that stretches to
+   its container — a `DayGrid` change, and `DayGrid` has three callers.
+3. ~~**BUJO-278 — `StatTile.color` is a no-op without an `icon`.**~~ **Done.**
+   The prop is a union now, so `tsc -b` refuses `color` without `icon` instead
+   of rendering nothing. It found **45 dead call sites across 8 files**; all
+   deleted. BUJO-279 (the "today done" threshold) is still open — that one is a
+   product call about whether the number should carry a signal at all.
 4. **The remaining 20 views.** Highest value by size: `Gym` (709), `Pickleball`
    (633), then Monthly, Goals, Mindset, Reading, Collections, Focus.
 5. Answer **Q3** and **Q4**.
