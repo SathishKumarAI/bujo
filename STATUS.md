@@ -1,15 +1,26 @@
 # STATUS
 
-**Stopped:** 2026-08-23. Nothing half-built, nothing uncommitted.
+**Stopped:** 2026-08-24. Nothing half-built, nothing uncommitted.
 
 ## Start here next session
 
-1. **Merge PRs #113 → #123**, bottom-up, **with merge commits** (`gh pr merge N
-   --merge`). Eleven deep. This is the bottleneck for everything else.
-2. Then work `docs/redesign/13-page-contract-rollout.md` — the audited plan for
-   the UI, phase 2 onward.
-3. #127 (retire the dead Pages workflow) and #128 (this plan) can merge to
-   `main` any time; both are independent.
+Every open PR is `CLEAN` with CI `SUCCESS` except #96. Nothing is blocked on a
+fix — only on a decision to merge.
+
+| # | Task | Command / file | Blocks |
+|---|---|---|---|
+| 1 | Merge **#127** then **#128**. Both green, both independent, both small | `gh pr merge 127 --merge --delete-branch` | nothing |
+| 2 | Merge **#113 → #123** bottom-up, **merge commits, no `--delete-branch`** | `gh pr merge 113 --merge` … through 123 | everything below |
+| 3 | Delete the eleven merged branches, *after* step 2 finishes | `git push origin --delete <branch>` | — |
+| 4 | Phase 2 of the plan: convert Today, Insights, Stats, Trackers | `docs/redesign/13-page-contract-rollout.md` | needs step 2 |
+| 5 | Decide **#96** — conflicted since 2026-08-03, 3.4k lines, largely superseded by the chain in step 2. Probably a close | — | — |
+| 6 | Fix print (white-on-white). Small, self-contained | see Traps below | — |
+
+**Step 2 is the bottleneck.** `PageLayout` and every page primitive live in
+those eleven PRs; step 4 has nothing to import until they land.
+
+Do **not** start step 4 by writing code. The method's stop gate comes first:
+restate the goal, list reuse-vs-create, name the contradictions, then wait.
 
 ## What changed this session
 
@@ -22,7 +33,8 @@ and the photo-sync budget are shipped.
 | #125 four data-loss defects | merge commit `ce8ca6c` |
 | #126 photos travel with a push | merge commit `a023490` |
 
-Open PRs: **16 → 14** (#113–#123, #96, #107, plus #127 and this one).
+Open PRs: **16 at session start → 13 after merging → 15**, once #127 and #128
+were opened. The fifteen are #113–#123 (eleven), #96, #107, #127, #128.
 
 ## The merge rule this session paid for
 

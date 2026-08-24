@@ -86,6 +86,9 @@ PRs **#113 → #123**, bottom-up, in order. `PageLayout` and every primitive
 above live in those PRs; until they land on `main` the later phases have
 nothing to import.
 
+As of 2026-08-24 all eleven are `MERGEABLE` / `CLEAN` with CI `SUCCESS`. There
+is nothing to fix first — only the eleven merges, in order.
+
 **Use merge commits, not squash.** Squashing a stacked PR rewrites the parent's
 commits under a new SHA, so the child still carries the originals and conflicts
 add/add against them. This cost a recovery on #125 — see D-49 and the note
