@@ -8,10 +8,9 @@ import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
 import { labelOf } from '../domain/activities'
 import { currentStreak, longestStreak, search, taskCompletion } from '../lib/stats'
-import { insights, moodImpactRanking, weeklyDigest, weeklyHabitTrend, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights, type PeriodTrend } from '../lib/correlations'
+import { insights, moodImpactRanking, weeklyDigest, digestRangeLabel, streakLeaderboard, habitConsistencyScore, habitMonthlyDeltas, bestWorstWeekday, weekdayWeekendSplit, metricVolatility, momentumIndicator, pickleballInsights } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
-import { CountUp, Ring } from '../components/ui/ring'
-import { Page } from '../components/shell/Page'
+import { PageLayout, StatBar } from '../components/page'
 import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
@@ -38,7 +37,6 @@ export function Insights() {
   const found = insights(data)
   const moodImpact = moodImpactRanking(data)
   const digest = weeklyDigest(data)
-  const habitTrend = weeklyHabitTrend(data)
   const coach = coachDigest(data)
 
   // Cross-domain mood/metric reads.
@@ -87,8 +85,25 @@ export function Insights() {
   ])].sort().reverse()
 
   return (
-    <Page width="wide" className="gap-0 sm:gap-0">
-      {/* 1) The ritual + search utility lead, above all read-only analytics. */}
+    <PageLayout
+      tier={1180}
+      /* Stacked: zone 3 is a masonry of analytics panels and a six-drawer
+         cabinet, all of which want the full width. There is no narrow form
+         here to justify the 62/38 split. */
+      stacked
+      zone1={
+        <StatBar
+          facts={[
+            { label: 'current streak', value: `${streak}d`, onClick: () => nav('trackers') },
+            { label: 'tasks done', value: `${tasks.pct}%`, onClick: () => nav('today') },
+            { label: 'entries', value: data.entries.length, onClick: () => nav('today') },
+          ]}
+        />
+      }
+      /* Zone 2 is what you *do* on a page that is otherwise entirely read-only:
+         run the weekly review, and search. Everything below zone 2 is a record
+         being read back. */
+      zone2={<>
       <WeeklyReview />
 
       <Card band title="Search" subtitle="Find anything across your journal">
@@ -137,16 +152,17 @@ export function Insights() {
           </div>
         )}
       </Card>
+      </>}
+      zone3={<>
+      {/* The four-`Big` stat row is gone; zone 1 carries three of its facts as
+          a bar. "Longest streak" is not one of them — it was already printed in
+          Personal records under Lifetime, so the row's fourth tile was a
+          duplicate of a card further down the same page. The completion ring
+          went with it, on the rule Fitness's conversion set: a ring is a fifth
+          accent appearance even when it is neutral, and the ratio it drew is
+          already the number beside it. */}
 
-      {/* 2) Big-stat row. */}
-      <div className="grid grid-cols-2 items-start gap-3 sm:gap-5 lg:grid-cols-4">
-        <Big label="Current streak" value={streak} suffix="d" trend={habitTrend} trendLabel="habits vs last week" onClick={() => nav('trackers')} />
-        <Big label="Longest streak" value={best} suffix="d" onClick={() => nav('trackers')} />
-        <Big label="Tasks done" value={tasks.pct} suffix="%" sub={`${tasks.done}/${tasks.total}`} ring max={100} onClick={() => nav('today')} />
-        <Big label="Entries" value={data.entries.length} onClick={() => nav('today')} />
-      </div>
-
-      {/* 3) This-week digest — the cross-domain digest is what Insights is about. */}
+      {/* This-week digest — the cross-domain digest is what Insights is about. */}
       <MasonryGrid>
         <Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
           <ul className="space-y-1.5 text-body">
@@ -458,7 +474,8 @@ export function Insights() {
         <TagManager />
       </Section>
       </CardGrid>
-    </Page>
+      </>}
+    />
   )
 }
 
@@ -511,51 +528,3 @@ function ReviewRow({ icon: Icon, color, label, value }: { icon: IconGlyph; color
   )
 }
 
-/**
- * A headline figure at the top of the page.
- *
- * **The value is `fg-1`. There is no per-instance colour prop, on purpose.**
- *
- * These four tiles used to take one each: Current streak peach, Longest streak
- * mauve, Tasks done green, Entries sky — and the pickleball grid below cycled
- * the same four in the same order. The colour was a rotation, not a reading.
- * Nothing about "Entries" is sky, and a longest streak is not mauve for being
- * a record; the fifth tile would simply have started the cycle again.
- *
- * Four differently-coloured numbers side by side promise the reader four
- * different kinds of thing. All four are counts. So the colour was not merely
- * decorative — it was actively misleading, and it competed with the colour on
- * the same page that *does* carry a reading: the trend delta below each tile
- * (green up, red down, grey flat), the consistency score banded at 70 and 40,
- * the stability band, the habit-impact badges. Those all still colour, and they
- * are legible now that nothing shouts over them.
- *
- * The rule this page now follows: **a figure is `fg-1` unless its colour is
- * computed from its value.** If you cannot name the threshold, it does not get
- * a colour.
- */
-function Big({ label, value, sub, suffix = '', ring, max = 100, trend, trendLabel, onClick }: { label: string; value: number; sub?: string; suffix?: string; ring?: boolean; max?: number; trend?: PeriodTrend; trendLabel?: string; onClick?: () => void }) {
-  const TrendIcon = trend?.dir === 'up' ? TrendUp : trend?.dir === 'down' ? TrendDown : Minus
-  const trendColor = trend?.dir === 'up' ? 'green' : trend?.dir === 'down' ? 'red' : 'overlay0'
-  return (
-    <Card band className={`flex flex-col items-center text-center ${onClick ? 'cursor-pointer hover:border-mauve' : ''}`} onClick={onClick}>
-      {ring ? (
-        // The ring keeps a fill — a progress arc with no colour is not a
-        // progress arc — but one fill for every ring, not one per call site.
-        <Ring value={value} max={max} color="mauve" suffix={suffix} />
-      ) : (
-        <div className="text-display font-medium text-fg-1">
-          <CountUp value={value} suffix={suffix} />
-        </div>
-      )}
-      <div className="mt-1 text-body text-fg-2">{label}</div>
-      {sub && <div className="text-label text-fg-2">{sub}</div>}
-      {trend && (
-        <div className="mt-1 flex items-center gap-1 text-label" style={{ color: cat(trendColor) }} title={trendLabel}>
-          <AppIcon as={TrendIcon} size="sm" />
-          <span>{trend.dir === 'flat' ? 'flat' : `${trend.pct > 0 ? '+' : ''}${trend.pct}%`}</span>
-        </div>
-      )}
-    </Card>
-  )
-}
