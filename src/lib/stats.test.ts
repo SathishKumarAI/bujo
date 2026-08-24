@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentStreak, longestStreak, onThisDay, search, taskCompletion } from './stats'
+import { currentStreak, loggedWeek, longestStreak, onThisDay, search, taskCompletion } from './stats'
 import { emptyJournal } from './storage'
 import type { Entry, JournalData } from './types'
 
@@ -163,5 +163,29 @@ describe('reminderMessage (R2-8 smarter notifications)', () => {
     const m = reminderMessage(d, '2026-06-11')
     expect(m?.title).toContain('Day 2')
     expect(m?.body).toContain('2 of 2')
+  })
+})
+
+describe('loggedWeek', () => {
+  // 2026-08-16 is a Sunday, so with weekStart 0 the week runs Sun 16 → Sat 22.
+  const TODAY = '2026-08-16'
+
+  it('marks a day you logged something', () => {
+    const week = loggedWeek(withEntries([entry({ date: TODAY })]), TODAY, 0)
+    expect(week[0]).toEqual({ date: TODAY, logged: true, future: false })
+  })
+
+  it('never marks a future day as logged, however it was dated', () => {
+    // A task dated Friday makes Friday an "active day" — scheduling is not
+    // logging, and the strip used to claim the day on the strength of it.
+    const week = loggedWeek(withEntries([entry({ id: 'e2', date: '2026-08-21' })]), TODAY, 0)
+    const friday = week.find((d) => d.date === '2026-08-21')!
+    expect(friday).toEqual({ date: '2026-08-21', logged: false, future: true })
+  })
+
+  it('returns all seven days even on an empty journal', () => {
+    const week = loggedWeek(emptyJournal(), TODAY, 0)
+    expect(week).toHaveLength(7)
+    expect(week.every((d) => !d.logged)).toBe(true)
   })
 })

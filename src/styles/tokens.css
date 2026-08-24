@@ -135,10 +135,24 @@
 
      Migrate call sites before retiring the old classes: Tailwind v4 exits 0 on
      a stale utility and silently emits nothing, so a removed class does not
-     fail the build, it just changes the design. */
-  --radius-control: 0.5rem;   /* 8px */
-  --radius-card: 0.875rem;    /* 14px */
-  --radius-pill: 9999px;
+     fail the build, it just changes the design.
+
+     **All three are 0 as of the final phase of the Modernist redesign.** The
+     three names stay — every call site still says which *kind* of thing it is,
+     so a future theme can give controls back their 8px without hunting 400
+     class strings. Zero radius is one of the four rules the redesign is built on
+     (2px/1px rules, radius 0, flush-left, accent for state only), and it is the
+     one rule that cannot be applied page by page: a flat page containing eight
+     rounded controls reads as a mistake, not as a migration.
+
+     This is the last seam of the staged rollout. Phases 1–6 flattened
+     page-owned chrome and left every shared primitive alone deliberately —
+     `StatTile`, `Input`, `Button`, `Segmented`, `CaptureBar`, `EntryRow` — so
+     that a half-converted app still worked. They all change here, in one line
+     each, for every page at once. */
+  --radius-control: 0rem;
+  --radius-card: 0rem;
+  --radius-pill: 0rem;
 
   /* ── Containers ───────────────────────────────────────────────────────────
      Two tiers, deliberately. Reading and capture want a short line; heatmaps,
