@@ -356,12 +356,12 @@ export function Settings() {
         <TabsContent value="data">
           <Card band title="Your data at a glance" subtitle="Everything stored on this device" className="mb-5">
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-              <StatTile compact label="Entries" value={data.entries.length} color="mauve" />
-              <StatTile compact label="Habits" value={data.habits.filter((h) => !h.archived).length} color="green" />
-              <StatTile compact label="Workouts" value={data.workouts.length} color="peach" />
-              <StatTile compact label="Memories" value={data.memories.length} color="sky" />
-              <StatTile compact label="Photos" value={(data.progressPhotos?.length ?? 0) + data.memories.filter((m) => m.photo).length} color="pink" />
-              <StatTile compact label="KB stored" value={Math.round((JSON.stringify(data).length / 1024))} color="teal" />
+              <StatTile compact label="Entries" value={data.entries.length} />
+              <StatTile compact label="Habits" value={data.habits.filter((h) => !h.archived).length} />
+              <StatTile compact label="Workouts" value={data.workouts.length} />
+              <StatTile compact label="Memories" value={data.memories.length} />
+              <StatTile compact label="Photos" value={(data.progressPhotos?.length ?? 0) + data.memories.filter((m) => m.photo).length} />
+              <StatTile compact label="KB stored" value={Math.round((JSON.stringify(data).length / 1024))} />
             </div>
             {(() => {
               // localStorage budget is ~5 MB. This measures the JSON blob only,
@@ -542,10 +542,10 @@ export function Settings() {
                 <Disclosure title="Journal summary" subtitle="the span and shape of everything you've tracked">
                   <Card band title="Journal summary" subtitle="The span and shape of everything you've tracked">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      <StatTile compact label="First day" value={sum.firstDay ?? '—'} color="lavender" />
-                      <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} color="lavender" />
-                      <StatTile compact label="Days span" value={sum.spanDays} color="blue" />
-                      <StatTile compact label="Active days" value={sum.activeDays} color="green" />
+                      <StatTile compact label="First day" value={sum.firstDay ?? '—'} />
+                      <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} />
+                      <StatTile compact label="Days span" value={sum.spanDays} />
+                      <StatTile compact label="Active days" value={sum.activeDays} />
                     </div>
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-label">

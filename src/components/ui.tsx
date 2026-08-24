@@ -276,8 +276,14 @@ export function Card({
  *
  * Moving the tint to the icon rather than deleting it keeps the tiles from
  * going grey and, more usefully, puts the decoration somewhere the eye already
- * reads as decoration. No call site changed — the prop means what it always
- * meant, it just applies where it does no harm.
+ * reads as decoration. **That left 45 call sites passing a colour and no icon,
+ * which drew nothing** — including four "accents" on Trackers that an audit
+ * counted as rendered. They are gone now (BUJO-278), and the prop union below
+ * makes the same mistake a type error instead of an invisible one.
+ *
+ * Two of the deleted ones did compute their colour from the value — DUPR
+ * "Change" and pickleball "Net". Neither got an icon back: both already print
+ * their own `+`/`−`, and a sign reads in greyscale where a hue does not.
  *
  * The rule: **a figure is `fg-1` unless its colour is computed from its value.**
  * If you cannot name the threshold, it does not get a colour.
@@ -294,14 +300,20 @@ export function StatTile({
 }: {
   label: ReactNode
   value: ReactNode
-  /** Tints `icon` only — it does **not** colour the value. See BUJO-278. */
-  color?: string
-  icon?: ReactNode
   onClick?: () => void
   title?: string
   compact?: boolean
   className?: string
-}) {
+} & (
+  /**
+   * `color` tints `icon` and nothing else, so passing one without the other
+   * renders exactly nothing. That shipped on ~38 call sites — three accents on
+   * Trackers were audited as "drawn" while being props only. The union makes it
+   * a type error rather than a thing you have to remember. See BUJO-278.
+   */
+  | { icon: ReactNode; color?: string }
+  | { icon?: undefined; color?: never }
+)) {
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag

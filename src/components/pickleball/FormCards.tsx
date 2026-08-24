@@ -39,9 +39,9 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={TrendUp} size="md" className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
       <div className="grid grid-cols-3 gap-2">
-        <StatTile compact label="Current win %" value={`${forecast.current}%`} color="green" />
+        <StatTile compact label="Current win %" value={`${forecast.current}%`} />
         <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <Icon as={TrendUp} size="sm" /> : forecast.direction === 'down' ? <Icon as={TrendDown} size="sm" /> : <Icon as={Minus} size="sm" />} />
-        <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} color={forecast.slope > 0 ? 'green' : forecast.slope < 0 ? 'red' : 'overlay0'} />
+        <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} />
       </div>
       <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
         <Pill color={forecast.readiness === 'ready' ? 'green' : forecast.readiness === 'consolidating' ? 'yellow' : 'sky'} className="px-2.5 py-1 font-medium">
@@ -79,9 +79,9 @@ export function SessionIntensityCard({ load }: { load: RpeLoad }) {
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Session intensity</span>} subtitle={`From RPE on ${load.sessions} ${load.sessions === 1 ? 'session' : 'sessions'}`} collapsible>
       <div className="grid grid-cols-3 gap-2">
-        <StatTile compact label="Avg RPE" value={load.avg} color={load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green'} />
-        <StatTile compact label="Hardest" value={load.hardest} color="red" />
-        <StatTile compact label="7-day load" value={load.weekLoad} color="mauve" />
+        <StatTile compact label="Avg RPE" value={load.avg} />
+        <StatTile compact label="Hardest" value={load.hardest} />
+        <StatTile compact label="7-day load" value={load.weekLoad} />
       </div>
       <p className="mt-3 text-label text-fg-2">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
     </Card>

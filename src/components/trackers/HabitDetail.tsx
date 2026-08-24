@@ -121,12 +121,12 @@ export function HabitDetail({
         <div className="space-y-4 p-5">
           {/* Stat tiles */}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            <StatTile compact label={avoid ? 'clean' : 'streak'} value={<span className="inline-flex items-center gap-0.5">{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</span>} color={avoid ? 'green' : 'peach'} />
-            <StatTile compact label="best ever" value={best} color="mauve" />
-            <StatTile compact label="30-day" value={`${r30.pct}%`} color="green" />
-            <StatTile compact label="90-day" value={`${r90.pct}%`} color="teal" />
-            <StatTile compact label="best day" value={wd.best == null ? '—' : WEEKDAYS[wd.best]} color="blue" />
-            <StatTile compact label="perfect wks" value={perfect} color="sky" />
+            <StatTile compact label={avoid ? 'clean' : 'streak'} value={<span className="inline-flex items-center gap-0.5">{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</span>} />
+            <StatTile compact label="best ever" value={best} />
+            <StatTile compact label="30-day" value={`${r30.pct}%`} />
+            <StatTile compact label="90-day" value={`${r90.pct}%`} />
+            <StatTile compact label="best day" value={wd.best == null ? '—' : WEEKDAYS[wd.best]} />
+            <StatTile compact label="perfect wks" value={perfect} />
           </div>
 
           {/* Habit strength meter (BUJO-243): recency-weighted consistency + grade. */}

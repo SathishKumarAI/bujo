@@ -36,9 +36,9 @@ export function PointDifferentialCard({ points }: { points: PointDiff }) {
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-teal" /> Point differential</span>} subtitle={`Across ${points.sessions} ${points.sessions === 1 ? 'session' : 'sessions'} with logged points`} collapsible>
       <div className="grid grid-cols-3 gap-2">
-        <StatTile compact label="Points for" value={points.pointsFor} color="green" />
-        <StatTile compact label="Points against" value={points.pointsAgainst} color="red" />
-        <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} color={points.diff > 0 ? 'green' : points.diff < 0 ? 'red' : 'overlay0'} />
+        <StatTile compact label="Points for" value={points.pointsFor} />
+        <StatTile compact label="Points against" value={points.pointsAgainst} />
+        <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} />
       </div>
       <p className="mt-3 text-label text-fg-2">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
     </Card>
@@ -50,10 +50,10 @@ export function TimeOnCourtCard({ hours }: { hours: PickleHours }) {
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Clock} size="md" className="text-sky" /> Time on court</span>} subtitle={`From duration on ${hours.timedSessions} ${hours.timedSessions === 1 ? 'session' : 'sessions'}`} collapsible>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatTile compact label="Total hours" value={hours.hours} color="sky" />
-        <StatTile compact label="Last 30d" value={`${hours.recentHours}h`} color="teal" />
-        <StatTile compact label="Avg session" value={`${hours.avgMin}m`} color="blue" />
-        <StatTile compact label="Min / game" value={hours.minPerGame || '—'} color="mauve" />
+        <StatTile compact label="Total hours" value={hours.hours} />
+        <StatTile compact label="Last 30d" value={`${hours.recentHours}h`} />
+        <StatTile compact label="Avg session" value={`${hours.avgMin}m`} />
+        <StatTile compact label="Min / game" value={hours.minPerGame || '—'} />
       </div>
       <p className="mt-3 text-label text-fg-2">Add Minutes when logging a session to track time invested. Min/game is your court tempo — lower means faster games.</p>
     </Card>
@@ -87,10 +87,10 @@ export function PlayConsistencyCard({ consistency }: { consistency: PlayConsiste
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarCheck} size="md" className="text-green" /> Play consistency</span>} subtitle="How regularly you get on court" collapsible>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatTile compact label="Days played" value={consistency.daysPlayed} color="green" />
-        <StatTile compact label={`Active wks / ${consistency.weeks}`} value={consistency.activeWeeks} color="teal" />
-        <StatTile compact label="Avg gap" value={consistency.avgGap ? `${consistency.avgGap}d` : '—'} color="blue" />
-        <StatTile compact label="Longest gap" value={consistency.longestGap ? `${consistency.longestGap}d` : '—'} color="peach" />
+        <StatTile compact label="Days played" value={consistency.daysPlayed} />
+        <StatTile compact label={`Active wks / ${consistency.weeks}`} value={consistency.activeWeeks} />
+        <StatTile compact label="Avg gap" value={consistency.avgGap ? `${consistency.avgGap}d` : '—'} />
+        <StatTile compact label="Longest gap" value={consistency.longestGap ? `${consistency.longestGap}d` : '—'} />
       </div>
       {consistency.daysSinceLast != null && (
         <p className="mt-3 text-label text-fg-2">
