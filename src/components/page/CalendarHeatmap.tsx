@@ -29,6 +29,7 @@ export function CalendarHeatmap({
   label,
   unit = '',
   today = todayISO(),
+  size,
 }: {
   weeks?: number
   data: HeatDatum[]
@@ -37,6 +38,11 @@ export function CalendarHeatmap({
   /** Appended to each cell's spoken value, e.g. "min". */
   unit?: string
   today?: string
+  /** Cell edge in px. Defaults to `DayGrid`'s 11 — the Body cluster's size,
+   *  which is tuned for a grid sharing its column with a form. A band that
+   *  gives the grid a column of its own (Mindset) passes a larger cell rather
+   *  than leaving 300px of empty space beside a postage stamp. */
+  size?: number
 }) {
   const days = useMemo<DayCell[]>(() => {
     const byDate = new Map<string, number>()
@@ -70,9 +76,17 @@ export function CalendarHeatmap({
 
   const trained = days.filter((d) => d.level > 0).length
   return (
-    <div className="overflow-x-auto">
+    // Focusable, because it scrolls. A `overflow-x-auto` box that no control
+    // inside can be tabbed to is unreachable by keyboard — axe `serious:
+    // scrollable-region-focusable`, and true: the grid is a table of static
+    // cells, so without this the right-hand weeks simply cannot be reached
+    // without a mouse. It only overflowed once Mindset asked for a larger cell,
+    // which is how a phone-width scan caught a primitive that had shipped for
+    // months.
+    <div className="overflow-x-auto" tabIndex={0} role="group" aria-label={label ?? 'Activity grid'}>
       <DayGrid
         days={days}
+        size={size}
         color="mauve"
         label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${weeks} weeks`}
       />

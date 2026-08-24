@@ -11,6 +11,16 @@ export interface MindsetPrinciple {
   category: string
 }
 
+/**
+ * How many principles can be in focus at once.
+ *
+ * A cap, not a preference: the page's own advice was "keep it to 1–3 at a time
+ * — focus beats breadth", and a list that grew past that quietly contradicted
+ * it. Rendering is defensive about journals that already hold more (see
+ * `FocusSlots`) — nothing is ever hidden, the cap only stops new additions.
+ */
+export const MINDSET_MAX_FOCUS = 3
+
 export const MINDSET_CATEGORIES = [
   'Focus & presence', 'Resilience', 'Growth mindset',
   'Composure', 'Confidence', 'Discipline', 'Connection',
