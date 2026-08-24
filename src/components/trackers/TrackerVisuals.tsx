@@ -124,8 +124,8 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
       {/* Perfect days: every scheduled build habit done. Rewards full days, not single habits. */}
       <Card band title="Perfect days" subtitle="Days you completed every scheduled habit (90 days)">
         <div className="grid grid-cols-2 gap-2">
-          <StatTile label="perfect days" value={perfect.total} color="green" />
-          <StatTile label="current streak" value={perfect.streak} color="peach" />
+          <StatTile label="perfect days" value={perfect.total} />
+          <StatTile label="current streak" value={perfect.streak} />
         </div>
         <p className="mt-2 text-label text-fg-2">
           {perfect.streak > 0

@@ -272,7 +272,7 @@ export function KitchenSink() {
       <Card title="Data display">
         <Row label="StatTile">
           <StatTile label="Streak" value="12 days" />
-          <StatTile label="Best ever" value="31 days" color="green" />
+          <StatTile label="Best ever" value="31 days" />
         </Row>
         <Row label="Ring">
           <Ring value={72} label="Today" suffix="%" />

@@ -802,9 +802,9 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
         <div className="space-y-3 p-4">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
-            <StatTile label="day streak" value={streak} color="peach" />
-            <StatTile label="best ever" value={bestEver} color="yellow" />
-            <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} color="green" />
+            <StatTile label="day streak" value={streak} />
+            <StatTile label="best ever" value={bestEver} />
+            <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} />
           </div>
           <p className="text-label text-fg-2">
             Strongest on <span className="text-fg-1">{bestDow}</span>{worstDow && <> · weakest on <span className="text-fg-1">{worstDow}</span></>}. <Momentum data={data} habit={habit} today={today} />

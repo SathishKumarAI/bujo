@@ -294,10 +294,10 @@ export function Pickleball() {
       <CardGrid>
       <Card band title="At a glance" subtitle="Your pickleball record" className={SPAN_2}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <StatTile compact label="Sessions" value={all.sessions} color="mauve" />
-          <StatTile compact label="Games" value={all.games} color="blue" />
+          <StatTile compact label="Sessions" value={all.sessions} />
+          <StatTile compact label="Games" value={all.games} />
           <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
-          <StatTile compact label="Day streak" value={streak} color="peach" />
+          <StatTile compact label="Day streak" value={streak} />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
           <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
@@ -395,9 +395,9 @@ export function Pickleball() {
         ) : (
           <>
             <div className="mb-3 grid grid-cols-3 gap-2">
-              <StatTile compact label="Latest" value={duprStats.latest ?? '—'} color="mauve" />
+              <StatTile compact label="Latest" value={duprStats.latest ?? '—'} />
               <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
-              <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} color={duprStats.direction === 'up' ? 'green' : duprStats.direction === 'down' ? 'red' : 'overlay0'} />
+              <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
             </div>
             {duprStats.points.length >= 2 && (
               <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
@@ -431,8 +431,8 @@ export function Pickleball() {
             DUPR tracker and collapsed. ── */}
       <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
         <div className="mb-4 grid grid-cols-3 gap-2">
-          <StatTile compact label="Events" value={events.length} color="mauve" />
-          <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} color="blue" />
+          <StatTile compact label="Events" value={events.length} />
+          <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} />
           <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
         </div>
         {/* log an event */}

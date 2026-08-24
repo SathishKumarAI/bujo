@@ -712,7 +712,7 @@ props are removed.
 
 | ID | Title | Status |
 |---|---|---|
-| BUJO-278 | **`StatTile`'s `color` prop silently does nothing without an `icon`.** Either colour the value, or make the prop require an icon in the type. Every call site passing `color` and no icon is currently a no-op — audit them all | 🔜 |
+| BUJO-278 | **`StatTile`'s `color` prop silently does nothing without an `icon`.** ✅ **Done 2026-08-24** — the prop is now a union (`{icon, color?}` \| `{icon?: undefined, color?: never}`), so `tsc -b` refuses the combination instead of rendering nothing. It named **45 dead call sites across 8 files**; all 45 deleted. Two of them did compute their colour from the value (DUPR "Change", pickleball "Net") and got no icon back — both already print their own `+`/`−`, which reads in greyscale where a hue does not. `StatTile.test.tsx` asserts the tinted and untinted markup are byte-identical, which is the measurement that made deleting them safe | ✅ |
 | BUJO-279 | The "today done" tile's green/yellow/peach threshold was intended as a status signal and has never rendered. Decide whether it should — it is the one number on this strip with an unambiguous direction | 🔜 |
 
 **2026-08-24, Phase B part 2 + Phase E — the contract rollout.**
