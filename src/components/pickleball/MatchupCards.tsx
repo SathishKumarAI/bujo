@@ -7,7 +7,7 @@ import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../
 /** Partner chemistry · win rate by doubles partner. */
 export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Users} size="md" className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Users} size="md" className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
       <ul className="space-y-3">
         {partners.map((p) => (
           <li key={p.partner}>
@@ -15,8 +15,8 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
               <span className="min-w-0 truncate text-fg-1">{p.partner}</span>
               <span className="shrink-0 text-fg-2">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: cat('green') }}>{p.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
-              <div className="h-full rounded-pill" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
+            <div className="h-2.5 overflow-hidden rounded-none bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
+              <div className="h-full rounded-none" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
             </div>
           </li>
         ))}
@@ -29,7 +29,7 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
 /** Courts & venues · games & win % by location. */
 export function VenuesCard({ venues }: { venues: VenueStat[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={MapPin} size="md" className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={MapPin} size="md" className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
       <ul className="divide-y divide-surface0">
         {venues.map((v) => (
           <li key={v.location} className="flex items-center justify-between gap-2 py-2 text-body">
@@ -49,7 +49,7 @@ export function VenuesCard({ venues }: { venues: VenueStat[] }) {
 /** Rivalry record book · head-to-head game record by opponent. */
 export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" className="text-red" /> Rivalry record book</span>} subtitle="Head-to-head game record by opponent" collapsible>
       <ul className="divide-y divide-surface0">
         {opponents.map((o) => (
           <li key={o.opponent} className="flex items-center justify-between gap-2 py-2 text-body">
@@ -71,7 +71,7 @@ export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }
 /** Performance by opponent level (#478). */
 export function LevelMatchupCard({ matchup }: { matchup: LevelBucket[] }) {
   return (
-    <Card title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
+    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-yellow" /> Performance by opponent level</span>} subtitle="Win % vs stronger, similar &amp; weaker fields" collapsible>
       <ul className="space-y-3">
         {matchup.map((m) => (
           <li key={m.bucket}>
@@ -79,8 +79,8 @@ export function LevelMatchupCard({ matchup }: { matchup: LevelBucket[] }) {
               <span className="text-fg-1">{m.label}</span>
               <span className="text-fg-2">{m.games} games · <span style={{ color: cat('green') }}>{m.winPct}%</span></span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
-              <div className="h-full rounded-pill" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
+            <div className="h-2.5 overflow-hidden rounded-none bg-ink-2" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
+              <div className="h-full rounded-none" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
             </div>
           </li>
         ))}

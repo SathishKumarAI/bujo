@@ -11,7 +11,7 @@ const INTENSITY_LABELS = ['Faint', 'Mild', 'Moderate', 'Strong', 'Intense']
 /** Urge-intensity distribution (#74) · how strong, and whether it's weakening. */
 export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`}>
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PersonSimpleRun} size="md" className="text-peach" /> Urge intensity</span>} subtitle={`Averaging ${intensity9.avg}/5${intensity9.mode ? ` · mostly ${INTENSITY_LABELS[intensity9.mode - 1].toLowerCase()}` : ''}`}>
       <div className="space-y-1.5">
         {intensity9.buckets.map((c, i) => {
           const pct = intensity9.rated > 0 ? Math.round((c / intensity9.rated) * 100) : 0
@@ -19,8 +19,8 @@ export function UrgeIntensityCard({ intensity9 }: { intensity9: Intensity }) {
           return (
             <div key={i} className="flex items-center gap-2 text-label">
               <span className="w-16 shrink-0 text-fg-2">{i + 1} · {INTENSITY_LABELS[i]}</span>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
-                <div className="h-full rounded-pill transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
+              <div className="h-2.5 flex-1 overflow-hidden rounded-none" style={{ background: cat('surface0') }}>
+                <div className="h-full rounded-none transition-[width] duration-500" style={{ width: `${pct}%`, background: isMode ? cat('peach') : cat('surface1') }} />
               </div>
               <span className="w-8 shrink-0 text-right text-fg-2">{c}</span>
             </div>

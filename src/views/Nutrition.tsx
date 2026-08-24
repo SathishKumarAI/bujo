@@ -92,7 +92,7 @@ export function Nutrition() {
             <select
               value={pick}
               onChange={(e) => setPick(e.target.value)}
-              className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1"
+              className="mt-1 w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1"
             >
               <option value="">Choose a food…</option>
               <optgroup label="Indian">
@@ -269,7 +269,7 @@ function MacroBar({ metric, totalG }: { metric?: { protein?: number; carbs?: num
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-label text-fg-2">
         {MACROS.map((mac) => (
           <li key={mac.key}>
-            <span className="mr-1 inline-block h-2 w-2 rounded-pill align-middle" style={{ background: cat(mac.color) }} />
+            <span className="mr-1 inline-block h-2 w-2 rounded-none align-middle" style={{ background: cat(mac.color) }} />
             {mac.label} {metric?.[mac.key] ?? 0} / {TARGET[mac.key]} g
           </li>
         ))}
@@ -293,7 +293,7 @@ function Bar({ label, segments, empty = false, muted = false }: {
           denominator, a segment's width is its share of whichever total is
           larger — a number that means nothing said out loud. Grams are what the
           legend below states and what the reader actually wants. */}
-      <div className="flex h-4 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={
+      <div className="flex h-4 overflow-hidden rounded-none bg-ink-2" role="img" aria-label={
         empty ? `${label}: nothing logged yet`
           : `${label}: ${segments.map((s) => `${s.label} ${Math.round(s.grams)} g`).join(', ')}`
       }>

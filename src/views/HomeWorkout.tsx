@@ -51,12 +51,12 @@ export function HomeWorkout() {
   }
 
   return (
-    <Page width="wide">
+    <Page width="wide" className="gap-0 sm:gap-0">
       {/* Three across. All three cards are empty until you build a session, and
           stacked they read as three separate failures rather than one start. */}
       <CardGrid>
       {/* PRIMARY: build & log today's session first, before the library/history (UX IA pass) */}
-      <Card title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>} subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Add exercises from the library'}>
         {items.length === 0 ? (
           <Empty>Tap “Add” on an exercise to build your session.</Empty>
         ) : (
@@ -77,7 +77,7 @@ export function HomeWorkout() {
         )}
       </Card>
 
-      <Card title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
+      <Card band title="Recent home workouts" subtitle="Tap a day to see exercises & reps">
         {sessions.length === 0 ? (
           <Empty>Finish a session to start building your history.</Empty>
         ) : (
@@ -108,20 +108,20 @@ export function HomeWorkout() {
       </Card>
 
       {/* Catalog is reference · folded below the active session builder + history. */}
-      <Card title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible>
+      <Card band title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {MUSCLES.map((m) => (
             <button
               key={m}
               onClick={() => setFilter(m)}
-              className="rounded-pill border px-2.5 py-1 text-label capitalize transition-colors"
+              className="rounded-none border px-2.5 py-1 text-label capitalize transition-colors"
               style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
             >{m}</button>
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {lib.map((ex) => (
-            <div key={ex.id} className="rounded-card border border-line bg-ink-0 p-3">
+            <div key={ex.id} className="rounded-none border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-heading">{ex.emoji}</span>
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>

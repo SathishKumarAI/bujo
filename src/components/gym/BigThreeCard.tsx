@@ -13,7 +13,7 @@ import type { BigThreeTotal } from '../../lib/fitness'
 export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal; unit: string; setFocusEx: (e: string | null) => void }) {
   const liftColor: Record<string, string> = { Squat: 'green', Bench: 'red', Deadlift: 'blue' }
   return (
-    <Card title="Big-three total" subtitle="Squat + bench + deadlift, your powerlifting number" defer>
+    <Card band title="Big-three total" subtitle="Squat + bench + deadlift, your powerlifting number" defer>
       {total.total === 0 ? (
         <Empty>Log a squat, bench, and deadlift to build your total.</Empty>
       ) : (
@@ -24,7 +24,7 @@ export function BigThreeCard({ total, unit, setFocusEx }: { total: BigThreeTotal
                 key={l.lift}
                 onClick={() => l.weight > 0 && setFocusEx(l.lift)}
                 disabled={l.weight === 0}
-                className="rounded-card border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
+                className="rounded-none border border-line bg-ink-0 px-3 py-2.5 text-left disabled:cursor-default"
                 title={l.weight > 0 ? `Best ${l.lift}: ${l.weight}${unit}${l.date ? ` on ${l.date}` : ''}` : `No ${l.lift} logged yet`}
               >
                 <p className="text-label text-fg-1">{l.lift}</p>

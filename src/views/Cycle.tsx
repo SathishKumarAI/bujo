@@ -27,8 +27,8 @@ export function Cycle() {
   }
 
   return (
-    <Page>
-      <Card title="Daily entry" subtitle="Tap a day to log temperature and flags">
+    <Page className="gap-0 sm:gap-0">
+      <Card band title="Daily entry" subtitle="Tap a day to log temperature and flags">
         <div className="overflow-x-auto">
           <table className="text-label">
             <tbody>
@@ -56,7 +56,7 @@ export function Cycle() {
                             onClick={() => toggleFlag(d, f)}
                             aria-pressed={on}
                             aria-label={`${f}${on ? ' (on)' : ''}`}
-                            className="rounded-pill px-2 py-0.5"
+                            className="rounded-none px-2 py-0.5"
                             style={{ background: on ? cat('red') : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}
                           >
                             {f}
@@ -72,7 +72,7 @@ export function Cycle() {
         </div>
       </Card>
 
-      <Card
+      <Card band
         title="Cycle & temperature"
         subtitle="A private, neutral chart. Read “Taking Charge of Your Fertility” to interpret."
       >

@@ -22,7 +22,7 @@ export function TimeReclaimedCard({
   onHoursPerDayChange: (h: number) => void
 }) {
   return (
-    <Card hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Hourglass} size="md" className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost, across all your clean days">
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Hourglass} size="md" className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost, across all your clean days">
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-display font-medium leading-none" style={{ color: cat('teal') }}>{reclaimed.hours}</div>
