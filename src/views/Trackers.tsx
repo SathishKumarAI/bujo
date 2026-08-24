@@ -613,13 +613,22 @@ function CategoryRows({
                   and un-shrinkable now, and the badges wrap under it — which is
                   the right way round, because the row is useless without the
                   one thing it is naming. */}
-              <div className="flex max-w-[44vw] flex-wrap items-center gap-0.5 sm:max-w-[260px]">
+              {/* `pl-7` + `-ml-7` on the first child: the padding indents every
+                  *wrapped* line to sit under the habit name, and the negative
+                  margin cancels it for the first line so nothing moves for rows
+                  whose badges already fit. Without it a wrapped badge started at
+                  the cell's left edge — left of the name it belongs to — so
+                  "2/7wk" under Sugar and "5d clean" under Vegetables read as
+                  belonging to the *next* habit. Splitting the cell into two rows
+                  would have fixed the alignment and made every row two lines
+                  tall, which is a worse trade in a table this dense. */}
+              <div className="flex max-w-[44vw] flex-wrap items-center gap-0.5 pl-7 sm:max-w-[260px]">
                 <span
                   draggable
                   onDragStart={() => setDragId(h.id)}
                   onDragEnd={() => { setDragId(null); setOverId(null) }}
                   title="Drag to reorder"
-                  className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+                  className="-ml-7 shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
                 ><Icon as={DotsSixVertical} size="sm" /></span>
                 {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
