@@ -285,7 +285,6 @@ export function Card({
 export function StatTile({
   label,
   value,
-  hint,
   color = 'text',
   icon,
   onClick,
@@ -295,14 +294,7 @@ export function StatTile({
 }: {
   label: ReactNode
   value: ReactNode
-  /**
-   * A quieter second line under the label, for the qualifier that would
-   * otherwise be crushed into `value`. A tile's value is one figure; the moment
-   * it becomes two, the number stops being readable at a glance and the row
-   * stops being scannable. Omitted tiles keep their exact previous height.
-   */
-  hint?: ReactNode
-  /** Tints `icon` only — it does **not** colour the value. */
+  /** Tints `icon` only — it does **not** colour the value. See BUJO-278. */
   color?: string
   icon?: ReactNode
   onClick?: () => void
@@ -332,7 +324,6 @@ export function StatTile({
         {value}
       </div>
       <div className={cn('text-fg-2', compact ? 'text-micro' : 'mt-0.5 text-label')}>{label}</div>
-      {hint != null && <div className="mt-0.5 text-micro text-fg-3">{hint}</div>}
     </Tag>
   )
 }

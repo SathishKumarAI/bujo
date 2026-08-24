@@ -19,12 +19,28 @@ import { cn } from '../../lib/cn'
  */
 export function PageLayout({
   tier = 1180,
+  stacked = false,
   zone1,
   zone2,
   zone3,
   className = '',
 }: {
   tier?: 820 | 1180
+  /**
+   * Keep the wide container but do **not** split it into columns.
+   *
+   * The 62/38 split assumes the act is a form — narrow, capped at 380px — and
+   * the review is a list that reads happily in the remaining ~800px. A review
+   * that is a 31-column grid does not: Trackers needs ~910px for a full month
+   * and would gain a horizontal scrollbar in the 62% column, hiding the last
+   * week of the very thing the page exists to show. Its act is a horizontal
+   * chip strip anyway, which wants the full width and has no use for 380px.
+   *
+   * This is the variant the contract predicts — "needing a variant later means
+   * Stage 2 under-abstracted" — so it lives in the primitive rather than as a
+   * fork at the call site.
+   */
+  stacked?: boolean
   /** Orient. Omit on a page with nothing that changes the next thirty seconds. */
   zone1?: ReactNode
   /** Act. The page's single primary button lives in here. */
@@ -82,7 +98,7 @@ export function PageLayout({
 
   return (
     <div className={cn('page-shell page-enter mx-auto w-full', tier === 820 ? 'max-w-read' : 'max-w-wide', className)}>
-      <div className={cn('page-zones', tier === 820 && 'page-zones-single')}>
+      <div className={cn('page-zones', (tier === 820 || stacked) && 'page-zones-single')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
           <div ref={act} className="zone-act min-w-0" data-sticky={sticky}>
