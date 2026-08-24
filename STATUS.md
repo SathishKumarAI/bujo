@@ -1,119 +1,161 @@
 # STATUS
 
-**Stopped:** 2026-08-16. Nothing half-built, nothing uncommitted. Every branch
-below is pushed with an open PR and green gates.
+**Stopped:** 2026-08-24. Documents and merges only — **no code was written and
+no gate was run this session.**
 
-## Where things are
+## Start here next session
 
-Two independent lines of work. **Neither has merged, and that is now the
-bottleneck** — thirteen open PRs, most of them in one chain.
+Read **`docs/redesign/16-next-session.md`** first, then answer
+**`docs/QUESTIONS.md`** — ten decisions, each with a recommendation. Blank
+answers mean "take the recommendation"; say so out loud when you do.
 
-### Line 1 · the nav / UI chain (11 PRs, merge bottom-up from #113)
+| # | Task | Command / file | Blocks |
+|---|---|---|---|
+| 1 | Confirm the chain finished — #122, #123 were still merging at the stop point | `gh pr list --state open` | task 3 |
+| 2 | Answer or default `QUESTIONS.md`. Q1 (#96), Q3 ("spin up"), Q6 (Body's tab count) change what gets built | `docs/QUESTIONS.md` | task 3 |
+| 3 | **Phase A** — move Trackers from Insights to Body. ~10 lines, do not touch `Trackers.tsx` | BUJO-250..253 | Phase B |
+| 4 | Delete the merged branches — only after #123 lands, and never `--delete-branch` while a child PR still targets one | `git push origin --delete <branch>` | — |
+| 5 | Decide **#96** (3.4k lines, conflicted since 2026-08-03, superseded by Phase E) and **#107** (docs, CLEAN) | QUESTIONS Q1, Q2 | — |
+| 6 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
 
-| PR | Branch | What |
+## What changed this session
+
+**The Modernist chain is landing.** #127 and #113–#121 merged; #122 and #123
+were in flight at the stop point, run by a background script that resolves the
+conflict, waits for CI, and merges.
+
+**Twelve PRs, one conflicting file.** Across the whole chain the only conflict
+was `STATUS.md` — this file — and only because each merge rewrites it. **No code
+conflict anywhere.** The "the stack is scary" framing was one doc.
+
+**They are fully stacked**, each PR targeting its parent's branch, so each needs
+`gh pr edit <n> --base main` as its parent lands. Auto-merge is disabled on this
+repo, so each also has to wait for CI (~5 min) before `gh pr merge` will take it.
+
+Four new documents:
+
+| File | What |
+|---|---|
+| `docs/redesign/14-dashboard-inspiration.md` | The ShadcnStore reference, and the nine patterns **not** to copy |
+| `docs/redesign/15-fitness-consolidation.md` | The six-phase plan, and two corrections to the record |
+| `docs/redesign/16-next-session.md` | The handoff |
+| `docs/QUESTIONS.md` | Ten open decisions with recommendations |
+
+Plus `docs/TICKETS.md` Epic **FIT-IA**, BUJO-245..272, and a correction banner on
+`docs/redesign/13-page-contract-rollout.md`.
+
+## The two things this repo believed that were not true
+
+**1. The rollout was never blocked.** `13-page-contract-rollout.md:85` and this
+file's previous revision both said `PageLayout` and every page primitive lived
+only inside PRs #113–#123, so Phase 2 had nothing to import. All eleven files in
+`src/components/page/` have been on `main` throughout, and Fitness, Plan,
+Nutrition, NoFap and KitchenSink import them there. What the chain actually
+carries is the Modernist *look* — bands, radius 0, shell and nav.
+
+One command disproves it:
+
+```
+git ls-tree -r --name-only origin/main -- src/components/page
+```
+
+**2. Merging the chain does not do the redesign.** Today, Insights, Stats and
+Trackers have **zero** `components/page` imports on the chain tip. It restyles
+them 34–58 lines each and restructures none of them. The conversion is owed
+either way; merging first was about conflict order — #120–#122 edit
+`sections.ts`, #117 edits all four target views.
+
+**The lesson, now BUJO-272:** an adoption count is evidence about the branch it
+was taken on and nothing else. The previous session's own last trap — *judge a
+UI on the right branch* — existed, was written down, and still did not prevent
+this, because it was aimed at screenshots and the failure came through a grep.
+
+## The fitness question, answered
+
+**Body is already the fitness hub.** `src/components/shell/sections.ts` files
+Fitness, Strength, Pickleball, Coaching and Nutrition under it, with Program and
+Challenges arriving in #122 and Recovery/Cycle gated.
+
+The genuinely misfiled thing is **Trackers** — 1013 lines, the largest view in
+the app, filed under *Insights* while being where gym attendance, protein and
+steps actually get logged. That splits the daily loop across two rail sections.
+It is a move, not a rebuild — Phase A, BUJO-250.
+
+**Consequence to decide:** moving it makes Body ten tabs against a recorded
+ceiling of eight. QUESTIONS Q6 recommends splitting the rail into *Train* and
+*Body* rather than nesting — nesting is how Pickleball got buried once already,
+and `sections.ts`'s own docstring says that redirect "did not move the page, it
+deleted it".
+
+## Two hand-maintained datasets worth retiring
+
+Both replace a list in this repo, both are keyless, neither adds a dependency,
+and both stay **enrichment-only** so the app still works offline.
+
+| Source | License | Replaces |
 |---|---|---|
-| #113–#119 | `feat/modernist-*` | The Modernist redesign, page cluster by cluster |
-| #120 | `refactor/one-nav-bar` | Rail deleted; navigation is a two-row top bar |
-| #121 | `feat/header-scroll-collapse` | Row 1 folds on scroll; `TopBar` split into `topbar/` |
-| #122 | `feat/hypertrophy-tab` | Program + Challenges become Body tabs; anatomy bundled offline |
-| #123 | `chore/tab-work-followups` | Five follow-ups; a11y gate reaches companion views |
+| Open Food Facts search + barcode | ODbL, no key, CORS-enabled | `src/lib/foods.ts` — 50 typed-out items whose own header admits it sends you to a web search for anything else |
+| free-exercise-db | Unlicense (public domain) | `EXERCISE_LIBRARY`, `src/lib/fitness.ts:100` |
 
-Each is based on the one above it. Squash-merging bottom-up retargets the next
-automatically; **merging out of order will not work.**
+Rejected with reasons, so it is not relitigated: **wger** needs a self-hosted
+Django backend this local-first PWA deliberately lacks; **Nutritionix / Edamam /
+USDA FoodData Central** all require an API key, and a key in a client-side PWA
+is a published key; **any charting library** undoes the accent discipline.
 
-### Line 2 · data storage (3 PRs, off `main`)
+`fitness.test.ts` must be extended *before* the exercise swap —
+`musclesForExercise` feeds the muscle map and is what breaks silently.
 
-| PR | Branch | What |
-|---|---|---|
-| #124 | `feat/data-engineer-agent` | `data-engineer` subagent + `docs/DATA-STORE-DECISION.md` |
-| #125 | `fix/sync-data-loss` | Four silent data-loss defects fixed |
-| #126 | `fix/photo-sync-payload` | Photos sync, within a budget that cannot break the push |
+## shadcn is already installed
 
-Independent of line 1. #124 can merge to `main` on its own.
+`components.json` plus 17 primitives in `src/components/ui/` (button, dialog,
+command, popover, tabs, tooltip, scroll-area, switch, toggle-group, sonner…).
+"Use shadcn" is therefore not an adoption decision but a question of how far —
+see QUESTIONS Q4. The recommendation is to add only the primitives the rebuilt
+pages need (`card`, `badge`, `table`, `select`) rather than migrating the
+hand-rolled `ui.tsx`, because a repo-wide primitive sweep is exactly the change
+that silently alters content.
 
-## Next action
+## Deploy: there is none, on purpose
 
-1. **Merge line 1 bottom-up from #113.** It is eleven deep and every day it sits
-   is a day of drift against `main`.
-2. **Merge #124 → #125 → #126.** These fix live data loss.
-3. Then the two remaining items below are yours to choose, not defects to patch.
+Unchanged, and #127 (merged) retires the workflow. Pages ran 8 times and failed
+8 times — it was never enabled, and it could not serve this app anyway:
+`api/sync.ts` and `api/feedback.ts` are serverless functions, and Pages cannot
+set the CSP/HSTS/XFO/COOP headers. `vercel.json` and `api/` are kept for that
+reason. **The Environments tab lies** — `actions/deploy-pages` registers the
+deployment before calling the API, so the record predates the failure by 30
+seconds. There has never been a site behind it. See D-49, and QUESTIONS Q3.
 
-Eight of the ten defects in `DATA-STORE-DECISION.md` §8 are fixed. The two that
-are not are **design choices with real trade-offs**, which is why they were not
-taken unilaterally:
+## Still open, unchanged
 
-### F-7 · four sync writers can be live at once
+- **F-7** four sync writers can be live at once — a product call, not a defect.
+- **F-8** sync passphrase in plaintext `localStorage` — a product call.
+- **SQLite exporter** not built; its precondition is met.
+- **PR #96** (+2620/−767) conflicted since 2026-08-03, superseded by Phase E.
 
-The blob, folder, Supabase and PostgREST paths can all be enabled together, with
-debounce windows of 1500 / 2500 / 4000 / 4000 ms. They no longer *lose* data —
-every adopt path merges now — but they still interleave, and a slow round trip
-can make one overwrite another's newer push.
+## Traps
 
-The clean fix is **one sync target at a time**, which means a settings change
-and a decision about what happens to anyone who currently has two enabled. The
-cheap partial fix is a single shared debounce window so they at least stop
-racing each other on every keystroke.
+Everything in `CLAUDE.md` still applies. Added or re-confirmed this session:
 
-### F-8 · the sync passphrase sits in plaintext
-
-`bujo:sync` holds it in `localStorage`, beside the data it unlocks. Anything
-with DOM access on that origin can read both.
-
-There is no clean client-side fix: the passphrase *is* the decryption key, so
-anywhere the app can read it unattended, so can an attacker. The real options
-are to stop persisting it and prompt each session (worse UX, genuinely safer),
-or accept it and say so in the UI. Both are product calls.
-
-## Smaller, still open
-
-1. **The SQLite exporter** (step 7 of the decision doc) is not built. It was
-   gated on the data-loss fixes; **that precondition is now met**, so it is
-   ready to build whenever you want real SQL over the journal.
-2. **PR #96** (Today UX, +2620/−767) has been conflicted since 2026-08-03 and is
-   largely superseded. Probably a close, but it is 3.4k lines and not my call.
-3. **Body is eight tabs.** It works — the row scrolls and the active tab centres
-   — but that is the ceiling. A ninth needs a decision to split the section.
-4. `data-engineer` is not invocable until a session restart; the agent registry
-   is read at start-up.
-
-## Traps found this session
-
-- **`overflow-x-hidden` makes an element a scroll container.** Non-`visible` on
-  one axis forces the other to `auto`, and `position: sticky` sticks to the
-  nearest *scrolling* ancestor. `<main>` had it, so every sticky-under-header
-  element was inert for months while reading `--header-h` correctly. Use
-  `overflow-x: clip`. Symptom: the bar reads -544px instead of clamping.
-- **A collapsing in-flow header fights scroll anchoring.** Shrinking content
-  above the reader makes the browser move `scrollY`; a scroll listener reads
-  that as the user and flips back, forever (`44 → 25 → 9 → 35 → 24 …`). Fixed
-  with a settle window, not by disabling `overflow-anchor` — this app
-  lazy-loads charts and anchoring is what stops them shoving content.
-- **`grid-template-rows: 0fr` does not collapse without `min-height: 0`.** Grid
-  items default to `min-height: auto`, flooring the track at min-content.
-- **A page can be reachable in-app and broken by URL.** In-app navigation sets
-  state and never consults `VIEW_ALIASES`. Pull-ups and Home workout rendered
-  fine when clicked and bounced to Fitness on reload. No click-through test can
-  see it — check the address bar and reload.
-- **A hand-maintained list against a growing type will drift.** `mergeJournals`
-  covered 28 keys and `JournalData` had more, so three collections were dropped
-  silently on every merge. The guard now derives from `emptyJournal()`.
-- **An effect keyed on navigation misses resize.** `SectionTabs` re-centred on
-  `[view, gates]` only, so rotating left the page saying one thing and the tab
-  row showing another — and a fresh load at the same width looked perfect.
-- **A constant standing in for a measured value will be wrong.**
-  `PageLayout` used 64px for a 99px header, so a 563px act column was sticky
-  with its last 35px unreachable — the exact bug that code guards against.
-- **Green tests do not mean shippable.** The photo-sync draft passed 764 tests
-  and would have broken sync for every photo user; no test went near the payload
-  limit. Read what the change *enables*, not just what it asserts.
-- **The devtools screenshot can return a stale frame.** Two inline captures
-  showed an unfolded header while the DOM measured folded. Save to disk when the
-  picture matters; trust the measurement over the image.
+- **`:5173` was not this working copy.** The dev server for this branch came up
+  on **`:5174`** because something else already held 5173. Check the port's
+  process command line before treating a screenshot as evidence — this is the
+  worktree trap, and it fired on the first command of the session.
+- **`gh pr merge` reads a cached mergeability state.** Immediately after a push
+  it still reports "Pull Request has merge conflicts". Wait for GitHub to
+  recompute rather than concluding the resolution failed.
+- **Auto-merge is disabled on this repo** — `enablePullRequestAutoMerge` errors
+  with "Auto merge is not allowed for this repository". Every merge must wait on
+  CI in the foreground.
+- **Merging a stacked PR does not advance `main`** unless you retarget it first.
+  Without `gh pr edit <n> --base main` it merges into its parent's branch.
+- **Merging main into each branch separately breaks the ancestry**, so the tip
+  stops containing its siblings and you cannot shortcut by merging only the last
+  one. Merge them in order.
 
 ## Environment
 
-- Dev server was on :5200 this session; other worktrees hold 4173/5174/5199.
-  The a11y gate spawns its own preview on :4173.
-- `chrome-devtools` MCP worked; the `claude-in-chrome` extension was not
-  connected.
+- Dev server **:5174**, root repo, branch `docs/page-contract-rollout-plan`.
+  Something unidentified holds :5173.
+- `.claude/worktrees/` holds three empty orphan dirs — gitignored, safe to leave.
+- `chrome-devtools` MCP needs Chrome started with `--remote-debugging-port=9333`.
 - Demo data is persisted, not regenerated — re-seed via Settings → Data.
