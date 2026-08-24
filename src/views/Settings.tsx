@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
+import { TagManager } from '../components/TagManager'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
 import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '../lib/serverSync'
 import { pushCloud, pullCloud } from '../lib/bujocloud'
@@ -483,6 +484,13 @@ export function Settings() {
           <p className="text-label text-fg-2">Or open any view and <button onClick={() => window.print()} className="text-mauve hover:underline">print / save as PDF</button> · the app chrome is hidden automatically.</p>
         </div>
       </Card>
+
+      {/* Tags moved here from Insights (BUJO-281). It is a maintenance tool —
+          it rewrites every entry that carries a tag — not an analysis, so it
+          was the one thing on that page you could *change* something with, and
+          it sat behind a fold at the bottom of six. Between export and the
+          danger zone is where data you edit in bulk belongs. */}
+      <TagManager />
 
       <Card band title="Demo & reset" subtitle="Sample data, or start fresh">
         <div className="flex flex-wrap gap-2">

@@ -15,7 +15,6 @@ import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, prettyMonth } from '../lib/date'
-import { TagManager } from '../components/TagManager'
 import { WeeklyReview } from '../components/WeeklyReview'
 // Insights carried a private copy of this collapsible section header — the
 // same markup, minus the press affordance and the "show" hint. Three copies of
@@ -469,10 +468,11 @@ export function Insights() {
       )}
       </Section>
 
-      {/* 9) Maintenance — collapsed at the bottom. */}
-      <Section stickyKey="insights.tags" title="Tag manager" subtitle="merge, rename & retire tags">
-        <TagManager />
-      </Section>
+      {/* Tag manager used to be a seventh drawer here. It moved to Settings →
+          Data (BUJO-281): it is the only thing on this page that *changes*
+          anything — renaming a tag rewrites every entry carrying it — and a
+          bulk edit filed under "Insights" is filed by where it was built, not
+          by what it does. */}
       </CardGrid>
       </>}
     />
