@@ -580,3 +580,80 @@ already matched ~12/14 of HabitKit and ~26/30 of the comparison; built the real 
 | BUJO-243 | **Habit strength meter** — surface the existing recency-weighted `consistencyScore` + A–F `habitGrade` as a visible bar in the detail | ✅ |
 | BUJO-244 | **HabitKit-style "Cards" layout** — 4th tracker layout: each habit a large colourful 13-week tile-grid card; tap a cell to log (a new heatmap-grid logging surface). `components/GridCardsLayout.tsx` | ✅ |
 | — | Out of scope: home-screen widgets / Wear OS (native shell), social / community challenges (backend), MBTI (niche) | ⊘ |
+
+## Epic FIT-IA — one place for fitness, and the contract rollout (2026-08-24, appended)
+
+Session findings in `docs/redesign/15-fitness-consolidation.md`; open decisions
+in `docs/QUESTIONS.md`; the reference that says what *not* to copy is
+`docs/redesign/14-dashboard-inspiration.md`.
+
+**The premise this epic corrects:** the rollout was never blocked on the
+Modernist chain. `src/components/page/` — all eleven primitives — has been on
+`main` the whole time, with five views importing it. `13-page-contract-rollout.md`
+and `STATUS.md` both said otherwise. Separately, the chain tip has **zero**
+`components/page` imports in Today/Insights/Stats/Trackers, so merging it was
+about conflict order, not about doing the work.
+
+### Phase 0 — unblock (in flight this session)
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-245 | Merge the Modernist chain #113–#123 into `main`, merge commits, retargeting each to `main` as its parent lands. Only `STATUS.md` ever conflicts — no code conflict in twelve PRs | 🔜 |
+| BUJO-246 | Retire the Pages deploy workflow (#127) that ran 8 times and failed 8 times | ✅ |
+| BUJO-247 | Delete the twelve merged branches, **after** the chain finishes — never with `--delete-branch` while a child still targets one | 🔜 |
+| BUJO-248 | Decide PR #96 (Today UX, +2620/−767, conflicted since 2026-08-03, superseded by Phase E) — see QUESTIONS Q1 | 🔜 |
+| BUJO-249 | Decide PR #107 (worklog docs, CLEAN) — see QUESTIONS Q2 | 🔜 |
+
+### Phase A — Trackers is filed in the wrong section
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-250 | **Move Trackers from Insights to Body**, labelled "Tracking", ordered after Fitness. `Trackers.tsx` is 1013 lines — the largest view in the app — and it is where gym attendance and protein get logged, so filing it under Insights splits the daily loop across two sections | 🔜 |
+| BUJO-251 | Audit every list that resolves a view id after the move — `BottomNav`'s `PRIMARY` is silently filtered against sidebar items, so a moved id can drop a phone tab with **no error**; also the command palette, onboarding, and `deepLink` aliases | 🔜 |
+| BUJO-252 | Verify `?view=trackers` still resolves by **reloading the address bar**, not by clicking — in-app clicks never consult `VIEW_ALIASES` | 🔜 |
+| BUJO-253 | Decide Body's tab count — moving Trackers in makes it ten, against a recorded ceiling of eight. Recommend splitting the rail into *Train* and *Body* (QUESTIONS Q6) | 🔜 |
+
+### Phase B — Trackers on the page contract
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-254 | Write Trackers' slot table before any code: route, job, primary object, container tier, zone contents, signature visual, where the single accent is spent, empty state, what moves off | 🔜 |
+| BUJO-255 | Rebuild Trackers on `PageLayout` — orient (habits alive, today's completion), act (log today), review (heatmap + list). Target ≤ 2 raised cards, 1 accent, from 9 accents today | 🔜 |
+
+### Phase C/D — stop hand-maintaining public data
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-256 | **Open Food Facts search in Nutrition.** ODbL, no API key, CORS-enabled. Replaces the dead end in `src/lib/foods.ts`, whose own header admits it sends you to a web search for anything not in its 50 typed-out items. `fetch` only, no dependency | 🔜 |
+| BUJO-257 | Write **resolved macros** into the journal record, never a product id alone — or the entry stops reading correctly the day the API goes away | 🔜 |
+| BUJO-258 | Keep `FOODS` as the offline seed and make the network path an enrichment only. Test with the network stubbed out; this app is local-first and must log food with no connection | 🔜 |
+| BUJO-259 | Gate the outbound call behind a Settings toggle, off by default — a food search leaks what you are eating (QUESTIONS Q7) | 🔜 |
+| BUJO-260 | **free-exercise-db replaces `EXERCISE_LIBRARY`** (`src/lib/fitness.ts:100`). ~870 exercises, Unlicense/public domain, static JSON, data only — no images (QUESTIONS Q8) | 🔜 |
+| BUJO-261 | Extend `fitness.test.ts` **before** swapping the dataset. `musclesForExercise` feeds the muscle map and is the thing that will break silently | 🔜 |
+| — | Rejected: **wger** (needs a self-hosted Django backend this local-first PWA deliberately lacks); **Nutritionix / Edamam / USDA FoodData Central** (all require an API key, and a key in a client-side PWA is a published key); **any charting library** (undoes the accent discipline) | ⊘ |
+
+### Phase E — the four pages that are actually looked at
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-262 | Insights on the contract — **17 `<Card>` against a cap of 2, six accent colours against one**. The worst offender in the app by measurement | 🔜 |
+| BUJO-263 | Stats on the contract — 11 cards, 5 accents | 🔜 |
+| BUJO-264 | Today on the contract — 8 cards across `Today.tsx` + `today/cards.tsx`, 3 accents | 🔜 |
+| BUJO-265 | Graft §10 grid discipline onto each converted page: content-weighted column ratios (not uniform splits), one shared gap token for every gutter, cells filling their allotted height instead of top-anchoring, constant padding regardless of content type | 🔜 |
+| BUJO-266 | Add the shadcn primitives the rebuilt pages actually need — `card`, `badge`, `table`, `select` — restyled onto bujo tokens, rather than a repo-wide migration of `ui.tsx` (QUESTIONS Q4) | 🔜 |
+
+### Phase F — sweep, and distrust the sweep
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-267 | Card-count and accent-count greps per page — then confirm on the **rendered** page. The counts in `13-page-contract-rollout.md` are greps over source and it flags them as unverified itself | 🔜 |
+| BUJO-268 | Add every converted page to `scripts/a11y-axe.mjs`'s fixed `VIEWS` list — otherwise "0 serious" means only "for the pages that were opened" | 🔜 |
+| BUJO-269 | Re-run `npm run a11y` with new and changed folds **open** — axe walks the rendered page and cannot see inside a collapsed section | 🔜 |
+| BUJO-270 | Fix print: white-on-white today. `print-color-adjust` is `economy` so Chrome drops the dark surface (which sits on a `div`, not `body`) while text keeps `rgb(205,214,244)`. Swap `data-theme` to `latte` on `beforeprint`; give `ExploreBanner` a `no-print` class since it is a `div` and `header, nav {display:none}` misses it | 🔜 |
+| BUJO-271 | Desktop screenshots per phase, in light and dark — after confirming the port's process command line, since a tab pointed at a stale worktree never shows the change | 🔜 |
+
+### Process
+
+| ID | Title | Status |
+|---|---|---|
+| BUJO-272 | **An adoption count is evidence about the branch it was taken on, and nothing else.** Doc 13 measured the chain tip and concluded something about `main`. One `git ls-tree` would have caught it. Fold this into the "judge a UI on the right branch" trap, which already existed and still did not prevent it | 🔜 |

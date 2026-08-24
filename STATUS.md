@@ -1,132 +1,161 @@
 # STATUS
 
-**Stopped:** 2026-08-24. Nothing half-built, nothing uncommitted.
+**Stopped:** 2026-08-24. Documents and merges only — **no code was written and
+no gate was run this session.**
 
 ## Start here next session
 
-Every open PR is `CLEAN` with CI `SUCCESS` except #96. Nothing is blocked on a
-fix — only on a decision to merge.
+Read **`docs/redesign/16-next-session.md`** first, then answer
+**`docs/QUESTIONS.md`** — ten decisions, each with a recommendation. Blank
+answers mean "take the recommendation"; say so out loud when you do.
 
 | # | Task | Command / file | Blocks |
 |---|---|---|---|
-| 1 | Merge **#127** then **#128**. Both green, both independent, both small | `gh pr merge 127 --merge --delete-branch` | nothing |
-| 2 | Merge **#113 → #123** bottom-up, **merge commits, no `--delete-branch`** | `gh pr merge 113 --merge` … through 123 | everything below |
-| 3 | Delete the eleven merged branches, *after* step 2 finishes | `git push origin --delete <branch>` | — |
-| 4 | Phase 2 of the plan: convert Today, Insights, Stats, Trackers | `docs/redesign/13-page-contract-rollout.md` | needs step 2 |
-| 5 | Decide **#96** — conflicted since 2026-08-03, 3.4k lines, largely superseded by the chain in step 2. Probably a close | — | — |
-| 6 | Fix print (white-on-white). Small, self-contained | see Traps below | — |
-
-**Step 2 is the bottleneck.** `PageLayout` and every page primitive live in
-those eleven PRs; step 4 has nothing to import until they land.
-
-Do **not** start step 4 by writing code. The method's stop gate comes first:
-restate the goal, list reuse-vs-create, name the contradictions, then wait.
+| 1 | Confirm the chain finished — #122, #123 were still merging at the stop point | `gh pr list --state open` | task 3 |
+| 2 | Answer or default `QUESTIONS.md`. Q1 (#96), Q3 ("spin up"), Q6 (Body's tab count) change what gets built | `docs/QUESTIONS.md` | task 3 |
+| 3 | **Phase A** — move Trackers from Insights to Body. ~10 lines, do not touch `Trackers.tsx` | BUJO-250..253 | Phase B |
+| 4 | Delete the merged branches — only after #123 lands, and never `--delete-branch` while a child PR still targets one | `git push origin --delete <branch>` | — |
+| 5 | Decide **#96** (3.4k lines, conflicted since 2026-08-03, superseded by Phase E) and **#107** (docs, CLEAN) | QUESTIONS Q1, Q2 | — |
+| 6 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
 
 ## What changed this session
 
-**Line 2 is merged.** `main` is at `a023490`. The four silent data-loss defects
-and the photo-sync budget are shipped.
+**The Modernist chain is landing.** #127 and #113–#121 merged; #122 and #123
+were in flight at the stop point, run by a background script that resolves the
+conflict, waits for CI, and merges.
 
-| PR | How |
+**Twelve PRs, one conflicting file.** Across the whole chain the only conflict
+was `STATUS.md` — this file — and only because each merge rewrites it. **No code
+conflict anywhere.** The "the stack is scary" framing was one doc.
+
+**They are fully stacked**, each PR targeting its parent's branch, so each needs
+`gh pr edit <n> --base main` as its parent lands. Auto-merge is disabled on this
+repo, so each also has to wait for CI (~5 min) before `gh pr merge` will take it.
+
+Four new documents:
+
+| File | What |
 |---|---|
-| #124 data-engineer agent + storage decision | squash `96ac275` |
-| #125 four data-loss defects | merge commit `ce8ca6c` |
-| #126 photos travel with a push | merge commit `a023490` |
+| `docs/redesign/14-dashboard-inspiration.md` | The ShadcnStore reference, and the nine patterns **not** to copy |
+| `docs/redesign/15-fitness-consolidation.md` | The six-phase plan, and two corrections to the record |
+| `docs/redesign/16-next-session.md` | The handoff |
+| `docs/QUESTIONS.md` | Ten open decisions with recommendations |
 
-Open PRs: **16 at session start → 13 after merging → 15**, once #127 and #128
-were opened. The fifteen are #113–#123 (eleven), #96, #107, #127, #128.
+Plus `docs/TICKETS.md` Epic **FIT-IA**, BUJO-245..272, and a correction banner on
+`docs/redesign/13-page-contract-rollout.md`.
 
-## The merge rule this session paid for
+## The two things this repo believed that were not true
 
-**Squash-merging a stacked PR poisons its children.** The squash rewrites the
-parent's commits under a new SHA, so the child still carries the originals and
-conflicts add/add against them. #125 needed a hand-resolved conflict on two docs
-because of it.
+**1. The rollout was never blocked.** `13-page-contract-rollout.md:85` and this
+file's previous revision both said `PageLayout` and every page primitive lived
+only inside PRs #113–#123, so Phase 2 had nothing to import. All eleven files in
+`src/components/page/` have been on `main` throughout, and Fitness, Plan,
+Nutrition, NoFap and KitchenSink import them there. What the chain actually
+carries is the Modernist *look* — bands, radius 0, shell and nav.
 
-**`--delete-branch` while a child PR still targets that branch auto-closes the
-child**, and a closed PR can be neither retargeted nor reopened until the base
-ref is restored (`git push origin <sha>:refs/heads/<branch>`). #125 had to be
-recovered this way. No commits were lost, but it cost twenty minutes.
+One command disproves it:
 
-Merged with plain merge commits and no `--delete-branch`, **#126 needed zero
-rebase and zero force-push**. Use that for #113–#123. Delete branches after,
-separately.
+```
+git ls-tree -r --name-only origin/main -- src/components/page
+```
+
+**2. Merging the chain does not do the redesign.** Today, Insights, Stats and
+Trackers have **zero** `components/page` imports on the chain tip. It restyles
+them 34–58 lines each and restructures none of them. The conversion is owed
+either way; merging first was about conflict order — #120–#122 edit
+`sections.ts`, #117 edits all four target views.
+
+**The lesson, now BUJO-272:** an adoption count is evidence about the branch it
+was taken on and nothing else. The previous session's own last trap — *judge a
+UI on the right branch* — existed, was written down, and still did not prevent
+this, because it was aimed at screenshots and the failure came through a grep.
+
+## The fitness question, answered
+
+**Body is already the fitness hub.** `src/components/shell/sections.ts` files
+Fitness, Strength, Pickleball, Coaching and Nutrition under it, with Program and
+Challenges arriving in #122 and Recovery/Cycle gated.
+
+The genuinely misfiled thing is **Trackers** — 1013 lines, the largest view in
+the app, filed under *Insights* while being where gym attendance, protein and
+steps actually get logged. That splits the daily loop across two rail sections.
+It is a move, not a rebuild — Phase A, BUJO-250.
+
+**Consequence to decide:** moving it makes Body ten tabs against a recorded
+ceiling of eight. QUESTIONS Q6 recommends splitting the rail into *Train* and
+*Body* rather than nesting — nesting is how Pickleball got buried once already,
+and `sections.ts`'s own docstring says that redirect "did not move the page, it
+deleted it".
+
+## Two hand-maintained datasets worth retiring
+
+Both replace a list in this repo, both are keyless, neither adds a dependency,
+and both stay **enrichment-only** so the app still works offline.
+
+| Source | License | Replaces |
+|---|---|---|
+| Open Food Facts search + barcode | ODbL, no key, CORS-enabled | `src/lib/foods.ts` — 50 typed-out items whose own header admits it sends you to a web search for anything else |
+| free-exercise-db | Unlicense (public domain) | `EXERCISE_LIBRARY`, `src/lib/fitness.ts:100` |
+
+Rejected with reasons, so it is not relitigated: **wger** needs a self-hosted
+Django backend this local-first PWA deliberately lacks; **Nutritionix / Edamam /
+USDA FoodData Central** all require an API key, and a key in a client-side PWA
+is a published key; **any charting library** undoes the accent discipline.
+
+`fitness.test.ts` must be extended *before* the exercise swap —
+`musclesForExercise` feeds the muscle map and is what breaks silently.
+
+## shadcn is already installed
+
+`components.json` plus 17 primitives in `src/components/ui/` (button, dialog,
+command, popover, tabs, tooltip, scroll-area, switch, toggle-group, sonner…).
+"Use shadcn" is therefore not an adoption decision but a question of how far —
+see QUESTIONS Q4. The recommendation is to add only the primitives the rebuilt
+pages need (`card`, `badge`, `table`, `select`) rather than migrating the
+hand-rolled `ui.tsx`, because a repo-wide primitive sweep is exactly the change
+that silently alters content.
 
 ## Deploy: there is none, on purpose
 
-PR #127 retires `.github/workflows/deploy.yml`. It ran 8 times and **failed 8
-times**, always on `Failed to create deployment (status: 404) … Ensure GitHub
-Pages has been enabled` — Pages was never switched on. The `build` job passed
-every run; only `deploy` died.
-
-**The Environments tab lies.** `github-pages` shows "last deployed 2026-08-02"
-because `actions/deploy-pages` registers the deployment *before* calling the
-API — that record was written 30 seconds before the run failed. There has never
-been a site behind it.
-
-`vercel.json` and `api/` are deliberately kept. Pages could never have served
-them: `api/sync.ts` and `api/feedback.ts` are serverless functions, and Pages
-cannot set HTTP headers, so the CSP/HSTS/XFO/COOP set would vanish. Deleting
-them would break `bujocloud` sync and the feedback button. See D-49.
-
-Also caught: `ci.yml` excluded `main` via `branches-ignore`, because deploy.yml
-gated it. Removing deploy.yml alone would have left `main` with no gate at all.
-Fixed in #127.
-
-## The UI question, answered with numbers
-
-Full audit in `docs/redesign/13-page-contract-rollout.md`. The short version:
-
-The three-zone contract **already exists** on the Modernist tip — `PageLayout`
-with zone1/2/3, container query, measured sticky, plus `StatBar`,
-`SummaryStrip`, `EmptyFrame`, `DisclosureRow`. **Four of 28 views use it.**
-
-| Page | `<Card>` | Accents | Cap is 2 cards / 1 accent |
-|---|---|---|---|
-| Insights | 17 | 6 | |
-| Stats | 11 | 5 | |
-| Trackers | 3 | 9 | |
-| Today | 8 | 3 | |
-| **Fitness** (converted) | **0** | **0** | the target |
-
-Every page that reads as "flat stack of cards" is one that never adopted it.
-This is a rollout problem, not a design problem.
+Unchanged, and #127 (merged) retires the workflow. Pages ran 8 times and failed
+8 times — it was never enabled, and it could not serve this app anyway:
+`api/sync.ts` and `api/feedback.ts` are serverless functions, and Pages cannot
+set the CSP/HSTS/XFO/COOP headers. `vercel.json` and `api/` are kept for that
+reason. **The Environments tab lies** — `actions/deploy-pages` registers the
+deployment before calling the API, so the record predates the failure by 30
+seconds. There has never been a site behind it. See D-49, and QUESTIONS Q3.
 
 ## Still open, unchanged
 
 - **F-7** four sync writers can be live at once — a product call, not a defect.
 - **F-8** sync passphrase in plaintext `localStorage` — a product call.
-- **SQLite exporter** (step 7) not built; its precondition is now met.
-- **PR #96** (Today UX, +2620/−767) conflicted since 2026-08-03 and largely
-  superseded. Probably a close, but 3.4k lines is not the agent's call.
-- **Body is eight tabs.** A ninth needs a decision to split the section.
+- **SQLite exporter** not built; its precondition is met.
+- **PR #96** (+2620/−767) conflicted since 2026-08-03, superseded by Phase E.
 
-## Traps found this session
+## Traps
 
-- **Squash + stacked PRs + `--delete-branch`** — see the merge rule above. The
-  child PR closes itself and the failure reads as a merge conflict.
-- **Print emits white-on-white.** `print-color-adjust` is `economy`, so Chrome
-  drops the dark surface — which sits on a `div` inside `#root`, not on `body`,
-  so the print block's `body { background: #fff }` does nothing. Text keeps
-  `rgb(205,214,244)`. Fix by swapping `data-theme` to `latte` on `beforeprint`
-  (covers Ctrl+P *and* the Settings button) and giving `ExploreBanner` a
-  `no-print` class — it is a `div`, so `header, nav {display:none}` misses it.
-- **A killed background task can leave the process alive.** The harness reported
-  the :5173 vite server stopped; `Get-NetTCPConnection` showed it still
-  listening 40 minutes later. Check the port, not the task status.
-- **`git worktree remove` fails on Windows while vite holds the rolldown
-  `.node` binary.** Kill the node process whose command line contains the
-  worktree path first, then remove.
-- **Judge a UI on the right branch.** `main` differs from the Modernist tip by
-  **153 files, +5568/−2978** in `src/`. Screenshots of `main` are not evidence
-  about a redesign sitting in unmerged PRs.
+Everything in `CLAUDE.md` still applies. Added or re-confirmed this session:
+
+- **`:5173` was not this working copy.** The dev server for this branch came up
+  on **`:5174`** because something else already held 5173. Check the port's
+  process command line before treating a screenshot as evidence — this is the
+  worktree trap, and it fired on the first command of the session.
+- **`gh pr merge` reads a cached mergeability state.** Immediately after a push
+  it still reports "Pull Request has merge conflicts". Wait for GitHub to
+  recompute rather than concluding the resolution failed.
+- **Auto-merge is disabled on this repo** — `enablePullRequestAutoMerge` errors
+  with "Auto merge is not allowed for this repository". Every merge must wait on
+  CI in the foreground.
+- **Merging a stacked PR does not advance `main`** unless you retarget it first.
+  Without `gh pr edit <n> --base main` it merges into its parent's branch.
+- **Merging main into each branch separately breaks the ancestry**, so the tip
+  stops containing its siblings and you cannot shortcut by merging only the last
+  one. Merge them in order.
 
 ## Environment
 
-- Dev server :5173, root repo, currently on `main`. Nothing else running.
-- `.claude/worktrees/` holds three **empty** orphan dirs — `fix94`, `verify87`,
-  `wt94` (2026-08-03). Gitignored (`.gitignore:47`), 0 tracked files, not
-  registered with git. Safe to delete, harmless to leave.
-- `chrome-devtools` MCP needs Chrome started with `--remote-debugging-port=9333`;
-  it does not attach to an already-running Chrome.
+- Dev server **:5174**, root repo, branch `docs/page-contract-rollout-plan`.
+  Something unidentified holds :5173.
+- `.claude/worktrees/` holds three empty orphan dirs — gitignored, safe to leave.
+- `chrome-devtools` MCP needs Chrome started with `--remote-debugging-port=9333`.
 - Demo data is persisted, not regenerated — re-seed via Settings → Data.

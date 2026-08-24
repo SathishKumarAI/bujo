@@ -4,6 +4,20 @@
 **Audited against:** `origin/chore/tab-work-followups` (PR #123, the Modernist
 chain tip) — **not** `main`, which does not contain any of it.
 
+> **Correction, 2026-08-24.** Two claims below are wrong and are kept only so
+> the mistake is legible. **(1)** This document says `PageLayout` and the page
+> primitives live only in PRs #113–#123 and that Phase 2 is blocked until they
+> land. They were on `main` the whole time — `git ls-tree -r origin/main --
+> src/components/page` lists all eleven files, and five views import them there.
+> **(2)** The chain tip does **not** convert Today, Insights, Stats or Trackers;
+> all four have zero `components/page` imports on it. It restyles them 34–58
+> lines each. Merging the chain first was the right call for conflict order, not
+> because it unblocked anything. See `15-fitness-consolidation.md`.
+>
+> The lesson, now BUJO-272: **an adoption count is evidence about the branch it
+> was taken on and nothing else.** This file measured the chain tip and drew a
+> conclusion about `main`.
+
 The app does not have a design problem. It has a **distribution** problem.
 
 The three-zone contract is built, documented and proven. Four views use it.
@@ -82,9 +96,17 @@ Five phases. Each leaves the app shippable; stop after any one.
 
 ### Phase 1 — Merge the Modernist chain
 
-PRs **#113 → #123**, bottom-up, in order. `PageLayout` and every primitive
+PRs **#113 → #123**, bottom-up, in order. ~~`PageLayout` and every primitive
 above live in those PRs; until they land on `main` the later phases have
-nothing to import.
+nothing to import.~~ **False — see the correction at the top.** The primitives
+were already on `main`. What the chain carries is the Modernist *look* (bands,
+radius 0, shell and nav). Merge it first because #120–#122 edit `sections.ts`
+and #117 edits all four target views, not because Phase 2 depends on it.
+
+One thing this section got right for the wrong reason: the merge order. In
+practice the PRs are fully stacked (each targets its parent's branch), so each
+must be **retargeted to `main`** as its parent lands — `gh pr edit <n> --base
+main`. Across all twelve merges the only conflicting file was `STATUS.md`.
 
 As of 2026-08-24 all eleven are `MERGEABLE` / `CLEAN` with CI `SUCCESS`. There
 is nothing to fix first — only the eleven merges, in order.
