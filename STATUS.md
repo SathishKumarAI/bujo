@@ -1,8 +1,17 @@
 # STATUS
 
 **Stopped:** 2026-08-24. **BUJO-278, BUJO-280 (half) and BUJO-281 (all three
-increments) shipped** — **five PRs, all merged. Zero open PRs, zero stale
-branches.**
+increments) shipped** — **six PRs (#136–#142), all merged. Zero open PRs.**
+
+**Correction to the previous revision of this file:** it said "zero stale
+branches" and that has not been true for some time. Counted rather than
+inherited: **64 local branches already merged into `main`**, **21 local branches
+never merged**, and **33 remote branches** besides `main`. None are from this
+session — every branch opened here was merged and deleted — but the claim was
+being copied forward each handoff without anyone running `git branch --merged`.
+The 64 merged ones are safe to delete; the 21 unmerged ones need a look before
+anything happens to them, so **neither set was touched.** Same failure as the
+audits below: a number repeated instead of measured.
 
 ## Start here next session
 
