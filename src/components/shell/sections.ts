@@ -89,6 +89,14 @@ export const SECTIONS: Section[] = [
     icon: PersonSimpleRun,
     tabs: [
       { view: 'fitness', label: 'Fitness' },
+      // Moved out of Insights, by the same test that moved Challenges. Trackers
+      // is where the gym habit, the protein target and the step count are
+      // *logged* — it is the second half of the daily loop whose first half is
+      // Fitness, and it sat two rail sections away from it. It produces charts,
+      // which is a fact about its output, not about what the page is for.
+      //
+      // Insights keeps the two surfaces that only ever look backwards.
+      { view: 'trackers', label: 'Tracking' },
       // Strength tools was reachable only from a link inside Fitness, and only
       // while the mode happened to be `strength` — so the exercise picker, the
       // program tracker, the plate calculator, the muscle map and progress
@@ -133,7 +141,6 @@ export const SECTIONS: Section[] = [
     tabs: [
       { view: 'insights', label: 'Insights' },
       { view: 'stats', label: 'Stats' },
-      { view: 'trackers', label: 'Trackers' },
     ],
   },
 ]

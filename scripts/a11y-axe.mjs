@@ -69,12 +69,16 @@ const VIEWS = [
   ['Body', 'Challenges'],
   ['Body', 'Recovery'],
   ['Body', 'Coaching'],
+  ['Body', 'Tracking'], // was ['Insights', 'Trackers'] until it moved sections
   ['Mind', 'Mindset'],
   ['Mind', 'Reading'],
   ['Mind', 'Collections'],
   ['Mind', 'Focus'],
   ['Insights', null],
-  ['Insights', 'Trackers'],
+  // Stats was never on this list. It has therefore never been scanned, and
+  // every "0 serious" this gate has ever printed excluded it — the same failure
+  // the file's own header warns about, sitting inside the file that warns.
+  ['Insights', 'Stats'],
 ]
 
 /**

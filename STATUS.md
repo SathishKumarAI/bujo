@@ -1,28 +1,40 @@
 # STATUS
 
-**Stopped:** 2026-08-24. Documents and merges only — **no code was written and
-no gate was run this session.**
+**Stopped:** 2026-08-24. **Phase 0 and Phase A shipped, all gates green.**
 
 ## Start here next session
 
-Read **`docs/redesign/16-next-session.md`** first, then answer
-**`docs/QUESTIONS.md`** — ten decisions, each with a recommendation. Blank
-answers mean "take the recommendation"; say so out loud when you do.
+Read **`docs/redesign/16-next-session.md`** first. `docs/QUESTIONS.md` still
+holds the open decisions — Q3 (deploy) and Q4 (shadcn depth) are the two that
+still matter. **Q6 was answered by measurement, not by choosing.**
 
 | # | Task | Command / file | Blocks |
 |---|---|---|---|
-| 1 | Confirm the chain finished — #122, #123 were still merging at the stop point | `gh pr list --state open` | task 3 |
-| 2 | Answer or default `QUESTIONS.md`. Q1 (#96), Q3 ("spin up"), Q6 (Body's tab count) change what gets built | `docs/QUESTIONS.md` | task 3 |
-| 3 | **Phase A** — move Trackers from Insights to Body. ~10 lines, do not touch `Trackers.tsx` | BUJO-250..253 | Phase B |
-| 4 | Delete the merged branches — only after #123 lands, and never `--delete-branch` while a child PR still targets one | `git push origin --delete <branch>` | — |
-| 5 | Decide **#96** (3.4k lines, conflicted since 2026-08-03, superseded by Phase E) and **#107** (docs, CLEAN) | QUESTIONS Q1, Q2 | — |
-| 6 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
+| 1 | Merge **#129** — Phase A, all gates green | `gh pr merge 129 --merge` | — |
+| 2 | Delete the twelve merged branches — never `--delete-branch` while a child PR still targets one | `git push origin --delete <branch>` | — |
+| 3 | **Phase B** — Trackers on the page contract. Slot table first. Four named defects in doc 16 | BUJO-254/255, 273..276 | Phase C |
+| 4 | Answer Q3 (does "spin up" mean localhost or a public URL) and Q4 (how far to push shadcn) | `docs/QUESTIONS.md` | Phase E |
+| 5 | Fix print (white-on-white). Small, self-contained | BUJO-270, Traps below | — |
+| 6 | `smoke-views.mjs` never tests `program` or `nutrition` | BUJO-277 | — |
 
 ## What changed this session
 
-**The Modernist chain is landing.** #127 and #113–#121 merged; #122 and #123
-were in flight at the stop point, run by a background script that resolves the
-conflict, waits for CI, and merges.
+**The Modernist chain landed — all twelve.** #127 and #113–#123, plus #107 and
+#128. **#96 is closed** (3.4k lines, conflicted three weeks, superseded by Phase
+E). **#129 is open**: Trackers moved into Body as "Tracking", Stats added to the
+a11y gate, and the contrast bug that addition exposed, fixed.
+
+**Phase A shipped with evidence, and it overturned two written assumptions.**
+The eight-tab ceiling was a count nobody had measured — 9 tabs report
+`scrollWidth === clientWidth` at 1280/1440/1920, so the planned *Train*/*Body*
+rail split was dropped. And `BottomNav` needed no change at all, because #120
+had already deleted the hand-written `PRIMARY` list the audit was worried about.
+
+Gates, quoted: `npx tsc -b` exit 0 · `npx vitest run` 798 passed (55 files) ·
+`npx eslint .` 0 errors, 2 pre-existing warnings · `npm run build` emitted ·
+`npm run design` passed (273 files) · `npm run clipped` clean across 23 views at
+1440 and 390 · `npm run a11y` **no serious or critical violations**, five themes
+× two viewports, with Stats included for the first time.
 
 **Twelve PRs, one conflicting file.** Across the whole chain the only conflict
 was `STATUS.md` — this file — and only because each merge rewrites it. **No code
