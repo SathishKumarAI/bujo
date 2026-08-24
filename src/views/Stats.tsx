@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useJournal } from '../store'
 import { PageLayout, StatBar } from '../components/page'
-import { CardGrid, SPAN_ALL } from '../components/shell/CardGrid'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { Card, Empty, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { QuietSection as Section } from '../components/CollapsibleSection'
@@ -146,7 +146,13 @@ export function Stats() {
       {/* Three across. Eight blocks — the heatmap, achievements and six
           collapsed analytics groups — used to be one tall column. */}
       <CardGrid>
-      <Card band className={SPAN_ALL} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
+      {/* The card sizes to the range, because the range sizes the grid: the
+          heatmap's cells are a fixed 11px, so 3mo draws 202px, 6mo 384px and
+          1yr 748px (measured at 1440). Pinned to the full row it left 978 /
+          796 / 432px of dead card — BUJO-280. Only 1yr needs more than one
+          column; the other two now sit in one and the neighbour card moves up
+          beside them. */}
+      <Card band className={heatWeeks === 52 ? SPAN_2 : undefined} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
 

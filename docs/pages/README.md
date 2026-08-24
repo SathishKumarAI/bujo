@@ -119,8 +119,9 @@ outward, not sand them down.
 
 Content flows into a **three-column card grid** — see
 [`../redesign/12-three-column-grid.md`](../redesign/12-three-column-grid.md).
-1 column on phones, 2 to 1535px, 3 above; `SPAN_2` and `SPAN_ALL` for tables and
-heatmaps. That is what moved Pickleball from 4.2 screens to 2.6 and Mindset from
+1 column on phones, 2 to 1535px, 3 above; `SPAN_2` for tables and wide charts.
+(`SPAN_ALL` is gone — see the correction in `12-three-column-grid.md`.) That is
+what moved Pickleball from 4.2 screens to 2.6 and Mindset from
 2.4 to 2.0, so the heights below are being re-measured as pages convert.
 
 ## Page heights, for reference

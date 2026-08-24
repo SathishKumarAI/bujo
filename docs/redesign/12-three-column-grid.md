@@ -2,6 +2,15 @@
 
 **Branch:** `feat/today-capture-first` · **Date:** 2026-08-02
 
+> **Correction, 2026-08-24 — `SPAN_ALL` no longer exists.** It is described below
+> as one of two escape hatches and it never earned that billing: it had exactly
+> one call site (the Stats activity heatmap), and below 1536px it expanded to the
+> same classes as `SPAN_2`, because the grid only has two columns there. So at
+> the 1,180px tier every converted page actually renders at, the "full bleed"
+> hatch and the "two of three" hatch were the same thing. The one card using it
+> spent 432–978px of its width empty (BUJO-280). Deleted; read every `SPAN_ALL`
+> below as `SPAN_2`.
+
 Most views were a single vertical stack of cards. That is why the tall ones got
 so tall: Pickleball reached **4.2 screens over twelve blocks**, of which only two
 needed the full width. A card holding four stat tiles does not need 1,344px.
