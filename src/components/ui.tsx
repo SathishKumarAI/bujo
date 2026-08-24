@@ -22,6 +22,19 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 export const CARD = {
   /** The card container (border, radius, background, padding, 3-D press, hover group). */
   container: 'card-3d group/card min-w-0 rounded-card border border-line bg-card p-4 sm:rounded-card sm:p-5 lg:p-6',
+  /**
+   * The Modernist band container — the same card, unboxed.
+   *
+   * No radius, no fill, no border but the 2px rule that closes the section, and
+   * no horizontal padding, so its content aligns with every other band on the
+   * page. Opt-in per call site (`<Card band>`), because the redesign lands one
+   * page at a time and a half-converted page needs both looks to work.
+   *
+   * A band is not a different component: same header, same collapse, same
+   * enlarge, same accessible names. Only the chrome changes, which is the whole
+   * point of `CARD` being one object.
+   */
+  band: 'group/card min-w-0 border-b-2 border-line py-5 sm:py-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl',
@@ -68,6 +81,7 @@ export function Card({
   enlargeable = false,
   help,
   hideInfo = false,
+  band = false,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -91,6 +105,8 @@ export function Card({
   help?: ReactNode
   /** Suppress the ⓘ popover. Required by the page contract. */
   hideInfo?: boolean
+  /** Render as a Modernist band — flat, ruled, flush-left. See `CARD.band`. */
+  band?: boolean
 }) {
   const [openState, setOpenState] = useState(!defaultCollapsed)
   const open = openProp ?? openState
@@ -113,7 +129,10 @@ export function Card({
   // Scoped to an opt-out rather than removed globally: 42 cards outside the
   // Body cluster still rely on this, and retiring it app-wide is a decision
   // about the whole app, not about one cluster.
-  const info = hideInfo ? null : (help ?? subtitle)
+  // A band never draws the ⓘ. The redesign's rule is that a label needing a "?"
+  // gets rewritten instead, and on a flat page the popover trigger is the only
+  // thing left that looks like card chrome.
+  const info = hideInfo || band ? null : (help ?? subtitle)
   // …but when the fallback is what fired, the popover says exactly what the
   // line below the title already says, so it is only worth a button where that
   // line is not drawn. The subtitle is `hidden … sm:block` (see below), which
@@ -143,7 +162,7 @@ export function Card({
   return (
     <section
       onClick={onClick}
-      className={`${CARD.container} ${defer ? 'order-last xl:order-none' : ''} ${className}`}
+      className={cn(band ? CARD.band : CARD.container, defer && 'order-last xl:order-none', className)}
     >
       {(title || right || collapsible) && (
         <header
@@ -164,7 +183,12 @@ export function Card({
             <div className="flex items-center gap-1.5">
               {/* Wraps, never truncates. A title clipped to "Workout mi…" costs
                   more than a second line does — and these are 2–4 words. */}
-              {title && <h2 className="min-w-0 font-display text-heading leading-tight font-medium text-balance text-fg-1 sm:text-title">{title}</h2>}
+              {/* A band keeps the heading at `heading` on every width. Cards grow
+                  to `title` at sm because they are objects competing for
+                  attention; bands are sections of one page, and a page with six
+                  22px headings has no hierarchy left for the statement at the
+                  top of it. */}
+              {title && <h2 className={cn('min-w-0 font-display text-heading leading-tight font-medium text-balance text-fg-1', !band && 'sm:text-title')}>{title}</h2>}
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>

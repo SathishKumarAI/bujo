@@ -77,7 +77,7 @@ export function TodayHabits({
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
           // `min-h-11` — 44px (WCAG 2.5.5). `py-1.5` on a 15px line put these
           // at 34px, and they are the most-tapped control on a phone.
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-none border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
@@ -92,7 +92,7 @@ export function TodayHabits({
           aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
           aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-pill opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-none opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
           data-note={hasNote || open ? '' : undefined}
           style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >
@@ -129,7 +129,7 @@ export function TodayHabits({
   //    so it reads as one: a row per habit, state on the left, full width.
   if (variant === 'checklist') {
     return (
-      <Card title="Close out your habits" hideInfo>
+      <Card band title="Close out your habits" hideInfo>
         <ul className="divide-y divide-line">
           {habits.map((h) => {
             const on = log.includes(h.id)
@@ -150,7 +150,7 @@ export function TodayHabits({
                 >
                   <span
                     aria-hidden
-                    className="grid size-5 shrink-0 place-items-center rounded-control border text-caption"
+                    className="grid size-5 shrink-0 place-items-center rounded-none border text-caption"
                     style={{
                       borderColor: on ? accent : cat('surface1'),
                       background: on ? accent + '22' : 'transparent',
@@ -184,7 +184,7 @@ export function TodayHabits({
   }
 
   return (
-    <Card
+    <Card band
       title="Today’s habits"
       hideInfo
       right={

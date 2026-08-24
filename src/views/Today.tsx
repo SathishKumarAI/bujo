@@ -46,15 +46,20 @@ function TodayFocused() {
   const nav = useNav()
 
   return (
-    <Page>
+    // `gap-0 sm:gap-0`: the bands are divided by their own 2px rules, and
+    // `Page`'s responsive `sm:gap-5` survives a base-only override (see the
+    // note in views/Mindset.tsx).
+    <Page className="gap-0 sm:gap-0">
       {/* Navigation, not a reveal: no transition beyond the page's existing
           220ms entrance. Switching surfaces is switching pages. */}
-      <Segmented
-        value={surface}
-        onChange={setSurface}
-        size="touch"
-        options={SURFACES.map((s) => ({ value: s, label: SURFACE_LABEL[s] }))}
-      />
+      <div className="border-b-2 border-line pb-4">
+        <Segmented
+          value={surface}
+          onChange={setSurface}
+          size="touch"
+          options={SURFACES.map((s) => ({ value: s, label: SURFACE_LABEL[s] }))}
+        />
+      </div>
 
       {surface === 'morning' && (
         <>
@@ -129,7 +134,7 @@ function TodayClassic() {
       <FastingCard />
       <WeeklyGoalRings date={date} />
       {hasFlash && !hidden.includes('onThisDay') && (
-        <Card title="On this day" subtitle="From earlier in your journal" hideInfo collapsible>
+        <Card band title="On this day" subtitle="From earlier in your journal" hideInfo collapsible>
           <ul className="space-y-2 text-body">
             {flashbacks.memories.map((m) => (
               <li key={m.date} className="text-fg-1">
@@ -150,7 +155,10 @@ function TodayClassic() {
   return (
     // `asideFirst` stays off: on phones the rail drops *below* the log, so the
     // capture box is the first thing on the screen at every width.
-    <Page aside={rail}>
+    // Only the *columns'* internal gaps go to zero — the bands inside each one
+    // are divided by their own rules. The grid keeps its column gutter, or the
+    // rail's rules would run straight into the log's.
+    <Page aside={rail} className="[&>aside]:gap-0 [&>div]:gap-0">
       {/* Capture first. This is a bullet journal; writing a line is the point
           of the page, so the log leads and everything that summarises it
           follows. */}
@@ -182,7 +190,7 @@ function TodayCountHabits({ date }: { date: string }) {
   )
   if (habits.length === 0) return null
   return (
-    <Card title="Count habits" subtitle="Tap −/+ to log your tally for today" hideInfo>
+    <Card band title="Count habits" subtitle="Tap −/+ to log your tally for today" hideInfo>
       <ul className="space-y-2">
         {habits.map((h) => {
           const target = habitTarget(h)
@@ -190,7 +198,7 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           return (
-            <li key={h.id} className="flex items-center gap-3 rounded-control border border-line bg-ink-0 px-3 py-2">
+            <li key={h.id} className="flex items-center gap-3 border-t border-line py-2">
               <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                 {h.emoji ? `${h.emoji} ` : ''}{h.name}
                 {h.unit && <span className="text-fg-2"> ({h.unit})</span>}
@@ -205,19 +213,19 @@ function TodayCountHabits({ date }: { date: string }) {
                   onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid size-11 place-items-center rounded-pill border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
+                  className="grid size-11 place-items-center rounded-none border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
                 >−</button>
                 <button
                   onClick={() => setHabitValue(date, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid size-11 place-items-center rounded-pill border text-fg-1 transition-colors"
+                  className="grid size-11 place-items-center rounded-none border text-fg-1 transition-colors"
                   style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
                 >+</button>
                 {step > 1 && (
                   <button
                     onClick={() => setHabitValue(date, h.id, val + step)}
                     aria-label={`Add ${step} to ${h.name}`}
-                    className="min-h-11 rounded-pill border border-line-strong px-2 text-caption text-fg-1 transition-colors hover:text-fg-1"
+                    className="min-h-11 rounded-none border border-line-strong px-2 text-caption text-fg-1 transition-colors hover:text-fg-1"
                   >+{step}</button>
                 )}
               </div>
@@ -235,12 +243,12 @@ function AtRiskNudge({ date }: { date: string }) {
   const atRisk = atRiskHabits(data, date)
   if (atRisk.length === 0) return null
   return (
-    <Card title="Keep your streaks" subtitle="Scheduled today, streak alive, not logged yet" hideInfo>
+    <Card band title="Keep your streaks" subtitle="Scheduled today, streak alive, not logged yet" hideInfo>
       <ul className="flex flex-wrap gap-2">
         {atRisk.map(({ habit, streak }) => (
           <li
             key={habit.id}
-            className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label"
+            className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-label"
             style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
           >
             <Icon as={Flame} size="sm" style={{ color: cat('peach') }} />
@@ -261,7 +269,7 @@ function WeeklyGoalRings({ date }: { date: string }) {
   const R = 16
   const C = 2 * Math.PI * R
   return (
-    <Card title="Weekly goals" subtitle="This week's completions vs your goal" hideInfo collapsible>
+    <Card band title="Weekly goals" subtitle="This week's completions vs your goal" hideInfo collapsible>
       <div className="flex flex-wrap gap-4">
         {habits.map((h) => {
           const { done, goal, pct } = weeklyGoalProgress(data, h, date, data.settings.weekStart ?? 0)
