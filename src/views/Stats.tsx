@@ -16,6 +16,9 @@ import { QuietSection as Section } from '../components/CollapsibleSection'
 import { Heatmap } from '../components/Heatmap'
 import { AchievementsCard } from '../components/AchievementsCard'
 import { CheckinTimesCard } from '../components/CheckinTimesCard'
+import { MoodAnalytics } from '../components/stats/MoodAnalytics'
+import { HabitAnalytics } from '../components/stats/HabitAnalytics'
+import { LifetimeCards } from '../components/stats/LifetimeCards'
 import { cat, rechartsTooltip } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
@@ -156,7 +159,12 @@ export function Stats() {
         <Heatmap cols={heat} />
       </Card>
 
+      {/* Lifetime totals, open: Achievements plus the year-in-review, the month
+          index and personal records that came over from Insights (BUJO-281).
+          Open rather than a seventh fold — they are the same subject
+          Achievements already covers, so they read as one region. */}
       <AchievementsCard />
+      <LifetimeCards />
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
       <Section title="This week" subtitle="7-day averages, see Trackers for live metrics">
@@ -229,8 +237,11 @@ export function Stats() {
       </div>
       </Section>
 
-      {/* 4) Mood views — merged calendar / year-in-pixels toggle, collapsed. */}
-      <Section title="Mood views" subtitle="calendar & year-in-pixels">
+      {/* 4) Mood views — merged calendar / year-in-pixels toggle, plus the three
+             mood read-backs that came over from Insights (BUJO-281). They went
+             *into* this fold rather than beside it: Stats already had six, and
+             a drawer relocated intact is not a drawer removed. */}
+      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability">
       {moodView === 'calendar' ? (
       <Card band
         enlargeable={false}
@@ -279,6 +290,7 @@ export function Stats() {
         {yearPixels(false)}
       </Card>
       )}
+      <MoodAnalytics />
       </Section>
 
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
@@ -347,9 +359,12 @@ export function Stats() {
         </Card>
       </Section>
 
-      {/* 7) Habit timing — collapsed. */}
-      <Section title="Habit timing" subtitle="when you check in">
+      {/* 7) Habits — check-in times, plus the three habit read-backs from
+             Insights (BUJO-281). Same rule as Mood views: into the existing
+             fold, not beside it. */}
+      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend">
         <CheckinTimesCard />
+        <HabitAnalytics />
       </Section>
 
       {/* Click-to-enlarge modal · portalled to <body> so it centres on the
