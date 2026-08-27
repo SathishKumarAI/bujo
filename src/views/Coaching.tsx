@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Pill, StatTile } from '../components/ui'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
@@ -234,7 +235,13 @@ export function Coaching() {
         </div>
       </Card>
 
-      {/* Knee rehab / prehab (ACL & MCL) */}
+      <CollapsibleSection title="Pull-ups Training" subtitle="Build your first strict pull-up">
+        <div className="space-y-2 text-label text-fg-2">
+          <p><strong>Volume Guidelines:</strong> Track daily/weekly volume based on max ability level. Example: if 100 pull-ups in a week over 4 days, do 22,35,28,15 instead of 25×4.</p>
+          <p><strong>Performance Tips:</strong> Set up: tuck pelvis, tight abs, pinky grip. Execution: stay tight, lean back, pull with elbows (not hands), chin all way over bar.</p>
+          <p><strong>Training Principles:</strong> Specificity to pull-ups, quality over quantity, 3-5 times per day frequency.</p>
+        </div>
+      </CollapsibleSection>
       <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Heartbeat} size="md" className="text-red" /> Knee rehab & prehab · ACL / MCL</span>} subtitle="Prevent + recover — with or without equipment" collapsible help="Prehab builds a court-proof knee; rehab supports recovery in phases. Filter by what gear you have. General education, not medical advice — after an injury, follow your physio.">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
