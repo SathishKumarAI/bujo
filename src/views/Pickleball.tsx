@@ -6,7 +6,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
+import { CardGrid } from '../components/shell/CardGrid'
 import { cat, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
@@ -318,65 +318,42 @@ export function Pickleball() {
     </CardGrid>
   )
 
+  // Compact "At a glance" summary moved to bottom as requested by user (BUJO-XXX)
+  const atAGlance = (
+    <Card band title="At a glance" subtitle="Your pickleball record in one compact box">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatTile compact label="Sessions" value={all.sessions} />
+        <StatTile compact label="Games" value={all.games} />
+        <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
+        <StatTile compact label="Day streak" value={streak} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
+        <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
+        <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">
+          Weekly goal
+          <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
+          <span className="text-label text-fg-2">games</span>
+        </label>
+      </div>
+      {goal > 0 && (
+        <div className="mt-2">
+          <div className="h-2.5 overflow-hidden rounded-none bg-ink-2">
+            <div className="h-full rounded-none" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
+          </div>
+          <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
+        </div>
+      )}
+    </Card>
+  )
+
   return (
     <Page width="wide" className="gap-0 sm:gap-0">
       {/* Three across instead of one tall stack. This page was 4.2 screens over
           twelve blocks, and most of them — the record, the log form, DUPR —
           never needed the full width. */}
       <CardGrid>
-      <Card band title="At a glance" subtitle="Your pickleball record" className={SPAN_2}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <StatTile compact label="Sessions" value={all.sessions} />
-          <StatTile compact label="Games" value={all.games} />
-          <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
-          <StatTile compact label="Day streak" value={streak} />
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
-          <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
-          <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">Weekly goal
-            <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
-            <span className="text-label text-fg-2">games</span>
-          </label>
-        </div>
-        {goal > 0 && (
-          <div className="mt-2">
-            <div className="h-2.5 overflow-hidden rounded-none bg-ink-2">
-              <div className="h-full rounded-none" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
-            </div>
-            <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
-          </div>
-        )}
-      </Card>
-
-      {/* ── Tournament prep countdown (#345) · conditional top status,
-            surfaces only when events exist; collapsed. ── */}
-      {upcoming.length > 0 && (
-        <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
-          <ul className="mb-3 space-y-2">
-            {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 rounded-none border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
-                <span className="min-w-0">
-                  <span className="text-body font-medium text-fg-1">{e.name}</span>
-                  <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                </span>
-                <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
-                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
-                </Pill>
-              </li>
-            ))}
-          </ul>
-          <details className="rounded-none border border-line bg-ink-0 p-3">
-            <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
-            <ul className="mt-2 space-y-1">
-              {PREP_CHECKLIST.map((x) => (
-                <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
-              ))}
-            </ul>
-          </details>
-        </Card>
-      )}
-
-      <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
+        {/* ── DATA-FIRST LAYOUT: Log session and history first (primary data entities) ── */}
+        <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
           <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
@@ -414,6 +391,34 @@ export function Pickleball() {
         )}
         {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-body text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
       </Card>
+
+      {/* ── Tournament prep countdown (#345) · conditional top status,
+            surfaces only when events exist; collapsed. ── */}
+      {upcoming.length > 0 && (
+        <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+          <ul className="mb-3 space-y-2">
+            {upcoming.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-2 rounded-none border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+                <span className="min-w-0">
+                  <span className="text-body font-medium text-fg-1">{e.name}</span>
+                  <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                </span>
+                <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
+                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
+                </Pill>
+              </li>
+            ))}
+          </ul>
+          <details className="rounded-none border border-line bg-ink-0 p-3">
+            <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
+            <ul className="mt-2 space-y-1">
+              {PREP_CHECKLIST.map((x) => (
+                <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
+              ))}
+            </ul>
+          </details>
+        </Card>
+      )}
 
       {/* ── DUPR rating tracker ── */}
       <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
@@ -611,6 +616,10 @@ export function Pickleball() {
           ))}
         </ul>
       </Card>
+
+      {/* ── At a glance compact summary card at bottom of primary column (BUJO-XXX) ── */}
+      {atAGlance}
+
       </CardGrid>
     </Page>
   )
