@@ -585,8 +585,53 @@ export function Pickleball() {
         {charts}
       </Section>
 
-      <CardGrid>
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
+      {/* ── Practice today & improve · rotating focus + warm-up; reference content folded below logging, collapsed. ── */}
+      <Section
+        title="Practice today & improve"
+        icon={<Icon as={Target} size="md" className="text-mauve" />}
+        hint="A focus for today, plus a warm-up to start right"
+        collapsible
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Today's rotating practice focus */}
+          <div className="rounded-none border border-line bg-ink-0 p-3">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-body font-medium text-fg-1">{drill.name}</span>
+              <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
+            </div>
+            <p className="text-label text-fg-2">{drill.how}</p>
+            <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>
+          </div>
+
+          {/* Warm-up checklist */}
+          <div className="rounded-none border border-line bg-ink-0 p-3">
+            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={Barbell} size="sm" className="text-green" /> Warm up first</p>
+            <ul className="space-y-1">
+              {WARMUP.map((w) => (
+                <li key={w} className="flex gap-1.5 text-label text-fg-2"><span className="text-green">•</span> {w}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* External resources */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3">
+            <span className="text-label text-fg-2">Learn more:</span>
+            {RESOURCES.map((r) => (
+              <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
+                {r.name} <Icon as={ArrowSquareOut} size="sm" />
+              </a>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Play safe · physio & trainer notes (injury-prevention basics) ── */}
+      <Section
+        title="Play safe"
+        icon={<Icon as={ShieldPlus} size="md" className="text-green" />}
+        subtitle="Injury-prevention basics for the court"
+        collapsible
+      >
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
@@ -595,10 +640,15 @@ export function Pickleball() {
             </li>
           ))}
         </ul>
-      </Card>
+      </Section>
 
       {/* ── Format playbook ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
+      <Section
+        title="Format playbook"
+        icon={<Icon as={ListChecks} size="md" className="text-blue" />}
+        subtitle="How each league & tournament format works"
+        collapsible
+      >
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
             <li key={fm.id} className="rounded-none border border-line bg-ink-0 p-3">
@@ -607,6 +657,11 @@ export function Pickleball() {
                 <span className="text-micro text-fg-2">{fm.size}</span>
               </div>
               <p className="text-label text-fg-2">{fm.how}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
             </li>
           ))}
         </ul>
