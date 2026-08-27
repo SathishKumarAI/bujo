@@ -162,7 +162,9 @@ export function Pickleball() {
   const upcoming = upcomingEvents(data, today)
   const goal = data.settings.pickleballGoalGames ?? 0
   // 13-week play-frequency heatmap.
-  const WEEKS = 13
+  // BUJO-280b: Add 1-year heatmap toggle (like Stats Activity card)
+  const [heatWeeks, setHeatWeeks] = useState(13)
+  const WEEKS = heatWeeks
   const hStart = addDays(today, -(WEEKS * 7 - 1))
   const hPad = fromISODay(hStart).getDay()
   const maxDay = Math.max(1, ...byDay.values())
@@ -270,18 +272,48 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card band title="Play heatmap" subtitle="Last 13 weeks, darker = more games" enlargeable>
+      <Card band title={<>Heatmap <span className="inline-flex items-center gap-2 text-label text-fg-2"><Icon as={ChartBar} size="sm" /> {heatWeeks === 13 ? '3mo' : heatWeeks === 26 ? '6mo' : '1yr'}</span></>} subtitle={`Last ${heatWeeks / 7 === 1 ? heatWeeks : heatWeeks / 7} weeks, darker = more games`} enlargeable>
+        <div className="flex items-center gap-3 mb-2">
+          <Segmented
+            value={heatWeeks}
+            onChange={setHeatWeeks}
+            options={[
+              { value: 13, label: '3mo' },
+              { value: 26, label: '6mo' },
+              { value: 52, label: '1yr' },
+            ]}
+          />
+        </div>
         <div className="overflow-x-auto">
-          <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }} role="img" aria-label="Heatmap of pickleball games played per day over the last 13 weeks">
+          <div
+            className="grid grid-flow-col gap-1"
+            style={{ gridTemplateRows: `repeat(7, 0.7rem)` }}
+            role="img"
+            aria-label={`Heatmap of pickleball games played per day over the last ${heatWeeks} weeks`}
+          >
             {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
             {Array.from({ length: WEEKS * 7 }).map((_, i) => {
               const d = addDays(hStart, i)
               const g = byDay.get(d) ?? 0
-              return <span key={d} title={`${d}: ${g} games`} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: g === 0 ? cat('surface0') : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})` }} />
+              return (
+                <span
+                  key={d}
+                  title={`${d}: ${g} games`}
+                  className="h-2.5 w-2.5 rounded-[2px]"
+                  style={{
+                    background:
+                      g === 0
+                        ? cat('surface0')
+                        : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})`,
+                  }}
+                />
+              )
             })}
           </div>
         </div>
-        <div className="mt-1 text-center text-micro text-fg-2">{WEEKDAYS[1]}–{WEEKDAYS[0]} · 13 weeks</div>
+        <div className="mt-1 text-center text-micro text-fg-2">
+          {WEEKDAYS[1]}–{WEEKDAYS[0]} · ${heatWeeks} weeks
+        </div>
       </Card>
     </CardGrid>
   )
