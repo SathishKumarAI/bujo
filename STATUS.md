@@ -1,8 +1,8 @@
 # STATUS
 
-**Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `4ea429b`.**
-Twelve merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
-#156 #157.
+**Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `588dc00`.**
+Fifteen merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
+#156 #157 #158 #159.
 
 ## What shipped
 
@@ -20,6 +20,8 @@ Twelve merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
 | #155 | STATUS: Coaching done, Recovery next | — |
 | #156 | Recovery: fold Setup and Reference, 6.33 screens → 4.15 | COD-23 |
 | #157 | **The a11y gate ran on an empty journal.** Armed it; fixed the 16 it hid | COD-28 |
+| #158 | STATUS: the gate was measuring an empty app | — |
+| #159 | Reconcile the docs — `ACCESSIBILITY.md` had recorded the bug as the fix | — |
 
 ## The findings worth carrying forward
 
