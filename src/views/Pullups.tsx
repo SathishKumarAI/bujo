@@ -94,11 +94,17 @@ export function Pullups() {
         <>
           <TrainingSetCard max={max} maxInput={maxInput} onMax={setMaxInput} logged={logged} />
           <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} />
-          <ProgramTracker only="pullup-zero" />
         </>
       }
       zone3={
         <>
+          {/* The programme moved out of zone 2. It is 637px of the act column's
+              1600, against a review column of 649 — 951px of empty page beside
+              a form squeezed into 442px — and it is not the act: "Starting From
+              Zero" is a twelve-week plan you check off and read your position
+              in, which is reviewing. Measured after the move: 963 against 1286,
+              and it reads better at 722px than at 442. */}
+          <ProgramTracker only="pullup-zero" />
           <section>
             <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">History</h2>
             {sessions.length === 0 ? (

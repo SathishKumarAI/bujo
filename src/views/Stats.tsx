@@ -174,12 +174,16 @@ export function Stats() {
       {/* Three across. Eight blocks — the heatmap, achievements and six
           collapsed analytics groups — used to be one tall column. */}
       <CardGrid>
-      {/* The card sizes to the range, because the range sizes the grid: the
-          heatmap's cells are a fixed 11px, so 3mo draws 202px, 6mo 384px and
-          1yr 748px (measured at 1440). Pinned to the full row it left 978 /
-          796 / 432px of dead card — BUJO-280. Only 1yr needs more than one
-          column; the other two now sit in one and the neighbour card moves up
-          beside them. */}
+      {/* The card still sizes to the range, but for the opposite reason now,
+          and the old one is worth keeping written down because it inverted.
+          The grid used to have a fixed 11px cell, so the range set its WIDTH —
+          202 / 384 / 748px at 1440 — and pinning the card to the full row left
+          978 / 796 / 432px of dead card (BUJO-280). The grid is `fluid` since
+          #169: it always fills its card, so the range now sets the CELL SIZE
+          instead. Measured at 1440: 3mo 35.5px, 6mo 17.6px, and 1yr in one
+          column would be ~9px. Spanning two columns at 1yr puts it back to
+          18.8px — the same density as 6mo, which is the point of the span.
+          Same conditional, live reason. */}
       <Card band className={heatWeeks === 52 ? SPAN_2 : undefined} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>

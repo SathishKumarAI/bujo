@@ -77,6 +77,22 @@ export function Coaching() {
   return (
     <PageLayout
       tier={1180}
+      /**
+       * `stacked`, because the 62/38 split is wrong for this page in both
+       * directions at once.
+       *
+       * Measured at 1440: the act column ran **1676px** and the review column
+       * **238px** — 1438px of empty page beside a twelve-row roadmap squeezed
+       * into 424px. The split assumes the act is a form capped at 380px and the
+       * review is a list; here the act is a twelve-week programme that wants
+       * width and the review is five collapsed reference rows that want none.
+       *
+       * Swapping the two zones only mirrors the hole: today's session is ~260px
+       * against a roadmap-plus-manual of ~1650. There is no allocation of two
+       * columns that balances one tall thing and two short ones — so it takes
+       * one column, which is the variant `stacked` exists for.
+       */
+      stacked
       zone1={<StatBar facts={facts} />}
       zone2={
         <>
