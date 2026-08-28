@@ -57,6 +57,18 @@ cluster clean while every titled card with a subtitle still drew one. Same shape
 as the six typographic folds that matched neither the caret-icon nor the
 `aria-expanded` grep. Grep the *output*, and confirm on the rendered page.
 
+Trap: **"environmental, not a regression" in a handover note means a gate has
+been switched off.** `npm run smoke` carried that sentence across two sessions:
+its default browser path was `/usr/bin/google-chrome-stable`, so it could not
+launch here at all, and even with the documented `CHROME_PATH` workaround it
+went red on `account` because there is no route to Supabase. A gate that is
+known to fail has a red that carries no information, and a gate with a manual
+incantation is one nobody types — so it silently stopped covering anything, and
+two Body tabs (`program`, `nutrition`) fell off its id list unnoticed. Fixed:
+falls back to Playwright's own Chromium, and judges a failed resource load by
+its **origin** rather than its message. When a gate needs a workaround, fix the
+gate; a workaround written in STATUS.md is a gate that is off.
+
 Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
 not checked, and "0 serious" means only "for the pages that were opened". Add new
 surfaces. Do not argue a page is unreachable from the code's shape — Recovery was
