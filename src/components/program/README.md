@@ -11,6 +11,7 @@ pure question about it ("which day am I on", "is this day finished") live in
 | Where the cursor opens, what ticking writes, any derived count | `useProgram.ts` |
 | The block/day grid, the progress bar, cell states | `ProgramMap.tsx` |
 | An exercise row, the actual-result field | `DayChecklist.tsx` |
+| The rest countdown, its controls | `RestTimer.tsx` |
 | The body map under a day | `DayAnatomy.tsx` |
 | The one-card layout Pull-ups uses | `ProgramTracker.tsx` |
 | The three-zone layout the Program tab uses | `src/views/Program.tsx` |
@@ -42,3 +43,10 @@ the arrangement. Copying the derivations into the view instead is how
   `DayGrid` has `fluid`.
 - **Foregrounds on a fill go through `onAccent()`,** and no `opacity` on text
   that was solved against its background.
+- **Rest is a fact about a program, not about exercises.** `restSeconds` takes
+  the `Program` and returns `null` unless it declares `restRule`. Written as a
+  global rule over quantities it read "5 reps" off the pull-up program's
+  scapular retractions and offered a three-minute rest inside a circuit whose
+  source prescribes none — a test asserts both directions.
+- **The countdown is `end - now`, never a decrement per tick.** A background tab
+  throttles `setInterval` to about once a minute.

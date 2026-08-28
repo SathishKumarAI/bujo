@@ -1,11 +1,13 @@
 import { Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { useState } from 'react'
 import { Card } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout, StatBar } from '../components/page'
-import { DayAnatomy, DayChecklist, ProgramMap, useProgram } from '../components/program'
+import { DayAnatomy, DayChecklist, ProgramMap, RestTimer, useProgram } from '../components/program'
 import { useNav } from '../components/shell/nav'
 import { setPendingSession } from '../lib/pendingSession'
+import { restSeconds } from '../lib/programs'
 
 /**
  * The 12-Week Hypertrophy Block · a Body tab of its own.
@@ -40,6 +42,23 @@ import { setPendingSession } from '../lib/pendingSession'
 export function Program() {
   const navigate = useNav()
   const s = useProgram('hyper12')
+
+  /**
+   * The running rest, if any. Held here rather than inside the checklist so it
+   * can render in the sticky act column — a countdown that scrolls off the
+   * screen with the row that started it is a countdown you go back to look for.
+   *
+   * `id` only ever increments; it is the remount key, so ticking the same lift
+   * again restarts the clock rather than leaving a finished one on screen.
+   */
+  const [rest, setRest] = useState<{ id: number; seconds: number; exercise: string } | null>(null)
+  function startRest(exercise: string, qty: string) {
+    const seconds = restSeconds(s.p, qty)
+    // No prescription, no timer. `restSeconds` returns null unless the program
+    // itself declares the rule and the quantity is a rep target.
+    if (seconds === null) return
+    setRest((r) => ({ id: (r?.id ?? 0) + 1, seconds, exercise }))
+  }
 
   // The day the PROGRAM says you are on, which is only the day on screen until
   // you start browsing. Read off `days` rather than `cur` — `cur` follows the
@@ -95,6 +114,15 @@ export function Program() {
             </Button>
           </div>
 
+          {/* Keyed on the tick count as well as the exercise, so ticking the
+              same lift twice — or two sets of it — restarts the clock instead
+              of leaving a finished timer on screen. */}
+          {rest && (
+            <div className="mt-3">
+              <RestTimer key={rest.id} seconds={rest.seconds} exercise={rest.exercise} onDismiss={() => setRest(null)} />
+            </div>
+          )}
+
           {s.p.note && (
             <p className="mt-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{s.p.note}</p>
           )}
@@ -115,7 +143,7 @@ export function Program() {
               <h2 className="text-label text-fg-2">{s.cur.focus} · day {s.day}</h2>
               <span className="num text-label text-fg-2">{s.curDoneCount}/{s.cur.exercises.length} done</span>
             </div>
-            <DayChecklist s={s} />
+            <DayChecklist s={s} onCheck={startRest} />
           </section>
           {/* Last, deliberately. The body map is 317px and it is reference, not
               a step — above the checklist it pushed the seven things you came

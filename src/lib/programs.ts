@@ -49,6 +49,18 @@ export interface Program {
   source: string
   /** Short note shown under the title (cardio / cadence guidance). */
   note?: string
+  /**
+   * This program prescribes rest by rep range — see `restSeconds`.
+   *
+   * On the record rather than global, because it is **not** a fact about
+   * exercises, it is a fact about one program: the rule is written in the
+   * hypertrophy block's own `note` and nowhere else. Left global it read
+   * "5 reps" and "1 rep" off the pull-up program's scapular retractions and
+   * jumping pull-ups and offered a three-minute rest between them — a
+   * prescription nobody wrote, in a program whose source gives none. A test
+   * asserts both directions.
+   */
+  restRule?: 'rep-range'
   weeks: ProgramWeek[]
 }
 
@@ -96,6 +108,10 @@ export const HYPERTROPHY_PROGRAM: Program = {
   home: 'program',
   source: '3 phases × 4 weeks · 6 days/week · push/pull/legs',
   note: 'Cardio: 20 min fast walk post-workout daily · Sun: rest / 1-hr walk / 10K steps. Rest: 12+ reps→30s · 8–10→120s · <8→180s.',
+  // The rest sentence above, as something the app can act on. Both stay: the
+  // note is the whole prescription in the author's words, `restRule` is the one
+  // clause `restSeconds` implements.
+  restRule: 'rep-range',
   weeks: [
     {
       week: 1, label: 'Phase 1 · Weeks 1–4',
@@ -186,6 +202,34 @@ export function resumeAt(p: Program, done: string[]): { week: number; day: numbe
   }
   const last = p.weeks[p.weeks.length - 1]
   return { week: last.week, day: last.days[last.days.length - 1].day }
+}
+
+/**
+ * The rest this program prescribes between sets of an exercise, in seconds — or
+ * `null` where it prescribes none.
+ *
+ * The rule is the hypertrophy block's own, written in its `note` and until now
+ * read by nobody: **12+ reps → 30s · 8–10 → 120s · under 8 → 180s**. It keys off
+ * the LOW end of a range, because that is the end that sets the load: "8–12
+ * reps" is a heavy-ish set you rest two minutes from, not a pump set.
+ *
+ * Two guards, and the first one is the one that matters:
+ *
+ * 1. **The program must opt in** (`restRule`). Written as a global rule over
+ *    quantities this looked right and was wrong — the pull-up program has "5
+ *    reps" scapular retractions and "1 rep" jumping pull-ups, so it handed out
+ *    three-minute rests inside a circuit whose source prescribes none.
+ * 2. The `reps` suffix is required, so times and counts — "15,30,15 s",
+ *    "Max effort", "20s work" — do not parse as rep targets.
+ *
+ * A timer counting down a number nobody wrote is worse than no timer.
+ */
+export function restSeconds(p: Program, qty: string): number | null {
+  if (p.restRule !== 'rep-range') return null
+  const m = /^(\d+)(?:\s*[–—-]\s*\d+)?\s*reps?\b/i.exec(qty.trim())
+  if (!m) return null
+  const low = Number(m[1])
+  return low >= 12 ? 30 : low >= 8 ? 120 : 180
 }
 
 /** Every day of the program in order — what a progress map walks. */
