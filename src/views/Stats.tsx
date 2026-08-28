@@ -19,7 +19,7 @@ import { CheckinTimesCard } from '../components/CheckinTimesCard'
 import { MoodAnalytics } from '../components/stats/MoodAnalytics'
 import { HabitAnalytics } from '../components/stats/HabitAnalytics'
 import { LifetimeCards } from '../components/stats/LifetimeCards'
-import { cat, rechartsTooltip } from '../lib/colors'
+import { cat, rechartsTooltip, onAccent } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
@@ -57,11 +57,28 @@ export function Stats() {
     setYm(ymOf(new Date(y, m - 1 + d, 1)))
   }
 
+  /**
+   * Mood tint, as **hex** rather than `hsl()`.
+   *
+   * It has to be hex because `onAccent` — which picks the readable foreground
+   * for it — parses hex, and picking that foreground is the whole point: these
+   * swatches are a fixed 55% lightness in every theme, so `crust` was correct
+   * on the dark themes and near-white on the light ones. Measured on latte:
+   * **2.04:1** for a mood-4 day. Same colour, five themes, one hardcoded
+   * partner.
+   */
   const moodColor = (v: number | undefined) => {
     if (v == null) return cat('surface0')
-    // red (low) → yellow → green (high)
+    // red (low) → yellow → green (high), at a fixed S/L so the scale reads the
+    // same in every theme.
     const hue = (v / 10) * 120
-    return `hsl(${hue} 45% 55%)`
+    const s = 0.45
+    const l = 0.55
+    const c = (1 - Math.abs(2 * l - 1)) * s
+    const x = c * (1 - Math.abs(((hue / 60) % 2) - 1))
+    const m = l - c / 2
+    const [r, g, b] = hue < 60 ? [c, x, 0] : [x, c, 0]
+    return '#' + [r, g, b].map((n) => Math.round((n + m) * 255).toString(16).padStart(2, '0')).join('')
   }
 
   // Click-to-enlarge: which widget is shown big in the modal.
@@ -79,13 +96,21 @@ export function Stats() {
         {monthDays(ym).map((d, i) => (
           <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
             className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-heading' : 'text-micro'}`}
+            // Two different backgrounds, so two different rules.
+            //
             // An unlogged day draws its date on the empty-cell surface, and
             // `overlay0` gave 2.57:1 against it at 10px — below the 4.5:1 floor
             // in every dark theme. `subtext0` is the next step up that is still
-            // clearly quieter than a logged day, and it clears the threshold in
-            // all five. A logged day keeps `crust`: its background is a
-            // saturated mood colour, not the empty surface.
-            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? cat('crust') : cat('subtext0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
+            // clearly quieter than a logged day, and clears it in all five.
+            //
+            // A logged day used to keep `crust`, on the argument that its
+            // background is a saturated mood colour rather than the empty
+            // surface. That argument was right about the background and wrong
+            // about the foreground: `crust` is near-white in the light themes,
+            // and a mood-4 day measured **2.04:1** on latte. The swatch is a
+            // fixed 55% lightness in every theme, so no single neutral works —
+            // `onAccent` picks per fill and per theme, which is what it is for.
+            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? onAccent(moodColor(moods.get(d))) : cat('subtext0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
             {Number(d.slice(8))}
           </div>
         ))}

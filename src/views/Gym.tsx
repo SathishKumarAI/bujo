@@ -340,7 +340,7 @@ export function Gym() {
                 className="inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-body"
                 style={{
                   background: split === s.id ? cat(s.color) : cat('surface0'),
-                  color: split === s.id ? cat('crust') : cat('subtext1'),
+                  color: split === s.id ? onAccent(cat(s.color)) : cat('subtext1'),
                 }}
               >
                 <AppIcon as={Icon} size="sm" /> {s.label}
@@ -389,7 +389,7 @@ export function Gym() {
                   aria-label="Focus muscle map on this exercise"
                   title="Show this exercise on the muscle map"
                   className="grid h-7 w-7 place-items-center rounded-none disabled:opacity-30"
-                  style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? cat('crust') : cat('overlay1') }}
+                  style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? onAccent(cat('mauve')) : cat('subtext0') }}
                 >
                   <AppIcon as={Crosshair} size="sm" />
                 </button>

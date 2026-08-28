@@ -1,7 +1,7 @@
 import { Clock } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onAccent } from '../../lib/colors'
 import type { urgeHourHistogram, peakUrgeHour } from '../../lib/urge'
 
 type HourHist = ReturnType<typeof urgeHourHistogram>
@@ -29,7 +29,7 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
               // Only the four `hour % 6 === 0` cells print a digit, so this hid
               // behind two labels — 12pm and 6pm, whenever those hours had no
               // urges logged.
-              color: h.heat > 0.5 ? cat('crust') : cat('subtext0'),
+              color: h.heat > 0.5 ? onAccent(cat('peach')) : cat('subtext0'),
             }}>
             {h.hour % 6 === 0 ? h.hour : ''}
           </div>

@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { PageLayout, StatBar } from '../components/page'
 import { Button } from '../components/ui/button'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
 import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
@@ -236,7 +236,7 @@ export function Plan() {
                     key={w}
                     onClick={() => setWeekdays((cur) => (cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]))}
                     className="rounded px-2 py-1 text-label"
-                    style={{ background: weekdays.includes(i) ? cat('mauve') : cat('surface0'), color: weekdays.includes(i) ? cat('crust') : cat('subtext0') }}
+                    style={{ background: weekdays.includes(i) ? cat('mauve') : cat('surface0'), color: weekdays.includes(i) ? onAccent(cat('mauve')) : cat('subtext0') }}
                   >
                     {w}
                   </button>
@@ -430,7 +430,12 @@ export function Plan() {
                         <button
                           onClick={() => setOpenThread(open ? null : t.rootId)}
                           className="shrink-0 rounded-none px-2 py-0.5 text-label font-medium"
-                          style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '33', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
+                          // `'22'`, not `'33'`. The accents are solved against a **13%** wash of
+                            // themselves (`scripts/solve-contrast.mjs`, and `Pill tone="wash"`
+                            // is the idiom it was calibrated on). A 20% wash lifts the
+                            // background further toward the text and puts them back under
+                            // 4.5 — latte measured 4.25 on red and 4.31 on peach. One digit.
+                            style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '22', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
                           title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                           aria-expanded={open}
                           aria-label={`Migration history for "${t.text}"`}

@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { monthDays, prettyMonth } from '../lib/date'
 import { Card, Input } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
-import { cat, rechartsTooltip } from '../lib/colors'
+import { cat, rechartsTooltip, onAccent } from '../lib/colors'
 
 const FLAGS = ['period', 'spotting', 'ovulation', 'pms', 'cramps']
 
@@ -57,7 +57,7 @@ export function Cycle() {
                             aria-pressed={on}
                             aria-label={`${f}${on ? ' (on)' : ''}`}
                             className="rounded-none px-2 py-0.5"
-                            style={{ background: on ? cat('red') : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}
+                            style={{ background: on ? cat('red') : cat('surface0'), color: on ? onAccent(cat('red')) : cat('subtext0') }}
                           >
                             {f}
                           </button>

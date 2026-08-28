@@ -11,7 +11,7 @@ import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { slotGlyph } from '../components/glyphs'
-import { cat, HABIT_COLORS } from '../lib/colors'
+import { cat, HABIT_COLORS, onAccent } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
@@ -387,7 +387,7 @@ function Seg({ label, options, value, onChange }: { label: string; options: [str
       <p className="mb-1 text-label text-fg-2">{label}</p>
       <div className="flex gap-1">
         {options.map(([v, l]) => (
-          <button key={v} onClick={() => onChange(v)} className="rounded px-2 py-1 text-label" style={{ background: value === v ? cat('mauve') : cat('surface0'), color: value === v ? cat('crust') : cat('subtext1') }}>{l}</button>
+          <button key={v} onClick={() => onChange(v)} className="rounded px-2 py-1 text-label" style={{ background: value === v ? cat('mauve') : cat('surface0'), color: value === v ? onAccent(cat('mauve')) : cat('subtext1') }}>{l}</button>
         ))}
       </div>
     </div>
@@ -677,7 +677,7 @@ function CategoryRows({
                     {streak > 1 && <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" />{streak}</span>}
                     {/* H5: 30-day completion % (scheduled days done), only when any day was scheduled. */}
                     {rate30 && rate30.scheduled > 0 && (
-                      <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-micro" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('yellow') : cat('overlay1') }}>{rate30.pct}%30d</span>
+                      <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-micro" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('peach') : cat('subtext0') }}>{rate30.pct}%30d</span>
                     )}
                     {/* Comeback chip: encourage after a lapse + show lifetime restarts. */}
                     {comeback?.recovering && (
@@ -685,11 +685,11 @@ function CategoryRows({
                     )}
                     {/* #395: recency-weighted consistency score — momentum, not a flat avg. */}
                     {consistency != null && consistency > 0 && (
-                      <span title={`Consistency score ${consistency}/100 (recent scheduled days weighted more)`} className="shrink-0 text-micro" style={{ color: consistency >= 80 ? cat('green') : consistency >= 50 ? cat('yellow') : cat('overlay1') }}>◆{consistency}</span>
+                      <span title={`Consistency score ${consistency}/100 (recent scheduled days weighted more)`} className="shrink-0 text-micro" style={{ color: consistency >= 80 ? cat('green') : consistency >= 50 ? cat('peach') : cat('subtext0') }}>◆{consistency}</span>
                     )}
                     {/* Letter grade (A–F) over the same window — a single glanceable mark. */}
                     {grade && grade.score > 0 && (
-                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-micro font-medium" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach')) + '33', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('yellow') : cat('peach') }}>{grade.letter}</span>
+                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-micro font-medium" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('peach') : cat('maroon')) + '22', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('peach') : cat('maroon') }}>{grade.letter}</span>
                     )}
                     {/* Days since the last scheduled miss — a clean-since counter. */}
                     {sinceMiss != null && sinceMiss >= 3 && (
@@ -698,7 +698,7 @@ function CategoryRows({
                   </>
                 )}
                 {h.weeklyGoal ? (
-                  <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-micro" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('overlay1') }}>
+                  <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-micro" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('subtext0') }}>
                     {weekCount}/{h.weeklyGoal}wk
                   </span>
                 ) : null}
@@ -729,7 +729,7 @@ function CategoryRows({
                       title={`${val}/${target}${h.floor ? ` (floor ${h.floor})` : ''}${met ? ' · stretch met' : atFloor ? ' · met floor' : partial ? ' · partial' : ''}`}
                       aria-label={`${h.name} ${d}: ${val} of ${target}${met ? ', stretch target met' : atFloor ? ', met floor' : partial ? ', partial' : ''}`}
                       className={`relative grid ${cell} place-items-center overflow-hidden rounded text-micro disabled:opacity-20`}
-                      style={{ background: met ? slipColor : atFloor ? slipColor + '44' : 'transparent', border: `1px solid ${met || atFloor || partial ? slipColor : cat('surface1')}`, color: met ? cat('crust') : cat('subtext1') }}
+                      style={{ background: met ? slipColor : atFloor ? slipColor + '44' : 'transparent', border: `1px solid ${met || atFloor || partial ? slipColor : cat('surface1')}`, color: met ? onAccent(slipColor) : cat('subtext1') }}
                     >
                       {/* Partial: a bottom-up fill bar sized to the target ratio. */}
                       {partial && (
@@ -980,7 +980,7 @@ function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => void }) 
               {WEEKDAYS.map((w, i) => {
                 const on = habit.activeDays?.includes(i)
                 return (
-                  <button key={w} onClick={() => { const cur = habit.activeDays ?? []; set({ activeDays: cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i] }) }} className="rounded px-2 py-1 text-label" style={{ background: on ? cat(habit.color) : cat('surface0'), color: on ? cat('crust') : cat('subtext0') }}>{w}</button>
+                  <button key={w} onClick={() => { const cur = habit.activeDays ?? []; set({ activeDays: cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i] }) }} className="rounded px-2 py-1 text-label" style={{ background: on ? cat(habit.color) : cat('surface0'), color: on ? onAccent(cat(habit.color)) : cat('subtext0') }}>{w}</button>
                 )
               })}
             </div>

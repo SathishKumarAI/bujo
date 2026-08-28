@@ -6,7 +6,7 @@ import { Card, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { PageLayout, StatBar } from '../components/page'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
@@ -112,8 +112,8 @@ export function Coaching() {
                         // The untaken weeks are a surface tone, not a brand fill, so
                         // crust-on-surface1 was the failing pair — those get `text`.
                         style={
-                          isDone ? { background: cat('green'), color: cat('crust') }
-                            : isNow ? { background: cat('mauve'), color: cat('crust') }
+                          isDone ? { background: cat('green'), color: onAccent(cat('green')) }
+                            : isNow ? { background: cat('mauve'), color: onAccent(cat('mauve')) }
                               : { background: cat('surface1'), color: cat('text') }
                         }>
                         {isDone ? <Icon as={Check} size="sm" /> : w.week}

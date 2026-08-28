@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
@@ -229,7 +229,7 @@ export function NoFap() {
           the three-zone rule is not about. */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-none px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
-        style={{ background: cat('red'), color: cat('crust'), boxShadow: `0 6px 24px ${cat('red')}55` }}>
+        style={{ background: cat('red'), color: onAccent(cat('red')), boxShadow: `0 6px 24px ${cat('red')}55` }}>
         <Icon as={Lifebuoy} size="md" /> SOS
       </button>
       {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
@@ -673,8 +673,8 @@ export function NoFap() {
                         one background and then applied to all three. */}
                     <span className="absolute -left-[27px] grid h-5 w-5 place-items-center rounded-none text-micro"
                       style={
-                        reached ? { background: cat('green'), color: cat('crust') }
-                          : isNext ? { background: cat('teal'), color: cat('crust') }
+                        reached ? { background: cat('green'), color: onAccent(cat('green')) }
+                          : isNext ? { background: cat('teal'), color: onAccent(cat('teal')) }
                             : { background: cat('surface0'), color: cat('text') }
                       }>
                       {reached ? <Icon as={Check} size="sm" /> : m.day}
