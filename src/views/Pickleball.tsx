@@ -1,4 +1,4 @@
-import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, ListChecks, Medal, PersonSimpleRun, ShieldPlus, Sword, Target, Trophy } from '@/components/icons'
+import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, ListChecks, Medal, PersonSimpleRun, Plus, ShieldPlus, Sword, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -71,6 +71,19 @@ const RESOURCES = [
 export function Pickleball() {
   const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings, logDupr, removeDupr } = useJournal()
   const [dupr, setDupr] = useState({ date: todayISO(), rating: '' })
+  // The page had three always-open log forms — session, DUPR, event — each
+  // ending in its own wide tonal button. Three controls at primary weight is
+  // three primary actions, which is none: nothing tells a first-time visitor
+  // that logging a session is the thing this page is for. DUPR and events are
+  // logged monthly at most, so they sit behind a header "+" and the reveal
+  // saves with a ghost button. "Log session" stays the one wide control.
+  // Both cards are also collapsible, so the fold is driven from here: hitting
+  // "+" on a card the user had collapsed would otherwise reveal a form inside a
+  // hidden body and read as a dead button.
+  const [duprOpen, setDuprOpen] = useState(false)
+  const [duprCardOpen, setDuprCardOpen] = useState(true)
+  const [evOpen, setEvOpen] = useState(false)
+  const [evCardOpen, setEvCardOpen] = useState(true)
   const duprStats = duprTrend(data.settings)
   function saveDupr() {
     const r = Number(dupr.rating)
@@ -399,14 +412,28 @@ export function Pickleball() {
       )}
 
       {/* ── DUPR rating tracker ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>} subtitle="Log your DUPR over time, watch the trend climb" collapsible>
-        <div className="mb-3 flex flex-wrap items-end gap-2">
-          <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-          <Button variant="secondary" onClick={saveDupr} className="press-3d">Log rating</Button>
-        </div>
+      <Card
+        band
+        title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>}
+        subtitle="Log your DUPR over time, watch the trend climb"
+        collapsible
+        open={duprCardOpen}
+        onOpenChange={setDuprCardOpen}
+        right={
+          <Button variant="ghost" size="icon-sm" onClick={() => { setDuprOpen((o) => !o); setDuprCardOpen(true) }} aria-expanded={duprOpen} aria-label="Log a DUPR rating">
+            <Icon as={Plus} size="sm" />
+          </Button>
+        }
+      >
+        {duprOpen && (
+          <div className="mb-3 flex flex-wrap items-end gap-2 border border-line bg-ink-0 p-3">
+            <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
+            <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
+            <Button variant="ghost" size="sm" onClick={saveDupr}>Save rating</Button>
+          </div>
+        )}
         {duprStats.points.length === 0 ? (
-          <Empty>No DUPR ratings logged yet · add one above to start the trend.</Empty>
+          <Empty>No DUPR ratings logged yet · use + in the header to start the trend.</Empty>
         ) : (
           <>
             <div className="mb-3 grid grid-cols-3 gap-2">
@@ -444,13 +471,26 @@ export function Pickleball() {
 
       {/* ── Leagues & tournaments · secondary event logging, grouped beside the
             DUPR tracker and collapsed. ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>} subtitle="Log competitive events, separate from casual sessions" collapsible>
+      <Card
+        band
+        title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>}
+        subtitle="Log competitive events, separate from casual sessions"
+        collapsible
+        open={evCardOpen}
+        onOpenChange={setEvCardOpen}
+        right={
+          <Button variant="ghost" size="icon-sm" onClick={() => { setEvOpen((o) => !o); setEvCardOpen(true) }} aria-expanded={evOpen} aria-label="Log an event">
+            <Icon as={Plus} size="sm" />
+          </Button>
+        }
+      >
         <div className="mb-4 grid grid-cols-3 gap-2">
           <StatTile compact label="Events" value={events.length} />
           <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} />
           <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
         </div>
         {/* log an event */}
+        {evOpen && (
         <div className="grid gap-2 rounded-none border border-line bg-ink-0 p-3 sm:grid-cols-2">
           <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
           <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
@@ -463,8 +503,9 @@ export function Pickleball() {
           <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
           <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
           <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-          <Button variant="secondary" onClick={logEvent} className="press-3d sm:col-span-2">Log event</Button>
+          <div className="flex justify-end sm:col-span-2"><Button variant="ghost" size="sm" onClick={logEvent}>Save event</Button></div>
         </div>
+        )}
         {/* event list */}
         {events.length > 0 && (
           <ul className="mt-3 divide-y divide-surface0">
@@ -522,8 +563,11 @@ export function Pickleball() {
       </CardGrid>
 
       {/* ── SECONDARY analytics · grouped under collapsible sections so the
-            primary logging + history UI above stays uncluttered. All analytics
-            groups default collapsed so open analytics don't dominate the view. ── */}
+            primary logging + history UI above stays uncluttered. Each group
+            OPENS by default (`Section` defaults `defaultOpen`): a fold that
+            starts shut hides its contents from `npm run a11y`, which walks the
+            rendered page, and a signal nobody scrolls to is a signal nobody
+            reads. The header caret is there for anyone who wants it shut. ── */}
       <Section
         title="Form & momentum"
         icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
