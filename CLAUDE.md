@@ -69,6 +69,18 @@ error — collapsing the Body cluster left the bar at three. There is no list an
 more: both nav bars read `SECTIONS` directly. Kept as a warning against
 re-introducing a hand-written id list that resolves against another source.
 
+Trap: **a data module can go dead without anything failing.** A pass adding
+"cards from the training guide" to `views/Pullups.tsx` rewrote the lists
+*inline* instead of reading `lib/pullups.ts`: `PULLUP_WORKOUTS` went from
+fourteen formats to three, `PULLUP_PROGRESSIONS` from nine to seven rewritten
+ones, and the ability table was dropped. `tsc -b`, eslint, vitest and the build
+were all clean — an export nobody imports is not an error — and the page still
+rendered a plausible-looking list, so the loss was invisible on screen too. Same
+family as the emergency-banner extraction in the global rules, running the other
+way: the copy was retyped rather than reused. **When a view stops importing a
+data module, that is the finding.** Assert the counts in a test
+(`lib/pullups.test.ts`), because nothing else will.
+
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.

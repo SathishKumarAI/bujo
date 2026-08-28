@@ -1,16 +1,40 @@
 # Pull-ups
 
-`src/views/Pullups.tsx` · nav: Fitness → Pull-ups · `?view=pullups`
+`src/views/Pullups.tsx` · nav: **Body → Pull-ups** · `?view=pullups`
 
 ## What this page is
 
-A single-exercise coaching hub. A six-week "Starting From Zero" program with a
-day-by-day checklist, an ability calculator that turns your max strict pull-ups
-into a prescribed training set, and a reference section of workout formats and
-progressions.
+A single-exercise coaching hub, and the only place a pull-up session is
+recorded as a scheme rather than as a duration. A six-week "Starting From Zero"
+program with a day-by-day checklist, an ability calculator that turns your max
+strict pull-ups into a prescribed training set, a session recorder, and the
+training manual underneath.
 
-Unusually for this app, this page **tells you what to do** rather than recording
-what you did. That is its strength and the source of most of its problems.
+The audit below was written against the older version, which **told you what to
+do** without recording what you did — that was its strength and the source of
+most of its problems. The next section says which of those are closed.
+
+## What shipped · COD-13, 2026-08-27
+
+| Was | Now |
+|---|---|
+| No door. Reached only by picking Pull-ups on the Fitness activity select and then finding a companion link | **A Body tab.** `sections.ts` argued for three releases that a pull-up session IS a `Workout` so the page was an activity — the wrong test, and the same one this repo already records getting wrong about Pickleball. The test is what the *page* holds |
+| The checklist marked a day done; nothing recorded what was pulled | **A session recorder.** Method (straight / ladder / pyramid / EMOM) + top set + rounds, which is how these are actually prescribed. Stores a plain `Workout` with `activity: 'pullups'`, one `Pull-up 1xN @ 0kg` line per set, so the existing strength analytics, CSV export and search read it unchanged |
+| The ability table sat permanently open below the calculator that had already told you your row | Collapsed, inside the manual |
+| Max strict pull-ups was a number you typed and retyped | Derived from the biggest single set you have logged. The input is still there and overrides it, and deliberately does not persist |
+| Counts and rep ranges set as body text | `.num` throughout |
+| A flat stack of eight cards | The three-zone contract — `PageLayout` / `StatBar` / `SummaryStrip` / `CalendarHeatmap`, like Fitness and Pickleball |
+
+**And a content regression, undone.** Commit `531596f` re-wrote the workout
+formats and progressions inline in the view instead of reading
+`lib/pullups.ts`. Fourteen formats became three, nine progressions became seven
+rewritten ones, and the ability-ladder table was dropped. Nothing failed —
+`PULLUP_WORKOUTS` and `PULLUP_PROGRESSIONS` simply became exports nobody read,
+which typechecks, lints and renders. `lib/pullups.test.ts` asserts the counts
+now, and the manual is back on the library.
+
+Commit `4a25ff5` had also pasted a shrunken copy of three of these cards into
+`views/Coaching.tsx`; that is deleted.
 
 ## Measured (1440×900, demo data)
 
@@ -75,15 +99,20 @@ starting from zero.
 
 ## Upgrades, ranked
 
+Still open — all three live in `components/ProgramTracker.tsx`, which this page
+shares with Program and did not change:
+
 1. **P1 · Add a "start here" state.** With 0/30 done, the page should show one
-   next action, not a six-week grid.
+   next action, not a six-week grid. Zone 1 now answers "what today" for the
+   *volume*, but the program grid still opens cold on week 1.
 2. **P1 · Make the week/day picker know where you are** — highlight the current
    day, and offer "continue".
-3. **P2 · Let the checklist capture reps**, so the program produces data instead
-   of only consuming it.
-4. **P2 · Collapse the ability table** behind the calculator's result.
-5. **P3 · Move "Mark all done" to the card header.**
-6. **P3 · Use the numeric type treatment** for the counts and rep ranges.
+3. **P3 · Move "Mark all done" to the card header.**
+
+Closed by COD-13: capture (the recorder), the ability table (collapsed), and the
+numeric type treatment. The checklist itself still does not capture reps — the
+recorder beside it does, which is the cheaper half of that upgrade and not the
+whole of it.
 
 ## Leave alone
 
