@@ -1,5 +1,69 @@
 # Worklog
 
+## 2026-08-28 (later) — "Too many numbers" was the wrong diagnosis
+
+**Summary:** Rebuilt Challenges on the three-zone page contract. `main` is at
+`2c75bc1`: `tsc -b` 0, **837 tests / 60 files**, eslint 0 errors / 2
+pre-existing warnings, build clean, `npm run a11y` 0 serious across both
+viewports and five themes, `verify-folds challenges` 0/0 with folds open,
+`clipped` 0 across 23 views, `smoke` 25/25, design-system 275 files.
+
+Merged: #161 #162. Closed COD-35, filed COD-37.
+
+### The page did not have too many numbers; it had unaddable ones
+
+`docs/pages/challenges.md` had carried "the card states its progress four
+times" as a P1 for weeks. Read literally, that is an instruction to delete
+three of them — and that fix would have hidden the defect rather than fixed
+it. From one screen the page showed `Day 4 of 75`, `5 of 75 days done`,
+`70 to go`, `7%`, `70 Days left` and `9/75 Elapsed`. **Every one was correct
+under its own definition.** What was missing is that no two of them could be
+added to each other: `Days left` was `duration − completed`, which counts from
+a different origin than `Day n of N`, so 4, 5, 9 and 70 could never be
+reconciled by a user counting on their fingers however few were on screen.
+
+The fix is a partition, asserted over four logs in `lib/challenges.test.ts`:
+
+    completedDays + missedDays + (1 if today is still open) === elapsedDay
+
+Five numbers on one screen is fine once they agree. Goals ("1 of 7 on track"
+and "53%") and Recovery (the streak twice within 200px) have the same shape and
+should get the same treatment.
+
+Two things fell out of it. **`progressDay` was the streak, said twice** — on a
+strict challenge it returned `streakBeforeToday + 1` and wore a day number's
+label, which is most of why the set read as contradictory. Its only remaining
+caller was its own test, so it was deleted outright rather than left unused.
+And **today is not a missed day**: the first `missedDays` counted the day in
+progress, so the strip read `Days missed 3` at breakfast.
+
+### What the rebuild deleted
+
+The progress ring and the progress bar (both restated the percent printed
+beside them), `Days left`, the header flame and `Current streak` (the second
+and third rendering of the streak on one card), and a `Card` nested inside the
+archive fold repeating the fold's own title. 1.41 screens → 1.00 at 1440.
+
+Not done, and filed as **COD-37**: the daily rule ticks are still `Switch`,
+which reads as a setting for what is an event. There is no checkbox primitive
+in `components/ui/`, and a native `<input>` would fight
+`check-design-system.mjs`.
+
+### Four tooling traps, none of them about the app
+
+- **The census clamps at 1.00 screens**, so Challenges, Account and Settings
+  all print 1.00 and are not the same height. Measure `#main` directly before
+  concluding a change did not move anything.
+- **A Playwright screenshot is frosted by the onboarding overlay** unless
+  `localStorage['bujo:onboarded']` is set on an *earlier* load. The first
+  screenshot of the rebuild was a blurred rectangle and read as broken layout.
+  `scripts/a11y-axe.mjs:178` already does this.
+- **`Segmented` renders a Radix `ToggleGroupItem`**, so
+  `getByRole('button', ...)` times out on it. Query by text.
+- **The worktree check in CLAUDE.md cuts both ways.** A dev server was already
+  on 5199; `Get-CimInstance Win32_Process` showed it was serving this working
+  copy, so the answer was "leave it alone" rather than "kill it".
+
 ## 2026-08-28 — Thirteen PRs, and the discovery that the a11y gate was grading an empty app
 
 **Summary:** Landed a four-deep PR stack that had been red for two sessions,
