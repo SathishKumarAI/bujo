@@ -1,103 +1,104 @@
 # STATUS
 
-**Stopped:** 2026-08-28 (second session that day). Branch
-`feat/today-orient-zone`, two commits, PR open. Previous session's five PRs
-(#161–#165) are merged; `main` was at `e4508db` when this branched.
+**Stopped:** 2026-08-28 (third session that day). On `main`, clean, nothing in
+flight. Four PRs opened, CI green, squash-merged: **#168, #169, #170, #171**.
+`main` is at `2c32a42`.
 
-## What this branch does
+## What this session did
 
-Today was the page the contract had never been applied to. Two increments:
+Started from "fix `?view=fitness` — space, UI optimisation, no duplication", and
+turned that into a measured sweep of every routable view rather than a look at
+one page.
 
-| Commit | What | Ticket |
+| PR | What | Ticket |
 |---|---|---|
-| `9a25dde` | The tabs report, and the day gets its 550px of gutter back | COD-53 |
-| `79fe084` | The close-out list is a list of checkboxes, not of pressed buttons | COD-50 |
+| #168 | Fitness: the review column fills, four duplicate doors deleted | COD-60 |
+| #169 | The other three stranded day grids — Stats, Mindset, Pickleball | — |
+| #170 | Dead zone columns on Coaching and Pull-ups | — |
+| #171 | **Smoke was testing a different application**, + header rhythm | COD-74 |
 
 ## The one thing to carry forward
 
-**"Optimise this page" is two different jobs, and only one of them was
-available.** Measured per surface at 1440, 1920 and 390:
+**A browser gate that does not check what it is pointed at prints the same
+number whether it is covering everything or nothing.**
 
-- **Chrome was compressible and worth compressing.** 180px of dateline plus tab
-  row before a word of the day, and 550px of dead gutter on each side at 1920
-  because the focused layout never had a rail. Fixing both took all three
-  surfaces from 1.36 / 1.01 / 1.09 screens to **0.91 / 0.88 / 0.88** — they fit
-  one screen now.
-- **The phone was not.** 1.57 → **1.56**. Every pixel there is card content, so
-  the only remaining lever is what the cards ask for — a density decision, not a
-  layout one. Saying that plainly is more useful than shaving 8px off a padding
-  and calling it a win.
+`npm run smoke` defaulted to `http://localhost:5173` — Vite's *dev* default,
+which belongs to whichever project on the machine booted first, while every
+sibling script defaults to 4173 (`vite preview`, what CI starts). On this box
+5173 was `interview_prep/frontend`, so smoke drove **"PrepForge — AI/ML
+Interview Prep"** through all 25 `?view=` URLs and printed `25/25 views OK ·
+All views rendered clean`. Three PRs quoted it as evidence before the fourth
+caught it — from one stray console error naming `StudyCard.tsx`, a file this
+repo does not contain.
 
-The second half is the part worth keeping: **before optimising, measure whether
-the thing you are about to compress is actually what is on the screen.**
+The port was the smaller half: the pass condition was "`main` or `#root` has
+more than five characters of text", which any page in the world satisfies. It
+now asserts identity (`document.title` starts with `bujo` **and** `#main`
+exists) before scoring a single view, and runs in CI beside `a11y`. Written up
+in `CLAUDE.md`.
 
-## Next action
+**If a gate passes, confirm what it was pointed at.** Cheapest version: compare
+the served `index-*.js` hash against `dist/index.html` before believing any
+browser result — that check is what proved the *other* gates in those PRs were
+correctly aimed, so their results stand.
 
-1. **The date is stated three times** — `Today · Your daily log` and
-   `Fri, Aug 28` in the shell, then `Friday · August 28 · today` in the
-   masthead. Hoisting the dateline (so Morning and Evening are dated at all)
-   made this worse. The fix is known and deliberately not taken here: the
-   shell's Row 2 exists on Today only to hold the day chevrons, so moving those
-   into the masthead retires the row and ~56px with it. It is a shell change for
-   one view; do it with the next shell pass. Filed as **COD-57**.
-2. **`fg-2` on `ink-3` is 4.09:1** — the surfaces swatch on the kitchen sink,
-   `#a6adc8` on `#45475a` at 11px. Found by axe-ing kitchen-sink by hand, which
-   is the finding underneath the finding: see the gate note below. **COD-58**.
-3. Still open from `docs/pages/today.md`: **pick a voice** (the penalty card's
-   gamified tone against the reflection prompts' calm one). A judgement call,
-   not a fix.
+## The sweep, and what it found
 
-## Gates, and what each one is now good for
+Two scripts, both in the scratchpad rather than the repo (they answer a
+question, they are not gates): one measuring every view for a visual materially
+narrower than its container, one measuring both zone columns and repeated
+strings.
 
-Unchanged from the last session except one repair.
+**Stranded visuals — all fixed.** `DayGrid` gained `fluid`: `table-fixed` with
+no declared column widths divides the container, so cell size falls out of the
+layout at every width with no breakpoint and no ResizeObserver.
 
-`scripts/a11y-axe.mjs` navigated by `hasText: /^Evening$/`, which reads
-`textContent` — **including visually-hidden text**. The moment a surface tab
-started announcing its state ("Evening, nothing recorded yet") the gate
-declared the tab retired and exited 1. It falls back to the same name followed
-by a status suffix now, exact match first so two controls sharing a prefix
-cannot swap places.
+| | Before | After (1440 / 390) |
+|---|---|---|
+| Fitness | 188 of 708px | 708/708 · 324/324 |
+| Pull-ups | 188 of 708px | full |
+| Stats | 384 of 580px | 580/580 · 398/398 |
+| Mindset | 331 of 613px | 613/613 · 299/299 |
+| Pickleball | 202 of 580px | 580/580 · 324/324 |
 
-**The kitchen sink is not on `VIEWS`,** so axe has never seen the design system
-it exists to display — which is how a 4.09:1 swatch label sat there. Adding it
-would be right, and would likely surface more than the one above; that is the
-argument for doing it deliberately rather than as a side effect of this branch.
+Fluid changes what the *window* control means: it now sets cell size, not
+width. So Pickleball's default moved 3mo → 6mo (13 fluid columns are 35.5px,
+a month calendar) and Stats' `SPAN_2`-at-1yr survives with its reason inverted.
 
-## Traps hit this session
+**Dead zone columns — two fixed, one refused, one wasn't a defect.**
 
-- **A rendering gate that navigates by accessible name breaks when a control
-  starts announcing its state.** Above. The gate's own error message was right —
-  "the destination was renamed or it lost its door" — and the answer was
-  neither: the name had grown a suffix.
-- **The design gate is a line-level regex, so it fires on prose.** A comment
-  explaining *why* a full-radius utility is wrong here failed the rule that
-  forbids the utility. Reworded the comment; the rule is fine.
-- **Tailwind v4 emits nothing for a class assembled at runtime, silently.**
-  `tone.on.replace(/data-\[state=checked\]:/g, 'group-data-[state=checked]/row:')`
-  type-checks, builds and paints nothing. Both forms are written out as literals
-  now, and the *proof* is a measurement: every checked row's box computes the
-  14% wash in mocha, latte and dawn, and every unchecked one computes the card
-  surface. This trap has no failure mode, so it needs a computed value or it
-  needs nothing.
-- **The docs were stale in the direction that sends work at the wrong thing.**
-  `docs/pages/today.md` described ten cards and 3.5 screens; the page has been
-  three surfaces for some time. Re-dated with measurements.
+| View | act/review gap | Outcome |
+|---|---|---|
+| coaching | 1438px | `stacked` — no two-column split balances one tall thing and two short ones |
+| pullups | 951px | `ProgramTracker` moved to review; page 1891 → **1539px** |
+| nofap | 2107px | **Refused**, COD-61 — the only way under the sticky threshold is folding away a 650px urge-coping tool |
+| plan | 814px | **Not a defect** — act column is 568px, so it is `data-sticky=true` and follows you |
 
-## Verification, as run
+**Duplication — clean outside Fitness.** Fitness's `CompanionTool` linked to
+four views that had since become Body tabs (a second door to a room already on
+screen); a test now fails if a companion becomes a tab. Everything else the
+sweep flagged is legitimate: per-row action buttons, and the Collections index
+and Settings nav, which are tables of contents by design.
 
-Against `http://localhost:5199` (dev server — sidesteps the stale-service-worker
-trap), demo data seeded and asserted present:
+## Next
 
-- `npx tsc -b` exit 0 · `npx vitest run` **61 files, 862 tests** (854 at the
-  start) · `npx eslint .` 0 errors, 2 pre-existing `App.tsx` warnings ·
-  `npm run build` clean.
-- `npm run design` — 276 files. `npm run contrast` — 5 themes, 14 accents, both
-  palettes agree.
-- `npm run a11y` — 0 serious, 0 critical, 5 themes × 2 widths, **all three
-  Today surfaces scanned** (the gate already walks them; see the repair above).
-- `npm run smoke` 25/25 · `node scripts/clipped-text.mjs` clean, 23 views.
-- Today re-measured on the rendered page at 1440, 1920 and 390, per surface,
-  before and after — the numbers in this file are those, not estimates.
-- `CheckRow` verified by computed style in mocha, latte and dawn: role, checked
-  state, 44px row height, wash alpha, mark opacity.
-- Kitchen sink axed by hand in mocha and latte (it is not on the gate's list).
+- **COD-61** — Recovery needs a real IA pass. 3734px, two review sections at
+  1121 and 1729px.
+- **COD-73** — five pages are still flat card stacks: pickleball 5379px (18
+  cards), stats 4685, gym 4207, help 4021, nofap 3734. Compare fitness 931,
+  goals 950, pullups 1539, coaching 1967.
+- Neither is a one-liner; both want the page-contract method, and neither should
+  be solved by folding things away — a closed fold is invisible to `npm run
+  a11y` as well as to the user.
+
+## Environment traps hit this session
+
+- **A leftover `vite preview` held 4173** across sessions and survived a
+  `TaskStop`. Harmless once verified (it serves `dist/` from disk), but verify:
+  `curl -s localhost:4173 | grep index-` against `dist/index.html`.
+- **Ports on this machine:** 5199 is this repo's dev server, 4173 its preview,
+  and **5173 belongs to `interview_prep/frontend`** — do not point anything here
+  at 5173.
+- Screenshots need `localStorage['bujo:onboarded'] = '1'` set before load, or
+  the first-run tour covers the page; and `?demo=1` seeds only into an empty
+  journal.
