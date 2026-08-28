@@ -173,7 +173,7 @@ export function Fitness() {
             </Button>
           ) : undefined}
         />
-        <CompanionTool activity={draft.activity} mode={mode} />
+        <CompanionTool activity={draft.activity} />
         </>
       }
       zone3={
@@ -228,14 +228,24 @@ export function Fitness() {
               above already says the true thing in one line. */}
           {sessions.length > 0 && (
             <section>
-              <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
+              {/* The same hairline header as History above it. The two were a
+                  bare `h2` and a ruled one, so zone 3 read as one section and
+                  one loose afterthought rather than two of the same kind. */}
+              <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Analytics</h2>
               <SummaryStrip items={[
                 { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
                 { label: 'Total time', value: time.value, empty: time.empty },
                 { label: best.label, value: best.value, empty: best.empty },
               ]} />
+              {/* `fluid`, and half a year rather than twelve weeks.
+                  Measured before: a 188×107px table in a 708px column, with
+                  ~520px of dead space beside it and ~300px below — the page's
+                  signature visual reading as a postage stamp. Fluid cells
+                  divide the column at any width, so 26 columns land at ~23px
+                  here and ~10px on a phone with no breakpoint, and the window
+                  doubles because the space was already paid for. */}
               <div className="mt-3">
-                <CalendarHeatmap weeks={12} data={heat} unit="min" />
+                <CalendarHeatmap weeks={26} fluid data={heat} unit="min" />
               </div>
             </section>
           )}
@@ -248,36 +258,31 @@ export function Fitness() {
 }
 
 /**
- * The one contextual door out of this page.
+ * The one contextual door out of this page — and it is now down to one entry.
  *
- * Collapsing Pull-ups, Home workout and Pickleball off the tab row relocated
- * them; it did not delete the tools behind them. The pull-up program, the
- * bodyweight exercise library and the pickleball match record are real
- * surfaces with their own data — Pickleball's is a different type entirely —
- * and folding them into a log form would have lost them.
+ * This map was written when Pull-ups, Pickleball, Strength tools and Coaching
+ * had been collapsed OFF the tab row and lived only behind an activity. Every
+ * one of them has since been promoted back to a Body tab, so four of the five
+ * links pointed at a destination whose tab was already on screen, forty pixels
+ * above the page — "Strength tools · anatomy, plates, analytics ›" sat under
+ * the submit button while `Strength` sat in the tab row. A second door to the
+ * same room is not a shortcut, it is a thing to read and dismiss.
  *
- * So the *activity* is the relocation, and this is the door: one link, shown
- * only when the selected activity has a companion, inside zone 2 because
- * opening the pull-up program is part of acting on a pull-up session rather
- * than reviewing one. It is not a zone 4, and it is never more than one link.
+ * Home workout is the one surface that really is unreachable from navigation
+ * (`sections.ts` lists it in `MEMBERS` but in no section's `tabs`), so it is
+ * the one that still needs a door. If it ever becomes a tab, delete this too.
+ *
+ * Keyed by activity only. `MODE_COMPANION` existed solely for the strength and
+ * sport entries and is gone with them.
  */
-const COMPANION: Record<string, { view: ViewId; label: string }> = {
-  pullups: { view: 'pullups', label: 'Pull-up program & progressions' },
+// eslint-disable-next-line react-refresh/only-export-components -- exported for the invariant test below it, not for reuse
+export const COMPANION: Record<string, { view: ViewId; label: string }> = {
   homeWorkout: { view: 'homeworkout', label: 'Bodyweight exercise library' },
-  pickleball: { view: 'pickleball', label: 'Pickleball record & matchups' },
-}
-/** Every strength activity shares one workshop, so it is keyed by mode. */
-const MODE_COMPANION: Partial<Record<Mode, { view: ViewId; label: string }>> = {
-  // "programs" left the label with the 12-week block: it is a Body tab of its
-  // own now, so promising it here would send you to a page that no longer has
-  // one. Strength kept the workshop.
-  strength: { view: 'gym', label: 'Strength tools · anatomy, plates, analytics' },
-  sport: { view: 'coaching', label: 'Coaching · drills, skill ladder, program' },
 }
 
-function CompanionTool({ activity, mode }: { activity: string; mode: Mode }) {
+function CompanionTool({ activity }: { activity: string }) {
   const navigate = useNav()
-  const tool = COMPANION[activity] ?? MODE_COMPANION[mode]
+  const tool = COMPANION[activity]
   if (!tool) return null
   return (
     <Button variant="ghost" onClick={() => navigate(tool.view)} className="mt-2 h-auto justify-start p-0 text-label">

@@ -455,6 +455,14 @@ export function KitchenSink() {
             <CalendarHeatmap weeks={12} data={[]} unit="min" />
             <EmptyFrame>Log a session to start your history.</EmptyFrame>
           </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">
+              Fluid · cells divide the container instead of taking 11px, for a grid that has a
+              column to itself. Fixed at 12 weeks it is a 188px table in Fitness&rsquo;s 708px
+              review column; this is what fills it. Resize the window — the cells follow.
+            </p>
+            <CalendarHeatmap weeks={26} fluid data={demoHeat} unit="min" />
+          </div>
         </div>
       </Card>
 
