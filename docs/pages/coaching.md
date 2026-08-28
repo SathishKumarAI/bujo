@@ -11,7 +11,43 @@ library, knee rehab/prehab, and a mental-game track.
 This is the app's most *editorial* page — it teaches rather than records — and
 it is the best-structured page in the product.
 
-## Measured (1440×900, demo data)
+## What shipped · COD-22, 2026-08-28
+
+Rebuilt onto the three-zone contract, matching Pull-ups — the two pages are the
+same kind of thing (a program you follow, plus the reference that explains it)
+and had been shaped differently for no reason anyone had written down.
+
+| | Before | After |
+|---|---|---|
+| Height @1440 | **5.80 screens** | **2.19** |
+| Disclosure points | **32**, 25 shut | **17**, 16 shut |
+| Layout | `Page` + `CardGrid`, 8 cards | `PageLayout`, three zones |
+| Reference content | 5 cards, **open** | 5 `CollapsibleSection` folds, closed, with `stickyKey` |
+| Roadmap opens on | week 1, or the calendar week | **the first unfinished week** |
+
+**How it got to 5.8 screens is the interesting part, and it was nobody's
+mistake.** The audit below measured 1.5 screens with six folds *collapsed*.
+`4609317` (2026-08-04, "keep the dropdowns open" — an explicit request) then
+dropped 18 `defaultCollapsed` call sites app-wide. That was right for analytics,
+which is what the request was about, and it is what closed pattern 1 on Stats,
+Pickleball and Focus. Applied to Coaching it opened a *manual* — and this
+directory's own rule is that what the app learned about you outranks what the
+app can tell everybody. None of the five reference sections is about you.
+
+So the folds here are closed again, deliberately and only here. **`stickyKey` is
+the part that makes it defensible**: the choice persists, so opening "How to
+play every shot" once keeps it open on every later visit. The cost is one extra
+click on a first visit to reach a shot, which is the honest trade for 3.6
+screens.
+
+`ProgramTracker`'s COD-20 fix is applied to the roadmap by hand rather than
+shared — this page has its own week list with a done-checkbox per row and does
+not use that component.
+
+Verification: `scripts/verify-coaching.mjs` re-opens the folds and re-runs axe,
+at 1440 and 390, because `npm run a11y` cannot see inside a closed fold.
+
+## Measured (1440×900, demo data) — **2026-08-02, superseded by the table above**
 
 - **1.5 screens · 8 blocks**, six of which are collapsed 102px strips.
 
