@@ -1,7 +1,8 @@
 # STATUS
 
-**Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `1beb9a7`.**
-Nine merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154.
+**Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `4ea429b`.**
+Twelve merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
+#156 #157.
 
 ## What shipped
 
@@ -16,8 +17,11 @@ Nine merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154.
 | #152 | The census counted folds by text, so it missed every card fold | — |
 | #153 | STATUS, and the two traps the session cost time to find | — |
 | #154 | Coaching rebuilt on the three-zone contract, 5.80 screens → 2.19 | COD-22 |
+| #155 | STATUS: Coaching done, Recovery next | — |
+| #156 | Recovery: fold Setup and Reference, 6.33 screens → 4.15 | COD-23 |
+| #157 | **The a11y gate ran on an empty journal.** Armed it; fixed the 16 it hid | COD-28 |
 
-## The three findings worth carrying forward
+## The findings worth carrying forward
 
 **1. `531596f` never compiled.** The commit that silently shrank the pull-ups
 manual also left four TypeScript errors in `views/Pullups.tsx`, so every CI run
@@ -33,7 +37,16 @@ legend exists. The heights table in `README.md` was wrong by up to 4.3 screens
 fourth-shortest; Coaching listed short, actually the largest structural problem
 in the app. Fixed by `scripts/page-census.mjs` — re-run it, do not quote it.
 
-**3. I then made the same class of mistake in the census itself.** It filtered
+**3. Every green a11y run this project has ever printed was partial.** The gate
+seeded an empty journal, so every card behind a `{rows.length > 0 && …}` guard
+was absent from the DOM and could not fail. Arming it turned one green run into
+**16 serious violations** in four of five themes. Three causes: `cat('crust')`
+used as a foreground where `onAccent()` exists (a helper with 2 adopters against
+21 hand-written call sites); the accent-on-wash idiom calibrated at `'22'` and
+written as `'33'`; and `solve-contrast.mjs` having only ever solved the two
+light themes. All fixed, gate now armed and green.
+
+**4. I made the same class of mistake in the census itself.** It filtered
 `[aria-expanded]` on `textContent`, which excludes every `Card collapsible`
 toggle — that button holds a caret glyph, so its name is entirely in
 `aria-label`. Coaching read as 14 folds instead of 32, Pickleball 4 instead of
@@ -43,26 +56,25 @@ CLAUDE.md trap.
 
 ## Next action
 
-**COD-23 · Recovery (`nofap`).** The census outlier now that Coaching is done:
-**6.33 screens at 1440 and 6.33 at 1600, 0 folds, 3 charts.** Identical at both
-widths means the third grid column does nothing for it — it is one long
-vertical stack with no shape to reason about and nothing to collapse.
+**COD-32 · a design call, not an implementation.** `solve-contrast.mjs` solves
+each accent to clear 4.5:1 as text; its output was applied to latte and dawn for
+green, red and peach and **skipped for yellow and pink**, which are still the
+unsolved originals — latte yellow measures **1.83:1**.
 
-The opposite failure to COD-22: Coaching had too many drawers, Recovery has
-none. **Mindset (3.29), Focus (3.04) and Help (4.47) share the shape** — over
-three screens, zero folds, equal at both widths — so whatever fixes Recovery
-probably generalises to those three.
+It was not simply applied because the solver's answer for latte yellow
+(`#f29900` → `#8a5700`, a 43% darkening) lands visually on top of latte's
+`peach` (`#9b4c07`), and Plan's migration pill and Trackers' completion bands
+both use red / peach / yellow as a **three-step** scale. Collapsing two steps
+into the same brown is a real loss. Three options are written up on the ticket.
 
-Two constraints: `docs/pages/README.md` names Recovery's tone and its HALT check
-as assets to protect, and the a11y gate found a contrast bug here the moment the
-page was added to its `VIEWS` list — so re-run `npm run a11y` on any change.
+Nothing fails on it today — #157 moved every failing call site off yellow — so
+this is a trap for the next person who writes `cat('yellow')` as text, not a
+live bug.
 
-**Open question for the next session, not a defect:** #154 re-closed five
-reference folds on Coaching, and `4609317` had opened every fold app-wide on an
-explicit "keep the dropdowns open" request. The narrow reading — reference
-content closed, personal content open — is argued in `docs/pages/coaching.md`
-and made survivable by `stickyKey`, but it is a decision worth confirming
-before it is applied anywhere else.
+After that, the census picks the next page: **Pickleball 5.92** and **Stats
+5.21** are the tallest left, and both are long because their analytics are open,
+which is the state this directory asked for. There may be no page worth
+restructuring right now. Run `node scripts/page-census.mjs` and see.
 
 ## Traps hit this session
 
@@ -92,7 +104,12 @@ before it is applied anywhere else.
 - Stats re-measured on the rendered page after the change, not inferred: first
   chart y=1386 → **814**, Achievements y=254 → **4096**, badges naming their
   lock state 0/14 → **14/14**.
-- Coaching re-measured the same way: **5.80 screens → 2.19**, 32 disclosure
-  points → 17. `node scripts/verify-coaching.mjs` re-opens the folds and re-runs
-  axe at 1440 and 390 — **0 serious, 0 critical** — because `npm run a11y`
-  cannot see inside a closed fold and so vouches for nothing that #154 closed.
+- Coaching **5.80 screens → 2.19**, 32 disclosure points → 17. Recovery
+  **6.33 → 4.15**.
+- `node scripts/verify-folds.mjs <view>` re-opens the folds and re-runs axe at
+  1440 and 390 — 0/0 for both `coaching` and `nofap`. `npm run a11y` cannot see
+  inside a closed fold, so it vouches for nothing #154 and #156 closed.
+- **`npm run a11y` — 0 serious, 0 critical, with the seed armed.** That number
+  now means something it did not this morning: it was 16 the moment the gate was
+  given data.
+- `npm run smoke` — 25/25 views.
