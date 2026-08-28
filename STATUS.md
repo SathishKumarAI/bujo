@@ -1,5 +1,36 @@
 # STATUS
 
+**Stopped:** 2026-08-27. **Pickleball · COD-12** on `feat/pickleball-design`,
+three commits, branched off `bionic/pickleball-data-first-completed`.
+
+The session started from a six-stage prompt to build the Pickleball page.
+**Stages 0–5 were already shipped** and in better shape than the prompt
+described: Pickleball is a peer tab with its own route, its own
+`PickleballSession` record and a 700-line `src/lib/pickleball.ts`, which is the
+prompt's "Option A" resolved long ago. Read `src/components/shell/sections.ts`
+lines 28–45 before re-litigating that — it is argued there. **Three real gaps
+remained**, and those are what shipped:
+
+| # | Gap | Fix |
+|---|---|---|
+| 1 | Heatmap was a local `grid grid-flow-col` div stack scaled **linearly** against the busiest day, so one tournament Saturday flattened every ordinary session to the lightest step | Renders through `CalendarHeatmap` — quartile buckets, real `<table>`, focusable scroll region |
+| 2 | **Three** always-open log forms, each ending in a wide tonal button | DUPR and events behind a ghost `+` in their card headers; `Log session` is the only wide control left |
+| 3 | No Pickleball states in `/kitchen-sink` | Empty, typical, overflow (52 weeks + a partner name that has to truncate) |
+
+Two smaller bugs fell out of #1: the subtitle divided the week count by 7 and
+read **"Last 1.857 weeks"**, and a JSX text node printed a literal `$`.
+
+**Verification is a script, not a screenshot:**
+`scratchpad/verify-pickleball.mjs` drives the preview build through Playwright —
+18 checks, all passing, including an **axe pass with both `+` forms open**. That
+last one matters: `npm run a11y` walks the rendered page, so a form behind a
+shut `+` is a region the gate now cannot reach. Two of its first-run "PASS"
+lines were **false passes on a page that never rendered** — a fresh profile
+needs `bujo:onboarded` *and* `settings.storageMode`, or the app sits on the
+onboarding gate and every "absent" assertion trivially holds.
+
+**Previous entry, still true:**
+
 **Stopped:** 2026-08-24. **BUJO-278, BUJO-280 (half) and BUJO-281 (all three
 increments) shipped** — **six PRs (#136–#142), all merged. Zero open PRs.**
 
@@ -20,7 +51,7 @@ audits below: a number repeated instead of measured.
 | # | Task | Ticket |
 |---|---|---|
 | 1 | **The remaining 20 views.** By size: Gym (709), Pickleball (633), then Monthly, Goals, Mindset, Reading | — |
-| 2 | **1yr heatmap still leaves 432px.** Needs a stretching cell in `DayGrid`, which has three callers | BUJO-280b |
+| 2 | **1yr heatmap still leaves 432px.** Needs a stretching cell in `DayGrid` — still **3 direct callers** (`ActivityLayout`, `Heatmap`, `CalendarHeatmap`; counted, not inherited). What changed is downstream: `CalendarHeatmap` now has a third product call site, and Pickleball's 3mo/6mo/**1yr** toggle is exactly the width that strands | BUJO-280b |
 | 3 | **The same correlation prints twice on Insights**, 300px apart — found by opening the fold | BUJO-283 |
 | 4 | **Stats is now the cluster's only cabinet** — six folds, and it absorbed nine panels. It is the next Insights | — |
 | 5 | Answer Q3 and Q4 | — |
