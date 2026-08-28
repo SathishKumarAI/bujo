@@ -51,10 +51,15 @@ describe('the five sections', () => {
   it('gives every non-preference view a section', () => {
     const exempt = new Set<ViewId>([
       'settings', 'help', 'account', 'kitchen-sink',
-      // Redirected onto Fitness with the activity preselected (deepLink.ts).
-      // Both are genuine activities: their session IS a `Workout`, so nothing
-      // is lost by logging them on the Fitness form.
-      'pullups', 'homeworkout',
+      // Reached from a companion link inside Fitness. A genuine activity: the
+      // page is a bodyweight exercise library, and the session it produces is
+      // a `Workout` the Fitness form already logs.
+      //
+      // `pullups` sat on this list too, on the same wording, and the wording
+      // was measuring the wrong thing — see `sections.ts`. The page held a
+      // program tracker, a calculator and a manual, so the exemption was again
+      // hiding a surface with no door. It is a tab now.
+      'homeworkout',
     ])
     const orphans = (Object.keys(VIEW_CHROME) as ViewId[]).filter((v) => !exempt.has(v) && !MEMBERS[v])
     expect(orphans).toEqual([])
@@ -68,6 +73,17 @@ describe('the five sections', () => {
   it('keeps Pickleball a destination, because its record is not a Workout', () => {
     expect(sectionOf('pickleball')).toBe('body')
     expect(tabsOf('body', ALL).map((t) => t.view)).toContain('pickleball')
+  })
+
+  /**
+   * The same rule, third application. Pull-ups' record IS a `Workout`, which is
+   * why the exempt list held it for three releases — but the test is about the
+   * page, not the record, and the page carries a program tracker, a calculator
+   * and a manual that no activity form has.
+   */
+  it('keeps Pull-ups a destination, because the page is more than its record', () => {
+    expect(sectionOf('pullups')).toBe('body')
+    expect(tabsOf('body', ALL).map((t) => t.view)).toContain('pullups')
   })
 
   it('reaches every tab in at most two clicks', () => {
