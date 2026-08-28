@@ -134,3 +134,56 @@ export const HYPERTROPHY_PROGRAM: Program = {
 }
 
 export const PROGRAMS: Program[] = [PULLUP_PROGRAM, HYPERTROPHY_PROGRAM]
+
+// ── Where you are in a program ───────────────────────────────────────────────
+//
+// Pure, and separate from `ProgramTracker` on purpose: "which day am I on" is
+// the whole promise of a program that runs for six weeks, and it should be
+// checkable without mounting a component and a store.
+
+/**
+ * The progress key for one exercise. **The only place this shape is written.**
+ *
+ * It was previously a closure inside `ProgramTracker`, so anything else that
+ * wanted to reason about progress had to re-derive the format from a template
+ * literal — and a second spelling of a storage key is a silent data loss, not a
+ * type error. `settings.programDone` holds these strings.
+ */
+export const exerciseKey = (programId: string, week: number, day: number, i: number) =>
+  `${programId}-w${week}d${day}-e${i}`
+
+/** Every exercise of this day ticked. A day with no exercises is not "done". */
+export function dayComplete(p: Program, week: number, day: number, done: string[]): boolean {
+  const exs = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)?.exercises ?? []
+  return exs.length > 0 && exs.every((_, i) => done.includes(exerciseKey(p.id, week, day, i)))
+}
+
+/** How many of the program's days are fully ticked. */
+export function daysComplete(p: Program, done: string[]): number {
+  return p.weeks.reduce((n, w) => n + w.days.filter((d) => dayComplete(p, w.week, d.day, done)).length, 0)
+}
+
+/**
+ * Where to open the tracker: the first day that is not finished.
+ *
+ * The tracker used to seed its state with `p.weeks[0]`, so a six-week program
+ * you were four weeks into greeted you at week 1 day 1 every single time, and
+ * `settings.programDone` — which it was already reading two lines later to draw
+ * the progress count — had no say in it.
+ *
+ * "First incomplete", not "one past the last complete": people skip days, and
+ * resuming past a gap would quietly hide the day they meant to come back to.
+ *
+ * A finished program returns its **last** day rather than wrapping to the
+ * start. Landing someone who has done all thirty days back on day 1 reads as
+ * progress lost; the last day they did is the honest place to be.
+ */
+export function resumeAt(p: Program, done: string[]): { week: number; day: number } {
+  for (const w of p.weeks) {
+    for (const d of w.days) {
+      if (!dayComplete(p, w.week, d.day, done)) return { week: w.week, day: d.day }
+    }
+  }
+  const last = p.weeks[p.weeks.length - 1]
+  return { week: last.week, day: last.days[last.days.length - 1].day }
+}
