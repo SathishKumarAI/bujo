@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HYPERTROPHY_PROGRAM, PROGRAMS, PULLUP_PROGRAM, allDays, dayComplete, dayStats, daysComplete,
-  exerciseKey, resumeAt,
+  exerciseKey, restSeconds, resumeAt,
 } from './programs'
 import type { Program } from './programs'
 
@@ -136,5 +136,53 @@ describe('dayStats', () => {
 
   it('is zero for a day the program does not have', () => {
     expect(dayStats(HYPERTROPHY_PROGRAM, 99, 99)).toEqual({ exercises: 0, sets: 0 })
+  })
+})
+
+describe('restSeconds', () => {
+  const H = HYPERTROPHY_PROGRAM
+
+  /** The rule written in the hypertrophy block's own `note`. */
+  it('reads the rule off the rep target', () => {
+    expect(restSeconds(H, '12 reps')).toBe(30)
+    expect(restSeconds(H, '12–15 reps')).toBe(30)
+    expect(restSeconds(H, '8–10 reps')).toBe(120)
+    expect(restSeconds(H, '10 reps')).toBe(120)
+    expect(restSeconds(H, '6 reps')).toBe(180)
+    expect(restSeconds(H, '4–6 reps')).toBe(180)
+  })
+
+  it('keys off the LOW end of a range, which is the end that sets the load', () => {
+    // "8–12" is a heavy-ish set rested like one, not a pump set.
+    expect(restSeconds(H, '8–12 reps')).toBe(120)
+  })
+
+  it('handles the qualified targets the record actually contains', () => {
+    expect(restSeconds(H, '12 reps ea')).toBe(30)
+    expect(restSeconds(H, '15 reps ea')).toBe(30)
+  })
+
+  it('is null for every quantity that is not a rep target', () => {
+    for (const q of ['Max effort', '15,30,15 s', '20s work', '1, 2', '3, 2, 1', '30s / 30s jog', 'repeats w/ jog', '1,2,1'])
+      expect(restSeconds(H, q), q).toBeNull()
+  })
+
+  /**
+   * The guard that matters, and the one this test was written to catch after it
+   * failed: the rule belongs to a PROGRAM, not to exercises. Written global it
+   * read "5 reps" off scapular retractions and "1 rep" off jumping pull-ups and
+   * offered three-minute rests inside a circuit whose source prescribes none.
+   */
+  it('prescribes nothing at all for a program that has not opted in', () => {
+    expect(PULLUP_PROGRAM.restRule).toBeUndefined()
+    const every = PULLUP_PROGRAM.weeks.flatMap((w) => w.days.flatMap((d) => d.exercises))
+    // Several of these DO parse as rep targets — that is the point.
+    expect(every.some((e) => /^\d+(?:[–-]\d+)?\s*reps?/i.test(e.qty))).toBe(true)
+    expect(every.filter((e) => restSeconds(PULLUP_PROGRAM, e.qty) !== null)).toEqual([])
+  })
+
+  it('prescribes something for every lift in the hypertrophy block', () => {
+    const every = H.weeks.flatMap((w) => w.days.flatMap((d) => d.exercises))
+    expect(every.filter((e) => restSeconds(H, e.qty) === null)).toEqual([])
   })
 })

@@ -12,8 +12,13 @@ import type { ProgramState } from './useProgram'
  * was fourteen rows and half of them were empty inputs — the page's dominant
  * visual was a stack of things nobody had filled in. It is now a short field on
  * the same line, wrapping under only when the column is too narrow to hold it.
+ *
+ * `onCheck` fires only when a box goes ON, and only with the exercise — what to
+ * do about it is the view's business. The Program page starts the prescribed
+ * rest; Pull-ups passes nothing, because its program prescribes no rest and a
+ * timer counting down a number nobody wrote is worse than no timer.
  */
-export function DayChecklist({ s }: { s: ProgramState }) {
+export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name: string, qty: string) => void }) {
   return (
     <ul className="space-y-0.5">
       {s.cur.exercises.map((e, i) => {
@@ -38,7 +43,10 @@ export function DayChecklist({ s }: { s: ProgramState }) {
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => s.toggleEx(i)}
+                  onChange={() => {
+                    s.toggleEx(i)
+                    if (!checked) onCheck?.(e.name, e.qty)
+                  }}
                   className="accent-green"
                   aria-label={`Did ${e.name}`}
                 />
