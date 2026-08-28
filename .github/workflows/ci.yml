@@ -75,3 +75,10 @@ jobs:
         run: npx wait-on http://localhost:4173 --timeout 60000
       - name: axe-core
         run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
+      # Smoke has never run in CI — it was local-only, which is how it managed
+      # to sit on a wrong default port (5173, Vite's dev default, i.e. whichever
+      # project on the machine booted first) and report a clean 25/25 against a
+      # different application. It asserts its own identity now, so it can be
+      # trusted here. Same preview server, no extra build.
+      - name: Smoke every view
+        run: BUJO_URL=http://localhost:4173 node scripts/smoke-views.mjs

@@ -159,7 +159,10 @@ export function Nutrition() {
           ]} />
 
           <section>
-            <h2 className="mb-2 text-label text-fg-2">Macro split against target</h2>
+            {/* Ruled, like "Recent days" directly below it. These two are the
+                same kind of thing — a zone-3 section with a body — and were a
+                bare heading and a ruled one, eleven lines apart. */}
+            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Macro split against target</h2>
             <MacroBar metric={m} totalG={totalG} />
             {totalG === 0 && <EmptyFrame>Add a food to see the day's ratio.</EmptyFrame>}
           </section>

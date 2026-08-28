@@ -431,7 +431,9 @@ export function NoFap() {
             replaced by the correlation this page actually exists to reveal:
             whether resisting urges is holding the resets down. */}
         <section>
-          <h2 className="mb-2 text-label text-fg-2">Urges resisted vs resets</h2>
+          {/* Ruled, like "Insights & progress" and "Deep analytics" further
+              down this same column. */}
+          <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Urges resisted vs resets</h2>
           <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
         </section>
 
