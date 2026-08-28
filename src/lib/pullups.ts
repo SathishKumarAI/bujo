@@ -94,3 +94,137 @@ export function pyramid(n: number): number[] {
   const up = ladder(n)
   return [...up, ...up.slice(0, -1).reverse()]
 }
+
+// ── The manual: form cues, principles, equipment ─────────────────────────────
+//
+// Prose from the training guide, here rather than in `views/Pullups.tsx` for
+// the reason the workspace rule gives: constants live in one module. It also
+// stops the next "add cards from the guide" pass rewriting them inline — that
+// happened once already (531596f) and it silently shrank `PULLUP_WORKOUTS`
+// from fourteen formats to three and rewrote nine progressions into seven.
+
+export interface FormPhase {
+  phase: string
+  /** Ordered cues. Order is the instruction — "tighten abs" comes before
+   *  "mount the bar" because doing it after is a different, worse set-up. */
+  cues: string[]
+}
+
+export const PULLUP_FORM: FormPhase[] = [
+  {
+    phase: 'Set up',
+    cues: [
+      'Tuck the pelvis and tighten the abs — hold that tightness throughout',
+      'Mount the bar and grip it hard, pinky knuckle over the top',
+      'Pull the arms down into the shoulder sockets',
+      'Pull the shoulders down with the lats — the opposite of a shrug',
+      'Squeeze the glutes, re-tighten the abs, legs straight, head neutral',
+    ],
+  },
+  {
+    phase: 'Execution',
+    cues: [
+      'Stay tight and lean back',
+      'Pull with the elbows, not the hands — drive them to the ribs',
+      'Chin all the way over the bar. Do not crane the chin to get there',
+      'Lower completely to a dead hang',
+    ],
+  },
+]
+
+export interface Principle {
+  name: string
+  /** A `lib/colors` catppuccin key. */
+  color: string
+  body: string
+}
+
+export const PULLUP_PRINCIPLES: Principle[] = [
+  { name: 'Specificity', color: 'mauve', body: 'Do pull-ups and pull-up progressions. During a session, spend the energy on the bar — not on supplementary work that leaves nothing for the pulls.' },
+  { name: 'Quality over quantity', color: 'green', body: 'Perfect reps first, count second. Quality is: tight body, legs uncrossed and unbent, head neutral, no jerk or kip, all the way up and all the way down. Poor reps train the miss.' },
+  { name: 'Frequency', color: 'blue', body: '3–5 times a day, 3–5 days a week. Spreading the volume across the day buys far more total reps than one session to failure.' },
+  { name: 'Volume', color: 'sky', body: 'Accumulate against a daily and weekly target, and vary it — 100 reps over four days is better as 22/35/28/15 than as 25×4. Raise the target as the reps get easier.' },
+]
+
+export interface EquipmentItem {
+  item: string
+  spec: string
+  url?: string
+}
+
+export const PULLUP_EQUIPMENT: EquipmentItem[] = [
+  { item: 'Pull-up bar', spec: "Ideal height 5'8\"–6'6\" — low enough to use for progressions, high enough to hang from." },
+  { item: 'Door-mounted bar', spec: 'Cheapest way in, installs in minutes, and its low height suits negatives and partials.' },
+  { item: 'Adjustable bar', spec: '66" or 72" options, roughly $500–650.', url: 'https://torqueathletic.com/collections/pullup-systems' },
+  { item: 'Plyo boxes', spec: '12", 18", 24", 30", 36" — what makes a too-high bar usable for jumping pull-ups and negatives.' },
+  { item: 'Thick bar grips', spec: 'Trains grip and forearms on the same reps you were already doing.' },
+  { item: 'Rings / TRX', spec: 'For rows and the supplementary pulling work.' },
+  { item: 'Bands', spec: 'Optional. Part rubber, part cloth wears better than pure rubber against a bar.' },
+]
+
+// ── Recording a session ──────────────────────────────────────────────────────
+
+export type PullupMethod = 'straight' | 'ladder' | 'pyramid' | 'emom'
+
+export const PULLUP_METHODS: { value: PullupMethod; label: string; hint: string }[] = [
+  { value: 'straight', label: 'Straight', hint: 'Rounds × the same set. Rest as needed.' },
+  { value: 'ladder', label: 'Ladder', hint: '1,2,…,top per round. 10–20s inside a ladder, 3+ min between.' },
+  { value: 'pyramid', label: 'Pyramid', hint: '1,…,top,…,1 per round. 10–20s inside, 3+ min between.' },
+  { value: 'emom', label: 'EMOM', hint: 'The set every minute on the minute; rounds = minutes.' },
+]
+
+/**
+ * The reps actually performed, set by set — the thing that gets stored.
+ *
+ * Returned per set rather than as a total because that is what the schemes
+ * *are*: a ladder to 4 and a straight 4×4 both come to 10 and 16 reps, and
+ * conflating them loses the session. `rounds` multiplies the whole scheme, so
+ * "3 ladders to 4" is three passes of 1,2,3,4.
+ */
+export function repScheme(method: PullupMethod, top: number, rounds: number): number[] {
+  const n = Math.max(0, Math.floor(top))
+  const r = Math.max(0, Math.floor(rounds))
+  if (n === 0 || r === 0) return []
+  const one = method === 'ladder' ? ladder(n) : method === 'pyramid' ? pyramid(n) : [n]
+  // `emom` and `straight` differ in rest, not in reps — a minute cap is a fact
+  // about the clock, and the clock is `durationMin`. Same scheme, both.
+  return Array.from({ length: r }, () => one).flat()
+}
+
+/**
+ * Rep counts → the `Workout.sets` lines the rest of the app already parses.
+ *
+ * One line per set, in the `Name NxR @ Wkg` shape `lib/fitness.ts`'s `parseSet`
+ * expects, at 0kg — the convention the seeded demo data already uses for
+ * bodyweight moves. One line per set rather than a grouped "5x3" because
+ * `parseSet` reads the reps and drops the set count, so a grouped line would
+ * count as a single set everywhere downstream.
+ */
+export function setLines(reps: number[]): string[] {
+  return reps.map((r) => `Pull-up 1x${r} @ 0kg`)
+}
+
+/**
+ * Reps on one set line, or 0 for a line that is not a pull-up set.
+ *
+ * Deliberately narrower than `fitness.parseSet`: a pull-up session may hold a
+ * free-typed note line, and anything that is not a `Pull-up` line must not be
+ * counted into a pull-up rep total.
+ */
+function setReps(line: string): number {
+  const m = line.match(/^Pull-ups?\s+\d+\s*[x×]\s*(\d+)/i)
+  return m ? Number(m[1]) : 0
+}
+
+/** Reps in one stored session. Reads the lines back through the same shape. */
+export function repsOf(sets: string[]): number {
+  return sets.reduce((total, line) => total + setReps(line), 0)
+}
+
+/** Biggest single set ever logged — which is what "max strict pull-ups" means. */
+export function bestSet(sessions: { sets: string[] }[]): number {
+  return sessions.reduce(
+    (best, s) => s.sets.reduce((b, line) => Math.max(b, setReps(line)), best),
+    0,
+  )
+}
