@@ -61,12 +61,13 @@ chart groups are shut. Focus keeps a near-empty History open and its analytics
 closed. The rule to apply everywhere: **what the app learned about you outranks
 what the app can tell everybody.**
 
-> **Stats no longer belongs on that list** (re-measured 2026-08-27: six folds
-> open, six Recharts surfaces on first paint). The rewrite that fixed it landed
-> 2026-08-24 and did not come back to this file, so the headline example of the
-> repo's most-cited cross-page pattern was three weeks stale. Treat every
-> example here as a claim with a date on it, and re-measure before quoting one —
-> see `stats.md` for the full re-measure.
+> **All three examples are now fixed** (census, 2026-08-27): Pickleball 4 folds
+> / 4 open / 5 charts, Stats 6 / 6 / 6, Focus has no folds at all. The rule
+> still holds and is worth keeping; the evidence for it is gone, and it was
+> being read as a work queue. The one page that still matches the *shape* is
+> **Coaching** — fourteen folds, none open — but not the substance: what is
+> folded there is technique reference, not the user's own data, so it is
+> pattern 3 rather than this one.
 
 ### 2 · The same number, said several different ways
 
@@ -82,6 +83,14 @@ Insights has seven, Coaching six, Pickleball four. Same height, same chrome,
 names that do not predict their contents ("Deeper signals", "Domain digests",
 "Mood views"). Collapse is the right instinct; an undifferentiated stack of
 drawers is not navigation.
+
+> **Re-counted 2026-08-27, and it moved in both directions.** Insights has
+> **none** — its nine analytics panels moved to Stats in `733df32` and the
+> drawers went with them. Pickleball's four are all open. **Coaching has
+> fourteen, all shut, across 5.8 screens** — the audit recorded six, so the one
+> page this pattern still describes is more than twice as bad as the number
+> being quoted for it. It is the largest single instance left in the app and
+> nothing has been filed against it.
 
 ### 4 · Density without a key
 
@@ -127,23 +136,58 @@ outward, not sand them down.
 Content flows into a **three-column card grid** — see
 [`../redesign/12-three-column-grid.md`](../redesign/12-three-column-grid.md).
 1 column on phones, 2 to 1535px, 3 above; `SPAN_2` for tables and wide charts.
-(`SPAN_ALL` is gone — see the correction in `12-three-column-grid.md`.) That is
-what moved Pickleball from 4.2 screens to 2.6 and Mindset from
-2.4 to 2.0, so the heights below are being re-measured as pages convert.
+(`SPAN_ALL` is gone — see the correction in `12-three-column-grid.md`.)
 
-## Page heights, for reference
+**The "4.2 → 2.6 screens" claim for Pickleball did not survive re-measurement.**
+It is 5.92 at 1440 and 5.15 at 1600 (census, 2026-08-27) — taller than the 4.2
+the grid was supposed to have reduced. Mindset, quoted as 2.4 → 2.0, is 3.29.
+Both pages gained content after the conversion, so the grid is not necessarily
+failing; the *claim* is, because it was written as a permanent result rather
+than a measurement of one afternoon. Any height in this directory that is not
+dated to a census run should be treated as folklore.
 
-Shortest to longest, at 1440×900 with demo data. Height is not quality, but the
-outliers are where the structural problems live.
+## Page census — **measured 2026-08-27**, `node scripts/page-census.mjs`
 
-| Screens | Page |
-|---|---|
-| 0.9 | Reading · Plan · Challenges · Home Workout · Settings |
-| 1.0 | Goals · Account |
-| 1.3 | Trackers · Monthly · Collections · Stats · Help |
-| 1.5 | Insights · Coaching |
-| 1.7 | Fitness · Pull-ups · Focus |
-| 2.3 | Recovery *(one 2,059px card)* |
-| 2.4 | Mindset *(one 1,575px card)* |
-| 3.5 | Today |
-| 4.2 | Pickleball *(12 blocks)* |
+Every routable view, demo data, tallest first. `folds` counts section headers
+with `aria-expanded`; `open` is how many of them are open before you touch
+anything; `charts` is Recharts surfaces in the DOM on first paint.
+
+**Re-run it rather than quoting it.** The table this replaces was quoted for
+weeks and had drifted by up to 4.3 screens — it sent a session at Today (listed
+3.5, actually 1.2) and left Coaching alone (listed 1.5, actually 5.8).
+
+| @1440 | @1600 | Page | Folds | Open | Charts |
+|---|---|---|---|---|---|
+| **6.33** | 6.33 | Recovery (`nofap`) | 0 | – | 3 |
+| **5.92** | 5.15 | Pickleball | 4 | **4** | 5 |
+| **5.80** | 4.27 | Coaching | **14** | **0** | 0 |
+| **5.21** | 4.38 | Stats | 6 | **6** | 6 |
+| **4.67** | 4.67 | Gym | 3 | 3 | 4 |
+| **4.47** | 4.47 | Help | 1 | 1 | 0 |
+| **3.29** | 3.29 | Mindset | 0 | – | 0 |
+| **3.04** | 3.04 | Focus | 0 | – | 0 |
+| **2.74** | 2.74 | Trackers | 7 | 5 | 2 |
+| **2.65** | 3.00 | Home workout | 0 | – | 0 |
+| **2.22** | 2.22 | Cycle | 1 | 0 | 1 |
+| **2.10** | 2.10 | Pull-ups | 6 | 0 | 0 |
+| **2.08** | 2.08 | Plan | 4 | 1 | 0 |
+| **1.96** | 1.96 | Monthly | 2 | 1 | 0 |
+| **1.82** | 1.82 | Reading | 3 | 0 | 0 |
+| **1.62** | 1.62 | Program | 0 | – | 0 |
+| **1.52** | 1.52 | Collections | 1 | 0 | 0 |
+| **1.41** | 1.41 | Challenges | 1 | 1 | 0 |
+| **1.30** | 1.28 | Insights | **0** | – | **0** |
+| **1.22** | 1.22 | Nutrition | 0 | – | 0 |
+| **1.21** | 1.21 | Today | 2 | 0 | 0 |
+| **1.06** | 1.06 | Goals | 0 | – | 0 |
+| **1.03** | 1.03 | Fitness | 1 | 0 | 0 |
+| **1.00** | 1.00 | Account · Settings | 0 | – | 0 |
+
+Height is not quality, but the outliers are still where the structural problems
+live. On this census the outlier is **Coaching**: fourteen folds, none open, and
+5.8 screens of chrome to scroll past to reach any of them.
+
+The two columns differ only where a page has enough cards to use the third grid
+column at ≥1536px. Where they are equal, the page is a single stack and the grid
+is doing nothing for it — Mindset, Focus, Recovery and Help are each over three
+screens with that column unused.
