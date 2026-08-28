@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { Checkbox } from '../components/ui/checkbox'
+import { Checkbox, CheckRow } from '../components/ui/checkbox'
 import { Switch } from '../components/ui/switch'
 import { Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
@@ -255,6 +255,39 @@ export function KitchenSink() {
           </label>
           <Checkbox disabled aria-label="Disabled, unchecked" />
           <Checkbox disabled defaultChecked aria-label="Disabled, checked" />
+        </Row>
+        <Row label="tone · danger is checked-and-bad, not indeterminate">
+          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-body text-fg-1">
+            <Checkbox tone="danger" defaultChecked />Alcohol
+          </label>
+          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-body text-fg-1">
+            <Checkbox tone="danger" />Doomscrolling
+          </label>
+          <span className="text-caption text-fg-3">
+            Ticking an avoid habit records a slip. A green ✓ and a struck-through label read as “well
+            done, handled”, which is the opposite of what the tick means.
+          </span>
+        </Row>
+        <Row label="check row · the row is the control">
+          {/* Empty, typical and overflow, on one 22rem column — the widths a
+              rail actually gives it. `defaultChecked` rather than
+              `checked` + `readOnly`: Radix rejects that pairing. */}
+          <div className="w-full max-w-[22rem] divide-y divide-line border border-line px-3">
+            <CheckRow>Read 10 pages</CheckRow>
+            <CheckRow defaultChecked>
+              <span className="text-fg-2 line-through">🏃 Exercise</span>
+            </CheckRow>
+            <CheckRow
+              tone="danger"
+              defaultChecked
+              right={<span className="shrink-0 text-label text-red">slipped</span>}
+            >
+              🍺 Alcohol
+            </CheckRow>
+            <CheckRow right={<span className="shrink-0 text-label text-green">clean</span>}>
+              A habit with a name long enough that the row has to truncate it somewhere
+            </CheckRow>
+          </div>
         </Row>
         <Row label="switch · this is on">
           <Switch defaultChecked aria-label="Strict mode, on" />

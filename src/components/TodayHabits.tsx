@@ -6,6 +6,7 @@ import { cat, washStyle } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
+import { CheckRow } from './ui/checkbox'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
 import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
@@ -137,36 +138,41 @@ export function TodayHabits({
             // the thing. So it gets none of the done treatment: no tick, no
             // strike-through, and a red mark instead. Struck-through-with-a-
             // check on "Alcohol" reads as "well done, that's handled", which
-            // is the opposite of what the tick records.
+            // is the opposite of what the tick records. That is what `tone`
+            // carries, and it is why this could not be a straight swap onto
+            // the shared checkbox — see `ui/checkbox.tsx`.
             const slipped = h.avoid && on
             const cleared = !h.avoid && on
-            const accent = h.avoid ? cat('red') : cat(h.color)
             return (
               <li key={h.id}>
-                <button
-                  onClick={() => toggleHabit(today, h.id)}
-                  aria-pressed={on}
-                  className="flex min-h-11 w-full items-center gap-3 py-2 text-left text-body"
+                {/* The row *is* the checkbox: one control per line, announced
+                    as "checkbox, checked" rather than as a pressed toggle
+                    button, and a 44px target that is the whole row instead of
+                    a 20px box at the start of it. */}
+                <CheckRow
+                  checked={on}
+                  onCheckedChange={() => toggleHabit(today, h.id)}
+                  tone={h.avoid ? 'danger' : 'brand'}
+                  right={
+                    h.avoid ? (
+                      <span className="shrink-0 text-label" style={{ color: slipped ? cat('red') : cat('green') }}>
+                        {slipped ? 'slipped' : 'clean'}
+                      </span>
+                    ) : undefined
+                  }
                 >
-                  <span
-                    aria-hidden
-                    className="grid size-5 shrink-0 place-items-center rounded-none border text-caption"
-                    style={{
-                      borderColor: on ? accent : cat('surface1'),
-                      ...(on ? washStyle(accent) : { background: 'transparent', color: accent }),
-                    }}
-                  >
-                    {slipped ? '✕' : cleared ? '✓' : ''}
-                  </span>
+                  {/* The habit's own colour moved off the box and onto this
+                      dot. The box is a *control* and now reads from the one
+                      accent like every other control in the app; the colour is
+                      *identity*, and eight ticked boxes in eight hues was the
+                      row of six stat tiles in six colours by another name.
+                      Same glyph fallback the pill row uses, so a habit with no
+                      emoji is not the only one with nothing beside its name. */}
                   <span className={cleared ? 'text-fg-2 line-through' : 'text-fg-1'}>
-                    {h.emoji ? `${h.emoji} ` : ''}{h.name}
+                    {h.emoji ? `${h.emoji} ` : <span style={{ color: cat(h.color) }}>● </span>}
+                    {h.name}
                   </span>
-                  {h.avoid && (
-                    <span className="ml-auto text-label" style={{ color: slipped ? cat('red') : cat('green') }}>
-                      {slipped ? 'slipped' : 'clean'}
-                    </span>
-                  )}
-                </button>
+                </CheckRow>
               </li>
             )
           })}
