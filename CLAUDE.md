@@ -69,6 +69,27 @@ falls back to Playwright's own Chromium, and judges a failed resource load by
 its **origin** rather than its message. When a gate needs a workaround, fix the
 gate; a workaround written in STATUS.md is a gate that is off.
 
+Trap: **there are two disclosure implementations and only one puts text in its
+toggle.** `CollapsibleSection` renders its title inside the button;
+`Card collapsible` renders a caret glyph and nothing else, so its name lives
+entirely in `aria-label`. A sweep that reads `textContent` therefore sees every
+`CollapsibleSection` and **no card fold at all** — `scripts/page-census.mjs`
+shipped that way and reported Coaching as 14 folds when it has 32, and
+Pickleball as 4 when it has 18. Read the accessible name
+(`aria-label ?? textContent`), and scope the query to `#main`: the shell header
+carries four `aria-expanded` menu buttons on every view, so a document-wide
+count adds a flat 4 to every page. Same family as the `help ?? subtitle` trap
+below — and note it was the script written to stop people quoting unmeasured
+numbers that got it wrong.
+
+Trap: **squash-merging the bottom of a PR stack permanently closes its child
+PR.** Deleting the base branch on merge auto-closes any PR pointing at it, and
+GitHub will not reopen or retarget a closed PR whose base branch is gone
+(`Cannot change the base branch of a closed pull request`) — #145 and #147 had
+to be re-created as #148 and #149 with their bodies copied across. Rebase each
+child onto `main` with `git rebase --onto main <old-base-sha> <branch>` and
+retarget it **before** merging its parent.
+
 Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
 not checked, and "0 serious" means only "for the pages that were opened". Add new
 surfaces. Do not argue a page is unreachable from the code's shape — Recovery was
