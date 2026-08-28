@@ -1,82 +1,87 @@
 # STATUS
 
-**Stopped:** 2026-08-27. **Pull-ups · COD-13** on `feat/pullups-manual`, five
-commits, branched off `feat/pickleball-design`.
+**Stopped:** 2026-08-27. **Zero open PRs, clean tree, `main` at `a646a2e`.**
+Seven merged this session: #146 #144 #148 #149 #150 #151 #152.
 
-The ask was "build the pull-ups training manual for this UI — the code is mostly
-there, connect it to Body". Both halves turned out to be true and both hid
-something.
+## What shipped
 
-## What was actually wrong
-
-| # | Found | Fix |
+| PR | What | Ticket |
 |---|---|---|
-| 1 | **The page had no door.** Reachable only by picking Pull-ups on the Fitness activity select and then finding a companion link inside the form | A **Body tab**. `sections.ts` had argued the exemption for three releases — "a pull-up session IS a `Workout`, so it is an activity" — which is true about the record and the wrong subject. `sections.test.ts` carried the same wording in its exempt list, so the "every view has a section" guard passed by being told not to look |
-| 2 | **Commit `531596f` silently deleted content.** It re-wrote the workout formats and progressions *inline* in the view instead of importing `lib/pullups.ts`: 14 formats became 3, 9 progressions became 7 rewritten ones, the ability table was dropped | The manual reads the library again. `lib/pullups.test.ts` asserts the counts |
-| 3 | **Commit `4a25ff5` pasted a shrunken copy** of three of those cards into `views/Coaching.tsx`, already drifting (kept "3-5 times per day", dropped the reason) | Deleted |
-| 4 | The checklist could mark a program day done but **nothing recorded what was pulled** | A session recorder: method + top set + rounds, stored as a plain `Workout` |
+| #146 | The smoke gate runs everywhere, and green | COD-19 |
+| #144 | Pickleball: quartile heatmap, one loud control, kitchen-sink states | COD-12 |
+| #148 | Pull-ups: a Body tab, the manual restored, a session recorder | COD-13 |
+| #149 | `ProgramTracker` opens where you left off; the dead marker draws | COD-20 |
+| #150 | Stats: Achievements last, and the lock state has a name | COD-21 |
+| #151 | Page heights replaced by a measured census | — |
+| #152 | The census counted folds by text, so it missed every card fold | — |
 
-**#2 is the one to remember, and it is now a CLAUDE.md trap.** `tsc -b`, eslint,
-vitest and `npm run build` were all clean through it — an export nobody imports
-is not an error — and the shrunken list still rendered something plausible, so
-it was invisible on screen too. **When a view stops importing a data module,
-that is the finding.**
+## The three findings worth carrying forward
 
-## Where things are
+**1. `531596f` never compiled.** The commit that silently shrank the pull-ups
+manual also left four TypeScript errors in `views/Pullups.tsx`, so every CI run
+on `feat/pickleball-design` and its base died at `npm run build` before the a11y
+job started. That had been read as flaky for two sessions. **A branch that
+cannot build is not flaky, and a red base blocks its whole stack.**
 
-- `src/lib/pullups.ts` — all the data plus `repScheme` / `setLines` / `repsOf` /
-  `bestSet`. Nothing about pull-ups belongs in the view.
-- `src/views/Pullups.tsx` — `PageLayout` three zones. ACT is calculator →
-  recorder → `ProgramTracker`; the manual is six closed folds at the bottom of
-  REVIEW, not a zone 4.
-- A session is a `Workout` with `activity: 'pullups'` and one
-  `Pull-up 1xN @ 0kg` line **per set**. Not grouped: `fitness.parseSet` reads
-  the reps and drops the leading set count, so `Pull-up 5x3` would count as one
-  set everywhere downstream.
+**2. `docs/pages/` is largely folklore.** `stats.md`'s headline P1 ("zero charts
+render by default") was closed by a rewrite three weeks earlier, and the same
+file asked for a heatmap legend two headings below its own note saying the
+legend exists. The heights table in `README.md` was wrong by up to 4.3 screens
+*in the direction that matters*: Today listed third-tallest, actually
+fourth-shortest; Coaching listed short, actually the largest structural problem
+in the app. Fixed by `scripts/page-census.mjs` — re-run it, do not quote it.
 
-## Verification — run, not asserted
-
-All on a `vite --port 5199` dev server, driven with Playwright:
-
-- `npx tsc -b` · `npx vitest run` → **57 files, 815 tests** · `npx eslint .` →
-  **0 errors** (2 pre-existing `App.tsx` warnings) · `npm run build` → clean.
-- `node scripts/check-design-system.mjs` → passed, 275 files.
-- `node scripts/clipped-text.mjs` → no clipped text, 23 views, 1440 and 390.
-- `npm run a11y` (mocha, both viewports) → **0 serious, 0 critical**, and
-  Pull-ups now appears in the desktop and phone lists.
-- **axe again with all six manual folds OPEN**, both widths → 0 serious, 0
-  critical. The closed-fold pass proves nothing; that is this repo's own trap.
-- End to end: click Body → Pull-ups, log a ladder to 4 for 3 rounds. Preview
-  reads `1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 · 30 reps in 12 sets`; the store
-  holds 12 lines totalling 30; zone 1, the history row and the summary tile then
-  all read 30. 14/14 formats and 9/9 progressions render, 14 demo links. No
-  sideways scroll at 390.
-
-**One measurement lied at first and is worth knowing about:** the summary tile
-read `27` where the store said 30. That is `CountUp` mid-animation — it is a JS
-transition, so `document.getAnimations()` does not cover it and the `settle()`
-helper the a11y gate uses walks straight past it. Wait ~2s before reading any
-`SummaryStrip` value.
+**3. I then made the same class of mistake in the census itself.** It filtered
+`[aria-expanded]` on `textContent`, which excludes every `Card collapsible`
+toggle — that button holds a caret glyph, so its name is entirely in
+`aria-label`. Coaching read as 14 folds instead of 32, Pickleball 4 instead of
+18. Corrected in #152. **`Card collapsible` and `CollapsibleSection` are two
+disclosure implementations and only one puts text in its toggle.** Now a
+CLAUDE.md trap.
 
 ## Next action
 
-Open the PR against `feat/pickleball-design` (its parent), and move **COD-13**
-to In Review.
+**COD-22 · Coaching.** The census outlier and the only page left that matches
+`docs/pages/README.md` pattern 3. Measured: **32 disclosure points, 25 shut,
+5.80 screens at 1440** (4.27 at 1600), zero charts. The 32 are:
 
-Then, if continuing: the three upgrades still open in `docs/pages/pullups.md`
-all live in `components/ProgramTracker.tsx`, which this branch did not touch —
-the program grid opens cold on week 1 with no "you are here" and no "continue",
-for a page whose whole promise is "follow this in order". That is shared with
-the Program tab, so it is one fix for two pages.
+- 6 collapsible `Card`s
+- 11 `Expand week N` rows nested inside the 12-week roadmap card
+- 14 technique folds nested inside "How to play every shot"
+
+So it is drawers inside drawers: reaching "Third-shot drop" costs two opens and
+a scroll. Filed in Backlog, **not started** — it is a page-contract job, and
+`page-contract`'s stop gate is the right place to begin.
+
+**The constraint on any restructure:** the page holds `Today: Rest or wall`,
+which `docs/pages/README.md` calls the best pattern in the product. It has to
+survive, and stay at the top.
 
 ## Traps hit this session
 
+- **Squash-merging the bottom of a PR stack deletes the base branch, which
+  auto-closes the child PR permanently.** GitHub will not reopen or retarget a
+  closed PR whose base branch is gone, so #145 and #147 had to be re-created as
+  #148 and #149 with their bodies copied across. Rebase each child with
+  `git rebase --onto main <old-base-sha> <branch>` **before** merging its
+  parent, or accept re-creating the PR.
 - **`npx tsc --noEmit` typechecks nothing here** (solution-style root config).
-  Always `npx tsc -b`. Already in CLAUDE.md; still the first thing to get wrong.
-- **`npm run smoke` cannot run on Windows.** `scripts/smoke-views.mjs:49` passes
-  `executablePath: CHROME` and CHROME is `/usr/bin/google-chrome-stable`. The
-  other three gates do not set it and all run. Filed as **COD-19**, Backlog —
-  pre-existing, unrelated to this branch, and quietly skipped until now.
+  Always `npx tsc -b`. Already documented; still the first thing to get wrong.
+- **`CountUp` animates through a wrong value.** A `SummaryStrip` tile read 27
+  where the store held 30. It is a JS transition, so `document.getAnimations()`
+  does not cover it and the `settle()` helper walks straight past it. Wait ~2s.
 - The a11y and clipped gates default to `http://localhost:4173` (preview).
-  `BUJO_URL=http://localhost:5199` points them at the dev server, which avoids
-  the stale-service-worker trap entirely.
+  `BUJO_URL=http://localhost:5199` points them at the dev server and avoids the
+  stale-service-worker trap entirely. Same variable works for the census.
+
+## Verification, as run
+
+- `npx tsc -b` exit 0 · `npx vitest run` **60 files, 831 tests** ·
+  `npx eslint .` 0 errors (2 pre-existing `App.tsx` warnings) · `npm run build`
+  clean.
+- `node scripts/check-design-system.mjs` — passed, 275 files.
+- `node scripts/clipped-text.mjs` — no clipped text, 23 views, 1440 and 390.
+- `npm run a11y` — **0 serious, 0 critical**, both viewports, all five themes.
+- Stats re-measured on the rendered page after the change, not inferred: first
+  chart y=1386 → **814**, Achievements y=254 → **4096**, badges naming their
+  lock state 0/14 → **14/14**.
