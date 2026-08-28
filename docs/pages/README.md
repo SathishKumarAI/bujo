@@ -162,51 +162,55 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 
 | @1440 | @1600 | Page | Folds | Open | Charts |
 |---|---|---|---|---|---|
-| ~~6.33~~ **4.15** | 4.15 | Recovery (`nofap`) — *folded, COD-23* | 2 | 0 | 3 |
 | **5.92** | 5.15 | Pickleball | 18 | 16 | 5 |
-| ~~5.80~~ **2.19** | 2.19 | Coaching — *rebuilt, COD-22* | ~~32~~ **17** | 1 | 0 |
 | **5.21** | 4.38 | Stats | 6 | 6 | 6 |
 | **4.67** | 4.67 | Gym | 10 | 10 | 4 |
 | **4.47** | 4.47 | Help | 1 | 1 | 0 |
+| **4.15** | 4.15 | Recovery (`nofap`) — *folded, COD-23, was 6.33* | 2 | 0 | 3 |
 | **3.29** | 3.29 | Mindset | 0 | – | 0 |
 | **3.04** | 3.04 | Focus | 0 | – | 0 |
 | **2.74** | 2.74 | Trackers | 7 | 6 | 2 |
 | **2.65** | 3.00 | Home workout | 1 | 1 | 0 |
 | **2.22** | 2.22 | Cycle | 0 | – | 1 |
+| **2.19** | 2.19 | Coaching — *rebuilt, COD-22, was 5.80 / 32 folds* | 17 | 1 | 0 |
 | **2.10** | 2.10 | Pull-ups | 7 | 0 | 0 |
 | **2.08** | 2.08 | Plan | 4 | 1 | 0 |
 | **1.96** | 1.96 | Monthly | 1 | 1 | 0 |
 | **1.82** | 1.82 | Reading | 3 | 0 | 0 |
 | **1.62** | 1.62 | Program | 1 | 0 | 0 |
 | **1.52** | 1.52 | Collections | 1 | 0 | 0 |
+| **1.48** | 1.48 | Today | 0 | – | 0 |
 | **1.41** | 1.41 | Challenges | 1 | 1 | 0 |
-| **1.30** | 1.28 | Insights | **0** | – | **0** |
+| **1.30** | 1.28 | Insights | 0 | – | 0 |
 | **1.22** | 1.22 | Nutrition | 0 | – | 0 |
-| **1.21** | 1.21 | Today | 1 | 0 | 0 |
 | **1.06** | 1.06 | Goals | 0 | – | 0 |
 | **1.03** | 1.03 | Fitness | 1 | 0 | 0 |
 | **1.00** | 1.00 | Account · Settings | 0 | – | 0 |
 
-Height is not quality, but the outliers are still where the structural problems
-live. On this census the outlier was **Coaching**: 32 disclosure points of which
-25 were shut — six collapsible cards, eleven "Expand week N" rows and fourteen
-technique folds — across 5.8 screens.
+Height is not quality, but the outliers are where the structural problems live.
+The first two this census found have both been fixed, and the pair is worth
+keeping because they were **opposite** failures:
 
-**That row is struck through because COD-22 rebuilt it**: onto the three-zone
-contract, matching Pull-ups, at **2.19 screens and 17 folds**.
+| | Was | Now | What was wrong |
+|---|---|---|---|
+| **Coaching** (COD-22) | 5.80 screens, **32** folds, 25 shut | 2.19, 17 | Too many drawers, and nested — six collapsible cards, eleven "Expand week N" rows *inside* one of them, fourteen technique folds inside another |
+| **Recovery** (COD-23) | 6.33 screens, **0** folds | 4.15, 2 | Too few. 724px of set-once Setup and 869px of static Reference, permanently open |
 
-**Recovery is struck through too (COD-23): 6.33 → 4.15 screens.** And the
-census's "0 folds" reading of it was misleading — I wrote "no structure at all"
-in a handover note and that was wrong. Recovery was already on `PageLayout`
-with three zones, and its zone 3 was already grouped into four named sections.
-Its length was **724px of set-once Setup and 869px of static Reference sitting
-permanently open**, both now folded. A fold count of zero means "nothing is
-collapsed", not "nothing is organised" — read the column as what it measures.
+**Recovery is also a warning about reading this table.** Its 0 in the Folds
+column was taken — by me, in a handover note — to mean "no structure at all".
+Recovery was already on `PageLayout` with three zones and its zone 3 was already
+grouped into four named sections. **A fold count of zero means nothing is
+collapsed, not that nothing is organised.** Read each column as the thing it
+measures and nothing more.
 
-The tallest pages are now Pickleball (5.92) and Stats (5.21), and both are long
-because their analytics are open, which is the state this directory asked for.
-**Re-run the census rather than reading this paragraph**; it is one merge out of
-date by construction.
+The tallest pages are now **Pickleball (5.92)** and **Stats (5.21)**, and both
+are long because their analytics are open — the state this directory explicitly
+asked for. There may be no page worth restructuring right now.
+
+**Re-run the census rather than reading this paragraph.** It is one merge out of
+date by construction, and it drifts on its own: `Today` moved 1.21 → 1.48
+between two runs a day apart, because the demo journal's newest entry aged out
+of the day being rendered.
 
 **The Folds and Open columns were wrong in the first version of this table**
 (published in #151) and are corrected here. The first census filtered

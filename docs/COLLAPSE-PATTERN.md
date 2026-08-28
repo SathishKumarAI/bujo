@@ -43,6 +43,32 @@ it. Everything opts out under `prefers-reduced-motion`.
 wanted. Plan's Setup was neither — two short cards that are the reason you
 opened the page — so it is a plain titled section now, not a fold.
 
+**What decides the default is whose content it is.** `defaultOpen` is `true`
+everywhere, from `4609317` ("keep the dropdowns open", 2026-08-04, an explicit
+request). That is right for analytics and it is what closed the
+*reference-open, personal-collapsed* pattern on Stats, Pickleball and Focus.
+Applied to a **manual** it is backwards, because the rule `docs/pages/README.md`
+states is that **what the app learned about you outranks what the app can tell
+everybody**. So:
+
+| Content | Default |
+|---|---|
+| Analytics, history, anything derived from your journal | **open** |
+| Reference — technique guides, ladders, coping lists | **closed** |
+| Configuration you set once and read back rarely | **closed** |
+
+Closed-by-default reference must carry a **`stickyKey`**. That is what makes the
+default defensible rather than a reversal of the request above: the choice
+persists, so opening a section once keeps it open on every later visit, and the
+cost is one click on a first visit. Applied on Coaching (COD-22, 5.80 screens →
+2.19) and Recovery (COD-23, 6.33 → 4.15).
+
+**Closing a fold hides it from the a11y gate.** axe walks the rendered page, and
+`CollapsibleSection` *unmounts* its children rather than hiding them. Run
+`node scripts/verify-folds.mjs <view>` on anything you close — it reopens
+everything and re-runs axe. It is how COD-23 found a **2.57:1** contrast failure
+that `npm run a11y` had reported clean for the card's entire existence.
+
 ## The two primitives
 
 Everything routes through one of these. There is no third.
@@ -86,14 +112,25 @@ Do **not** put a Tailwind `transition-*` utility on the same element.
 `.caret-turn` is unlayered CSS and wins over `@layer utilities`, so the Tailwind
 transition silently does nothing.
 
-## Inventory
+## Inventory — **counted 2026-08-28**, not carried forward
 
-**42** `Card collapsible` call sites across 15 files, and **30**
+**42** `Card collapsible` call sites across **17** files, and **26**
 `CollapsibleSection` / `QuietSection` call sites. Both get header-click, caret
 rotation and the open animation for free.
 
-Nine folds are inline — genuinely part of a card or row, not a section — and
-carry the utilities directly:
+Section folds, by view:
+
+| View | Folds | Note |
+|---|---|---|
+| `views/Pullups.tsx` | 6 | The manual (COD-13) |
+| `views/Coaching.tsx` | 5 | The manual (COD-22) |
+| `views/Stats.tsx` | 6 | Imported as `Section` — `QuietSection` under an alias |
+| `views/Gym.tsx` | 3 | |
+| `views/NoFap.tsx` | 2 | Setup and Reference (COD-23) |
+| `views/Challenges.tsx` · `Help.tsx` · `Monthly.tsx` · `Trackers.tsx` | 1 each | |
+
+Inline folds — genuinely part of a card or row, not a section — carrying the
+utilities directly:
 
 | Fold | File | Body animates |
 |---|---|---|
@@ -103,9 +140,15 @@ carry the utilities directly:
 | Category rows | `views/Trackers.tsx` | **no** — body is `<tr>`s |
 | Week rows | `views/Coaching.tsx` | yes |
 | Technique rows | `views/Coaching.tsx` | yes |
+| Drill-skill rows | `views/Coaching.tsx` | yes — **had no `aria-expanded` until COD-22**, the only disclosures on that page whose state a screen reader could not read |
 | Workout history | `views/HomeWorkout.tsx` | yes |
-| Workout formats | `views/Pullups.tsx` | yes |
 | Notes toggle | `views/Reading.tsx` | pre-existing rotation |
+
+`Workout formats · views/Pullups.tsx` used to be on this list and is not any
+more: COD-13 moved the pull-ups manual onto `CollapsibleSection`, and that view
+now has **zero** inline `aria-expanded`. Counts and rows here are re-derived by
+grep whenever this file is touched — the previous revision said 15 files and 30
+section folds, which had drifted by 2 and 4.
 
 Trackers' category rows are the one deliberate gap: their body is a run of
 `<tr>`s, which cannot be wrapped in an animating element without breaking the

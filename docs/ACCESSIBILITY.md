@@ -36,7 +36,8 @@ important an `!`, dropped a strikethrough.
 | Recharts SVG charts lack text alternatives | Medium | Add an `aria-label` summary + a data table toggle for the mood/sleep chart |
 | Sticker/emoji buttons announce raw emoji | Low | Add descriptive `aria-label` per emoji |
 | Color-picker for habits relies on swatch color | Low | Add a name/label to each swatch |
-| Automated axe-core checks | — | Add `@axe-core/playwright` to CI |
+| Empty states are no longer scanned | Low | The gate now seeds demo data, so it grades the *populated* app. Empty and populated are different UI; a second pass would cover both |
+| `yellow` and `pink` unsolved in the light themes | Medium | latte `yellow` is **1.83:1** as text. Not a live failure — every call site was moved off it — but a trap for the next `cat('yellow')`. **COD-32**, a design call: the solver's answer collapses two steps of a three-step scale |
 
 ### Closed
 
@@ -49,7 +50,9 @@ important an `!`, dropped a strikethrough.
 | Six folds drew a state they never announced | The typographic disclosures (`▸ ▾ ▴`) in Coaching, Home Workout, Pull-ups and Trackers now carry `aria-expanded` — they had none, and matched neither the caret-icon nor the `aria-expanded` grep, so two sweeps missed them |
 | Recurring-rule form controls unnamed (**critical**) | Neither `<select>` in Plan's rule form had an accessible name. Fixed with `aria-label` on all three controls — visible labels would break the row's "Take vitamins · task · daily" sentence |
 | Activity grids conveyed data by colour alone | `DayGrid` was a `<div role="img">` with one summary label and per-cell `title` — `title` is not a reliable accessible name and is skipped entirely on touch. It is now a `<table>` with weekday row headers, week-start column headers and a visually-hidden per-cell label carrying the actual value. Headers are `sr-only`: the visual is a heatmap, not a spreadsheet. Fixes Stats and Trackers too, which share the primitive |
-| `crust` foreground on neutral chips (**two sites**) | A colour picked as the light-on-dark half of a saturated fill was set unconditionally, so the neutral state of the chip was dark-on-dark: Coaching's week numbers and Recovery's milestone ladder — in both cases the numbers you are counting towards. Each now pairs a foreground with its own background. Every other `cat('crust')` in the app already branches correctly (`complete ? crust : overlay0`), which is why only these two failed |
+| `crust` foreground on neutral chips (**two sites**) | A colour picked as the light-on-dark half of a saturated fill was set unconditionally, so the neutral state of the chip was dark-on-dark: Coaching's week numbers and Recovery's milestone ladder — in both cases the numbers you are counting towards. Each now pairs a foreground with its own background. ~~Every other `cat('crust')` in the app already branches correctly (`complete ? crust : overlay0`), which is why only these two failed.~~ **That last sentence was wrong, and wrong in an instructive way — see below** |
+| Automated axe-core checks | The `a11y` job runs `scripts/a11y-axe.mjs` on every PR — 5 themes on desktop, 2 on phone, plus Today's three time-of-day surfaces and the companion views |
+| **The gate was grading an empty app** (**16 violations**) | `scripts/a11y-axe.mjs` seeded `{ settings }` and nothing else, so every card behind a `{rows.length > 0 && …}` guard — most of this app's analytics — was absent from the DOM and could not fail. It now loads `?demo=1` and **asserts the seed landed**. Arming it turned one green run into **16 serious `color-contrast` violations** across Challenges, Plan, Trackers, Stats and Strength, in four of five themes. All fixed; see the three colour rules below |
 
 **Rule for new overlays:** if it is a `fixed inset-0` div rather than a Radix
 dialog, it must call `useFocusTrap` (`src/lib/useFocusTrap.ts`). The hook
@@ -66,6 +69,56 @@ Full pattern and inventory: `docs/COLLAPSE-PATTERN.md`.
 > Unhiding Plan's Setup surfaced a **critical** `select-name` violation that had
 > been shipping for months. When you add or change a fold, re-run the gate with
 > it **open**, and read a clean report as "clean for what was expanded".
+>
+> Use **`node scripts/verify-folds.mjs <view>`** — it loads `?demo=1`, opens
+> every disclosure in three passes (opening an outer fold *mounts* inner ones
+> that were not in the DOM), and re-runs axe at 1440 and 390. It reports how
+> many are still shut, because single-select disclosures cannot all be open at
+> once: read its result as "clean for what could be opened".
+
+## The three ways this gate has lied
+
+Each was found the same way — by making the gate look somewhere it had not been
+looking — and each one produced real, shipped violations. They are listed
+together because the shape repeats: **a clean report is a claim about what was
+scanned, never about the app.**
+
+| # | It could not see… | What it hid |
+|---|---|---|
+| 1 | **inside a closed fold** | a **critical** `select-name` in Plan's Setup, for months |
+| 2 | **a page not on its `VIEWS` list** | Recovery, excluded on the belief it was behind an opt-in — `nofapEnabled` defaults to **true**, and adding it immediately failed on contrast |
+| 3 | **a card that had no data to render** | **16** serious `color-contrast` violations, because the gate seeded an empty journal and most analytics is behind a `{rows.length > 0 && …}` guard |
+
+The seed is now **asserted**, not assumed: if demo data fails to load, the gate
+exits 1 and says so. A gate that silently reverts to an empty journal prints the
+same reassuring zero it printed for its whole existence.
+
+## Colour rules, each learned from a shipped failure
+
+**`cat('crust')` is not a foreground.** It is the light-on-*saturated* half of a
+pair and is near-white in the light themes, so `crust` on a fill is correct in
+Mocha and wrong in Latte and Dawn. **Use `onAccent(fill)`** — it picks the better
+neutral per theme and pushes it to 4.6. That helper already existed, with two
+adopters against **21** hand-written `cat('crust')` call sites; finishing the
+migration fixed 7 of the 16. `PlateStack` carried the assumption in a comment —
+`/* Catppuccin Mocha crust */` — i.e. right for one theme in five, out loud.
+
+**Its partner mistake is `cat('overlay0')` as text on the neutral branch of the
+same ternary** — **2.57:1** at 10px, four instances. Use `subtext0`. The two
+together are why `complete ? crust : overlay0`, recorded in the table above as
+the *correct* pattern, was in fact both bugs at once. When a ternary picks a
+foreground per state, **both branches are a decision**.
+
+**The accent-on-wash idiom is calibrated at `'22'`.** `scripts/solve-contrast.mjs`
+solved every accent to clear 4.5 as text on a **13%** wash of itself. A `'33'`
+wash lifts the background toward the text and puts it back under — latte's Plan
+pill measured **4.25**. One hex digit, failing silently.
+
+**A "solved palette" is not solved.** `solve-contrast.mjs` only ever solved the
+two *light* themes, and even there its output was applied for green/red/peach
+and skipped for yellow and pink. vscode's `red` failed its own wash at **3.97**
+and had to be solved by hand. Measure the accent you are about to use as text;
+do not assume the script covered it.
 
 ## How to test
 
