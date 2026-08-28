@@ -61,6 +61,13 @@ chart groups are shut. Focus keeps a near-empty History open and its analytics
 closed. The rule to apply everywhere: **what the app learned about you outranks
 what the app can tell everybody.**
 
+> **Stats no longer belongs on that list** (re-measured 2026-08-27: six folds
+> open, six Recharts surfaces on first paint). The rewrite that fixed it landed
+> 2026-08-24 and did not come back to this file, so the headline example of the
+> repo's most-cited cross-page pattern was three weeks stale. Treat every
+> example here as a claim with a date on it, and re-measure before quoting one —
+> see `stats.md` for the full re-measure.
+
 ### 2 · The same number, said several different ways
 
 Challenges reports progress four times with four numbers (`Day 4 of 75`, `5 of
