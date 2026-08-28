@@ -44,8 +44,10 @@ screens.
 shared — this page has its own week list with a done-checkbox per row and does
 not use that component.
 
-Verification: `scripts/verify-coaching.mjs` re-opens the folds and re-runs axe,
-at 1440 and 390, because `npm run a11y` cannot see inside a closed fold.
+Verification: `node scripts/verify-folds.mjs coaching` re-opens the folds and
+re-runs axe, at 1440 and 390, because `npm run a11y` cannot see inside a closed
+fold. (It shipped as `verify-coaching.mjs` and was generalised to take a view id
+when Recovery needed the same check — one script rather than one per page.)
 
 ## Measured (1440×900, demo data) — **2026-08-02, superseded by the table above**
 
