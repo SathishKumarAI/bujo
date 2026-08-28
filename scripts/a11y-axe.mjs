@@ -65,6 +65,7 @@ const VIEWS = [
   ['Body', 'Strength'],
   ['Body', 'Program'],
   ['Body', 'Pickleball'],
+  ['Body', 'Pull-ups'],
   ['Body', 'Nutrition'],
   ['Body', 'Challenges'],
   ['Body', 'Recovery'],
@@ -93,19 +94,26 @@ const SURFACES = ['Morning', 'Day', 'Evening']
  * COMPANIONS · views with no tab of their own.
  *
  * `VIEWS` above is `[section, tab]` pairs that this gate *clicks*, which means
- * it can only ever reach something the tab row names. Pull-ups and Home workout
- * are companions — reached from a link inside Fitness, deliberately not tabs —
- * so no amount of clicking section rows finds them, and they have never been
- * scanned. That is the same hole `Strength` and `Recovery` were in, and it is
- * invisible from the report: a page that is never visited cannot fail.
+ * it can only ever reach something the tab row names. Home workout is a
+ * companion — reached from a link inside Fitness, deliberately not a tab — so
+ * no amount of clicking section rows finds it, and it was never scanned. That
+ * is the same hole `Strength` and `Recovery` were in, and it is invisible from
+ * the report: a page that is never visited cannot fail.
  *
- * They are reachable by URL again (their `VIEW_ALIASES` redirects were removed
- * once it turned out both pages held things the Fitness activity form does
- * not), so this pass navigates straight to `?view=<id>` rather than hunting a
- * control that by design does not exist.
+ * It is reachable by URL (its `VIEW_ALIASES` redirect was removed once it
+ * turned out the page held things the Fitness activity form does not), so this
+ * pass navigates straight to `?view=<id>` rather than hunting a control that by
+ * design does not exist.
+ *
+ * Pull-ups was on this list until it became a Body tab; it is clicked through
+ * `VIEWS` now. Both passes reach the page, so keeping it here as well would
+ * only scan it twice.
+ *
+ * **Neither pass opens a fold.** The Pull-ups manual is six collapsed sections
+ * and axe cannot see inside a closed one, so a clean report here says nothing
+ * about the tables and links in them — expand them by hand when they change.
  */
 const COMPANIONS = [
-  ['Pull-ups', 'pullups'],
   ['Home workout', 'homeworkout'],
 ]
 

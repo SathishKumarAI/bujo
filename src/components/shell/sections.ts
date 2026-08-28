@@ -20,19 +20,28 @@ import type { ViewId } from './viewChrome'
  * `lib/deepLink.ts`). The tab is therefore in the URL, not in local state —
  * which is the property the tabs had to have.
  *
- * **Pull-ups and Home workout are deliberately not tabs.** They are activities
- * you pick inside Fitness, not surfaces you navigate to; `deepLink` still
- * redirects their old ids. `MEMBERS` maps them to Body anyway so that arriving
- * on one lights the right rail row.
+ * **Home workout is deliberately not a tab.** It is an activity you pick inside
+ * Fitness, not a surface you navigate to. `MEMBERS` maps it to Body anyway so
+ * that arriving on it lights the right rail row.
  *
- * **Pickleball is a tab, and was wrongly grouped with them.** The test for
- * "activity or surface" is not whether you can do the thing — it is whether it
- * has a record of its own. A pull-up session IS a `Workout`, so Pull-ups is an
- * activity. A pickleball session is a `PickleballSession`: format
- * (singles/doubles), games won and lost, scoring format, partner, opponent,
- * level, points for and against — none of which a `Workout` can hold.
+ * **Pickleball is a tab, and was wrongly grouped with it.** The test for
+ * "activity or surface" is not whether you can do the thing — it is whether the
+ * page holds anything the Fitness activity form does not. A pickleball session
+ * is a `PickleballSession`: format (singles/doubles), games won and lost,
+ * scoring format, partner, opponent, level, points for and against — none of
+ * which a `Workout` can hold.
  *
- * Redirecting it into Fitness therefore did not move the page, it deleted it.
+ * **Pull-ups is a tab too, and this note argued the opposite for three
+ * releases.** The argument was "a pull-up session IS a `Workout`, so Pull-ups
+ * is an activity", and it is the wrong test — the same wrong test this file
+ * already records making about Pickleball, applied to the record instead of to
+ * the page. A pull-up session is indeed a `Workout`. The *page* is the six-week
+ * program tracker, the ability calculator, the rep-scheme builder and the whole
+ * training manual, and none of those are reachable from a duration field. Its
+ * only door was a link that appeared inside Fitness once you had already picked
+ * Pull-ups on the activity select, which is the Strength-tools hole verbatim.
+ *
+ * Redirecting Pickleball into Fitness did not move the page, it deleted it.
  * `ACTIVITIES.pickleball` is `mode: 'sport'` with `required: ['durationMin']`,
  * so the form you land on asks for a duration and nothing else, and the whole
  * record — win rate, singles-vs-doubles, tournaments, leagues — became
@@ -111,6 +120,8 @@ export const SECTIONS: Section[] = [
       { view: 'program', label: 'Program' },
       // Pickleball is a surface, not an activity — see the note below.
       { view: 'pickleball', label: 'Pickleball' },
+      // Pull-ups, by the same test, applied a third time. See the note below.
+      { view: 'pullups', label: 'Pull-ups' },
       { view: 'coaching', label: 'Coaching' },
       { view: 'nutrition', label: 'Nutrition' },
       // Moved out of Insights. 75 Hard and the 90-day blocks are disciplines you
@@ -147,18 +158,17 @@ export const SECTIONS: Section[] = [
 
 /**
  * Which section a view belongs to — the "section prefix" the active state
- * matches on. Includes views that are **not** tabs (Strength tools, and the
- * three retired activity views) so landing on one still lights its rail row.
+ * matches on. Includes Home workout, which is **not** a tab, so landing on it
+ * still lights its rail row.
  * Views absent from this map (Settings, Help, Account, the kitchen sink) light
  * nothing, which is correct: they are not section destinations.
  */
 export const MEMBERS: Partial<Record<ViewId, SectionId>> = (() => {
   const m: Partial<Record<ViewId, SectionId>> = {}
   for (const s of SECTIONS) for (const t of s.tabs) m[t.view] = s.id
-  // Companions: reachable, not tabbed. Both are redirected by `deepLink` onto
-  // Fitness with the activity preselected, and are listed here only so an
-  // in-flight link lights the right rail row.
-  m.pullups = 'body'
+  // Companion: reachable from a link inside Fitness, not tabbed. Listed here
+  // only so landing on it lights the right rail row. Pull-ups used to sit
+  // beside it and is a tab now, so it arrives through `SECTIONS` above.
   m.homeworkout = 'body'
   return m
 })()
