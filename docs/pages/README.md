@@ -164,7 +164,7 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 |---|---|---|---|---|---|
 | **6.33** | 6.33 | Recovery (`nofap`) | 0 | – | 3 |
 | **5.92** | 5.15 | Pickleball | 18 | 16 | 5 |
-| **5.80** | 4.27 | Coaching | **32** | **7** | 0 |
+| ~~5.80~~ **2.19** | 2.19 | Coaching — *rebuilt, COD-22* | ~~32~~ **17** | 1 | 0 |
 | **5.21** | 4.38 | Stats | 6 | 6 | 6 |
 | **4.67** | 4.67 | Gym | 10 | 10 | 4 |
 | **4.47** | 4.47 | Help | 1 | 1 | 0 |
@@ -188,9 +188,17 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 | **1.00** | 1.00 | Account · Settings | 0 | – | 0 |
 
 Height is not quality, but the outliers are still where the structural problems
-live. On this census the outlier is **Coaching**: **32 disclosure points of
-which 25 are shut** — six collapsible cards, eleven "Expand week N" rows and
-fourteen technique folds — across 5.8 screens.
+live. On this census the outlier was **Coaching**: 32 disclosure points of which
+25 were shut — six collapsible cards, eleven "Expand week N" rows and fourteen
+technique folds — across 5.8 screens.
+
+**That row is struck through because COD-22 rebuilt it**: onto the three-zone
+contract, matching Pull-ups, at **2.19 screens and 17 folds**. The next outlier
+is now Recovery (`nofap`) at 6.33 screens with no structure at all — 0 folds,
+3 charts, one long stack — followed by Pickleball at 5.92 and Stats at 5.21,
+both of which are long because their analytics are open, which is the state
+this directory asked for. **Re-run the census rather than reading this
+paragraph**; it is already one merge out of date by construction.
 
 **The Folds and Open columns were wrong in the first version of this table**
 (published in #151) and are corrected here. The first census filtered
