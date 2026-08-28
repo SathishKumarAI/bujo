@@ -187,3 +187,26 @@ export function resumeAt(p: Program, done: string[]): { week: number; day: numbe
   const last = p.weeks[p.weeks.length - 1]
   return { week: last.week, day: last.days[last.days.length - 1].day }
 }
+
+/** Every day of the program in order — what a progress map walks. */
+export function allDays(p: Program): { week: number; day: number; focus: string }[] {
+  return p.weeks.flatMap((w) => w.days.map((d) => ({ week: w.week, day: d.day, focus: d.focus })))
+}
+
+/**
+ * The size of one day: how many exercises, and how many working sets they add
+ * up to.
+ *
+ * `sets` is a free-form string on the record because a few entries are not
+ * numbers ("Max effort" days carry '1', but the pull-up program's Tabata rows
+ * carry a count derived at build time). Anything that does not parse counts as
+ * zero rather than NaN — a session summary reading "22 sets" and one reading
+ * "NaN sets" are not equally wrong.
+ */
+export function dayStats(p: Program, week: number, day: number): { exercises: number; sets: number } {
+  const exs = p.weeks.find((w) => w.week === week)?.days.find((d) => d.day === day)?.exercises ?? []
+  return {
+    exercises: exs.length,
+    sets: exs.reduce((n, e) => n + (Number.parseInt(e.sets, 10) || 0), 0),
+  }
+}

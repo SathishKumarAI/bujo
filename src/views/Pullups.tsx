@@ -3,7 +3,7 @@ import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { ProgramTracker } from '../components/ProgramTracker'
+import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, NumField, EmptyFrame,
