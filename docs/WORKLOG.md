@@ -1,5 +1,122 @@
 # Worklog
 
+## 2026-08-28 — Thirteen PRs, and the discovery that the a11y gate was grading an empty app
+
+**Summary:** Landed a four-deep PR stack that had been red for two sessions,
+then followed one stale document to a second, and that to a third. `main` is at
+`da35f02`: `tsc -b` 0, **831 tests / 60 files**, eslint 0 errors / 2 pre-existing
+warnings, build clean, `npm run smoke` 25/25, `npm run clipped` 0 across 23
+views, and **`npm run a11y` 0 serious — for the first time meaning something.**
+
+Merged: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155 #156 #157 #158.
+Closed COD-12, COD-13, COD-19, COD-20, COD-21, COD-22, COD-23, COD-28.
+
+### The stack was red because a commit never compiled
+
+`feat/pickleball-design` and its base had failed CI for two sessions and it was
+being read as flaky. It was not: `531596f` — the commit already on record for
+silently shrinking the pull-ups manual — also left **four TypeScript errors** in
+`views/Pullups.tsx`, so every run died at `npm run build` before the a11y job
+started. A branch that cannot build is not flaky.
+
+Landing the stack then produced its own lesson. **Squash-merging the bottom of a
+stack deletes the base branch, which permanently closes the child PR** — GitHub
+will not reopen or retarget a closed PR whose base is gone, so #145 and #147 had
+to be recreated as #148 and #149 with their bodies copied across. Rebase each
+child with `git rebase --onto main <old-base-sha> <branch>` *before* merging its
+parent.
+
+### Then one stale document led to another
+
+`docs/pages/stats.md` was the entry point. Its headline P1 — *"zero chart
+elements rendered by default"* — had been closed by a rewrite **three weeks
+earlier**, and two headings above the upgrade asking for a heatmap legend, the
+same file noted that the legend exists. Four of its six ranked upgrades had
+moved.
+
+So the numbers got measured instead of quoted. `scripts/page-census.mjs` walks
+every routable view and reports height, fold count, open-fold count and
+first-paint chart count at both grid breakpoints. The heights table it replaced
+was wrong by up to **4.3 screens**, and wrong in the direction that matters:
+Today listed third-tallest and is fourth-shortest; **Coaching listed at 1.5
+screens and is 5.8**, the largest structural problem in the app.
+
+**And then the census was wrong too.** It filtered `[aria-expanded]` on
+`textContent`, which excludes every `Card collapsible` toggle — that button
+holds a caret glyph and its name lives entirely in `aria-label`. Coaching read
+as 14 folds instead of 32, Pickleball as 4 instead of 18. This repo's own
+"an audit keyed on a prop misses the feature it feeds" trap, walked into by the
+script written to stop people quoting unmeasured numbers. Corrected in #152 —
+and that is the argument *for* a script: the mistake was in a file, so it was
+reviewable and fixed in one place.
+
+### Two pages, opposite failures
+
+| | Was | Now | What was wrong |
+|---|---|---|---|
+| **Coaching** (COD-22) | 5.80 screens, 32 folds, 25 shut | 2.19, 17 | Drawers inside drawers |
+| **Recovery** (COD-23) | 6.33 screens, **0** folds | 4.15, 2 | 724px of set-once Setup + 869px of Reference, permanently open |
+
+Recovery is also a warning about reading a census: its **0** in the Folds column
+was taken to mean "no structure at all". It was already on `PageLayout` with
+three zones and four named sections. A fold count of zero means *nothing is
+collapsed*, not *nothing is organised*.
+
+How Coaching reached 5.8 screens was nobody's mistake. `4609317` (2026-08-04,
+*"keep the dropdowns open"*, an explicit request) dropped 18 `defaultCollapsed`
+call sites app-wide. That was right for analytics — it is what closed the
+reference-open/personal-collapsed pattern on Stats, Pickleball and Focus — and
+backwards for a manual. Reference and configuration are closed again on those
+two pages only, with `stickyKey` so the choice persists.
+
+### The finding that outweighs the rest
+
+**`npm run a11y` ran against an empty journal.** It seeded
+`{ settings: { storageMode, theme } }` and nothing else, so every card behind a
+`{rows.length > 0 && …}` guard — most of this app's analytics — was absent from
+the DOM and could not fail. Every "0 serious, 0 critical" this project has ever
+printed meant *"for the pages that were opened, in their empty state"*.
+
+Arming it with `?demo=1`: **16 serious `color-contrast` violations**, across
+Challenges, Plan, Trackers, Stats and Strength, in four of five themes. Three
+root causes, all fixed as causes:
+
+1. **`cat('crust')` is not a foreground** (7). It is the light-on-*saturated*
+   half of a pair and near-white in the light themes. `onAccent()` already
+   existed to solve exactly this — **its own docstring names the failure** — and
+   had two adopters against **21** hand-written call sites. `PlateStack` carried
+   the assumption in a comment: `/* Catppuccin Mocha crust */`, right for one
+   theme in five, out loud.
+2. **The accent-on-wash idiom is calibrated at `'22'`** (8). A `'33'` wash lifts
+   the background toward the text: latte's Plan pill measured 4.25. One hex
+   digit.
+3. **`solve-contrast.mjs` only ever solved the two light themes** (1), and even
+   there its output was applied for green/red/peach and skipped for yellow and
+   pink. vscode's `red` failed its own wash at 3.97 and was solved by hand.
+
+`docs/ACCESSIBILITY.md` had recorded `complete ? crust : overlay0` as the
+**correct** pattern. That single expression is both bugs at once.
+
+The gate now **asserts** its seed landed and exits 1 if not — a gate that
+silently reverts to an empty journal prints the same reassuring zero.
+
+### Left open deliberately
+
+**COD-32**, a design call: latte and dawn `yellow` and `pink` are still the
+unsolved palette values (latte yellow is **1.83:1** as text). Applying the
+solver's answer takes latte yellow to `#8a5700`, visually on top of its `peach`
+— collapsing two steps of the red/peach/yellow severity scale Plan and Trackers
+both use. Three options on the ticket. Nothing fails on it today; #157 moved
+every failing call site off yellow.
+
+### Tools left behind
+
+- `scripts/page-census.mjs` — height and fold census, both breakpoints. Not a
+  gate; it asserts nothing.
+- `scripts/verify-folds.mjs <view>` — reopens every fold and re-runs axe, because
+  axe cannot see inside a closed one. Found the contrast bug in COD-23.
+- `scripts/README.md` — the directory had 13 files and no `change → file` table.
+
 ## 2026-08-06 — The stack lands on main, a three-session bug closes, and one refusal
 
 **Summary:** Closed out the backlog pass, fixed the legacy deep link that had

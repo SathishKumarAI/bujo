@@ -422,3 +422,61 @@ subject of D-40 and of the photo-sync budget in `lib/imageStore.ts` — whatever
 replaces Vercel inherits that constraint, or invalidates the budget built
 around it.
 
+
+**D-50 — A fold's default is decided by whose content it is.**
+*Context:* `4609317` (2026-08-04) dropped 18 `defaultCollapsed` call sites on an
+explicit "keep the dropdowns open" request, and `defaultOpen` is `true`
+everywhere. That was right for analytics and it is what closed the
+*reference-open, personal-collapsed* pattern on Stats, Pickleball and Focus.
+Applied to a **manual** it is backwards: Coaching reached 5.80 screens with 32
+disclosure points and Recovery 6.33 with 724px of set-once configuration and
+869px of static guide, all open.
+*Choice:* analytics, history and anything derived from the journal default
+**open**; reference and set-once configuration default **closed**, and must
+carry a `stickyKey`. The rule underneath is `docs/pages/README.md`'s: what the
+app learned about you outranks what the app can tell everybody.
+*Trade-off:* one extra click on a first visit to reach a technique or a coping
+list. `stickyKey` is what makes it survivable — the choice persists — and it
+bought 3.6 screens on Coaching and 2.2 on Recovery. **This narrows an explicit
+past request rather than reversing it**, so it is applied per page and argued at
+the call site, not made the global default.
+*Consequence worth knowing:* closing a fold removes it from `npm run a11y`'s
+view — `CollapsibleSection` unmounts its children. Anything closed must be
+re-checked with `node scripts/verify-folds.mjs <view>`.
+
+**D-51 — A gate seeds real data, and asserts that it did.**
+*Context:* `scripts/a11y-axe.mjs` seeded `{ settings }` and nothing else, so
+every card behind a `{rows.length > 0 && …}` guard — most of this app's
+analytics — was never in the DOM. Every "0 serious, 0 critical" it had ever
+printed meant "for the pages that were opened, **in their empty state**".
+Arming it with `?demo=1` produced **16** serious violations in four of five
+themes, some of them years old.
+*Choice:* the gate loads demo data before scanning and **exits 1 if the seed did
+not land**. The assertion is the point: a gate that silently falls back to an
+empty journal prints the same reassuring zero as a working one, which is
+indistinguishable from success.
+*Trade-off:* empty states are no longer scanned — they are genuinely different
+UI and want their own pass. Recorded as a known gap in
+`docs/ACCESSIBILITY.md` rather than quietly dropped.
+*Consequence worth knowing:* this is the **third** way this gate has been caught
+grading something other than the app — after "cannot see inside a closed fold"
+and "cannot see a page missing from `VIEWS`". Assume there is a fourth. When a
+gate reports clean, ask what it was looking at before believing it.
+
+**D-52 — `cat('crust')` is not a foreground; `onAccent()` is.**
+*Context:* `crust` is the light-on-*saturated* half of a colour pair and is
+near-white in the light themes, so `crust` on a fill is correct in Mocha and
+fails in Latte and Dawn. `onAccent()` was written to solve exactly this and had
+**two adopters against 21 hand-written `cat('crust')` call sites** — a helper
+built and then not rolled out. `PlateStack` carried the assumption in a comment:
+`/* Catppuccin Mocha crust */`, correct for one theme in five, out loud.
+*Choice:* every foreground on a fill goes through `onAccent(fill)`, which picks
+the better neutral per theme and pushes it to 4.6. Its partner mistake —
+`cat('overlay0')` as text on the *neutral* branch of the same ternary, 2.57:1 at
+10px — takes `subtext0`.
+*Trade-off:* a function call per fill rather than a constant, and Stats'
+`moodColor` had to emit hex rather than `hsl()` so `onAccent` could parse it.
+*Consequence worth knowing:* `docs/ACCESSIBILITY.md` had recorded
+`complete ? crust : overlay0` as the **correct** pattern. That one expression is
+both bugs at once, which is why the rule is stated as: when a ternary picks a
+foreground per state, **both branches are a decision**.
