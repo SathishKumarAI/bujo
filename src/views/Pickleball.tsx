@@ -7,8 +7,9 @@ import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../comp
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid } from '../components/shell/CardGrid'
+import { CalendarHeatmap } from '../components/page'
 import { cat, rechartsTooltip } from '../lib/colors'
-import { todayISO, prettyDay, addDays, fromISODay, WEEKDAYS } from '../lib/date'
+import { todayISO, prettyDay, fromISODay } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
@@ -161,13 +162,14 @@ export function Pickleball() {
   const consistency = playConsistency(data, 8, today)
   const upcoming = upcomingEvents(data, today)
   const goal = data.settings.pickleballGoalGames ?? 0
-  // 13-week play-frequency heatmap.
-  // BUJO-280b: Add 1-year heatmap toggle (like Stats Activity card)
+  // Play-frequency heatmap. Renders through the Body cluster's `CalendarHeatmap`
+  // rather than a local grid: that primitive is a real <table> with weekday row
+  // headers and per-cell focus, and it buckets by QUARTILE over the non-zero
+  // days. The grid this replaced scaled linearly against the busiest day, so a
+  // single tournament Saturday flattened every ordinary session to the lightest
+  // step — the shape of the habit was the one thing the visual could not show.
   const [heatWeeks, setHeatWeeks] = useState(13)
-  const WEEKS = heatWeeks
-  const hStart = addDays(today, -(WEEKS * 7 - 1))
-  const hPad = fromISODay(hStart).getDay()
-  const maxDay = Math.max(1, ...byDay.values())
+  const heat = [...byDay].map(([date, value]) => ({ date, value }))
 
   // ── Leagues & tournaments ──
   const events = [...(data.pickleballEvents ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -272,8 +274,8 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card band title={<>Heatmap <span className="inline-flex items-center gap-2 text-label text-fg-2"><Icon as={ChartBar} size="sm" /> {heatWeeks === 13 ? '3mo' : heatWeeks === 26 ? '6mo' : '1yr'}</span></>} subtitle={`Last ${heatWeeks / 7 === 1 ? heatWeeks : heatWeeks / 7} weeks, darker = more games`} enlargeable>
-        <div className="flex items-center gap-3 mb-2">
+      <Card band title={<>Heatmap <span className="inline-flex items-center gap-2 text-label text-fg-2"><Icon as={ChartBar} size="sm" /> {heatWeeks === 13 ? '3mo' : heatWeeks === 26 ? '6mo' : '1yr'}</span></>} subtitle={`Last ${heatWeeks} weeks, darker = more games`} enlargeable>
+        <div className="mb-2 flex items-center gap-3">
           <Segmented
             value={heatWeeks}
             onChange={setHeatWeeks}
@@ -284,36 +286,12 @@ export function Pickleball() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <div
-            className="grid grid-flow-col gap-1"
-            style={{ gridTemplateRows: `repeat(7, 0.7rem)` }}
-            role="img"
-            aria-label={`Heatmap of pickleball games played per day over the last ${heatWeeks} weeks`}
-          >
-            {Array.from({ length: hPad }).map((_, i) => <span key={`p${i}`} />)}
-            {Array.from({ length: WEEKS * 7 }).map((_, i) => {
-              const d = addDays(hStart, i)
-              const g = byDay.get(d) ?? 0
-              return (
-                <span
-                  key={d}
-                  title={`${d}: ${g} games`}
-                  className="h-2.5 w-2.5 rounded-[2px]"
-                  style={{
-                    background:
-                      g === 0
-                        ? cat('surface0')
-                        : `color-mix(in srgb, ${cat('teal')} ${Math.round(30 + (g / maxDay) * 70)}%, ${cat('surface1')})`,
-                  }}
-                />
-              )
-            })}
-          </div>
-        </div>
-        <div className="mt-1 text-center text-micro text-fg-2">
-          {WEEKDAYS[1]}–{WEEKDAYS[0]} · ${heatWeeks} weeks
-        </div>
+        <CalendarHeatmap
+          weeks={heatWeeks}
+          data={heat}
+          unit="games"
+          label={`Pickleball games per day over the last ${heatWeeks} weeks`}
+        />
       </Card>
     </CardGrid>
   )
