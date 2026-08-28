@@ -181,7 +181,11 @@ export function Pickleball() {
   // days. The grid this replaced scaled linearly against the busiest day, so a
   // single tournament Saturday flattened every ordinary session to the lightest
   // step — the shape of the habit was the one thing the visual could not show.
-  const [heatWeeks, setHeatWeeks] = useState(13)
+  // 6mo, not 3mo. With a fluid grid the window sets the cell size as well as
+  // the span, and thirteen columns across a 580px card come out at **35.5px** —
+  // that is a month calendar, not a heatmap. Twenty-six lands at 18.4px, which
+  // is the density the grid is drawn for. 3mo is still one click away.
+  const [heatWeeks, setHeatWeeks] = useState(26)
   const heat = [...byDay].map(([date, value]) => ({ date, value }))
 
   // ── Leagues & tournaments ──
@@ -299,8 +303,14 @@ export function Pickleball() {
             ]}
           />
         </div>
+        {/* `fluid`, because the window above is a user control: at 13 weeks a
+            fixed 11px cell measured **202px inside 580px** — the worst ratio in
+            the app — and at 52 it overflows into a scrollbar. Dividing the card
+            means the 3mo/6mo/1yr toggle changes the density of one grid rather
+            than the length of a stub. */}
         <CalendarHeatmap
           weeks={heatWeeks}
+          fluid
           data={heat}
           unit="games"
           label={`Pickleball games per day over the last ${heatWeeks} weeks`}
