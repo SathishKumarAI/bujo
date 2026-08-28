@@ -20,15 +20,30 @@ try {
 }
 
 const BASE = process.env.BUJO_URL || 'http://localhost:5173'
-const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
 
-// Every routable view id (from App.tsx VIEWS), incl. gated cycle/nofap + account.
-const VIEWS = [
-  'today', 'plan', 'trackers', 'fitness', 'gym', 'pullups', 'pickleball',
-  'coaching', 'homeworkout', 'challenges', 'focus', 'cycle', 'nofap',
-  'monthly', 'collections', 'reading', 'goals', 'mindset', 'insights',
-  'stats', 'account', 'help', 'settings',
-]
+/**
+ * The browser to drive. `CHROME_PATH` still wins, for CI images that ship a
+ * system Chrome; otherwise this falls through to the Chromium Playwright
+ * already installed, which is what `a11y-axe`, `clipped-text` and
+ * `check-design-system` do — and why those three run everywhere and this one
+ * did not.
+ *
+ * The default used to be the literal `/usr/bin/google-chrome-stable`, passed as
+ * `executablePath` unconditionally, so on Windows the gate died at launch with
+ * "Failed to launch chromium because executable doesn't exist". STATUS.md
+ * carried the export-this-variable workaround for several sessions. A gate with
+ * a documented manual workaround is a gate that does not run: nobody types the
+ * incantation, and "smoke passes" quietly means "smoke was skipped".
+ */
+const CHROME = process.env.CHROME_PATH
+
+/**
+ * The ids, from the shared module `viewChrome.test.ts` checks against the app's
+ * own registry. `program` and `nutrition` were missing from the list this
+ * replaces — both are Body tabs, so the gate had never opened two of the pages
+ * its "all views passed" line implied it had.
+ */
+const { VIEW_IDS: VIEWS } = await import('./view-ids.mjs')
 
 // Dev-mode noise we don't want to fail on (HMR, React DevTools hint, etc.).
 const IGNORE = [
@@ -45,8 +60,34 @@ const IGNORE = [
 ]
 const ignored = (t) => IGNORE.some((re) => re.test(t))
 
+/**
+ * A failed resource load counts only when the resource is OURS.
+ *
+ * `account` renders a Supabase notice, so booting it on a machine with no route
+ * to Supabase logs `Failed to load resource: net::ERR_NAME_NOT_RESOLVED` and
+ * the gate went red. STATUS.md has called that "environmental, not a
+ * regression" across at least two sessions — which is the tell. A gate that is
+ * known to fail is a gate nobody runs, and its red is then indistinguishable
+ * from a real one.
+ *
+ * Suppressing the string outright would be the wrong fix: the same error
+ * against `/assets/…` is a genuinely broken lazy chunk, which is most of what
+ * this gate exists to catch. So the test is the ORIGIN, not the message —
+ * available on `m.location().url`, which the text alone does not carry.
+ *
+ * Third-party reachability is not what "does every view render" means.
+ */
+const OWN_ORIGIN = new URL(BASE).origin
+const thirdPartyResource = (m) => {
+  if (!/Failed to load resource/i.test(m.text())) return false
+  const url = m.location()?.url ?? ''
+  return Boolean(url) && !url.startsWith(OWN_ORIGIN)
+}
+
 const browser = await chromium.launch({
-  executablePath: CHROME,
+  // Spread, not `executablePath: CHROME` — passing `undefined` is not the same
+  // as omitting the key to Playwright's launcher.
+  ...(CHROME ? { executablePath: CHROME } : {}),
   args: ['--no-sandbox', '--disable-dev-shm-usage'],
 })
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
@@ -55,7 +96,9 @@ const page = await ctx.newPage()
 const failures = []
 let current = 'boot'
 page.on('console', (m) => {
-  if (m.type() === 'error' && !ignored(m.text())) failures.push(`[${current}] console.error: ${m.text().slice(0, 200)}`)
+  if (m.type() !== 'error' || ignored(m.text()) || thirdPartyResource(m)) return
+  const from = m.location()?.url ? ` (${m.location().url.slice(0, 120)})` : ''
+  failures.push(`[${current}] console.error: ${m.text().slice(0, 200)}${from}`)
 })
 page.on('pageerror', (e) => failures.push(`[${current}] pageerror: ${String(e).slice(0, 200)}`))
 
