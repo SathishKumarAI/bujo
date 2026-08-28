@@ -24,7 +24,11 @@ audits below: a number repeated instead of measured.
 | 3 | **The same correlation prints twice on Insights**, 300px apart — found by opening the fold | BUJO-283 |
 | 4 | **Stats is now the cluster's only cabinet** — six folds, and it absorbed nine panels. It is the next Insights | — |
 | 5 | Answer Q3 and Q4 | — |
-| 6 | Print fix · `smoke-views.mjs` misses `program`/`nutrition` · `weeklyRadar` mixes hours with 0–10 | BUJO-270/277/282 |
+| 6 | Print fix · `weeklyRadar` mixes hours with 0–10 | BUJO-270/282 |
+
+~~`smoke-views.mjs` misses `program`/`nutrition`~~ — fixed, COD-19. The id list
+moved to `scripts/view-ids.mjs` and `viewChrome.test.ts` now fails if it drifts
+from `VIEW_CHROME` again.
 
 **Today is still deliberately untouched.** See BUJO-264, unchanged.
 
@@ -82,11 +86,19 @@ markup" is the claim this repo keeps being wrong about.
   #140, and it **cannot be reopened** — "Cannot change the base branch of a
   closed pull request". Had to re-create it as #141. **Retarget the child to
   `main` *before* merging the parent**, not after.
-- **`npm run smoke` cannot run on Windows without `CHROME_PATH`.** Its default
-  is `/usr/bin/google-chrome-stable`. Use
-  `CHROME_PATH=$(node -e "const{chromium}=require('playwright');console.log(chromium.executablePath())")`.
-  It then passes 22/23 — `account` fails on `ERR_NAME_NOT_RESOLVED` because
-  there is no DNS to Supabase here. Environmental, not a regression.
+- ~~**`npm run smoke` cannot run on Windows without `CHROME_PATH`.**~~ **Fixed,
+  COD-19.** It runs everywhere with no environment variable now, and it is
+  green: `BUJO_URL=http://localhost:5199 node scripts/smoke-views.mjs` →
+  **25/25, exit 0**. Both halves of "nobody runs it" were here — a hardcoded
+  `/usr/bin/google-chrome-stable` that killed it at launch, and an `account`
+  failure on `ERR_NAME_NOT_RESOLVED` that this file twice called
+  "environmental, not a regression" rather than fixing. **That phrase, written
+  down twice, was the tell.** A gate known to exit non-zero is a gate whose red
+  carries no information, and a documented manual workaround is one nobody
+  types. Third-party reachability is not what "does every view render" means, so
+  the gate now discriminates on the resource's ORIGIN rather than on the
+  message — a `Failed to load resource` against `/assets/…` still fails it,
+  which was checked by aborting a real chunk, not assumed.
 - **`[aria-expanded]` counted over the whole document includes nav chrome.**
   Insights reported "4 folds" with zero folds on the page. Scope the query to
   `<main>`.
