@@ -159,11 +159,11 @@ export function Stats() {
         <Heatmap cols={heat} />
       </Card>
 
-      {/* Lifetime totals, open: Achievements plus the year-in-review, the month
-          index and personal records that came over from Insights (BUJO-281).
-          Open rather than a seventh fold — they are the same subject
-          Achievements already covers, so they read as one region. */}
-      <AchievementsCard />
+      {/* Lifetime totals, open: the year-in-review, the month index and personal
+          records that came over from Insights (BUJO-281). Open rather than a
+          seventh fold, and they sit here rather than below because they are
+          analytics — they read the journal back at you. Achievements is not;
+          it moved to the foot of the page. */}
       <LifetimeCards />
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
@@ -366,6 +366,17 @@ export function Stats() {
         <CheckinTimesCard />
         <HabitAnalytics />
       </Section>
+
+      {/* 8) Achievements, last. Fourteen badges used to be the second block on
+             the page, ~1,050px of reward layer standing between the heatmap and
+             the first chart (measured at 1440 with demo data). It is the one
+             thing here that is not analysis, so it reads last rather than
+             first. Kept open — it is a wall of badges, and a fold would only
+             hide what it is for. `SPAN_2` because DOM-last is not visually last
+             in a two-column grid — left alone it filled the cell beside the
+             Habits fold at y=2937 of 4114. Spanning the row puts it under
+             everything, which is what "last" was supposed to mean. */}
+      <AchievementsCard className={SPAN_2} />
 
       {/* Click-to-enlarge modal · portalled to <body> so it centres on the
           viewport, not inside transformed ancestors (book mode / zoom). */}

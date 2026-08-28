@@ -10,7 +10,11 @@ achievements board.
 
 Its subtitle in the top bar is **"Charts at a glance"**.
 
-## Measured (1440×900, demo data)
+## Measured (1440×900, demo data) — **2026-08-02, superseded**
+
+**This block is a snapshot of the page before the 2026-08-24 rewrites. It is
+kept because the reasoning below it was built on it; for what the page does now,
+read the re-measured table under "Upgrades, ranked".**
 
 - **1.3 screens.**
 - **Zero chart elements rendered by default.** Every Recharts surface on the
@@ -72,15 +76,27 @@ works.
 
 ## Upgrades, ranked
 
-1. **P1 · Open two or three charts by default** — or change the subtitle. A page
-   promising charts at a glance must show one.
-2. **P2 · Move Achievements below the analytics**, or onto its own surface.
-3. **P2 · Turn the two "see X for live metrics" sections into links** instead of
-   maintaining duplicate views.
-4. **P2 · Decide the Stats/Insights split** and state it: one for *charts*, one
-   for *reflection*, with no overlapping drawers.
-5. **P3 · Give the heatmap a real scale legend.**
-6. **P3 · Make achievement lock state explicit**, not styling-only.
+**Re-measured 2026-08-27, and four of the six had moved.** Everything above this
+line was audited on 2026-08-02; `Stats.tsx` was then rewritten twice on
+**2026-08-24** (`f4a9336` onto the three-zone contract, `733df32` moving nine
+Insights panels in), so the audit was three weeks behind the page it described
+and the top item was no longer true. The numbers below come from the rendered
+page at 1440×900 with demo data, not from reading the source.
+
+| # | Was | Now |
+|---|---|---|
+| 1 | **P1 · "Zero chart elements rendered by default"** — six drawers, all shut | **Already closed by the 2026-08-24 rewrite.** All six folds report `aria-expanded="true"` and **six Recharts surfaces** are in the DOM on first paint. `CollapsibleSection`'s `defaultOpen` is `true` and no call site on this page overrides it — the audit's claim had simply expired |
+| 2 | **P2 · Achievements outrank the statistics** | **Closed.** It is last, and spans the row. The fourteen badges were the second block, so the first chart began at **y=1386**; it now begins at **y=814** and Achievements sits at **y=4096** |
+| 3 | P2 · the two "see X for live metrics" sections should be links | **Still open.** Both subtitles still say it |
+| 4 | P2 · decide the Stats/Insights split | **Partly done** by `733df32`, which moved the nine analytics panels here. Not stated anywhere yet |
+| 5 | **P3 · Give the heatmap a real scale legend** | **Already closed.** The card renders a `less → more` scale. The audit's own UI note said so; the upgrade list contradicted it |
+| 6 | **P3 · Make achievement lock state explicit** | **Closed.** It was worse than "styling-only": the padlock *was* drawn, but as an unnamed `<svg>`, so a screen reader was given `opacity-50` and a tint and nothing else. Measured before: **0 of 14** badges named their state. After: **14 of 14**, via `role="img"` + `aria-label` on the glyph cell, and the grid is a real `<ul>`. `AchievementsCard.test.tsx` counts both, because an assertion that "a Locked label exists" would still pass if thirteen lost theirs |
+
+**The lesson is about the audit, not the page.** Two of six items were fixed by
+work that never came back to update this file, and one of those two — the P1 —
+was the headline finding quoted in `docs/pages/README.md`'s cross-page patterns
+list. A ranked upgrade list is a claim about the present tense; re-measure
+before building from it.
 
 ## Leave alone
 
