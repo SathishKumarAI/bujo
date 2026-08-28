@@ -86,9 +86,7 @@ function PullupGuideCard() {
 
 /** Volume guidelines based on max level */
 function VolumeTrackerCard() {
-  const [max, setMax] = useState('5')
-  const n = Number(max) || 0
-  const a = pullupAbility(n)
+  const a = pullupAbility(5)
 
   return (
     <Card band title="Volume Guidelines" subtitle={`${a.daily} daily · ${a.weekly} weekly`}>
@@ -199,10 +197,10 @@ function EquipmentGuideCard() {
 function EquipmentTable() {
   const equipmentData = [
     { type: 'Pull-up bar', notes: "Height: 5'8\" - 6'6\"\nDoor-mounted: cheap, easy install\nAdjustable: $500-650", links: ['https://shop.steelfitstore.com', 'https://torqueathletic.com/collections/pullup-systems'] },
-    { type: 'Thick grip', notes: 'Promotes forearm training', links: '' },
-    { type: 'Plyo boxes', notes: 'Place under high bars (12", 18", 24", 30", 36")', links: '' },
-    { type: 'Gymnastics rings/TRX', notes: 'For supplementary exercises', links: '' },
-    { type: 'Pull-up bands', notes: 'Optional - part rubber, part cloth (red/black)', links: '' },
+    { type: 'Thick grip', notes: 'Promotes forearm training', links: [] },
+    { type: 'Plyo boxes', notes: 'Place under high bars (12", 18", 24", 30", 36")', links: [] },
+    { type: 'Gymnastics rings/TRX', notes: 'For supplementary exercises', links: [] },
+    { type: 'Pull-up bands', notes: 'Optional - part rubber, part cloth (red/black)', links: [] },
   ]
 
   return (
@@ -220,9 +218,9 @@ function EquipmentTable() {
             <tr key={eq.type} className="border-t border-line">
               <td className="py-1 pr-2 text-fg-1">{eq.type}</td>
               <td className="py-1 pr-2 text-fg-2 whitespace-pre-line">{eq.notes}</td>
-              <td className="py-1 text-fg-2 text-micro">{eq.links && eq.links.map((l, i) => (
+              <td className="py-1 text-fg-2 text-micro">{eq.links.map((l, i) => (
                 <a key={i} href={l.startsWith('http') ? l : 'https://' + l} target="_blank" rel="noreferrer" className="text-blue hover:underline truncate max-w-full block">🔗</a>
-              )) || ''}</td>
+              ))}</td>
             </tr>
           ))}
         </tbody>
