@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { emptyJournal } from './storage'
 import type { Challenge, JournalData } from './types'
 import {
-  CHALLENGE_PRESETS, isDayComplete, elapsedDay, completedDays,
-  streakBeforeToday, progressDay, percentComplete, isFinished, longestStreak,
+  CHALLENGE_PRESETS, isDayComplete, elapsedDay, completedDays, missedDays,
+  streakBeforeToday, percentComplete, isFinished, longestStreak,
 } from './challenges'
 
 function withChallenge(c: Challenge, log: Record<string, number[]>): JournalData {
@@ -51,7 +51,39 @@ describe('lenient progress', () => {
     const d = withChallenge(C, log)
     expect(completedDays(d, C, '2026-06-03')).toBe(2)
     expect(percentComplete(d, C, '2026-06-03')).toBe(40) // 2/5 -> 40, whole number
-    expect(progressDay(d, C, '2026-06-03')).toBe(3) // calendar day
+  })
+})
+
+/**
+ * COD-35. The page printed `Day 4 of 75`, `5 of 75 days done`, `70 to go`,
+ * `7%`, `70 Days left` and `9/75 Elapsed` from one screen, and none of them
+ * could be added to any other. The three review numbers now partition the
+ * elapsed window, and this is the assertion that keeps them a partition.
+ */
+describe('the review numbers add up', () => {
+  const cases: [string, Record<string, number[]>, string][] = [
+    ['nothing logged', {}, '2026-06-03'],
+    ['today open, earlier days mixed', { '2026-06-01': [0, 1], '2026-06-02': [0] }, '2026-06-03'],
+    ['today already done', { '2026-06-01': [0, 1], '2026-06-03': [0, 1] }, '2026-06-03'],
+    ['past the end', { '2026-06-01': [0, 1] }, '2026-06-30'],
+  ]
+  for (const [label, log, today] of cases) {
+    it(`done + missed + today-in-progress === elapsed · ${label}`, () => {
+      const d = withChallenge(C, log)
+      const elapsed = elapsedDay(C, today)
+      const open = elapsed > 0 && !isDayComplete(d, C, today) ? 1 : 0
+      expect(completedDays(d, C, today) + missedDays(d, C, today) + open).toBe(elapsed)
+    })
+  }
+
+  it('does not count today as missed while it is still open', () => {
+    const d = withChallenge(C, { '2026-06-01': [0, 1], '2026-06-02': [0, 1] })
+    expect(missedDays(d, C, '2026-06-03')).toBe(0) // day 3 is in progress, not lost
+    expect(missedDays(d, C, '2026-06-04')).toBe(1) // day 3 ended incomplete
+  })
+
+  it('is zero before the challenge starts', () => {
+    expect(missedDays(withChallenge(C, {}), C, '2026-05-31')).toBe(0)
   })
 })
 
@@ -62,10 +94,8 @@ describe('strict progress (75-Hard reset rule)', () => {
     const log = { '2026-06-01': [0, 1], '2026-06-02': [0, 1] }
     const d = withChallenge(S, log)
     expect(streakBeforeToday(d, S, '2026-06-03')).toBe(2)
-    expect(progressDay(d, S, '2026-06-03')).toBe(3) // streak 2 + the day in progress
     // a gap: nothing logged on 06-03, so on 06-04 the streak is broken to 0
     expect(streakBeforeToday(d, S, '2026-06-04')).toBe(0)
-    expect(progressDay(d, S, '2026-06-04')).toBe(1) // reset to day 1
   })
   it('tracks the longest streak across gaps', () => {
     // 01,02 done, 03 missed, 04,05 done → longest run = 2

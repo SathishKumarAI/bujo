@@ -94,27 +94,41 @@ export function streakBeforeToday(data: JournalData, c: Challenge, today: string
 }
 
 /**
- * The day the user is currently *on* (1-based, whole number, never fractional).
- * - Strict (75 Hard): missing a day resets — you're on `streak + 1`.
- * - Lenient: simply the calendar day elapsed.
- */
-export function progressDay(data: JournalData, c: Challenge, today: string): number {
-  if (elapsedDay(c, today) === 0) return 0
-  const day = c.strict ? streakBeforeToday(data, c, today) + 1 : elapsedDay(c, today)
-  return Math.min(day, c.durationDays)
-}
-
-/**
  * Whole-number percent complete (0–100), never a fraction.
- * Single source of truth = `completedDays`, the same count the card text/bar show
- * ("X of N days done"). This keeps the ring and the text in agreement even for
- * strict challenges after a miss — the strict "reset" nuance is surfaced
- * separately via `streakBeforeToday`/`progressDay` (the Flame streak + "Day X"),
- * not by contradicting the headline percentage.
+ *
+ * Single source of truth = `completedDays`, the same count the review strip
+ * shows. `progressDay` used to live here — the day you are "on", which for a
+ * strict challenge was `streakBeforeToday + 1`. The view printed it beside the
+ * streak and beside `elapsedDay`, so the page showed day 4, day 5 done and day
+ * 9 elapsed at once and read as three contradictory counts. It had no other
+ * caller, so it is gone rather than merely unused; the strict reset is told by
+ * the streak, which is the same number said once.
  */
 export function percentComplete(data: JournalData, c: Challenge, today: string): number {
   if (!c.durationDays) return 0 // guard 0-duration (imported/legacy) → avoid NaN in the ProgressRing
   return Math.round((completedDays(data, c, today) / c.durationDays) * 100)
+}
+
+/**
+ * Days already gone by without every rule ticked.
+ *
+ * Today is deliberately NOT counted while it is still open — you have not
+ * missed a day you are still living. That makes the three review numbers a
+ * partition of the elapsed window rather than three unrelated counts:
+ *
+ *     completedDays + missedDays + (1 if today is still open) === elapsedDay
+ *
+ * The page used to print `duration - completedDays` as "days left" beside
+ * `elapsedDay`, which counts from a different origin, so the numbers could not
+ * be reconciled by anyone adding them up. `challenges.test.ts` asserts the
+ * identity above; it is the whole reason this function exists rather than
+ * being inlined in the view.
+ */
+export function missedDays(data: JournalData, c: Challenge, today: string): number {
+  const elapsed = elapsedDay(c, today)
+  if (elapsed === 0) return 0
+  const open = isDayComplete(data, c, today) ? 0 : 1
+  return Math.max(0, elapsed - completedDays(data, c, today) - open)
 }
 
 /** Longest run of consecutive complete days so far (best streak). */
