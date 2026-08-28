@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PROGRAMS, PULLUP_PROGRAM, dayComplete, daysComplete, exerciseKey, resumeAt,
+  HYPERTROPHY_PROGRAM, PROGRAMS, PULLUP_PROGRAM, allDays, dayComplete, dayStats, daysComplete,
+  exerciseKey, resumeAt,
 } from './programs'
 import type { Program } from './programs'
 
@@ -107,5 +108,33 @@ describe('dayComplete', () => {
     // without it a typo'd day number would report itself finished, and
     // `daysComplete` would count days that do not exist.
     expect(dayComplete(PULLUP_PROGRAM, 99, 99, [])).toBe(false)
+  })
+})
+
+describe('allDays', () => {
+  it('walks every day of every week, in order', () => {
+    const days = allDays(PULLUP_PROGRAM)
+    expect(days.length).toBe(PULLUP_PROGRAM.weeks.reduce((n, w) => n + w.days.length, 0))
+    expect(days[0]).toEqual({ week: 1, day: 1, focus: 'Strength' })
+    // The map draws one cell per entry, so a duplicate or a dropped day would
+    // be a cell that navigates somewhere else than it says.
+    expect(new Set(days.map((d) => `${d.week}-${d.day}`)).size).toBe(days.length)
+  })
+})
+
+describe('dayStats', () => {
+  /**
+   * The session panel reads "7 lifts · 22 sets" off this. Asserted against the
+   * record rather than a literal so the numbers cannot drift apart from the
+   * program the page actually renders.
+   */
+  it('counts the day’s exercises and adds up their sets', () => {
+    const day = HYPERTROPHY_PROGRAM.weeks[0].days[0]
+    const expected = day.exercises.reduce((n, e) => n + Number(e.sets), 0)
+    expect(dayStats(HYPERTROPHY_PROGRAM, 1, 1)).toEqual({ exercises: day.exercises.length, sets: expected })
+  })
+
+  it('is zero for a day the program does not have', () => {
+    expect(dayStats(HYPERTROPHY_PROGRAM, 99, 99)).toEqual({ exercises: 0, sets: 0 })
   })
 })
