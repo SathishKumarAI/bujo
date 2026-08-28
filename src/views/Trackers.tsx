@@ -11,7 +11,7 @@ import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { slotGlyph } from '../components/glyphs'
-import { cat, HABIT_COLORS, onAccent } from '../lib/colors'
+import { cat, HABIT_COLORS, onAccent, washStyle } from '../lib/colors'
 import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
 import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
@@ -689,7 +689,7 @@ function CategoryRows({
                     )}
                     {/* Letter grade (A–F) over the same window — a single glanceable mark. */}
                     {grade && grade.score > 0 && (
-                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-micro font-medium" style={{ background: (grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('peach') : cat('maroon')) + '22', color: grade.letter === 'A' || grade.letter === 'B' ? cat('green') : grade.letter === 'C' ? cat('peach') : cat('maroon') }}>{grade.letter}</span>
+                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-micro font-medium" style={washStyle(grade.letter === 'A' || grade.letter === 'B' ? 'green' : grade.letter === 'C' ? 'peach' : 'maroon')}>{grade.letter}</span>
                     )}
                     {/* Days since the last scheduled miss — a clean-since counter. */}
                     {sinceMiss != null && sinceMiss >= 3 && (

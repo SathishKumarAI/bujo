@@ -1,7 +1,7 @@
 import { Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { washStyle } from '../../lib/colors'
 import { muscleNames } from '../../lib/muscles'
 import type { NeglectedMuscle } from '../../lib/fitness'
 
@@ -22,7 +22,7 @@ export function NeglectedMuscles({ muscles, setFocusEx }: { muscles: NeglectedMu
             key={m.muscle}
             onClick={() => setFocusEx(m.name)}
             className="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-label"
-            style={{ background: cat('peach') + '22', color: cat('peach') }}
+            style={washStyle('peach')}
             title={m.daysSince == null ? `${m.name}: never trained` : `${m.name}: last trained ${m.daysSince} days ago`}
           >
             <Icon as={Warning} size="sm" /> {m.name}

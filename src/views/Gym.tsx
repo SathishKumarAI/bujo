@@ -24,7 +24,7 @@ import {
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
-import { cat, onAccent, rechartsTooltip } from '../lib/colors'
+import { cat, onAccent, rechartsTooltip, washStyle } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, personalRecords, SPLITS, splitMeta, nextSplit,
@@ -444,7 +444,7 @@ export function Gym() {
                           }
                           title={`Add ${r.weight}${unit} warm-up set`}
                           className="rounded-none px-2 py-0.5 transition-colors hover:text-fg-1"
-                          style={{ background: cat('blue') + '22', color: cat('blue') }}
+                          style={washStyle('blue')}
                         >
                           {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
                         </button>

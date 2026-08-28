@@ -1,7 +1,7 @@
 import { Flame, Gauge, Heartbeat, Medal, Minus, PersonSimpleRun, TrendDown, TrendUp, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Pill, StatTile } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, washStyle } from '../../lib/colors'
 import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../../lib/pickleball'
 
 /** Recent form / momentum strip with win-streak chips (#323). */
@@ -12,7 +12,7 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
         <div className="flex flex-wrap gap-1" role="img" aria-label={`Recent form: ${form.wins} won, ${form.losses} lost, ${form.draws} drawn`}>
           {form.results.map((r, i) => {
             const c = r === 'W' ? 'green' : r === 'L' ? 'red' : 'overlay0'
-            return <span key={i} className="grid h-6 w-6 place-items-center rounded-none text-caption font-medium" style={{ background: cat(c) + '22', color: cat(c) }}>{r}</span>
+            return <span key={i} className="grid h-6 w-6 place-items-center rounded-none text-caption font-medium" style={washStyle(c)}>{r}</span>
           })}
         </div>
         <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>

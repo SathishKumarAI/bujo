@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { PageLayout, StatBar } from '../components/page'
 import { Button } from '../components/ui/button'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, washStyle } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
 import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
@@ -440,7 +440,7 @@ export function Plan() {
                             // The demo seed only produces migration counts of 2, 3 and 4, so
                             // this branch has never once rendered in CI — and latte's yellow
                             // was 2.02:1 through every green a11y run the project has printed.
-                            style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '22', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
+                            style={washStyle(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow')}
                           title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                           aria-expanded={open}
                           aria-label={`Migration history for "${t.text}"`}

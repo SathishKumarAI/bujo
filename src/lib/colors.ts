@@ -166,6 +166,37 @@ export function onAccent(accentHex: string, target = 4.6): string {
   return readableOn(best, accentHex, target)
 }
 
+/**
+ * The accent-on-its-own-wash chip, as one inline style.
+ *
+ * `{ background: cat(x) + '22', color: cat(x) }` is the app's most-copied
+ * idiom and its most-repeated bug: painting the background with 13% of the
+ * text's own hue pulls the two together, so a mid-tone accent that clears 4.5
+ * on the card fails on its wash. `Pill tone="wash"` has derived its foreground
+ * from the composited background since I1; eight call sites still hand-wrote
+ * the pair and did not.
+ *
+ * Whether they *failed* depended entirely on which token the call site happened
+ * to pass — `cat(color)` in a loop over a habit palette is a different answer
+ * per row — which is why this belongs in one function rather than in a review
+ * checklist.
+ *
+ * Takes a token name or a resolved hex, because half the call sites hold one
+ * and half the other — `TodayHabits` computes `h.avoid ? cat('red') :
+ * cat(h.color)` before it knows it wants a wash. Requiring the token name
+ * would have meant threading it through, and a helper you have to refactor
+ * around is a helper people write around instead.
+ *
+ * `bg` is the surface the chip sits on. It defaults to the page rather than the
+ * card because the two differ by a step or two of luminance in every theme and
+ * the page is the darker-on-light / lighter-on-dark of the pair, i.e. the
+ * conservative one.
+ */
+export function washStyle(accentOrToken: string, bg = cat('base')): { background: string; color: string } {
+  const accent = accentOrToken.startsWith('#') ? accentOrToken : cat(accentOrToken)
+  return { background: accent + '22', color: readableOn(accent, over(accent, bg, 0x22 / 255), 4.6) }
+}
+
 /** Theme-aware recharts `<Tooltip contentStyle>`. A function (not a const) so it
  *  reads the live palette each render — otherwise it freezes on load-time Mocha. */
 export function rechartsTooltip() {

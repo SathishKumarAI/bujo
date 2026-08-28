@@ -3,7 +3,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { lazy, Suspense, useMemo } from 'react'
 import { Fitness } from './Fitness'
 import { useJournal } from '../store'
-import { cat } from '../lib/colors'
+import { cat, washStyle } from '../lib/colors'
 import { weeklyActiveMinutes, nextSplit, splitMeta } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
 import { splitGlyph } from '../components/glyphs'
@@ -69,7 +69,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
           className="flex items-center gap-3 rounded-none border border-line bg-ink-0 px-4 py-3 text-left transition-colors hover:border-line-strong"
           title="Open the Strength tab on this split"
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-none" style={{ background: cat(split.color) + '22', color: cat(split.color) }}>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-none" style={washStyle(split.color)}>
             <AppIcon as={splitGlyph(split.id)} size="lg" />
           </span>
           <span className="min-w-0">

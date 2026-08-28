@@ -3,7 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { cat, onAccent, over, readableOn } from '../lib/colors'
+import { cat, onAccent, readableOn, washStyle } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
@@ -457,13 +457,14 @@ export function Pill({
   // text and cost this pairing AA in every light theme. Both tones now derive
   // their text colour from the background they actually land on, rather than
   // assuming. See `readableOn` / `onAccent` in lib/colors.
-  const washBg = accent ? over(accent, cat('base'), 0x22 / 255) : null
   const style =
     tone === 'solid' && accent
       ? { background: accent, color: onAccent(accent) }
       : tone === 'muted' || !accent
         ? { background: cat('surface1'), color: readableOn(cat('subtext0'), cat('surface1')) }
-        : { background: accent + '22', color: readableOn(accent, washBg!, 4.6) }
+        // `washStyle` is this branch, lifted out. It was the only correct copy
+        // of the idiom in the app and ten call sites hand-wrote their own.
+        : washStyle(accent)
   return (
     <span
       title={title}

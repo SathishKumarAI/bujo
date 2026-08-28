@@ -1,7 +1,7 @@
 import { ListNumbers } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, washStyle } from '../../lib/colors'
 import type { addictionPortfolio } from '../../lib/urge'
 
 type Portfolio = ReturnType<typeof addictionPortfolio>
@@ -13,7 +13,7 @@ export function RecoveryPortfolioCard({ portfolio }: { portfolio: Portfolio }) {
       <ul className="space-y-1.5">
         {portfolio.map((p, i) => (
           <li key={p.id} className="flex items-center gap-3 rounded-none border border-line bg-ink-0 px-3 py-2 text-body">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-none text-caption font-medium" style={{ background: i === 0 ? cat('mauve') + '22' : cat('surface0'), color: i === 0 ? cat('mauve') : cat('overlay1') }}>{i + 1}</span>
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-none text-caption font-medium" style={i === 0 ? washStyle('mauve') : { background: cat('surface0'), color: cat('subtext0') }}>{i + 1}</span>
             <span className="min-w-0 flex-1 truncate font-medium text-fg-1">{p.name}</span>
             <span className="shrink-0 tabular-nums" style={{ color: p.resetToday ? cat('red') : cat('mauve') }}><span className="font-medium">{p.current}</span>d</span>
             <span className="hidden shrink-0 text-label text-fg-2 sm:inline">best {p.best}d</span>

@@ -83,6 +83,25 @@ for (const file of files) {
       fail('retired button variant', file, n, line.trim().slice(0, 90))
     }
 
+    // 4b · The accent-on-its-own-wash pairing, hand-written.
+    //
+    // `background: cat(x) + '22'` next to `color: cat(x)` is the app's
+    // most-copied idiom and its most-repeated contrast bug: the wash pulls the
+    // background toward the text, so an accent that clears 4.5 on the card
+    // fails on its own wash. Ten call sites had their own copy; `washStyle()`
+    // is the one that derives the foreground from the composited background.
+    //
+    // Deliberately narrow: it only fires when the SAME expression appears as
+    // both the wash and the colour, because `color: cat('text')` on an accent
+    // wash is a different (and fine) pairing, and half a dozen selected-chip
+    // styles do exactly that.
+    if (!name.includes('lib/colors') && /\+\s*['"]22['"]/.test(line)) {
+      const wash = line.match(/background:[^,}]*?(cat\([^)]*\)|\baccent\b)[^,}]*?\+\s*['"]22['"]/)
+      if (wash && new RegExp(`color:[^,}]*${wash[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(line)) {
+        fail('accent on its own wash — use washStyle()', file, n, line.trim().slice(0, 90))
+      }
+    }
+
     // 5 · Three radii and three control heights, by token.
     if (/\brounded-(lg|md|xl|2xl|full)\b/.test(line)) {
       fail('use rounded-control / rounded-card / rounded-pill', file, n, line.trim().slice(0, 90))
