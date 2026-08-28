@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
-import { Fitness } from './Fitness'
+import { COMPANION, Fitness } from './Fitness'
+import { SECTIONS } from '../components/shell/sections'
 
 /**
  * The deep-linked activity has to beat the stored mode.
@@ -75,5 +76,31 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
     const select = activitySelect()
     expect([...select.options].map((o) => o.value)).toContain(select.value)
     expect(select.value).toBe('pickleball')
+  })
+})
+
+/**
+ * A companion link may only point somewhere navigation cannot already reach.
+ *
+ * The map held five links when Pull-ups, Pickleball, Strength tools and
+ * Coaching lived nowhere else. All four were promoted to Body tabs, and nothing
+ * failed — so the page kept drawing "Strength tools · anatomy, plates,
+ * analytics ›" under the submit button while `Strength` sat in the tab row
+ * forty pixels above it. Four second doors to rooms already on screen.
+ *
+ * This is the reverse of `sections.test.ts`'s "every view has a door": that one
+ * catches a surface with no way in, this one catches a second way in. Promote a
+ * companion to a tab and this fails, which is the moment to delete its entry.
+ */
+describe('Fitness companion links', () => {
+  it('only links to views that are not already tabs', () => {
+    // `SECTIONS`, not `sectionOf`. `sectionOf` reads `MEMBERS`, which lists
+    // Home workout so that landing on it lights the Body rail row — it is a
+    // member of the section without being one of its tabs, and asserting on it
+    // fails the very entry that is still correct. The question here is whether
+    // a tab row can already take you there.
+    const tabs = SECTIONS.flatMap((s) => s.tabs).map((t) => t.view)
+    const tabbed = Object.values(COMPANION).map((c) => c.view).filter((v) => tabs.includes(v))
+    expect(tabbed).toEqual([])
   })
 })

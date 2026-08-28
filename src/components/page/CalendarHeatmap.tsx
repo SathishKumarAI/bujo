@@ -30,6 +30,7 @@ export function CalendarHeatmap({
   unit = '',
   today = todayISO(),
   size,
+  fluid = false,
 }: {
   weeks?: number
   data: HeatDatum[]
@@ -43,6 +44,10 @@ export function CalendarHeatmap({
    *  gives the grid a column of its own (Mindset) passes a larger cell rather
    *  than leaving 300px of empty space beside a postage stamp. */
   size?: number
+  /** Divide the container's width instead of taking `size` px — see `DayGrid`.
+   *  Use it wherever the grid has a column to itself; `size` cannot be right at
+   *  both a 708px review column and a 358px phone, and this needs no number. */
+  fluid?: boolean
 }) {
   const days = useMemo<DayCell[]>(() => {
     const byDate = new Map<string, number>()
@@ -83,10 +88,21 @@ export function CalendarHeatmap({
     // without a mouse. It only overflowed once Mindset asked for a larger cell,
     // which is how a phone-width scan caught a primitive that had shipped for
     // months.
-    <div className="overflow-x-auto" tabIndex={0} role="group" aria-label={label ?? 'Activity grid'}>
+    //
+    // A `fluid` grid cannot overflow — its cells divide whatever width it is
+    // given — so it is neither scrollable nor a tab stop. Leaving `tabIndex={0}`
+    // on it would put a focus stop on a static table between the summary and
+    // the next control, which is the cost the rule above is paying to avoid.
+    <div
+      className={fluid ? undefined : 'overflow-x-auto'}
+      tabIndex={fluid ? undefined : 0}
+      role="group"
+      aria-label={label ?? 'Activity grid'}
+    >
       <DayGrid
         days={days}
         size={size}
+        fluid={fluid}
         color="mauve"
         label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${weeks} weeks`}
       />

@@ -65,6 +65,7 @@ export function DayGrid({
   colorFor,
   size = 11,
   gap = 3,
+  fluid = false,
   label,
   onDayClick,
 }: {
@@ -78,11 +79,33 @@ export function DayGrid({
   colorFor?: (c: DayCell) => string
   size?: number
   gap?: number
+  /**
+   * Cells divide the container's width instead of taking `size` px.
+   *
+   * A fixed cell is right when the grid shares its column with something else.
+   * It is wrong when the grid has a column to itself: twelve weeks at 11px is a
+   * **188px** table in Fitness's **708px** review column, so the page's
+   * signature visual read as a postage stamp with 520px of dead space beside it
+   * and 300px below. `size` already existed for this and its one adopter
+   * (Mindset) had to guess a number that only suits one container width — a
+   * guess that cannot be right at both 708px and a 358px phone.
+   *
+   * `table-fixed` with no declared column widths divides the width equally,
+   * so the cell size falls out of the container at every width with no
+   * measurement, media query or resize observer.
+   */
+  fluid?: boolean
   label?: string
   /** Omit for a read-only grid. */
   onDayClick?: (date: string) => void
 }) {
-  const box = { height: size, width: size }
+  // Square either way: fixed px, or a full-width cell whose height follows.
+  const box = fluid ? { width: '100%', aspectRatio: '1' } : { height: size, width: size }
+  // The sr-only header column is `position: absolute`, so it contributes no
+  // width of its own — but under `table-fixed` it would still be handed an
+  // equal share of the row. Zero it, or the grid loses a column's worth of
+  // width to a cell nobody can see.
+  const headCol = fluid ? { width: 0, padding: 0 } : undefined
   // `rounded-[2px]` lived at 13 call sites as an arbitrary value; it is a
   // data-cell radius rather than a control or card one, so it belongs to this
   // primitive and nowhere else.
@@ -119,11 +142,11 @@ export function DayGrid({
   return (
     // A <caption> rather than an aria-label: it survives table-navigation mode
     // in every screen reader, where a label on <table> sometimes does not.
-    <table className="border-separate" style={{ borderSpacing: gap }}>
+    <table className={`border-separate${fluid ? ' w-full table-fixed' : ''}`} style={{ borderSpacing: gap }}>
       <caption className="sr-only">{label ?? `Activity grid, ${days.length} days`}</caption>
       <thead>
         <tr>
-          <td className="sr-only" />
+          <td className="sr-only" style={headCol} />
           {Array.from({ length: cols }).map((_, c) => (
             <th key={c} scope="col" className="sr-only">{colHeader(c)}</th>
           ))}
@@ -132,7 +155,7 @@ export function DayGrid({
       <tbody>
         {Array.from({ length: ROWS }).map((_, row) => (
           <tr key={row}>
-            <th scope="row" className="sr-only">{rowHeader(row)}</th>
+            <th scope="row" className="sr-only" style={headCol}>{rowHeader(row)}</th>
             {Array.from({ length: cols }).map((_, col) => {
               const d = slot(row, col)
               if (!d) return <td key={col} style={box} />

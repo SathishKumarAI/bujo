@@ -129,14 +129,16 @@ export function Pullups() {
           </section>
 
           <section>
-            <h2 className="mb-2 text-label text-fg-2">Analytics</h2>
+            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Analytics</h2>
             <SummaryStrip items={[
               { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
               { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
               { label: 'Best set', value: logged, empty: logged === 0 },
             ]} />
+            {/* Same stranded grid as Fitness — measured at 188px in a 708px
+                column — and the same fix. See `DayGrid`'s `fluid`. */}
             <div className="mt-3">
-              <CalendarHeatmap weeks={12} data={heat} unit="reps" label="Pull-up reps per day over the last twelve weeks" />
+              <CalendarHeatmap weeks={26} fluid data={heat} unit="reps" label="Pull-up reps per day over the last twenty-six weeks" />
             </div>
           </section>
 
