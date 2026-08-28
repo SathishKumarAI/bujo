@@ -1,7 +1,7 @@
 import { ArrowCounterClockwise, Pause, Play, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { Button } from './ui/button'
 
 const PRESETS = [60, 90, 120, 180]
@@ -57,7 +57,7 @@ export function RestTimer() {
             key={s}
             onClick={() => start(s)}
             className="rounded-control px-2.5 py-1 text-label"
-            style={{ background: total === s ? cat('mauve') : cat('surface0'), color: total === s ? cat('crust') : cat('subtext1') }}
+            style={{ background: total === s ? cat('mauve') : cat('surface0'), color: total === s ? onAccent(cat('mauve')) : cat('subtext1') }}
           >
             {s < 120 ? `${s}s` : `${s / 60}m`}
           </button>

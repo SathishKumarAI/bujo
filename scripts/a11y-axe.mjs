@@ -182,7 +182,33 @@ await page.addInitScript(() => {
   }
 })
 
-await page.goto(BASE, { waitUntil: 'networkidle' })
+/**
+ * Seed the demo journal before scanning anything.
+ *
+ * Until COD-28 this gate ran against an **empty** journal, so every card behind
+ * a `{rows.length > 0 && …}` guard — which is most of the analytics in the app —
+ * was absent from the DOM and could not fail. `HighRiskHoursCard` carried a
+ * 2.57:1 contrast failure through every green run this file ever printed.
+ *
+ * `?demo=1` seeds only when `entries.length === 0` (`store.tsx`), writes to
+ * localStorage and therefore survives the reloads `setTheme` does, so one load
+ * here is enough for the whole sweep.
+ */
+await page.goto(`${BASE}?demo=1`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(1200)
+
+// Assert it actually landed. A gate that silently reverts to an empty journal
+// is the bug being fixed, and it would report the same reassuring zero.
+const seeded = await page.evaluate(() => {
+  const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
+  return { entries: d.entries?.length ?? 0, metrics: d.metrics?.length ?? 0 }
+})
+if (seeded.entries === 0) {
+  console.error('\nDemo data did not seed — the journal is empty.')
+  console.error('Every "0 serious" below would mean "0 serious for empty pages".')
+  process.exit(1)
+}
+console.log(`Seeded demo journal: ${seeded.entries} entries, ${seeded.metrics} metrics.`)
 
 let serious = 0
 const summary = []

@@ -1,4 +1,4 @@
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 
 /**
  * Per-denomination plate → Catppuccin token, so each weight reads the same color
@@ -66,7 +66,11 @@ export function PlateStack({ plates, unit = 'kg' }: { plates: number[]; unit?: s
               y={height / 2 + 3}
               textAnchor="middle"
               className="font-medium"
-              fill={cat('crust')} /* Catppuccin Mocha crust — dark label on the colored disc */
+              /* Was a flat `cat('crust')`, with a comment naming Mocha — so it
+                 was the right colour for one theme out of five and near-white
+                 on the light ones, over a saturated disc. `onAccent` picks per
+                 fill and per theme. */
+              fill={onAccent(plateColor(p))}
               fontSize={8}
             >
               {p}

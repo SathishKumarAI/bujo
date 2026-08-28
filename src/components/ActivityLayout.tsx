@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import type { Habit, HabitCategory, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { DayGrid } from './ui/day-grid'
 
@@ -219,7 +219,7 @@ function TodayControl({
       className="inline-grid h-6 w-6 place-items-center rounded-pill border"
       style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent : 'transparent' }}
     >
-      {on && <span className="text-micro" style={{ color: cat('crust') }}>✓</span>}
+      {on && <span className="text-micro" style={{ color: onAccent(accent) }}>✓</span>}
     </button>
   )
 }

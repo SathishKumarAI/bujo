@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Page } from '../components/shell/Page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import type { Challenge } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
@@ -188,7 +188,7 @@ function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
                     key={d}
                     title={`Day ${i + 1}, ${d}${complete ? ', done' : past ? ', missed' : isToday ? ', today' : ''}`}
                     className="grid h-7 w-7 place-items-center rounded text-micro"
-                    style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? cat('crust') : cat('overlay0') }}
+                    style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? onAccent(cat('green')) : cat('subtext0') }}
                   >
                     {i + 1}
                   </span>

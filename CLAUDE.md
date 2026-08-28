@@ -90,27 +90,36 @@ to be re-created as #148 and #149 with their bodies copied across. Rebase each
 child onto `main` with `git rebase --onto main <old-base-sha> <branch>` and
 retarget it **before** merging its parent.
 
-Trap: **`npm run a11y` runs against an empty journal, so a card that only
-renders when there is data is never scanned.** `scripts/a11y-axe.mjs:177` seeds
-`{ settings: { storageMode, theme } }` and nothing else, so every
-`{peakHour && <Card/>}` / `{rows.length > 0 && …}` in the app is absent from the
-DOM when axe walks it. `HighRiskHoursCard` carried a **2.57:1** contrast failure
-through every green run the gate ever printed; it was found by
-`scripts/verify-folds.mjs`, which loads `?demo=1` first. Sibling of the
-`VIEWS`-list trap below — "a page that is never visited cannot fail" becomes "a
-card that never renders cannot fail". Filed as COD-28. Until it is fixed, read
-"0 serious" as **"0 serious for the pages that were opened, in their empty
-state"**, and check any new analytics card with
-`node scripts/verify-folds.mjs <view>`.
+Trap (fixed, COD-28): **`npm run a11y` used to run against an empty journal**,
+so every `{peakHour && <Card/>}` / `{rows.length > 0 && …}` was absent from the
+DOM and could not fail. It now loads `?demo=1` and **asserts the seed landed**
+before scanning — arming it turned one green run into **16 serious violations**
+that had been invisible for the gate's whole existence. Keep the assertion: a
+gate that silently reverts to an empty journal prints the same reassuring zero.
+Sibling of the `VIEWS`-list trap below: "a page that is never visited cannot
+fail" became "a card that never renders cannot fail".
 
-Trap: **`overlay0` as a text colour on `surface0` measures 2.57:1 at 10px** and
-fails in every dark theme. Four instances so far — the Stats mood calendar, the
-Recovery milestone chips, `HighRiskHoursCard`'s hour labels, and the empty-cell
-case each of them shares. The cause is the same every time: `crust` is the
-light-on-*saturated* half of a pair, and whoever writes the `else` branch reaches
-for its partner and applies it to the *neutral* background. `subtext0` is the
-next step up, still clearly quieter, and clears 4.5 in all five themes. When you
-write a ternary that picks a foreground per state, check the neutral branch.
+Trap: **`cat('crust')` is not a foreground.** It is the light-on-*saturated*
+half of a pair, and it is near-white in the light themes — so `crust` on any
+fill is correct in Mocha and wrong in Latte and Dawn. **Use `onAccent(fill)`**,
+which picks the better neutral per theme and pushes it to 4.6. That helper
+existed and had two adopters against 21 hand-written `cat('crust')` call sites;
+finishing the migration fixed 7 of the 16 violations above. Its partner mistake
+is `cat('overlay0')` as text on the *neutral* branch of the same ternary —
+**2.57:1** at 10px, four instances. Use `subtext0` there. When you write a
+ternary that picks a foreground per state, both branches are a decision.
+
+Trap: **the accent-on-wash idiom is calibrated at `'22'`, and `'33'` breaks
+it.** `scripts/solve-contrast.mjs` solved each accent to clear 4.5 as text on a
+**13%** wash of itself. A 20% wash lifts the background further toward the text
+and puts it back under — Plan's migration pill measured 4.25 on latte red. One
+hex digit, and nothing fails loudly.
+
+Trap: **`scripts/solve-contrast.mjs` only ever solved the two light themes**,
+and even there its output was applied for green/red/peach and skipped for
+yellow and pink. So a "solved palette" is not solved: vscode's `red`
+(`#f14c4c`) failed its own wash at 3.97 and had to be solved by hand. Before
+trusting an accent as text, measure it — do not assume the script covered it.
 
 Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
 not checked, and "0 serious" means only "for the pages that were opened". Add new

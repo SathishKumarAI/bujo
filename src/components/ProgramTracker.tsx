@@ -2,7 +2,7 @@ import { Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat } from '../lib/colors'
+import { cat, onAccent } from '../lib/colors'
 import { PROGRAMS, exerciseKey, dayComplete as isDayComplete, daysComplete, resumeAt } from '../lib/programs'
 import { musclesForExercise } from '../lib/fitness'
 import { muscleNames } from '../lib/muscles'
@@ -133,7 +133,7 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
               aria-pressed={week === w.week}
               aria-label={`${curWeek.label ? 'Block' : 'Week'} ${w.week}${complete ? ', complete' : ''}`}
               className="inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded px-2 text-label"
-              style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}
+              style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? onAccent(cat('mauve')) : cat('subtext1') }}
             >
               {/* Mark *and* number, like the day row. Replacing the number with
                   the tick rendered "✓ 2 3 4 5 6", where the finished week is
@@ -157,7 +157,7 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
               aria-pressed={day === dn}
               aria-label={`Day ${dn}${complete ? ', complete' : next ? ', next up' : ''}`}
               className="inline-flex h-8 items-center gap-1 rounded px-2 text-label"
-              style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}
+              style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? onAccent(cat('blue')) : cat('subtext1') }}
             >
               {/*
                 This line was `{dayComplete(week, dn) && ''} {dn}` — the

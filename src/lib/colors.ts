@@ -51,7 +51,14 @@ const THEME_PALETTES: Record<string, Record<string, string>> = {
     text: '#d4d4d4', subtext1: '#cccccc', subtext0: '#b5b5b5', overlay2: '#9d9d9d', overlay1: '#9b9b9b', overlay0: '#979ca4',
     surface2: '#3e3e42', surface1: '#333337', surface0: '#2a2a2e', base: '#1f1f1f', mantle: '#181818', crust: '#141414',
     mauve: '#c586c0', lavender: '#b5a4e0', blue: '#569cd6', sapphire: '#4fc1ff', sky: '#9cdcfe', teal: '#4ec9b0',
-    green: '#89d185', red: '#f14c4c', maroon: '#f48771', peach: '#ce9178', yellow: '#dcdcaa', pink: '#d16d9e',
+    // `red` was VS Code's own `#f14c4c`, which is the one accent in this theme
+    // that fails the app's dominant idiom — accent text on a 13% wash of
+    // itself. Measured 3.97 on Plan's migration pill and 4.00 on the Stats
+    // habit chips, against a 4.5 floor. Lightened 25% toward white by the same
+    // walk `scripts/solve-contrast.mjs` uses (that script only ever solved the
+    // two *light* themes, which is why this survived): 4.65 on the wash, 5.35
+    // on `surface0`, 5.73 on the card.
+    green: '#89d185', red: '#f57979', maroon: '#f48771', peach: '#ce9178', yellow: '#dcdcaa', pink: '#d16d9e',
   },
   dawn: {
     text: '#3a322a', subtext1: '#574d40', subtext0: '#6f6354', overlay2: '#8a7d6b', overlay1: '#6a6154', overlay0: '#6f6354',
