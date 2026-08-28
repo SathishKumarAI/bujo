@@ -531,7 +531,7 @@ body.handwriting textarea {
 
   /* Accents tuned for legibility on light surfaces. */
   --color-mauve: #6c4cf0;   /* primary accent: calm violet, AA on white */
-  --color-lavender: #7c5cff;
+  --color-lavender: #7053e6;
   --color-blue: #165fc1;    /* Google blue, darkened for AA as text */
   --color-sapphire: #1967d2;
   --color-sky: #165fc1;
@@ -540,8 +540,21 @@ body.handwriting textarea {
   --color-red: #b8291f;     /* destructive */
   --color-maroon: #c5221f;
   --color-peach: #9b4c07;   /* warning */
-  --color-yellow: #f29900;
+  /* Not a darkened `#f29900`. Walking that value toward black until it clears
+     4.5 lands on `#8a5700`, which measures dE 14 from `peach` (`#9b4c07`) —
+     the same brown. Plan's migration pill and Trackers' completion bands both
+     use red / peach / yellow as a three-step scale, so that collapse loses a
+     step. Re-picked by hue instead (h50, the olive-gold side of yellow rather
+     than the orange side): dE 31 from peach, dE 46 from green, and 4.62:1 on
+     white. There is no *light* yellow that is legible on white — the choice is
+     which dark one, not whether. */
+  --color-yellow: #816c03;
   --color-pink: #d01884;
+  /* Catppuccin's pastels are near-white, so inheriting them here gave 1.14:1
+     and 1.31:1 — and both are in use (Trackers seeds Coffee as `rosewater` and
+     Vitamins as `flamingo`, and Recovery's urge palette ends on `flamingo`). */
+  --color-rosewater: #985f4b;
+  --color-flamingo: #b54a58;
 
   /* Map the shadcn semantic border/input to the crisp hairline. */
   --border: var(--border-hairline);
@@ -680,11 +693,15 @@ body.handwriting textarea {
   --color-sky: #9cdcfe;
   --color-teal: #4ec9b0;
   --color-green: #89d185;     /* success (git-added green) */
-  --color-red: #f14c4c;       /* error red */
+  /* VS Code's own `#f14c4c`, lightened 25% toward white. #157 solved this and
+     applied the answer to `lib/colors.ts` only, so `text-red` painted the
+     original and `cat('red')` painted the fix — one token, two colours, on the
+     same screen. `scripts/check-contrast.mjs` fails on that now. */
+  --color-red: #f57979;       /* error red */
   --color-maroon: #f48771;
   --color-peach: #ce9178;     /* string orange */
   --color-yellow: #dcdcaa;    /* function yellow */
-  --color-pink: #d16d9e;
+  --color-pink: #d374a3;
 
   --border-hairline: #2b2b2b;
   --border: var(--border-hairline);
@@ -731,7 +748,7 @@ body.handwriting textarea {
 
   --color-mauve: #974608;     /* primary accent: warm amber, AA on cream */
   --color-lavender: #7c3aed;
-  --color-blue: #2563eb;      /* links/info */
+  --color-blue: #235edf;      /* links/info */
   --color-sapphire: #1e40af;
   --color-sky: #0369a1;
   --color-teal: #0d6962;
@@ -739,8 +756,11 @@ body.handwriting textarea {
   --color-red: #b21f1f;       /* destructive */
   --color-maroon: #9f1239;
   --color-peach: #a13d08;     /* warning */
-  --color-yellow: #ca8a04;
+  /* Re-picked by hue, not darkened — see the note on latte's yellow. */
+  --color-yellow: #7c6803;
   --color-pink: #be185d;
+  --color-rosewater: #8c5d45;
+  --color-flamingo: #ac4654;
 
   --border: var(--border-hairline);
   --input: var(--border-hairline);

@@ -110,16 +110,36 @@ is `cat('overlay0')` as text on the *neutral* branch of the same ternary —
 ternary that picks a foreground per state, both branches are a decision.
 
 Trap: **the accent-on-wash idiom is calibrated at `'22'`, and `'33'` breaks
-it.** `scripts/solve-contrast.mjs` solved each accent to clear 4.5 as text on a
-**13%** wash of itself. A 20% wash lifts the background further toward the text
-and puts it back under — Plan's migration pill measured 4.25 on latte red. One
-hex digit, and nothing fails loudly.
+it.** The accents clear 4.5 as text on a **13%** wash of themselves. A 20% wash
+lifts the background further toward the text and puts it back under — Plan's
+migration pill measured 4.25 on latte red. One hex digit, and nothing fails
+loudly.
 
-Trap: **`scripts/solve-contrast.mjs` only ever solved the two light themes**,
-and even there its output was applied for green/red/peach and skipped for
-yellow and pink. So a "solved palette" is not solved: vscode's `red`
-(`#f14c4c`) failed its own wash at 3.97 and had to be solved by hand. Before
-trusting an accent as text, measure it — do not assume the script covered it.
+Trap (fixed, COD-32): **the palette was written down twice and the copies had
+diverged.** Every theme lives in `src/index.css` as `--color-*` *and* in
+`src/lib/colors.ts` as a literal map, because Tailwind utilities resolve the
+first and `cat()` (inline styles, charts) resolves the second. Nothing kept
+them in step: vscode's `red` was solved by hand in #157 and applied to
+`colors.ts` only, so `text-red` painted `#f14c4c` and `cat('red')` painted
+`#f57979` **on the same screen**. Mocha's three surfaces had drifted the same
+way. `npm run contrast` now fails on any divergence and on any accent under
+4.5:1 as text — **run it, and edit both files.**
+
+Trap: **a static gate catches what a rendering gate structurally cannot.** The
+armed a11y gate was green while latte's `yellow` sat at **2.02:1** — below even
+the 3.0 floor for a graphic — because the only place it renders is one branch
+of Plan's `count >= 4 ? red : count >= 2 ? peach : yellow`, and the demo seed
+produces counts of 2, 3 and 4 only. **A branch the seed never takes cannot
+fail.** Same family as the empty-journal and closed-fold traps: prefer a check
+on the *source* when one is possible.
+
+Trap: **in a light theme there is no legible light yellow.** Any yellow that
+clears 4.5:1 on white is dark, and darkening `#f29900` straight down lands on
+`#8a5700` — dE 14 from latte's `peach`, i.e. the same brown, which collapses
+the red/peach/yellow three-step scale Plan and Trackers both use. Re-pick by
+**hue** instead (the olive-gold side, h≈50): `#816c03` is dE 31 from peach.
+When an accent cannot be darkened into legibility without colliding, move it
+sideways in hue, not down in lightness.
 
 Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
 not checked, and "0 serious" means only "for the pages that were opened". Add new
@@ -164,7 +184,7 @@ Rules:
 - Read `.graphify/GRAPH_REPORT.md` only for broad architecture review or when `query` / `path` / `explain` do not surface enough context
 - After modifying code files in this session, run `npx graphify hook-rebuild` to keep the graph current
 
-<!-- plane-agent-rules:v1 -->
+<!-- plane-agent-rules:v2 -->
 ## Issue tracking (Plane, local)
 
 All work across `~/Documents/coding` is tracked in one Plane board.
@@ -191,8 +211,10 @@ States, and what each one means here:
 Rules:
 
 1. **Before starting work, check for an existing work item** for what you are
-   about to do. Search the board by `repo:bujo` first. Duplicates are worse
-   than nothing because they split the history of a decision.
+   about to do. Duplicates are worse than nothing because they split the history
+   of a decision. **Two ways to look, and both have a trap** — see "Finding an
+   existing item" below. An empty result from a search you got wrong reads
+   exactly like an empty board, which is how duplicates get filed.
 2. **A found bug outside the current task's scope gets filed, not silently left.**
    File it in `Backlog` with `repo:bujo`, say in your reply that you filed it.
    This is the mechanism the global CLAUDE.md rule refers to.
@@ -205,6 +227,49 @@ Rules:
 6. Cycles are weeks. If the user asks "what am I doing this week", read the
    current cycle, not the whole backlog.
 
+### Finding an existing item
+
+This Plane is the **Community edition**. `workitem list` with a `pql` or any
+structured filter fails outright:
+
+> PQL and structured filters are not supported on this Plane edition.
+
+So **there is no server-side way to filter by the `repo:` label.** Filter in your
+own head instead — list, then read:
+
+```
+workitem list  project_id=<COD uuid>  per_page=100
+               fields=sequence_id,name,state,labels
+```
+
+and keep only the rows whose `labels` contain this repo's label UUID. Get that
+UUID once from `label list` (the API returns UUIDs everywhere and accepts nothing
+else). The board is small enough that one unfiltered list is cheaper than the
+round-trips to avoid it.
+
+`workitem search` also works, but **it matches a contiguous substring of the
+title, not a set of words.** Searching `"LM Studio local model"` returns nothing
+while `"LM Studio"` returns two items — the first phrase appears in no title.
+**Search one distinctive token** (`local_model`, `vault.yaml`, `8787`), never a
+sentence, and treat a miss as "my query was too long", not as "no such ticket".
+
+### Useful UUIDs
+
+Every repo shares one project and one set of states, so these are fixed. Only the
+`repo:` label differs — look yours up with `label list`.
+
+| Thing | UUID |
+|---|---|
+| project `Coding` (COD) | `384bb763-72eb-497f-8ddb-142f7c178668` |
+| state `Backlog` | `c1497bfa-8446-49f0-aa45-976b0311b82f` |
+| state `Todo` | `c074ade8-4a34-4a89-8de3-e7ab61caedf6` |
+| state `In Progress` | `824d6862-acf5-4562-82d3-fc1ee7eaadd9` |
+| state `In Review` | `25021b28-b089-490e-9628-d4c0fd1a5253` |
+| state `Done` | `ede567e7-3e57-405e-ac93-fb04db6bcfff` |
+| state `Cancelled` | `85b6f97d-30e3-4cf4-ae58-063a0e239b4f` |
+
 Plane does not replace `STATUS.md`. `STATUS.md` is re-entry context — where you
 stopped, the next action, the traps. Plane is the queue. Both, in the same commit
 as the work.
+
+<!-- /plane-agent-rules -->

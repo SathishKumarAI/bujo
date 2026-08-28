@@ -1,7 +1,7 @@
 import { Heartbeat } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Empty } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, washStyle } from '../../lib/colors'
 import { muscleNames } from '../../lib/muscles'
 import type { MuscleRecovery } from '../../lib/fitness'
 
@@ -29,7 +29,7 @@ export function RecoveryMap({ recovery, setFocusEx }: { recovery: MuscleRecovery
                 key={r.muscle}
                 onClick={() => setFocusEx(r.name)}
                 className="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-label"
-                style={{ background: cat(color) + '22', color: cat(color) }}
+                style={washStyle(color)}
                 title={`${r.name}: ${r.daysSince == null ? 'never trained' : `last trained ${r.daysSince}d ago`} · ${stateLabel[r.state]}`}
               >
                 {r.name}

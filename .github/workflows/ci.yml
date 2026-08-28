@@ -38,6 +38,12 @@ jobs:
       # user, in a shipped view.
       - name: Design system
         run: node scripts/check-design-system.mjs
+      # Static, so it grades the palette rather than the screenshot. The a11y
+      # job below can only fail on what the demo journal happens to render, and
+      # a token used by one branch of one ternary the seed never takes had been
+      # illegible in two themes for the gate's entire existence.
+      - name: Palette contrast
+        run: node scripts/check-contrast.mjs
       - name: Tests
         run: npm test -- --run
       - name: Build

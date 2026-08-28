@@ -109,16 +109,34 @@ together are why `complete ? crust : overlay0`, recorded in the table above as
 the *correct* pattern, was in fact both bugs at once. When a ternary picks a
 foreground per state, **both branches are a decision**.
 
-**The accent-on-wash idiom is calibrated at `'22'`.** `scripts/solve-contrast.mjs`
-solved every accent to clear 4.5 as text on a **13%** wash of itself. A `'33'`
-wash lifts the background toward the text and puts it back under — latte's Plan
-pill measured **4.25**. One hex digit, failing silently.
+**The accent-on-wash idiom is calibrated at `'22'`.** The accents clear 4.5 as
+text on a **13%** wash of themselves. A `'33'` wash lifts the background toward
+the text and puts it back under — latte's Plan pill measured **4.25**. One hex
+digit, failing silently.
 
-**A "solved palette" is not solved.** `solve-contrast.mjs` only ever solved the
-two *light* themes, and even there its output was applied for green/red/peach
-and skipped for yellow and pink. vscode's `red` failed its own wash at **3.97**
-and had to be solved by hand. Measure the accent you are about to use as text;
-do not assume the script covered it.
+**The palette is a gate now: `npm run contrast`** (`scripts/check-contrast.mjs`,
+in CI). It replaced `solve-contrast.mjs`, which was advisory, carried its own
+stale copy of the tokens, and had only ever covered the two light themes. The
+gate checks two things statically:
+
+1. **`src/index.css` and `src/lib/colors.ts` agree.** Every theme is written
+   down twice — custom properties for Tailwind and CSS, a literal map for
+   `cat()` and the chart libraries — and they had drifted in four places.
+   vscode's `red` was the worst: `text-red` painted `#f14c4c` while
+   `cat('red')` painted `#f57979`, on the same screen, decided only by whether
+   the call site used a class or an inline style.
+2. **Every accent clears 4.5:1 as text** on the card, the page and the raised
+   surface. Not 3.0-for-fills: the palette cannot know how it will be used, and
+   the next `style={{ color: cat(x) }}` is one commit away.
+
+**Why static, when there is an armed axe gate.** Because axe grades what
+rendered. Latte's `yellow` was **2.02:1** — failing even the 3.0 non-text floor
+— through every green a11y run this project has printed, because the only place
+it renders is one branch of Plan's `count >= 4 ? red : count >= 2 ? peach :
+yellow` and the demo seed only ever produces counts of 2, 3 and 4. **A branch
+the seed never takes cannot fail.** Latte and dawn were also missing
+`rosewater` and `flamingo` entirely, inheriting Catppuccin's near-white pastels
+at **1.14:1** and **1.31:1**, while Trackers seeds a habit in each.
 
 ## How to test
 

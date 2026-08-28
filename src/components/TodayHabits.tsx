@@ -2,7 +2,7 @@ import { Note, Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat } from '../lib/colors'
+import { cat, washStyle } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
@@ -78,7 +78,7 @@ export function TodayHabits({
           // `min-h-11` — 44px (WCAG 2.5.5). `py-1.5` on a 15px line put these
           // at 34px, and they are the most-tapped control on a phone.
           className="inline-flex min-h-11 items-center gap-1.5 rounded-none border px-3 py-1.5 text-body transition-colors active:scale-95"
-          style={{ borderColor: on ? accent : cat('surface1'), background: on ? accent + '22' : 'transparent', color: on ? accent : cat('subtext1') }}
+          style={{ borderColor: on ? accent : cat('surface1'), ...(on ? washStyle(accent) : { background: 'transparent', color: cat('subtext1') }) }}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
@@ -153,8 +153,7 @@ export function TodayHabits({
                     className="grid size-5 shrink-0 place-items-center rounded-none border text-caption"
                     style={{
                       borderColor: on ? accent : cat('surface1'),
-                      background: on ? accent + '22' : 'transparent',
-                      color: accent,
+                      ...(on ? washStyle(accent) : { background: 'transparent', color: accent }),
                     }}
                   >
                     {slipped ? '✕' : cleared ? '✓' : ''}

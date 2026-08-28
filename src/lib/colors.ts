@@ -25,9 +25,14 @@ export const CAT: Record<string, string> = {
   surface2: '#585b70',
   surface1: '#45475a',
   surface0: '#313244',
-  base: '#1e1e2e',
-  mantle: '#181825',
-  crust: '#11111b',
+  // The three surfaces are the app's, not Catppuccin's — `index.css` deepened
+  // them and this map was not updated, so `cat('mantle')` returned `#181825`
+  // while the card it sat on painted `#141419`. A recharts tooltip is
+  // positioned over a card and coloured from here, which is where you could
+  // see it. `scripts/check-contrast.mjs` now fails on any such divergence.
+  base: '#1a1a1f',
+  mantle: '#141419',
+  crust: '#0e0e12',
 }
 
 // Per-theme palettes (mirrors the `--color-*` blocks in index.css). Charts need
@@ -38,8 +43,9 @@ const THEME_PALETTES: Record<string, Record<string, string>> = {
   latte: {
     text: '#202124', subtext1: '#3c4043', subtext0: '#5f6368', overlay2: '#9aa0a6', overlay1: '#656a6e', overlay0: '#5f6368',
     surface2: '#dadce0', surface1: '#e8eaed', surface0: '#f1f3f4', base: '#f8f9fa', mantle: '#ffffff', crust: '#f1f3f4',
-    mauve: '#6c4cf0', lavender: '#7c5cff', blue: '#165fc1', sapphire: '#1967d2', sky: '#165fc1', teal: '#006d62',
-    green: '#187232', red: '#b8291f', maroon: '#c5221f', peach: '#9b4c07', yellow: '#f29900', pink: '#d01884',
+    mauve: '#6c4cf0', lavender: '#7053e6', blue: '#165fc1', sapphire: '#1967d2', sky: '#165fc1', teal: '#006d62',
+    green: '#187232', red: '#b8291f', maroon: '#c5221f', peach: '#9b4c07', yellow: '#816c03', pink: '#d01884',
+    rosewater: '#985f4b', flamingo: '#b54a58',
   },
   neon: {
     text: '#e6e6ff', subtext1: '#c4c4e8', subtext0: '#9d9dce', overlay2: '#8585b8', overlay1: '#6f6fa0', overlay0: '#585883',
@@ -54,17 +60,20 @@ const THEME_PALETTES: Record<string, Record<string, string>> = {
     // `red` was VS Code's own `#f14c4c`, which is the one accent in this theme
     // that fails the app's dominant idiom — accent text on a 13% wash of
     // itself. Measured 3.97 on Plan's migration pill and 4.00 on the Stats
-    // habit chips, against a 4.5 floor. Lightened 25% toward white by the same
-    // walk `scripts/solve-contrast.mjs` uses (that script only ever solved the
-    // two *light* themes, which is why this survived): 4.65 on the wash, 5.35
-    // on `surface0`, 5.73 on the card.
-    green: '#89d185', red: '#f57979', maroon: '#f48771', peach: '#ce9178', yellow: '#dcdcaa', pink: '#d16d9e',
+    // habit chips, against a 4.5 floor. Lightened 25% toward white: 4.65 on the
+    // wash, 5.35 on `surface0`, 5.73 on the card.
+    //
+    // It was applied HERE ONLY for two sessions, so `text-red` (which resolves
+    // `--color-red` in index.css) kept painting the original while `cat('red')`
+    // painted this. `npm run contrast` fails on that now — edit both files.
+    green: '#89d185', red: '#f57979', maroon: '#f48771', peach: '#ce9178', yellow: '#dcdcaa', pink: '#d374a3',
   },
   dawn: {
     text: '#3a322a', subtext1: '#574d40', subtext0: '#6f6354', overlay2: '#8a7d6b', overlay1: '#6a6154', overlay0: '#6f6354',
     surface2: '#ddc9ad', surface1: '#ecdcc4', surface0: '#f4e9d6', base: '#faf3e7', mantle: '#fffdf8', crust: '#f1e6d2',
-    mauve: '#974608', lavender: '#7c3aed', blue: '#2563eb', sapphire: '#1e40af', sky: '#0369a1', teal: '#0d6962',
-    green: '#126c33', red: '#b21f1f', maroon: '#9f1239', peach: '#a13d08', yellow: '#ca8a04', pink: '#be185d',
+    mauve: '#974608', lavender: '#7c3aed', blue: '#235edf', sapphire: '#1e40af', sky: '#0369a1', teal: '#0d6962',
+    green: '#126c33', red: '#b21f1f', maroon: '#9f1239', peach: '#a13d08', yellow: '#7c6803', pink: '#be185d',
+    rosewater: '#8c5d45', flamingo: '#ac4654',
   },
 }
 
@@ -155,6 +164,37 @@ export function onAccent(accentHex: string, target = 4.6): string {
   // on, so the result stays the theme's neutral rather than jumping to pure
   // black on every mid-tone fill.
   return readableOn(best, accentHex, target)
+}
+
+/**
+ * The accent-on-its-own-wash chip, as one inline style.
+ *
+ * `{ background: cat(x) + '22', color: cat(x) }` is the app's most-copied
+ * idiom and its most-repeated bug: painting the background with 13% of the
+ * text's own hue pulls the two together, so a mid-tone accent that clears 4.5
+ * on the card fails on its wash. `Pill tone="wash"` has derived its foreground
+ * from the composited background since I1; eight call sites still hand-wrote
+ * the pair and did not.
+ *
+ * Whether they *failed* depended entirely on which token the call site happened
+ * to pass — `cat(color)` in a loop over a habit palette is a different answer
+ * per row — which is why this belongs in one function rather than in a review
+ * checklist.
+ *
+ * Takes a token name or a resolved hex, because half the call sites hold one
+ * and half the other — `TodayHabits` computes `h.avoid ? cat('red') :
+ * cat(h.color)` before it knows it wants a wash. Requiring the token name
+ * would have meant threading it through, and a helper you have to refactor
+ * around is a helper people write around instead.
+ *
+ * `bg` is the surface the chip sits on. It defaults to the page rather than the
+ * card because the two differ by a step or two of luminance in every theme and
+ * the page is the darker-on-light / lighter-on-dark of the pair, i.e. the
+ * conservative one.
+ */
+export function washStyle(accentOrToken: string, bg = cat('base')): { background: string; color: string } {
+  const accent = accentOrToken.startsWith('#') ? accentOrToken : cat(accentOrToken)
+  return { background: accent + '22', color: readableOn(accent, over(accent, bg, 0x22 / 255), 4.6) }
 }
 
 /** Theme-aware recharts `<Tooltip contentStyle>`. A function (not a const) so it

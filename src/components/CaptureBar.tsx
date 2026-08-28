@@ -11,7 +11,7 @@ import { parseTags } from '../lib/bullets'
 import { parseCapture, type CaptureResult } from '../lib/capture'
 import { labelOf } from '../domain/activities'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
-import { cat } from '../lib/colors'
+import { washStyle } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
 import { Button } from './ui/button'
 
@@ -227,7 +227,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
       {/* Live routed preview: which view it lands in + the parsed values. */}
       {parsed && meta && Icon && (
         <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-label text-fg-2">
-          <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={{ background: cat(meta.color) + '22', color: cat(meta.color) }}>
+          <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium" style={washStyle(meta.color)}>
             <AppIcon as={Icon} size="sm" /> {meta.label}
           </span>
           <span className="text-fg-1">{describe(draft ?? parsed) || '…'}</span>
