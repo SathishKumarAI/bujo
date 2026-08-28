@@ -1,7 +1,7 @@
 # STATUS
 
 **Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `588dc00`.**
-Fifteen merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
+Fourteen merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154 #155
 #156 #157 #158 #159.
 
 ## What shipped
