@@ -1,7 +1,7 @@
 # STATUS
 
-**Stopped:** 2026-08-27. **Zero open PRs, clean tree, `main` at `a646a2e`.**
-Seven merged this session: #146 #144 #148 #149 #150 #151 #152.
+**Stopped:** 2026-08-28. **Zero open PRs, clean tree, `main` at `1beb9a7`.**
+Nine merged this session: #146 #144 #148 #149 #150 #151 #152 #153 #154.
 
 ## What shipped
 
@@ -14,6 +14,8 @@ Seven merged this session: #146 #144 #148 #149 #150 #151 #152.
 | #150 | Stats: Achievements last, and the lock state has a name | COD-21 |
 | #151 | Page heights replaced by a measured census | — |
 | #152 | The census counted folds by text, so it missed every card fold | — |
+| #153 | STATUS, and the two traps the session cost time to find | — |
+| #154 | Coaching rebuilt on the three-zone contract, 5.80 screens → 2.19 | COD-22 |
 
 ## The three findings worth carrying forward
 
@@ -41,21 +43,26 @@ CLAUDE.md trap.
 
 ## Next action
 
-**COD-22 · Coaching.** The census outlier and the only page left that matches
-`docs/pages/README.md` pattern 3. Measured: **32 disclosure points, 25 shut,
-5.80 screens at 1440** (4.27 at 1600), zero charts. The 32 are:
+**COD-23 · Recovery (`nofap`).** The census outlier now that Coaching is done:
+**6.33 screens at 1440 and 6.33 at 1600, 0 folds, 3 charts.** Identical at both
+widths means the third grid column does nothing for it — it is one long
+vertical stack with no shape to reason about and nothing to collapse.
 
-- 6 collapsible `Card`s
-- 11 `Expand week N` rows nested inside the 12-week roadmap card
-- 14 technique folds nested inside "How to play every shot"
+The opposite failure to COD-22: Coaching had too many drawers, Recovery has
+none. **Mindset (3.29), Focus (3.04) and Help (4.47) share the shape** — over
+three screens, zero folds, equal at both widths — so whatever fixes Recovery
+probably generalises to those three.
 
-So it is drawers inside drawers: reaching "Third-shot drop" costs two opens and
-a scroll. Filed in Backlog, **not started** — it is a page-contract job, and
-`page-contract`'s stop gate is the right place to begin.
+Two constraints: `docs/pages/README.md` names Recovery's tone and its HALT check
+as assets to protect, and the a11y gate found a contrast bug here the moment the
+page was added to its `VIEWS` list — so re-run `npm run a11y` on any change.
 
-**The constraint on any restructure:** the page holds `Today: Rest or wall`,
-which `docs/pages/README.md` calls the best pattern in the product. It has to
-survive, and stay at the top.
+**Open question for the next session, not a defect:** #154 re-closed five
+reference folds on Coaching, and `4609317` had opened every fold app-wide on an
+explicit "keep the dropdowns open" request. The narrow reading — reference
+content closed, personal content open — is argued in `docs/pages/coaching.md`
+and made survivable by `stickyKey`, but it is a decision worth confirming
+before it is applied anywhere else.
 
 ## Traps hit this session
 
@@ -85,3 +92,7 @@ survive, and stay at the top.
 - Stats re-measured on the rendered page after the change, not inferred: first
   chart y=1386 → **814**, Achievements y=254 → **4096**, badges naming their
   lock state 0/14 → **14/14**.
+- Coaching re-measured the same way: **5.80 screens → 2.19**, 32 disclosure
+  points → 17. `node scripts/verify-coaching.mjs` re-opens the folds and re-runs
+  axe at 1440 and 390 — **0 serious, 0 critical** — because `npm run a11y`
+  cannot see inside a closed fold and so vouches for nothing that #154 closed.
