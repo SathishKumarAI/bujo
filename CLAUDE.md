@@ -69,6 +69,23 @@ falls back to Playwright's own Chromium, and judges a failed resource load by
 its **origin** rather than its message. When a gate needs a workaround, fix the
 gate; a workaround written in STATUS.md is a gate that is off.
 
+Trap (fixed): **`npm run smoke` was testing a different application.** Its
+default was `http://localhost:5173` — Vite's *dev* default, so it belongs to
+whichever project on the machine started a dev server first, while every other
+script here defaults to 4173 (`vite preview`, what CI starts). With
+`interview_prep/frontend` holding 5173, smoke drove **PrepForge — AI/ML
+Interview Prep**, found nothing it recognised as an error, and printed
+`Smoke: 25/25 views OK · All views rendered clean`. Three PRs quoted that line
+as evidence. The port was only half of it: the pass condition was "`main` or
+`#root` has more than five characters of text", which any web page satisfies,
+so the gate could not tell bujo from a stranger. It now **asserts its own
+identity** (`document.title` starts with `bujo` **and** `#main` exists) before
+scoring a single view, and it runs in CI beside `a11y` instead of local-only —
+a gate nothing runs is a gate that rots. Sibling of the empty-journal and
+closed-fold traps, one level up: not "a page that is never visited cannot
+fail", but **an app that is never checked cannot fail**. When a browser gate
+passes, confirm what it was pointed at.
+
 Trap: **there are two disclosure implementations and only one puts text in its
 toggle.** `CollapsibleSection` renders its title inside the button;
 `Card collapsible` renders a caret glyph and nothing else, so its name lives

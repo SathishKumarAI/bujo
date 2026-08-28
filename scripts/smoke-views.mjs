@@ -4,9 +4,23 @@
 // against render-time breakage that unit tests can't catch.
 //
 // Usage:
-//   BUJO_URL=http://localhost:5173 node scripts/smoke-views.mjs
+//   BUJO_URL=http://localhost:4173 node scripts/smoke-views.mjs
 //   (point at a running `vite dev` or `vite preview`)
 // Exits non-zero if any view fails.
+//
+// The default is 4173 — `vite preview` — because that is what CI starts and
+// what `a11y-axe`, `clipped-text` and `capture-screenshots` all default to.
+// It used to be 5173, and that had gone properly wrong: 5173 is Vite's default
+// dev port, so it belongs to whichever project on the machine started a dev
+// server first. On the box this was found on, 5173 was serving an entirely
+// DIFFERENT app, and this gate rendered that app's pages, found nothing it
+// recognised as an error, and printed "Smoke: 25/25 views OK / All views
+// rendered clean". Three PRs quoted that line as evidence.
+//
+// The port was only half of it. The pass condition was "`main` or `#root`
+// contains more than five characters", which any web page in the world
+// satisfies — so the gate could not tell bujo from a stranger. See the boot
+// assertion below: identity is checked before a single view is scored.
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 let chromium
@@ -19,7 +33,7 @@ try {
   process.exit(1)
 }
 
-const BASE = process.env.BUJO_URL || 'http://localhost:5173'
+const BASE = process.env.BUJO_URL || 'http://localhost:4173'
 
 /**
  * The browser to drive. `CHROME_PATH` still wins, for CI images that ship a
@@ -107,6 +121,33 @@ await page.goto(BASE, { waitUntil: 'load' })
 await page.waitForTimeout(2000)
 try { await page.locator('button', { hasText: 'This device only' }).first().click({ timeout: 6000 }) } catch { /* already in */ }
 await page.waitForTimeout(1500)
+
+/**
+ * Assert this is bujo before scoring anything.
+ *
+ * Without it the gate cannot tell which application it is looking at, and it
+ * has already reported a clean sweep of a different project's pages (see the
+ * header). Two independent markers, because either alone is weak: a title can
+ * be generic, and `#main` is a common id — together they are specific enough,
+ * and both are load-bearing here (`AppShell` owns `#main`, and the skip link
+ * and every gate in this repo target it).
+ *
+ * Same shape as the a11y gate's "assert the demo seed landed": a browser gate
+ * that does not check what it is pointed at prints the same reassuring number
+ * whether it is covering everything or nothing.
+ */
+const identity = await page.evaluate(() => ({
+  title: document.title,
+  main: !!document.querySelector('#main'),
+}))
+if (!identity.title.toLowerCase().startsWith('bujo') || !identity.main) {
+  console.error(`\n${BASE} is not bujo.`)
+  console.error(`  document.title = ${JSON.stringify(identity.title)} (expected to start with "bujo")`)
+  console.error(`  #main present   = ${identity.main}`)
+  console.error('\nSomething else is on that port. Start `vite preview` (4173) or set BUJO_URL.')
+  await browser.close()
+  process.exit(1)
+}
 
 const results = []
 for (const v of VIEWS) {
