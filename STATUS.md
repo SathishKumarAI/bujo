@@ -1,104 +1,97 @@
 # STATUS
 
-**Stopped:** 2026-08-28 (third session that day). On `main`, clean, nothing in
-flight. Four PRs opened, CI green, squash-merged: **#168, #169, #170, #171**.
-`main` is at `2c32a42`.
+**Stopped:** 2026-08-28 (fourth session that day). On `main`, clean, nothing in
+flight. Two PRs opened, CI green, squash-merged: **#173, #174**. `main` is at
+`094ad86`.
 
 ## What this session did
 
-Started from "fix `?view=fitness` — space, UI optimisation, no duplication", and
-turned that into a measured sweep of every routable view rather than a look at
-one page.
+`?view=program` — "optimise, more UI, add features if needed".
 
 | PR | What | Ticket |
 |---|---|---|
-| #168 | Fitness: the review column fills, four duplicate doors deleted | COD-60 |
-| #169 | The other three stranded day grids — Stats, Mindset, Pickleball | — |
-| #170 | Dead zone columns on Coaching and Pull-ups | — |
-| #171 | **Smoke was testing a different application**, + header rhythm | COD-74 |
+| #173 | Program onto the three-zone contract; `ProgramTracker` split into `components/program/` | COD-76 |
+| #174 | Rest timer, driven by the block's own rep-range rule | COD-77 |
 
 ## The one thing to carry forward
 
-**A browser gate that does not check what it is pointed at prints the same
-number whether it is covering everything or nothing.**
+**A rule that reads correctly over one dataset is not a rule about the domain.**
 
-`npm run smoke` defaulted to `http://localhost:5173` — Vite's *dev* default,
-which belongs to whichever project on the machine booted first, while every
-sibling script defaults to 4173 (`vite preview`, what CI starts). On this box
-5173 was `interview_prep/frontend`, so smoke drove **"PrepForge — AI/ML
-Interview Prep"** through all 25 `?view=` URLs and printed `25/25 views OK ·
-All views rendered clean`. Three PRs quoted it as evidence before the fourth
-caught it — from one stray console error naming `StudyCard.tsx`, a file this
-repo does not contain.
+`restSeconds(qty)` started global: parse the rep target, apply the block's
+"12+ → 30s · 8–10 → 120s · <8 → 180s". Every hypertrophy quantity gave a
+sensible answer. But the *pull-up* program has `5 reps` scapular retractions and
+`1 rep` jumping pull-ups, so the same function offered three-minute rests inside
+a circuit whose source prescribes no rest at all — a prescription nobody wrote,
+presented with a countdown clock.
 
-The port was the smaller half: the pass condition was "`main` or `#root` has
-more than five characters of text", which any page in the world satisfies. It
-now asserts identity (`document.title` starts with `bujo` **and** `#main`
-exists) before scoring a single view, and runs in CI beside `a11y`. Written up
-in `CLAUDE.md`.
+The rest rule is a fact about **one program**, and it now lives on the record
+(`restRule: 'rep-range'`); `restSeconds(program, qty)` returns `null` for anyone
+who has not opted in. The test asserts both directions *and* asserts that
+several pull-up quantities do parse as rep targets, so it cannot pass for the
+wrong reason.
 
-**If a gate passes, confirm what it was pointed at.** Cheapest version: compare
-the served `index-*.js` hash against `dist/index.html` before believing any
-browser result — that check is what proved the *other* gates in those PRs were
-correctly aimed, so their results stand.
+It was the test that found this, before the UI rendered once. Same family as the
+`help ?? subtitle` and `aria-label ?? textContent` traps already in `CLAUDE.md`:
+the sweep that keys on the wrong thing reports clean.
 
-## The sweep, and what it found
+## Measured
 
-Two scripts, both in the scratchpad rather than the repo (they answer a
-question, they are not gates): one measuring every view for a visual materially
-narrower than its container, one measuring both zone columns and repeated
-strings.
+Dev server 5199, demo journal seeded, `#main` scroll height.
 
-**Stranded visuals — all fixed.** `DayGrid` gained `fluid`: `table-fixed` with
-no declared column widths divides the container, so cell size falls out of the
-layout at every width with no breakpoint and no ResizeObserver.
-
-| | Before | After (1440 / 390) |
+| | before | after |
 |---|---|---|
-| Fitness | 188 of 708px | 708/708 · 324/324 |
-| Pull-ups | 188 of 708px | full |
-| Stats | 384 of 580px | 580/580 · 398/398 |
-| Mindset | 331 of 613px | 613/613 · 299/299 |
-| Pickleball | 202 of 580px | 580/580 · 324/324 |
+| program · 1440 | 1354px | **894px** |
+| program · 390 | 1512px | 1635px |
+| pullups · 1440 | 1439px | 1683px |
+| pullups · 390 | 2513px | 2745px |
 
-Fluid changes what the *window* control means: it now sets cell size, not
-width. So Pickleball's default moved 3mo → 6mo (13 fluid columns are 35.5px,
-a month calendar) and Stats' `SPAN_2`-at-1yr survives with its reason inverted.
+Program was a single `Card` in the 820 tier — 820px of content in a 1392px
+container, 572px of empty page, the body map below the fold. Now:
 
-**Dead zone columns — two fixed, one refused, one wasn't a defect.**
+- **ORIENT** — focus, set count, day and block progress. Fact 1 is a button
+  while browsing; that is the old "Continue" row.
+- **ACT** (sticky) — load into session, mark all done, the rest timer, the
+  program map.
+- **REVIEW** — the exercises, then the body map last.
 
-| View | act/review gap | Outcome |
-|---|---|---|
-| coaching | 1438px | `stacked` — no two-column split balances one tall thing and two short ones |
-| pullups | 951px | `ProgramTracker` moved to review; page 1891 → **1539px** |
-| nofap | 2107px | **Refused**, COD-61 — the only way under the sticky threshold is folding away a 650px urge-coping tool |
-| plan | 814px | **Not a defect** — act column is 568px, so it is `data-sticky=true` and follows you |
+Both pages grew where the **program map** lands (246px on a phone): eighteen or
+thirty days of progress in place of two rows of bare numbers that could not
+answer "how much of block 2 is left".
 
-**Duplication — clean outside Fitness.** Fitness's `CompanionTool` linked to
-four views that had since become Body tabs (a second door to a room already on
-screen); a test now fails if a companion becomes a tab. Everything else the
-sweep flagged is legitimate: per-row action buttons, and the Collections index
-and Settings nav, which are tables of contents by design.
+## Two defects the gates caught in this session's own code
+
+- `rounded-full` is not a token here — `npm run design` blocked it.
+- `truncate` on the map's focus label: **30 clipped strings** on Pull-ups at
+  390px, from a gate that had been at zero. A phone gives a five-day week 43px
+  per cell and "Conditioning" needs 60; wrapping does not help one long word,
+  and a wider cell puts the hypertrophy grid back to 377px. The phone cell is
+  the day number now, and the focus reads from the day header.
 
 ## Next
 
 - **COD-61** — Recovery needs a real IA pass. 3734px, two review sections at
   1121 and 1729px.
-- **COD-73** — five pages are still flat card stacks: pickleball 5379px (18
-  cards), stats 4685, gym 4207, help 4021, nofap 3734. Compare fitness 931,
-  goals 950, pullups 1539, coaching 1967.
-- Neither is a one-liner; both want the page-contract method, and neither should
-  be solved by folding things away — a closed fold is invisible to `npm run
-  a11y` as well as to the user.
+- **COD-73** — flat card stacks: pickleball 5379px (18 cards), stats 4685, gym
+  4207, help 4021, nofap 3734.
+- **Pull-ups' zone balance.** Its review column was already the taller one and
+  #173 added 244px to it. Worth a look with the page-contract method.
+- **The store persists the whole journal on every change, undebounced.** #173
+  stopped the Program page provoking it once per keystroke by keeping the
+  actual-result field local until blur, but `store.tsx` is untouched and every
+  other write-through field in the app still does it. Not filed — decide
+  whether a debounce plus a `visibilitychange` flush is worth the data-loss
+  surface before opening a ticket.
 
-## Environment traps hit this session
+## Environment traps
 
-- **A leftover `vite preview` held 4173** across sessions and survived a
-  `TaskStop`. Harmless once verified (it serves `dist/` from disk), but verify:
+- **Ports:** 5199 is this repo's dev server, 4173 its preview, and **5173
+  belongs to `interview_prep/frontend`**. Verify the preview is serving the
+  current build before believing a browser result:
   `curl -s localhost:4173 | grep index-` against `dist/index.html`.
-- **Ports on this machine:** 5199 is this repo's dev server, 4173 its preview,
-  and **5173 belongs to `interview_prep/frontend`** — do not point anything here
-  at 5173.
-- Screenshots need `localStorage['bujo:onboarded'] = '1'` set before load, or
-  the first-run tour covers the page; and `?demo=1` seeds only into an empty
-  journal.
+- **`npm run a11y` cannot see the rest timer.** It walks the rendered page and
+  the timer is not in the DOM until an exercise is ticked — the closed-fold
+  blind spot, one level in. Checked this session with a throwaway script that
+  ticks one and runs axe in all five themes (0 serious/critical). Anything else
+  that only appears after an interaction has the same hole.
+- Screenshots need `localStorage['bujo:onboarded'] = '1'` before load, and
+  `?demo=1` seeds only into an empty journal.
