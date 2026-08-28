@@ -311,13 +311,22 @@ async function onScreen(locator) {
 }
 
 async function go(name) {
-  const target = await onScreen(
-    page
-      // Rail rows and section tabs are links; the Today surface switcher is a
-      // Radix ToggleGroup whose items are buttons inside `main`.
-      .locator('nav a, nav button, aside a, aside button, main [data-slot="toggle-group"] button')
-      .filter({ hasText: new RegExp(`^${name}$`) }),
-  )
+  // Rail rows and section tabs are links; the Today surface switcher is a
+  // Radix ToggleGroup whose items are buttons inside `main`.
+  const items = page.locator('nav a, nav button, aside a, aside button, main [data-slot="toggle-group"] button')
+  // Exact match first, then the same name carrying a **status suffix**.
+  //
+  // `hasText` reads `textContent`, which includes visually-hidden text — so the
+  // moment Today's surface tabs started announcing their state ("Evening,
+  // nothing recorded yet") an anchored-exact match reported the tab as retired
+  // and killed the gate. The name had not changed; it had grown a suffix.
+  //
+  // Exact-first rather than prefix-only, so two controls whose names share a
+  // prefix cannot swap places. The suffix must begin with a comma or a middot,
+  // which is the convention for state appended to an accessible name here.
+  const target =
+    (await onScreen(items.filter({ hasText: new RegExp(`^${name}$`) }))) ??
+    (await onScreen(items.filter({ hasText: new RegExp(`^${name}[,·]`) })))
   if (!target) return false
   await target.click()
   await page.waitForTimeout(300)

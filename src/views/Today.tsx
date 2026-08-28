@@ -14,9 +14,9 @@ import { habitTarget, habitValueOn, habitDoneOn, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/habitStats'
 import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat } from '../lib/colors'
-import { SURFACE_LABEL } from '../lib/surface'
+import { SURFACE_LABEL, surfaceUntouched } from '../lib/surface'
 import type { Surface } from '../lib/deepLink'
-import { DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
+import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -41,55 +41,142 @@ export function Today() {
 
 const SURFACES: Surface[] = ['morning', 'day', 'evening']
 
-function TodayFocused() {
+/**
+ * THE SURFACE SWITCHER · navigation that also reports.
+ *
+ * Three words and nothing else was the whole control, so the row could tell you
+ * where you *are* and never where you have not been. Each segment now carries a
+ * dot when that surface's own record is still empty for the day
+ * (`surfaceUntouched`), which is the only fact a tab row is in a position to
+ * state without duplicating the cards beneath it.
+ *
+ * The mark is a graphic, so the state is also in the accessible name — colour
+ * and shape are never the only carrier. It inherits `currentColor`, which means
+ * it picks up the accent on the active segment and the muted foreground
+ * elsewhere: the page's one accent, not a second one.
+ *
+ * A **square**, not a round dot, because `--radius-pill` is `0rem` here: radius
+ * zero is one of the four rules the whole redesign is built on, and the design
+ * gate rejects a full-radius utility for exactly that reason. It also happens to
+ * be the right glyph — this is a bullet journal, and its marks are signifiers.
+ * (The gate is a line-level regex, so it fired on this paragraph naming the
+ * class as readily as on the class itself.)
+ */
+function SurfaceTabs() {
+  const { data } = useJournal()
   const { day: date, surface, setSurface } = useCursor()
-  const nav = useNav()
+  const untouched = surfaceUntouched(data, date)
 
   return (
-    // `gap-0 sm:gap-0`: the bands are divided by their own 2px rules, and
-    // `Page`'s responsive `sm:gap-5` survives a base-only override (see the
-    // note in views/Mindset.tsx).
-    <Page className="gap-0 sm:gap-0">
-      {/* Navigation, not a reveal: no transition beyond the page's existing
-          220ms entrance. Switching surfaces is switching pages. */}
-      <div className="border-b-2 border-line pb-4">
-        <Segmented
-          value={surface}
-          onChange={setSurface}
-          size="touch"
-          options={SURFACES.map((s) => ({ value: s, label: SURFACE_LABEL[s] }))}
-        />
-      </div>
+    // Navigation, not a reveal: no transition beyond the page's existing 220ms
+    // entrance. Switching surfaces is switching pages. It sits *inside* the
+    // masthead band rather than under it — a row of its own cost 68px on every
+    // surface at every width, for three words.
+    <Segmented
+      value={surface}
+      onChange={setSurface}
+      size="touch"
+      options={SURFACES.map((s) => ({
+        value: s,
+        label: (
+          <span className="inline-flex items-center gap-1.5">
+            {SURFACE_LABEL[s]}
+            {untouched[s] && (
+              <>
+                <span aria-hidden className="size-1.5 bg-current" />
+                <span className="sr-only">, nothing recorded yet</span>
+              </>
+            )}
+          </span>
+        ),
+      }))}
+    />
+  )
+}
 
-      {surface === 'morning' && (
+/**
+ * WHICH COLUMN EACH SURFACE'S CARDS GO IN.
+ *
+ * Same rule the classic layout has always used — **you write in the left
+ * column; the right rail reports on what you wrote** — applied to the focused
+ * layout, which never had a rail at all. Measured at 1920 it was an 820px
+ * column with **550px of dead gutter on each side**, and 1.50 screens tall on
+ * Morning: the desktop layout was the phone layout, centred.
+ *
+ * The rail is DOM-ordered *after* main, so a phone stacks them in exactly the
+ * order these surfaces already had — that is what fixes the column split for
+ * free rather than reshuffling the small screen. It is why `StatusStrip` is at
+ * the end of Day's rail and not the end of Day's main: on a phone it has to
+ * land last, and it is read-only status, which is rail material anyway.
+ */
+function surfaceColumns(date: string, nav: ReturnType<typeof useNav>) {
+  return {
+    morning: {
+      // Four taps and it is done: rate the day, say what broke the fast, start
+      // the clock, then read what is already planned.
+      main: <WellbeingCard key={date} date={date} />,
+      rail: (
         <>
-          {/* Four taps and it is done: rate the day, say what broke the fast,
-              start the clock, then read what is already planned. */}
-          <WellbeingCard key={date} date={date} />
           {!isFutureDay(date) && <FastingCard />}
-          <TodayPlanCard />
+          <TodayPlanCard date={date} />
         </>
-      )}
-
-      {surface === 'day' && (
+      ),
+    },
+    day: {
+      // The rapid log and the row you tick against it. Everything that merely
+      // *reports* moves to the rail, because this surface exists so that
+      // writing a line is the only thing asking for attention.
+      main: (
         <>
-          {/* One card. Everything that reports on the day is either a pill row
-              or the strip at the bottom, because this surface exists so that
-              writing a line is the only thing asking for attention. */}
           <DayLogCard date={date} sticky />
           <TodayHabits date={date} variant="row" />
+        </>
+      ),
+      rail: (
+        <>
           <TodayCountHabits date={date} />
           <AtRiskNudge date={date} />
           <StatusStrip date={date} onNavigate={nav} />
         </>
-      )}
+      ),
+    },
+    evening: {
+      main: <TodayHabits date={date} variant="checklist" />,
+      rail: <WritingCard key={date} date={date} />,
+    },
+  }
+}
 
-      {surface === 'evening' && (
-        <>
-          <TodayHabits date={date} variant="checklist" />
-          <WritingCard key={date} date={date} />
-        </>
-      )}
+function TodayFocused() {
+  const { day: date, surface } = useCursor()
+  const nav = useNav()
+  const { main, rail } = surfaceColumns(date, nav)[surface]
+
+  return (
+    // `wide`, not `read`: with a rail beside it the reading column still lands
+    // at ~808px, which is the measure `read` was protecting — the extra width
+    // goes to the rail rather than to the prose.
+    //
+    // `gap-0 sm:gap-0`: the bands are divided by their own 2px rules, and
+    // `Page`'s responsive `sm:gap-5` survives a base-only override (see the
+    // note in views/Mindset.tsx).
+    <Page width="wide" className="gap-0 sm:gap-0">
+      {/* The dateline heads the *page*, not the log card. It used to live
+          inside `DayLogCard`, which only the Day surface renders — so Morning
+          and Evening printed no date at all and the day cursor could be walked
+          with nothing on screen changing to say so. The surface tabs ride in
+          its band; see `DayMasthead`.
+
+          It is a child of `Page` rather than of the grid below, so it spans
+          both columns — zone 1 orients the whole page, not just the left of
+          it. `Page`'s own `aside` prop cannot do that, which is why the split
+          is a grid here instead. */}
+      <DayHeader date={date} right={<SurfaceTabs />} />
+
+      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="flex min-w-0 flex-col">{main}</div>
+        <aside className="flex flex-col">{rail}</aside>
+      </div>
     </Page>
   )
 }
@@ -128,7 +215,7 @@ function TodayClassic() {
    */
   const rail = isToday ? (
     <>
-      {!hidden.includes('plan') && <TodayPlanCard />}
+      {!hidden.includes('plan') && <TodayPlanCard date={date} />}
       <CoachCard />
       {!hidden.includes('penalty') && <PenaltyCard />}
       <FastingCard />
@@ -159,6 +246,14 @@ function TodayClassic() {
     // are divided by their own rules. The grid keeps its column gutter, or the
     // rail's rules would run straight into the log's.
     <Page aside={rail} className="[&>aside]:gap-0 [&>div]:gap-0">
+      {/* Same dateline as the focused layout, and for the same reason: the day
+          is the page's subject, so it heads the page rather than titling one
+          card on it. The rail's first card therefore starts level with the
+          dateline rather than with the log — deliberate, and the alternative
+          (a prop on `DayLogCard` toggling its own header) is two shapes of the
+          same page. */}
+      <DayHeader date={date} />
+
       {/* Capture first. This is a bullet journal; writing a line is the point
           of the page, so the log leads and everything that summarises it
           follows. */}
