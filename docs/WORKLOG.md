@@ -1,5 +1,111 @@
 # Worklog
 
+## 2026-08-28 (evening) — Both tickets understated the bug
+
+**Summary:** Cleared the whole of what the previous STATUS nominated as next.
+`main` is at `e4508db`: `tsc -b` 0, **854 tests / 61 files**, eslint 0 errors /
+2 pre-existing warnings, build clean, `npm run contrast` and `npm run design`
+green, `npm run a11y` 0 serious across both viewports and five themes,
+`clipped` 0 across 23 views, `smoke` 25/25.
+
+Merged: #164 #165. Closed COD-32 and COD-37. Filed COD-48, COD-49, COD-50,
+COD-51.
+
+### The palette ticket named four problems; there were six, and two of the four were false
+
+COD-32 asked for a **decision** about latte and dawn `yellow`, and listed four
+bad values taken from `solve-contrast.mjs`. Measuring first:
+
+    latte   rosewater 1.14   flamingo 1.31   yellow 2.02   lavender 3.90
+    dawn    rosewater 1.05   flamingo 1.21   yellow 2.44   blue     4.30
+    vscode  pink 4.35        red 4.00
+
+Latte and dawn never overrode `rosewater` or `flamingo`, so both inherited
+Catppuccin’s near-white pastels — and both are in use, as Trackers’ seeded
+Coffee and Vitamins habits and the last entry in Recovery’s urge palette. The
+two yellows fail even the **3.0** floor for a non-text graphic, so “keep yellow
+for fills only” — option (c) on the ticket — was never available: the fills were
+illegible too. And the ticket’s `pink` entries were simply fine.
+
+**The decision on yellow: sideways in hue, not down in lightness.** Darkening
+`#f29900` until it clears 4.5 lands on `#8a5700`, dE **14** from latte’s
+`peach` — the same brown, which collapses the red/peach/yellow three-step scale
+Plan and Trackers both use. That is exactly why #157 left it alone. Re-picked on
+the olive-gold side (h≈50) instead: `#816c03`, dE **31** from peach, 4.62:1 on
+white. There is no *light* yellow that is legible on white; the choice was only
+ever which dark one.
+
+Worth stating plainly: **contrast ratio cannot answer “are these two colours
+distinguishable”.** Two colours of equal luminance have a ratio of 1.0 whatever
+their hue. Separation is dE, and reaching for the wrong metric is how “darken
+until it passes” looked like a fix.
+
+### The bug the ticket did not know about: the palette was two files
+
+Every theme is written down twice — `--color-*` in `index.css` for Tailwind and
+CSS, a literal map in `lib/colors.ts` for `cat()` and the chart libraries — and
+nothing kept them in step. **Four divergences.** #157 solved vscode’s `red` and
+applied it to `colors.ts` only, so `text-red` painted `#f14c4c` and `cat('red')`
+painted `#f57979` **on the same screen**, decided by nothing but whether the call
+site used a class or an inline style. Mocha’s three surfaces had drifted the same
+way, which is why a recharts tooltip sat on a card in a slightly different black.
+
+### Why every green a11y run had missed all of it
+
+Latte’s yellow renders in exactly one place: the `count >= 4 ? red : count >= 2
+? peach : yellow` arm of Plan’s migration pill. The demo seed produces counts of
+2, 3 and 4 — never 1 — so **that branch has not been painted in CI once.**
+
+That is the third member of a family: an empty journal (COD-28), a closed fold,
+and now a branch the seed never takes. The lesson is the same each time and it
+is now a rule: **when a static check is possible, prefer it.**
+`scripts/check-contrast.mjs` is that check — it fails on any divergence between
+the two palettes and on any accent under 4.5:1 as text, in CI, without a
+browser. `solve-contrast.mjs` is deleted; it was advisory, only ever covered two
+themes, and its stale token table is what put the wrong numbers on the ticket.
+
+### One implementation of accent-on-its-own-wash
+
+`{ background: cat(x) + '22', color: cat(x) }` was hand-written at **ten** call
+sites. Whether any given one failed depended on which token it happened to pass
+— `cat(color)` inside a loop over the habit palette is a different answer per
+row — so it could not be settled by reading them. `washStyle()` is `Pill`’s wash
+branch lifted into `lib/colors`, with `Pill` now calling it too.
+
+Two gates, because a helper only fixes today: a `check-design-system.mjs` rule
+that fails on the hand-written pair, and `lib/colors.test.ts` asserting the whole
+grid — every accent × every theme on its own wash, `onAccent` on every solid
+fill, every `HABIT_COLORS` entry as text.
+
+**The linter rule was proven by writing the bug into a probe file and watching
+it go red, then the safe pairing and watching it stay green.** A rule nobody has
+watched fail is a rule that might match nothing — do this every time.
+
+### COD-37: an event is not a setting
+
+Challenges rendered its daily rules as `Switch`, so a 75 Hard check-in read as a
+preferences pane. A switch is a *setting*; ticking “Workout 1” records that a
+thing happened **on a date**, and tomorrow starts blank. New
+`components/ui/checkbox.tsx` (Radix, to match `switch.tsx`; the mark is the `✓`
+text glyph in the mono face, per the rule `DisclosureRow` states for its `▸`).
+Added to the kitchen sink **beside a Switch** with the sentence explaining which
+is which — a gallery showing a new control without the one it is confused with
+has not documented the decision.
+
+### Filed, with measurements attached
+
+- **COD-48 · Goals** says `1 of 7 on track` from `value >= target` (goals already
+  *finished*) while each row shows a pill also reading “on track” from
+  `observedRate >= requiredRate`. One phrase, two predicates. Worse for
+  avoid-goals: Caffeine `2/5` and Sugar `2/7` are under their caps, i.e.
+  succeeding, and the headline counts them as failures.
+- **COD-49 · Recovery** prints `16` twice within 200px and its next milestone
+  twice with it — half of zone 1 is the hero restated.
+- **COD-50** TodayHabits and Trackers still hand-roll a checkbox, but with a
+  third “slipped” state, so it is not a rename.
+- **COD-51** dawn `flamingo` is dE 16 from `maroon`; add a dE floor to
+  `check-contrast.mjs` if it is fixed.
+
 ## 2026-08-28 (later) — "Too many numbers" was the wrong diagnosis
 
 **Summary:** Rebuilt Challenges on the three-zone page contract. `main` is at

@@ -83,7 +83,17 @@ paid product, numbers agreeing *is* the trust.
 > outright: on a strict challenge it was `streak + 1`, so the page printed the
 > streak twice and called one of them a day number. **The general fix is not
 > "show fewer numbers", it is to make the numbers you show add up to each
-> other.** Goals and Recovery still match this pattern.
+> other.**
+>
+> **The other two are measured and filed** (2026-08-28, rendered page, demo
+> data). **Goals · COD-48** is the worse of them: the header says `1 of 7 on
+> track` from `value >= target` — goals already *finished* — while each row
+> carries a pill also reading "on track" from `observedRate >= requiredRate`.
+> One phrase, two predicates. And Caffeine `2/5` and Sugar `2/7` are *under*
+> their caps, i.e. succeeding, which that headline counts as failures.
+> **Recovery · COD-49** prints `16` twice within 200px (orient bar and hero
+> ring) and its next milestone twice with it — half of zone 1 is the hero
+> restated.
 
 ### 3 · Rows of identical collapsed drawers
 
@@ -187,7 +197,7 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 | **1.82** | 1.82 | Reading | 3 | 0 | 0 |
 | **1.62** | 1.62 | Program | 1 | 0 | 0 |
 | **1.52** | 1.52 | Collections | 1 | 0 | 0 |
-| **1.48** | 1.48 | Today | 0 | – | 0 |
+| **1.27** | 1.27 | Today | 9 | 0 | 0 |
 | **1.00** | 1.00 | Challenges — *rebuilt on the contract, COD-35, was 1.41* | 0 | – | 0 |
 | **1.30** | 1.28 | Insights | 0 | – | 0 |
 | **1.22** | 1.22 | Nutrition | 0 | – | 0 |
