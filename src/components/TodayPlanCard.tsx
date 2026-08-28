@@ -14,27 +14,33 @@ import { Card } from './ui'
  * (habits left · workout status · tasks due · pull-up program day) instead of
  * re-rendering those views, so the day is actionable from one screen without
  * duplicating the dedicated views (see DECISIONS D-34). Tap a chip to jump in.
+ *
+ * **It takes the day from the route.** Every figure on it used to be computed
+ * against `todayISO()` regardless of where the cursor was, so stepping back a
+ * day on Today's Morning surface left this card reporting *today's* habits,
+ * tasks, workout and at-risk streaks under a header that said otherwise. The
+ * default keeps the two call sites that genuinely mean "now" unchanged.
  */
-export function TodayPlanCard() {
+export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   const { data } = useJournal()
   const navigate = useNav()
-  const today = todayISO()
+  const isToday = day === todayISO()
 
-  const cov = dayCompletion(data, today)
+  const cov = dayCompletion(data, day)
   const habitsLeft = cov.total - cov.done
 
-  // Streaks at risk today: scheduled, not yet done, with a ≥3-day run going.
-  const dow = new Date(today + 'T00:00').getDay()
-  const log = data.habitLog[today] ?? []
+  // Streaks at risk that day: scheduled, not yet done, with a ≥3-day run going.
+  const dow = new Date(day + 'T00:00').getDay()
+  const log = data.habitLog[day] ?? []
   const atRisk = data.habits.filter((h) => {
     if (h.archived || (h.type ?? 'check') !== 'check') return false
     const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
     if (!scheduled || log.includes(h.id)) return false
-    return habitStreak(data, h.id, addDays(today, -1)) >= 3
+    return habitStreak(data, h.id, addDays(day, -1)) >= 3
   })
-  const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= today).length
-  const workedOut = data.workouts.some((w) => w.date === today) || (data.pickleball ?? []).some((p) => p.date === today)
-  const focusMin = (data.devSessions ?? []).filter((s) => s.date === today).reduce((a, s) => a + s.durationMin, 0)
+  const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= day).length
+  const workedOut = data.workouts.some((w) => w.date === day) || (data.pickleball ?? []).some((p) => p.date === day)
+  const focusMin = (data.devSessions ?? []).filter((s) => s.date === day).reduce((a, s) => a + s.durationMin, 0)
 
   // Program progress (days fully checked off), for EVERY built-in program.
   //
@@ -79,14 +85,19 @@ export function TodayPlanCard() {
 
   // Week-at-a-glance (folded in from the old Coverage card to keep Today to one
   // summary card · avoids the "crowded Today" con from DECISIONS D-34).
-  const week = weekCoverage(data, today, 7)
+  const week = weekCoverage(data, day, 7)
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
 
   return (
-    <Card band title="Today’s plan" hideInfo right={<span className="text-label text-fg-2">week {weekScore}%</span>}>
+    <Card
+      band
+      title={isToday ? 'Today’s plan' : `Plan · ${prettyDay(day)}`}
+      hideInfo
+      right={<span className="text-label text-fg-2">week {weekScore}%</span>}
+    >
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
-          <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(today, -1))}-day ${atRisk[0].name} streak is at risk today` : `${atRisk.length} streaks at risk today`} · tap to keep them alive
+          <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(day, -1))}-day ${atRisk[0].name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
       )}
       <div className="flex flex-wrap gap-2">
@@ -128,7 +139,7 @@ export function TodayPlanCard() {
             <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${pct}% covered`}>
               <div
                 className="flex h-10 w-full items-end rounded"
-                style={{ background: cat('surface1') + '80', outline: d.date === today ? `1px solid ${cat('mauve')}` : 'none' }}
+                style={{ background: cat('surface1') + '80', outline: d.date === day ? `1px solid ${cat('mauve')}` : 'none' }}
               >
                 <div
                   className="w-full rounded transition-[height] duration-300"

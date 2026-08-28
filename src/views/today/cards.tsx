@@ -1,6 +1,6 @@
 import { Barbell, Drop, ForkKnife, NotePencil, PencilSimple, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useJournal } from '../../store'
 import { addDays, fromISODay, isFutureDay, todayISO } from '../../lib/date'
 import { Card, Empty, Input } from '../../components/ui'
@@ -38,9 +38,16 @@ import { DEFAULT_FAST_TARGET, elapsedHours, fmtDuration } from '../../lib/fastin
  * The one flourish is **№ 214**: bullet journals number and index their pages,
  * so the day-of-year is a real page number in the method's own vocabulary. It
  * is set in the mono face, kept small, and appears exactly once.
+ *
+ * **It is one band, not four stacked ones.** Measured on the rendered page, the
+ * dateline was 112px and the surface tabs below it another 68px — 180px, a
+ * fifth of a 900px viewport, spent before a single word of the day. The weekday
+ * keeps the display face and everything else folds around it: the date sits on
+ * its baseline, `right` (the surface tabs) sits opposite, and the status
+ * sentence shares the second line with the page number.
  */
 export function DayMasthead({
-  date, isToday, weather, entryCount, openTasks, taskCount,
+  date, isToday, weather, entryCount, openTasks, taskCount, right,
 }: {
   date: string
   isToday: boolean
@@ -48,6 +55,8 @@ export function DayMasthead({
   entryCount: number
   openTasks: number
   taskCount: number
+  /** Controls that belong to the day rather than to a card — the surface tabs. */
+  right?: ReactNode
 }) {
   const d = fromISODay(date)
   const weekday = d.toLocaleDateString(undefined, { weekday: 'long' })
@@ -67,28 +76,63 @@ export function DayMasthead({
   else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
 
   return (
-    <header className="mb-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-title leading-tight font-medium text-fg-1 sm:text-display">{weekday}</h2>
+    <header className="mb-4 border-b-2 border-line pb-3">
+      {/* `items-baseline` so the date sits on the weekday's baseline rather than
+          in the middle of a 40px display line, and `flex-wrap` so the tabs drop
+          to their own row on a phone instead of squeezing the dateline. */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3">
+        <h2 className="font-display text-title leading-tight font-medium text-fg-1 sm:text-display">
+          {weekday}
+          <span className="ml-3 font-sans text-body font-normal text-fg-2">
+            {dayMonth}
+            {isToday && ' · today'}
+            {weather && <span title={weather.label}> · {weather.icon} {weather.tempC}°C</span>}
+          </span>
+        </h2>
+        {right}
+      </div>
+      <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-line pt-2">
+        <p className="min-w-0 text-body text-fg-1">{line}</p>
         <span className="shrink-0 font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
           № {pageNo}
         </span>
       </div>
-      <p className="mt-0.5 flex items-center gap-2 text-body text-fg-2">
-        {dayMonth}
-        {isToday && <span className="text-fg-2">· today</span>}
-        {weather && <span title={weather.label}>· {weather.icon} {weather.tempC}°C</span>}
-      </p>
-      <hr className="mt-3 mb-2.5 border-line" />
-      <p className="text-body text-fg-1">{line}</p>
     </header>
+  )
+}
+
+/**
+ * The masthead with its counts read for it, so a page can date itself without
+ * knowing how an entry is shaped.
+ *
+ * It sits above the surface tabs rather than inside `DayLogCard`, because only
+ * the Day surface renders that card: Morning and Evening printed no date at all
+ * and the day cursor could be walked with nothing on screen acknowledging it.
+ */
+export function DayHeader({ date, right }: { date: string; right?: ReactNode }) {
+  const { data } = useJournal()
+  const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
+  const doneCount = dayEntries.filter((e) => e.type === 'task' && e.status === 'done').length
+  const taskCount = dayEntries.filter((e) => e.type === 'task' && e.status !== 'dropped').length
+  return (
+    <DayMasthead
+      date={date}
+      isToday={date === todayISO()}
+      weather={data.metrics.find((m) => m.date === date)?.weather}
+      entryCount={dayEntries.length}
+      openTasks={taskCount - doneCount}
+      taskCount={taskCount}
+      right={right}
+    />
   )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * THE DAY LOG · dateline, capture box, carry-forward, the day's entries.
+ * THE DAY LOG · capture box, carry-forward, the day's entries.
+ *
+ * The dateline is `DayHeader`, one level up — see its note.
  *
  * The empty state is the one that mattered most. It used to read "Nothing
  * logged for this day" above five empty inputs and a 0/6 counter — a status
@@ -99,25 +143,14 @@ export function DayMasthead({
 export function DayLogCard({ date, sticky = false }: { date: string; sticky?: boolean }) {
   const { data, migrateEntry } = useJournal()
   const dayEntries = data.entries.filter((e) => e.date === date && !e.collection)
-  const doneCount = dayEntries.filter((e) => e.type === 'task' && e.status === 'done').length
-  const taskCount = dayEntries.filter((e) => e.type === 'task' && e.status !== 'dropped').length
   const carryover = data.entries.filter(
     (e) => e.date === addDays(date, -1) && e.type === 'task' && e.status === 'open' && !e.collection,
   )
-  const metric = data.metrics.find((m) => m.date === date)
   const streak = currentStreak(data)
   const future = isFutureDay(date)
 
   return (
     <Card band hideInfo>
-      <DayMasthead
-        date={date}
-        isToday={date === todayISO()}
-        weather={metric?.weather}
-        entryCount={dayEntries.length}
-        openTasks={taskCount - doneCount}
-        taskCount={taskCount}
-      />
       {/* Future days keep the input in place and disabled rather than hiding
           it. Hiding moves everything below it up, so stepping forward a day
           makes the page jump — and the disabled field explains itself, which
