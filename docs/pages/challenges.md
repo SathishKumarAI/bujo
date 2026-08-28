@@ -70,13 +70,10 @@ other way.
 | The header flame | See above. |
 | The red on the strict pill | Status pills are neutral; the six words carry the stake. The copy is unchanged, deliberately — it is the best sentence on the page. |
 | The inner `Card` inside the archive fold | It repeated the fold's own title. |
+| The `Switch` on each daily rule (COD-37) | A switch is a *setting* — it says how the app should behave from now on and stays where you left it. Ticking "Workout 1" records that a thing happened **on a date**, and tomorrow starts blank. Now `Checkbox`, which is new in `components/ui/` and in the kitchen sink beside a `Switch` so the difference is reviewable. The `strict` toggle on the new-challenge form is still a switch, correctly. |
 
 ## Still open
 
-- **P3 · The rules are switches, and switches read as settings.** Ticking off
-  "Workout 1" for today is an event, not a preference. There is no checkbox
-  primitive in `components/ui/`, so this is a separate ticket rather than a
-  native `<input>` smuggled past the design-system check.
 - **P3 · "Fixed-length discipline challenges, 75 Hard, 90-day & more"** — the
   old subtitle is gone with the header card it lived in, but the empty state's
   "75 Hard, 90-day, or your own rules" inherits the job and could still be

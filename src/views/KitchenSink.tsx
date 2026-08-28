@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { Checkbox } from '../components/ui/checkbox'
+import { Switch } from '../components/ui/switch'
 import { Ring } from '../components/ui/ring'
 import { Page } from '../components/shell/Page'
 import { Stepper } from '../components/fields/Stepper'
@@ -241,6 +243,27 @@ export function KitchenSink() {
             </p>
           </Card>
         </div>
+      </Card>
+
+      <Card title="Checkbox vs switch" subtitle="An event and a setting are not the same control.">
+        <Row label="checkbox · this happened">
+          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-body text-fg-1">
+            <Checkbox defaultChecked />Workout 1
+          </label>
+          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-body text-fg-1">
+            <Checkbox />Read 10 pages
+          </label>
+          <Checkbox disabled aria-label="Disabled, unchecked" />
+          <Checkbox disabled defaultChecked aria-label="Disabled, checked" />
+        </Row>
+        <Row label="switch · this is on">
+          <Switch defaultChecked aria-label="Strict mode, on" />
+          <Switch aria-label="Strict mode, off" />
+          <span className="text-caption text-fg-3">
+            Tick a rule for today and tomorrow starts blank; a switch stays where you left it. Challenges
+            used switches for its daily rules, so a 75 Hard check-in read as a preferences pane.
+          </span>
+        </Row>
       </Card>
 
       <Card title="Buttons" subtitle="Four variants, three heights, and no solid accent fill anywhere.">

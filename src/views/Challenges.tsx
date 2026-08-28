@@ -5,6 +5,7 @@ import { useJournal } from '../store'
 import { Card, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
+import { Checkbox } from '../components/ui/checkbox'
 import { PageLayout, StatBar, SummaryStrip, EmptyFrame } from '../components/page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
@@ -227,9 +228,14 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
             const ruleDone = done.includes(i)
             return (
               <li key={i}>
-                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-none border border-line bg-background px-3 py-2 text-body">
+                {/* A checkbox, not a switch. Ticking a rule for today records
+                    that a thing happened on a date; a switch says a setting is
+                    on from now until you change it. `min-h-11` because the
+                    whole row is the target (WCAG 2.5.5) — the 20px box is the
+                    mark, not the hit area. */}
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-none border border-line bg-background px-3 py-2 text-body">
+                  <Checkbox checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
-                  <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                 </label>
               </li>
             )
