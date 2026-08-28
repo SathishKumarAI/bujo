@@ -32,18 +32,27 @@ export function PracticeBand({
     <Band>
       <BandRow>
         <BandCell className="basis-[26rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Practice, last 12 weeks</h2>
+          <h2 className="font-display text-heading font-medium text-fg-1">Practice, last 26 weeks</h2>
           <p className="mt-1 mb-4 text-label text-fg-2">One mark per day you practised a principle.</p>
+          {/* `size={22}` was this component's answer to a grid stranded in its
+              own cell, and it was a guess at one width: measured, 12 weeks at
+              22px is **331px inside 613px**. Twenty-six fluid columns measure
+              18.8px in the same cell — a shade smaller than today, double the
+              window, and no dead space at any width. */}
           <CalendarHeatmap
-            weeks={12}
+            weeks={26}
+            fluid
             today={today}
             data={practiceData(log)}
             unit="marked"
-            size={22}
-            label="Mindset practice: one cell per day in the last 12 weeks"
+            label="Mindset practice: one cell per day in the last 26 weeks"
           />
-          <div className="mt-2 flex max-w-[22rem] justify-between text-micro tracking-[0.08em] text-fg-3 uppercase">
-            <span>12 weeks ago</span>
+          {/* These two are the grid's axis, so they span the grid. The 22rem cap
+              was a second guess at the same width and did not agree with the
+              first: 352px of labels under a 331px grid, so "This week" sat past
+              its own column. */}
+          <div className="mt-2 flex justify-between text-micro tracking-[0.08em] text-fg-3 uppercase">
+            <span>26 weeks ago</span>
             <span>This week</span>
           </div>
         </BandCell>
