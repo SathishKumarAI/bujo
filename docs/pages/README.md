@@ -61,11 +61,11 @@ chart groups are shut. Focus keeps a near-empty History open and its analytics
 closed. The rule to apply everywhere: **what the app learned about you outranks
 what the app can tell everybody.**
 
-> **All three examples are now fixed** (census, 2026-08-27): Pickleball 4 folds
-> / 4 open / 5 charts, Stats 6 / 6 / 6, Focus has no folds at all. The rule
+> **All three examples are now fixed** (census, 2026-08-27): Pickleball 18 folds
+> / 16 open / 5 charts, Stats 6 / 6 / 6, Focus has no folds at all. The rule
 > still holds and is worth keeping; the evidence for it is gone, and it was
 > being read as a work queue. The one page that still matches the *shape* is
-> **Coaching** — fourteen folds, none open — but not the substance: what is
+> **Coaching** — 32 disclosure points, 25 shut — but not the substance: what is
 > folded there is technique reference, not the user's own data, so it is
 > pattern 3 rather than this one.
 
@@ -86,11 +86,15 @@ drawers is not navigation.
 
 > **Re-counted 2026-08-27, and it moved in both directions.** Insights has
 > **none** — its nine analytics panels moved to Stats in `733df32` and the
-> drawers went with them. Pickleball's four are all open. **Coaching has
-> fourteen, all shut, across 5.8 screens** — the audit recorded six, so the one
-> page this pattern still describes is more than twice as bad as the number
-> being quoted for it. It is the largest single instance left in the app and
-> nothing has been filed against it.
+> drawers went with them. Pickleball has eighteen but sixteen are open, so it
+> is a long page rather than a cabinet. **Coaching has 32 disclosure points and
+> 25 of them are shut**: six collapsible cards, eleven "Expand week N" rows in
+> the roadmap, and fourteen technique folds. The audit recorded six.
+>
+> That is more than five times the number being quoted, and the shape is worse
+> than the count — the fourteen technique folds are *nested inside* one of the
+> six cards, so the pattern is not a flat row of drawers but drawers inside
+> drawers. Filed as **COD-22**.
 
 ### 4 · Density without a key
 
@@ -159,33 +163,46 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 | @1440 | @1600 | Page | Folds | Open | Charts |
 |---|---|---|---|---|---|
 | **6.33** | 6.33 | Recovery (`nofap`) | 0 | – | 3 |
-| **5.92** | 5.15 | Pickleball | 4 | **4** | 5 |
-| **5.80** | 4.27 | Coaching | **14** | **0** | 0 |
-| **5.21** | 4.38 | Stats | 6 | **6** | 6 |
-| **4.67** | 4.67 | Gym | 3 | 3 | 4 |
+| **5.92** | 5.15 | Pickleball | 18 | 16 | 5 |
+| **5.80** | 4.27 | Coaching | **32** | **7** | 0 |
+| **5.21** | 4.38 | Stats | 6 | 6 | 6 |
+| **4.67** | 4.67 | Gym | 10 | 10 | 4 |
 | **4.47** | 4.47 | Help | 1 | 1 | 0 |
 | **3.29** | 3.29 | Mindset | 0 | – | 0 |
 | **3.04** | 3.04 | Focus | 0 | – | 0 |
-| **2.74** | 2.74 | Trackers | 7 | 5 | 2 |
-| **2.65** | 3.00 | Home workout | 0 | – | 0 |
-| **2.22** | 2.22 | Cycle | 1 | 0 | 1 |
-| **2.10** | 2.10 | Pull-ups | 6 | 0 | 0 |
+| **2.74** | 2.74 | Trackers | 7 | 6 | 2 |
+| **2.65** | 3.00 | Home workout | 1 | 1 | 0 |
+| **2.22** | 2.22 | Cycle | 0 | – | 1 |
+| **2.10** | 2.10 | Pull-ups | 7 | 0 | 0 |
 | **2.08** | 2.08 | Plan | 4 | 1 | 0 |
-| **1.96** | 1.96 | Monthly | 2 | 1 | 0 |
+| **1.96** | 1.96 | Monthly | 1 | 1 | 0 |
 | **1.82** | 1.82 | Reading | 3 | 0 | 0 |
-| **1.62** | 1.62 | Program | 0 | – | 0 |
+| **1.62** | 1.62 | Program | 1 | 0 | 0 |
 | **1.52** | 1.52 | Collections | 1 | 0 | 0 |
 | **1.41** | 1.41 | Challenges | 1 | 1 | 0 |
 | **1.30** | 1.28 | Insights | **0** | – | **0** |
 | **1.22** | 1.22 | Nutrition | 0 | – | 0 |
-| **1.21** | 1.21 | Today | 2 | 0 | 0 |
+| **1.21** | 1.21 | Today | 1 | 0 | 0 |
 | **1.06** | 1.06 | Goals | 0 | – | 0 |
 | **1.03** | 1.03 | Fitness | 1 | 0 | 0 |
 | **1.00** | 1.00 | Account · Settings | 0 | – | 0 |
 
 Height is not quality, but the outliers are still where the structural problems
-live. On this census the outlier is **Coaching**: fourteen folds, none open, and
-5.8 screens of chrome to scroll past to reach any of them.
+live. On this census the outlier is **Coaching**: **32 disclosure points of
+which 25 are shut** — six collapsible cards, eleven "Expand week N" rows and
+fourteen technique folds — across 5.8 screens.
+
+**The Folds and Open columns were wrong in the first version of this table**
+(published in #151) and are corrected here. The first census filtered
+`[aria-expanded]` on `textContent`, which excludes every `Card collapsible`
+toggle, because that button holds a caret glyph and its name lives entirely in
+`aria-label`. Coaching read as 14 folds rather than 32; Pickleball as 4 rather
+than 18; Gym as 3 rather than 10. It also counted the shell header's four menu
+buttons on every page. **This is the repo's own "audit keyed on a prop" trap,
+walked into by the script written to stop people quoting unmeasured numbers** —
+which is the argument for a script rather than against one: the mistake is in a
+file, reviewable and fixed once, instead of in a paragraph nobody can re-run.
+The heights were measured from `scrollHeight` and were unaffected.
 
 The two columns differ only where a page has enough cards to use the third grid
 column at ≥1536px. Where they are equal, the page is a single stack and the grid

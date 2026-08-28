@@ -58,14 +58,26 @@ for (const id of VIEW_IDS) {
     px[w] = await page.evaluate(() => document.documentElement.scrollHeight)
   }
   const m = await page.evaluate(() => {
-    const folds = [...document.querySelectorAll('[aria-expanded]')]
-      // A fold is a section header, not a combobox or a menu button.
-      .filter((b) => (b.textContent || '').trim().length > 2)
+    // Name a fold the way a screen reader does: `aria-label` first, text
+    // second. Filtering on `textContent` alone silently dropped every
+    // `Card collapsible` — its toggle holds a caret glyph and nothing else, so
+    // its name lives entirely in `aria-label`. That undercounted Coaching by
+    // six and reported the page's card folds as absent rather than open.
+    const name = (b) => (b.getAttribute('aria-label') || b.textContent || '').trim().replace(/\s+/g, ' ')
+    // Scope to `<main>`. The shell's header carries four `aria-expanded`
+    // menu buttons on every view ("Help and 2 suggestions", "Send feedback",
+    // "Account", "More options"); counting document-wide added a flat 4 to
+    // every page and made the column useless for comparing pages.
+    const root = document.getElementById('main') || document.body
+    const folds = [...root.querySelectorAll('[aria-expanded]')]
+      // A fold is a disclosure, not a combobox or a menu button.
+      .filter((b) => !b.getAttribute('role') || b.getAttribute('role') === 'button')
+      .filter((b) => name(b).length > 2)
     return {
       folds: folds.length,
       open: folds.filter((b) => b.getAttribute('aria-expanded') === 'true').length,
       shut: folds.filter((b) => b.getAttribute('aria-expanded') === 'false')
-        .map((b) => (b.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 28)),
+        .map((b) => name(b).slice(0, 28)),
       charts: document.querySelectorAll('.recharts-surface').length,
     }
   })
