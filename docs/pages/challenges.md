@@ -5,76 +5,82 @@
 ## What this page is
 
 Fixed-length disciplines — 75 Hard, 90-day, custom. Each has a rule list you
-check off daily, a progress ring, a week calendar, and an optional strict mode
-that resets you to Day 1 on a miss.
+check off daily, a day-numbered calendar, and an optional strict mode that
+resets you to day 1 on a miss.
 
-## Measured (1440×900, demo data)
+Rebuilt on the three-zone page contract in **COD-35**. What follows is the page
+as it is now; the findings that drove the rebuild are kept at the bottom because
+the reasoning is worth more than the list.
 
-- **0.9 screens** — fits without scrolling. Two blocks: the header/new-challenge
-  card (118px) and the active challenge (571px).
+## The contract, as applied here
 
-## The finding that matters
-
-**P1 · The card states your progress four times, with four different numbers.**
-From one screen:
-
-| Where | What it says |
+| Zone | What it holds |
 |---|---|
-| Header | `Day 4 of 75` |
-| Ring area | `5 of 75 days done` · `70 to go` · `7%` |
-| Above the rules | `Day 4 of 75` (again) |
-| Stats row | `70 Days left` · `9/75 Elapsed` |
+| 1 · Orient | `Today · 5 of 5 rules` · `Day 9 of 75` · `Streak 5` · `Complete 9%`. When more than one challenge is running, a `Segmented` picks the focused one and it filters all three zones. |
+| 2 · Act | Today's rules, and nothing else. The archive and delete controls belong to the challenge, so they sit in this card's header. |
+| 3 · Review | Three tiles — `Days done` · `Days missed` · `Best streak` — then the calendar, then `New challenge`, then the archive fold. |
 
-Day 4, 5 done, 70 left, 9 elapsed, 7%. Each is presumably correct under its own
-definition — current day, days completed, days remaining, days since start — but
-the page never distinguishes them, so they read as contradictions. A user
-counting on their fingers will find that 4, 5 and 9 cannot all be true.
+## Measured (dev server, demo data, 2026-08-28)
 
-This is the clearest "premium" gap on the page: a paid product is trusted
-because its numbers agree.
+- **1.00 screens** at 1440 (was 1.41), **1.39** at 390. Fits without scrolling on
+  a desktop, which is the thing this page's earlier note asked to protect.
+- **0 folds** open or shut, unless there is an archived challenge to fold.
+- `npm run a11y` 0 serious / 0 critical, both viewports, five themes ·
+  `verify-folds challenges` 0/0 at 1440 and 390 · `clipped-text` clean ·
+  `smoke` 25/25.
 
-**P2 · `3 Current streak` and `3 Best streak` sit side by side**, along with
-`🔥 3 streak` above them. The same 3, three times, in one card.
+## The finding that drove the rebuild
 
-## UX / IA
+**The card stated its progress five ways with four denominators.** From one
+screen: `Day 4 of 75`, `5 of 75 days done`, `70 to go`, `7%`, `70 Days left`,
+`9/75 Elapsed`. Day 4, 5 done, 70 left, 9 elapsed. Each was correct under its
+own definition — current day, days completed, days remaining, days since start —
+and the page named none of them, so a user counting on their fingers found that
+4, 5 and 9 could not all be true.
 
-**P2 · The rules checklist is the daily job and it is in the middle.** Ring,
-stats, "Day 4 of 75", *then* `Today's rules (3/5)`. The thing you open the page
-to do — tick five boxes — is below the thing that reports on having done it.
+The fix was not "print fewer numbers". It was to make the numbers a
+**partition**, so they can be added:
 
-**P3 · "New challenge" is a button in the header of a card titled
-"Challenges"**, above an active challenge. When you already have one running,
-starting another is the rarer action and it is the most prominent control.
+```
+completedDays + missedDays + (1 if today is still open) === elapsedDay
+```
 
-## UI
+`missedDays` was added to `lib/challenges.ts` for this, and the identity is
+asserted over four different logs in `lib/challenges.test.ts`. Today is
+deliberately not counted as missed while it is still open — you have not lost a
+day you are still living.
 
-**P2 · Two stat rows for one challenge.** `3 · 7% · 5 of 75 days done · 70 to
-go · 🔥 3 streak` and then `3 Current streak · 3 Best streak · 70 Days left ·
-9/75 Elapsed`. Merging them into one row of four would remove a whole band and
-make the numbers comparable.
+`Days left` is gone. It was `duration − completed`, which counts from a
+different origin than `Day n of N`, and it was the number that made the whole
+set read as broken.
 
-**P3 · The rules are switches, and switches read as settings.** Ticking off
-"Workout 1" for today is an event, not a preference. Checkboxes — or the same
-bullet-glyph the journal uses — would match the act better.
+**`progressDay` is deleted from the app.** On a strict challenge it returned
+`streakBeforeToday + 1` — the streak, again, wearing a day number's label. It
+had no caller but its own test, which is the shape this repo's CLAUDE.md warns
+about under "a data module can go dead without anything failing", running the
+other way.
 
-## Copy
+## What else was deleted, and why
 
-**P2 · "strict · resets on a miss"** is excellent — six words, states the stake
-plainly. Keep exactly.
+| Gone | Why |
+|---|---|
+| The progress ring | Restated the percent printed beside it. The contract calls a ring an accent appearance even in neutral, and this page needs its accent elsewhere. |
+| The progress bar | Same ratio a third time. |
+| The four-tile stat row (`Current streak` · `Best streak` · `Days left` · `Elapsed`) | `Current streak` was the *third* rendering of the streak on that card, after the header flame and `🔥 3 streak`. |
+| The header flame | See above. |
+| The red on the strict pill | Status pills are neutral; the six words carry the stake. The copy is unchanged, deliberately — it is the best sentence on the page. |
+| The inner `Card` inside the archive fold | It repeated the fold's own title. |
 
-**P3 · "Fixed-length discipline challenges, 75 Hard, 90-day & more"** —
-"discipline challenges" is one noun too many, and "& more" is filler in a
-subtitle with room for a real third example.
+## Still open
 
-## Upgrades, ranked
-
-1. **P1 · Pick one progress number and one denominator.** If day, elapsed and
-   completed genuinely differ, label them so the difference is visible; if they
-   do not, show one.
-2. **P2 · Merge the two stat rows.**
-3. **P2 · Put "Today's rules" first**, under a single progress line.
-4. **P3 · Switches → checkboxes** for daily rule completion.
-5. **P3 · Demote "New challenge"** while a challenge is active.
+- **P3 · The rules are switches, and switches read as settings.** Ticking off
+  "Workout 1" for today is an event, not a preference. There is no checkbox
+  primitive in `components/ui/`, so this is a separate ticket rather than a
+  native `<input>` smuggled past the design-system check.
+- **P3 · "Fixed-length discipline challenges, 75 Hard, 90-day & more"** — the
+  old subtitle is gone with the header card it lived in, but the empty state's
+  "75 Hard, 90-day, or your own rules" inherits the job and could still be
+  sharper.
 
 ## Leave alone
 
@@ -82,3 +88,8 @@ subtitle with room for a real third example.
   reset, and the page says so without moralising.
 - **Fitting in one screen.** A challenge check-in should never need a scroll.
 - **The rule list as the unit** — five short strings, tick them, done.
+- **The day numbers in the calendar.** The shared `DayGrid` is a week-columned
+  trailing window with no text in a cell; a challenge is a sequence from day 1
+  to day N and the number is what people count in. That is why this grid is not
+  built on the shared primitive, and why each cell carries its state as hidden
+  text rather than in a `title` alone.

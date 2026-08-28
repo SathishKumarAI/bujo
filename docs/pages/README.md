@@ -71,11 +71,19 @@ what the app can tell everybody.**
 
 ### 2 · The same number, said several different ways
 
-Challenges reports progress four times with four numbers (`Day 4 of 75`, `5 of
+Challenges reported progress four times with four numbers (`Day 4 of 75`, `5 of
 75 days done`, `70 to go`, `9/75 Elapsed`). Goals says "1 of 7 on track" and
 "53%" in one card. Recovery prints the streak twice within 200px. Each is
 individually defensible and collectively reads as an app that cannot count. In a
 paid product, numbers agreeing *is* the trust.
+
+> **Challenges is fixed (COD-35).** Its numbers are now a partition —
+> `completedDays + missedDays + (today, if still open) === elapsedDay` — with
+> the identity asserted in `lib/challenges.test.ts`. `progressDay` was deleted
+> outright: on a strict challenge it was `streak + 1`, so the page printed the
+> streak twice and called one of them a day number. **The general fix is not
+> "show fewer numbers", it is to make the numbers you show add up to each
+> other.** Goals and Recovery still match this pattern.
 
 ### 3 · Rows of identical collapsed drawers
 
@@ -180,7 +188,7 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 | **1.62** | 1.62 | Program | 1 | 0 | 0 |
 | **1.52** | 1.52 | Collections | 1 | 0 | 0 |
 | **1.48** | 1.48 | Today | 0 | – | 0 |
-| **1.41** | 1.41 | Challenges | 1 | 1 | 0 |
+| **1.00** | 1.00 | Challenges — *rebuilt on the contract, COD-35, was 1.41* | 0 | – | 0 |
 | **1.30** | 1.28 | Insights | 0 | – | 0 |
 | **1.22** | 1.22 | Nutrition | 0 | – | 0 |
 | **1.06** | 1.06 | Goals | 0 | – | 0 |

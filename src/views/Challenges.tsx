@@ -1,226 +1,305 @@
-import { Archive, CaretRight, Flame, Plus, Trash, Trophy, X } from '@/components/icons'
+import { Archive, Plus, Trash, Trophy, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Empty, Input, Segmented } from '../components/ui'
+import { Card, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
-import { Page } from '../components/shell/Page'
+import { PageLayout, StatBar, SummaryStrip, EmptyFrame } from '../components/page'
 import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
-import type { Challenge } from '../lib/types'
+import type { Challenge, JournalData } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
 import {
-  CHALLENGE_PRESETS, isDayComplete, progressDay, percentComplete,
+  CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
 } from '../lib/challenges'
 
+/**
+ * CHALLENGES · fixed-length disciplines (75 Hard, 90-day, custom), on the
+ * three-zone page contract.
+ *
+ * 1. ORIENT — the focused challenge in four facts. When more than one is
+ *    running, a segmented control picks which; it filters all three zones.
+ * 2. ACT — today's rules. This is the whole job of the page and it used to be
+ *    third on the screen, under the report on having done it.
+ * 3. REVIEW — three tiles that add up, then the calendar, then the archive.
+ *
+ * ── What was deleted, and why ────────────────────────────────────────────────
+ *
+ * The page used to state its progress five ways with four denominators, from a
+ * single screen: `Day 4 of 75`, `5 of 75 days done`, `70 to go`, `7%`,
+ * `70 Days left`, `9/75 Elapsed`. Each was correct under its own definition and
+ * the page named none of them, so 4, 5, 9 and 70 read as four contradictory
+ * counts of the same thing.
+ *
+ * Now every number on the page belongs to one arithmetic:
+ *
+ *     days done + days missed + today = the day you are on = `elapsedDay`
+ *
+ * `progressDay` is gone from the app entirely (it was `streak + 1` on a strict
+ * challenge, which is the streak said twice). The strict reset story is told by
+ * the streak fact and the pill, which is where it was always legible.
+ *
+ * Also gone: the progress ring and the progress bar — both restated the percent
+ * printed beside them, and the calendar shows the same shape with the dates
+ * attached. `Days left` (duration − completed) is gone, because it counted a
+ * different thing from `Day n of N` and was the number that made the set read
+ * as broken.
+ */
 export function Challenges() {
   const { data, addChallenge } = useJournal()
   const [creating, setCreating] = useState(false)
-  const active = (data.challenges ?? []).filter((c) => !c.archived)
-  const archived = (data.challenges ?? []).filter((c) => c.archived)
+  const [focusId, setFocusId] = useState<string | null>(null)
+  const all = data.challenges ?? []
+  const active = all.filter((c) => !c.archived)
+  const archived = all.filter((c) => c.archived)
+
+  // Fall back to the first active challenge rather than trusting the stored id:
+  // the focused one can be archived or deleted out from under this state, and a
+  // dangling id would render an empty page with no way back.
+  const focused = active.find((c) => c.id === focusId) ?? active[0]
+  const today = todayISO()
 
   return (
-    <Page className="gap-0 sm:gap-0">
-      <Card band
-        title="Challenges"
-        subtitle="Fixed-length discipline challenges, 75 Hard, 90-day & more"
-        right={
-          <Button variant="secondary" onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-1.5">
-            {creating ? <Icon as={X} size="sm" /> : <Icon as={Plus} size="sm" />} {creating ? 'Cancel' : 'New challenge'}
-          </Button>
-        }
-      >
-        {creating && <NewChallengeForm onCreate={(c) => { addChallenge(c); setCreating(false) }} />}
-        {!creating && active.length === 0 && (
-          <Empty>No active challenge. Start one · pick 75 Hard, 90-day, or build your own.</Empty>
+    <PageLayout
+      tier={1180}
+      zone1={focused && <StatBar
+        mode={active.length > 1 ? focused.id : undefined}
+        onModeChange={active.length > 1 ? setFocusId : undefined}
+        segments={active.length > 1 ? active.map((c) => ({ value: c.id, label: c.name })) : undefined}
+        facts={orientFacts(data, focused, today)}
+      />}
+      zone2={
+        creating ? (
+          <Card band hideInfo title="New challenge" right={
+            <Button variant="ghost" size="icon-sm" onClick={() => setCreating(false)} aria-label="Cancel new challenge">
+              <Icon as={X} size="sm" />
+            </Button>
+          }>
+            <NewChallengeForm onCreate={(c) => { addChallenge(c); setCreating(false) }} />
+          </Card>
+        ) : focused ? (
+          <TodayCard challenge={focused} />
+        ) : (
+          <Card band hideInfo title="Start a challenge" subtitle="75 Hard, 90-day, or your own rules">
+            <p className="mb-3 text-body text-fg-2">
+              A challenge is a fixed number of days and a short list of rules you tick off each one.
+            </p>
+            <Button variant="primary" size="lg" className="w-full" onClick={() => setCreating(true)}>
+              <Icon as={Plus} size="sm" /> New challenge
+            </Button>
+          </Card>
+        )
+      }
+      zone3={<>
+        <SummaryStrip items={reviewTiles(data, focused, today)} />
+
+        {focused
+          ? <ChallengeCalendar challenge={focused} today={today} />
+          : <EmptyFrame>Your day grid fills in here once a challenge is running.</EmptyFrame>}
+
+        {focused && !creating && (
+          <div className="border-t border-line pt-3">
+            <Button variant="ghost" size="sm" onClick={() => setCreating(true)}>
+              <Icon as={Plus} size="sm" /> New challenge
+            </Button>
+          </div>
         )}
-      </Card>
 
-      {active.length > 0 && (
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          {active.map((c) => <ChallengeCard key={c.id} challenge={c} />)}
-        </div>
-      )}
-
-      {archived.length > 0 && (
-        <QuietSection
-          title={<>Completed &amp; archived</>}
-          subtitle={`${archived.length} past challenge${archived.length === 1 ? '' : 's'}`}
-        >
-            <Card band title="Completed & archived" subtitle="Your past challenges">
-              <ul className="space-y-2 text-body">
-                {archived.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between rounded-none border border-line bg-background px-3 py-2">
-                    <span className="text-fg-1"><Icon as={Trophy} size="sm" className="mr-1 inline text-yellow" />{c.name} · {c.durationDays} days</span>
-                    <span className="text-label text-fg-2">{completedDays(data, c, todayISO())} days done</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-        </QuietSection>
-      )}
-    </Page>
+        {archived.length > 0 && (
+          <QuietSection
+            title={<>Completed &amp; archived</>}
+            subtitle={`${archived.length} past challenge${archived.length === 1 ? '' : 's'}`}
+          >
+            <ul className="space-y-2 text-body">
+              {archived.map((c) => (
+                <li key={c.id} className="flex items-center justify-between rounded-none border border-line bg-background px-3 py-2">
+                  <span className="text-fg-1">
+                    <Icon as={Trophy} size="sm" className="mr-1 inline text-fg-2" />{c.name} · {c.durationDays} days
+                  </span>
+                  <span className="text-label text-fg-2">{completedDays(data, c, today)} days done</span>
+                </li>
+              ))}
+            </ul>
+          </QuietSection>
+        )}
+      </>}
+    />
   )
 }
 
-function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
+/**
+ * The three counts that partition the elapsed window, so the strip is an
+ * arithmetic rather than a pile: done + missed + (today, if still open) is the
+ * day you are on. `Days left` used to sit here as duration − completed, which
+ * counts from a different origin and is why the old set never added up.
+ */
+function reviewTiles(data: JournalData, c: Challenge | undefined, today: string) {
+  if (!c) {
+    return [
+      { label: 'Days done', value: 0, empty: true },
+      { label: 'Days missed', value: 0, empty: true },
+      { label: 'Best streak', value: 0, empty: true },
+    ]
+  }
+  return [
+    { label: 'Days done', value: completedDays(data, c, today) },
+    { label: 'Days missed', value: missedDays(data, c, today) },
+    { label: 'Best streak', value: longestStreak(data, c, today) },
+  ]
+}
+
+/** Zone 1. Four facts, each of which changes what you do in the next minute. */
+function orientFacts(data: JournalData, c: Challenge, today: string) {
+  const notStarted = dayDiff(c.startDate, today) < 0
+  const finished = isFinished(data, c, today)
+  const done = rulesDoneOn(data, c.id, today)
+  const streak = streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0)
+  return [
+    {
+      label: 'Today',
+      value: notStarted ? 'Not started' : finished ? 'Complete' : `${done.length} of ${c.rules.length} rules`,
+      prose: notStarted || finished,
+    },
+    { label: 'Day', value: `${elapsedDay(c, today)} of ${c.durationDays}` },
+    { label: 'Streak', value: streak },
+    { label: 'Complete', value: `${percentComplete(data, c, today)}%` },
+  ]
+}
+
+/** Zone 2 · the act. Tick today's rules; nothing else. */
+function TodayCard({ challenge: c }: { challenge: Challenge }) {
   const confirm = useConfirm()
   const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
-  // Open by default, like every other fold in the app. This one is hand-rolled
-  // (a caret button, not one of the three collapse primitives), which is why the
-  // sweep that opened the rest walked straight past it.
-  const [calOpen, setCalOpen] = useState(true)
   const today = todayISO()
-  const day = progressDay(data, c, today)
-  const pct = percentComplete(data, c, today)
-  const streak = streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0)
-  const todayDone = rulesDoneOn(data, c.id, today)
+  const done = rulesDoneOn(data, c.id, today)
   const finished = isFinished(data, c, today)
   const notStarted = dayDiff(c.startDate, today) < 0
 
   return (
-    <Card band
-      title={<span className="flex items-center gap-2">{c.name}{c.strict && <span className="rounded-none bg-red/15 px-2 py-0.5 text-micro font-medium text-red">strict · resets on a miss</span>}</span>}
-      subtitle={notStarted ? `Starts ${c.startDate}` : `Day ${day} of ${c.durationDays}`}
+    <Card band hideInfo
+      title={
+        <span className="flex flex-wrap items-center gap-2">
+          {c.name}
+          {/* Neutral, not red. The contract spends a page's one accent on the
+              primary button; a status pill that fills with a hue competes with
+              it. The six words carry the stake on their own — which is why the
+              copy is unchanged. */}
+          {c.strict && (
+            <span className="rounded-pill border border-line px-2 py-0.5 text-micro font-medium text-fg-2">
+              strict · resets on a miss
+            </span>
+          )}
+        </span>
+      }
+      subtitle={notStarted ? `Starts ${c.startDate}` : finished ? 'Finished' : `${done.length} of ${c.rules.length} done`}
       right={
         <div className="flex items-center gap-1">
-          <span className="mr-1 inline-flex items-center gap-1 text-label text-peach" title="Current streak"><Icon as={Flame} size="sm" />{streak}</span>
-          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive"><Icon as={Archive} size="sm" /></Button>
-          <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
-            title: `Delete the “${c.name}” challenge?`,
-            description: 'Its progress log and streak are deleted with it. This cannot be undone.',
-            confirmLabel: 'Delete challenge', destructive: true,
-          })) removeChallenge(c.id) }} aria-label="Delete challenge" className="text-red hover:text-red"><Icon as={Trash} size="sm" /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive">
+            <Icon as={Archive} size="sm" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" aria-label="Delete challenge" className="text-danger-text"
+            onClick={async () => {
+              if (await confirm({
+                title: `Delete the “${c.name}” challenge?`,
+                description: 'Its progress log and streak are deleted with it. This cannot be undone.',
+                confirmLabel: 'Delete challenge', destructive: true,
+              })) removeChallenge(c.id)
+            }}>
+            <Icon as={Trash} size="sm" />
+          </Button>
         </div>
       }
     >
-      {finished && (
-        <p className="mb-3 flex items-center gap-1.5 rounded-none border border-green/30 bg-green/10 px-3 py-2 text-body text-green">
-          <Icon as={Trophy} size="sm" /> Challenge complete · {c.durationDays} days done. Archive it to celebrate.
+      {finished ? (
+        <p className="flex items-center gap-1.5 rounded-none border border-line bg-ink-2 px-3 py-2 text-body text-fg-1">
+          <Icon as={Trophy} size="sm" /> {c.durationDays} days done. Archive it to close it out.
         </p>
+      ) : notStarted ? (
+        <p className="text-body text-fg-2">Nothing to tick yet · day 1 is {c.startDate}.</p>
+      ) : c.rules.length === 0 ? (
+        <p className="text-body text-fg-2">This challenge has no rules, so every day counts as done.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {c.rules.map((rule, i) => {
+            const ruleDone = done.includes(i)
+            return (
+              <li key={i}>
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-none border border-line bg-background px-3 py-2 text-body">
+                  <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
+                  <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
+                </label>
+              </li>
+            )
+          })}
+        </ul>
       )}
-
-      {/* Progress · ring + bar + headline stats (whole numbers, no fractions). */}
-      <div className="mb-4 flex items-center gap-4">
-        <ProgressRing pct={pct} />
-        <div className="flex-1">
-          <div className="mb-1 flex items-center justify-between text-label text-fg-2">
-            <span>{completedDays(data, c, today)} of {c.durationDays} days done</span>
-            <span>{Math.max(0, c.durationDays - completedDays(data, c, today))} to go</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-none bg-ink-2">
-            <div className="h-full rounded-none transition-[width]" style={{ width: `${pct}%`, background: cat(pct >= 100 ? 'green' : 'mauve') }} />
-          </div>
-          <div className="mt-2 flex gap-4 text-label">
-            <span className="inline-flex items-center gap-1 text-peach"><Icon as={Flame} size="sm" /> {streak} streak</span>
-            {/* Say WHICH day this is. For a strict challenge `progressDay` is
-                the current run (streak + 1), so the card was showing "Day 5",
-                "7 of 75 days done" and "Elapsed 9/75" together and reading as
-                three contradictory counts of the same thing. They are three
-                different facts; only the label was missing. */}
-            <span className="text-fg-2" title={c.strict ? 'Days since your last reset' : 'Days since the challenge started'}>
-              Day {day} of {c.durationDays}{c.strict ? ' · since last reset' : ''}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Today's check-in */}
-      {!notStarted && !finished && (
-        <div className="mb-4">
-          <p className="mb-2 text-body font-medium text-fg-1">Today’s rules <span className="text-fg-2">({todayDone.length}/{c.rules.length})</span></p>
-          <ul className="space-y-1.5">
-            {c.rules.map((rule, i) => {
-              const ruleDone = todayDone.includes(i)
-              return (
-                <li key={i}>
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-none border border-line bg-background px-3 py-2 text-body">
-                    <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
-                    <Switch checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
-                  </label>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* Stats block */}
-      <div className="mb-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-        <Stat label="Current streak" value={`${streak}`} icon="" color="peach" />
-        <Stat label="Best streak" value={`${longestStreak(data, c, today)}`} icon="" color="yellow" />
-        <Stat label="Days left" value={`${Math.max(0, c.durationDays - completedDays(data, c, today))}`} color="blue" />
-        <Stat label="Elapsed" value={`${elapsedDay(c, today)}/${c.durationDays}`} color="mauve" />
-      </div>
-
-      {/* Calendar grid · collapsed by default so the daily check-in stays prominent. */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setCalOpen((o) => !o)}
-          aria-expanded={calOpen}
-          className="flex w-full items-center gap-1.5 text-body font-medium text-fg-1 hover:text-fg-1"
-        >
-          <span className="caret-turn caret-turn-quarter inline-flex text-fg-2" data-open={calOpen}><Icon as={CaretRight} size="sm" /></span>
-          Calendar
-        </button>
-        {calOpen && (
-          <div className="collapse-in">
-            <div className="mt-2 mb-2 flex items-center justify-end">
-              <div className="flex items-center gap-3 text-micro text-fg-2">
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('green') }} /> done</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded" style={{ background: cat('surface0') }} /> missed</span>
-                <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded border" style={{ borderColor: cat('mauve') }} /> today</span>
-              </div>
-            </div>
-            <div className="grid w-fit grid-cols-7 gap-1">
-              {Array.from({ length: c.durationDays }).map((_, i) => {
-                const d = addDays(c.startDate, i)
-                const complete = isDayComplete(data, c, d)
-                const isToday = d === today
-                const past = dayDiff(d, today) > 0
-                const bg = complete ? cat('green') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
-                return (
-                  <span
-                    key={d}
-                    title={`Day ${i + 1}, ${d}${complete ? ', done' : past ? ', missed' : isToday ? ', today' : ''}`}
-                    className="grid h-7 w-7 place-items-center rounded text-micro"
-                    style={{ background: bg, border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`, color: complete ? onAccent(cat('green')) : cat('subtext0') }}
-                  >
-                    {i + 1}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )}
-      </div>
     </Card>
   )
 }
 
-function Stat({ label, value, icon, color }: { label: string; value: string; icon?: string; color: string }) {
+/**
+ * Zone 3's signature visual · one numbered cell per day of the challenge.
+ *
+ * Not `CalendarHeatmap`/`DayGrid`: those are week-columned trailing windows and
+ * carry no text in a cell. A challenge is a sequence from day 1 to day N and
+ * the day *number* is the thing people count in — "I'm on day 43" — so the
+ * numbers stay and the grid runs in challenge order, not calendar order.
+ *
+ * Each cell carries its state as hidden text as well as colour. The old grid
+ * put it in a `title` only, which is skipped outright on touch and by several
+ * screen-reader pairings — the state was conveyed by colour alone.
+ *
+ * Always renders, including before the start date: an empty grid says "this is
+ * where your 75 days will be", which is worth more than the space it costs.
+ */
+function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; today: string }) {
+  const { data } = useJournal()
   return (
-    <div className="rounded-none border border-line bg-background py-2">
-      <div className="text-heading font-medium" style={{ color: cat(color) }}>{icon && <span className="mr-1">{icon}</span>}{value}</div>
-      <div className="text-micro text-fg-2">{label}</div>
+    // `w-fit`, so the heading and the legend sit over the grid rather than at
+    // the far edge of a 700px review column. The grid is ~290px wide and the
+    // column is not; justifying to the column put the legend a third of a
+    // screen away from the colours it names.
+    <div className="w-fit">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <p className="text-label font-medium text-fg-1">Calendar</p>
+        <div className="flex items-center gap-3 text-micro text-fg-2" aria-hidden="true">
+          <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: cat('mauve') }} /> done</span>
+          <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: cat('surface0') }} /> missed</span>
+          <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px] border" style={{ borderColor: cat('mauve') }} /> today</span>
+        </div>
+      </div>
+      <ul className="grid w-fit grid-cols-7 gap-1">
+        {Array.from({ length: c.durationDays }).map((_, i) => {
+          const d = addDays(c.startDate, i)
+          const complete = isDayComplete(data, c, d)
+          const isToday = d === today
+          const past = dayDiff(d, today) > 0
+          const state = complete ? 'done' : isToday ? 'today' : past ? 'missed' : 'to come'
+          const bg = complete ? cat('mauve') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
+          return (
+            <li
+              key={d}
+              // 34px, not the old 28px: seven of these plus gaps is 286px, which
+              // still fits a 390px phone, and the day number is the thing people
+              // count in — "I'm on day 43" — so it should be readable at a
+              // glance rather than a 10px tick.
+              className="grid h-[34px] w-[34px] place-items-center rounded-[2px] text-label"
+              style={{
+                background: bg,
+                border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`,
+                color: complete ? onAccent(cat('mauve')) : cat('subtext0'),
+              }}
+            >
+              {i + 1}
+              <span className="sr-only">{` · day ${i + 1}, ${d}, ${state}`}</span>
+            </li>
+          )
+        })}
+      </ul>
     </div>
-  )
-}
-
-/** Circular progress ring with a whole-number percent label. */
-function ProgressRing({ pct }: { pct: number }) {
-  const r = 26
-  const circ = 2 * Math.PI * r
-  return (
-    <svg width="68" height="68" viewBox="0 0 68 68" className="shrink-0">
-      <circle cx="34" cy="34" r={r} fill="none" stroke={cat('surface0')} strokeWidth="6" />
-      <circle cx="34" cy="34" r={r} fill="none" stroke={cat(pct >= 100 ? 'green' : 'mauve')} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 34 34)" />
-      <text x="34" y="38" textAnchor="middle" className="fill-text font-medium" fontSize="15">{pct}%</text>
-    </svg>
   )
 }
 
@@ -249,7 +328,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
   }
 
   return (
-    <div className="mb-2 space-y-3 rounded-none border border-line bg-background p-4">
+    <div className="space-y-3">
       <div>
         <p className="mb-1.5 text-label text-fg-2">Preset</p>
         <Segmented
@@ -270,14 +349,14 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
           onChange={(e) => setRules(e.target.value)}
           rows={4}
           placeholder={'Two 45-min workouts\nDrink water\nRead 10 pages'}
-          className="mt-1 w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
       </label>
       <label className="flex cursor-pointer items-center justify-between text-body text-fg-1">
-        <span>Strict · missing a day resets to Day 1 (75 Hard rule)</span>
+        <span>Strict · missing a day resets to day 1 (the 75 Hard rule)</span>
         <Switch checked={strict} onCheckedChange={setStrict} />
       </label>
-      <Button variant="secondary" size="lg" onClick={submit} className="w-full">Start challenge</Button>
+      <Button variant="primary" size="lg" onClick={submit} className="w-full">Start challenge</Button>
     </div>
   )
 }
