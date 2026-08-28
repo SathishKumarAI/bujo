@@ -430,11 +430,16 @@ export function Plan() {
                         <button
                           onClick={() => setOpenThread(open ? null : t.rootId)}
                           className="shrink-0 rounded-none px-2 py-0.5 text-label font-medium"
-                          // `'22'`, not `'33'`. The accents are solved against a **13%** wash of
-                            // themselves (`scripts/solve-contrast.mjs`, and `Pill tone="wash"`
-                            // is the idiom it was calibrated on). A 20% wash lifts the
-                            // background further toward the text and puts them back under
-                            // 4.5 — latte measured 4.25 on red and 4.31 on peach. One digit.
+                          // `'22'`, not `'33'`. The accents clear 4.5 against a **13%** wash of
+                            // themselves (`Pill tone="wash"` is the idiom they were calibrated
+                            // on). A 20% wash lifts the background further toward the text and
+                            // puts them back under 4.5 — latte measured 4.25 on red and 4.31 on
+                            // peach. One digit.
+                            //
+                            // The `yellow` arm here is why `scripts/check-contrast.mjs` exists.
+                            // The demo seed only produces migration counts of 2, 3 and 4, so
+                            // this branch has never once rendered in CI — and latte's yellow
+                            // was 2.02:1 through every green a11y run the project has printed.
                             style={{ background: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') + '22', color: cat(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow') }}
                           title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                           aria-expanded={open}
