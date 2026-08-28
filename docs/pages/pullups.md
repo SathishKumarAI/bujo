@@ -99,20 +99,25 @@ starting from zero.
 
 ## Upgrades, ranked
 
-Still open — all three live in `components/ProgramTracker.tsx`, which this page
-shares with Program and did not change:
+**All six are closed.** COD-13 did capture (the recorder), the ability table
+(collapsed) and the numeric type treatment; COD-20 did the rest, in
+`components/ProgramTracker.tsx`, which Pull-ups shares with Program:
 
-1. **P1 · Add a "start here" state.** With 0/30 done, the page should show one
-   next action, not a six-week grid. Zone 1 now answers "what today" for the
-   *volume*, but the program grid still opens cold on week 1.
-2. **P1 · Make the week/day picker know where you are** — highlight the current
-   day, and offer "continue".
-3. **P3 · Move "Mark all done" to the card header.**
+| Was | Now |
+|---|---|
+| **P1 ·** the picker did not know your place | It opens on the **first unfinished day**. `useState(p.weeks[0].week)` had ignored `settings.programDone` entirely — the same render read it two lines later to draw "8/30 days done" |
+| **P1 ·** no marker for what was finished | `✓` on every complete week and day, `▸` on the one you are up to — in the accessible name as well as on screen. **The marker was already written and rendered nothing:** `{dayComplete(week, dn) && ''}` computed the predicate and printed an empty string |
+| **P1 ·** no way back from browsing | A **Continue** link, shown only while the day you are looking at is not the day you are on |
+| **P3 ·** "Mark all done" last, after every row | In the card header, beside the count it changes |
 
-Closed by COD-13: capture (the recorder), the ability table (collapsed), and the
-numeric type treatment. The checklist itself still does not capture reps — the
-recorder beside it does, which is the cheaper half of that upgrade and not the
-whole of it.
+`resumeAt` / `dayComplete` / `daysComplete` / `exerciseKey` are pure and live in
+`lib/programs.ts` with `programs.test.ts` on them — "which day am I on" is the
+whole promise of a six-week program and should be checkable without mounting a
+component and a store.
+
+The one nuance kept from the old list: **the checklist still does not capture
+reps.** The recorder beside it does, which is the cheaper half and not the whole
+of that upgrade.
 
 ## Leave alone
 

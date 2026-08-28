@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { cat } from '../lib/colors'
-import { PROGRAMS } from '../lib/programs'
+import { PROGRAMS, exerciseKey, dayComplete as isDayComplete, daysComplete, resumeAt } from '../lib/programs'
 import { musclesForExercise } from '../lib/fitness'
 import { muscleNames } from '../lib/muscles'
 import { Card, Segmented } from './ui'
@@ -33,11 +33,16 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
   const programs = only ? PROGRAMS.filter((p) => p.id === only) : PROGRAMS
   const [pid, setPid] = useState(programs[0].id)
   const p = programs.find((x) => x.id === pid) ?? programs[0]
-  const [week, setWeek] = useState(p.weeks[0].week)
-  const [day, setDay] = useState(p.weeks[0].days[0].day)
   const done = data.settings.programDone ?? []
   const actuals = data.settings.programActuals ?? {}
-  const exKey = (w: number, dy: number, i: number) => `${p.id}-w${w}d${dy}-e${i}`
+  // Open where you left off, not at week 1 day 1. Lazy initialisers, so this
+  // reads stored progress once on mount and never fights you afterwards: it is
+  // a starting point, not a controller. Re-deriving it on every render would
+  // yank the grid out from under you the moment you ticked the last exercise of
+  // the day you were looking at.
+  const [week, setWeek] = useState(() => resumeAt(p, done).week)
+  const [day, setDay] = useState(() => resumeAt(p, done).day)
+  const exKey = (w: number, dy: number, i: number) => exerciseKey(p.id, w, dy, i)
   function setActual(i: number, val: string) {
     const k = exKey(week, day, i)
     const next = { ...actuals }
@@ -48,12 +53,16 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
   const dayNums = curWeek.days.map((x) => x.day)
   const cur = curWeek.days.find((x) => x.day === day) ?? curWeek.days[0]
   const totalDays = p.weeks.reduce((acc, w) => acc + w.days.length, 0)
-  const dayComplete = (w: number, dy: number) => {
-    const exs = p.weeks.find((x) => x.week === w)?.days.find((x) => x.day === dy)?.exercises ?? []
-    return exs.length > 0 && exs.every((_, i) => done.includes(exKey(w, dy, i)))
-  }
-  const doneCount = p.weeks.reduce((acc, w) => acc + w.days.filter((x) => dayComplete(w.week, x.day)).length, 0)
+  const dayComplete = (w: number, dy: number) => isDayComplete(p, w, dy, done)
+  const weekComplete = (w: number) =>
+    (p.weeks.find((x) => x.week === w)?.days ?? []).every((d) => dayComplete(w, d.day))
+  const doneCount = daysComplete(p, done)
+  // Where the program itself says you are, as opposed to what you are looking
+  // at. The two are the same on arrival and diverge the moment you browse.
+  const resume = resumeAt(p, done)
+  const browsing = resume.week !== week || resume.day !== day
   const curDoneCount = cur ? cur.exercises.filter((_, i) => done.includes(exKey(week, cur.day, i))).length : 0
+  const allCurDone = !!cur && cur.exercises.length > 0 && curDoneCount === cur.exercises.length
   // Every muscle the selected day touches, deduped. Unmapped names (cardio,
   // "Sprints", the pull-up programme's assessments) simply contribute nothing,
   // which is why the block below hides itself on an empty result rather than
@@ -62,9 +71,11 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
 
   function pickProgram(id: string) {
     setPid(id)
-    const first = (programs.find((x) => x.id === id) ?? programs[0]).weeks[0]
-    setWeek(first.week)
-    setDay(first.days[0].day)
+    // Same rule as mount: switching programs lands on that program's next day,
+    // not on its first. Each program keeps its own place in the same store.
+    const at = resumeAt(programs.find((x) => x.id === id) ?? programs[0], done)
+    setWeek(at.week)
+    setDay(at.day)
   }
   function toggleEx(i: number) {
     const k = exKey(week, cur!.day, i)
@@ -81,28 +92,100 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
     <Card
       title={p.name}
       subtitle={p.source}
-      right={<span className="text-label text-fg-2">{doneCount}/{totalDays} days done</span>}
+      // "Mark all done" was the last thing after the exercise rows, so the fast
+      // path was the one you found last. In the header it sits beside the count
+      // it changes.
+      right={
+        <span className="flex items-center gap-3">
+          {cur && (
+            <Button variant="ghost" onClick={toggleAll} className="h-auto p-0 text-label">
+              {allCurDone ? 'Uncheck all' : 'Mark all done'}
+            </Button>
+          )}
+          <span className="num text-label text-fg-2">{doneCount}/{totalDays} days done</span>
+        </span>
+      }
     >
       {programs.length > 1 && (
         <div className="mb-3">
           <Segmented value={pid} onChange={pickProgram} options={programs.map((x) => ({ value: x.id, label: x.short }))} />
         </div>
       )}
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+      {/*
+        Week and day are single-choice groups, so they say so. They were bare
+        <button>s carrying their selected state in an inline `background` and
+        nothing else: no `aria-pressed`, no group name, and colour as the only
+        channel — which fails the same way for a screen reader and for anyone
+        who cannot separate mauve from surface0.
+
+        The completion mark is a ✓ in the accessible name as well as on screen,
+        for the same reason.
+      */}
+      <div className="mb-2 flex flex-wrap items-center gap-1.5" role="group" aria-label={curWeek.label ? 'Block' : 'Week'}>
         <span className="text-label text-fg-2">{curWeek.label ? 'Block' : 'Week'}</span>
-        {p.weeks.map((w) => (
-          <button key={w.week} onClick={() => { setWeek(w.week); setDay(w.days[0].day) }} title={w.label} className="grid h-8 min-w-8 place-items-center rounded px-2 text-label" style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}>{w.week}</button>
-        ))}
+        {p.weeks.map((w) => {
+          const complete = weekComplete(w.week)
+          return (
+            <button
+              key={w.week}
+              onClick={() => { setWeek(w.week); setDay(w.days[0].day) }}
+              title={w.label}
+              aria-pressed={week === w.week}
+              aria-label={`${curWeek.label ? 'Block' : 'Week'} ${w.week}${complete ? ', complete' : ''}`}
+              className="inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded px-2 text-label"
+              style={{ background: week === w.week ? cat('mauve') : cat('surface0'), color: week === w.week ? cat('crust') : cat('subtext1') }}
+            >
+              {/* Mark *and* number, like the day row. Replacing the number with
+                  the tick rendered "✓ 2 3 4 5 6", where the finished week is
+                  the one you can no longer identify. */}
+              {complete && <span aria-hidden>✓</span>}
+              <span aria-hidden>{w.week}</span>
+            </button>
+          )
+        })}
         {curWeek.label && <span className="text-label text-fg-2">{curWeek.label}</span>}
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+      <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Day">
         <span className="text-label text-fg-2">Day</span>
-        {dayNums.map((dn) => (
-          <button key={dn} onClick={() => setDay(dn)} className="inline-flex h-8 items-center gap-1 rounded px-2 text-label" style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}>
-            {dayComplete(week, dn) && ''} {dn}
-          </button>
-        ))}
+        {dayNums.map((dn) => {
+          const complete = dayComplete(week, dn)
+          const next = resume.week === week && resume.day === dn
+          return (
+            <button
+              key={dn}
+              onClick={() => setDay(dn)}
+              aria-pressed={day === dn}
+              aria-label={`Day ${dn}${complete ? ', complete' : next ? ', next up' : ''}`}
+              className="inline-flex h-8 items-center gap-1 rounded px-2 text-label"
+              style={{ background: day === dn ? cat('blue') : cat('surface0'), color: day === dn ? cat('crust') : cat('subtext1') }}
+            >
+              {/*
+                This line was `{dayComplete(week, dn) && ''} {dn}` — the
+                predicate computed, then rendered as an empty string. A glyph
+                had been stripped at some point, so no day button had shown
+                whether it was finished for as long as anyone can tell, which is
+                half of the audit's "the picker does not know your place".
+              */}
+              <span aria-hidden>{complete ? '✓' : next ? '▸' : ''}</span>
+              <span aria-hidden>{dn}</span>
+            </button>
+          )
+        })}
       </div>
+      {/*
+        The way back. Browsing a program is normal — you check what week 4 holds
+        — but before this there was no route from "looking at week 4" to "the
+        day I am actually on" except remembering it.
+      */}
+      {browsing && (
+        <div className="mb-3">
+          <Button variant="ghost" onClick={() => { setWeek(resume.week); setDay(resume.day) }} className="h-auto p-0 text-label">
+            {doneCount === totalDays
+              ? `Program complete · back to ${curWeek.label ? 'block' : 'week'} ${resume.week}, day ${resume.day}`
+              : `Continue ${curWeek.label ? 'block' : 'week'} ${resume.week}, day ${resume.day}`}
+          </Button>
+        </div>
+      )}
       {p.note && <p className="mb-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{p.note}</p>}
 
       {cur && (
@@ -146,10 +229,13 @@ export function ProgramTracker({ onLoad, only, anatomy = false }: { onLoad?: (ex
               </div>
             </div>
           )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {onLoad && <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-control inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>}
-            <Button variant="secondary" onClick={toggleAll} className="press-3d">{cur.exercises.every((_, i) => done.includes(exKey(week, day, i))) ? 'Uncheck all' : 'Mark all done'}</Button>
-          </div>
+          {/* "Mark all done" used to sit here, after every row. It is in the
+              card header now, beside the count it moves. */}
+          {onLoad && (
+            <div className="mt-3">
+              <Button variant="secondary" onClick={() => onLoad(cur.exercises.map((e) => e.name))} className="press-3d rounded-control inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Load into session</Button>
+            </div>
+          )}
         </>
       )}
     </Card>
