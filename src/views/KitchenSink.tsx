@@ -11,6 +11,7 @@ import {
   ActivityForm, CalendarHeatmap, DisclosureRow, EmptyFrame, StatBar, SummaryStrip,
   useActivityDraft,
 } from '../components/page'
+import { PartnerChemistryCard } from '../components/pickleball/MatchupCards'
 import type { Mode } from '../domain/activities'
 import { addDays, todayISO } from '../lib/date'
 
@@ -29,6 +30,37 @@ const demoHeat = (() => {
   }
   return out
 })()
+
+/**
+ * A year of pickleball, played roughly three days a week with a tournament
+ * weekend at day 40. Same outlier logic as `demoHeat` — the point of showing it
+ * at 52 weeks is that the overflow case is where a heatmap breaks, and it is
+ * the width no real journal reaches for months.
+ */
+const picklePlay = (() => {
+  const today = todayISO()
+  const out: { date: string; value: number }[] = []
+  for (let i = 0; i < 364; i += 1) {
+    if (i % 7 === 2 || i % 7 === 4 || i % 7 === 6) continue // days off
+    out.push({ date: addDays(today, -i), value: i === 40 ? 14 : 2 + (i % 4) })
+  }
+  return out
+})()
+
+/**
+ * Partner list long enough to prove the card scrolls rather than clips, with one
+ * name deliberately past the truncation width — a partner is free text, so the
+ * overflow case is a name someone actually typed, not a synthetic one.
+ */
+const picklePartners = [
+  { partner: 'Ravi', sessions: 22, games: 71, gamesWon: 45, gamesLost: 26, winPct: 63 },
+  { partner: 'Meera', sessions: 14, games: 48, gamesWon: 26, gamesLost: 22, winPct: 54 },
+  { partner: 'Dan', sessions: 9, games: 31, gamesWon: 19, gamesLost: 12, winPct: 61 },
+  { partner: 'Priya', sessions: 6, games: 20, gamesWon: 9, gamesLost: 11, winPct: 45 },
+  { partner: 'Tom', sessions: 4, games: 13, gamesWon: 10, gamesLost: 3, winPct: 77 },
+  { partner: 'Alex', sessions: 3, games: 9, gamesWon: 3, gamesLost: 6, winPct: 33 },
+  { partner: 'Jordan from the Tuesday morning open-play group', sessions: 1, games: 4, gamesWon: 2, gamesLost: 2, winPct: 50 },
+]
 
 /**
  * `/kitchen-sink` — every primitive, variant and state on one page.
@@ -366,6 +398,26 @@ export function KitchenSink() {
             <p className="mb-1 text-caption text-fg-3">Empty · the grid still draws, which is the whole point</p>
             <CalendarHeatmap weeks={12} data={[]} unit="min" />
             <EmptyFrame>Log a session to start your history.</EmptyFrame>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Pickleball · page states" subtitle="Empty, typical and overflow for the two parts of /body/pickleball that grow without bound.">
+        <div className="space-y-5">
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Empty · no sessions logged. The grid draws its frame; the card does not.</p>
+            <CalendarHeatmap weeks={13} data={[]} unit="games" label="Pickleball games per day, no sessions logged" />
+            <EmptyFrame>Log a session above to start your record.</EmptyFrame>
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Typical · a season of play at 13 weeks</p>
+            <CalendarHeatmap weeks={13} data={picklePlay} unit="games" label="Pickleball games per day over 13 weeks" />
+            <PartnerChemistryCard partners={picklePartners.slice(0, 3)} />
+          </div>
+          <div>
+            <p className="mb-1 text-caption text-fg-3">Overflow · a year of sessions and a long partner list, one of them with a name that has to truncate</p>
+            <CalendarHeatmap weeks={52} data={picklePlay} unit="games" label="Pickleball games per day over 52 weeks" />
+            <PartnerChemistryCard partners={picklePartners} />
           </div>
         </div>
       </Card>
