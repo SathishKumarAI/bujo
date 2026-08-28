@@ -90,6 +90,28 @@ to be re-created as #148 and #149 with their bodies copied across. Rebase each
 child onto `main` with `git rebase --onto main <old-base-sha> <branch>` and
 retarget it **before** merging its parent.
 
+Trap: **`npm run a11y` runs against an empty journal, so a card that only
+renders when there is data is never scanned.** `scripts/a11y-axe.mjs:177` seeds
+`{ settings: { storageMode, theme } }` and nothing else, so every
+`{peakHour && <Card/>}` / `{rows.length > 0 && …}` in the app is absent from the
+DOM when axe walks it. `HighRiskHoursCard` carried a **2.57:1** contrast failure
+through every green run the gate ever printed; it was found by
+`scripts/verify-folds.mjs`, which loads `?demo=1` first. Sibling of the
+`VIEWS`-list trap below — "a page that is never visited cannot fail" becomes "a
+card that never renders cannot fail". Filed as COD-28. Until it is fixed, read
+"0 serious" as **"0 serious for the pages that were opened, in their empty
+state"**, and check any new analytics card with
+`node scripts/verify-folds.mjs <view>`.
+
+Trap: **`overlay0` as a text colour on `surface0` measures 2.57:1 at 10px** and
+fails in every dark theme. Four instances so far — the Stats mood calendar, the
+Recovery milestone chips, `HighRiskHoursCard`'s hour labels, and the empty-cell
+case each of them shares. The cause is the same every time: `crust` is the
+light-on-*saturated* half of a pair, and whoever writes the `else` branch reaches
+for its partner and applies it to the *neutral* background. `subtext0` is the
+next step up, still clearly quieter, and clears 4.5 in all five themes. When you
+write a ternary that picks a foreground per state, check the neutral branch.
+
 Trap: **`scripts/a11y-axe.mjs` visits a fixed `VIEWS` list.** A page not on it is
 not checked, and "0 serious" means only "for the pages that were opened". Add new
 surfaces. Do not argue a page is unreachable from the code's shape — Recovery was

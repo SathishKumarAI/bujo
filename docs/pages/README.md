@@ -162,7 +162,7 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 
 | @1440 | @1600 | Page | Folds | Open | Charts |
 |---|---|---|---|---|---|
-| **6.33** | 6.33 | Recovery (`nofap`) | 0 | – | 3 |
+| ~~6.33~~ **4.15** | 4.15 | Recovery (`nofap`) — *folded, COD-23* | 2 | 0 | 3 |
 | **5.92** | 5.15 | Pickleball | 18 | 16 | 5 |
 | ~~5.80~~ **2.19** | 2.19 | Coaching — *rebuilt, COD-22* | ~~32~~ **17** | 1 | 0 |
 | **5.21** | 4.38 | Stats | 6 | 6 | 6 |
@@ -193,12 +193,20 @@ live. On this census the outlier was **Coaching**: 32 disclosure points of which
 technique folds — across 5.8 screens.
 
 **That row is struck through because COD-22 rebuilt it**: onto the three-zone
-contract, matching Pull-ups, at **2.19 screens and 17 folds**. The next outlier
-is now Recovery (`nofap`) at 6.33 screens with no structure at all — 0 folds,
-3 charts, one long stack — followed by Pickleball at 5.92 and Stats at 5.21,
-both of which are long because their analytics are open, which is the state
-this directory asked for. **Re-run the census rather than reading this
-paragraph**; it is already one merge out of date by construction.
+contract, matching Pull-ups, at **2.19 screens and 17 folds**.
+
+**Recovery is struck through too (COD-23): 6.33 → 4.15 screens.** And the
+census's "0 folds" reading of it was misleading — I wrote "no structure at all"
+in a handover note and that was wrong. Recovery was already on `PageLayout`
+with three zones, and its zone 3 was already grouped into four named sections.
+Its length was **724px of set-once Setup and 869px of static Reference sitting
+permanently open**, both now folded. A fold count of zero means "nothing is
+collapsed", not "nothing is organised" — read the column as what it measures.
+
+The tallest pages are now Pickleball (5.92) and Stats (5.21), and both are long
+because their analytics are open, which is the state this directory asked for.
+**Re-run the census rather than reading this paragraph**; it is one merge out of
+date by construction.
 
 **The Folds and Open columns were wrong in the first version of this table**
 (published in #151) and are corrected here. The first census filtered

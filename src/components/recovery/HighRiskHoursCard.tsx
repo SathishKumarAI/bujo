@@ -17,7 +17,19 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
             className="grid aspect-square place-items-center rounded text-micro"
             style={{
               background: h.count > 0 ? cat('peach') + Math.round(38 + h.heat * 217).toString(16).padStart(2, '0') : cat('surface0'),
-              color: h.heat > 0.5 ? cat('crust') : cat('overlay0'),
+              // `overlay0` on the empty-cell `surface0` measured **2.57:1** at
+              // 10px — the same pairing, the same number and the same cause as
+              // the Stats mood calendar, which is the fourth time this exact
+              // combination has been written in this app. `crust` is the
+              // light-on-saturated half; applying its partner to the *neutral*
+              // background is the mistake each time. `subtext0` is the next
+              // step up, still clearly quieter than a hot cell, and clears 4.5
+              // in all five themes.
+              //
+              // Only the four `hour % 6 === 0` cells print a digit, so this hid
+              // behind two labels — 12pm and 6pm, whenever those hours had no
+              // urges logged.
+              color: h.heat > 0.5 ? cat('crust') : cat('subtext0'),
             }}>
             {h.hour % 6 === 0 ? h.hour : ''}
           </div>

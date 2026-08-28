@@ -11,6 +11,7 @@ import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByTy
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 import { PageLayout, StatBar, SummaryStrip } from '../components/page'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import {
@@ -492,10 +493,20 @@ export function NoFap() {
           )}
         </Card>
 
-        {/* ── Setup · set-once contract + if-then plans──── */}
-        <section>
-          <h2 className="border-b border-line pb-1 text-label text-fg-2">Setup <span className="text-fg-3">· Your commitment contract & if-then trigger plans</span></h2>
-          <div className="mt-2 flex flex-col gap-4">
+        {/* ── Setup · set-once contract + if-then plans────
+            Folded. This is 724px of configuration you fill in once and then
+            read back rarely — measured at 1440 with demo data: the commitment
+            contract is 292px and the trigger plans 432px, and they sat open
+            between the per-addiction streaks and the analytics for the whole
+            life of the page. Neither is something the app learned about you;
+            both are something you told it. `stickyKey`, so someone who does
+            want them open keeps them open. */}
+        <CollapsibleSection
+          variant="quiet" defaultOpen={false} stickyKey="recovery.setup"
+          title="Setup"
+          subtitle="Your commitment contract & if-then trigger plans"
+        >
+          <div className="flex flex-col gap-4">
           {/* My commitment (#316) · quit-date contract + personal "why" */}
           <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
             subtitle="Your quit-date contract, the reason you’re doing this"
@@ -552,7 +563,7 @@ export function NoFap() {
             )}
           </Card>
         </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ── Secondary analytics, grouped + (card-density UX) ──── */}
         {/* Insights · motivational / progress cards */}
@@ -604,10 +615,25 @@ export function NoFap() {
         </div>
         </section>
 
-        {/* ── Reference · static guides & history────────── */}
-        <section>
-          <h2 className="border-b border-line pb-1 text-label text-fg-2">Reference <span className="text-fg-3">· Coping techniques, recovery ladder & reset history</span></h2>
-          <div className="mt-2 flex flex-col gap-4">
+        {/* ── Reference · static guides & history──────────
+            Folded. 869px measured at 1440 — the coping list, the milestone
+            ladder and the reset log — and none of it is analysis. Same rule as
+            Coaching's manual: what the app learned about you outranks what the
+            app can tell everybody, so the analytics above stay open and this
+            does not.
+
+            **Folding this does not touch the crisis path.** The in-urge version
+            of these techniques lives in `SosOverlay`, behind a fixed
+            floating button that is reachable from any scroll position and sits
+            outside the zones for exactly that reason. Were that not true this
+            fold would be wrong: a page someone opens mid-urge must not put its
+            coping list behind a click. */}
+        <CollapsibleSection
+          variant="quiet" defaultOpen={false} stickyKey="recovery.reference"
+          title="Reference"
+          subtitle="Coping techniques, recovery ladder & reset history"
+        >
+          <div className="flex flex-col gap-4">
           {/* Beat the urge · coping techniques (merged here from the rail; the SOS overlay carries the in-crisis version) */}
           <RefBlock
             title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>}
@@ -682,7 +708,7 @@ export function NoFap() {
             )}
           </RefBlock>
         </div>
-        </section>
+        </CollapsibleSection>
         </>}
       />
     </>
