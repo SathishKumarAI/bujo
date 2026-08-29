@@ -45,7 +45,13 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         <div className="overflow-x-auto">
           <div
             className="grid grid-flow-col gap-1"
-            style={{ gridTemplateRows: 'repeat(7, 0.7rem)' }}
+            /* `gridAutoColumns` matters as much as the rows: without it the
+               implicit columns default to `auto` and stretch to fill the card,
+               so thirteen weeks of 10px cells were measured sitting in 81px
+               tracks across 1180px — 70px of dead space per week, which reads
+               as thirteen unrelated dashes rather than a heatmap. The grid is
+               already inside `overflow-x-auto`, so a fixed track is safe. */
+            style={{ gridTemplateRows: 'repeat(7, 0.7rem)', gridAutoColumns: '0.7rem' }}
             role="img"
             aria-label="Heatmap of daily habit-completion ratio over the last 13 weeks"
           >
