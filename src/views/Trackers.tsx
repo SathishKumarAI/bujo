@@ -339,7 +339,19 @@ export function Trackers() {
           disclosure is a quiet row for optional form fields, a section folds a
           whole titled region with card chrome. Zone 2 spends the page's single
           DisclosureRow on "Add a habit". */}
-      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns">
+      {/* Folded by default, and the fold is remembered. `CollapsibleSection`'s
+          `defaultOpen` prop is documented "Deep-analytics groups default to
+          collapsed" and then defaults to `true`, so this section — five cards
+          and roughly 900px of them — opened on every visit despite being the
+          fifth thing on the page. The component default is left alone: it is
+          shared, and flipping it would silently close folds across the app.
+          `stickyKey` means a reader who wants these open only says so once,
+          the same bargain the Day/Week/Month control already makes.
+
+          Note for the next person: `npm run a11y` walks the rendered page, so
+          nothing in here is scanned while it is shut. It was re-run with the
+          section expanded for this change — keep doing that. */}
+      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns" defaultOpen={false} stickyKey="trackers.deepAnalytics">
         <TrackerVisuals data={data} today={today} />
         <ArchivedHabits />
       </CollapsibleSection>

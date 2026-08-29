@@ -33,8 +33,10 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
     .slice(0, 8)
   const maxStreak = Math.max(1, ...streaks.map((s) => Math.max(s.streak, s.best)))
 
-  // Weekday consistency (avg completion per weekday, 90d).
+  // Weekday consistency (avg completion per weekday, 90d). `null` where the
+  // weekday never had anything scheduled, which is not the same as 0%.
   const wd = weekdayConsistency(data, 90, today)
+  const bestDow = wd.reduce<number | null>((best, r, i) => (r == null ? best : best == null || r > (wd[best] ?? 0) ? i : best), null)
 
   // Perfect-day analytics across all build check habits (90d window).
   const perfect = perfectDayStats(data, today)
@@ -94,12 +96,18 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
 
       <Card band title="Monthly trend" subtitle="Avg completion per month, is it climbing?">
         {(() => {
-          const months = monthlyCompletion(data, 6, today)
+          // Months with nothing scheduled are dropped, not drawn at zero. The
+          // card used to open with "0% · 0%" for the two months preceding the
+          // first habit's `startedOn` — a flat failure that never happened,
+          // sitting in the leftmost position where a trend is read from.
+          // `HabitEditor`'s own monthly bars have always filtered this way.
+          const months = monthlyCompletion(data, 6, today).filter((m) => m.ratio != null) as { ym: string; ratio: number }[]
+          if (months.length === 0) return <Empty>No scheduled days yet — the trend starts once a habit has a week behind it.</Empty>
           // `items-stretch`, not `items-end`: cross-axis `end` collapses each
           // column to its text, leaving the `flex-1` bar track at 0px and the
           // whole chart flat. See `views/Insights.tsx`.
           return (
-            <div className="flex items-stretch justify-between gap-2" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion per month over the last 6 months">
+            <div className="flex items-stretch justify-between gap-2" style={{ height: 120 }} role="img" aria-label={`Bar chart of average habit completion for the last ${months.length} months with scheduled days`}>
               {months.map((m) => (
                 <div key={m.ym} className="flex flex-1 flex-col items-center gap-1">
                   <span className="text-micro tabular-nums text-fg-2">{Math.round(m.ratio * 100)}%</span>
@@ -114,14 +122,29 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
         })()}
       </Card>
 
-      <Card band title="Best weekdays" subtitle="Avg completion by day (last 90 days)">
+      {/* A card called "Best weekdays" that marks no day as best is a chart of
+          seven bars you are invited to eyeball. The weekday spread is narrow —
+          typically a few points — which is exactly the range where unlabelled
+          bars of near-equal height read as "all the same" and the card says
+          nothing. So: print every value, and name the winner in the subtitle
+          where it can actually be read. */}
+      <Card band title="Best weekdays" subtitle={bestDow == null ? 'Avg completion by day (last 90 days)' : `Last 90 days · strongest on ${WEEKDAYS[bestDow]}`}>
         <div className="flex items-stretch justify-between gap-1.5" style={{ height: 120 }} role="img" aria-label="Bar chart of average habit completion by weekday over 90 days">
           {wd.map((r, i) => (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
+              <span className="text-micro tabular-nums text-fg-2">{r == null ? '–' : `${Math.round(r * 100)}%`}</span>
               <div className="flex w-full flex-1 items-end">
-                <div className="w-full rounded-t" style={{ height: `${Math.max(3, r * 100)}%`, background: cat('mauve'), opacity: 0.5 + r * 0.5 }} title={`${Math.round(r * 100)}%`} />
+                {/* A weekday with nothing ever scheduled gets a hollow track,
+                    not a bar at zero. */}
+                <div
+                  className="w-full rounded-t"
+                  style={r == null
+                    ? { height: '100%', background: cat('surface0'), opacity: 0.4 }
+                    : { height: `${Math.max(3, r * 100)}%`, background: cat('mauve'), opacity: i === bestDow ? 1 : 0.45 + r * 0.35 }}
+                  title={r == null ? 'nothing scheduled' : `${Math.round(r * 100)}%${i === bestDow ? ' · your strongest day' : ''}`}
+                />
               </div>
-              <span className="text-micro text-fg-2">{WEEKDAYS[i]}</span>
+              <span className={`text-micro ${i === bestDow ? 'text-fg-1' : 'text-fg-2'}`}>{WEEKDAYS[i]}</span>
             </div>
           ))}
         </div>
