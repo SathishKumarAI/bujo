@@ -5,7 +5,7 @@ import { StatTile } from '../ui'
 import { cat } from '../../lib/colors'
 import { addDays, fromISODay, todayISO, WEEKDAYS } from '../../lib/date'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } from '../../lib/stats'
-import { longestStreakEver } from '../../lib/streak'
+import { longestStreakEver, habitComeback, daysSinceLastMiss } from '../../lib/streak'
 import { completionRate30, bestWeekday, perfectWeeks, habitGrade } from '../../lib/habitStats'
 import type { Habit, JournalData } from '../../lib/types'
 import { Button } from '../ui/button'
@@ -44,6 +44,10 @@ export function HabitDetail({
   const perfect = perfectWeeks(data, h, today, 12)
   const grade = habitGrade(data, h, today, 30) // recency-weighted strength (0–100) + A–F
   const gradeColor = grade.score >= 75 ? 'green' : grade.score >= 50 ? 'yellow' : grade.score >= 25 ? 'peach' : 'red'
+  // Build habits only: neither reads as anything for a quit habit, where a
+  // logged day is the miss.
+  const comeback = avoid ? null : habitComeback(data, h, today)
+  const sinceMiss = avoid ? null : daysSinceLastMiss(data, h, today)
 
   // 18-week day heatmap (one column per week, aligned to weekday rows).
   const days = WEEKS * 7
@@ -169,8 +173,16 @@ export function HabitDetail({
             </div>
           </div>
 
+          {/* The two numbers the habit grid used to carry as chips in the name
+              cell. Everything else it showed there — the 30-day rate, the
+              recency-weighted score, its letter grade — was already on this
+              panel above, labelled, which is why the row could drop them
+              outright. These two had nowhere else to live, so they land here
+              before the row loses them rather than after. */}
           <p className="text-label text-fg-2">
             {r30.done}/{r30.scheduled} scheduled days done in the last 30.
+            {sinceMiss != null && sinceMiss > 0 && <> · {sinceMiss} {sinceMiss === 1 ? 'day' : 'days'} since a missed scheduled day.</>}
+            {comeback?.recovering && <> · Back on track after a lapse — {comeback.current} {comeback.current === 1 ? 'day' : 'days'}{comeback.comebackCount > 1 ? `, ${comeback.comebackCount} comebacks all told` : ''}.</>}
             {h.cue && <> · Cue: {h.cue}</>}
           </p>
         </div>
