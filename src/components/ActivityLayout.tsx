@@ -1,13 +1,13 @@
 import { DotsSixVertical, Flame, PersonSimpleRun, Prohibit, ShieldCheck, Star } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import type { Habit, HabitCategory, JournalData } from '../lib/types'
+import { HABIT_CATEGORIES, type Habit, type HabitCategory, type JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { DayGrid } from './ui/day-grid'
 
-const CATEGORY_ORDER: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
+const CATEGORY_ORDER = HABIT_CATEGORIES
 /**
  * Activity layout · one row per habit with a GitHub-style intensity heatmap
  * (last 16 weeks) plus a type-aware "today" control. An alternative to the
