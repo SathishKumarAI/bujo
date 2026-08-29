@@ -1,16 +1,17 @@
 # STATUS
 
-**Stopped:** 2026-08-29. On `main`, clean, nothing in flight. Two PRs opened,
-CI green, squash-merged: **#176, #177**. `main` is at `6033f2a`.
+**Stopped:** 2026-08-29. On `main`, clean, nothing in flight. Four PRs opened,
+CI green, squash-merged: **#176, #177, #178, #179**. `main` is at `cd1f209`.
 
 ## What this session did
 
-`?view=trackers` — "fix this page, optimise, make it premium".
+`?view=trackers` — "fix this page, optimise, make it premium", then "split it".
 
 | PR | What | Ticket |
 |---|---|---|
 | #176 | Controls pushed off the phone screen with nothing able to scroll to them; the completion heatmap in 81px tracks | COD-80 |
 | #177 | Six chips per habit row printing the same number three ways; "no data" drawn as 0% | COD-81 |
+| #179 | The 1,048-line view split into the four components it already had | COD-85 |
 
 ## The one thing to carry forward
 
@@ -58,8 +59,25 @@ Dev server 5199, demo journal seeded, `#main` scroll height.
 | trackers · 1440 | 2463px | **1469px** |
 | trackers · 390 | 3742px | **2083px** |
 | unreachable controls, 23 views | 18 | **0** |
+| `views/Trackers.tsx` | 1048 lines | **436** |
 
-Every habit row is one line now; several were three.
+Every habit row is one line now; several were three. The split moved
+`CategoryRows`, `HabitEditor`, `RoutineTimeline` and `TodayStrip` into
+`components/trackers/`, which now has a README with the change → file table.
+
+**How to prove a "pure move" here.** Extract by line range (`sed -n '426,499p'`)
+— never retype — then diff the *rendered markup*, not the code. The harness for
+this page is worth rebuilding: it captures seventeen states (five layouts, three
+date ranges, compact density, hidden weekends, show-archived, the wheel, the add
+disclosure, the deep-analytics fold, the settings popover, and both overlays)
+and compares them byte-for-byte. #179 came back identical on all seventeen.
+
+Check the harness before trusting its green: two states came back identical to
+the baseline and both needed explaining — `classic:compact` really does swap 341
+cells from `h-4 w-4` to `h-3 w-3` and merely happens to be the same *length*,
+and `classic:archived` matches because the demo journal has no archived habits.
+The overlays are the states that matter most: they open only on interaction, so
+no page-walking gate in this repo would have noticed either one breaking.
 
 ## Three defects found by writing the checks, not by reading the code
 
@@ -89,12 +107,6 @@ page shot cannot support that claim.
 
 ## Next
 
-- **COD-85** — `views/Trackers.tsx` is still ~1000 lines, over the 500 ceiling.
-  `CategoryRows`, `RoutineTimeline` and `HabitEditor` are self-contained and
-  would leave it near 450. Kept out of #177 to keep that diff reviewable. Do it
-  as a pure move and **diff the rendered output**: this is the exact shape of
-  the `views/Pullups.tsx` case where an inline rewrite silently dropped eleven
-  workout formats with every gate green.
 - **`Perfect days` renders two zeroes** on the demo seed. Left alone — a perfect
   day across eleven habits is genuinely rare, so it is not evidence the card is
   broken. Worth a decision, not a hunch.
