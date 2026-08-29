@@ -11,11 +11,12 @@ import { SmartInput } from '../components/SmartInput'
 import { Stepper } from '../components/fields/Stepper'
 import { TIME_SLOTS, orderedSlots, slotMeta, currentSlot } from '../lib/timeofday'
 import { slotGlyph } from '../components/glyphs'
-import { cat, HABIT_COLORS, onAccent, washStyle } from '../lib/colors'
-import { habitConsistency, habitStreak, cleanStreak, weeklyHabitCount, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
-import { nextHabitMilestone, habitComeback, longestStreakEver, daysSinceLastMiss, goalTier } from '../lib/streak'
+import { cat, HABIT_COLORS, onAccent } from '../lib/colors'
+import { habitConsistency, habitStreak, cleanStreak, habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../lib/stats'
+import { longestStreakEver, goalTier } from '../lib/streak'
 import { milestoneEmoji } from '../lib/milestones'
-import { completionRate30, habitCellFill, consistencyScore, bestWeekday, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from '../lib/habitStats'
+import { habitRowChips, type HabitChip } from '../lib/habitRowChips'
+import { habitCellFill, bestWeekday, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, trackerSummary } from '../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../lib/habitIntensity'
 import { rollingAverage } from '../lib/correlations'
 import { RadialTracker } from '../components/RadialTracker'
@@ -338,7 +339,19 @@ export function Trackers() {
           disclosure is a quiet row for optional form fields, a section folds a
           whole titled region with card chrome. Zone 2 spends the page's single
           DisclosureRow on "Add a habit". */}
-      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns">
+      {/* Folded by default, and the fold is remembered. `CollapsibleSection`'s
+          `defaultOpen` prop is documented "Deep-analytics groups default to
+          collapsed" and then defaults to `true`, so this section — five cards
+          and roughly 900px of them — opened on every visit despite being the
+          fifth thing on the page. The component default is left alone: it is
+          shared, and flipping it would silently close folds across the app.
+          `stickyKey` means a reader who wants these open only says so once,
+          the same bargain the Day/Week/Month control already makes.
+
+          Note for the next person: `npm run a11y` walks the rendered page, so
+          nothing in here is scanned while it is shut. It was re-run with the
+          section expanded for this change — keep doing that. */}
+      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns" defaultOpen={false} stickyKey="trackers.deepAnalytics">
         <TrackerVisuals data={data} today={today} />
         <ArchivedHabits />
       </CollapsibleSection>
@@ -547,13 +560,16 @@ function RoutineTimeline({
                           background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
                         }}
                       >{on ? (h.avoid ? <Icon as={Prohibit} size="sm" /> : '') : (h.emoji ?? '○')}</button>
-                      <button onClick={() => onEdit(h.id)} className="min-w-0 flex-1 text-left">
-                        <span className={`block truncate text-body ${on && !h.avoid ? 'text-fg-1' : 'text-fg-1'}`}>{h.name}</span>
+                      {/* The name is the control. There used to be a second
+                          button beside it firing the identical `onEdit(h.id)`,
+                          which is two targets for one action in a row that is
+                          already dense. */}
+                      <button onClick={() => onEdit(h.id)} aria-label={`${h.name} — activity & stats`} className="min-w-0 flex-1 text-left">
+                        <span className="block truncate text-body text-fg-1">{h.name}</span>
                         {h.cue && <span className="block truncate text-caption text-fg-2">{h.cue}</span>}
                       </button>
                       {numeric && !h.avoid && <span className="shrink-0 text-label text-fg-2">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
                       {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-label" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" /> {streak}</span>}
-                      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></Button>
                       <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-fg-2 hover:text-fg-1'}`}><Icon as={Note} size="sm" /></Button>
                     </div>
                     {(open || note) && (
@@ -575,6 +591,32 @@ function RoutineTimeline({
       })}
     </div>
   )
+}
+
+/**
+ * One mark beside a habit's name. `habitRowChips` decides *whether* and *which*;
+ * this decides only how it looks.
+ *
+ * Two colours between them, not five. The row used to carry peach, green,
+ * teal, sapphire and a maroon wash at once, which is what "stats in six
+ * different colours" looks like in practice: nothing is emphasised because
+ * everything is. Peach marks a run of days, green marks progress toward a
+ * target the user set, and that is the whole vocabulary.
+ */
+function RowChip({ chip: c }: { chip: HabitChip }) {
+  const box = 'inline-flex shrink-0 items-center gap-0.5 text-micro'
+  switch (c.kind) {
+    case 'streak':
+      return <span title={`${c.days}-day streak`} className={box} style={{ color: cat('peach') }}><Icon as={Flame} size="sm" />{c.days}</span>
+    case 'clean':
+      return <span title={`${c.days} ${c.days === 1 ? 'day' : 'days'} clean`} className={box} style={{ color: cat('green') }}><Icon as={ShieldCheck} size="sm" />{c.days}d clean</span>
+    case 'weekly':
+      return <span title={`${c.done} of ${c.goal} this week`} className={box} style={{ color: c.done >= c.goal ? cat('green') : cat('subtext0') }}>{c.done}/{c.goal}wk</span>
+    case 'comeback':
+      return <span title={`Back on track — ${c.days} days${c.count > 1 ? ` · ${c.count} comebacks` : ''}`} className={box} style={{ color: cat('green') }}>↺ {c.days}d</span>
+    case 'milestone':
+      return <span title={`${c.daysToGo} ${c.daysToGo === 1 ? 'day' : 'days'} to your ${c.day}-day milestone`} className={box} style={{ color: cat('peach') }}>{milestoneEmoji(c.day)}{c.day}d</span>
+  }
 }
 
 // ── Category section of habit rows ───────────────────────────────────────────
@@ -613,22 +655,12 @@ function CategoryRows({
         const numeric = type === 'count' || type === 'timer' || type === 'rating'
         const target = habitTarget(h)
         const avoid = !!h.avoid
-        const streak = avoid ? cleanStreak(data, h.id) : habitStreak(data, h.id)
         const slipColor = avoid ? cat('red') : cat(h.color)
-        const weekCount = h.weeklyGoal ? weeklyHabitCount(data, h.id, today) : 0
-        // H4: nearest clean-day milestone for avoid habits. H5: 30-day completion %.
-        const milestone = avoid ? nextHabitMilestone(streak) : null
-        const rate30 = avoid ? null : completionRate30(data, h, today)
-        // Comeback tracking: after a lapse, surface "back on track — Nd" so a
-        // missed day doesn't read as failure. Only for build habits.
-        const comeback = avoid ? null : habitComeback(data, h, today)
-        // Recency-weighted consistency score (#395) + days since the last
-        // scheduled miss (a complement to the raw streak). Build habits only.
-        const consistency = avoid ? null : consistencyScore(data, h, today)
-        const sinceMiss = avoid ? null : daysSinceLastMiss(data, h, today)
-        // Letter grade (A–F) over the recency-weighted 30-day consistency — a
-        // single glanceable mark. Only show once there's a real signal (not F at 0).
-        const grade = avoid ? null : habitGrade(data, h, today)
+        // What this row is allowed to say beside the name, and how much of it.
+        // The cap and the priority live in `lib/habitRowChips.ts`; this file
+        // only decides how each kind looks. See that module's header for why
+        // the decision was moved out of here.
+        const chips = habitRowChips(data, h, today)
         return (
           <tr
             key={h.id}
@@ -666,48 +698,9 @@ function CategoryRows({
                 {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
-                <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`max-w-[10rem] shrink-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></Button>
+                <button onClick={() => onEdit(h.id)} aria-label={`${h.name} — activity & stats`} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`max-w-[10rem] shrink-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-fg-2">({h.unit})</span>}
-                {avoid ? (
-                  <>
-                    {/* H4: clean-day chip — staying clean is the win for quit habits. */}
-                    <span title={`${streak} ${streak === 1 ? 'day' : 'days'} clean`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('green') }}><Icon as={ShieldCheck} size="sm" />{streak}d clean</span>
-                    {/* H4: nearest milestone badge — what to aim for next. */}
-                    {milestone && (
-                      <span title={`${milestone.daysToGo} ${milestone.daysToGo === 1 ? 'day' : 'days'} to your ${milestone.day}-day milestone`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}>{milestoneEmoji(milestone.day)}{milestone.day}d</span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {streak > 1 && <span title={`${streak}-day streak`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" />{streak}</span>}
-                    {/* H5: 30-day completion % (scheduled days done), only when any day was scheduled. */}
-                    {rate30 && rate30.scheduled > 0 && (
-                      <span title={`${rate30.done}/${rate30.scheduled} scheduled days done in the last 30`} className="shrink-0 text-micro" style={{ color: rate30.pct >= 80 ? cat('green') : rate30.pct >= 50 ? cat('peach') : cat('subtext0') }}>{rate30.pct}%30d</span>
-                    )}
-                    {/* Comeback chip: encourage after a lapse + show lifetime restarts. */}
-                    {comeback?.recovering && (
-                      <span title={`Back on track — ${comeback.current} ${comeback.current === 1 ? 'day' : 'days'}${comeback.comebackCount > 1 ? ` · ${comeback.comebackCount} comebacks` : ''}`} className="inline-flex shrink-0 items-center gap-0.5 text-micro" style={{ color: cat('teal') }}>↺ back {comeback.current}d{comeback.comebackCount > 1 ? ` ·${comeback.comebackCount}` : ''}</span>
-                    )}
-                    {/* #395: recency-weighted consistency score — momentum, not a flat avg. */}
-                    {consistency != null && consistency > 0 && (
-                      <span title={`Consistency score ${consistency}/100 (recent scheduled days weighted more)`} className="shrink-0 text-micro" style={{ color: consistency >= 80 ? cat('green') : consistency >= 50 ? cat('peach') : cat('subtext0') }}>◆{consistency}</span>
-                    )}
-                    {/* Letter grade (A–F) over the same window — a single glanceable mark. */}
-                    {grade && grade.score > 0 && (
-                      <span title={`Grade ${grade.letter}, consistency ${grade.score}/100`} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-micro font-medium" style={washStyle(grade.letter === 'A' || grade.letter === 'B' ? 'green' : grade.letter === 'C' ? 'peach' : 'maroon')}>{grade.letter}</span>
-                    )}
-                    {/* Days since the last scheduled miss — a clean-since counter. */}
-                    {sinceMiss != null && sinceMiss >= 3 && (
-                      <span title={`${sinceMiss} days since the last missed scheduled day`} className="shrink-0 text-micro" style={{ color: cat('sapphire') }}>{sinceMiss}d clean</span>
-                    )}
-                  </>
-                )}
-                {h.weeklyGoal ? (
-                  <span title={`${weekCount} of ${h.weeklyGoal} this week`} className="shrink-0 text-micro" style={{ color: weekCount >= h.weeklyGoal ? cat('green') : cat('subtext0') }}>
-                    {weekCount}/{h.weeklyGoal}wk
-                  </span>
-                ) : null}
+                {chips.map((c) => <RowChip key={c.kind} chip={c} />)}
               </div>
             </td>
             {days.map((d) => {

@@ -264,7 +264,7 @@ export function dayCompletion(data: JournalData, date: string): { done: number; 
 }
 
 /** Average completion ratio (0–1) per weekday (0=Sun…6=Sat) over a window. */
-export function weekdayConsistency(data: JournalData, window = 90, today = todayISO()): number[] {
+export function weekdayConsistency(data: JournalData, window = 90, today = todayISO()): (number | null)[] {
   const sum = Array(7).fill(0)
   const count = Array(7).fill(0)
   for (let i = 0; i < window; i++) {
@@ -275,7 +275,11 @@ export function weekdayConsistency(data: JournalData, window = 90, today = today
     sum[dow] += c.ratio
     count[dow] += 1
   }
-  return sum.map((s, i) => (count[i] ? s / count[i] : 0))
+  // `null`, not 0, where the weekday had nothing scheduled — the same
+  // distinction `moodByWeekday` below has always made. Collapsing the two
+  // states let "Best weekdays" draw a bar at zero for a day the user was never
+  // asked to do anything on, which reads as a failure that did not happen.
+  return sum.map((s, i) => (count[i] ? s / count[i] : null))
 }
 
 /** Average logged mood (0–10) per weekday (0=Sun…6=Sat); null where none. */
@@ -304,9 +308,9 @@ export function workoutSplitCounts(data: JournalData): { split: string; count: n
 }
 
 /** Average completion ratio (0–1) per calendar month for the last `months`. */
-export function monthlyCompletion(data: JournalData, months = 6, today = todayISO()): { ym: string; ratio: number }[] {
+export function monthlyCompletion(data: JournalData, months = 6, today = todayISO()): { ym: string; ratio: number | null }[] {
   const [y0, m0] = today.split('-').map(Number)
-  const out: { ym: string; ratio: number }[] = []
+  const out: { ym: string; ratio: number | null }[] = []
   for (let k = months - 1; k >= 0; k--) {
     const d = new Date(y0, m0 - 1 - k, 1)
     const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -318,7 +322,10 @@ export function monthlyCompletion(data: JournalData, months = 6, today = todayIS
       sum += c.ratio
       n += 1
     }
-    out.push({ ym, ratio: n ? sum / n : 0 })
+    // `null` for a month in which nothing was ever scheduled — before any
+    // habit's `startedOn`, say. Reporting it as 0 made "Monthly trend" open
+    // with two months of apparent total failure that simply predate the data.
+    out.push({ ym, ratio: n ? sum / n : null })
   }
   return out
 }

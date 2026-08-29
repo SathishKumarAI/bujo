@@ -28,7 +28,13 @@ type Props = {
   icon?: IconGlyph | ReactNode
   color?: string
   variant?: 'card' | 'quiet'
-  /** Deep-analytics groups default to collapsed. */
+  /**
+   * Open unless told otherwise. This said "Deep-analytics groups default to
+   * collapsed", which is the *intent* for those groups and not what the
+   * default does — Trackers' "Deep analytics" passed nothing and opened five
+   * cards on every visit for that reason. A group that wants to start folded
+   * has to say `defaultOpen={false}` (and usually a `stickyKey` with it).
+   */
   defaultOpen?: boolean
   /** Persist the open/closed choice under `section.<key>` (F6). */
   stickyKey?: string
