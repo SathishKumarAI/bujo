@@ -1,149 +1,90 @@
 # STATUS
 
-**Stopped:** 2026-08-29. On `main`, clean, nothing in flight. Four PRs opened,
-CI green, squash-merged: **#176, #177, #178, #179**. `main` is at `cd1f209`.
+**Stopped:** 2026-08-29. On `refactor/gym-page-contract`, clean.
+**#181 merged** (`main` at `85c3682`). **#182 open**, CI running.
 
 ## What this session did
 
-`?view=trackers` — "fix this page, optimise, make it premium", then "split it".
+Started from "work on `?view=gym`", then a reported bug: the exercise picker
+"not showing all the text".
 
 | PR | What | Ticket |
 |---|---|---|
-| #176 | Controls pushed off the phone screen with nothing able to scroll to them; the completion heatmap in 81px tracks | COD-80 |
-| #177 | Six chips per habit row printing the same number three ways; "no data" drawn as 0% | COD-81 |
-| #179 | The 1,048-line view split into the four components it already had | COD-85 |
+| #181 · merged | The picker was unreadable because a filling animation trapped it in a stacking context | — |
+| #182 · open | Gym on the three-zone contract; 4.67 → 1.38 screens at 1440, 6.89 → 2.37 at 390 | — |
+
+Filed, not fixed: **COD-89** three lists of the same lifts · **COD-90**
+`stalledLifts` fires on 6 of 6 · **COD-91** `ExercisePicker` is not a combobox ·
+**COD-92** set-row controls under the 44px touch floor · **COD-93** the a11y
+gate does not open folds.
 
 ## The one thing to carry forward
 
-**There is a second way to hide something, and no gate here could see it.**
+**A fix can look right, land, and do nothing — and the only way to know is to
+re-measure the symptom, not the mechanism.**
 
-`clipped-text.mjs` asks whether an element shows less than it holds
-(`scrollWidth > clientWidth`). `npm run a11y` asks whether the accessibility
-tree is sound. A button sitting at **x=453 in a 390px viewport** passes both: it
-shows everything it holds, its own box is fine, and it is focusable and named.
-The clip happens at an *ancestor*, and `document.body.scrollWidth` still reads
-390 because it happens above the body. So the Trackers toolbar had seven
-controls of which Month, three layouts, the wheel and the settings button were
-**unreachable on a phone**, through two green rendering gates.
+The picker bug was diagnosed correctly on the second try. The first diagnosis
+was: `transform: translateY(0)` computes to `matrix(1,0,0,1,0,0)`, which is not
+`none`, which creates a stacking context — so end every keyframe on
+`transform: none`. That is all true, it is a real CSS rule, and it fixed
+nothing. I confirmed the edited CSS was being served (`curl` the dev server,
+read the keyframe back) and the computed transform was *still* the matrix.
 
-The check that finds it is "a control outside the viewport with no ancestor able
-to scroll it into view". Two things about writing it are worth keeping:
+The actual rule is that **an animation which is filling a transform holds a
+stacking context for as long as it fills, whatever value it holds**, and
+`animation-fill-mode: both` fills forever. The value was never the variable.
+Nine entrance animations moved `both` → `backwards`; `celebrate-confetti` keeps
+`both` and is marked `fill-both-ok`, because it ends displaced at opacity 0 and
+must keep filling.
 
-- **The first draft reported 52 hits across 23 views** because it ran over every
-  leaf with text — tooltip descenders, SVG `path` nodes, sentences overhanging
-  by 40px. All cosmetic. Narrowed to *controls only*, it reported 18, and all 18
-  were real. A gate whose red is mostly noise is a gate nobody reads, which is
-  the same failure as a gate that is switched off.
-- **16 of the 18 were on Stats, not Trackers**, and one class fixed them.
-  `CardGrid` had no `grid-template-columns` below 768px; `grid-cols-2/3` expand
-  to `repeat(n, minmax(0,1fr))` so those steps were always safe, but the single
-  implicit `auto` track sizes to the widest item's min-content and may exceed
-  its own container — and **a grid track is shared**. Stats' Activity heatmap is
-  a 53-column `table-fixed` with a 398px min-content, so it dragged all six
-  sibling cards to 398px inside a 324px box. A card's own `min-w-0` cannot help:
-  it is the *track* that overflows, not the item.
+Two things worth keeping from that:
 
-Second: **the count is nobody's job until it is somebody's.** The habit row grew
-to seven marks in five colours, three of them the same measurement — `53%30d`,
-`◆60`, and a letter grade whose own docstring says it is "a thin, pure mapping
-over `consistencyScore`". No single commit added more than one. The cap now
-lives in `lib/habitRowChips.ts` as the contract of a pure function (`at most
-two, in priority order`), so adding a mark means deciding what it outranks.
+- **The gate I wrote first encoded the wrong rule and passed a broken page.**
+  It matched keyframes ending on `translateY(0)`. Rule 7 in
+  `check-design-system.mjs` reads the *fill mode* instead. A static gate is only
+  as good as the mechanism it believes in, and writing the gate is not proof you
+  understood the bug.
+- **The decisive measurement was three lines**: `elementFromPoint` at the centre
+  of the open panel, plus `panel.contains(hit)`. Before: the Body-weight chart's
+  `<svg>`, `false`. After: the panel's own `<li>`, `true`. Screenshots showed
+  "the menu looks transparent", which is what sent the first diagnosis at the
+  background colour instead of the z-order.
+
+Second: **folding a section removes it from `npm run a11y`.** That gate does not
+open folds — its header says so — so when the contract pass folded Gym's
+analytics, `BigThreeCard`'s **1.41:1** latte contrast bug went from
+gate-visible to gate-invisible. Found by re-running axe with every
+`[aria-expanded="false"]` in `#main` clicked open, three passes deep. Fixed the
+contrast bug; filed the gate as COD-93. **Re-run axe with folds open whenever
+you add or move one**, and read a clean a11y run as "clean for whatever was
+expanded".
+
+Third, smaller: **the set row did not fit a phone, through two green rendering
+gates.** 324px column, 326px of grid tracks, so the remove button sat at
+**x=387 in a 390 viewport** while `document.body.scrollWidth` still read 390 —
+the ancestor-clip trap already in CLAUDE.md, hit again. The same squeeze
+collapsed `1fr` to 50px, making the exercise picker the *narrowest* control in
+the row it exists to fill. Both found by iterating control rects, not by
+looking.
 
 ## Measured
 
-Dev server 5199, demo journal seeded, `#main` scroll height.
+Demo journal, dev server 5199.
 
 | | before | after |
 |---|---|---|
-| trackers · 1440 | 2463px | **1469px** |
-| trackers · 390 | 3742px | **2083px** |
-| unreachable controls, 23 views | 18 | **0** |
-| `views/Trackers.tsx` | 1048 lines | **436** |
+| gym · 1440 | 4207px · 4.67 screens | **1246px · 1.38** |
+| gym · 390 | 5818px · 6.89 screens | **1997px · 2.37** |
+| folds open on arrival | 10 of 10 | **0 of 9** |
+| charts on first paint | 4 | **0** |
+| controls off-screen at 390 | 1 | **0** |
 
-Every habit row is one line now; several were three. The split moved
-`CategoryRows`, `HabitEditor`, `RoutineTimeline` and `TodayStrip` into
-`components/trackers/`, which now has a README with the change → file table.
+Gates on #182: `tsc -b` 0 · eslint 0 errors · vitest **887/887** · build ok ·
+`design` 288 files · `contrast` 5 themes · `clipped` 23 views · `smoke` 25/25 ·
+axe with every fold open, 0 serious at mocha 1440 / latte 1440 / mocha 390.
 
-**How to prove a "pure move" here.** Extract by line range (`sed -n '426,499p'`)
-— never retype — then diff the *rendered markup*, not the code. The harness for
-this page is worth rebuilding: it captures seventeen states (five layouts, three
-date ranges, compact density, hidden weekends, show-archived, the wheel, the add
-disclosure, the deep-analytics fold, the settings popover, and both overlays)
-and compares them byte-for-byte. #179 came back identical on all seventeen.
+## Next action
 
-Check the harness before trusting its green: two states came back identical to
-the baseline and both needed explaining — `classic:compact` really does swap 341
-cells from `h-4 w-4` to `h-3 w-3` and merely happens to be the same *length*,
-and `classic:archived` matches because the demo journal has no archived habits.
-The overlays are the states that matter most: they open only on interaction, so
-no page-walking gate in this repo would have noticed either one breaking.
-
-## Three defects found by writing the checks, not by reading the code
-
-- **`habitComeback` reports `recovering` after a single day.** A habit logged
-  once today rendered "↺ back 1d" — a sentence meaning only "you did it today",
-  which the cell beside it already said. Three of the eleven demo habits carried
-  it. The chip test caught it before the page re-rendered.
-- **`monthlyCompletion` and `weekdayConsistency` both ended `count ? sum/count :
-  0`**, making "nothing was scheduled" and "you completed nothing" the same
-  number. *Monthly trend* opened with `0% · 0%` for the two months preceding the
-  first habit's `startedOn` — in the leftmost position, where a trend is read
-  from. Both return `null` now, matching `moodByWeekday` immediately below them
-  in the same file, which had always drawn the distinction.
-- **The existing test passed by accident.** `expect(null).toBeGreaterThanOrEqual(0)`
-  coerces and succeeds, so `weekdayConsistency returns 7 values in 0..1` would
-  have gone on passing whatever that function returned.
-
-## A false alarm worth recording
-
-**The Mood/Stress/Sleep chart is not broken.** It reads as an empty grid in
-full-page screenshots at 1440 because the tool downscales and 2px strokes at
-`opacity 0.35` disappear. Confirmed twice — six `recharts-curve` paths with real
-`d` values in the DOM, then a native-resolution element screenshot showing a
-dense, legible chart. Same for the Category-consistency radar. **Take element
-screenshots at native size before believing a chart is empty**; a downscaled
-page shot cannot support that claim.
-
-## Next
-
-- **`Perfect days` renders two zeroes** on the demo seed. Left alone — a perfect
-  day across eleven habits is genuinely rare, so it is not evidence the card is
-  broken. Worth a decision, not a hunch.
-- **COD-61** — Recovery needs a real IA pass. 3734px, two review sections at
-  1121 and 1729px.
-- **COD-73** — flat card stacks: pickleball 5379px (18 cards), stats 4685, gym
-  4207, help 4021, nofap 3734. Note the `CardGrid` fix above changes phone
-  layout on every one of these; re-measure before quoting those numbers again.
-- **The store persists the whole journal on every change, undebounced.**
-  Unchanged from the last session — `store.tsx` is untouched and every
-  write-through field still provokes it. Decide whether a debounce plus a
-  `visibilitychange` flush is worth the data-loss surface before filing.
-
-## Environment traps
-
-- **Ports:** 5199 is this repo's dev server, 4173 its preview, and **5173
-  belongs to `interview_prep/frontend`**. `scripts/clipped-text.mjs` defaults to
-  4173, so pass `BUJO_URL=http://localhost:5199` to run it against the dev
-  server.
-- **Chrome DevTools MCP and the Claude-in-Chrome extension were both
-  unavailable this session** (no browser on the debug port, extension not
-  connected). Everything visual here was measured with Playwright scripts
-  driving `require('playwright')` out of the repo's `node_modules` — note that
-  `createRequire(import.meta.url)` fails from a scratchpad file, so point it at
-  the repo's `package.json` instead.
-- **`page.evaluate` ships the function source and nothing it closes over.** A
-  module-level `const` used inside an evaluated function arrives undefined at
-  runtime, not at lint time.
-- **A `{/* comment */}` inside a JSX attribute expression is a syntax error** —
-  `right={ {/* … */} <div/> }` is two expressions. Use a bare `/* … */`. Vite
-  kept serving the last good module, so the page still rendered and a browser
-  gate still passed while `tsc -b` was red.
-- **`npm run a11y` still cannot see inside a closed fold**, and #177 closes
-  Trackers' "Deep analytics" by default. It was re-run with the fold forced open
-  via `localStorage['bujo.ui.section.trackers.deepAnalytics'] = '1'`, asserting
-  `aria-expanded="true"` and all five inner cards present before scoring —
-  otherwise folding a section buys a green report for free. Do that whenever a
-  fold's default changes.
-- Screenshots need `localStorage['bujo:onboarded'] = '1'` before load, and
-  `?demo=1` seeds only into an empty journal.
+Merge #182 once CI is green. Then COD-93 (arm the a11y gate to open folds) is
+the highest-leverage of the five filed — it is the reason the other bugs on this
+page were invisible, and it protects every page, not this one.
