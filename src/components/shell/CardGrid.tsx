@@ -38,10 +38,23 @@ import { cn } from '../../lib/cn'
  *
  * `items-start`, not stretch: a short card next to a tall one should stay
  * short rather than grow a pocket of empty space to match its neighbour.
+ *
+ * **The phone column needs `minmax(0, 1fr)` spelled out.** `grid-cols-2` and
+ * `grid-cols-3` expand to `repeat(n, minmax(0, 1fr))`, so the two- and
+ * three-column steps have always been safe; below 768px there was no
+ * `grid-template-columns` at all, leaving a single implicit `auto` track that
+ * sizes to the *widest item's min-content* and is free to exceed its own
+ * container. One card doing that widens the track, and a grid track is shared —
+ * so every other card in the grid is stretched with it. On Stats at 390px the
+ * Activity heatmap's 53-column `table-fixed` measured a 398px min-content and
+ * dragged all six sibling cards to 398 inside a 324px box, putting sixteen
+ * controls (every "Enlarge", the month stepper, the 3mo/6mo/1yr range) off the
+ * right edge with no ancestor able to scroll to them. A card's own `min-w-0`
+ * cannot prevent this: it is the track that overflows, not the item.
  */
 export function CardGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('grid items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
+    <div className={cn('grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
       {children}
     </div>
   )

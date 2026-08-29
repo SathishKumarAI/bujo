@@ -277,7 +277,11 @@ export function Stats() {
         title="Mood calendar"
         subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
         right={
-          <div className="flex gap-1">
+          /* Five controls do not fit a 390px row, and `Card` can only cap the
+             width of the slot — it cannot wrap a cluster whose markup it does
+             not own. Without `flex-wrap` here this one overflowed *left*, to
+             x=-38. Same fix as the Trackers toolbar. */
+          <div className="flex flex-wrap justify-end gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
             <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d rounded-none">←</Button>
             <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d rounded-none">This month</Button>
@@ -311,7 +315,7 @@ export function Stats() {
       ) : (
       <Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
         right={
-          <div className="flex gap-1">
+          <div className="flex flex-wrap justify-end gap-1">
             <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
             <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d rounded-none"><Icon as={ArrowsOut} size="sm" /></Button>
           </div>

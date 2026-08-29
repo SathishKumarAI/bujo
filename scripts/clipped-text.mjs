@@ -73,6 +73,55 @@ function findClipped() {
 }
 
 /**
+ * The other way to hide something that is present: push a *control* past the
+ * edge of the page with nothing able to scroll to it. Not clipped — unreachable.
+ *
+ * `findClipped` cannot see this, and the distinction is the same blind spot the
+ * header describes one level up. That check asks whether an element shows less
+ * than it holds — `scrollWidth > clientWidth`. A button sitting at x=453 in a
+ * 390px viewport shows *everything* it holds; its own box is fine. The clip
+ * happens at an ancestor, and `document.body` still reports `scrollWidth` 390
+ * because it happens above the body. So the page measures clean while a third
+ * of a toolbar cannot be pressed.
+ *
+ * Deliberately controls only, not text. The first draft of this ran over every
+ * leaf with text and reported 52 hits across 23 views — descenders of a
+ * tooltip, SVG `path` nodes, sentences overhanging by 40px. All cosmetic, none
+ * of them the defect, and a gate whose red is mostly noise is a gate nobody
+ * reads. "You cannot press this" is unambiguous and worth failing a build for.
+ *
+ * The reachability walk is what keeps even that honest: wide content inside an
+ * `overflow-x-auto` box is a design, not a defect — the month grid on Trackers
+ * is 900px wide by intent, and every day cell in it is a button — so a control
+ * only counts as lost when nothing between it and the document can scroll it
+ * into view.
+ */
+function findUnreachable() {
+  // Inline, not a module-level constant: `page.evaluate` ships the function
+  // source and nothing it closes over, so a hoisted selector arrives undefined.
+  const CONTROLS = 'button, a[href], input, select, textarea, [role="button"], [role="tab"], [role="switch"]'
+  const out = []
+  const limit = document.documentElement.clientWidth
+  for (const el of document.querySelectorAll(`main :is(${CONTROLS})`)) {
+    const r = el.getBoundingClientRect()
+    if (r.width <= 2 || r.height <= 2) continue // sr-only / not laid out
+    if (r.right <= limit + 1 && r.left >= -1) continue
+    if (el.closest('[data-clip-ok]')) continue
+
+    let reachable = false
+    for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+      const ov = getComputedStyle(p).overflowX
+      if ((ov === 'auto' || ov === 'scroll') && p.scrollWidth > p.clientWidth + 1) { reachable = true; break }
+    }
+    if (reachable) continue
+
+    const label = ((el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '').trim() || el.tagName.toLowerCase()).slice(0, 60)
+    out.push({ text: label, left: Math.round(r.left), right: Math.round(r.right), limit })
+  }
+  return out
+}
+
+/**
  * Both widths. This gate only ever ran at 1440 — the width at which text is
  * least likely to be clipped — and never at the one where it is most likely.
  * A pass at desktop says nothing about a phone: the columns are a third as
@@ -118,15 +167,22 @@ for (const vp of VIEWPORTS) {
       console.error(`\n${vp.name} · ${view} — ${clipped.length} clipped`)
       for (const c of clipped) console.error(`  "${c.text}"  ${c.shown}px shown, ${c.needed}px needed`)
     }
+    const lost = await page.evaluate(findUnreachable)
+    if (lost.length) {
+      failures += lost.length
+      console.error(`\n${vp.name} · ${view} — ${lost.length} controls off-screen and unreachable`)
+      for (const c of lost) console.error(`  "${c.text}"  spans ${c.left}–${c.right}px, page is ${c.limit}px`)
+    }
   }
 }
 
 await browser.close()
 
 if (failures) {
-  console.error(`\n${failures} clipped strings across ${VIEWS.length} views.`)
-  console.error('Let the text wrap, give its column the space, or mark the element')
-  console.error('`data-clip-ok` if the truncation is genuinely intended.')
+  console.error(`\n${failures} hidden strings across ${VIEWS.length} views.`)
+  console.error('Let the text wrap, give its column the space, let the row wrap so')
+  console.error('it stays on the page, or mark the element `data-clip-ok` if the')
+  console.error('truncation is genuinely intended.')
   process.exit(1)
 }
-console.log(`No clipped text across ${VIEWS.length} views at ${VIEWPORTS.map((v) => v.width).join('px and ')}px.`)
+console.log(`No clipped or off-screen text across ${VIEWS.length} views at ${VIEWPORTS.map((v) => v.width).join('px and ')}px.`)

@@ -202,7 +202,13 @@ export function Trackers() {
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)}, tap a cell to mark the day`}
         right={
-          <div className="flex items-center gap-1.5">
+          /* `flex-wrap`, because `Card` cannot wrap a cluster it does not own:
+             its `right` slot arrives as a single flex item, so capping the
+             wrapper at `max-w-full` only decided *where* a 420px child
+             overflows, not whether it did — with `justify-end` it moved from
+             off the right edge to off the left one. Seven controls do not fit
+             on a 390px row and the row has to say so itself. */
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             {!radial && (
               <div className="inline-flex overflow-hidden rounded-none border border-line-strong">

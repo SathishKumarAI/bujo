@@ -202,7 +202,17 @@ export function Card({
             </div>
             {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          {/* `max-w-full` + `flex-wrap`, because `shrink-0` alone lets this
+              cluster size to its content past the width of the page. Trackers
+              ships seven controls here (Day/Week/Month, four layouts, wheel,
+              settings); at 390px that measured 420px wide with its right edge
+              at x=453, and no ancestor scrolls horizontally — so Month, three
+              layouts, the wheel and the settings button were simply not on the
+              screen and could not be reached. `shrink-0` stays: the header is
+              `flex-wrap`, so a wide cluster still drops to its own line rather
+              than squeezing the title to "M…". The cap only decides what
+              happens once it is *on* that line and still too wide. */}
+          <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-2">
             {right && <span className="contents" onClick={stopBubble}>{right}</span>}
             {showEnlarge && (
               <button onClick={(e) => { e.stopPropagation(); setLarge(true) }}
