@@ -48,6 +48,16 @@ export interface Recurrence {
 }
 
 export type HabitCategory = 'stimulant' | 'food' | 'movement' | 'wellness' | 'custom'
+/**
+ * Every category, in the order the tracker groups them. Beside the union
+ * deliberately: the two have to agree, and they were previously written out a
+ * third and a fourth time — `CATEGORIES` in `views/Trackers.tsx` and
+ * `CATEGORY_ORDER` in `components/ActivityLayout.tsx`, identical and with
+ * nothing keeping them so. Same shape as the palette that lived in two files
+ * and drifted (see CLAUDE.md). Adding a category means editing this line and
+ * the one above it, and the compiler checks you did both.
+ */
+export const HABIT_CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 /** check = a yes/no dot; count = a number toward a daily target. */
 export type HabitType = 'check' | 'count' | 'timer' | 'rating'
 
