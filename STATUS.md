@@ -1,38 +1,53 @@
 # STATUS
 
-**Stopped:** 2026-08-28 (fourth session that day). On `main`, clean, nothing in
-flight. Two PRs opened, CI green, squash-merged: **#173, #174**. `main` is at
-`094ad86`.
+**Stopped:** 2026-08-29. On `refactor/trackers-row-signal`, clean. **#176**
+squash-merged; **#177** open with CI running. `main` is at `9b4d0dd`.
 
 ## What this session did
 
-`?view=program` — "optimise, more UI, add features if needed".
+`?view=trackers` — "fix this page, optimise, make it premium".
 
 | PR | What | Ticket |
 |---|---|---|
-| #173 | Program onto the three-zone contract; `ProgramTracker` split into `components/program/` | COD-76 |
-| #174 | Rest timer, driven by the block's own rep-range rule | COD-77 |
+| #176 | Controls pushed off the phone screen with nothing able to scroll to them; the completion heatmap in 81px tracks | COD-80 |
+| #177 | Six chips per habit row printing the same number three ways; "no data" drawn as 0% | COD-81 |
 
 ## The one thing to carry forward
 
-**A rule that reads correctly over one dataset is not a rule about the domain.**
+**There is a second way to hide something, and no gate here could see it.**
 
-`restSeconds(qty)` started global: parse the rep target, apply the block's
-"12+ → 30s · 8–10 → 120s · <8 → 180s". Every hypertrophy quantity gave a
-sensible answer. But the *pull-up* program has `5 reps` scapular retractions and
-`1 rep` jumping pull-ups, so the same function offered three-minute rests inside
-a circuit whose source prescribes no rest at all — a prescription nobody wrote,
-presented with a countdown clock.
+`clipped-text.mjs` asks whether an element shows less than it holds
+(`scrollWidth > clientWidth`). `npm run a11y` asks whether the accessibility
+tree is sound. A button sitting at **x=453 in a 390px viewport** passes both: it
+shows everything it holds, its own box is fine, and it is focusable and named.
+The clip happens at an *ancestor*, and `document.body.scrollWidth` still reads
+390 because it happens above the body. So the Trackers toolbar had seven
+controls of which Month, three layouts, the wheel and the settings button were
+**unreachable on a phone**, through two green rendering gates.
 
-The rest rule is a fact about **one program**, and it now lives on the record
-(`restRule: 'rep-range'`); `restSeconds(program, qty)` returns `null` for anyone
-who has not opted in. The test asserts both directions *and* asserts that
-several pull-up quantities do parse as rep targets, so it cannot pass for the
-wrong reason.
+The check that finds it is "a control outside the viewport with no ancestor able
+to scroll it into view". Two things about writing it are worth keeping:
 
-It was the test that found this, before the UI rendered once. Same family as the
-`help ?? subtitle` and `aria-label ?? textContent` traps already in `CLAUDE.md`:
-the sweep that keys on the wrong thing reports clean.
+- **The first draft reported 52 hits across 23 views** because it ran over every
+  leaf with text — tooltip descenders, SVG `path` nodes, sentences overhanging
+  by 40px. All cosmetic. Narrowed to *controls only*, it reported 18, and all 18
+  were real. A gate whose red is mostly noise is a gate nobody reads, which is
+  the same failure as a gate that is switched off.
+- **16 of the 18 were on Stats, not Trackers**, and one class fixed them.
+  `CardGrid` had no `grid-template-columns` below 768px; `grid-cols-2/3` expand
+  to `repeat(n, minmax(0,1fr))` so those steps were always safe, but the single
+  implicit `auto` track sizes to the widest item's min-content and may exceed
+  its own container — and **a grid track is shared**. Stats' Activity heatmap is
+  a 53-column `table-fixed` with a 398px min-content, so it dragged all six
+  sibling cards to 398px inside a 324px box. A card's own `min-w-0` cannot help:
+  it is the *track* that overflows, not the item.
+
+Second: **the count is nobody's job until it is somebody's.** The habit row grew
+to seven marks in five colours, three of them the same measurement — `53%30d`,
+`◆60`, and a letter grade whose own docstring says it is "a thin, pure mapping
+over `consistencyScore`". No single commit added more than one. The cap now
+lives in `lib/habitRowChips.ts` as the contract of a pure function (`at most
+two, in priority order`), so adding a mark means deciding what it outranks.
 
 ## Measured
 
@@ -40,58 +55,83 @@ Dev server 5199, demo journal seeded, `#main` scroll height.
 
 | | before | after |
 |---|---|---|
-| program · 1440 | 1354px | **894px** |
-| program · 390 | 1512px | 1635px |
-| pullups · 1440 | 1439px | 1683px |
-| pullups · 390 | 2513px | 2745px |
+| trackers · 1440 | 2463px | **1469px** |
+| trackers · 390 | 3742px | **2083px** |
+| unreachable controls, 23 views | 18 | **0** |
 
-Program was a single `Card` in the 820 tier — 820px of content in a 1392px
-container, 572px of empty page, the body map below the fold. Now:
+Every habit row is one line now; several were three.
 
-- **ORIENT** — focus, set count, day and block progress. Fact 1 is a button
-  while browsing; that is the old "Continue" row.
-- **ACT** (sticky) — load into session, mark all done, the rest timer, the
-  program map.
-- **REVIEW** — the exercises, then the body map last.
+## Three defects found by writing the checks, not by reading the code
 
-Both pages grew where the **program map** lands (246px on a phone): eighteen or
-thirty days of progress in place of two rows of bare numbers that could not
-answer "how much of block 2 is left".
+- **`habitComeback` reports `recovering` after a single day.** A habit logged
+  once today rendered "↺ back 1d" — a sentence meaning only "you did it today",
+  which the cell beside it already said. Three of the eleven demo habits carried
+  it. The chip test caught it before the page re-rendered.
+- **`monthlyCompletion` and `weekdayConsistency` both ended `count ? sum/count :
+  0`**, making "nothing was scheduled" and "you completed nothing" the same
+  number. *Monthly trend* opened with `0% · 0%` for the two months preceding the
+  first habit's `startedOn` — in the leftmost position, where a trend is read
+  from. Both return `null` now, matching `moodByWeekday` immediately below them
+  in the same file, which had always drawn the distinction.
+- **The existing test passed by accident.** `expect(null).toBeGreaterThanOrEqual(0)`
+  coerces and succeeds, so `weekdayConsistency returns 7 values in 0..1` would
+  have gone on passing whatever that function returned.
 
-## Two defects the gates caught in this session's own code
+## A false alarm worth recording
 
-- `rounded-full` is not a token here — `npm run design` blocked it.
-- `truncate` on the map's focus label: **30 clipped strings** on Pull-ups at
-  390px, from a gate that had been at zero. A phone gives a five-day week 43px
-  per cell and "Conditioning" needs 60; wrapping does not help one long word,
-  and a wider cell puts the hypertrophy grid back to 377px. The phone cell is
-  the day number now, and the focus reads from the day header.
+**The Mood/Stress/Sleep chart is not broken.** It reads as an empty grid in
+full-page screenshots at 1440 because the tool downscales and 2px strokes at
+`opacity 0.35` disappear. Confirmed twice — six `recharts-curve` paths with real
+`d` values in the DOM, then a native-resolution element screenshot showing a
+dense, legible chart. Same for the Category-consistency radar. **Take element
+screenshots at native size before believing a chart is empty**; a downscaled
+page shot cannot support that claim.
 
 ## Next
 
+- **COD-85** — `views/Trackers.tsx` is still ~1000 lines, over the 500 ceiling.
+  `CategoryRows`, `RoutineTimeline` and `HabitEditor` are self-contained and
+  would leave it near 450. Kept out of #177 to keep that diff reviewable. Do it
+  as a pure move and **diff the rendered output**: this is the exact shape of
+  the `views/Pullups.tsx` case where an inline rewrite silently dropped eleven
+  workout formats with every gate green.
+- **`Perfect days` renders two zeroes** on the demo seed. Left alone — a perfect
+  day across eleven habits is genuinely rare, so it is not evidence the card is
+  broken. Worth a decision, not a hunch.
 - **COD-61** — Recovery needs a real IA pass. 3734px, two review sections at
   1121 and 1729px.
 - **COD-73** — flat card stacks: pickleball 5379px (18 cards), stats 4685, gym
-  4207, help 4021, nofap 3734.
-- **Pull-ups' zone balance.** Its review column was already the taller one and
-  #173 added 244px to it. Worth a look with the page-contract method.
-- **The store persists the whole journal on every change, undebounced.** #173
-  stopped the Program page provoking it once per keystroke by keeping the
-  actual-result field local until blur, but `store.tsx` is untouched and every
-  other write-through field in the app still does it. Not filed — decide
-  whether a debounce plus a `visibilitychange` flush is worth the data-loss
-  surface before opening a ticket.
+  4207, help 4021, nofap 3734. Note the `CardGrid` fix above changes phone
+  layout on every one of these; re-measure before quoting those numbers again.
+- **The store persists the whole journal on every change, undebounced.**
+  Unchanged from the last session — `store.tsx` is untouched and every
+  write-through field still provokes it. Decide whether a debounce plus a
+  `visibilitychange` flush is worth the data-loss surface before filing.
 
 ## Environment traps
 
 - **Ports:** 5199 is this repo's dev server, 4173 its preview, and **5173
-  belongs to `interview_prep/frontend`**. Verify the preview is serving the
-  current build before believing a browser result:
-  `curl -s localhost:4173 | grep index-` against `dist/index.html`.
-- **`npm run a11y` cannot see the rest timer.** It walks the rendered page and
-  the timer is not in the DOM until an exercise is ticked — the closed-fold
-  blind spot, one level in. Checked this session with a throwaway script that
-  ticks one and runs axe in all five themes (0 serious/critical). Anything else
-  that only appears after an interaction has the same hole.
+  belongs to `interview_prep/frontend`**. `scripts/clipped-text.mjs` defaults to
+  4173, so pass `BUJO_URL=http://localhost:5199` to run it against the dev
+  server.
+- **Chrome DevTools MCP and the Claude-in-Chrome extension were both
+  unavailable this session** (no browser on the debug port, extension not
+  connected). Everything visual here was measured with Playwright scripts
+  driving `require('playwright')` out of the repo's `node_modules` — note that
+  `createRequire(import.meta.url)` fails from a scratchpad file, so point it at
+  the repo's `package.json` instead.
+- **`page.evaluate` ships the function source and nothing it closes over.** A
+  module-level `const` used inside an evaluated function arrives undefined at
+  runtime, not at lint time.
+- **A `{/* comment */}` inside a JSX attribute expression is a syntax error** —
+  `right={ {/* … */} <div/> }` is two expressions. Use a bare `/* … */`. Vite
+  kept serving the last good module, so the page still rendered and a browser
+  gate still passed while `tsc -b` was red.
+- **`npm run a11y` still cannot see inside a closed fold**, and #177 closes
+  Trackers' "Deep analytics" by default. It was re-run with the fold forced open
+  via `localStorage['bujo.ui.section.trackers.deepAnalytics'] = '1'`, asserting
+  `aria-expanded="true"` and all five inner cards present before scoring —
+  otherwise folding a section buys a green report for free. Do that whenever a
+  fold's default changes.
 - Screenshots need `localStorage['bujo:onboarded'] = '1'` before load, and
   `?demo=1` seeds only into an empty journal.

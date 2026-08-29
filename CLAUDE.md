@@ -86,6 +86,51 @@ closed-fold traps, one level up: not "a page that is never visited cannot
 fail", but **an app that is never checked cannot fail**. When a browser gate
 passes, confirm what it was pointed at.
 
+Trap: **a control can be hidden without being clipped, and neither rendering
+gate sees it.** `scripts/clipped-text.mjs` asks whether an element shows less
+than it holds (`scrollWidth > clientWidth`); `npm run a11y` asks whether the
+accessibility tree is sound. A button at **x=453 in a 390px viewport** passes
+both — it shows everything it holds, its own box is fine, and it is focusable
+and named. The clip happens at an *ancestor*, and `document.body.scrollWidth`
+still reads 390 because it happens above the body. Trackers shipped a
+seven-control toolbar of which Month, three layouts, the wheel and the settings
+button were **unreachable on a phone**. `clipped-text.mjs` now also fails on "a
+control outside the viewport with no ancestor able to scroll it into view" —
+**controls only**, because the first draft ran over every leaf with text and
+reported 52 cosmetic hits across 23 views, and a gate whose red is mostly noise
+is a gate nobody reads. Two corollaries: a wide box inside `overflow-x-auto` is
+a *design* (every day cell in the month grid is a button), so the reachability
+walk is load-bearing; and `Card` can cap its `right` slot at `max-w-full` but
+**cannot wrap a cluster whose markup it does not own** — an over-wide child just
+changes which edge it leaves by, so the call site needs `flex-wrap` itself.
+
+Trap: **`grid-cols-N` is safe and the *implicit* track is not.** Tailwind's
+`grid-cols-2/3` expand to `repeat(n, minmax(0, 1fr))`. A grid with no
+`grid-template-columns` at all — which `CardGrid` had below 768px — gets one
+implicit `auto` track that sizes to the **widest item's min-content** and may
+exceed its own container. A grid track is *shared*, so one wide item drags every
+sibling with it: Stats' Activity heatmap (a 53-column `table-fixed`, min-content
+398px) stretched all six neighbouring cards to 398px inside a 324px box and put
+sixteen controls off the right edge. **A card's own `min-w-0` cannot fix this** —
+it is the track that overflows, not the item. Spell the phone column out.
+
+Trap: **`count ? sum / count : 0` makes "no data" indistinguishable from "you
+scored zero".** `monthlyCompletion` and `weekdayConsistency` both ended that
+way, so *Monthly trend* opened with `0% · 0%` for the two months preceding the
+first habit's `startedOn` — a total failure that never happened, in the leftmost
+position where a trend is read from. Return `null` and let the caller decide;
+`moodByWeekday`, immediately below them in the same file, always did. Watch for
+the test that hides it: **`expect(null).toBeGreaterThanOrEqual(0)` coerces and
+passes**, so `weekdayConsistency returns 7 values in 0..1` would have gone on
+passing whatever that function returned. Assert `not.toBeNull()` first.
+
+Trap: **a chart is not empty because a full-page screenshot says so.** The
+screenshot tool downscales, and 2px strokes at `opacity 0.35` vanish — Trackers'
+Mood/Stress/Sleep line chart and its category radar both read as bare grids at
+1440 and are in fact dense and legible. Count the `recharts-curve` paths in the
+DOM, or take an **element** screenshot at native size, before calling one
+broken. A downscaled page shot cannot support that claim in either direction.
+
 Trap: **there are two disclosure implementations and only one puts text in its
 toggle.** `CollapsibleSection` renders its title inside the button;
 `Card collapsible` renders a caret glyph and nothing else, so its name lives
