@@ -237,7 +237,7 @@ th {
   }
 }
 .glyph-set {
-  animation: glyph-set var(--dur-base) var(--ease-emphasis) both;
+  animation: glyph-set var(--dur-base) var(--ease-emphasis) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .glyph-set {
@@ -403,12 +403,36 @@ body.handwriting textarea {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* ── Entrance animations end `backwards`, never `both` ──────────────────────
+   An animation that is *filling* a transform holds a stacking context on its
+   element for as long as it fills — and `fill-mode: both` fills forever. The
+   value does not matter: `transform: none` in the last keyframe still computes
+   to `matrix(1, 0, 0, 1, 0, 0)` while the animation is retained, which was the
+   first fix tried here and changed nothing.
+
+   The cost: every top-level card carries `.page-enter > *` (bujo-rise), so each
+   one was a permanent stacking context, and anything absolutely positioned
+   inside was trapped in it. `ExercisePicker`'s dropdown has `z-50` and still
+   painted *underneath* the following card — measured on `?view=gym`, where
+   `elementFromPoint` in the middle of the open panel returned the Body-weight
+   chart's <svg> and `panel.contains(hit)` was false. It reads as a transparent
+   menu; it is a z-order bug, and z-index cannot climb out of a stacking context.
+
+   `backwards` keeps the only part that is load-bearing — holding the *from*
+   state through `animation-delay`, which is what the stagger needs — and drops
+   the element back to its own style the moment the animation ends. Identical
+   pixels, because every one of these ends on the element's natural style.
+
+   The exception is `celebrate-confetti`, which ends displaced and invisible on
+   purpose: it must keep `both` or the confetti snaps back and reappears. Ending
+   somewhere other than the natural state is the test for which mode you want. */
+
 /* Staggered entrance for hero elements (set animation-delay inline). */
 @keyframes rise-in {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
-.rise { animation: rise-in var(--dur-slow) var(--ease-rise) both; }
+.rise { animation: rise-in var(--dur-slow) var(--ease-rise) backwards; }
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; }
 }
@@ -419,7 +443,7 @@ body.handwriting textarea {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .page-in {
-  animation: page-in var(--dur-base) var(--ease-rise) both;
+  animation: page-in var(--dur-base) var(--ease-rise) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .page-in { animation: none; }
@@ -434,7 +458,7 @@ body.handwriting textarea {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: none; }
 }
-.collapse-in { animation: collapse-in var(--dur-fast) var(--ease-rise) both; }
+.collapse-in { animation: collapse-in var(--dur-fast) var(--ease-rise) backwards; }
 /* One caret, rotated — not two glyphs swapped — so the state change is a turn
    rather than a cut. Pair with a CaretDown at rest. */
 .caret-turn { transition: transform var(--dur-base) var(--ease-emphasis); }
@@ -502,8 +526,8 @@ body.handwriting textarea {
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.modal-backdrop-in { animation: modal-backdrop-in var(--dur-fast) var(--ease-rise) both; }
-.modal-panel-in { animation: modal-panel-in var(--dur-base) var(--ease-emphasis) both; }
+.modal-backdrop-in { animation: modal-backdrop-in var(--dur-fast) var(--ease-rise) backwards; }
+.modal-panel-in { animation: modal-panel-in var(--dur-base) var(--ease-emphasis) backwards; }
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop-in, .modal-panel-in { animation: none; }
 }
@@ -852,7 +876,7 @@ body.handwriting textarea {
     to { opacity: 1; transform: translateY(0); }
   }
   /* Staggered fade-rise for a page's top-level cards. */
-  .page-enter > * { animation: bujo-rise var(--dur-slow) var(--ease-emphasis) both; }
+  .page-enter > * { animation: bujo-rise var(--dur-slow) var(--ease-emphasis) backwards; }
   .page-enter > *:nth-child(1) { animation-delay: 0ms; }
   .page-enter > *:nth-child(2) { animation-delay: 45ms; }
   .page-enter > *:nth-child(3) { animation-delay: 90ms; }
@@ -889,7 +913,7 @@ body.handwriting textarea {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .sheet-up { animation: sheet-up 0.18s var(--ease-emphasis) both; }
+  .sheet-up { animation: sheet-up 0.18s var(--ease-emphasis) backwards; }
 }
 
 /* ── Native-app feel on touch / iOS ───────────────────────────────────────── */
@@ -942,10 +966,13 @@ button, a, [role='button'], label, input, select, textarea {
     55% { opacity: 1; transform: scale(1.05); }
     100% { opacity: 1; transform: scale(1); }
   }
-  .celebrate-pop { animation: celebrate-pop 0.34s var(--ease-emphasis) both; }
+  .celebrate-pop { animation: celebrate-pop 0.34s var(--ease-emphasis) backwards; }
   @keyframes celebrate-confetti {
     0% { transform: translateY(0) rotate(0); opacity: 1; }
     100% { transform: translateY(-24px) rotate(28deg); opacity: 0; }
   }
-  .celebrate-confetti { animation: celebrate-confetti 0.9s ease-out 0.15s both; }
+  /* `both` on purpose — this one ends displaced and at opacity 0, so it has to
+     keep filling or the confetti snaps back into view. See the note above
+     `rise-in`; it is the sole exception. */
+  .celebrate-confetti { animation: celebrate-confetti 0.9s ease-out 0.15s both; /* fill-both-ok */ }
 }

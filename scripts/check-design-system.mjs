@@ -136,6 +136,43 @@ for (const modulePath of CHROME_MODULES) {
   })
 }
 
+// 7 · An entrance animation left on `animation-fill-mode: both`.
+//
+// A filling animation on `transform` holds a STACKING CONTEXT on its element for
+// as long as it fills, and `both` fills forever. `.page-enter > *` therefore gave
+// every top-level card a permanent stacking context, and anything absolutely
+// positioned inside was trapped in it: `ExercisePicker`'s dropdown carries
+// `z-50` and still painted *under* the following card. It looks like a
+// transparent menu; it is a z-order bug that z-index cannot fix.
+//
+// The value in the last keyframe is NOT the tell — `transform: none` still
+// computes to a matrix while the animation is retained, which is why the first
+// attempt at this rule (match keyframes ending on `translateY(0)`) passed a
+// still-broken page. What matters is the fill mode, so that is what this reads.
+//
+// Static, because no rendering gate can see it: the panel is present, sized,
+// named and focusable, so `a11y` and `clipped-text` both pass while it is
+// unreadable. Sibling of the closed-fold and empty-journal traps — a defect that
+// is only visible in the compositor.
+//
+// `both` is legitimate when the animation ends somewhere OTHER than the
+// element's natural style, so it has to keep filling to stay there. Those
+// opt out with a `fill-both-ok` comment on the same line rather than being
+// silently exempted by name.
+for (const cssFile of ['src/index.css', 'src/styles/tokens.css', 'src/styles/layout.css']) {
+  const full = join(root, cssFile)
+  let css
+  try { css = readFileSync(full, 'utf8') } catch { continue }
+  css.split('\n').forEach((line, i) => {
+    if (/animation:\s*[^;]*\bboth\s*;/.test(line) && !/fill-both-ok/.test(line)) {
+      fail(
+        'animation-fill-mode: both keeps a stacking context forever — use `backwards`, or mark the line `/* fill-both-ok */` if it must end off its natural state',
+        full, i + 1, line.trim().slice(0, 90),
+      )
+    }
+  })
+}
+
 if (failures.length) {
   console.error(`\nDesign-system check failed — ${failures.length} issue(s):\n`)
   for (const f of failures) console.error(`  ${f}\n`)
