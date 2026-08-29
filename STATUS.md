@@ -1,7 +1,7 @@
 # STATUS
 
-**Stopped:** 2026-08-29. On `refactor/trackers-row-signal`, clean. **#176**
-squash-merged; **#177** open with CI running. `main` is at `9b4d0dd`.
+**Stopped:** 2026-08-29. On `main`, clean, nothing in flight. Two PRs opened,
+CI green, squash-merged: **#176, #177**. `main` is at `6033f2a`.
 
 ## What this session did
 
