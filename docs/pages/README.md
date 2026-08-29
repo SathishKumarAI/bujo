@@ -34,7 +34,7 @@ user · **P3** = polish, worth doing when nearby.
 | Cluster | Pages |
 |---|---|
 | Journal | [Today](today.md) · [Plan](plan.md) · [Monthly](monthly.md) |
-| Fitness | [Fitness](fitness.md) · [Pull-ups](pullups.md) · [Home Workout](home-workout.md) |
+| Fitness | [Fitness](fitness.md) · [Strength](gym.md) · [Pull-ups](pullups.md) · [Home Workout](home-workout.md) |
 | Sports | [Pickleball](pickleball.md) · [Coaching](coaching.md) |
 | Habits | [Trackers](trackers.md) · [Challenges](challenges.md) · [Focus](focus.md) |
 | Wellbeing | [Mindset](mindset.md) · Cycle¹ · [Recovery](recovery.md) |
@@ -182,7 +182,6 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 |---|---|---|---|---|---|
 | **5.92** | 5.15 | Pickleball | 18 | 16 | 5 |
 | **5.21** | 4.38 | Stats | 6 | 6 | 6 |
-| **4.67** | 4.67 | Gym | 10 | 10 | 4 |
 | **4.47** | 4.47 | Help | 1 | 1 | 0 |
 | **4.15** | 4.15 | Recovery (`nofap`) — *folded, COD-23, was 6.33* | 2 | 0 | 3 |
 | **3.29** | 3.29 | Mindset | 0 | – | 0 |
@@ -199,6 +198,7 @@ weeks and had drifted by up to 4.3 screens — it sent a session at Today (liste
 | **1.52** | 1.52 | Collections | 1 | 0 | 0 |
 | **1.27** | 1.27 | Today | 9 | 0 | 0 |
 | **1.00** | 1.00 | Challenges — *rebuilt on the contract, COD-35, was 1.41* | 0 | – | 0 |
+| **1.38** | 1.38 | Gym — *on the contract, 2026-08-28, was 4.67 / 10 folds all open* | 9 | 0 | 0 |
 | **1.30** | 1.28 | Insights | 0 | – | 0 |
 | **1.22** | 1.22 | Nutrition | 0 | – | 0 |
 | **1.06** | 1.06 | Goals | 0 | – | 0 |
@@ -213,6 +213,7 @@ keeping because they were **opposite** failures:
 |---|---|---|---|
 | **Coaching** (COD-22) | 5.80 screens, **32** folds, 25 shut | 2.19, 17 | Too many drawers, and nested — six collapsible cards, eleven "Expand week N" rows *inside* one of them, fourteen technique folds inside another |
 | **Recovery** (COD-23) | 6.33 screens, **0** folds | 4.15, 2 | Too few. 724px of set-once Setup and 869px of static Reference, permanently open |
+| **Gym** ([gym.md](gym.md)) | 4.67 screens, 10 folds, **10 open** | 1.38, 9, 0 open | A third kind: enough folds, none of them shut. Two carried comments reading "(default COLLAPSED)" — `CollapsibleSection`'s `defaultOpen` is `true`, and neither passed `false`. Meanwhile the *act* folded itself below 640px, so a phone got the logger shut and twelve analytics cards open |
 
 **Recovery is also a warning about reading this table.** Its 0 in the Folds
 column was taken — by me, in a handover note — to mean "no structure at all".
