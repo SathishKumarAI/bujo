@@ -379,7 +379,13 @@ async function openFolds() {
   let opened = 0
   for (let pass = 0; pass < 4; pass++) {
     const n = await page.evaluate(() => {
-      const shut = [...document.querySelectorAll('#main [aria-expanded="false"]')]
+      // `:not([aria-haspopup])` — a fold reveals page content; a popup covers
+      // it. `ExercisePicker` is a combobox and there is one per set row, so
+      // without this the gym page would open 35 of them at once, each laying
+      // down its own full-screen click-catcher. Its semantics are guarded by
+      // `ExercisePicker.test.tsx` instead, which is where widget behaviour
+      // belongs — axe cannot assert it either way.
+      const shut = [...document.querySelectorAll('#main [aria-expanded="false"]:not([aria-haspopup])')]
       for (const el of shut) el.click()
       return shut.length
     })
