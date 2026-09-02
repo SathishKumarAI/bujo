@@ -136,18 +136,62 @@ export function generateDemoData(today = todayISO()): JournalData {
   ]
   j.collections = [{ id: uid('col'), name: 'Books to read', icon: '📚', createdAt: today }]
 
-  // PPL gym sessions + progressive body weight, so Gym view has data.
+  /**
+   * PPL gym sessions · eighteen of them, six per split, every other day.
+   *
+   * **Each lift carries its own weight history, oldest first.** The previous
+   * version logged one fixed `sets` string per split and repeated it, so every
+   * lift read 60, 60, 60 — the demo journal contained no PR, ever, and every
+   * analytic on `?view=gym` was measuring a flat line. `stalledLifts` was
+   * therefore correct to fire on 7 of 7 (COD-90): the data really was stalled.
+   * An alert that fires on everything is useless whether or not it is right.
+   *
+   * The mix is deliberate, so the page has something to discriminate between:
+   * Bench, Overhead Press and Romanian Deadlift plateau (three sessions since
+   * their last top set — flagged), Deadlift and Barbell Row climb the whole
+   * way, Squat and Calf Raise have just PR'd. Dip and Pull-up stay at 0kg
+   * because they are bodyweight, which is also worth having in the fixture —
+   * they have no progression to walk at all.
+   */
   const ppl = [
-    { split: 'push' as const, sets: ['Bench Press 5x5 @ 60kg', 'Overhead Press 5x5 @ 35kg', 'Dip 3x8 @ 0kg'] },
-    { split: 'pull' as const, sets: ['Deadlift 5x5 @ 100kg', 'Barbell Row 5x5 @ 55kg', 'Pull-up 3x8 @ 0kg'] },
-    { split: 'legs' as const, sets: ['Squat 5x5 @ 80kg', 'Romanian Deadlift 4x8 @ 60kg', 'Calf Raise 4x12 @ 40kg'] },
+    {
+      split: 'push' as const,
+      lifts: [
+        { name: 'Bench Press', scheme: '5x5', weights: [60, 62.5, 65, 65, 65, 65] },
+        { name: 'Overhead Press', scheme: '5x5', weights: [35, 35, 37.5, 37.5, 37.5, 37.5] },
+        { name: 'Dip', scheme: '3x8', weights: [0, 0, 0, 0, 0, 0] },
+      ],
+    },
+    {
+      split: 'pull' as const,
+      lifts: [
+        { name: 'Deadlift', scheme: '5x5', weights: [100, 105, 110, 115, 120, 125] },
+        { name: 'Barbell Row', scheme: '5x5', weights: [55, 57.5, 60, 60, 62.5, 65] },
+        { name: 'Pull-up', scheme: '3x8', weights: [0, 0, 0, 0, 0, 0] },
+      ],
+    },
+    {
+      split: 'legs' as const,
+      lifts: [
+        { name: 'Squat', scheme: '5x5', weights: [80, 85, 90, 95, 100, 100] },
+        { name: 'Romanian Deadlift', scheme: '4x8', weights: [60, 60, 65, 65, 65, 65] },
+        { name: 'Calf Raise', scheme: '4x12', weights: [40, 45, 45, 45, 50, 50] },
+      ],
+    },
   ]
-  for (let i = 0; i < 9; i++) {
+  const PPL_SESSIONS = ppl[0].lifts[0].weights.length
+  for (let i = 0; i < PPL_SESSIONS * ppl.length; i++) {
     const day = addDays(today, -i * 2 - 1)
     const w = ppl[i % 3]
+    // `i` counts backwards from today, so the newest session reads the LAST
+    // entry of each weight array. Getting this the wrong way round produces a
+    // journal that deloads every week and looks plausible on the page.
+    const s = PPL_SESSIONS - 1 - Math.floor(i / 3)
     j.workouts.push({
       id: uid('w'), date: day, activity: w.split, split: w.split,
-      durationMin: 55 + Math.floor(rand() * 20), sets: w.sets, rpe: 7 + Math.floor(rand() * 3), notes: '',
+      durationMin: 55 + Math.floor(rand() * 20),
+      sets: w.lifts.map((l) => `${l.name} ${l.scheme} @ ${l.weights[s]}kg`),
+      rpe: 7 + Math.floor(rand() * 3), notes: '',
     })
   }
   for (let i = 29; i >= 0; i -= 3) {
