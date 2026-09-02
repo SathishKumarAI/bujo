@@ -1,5 +1,41 @@
 import { describe, it, expect } from 'vitest'
-import { goalPace } from './goals'
+import { goalFraction, goalMet, goalPace } from './goals'
+
+/**
+ * COD-48 · the Goals headline counted `value >= target` and called it "on
+ * track", which is a different question from the pace pill beside it, and is
+ * backwards for a cap. Each case here is one of the sentences that was wrong
+ * on the rendered page.
+ */
+describe('goalMet', () => {
+  it('a reach goal is met when it reaches the number', () => {
+    expect(goalMet(5, 5)).toBe(true)
+    expect(goalMet(6, 5)).toBe(true)
+    expect(goalMet(4, 5)).toBe(false)
+  })
+
+  it('a cap is met while you are UNDER it — the inversion the headline missed', () => {
+    // "Caffeine 2 of 5" was counted as a miss, so a good week scored as failure.
+    expect(goalMet(2, 5, true)).toBe(true)
+    expect(goalMet(5, 5, true)).toBe(true) // exactly at the cap is still within it
+    expect(goalMet(6, 5, true)).toBe(false)
+  })
+
+  it('is not the same predicate as being on pace', () => {
+    // Mid-week at 1 of 7 is behind on nothing yet, but it is not *met*. The old
+    // headline printed this as "not on track" for five goals at once.
+    expect(goalMet(1, 7)).toBe(false)
+  })
+})
+
+describe('goalFraction', () => {
+  it('clamps to 0..1 and survives a zero target', () => {
+    expect(goalFraction(3, 6)).toBe(0.5)
+    expect(goalFraction(9, 6)).toBe(1)
+    expect(goalFraction(-2, 6)).toBe(0)
+    expect(goalFraction(3, 0)).toBe(0) // no divide-by-zero, no Infinity bar
+  })
+})
 
 describe('goalPace', () => {
   it('returns null when there is no deadline', () => {

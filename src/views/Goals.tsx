@@ -8,8 +8,8 @@ import { Stepper } from '../components/fields/Stepper'
 import { Page } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { cat } from '../lib/colors'
-import { todayISO, dayDiff, prettyDay } from '../lib/date'
-import { goalPace } from '../lib/goals'
+import { todayISO, dayDiff, prettyDay, weekColumn } from '../lib/date'
+import { goalFraction, goalMet, goalOnPace, goalPace } from '../lib/goals'
 import { weeklyActiveMinutes } from '../lib/fitness'
 import { pickleTotals } from '../lib/pickleball'
 import { finishedThisYear } from '../lib/reading'
@@ -25,6 +25,19 @@ interface Goal {
   color: string
   icon: typeof Target
   to: ViewId
+  /**
+   * The target is a **cap**, not a finish line — an avoid habit. Being under it
+   * is success, and the bar fills toward failure. Nothing recorded this before
+   * COD-48, so "Caffeine 2 of 5" counted as a miss.
+   */
+  avoid?: boolean
+  /**
+   * How far through this goal's period we are, 0–1 — the bar the goal should
+   * have reached by now. `undefined` for goals with no period at all (a
+   * training program, streak-vs-best): those cannot be off pace, and saying so
+   * is not the same as saying they are on it.
+   */
+  elapsed?: number
 }
 
 /**
@@ -37,18 +50,27 @@ export function Goals() {
   const navigate = useNav()
   const today = todayISO()
   const goals: Goal[] = []
+  // How far through the current week and year we are. A "this week" goal at 2 of
+  // 7 on a Wednesday is not behind — it is Wednesday. Without this the page can
+  // only say "met", and "1 of 7 met" mid-week reads as a failure that has not
+  // happened. `weekColumn` is 0-based, so day 1 of the week is 1/7 elapsed.
+  const weekStart = data.settings.weekStart ?? 0
+  const weekElapsed = (weekColumn(today, weekStart) + 1) / 7
+  const yearElapsed = (dayDiff(`${today.slice(0, 4)}-01-01`, today) + 1) / 365
 
   // Per-habit weekly goals.
   for (const h of data.habits) {
     if (h.archived || !h.weeklyGoal) continue
     goals.push({
       label: `${h.emoji ? h.emoji + ' ' : ''}${h.name}`,
-      detail: 'this week',
+      detail: h.avoid ? 'this week, at most' : 'this week',
       value: weeklyHabitCount(data, h.id, today),
       target: h.weeklyGoal,
       color: h.color,
       icon: Target,
       to: 'trackers',
+      avoid: h.avoid,
+      elapsed: weekElapsed,
     })
   }
 
@@ -62,6 +84,7 @@ export function Goals() {
     color: 'teal',
     icon: PersonSimpleRun,
     to: 'fitness',
+    elapsed: weekElapsed,
   })
 
   // Weekly pickleball games.
@@ -74,6 +97,7 @@ export function Goals() {
       color: 'teal',
       icon: Trophy,
       to: 'pickleball',
+      elapsed: weekElapsed,
     })
   }
 
@@ -93,6 +117,7 @@ export function Goals() {
       color: 'mauve',
       icon: Flame,
       to: 'challenges',
+      elapsed: elapsed / c.durationDays,
     })
   }
 
@@ -131,6 +156,7 @@ export function Goals() {
       color: 'sky',
       icon: BookOpen,
       to: 'reading',
+      elapsed: yearElapsed,
     })
   }
 
@@ -150,16 +176,28 @@ export function Goals() {
     })
   }
 
-  const hit = goals.filter((g) => g.value >= g.target).length
-  // Read-only roll-up insight: overall average progress and how many goals are
-  // in the "nearly there" band (80–99%) so users see what's worth a final push.
-  const avgPct = goals.length
-    ? Math.round(goals.reduce((a, g) => a + (g.target > 0 ? Math.min(1, g.value / g.target) : 0), 0) / goals.length * 100)
+  // Three different facts, and two of them used to share the word "on track"
+  // (COD-48). Each one now says which question it answers.
+  const met = goals.filter((g) => goalMet(g.value, g.target, g.avoid)).length
+  // Mean progress across the *reach-a-number* goals only. An avoid goal's
+  // fraction is allowance spent, so averaging it in makes a clean week look
+  // like a low score — the same inversion the headline had.
+  const pacing = goals.filter((g) => !g.avoid)
+  const avgPct = pacing.length
+    ? Math.round(pacing.reduce((a, g) => a + goalFraction(g.value, g.target), 0) / pacing.length * 100)
     : 0
-  const nearly = goals.filter((g) => {
-    const p = g.target > 0 ? g.value / g.target : 0
-    return p >= 0.8 && p < 1
-  }).length
+  // 80–99% means two opposite things. On a reach goal it is "worth a final
+  // push"; on a cap it is "you are about to blow it". Counted separately, and
+  // labelled as what it is.
+  const inBand = (g: Goal) => { const p = goalFraction(g.value, g.target); return p >= 0.8 && p < 1 }
+  const nearly = pacing.filter(inBand).length
+  const closeToCap = goals.filter((g) => g.avoid && inBand(g)).length
+  // On pace: keeping up with the clock, which is a different question from met
+  // and the one the reader actually wants mid-week. Only goals with a period
+  // can answer it — a training program has no deadline, so it is excluded
+  // rather than counted as behind.
+  const timed = goals.filter((g) => g.elapsed != null)
+  const onPace = timed.filter((g) => goalOnPace(goalFraction(g.value, g.target), g.elapsed!, g.avoid)).length
 
   const { addCustomGoal, updateCustomGoal, removeCustomGoal } = useJournal()
   const customGoals = data.customGoals ?? []
@@ -173,7 +211,19 @@ export function Goals() {
 
   return (
     <Page className="gap-0 sm:gap-0">
-      <Card band title="Goals" subtitle={goals.length ? `${hit} of ${goals.length} on track` : 'Your active targets, all in one place'}>
+      {/* "met", not "on track" — see `goalMet`. The list mixes goals you reach
+          and caps you stay under, and neither "complete" nor "on track" is true
+          for both. "On track" now appears in exactly one place on this page:
+          the custom-goal pace pill, where it means a rate. */}
+      <Card
+        band
+        title="Goals"
+        subtitle={
+          goals.length
+            ? `${met} of ${goals.length} met${timed.length ? ` · ${onPace} of ${timed.length} on pace` : ''}`
+            : 'Your active targets, all in one place'
+        }
+      >
         {goals.length === 0 ? (
           <Empty>No goals yet · set a habit weekly goal, start a challenge, or follow a program.</Empty>
         ) : (
@@ -186,14 +236,22 @@ export function Goals() {
             {nearly > 0 && (
               <span className="text-fg-2">{nearly} nearly there <span className="text-fg-2">(80–99%)</span></span>
             )}
+            {closeToCap > 0 && (
+              <span style={{ color: cat('peach') }}>{closeToCap} close to the cap</span>
+            )}
           </div>
           </>
         )}
         {goals.length === 0 ? null : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {goals.map((g, i) => {
-              const pct = g.target > 0 ? Math.min(100, Math.round((g.value / g.target) * 100)) : 0
-              const reached = g.value >= g.target
+              const pct = Math.round(goalFraction(g.value, g.target) * 100)
+              // On a cap the bar is allowance *spent*, so a full one is the bad
+              // end and green would be a lie. `ok` is the state worth colouring;
+              // `reached` is only the tick, which a cap never earns mid-week.
+              const ok = goalMet(g.value, g.target, g.avoid)
+              const reached = !g.avoid && ok
+              const barColor = g.avoid ? (ok ? g.color : 'red') : ok ? 'green' : g.color
               const Icon = g.icon
               return (
                 <li key={i}>
@@ -215,7 +273,7 @@ export function Goals() {
                       </span>
                     </div>
                     <div className="mt-auto h-2.5 overflow-hidden rounded-none bg-ink-2">
-                      <div className="h-full rounded-none transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : g.color) }} />
+                      <div className="h-full rounded-none transition-all" style={{ width: `${pct}%`, background: cat(barColor) }} />
                     </div>
                   </button>
                 </li>
