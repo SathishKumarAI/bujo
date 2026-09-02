@@ -1,6 +1,6 @@
 import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Database, Download, FileText, Palette, Sparkle, Trash, Upload, User, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -14,7 +14,8 @@ import { TagManager } from '../components/TagManager'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
 import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '../lib/serverSync'
 import { pushCloud, pullCloud } from '../lib/bujocloud'
-import { supabaseEnabled, currentUser, signInGuest, signUpEmail, signInEmail, signOut, pullJournal, pushJournal, resetPassword, updatePassword, onPasswordRecovery } from '../lib/supabase'
+import { supabaseEnabled } from '../lib/supabase'
+import { useAuthForm } from '../lib/useAuthForm'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive, devSessionsCsv, dataSummary, verifyChecksum, withChecksum } from '../lib/csv'
 import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from '../lib/ics'
@@ -608,34 +609,26 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
   )
 }
 
-/** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync. */
+/** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync.
+ * Auth logic lives in useAuthForm (shared with Account and Welcome); this card owns markup,
+ * Share app, and the log-out-to-start-screen escape hatch. */
 function AccountCard() {
   const confirm = useConfirm()
-  const { data, replaceAll, setSettings } = useJournal()
-  const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null)
-  const [email, setEmail] = useState('')
-  const [pw, setPw] = useState('')
-  const [msg, setMsg] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  const [recovery, setRecovery] = useState(false)
+  const { setSettings } = useJournal()
   const [newPw, setNewPw] = useState('')
-  useEffect(() => { if (supabaseEnabled()) currentUser().then(setUser) }, [])
-  useEffect(() => onPasswordRecovery(() => setRecovery(true)), [])
+  const auth = useAuthForm({
+    confirmReplace: () => confirm({
+      title: 'Load your cloud data onto this device?',
+      description: 'This replaces what is currently on this device with the copy stored in your account.',
+      confirmLabel: 'Load cloud data', destructive: true,
+    }),
+  })
+  const { user, signedIn, isGuest: guest, email, setEmail, pw, setPw, busy, err, msg, setMsg, recovery } = auth
   if (!supabaseEnabled()) return null
 
   function share() {
     navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('App link copied, share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
   }
-
-  async function run(fn: () => Promise<void>, ok: string) {
-    setBusy(true); setMsg('')
-    try { await fn(); setUser(await currentUser()); setMsg(ok) }
-    catch (e) { setMsg((e as Error).message) }
-    finally { setBusy(false) }
-  }
-  const guest = !!user?.is_anonymous
-  const signedIn = !!user && !guest
   // Return to the first-run gate (keeps local data; lets them switch/log in).
   async function leave() {
     if (!await confirm({
@@ -643,11 +636,9 @@ function AccountCard() {
       description: 'Your data stays on this device. Sign in afterward to save it to an account.',
       confirmLabel: 'Log out',
     })) return
-    setBusy(true)
     try { if (user) await import('../lib/supabase').then((m) => m.signOut()) } catch { /* ignore */ }
     localStorage.removeItem('bujo:sync')
     setSettings({ storageMode: undefined })
-    setBusy(false)
   }
 
   return (
@@ -656,7 +647,7 @@ function AccountCard() {
         <div className="mb-3 rounded-none border border-mauve/40 bg-ink-0 p-3">
           <p className="mb-2 text-body text-fg-1">Set a new password:</p>
           <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
-          <Button variant="secondary" className="mt-2" onClick={() => run(async () => { await updatePassword(newPw); setRecovery(false); setNewPw('') }, 'Password updated.')}>Update password</Button>
+          <Button variant="secondary" className="mt-2" onClick={async () => { if (await auth.changePw(newPw)) setNewPw('') }}>Update password</Button>
         </div>
       )}
       <p className="mb-1 text-body text-fg-1">
@@ -667,33 +658,26 @@ function AccountCard() {
       {!signedIn && <p className="mb-3 text-label text-fg-2">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
       {!signedIn && (
         <div className="space-y-2">
-          {!user && <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInGuest() }, 'Guest session started.')} className="w-full">Continue as guest</Button>}
+          {!user && <Button variant="secondary" disabled={busy} onClick={auth.guest} className="w-full">Continue as guest</Button>}
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
           <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signUpEmail(email, pw); await pushJournal(data) }, guest ? 'Account claimed · your data is saved.' : 'Account created.')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
-            <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await signInEmail(email, pw); const r = await pullJournal(); if (r && await confirm({
-              title: 'Load your cloud data onto this device?',
-              description: 'This replaces what is currently on this device with the copy stored in your account.',
-              confirmLabel: 'Load cloud data', destructive: true,
-            })) replaceAll(migrate(r)) }, 'Signed in.')}>Log in</Button>
-            <button onClick={() => { if (!email) { setMsg('Enter your email above first.'); return } run(async () => { await resetPassword(email) }, 'Reset link sent · check your email.') }} className="text-label text-mauve hover:underline">Forgot password?</button>
+            <Button variant="secondary" disabled={busy} onClick={() => auth.submit('signup')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => auth.submit('login')}>Log in</Button>
+            <button onClick={auth.forgot} className="text-label text-mauve hover:underline">Forgot password?</button>
             <button onClick={leave} className="ml-auto text-label text-fg-2 hover:text-red">Log out / switch</button>
           </div>
         </div>
       )}
       {signedIn && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" disabled={busy} onClick={() => run(async () => { await pushJournal(data) }, 'Saved to your account.')}>Save now</Button>
-          <Button variant="secondary" disabled={busy} onClick={() => run(async () => { const r = await pullJournal(); if (r && await confirm({
-              title: 'Replace this device with your cloud data?',
-              description: 'Everything currently on this device is overwritten by the copy stored in your account.',
-              confirmLabel: 'Replace my data', destructive: true,
-            })) replaceAll(migrate(r)) }, 'Loaded.')}>Load</Button>
-          <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={() => run(async () => { await signOut() }, 'Signed out.')}>Sign out</Button>
+          <Button variant="secondary" disabled={busy} onClick={auth.pushNow}>Save now</Button>
+          <Button variant="secondary" disabled={busy} onClick={auth.loadNow}>Load</Button>
+          <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={auth.out}>Sign out</Button>
         </div>
       )}
       {msg && <p className="mt-2 text-label text-fg-1">{busy ? '…' : msg}</p>}
+      {err && <p className="mt-2 text-label text-red">{busy ? '…' : err}</p>}
       <p className="mt-2 text-label text-fg-2">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
     </Card>
   )

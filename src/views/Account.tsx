@@ -1,86 +1,47 @@
 import { ArrowsClockwise, Check, Cloud, Envelope, Eye, EyeSlash, Lock, ShieldCheck, SignOut, UserCircle } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useJournal } from '../store'
 import { Button } from '../components/ui/button'
 import { useNav } from '../components/shell/nav'
-import { migrate } from '../lib/storage'
-import { authFormError, isValidEmail, suggestEmailFix, passwordError } from '../lib/validate'
-import {
-  supabaseEnabled, providerEnabled, currentUser,
-  signInGoogle, signUpEmail, signInEmail, signInGuest, signOut,
-  resetPassword, updatePassword, pullJournal, pushJournal,
-} from '../lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useConfirm } from '../components/ConfirmDialog'
+import { suggestEmailFix } from '../lib/validate'
+import { useAuthForm } from '../lib/useAuthForm'
+import { supabaseEnabled } from '../lib/supabase'
 
 /**
  * Dedicated, real-login-page-style account screen · a centred, branded auth
  * card (not the buried Settings form). Reached from the top-bar account menu.
+ * All auth logic lives in useAuthForm — this file owns only the page markup.
  */
 export function Account() {
-  const { data, setSettings, replaceAll } = useJournal()
+  const { setSettings } = useJournal()
   const nav = useNav()
-  const [user, setUser] = useState<User | null>(null)
+  const confirm = useConfirm()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [email, setEmail] = useState('')
-  const [pw, setPw] = useState('')
   const [showPw, setShowPw] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState('')
-  const [msg, setMsg] = useState('')
-  const [googleOk, setGoogleOk] = useState(false)
   const [changing, setChanging] = useState(false)
   const [newPw, setNewPw] = useState('')
 
-  const refresh = () => currentUser().then(setUser).catch(() => {})
-  useEffect(() => { if (supabaseEnabled()) { refresh(); providerEnabled('google').then(setGoogleOk) } }, [])
+  const auth = useAuthForm({
+    confirmReplace: () => confirm({
+      title: 'Load your account data onto this device?',
+      description: 'This replaces what is currently on this device with the copy stored in your account.',
+      confirmLabel: 'Load account copy', destructive: true,
+    }),
+    onDone: (kind) => {
+      setSettings(kind === 'guest' ? { storageMode: 'local' } : { storageMode: 'local', explore: false })
+      if (kind !== 'signup') nav('today') // signed in → lift the gate, drop into the journal
+    },
+  })
+  const { email, setEmail, pw, setPw, busy, err, msg, googleOk, signedIn, isGuest, user } = auth
 
-  const signedIn = !!user && !user.is_anonymous
-  const isGuest = !!user?.is_anonymous
+  // A recovery link signs the user in with a temporary session — derive the
+  // form open so the link actually lands somewhere visible (no mirror state).
+  const changeOpen = changing || auth.recovery
 
-  async function google() {
-    setBusy(true); setErr('')
-    try { await signInGoogle() } catch (e) { setErr((e as Error).message); setBusy(false) }
-  }
-  async function submit() {
-    const ve = authFormError(email, pw)
-    if (ve) { setErr(ve); return }
-    setBusy(true); setErr(''); setMsg('')
-    try {
-      if (mode === 'signup') {
-        await signUpEmail(email, pw); await pushJournal(data)
-        setMsg('Account created, check your inbox to confirm your email, then sign in.')
-      } else {
-        await signInEmail(email, pw)
-        const r = await pullJournal(); if (r) replaceAll(migrate(r))
-        setSettings({ storageMode: 'local', explore: false }); setPw(''); await refresh()
-        nav('today') // signed in → lift the gate, drop into the journal
-        return
-      }
-      setSettings({ storageMode: 'local', explore: false }); setPw(''); await refresh()
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
-  }
-  async function forgot() {
-    if (!isValidEmail(email)) { setErr('Enter a valid email first, then tap “Forgot password”.'); return }
-    setBusy(true); setErr(''); setMsg('')
-    try { await resetPassword(email); setMsg('Password-reset link sent, check your inbox.') }
-    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
-  }
-  async function guest() {
-    setBusy(true); setErr('')
-    try { await signInGuest(); setSettings({ storageMode: 'local' }); await refresh(); nav('today') }
-    catch (e) { setErr((e as Error).message); setBusy(false) }
-  }
-  async function out() {
-    setBusy(true)
-    try { await signOut() } finally { await refresh(); setBusy(false) }
-  }
   async function changePw() {
-    const ve = passwordError(newPw)
-    if (ve) { setErr(ve); return }
-    setBusy(true); setErr(''); setMsg('')
-    try { await updatePassword(newPw); setNewPw(''); setChanging(false); setMsg('Password updated.') }
-    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+    if (await auth.changePw(newPw)) { setNewPw(''); setChanging(false) }
   }
 
   // ── Not configured: honest fallback ──
@@ -114,22 +75,21 @@ export function Account() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button onClick={() => { setBusy(true); pushJournal(data).then(() => setMsg('Saved to your account.')).catch((e) => setErr((e as Error).message)).finally(() => setBusy(false)) }}
-            disabled={busy} variant="primary" className="press-3d flex-1 gap-1.5">
+          <Button onClick={auth.pushNow} disabled={busy} variant="primary" className="press-3d flex-1 gap-1.5">
             <AppIcon as={ArrowsClockwise} size="sm" /> {busy ? 'Saving…' : 'Save now'}
           </Button>
-          <Button onClick={out} disabled={busy} variant="secondary" className="gap-1.5 text-red hover:text-red">
+          <Button onClick={auth.out} disabled={busy} variant="secondary" className="gap-1.5 text-red hover:text-red">
             <AppIcon as={SignOut} size="sm" /> Sign out
           </Button>
         </div>
         {signedIn && (
           <div className="mt-4 border-t border-line pt-4">
-            {!changing ? (
-              <button onClick={() => { setChanging(true); setErr(''); setMsg('') }} className="text-label text-fg-2 hover:text-fg-1">Change password</button>
+            {!changeOpen ? (
+              <button onClick={() => { setChanging(true); auth.setErr(''); auth.setMsg('') }} className="text-label text-fg-2 hover:text-fg-1">Change password</button>
             ) : (
               <div className="space-y-2.5">
                 <Field icon={Lock}>
-                  <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); setErr('') }}
+                  <input type={showPw ? 'text' : 'password'} autoComplete="new-password" value={newPw} onChange={(e) => { setNewPw(e.target.value); auth.setErr('') }}
                     onKeyDown={(e) => e.key === 'Enter' && changePw()} placeholder="New password (min 6)"
                     className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
                   <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-fg-2 hover:text-fg-1">
@@ -140,7 +100,7 @@ export function Account() {
                   <Button onClick={changePw} disabled={busy} variant="primary" size="sm" className="press-3d flex-1">
                     {busy ? 'Updating…' : 'Update password'}
                   </Button>
-                  <Button onClick={() => { setChanging(false); setNewPw(''); setErr('') }} disabled={busy} variant="secondary" size="sm" className="text-fg-2">Cancel</Button>
+                  <Button onClick={() => { setChanging(false); auth.setRecovery(false); setNewPw(''); auth.setErr('') }} disabled={busy} variant="secondary" size="sm" className="text-fg-2">Cancel</Button>
                 </div>
               </div>
             )}
@@ -161,7 +121,7 @@ export function Account() {
       {/* Segmented Sign in / Sign up control */}
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-none bg-secondary/60 p-1">
         {(['login', 'signup'] as const).map((m) => (
-          <button key={m} onClick={() => { setMode(m); setErr(''); setMsg('') }}
+          <button key={m} onClick={() => { setMode(m); auth.setErr(''); auth.setMsg('') }}
             className={`rounded-none py-2 text-body font-medium transition-colors ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-fg-2 hover:text-fg-1'}`}>
             {m === 'login' ? 'Sign in' : 'Sign up'}
           </button>
@@ -170,7 +130,7 @@ export function Account() {
 
       {googleOk && (
         <>
-          <Button onClick={google} disabled={busy} variant="secondary" className="press-3d w-full gap-2 hover:border-primary">
+          <Button onClick={auth.google} disabled={busy} variant="secondary" className="press-3d w-full gap-2 hover:border-primary">
             <GoogleMark /> Continue with Google
           </Button>
           <div className="my-4 flex items-center gap-3 text-label text-fg-2">
@@ -181,13 +141,13 @@ export function Account() {
 
       <div className="space-y-2.5">
         <Field icon={Envelope}>
-          <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr('') }} placeholder="you@email.com"
+          <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); auth.setErr('') }} placeholder="you@email.com"
             className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
         </Field>
         {fix && <button type="button" onClick={() => setEmail(fix)} className="text-label text-yellow hover:underline">Did you mean <strong>{fix}</strong>?</button>}
         <Field icon={Lock}>
           <input type={showPw ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={pw} onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="Password (min 6)"
+            onKeyDown={(e) => e.key === 'Enter' && auth.submit(mode)} placeholder="Password (min 6)"
             className="w-full bg-transparent text-body text-foreground outline-none placeholder:text-fg-2" />
           <Button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} variant="ghost" size="icon-sm" className="text-fg-2 hover:text-fg-1">
             {showPw ? <AppIcon as={EyeSlash} size="sm" /> : <AppIcon as={Eye} size="sm" />}
@@ -195,13 +155,13 @@ export function Account() {
         </Field>
       </div>
 
-      <Button onClick={submit} disabled={busy} variant="primary" className="press-3d mt-4 w-full gap-1.5">
+      <Button onClick={() => auth.submit(mode)} disabled={busy} variant="primary" className="press-3d mt-4 w-full gap-1.5">
         {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
       </Button>
 
       {mode === 'login' && (
         <div className="mt-3 text-center">
-          <button onClick={forgot} disabled={busy} className="text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
+          <button onClick={auth.forgot} disabled={busy} className="text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
         </div>
       )}
 
@@ -209,7 +169,7 @@ export function Account() {
       {msg && <p className="mt-3 text-center text-label text-green">{msg}</p>}
 
       <div className="mt-5 space-y-2 border-t border-line pt-4 text-center">
-        <button onClick={guest} disabled={busy} className="inline-flex items-center gap-1.5 text-label text-fg-2 hover:text-foreground disabled:opacity-50">
+        <button onClick={auth.guest} disabled={busy} className="inline-flex items-center gap-1.5 text-label text-fg-2 hover:text-foreground disabled:opacity-50">
           <AppIcon as={Check} size="sm" className="text-green" /> Just explore as a guest · no email needed
         </button>
         <div>

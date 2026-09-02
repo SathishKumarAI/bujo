@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { migrate, emptyJournal } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
-import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange } from './lib/supabase'
+import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange, onPasswordRecovery } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Account } from './views/Account'
@@ -186,6 +186,10 @@ export default function App() {
       }),
     [],
   )
+  // A password-recovery link can land on any view; steer it to the Account
+  // page, whose form opens on the same event. Before this, recovery only
+  // worked if the user happened to be sitting on Settings.
+  useEffect(() => onPasswordRecovery(() => setView('account')), [])
   const [paletteOpen, setPaletteOpen] = useState(false)
   // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
   const [showTour, setShowTour] = useState(() => !onboarded())

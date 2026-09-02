@@ -1,6 +1,6 @@
 import { Check, CloudCheck, FolderOpen, HardDrive, ShieldCheck, SignIn, UserCircle } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useJournal } from '../store'
 // (the three choice cards below stay native buttons — card-shaped click targets)
 import { Button } from '../components/ui/button'
@@ -8,8 +8,8 @@ import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
-import { supabaseEnabled, providerEnabled, signInGoogle, signUpEmail, signInEmail, resetPassword, pullJournal, pushJournal } from '../lib/supabase'
-import { authFormError, isValidEmail } from '../lib/validate'
+import { supabaseEnabled } from '../lib/supabase'
+import { useAuthForm } from '../lib/useAuthForm'
 import { useConfirm } from '../components/ConfirmDialog'
 
 /**
@@ -50,36 +50,19 @@ export function Welcome() {
   }
 
   // ── Account onboarding (when Supabase is configured) ──
-  const [email, setEmail] = useState('')
-  const [pw, setPw] = useState('')
+  // All auth logic (incl. Google availability probe and the confirm-before-
+  // replace guard on login) lives in useAuthForm; this view owns the markup.
   const [showLogin, setShowLogin] = useState(false)
-  const [err, setErr] = useState('')
-  const [notice, setNotice] = useState('')
-  // Only offer Google once we've confirmed the provider is enabled on Supabase —
-  // otherwise the OAuth redirect dead-ends on a raw "provider not enabled" error.
-  const [googleOk, setGoogleOk] = useState(false)
-  useEffect(() => { providerEnabled('google').then(setGoogleOk) }, [])
-  async function google() {
-    setBusy(true); setErr('')
-    try { await signInGoogle() } // redirects out to Google, returns to the app signed in
-    catch (e) { setErr((e as Error).message); setBusy(false) }
-  }
-  async function account(mode: 'signup' | 'login') {
-    const ve = authFormError(email, pw)
-    if (ve) { setErr(ve); return }
-    setBusy(true); setErr(''); setNotice('')
-    try {
-      if (mode === 'signup') { await signUpEmail(email, pw); await pushJournal(data); setNotice('Account created. Check your email if a confirmation link was sent.') }
-      else { await signInEmail(email, pw); const r = await pullJournal(); if (r) replaceAll(migrate(r)) }
-      setSettings({ storageMode: 'local' })
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
-  }
-  async function forgot() {
-    if (!isValidEmail(email)) { setErr('Enter a valid email above, then tap “Forgot password”.'); return }
-    setBusy(true); setErr(''); setNotice('')
-    try { await resetPassword(email); setNotice('Password-reset link sent, check your inbox.') }
-    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
-  }
+  const auth = useAuthForm({
+    confirmReplace: () => confirm({
+      title: 'Load your account data onto this device?',
+      description: 'This replaces what is currently on this device with the copy stored in your account.',
+      confirmLabel: 'Load account copy', destructive: true,
+    }),
+    onDone: () => setSettings({ storageMode: 'local' }),
+  })
+  const { email, setEmail, pw, setPw, err, googleOk } = auth
+  const notice = auth.msg
 
   return (
     <div className="aurora grid min-h-screen place-items-center p-6">
@@ -102,12 +85,12 @@ export function Welcome() {
             {!showLogin ? (
               <div className="flex flex-wrap items-center gap-3">
                 {googleOk && (
-                  <Button onClick={google} disabled={busy} variant="primary" className="press-3d gap-2">{busy ? 'Starting…' : 'Continue with Google'}</Button>
+                  <Button onClick={auth.google} disabled={auth.busy} variant="primary" className="press-3d gap-2">{auth.busy ? 'Starting…' : 'Continue with Google'}</Button>
                 )}
                 {googleOk ? (
-                  <button onClick={() => { setShowLogin(true); setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><Icon as={SignIn} size="sm" /> Use email</button>
+                  <button onClick={() => { setShowLogin(true); auth.setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><Icon as={SignIn} size="sm" /> Use email</button>
                 ) : (
-                  <Button onClick={() => { setShowLogin(true); setErr('') }} variant="primary" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
+                  <Button onClick={() => { setShowLogin(true); auth.setErr('') }} variant="primary" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
                 )}
                 <span className="text-label text-fg-2">Signing in creates your journal and keeps it in sync across devices.</span>
               </div>
@@ -116,9 +99,9 @@ export function Welcome() {
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1" />
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button onClick={() => account('login')} disabled={busy} variant="primary" className="press-3d">Log in</Button>
-                  <Button onClick={() => account('signup')} disabled={busy} variant="secondary" className="text-fg-1">Sign up</Button>
-                  <button onClick={forgot} disabled={busy} className="ml-auto text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
+                  <Button onClick={() => auth.submit('login')} disabled={auth.busy} variant="primary" className="press-3d">Log in</Button>
+                  <Button onClick={() => auth.submit('signup')} disabled={auth.busy} variant="secondary" className="text-fg-1">Sign up</Button>
+                  <button onClick={auth.forgot} disabled={auth.busy} className="ml-auto text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
                   <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-body text-fg-2">Back</button>
                 </div>
               </div>
