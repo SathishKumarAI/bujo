@@ -20,7 +20,8 @@
     "tauri:build": "tauri build",
     "tauri:dev": "tauri dev",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify": "tsc -b && vitest run && eslint . && vite build"
   },
   "dependencies": {
     "@fontsource-variable/caveat": "^5.3.0",

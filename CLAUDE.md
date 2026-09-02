@@ -9,9 +9,9 @@ happens to be checked out.
    prefixes: `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`.
 2. **Commit in logical chunks**, not one blob. One concern per commit, with a
    body explaining *why*, including anything surprising found on the way.
-3. **Verify before pushing:** `npx tsc -b` (NOT `--noEmit`, see below), then
-   `npx vitest run`, `npx eslint .`, `npm run build`. For UI work, also open the
-   app and check the affected views.
+3. **Verify before pushing:** `npm run verify` — chains `tsc -b` (NOT
+   `--noEmit`, see below), `vitest run`, `eslint .`, `vite build` in order.
+   For UI work, also open the app and check the affected views.
 4. **Push and open a PR** with `gh pr create --base <parent-branch>`. State what
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
