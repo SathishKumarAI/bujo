@@ -1,0 +1,70 @@
+name: a11y
+
+# The browser gate: axe over every view, plus smoke. Split out of ci.yml so it
+# can be skipped on documentation-only changes.
+#
+# WHY ITS OWN FILE, and not an `if:` on a job inside ci.yml. `paths-ignore` is a
+# workflow-level filter in Actions - it cannot be applied to one job. The
+# alternative is a job that starts, decides nothing changed, skips its own steps
+# and reports **green**. That is a check claiming to have looked when it did not,
+# which is the exact failure this repo has been bitten by three times (empty
+# journal, closed folds, a smoke run pointed at a different app). A missing check
+# is honest; a green one that never ran is not.
+#
+# So on a docs-only PR this workflow does not appear at all, and `verify` +
+# `docs-guard` in ci.yml still do.
+#
+# The cost being avoided is real: ~10 minutes to boot Chromium, seed a demo
+# journal and scan 25 views x 5 themes x 2 widths with every fold forced open.
+# On a one-file STATUS.md edit that is the whole PR.
+#
+# WHEN EDITING THE IGNORE LIST: it must stay narrow. `scripts/**` is where the
+# gates themselves live, so a change there has to re-run this - which is why the
+# filter matches markdown rather than listing directories. If you find yourself
+# adding a source path here, that is the signal to stop.
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  push:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  # Accessibility gate (BUJO-94 tail). Runs against a production preview and
+  # fails on serious/critical axe violations only — the moderate ones are mostly
+  # colour-contrast findings on chart internals, which need the data-viz palette
+  # decision rather than a blanket fix.
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Playwright stays out of the app tree deliberately (see scripts/*.mjs):
+      # installed here with --no-save so it never reaches a user's bundle.
+      - name: Install Playwright
+        run: |
+          npm i -D --no-save playwright @axe-core/playwright
+          npx playwright install --with-deps chromium
+      - name: Serve preview
+        run: npx vite preview --port 4173 &
+      - name: Wait for preview
+        run: npx wait-on http://localhost:4173 --timeout 60000
+      - name: axe-core
+        run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
+      # Smoke has never run in CI — it was local-only, which is how it managed
+      # to sit on a wrong default port (5173, Vite's dev default, i.e. whichever
+      # project on the machine booted first) and report a clean 25/25 against a
+      # different application. It asserts its own identity now, so it can be
+      # trusted here. Same preview server, no extra build.
+      - name: Smoke every view
+        run: BUJO_URL=http://localhost:4173 node scripts/smoke-views.mjs
