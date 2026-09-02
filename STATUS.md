@@ -1,90 +1,105 @@
 # STATUS
 
-**Stopped:** 2026-08-29. On `refactor/gym-page-contract`, clean.
-**#181 merged** (`main` at `85c3682`). **#182 open**, CI running.
+**Stopped:** 2026-09-02. On `fix/dawn-flamingo-separation`, clean.
+`main` at the #190 merge. **#191 and #192 open**, CI running.
 
 ## What this session did
 
-Started from "work on `?view=gym`", then a reported bug: the exercise picker
-"not showing all the text".
+Started from "what's the status", then "complete them" — the twelve open
+`repo:bujo` items on the Plane board. Ten shipped, two of the twelve are
+deliberately not started (below), and four new items were filed on the way.
 
 | PR | What | Ticket |
 |---|---|---|
-| #181 · merged | The picker was unreadable because a filling animation trapped it in a stacking context | — |
-| #182 · open | Gym on the three-zone contract; 4.67 → 1.38 screens at 1440, 6.89 → 2.37 at 390 | — |
+| #183 · merged | The a11y gate now opens every fold before scanning | COD-93 |
+| #184 · merged | Set-row headers were wider than the phone tracks they label | COD-95 |
+| #185 · merged | The stalled-lift alert fired on everything, and the data was why | COD-90 |
+| #186 · merged | The exercise picker called itself a combobox and was a list of buttons | COD-91 |
+| #187 · merged | The set row buys its touch targets with a second line | COD-92 |
+| #188 · merged | Three quarters of a card was another card | COD-89 |
+| #189 · merged | README: the shape of the codebase, where nine screenshots were | — |
+| #190 · merged | The gate had never seen Settings or the design-system page | COD-58, COD-94 |
+| #191 · open | "On track" named two different things, and was backwards for a cap | COD-48 |
+| #192 · open | A four-step staleness ramp whose top two rungs were one colour | COD-51 |
 
-Filed, not fixed: **COD-89** three lists of the same lifts · **COD-90**
-`stalledLifts` fires on 6 of 6 · **COD-91** `ExercisePicker` is not a combobox ·
-**COD-92** set-row controls under the 44px touch floor · **COD-93** the a11y
-gate does not open folds.
+Filed, not fixed: **COD-94** (closed by #190) · **COD-95** (closed by #184) ·
+**COD-96** 24 controls on gym still under 44px · **COD-116** NoFap's 10-colour
+urge palette collapses (latte 5.7).
 
 ## The one thing to carry forward
 
-**A fix can look right, land, and do nothing — and the only way to know is to
-re-measure the symptom, not the mechanism.**
+**Every gate this session touched was green because of what it could not see,
+and arming each one turned it red on the first run.**
 
-The picker bug was diagnosed correctly on the second try. The first diagnosis
-was: `transform: translateY(0)` computes to `matrix(1,0,0,1,0,0)`, which is not
-`none`, which creates a stacking context — so end every keyframe on
-`transform: none`. That is all true, it is a real CSS rule, and it fixed
-nothing. I confirmed the edited CSS was being served (`curl` the dev server,
-read the keyframe back) and the computed transform was *still* the matrix.
+Four in a row, same shape:
 
-The actual rule is that **an animation which is filling a transform holds a
-stacking context for as long as it fills, whatever value it holds**, and
-`animation-fill-mode: both` fills forever. The value was never the variable.
-Nine entrance animations moved `both` → `backwards`; `celebrate-confetti` keeps
-`both` and is marked `fill-both-ok`, because it ends displaced at opacity 0 and
-must keep filling.
+- `a11y` did not open folds → armed it → **critical `select-name`** on Trackers,
+  the exact violation `CLAUDE.md` said had "shipped for months this way",
+  still shipping.
+- `a11y`'s `VIEWS` list had no Settings and no kitchen sink → added them →
+  **`fg-2` on `ink-3` at 4.09:1** on the page whose entire job is to display
+  the design system.
+- `contrast` measured legibility but not separation → added a scale check →
+  **Plan's four-step staleness ramp had two rungs the same colour** (maroon/red,
+  dE 6.6 in latte). Contrast ratio is structurally blind to this: two colours
+  of equal luminance have ratio 1.0 whatever their hue.
+- `clipped` was simply **red on `main`** and had been quoted as green in #182's
+  body.
 
-Two things worth keeping from that:
+The corollary that cost the most time to learn: **the ticket is a hypothesis,
+not a finding.** Three of the ten said something that measuring contradicted.
 
-- **The gate I wrote first encoded the wrong rule and passed a broken page.**
-  It matched keyframes ending on `translateY(0)`. Rule 7 in
-  `check-design-system.mjs` reads the *fill mode* instead. A static gate is only
-  as good as the mechanism it believes in, and writing the gate is not proof you
-  understood the bug.
-- **The decisive measurement was three lines**: `elementFromPoint` at the centre
-  of the open panel, plus `panel.contains(hit)`. Before: the Body-weight chart's
-  `<svg>`, `false`. After: the panel's own `<li>`, `true`. Screenshots showed
-  "the menu looks transparent", which is what sent the first diagnosis at the
-  background colour instead of the z-order.
+- COD-90 said `stalledLifts`' threshold was too loose. It was not. The demo
+  seeder logged one fixed weight per lift, so the journal contained **no PR
+  anywhere** and the detector was right to fire on 7 of 7. Fixing the fixture
+  fixed the alert.
+- COD-51 said dawn's `flamingo` sits dE 16 from `maroon`. True, and not the
+  problem — they are never drawn together, while two colours that *are* drawn
+  together sat at 6.6.
+- COD-48 named one defect and there were three.
 
-Second: **folding a section removes it from `npm run a11y`.** That gate does not
-open folds — its header says so — so when the contract pass folded Gym's
-analytics, `BigThreeCard`'s **1.41:1** latte contrast bug went from
-gate-visible to gate-invisible. Found by re-running axe with every
-`[aria-expanded="false"]` in `#main` clicked open, three passes deep. Fixed the
-contrast bug; filed the gate as COD-93. **Re-run axe with folds open whenever
-you add or move one**, and read a clean a11y run as "clean for whatever was
-expanded".
+**Measure before you accept the diagnosis, even when the diagnosis is written
+down in a ticket by someone careful.**
 
-Third, smaller: **the set row did not fit a phone, through two green rendering
-gates.** 324px column, 326px of grid tracks, so the remove button sat at
-**x=387 in a 390 viewport** while `document.body.scrollWidth` still read 390 —
-the ancestor-clip trap already in CLAUDE.md, hit again. The same squeeze
-collapsed `1fr` to 50px, making the exercise picker the *narrowest* control in
-the row it exists to fill. Both found by iterating control rects, not by
-looking.
+Smaller, worth keeping:
+
+- **A gate can only fail on what the fixture renders.** `stalledLifts`,
+  `weekdayConsistency` and now Plan's `yellow` arm are all cases where the demo
+  data decided what could be caught. When a gate goes green, ask what the seed
+  never produced.
+- **An exemption you can see beats an omission you cannot.** The new scale
+  check lists NoFap's failing 10-colour scale in an `UNENFORCED` map and prints
+  it on every run, rather than leaving it out of `SCALES` where it would be
+  invisible — the failure mode of `VIEWS`, the empty journal, and closed folds,
+  three times over.
+- **`a11y` costs ~9 minutes in CI now** (was ~7.5). Folds open is worth it.
+
+## Not started, and why
+
+- **COD-73** — four pages are still flat card stacks: pickleball 5379px, stats
+  4685, help 4021, nofap 3734. Each is a page-contract pass on the scale of
+  #182, which took a full session for one page and produced five follow-up
+  tickets. Four of those is not one increment.
+- **COD-61 / COD-49** (Recovery IA and its duplicated orient bar) and **COD-57**
+  (Today states the date three times) are the same shape — layout passes that
+  want measuring, a plan, and their own PRs.
 
 ## Measured
 
-Demo journal, dev server 5199.
-
 | | before | after |
 |---|---|---|
-| gym · 1440 | 4207px · 4.67 screens | **1246px · 1.38** |
-| gym · 390 | 5818px · 6.89 screens | **1997px · 2.37** |
-| folds open on arrival | 10 of 10 | **0 of 9** |
-| charts on first paint | 4 | **0** |
-| controls off-screen at 390 | 1 | **0** |
-
-Gates on #182: `tsc -b` 0 · eslint 0 errors · vitest **887/887** · build ok ·
-`design` 288 files · `contrast` 5 themes · `clipped` 23 views · `smoke` 25/25 ·
-axe with every fold open, 0 serious at mocha 1440 / latte 1440 / mocha 390.
+| `npm run a11y` coverage | 23 views × 5 themes, folds shut | **25 views**, folds forced open, 48 scans |
+| a11y violations found by arming it | — | **3** (1 critical, 2 serious), all fixed |
+| `npm run contrast` checks | 2 | **3** — divergence, legibility, **scale separation** |
+| `npm run clipped` on `main` | **red**, 2 strings | clean, 23 views |
+| gym set-row controls at 390 | 28×28, picker 120×61 | **all ≥44px**, picker 241×44 |
+| gym · "Deadlift" lines, folds open | 9 | **7** |
+| Goals headline | `1 of 7 on track` | `4 of 9 met · 3 of 8 on pace` |
+| tests | 887 | **900** |
 
 ## Next action
 
-Merge #182 once CI is green. Then COD-93 (arm the a11y gate to open folds) is
-the highest-leverage of the five filed — it is the reason the other bugs on this
-page were invisible, and it protects every page, not this one.
+Merge #191 and #192 once CI is green. Then **COD-73** is the biggest thing
+left, and it wants slicing: one page per PR, `node scripts/page-census.mjs`
+first for the before-number, and expect each page to file its own follow-ups
+the way gym filed five.
