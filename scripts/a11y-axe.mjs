@@ -7,6 +7,10 @@
  *
  *   BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
  *
+ * Every scan runs with the view's folds forced open (`openFolds`), because axe
+ * cannot see inside a closed disclosure and folding a section used to remove it
+ * from this gate silently.
+ *
  * Fails on **serious** and **critical** violations only. Moderate findings are
  * reported but not fatal: most are contrast inside chart internals, which needs
  * the data-viz palette decision rather than a blanket fix, and a gate that
@@ -109,9 +113,9 @@ const SURFACES = ['Morning', 'Day', 'Evening']
  * `VIEWS` now. Both passes reach the page, so keeping it here as well would
  * only scan it twice.
  *
- * **Neither pass opens a fold.** The Pull-ups manual is six collapsed sections
- * and axe cannot see inside a closed one, so a clean report here says nothing
- * about the tables and links in them — expand them by hand when they change.
+ * Both passes now open folds before scanning — see `openFolds` below. This
+ * paragraph used to say neither did, and that the Pull-ups manual's six
+ * collapsed sections had to be expanded by hand.
  */
 const COMPANIONS = [
   ['Home workout', 'homeworkout'],
@@ -344,6 +348,48 @@ async function goOrDie(name, why) {
   process.exit(1)
 }
 
+/**
+ * Open every disclosure inside `#main` before scanning · COD-93.
+ *
+ * axe walks the *rendered* page, so anything behind a closed fold is simply not
+ * checked. That is not a theoretical hole: when the Gym contract pass folded the
+ * analytics, `BigThreeCard`'s **1.41:1** latte contrast failure went from
+ * gate-visible to gate-invisible in the same commit, and the report stayed
+ * green. The file header used to say "expand them by hand when they change",
+ * which is the tell that it never happened — same shape as "only mocha was
+ * checked" sitting in STATUS.md for five sessions.
+ *
+ * Scoped to `#main` deliberately. The shell header carries four `aria-expanded`
+ * menu buttons on every single view; clicking those opens a popover over the
+ * page rather than revealing page content, and it would be scanned 132 times.
+ *
+ * Clicked in the page rather than through Playwright: React's synthetic handler
+ * is attached at the root and `el.click()` bubbles to it, so one `evaluate` per
+ * pass replaces up to 32 round-trips. Several passes because folds nest —
+ * Coaching has drawers inside drawers.
+ *
+ * Known ceiling: a **single-open accordion** (Coaching's weeks, its techniques)
+ * only ever shows one panel, and a pass that clicks all of its shut buttons in
+ * one batch leaves whichever React saw last open. So those groups are scanned
+ * one representative panel at a time, not exhaustively, and the pass count never
+ * settles to zero on them — which is why this is bounded by passes and does not
+ * assert everything opened.
+ */
+async function openFolds() {
+  let opened = 0
+  for (let pass = 0; pass < 4; pass++) {
+    const n = await page.evaluate(() => {
+      const shut = [...document.querySelectorAll('#main [aria-expanded="false"]')]
+      for (const el of shut) el.click()
+      return shut.length
+    })
+    if (n === 0) break
+    opened += n
+    await settle()
+  }
+  return opened
+}
+
 /** Scan whatever is on screen, under a label. */
 async function scan(label) {
   await settle()
@@ -355,6 +401,7 @@ async function scan(label) {
     await browser.close()
     process.exit(1)
   }
+  const folds = await openFolds()
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
@@ -362,7 +409,7 @@ async function scan(label) {
   const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
   const meh = results.violations.filter((v) => v.impact === 'moderate' || v.impact === 'minor')
   serious += bad.length
-  summary.push({ view: `${viewport} · ${theme} · ${label}`, serious: bad.length, other: meh.length })
+  summary.push({ view: `${viewport} · ${theme} · ${label}`, serious: bad.length, other: meh.length, folds })
 
   for (const v of bad) {
     console.error(`\n[${viewport} · ${theme} · ${label}] ${v.impact}: ${v.id} — ${v.help}`)
@@ -419,8 +466,8 @@ for (const vp of VIEWPORTS) {
 
 await browser.close()
 
-console.log('\nView            serious  other')
-for (const s of summary) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)}`)
+console.log('\nView            serious  other  folds')
+for (const s of summary) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)} ${String(s.folds).padStart(6)}`)
 
 if (serious > 0) {
   console.error(`\n${serious} serious/critical accessibility violation(s).`)

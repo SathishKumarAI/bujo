@@ -170,9 +170,12 @@ export function Settings() {
         <TabsContent value="profile" className="max-w-2xl">
       <Card band title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
+          {/* `Row` renders its label as a <span>, so it names nothing. Settings
+              is not on the gate's VIEWS list either — filed as COD-94. */}
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
+            aria-label="Gender"
             className="rounded-none border border-input bg-background px-2 py-1.5 text-body text-fg-1"
           >
             <option value="prefer-not">Prefer not to say</option>

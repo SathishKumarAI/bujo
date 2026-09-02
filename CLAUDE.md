@@ -25,11 +25,20 @@ Trap: **Tailwind v4 does not fail the build on a stale utility class.** It exits
 migrate every call site first and only then remove it from the theme, with a
 grep as the gate.
 
-Trap: **`npm run a11y` cannot scan inside a collapsed fold.** axe walks the
-rendered page, so anything behind a closed section is simply not checked — a
-critical `select-name` violation shipped for months this way. Re-run the gate
-with new or changed folds **open**, and read a clean report as "clean for
-whatever was expanded".
+Trap (fixed, COD-93): **`npm run a11y` could not scan inside a collapsed
+fold.** axe walks the rendered page, so anything behind a closed section was
+simply not checked — folding a section was a way to make a violation vanish
+from the gate, and the Gym contract pass did exactly that to a **1.41:1**
+contrast bug in the same commit. `openFolds()` now clicks every
+`[aria-expanded="false"]` inside `#main`, up to four passes because folds nest,
+before every scan. Arming it turned a green run red on a **critical**
+`select-name` — Trackers' new-habit category select, unnamed and behind a
+`DisclosureRow`, exactly the violation the old wording said "shipped for months
+this way". Its ceiling: a **single-open accordion** (Coaching's weeks) shows one
+panel at a time, so those groups get one representative panel, not all of them;
+the fold count in the summary column oscillates there rather than settling.
+Scoped to `#main` on purpose — the shell header's four `aria-expanded` menu
+buttons are not page content.
 
 Trap: **`vite preview` serves a stale bundle through its service worker.** A
 screenshot can show pre-change markup against a freshly built `dist/`. Before

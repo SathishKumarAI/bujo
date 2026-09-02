@@ -200,7 +200,10 @@ export function Trackers() {
                   placeholder="New habit / food / stimulant…"
                 />
               </div>
-              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+              {/* Named only by its options until COD-93 armed the a11y gate to
+                  open folds. It sits inside a DisclosureRow, so axe had never
+                  seen it — a screen reader announced "combo box" and nothing. */}
+              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} aria-label="Category for the new habit" className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               {/* The page's single primary button. */}
