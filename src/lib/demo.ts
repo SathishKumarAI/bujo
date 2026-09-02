@@ -281,8 +281,28 @@ export function generateDemoData(today = todayISO()): JournalData {
     j.entries.push({ id: uid('e'), date: addDays(today, -i * 2), type: 'note', text, status: 'open', important: false, memory: false, tags: text.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? [], createdAt: today })
   }
 
-  // ── Give a couple habits weekly goals so the Goals roll-up populates ──
-  j.habits.slice(0, 2).forEach((h, i) => { h.weeklyGoal = i === 0 ? 5 : 7 })
+  // ── Weekly goals, chosen rather than sliced ──
+  //
+  // This was `j.habits.slice(0, 2)`, which is an arbitrary two — and the
+  // default seed's first two are **Caffeine and Sugar**. Giving those a weekly
+  // *target* of 5 and 7 says "drink more coffee": the Goals page rendered
+  // "Caffeine 2/5" as a goal being missed when 2 is the good outcome. Half of
+  // COD-48 was that inversion; the roll-up was demoing it.
+  //
+  // Named, and one of each kind, so the page shows both a target you reach and
+  // a cap you stay under.
+  const WEEKLY_GOALS: Record<string, { goal: number; avoid?: boolean }> = {
+    Caffeine: { goal: 5, avoid: true }, // at most 5 coffees a week
+    Sugar: { goal: 2, avoid: true },
+    Exercise: { goal: 4 },
+    Read: { goal: 6 },
+  }
+  j.habits.forEach((h) => {
+    const g = WEEKLY_GOALS[h.name]
+    if (!g) return
+    h.weeklyGoal = g.goal
+    if (g.avoid) h.avoid = true
+  })
   // Assign times of day + cues so the routine-timeline lens demos well.
   const SLOT: Record<string, { t: 'morning' | 'afternoon' | 'evening' | 'anytime'; cue?: string }> = {
     Caffeine: { t: 'morning', cue: 'With breakfast' },
