@@ -72,6 +72,12 @@ for (const id of VIEW_IDS) {
     const folds = [...root.querySelectorAll('[aria-expanded]')]
       // A fold is a disclosure, not a combobox or a menu button.
       .filter((b) => !b.getAttribute('role') || b.getAttribute('role') === 'button')
+      // …and `role` alone does not catch them. `ExercisePicker`'s trigger is a
+      // plain `<button aria-haspopup="listbox" aria-expanded>`, so it has no
+      // role attribute to filter on — and there are up to 35 of them on
+      // `?view=gym`, one per set row. What separates a popup from a disclosure
+      // is that it *has a popup*.
+      .filter((b) => !b.getAttribute('aria-haspopup'))
       .filter((b) => name(b).length > 2)
     return {
       folds: folds.length,
