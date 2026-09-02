@@ -1,7 +1,12 @@
 # STATUS
 
-**Stopped:** 2026-09-02. On `fix/dawn-flamingo-separation`, clean.
-`main` at the #190 merge. **#191 and #192 open**, CI running.
+**Stopped:** 2026-09-02 14:47 CDT. On `main`, clean.
+**All eleven PRs merged, no open PRs.** `main` at the #193 merge.
+
+After the merges the session continued outside this repo, improving the
+`agile-github-flow` skill with a benchmark; that work is written up in
+`~/.claude/skills/agile-github-flow-workspace/SESSION-2026-09-02.md` and has an
+open decision waiting. It touched nothing here.
 
 ## What this session did
 
@@ -19,8 +24,8 @@ deliberately not started (below), and four new items were filed on the way.
 | #188 · merged | Three quarters of a card was another card | COD-89 |
 | #189 · merged | README: the shape of the codebase, where nine screenshots were | — |
 | #190 · merged | The gate had never seen Settings or the design-system page | COD-58, COD-94 |
-| #191 · open | "On track" named two different things, and was backwards for a cap | COD-48 |
-| #192 · open | A four-step staleness ramp whose top two rungs were one colour | COD-51 |
+| #191 · merged | "On track" named two different things, and was backwards for a cap | COD-48 |
+| #192 · merged | A four-step staleness ramp whose top two rungs were one colour | COD-51 |
 
 Filed, not fixed: **COD-94** (closed by #190) · **COD-95** (closed by #184) ·
 **COD-96** 24 controls on gym still under 44px · **COD-116** NoFap's 10-colour
@@ -99,7 +104,15 @@ Smaller, worth keeping:
 
 ## Next action
 
-Merge #191 and #192 once CI is green. Then **COD-73** is the biggest thing
-left, and it wants slicing: one page per PR, `node scripts/page-census.mjs`
-first for the before-number, and expect each page to file its own follow-ups
-the way gym filed five.
+**COD-73** is the biggest thing left, and it wants slicing: one page per PR,
+`node scripts/page-census.mjs` first for the before-number, and expect each
+page to file its own follow-ups the way gym filed five. Pickleball is the
+tallest at 5379px and the obvious first cut.
+
+Two calls left open for the user, neither blocking:
+
+- `.github/workflows/screenshots.yml` still runs on every push to `main`, and
+  since #189 the README no longer shows its output. Keep it or retire it.
+- latte's `sky` and `blue` are the **identical hex** `#165fc1`. Not drawn in
+  any declared scale, so `npm run contrast` passes; re-picking one is a taste
+  call rather than a bug fix.
