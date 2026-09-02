@@ -6,32 +6,14 @@ minimal one-pen style. Rapid logging, monthly spreads, habit & mood tracking,
 fitness logging, and gendered wellbeing tools — all stored **only in your
 browser**. No accounts, no server, no tracking.
 
-![bujo in open-book mode with demo data](docs/screenshot-book.png)
+**▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to
+try it instantly, no account. Or run it locally and open `?demo=1` for a month
+of sample data.
 
-## Screenshots
-
-**▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to try it instantly, no account.
-
-| Today | Trackers | Stats |
-|---|---|---|
-| ![Today](docs/screenshots/today-desktop.png) | ![Trackers](docs/screenshots/trackers-desktop.png) | ![Stats](docs/screenshots/stats-desktop.png) |
-
-| Fitness | Pickleball | Goals |
-|---|---|---|
-| ![Fitness](docs/screenshots/fitness-desktop.png) | ![Pickleball](docs/screenshots/pickleball-desktop.png) | ![Goals](docs/screenshots/goals-desktop.png) |
-
-**On a phone** — Today · Trackers · Fitness:
-
-<p>
-  <img src="docs/screenshots/today-mobile.png" alt="Today (mobile)" width="220">
-  <img src="docs/screenshots/trackers-mobile.png" alt="Trackers (mobile)" width="220">
-  <img src="docs/screenshots/fitness-mobile.png" alt="Fitness (mobile)" width="220">
-</p>
-
-> These shots **auto-refresh after every deploy** — a GitHub Action
-> (`.github/workflows/screenshots.yml`) rebuilds the app on each push to `main`
-> and re-runs `npm run shots` (Playwright → `docs/screenshots/`). Regenerate
-> locally with `npm run build && npm run preview` then `npm run shots`.
+> Screenshots used to sit here. They are still generated on every push to `main`
+> (`.github/workflows/screenshots.yml` → `npm run shots` → `docs/screenshots/`),
+> and are worth a look, but a wall of images is not what a reader needs first
+> from a repo — the shape of the codebase is. That is what follows.
 
 ## Why
 
@@ -91,13 +73,138 @@ paper *feel* (book frame, dot-grid, handwriting, stickers) with digital power
 | **Backups** | Export/import **JSON**, export **Markdown** (Obsidian/Logseq friendly). |
 | **Polish** | Editorial serif titles + clean line icons, Catppuccin Mocha **dark** + Latte **light**, subtle 3D depth, fully responsive, keyboard-friendly, image uploads auto-downscaled. |
 
-## Tech
+## Architecture
 
-- **Vite + React 19 + TypeScript**
-- **Tailwind CSS v4** (Catppuccin Mocha/Latte theme tokens)
-- **Recharts** for the line charts (lazy-loaded)
-- **localStorage** persistence — zero backend
-- **Vitest + Testing Library** (200+ tests)
+A single-page React app with **no backend on the default path**. All state is
+one JSON object in `localStorage` under `bujo:data`; the optional sync adapters
+are opt-in and additive, never the source of truth.
+
+| Layer | What it is |
+|---|---|
+| **Build** | Vite · React 19 · TypeScript. No router — `App.tsx` switches on a `?view=` id, read once at boot |
+| **Style** | Tailwind CSS v4. Theme tokens in `src/index.css` (`@theme`) and `src/styles/tokens.css`; shadcn semantic vars mapped onto Catppuccin |
+| **Primitives** | shadcn/ui + Radix in `components/ui/`, re-themed. `cn()` = clsx + tailwind-merge |
+| **Charts** | Recharts, lazy-loaded so they stay off the initial bundle |
+| **Offline** | `vite-plugin-pwa` — installable, service-worker app shell |
+| **Tests** | Vitest + Testing Library — **64 test files, 896 tests** |
+
+### Data flow
+
+```
+        localStorage  "bujo:data"
+              ▲   │
+     save     │   │  load + migrate            src/lib/storage.ts
+              │   ▼
+          useReducer ──► JournalData ──► useJournal()       src/store.tsx
+              ▲                              │                (React context)
+   actions    │                              ▼  read
+   (addEntry, toggleHabit, setHabitValue…)  views/ + components/
+              │
+              └── optional, opt-in, additive:  supabase.ts · bujocloud.ts · fscloud.ts
+```
+
+`JournalData` (`src/lib/types.ts`) is the single source of truth. Everything
+derived — streaks, correlations, PRs, heatmaps — is a **pure function in
+`src/lib/`** with its own unit test, not state.
+
+> ⚠️ There are several write paths, and silent divergence between them is the
+> risk this codebase watches hardest. Before touching `storage.ts`, `supabase.ts`,
+> `bujocloud.ts`, `fscloud.ts` or the export paths, read `.claude/CLAUDE.md` —
+> that work has a dedicated agent for a reason.
+
+### Every page has the same shape
+
+Screens are not free-form. `components/page/PageLayout.tsx` imposes a
+**three-zone contract**, and there is deliberately no zone 4:
+
+| Zone | Holds | Enforced by |
+|---|---|---|
+| 1 · **orient** | at most **four** facts, one bar | `StatBar` caps it |
+| 2 · **act** | the one thing the page exists to do — never folded | convention + `docs/pages/*.md` |
+| 3 · **review** | what has been recorded: the signature visual, then folds | `SummaryStrip`, `QuietSection` |
+
+### The gates are the design
+
+Eight, all runnable locally. Each was earned by a bug that shipped past
+everything else, and the story is in `CLAUDE.md`.
+
+| Command | What it catches | In CI |
+|---|---|---|
+| `npx tsc -b` | types. **Not `--noEmit`** — the root tsconfig is solution-style, has no root files, and always exits 0 | yes |
+| `npx vitest run` | 896 tests | yes |
+| `npx eslint .` | lint | yes, **soft** — pre-existing debt tolerated |
+| `npm run design` | design-system rules read off the source | yes |
+| `npm run contrast` | every accent × every theme, and that the palette's two copies agree | yes |
+| `npm run a11y` | axe over every view × 5 themes × 2 widths, **folds forced open** | yes |
+| `npm run smoke` | every view renders — and asserts it is looking at *this* app, after it once graded a different project for three PRs | yes |
+| `npm run clipped` | text showing less than it holds, and controls pushed off-screen by an ancestor | **no — local only** |
+
+## Directory structure
+
+```
+bujo/
+├── src/
+│   ├── main.tsx              entry — wraps <App> in <JournalProvider>
+│   ├── App.tsx               the view switch + shell composition (no router)
+│   ├── store.tsx             JournalProvider, useReducer, useJournal() context
+│   ├── index.css             Tailwind v4 @theme — the CSS half of the palette
+│   ├── styles/               tokens.css (type/space scale), layout.css
+│   ├── lib/             73   pure logic + types, unit-tested (+52 test files).
+│   │                         storage · types · date · stats · fitness ·
+│   │                         correlations · colors · deepLink · validate ·
+│   │                         supabase / bujocloud / fscloud
+│   ├── domain/               cross-cutting vocabulary: activities, sessions
+│   ├── views/           28   one file per screen — Today, Plan, Gym, Trackers…
+│   │   └── today/            Today is big enough to be a directory
+│   ├── components/
+│   │   ├── ui/               shadcn primitives, re-themed
+│   │   ├── ui.tsx            the bespoke kit (Card, Empty, Segmented, StatTile)
+│   │   ├── page/             the three-zone contract: PageLayout, StatBar,
+│   │   │                     SummaryStrip, DisclosureRow, CalendarHeatmap
+│   │   ├── shell/            AppShell, TopBar, SectionTabs, BottomNav, nav,
+│   │   │                     sections, cursor, viewChrome
+│   │   └── …13 feature dirs  gym · trackers · pickleball · stats · reading ·
+│   │                         recovery · program · mindset · collections ·
+│   │                         focus · fields · feedback · mod
+│   └── test/                 vitest setup
+├── scripts/                  the gates + the measuring tools (a11y-axe,
+│                             clipped-text, check-contrast, check-design-system,
+│                             page-census, smoke-views, capture-screenshots)
+├── docs/                     the reasoning. pages/ per screen, engineering/
+│                             per lens, plus ARCHITECTURE / DECISIONS / RULES
+├── public/                   favicon, icons, muscles/ (bundled wger diagrams)
+├── api/                      optional serverless handlers — feedback, sync
+├── docker/                   optional self-host: nginx, initdb, security headers
+├── src-tauri/                optional desktop shell (Rust)
+├── archive/                  retired code, kept not deleted — never imported
+├── CLAUDE.md                 house rules + the traps, read this first
+└── STATUS.md                 written when someone STOPS: where, next, gotchas
+```
+
+**Any directory with more than ~4 source files carries its own `README.md`
+whose first section is a `change → file` table.** Read that instead of the
+code — `src/components/trackers/README.md`, `src/components/shell/README.md`,
+`scripts/README.md`. Files target ~300 lines and hard-cap at 500.
+
+## Keeping this current
+
+This section is a claim with a date on it, and a stale map costs more than no
+map. **When the architecture moves, update it in the same commit as the move** —
+that is the rule in `CLAUDE.md`, and `.github/workflows/docs-guard.yml` warns
+on any PR that changes `src/` without touching docs or tests.
+
+| What you changed | What to update, same commit |
+|---|---|
+| Added / removed / renamed a **top-level directory** | the tree above — it is the authoritative copy; `docs/ARCHITECTURE.md` points here |
+| Changed **how data is loaded, saved, migrated or synced** | the data-flow diagram above **and** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Added a **feature directory** under `src/components/` | the tree above **and** that directory's own `README.md` `change → file` table |
+| Added a **screen** | [`docs/pages/`](docs/pages/) entry, the `VIEWS` list in `scripts/a11y-axe.mjs`, and `scripts/view-ids.mjs` |
+| Added or changed a **gate** | the gate list above and [`docs/PIPELINE.md`](docs/PIPELINE.md) |
+| Made a decision worth arguing with later | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
+| Hit a trap that cost you an hour | the trap list in [`CLAUDE.md`](CLAUDE.md) — that file is the reason the next session does not repeat it |
+
+Run `node scripts/page-census.mjs` before quoting a number about a page. Numbers
+in docs here have been wrong by 4× because they were copied rather than measured.
 
 ## Getting started
 

@@ -52,18 +52,17 @@ localStorage ("bujo:data")
 
 ## Directory map
 
-```
-src/
-├── lib/            pure logic + types (unit-tested) + cn() class-merge
-├── components/
-│   ├── ui/         shadcn primitives (button, switch, dialog, …)
-│   ├── ui.tsx      bespoke kit (Card, Button, Input, Slider, Segmented) — wraps shadcn
-│   └── shell/      app shell: AppShell, TopBar, SectionTabs, BottomNav, Page, cursor, viewChrome
-├── views/          one file per screen (Today, Monthly, Trackers, …)
-├── store.tsx       JournalProvider + useJournal() context
-├── App.tsx         view switch + shell composition (no router)
-└── main.tsx        entry; wraps <App> in <JournalProvider>
-```
+**It lives in [`README.md`](../README.md#directory-structure), not here.**
+
+There used to be a copy in this file, and it had drifted: no `domain/`, no
+`components/page/` — the directory that holds the three-zone contract every
+screen is built on — and no mention of `api/`, `docker/` or `src-tauri/`. Two
+copies of the same map is the same mistake as the palette written down twice
+(`CLAUDE.md`, COD-32): nothing keeps them in step, so the reader cannot tell
+which one is lying.
+
+One tree, in the file a newcomer opens first. This file keeps what a tree
+cannot say — the data flow above, the shell, and the decisions below.
 
 ## App shell (presentation layer)
 
