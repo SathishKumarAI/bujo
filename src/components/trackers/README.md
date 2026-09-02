@@ -52,11 +52,12 @@ build all clean (see the trap in the root `CLAUDE.md`).
   not here.** This directory chooses icons and colours for a chip; it never
   decides whether one appears. The cap exists because six chips accreted one
   commit at a time, three of them printing the same number.
-- **`TrackerVisuals` renders inside a fold that is closed by default.**
-  `npm run a11y` walks the rendered page, so nothing in that file is scanned
-  unless the fold is opened first — set
-  `localStorage['bujo.ui.section.trackers.deepAnalytics'] = '1'` and assert
-  `aria-expanded="true"` before believing a clean report.
+- **`TrackerVisuals` renders inside a fold that is closed by default.** That
+  used to put it outside `npm run a11y` entirely; since COD-93 the gate opens
+  every fold in `#main` before scanning, so it is covered. The manual
+  workaround this bullet used to prescribe
+  (`localStorage['bujo.ui.section.trackers.deepAnalytics'] = '1'`) is no longer
+  needed, and a manual workaround was never run anyway.
 - **A period with nothing scheduled is `null`, not `0`.** `monthlyCompletion`
   and `weekdayConsistency` both return it, and the charts here must not draw a
   bar for it — a month before the first habit's `startedOn` is unknown, not a

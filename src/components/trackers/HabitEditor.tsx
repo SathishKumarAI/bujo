@@ -166,7 +166,11 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
 
           <div className="flex items-center justify-between">
             <span className="text-body text-fg-1">Category</span>
-            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} className="rounded-none border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
+            {/* The span beside it is a span, not a <label>, so it names nothing.
+                Same defect as the new-habit select in Trackers.tsx; this one is
+                behind an edit mode the a11y gate does not enter, so it is fixed
+                by inspection rather than by a red run. */}
+            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} aria-label="Category" className="rounded-none border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
