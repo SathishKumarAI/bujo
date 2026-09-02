@@ -36,22 +36,56 @@ export interface SetRow {
 /**
  * The set-row grid, spelled once — the header and every row must agree.
  *
- * Two steps, because the desktop track list does not fit a phone. In the act
- * column at 390px the container is 324px and the seven desktop tracks plus
- * their gaps come to 326: the row overflowed by 2px, which put the **remove
- * button at x=387 in a 390 viewport** — outside the screen, with nothing able
- * to scroll to it, and `document.body.scrollWidth` still reading 390 because
- * the clip happens at an ancestor. Neither `npm run a11y` nor `clipped-text`
- * can see that (the button shows everything it holds and its own box is fine);
- * it is the failure `STATUS.md` describes, found by measuring control rects.
+ * **One line on desktop, two on a phone**, and the second line is what makes
+ * the touch targets legal (COD-92). Seven controls across 324px means every
+ * one of them is 24–28px wide; the accessibility floor is 44. Fighting for
+ * width had already been tried and lost: the seven desktop tracks plus gaps
+ * came to 326px in a 324px column, which put the **remove button at x=387 in
+ * a 390 viewport** — off screen, with nothing able to scroll to it, and
+ * `document.body.scrollWidth` still reading 390 because the clip happens at an
+ * ancestor. Neither `npm run a11y` nor `clipped-text` can see that. Trimming
+ * the tracks to fit made the targets *smaller*, which was the right call
+ * against off-screen and the wrong one against a thumb.
  *
- * The squeeze also collapsed `1fr` to **50px**, so the exercise picker — the
- * widest thing a set row has to say — was the narrowest control in the row.
- * The phone step trims the six fixed tracks and the gap, which buys `1fr`
- * 122px instead.
+ * A second line buys the height instead of fighting for the width, which is
+ * exactly what `ui/button.tsx` says to do: it refuses to grow `icon-sm` to 44
+ * globally because 338 pairs of small buttons sit under 16px apart and would
+ * start overlapping. "Spacing decisions per cluster, not a sweep over the
+ * primitive" — this is the cluster.
+ *
+ *   phone      [ ⊕ ][ exercise ............ ][ ✕ ]
+ *              [ kg ][ reps ][ RPE ][ set ]
+ *   sm and up  [ ⊕ ][ exercise ][ kg ][ reps ][ RPE ][ set ][ ✕ ]
+ *
+ * The children stay in desktop order in the DOM — the phone line break is
+ * done with explicit `col-start`/`row-start`, reset to `auto` at `sm`. Doing
+ * it with two wrapper divs and `sm:contents` reads better and cannot work:
+ * flattening them would hand the desktop grid its children in the order
+ * focus, picker, remove, weight… and drop the remove button into track 3.
  */
 const ROW_GRID =
-  'grid grid-cols-[24px_1fr_40px_34px_30px_26px_24px] gap-1 sm:grid-cols-[28px_1fr_52px_44px_40px_36px_28px] sm:gap-2'
+  'grid grid-cols-4 gap-1 sm:grid-cols-[28px_1fr_52px_44px_40px_36px_28px] sm:gap-2'
+
+/**
+ * Where each control sits on the phone's two lines. `sm:*-auto` hands the row
+ * back to auto-placement, which fills the seven desktop tracks in DOM order.
+ */
+const AT = {
+  focus: 'col-start-1 row-start-1 sm:col-auto sm:row-auto',
+  // The picker's own trigger is 37px tall, so it needs the touch height too.
+  // Reached through the wrapper rather than by giving `ExercisePicker` a
+  // `className`: its height is this row's decision, not the component's, and
+  // it is used elsewhere (the anatomy lookup) where 44 is not wanted.
+  picker: 'col-start-2 col-span-3 row-start-1 min-w-0 [&_button]:h-11 sm:col-auto sm:col-span-1 sm:row-auto sm:[&_button]:h-auto',
+  weight: 'col-start-1 row-start-2 sm:col-auto sm:row-auto',
+  reps: 'col-start-2 row-start-2 sm:col-auto sm:row-auto',
+  rpe: 'col-start-3 row-start-2 sm:col-auto sm:row-auto',
+  kind: 'col-start-4 row-start-2 sm:col-auto sm:row-auto',
+  remove: 'col-start-4 row-start-1 justify-self-end sm:col-auto sm:row-auto',
+}
+
+/** 44px on touch, back to the compact desktop size from `sm` up. */
+const TOUCH = 'h-11 w-full sm:h-7'
 
 export function SessionLogger({
   data, split, setSplit, rows, setRows, setRow, addRow, onLoadRoutine,
@@ -120,17 +154,13 @@ export function SessionLogger({
       </datalist>
 
       <div className="space-y-2">
-        <div className={`${ROW_GRID} text-label text-fg-2`}>
-          {/* Two of these headers are wider than the phone track they label —
-              "Weight" wants 44px in 40, "Type" 29 in 26 — and the tracks cannot
-              grow: they were trimmed to 324px precisely so the remove button
-              stays on screen (see ROW_GRID). So the *word* gives way, not the
-              column. `npm run clipped` was red on `phone · gym` for both. */}
-          <span /><span>Exercise</span>
-          <span><span className="sm:hidden">Wt</span><span className="hidden sm:inline">Weight</span></span>
-          <span>Reps</span><span>RPE</span>
-          <span><span className="sm:hidden">Set</span><span className="hidden sm:inline">Type</span></span>
-          <span />
+        {/* Desktop only. A header row cannot label a two-line row without
+            repeating itself, and on a phone every field already names itself
+            through its placeholder — which is why RPE's is now the word and
+            not an em dash. The "Wt"/"Set" phone abbreviations this replaces
+            existed to fit tracks that no longer exist. */}
+        <div className={`${ROW_GRID} hidden text-label text-fg-2 sm:grid`}>
+          <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span>RPE</span><span>Type</span><span />
         </div>
         {rows.map((row, i) => {
           const focused = !!row.exercise.trim() && focusEx === row.exercise
@@ -150,25 +180,30 @@ export function SessionLogger({
                   aria-label="Focus muscle map on this exercise"
                   aria-pressed={focused}
                   title="Show this exercise on the muscle map"
-                  className="grid h-7 w-7 place-items-center rounded-none disabled:opacity-30"
+                  className={`${AT.focus} ${TOUCH} grid place-items-center rounded-none disabled:opacity-30 sm:w-7`}
                   style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? onAccent(cat('mauve')) : cat('subtext0') }}
                 >
                   <AppIcon as={Crosshair} size="sm" />
                 </button>
-                <ExercisePicker
-                  value={row.exercise}
-                  onPick={(name) => setRow(i, { exercise: name })}
-                  library={EXERCISE_LIBRARY}
-                  recents={recentExercises}
-                />
-                <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} aria-label="Weight" className="py-1.5" />
-                <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" aria-label="Reps" className="py-1.5" />
-                <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="—" aria-label="RPE" className="py-1.5" />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className="grid h-7 w-8 place-items-center rounded-none text-label font-medium" style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
-                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className="text-fg-2 hover:text-red"><AppIcon as={X} size="sm" /></Button>
+                {/* Wrapped rather than given a className: `ExercisePicker` owns
+                    its own positioning root for the popup, and the grid item
+                    has to be the thing that is placed. */}
+                <div className={AT.picker}>
+                  <ExercisePicker
+                    value={row.exercise}
+                    onPick={(name) => setRow(i, { exercise: name })}
+                    library={EXERCISE_LIBRARY}
+                    recents={recentExercises}
+                  />
+                </div>
+                <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} aria-label="Weight" className={`${AT.weight} h-11 py-1.5 sm:h-auto`} />
+                <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" aria-label="Reps" className={`${AT.reps} h-11 py-1.5 sm:h-auto`} />
+                <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="RPE" aria-label="RPE" className={`${AT.rpe} h-11 py-1.5 sm:h-auto`} />
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-none text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className={`${AT.remove} h-11 w-11 text-fg-2 hover:text-red sm:h-7 sm:w-7`}><AppIcon as={X} size="sm" /></Button>
               </div>
               {(prev || oneRM || row.exercise.trim()) && (
-                <div className="mt-0.5 ml-9 flex items-center gap-3 text-micro text-fg-2">
+                <div className="mt-0.5 flex sm:ml-9 items-center gap-3 text-micro text-fg-2">
                   {prev && (
                     <button
                       type="button"
@@ -189,7 +224,7 @@ export function SessionLogger({
                 const ramp = warmupRamp(Number(row.weight) || 0, defaultBar, warmStep)
                 if (!ramp.length) return null
                 return (
-                  <div className="mt-1 ml-9 flex flex-wrap items-center gap-1.5 text-micro text-fg-2">
+                  <div className="mt-1 flex sm:ml-9 flex-wrap items-center gap-1.5 text-micro text-fg-2">
                     <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
                       <AppIcon as={Stack} size="sm" style={{ color: cat('blue') }} /> Warm-up:
                     </span>
