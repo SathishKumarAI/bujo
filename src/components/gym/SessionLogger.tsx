@@ -167,7 +167,7 @@ export function SessionLogger({
           const prev = row.exercise.trim() ? lastSetFor(data, row.exercise) : null
           const oneRM = row.weight && row.reps ? epley1RM(Number(row.weight), Number(row.reps)) : null
           const kind = row.kind ?? 'working'
-          const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'peach', title: 'Drop set' } }[kind]
+          const kindMeta = { working: { label: '•', color: 'mauve', title: 'Working set' }, warmup: { label: 'W', color: 'blue', title: 'Warm-up' }, drop: { label: 'D', color: 'maroon', title: 'Drop set' } }[kind]
           const nextKind = { working: 'warmup', warmup: 'drop', drop: 'working' }[kind] as SetRow['kind']
           // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
           const complete = !!(row.weight.trim() && row.reps.trim())

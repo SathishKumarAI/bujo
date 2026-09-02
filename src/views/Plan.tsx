@@ -104,7 +104,13 @@ export function Plan() {
   const agingBuckets = [
     { key: 'recent', label: '1–2d', n: aging.recent, color: 'yellow' as const },
     { key: 'week', label: '3–7d', n: aging.week, color: 'peach' as const },
-    { key: 'stale', label: '1–4wk', n: aging.stale, color: 'maroon' as const },
+    // `pink`, not `maroon`. This is a four-step staleness ramp and the two most
+    // severe steps were the same colour: maroon/red measure dE 6.6 apart in
+    // latte, 11.4 in vscode, 14.1 in mocha — a ramp whose top two rungs a reader
+    // cannot separate. Caught by the scale check in `scripts/check-contrast.mjs`
+    // (COD-51), which exists because contrast ratio cannot see this: two colours
+    // of equal luminance have ratio 1.0 whatever their hue.
+    { key: 'stale', label: '1–4wk', n: aging.stale, color: 'pink' as const },
     { key: 'ancient', label: '30d+', n: aging.ancient, color: 'red' as const },
   ].filter((b) => b.n > 0)
 
