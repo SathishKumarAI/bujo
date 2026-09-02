@@ -220,8 +220,14 @@ export function KitchenSink() {
               ['ink-3', 'bg-ink-3'],
             ] as const
           ).map(([name, cls]) => (
+            /* `text-fg-1`, not `fg-2`. The label sits on the swatch it names,
+               and the swatches get lighter: `fg-2` on `ink-3` measured
+               **4.09:1** at 11px in mocha (COD-58) — the page whose whole job
+               is to display the design system, failing the design system, in
+               its own caption. It went unseen because this view was not on the
+               a11y gate's list; it is now. */
             <div key={name} className={`grid h-16 w-28 place-items-center rounded-card border border-line ${cls}`}>
-              <span className="text-caption text-fg-2">{name}</span>
+              <span className="text-caption text-fg-1">{name}</span>
             </div>
           ))}
         </div>
