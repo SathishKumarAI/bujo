@@ -102,6 +102,24 @@ Smaller, worth keeping:
 | Goals headline | `1 of 7 on track` | `4 of 9 met · 3 of 8 on pace` |
 | tests | 887 | **900** |
 
+## The gate moved · #195
+
+`a11y` (axe + smoke) is its own workflow now, `.github/workflows/a11y.yml`, with
+`paths-ignore` on `**/*.md` and `docs/**`. A one-file `STATUS.md` edit was
+booting Chromium and scanning 25 views x 5 themes x 2 widths — ten minutes on a
+PR touching no source.
+
+**It is a separate file rather than an `if:` on the job on purpose.**
+`paths-ignore` is workflow-level in Actions, and a job guarded by `if:` would
+start, skip its steps and report **green** — a check claiming to have looked
+when it did not. That is the shape this repo has been bitten by three times
+(COD-28 empty journal, COD-93 closed folds, smoke scoring a different app
+25/25). A missing check is honest; a green one that never ran is not.
+
+The ignore list matches markdown rather than listing directories, because
+`scripts/**` holds the gates themselves and must always re-trigger. Adding a
+source path to that list is the signal to stop.
+
 ## Next action
 
 **COD-73** is the biggest thing left, and it wants slicing: one page per PR,
