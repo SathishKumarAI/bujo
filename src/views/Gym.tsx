@@ -20,7 +20,7 @@ import { QuietSection } from '../components/CollapsibleSection'
 import { splitGlyph } from '../components/glyphs'
 import {
   RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
-  MuscleVolumeBalance, BigThreeCard, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
+  MuscleVolumeBalance, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
   SessionLogger, type SetRow,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
@@ -454,10 +454,9 @@ export function Gym() {
             </QuietSection>
 
             <QuietSection title="Strength standards" subtitle="Big-three total, bodyweight ratios, effort trend" defaultOpen={false} stickyKey="gym.standards">
-              <div className="grid items-start gap-5 lg:grid-cols-2">
-                <BigThreeCard total={bigThree} unit={unit} setFocusEx={setFocusEx} />
-                <RelativeStrengthCard rows={relStrength} unit={unit} setFocusEx={setFocusEx} />
-              </div>
+              {/* One card, not two side by side. The big-three tiles were
+                  `Personal records` a second time — see COD-89. */}
+              <RelativeStrengthCard rows={relStrength} total={bigThree} unit={unit} setFocusEx={setFocusEx} />
               {rpeSeries.length >= 2 && (
                 <Card band title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
                   <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>

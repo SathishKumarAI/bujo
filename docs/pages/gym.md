@@ -72,19 +72,25 @@ carries "Sets this week", and a strip that repeats an orient fact is the mistake
 this page already made with its lift lists. It carries volume instead: sets are
 the stimulus, volume is the load.
 
-## Still true, and not fixed here
+## The four things that pass left open · closed 2026-09-02
 
-- **The same lifts are listed three times.** Personal records, Stalled lifts and
-  Relative strength each enumerate the same exercises with the same weights, and
-  Big-three total repeats three of them a fourth time. Same shape as the habit
-  row that printed one number three ways (#177). They are now in three separate
-  folds, which hides the redundancy rather than resolving it.
-- **"Stalled lifts" fires on everything.** Six of six lifts in the demo journal.
-  An alert that fires on everything is a label, not an alert.
-- **`ExercisePicker` is not a combobox.** No `role="combobox"`, no `aria-expanded`,
-  no arrow-key navigation — it is a button plus a filtered list.
-- **The set row's controls are under the 44px touch floor** (`h-7`), as they were
-  before.
+Each was filed rather than silently left, and each is now shipped. They are
+worth keeping written down, because three of the four were invisible to a gate.
+
+| Was | Now |
+|---|---|
+| **The same lifts listed three times**, and Big-three total repeating three of them a fourth — "Deadlift 100kg" appeared on the page four times. Three separate folds *hid* the redundancy rather than resolving it | `BigThreeCard` is gone. Three of its four numbers were `Personal records` printed again; the one it owned, the total, is a line at the top of `RelativeStrengthCard`, which is now the page's single "how strong am I" card (COD-89) |
+| **"Stalled lifts" fired on six of six.** An alert that fires on everything is a label | The demo seeder was logging one fixed weight per lift, so the journal held **no PR anywhere** and the detector was right. Real progressions now; 3 of 7 flagged. Flagging and counting were also two disagreeing definitions — `60, 65, 65, 65` printed "4 sessions stuck", counting the session that went up (COD-90) |
+| **`ExercisePicker` was not a combobox** — no roles, no `aria-expanded`, no arrow keys. `npm run a11y` passed it and always would: a named button over named buttons is valid markup | The ARIA 1.2 listbox pattern, guarded by `ExercisePicker.test.tsx` rather than by a gate, because widget semantics are not a thing axe asserts (COD-91) |
+| **Set-row controls under the 44px floor** — 28×28, and the picker 120×61 with its own label wrapping | Two lines on a phone, one on desktop. Every control ≥44px; page 1988 → 1993px. Buying height rather than fighting for width is what `ui/button.tsx` prescribes (COD-92) |
+
+Found while closing them, still open: **COD-94** Settings is not on the a11y
+gate's `VIEWS` list · **COD-96** 24 other controls on this page are still under
+44px (the quick-load links are 19px).
+
+The `npm run a11y` warning below is now obsolete in its particulars — the gate
+opens folds itself since COD-93 — but the general lesson is why this section
+exists at all.
 
 ## Measured
 
