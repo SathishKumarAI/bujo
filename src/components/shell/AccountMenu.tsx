@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { useJournal } from '../../store'
-import { supabaseEnabled, currentUser, signOut, pushJournal } from '../../lib/supabase'
+import { supabaseEnabled, currentUser, onAuthChange, signOut, pushJournal } from '../../lib/supabase'
 import type { ViewId } from './viewChrome'
 
 /**
@@ -16,7 +16,9 @@ export function AccountMenu({ onNavigate }: { onNavigate: (id: ViewId) => void }
   const { data } = useJournal()
   const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null)
   const [busy, setBusy] = useState(false)
-  useEffect(() => { if (supabaseEnabled()) currentUser().then(setUser) }, [])
+  // Subscribe rather than fetch-once: sign-in happens on other views (Account,
+  // Welcome, Settings) and the menu label must follow without a remount.
+  useEffect(() => { if (supabaseEnabled()) return onAuthChange(() => { currentUser().then(setUser) }) }, [])
   if (!supabaseEnabled()) return null
 
   const signedIn = !!user && !user.is_anonymous
