@@ -121,7 +121,16 @@ export function SessionLogger({
 
       <div className="space-y-2">
         <div className={`${ROW_GRID} text-label text-fg-2`}>
-          <span /><span>Exercise</span><span>Weight</span><span>Reps</span><span>RPE</span><span>Type</span><span />
+          {/* Two of these headers are wider than the phone track they label —
+              "Weight" wants 44px in 40, "Type" 29 in 26 — and the tracks cannot
+              grow: they were trimmed to 324px precisely so the remove button
+              stays on screen (see ROW_GRID). So the *word* gives way, not the
+              column. `npm run clipped` was red on `phone · gym` for both. */}
+          <span /><span>Exercise</span>
+          <span><span className="sm:hidden">Wt</span><span className="hidden sm:inline">Weight</span></span>
+          <span>Reps</span><span>RPE</span>
+          <span><span className="sm:hidden">Set</span><span className="hidden sm:inline">Type</span></span>
+          <span />
         </div>
         {rows.map((row, i) => {
           const focused = !!row.exercise.trim() && focusEx === row.exercise
