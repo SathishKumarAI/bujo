@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio } from './fitness'
 import { plateColor } from '../components/PlateStack'
+import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
 import type { JournalData, Workout } from './types'
 
@@ -477,24 +478,48 @@ describe('stalledLifts (#479 plateau detector)', () => {
   })
   it('flags a lift with no new top weight across the last N sessions', () => {
     const d = emptyJournal()
-    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 65), rowDay('2026-06-15', 65), rowDay('2026-06-22', 65)]
+    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 65), rowDay('2026-06-15', 65), rowDay('2026-06-22', 65), rowDay('2026-06-29', 65)]
     const stalled = stalledLifts(d, 3)
     const bench = stalled.find((s) => s.exercise === 'Bench Press')
     expect(bench).toBeDefined()
     expect(bench!.top).toBe(65)
-    // Plateau run = trailing sessions at or below the current top. The opening
-    // 60 also sits below 65, so all four sessions are part of the no-PR streak.
-    expect(bench!.sessions).toBe(4)
+    // Three sessions have been logged SINCE the 65 went up. The session that
+    // set it is not part of the stall — counting it was the old bug, which
+    // reported "4 sessions" for `60, 65, 65, 65`.
+    expect(bench!.sessions).toBe(3)
+  })
+  it('does not count the session that set the top weight as part of the stall', () => {
+    const d = emptyJournal()
+    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 65), rowDay('2026-06-15', 65), rowDay('2026-06-22', 65)]
+    // Two sessions since the PR, so at a threshold of 3 this lift is climbing,
+    // not stuck. The old predicate flagged it and printed "4 sessions".
+    expect(stalledLifts(d, 3)).toEqual([])
   })
   it('does NOT flag a lift that just set a new high', () => {
     const d = emptyJournal()
-    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 62.5), rowDay('2026-06-15', 65)]
+    d.workouts = [rowDay('2026-06-01', 60), rowDay('2026-06-08', 62.5), rowDay('2026-06-15', 65), rowDay('2026-06-22', 67.5)]
     expect(stalledLifts(d, 3)).toEqual([])
   })
-  it('needs at least N logged sessions before it can stall', () => {
+  it('needs more than N logged sessions before it can stall', () => {
     const d = emptyJournal()
+    // Three flat sessions and nothing before them: there is no earlier high to
+    // have stalled from, and "never PR'd" is a different sentence.
+    const d3 = emptyJournal()
+    d3.workouts = [rowDay('2026-06-01', 65), rowDay('2026-06-08', 65), rowDay('2026-06-15', 65)]
+    expect(stalledLifts(d3, 3)).toEqual([])
     d.workouts = [rowDay('2026-06-08', 65), rowDay('2026-06-15', 65)]
     expect(stalledLifts(d, 3)).toEqual([])
+  })
+  it('discriminates on the demo journal rather than firing on everything', () => {
+    // COD-90: this fired on 7 of 7 lifts, because the demo seeder logged the
+    // same weight every session — the data really was flat. Both halves are
+    // fixed, and the assertion is that the alert now separates lifts.
+    const demo = generateDemoData('2026-09-02')
+    const stalled = stalledLifts(demo)
+    expect(stalled.length).toBeGreaterThan(0)
+    expect(stalled.map((s) => s.exercise).sort()).toEqual(['Bench Press', 'Overhead Press', 'Romanian Deadlift'])
+    // …and the ones that are climbing are absent.
+    expect(stalled.some((s) => s.exercise === 'Deadlift')).toBe(false)
   })
 })
 

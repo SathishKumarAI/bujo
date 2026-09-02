@@ -585,22 +585,35 @@ export function neglectedMuscles(data: JournalData, today = todayISO(), days = 1
 // ── Stalled-lift detector (F: #479) ──────────────────────────────────────────
 export interface StalledLift {
   exercise: string
-  /** Current top weight (kg/lb in the user's unit). */
+  /** The ceiling the lift is stuck under — its best weight ever. */
   top: number
-  /** Number of consecutive most-recent sessions at or below `top`. */
+  /** Sessions logged **since** the last new top set. This is the stall length. */
   sessions: number
   /** Most recent session date for the lift. */
   lastDate: string
 }
 
 /**
- * Lifts whose heaviest set hasn't improved across the last `sessions` sessions.
- * For each exercise we walk exerciseProgression (best weight per training day,
- * ascending) and look at the trailing window: if the most recent day's top
- * weight is not greater than every earlier day in that window — i.e. no new high
- * was set across the last `sessions` days — the lift is flagged as stalled. Needs
- * at least `sessions` logged days for an exercise to qualify. Sorted by stall
- * length desc then name. Pure — derived from logged progression.
+ * Lifts that have not set a new top weight in their last `sessions` sessions.
+ *
+ * One definition does both jobs: walk `exerciseProgression` (best weight per
+ * training day, ascending), find the last day that beat everything before it,
+ * and count the days after it. That count **is** the stall length, and the lift
+ * is stalled when it reaches `sessions`.
+ *
+ * It used to be two definitions that disagreed, which is why the card could say
+ * "no new top set in the last 3+ sessions" beside a number that meant something
+ * else. Flagging asked "is the latest day a new high over the trailing window",
+ * so a lift that PR'd two days ago and held was called stalled; the number
+ * beside it counted every trailing day *at or below* the current top, so the
+ * session where the PR was actually set was counted as part of the plateau.
+ * `60, 65, 65, 65` reported "4 sessions" stuck — including the one that went up.
+ *
+ * A lift needs more than `sessions` logged days to qualify: with exactly three
+ * days and no improvement there is no earlier high to have stalled *from*, and
+ * "you have never PR'd this lift" is a different sentence than the card says.
+ *
+ * Sorted by stall length desc then name. Pure — derived from logged progression.
  */
 export function stalledLifts(data: JournalData, sessions = 3): StalledLift[] {
   // Distinct exercise names across structured rows + legacy strings.
@@ -612,20 +625,17 @@ export function stalledLifts(data: JournalData, sessions = 3): StalledLift[] {
   const out: StalledLift[] = []
   for (const name of names) {
     const prog = exerciseProgression(data, name) // {date:'MM-DD', weight} ascending
-    if (prog.length < sessions) continue
-    const window = prog.slice(-sessions)
-    const recent = window[window.length - 1].weight
-    // Stalled when the latest top is not a new high over the window — i.e. some
-    // earlier session in the window already matched or beat it.
-    const newHigh = window.slice(0, -1).every((p) => recent > p.weight)
-    if (newHigh) continue
-    // Count how many trailing sessions sit at or below the current top (the run
-    // length of the plateau), capped at the available history.
-    let run = 0
-    for (let i = prog.length - 1; i >= 0; i--) {
-      if (prog[i].weight <= recent) run++; else break
+    if (prog.length <= sessions) continue
+    // The last day that beat every day before it. Day 0 counts as a high — the
+    // first time you load a bar you have never lifted more.
+    let lastHigh = 0
+    let best = prog[0].weight
+    for (let i = 1; i < prog.length; i++) {
+      if (prog[i].weight > best) { best = prog[i].weight; lastHigh = i }
     }
-    out.push({ exercise: name, top: recent, sessions: run, lastDate: prog[prog.length - 1].date })
+    const since = prog.length - 1 - lastHigh
+    if (since < sessions) continue
+    out.push({ exercise: name, top: best, sessions: since, lastDate: prog[prog.length - 1].date })
   }
   return out.sort((a, b) => (b.sessions - a.sessions) || (a.exercise < b.exercise ? -1 : 1))
 }
