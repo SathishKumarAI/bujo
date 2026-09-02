@@ -119,6 +119,19 @@ const SURFACES = ['Morning', 'Day', 'Evening']
  */
 const COMPANIONS = [
   ['Home workout', 'homeworkout'],
+  // Settings is not in the rail or any tab row — it is behind the account menu
+  // — so it had never been scanned, and every "0 serious" this gate printed
+  // excluded the page that holds most of the app's form controls. Adding it
+  // immediately failed on an unnamed `<select>` (COD-94).
+  ['Settings', 'settings'],
+  // The kitchen sink renders every component in every state. It is excluded
+  // from `scripts/view-ids.mjs` as a development surface, and that exemption
+  // was quietly inherited here — so **the page whose whole job is to display
+  // the design system had never been checked by the design system's gate**. It
+  // is exactly the page a contrast bug shows up on first, and it did: `fg-2` on
+  // `ink-3` measured 4.09:1 (COD-58). Not shipped to users is not a reason to
+  // leave it unmeasured; it is a reason the measurement is cheap.
+  ['Kitchen sink', 'kitchen-sink'],
 ]
 
 /**
