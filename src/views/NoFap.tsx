@@ -12,6 +12,7 @@ import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, ur
 import type { TriggerPlan } from '../lib/types'
 import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { CollapsibleSection } from '../components/CollapsibleSection'
+import { LazyMount } from '../components/LazyMount'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import {
@@ -583,9 +584,14 @@ export function NoFap() {
         </div>
         </section>
 
-        {/* Deep analytics · trends, distributions, heatmaps, patterns */}
+        {/* Deep analytics · trends, distributions, heatmaps, patterns.
+            LazyMount: six chart cards, ~2 screens below the fold on most
+            visits — the data is computed above either way, but recharts
+            mount+measure+draw waits until the reader actually heads down
+            here (400px early, so it is there when they arrive). */}
         <section>
           <h2 className="border-b border-line pb-1 text-label text-fg-2">Deep analytics <span className="text-fg-3">· Trends, intensity, clean windows, high-risk hours & days, urge mix</span></h2>
+          <LazyMount minHeight={600}>
           <div className="mt-2 flex flex-col gap-4">
           {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
           {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
@@ -615,6 +621,7 @@ export function NoFap() {
             </Card>
           )}
         </div>
+          </LazyMount>
         </section>
 
         {/* ── Reference · static guides & history──────────

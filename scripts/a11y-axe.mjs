@@ -414,6 +414,23 @@ async function openFolds() {
   return opened
 }
 
+/**
+ * Walk the page top to bottom so every `LazyMount` fires its
+ * IntersectionObserver and mounts its content, then return to the top.
+ * Without this, lazily-mounted sections are simply absent from the DOM at
+ * scan time — the closed-fold trap in a new shape: a chart that never
+ * mounts cannot fail. Runs before AND the fold pass runs again after,
+ * because lazy content can carry folds (Pickleball) and folds can carry
+ * lazy content.
+ */
+async function revealLazy() {
+  // An explicit event, not a scroll walk: scrolling to the bottom and back
+  // left the hide-on-scroll header in a state that intercepted this script's
+  // own tab clicks. LazyMount listens for this and mounts immediately.
+  await page.evaluate(() => window.dispatchEvent(new Event('bujo:reveal-lazy')))
+  await settle()
+}
+
 /** Scan whatever is on screen, under a label. */
 async function scan(label) {
   await settle()
@@ -425,7 +442,9 @@ async function scan(label) {
     await browser.close()
     process.exit(1)
   }
-  const folds = await openFolds()
+  let folds = await openFolds()
+  await revealLazy()
+  folds += await openFolds()
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
