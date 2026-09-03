@@ -87,6 +87,24 @@
     position: sticky;
     top: calc(var(--header-h, 3.5rem) + 1rem);
   }
+
+  /* The act column, when it has outgrown the viewport. It used to fall back
+     to static and both columns scrolled as one page; now it is a scrollport of
+     its own — wheel over the right panel moves only the right panel, and
+     `overscroll-behavior` keeps the leftover scroll from spilling into the
+     page. PageLayout pairs this with tabIndex/role/aria-label so the region
+     is keyboard-reachable (axe scrollable-region-focusable). Scoped to the
+     split layout: stacked pages keep one scrollbar, which is correct there. */
+  .page-zones:not(.page-zones-single) .zone-act[data-panel='true'] {
+    position: sticky;
+    top: calc(var(--header-h, 3.5rem) + 1rem);
+    max-height: calc(100vh - var(--header-h, 3.5rem) - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Breathing room so the scrollbar does not sit on the controls. */
+    padding-right: 0.5rem;
+    margin-right: -0.5rem;
+  }
 }
 
 /* No individual control ever exceeds this, whatever room it is given. A text

@@ -7,6 +7,7 @@ import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../comp
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid } from '../components/shell/CardGrid'
+import { LazyMount } from '../components/LazyMount'
 import { CalendarHeatmap } from '../components/page'
 import { cat, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay } from '../lib/date'
@@ -619,7 +620,10 @@ export function Pickleball() {
         icon={<Icon as={ChartBar} size="md" className="text-teal" />}
         hint="Trends · volume · heatmap · tap ⛶ to enlarge"
       >
-        {charts}
+        {/* Seven recharts. The fold already defers them for anyone who keeps
+            it closed; LazyMount covers the sticky-open case, where they used
+            to mount on page load two screens above where they render. */}
+        <LazyMount minHeight={500}>{charts}</LazyMount>
       </Section>
 
       <CardGrid>

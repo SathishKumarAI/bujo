@@ -51,6 +51,10 @@ export function PageLayout({
 }) {
   const act = useRef<HTMLDivElement>(null)
   const [sticky, setSticky] = useState(true)
+  // Whether the container query has actually split the columns — the panel
+  // affordance below is meaningless in the stacked single-column layout, and
+  // a focusable region that does not scroll is a dead tab stop.
+  const [split, setSplit] = useState(false)
 
   /**
    * Sticky only engages while the act column is shorter than the viewport.
@@ -85,6 +89,9 @@ export function PageLayout({
       // `useHeaderHeight` has published a measurement.
       const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 56
       setSticky(el.scrollHeight < window.innerHeight - header - 16)
+      // Mirrors layout.css's `@container (min-width: 900px)` — the shell is
+      // the container, so its width is the same measurement the CSS makes.
+      setSplit((el.closest('.page-shell')?.clientWidth ?? 0) >= 900)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -96,12 +103,32 @@ export function PageLayout({
     }
   }, [])
 
+  const panel = tier === 1180 && !stacked && split && !sticky
+
   return (
     <div className={cn('page-shell page-enter mx-auto w-full', tier === 820 ? 'max-w-read' : 'max-w-wide', className)}>
       <div className={cn('page-zones', (tier === 820 || stacked) && 'page-zones-single')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
-          <div ref={act} className="zone-act min-w-0" data-sticky={sticky}>
+          // When the act column FITS the viewport it is sticky, as before.
+          // When it outgrows it, it used to drop to static — and then the two
+          // columns scrolled as one, so reading a chart on the left dragged
+          // the half-filled form on the right off screen. Now it becomes its
+          // own scrollport instead (`data-panel`, styles in layout.css):
+          // wheel over the right panel scrolls only the right panel,
+          // `overscroll-behavior` stops it handing the leftover scroll to the
+          // page. Focusable + labelled because a scroll region no keyboard
+          // can reach is the axe `scrollable-region-focusable` failure this
+          // repo has already shipped once (CalendarHeatmap).
+          <div
+            ref={act}
+            className="zone-act min-w-0"
+            data-sticky={sticky}
+            data-panel={panel}
+            tabIndex={panel ? 0 : undefined}
+            role={panel ? 'region' : undefined}
+            aria-label={panel ? 'Actions panel, scrollable' : undefined}
+          >
             {zone2}
           </div>
         )}

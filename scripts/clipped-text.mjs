@@ -161,6 +161,11 @@ for (const vp of VIEWPORTS) {
   for (const view of VIEWS) {
     await page.goto(`${BASE}/?view=${view}`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(300)
+    // Arm every LazyMount first: lazily-mounted sections do not exist in the
+    // DOM until their IntersectionObserver fires, and an unmounted element
+    // cannot be measured — the closed-fold trap in a new shape.
+    await page.evaluate(() => window.dispatchEvent(new Event('bujo:reveal-lazy')))
+    await page.waitForTimeout(200)
     const clipped = await page.evaluate(findClipped)
     if (clipped.length) {
       failures += clipped.length
