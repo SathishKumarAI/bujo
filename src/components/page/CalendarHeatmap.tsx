@@ -103,6 +103,7 @@ export function CalendarHeatmap({
         days={days}
         size={size}
         fluid={fluid}
+        months
         color="mauve"
         label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${weeks} weeks`}
       />

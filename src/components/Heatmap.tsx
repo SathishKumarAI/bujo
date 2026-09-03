@@ -33,7 +33,7 @@ export function Heatmap({ cols }: { cols: HeatCell[][] }) {
   // data, and a legend whose swatches grow with the viewport reads as a chart.
   return (
     <div>
-      <DayGrid days={days} fluid label={`Activity heatmap, ${days.length} days`} />
+      <DayGrid days={days} fluid months label={`Activity heatmap, ${days.length} days`} />
       <DayGridLegend />
     </div>
   )

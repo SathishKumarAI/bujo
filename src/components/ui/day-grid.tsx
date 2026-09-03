@@ -1,5 +1,5 @@
 import { cat } from '../../lib/colors'
-import { fromISODay, prettyDay, WEEKDAYS } from '../../lib/date'
+import { fromISODay, MONTHS, prettyDay, WEEKDAYS } from '../../lib/date'
 
 /**
  * DayGrid — one day per cell, columns are weeks, rows are weekdays.
@@ -66,6 +66,7 @@ export function DayGrid({
   size = 11,
   gap = 3,
   fluid = false,
+  months = false,
   label,
   onDayClick,
 }: {
@@ -95,6 +96,13 @@ export function DayGrid({
    * measurement, media query or resize observer.
    */
   fluid?: boolean
+  /**
+   * A visible month-label row above the grid, GitHub-style. Without it a
+   * trailing-window grid is an anonymous field of squares — nothing on it says
+   * *when*. Visual only (`aria-hidden`): the sr-only "Week of …" column headers
+   * already carry the month for assistive tech.
+   */
+  months?: boolean
   label?: string
   /** Omit for a read-only grid. */
   onDayClick?: (date: string) => void
@@ -138,6 +146,28 @@ export function DayGrid({
     }
     return ''
   }
+  // Month index of a column's first real day, or -1 for an all-blank column.
+  const colMonth = (col: number) => {
+    for (let r = 0; r < ROWS; r++) {
+      const d = slot(r, col)
+      if (d && !d.blank) return fromISODay(d.date).getMonth()
+    }
+    return -1
+  }
+  // Label the columns where the month turns over. The first column is labeled
+  // too unless the turnover lands within the next two — the labels overflow
+  // their 11px cell on purpose (that is how a 3-letter word sits over a week),
+  // so two of them three columns apart would overprint each other.
+  const monthLabel = (col: number) => {
+    const m = colMonth(col)
+    if (m < 0) return ''
+    if (col === 0) {
+      const soon = [1, 2].some((c) => c < cols && colMonth(c) >= 0 && colMonth(c) !== m)
+      return soon ? '' : MONTHS[m].slice(0, 3)
+    }
+    const prev = colMonth(col - 1)
+    return prev >= 0 && prev !== m ? MONTHS[m].slice(0, 3) : ''
+  }
 
   return (
     // A <caption> rather than an aria-label: it survives table-navigation mode
@@ -145,6 +175,19 @@ export function DayGrid({
     <table className={`border-separate${fluid ? ' w-full table-fixed' : ''}`} style={{ borderSpacing: gap }}>
       <caption className="sr-only">{label ?? `Activity grid, ${days.length} days`}</caption>
       <thead>
+        {months && (
+          <tr aria-hidden="true">
+            <td style={headCol} />
+            {Array.from({ length: cols }).map((_, c) => (
+              // data-clip-ok: the label deliberately overflows its 11px week
+              // column and draws over the empty cells beside it (the GitHub
+              // idiom); scrollWidth > clientWidth here is not a truncation.
+              <td key={c} data-clip-ok className="overflow-visible p-0 text-left text-micro whitespace-nowrap text-fg-2">
+                {monthLabel(c)}
+              </td>
+            ))}
+          </tr>
+        )}
         <tr>
           <td className="sr-only" style={headCol} />
           {Array.from({ length: cols }).map((_, c) => (
