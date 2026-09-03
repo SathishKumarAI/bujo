@@ -55,7 +55,11 @@ export function defaultSettings(): Settings {
     distanceUnit: 'mi',
     weekStart: 0,
     gender: 'male',
-    cycleTrackerEnabled: false,
+    // On by default for everyone, like nofap below — the tab shows beside
+    // Recovery and Settings hides it, rather than a tab whose existence has
+    // to be discovered in Settings first. Existing journals keep whatever
+    // value they stored; this only shapes fresh ones.
+    cycleTrackerEnabled: true,
     nofapEnabled: true,
     startedOn: todayISO(),
     paperMode: true,

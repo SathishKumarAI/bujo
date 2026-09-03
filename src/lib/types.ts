@@ -433,7 +433,7 @@ export interface Settings {
   weekStart: 0 | 1
   /** Drives which gendered wellbeing tools are surfaced (cycle vs. abstinence). */
   gender: Gender
-  /** Show the neutral cycle / fertility tracker. Auto-on for female. */
+  /** Show the neutral cycle / fertility tracker. Defaults on; hide in Settings. */
   cycleTrackerEnabled: boolean
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
