@@ -5,6 +5,39 @@ import { toKm } from './units'
 
 export const STORAGE_KEY = 'bujo:data'
 
+// ── Account ownership (COD-135) ──────────────────────────────────────────────
+// One local journal per browser origin, but a shared device can sign into
+// several different Supabase accounts over its lifetime. Without a record of
+// whose journal is currently sitting in localStorage, signing in as account B
+// after account A used the same device (sign-out never clears local data —
+// that's deliberate) lets the sync path merge or push A's journal into B's
+// cloud row. `bujo:owner` is that record: the Supabase user id the local
+// journal currently matches, or absent when it's unclaimed (guest/local-only,
+// or a journal written before this key existed — never treated as foreign).
+export const OWNER_KEY = 'bujo:owner'
+
+/** The Supabase user id the local journal currently belongs to, or null. */
+export function getOwner(): string | null {
+  return typeof localStorage !== 'undefined' ? localStorage.getItem(OWNER_KEY) : null
+}
+
+/** Record that the local journal now matches this account — call right after
+ *  an adopt or push makes that true, never speculatively. */
+export function claimOwner(userId: string): void {
+  if (typeof localStorage !== 'undefined') localStorage.setItem(OWNER_KEY, userId)
+}
+
+/**
+ * True when the local journal is known to belong to a DIFFERENT account than
+ * `userId`. An unclaimed journal (no owner recorded) is never foreign, so
+ * upgrading users and guest→account linking (same user id throughout) are
+ * unaffected — this only fires for the shared-device, different-account case.
+ */
+export function isForeignOwner(userId: string): boolean {
+  const owner = getOwner()
+  return owner != null && owner !== userId
+}
+
 let _counter = 0
 /** Stable-ish unique id (uuid when available, else a counter fallback for tests). */
 export function uid(prefix = 'id'): string {

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
 import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
+import { claimOwner, isForeignOwner } from './storage'
 import type { JournalData } from './types'
 
 // Optional Supabase backend: real login (guest/anonymous + email) and per-user
@@ -166,6 +167,12 @@ export async function pushJournal(journal: JournalData): Promise<void> {
   const sb = client()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Not signed in.')
+  // COD-135: the local journal is a different account's (sign-out never wipes
+  // it, so a shared device can still hold one). Never push it into this
+  // account's row — loud failure here, not a silent cross-account merge.
+  if (isForeignOwner(user.id)) {
+    throw new Error('This device has another account’s journal saved locally. Sign in as that account to sync it, or replace it with this account’s cloud copy first.')
+  }
   // Inline photos so their bytes actually travel, within the budget the request
   // body allows; over it the journal still syncs without them. See
   // `inlineImagesWithinBudget` for why all-or-nothing rather than partial.
@@ -173,4 +180,6 @@ export async function pushJournal(journal: JournalData): Promise<void> {
   const { error } = await sb.from('journals').upsert({ user_id: user.id, data: payload, updated_at: new Date().toISOString() })
   if (error) throw error
   notePhotosSkipped(skipped)
+  // The push succeeded, so local now IS this account's canonical copy.
+  claimOwner(user.id)
 }

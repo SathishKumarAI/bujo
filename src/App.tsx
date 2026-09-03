@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
-import { migrate, emptyJournal } from './lib/storage'
+import { migrate, emptyJournal, isForeignOwner, claimOwner } from './lib/storage'
 import { resolveIncoming } from './lib/conflict'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange, onPasswordRecovery } from './lib/supabase'
@@ -124,14 +124,23 @@ export default function App() {
       // sample-data session → adopt their cloud journal (or start clean) and
       // drop the demo, rather than merging sample data into the new account.
       const leavingExplore = !u.is_anonymous && dataRef.current.settings.explore
+      // COD-135: local belongs to a DIFFERENT account (sign-out never clears
+      // it). This runs on every load, including the OAuth-redirect reload
+      // that never touches useAuthForm's own confirm-before-replace — so it's
+      // the only place that can catch that path. Same treatment as leaving
+      // explore: replace outright, never resolveIncoming (which would MERGE
+      // the foreign journal's items into the account's data).
+      const foreignOwner = !leavingExplore && isForeignOwner(u.id)
+      const replaceOnly = leavingExplore || foreignOwner
       return pullJournal().then((r) => {
         if (r) {
-          const next = leavingExplore ? migrate(r) : resolveIncoming(dataRef.current, migrate(r))
+          const next = replaceOnly ? migrate(r) : resolveIncoming(dataRef.current, migrate(r))
           if (next) replaceAll(next)
-        } else if (leavingExplore) {
+        } else if (replaceOnly) {
           replaceAll(emptyJournal())
         }
         if (leavingExplore) setSettings({ explore: false })
+        claimOwner(u.id)
       }).catch(() => {})
     }).finally(() => { sbReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -142,6 +151,12 @@ export default function App() {
     if (snapshot === lastSync.current) return // nothing new (e.g. just applied a remote change)
     const id = setTimeout(async () => {
       try {
+        // COD-135: local belongs to a different account — skip pull-merge too,
+        // not just push. `pushJournal` alone refusing to upload isn't enough:
+        // this effect would otherwise merge the foreign journal into `remote`
+        // and write that blend to local storage even without ever pushing it.
+        const u = await currentUser()
+        if (!u || isForeignOwner(u.id)) return
         // Pull-first guard (two devices, one account): adopt+merge a newer remote
         // instead of clobbering it, mirroring the blob/folder paths.
         const remote = await pullJournal()
@@ -168,9 +183,13 @@ export default function App() {
     subscribeJournal((remote) => {
       const snap = JSON.stringify(remote)
       if (snap === lastSync.current) return // our own write echoing back
-      lastSync.current = snap
-      const next = resolveIncoming(dataRef.current, migrate(remote))
-      if (next) replaceAll(next) // null = keep local; it re-pushes on next change
+      currentUser().then((u) => {
+        // COD-135: never merge a live push from the account into a foreign local.
+        if (!u || isForeignOwner(u.id)) return
+        lastSync.current = snap
+        const next = resolveIncoming(dataRef.current, migrate(remote))
+        if (next) replaceAll(next) // null = keep local; it re-pushes on next change
+      })
     }).then((fn) => { off = fn })
     return () => off()
   }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps

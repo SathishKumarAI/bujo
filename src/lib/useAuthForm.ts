@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useJournal } from '../store'
-import { migrate } from './storage'
+import { migrate, emptyJournal, isForeignOwner, claimOwner } from './storage'
 import { authFormError, isValidEmail, passwordError } from './validate'
 import {
   supabaseEnabled, providerEnabled, currentUser, onAuthChange, onPasswordRecovery,
@@ -63,10 +63,25 @@ export function useAuthForm(opts: {
         setMsg('Account created — check your inbox to confirm your email.')
       } else {
         await signInEmail(email, pw)
+        const u = await currentUser()
+        // COD-135: is the journal already on this device someone else's?
+        // (Sign-out never clears it, so a shared device can still hold one.)
+        const foreign = u ? isForeignOwner(u.id) : false
         const r = await pullJournal()
-        // Never silently clobber this device: declining keeps local data,
-        // which re-pushes on the next change.
-        if (r && await opts.confirmReplace()) replaceAll(migrate(r))
+        if (r) {
+          // Never silently clobber this device: declining keeps local data,
+          // which re-pushes on the next change — UNLESS it's a foreign
+          // journal, in which case declining just leaves it unsynced (see
+          // pushJournal's owner guard) rather than uploading it here.
+          if (await opts.confirmReplace()) { replaceAll(migrate(r)); if (u) claimOwner(u.id) }
+        } else if (foreign) {
+          // This account has no cloud copy yet, and local belongs to whoever
+          // used this device before — don't hand it to the new sign-in.
+          replaceAll(emptyJournal())
+          if (u) claimOwner(u.id)
+        } else if (u) {
+          claimOwner(u.id)
+        }
         setPw('')
       }
       opts.onDone?.(mode)
@@ -90,7 +105,12 @@ export function useAuthForm(opts: {
     await run(async () => {
       const r = await pullJournal()
       if (!r) { setMsg('Nothing stored in your account yet.'); return }
-      if (await opts.confirmReplace()) { replaceAll(migrate(r)); setMsg('Loaded.') }
+      if (await opts.confirmReplace()) {
+        replaceAll(migrate(r))
+        const u = await currentUser()
+        if (u) claimOwner(u.id)
+        setMsg('Loaded.')
+      }
     })
   }
 
