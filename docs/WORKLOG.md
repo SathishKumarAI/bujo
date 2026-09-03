@@ -1,5 +1,46 @@
 # Worklog
 
+## 2026-09-03 (evening) — Independent panels, and charts that wait for the reader (COD-143)
+
+**Summary:** Two user asks, branch `feat/panel-scroll-lazy`. (1) "Left and
+right panels where I can scroll only the one I'm on": on split pages the act
+column used to drop from sticky to *static* once it outgrew the viewport, so
+both columns scrolled as one. It is now its own scrollport in that case —
+sticky + max-height + `overflow-y: auto` + `overscroll-behavior: contain` —
+wheel over the right panel moves only the right panel. Focusable
+(`tabIndex`/`role=region`/label, the CalendarHeatmap lesson), and all of it
+gated on the split being active (tier 1180, not stacked, shell ≥900px) so
+phones and stacked pages keep one scrollbar and no dead tab stop. Verified
+live on Strength: panel scrolled 300px, `window.scrollY` stayed 0.
+(2) "Lazy loading — data there, not rendered until scrolled to": new
+`LazyMount` (IntersectionObserver, 400px rootMargin, mount-once,
+fixed-height skeleton) wraps Recovery's Deep-analytics block (six recharts)
+and Pickleball's Charts section (seven). Recovery paints with **0** recharts
+mounted; heading toward the section mounts them before it enters the
+viewport. Closed folds already deferred their content — this covers the
+open-by-default stacks.
+
+**The gate story is the half that matters.** An unmounted section cannot be
+scanned — the closed-fold trap in a new shape — so `LazyMount` also mounts
+on an explicit `bujo:reveal-lazy` window event and **both scanning gates
+dispatch it** before measuring. First attempt scrolled each page bottom-and-
+back instead; the hide-on-scroll header ended up intercepting the a11y
+script's own tab clicks (30s Playwright timeout, `<nav Section> intercepts
+pointer events`). An explicit arm is deterministic. No IntersectionObserver
+at all → content renders immediately; both paths pinned in
+`LazyMount.test.tsx`.
+
+**Trap hit:** editing `NoFap.tsx` through the path `Nofap.tsx` silently
+renamed the directory entry on this case-insensitive filesystem — git showed
+`D NoFap.tsx` + `?? Nofap.tsx` and tsc failed with TS1261 (same file, two
+casings). Renamed back via a temp name. Match the repo's casing exactly on
+Windows; the tools won't stop you.
+
+**Verification:** `npm run verify` exit 0 — `Tests 922 passed (922)` (920 +
+2 new LazyMount tests), eslint 0 errors. a11y "No serious or critical violations"
+(now scanning the armed lazy content); clipped "No clipped or off-screen
+text across 23 views"; smoke "25/25 views OK".
+
 ## 2026-09-03 (later) — Strength: tools beside the logger, and a barbell that animates (COD-142)
 
 **Summary:** Two user asks in sequence on the Strength page, branch

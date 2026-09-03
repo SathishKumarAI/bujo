@@ -1,56 +1,53 @@
 # STATUS
 
-**Stopped:** 2026-09-03. Branch `refactor/body-ui-polish` (COD-141), PR open
-against `main`. All gates green and quoted in `docs/WORKLOG.md` (2026-09-03
-entry) — 920 tests, a11y/contrast/clipped/smoke/design all pass.
+**Stopped:** 2026-09-03 evening. Three branches shipped and squash-merged
+today — #197 (COD-141, Body cluster polish), #198 (COD-142, Strength tools +
+animated barbell), and `feat/panel-scroll-lazy` (COD-143, panels + lazy
+mounting; PR open or just merged — check `gh pr list`). All gates green,
+outputs quoted per-entry in `docs/WORKLOG.md` (three 2026-09-03 entries).
 
-## What this session did
+## What today's session did
 
-Brief: "improve the UI of all pages in the Body cluster, document changes."
-Surveyed all 11 Body tabs in a real browser (preview + `?demo=1`, 1440 and
-390) before touching anything; fixed the six rendered defects the survey
-found. Full defect→fix table in the WORKLOG entry.
-
-- **Cycle** rebuilt day-first: one editor for the selected day, compact month
-  list with per-flag coloured dots, today bold. Was 180 controls at once.
-- **`DayGrid` gained `months`** (opt-in visible month-label row); `Heatmap` +
-  `CalendarHeatmap` opt in, so Fitness / Pull-ups / Stats / Pickleball /
-  Mindset grids all gained month anchors from one edit.
-- **Challenges** missed days now red-`'22'`-washed (were identical to
-  future days). **Home workout** library spans the row, emoji glyphs deleted
-  (field removed from `lib/homeExercises.ts` too). **Nutrition** over/under
-  legend. **Trackers** `47` → `47%`.
-- **`npm run a11y` now scans Cycle** (COMPANIONS entry — gated tab, URL
-  reachable, had never been scanned).
-- **Strength (user asked mid-session):** set-row 'reps'/'RPE' placeholders
-  were clipped mid-glyph at the 44/40px tracks — 56px now; RPE labeled
-  "effort 1–10"; weightless PRs say "bodyweight ×8", not "0lb · 1RM ~0lb".
+1. **COD-141** — surveyed all 11 Body tabs in-browser before touching code;
+   fixed seven measured defects (Cycle's 180-control wall → day editor,
+   month labels on all day grids, Challenges missed-day encoding, Home
+   workout layout + emoji removal, Nutrition legend, Trackers unit, Gym
+   clipped placeholders / 0lb PRs). Cycle added to the a11y COMPANIONS list.
+2. **COD-142** — Look up & tools moved beside the session logger (used
+   *during* the act); plate calculator rebuilt as a full symmetric barbell
+   with staggered plate-load animation and thumb steppers.
+3. **COD-143** — split pages: an act column taller than the viewport becomes
+   its own scrollport (independent left/right scrolling, focusable region);
+   `LazyMount` defers below-fold chart stacks (Recovery, Pickleball) until
+   the reader heads there.
 
 ## Decisions that will surprise you later
 
-- **Cycle's selection is view state, not journal state** — deliberately not
-  persisted; the month cursor moving snaps selection back into the month.
-- **The month labels legitimately trip `scrollWidth > clientWidth`** — they
-  overflow their 11px week column on purpose (GitHub idiom). That is what
-  `data-clip-ok` on the `<td>` is for; removing it re-flags 30 strings.
-- **Pickleball and Recovery were left alone on purpose.** Both are
-  page-contract-scale restructures (Pickleball renders ~7,700px expanded);
-  polishing them would be lipstick on an IA problem. That is the next real
-  conversation, not a checkbox.
+- **`LazyMount` mounts on `bujo:reveal-lazy`**, and both scanning gates
+  (`a11y-axe`, `clipped-text`) dispatch that event before measuring. This is
+  load-bearing: unmounted content cannot be scanned, so removing the arm
+  turns both gates green-but-blind. Do not "simplify" it away.
+- **A scroll-walk reveal was tried and reverted** — scrolling bottom-and-back
+  left the hide-on-scroll header intercepting the a11y script's own clicks.
+- **`.zone-act :is(input…)` (0-1-1) beats Tailwind width utilities** on
+  inputs inside act columns; the plate calculator uses inline `style` widths
+  for exactly this reason.
+- **Pickleball and Recovery IA restructures still deliberately not done**
+  (page-contract scale). LazyMount trims their cost, not their length.
 
 ## Environment traps hit this session
 
-- `vite preview`'s service worker served the **pre-change bundle twice** even
-  after rebuilds — unregister SW + clear `caches` + reload before believing
-  any screenshot (the documented trap, still live).
-- Port 4173 was already owned by a leftover preview from this repo — reused
-  after checking the process command line per the worktree trap.
-- Browser automation worked this session via a debug Chrome on 9333
-  (`--remote-debugging-port=9333 --user-data-dir=<temp profile>`).
+- **Editing `NoFap.tsx` via the path `Nofap.tsx` renamed the file** on this
+  case-insensitive filesystem — tsc TS1261, git `D`+`??` pair. Match tracked
+  casing exactly; renamed back through a temp name.
+- `vite preview`'s service worker served a stale bundle repeatedly —
+  unregister + clear `caches` + reload before believing any screenshot.
+- Debug Chrome on 9333 with a temp profile works for browser verification;
+  `resize_page` cannot shrink the window below ~500px (min window width) —
+  use the gates' own 390px emulation for phone truth.
 
 ## Next action
 
-Merge the PR if CI agrees, move COD-141 to Done. Then either COD-137 (sync
-consolidation, clears the two standing eslint warnings) or open the
-Pickleball/Recovery restructure conversation (page-contract shape, COD-73 is
-the standing "flat card stacks" ticket).
+Confirm COD-143's PR merged and move it to Done. Then the standing queue:
+COD-137 (sync-effect consolidation, clears the two eslint warnings) or the
+Pickleball/Recovery page-contract conversation (COD-73 adjacent).
