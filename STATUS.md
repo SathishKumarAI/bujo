@@ -1,136 +1,75 @@
 # STATUS
 
-**Stopped:** 2026-09-02 14:47 CDT. On `main`, clean.
-**All eleven PRs merged, no open PRs.** `main` at the #193 merge.
-
-After the merges the session continued outside this repo, improving the
-`agile-github-flow` skill with a benchmark; that work is written up in
-`~/.claude/skills/agile-github-flow-workspace/SESSION-2026-09-02.md` and has an
-open decision waiting. It touched nothing here.
+**Stopped:** 2026-09-02 evening. On `main`, clean.
+**`main` is FIVE LOCAL COMMITS AHEAD of `origin/main` — deliberately unpushed.**
+The user said "keep everything local as of now": no push, no PRs, branches were
+squash-merged locally and deleted. When the user says to publish, just
+`git push`; the commit bodies carry the full PR-grade reasoning.
 
 ## What this session did
 
-Started from "what's the status", then "complete them" — the twelve open
-`repo:bujo` items on the Plane board. Ten shipped, two of the twelve are
-deliberately not started (below), and four new items were filed on the way.
+Session brief: "make some UI change, login/signup logic, local account and
+data storage — create backlogs and work them." Mapping first showed
+login/signup already existed (Supabase email+password, Google, guest,
+recovery in `src/lib/supabase.ts`); what was broken was around it. Eight
+items filed (COD-133…140), five shipped, three parked.
 
-| PR | What | Ticket |
+| Commit | What | Ticket |
 |---|---|---|
-| #183 · merged | The a11y gate now opens every fold before scanning | COD-93 |
-| #184 · merged | Set-row headers were wider than the phone tracks they label | COD-95 |
-| #185 · merged | The stalled-lift alert fired on everything, and the data was why | COD-90 |
-| #186 · merged | The exercise picker called itself a combobox and was a list of buttons | COD-91 |
-| #187 · merged | The set row buys its touch targets with a second line | COD-92 |
-| #188 · merged | Three quarters of a card was another card | COD-89 |
-| #189 · merged | README: the shape of the codebase, where nine screenshots were | — |
-| #190 · merged | The gate had never seen Settings or the design-system page | COD-58, COD-94 |
-| #191 · merged | "On track" named two different things, and was backwards for a cap | COD-48 |
-| #192 · merged | A four-step staleness ramp whose top two rungs were one colour | COD-51 |
+| 9524dde | `npm run verify` — the four always-run gates as one command | COD-140 |
+| 33503b8 | AccountMenu subscribes to onAuthChange (label no longer stale) | COD-134 |
+| 7b9c669 | One `useAuthForm` hook behind Account / Welcome / Settings | COD-133 |
+| f23356b | `bujo:owner` — a foreign account's journal is never merged/pushed | COD-135 |
+| ec11f2a | Crypto round-trip + LockScreen gate + no-blob recovery tests | COD-138 |
 
-Filed, not fixed: **COD-94** (closed by #190) · **COD-95** (closed by #184) ·
-**COD-96** 24 controls on gym still under 44px · **COD-116** NoFap's 10-colour
-urge palette collapses (latte 5.7).
+Tests 900 → **920**. Auth logic exists once now: `src/lib/useAuthForm.ts`
+owns the flows, the three hosts own only markup — extracting the markup
+itself was rejected on purpose (page/banner/card are three designs; see the
+emergency-banner rule in the global CLAUDE.md).
 
-## The one thing to carry forward
+## Decisions that will surprise you later
 
-**Every gate this session touched was green because of what it could not see,
-and arming each one turned it red on the first run.**
+- **Login now confirms before replacing local data on every surface.**
+  Account and Welcome used to `replaceAll` silently; Settings asked. The
+  asking version won.
+- **`bujo:owner` (localStorage) records which Supabase user the local journal
+  belongs to.** Absent = unclaimed = never foreign, so upgrades and
+  guest→account linking are unaffected. `pushJournal` throws on a foreign
+  owner; the three merge sites in App.tsx skip. Claimed only after adopt /
+  clear-to-empty / successful push. The OAuth-redirect mount path replaces a
+  foreign journal *without* a prompt — there is no confirm UI in that effect;
+  privacy beats the previous owner's unpushed edits.
+- **Password-recovery links now steer to the Account view from anywhere**
+  (App.tsx onPasswordRecovery → setView('account')); the form opens on the
+  same event via the hook.
 
-Four in a row, same shape:
+## Parked, and why
 
-- `a11y` did not open folds → armed it → **critical `select-name`** on Trackers,
-  the exact violation `CLAUDE.md` said had "shipped for months this way",
-  still shipping.
-- `a11y`'s `VIEWS` list had no Settings and no kitchen sink → added them →
-  **`fg-2` on `ink-3` at 4.09:1** on the page whose entire job is to display
-  the design system.
-- `contrast` measured legibility but not separation → added a scale check →
-  **Plan's four-step staleness ramp had two rungs the same colour** (maroon/red,
-  dE 6.6 in latte). Contrast ratio is structurally blind to this: two colours
-  of equal luminance have ratio 1.0 whatever their hue.
-- `clipped` was simply **red on `main`** and had been quoted as green in #182's
-  body.
+- **COD-136** serverSync keys rows on deviceId — two devices never converge.
+- **COD-139** gdrive token is in-memory only, no auto-sync effect.
+- **COD-137** the ~20-line pull-then-push dance exists four times in
+  App.tsx/ServerSync.tsx with four debounce values. This is also where the
+  two long-standing eslint `react-hooks/exhaustive-deps` warnings live —
+  fix them together when consolidating.
 
-The corollary that cost the most time to learn: **the ticket is a hypothesis,
-not a finding.** Three of the ten said something that measuring contradicted.
+All three are cloud-path work; the session's directive was local-first.
+Older backlog unchanged: COD-73 (flat card stacks), 61, 57, 49, 96, 116.
 
-- COD-90 said `stalledLifts`' threshold was too loose. It was not. The demo
-  seeder logged one fixed weight per lift, so the journal contained **no PR
-  anywhere** and the detector was right to fire on 7 of 7. Fixing the fixture
-  fixed the alert.
-- COD-51 said dawn's `flamingo` sits dE 16 from `maroon`. True, and not the
-  problem — they are never drawn together, while two colours that *are* drawn
-  together sat at 6.6.
-- COD-48 named one defect and there were three.
+## Environment traps hit this session
 
-**Measure before you accept the diagnosis, even when the diagnosis is written
-down in a ticket by someone careful.**
-
-Smaller, worth keeping:
-
-- **A gate can only fail on what the fixture renders.** `stalledLifts`,
-  `weekdayConsistency` and now Plan's `yellow` arm are all cases where the demo
-  data decided what could be caught. When a gate goes green, ask what the seed
-  never produced.
-- **An exemption you can see beats an omission you cannot.** The new scale
-  check lists NoFap's failing 10-colour scale in an `UNENFORCED` map and prints
-  it on every run, rather than leaving it out of `SCALES` where it would be
-  invisible — the failure mode of `VIEWS`, the empty journal, and closed folds,
-  three times over.
-- **`a11y` costs ~9 minutes in CI now** (was ~7.5). Folds open is worth it.
-
-## Not started, and why
-
-- **COD-73** — four pages are still flat card stacks: pickleball 5379px, stats
-  4685, help 4021, nofap 3734. Each is a page-contract pass on the scale of
-  #182, which took a full session for one page and produced five follow-up
-  tickets. Four of those is not one increment.
-- **COD-61 / COD-49** (Recovery IA and its duplicated orient bar) and **COD-57**
-  (Today states the date three times) are the same shape — layout passes that
-  want measuring, a plan, and their own PRs.
-
-## Measured
-
-| | before | after |
-|---|---|---|
-| `npm run a11y` coverage | 23 views × 5 themes, folds shut | **25 views**, folds forced open, 48 scans |
-| a11y violations found by arming it | — | **3** (1 critical, 2 serious), all fixed |
-| `npm run contrast` checks | 2 | **3** — divergence, legibility, **scale separation** |
-| `npm run clipped` on `main` | **red**, 2 strings | clean, 23 views |
-| gym set-row controls at 390 | 28×28, picker 120×61 | **all ≥44px**, picker 241×44 |
-| gym · "Deadlift" lines, folds open | 9 | **7** |
-| Goals headline | `1 of 7 on track` | `4 of 9 met · 3 of 8 on pace` |
-| tests | 887 | **900** |
-
-## The gate moved · #195
-
-`a11y` (axe + smoke) is its own workflow now, `.github/workflows/a11y.yml`, with
-`paths-ignore` on `**/*.md` and `docs/**`. A one-file `STATUS.md` edit was
-booting Chromium and scanning 25 views x 5 themes x 2 widths — ten minutes on a
-PR touching no source.
-
-**It is a separate file rather than an `if:` on the job on purpose.**
-`paths-ignore` is workflow-level in Actions, and a job guarded by `if:` would
-start, skip its steps and report **green** — a check claiming to have looked
-when it did not. That is the shape this repo has been bitten by three times
-(COD-28 empty journal, COD-93 closed folds, smoke scoring a different app
-25/25). A missing check is honest; a green one that never ran is not.
-
-The ignore list matches markdown rather than listing directories, because
-`scripts/**` holds the gates themselves and must always re-trigger. Adding a
-source path to that list is the signal to stop.
+- Port 4173 was already owned by a leftover `vite preview` **from this repo**
+  — fine to reuse (serves `dist/` from disk), but check
+  `Get-CimInstance Win32_Process` first per the worktree trap.
+- Neither browser-automation path worked (no debug Chrome on 9333, extension
+  not connected). `npm run smoke` (25/25, asserts app identity) stood in for
+  eyeballing the Account/Settings views.
+- Plugin installs: `claude-code-skills` marketplace registered;
+  `engineering-skills` + `engineering-advanced-skills` installed;
+  `skill-security-auditor` no longer exists upstream. New plugin skills load
+  at next session start.
 
 ## Next action
 
-**COD-73** is the biggest thing left, and it wants slicing: one page per PR,
-`node scripts/page-census.mjs` first for the before-number, and expect each
-page to file its own follow-ups the way gym filed five. Pickleball is the
-tallest at 5379px and the obvious first cut.
-
-Two calls left open for the user, neither blocking:
-
-- `.github/workflows/screenshots.yml` still runs on every push to `main`, and
-  since #189 the README no longer shows its output. Keep it or retire it.
-- latte's `sky` and `blue` are the **identical hex** `#165fc1`. Not drawn in
-  any declared scale, so `npm run contrast` passes; re-picking one is a taste
-  call rather than a bug fix.
+Either push the five commits (one `git push` when the user says so), or pick
+up COD-137 — the sync-effect consolidation is the highest-leverage remaining
+item and clears the two standing eslint warnings with it.
