@@ -35,8 +35,7 @@ import {
   bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts,
   repPRs, volumeByCategory, muscleRecovery, exerciseFrequency, trainRestRatio,
 } from '../lib/fitness'
-import { PlateStack, plateColor } from '../components/PlateStack'
-import { onAccent } from '../lib/colors'
+import { Barbell as BarbellViz } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
@@ -343,6 +342,34 @@ export function Gym() {
               <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Rest timer</h2>
               <RestTimer />
             </section>
+
+            {/* Tools, beside the logger rather than under nine folds of review.
+                Everything in here is used *while building a session* — load a
+                routine, check what a lift hits, work out the plates, pull an
+                exercise from wger — which is the rest timer's argument again:
+                it sat at the very bottom of the review column, after every
+                chart, so using it meant scrolling past the entire page's
+                analytics mid-workout. Folded, because the act column is sticky
+                only while it is shorter than the viewport and four open cards
+                would cost that. */}
+            <div className="mt-4">
+              <QuietSection title="Look up & tools" subtitle="Anatomy, plate maths, saved routines, wger’s library" defaultOpen={false} stickyKey="gym.reference">
+                <AnatomyCard
+                  focusEx={focusEx}
+                  setFocusEx={setFocusEx}
+                  focusLabel={focusLabel}
+                  split={split}
+                  activeMuscles={activeMuscles}
+                  recentExercises={recentExercises}
+                  addRow={addRow}
+                />
+                <PlateCalculator key={unit} unit={unit} />
+                <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
+                <Card band title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session">
+                  <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
+                </Card>
+              </QuietSection>
+            </div>
           </>
         }
         zone3={
@@ -507,27 +534,10 @@ export function Gym() {
               <ProgressPhotos />
             </QuietSection>
 
-            {/* Reference and tools — looked up, not read. The 12-week hypertrophy
-                tracker used to share this fold; it is a Body tab of its own now
-                (`views/Program.tsx`). Photos stayed: they are not programme data,
-                and moving a feature because its neighbour moved is how content
-                goes missing. */}
-            <QuietSection title="Look up & tools" subtitle="Anatomy, plate maths, saved routines, wger’s library" defaultOpen={false} stickyKey="gym.reference">
-              <AnatomyCard
-                focusEx={focusEx}
-                setFocusEx={setFocusEx}
-                focusLabel={focusLabel}
-                split={split}
-                activeMuscles={activeMuscles}
-                recentExercises={recentExercises}
-                addRow={addRow}
-              />
-              <PlateCalculator key={unit} unit={unit} />
-              <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
-              <Card band title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session">
-                <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
-              </Card>
-            </QuietSection>
+            {/* "Look up & tools" lived here, at the very bottom of the review
+                column — the same mistake this file records fixing for the rest
+                timer. It is in zone 2 with the logger now: tools are used
+                while building a session, and review is for reading. */}
           </>
         }
       />
@@ -608,38 +618,52 @@ function AnatomyCard({
   )
 }
 
-/** Greedy plate-loading helper: target weight → plates per side. */
+/** Greedy plate-loading helper: target weight → a loaded, animated barbell. */
 function PlateCalculator({ unit }: { unit: string }) {
   const [target, setTarget] = useState('100')
   const [bar, setBar] = useState(unit === 'lb' ? '45' : '20')
   // Plate denominations differ by unit (kg gym plates vs lb).
   const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
+  // One stepper click = the smallest plate on each side, the smallest change a
+  // real bar can make. Thumb-sized, because this is used standing at a rack.
+  const step = denoms[denoms.length - 1] * 2
   const plates = platesPerSide(Number(target) || 0, Number(bar) || 0, denoms)
   const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
   const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
+  const bump = (d: number) => setTarget(String(Math.max(0, (Number(target) || 0) + d)))
   return (
     <Card band title="Plate calculator" subtitle="What to load on the bar">
-      <div className="mb-3 flex flex-wrap items-end gap-3">
-        <label className="block text-body text-fg-1">Target ({unit})<Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-28" /></label>
-        <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 w-24" /></label>
+      {/* One row, always: Target's stepper trio plus Bar come to ~230px, and
+          the act column never goes below 324. `max-w-*`, not `w-*` — Input's
+          base `w-full` wins the width fight against a bare `w-24`, which is
+          why these two stacked full-width before. */}
+      <div className="mb-3 flex items-end gap-3">
+        <label className="block text-body text-fg-1">
+          Target ({unit})
+          <span className="mt-1 flex items-center gap-1">
+            <Button variant="secondary" size="icon-sm" onClick={() => bump(-step)} aria-label={`Target down ${step} ${unit}`} className="h-9 w-9 shrink-0">−</Button>
+            {/* Inline widths, not utilities: `.zone-act :is(input)` (0-1-1)
+                out-specifies any single-class width, which is how two earlier
+                attempts (`w-24`, `max-w-20`) silently lost. */}
+            <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} aria-label={`Target weight (${unit})`} className="text-center" style={{ width: 84 }} />
+            <Button variant="secondary" size="icon-sm" onClick={() => bump(step)} aria-label={`Target up ${step} ${unit}`} className="h-9 w-9 shrink-0">+</Button>
+          </span>
+        </label>
+        <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 text-center" style={{ width: 72 }} /></label>
       </div>
       {barOverTarget ? (
         <p className="text-body text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
-      ) : plates.length === 0 ? (
-        <p className="text-body text-fg-2">Just the bar, no plates needed.</p>
       ) : (
         <>
-          <p className="mb-2 text-label text-fg-2">Per side:</p>
-          {/* `text-crust` is near-white in the light themes, so a plate sitting
-              on the yellow fill measured 2.02:1. `onAccent` picks whichever
-              neutral actually contrasts with the fill it lands on. */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {plates.map((p, i) => (
-              <span key={i} className="grid h-9 min-w-9 place-items-center rounded-none px-2 text-body font-medium" style={{ background: plateColor(p), color: onAccent(plateColor(p)) }}>{p}</span>
-            ))}
-          </div>
-          <div className="mt-2"><PlateStack plates={plates} unit={unit} /></div>
-          {loadable !== Number(target) && <p className="mt-2 text-label text-yellow">Closest loadable: {loadable} {unit}</p>}
+          <BarbellViz plates={plates} unit={unit} bar={Number(bar) || 0} />
+          {/* The sentence to read off at the rack. Keyed so a change re-enters —
+              the number moves with the discs. */}
+          <p key={loadable} className="collapse-in mt-2 text-body text-fg-1">
+            {plates.length === 0
+              ? 'Just the bar, no plates needed.'
+              : <>Per side: <span className="font-medium">{plates.join(' · ')}</span> = {loadable} {unit} loaded</>}
+            {plates.length > 0 && loadable !== Number(target) && <span className="ml-1 text-yellow">(closest loadable to {target})</span>}
+          </p>
         </>
       )}
     </Card>
