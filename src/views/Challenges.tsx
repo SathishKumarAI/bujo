@@ -273,7 +273,7 @@ function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; toda
         <p className="text-label font-medium text-fg-1">Calendar</p>
         <div className="flex items-center gap-3 text-micro text-fg-2" aria-hidden="true">
           <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: cat('mauve') }} /> done</span>
-          <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: cat('surface0') }} /> missed</span>
+          <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: cat('red') + '22' }} /> missed</span>
           <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[2px] border" style={{ borderColor: cat('mauve') }} /> today</span>
         </div>
       </div>
@@ -284,7 +284,12 @@ function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; toda
           const isToday = d === today
           const past = dayDiff(d, today) > 0
           const state = complete ? 'done' : isToday ? 'today' : past ? 'missed' : 'to come'
-          const bg = complete ? cat('mauve') : isToday ? 'transparent' : past ? cat('surface0') : cat('mantle')
+          // Missed used to be `surface0` — visually identical to `mantle`'s
+          // to-come cells, so the one state a strict challenge exists to
+          // surface was the one the grid could not show. The 13% red wash is
+          // the app's calibrated accent-on-wash idiom (see CLAUDE.md: '22',
+          // never '33'), with the day number in the accent itself.
+          const bg = complete ? cat('mauve') : isToday ? 'transparent' : past ? cat('red') + '22' : cat('mantle')
           return (
             <li
               key={d}
@@ -296,7 +301,7 @@ function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; toda
               style={{
                 background: bg,
                 border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`,
-                color: complete ? onAccent(cat('mauve')) : cat('subtext0'),
+                color: complete ? onAccent(cat('mauve')) : !isToday && past ? cat('red') : cat('subtext0'),
               }}
             >
               {i + 1}
