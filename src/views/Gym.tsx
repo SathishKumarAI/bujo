@@ -658,9 +658,14 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
             title="Show this lift on the muscle map"
           >
             <span className="inline-flex items-center gap-1.5 text-fg-1"><AppIcon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> {pr.exercise}</span>
+            {/* A weightless set (dips, pull-ups logged without added load) used
+                to print "0lb · 1RM ~0lb" — a data artifact dressed as a record.
+                Bodyweight is the honest name, and Epley of 0 is not a 1RM. */}
             <span className="text-fg-2">
-              <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
-              {pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
+              {pr.weight > 0
+                ? <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
+                : <span style={{ color: cat('yellow') }}>bodyweight{pr.reps > 1 ? ` ×${pr.reps}` : ''}</span>}
+              {pr.weight > 0 && pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
             </span>
           </button>
         </li>

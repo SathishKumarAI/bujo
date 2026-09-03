@@ -1,76 +1,56 @@
 # STATUS
 
-**Stopped:** 2026-09-02 night. On `main`, clean, **pushed** (`41e5683..7049a14`).
-The session ran local-only at the user's request — branches squash-merged
-locally, no PRs — then the user said push, so the seven commits went up in one
-`git push`. The commit bodies carry the PR-grade reasoning; there are no PRs
-for this batch, which is a deliberate one-off, not the new normal.
+**Stopped:** 2026-09-03. Branch `refactor/body-ui-polish` (COD-141), PR open
+against `main`. All gates green and quoted in `docs/WORKLOG.md` (2026-09-03
+entry) — 920 tests, a11y/contrast/clipped/smoke/design all pass.
 
 ## What this session did
 
-Session brief: "make some UI change, login/signup logic, local account and
-data storage — create backlogs and work them." Mapping first showed
-login/signup already existed (Supabase email+password, Google, guest,
-recovery in `src/lib/supabase.ts`); what was broken was around it. Eight
-items filed (COD-133…140), five shipped, three parked.
+Brief: "improve the UI of all pages in the Body cluster, document changes."
+Surveyed all 11 Body tabs in a real browser (preview + `?demo=1`, 1440 and
+390) before touching anything; fixed the six rendered defects the survey
+found. Full defect→fix table in the WORKLOG entry.
 
-| Commit | What | Ticket |
-|---|---|---|
-| 9524dde | `npm run verify` — the four always-run gates as one command | COD-140 |
-| 33503b8 | AccountMenu subscribes to onAuthChange (label no longer stale) | COD-134 |
-| 7b9c669 | One `useAuthForm` hook behind Account / Welcome / Settings | COD-133 |
-| f23356b | `bujo:owner` — a foreign account's journal is never merged/pushed | COD-135 |
-| ec11f2a | Crypto round-trip + LockScreen gate + no-blob recovery tests | COD-138 |
-
-Tests 900 → **920**. Auth logic exists once now: `src/lib/useAuthForm.ts`
-owns the flows, the three hosts own only markup — extracting the markup
-itself was rejected on purpose (page/banner/card are three designs; see the
-emergency-banner rule in the global CLAUDE.md).
+- **Cycle** rebuilt day-first: one editor for the selected day, compact month
+  list with per-flag coloured dots, today bold. Was 180 controls at once.
+- **`DayGrid` gained `months`** (opt-in visible month-label row); `Heatmap` +
+  `CalendarHeatmap` opt in, so Fitness / Pull-ups / Stats / Pickleball /
+  Mindset grids all gained month anchors from one edit.
+- **Challenges** missed days now red-`'22'`-washed (were identical to
+  future days). **Home workout** library spans the row, emoji glyphs deleted
+  (field removed from `lib/homeExercises.ts` too). **Nutrition** over/under
+  legend. **Trackers** `47` → `47%`.
+- **`npm run a11y` now scans Cycle** (COMPANIONS entry — gated tab, URL
+  reachable, had never been scanned).
+- **Strength (user asked mid-session):** set-row 'reps'/'RPE' placeholders
+  were clipped mid-glyph at the 44/40px tracks — 56px now; RPE labeled
+  "effort 1–10"; weightless PRs say "bodyweight ×8", not "0lb · 1RM ~0lb".
 
 ## Decisions that will surprise you later
 
-- **Login now confirms before replacing local data on every surface.**
-  Account and Welcome used to `replaceAll` silently; Settings asked. The
-  asking version won.
-- **`bujo:owner` (localStorage) records which Supabase user the local journal
-  belongs to.** Absent = unclaimed = never foreign, so upgrades and
-  guest→account linking are unaffected. `pushJournal` throws on a foreign
-  owner; the three merge sites in App.tsx skip. Claimed only after adopt /
-  clear-to-empty / successful push. The OAuth-redirect mount path replaces a
-  foreign journal *without* a prompt — there is no confirm UI in that effect;
-  privacy beats the previous owner's unpushed edits.
-- **Password-recovery links now steer to the Account view from anywhere**
-  (App.tsx onPasswordRecovery → setView('account')); the form opens on the
-  same event via the hook.
-
-## Parked, and why
-
-- **COD-136** serverSync keys rows on deviceId — two devices never converge.
-- **COD-139** gdrive token is in-memory only, no auto-sync effect.
-- **COD-137** the ~20-line pull-then-push dance exists four times in
-  App.tsx/ServerSync.tsx with four debounce values. This is also where the
-  two long-standing eslint `react-hooks/exhaustive-deps` warnings live —
-  fix them together when consolidating.
-
-All three are cloud-path work; the session's directive was local-first.
-Older backlog unchanged: COD-73 (flat card stacks), 61, 57, 49, 96, 116.
+- **Cycle's selection is view state, not journal state** — deliberately not
+  persisted; the month cursor moving snaps selection back into the month.
+- **The month labels legitimately trip `scrollWidth > clientWidth`** — they
+  overflow their 11px week column on purpose (GitHub idiom). That is what
+  `data-clip-ok` on the `<td>` is for; removing it re-flags 30 strings.
+- **Pickleball and Recovery were left alone on purpose.** Both are
+  page-contract-scale restructures (Pickleball renders ~7,700px expanded);
+  polishing them would be lipstick on an IA problem. That is the next real
+  conversation, not a checkbox.
 
 ## Environment traps hit this session
 
-- Port 4173 was already owned by a leftover `vite preview` **from this repo**
-  — fine to reuse (serves `dist/` from disk), but check
-  `Get-CimInstance Win32_Process` first per the worktree trap.
-- Neither browser-automation path worked (no debug Chrome on 9333, extension
-  not connected). `npm run smoke` (25/25, asserts app identity) stood in for
-  eyeballing the Account/Settings views.
-- Plugin installs: `claude-code-skills` marketplace registered;
-  `engineering-skills` + `engineering-advanced-skills` installed;
-  `skill-security-auditor` no longer exists upstream. New plugin skills load
-  at next session start.
+- `vite preview`'s service worker served the **pre-change bundle twice** even
+  after rebuilds — unregister SW + clear `caches` + reload before believing
+  any screenshot (the documented trap, still live).
+- Port 4173 was already owned by a leftover preview from this repo — reused
+  after checking the process command line per the worktree trap.
+- Browser automation worked this session via a debug Chrome on 9333
+  (`--remote-debugging-port=9333 --user-data-dir=<temp profile>`).
 
 ## Next action
 
-Pick up COD-137 — the sync-effect consolidation is the highest-leverage
-remaining item and clears the two standing eslint warnings with it. Watch the
-first CI run on this push: `a11y.yml` sees the new Account markup for the
-first time.
+Merge the PR if CI agrees, move COD-141 to Done. Then either COD-137 (sync
+consolidation, clears the two standing eslint warnings) or open the
+Pickleball/Recovery restructure conversation (page-contract shape, COD-73 is
+the standing "flat card stacks" ticket).

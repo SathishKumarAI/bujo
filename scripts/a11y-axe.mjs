@@ -132,6 +132,11 @@ const COMPANIONS = [
   // `ink-3` measured 4.09:1 (COD-58). Not shipped to users is not a reason to
   // leave it unmeasured; it is a reason the measurement is cheap.
   ['Kitchen sink', 'kitchen-sink'],
+  // Cycle sits behind an opt-off gate (`cycleEnabled` defaults false), so no
+  // tab exists to click on a fresh journal — but the view renders by URL for
+  // anyone who has turned it on, and it had never been scanned. Recovery's
+  // lesson, from the other side of the default.
+  ['Cycle', 'cycle'],
 ]
 
 /**

@@ -162,7 +162,7 @@ export function Trackers() {
           facts={[
             { label: 'today done', value: `${sum.todayPct}%` },
             { label: sum.topStreakHabit ?? 'top streak', value: `${sum.topStreak}d` },
-            { label: 'avg consistency', value: sum.avgConsistency },
+            { label: 'avg consistency', value: `${sum.avgConsistency}%` },
           ]}
         />
       ) : undefined}

@@ -168,8 +168,15 @@ export function Nutrition() {
           </section>
 
           <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">
-              Recent days {logged > 0 && <span className="text-fg-3">· avg {avg} kcal</span>}
+            <h2 className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 border-b border-line pb-1 text-label text-fg-2">
+              <span>Recent days {logged > 0 && <span className="text-fg-3">· avg {avg} kcal</span>}</span>
+              {/* The bars encode over/under in colour alone — name the code. */}
+              {logged > 0 && (
+                <span className="flex items-center gap-3 text-micro" aria-hidden="true">
+                  <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-[2px]" style={{ background: cat('green'), opacity: 0.5 }} /> under target</span>
+                  <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-[2px]" style={{ background: cat('peach'), opacity: 0.5 }} /> over</span>
+                </span>
+              )}
             </h2>
             {logged === 0 ? (
               <EmptyFrame>Nothing logged in the last two weeks.</EmptyFrame>
@@ -206,7 +213,7 @@ export function Nutrition() {
                         <button onClick={() => setDate(d.date)} className="text-left text-body text-fg-1 hover:underline">
                           {prettyDay(d.date)}
                         </button>
-                        <span className="num text-label text-fg-2">{d.kcal} kcal</span>
+                        <span className="num text-label text-fg-2">{d.kcal} kcal<span className="sr-only">{over ? ', over target' : ', under target'}</span></span>
                       </div>
                     </li>
                   )

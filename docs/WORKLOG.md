@@ -1,6 +1,47 @@
 # Worklog
 
-## 2026-09-02 (night) — The login existed; what drifted was everything around it
+## 2026-09-03 — Body cluster UI polish: the survey found six defects, the gates missed five (COD-141)
+
+**Summary:** Brief was "improve the UI of all pages in the Body cluster and
+document the changes." Instead of restyling blind, every one of the 11 Body
+tabs was rendered (preview + demo seed, 1440 and 390) and read for defects.
+Six were real; five of them had been invisible to every gate. Branch
+`refactor/body-ui-polish`.
+
+**What shipped, per defect:**
+
+| View | Defect | Fix |
+|---|---|---|
+| Cycle | 30 identical rows × (temp input + 5 flag chips) = 180 controls at once; subtitle said "tap a day" but there was nothing to tap; every flag filled `red`, so a marked row didn't say *what* was marked | One editor for the selected day (defaults to today), month behind it as a compact row list — logged values as text + per-flag coloured dots (`period` red, `spotting` maroon, `ovulation` green, `pms` mauve, `cramps` peach), today bold, selection = mauve `'22'` wash |
+| Fitness / Pull-ups / Stats (+ Pickleball, Mindset via the same primitive) | Trailing-window day grids were anonymous squares — nothing said *when* | `DayGrid` gained an opt-in `months` header row (GitHub idiom: label at each month turnover, overflowing its 11px week column on purpose — `data-clip-ok`); `Heatmap` and `CalendarHeatmap` both opt in |
+| Challenges | Missed days (`surface0`) were indistinguishable from not-yet days (`mantle`) — the one state a strict challenge exists to surface | Missed = red `'22'` wash with the day number in red; legend swatch updated to match |
+| Home workout | 21-card exercise library squeezed into a half-width grid column (half the page empty); emoji standing in for icons | Library card takes the row (`SPAN_2`); emoji deleted from the cards *and* from `lib/homeExercises.ts` (dead field, not a stranded one) |
+| Nutrition | Recent-days bars encode over/under target in colour alone, unnamed | Legend on the section heading (green under / peach over) + sr-only state per row |
+| Trackers | `avg consistency 47` — unitless number beside two united ones | `47%` |
+| Strength (asked for mid-session) | 'reps'/'RPE' placeholders clipped mid-glyph (30px of text in 18px / 29 in 14 — measured, not eyeballed); RPE's placeholder was its only scale hint; Personal records printed "Dip 0lb · 1RM ~0lb" for weightless bodyweight lifts | Number tracks 44/40→56px (picker's 1fr absorbs it; phone grid untouched); RPE labeled "effort 1–10"; weightless PRs read "bodyweight ×8" and get no fake Epley |
+
+**Gate work:** Cycle sits behind `cycleEnabled` (defaults off) so no tab
+exists to click, but the view renders by URL — it had **never been scanned**
+by `npm run a11y`. Added to `COMPANIONS` (Recovery's lesson from the other
+side of the default). First scan: clean, 7 theme/viewport combos.
+
+**Verification (all quoted from this session):** `npm run verify` exit 0 —
+`Tests 920 passed (920)`, eslint `0 errors` (2 pre-existing warnings in an
+untouched file). `npm run a11y`: "No serious or critical violations".
+`npm run contrast`: "Palette check passed". `npm run clipped`: "No clipped or
+off-screen text across 23 views at 1440px and 390px" (the month labels
+tripped it first — 30 flags — until marked `data-clip-ok`, which is the
+gate's own escape for deliberate overflow). `npm run smoke`: "25/25 views
+OK". Impeccable mechanical detector on all changed files: `[]`. Cycle's
+editor exercised in the browser: flag toggle flips `aria-pressed` and draws
+the dot on the day row; tapping day 5 moves the editor to "Sat, Sep 5";
+both layouts checked at 390px.
+
+**Not in this pass, deliberately:** Pickleball's ~7,700px expanded stack and
+Recovery's long scroll are page-contract-scale restructures, not polish —
+filed nothing yet because the right unit is a redesign conversation, not a
+ticket named "make it shorter."
+
 
 **Summary:** Brief was "UI change + login/signup + local account + data
 storage, file backlogs and work them." The map showed auth already complete in

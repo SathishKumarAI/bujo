@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid } from '../components/shell/CardGrid'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { cat } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { HOME_EXERCISES, demoUrl, searchUrl, type HomeExercise, type Muscle } from '../lib/homeExercises'
@@ -107,8 +107,11 @@ export function HomeWorkout() {
         )}
       </Card>
 
-      {/* Catalog is reference · folded below the active session builder + history. */}
-      <Card band title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible>
+      {/* Catalog is reference · after the active session builder + history.
+          SPAN_2: 21 exercise cards in a half-width column left the other half
+          of every row empty — the library is the widest thing here, give it
+          the row. */}
+      <Card band title="Exercise library" subtitle="No equipment, tap a demo to watch proper form" collapsible className={SPAN_2}>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {MUSCLES.map((m) => (
             <button
@@ -123,7 +126,6 @@ export function HomeWorkout() {
           {lib.map((ex) => (
             <div key={ex.id} className="rounded-none border border-line bg-ink-0 p-3">
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-heading">{ex.emoji}</span>
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>
                 <Pill tone="muted" size="micro" className="ml-auto px-2 capitalize">{ex.muscle}</Pill>
               </div>
