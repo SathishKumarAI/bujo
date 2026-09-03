@@ -1,4 +1,4 @@
-import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, ShieldWarning, Target } from '@/components/icons'
+import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -8,6 +8,7 @@ import { CollapsibleSection } from '../components/CollapsibleSection'
 import { PageLayout, StatBar } from '../components/page'
 import { cat, onAccent } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
+import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
   TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, type RehabEquip, TECHNIQUES,
@@ -372,6 +373,25 @@ function Manual() {
         <p className="inline-flex items-start gap-1.5 rounded-none bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
       </CollapsibleSection>
 
+      {/* Moved from the Pickleball page: reference reading, not session
+          logging, and it sat there as the tenth card on a four-screen page.
+          Beside Knee rehab because both are the injury shelf. */}
+      <CollapsibleSection
+        variant="quiet" defaultOpen={false} stickyKey="coaching.playsafe"
+        icon={ShieldPlus} color="green"
+        title="Play safe"
+        subtitle="Physio & trainer notes · injury-prevention basics for the court"
+      >
+        <ul className="space-y-2">
+          {TIPS.map((x) => (
+            <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
+              <p className="text-fg-1">{x.t}</p>
+              <p className="text-label text-fg-2">{x.d}</p>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
+
       <CollapsibleSection
         variant="quiet" defaultOpen={false} stickyKey="coaching.mental"
         icon={Brain} color="peach"
@@ -387,6 +407,38 @@ function Manual() {
           ))}
         </ul>
       </CollapsibleSection>
+
+      {/* Moved from the Pickleball page with Play safe above. How each league
+          and tournament format works — read before an event, not while
+          logging one. The event form's format select still lives on
+          Pickleball; PICKLE_FORMATS feeds both. */}
+      <CollapsibleSection
+        variant="quiet" defaultOpen={false} stickyKey="coaching.formats"
+        icon={Medal} color="blue"
+        title="Format playbook"
+        subtitle="How each league & tournament format works"
+      >
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {PICKLE_FORMATS.map((fm) => (
+            <li key={fm.id} className="rounded-none border border-line bg-ink-0 p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-body font-medium text-fg-1">{fm.label}</span>
+                <span className="text-micro text-fg-2">{fm.size}</span>
+              </div>
+              <p className="text-label text-fg-2">{fm.how}</p>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
     </section>
   )
 }
+
+/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
+const TIPS = [
+  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
+  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
+  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
+  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
+  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
+]

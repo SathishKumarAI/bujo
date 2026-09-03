@@ -1,5 +1,29 @@
 # Worklog
 
+## 2026-09-03 (night) — Reference reading leaves the Pickleball page; Cycle shows itself (COD-144)
+
+**Summary:** Two user asks, branch `refactor/pickleball-manual-to-coaching`.
+(1) "Move Play safe and the format instructions to Coaching": both were
+reference reading sitting as the ninth and tenth cards on a four-screen
+logging page. They are Coaching **Manual** folds now — *Play safe* beside
+Knee rehab & prehab (the injury shelf), *Format playbook* after Mental game
+— in `CollapsibleSection` chrome with sticky keys. `TIPS` moved with its
+renderer; `PICKLE_FORMATS` stays in `lib/pickleballPlan` because
+Pickleball's event form still selects from it — the data module gained a
+second reader rather than losing its only one (the Pullups dead-module trap,
+avoided). (2) "Show the Cycle tab for everyone, hide it in Settings":
+`cycleTrackerEnabled` defaulted false, so the tab had to be discovered in
+Settings before it existed. Defaults true now, same shape as `nofapEnabled`;
+gate + toggle unchanged. **Existing journals keep their stored value** —
+one Settings toggle is the migration.
+
+**Verification:** `npm run verify` exit 0 — `Tests 922 passed (922)`,
+eslint 0 errors. a11y "No serious or critical violations". Fresh isolated
+browser context: tab row reads … Challenges · Recovery · **Cycle**; Coaching
+Manual shows both new folds with their content ("Protect the ankles",
+"Round Robin" both render); Pickleball no longer contains either block.
+clipped + smoke quoted in the PR.
+
 ## 2026-09-03 (evening) — Independent panels, and charts that wait for the reader (COD-143)
 
 **Summary:** Two user asks, branch `feat/panel-scroll-lazy`. (1) "Left and
