@@ -63,8 +63,12 @@ export interface SetRow {
  * flattening them would hand the desktop grid its children in the order
  * focus, picker, remove, weight… and drop the remove button into track 3.
  */
+// 56px number tracks, measured not guessed: the "reps" placeholder is 30px of
+// text and the old 44px track minus the input's 24px padding left it 18px —
+// it rendered as "re" clipped mid-glyph. Same for RPE (29px in 14px). The
+// extra 32px comes out of the picker's 1fr, which has hundreds to spare at sm.
 const ROW_GRID =
-  'grid grid-cols-4 gap-1 sm:grid-cols-[28px_1fr_52px_44px_40px_36px_28px] sm:gap-2'
+  'grid grid-cols-4 gap-1 sm:grid-cols-[28px_1fr_56px_56px_56px_36px_28px] sm:gap-2'
 
 /**
  * Where each control sits on the phone's two lines. `sm:*-auto` hands the row
@@ -198,7 +202,7 @@ export function SessionLogger({
                 </div>
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} aria-label="Weight" className={`${AT.weight} h-11 py-1.5 sm:h-auto`} />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" aria-label="Reps" className={`${AT.reps} h-11 py-1.5 sm:h-auto`} />
-                <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="RPE" aria-label="RPE" className={`${AT.rpe} h-11 py-1.5 sm:h-auto`} />
+                <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="RPE" aria-label="RPE, effort 1 to 10" title="RPE · effort 1–10" className={`${AT.rpe} h-11 py-1.5 sm:h-auto`} />
                 <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-none text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
                 <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className={`${AT.remove} h-11 w-11 text-fg-2 hover:text-red sm:h-7 sm:w-7`}><AppIcon as={X} size="sm" /></Button>
               </div>
