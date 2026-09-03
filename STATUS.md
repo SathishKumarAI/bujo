@@ -1,10 +1,10 @@
 # STATUS
 
-**Stopped:** 2026-09-02 evening. On `main`, clean.
-**`main` is FIVE LOCAL COMMITS AHEAD of `origin/main` — deliberately unpushed.**
-The user said "keep everything local as of now": no push, no PRs, branches were
-squash-merged locally and deleted. When the user says to publish, just
-`git push`; the commit bodies carry the full PR-grade reasoning.
+**Stopped:** 2026-09-02 night. On `main`, clean, **pushed** (`41e5683..7049a14`).
+The session ran local-only at the user's request — branches squash-merged
+locally, no PRs — then the user said push, so the seven commits went up in one
+`git push`. The commit bodies carry the PR-grade reasoning; there are no PRs
+for this batch, which is a deliberate one-off, not the new normal.
 
 ## What this session did
 
@@ -70,6 +70,7 @@ Older backlog unchanged: COD-73 (flat card stacks), 61, 57, 49, 96, 116.
 
 ## Next action
 
-Either push the five commits (one `git push` when the user says so), or pick
-up COD-137 — the sync-effect consolidation is the highest-leverage remaining
-item and clears the two standing eslint warnings with it.
+Pick up COD-137 — the sync-effect consolidation is the highest-leverage
+remaining item and clears the two standing eslint warnings with it. Watch the
+first CI run on this push: `a11y.yml` sees the new Account markup for the
+first time.
