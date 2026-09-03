@@ -1,4 +1,4 @@
-import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, ListChecks, Medal, PersonSimpleRun, Plus, ShieldPlus, Sword, Target, Trophy } from '@/components/icons'
+import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, Medal, PersonSimpleRun, Plus, Sword, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -22,15 +22,6 @@ import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, Scoring
 const tip = rechartsTooltip
 const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
 const evtBlank = { date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' }
-
-/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
-const TIPS = [
-  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
-  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
-  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
-  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
-  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
-]
 
 /** Quick pre-match warm-up · done before logging a session keeps injuries down. */
 const WARMUP = [
@@ -626,33 +617,11 @@ export function Pickleball() {
         <LazyMount minHeight={500}>{charts}</LazyMount>
       </Section>
 
+      {/* "Play safe" and the format playbook lived here as two more cards on
+          an already 4-screen page. Both are reference reading, not session
+          logging — they are in Coaching's Manual now, beside the knee-rehab
+          and shot guides they belong with. */}
       <CardGrid>
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ShieldPlus} size="md" className="text-green" /> Play safe · physio & trainer notes</span>} subtitle="Injury-prevention basics for the court" collapsible>
-        <ul className="space-y-2">
-          {TIPS.map((x) => (
-            <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
-              <p className="text-fg-1">{x.t}</p>
-              <p className="text-label text-fg-2">{x.d}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      {/* ── Format playbook ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={ListChecks} size="md" className="text-blue" /> Format playbook</span>} subtitle="How each league & tournament format works" collapsible>
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-none border border-line bg-ink-0 p-3">
-              <div className="mb-1 flex items-center justify-between">
-                <span className="text-body font-medium text-fg-1">{fm.label}</span>
-                <span className="text-micro text-fg-2">{fm.size}</span>
-              </div>
-              <p className="text-label text-fg-2">{fm.how}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
       {/* ── At a glance compact summary card at bottom of primary column (BUJO-XXX) ── */}
       {atAGlance}
 
