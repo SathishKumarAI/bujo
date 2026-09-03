@@ -1,5 +1,38 @@
 # Worklog
 
+## 2026-09-02 (night) — The login existed; what drifted was everything around it
+
+**Summary:** Brief was "UI change + login/signup + local account + data
+storage, file backlogs and work them." The map showed auth already complete in
+`src/lib/supabase.ts`; the defects were triplicated auth UI, a stale account
+menu, and a shared-device leak where switching accounts merged the previous
+user's journal into the new account's cloud row. Filed COD-133…140, shipped
+five, all merged **locally only** — the user said "keep everything local as of
+now", so `main` sits five commits ahead of origin with no push and no PRs.
+
+Shipped: COD-140 `npm run verify` · COD-134 AccountMenu onAuthChange ·
+COD-133 one `useAuthForm` hook behind Account/Welcome/Settings (logic shared,
+markup deliberately per-host; login now confirms before replacing local data
+everywhere; recovery links work from any view) · COD-135 `bujo:owner`
+ownership record — foreign journals are never merged or pushed (data-engineer
+agent designed/implemented; guard in `pushJournal`, three merge sites skip) ·
+COD-138 eleven tests over crypto round-trip, enc/plaintext exclusivity, and
+the LockScreen no-blob recovery branch.
+
+**Gate state:** `npm run verify` 0 — **920 tests / 69 files** (was 900/64),
+eslint 0 errors / 2 pre-existing warnings, build clean, smoke 25/25.
+
+**Parked (Backlog):** COD-136 serverSync deviceId rows, COD-137 the
+four-times-copied sync effect (fix the two eslint warnings with it),
+COD-139 gdrive in-memory token.
+
+**Process:** browser automation unavailable (no debug Chrome, extension
+disconnected) — smoke's identity-asserting run stood in for eyeballing.
+Port 4173 was a leftover preview server from this repo; verified owner via
+`Win32_Process` before reusing. Installed `engineering-skills` +
+`engineering-advanced-skills` plugins; `skill-security-auditor` is gone
+upstream (marketplace pivoted to advisor packs).
+
 ## 2026-08-28 (evening) — Both tickets understated the bug
 
 **Summary:** Cleared the whole of what the previous STATUS nominated as next.
