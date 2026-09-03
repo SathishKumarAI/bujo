@@ -1,5 +1,41 @@
 # Worklog
 
+## 2026-09-03 (late) — The Cycle page grows up: two-box month, phase estimate, and a guide (COD-145)
+
+**Summary:** User asks: split the month into two 15-day boxes side by side
+so a cycle's shape reads at a glance; heatmap-style reading; and educational
+content "to help girls with tracking". Branch `feat/cycle-page`.
+
+**What shipped:**
+
+- **Two-box month.** Days 1–15 left, 16–end right (`sm:grid-cols-2`, stacks
+  on a phone). One 31-row column made the reader scroll to compare the start
+  of the month with the end; split, period-early / PMS-late fits one glance.
+- **Heatmap reading.** A day row with the `period` flag carries the red
+  `'22'` wash (selection's mauve wash wins when both apply), so where the
+  period fell is visible from across the room — plus the per-flag dots and
+  temp values from the earlier redesign.
+- **Phase estimate.** New `lib/cycleInsights.ts`: `periodStarts` (first day
+  of each flagged run), `cycleDay`, `avgCycleLength` (last ≤6 gaps, 15–60
+  days only — a 200-day gap is lapsed logging, not a cycle),
+  `nextPeriodEstimate`, `phaseOf` (ovulation placed 14 days before the next
+  period, scaled to the personal average). All return `null` when the log
+  cannot answer (the `count ? x : 0` trap). Rendered as "Cycle day N ·
+  ⟨phase⟩ · estimate · next period ~date". 14 tests.
+- **Guide.** New `lib/cycleGuide.ts` — the four phases (what/feel/helps),
+  five BBT rules (same time, before rising, 3h sleep, the 0.3–0.5 °F
+  sustained shift, confounders), four what-to-log-and-why tips, and a
+  medical disclaimer (educational only, **not contraception**, when to see a
+  clinician). Standard ACOG/NHS-class health education, neutral wording.
+  Three `CollapsibleSection` folds + the disclaimer strip, mirroring
+  Coaching's manual. Counts pinned by `cycleGuide.test.ts` (the Pullups
+  dead-module lesson).
+
+**Verification:** 17 new tests green (14 insights + 3 guide); full gate
+outputs quoted in the PR. Exercised live: logging a Sep 1–3 period run via
+the UI produced "Cycle day 3 · Menstrual · estimate", red-washed rows 1–2,
+and all three guide folds render their content.
+
 ## 2026-09-03 (night) — Reference reading leaves the Pickleball page; Cycle shows itself (COD-144)
 
 **Summary:** Two user asks, branch `refactor/pickleball-manual-to-coaching`.
