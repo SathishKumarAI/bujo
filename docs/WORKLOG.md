@@ -1,5 +1,39 @@
 # Worklog
 
+## 2026-09-03 (later) — Strength: tools beside the logger, and a barbell that animates (COD-142)
+
+**Summary:** Two user asks in sequence on the Strength page, branch
+`refactor/gym-tools-right`. (1) "Move the tools to the right side, keep the
+visualisations down": the *Look up & tools* fold (anatomy, plate calculator,
+saved routines, wger search) moved from the very bottom of the review column
+— under nine folds, ~4,700px down a phone — into zone 2 under the rest
+timer, folded so the act column keeps its sticky. Same argument the file
+already recorded for the rest timer: used *during* the act, so it lives with
+the act. The review column is now purely charts. (2) "Make the plate
+calculator work like realtime plates and bar": `PlateStack` (one-sided mini
+stack + redundant chip row) became `Barbell` — full symmetric bar, shaft
+weight printed on it, loadout mirrored heaviest-at-the-collar, discs sliding
+onto the sleeves with a 45ms stagger on every target change (`plate-load`
+keyframes, app motion tokens, reduced-motion opt-out; group keyed by loadout
+so identical plates never re-animate). Target gained thumb-sized −/+
+steppers stepping by the smallest plate pair (5lb/2.5kg); readout is one
+sentence, "Per side: 25 · 2.5 = 100 lb loaded".
+
+**Trap found while putting Target and Bar on one row:** `.zone-act
+:is(input, select, textarea)` in `layout.css` carries specificity 0-1-1, so
+it silently beats *any* single-class Tailwind width utility on an input
+inside an act column — `w-24` and `max-w-20` both lost before an inline
+`style={{width}}` won. Swept the other five `w-*` Inputs in the app: none
+sit inside a zone-act, all render at their intended width.
+
+**Verification:** `npm run verify` exit 0 — `Tests 920 passed (920)`,
+eslint 0 errors. a11y "No serious or critical violations"; clipped "No
+clipped or off-screen text across 23 views"; smoke "25/25 views OK".
+Impeccable detector: one hit, pre-existing (`.prose-doc blockquote`
+border-left — markdown idiom, not in this diff; judged false positive).
+Live: target 100 → 125 → 120 recomputes per keystroke and replays the
+animation; Target/Bar measured on one row at 84px/72px.
+
 ## 2026-09-03 — Body cluster UI polish: the survey found six defects, the gates missed five (COD-141)
 
 **Summary:** Brief was "improve the UI of all pages in the Body cluster and
