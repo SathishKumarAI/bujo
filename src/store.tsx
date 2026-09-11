@@ -37,6 +37,7 @@ import { dayDiff, todayISO } from './lib/date'
 import { setActiveTheme } from './lib/colors'
 import { generateRecurring } from './lib/recurrence'
 import { generateDemoData } from './lib/demo'
+import { notify } from './lib/notify'
 
 // ── Reducer with undo/redo history ──────────────────────────────────────────
 
@@ -328,6 +329,26 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  /**
+   * A delete, with the way back. Every `remove*` / `delete*` action routes
+   * through here so deleting is recoverable without knowing ⌘Z exists — one
+   * helper rather than a toast hand-written at each of the twenty-five call
+   * sites, which is how the other twenty-four came to have none.
+   *
+   * ponytail: "Undo" pops the last *history* step, not a snapshot taken at
+   * delete time. Delete something, edit something else, then click Undo and you
+   * get the edit back rather than the deletion — the same ceiling ⌘Z already
+   * has. Swap in a captured snapshot + `set` dispatch if that ever bites; it
+   * costs correctness in the other direction (it would clobber the later edit).
+   */
+  const removeWithUndo = useCallback(
+    (noun: string, fn: (d: JournalData) => JournalData) => {
+      patch(fn)
+      notify.undo(`${noun} deleted`, () => dispatch({ type: 'undo' }))
+    },
+    [patch],
+  )
+
   // Global undo/redo (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z or Ctrl+Y). Skip while a text
   // field is focused so the browser's native in-field undo keeps working.
   useEffect(() => {
@@ -398,7 +419,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         })),
 
       deleteEntry: (id) =>
-        patch((d) => ({ ...d, entries: d.entries.filter((e) => e.id !== id) })),
+        removeWithUndo('Entry', (d) => ({ ...d, entries: d.entries.filter((e) => e.id !== id) })),
 
       // Real BuJo migration: mark the original ">" migrated and create a fresh
       // open copy on the target date, threaded back via originId.
@@ -465,7 +486,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         })),
 
       removeHabit: (id) =>
-        patch((d) => ({ ...d, habits: d.habits.filter((h) => h.id !== id) })),
+        removeWithUndo('Habit', (d) => ({ ...d, habits: d.habits.filter((h) => h.id !== id) })),
 
       renameHabit: (id, name) =>
         patch((d) => ({
@@ -532,7 +553,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, workouts: d.workouts.map((w) => (w.id === id ? { ...w, ...wpatch } : w)) })),
 
       removeWorkout: (id) =>
-        patch((d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
+        removeWithUndo('Workout', (d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
 
       startFast: () =>
         patch((d) => ({ ...d, settings: { ...d.settings, fastActiveStart: new Date().toISOString() } })),
@@ -546,13 +567,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }),
 
       removeFast: (id) =>
-        patch((d) => ({ ...d, fasts: (d.fasts ?? []).filter((f) => f.id !== id) })),
+        removeWithUndo('Fast', (d) => ({ ...d, fasts: (d.fasts ?? []).filter((f) => f.id !== id) })),
 
       addRoutine: (r) =>
         patch((d) => ({ ...d, routines: [...d.routines, { id: uid('rt'), ...r }] })),
 
       removeRoutine: (id) =>
-        patch((d) => ({ ...d, routines: d.routines.filter((r) => r.id !== id) })),
+        removeWithUndo('Routine', (d) => ({ ...d, routines: d.routines.filter((r) => r.id !== id) })),
 
       setBodyMetric: (date, bp) =>
         patch((d) => {
@@ -564,13 +585,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }, `body:${date}`),
 
       removeBodyMetric: (date) =>
-        patch((d) => ({ ...d, bodyMetrics: d.bodyMetrics.filter((b) => b.date !== date) })),
+        removeWithUndo('Measurement', (d) => ({ ...d, bodyMetrics: d.bodyMetrics.filter((b) => b.date !== date) })),
 
       addProgressPhoto: (p) =>
         patch((d) => ({ ...d, progressPhotos: [...(d.progressPhotos ?? []), { id: uid('pp'), ...p }] })),
 
       removeProgressPhoto: (id) =>
-        patch((d) => ({ ...d, progressPhotos: (d.progressPhotos ?? []).filter((p) => p.id !== id) })),
+        removeWithUndo('Photo', (d) => ({ ...d, progressPhotos: (d.progressPhotos ?? []).filter((p) => p.id !== id) })),
 
       addPickleball: (p) =>
         patch((d) => ({ ...d, pickleball: [...(d.pickleball ?? []), { id: uid('pk'), ...p }] })),
@@ -579,7 +600,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).map((p) => (p.id === id ? { ...p, ...ppatch } : p)) }), `pk:${id}`),
 
       removePickleball: (id) =>
-        patch((d) => ({ ...d, pickleball: (d.pickleball ?? []).filter((p) => p.id !== id) })),
+        removeWithUndo('Session', (d) => ({ ...d, pickleball: (d.pickleball ?? []).filter((p) => p.id !== id) })),
 
       addFriend: (f) =>
         patch((d) => ({ ...d, friends: [...(d.friends ?? []), { id: uid('fr'), createdAt: todayISO(), ...f }] })),
@@ -588,7 +609,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, friends: (d.friends ?? []).map((f) => (f.id === id ? { ...f, ...fpatch } : f)) })),
 
       removeFriend: (id) =>
-        patch((d) => ({ ...d, friends: (d.friends ?? []).filter((f) => f.id !== id) })),
+        removeWithUndo('Person', (d) => ({ ...d, friends: (d.friends ?? []).filter((f) => f.id !== id) })),
 
       addBook: (b) =>
         patch((d) => ({ ...d, books: [...(d.books ?? []), { id: uid('bk'), createdAt: todayISO(), ...b }] })),
@@ -597,7 +618,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, books: (d.books ?? []).map((b) => (b.id === id ? { ...b, ...bpatch } : b)) }), `book:${id}`),
 
       removeBook: (id) =>
-        patch((d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
+        removeWithUndo('Book', (d) => ({ ...d, books: (d.books ?? []).filter((b) => b.id !== id) })),
 
       addBookLearning: (id, text, date) =>
         patch((d) => ({
@@ -608,7 +629,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         })),
 
       removeBookLearning: (id, index) =>
-        patch((d) => ({
+        removeWithUndo('Note', (d) => ({
           ...d,
           books: (d.books ?? []).map((b) =>
             b.id === id ? { ...b, learnings: (b.learnings ?? []).filter((_, i) => i !== index) } : b,
@@ -622,13 +643,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).map((l) => (l.id === id ? { ...l, ...lpatch } : l)) })),
 
       removeReadLink: (id) =>
-        patch((d) => ({ ...d, readLinks: (d.readLinks ?? []).filter((l) => l.id !== id) })),
+        removeWithUndo('Link', (d) => ({ ...d, readLinks: (d.readLinks ?? []).filter((l) => l.id !== id) })),
 
       addPickleEvent: (e) =>
         patch((d) => ({ ...d, pickleballEvents: [...(d.pickleballEvents ?? []), { id: uid('pke'), ...e }] })),
 
       removePickleEvent: (id) =>
-        patch((d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).filter((e) => e.id !== id) })),
+        removeWithUndo('Event', (d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).filter((e) => e.id !== id) })),
 
       setGratitude: (date, text) =>
         patch((d) => {
@@ -652,7 +673,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, birthdays: [...d.birthdays, { id: uid('b'), ...b }] })),
 
       removeBirthday: (id) =>
-        patch((d) => ({ ...d, birthdays: d.birthdays.filter((b) => b.id !== id) })),
+        removeWithUndo('Birthday', (d) => ({ ...d, birthdays: d.birthdays.filter((b) => b.id !== id) })),
 
       setMonthly: (ym, mp) =>
         patch((d) => {
@@ -702,13 +723,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         })),
 
       removeUrge: (id) =>
-        patch((d) => ({ ...d, nofap: { ...d.nofap, urgeLog: (d.nofap.urgeLog ?? []).filter((u) => u.id !== id) } })),
+        removeWithUndo('Urge', (d) => ({ ...d, nofap: { ...d.nofap, urgeLog: (d.nofap.urgeLog ?? []).filter((u) => u.id !== id) } })),
 
       addTriggerPlan: (p) =>
         patch((d) => ({ ...d, nofap: { ...d.nofap, plans: [...(d.nofap.plans ?? []), { id: uid('tp'), ...p }] } })),
 
       removeTriggerPlan: (id) =>
-        patch((d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
+        removeWithUndo('Trigger plan', (d) => ({ ...d, nofap: { ...d.nofap, plans: (d.nofap.plans ?? []).filter((p) => p.id !== id) } })),
 
       addAddiction: (name) =>
         patch((d) => {
@@ -718,7 +739,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }),
 
       removeAddiction: (id) =>
-        patch((d) => ({ ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).filter((a) => a.id !== id) } })),
+        removeWithUndo('Addiction', (d) => ({ ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).filter((a) => a.id !== id) } })),
 
       relapseAddiction: (id, r) =>
         patch((d) => ({
@@ -764,7 +785,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).map((g) => (g.id === id ? { ...g, ...gpatch } : g)) }), `cgoal:${id}`),
 
       removeCustomGoal: (id) =>
-        patch((d) => ({ ...d, customGoals: (d.customGoals ?? []).filter((g) => g.id !== id) })),
+        removeWithUndo('Goal', (d) => ({ ...d, customGoals: (d.customGoals ?? []).filter((g) => g.id !== id) })),
 
       addMindsetFocus: (principleId) =>
         patch((d) => {
@@ -776,7 +797,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).map((m) => (m.id === id ? { ...m, note: note.trim() || undefined } : m)) }), `mind:${id}`),
 
       removeMindsetFocus: (id) =>
-        patch((d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).filter((m) => m.id !== id) })),
+        removeWithUndo('Focus', (d) => ({ ...d, mindsetFocus: (d.mindsetFocus ?? []).filter((m) => m.id !== id) })),
 
       toggleMindsetPractice: (principleId, date = todayISO()) =>
         patch((d) => {
@@ -796,7 +817,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, challenges: [...(d.challenges ?? []), { id: uid('chal'), ...c }] })),
 
       removeChallenge: (id) =>
-        patch((d) => {
+        removeWithUndo('Challenge', (d) => {
           const log = { ...(d.challengeLog ?? {}) }
           delete log[id]
           return { ...d, challenges: (d.challenges ?? []).filter((c) => c.id !== id), challengeLog: log }
@@ -824,13 +845,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).map((s) => (s.id === id ? { ...s, ...spatch } : s)) })),
 
       removeDevSession: (id) =>
-        patch((d) => ({ ...d, devSessions: (d.devSessions ?? []).filter((s) => s.id !== id) })),
+        removeWithUndo('Session', (d) => ({ ...d, devSessions: (d.devSessions ?? []).filter((s) => s.id !== id) })),
 
       addTypingSession: (s) =>
         patch((d) => ({ ...d, typingSessions: [...(d.typingSessions ?? []), { id: uid('typ'), ...s }] })),
 
       removeTypingSession: (id) =>
-        patch((d) => ({ ...d, typingSessions: (d.typingSessions ?? []).filter((s) => s.id !== id) })),
+        removeWithUndo('Session', (d) => ({ ...d, typingSessions: (d.typingSessions ?? []).filter((s) => s.id !== id) })),
 
       addRecurrence: (r) =>
         patch((d) => generateRecurring({ ...d, recurrences: [...d.recurrences, { id: uid('rec'), ...r }] })),
@@ -859,7 +880,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       // Removing a rule also clears its not-yet-done future instances; past and
       // completed occurrences stay as history.
       removeRecurrence: (id) =>
-        patch((d) => {
+        removeWithUndo('Recurrence', (d) => {
           const t = todayISO()
           return {
             ...d,
@@ -875,7 +896,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         })),
 
       removeCollection: (id) =>
-        patch((d) => ({
+        removeWithUndo('Collection', (d) => ({
           ...d,
           collections: d.collections.filter((c) => c.id !== id),
           entries: d.entries.filter((e) => e.collection !== id),
@@ -901,7 +922,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }),
 
       removeDupr: (date) =>
-        patch((d) => ({ ...d, settings: { ...d.settings, duprLog: (d.settings.duprLog ?? []).filter((e) => e.date !== date) } })),
+        removeWithUndo('Rating', (d) => ({ ...d, settings: { ...d.settings, duprLog: (d.settings.duprLog ?? []).filter((e) => e.date !== date) } })),
 
       replaceAll: (next, opts) => dispatch({ type: 'set', data: next, stamp: opts?.stamp }),
 
@@ -924,7 +945,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       canUndo: hist.past.length > 0,
       canRedo: hist.future.length > 0,
     }
-  }, [data, patch, hist.past.length, hist.future.length, encrypted])
+  }, [data, patch, removeWithUndo, hist.past.length, hist.future.length, encrypted])
 
   // Decrypt + hydrate on unlock. Throws on a wrong passcode (data never wiped).
   async function unlock(pc: string) {
