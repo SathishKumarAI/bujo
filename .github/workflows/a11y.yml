@@ -68,3 +68,12 @@ jobs:
       # trusted here. Same preview server, no extra build.
       - name: Smoke every view
         run: BUJO_URL=http://localhost:4173 node scripts/smoke-views.mjs
+      # Neither did this one, and it had the same consequence: `npm run clipped`
+      # existed in package.json and ran in no workflow at all, so the only thing
+      # keeping it honest was someone remembering to type it. A gate nothing
+      # runs is a gate that rots — the sentence this repo already wrote about
+      # smoke. It catches what a11y structurally cannot: a control pushed off
+      # the viewport, a field showing less than was typed into it, and a scroll
+      # region squeezed too narrow to scroll in. Same preview server.
+      - name: Clipped and unreachable content
+        run: BUJO_URL=http://localhost:4173 node scripts/clipped-text.mjs

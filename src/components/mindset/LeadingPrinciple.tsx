@@ -29,7 +29,14 @@ export function LeadingPrinciple({
           {principle ? (
             <>
               <Statement as="h2" className="mt-3">{principle.title}</Statement>
-              <p className="mt-3.5 max-w-[46ch] text-body text-fg-2">{principle.why}</p>
+              {/* `text-balance`, not `text-pretty`: at a 46ch measure this ran
+                  65 characters on line one and left "and move on." — twelve
+                  characters — alone on line two, directly under the page's
+                  loudest line. `text-pretty` did not move it (Chrome only
+                  rescues a last line that is a single short word); balance
+                  splits the two lines evenly, which is what a two-line
+                  paragraph wants. Measured, not assumed. */}
+              <p className="mt-3.5 max-w-[46ch] text-body text-balance text-fg-2">{principle.why}</p>
               <div className="mt-5 flex flex-wrap gap-x-7 gap-y-1 border-t border-line pt-3.5 text-label text-fg-2">
                 <span>{principle.category}</span>
                 {/* "Active 0 days" is a real answer, not a gap: it says the
@@ -43,7 +50,7 @@ export function LeadingPrinciple({
           ) : (
             <>
               <Statement as="h2" className="mt-3 text-fg-3">Nothing in focus yet</Statement>
-              <p className="mt-3.5 max-w-[46ch] text-body text-fg-2">
+              <p className="mt-3.5 max-w-[46ch] text-body text-balance text-fg-2">
                 Pick a principle from the library below. The first one you add leads here.
               </p>
             </>

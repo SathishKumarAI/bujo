@@ -15,7 +15,29 @@ import { cn } from '../../lib/cn'
  *
  * One per band, and at most one per screen — a second statement is not a
  * statement.
+ *
+ * **A dash never starts a line.** At 20ch almost every real title wraps, and
+ * "Short memory — flush errors" broke after "memory", putting the em dash at
+ * the head of line two — where it reads as a list marker rather than as the
+ * continuation of a phrase. Binding the dash to the word before it moves the
+ * break to the only other place it can go. Done here rather than in the data
+ * because `Statement` also renders book titles the user typed, so the next
+ * title with a dash in it is not one anybody can edit ahead of time.
  */
+
+/**
+ * Bind an en/em dash to the preceding word with a non-breaking space, so a line
+ * can only ever break *after* it.
+ *
+ * Strings only. A `Statement` given elements is composing its own line breaks
+ * and this would have nothing to act on.
+ */
+function bindDashes(children: ReactNode): ReactNode {
+  // The escape, not a literal NBSP: an invisible character in a source file
+  // reads as an ordinary space and the next person deletes it as a no-op.
+  return typeof children === 'string' ? children.replace(/ ([—–]) /g, '\u00a0$1 ') : children
+}
+
 export function Statement({
   children,
   className,
@@ -28,7 +50,7 @@ export function Statement({
 }) {
   return (
     <Tag className={cn('max-w-[20ch] font-display text-display font-medium tracking-[-0.02em] text-balance text-fg-1', className)}>
-      {children}
+      {bindDashes(children)}
     </Tag>
   )
 }
