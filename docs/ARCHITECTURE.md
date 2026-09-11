@@ -1,7 +1,18 @@
 # Architecture
 
-`bujo` is a single-page React app with **no backend**. All state lives in one
-JSON object persisted to `localStorage`.
+`bujo` is a single-page React app that is **local-first**: the source of truth
+is one `JournalData` object on the device, and the app is fully usable with no
+network and no account.
+
+That is not the same as "no backend", which is what this file used to say. There
+are three optional server-backed sync targets (Vercel Blob via `/api/sync`,
+Supabase, and a self-hosted PostgREST stack under `docker/`), plus three
+serverless ones (a folder you pick, a GitHub gist, Google Drive). Every one is
+opt-in and none is required — but a reader planning a change needs to know they
+exist. Nor is all state in `localStorage`: photos live in IndexedDB, because
+they are the one thing that blows past its quota.
+
+**The diagrams are in [`docs/diagrams/`](diagrams/README.md).**
 
 ## Stack
 
@@ -18,16 +29,16 @@ JSON object persisted to `localStorage`.
 
 ## Data flow
 
-```
-localStorage ("bujo:data")
-      ▲  │
- save │  │ load / migrate            (src/lib/storage.ts)
-      │  ▼
-   useReducer  ──►  JournalData  ──►  useJournal() context   (src/store.tsx)
-      ▲                                   │
-      │ actions (addEntry, toggleHabit…)  ▼
-   UI components / views  ◄──────────  read data
-```
+Drawn, with the numbers, in
+[`docs/diagrams/data-model.md`](diagrams/data-model.md) and
+[`docs/diagrams/storage-and-sync.md`](diagrams/storage-and-sync.md) — the
+reducer's five action types, the eight write paths and their debounces, the
+conflict branch, and the echo guard.
+
+There used to be a hand-drawn ASCII copy here. Two drawings of one system is the
+same mistake as the palette written into two files (`CLAUDE.md`, COD-32) and as
+the two UML documents those diagram pages replaced: nothing keeps them in step,
+and the reader cannot tell which one is lying.
 
 - **Single source of truth:** `JournalData` (`src/lib/types.ts`).
 - **`store.tsx`** holds it in a `useReducer`, exposes typed action methods via
@@ -86,7 +97,7 @@ cannot say — the data flow above, the shell, and the decisions below.
 
 | Decision | Why |
 |---|---|
-| `localStorage`, not IndexedDB | Data is small (text + a few downscaled photos); simpler API; trivial export. |
+| `localStorage` for the journal, **IndexedDB for photos** | The journal is small (text + ids) and `localStorage` keeps load/save synchronous and export trivial. Photos are the one thing that blows past its ~5 MB quota, so `lib/imageStore.ts` holds their bytes and the journal references them by id. Every export and remote push inlines them first. |
 | Inline styles for dynamic colors | Tailwind v4's JIT can't see `` `text-${color}` ``; a hex map keeps colors data-driven. |
 | Lazy-load chart views | Recharts is ~100 KB gzip; keeping it off the initial route holds the bundle budget. |
 | Forward-compatible `migrate()` | Any older/partial saved blob is merged onto a fresh default, so schema growth never breaks existing journals. |
