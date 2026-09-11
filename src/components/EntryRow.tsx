@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { glyphFor } from '../lib/bullets'
 import { cat } from '../lib/colors'
-import { notify } from '../lib/notify'
 import { useJournal } from '../store'
 import type { Entry } from '../lib/types'
 
@@ -10,7 +9,7 @@ const LONG_ENTRY = 180
 
 /** A single rapid-log line: click the glyph to advance status, double-click text to edit. */
 export function EntryRow({ entry }: { entry: Entry }) {
-  const { cycleStatus, toggleImportant, deleteEntry, updateEntry, undo } = useJournal()
+  const { cycleStatus, toggleImportant, deleteEntry, updateEntry } = useJournal()
   const dropped = entry.status === 'dropped'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(entry.text)
@@ -117,12 +116,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
           !
         </button>
         <button
-          onClick={() => {
-            deleteEntry(entry.id)
-            // The store keeps an undo stack; surface it here so deleting is
-            // recoverable without knowing ⌘Z exists.
-            notify.undo('Entry deleted', undo)
-          }}
+          onClick={() => deleteEntry(entry.id)} // the store raises the undo toast
           aria-label="Delete entry"
           className="text-fg-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
         >

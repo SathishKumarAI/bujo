@@ -2,6 +2,7 @@ import { Camera, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { fileToDataURL } from '../lib/image'
+import { notify } from '../lib/notify'
 import { Button } from './ui/button'
 
 /**
@@ -29,7 +30,7 @@ export function ImageUpload({
     try {
       onChange(await fileToDataURL(file))
     } catch {
-      alert('Could not read that image.')
+      notify.error('Could not read that image', 'Try a different file, or a smaller one.')
     } finally {
       setBusy(false)
       if (ref.current) ref.current.value = ''

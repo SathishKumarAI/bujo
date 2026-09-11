@@ -127,22 +127,32 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
  * via {@link mergeJournals} so non-conflicting local edits aren't dropped.
  *
  * Returns the data to adopt, or `null` to keep the local journal untouched.
- * `confirm` is injectable so the logic is unit-testable without a DOM.
+ * `ask` is injectable so the logic is unit-testable without a DOM, and so the
+ * prompt can be the app's own dialog rather than a native `confirm()`.
+ *
+ * **The default answer is "keep local".** It applies only when a caller passes
+ * no `ask` at all (tests, non-DOM). Keeping local stalls the adoption until the
+ * next change; the other default would silently clobber unsynced work, and a
+ * stall is recoverable where a clobber is not.
  */
-export function resolveIncoming(
+export const CONFLICT_PROMPT = {
+  title: 'This device has changes newer than the cloud copy',
+  description:
+    'Something edited here has not reached the cloud yet. Taking the cloud version replaces what is on this device — items that exist only here are kept, but edits to shared items are overwritten by the cloud’s.',
+  confirmLabel: 'Use the cloud version',
+  cancelLabel: 'Keep this device’s changes',
+} as const
+
+export async function resolveIncoming(
   local: JournalData,
   remote: JournalData,
-  ask: (msg: string) => boolean = (m) => (typeof confirm === 'function' ? confirm(m) : true),
-): JournalData | null {
+  ask: () => boolean | Promise<boolean> = () => false,
+): Promise<JournalData | null> {
   const l = local.updatedAt
   const r = remote.updatedAt
-  // Local has unsynced edits newer than the cloud copy → ask before overwriting.
+  // Local has unsynced edits newer than the cloud copy — ask before overwriting.
   if (l && (!r || l > r)) {
-    const useCloud = ask(
-      'Sync conflict: this device has changes newer than the cloud copy.\n\n' +
-        'OK = replace this device with the cloud version\n' +
-        'Cancel = keep this device’s changes (they sync up on the next change)',
-    )
+    const useCloud = await ask()
     // Even on confirm, union local-only items so the user doesn't lose them.
     return useCloud ? mergeJournals(remote, local) : null
   }

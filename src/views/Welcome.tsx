@@ -2,6 +2,7 @@ import { Check, CloudCheck, FolderOpen, HardDrive, ShieldCheck, SignIn, UserCirc
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
+import { notify } from '../lib/notify'
 // (the three choice cards below stay native buttons — card-shaped click targets)
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
@@ -43,7 +44,7 @@ export function Welcome() {
       }
       setSettings({ storageMode: 'folder', folderName: name })
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') alert('Could not use that folder: ' + (e as Error).message)
+      if ((e as Error).name !== 'AbortError') notify.error('Could not use that folder', (e as Error).message)
     } finally {
       setBusy(false)
     }

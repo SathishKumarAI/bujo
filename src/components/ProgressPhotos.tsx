@@ -2,6 +2,7 @@ import { Camera, Columns, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
+import { notify } from '../lib/notify'
 import { fileToDataURL } from '../lib/image'
 import { putImage, getImage, deleteImage } from '../lib/imageStore'
 import { todayISO, prettyDay } from '../lib/date'
@@ -41,7 +42,7 @@ export function ProgressPhotos() {
       const id = await putImage(await fileToDataURL(file))
       addProgressPhoto({ date: todayISO(), photo: id, weight })
     } catch {
-      alert('Could not read that image.')
+      notify.error('Could not read that image', 'Try a different file, or a smaller one.')
     } finally {
       setBusy(false)
       if (ref.current) ref.current.value = ''
