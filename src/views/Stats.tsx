@@ -196,7 +196,7 @@ export function Stats() {
       <LifetimeCards />
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
-      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics">
+      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics" defaultOpen={false} stickyKey="stats.week">
         <Card band title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
@@ -212,7 +212,7 @@ export function Stats() {
       </Section>
 
       {/* 3) Sleep & mood correlations — collapsed. */}
-      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus">
+      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus" defaultOpen={false} stickyKey="stats.sleepmood">
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
           {scatter.length < 3 ? (
@@ -270,7 +270,7 @@ export function Stats() {
              mood read-backs that came over from Insights (BUJO-281). They went
              *into* this fold rather than beside it: Stats already had six, and
              a drawer relocated intact is not a drawer removed. */}
-      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability">
+      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" defaultOpen={false} stickyKey="stats.moodviews">
       {moodView === 'calendar' ? (
       <Card band
         enlargeable={false}
@@ -327,7 +327,7 @@ export function Stats() {
       </Section>
 
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
-      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging">
+      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging" defaultOpen={false} stickyKey="stats.fitness">
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card band title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (
@@ -370,7 +370,7 @@ export function Stats() {
       </Section>
 
       {/* 6) Tasks — collapsed. */}
-      <Section title="Tasks" subtitle="where your tasks land">
+      <Section title="Tasks" subtitle="where your tasks land" defaultOpen={false} stickyKey="stats.tasks">
         <Card band title="Task breakdown" subtitle="Where your tasks land" enlargeable>
           {tasks.length === 0 ? (
             <Empty>Add a task on Today to see how your week breaks down.</Empty>
@@ -395,7 +395,7 @@ export function Stats() {
       {/* 7) Habits — check-in times, plus the three habit read-backs from
              Insights (BUJO-281). Same rule as Mood views: into the existing
              fold, not beside it. */}
-      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend">
+      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" defaultOpen={false} stickyKey="stats.habits">
         <CheckinTimesCard />
         <HabitAnalytics />
       </Section>

@@ -605,11 +605,20 @@ export function Pickleball() {
       </Section>
 
       {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
-            section so they don't strand on mobile. ── */}
+            section so they don't strand on mobile. ──
+
+            It was not collapsed. The inner comment below already assumed it was
+            ("the fold already defers them for anyone who keeps it closed"), but
+            nothing passed `defaultOpen={false}` and this Section — like the
+            shared one — defaults to OPEN. Note it is *not* `CollapsibleSection`:
+            `components/pickleball/Section` is a local near-duplicate with the
+            same name and no `stickyKey`, so unlike every other fold in the app
+            the choice made here does not survive a reload. ── */}
       <Section
         title="Charts"
         icon={<Icon as={ChartBar} size="md" className="text-teal" />}
         hint="Trends · volume · heatmap · tap ⛶ to enlarge"
+        defaultOpen={false}
       >
         {/* Seven recharts. The fold already defers them for anyone who keeps
             it closed; LazyMount covers the sticky-open case, where they used
