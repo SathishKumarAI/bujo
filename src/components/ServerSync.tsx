@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useJournal } from '../store'
 import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '../lib/serverSync'
-import { resolveIncoming } from '../lib/conflict'
+import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
+import { useConfirm } from './ConfirmDialog'
 import { migrate } from '../lib/storage'
 
 /**
@@ -15,6 +16,13 @@ import { migrate } from '../lib/storage'
  */
 export function ServerSync() {
   const { data, replaceAll } = useJournal()
+  const confirm = useConfirm()
+  // Memoised on the context value, which never changes — so naming it in the
+  // effect deps below costs nothing and keeps the exhaustive-deps rule honest.
+  const askConflict = useCallback(
+    () => confirm({ ...CONFLICT_PROMPT, destructive: true }),
+    [confirm],
+  )
   const url = data.settings.selfHostUrl
   const token = data.settings.selfHostToken
   const latest = useRef(data)
@@ -32,11 +40,11 @@ export function ServerSync() {
       const remote = await pullJournalFromServer(url!, token)
       if (cancelled || !remote) return
       // Merge against the freshest local snapshot, not the mount-time one.
-      const adopt = resolveIncoming(latest.current, migrate(remote))
+      const adopt = await resolveIncoming(latest.current, migrate(remote), askConflict)
       if (adopt) replaceAll(adopt)
     })()
     return () => { cancelled = true }
-  }, [url, token, replaceAll])
+  }, [url, token, replaceAll, askConflict])
 
   // Debounced push on change, pull-first so a newer server copy is adopted
   // rather than clobbered. Every other sync path already did this; this one
@@ -48,7 +56,7 @@ export function ServerSync() {
       if (remote) {
         const rm = migrate(remote)
         if (rm.updatedAt && (!latest.current.updatedAt || rm.updatedAt > latest.current.updatedAt)) {
-          const merged = resolveIncoming(latest.current, rm)
+          const merged = await resolveIncoming(latest.current, rm, askConflict)
           if (merged) replaceAll(merged)
           return // adopted the server copy; do NOT push over it
         }
@@ -56,7 +64,7 @@ export function ServerSync() {
       await pushJournalToServer(url!, latest.current, token)
     }, 2500)
     return () => clearTimeout(t)
-  }, [data, url, token, replaceAll])
+  }, [data, url, token, replaceAll, askConflict])
 
   // Flush on tab close / hide.
   useEffect(() => {

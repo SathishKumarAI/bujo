@@ -9,47 +9,47 @@ const entry = (id: string, date = '2026-06-15', text = id) => ({
 })
 
 describe('resolveIncoming', () => {
-  it('adopts remote when it is newer (normal sync, no prompt)', () => {
+  it('adopts remote when it is newer (normal sync, no prompt)', async () => {
     const ask = vi.fn(() => false)
     const local = at('2026-06-15T10:00:00.000Z')
     const remote = at('2026-06-15T12:00:00.000Z')
-    expect(resolveIncoming(local, remote, ask)).toMatchObject({ updatedAt: '2026-06-15T12:00:00.000Z' })
+    await expect(resolveIncoming(local, remote, ask)).resolves.toMatchObject({ updatedAt: '2026-06-15T12:00:00.000Z' })
     expect(ask).not.toHaveBeenCalled()
   })
 
-  it('adopts remote when neither side is stamped (legacy)', () => {
+  it('adopts remote when neither side is stamped (legacy)', async () => {
     const ask = vi.fn(() => false)
-    expect(resolveIncoming(at(undefined), at(undefined), ask)).toMatchObject({ updatedAt: undefined })
+    await expect(resolveIncoming(at(undefined), at(undefined), ask)).resolves.toMatchObject({ updatedAt: undefined })
     expect(ask).not.toHaveBeenCalled()
   })
 
-  it('prompts when local is newer; keeps local on cancel', () => {
+  it('prompts when local is newer; keeps local on cancel', async () => {
     const ask = vi.fn(() => false)
     const local = at('2026-06-15T12:00:00.000Z')
     const remote = at('2026-06-15T10:00:00.000Z')
-    expect(resolveIncoming(local, remote, ask)).toBeNull()
+    await expect(resolveIncoming(local, remote, ask)).resolves.toBeNull()
     expect(ask).toHaveBeenCalledOnce()
   })
 
-  it('prompts when local is newer; adopts cloud on confirm', () => {
+  it('prompts when local is newer; adopts cloud on confirm', async () => {
     const ask = vi.fn(() => true)
     const local = at('2026-06-15T12:00:00.000Z')
     const remote = at('2026-06-15T10:00:00.000Z')
-    expect(resolveIncoming(local, remote, ask)).toMatchObject({ updatedAt: '2026-06-15T10:00:00.000Z' })
+    await expect(resolveIncoming(local, remote, ask)).resolves.toMatchObject({ updatedAt: '2026-06-15T10:00:00.000Z' })
   })
 
-  it('prompts when local is stamped but remote is not (local has unsynced edits)', () => {
+  it('prompts when local is stamped but remote is not (local has unsynced edits)', async () => {
     const ask = vi.fn(() => true)
     const local = at('2026-06-15T12:00:00.000Z')
     const remote = at(undefined)
-    expect(resolveIncoming(local, remote, ask)).toMatchObject({ updatedAt: undefined })
+    await expect(resolveIncoming(local, remote, ask)).resolves.toMatchObject({ updatedAt: undefined })
     expect(ask).toHaveBeenCalledOnce()
   })
 
-  it('keeps local-only entries when adopting a newer remote (no silent loss)', () => {
+  it('keeps local-only entries when adopting a newer remote (no silent loss)', async () => {
     const local = { ...at('2026-06-15T10:00:00.000Z'), entries: [entry('a'), entry('local-only')] }
     const remote = { ...at('2026-06-15T12:00:00.000Z'), entries: [entry('a'), entry('remote-only')] }
-    const out = resolveIncoming(local, remote)!
+    const out = (await resolveIncoming(local, remote))!
     const ids = out.entries.map((e) => e.id).sort()
     expect(ids).toEqual(['a', 'local-only', 'remote-only'])
     expect(out.updatedAt).toBe('2026-06-15T12:00:00.000Z') // remote wins the stamp

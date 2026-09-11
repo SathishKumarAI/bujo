@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { migrate, emptyJournal, isForeignOwner, claimOwner } from './lib/storage'
-import { resolveIncoming } from './lib/conflict'
+import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
+import { useConfirm } from './components/ConfirmDialog'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange, onPasswordRecovery } from './lib/supabase'
 import { useJournal } from './store'
@@ -66,13 +67,23 @@ export default function App() {
   // current journal (not the stale mount snapshot) for conflict resolution.
   const dataRef = useRef(data)
   useEffect(() => { dataRef.current = data }, [data])
+  // Sync conflicts prompt through the app's own dialog, not window.confirm.
+  // Held in a ref because the sync effects below run once on mount and would
+  // otherwise capture the first render's callback forever.
+  const confirm = useConfirm()
+  const askConflict = useCallback(
+    () => confirm({ ...CONFLICT_PROMPT, destructive: true }),
+    [confirm],
+  )
+  const askConflictRef = useRef(askConflict)
+  useEffect(() => { askConflictRef.current = askConflict }, [askConflict])
   const syncReady = useRef(false)
   // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
   useEffect(() => {
     const pass = localStorage.getItem('bujo:sync')
     if (!pass) { syncReady.current = true; return }
     pullCloud(pass)
-      .then((remote) => { if (remote) { const next = resolveIncoming(dataRef.current, migrate(remote)); if (next) replaceAll(next) } })
+      .then(async (remote) => { if (remote) { const next = await resolveIncoming(dataRef.current, migrate(remote), askConflictRef.current); if (next) replaceAll(next) } })
       .catch(() => {})
       .finally(() => { syncReady.current = true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,7 +106,7 @@ export default function App() {
             // before the remote's newer write). `resolveIncoming` cannot prompt
             // on this branch — we already know the remote is strictly newer —
             // so it merges silently, matching the Supabase path below.
-            const merged = resolveIncoming(dataRef.current, rm)
+            const merged = await resolveIncoming(dataRef.current, rm, askConflictRef.current)
             if (merged) { cloudLastSync.current = JSON.stringify(merged); replaceAll(merged) }
             else cloudLastSync.current = JSON.stringify(rm)
             return // adopted remote; do NOT push over it
@@ -132,9 +143,9 @@ export default function App() {
       // the foreign journal's items into the account's data).
       const foreignOwner = !leavingExplore && isForeignOwner(u.id)
       const replaceOnly = leavingExplore || foreignOwner
-      return pullJournal().then((r) => {
+      return pullJournal().then(async (r) => {
         if (r) {
-          const next = replaceOnly ? migrate(r) : resolveIncoming(dataRef.current, migrate(r))
+          const next = replaceOnly ? migrate(r) : await resolveIncoming(dataRef.current, migrate(r), askConflictRef.current)
           if (next) replaceAll(next)
         } else if (replaceOnly) {
           replaceAll(emptyJournal())
@@ -163,7 +174,7 @@ export default function App() {
         if (remote) {
           const rm = migrate(remote)
           if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
-            const merged = resolveIncoming(dataRef.current, rm)
+            const merged = await resolveIncoming(dataRef.current, rm, askConflictRef.current)
             if (merged) { lastSync.current = JSON.stringify(merged); replaceAll(merged) }
             else lastSync.current = JSON.stringify(rm)
             return // adopted remote; do NOT push over it
@@ -183,11 +194,11 @@ export default function App() {
     subscribeJournal((remote) => {
       const snap = JSON.stringify(remote)
       if (snap === lastSync.current) return // our own write echoing back
-      currentUser().then((u) => {
+      currentUser().then(async (u) => {
         // COD-135: never merge a live push from the account into a foreign local.
         if (!u || isForeignOwner(u.id)) return
         lastSync.current = snap
-        const next = resolveIncoming(dataRef.current, migrate(remote))
+        const next = await resolveIncoming(dataRef.current, migrate(remote), askConflictRef.current)
         if (next) replaceAll(next) // null = keep local; it re-pushes on next change
       })
     }).then((fn) => { off = fn })
@@ -249,7 +260,7 @@ export default function App() {
           if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
             // UNION, don't clobber — same fix as the blob path above. Adopting
             // the folder copy raw discarded unsynced local items with no prompt.
-            const merged = resolveIncoming(dataRef.current, rm)
+            const merged = await resolveIncoming(dataRef.current, rm, askConflictRef.current)
             if (merged) { folderLastSync.current = JSON.stringify(merged); replaceAll(merged) }
             else folderLastSync.current = JSON.stringify(rm)
             return // folder copy is newer → adopt, don't overwrite
