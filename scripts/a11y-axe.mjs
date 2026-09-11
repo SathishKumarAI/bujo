@@ -137,6 +137,12 @@ const COMPANIONS = [
   // anyone who has turned it on, and it had never been scanned. Recovery's
   // lesson, from the other side of the default.
   ['Cycle', 'cycle'],
+  // Account has no tab either — it is behind the account menu, like Settings,
+  // and like Settings it had never been scanned. It was a full-screen auth card
+  // for most of this gate's life: two text inputs, a password reveal toggle and
+  // an OAuth button, none of them ever checked. It is now the local-account
+  // page, which is the moment to notice the hole rather than inherit it.
+  ['Account', 'account'],
 ]
 
 /**

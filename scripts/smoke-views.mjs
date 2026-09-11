@@ -77,10 +77,13 @@ const ignored = (t) => IGNORE.some((re) => re.test(t))
 /**
  * A failed resource load counts only when the resource is OURS.
  *
- * `account` renders a Supabase notice, so booting it on a machine with no route
- * to Supabase logs `Failed to load resource: net::ERR_NAME_NOT_RESOLVED` and
+ * `account` used to render a Supabase notice, so booting it on a machine with
+ * no route to Supabase logged `Failed to load resource: net::ERR_NAME_NOT_RESOLVED`
+ * and
  * the gate went red. STATUS.md has called that "environmental, not a
- * regression" across at least two sessions — which is the tell. A gate that is
+ * regression" across at least two sessions — which is the tell. (Accounts were
+ * removed in 2026-09; the origin rule below is what still matters, and it now
+ * guards the other third-party fetches rather than that one.) A gate that is
  * known to fail is a gate nobody runs, and its red is then indistinguishable
  * from a real one.
  *
