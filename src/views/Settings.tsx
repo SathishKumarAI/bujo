@@ -2,6 +2,7 @@ import { ArrowsClockwise, Bell, CalendarBlank, CaretDown, CaretRight, Cloud, Dat
 import { Icon } from '@/components/Icon'
 import { useRef, useState } from 'react'
 import { useJournal } from '../store'
+import { notify } from '../lib/notify'
 import { Card, Input, Segmented, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat } from '../lib/colors'
@@ -82,11 +83,11 @@ export function Settings() {
     reader.onload = () => {
       const r = verifyChecksum(String(reader.result))
       if (!r.ok) {
-        alert('This backup failed its integrity check — it looks truncated or corrupted. Do not rely on it; keep an older copy.')
+        notify.error('Integrity check failed', 'This backup looks truncated or corrupted. Do not rely on it — keep an older copy.')
       } else if (!r.stamped) {
-        alert('This file has no integrity checksum (an older or plain export). It looks readable, but can’t be verified.')
+        notify.info('No checksum in this file', 'An older or plain export. It looks readable, but can’t be verified.')
       } else {
-        alert('Integrity check passed — this backup is intact.')
+        notify.success('Integrity check passed', 'This backup is intact.')
       }
     }
     reader.readAsText(file)
@@ -100,7 +101,7 @@ export function Settings() {
     reader.onload = () => {
       const rows = parseMetricsCsv(String(reader.result))
       rows.forEach((r) => setMetric(r.date, r.patch))
-      alert(`Imported metrics for ${rows.length} day${rows.length === 1 ? '' : 's'}.`)
+      notify.success(`Imported metrics for ${rows.length} day${rows.length === 1 ? '' : 's'}`)
     }
     reader.readAsText(file)
     if (csvRef.current) csvRef.current.value = ''
@@ -138,9 +139,9 @@ export function Settings() {
     reader.onload = () => {
       try {
         replaceAll(importJSON(String(reader.result)), { stamp: true })
-        alert('Backup imported successfully.')
+        notify.success('Backup imported')
       } catch {
-        alert('Could not read that file, is it a valid bujo backup?')
+        notify.error('Could not read that file', 'Is it a valid bujo backup?')
       }
     }
     reader.readAsText(file)

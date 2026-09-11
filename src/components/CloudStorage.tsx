@@ -9,6 +9,7 @@ import { todayISO } from '../lib/date'
 import { folderName, isSupported, loadFromFolder, pickFolder, restoreFolder, saveToFolder } from '../lib/fscloud'
 import { pullGist, pushGist, verifyToken } from '../lib/github'
 import { useConfirm } from './ConfirmDialog'
+import { notify } from '../lib/notify'
 import { Button } from './ui/button'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
@@ -35,7 +36,7 @@ export function CloudStorage() {
       }
       setSettings({ storageMode: 'folder', folderName: name })
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') alert((e as Error).message)
+      if ((e as Error).name !== 'AbortError') notify.error('Could not use that folder', (e as Error).message)
     } finally {
       setBusy('')
     }
@@ -43,11 +44,11 @@ export function CloudStorage() {
   async function syncFolderNow() {
     setBusy('folder')
     try {
-      if (!(await restoreFolder(true))) return alert('Folder access not granted.')
+      if (!(await restoreFolder(true))) { notify.error('Folder access not granted', 'Re-pick the folder to grant permission again.'); return }
       await saveToFolder(data)
-      alert('Saved to your cloud folder.')
+      notify.success('Saved to your cloud folder')
     } catch (e) {
-      alert((e as Error).message)
+      notify.error('That did not work', (e as Error).message)
     } finally {
       setBusy('')
     }
@@ -55,21 +56,21 @@ export function CloudStorage() {
 
   // ── GitHub gist ──
   async function ghBackup() {
-    if (!s.githubToken) return alert('Paste a GitHub token (gist scope) first.')
+    if (!s.githubToken) { notify.error('No GitHub token', 'Paste a token with gist scope first.'); return }
     setBusy('gh')
     try {
-      if (!(await verifyToken(s.githubToken))) return alert('Token rejected by GitHub.')
+      if (!(await verifyToken(s.githubToken))) { notify.error('Token rejected by GitHub', 'Check it has gist scope and has not expired.'); return }
       const id = await pushGist(s.githubToken, s.githubGistId, data)
       setSettings({ githubGistId: id, lastDriveSync: todayISO() })
-      alert('Backed up to a private GitHub gist.')
+      notify.success('Backed up to a private GitHub gist')
     } catch (e) {
-      alert((e as Error).message)
+      notify.error('That did not work', (e as Error).message)
     } finally {
       setBusy('')
     }
   }
   async function ghRestore() {
-    if (!s.githubToken || !s.githubGistId) return alert('Connect + back up to GitHub first.')
+    if (!s.githubToken || !s.githubGistId) { notify.error('Nothing to restore', 'Connect and back up to GitHub first.'); return }
     if (!await confirm({
       title: 'Replace this device’s journal with the GitHub copy?',
       description: 'Everything currently on this device is overwritten by the copy stored in your gist.',
@@ -78,11 +79,11 @@ export function CloudStorage() {
     setBusy('gh')
     try {
       const remote = await pullGist(s.githubToken, s.githubGistId)
-      if (!remote) return alert('No bujo.json in that gist.')
+      if (!remote) { notify.error('No bujo.json in that gist'); return }
       replaceAll(migrate(remote))
-      alert('Restored from GitHub.')
+      notify.success('Restored from GitHub')
     } catch (e) {
-      alert((e as Error).message)
+      notify.error('That did not work', (e as Error).message)
     } finally {
       setBusy('')
     }

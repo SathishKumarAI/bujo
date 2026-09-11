@@ -2,6 +2,7 @@ import { ArrowSquareOut, At, UserPlus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
+import { notify } from '../../lib/notify'
 import { Band, BandCell, BandRow } from '../mod'
 import { Button } from '../ui/button'
 import { fetchGithubProfile } from '../../lib/enrich'
@@ -51,7 +52,7 @@ export function People() {
       if (gh.trim()) {
         const p = await fetchGithubProfile(gh)
         if (p) enrich = { avatar: p.avatar, bio: p.bio, company: p.company, links: p.htmlUrl ? [p.htmlUrl] : undefined }
-        else alert('Could not find that public GitHub profile (or rate-limited). Added without it.')
+        else notify.info('Added without a GitHub profile', 'That public profile could not be found, or GitHub rate-limited the lookup.')
       }
       addFriend({ name: name.trim(), github: gh.trim() || undefined, birthday: bday || undefined, ...enrich })
       setName('')
@@ -65,7 +66,7 @@ export function People() {
   async function reEnrich(id: string, handle: string) {
     const p = await fetchGithubProfile(handle)
     if (p) updateFriend(id, { avatar: p.avatar, bio: p.bio, company: p.company, links: p.htmlUrl ? [p.htmlUrl] : undefined })
-    else alert('Could not refresh that profile right now.')
+    else notify.error('Could not refresh that profile right now')
   }
 
   // One list from two sources, deduped on person + date. Concatenating them put

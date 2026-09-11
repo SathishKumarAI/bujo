@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../store'
+import { notify } from '../lib/notify'
 import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
 import { Card, Input, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -29,7 +30,7 @@ export function Monthly() {
       setWeather(todayISO(), w)
       if (city) setMonthly(ym, { location: city })
     } catch {
-      alert('Could not get location/weather, permission denied or offline.')
+      notify.error('No weather', 'Location permission was denied, or you are offline.')
     } finally {
       setGeoBusy(false)
     }
