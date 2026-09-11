@@ -69,7 +69,7 @@ export function FocusWeek({
                 {longest.project ? ` on ${longest.project}` : ''} · {prettyDay(longest.date)}
               </li>
             )}
-            {insight && <li className="border-t border-line pt-2 first:border-t-0 first:pt-0">{insight}</li>}
+            {insight && <li className="border-t border-line pt-2 text-pretty first:border-t-0 first:pt-0">{insight}</li>}
             {!longest && !insight && (
               <li>Log a couple of sessions and this fills with your longest block and what your focus tracks with.</li>
             )}

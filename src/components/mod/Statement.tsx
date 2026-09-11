@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { bindDashes } from '../../lib/typography'
 
 /**
  * Statement — the one large line a Modernist band leads with.
@@ -25,18 +26,6 @@ import { cn } from '../../lib/cn'
  * title with a dash in it is not one anybody can edit ahead of time.
  */
 
-/**
- * Bind an en/em dash to the preceding word with a non-breaking space, so a line
- * can only ever break *after* it.
- *
- * Strings only. A `Statement` given elements is composing its own line breaks
- * and this would have nothing to act on.
- */
-function bindDashes(children: ReactNode): ReactNode {
-  // The escape, not a literal NBSP: an invisible character in a source file
-  // reads as an ordinary space and the next person deletes it as a no-op.
-  return typeof children === 'string' ? children.replace(/ ([—–]) /g, '\u00a0$1 ') : children
-}
 
 export function Statement({
   children,
