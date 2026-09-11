@@ -14,10 +14,10 @@ code-only PRs in CI.
 
 | You changed | Update |
 |---|---|
-| **A data type** (`src/lib/types.ts`) | `docs/diagrams/uml.mdx` (class diagram), `docs/data-engineering/schema.sql` + `docker/initdb.sql` if it's persisted, and a `migrate()` path if not additive. |
-| **The store / a persisted field** | `migrate()` default, `docs/diagrams/uml.mdx` (sync/state), tests for the new action. |
-| **A view or shell component** | `docs/diagrams/uml.mdx` (component diagram) if the tree changed. |
-| **Sync (serverSync / supabase / github / fscloud)** | `docs/diagrams/uml.mdx` (sequence), `docs/data-engineering/*`, `docs/hosting/*` if endpoints change. |
+| **A data type** (`src/lib/types.ts`) | [`docs/diagrams/data-model.md`](diagrams/data-model.md), `docs/data-engineering/schema.sql` + `docker/initdb.sql` if it's persisted, and a `migrate()` path if not additive. |
+| **The store / a persisted field** | `migrate()` default, [`docs/diagrams/data-model.md`](diagrams/data-model.md) (the reducer + migrate sections), tests for the new action. |
+| **A view or shell component** | [`docs/diagrams/shell-and-views.md`](diagrams/shell-and-views.md) if the tree changed — **and the hand-written `VIEWS` lists in `scripts/a11y-axe.mjs` and `scripts/clipped-text.mjs` if you added a view.** A page not on those lists is never scanned. |
+| **Sync (serverSync / supabase / github / fscloud)** | [`docs/diagrams/storage-and-sync.md`](diagrams/storage-and-sync.md), `docs/data-engineering/*`, `docs/hosting/*` if endpoints change. |
 | **The Docker stack** (`docker-compose.yml`, `docker/*`) | `docs/hosting/*`, `docs/data-engineering/*`, and verify with `docker compose up` (+ a curl check for the API). |
 | **A pure lib function** | a `*.test.ts` beside it (table-driven, like `capture.test.ts`). |
 | **Anything user-facing** | a one-line ticket in `docs/TICKETS.md` (append to the current epic) and the running `docs/WORKLOG.md` entry. |

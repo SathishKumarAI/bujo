@@ -10,7 +10,7 @@ matches how you think.
 | 🔌 **Backend** | API routes, auth, sync, storage, security boundaries | [backend-view.md](backend-view.md) |
 | 🧮 **Data engineering** | the data model, persistence, schemas, export/import, pipelines | [data-engineering-view.md](data-engineering-view.md) |
 | 🤖 **ML / analytics** | the analytics, the coach heuristics, and where real ML could go | [ml-analytics-view.md](ml-analytics-view.md) |
-| 📐 **UML** | component, class/data-model, and sequence diagrams (Mermaid) | [uml.md](uml.md) |
+| 📐 **Diagrams** | component, data-model, sync and pipeline diagrams (Mermaid) | [../diagrams/](../diagrams/README.md) |
 
 **One-line summary:** bujo is a **local-first** React 19 + Vite SPA. The entire
 journal is one `JournalData` JSON object in `localStorage`; optional, opt-in
