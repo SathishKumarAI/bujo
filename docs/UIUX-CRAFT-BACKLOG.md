@@ -24,19 +24,35 @@ real gap verified in code, not a generic wishlist entry.
 
 ## Feedback & notifications
 
-The largest single gap. `sonner` is installed and `src/components/ui/sonner.tsx` exists, but
-`<Toaster />` **is never mounted** and `toast()` is **never called**. Every confirmation in the app
-is a blocking native `alert()` / `confirm()`, an ad-hoc inline `msg` string, or the bespoke
-`SyncIndicator` pill.
+**Closed 2026-09-10** (`feat/feedback-layer`). This section read as "the largest single gap —
+`<Toaster />` is never mounted and `toast()` is never called" for months after that stopped being
+true: `lib/notify.ts`, `components/Toasts.tsx` and the `AppShell` mount had all shipped, and four
+modules had adopted them. A doc that overstates a gap costs the same as one that hides a bug — both
+send the next session to the wrong place. What was actually left, and is now done:
 
-- [ ] Mount `<Toaster />` in the shell; add a thin `lib/notify.ts` wrapper so views never import sonner directly.
-- [ ] Replace success/failure `alert()` calls with toasts — `Settings.tsx` (~16 sites), `DriveSync.tsx` (~9), `CloudStorage.tsx` (~14).
-- [ ] Replace Settings' inline `msg` state (`Settings.tsx:569,582-585,646,732`) with toasts.
-- [ ] **Undo toast** after destructive actions (delete entry / habit / session) — the store already has `undo()`; wire it to a toast action button so undo is discoverable, not just ⌘Z.
-- [ ] Replace destructive `confirm()` with a real `<ConfirmDialog>` (shadcn Dialog) — native `confirm()` blocks the thread and looks foreign.
+- [x] Mount `<Toaster />` in the shell; `lib/notify.ts` wrapper so views never import sonner directly.
+- [x] Replace `alert()` with toasts — 26 sites across `CloudStorage` (10), `Settings` (6),
+      `People` (2), `ImageUpload`, `ProgressPhotos`, `Monthly`, `Welcome`. Each gained a
+      message/description split so failures say what to do next rather than echoing an exception.
+      `src/lib/notify.test.ts` fails the build if one comes back.
+- [x] Replace destructive `confirm()` with `<ConfirmDialog>` — this had already shipped; the
+      remaining `confirm({ … })` calls only *look* native to a grep. The real holdout was
+      `lib/conflict.ts`, whose sync-conflict prompt was a genuine `window.confirm` with
+      "OK = replace this device" spelled out in the message body. Now async, prompting through
+      `ConfirmDialog` with named buttons; the gate covers this too.
+- [x] **Undo toast** after destructive actions — done at the store, not the call sites.
+      `removeWithUndo` wraps all twenty-five `remove*` / `delete*` actions, so a delete added later
+      inherits it. Pinned by `src/store.undo.test.tsx`.
+
+Still open here:
+
+- [ ] Settings' two inline `msg` states (`Settings.tsx:693`, `:789`) — these are *inline status
+      under a control*, not notifications, so converting them is a judgement call rather than the
+      obvious cleanup the old wording implied. Decide, don't convert by reflex.
 - [ ] "Saved ✓" autosave affordance on note/journal textareas.
 - [ ] Copy-to-clipboard buttons (entry text, export payload) with a toast on success.
-- [ ] Fold `SyncIndicator` into the toast system, or keep it deliberately (it is a status pill, not a notification) — decide, don't leave both by accident.
+- [ ] Fold `SyncIndicator` into the toast system, or keep it deliberately (it is a status pill, not
+      a notification) — decide, don't leave both by accident.
 
 ## Keyboard & shortcuts
 
