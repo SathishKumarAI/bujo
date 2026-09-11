@@ -204,7 +204,7 @@ export function Monthly() {
 
       {/* Month analytics · deep charts, collapsed by default below the calendar + inputs */}
       {(monthEntries.length > 0 || monthlyTotal > 0) && (
-        <QuietSection title="Month analytics" subtitle={<>month pulse &amp; trailing-year rhythm</>}>
+        <QuietSection title="Month analytics" subtitle={<>month pulse &amp; trailing-year rhythm</>} defaultOpen={false} stickyKey="monthly.analytics">
             <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
       {monthEntries.length > 0 && (
