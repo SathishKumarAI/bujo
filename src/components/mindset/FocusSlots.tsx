@@ -56,7 +56,10 @@ export function FocusSlots({
               className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pr-5 pb-1 [&:not(:last-child)]:border-r"
             >
               <div className="flex items-baseline gap-2.5">
-                <Eyebrow className="text-fg-3">Slot {i + 1}</Eyebrow>
+                {/* `whitespace-nowrap`: an 87px phone column breaks "Slot 1"
+                    between the word and the number, which reads as a different
+                    label on each of the three slots. */}
+                <Eyebrow className="whitespace-nowrap text-fg-3">Slot {i + 1}</Eyebrow>
                 {f && (
                   <button
                     onClick={() => onRemove(f.id)}
@@ -72,14 +75,22 @@ export function FocusSlots({
                   <h3 className="font-display text-body leading-snug font-medium text-balance text-fg-1">{p.title}</h3>
                   {/* Borderless but for a bottom rule: a boxed input would be the
                       only rounded object on the page and would read as a form
-                      rather than as a line you write on. */}
+                      rather than as a line you write on.
+
+                      `field-sizing-content` grows it to fit what you wrote;
+                      `rows={2}` is now the *minimum*, not the height. Three
+                      slots across a 390px phone gives each cue an 87px column,
+                      where a fixed two rows showed 54px of a 147px cue — 63% of
+                      your own note unreachable, with no scrollbar to say so.
+                      Progressive: where the property is unsupported (Safari,
+                      older Firefox) this renders exactly as it did before. */}
                   <textarea
                     value={f.note ?? ''}
                     onChange={(e) => onNote(f.id, e.target.value)}
                     placeholder="Add a cue"
                     rows={2}
                     aria-label={`Your cue for ${p.title}`}
-                    className="min-h-11 w-full resize-none border-0 border-b border-line bg-transparent py-1 text-label text-fg-2 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+                    className="min-h-11 w-full resize-none border-0 border-b border-line bg-transparent py-1 text-label text-fg-2 field-sizing-content placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
                   />
                   <button
                     onClick={() => onTogglePractice(f.principleId)}
