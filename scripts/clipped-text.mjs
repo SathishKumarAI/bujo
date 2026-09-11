@@ -122,6 +122,80 @@ function findUnreachable() {
 }
 
 /**
+ * A field showing less than it holds — the *vertical* case.
+ *
+ * `findClipped` asks `scrollWidth > clientWidth`, which is the right question
+ * for a label and the wrong one for a textarea: a textarea is meant to wrap, so
+ * it never overflows horizontally. It overflows *down*, silently, with no
+ * scrollbar on a touch device to say there is more.
+ *
+ * Mindset shipped a cue field 87px wide in a three-across phone row, showing
+ * 54px of a 147px note — 63% of what the user had typed, unreachable and
+ * unsignposted. Both other rendering gates were green on it: its own box was
+ * fine, and the accessibility tree was sound.
+ *
+ * Only fields that have a value, because an empty box at its minimum height is
+ * the normal case and would be pure noise.
+ */
+function findOverflowingFields() {
+  const out = []
+  for (const el of document.querySelectorAll('main textarea, main input')) {
+    if (!el.value || el.type === 'hidden') continue
+    if (el.closest('[data-clip-ok]')) continue
+    const r = el.getBoundingClientRect()
+    if (r.width <= 2 || r.height <= 2) continue
+    if (el.scrollHeight <= el.clientHeight + 1) continue
+    out.push({
+      text: ((el.getAttribute('aria-label') || el.getAttribute('placeholder') || 'field').trim()).slice(0, 60),
+      shown: el.clientHeight,
+      needed: el.scrollHeight,
+      chars: String(el.value).length,
+    })
+  }
+  return out
+}
+
+/**
+ * A scrollport too narrow to scroll in.
+ *
+ * `findUnreachable` treats "has a scrollable ancestor" as proof a control can
+ * be reached, which is right almost always — the month grid is 900px wide by
+ * design and every day cell in it is a button. It is wrong when the scrollport
+ * itself has been squeezed to nothing by its siblings.
+ *
+ * Mindset's category filters sat in a `flex-1 overflow-x-auto` row beside a
+ * fixed `basis-44` search box and a `flex-none` count. At 390px those two took
+ * 314 of the band's 324px and left the scrollport **10px** — eight filters
+ * "reachable" by dragging a strip narrower than a fingernail. The unreachable
+ * check passed it because the ancestor scrolled; it never asked whether the
+ * ancestor was usable.
+ *
+ * 96px is a judgement call: wide enough that a real horizontal strip (tabs, a
+ * chip row, a wide table) clears it comfortably, narrow enough that a collapsed
+ * flex child cannot. It is a floor on *usability*, not on content.
+ */
+function findCrushedScrollports() {
+  const FLOOR = 96
+  const out = []
+  for (const el of document.querySelectorAll('main *')) {
+    const ov = getComputedStyle(el).overflowX
+    if (ov !== 'auto' && ov !== 'scroll') continue
+    if (el.scrollWidth <= el.clientWidth + 1) continue
+    if (el.clientWidth >= FLOOR) continue
+    if (el.closest('[data-clip-ok]')) continue
+    if (el.getBoundingClientRect().height <= 2) continue
+    const first = el.querySelector('button, a[href], [role="tab"]')
+    out.push({
+      text: ((first?.textContent || el.textContent || 'scroll region').trim()).slice(0, 60),
+      shown: el.clientWidth,
+      needed: el.scrollWidth,
+    })
+  }
+  return out
+}
+
+
+/**
  * Both widths. This gate only ever ran at 1440 — the width at which text is
  * least likely to be clipped — and never at the one where it is most likely.
  * A pass at desktop says nothing about a phone: the columns are a third as
@@ -178,16 +252,31 @@ for (const vp of VIEWPORTS) {
       console.error(`\n${vp.name} · ${view} — ${lost.length} controls off-screen and unreachable`)
       for (const c of lost) console.error(`  "${c.text}"  spans ${c.left}–${c.right}px, page is ${c.limit}px`)
     }
+    const overflowing = await page.evaluate(findOverflowingFields)
+    if (overflowing.length) {
+      failures += overflowing.length
+      console.error(`
+${vp.name} · ${view} — ${overflowing.length} ${overflowing.length === 1 ? 'field' : 'fields'} hiding what was typed in`)
+      for (const c of overflowing) console.error(`  "${c.text}"  ${c.shown}px shown of ${c.needed}px (${c.chars} chars)`)
+    }
+    const crushed = await page.evaluate(findCrushedScrollports)
+    if (crushed.length) {
+      failures += crushed.length
+      console.error(`
+${vp.name} · ${view} — ${crushed.length} scroll ${crushed.length === 1 ? 'region' : 'regions'} too narrow to scroll in`)
+      for (const c of crushed) console.error(`  "${c.text}"  ${c.shown}px wide, holds ${c.needed}px`)
+    }
   }
 }
 
 await browser.close()
 
 if (failures) {
-  console.error(`\n${failures} hidden strings across ${VIEWS.length} views.`)
+  console.error(`\n${failures} things hidden from the reader across ${VIEWS.length} views.`)
   console.error('Let the text wrap, give its column the space, let the row wrap so')
-  console.error('it stays on the page, or mark the element `data-clip-ok` if the')
-  console.error('truncation is genuinely intended.')
+  console.error('it stays on the page, let the field grow to its content, or give the')
+  console.error('scroll region a width its siblings cannot take. Mark an element')
+  console.error('`data-clip-ok` only if the truncation is genuinely intended.')
   process.exit(1)
 }
 console.log(`No clipped or off-screen text across ${VIEWS.length} views at ${VIEWPORTS.map((v) => v.width).join('px and ')}px.`)
