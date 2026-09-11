@@ -390,5 +390,10 @@ export function generateDemoData(today = todayISO()): JournalData {
 
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
+  // Marked here rather than at the three call sites (the welcome screen, the
+  // Settings button, and the `?demo=1` boot path), because a flag that each
+  // caller has to remember to set is a flag that one of them will not — and
+  // `?demo=1` was already that caller.
+  j.settings.demoSeeded = true
   return j
 }

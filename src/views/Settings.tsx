@@ -496,6 +496,10 @@ export function Settings() {
 
       <Card band title="Demo & reset" subtitle="Sample data, or start fresh">
         <div className="flex flex-wrap gap-2">
+          {/* Hidden, not disabled, when demo data is switched off: a greyed
+              button invites a click and then explains why it will not work.
+              The switch below is the place that answers "why is this gone". */}
+          {!data.settings.demoDisabled && (
           <Button
             variant="secondary"
             onClick={async () => {
@@ -511,6 +515,32 @@ export function Settings() {
           >
             <Icon as={Sparkle} size="sm" /> Load demo data
           </Button>
+          )}
+          {/* Only offered when the journal actually IS the samples. Without the
+              marker this button could not exist: nothing distinguishes a demo
+              entry from a real one, so "remove the demo" on a journal that has
+              since been written in would have meant erasing the real work too.
+              That is why the confirm still names the counts — anything typed
+              since the seed goes with it. */}
+          {data.settings.demoSeeded && (
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              if (await confirm({
+                title: 'Remove the demo data?',
+                description: `This journal was filled with samples. Removing them clears all ${data.entries.length} entries and starts you on an empty journal — including anything you have added since.`,
+                confirmLabel: 'Remove the samples', destructive: true, onBackup: doExport,
+              })) {
+                replaceAll(emptyJournal())
+                setSettings({ storageMode: 'local', demoSeeded: false, explore: false })
+                notify.success('Demo data removed', 'You are starting from an empty journal.')
+              }
+            }}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Icon as={Trash} size="sm" /> Remove demo data
+          </Button>
+          )}
           <Button
             variant="danger"
             onClick={async () => {
@@ -538,6 +568,22 @@ export function Settings() {
             Back to start screen
           </Button>
         </div>
+        <label className="mt-4 flex cursor-pointer items-center justify-between gap-4 border-t border-line pt-3 text-body text-fg-1">
+          <span>
+            Allow demo data
+            <span className="block text-label text-fg-2">
+              Off: <code>?demo=1</code> links are ignored and the sample journal cannot be loaded.
+            </span>
+          </span>
+          <Switch
+            checked={!data.settings.demoDisabled}
+            onCheckedChange={(on) => {
+              setSettings({ demoDisabled: !on })
+              notify.success(on ? 'Demo data allowed' : 'Demo data switched off',
+                on ? 'You can load the sample journal again.' : 'Existing data is untouched — this only stops new samples loading.')
+            }}
+          />
+        </label>
         <p className="mt-2 text-label text-fg-2">
           Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
         </p>

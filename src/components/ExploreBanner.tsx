@@ -4,6 +4,9 @@ import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat } from '../lib/colors'
 import { Button } from './ui/button'
+import { useConfirm } from './ConfirmDialog'
+import { emptyJournal } from '../lib/storage'
+import { notify } from '../lib/notify'
 
 /**
  * Shown while exploring sample data (the demo seed). Exploring is for *seeing*
@@ -16,13 +19,33 @@ import { Button } from './ui/button'
  * not start a journal, it replaced one.
  *
  * Starting fresh is a local action — clear the demo, keep the app — so the CTA
- * points at the thing that actually does it, and the destructive part is
- * confirmed there rather than here.
+ * does it here rather than sending the reader to Settings to hunt for it. The
+ * first version of this rewrite *did* send them to Settings, where the nearest
+ * button was "Clear all data" — a nuclear option wearing the wrong label.
+ *
+ * It shows on `demoSeeded`, not on `explore`. `explore` is set only by the
+ * welcome screen's Explore button; `?demo=1` seeds exactly the same sample
+ * journal and set neither flag, so anyone arriving by a demo link saw no banner
+ * and had no idea the data was not theirs.
  */
 export function ExploreBanner() {
-  const { data } = useJournal()
+  const { data, replaceAll, setSettings } = useJournal()
   const nav = useNav()
-  if (!data.settings.explore) return null
+  const confirm = useConfirm()
+  if (!data.settings.demoSeeded && !data.settings.explore) return null
+
+  async function clearDemo() {
+    if (await confirm({
+      title: 'Remove the demo data?',
+      description: `This clears all ${data.entries.length} sample entries and starts you on an empty journal — including anything you have added since.`,
+      confirmLabel: 'Remove the samples',
+      destructive: true,
+    })) {
+      replaceAll(emptyJournal())
+      setSettings({ storageMode: 'local', demoSeeded: false, explore: false })
+      notify.success('Demo data removed', 'You are starting from an empty journal.')
+    }
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-ink-1 px-4 py-2 text-body">
@@ -32,12 +55,7 @@ export function ExploreBanner() {
         <strong className="text-fg-1">clear it out when you want to start for real.</strong>
       </span>
       <div className="ml-auto flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => nav('settings')}
-          className="press-3d text-label"
-        >
+        <Button variant="secondary" size="sm" onClick={clearDemo} className="press-3d text-label">
           Clear the demo
         </Button>
         <Button variant="ghost" size="sm" onClick={() => nav('account')} className="h-auto p-0 text-label">

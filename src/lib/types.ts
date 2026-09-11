@@ -457,6 +457,24 @@ export interface Settings {
   /** Exploring sample data (the demo seed). The banner offers to clear it out. */
   explore?: boolean
   /**
+   * This journal's contents came from `generateDemoData()`.
+   *
+   * Separate from `explore`, which only ever meant "the user pressed Explore on
+   * the welcome screen". `?demo=1` seeds the same sample journal and set
+   * neither flag, so a demo-seeded journal had no way to know what it was and
+   * showed no way out — which is how "Clear the demo" ended up meaning "erase
+   * everything" for those users.
+   *
+   * Cleared the moment the journal is emptied or replaced by a real import.
+   */
+  demoSeeded?: boolean
+  /**
+   * Refuse to load sample data at all: `?demo=1` is ignored and the Settings
+   * button is hidden. Off by default — the demo is how most people see the app
+   * before trusting it with anything.
+   */
+  demoDisabled?: boolean
+  /**
    * The local account: a name and an emoji, kept in this journal and nowhere
    * else. Set means "this device has been claimed by someone"; unset means the
    * first-run screen still has something to ask.
