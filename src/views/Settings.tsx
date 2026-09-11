@@ -14,9 +14,6 @@ import { CloudStorage } from '../components/CloudStorage'
 import { TagManager } from '../components/TagManager'
 import { emptyJournal, exportJSON, exportMarkdown, importJSON, migrate } from '../lib/storage'
 import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '../lib/serverSync'
-import { pushCloud, pullCloud } from '../lib/bujocloud'
-import { supabaseEnabled } from '../lib/supabase'
-import { useAuthForm } from '../lib/useAuthForm'
 import { generateDemoData } from '../lib/demo'
 import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripSyncSecrets, daysSinceBackup, habitLogCsv, pickleballCsv, recoveryCsv, personalRecordsCsv, collectionCsv, redactSensitive, devSessionsCsv, dataSummary, verifyChecksum, withChecksum } from '../lib/csv'
 import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from '../lib/ics'
@@ -24,6 +21,7 @@ import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
 import type { Gender, ThemeName } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
+import { CloudSyncCard } from '../components/account/CloudSyncCard'
 
 /** Selectable themes (swatch = base / surface / accent) for the Settings picker. */
 const THEMES: { value: ThemeName; label: string; hint: string; swatch: [string, string, string] }[] = [
@@ -343,8 +341,7 @@ export function Settings() {
         <TabsContent value="sync">
           {/* Recommended path: account + E2E cloud sync, plus at-rest passcode. */}
           <div className="space-y-5">
-            <AccountCard />
-            <BujoCloudCard />
+            <CloudSyncCard />
             <PasscodeCard />
           </div>
           {/* Advanced · BYO-storage / self-host, collapsed to cut option overload. */}
@@ -610,134 +607,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
   )
 }
 
-/** Supabase account: guest (anonymous) by default, optional email login + per-user DB sync.
- * Auth logic lives in useAuthForm (shared with Account and Welcome); this card owns markup,
- * Share app, and the log-out-to-start-screen escape hatch. */
-function AccountCard() {
-  const confirm = useConfirm()
-  const { setSettings } = useJournal()
-  const [newPw, setNewPw] = useState('')
-  const auth = useAuthForm({
-    confirmReplace: () => confirm({
-      title: 'Load your cloud data onto this device?',
-      description: 'This replaces what is currently on this device with the copy stored in your account.',
-      confirmLabel: 'Load cloud data', destructive: true,
-    }),
-  })
-  const { user, signedIn, isGuest: guest, email, setEmail, pw, setPw, busy, err, msg, setMsg, recovery } = auth
-  if (!supabaseEnabled()) return null
 
-  function share() {
-    navigator.clipboard?.writeText(window.location.origin).then(() => setMsg('App link copied, share it; each friend signs up for their own journal.'), () => setMsg(window.location.origin))
-  }
-  // Return to the first-run gate (keeps local data; lets them switch/log in).
-  async function leave() {
-    if (!await confirm({
-      title: 'Log out and return to the start screen?',
-      description: 'Your data stays on this device. Sign in afterward to save it to an account.',
-      confirmLabel: 'Log out',
-    })) return
-    try { if (user) await import('../lib/supabase').then((m) => m.signOut()) } catch { /* ignore */ }
-    localStorage.removeItem('bujo:sync')
-    setSettings({ storageMode: undefined })
-  }
-
-  return (
-    <Card band title="Account" subtitle="Sign in to sync across devices, guest works too" right={<Button variant="secondary" onClick={share}>Share app</Button>}>
-      {recovery && (
-        <div className="mb-3 rounded-none border border-mauve/40 bg-ink-0 p-3">
-          <p className="mb-2 text-body text-fg-1">Set a new password:</p>
-          <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6)" />
-          <Button variant="secondary" className="mt-2" onClick={async () => { if (await auth.changePw(newPw)) setNewPw('') }}>Update password</Button>
-        </div>
-      )}
-      <p className="mb-1 text-body text-fg-1">
-        {signedIn ? <>Signed in as <span className="text-fg-1">{user!.email}</span> · synced to your account.</>
-          : guest ? <span className="text-peach">Guest · data is on <strong>this device only</strong>, not in any account.</span>
-            : <span className="text-peach">On this device only · <strong>no account</strong>, nothing is stored online.</span>}
-      </p>
-      {!signedIn && <p className="mb-3 text-label text-fg-2">Sign in below to save & sync across devices (with recovery). Or log out to switch.</p>}
-      {!signedIn && (
-        <div className="space-y-2">
-          {!user && <Button variant="secondary" disabled={busy} onClick={auth.guest} className="w-full">Continue as guest</Button>}
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" autoComplete="email" />
-          <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" autoComplete="current-password" />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" disabled={busy} onClick={() => auth.submit('signup')}>{guest ? 'Save to an account' : 'Sign up'}</Button>
-            <Button variant="secondary" disabled={busy} onClick={() => auth.submit('login')}>Log in</Button>
-            <button onClick={auth.forgot} className="text-label text-mauve hover:underline">Forgot password?</button>
-            <button onClick={leave} className="ml-auto text-label text-fg-2 hover:text-red">Log out / switch</button>
-          </div>
-        </div>
-      )}
-      {signedIn && (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" disabled={busy} onClick={auth.pushNow}>Save now</Button>
-          <Button variant="secondary" disabled={busy} onClick={auth.loadNow}>Load</Button>
-          <Button variant="ghost" disabled={busy} className="text-red hover:text-red" onClick={auth.out}>Sign out</Button>
-        </div>
-      )}
-      {msg && <p className="mt-2 text-label text-fg-1">{busy ? '…' : msg}</p>}
-      {err && <p className="mt-2 text-label text-red">{busy ? '…' : err}</p>}
-      <p className="mt-2 text-label text-fg-2">Guest data lives on this device until you add an email. With an account, your journal syncs from a private row only you can read. <strong>Share app</strong> copies the link · each friend signs up for their own journal.</p>
-    </Card>
-  )
-}
-
-/** One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync). */
-function BujoCloudCard() {
-  const confirm = useConfirm()
-  const { data, replaceAll } = useJournal()
-  const [pass, setPass] = useState('')
-  const [busy, setBusy] = useState('')
-  const [msg, setMsg] = useState('')
-
-  async function push() {
-    if (pass.length < 6) { setMsg('Use a passphrase of at least 6 characters.'); return }
-    setBusy('push'); setMsg('')
-    try { await pushCloud(pass, data); setMsg('Pushed to cloud.') }
-    catch (e) { setMsg((e as Error).message) }
-    finally { setBusy('') }
-  }
-  async function pull() {
-    if (pass.length < 6) { setMsg('Enter your passphrase first.'); return }
-    setBusy('pull'); setMsg('')
-    try {
-      const remote = await pullCloud(pass)
-      if (!remote) { setMsg('Nothing stored for that passphrase yet.'); return }
-      if (await confirm({
-        title: 'Replace this device’s data with the cloud copy?',
-        description: 'Everything currently on this device is overwritten by the encrypted copy stored in the cloud.',
-        confirmLabel: 'Replace my data', destructive: true,
-      })) { replaceAll(migrate(remote)); setMsg('Pulled from cloud.') }
-    } catch (e) { setMsg(/wrong|decrypt|operation/i.test((e as Error).message) ? 'Wrong passphrase, or corrupt data.' : (e as Error).message) }
-    finally { setBusy('') }
-  }
-
-  const [auto, setAuto] = useState(() => !!localStorage.getItem('bujo:sync'))
-  function toggleAuto(on: boolean) {
-    if (on) {
-      if (pass.length < 6) { setMsg('Enter a passphrase first, then enable auto-sync.'); return }
-      localStorage.setItem('bujo:sync', pass); setAuto(true); push()
-    } else { localStorage.removeItem('bujo:sync'); setAuto(false); setMsg('Auto-sync off.') }
-  }
-
-  return (
-    <Card band title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
-      <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
-        <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
-      </div>
-      <label className="mt-3 flex cursor-pointer items-center justify-between text-body text-fg-1">
-        <span>Auto-sync on this device <span className="text-label text-fg-2">(pull on open · push on change)</span></span>
-        <Switch checked={auto} onCheckedChange={toggleAuto} />
-      </label>
-      {msg && <p className="mt-2 text-label text-fg-1">{msg}</p>}
-      <p className="mt-2 text-label text-fg-2">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
-    </Card>
-  )
-}
 
 /** Encrypt the journal at rest behind a passcode (Web Crypto, local-only). */
 function PasscodeCard() {

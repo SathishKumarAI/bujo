@@ -454,8 +454,26 @@ export interface Settings {
   storageMode?: 'local' | 'folder' | 'drive'
   /** Display name of the picked cloud folder. */
   folderName?: string
-  /** Exploring sample data (guest demo). Prompts to sign up to keep a real journal. */
+  /** Exploring sample data (the demo seed). The banner offers to clear it out. */
   explore?: boolean
+  /**
+   * The local account: a name and an emoji, kept in this journal and nowhere
+   * else. Set means "this device has been claimed by someone"; unset means the
+   * first-run screen still has something to ask.
+   *
+   * **This is identity, not authentication.** Nothing is verified, nothing is
+   * checked against a server, and anyone holding the device can change it in
+   * Settings. It exists so the app can say your name and so a shared export
+   * says whose journal it is — not to protect anything. The copy around it has
+   * to keep that promise; see `docs/AUTH.md`.
+   */
+  profile?: { name: string; emoji: string }
+  /**
+   * The one-time Supabase-account migration has run (`lib/legacyAccount.ts`).
+   * Set only after the offer was answered — never after a failed pull, or the
+   * retry that would have rescued the journal never happens.
+   */
+  legacyAccountChecked?: boolean
   /** GitHub Personal Access Token (gist scope) for gist storage. */
   githubToken?: string
   /** Gist id holding bujo.json. */

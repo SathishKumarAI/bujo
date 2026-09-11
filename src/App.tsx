@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
-import { migrate, emptyJournal, isForeignOwner, claimOwner } from './lib/storage'
+import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
+import { findLegacyAccount } from './lib/legacyAccount'
+import { notify } from './lib/notify'
 import { useConfirm } from './components/ConfirmDialog'
 import { pushCloud, pullCloud } from './lib/bujocloud'
-import { supabaseEnabled, currentUser, pullJournal, pushJournal, subscribeJournal, onAuthChange, onPasswordRecovery } from './lib/supabase'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Account } from './views/Account'
@@ -119,91 +120,38 @@ export default function App() {
     }, 4000)
     return () => clearTimeout(id)
   }, [data])
-  // Supabase account sync (when configured + signed in): pull on load, push on change.
-  const sbReady = useRef(false)
-  const sbAuthed = useRef(false)
-  // Mirror auth in state so the realtime effect re-subscribes once auth resolves.
-  // The ref alone is false at mount, so a []-dep effect never activated until reload.
-  const [sbAuthedState, setSbAuthedState] = useState(false)
+  // One-time rescue for a journal stranded in the retired Supabase account
+  // (docs/AUTH.md). Runs at most once per journal, asks before taking anything,
+  // and does NOT mark itself done if the pull fails — see lib/legacyAccount.
   useEffect(() => {
-    if (!supabaseEnabled()) { sbReady.current = true; return }
-    currentUser().then((u) => {
-      sbAuthed.current = !!u
-      setSbAuthedState(!!u)
-      if (!u) return
-      // Leaving explore: a real (non-anonymous) account just took over the
-      // sample-data session → adopt their cloud journal (or start clean) and
-      // drop the demo, rather than merging sample data into the new account.
-      const leavingExplore = !u.is_anonymous && dataRef.current.settings.explore
-      // COD-135: local belongs to a DIFFERENT account (sign-out never clears
-      // it). This runs on every load, including the OAuth-redirect reload
-      // that never touches useAuthForm's own confirm-before-replace — so it's
-      // the only place that can catch that path. Same treatment as leaving
-      // explore: replace outright, never resolveIncoming (which would MERGE
-      // the foreign journal's items into the account's data).
-      const foreignOwner = !leavingExplore && isForeignOwner(u.id)
-      const replaceOnly = leavingExplore || foreignOwner
-      return pullJournal().then(async (r) => {
-        if (r) {
-          const next = replaceOnly ? migrate(r) : await resolveIncoming(dataRef.current, migrate(r), askConflictRef.current)
-          if (next) replaceAll(next)
-        } else if (replaceOnly) {
-          replaceAll(emptyJournal())
-        }
-        if (leavingExplore) setSettings({ explore: false })
-        claimOwner(u.id)
-      }).catch(() => {})
-    }).finally(() => { sbReady.current = true })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const lastSync = useRef('')
-  useEffect(() => {
-    if (!supabaseEnabled() || !sbReady.current || !sbAuthed.current) return
-    const snapshot = JSON.stringify(data)
-    if (snapshot === lastSync.current) return // nothing new (e.g. just applied a remote change)
-    const id = setTimeout(async () => {
-      try {
-        // COD-135: local belongs to a different account — skip pull-merge too,
-        // not just push. `pushJournal` alone refusing to upload isn't enough:
-        // this effect would otherwise merge the foreign journal into `remote`
-        // and write that blend to local storage even without ever pushing it.
-        const u = await currentUser()
-        if (!u || isForeignOwner(u.id)) return
-        // Pull-first guard (two devices, one account): adopt+merge a newer remote
-        // instead of clobbering it, mirroring the blob/folder paths.
-        const remote = await pullJournal()
-        if (remote) {
-          const rm = migrate(remote)
-          if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
-            const merged = await resolveIncoming(dataRef.current, rm, askConflictRef.current)
-            if (merged) { lastSync.current = JSON.stringify(merged); replaceAll(merged) }
-            else lastSync.current = JSON.stringify(rm)
-            return // adopted remote; do NOT push over it
-          }
-        }
-        lastSync.current = JSON.stringify(dataRef.current)
-        await pushJournal(dataRef.current)
-      } catch { /* offline — retry on the next change */ }
-    }, 4000)
-    return () => clearTimeout(id)
-  }, [data])
-  // Realtime: apply changes pushed from another device/session (live multi-device).
-  // Keyed on sbAuthedState so it (re)subscribes once auth resolves, not just at mount.
-  useEffect(() => {
-    if (!supabaseEnabled() || !sbAuthedState) return
-    let off = () => {}
-    subscribeJournal((remote) => {
-      const snap = JSON.stringify(remote)
-      if (snap === lastSync.current) return // our own write echoing back
-      currentUser().then(async (u) => {
-        // COD-135: never merge a live push from the account into a foreign local.
-        if (!u || isForeignOwner(u.id)) return
-        lastSync.current = snap
-        const next = await resolveIncoming(dataRef.current, migrate(remote), askConflictRef.current)
-        if (next) replaceAll(next) // null = keep local; it re-pushes on next change
+    let cancelled = false
+    void (async () => {
+      const found = await findLegacyAccount(!!dataRef.current.settings.legacyAccountChecked)
+      if (!found || cancelled) return
+      const take = await confirm({
+        title: `Bring your old account journal to this device?`,
+        description: `bujo no longer has accounts. ${found.email} still has a journal stored server-side; this is the last chance to pull it across. Items on this device are kept either way.`,
+        confirmLabel: 'Bring it across',
+        cancelLabel: 'No, discard it',
       })
-    }).then((fn) => { off = fn })
-    return () => off()
-  }, [sbAuthedState])  // eslint-disable-line react-hooks/exhaustive-deps
+      if (cancelled) return
+      try {
+        if (take) {
+          const merged = await found.adopt(dataRef.current)
+          if (merged) replaceAll(merged)
+          notify.success('Journal brought across', 'Your old account has been signed out.')
+        } else {
+          await found.dismiss()
+        }
+        setSettings({ legacyAccountChecked: true })
+      } catch (e) {
+        // Loud, and the flag stays unset so the next launch tries again.
+        notify.error('Could not reach your old account', `${(e as Error).message}. We will ask again next time you open bujo.`)
+      }
+    })()
+    return () => { cancelled = true }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const urlView = readDeepLink().view
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   // Back / Forward. `writeDeepLink` pushes entries now, so this is what makes
@@ -216,17 +164,9 @@ export default function App() {
       }),
     [],
   )
-  // A password-recovery link can land on any view; steer it to the Account
-  // page, whose form opens on the same event. Before this, recovery only
-  // worked if the user happened to be sitting on Settings.
-  useEffect(() => onPasswordRecovery(() => setView('account')), [])
   const [paletteOpen, setPaletteOpen] = useState(false)
   // First-run tour: show once after a storage mode is chosen (skips when exploring demo).
   const [showTour, setShowTour] = useState(() => !onboarded())
-  // Session presence (real account OR guest) — drives the full-screen auth gate
-  // so the signed-out sign in / sign up page can't reach the rest of the app.
-  const [hasSession, setHasSession] = useState(false)
-  useEffect(() => onAuthChange(setHasSession), [])
   // Names the current screen in the dev-only one-primary-per-screen warning.
   setPrimaryScope(view)
   const gated: SectionGates = { cycle: data.settings.cycleTrackerEnabled, nofap: data.settings.nofapEnabled }
@@ -276,20 +216,6 @@ export default function App() {
   // First run → show the login/welcome gate.
   if (!mode) return <Welcome />
 
-  // Auth gate: on the Account page while signed out (and a backend exists), take
-  // over the whole screen — no top bar, no bottom nav — so sign in / sign up can't
-  // navigate into the rest of the app until the user is signed in.
-  if (view === 'account' && supabaseEnabled() && !hasSession) {
-    return (
-      <DeviceProvider>
-      <CursorProvider>
-        <NavProvider navigate={setView}>
-          <Account />
-        </NavProvider>
-      </CursorProvider>
-      </DeviceProvider>
-    )
-  }
 
   return (
     <DeviceProvider>
