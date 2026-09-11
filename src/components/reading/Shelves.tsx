@@ -68,7 +68,11 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
           return (
             <div
               key={s.id}
-              className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 [&:not(:last-child)]:border-r"
+              /* Hand-rolled rather than `BandCell` (this cell has no `py`), so it
+                 needs the same wrap guard: below the container width these three
+                 shelves stack, and a right-hand rule on a full-width block has
+                 nothing on the other side of it. See `mod/Band.tsx`. */
+              className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 [&:not(:last-child)]:border-r @max-[44rem]/band:pr-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0"
             >
               <div className="flex items-baseline gap-2">
                 <h3 className="font-display text-label font-medium text-fg-1">{s.label}</h3>
