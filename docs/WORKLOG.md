@@ -1,5 +1,72 @@
 # Worklog
 
+## 2026-09-11 — Four PRs, and four gates that were green on real bugs (#203–#206)
+
+**Summary:** User asks to improve every page, add features, make it "wow",
+improve the docs and add architecture diagrams. Three of the four slices
+turned out to be *finishing or correcting something that already existed*
+rather than building something new, and each one was found by measuring
+rather than by reading.
+
+**What shipped:**
+
+- **#203 · Feedback layer.** 26 native `alert()` calls replaced with
+  `notify.*`, each gaining a message/description split so a failure says
+  what to do next. `resolveIncoming` became async so the sync-conflict
+  prompt is the app's own dialog instead of a `window.confirm` with
+  "OK = replace this device" written into the message body. Its default
+  answer changed to keep-local: a stall is recoverable, a clobber is not.
+  Every one of the 25 `remove*`/`delete*` store actions now raises an undo
+  toast, done at the one `removeWithUndo` helper rather than at 25 call
+  sites — which is how the other 24 came to have none.
+- **#204 · Mindset on a phone.** The cue field showed 54px of a 147px note
+  (63% of what the user typed, unreachable); the category filter scrollport
+  was **10px** wide holding 646px of chips. Both fixed without reversing
+  either documented decision — the slot row still never wraps, the filters
+  still scroll rather than wrap. The bugs were in the width *budget* around
+  those decisions. Also `Statement` now binds a spaced dash to the word
+  before it, so a title can never start a line with "—".
+- **#205 · Architecture diagrams.** Four pages under `docs/diagrams/`
+  replacing two divergent UML files. See below.
+- **#206 · Eight sections that said "collapsed".** Stats went from 732ms
+  script / 221ms long tasks / 1811 nodes to 111 / 61 / 907, and from 5.15
+  screens to 1.95.
+
+**The pattern across all four:** every one of these was invisible to a
+green toolchain. `tsc -b`, eslint, vitest and `vite build` are all
+perfectly happy with `alert()`, with a comment that contradicts its own
+props, and with a field showing a third of its contents.
+
+**Gates added or armed, each proven by planting the thing it catches:**
+
+| Gate | Was green on |
+|---|---|
+| `lib/notify.test.ts` | 26 native `alert()` and a `window.confirm` |
+| `clipped-text.mjs` + field overflow | a cue showing 54px of 147px |
+| `clipped-text.mjs` + crushed scrollports | a 10px scrollport whose contents were "reachable" |
+| `CollapsibleSection.contract.test.ts` | 8 sections commented "collapsed" that opened |
+
+`npm run clipped` also **ran in no workflow at all** — it was in
+`package.json` and the only thing keeping it honest was somebody
+remembering to type it. Now in the a11y job. "A gate nothing runs is a
+gate that rots" was already written in this repo, about smoke, one script
+over.
+
+**Docs.** `docs/diagrams/` is now the single home: storage-and-sync,
+data-model, shell-and-views, verification-pipeline, plus a README carrying
+the shared component library. It replaces `docs/diagrams/uml.mdx` (deleted)
+and `docs/engineering/uml.md` (now a pointer), which had diverged far
+enough that one drew a `Sidebar` component that does not exist while
+`ARCHITECTURE.md` said "there is no rail" in the same repo. `docs-guard`
+could not catch it: a PR touching *either* file counts as documented.
+`ARCHITECTURE.md`'s "no backend" and "localStorage, not IndexedDB" were
+both false and are fixed; its hand-drawn ASCII data-flow is now a pointer.
+
+**Numbers, measured not recalled:** 953 tests / 76 files. Stats 732→111ms
+script. Mindset cue 54→147px visible, filter scrollport 10→180px. Page
+heights: stats 5.15→1.95, monthly 1.85→1.18, pickleball 4.78→4.21.
+
+
 ## 2026-09-03 (late) — The Cycle page grows up: two-box month, phase estimate, and a guide (COD-145)
 
 **Summary:** User asks: split the month into two 15-day boxes side by side
