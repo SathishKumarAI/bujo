@@ -130,13 +130,19 @@ export function SectionTabs({
               e.preventDefault()
               onNavigate(t.view)
             }}
-            // 44px minimum touch target (WCAG 2.5.5) via `min-h-11`, and the
-            // active underline sits on the row's own bottom border rather than
-            // floating below it, so nothing needs to overflow the container.
-            className={`inline-flex min-h-11 flex-none items-center border-b-2 px-3 text-body font-medium whitespace-nowrap transition-colors ${
+            // 44px minimum touch target (WCAG 2.5.5) via `min-h-11`.
+            //
+            // A NEUTRAL fill, deliberately one step quieter than the accent
+            // pill the section nav above it uses. Two rows of navigation both
+            // painted in the accent is two things claiming to be where you
+            // are; the section owns the accent, the tab owns the surface. This
+            // was a 2px `border-foreground` underline, which was both the
+            // loudest possible rule and the same weight as the row's own
+            // bottom border.
+            className={`my-1 inline-flex min-h-11 flex-none items-center rounded-control px-3 text-body font-medium whitespace-nowrap transition-colors ${
               active
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-fg-2 hover:text-fg-1'
+                ? 'bg-ink-2 text-foreground shadow-raise'
+                : 'text-fg-2 hover:bg-ink-2 hover:text-fg-1'
             }`}
           >
             {t.label}
