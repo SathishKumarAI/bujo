@@ -123,7 +123,7 @@ export function People() {
               className="border-0 border-b border-line bg-transparent py-1 text-fg-1 focus-visible:border-brand focus-visible:outline-none"
             />
           </label>
-          <p className="mt-2 text-caption text-fg-3">
+          <p className="mt-2 text-label text-fg-3">
             The GitHub pull uses the official public API and only data they have made public.
           </p>
 

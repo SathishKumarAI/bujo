@@ -21,7 +21,7 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-caption text-fg-2">Add a partner when logging a doubles session to track your chemistry.</p>
+      <p className="mt-3 text-label text-fg-2">Add a partner when logging a doubles session to track your chemistry.</p>
     </Card>
   )
 }

@@ -3,6 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, type ReactNode } from 'react'
 import { cat } from '../lib/colors'
+import { cn } from '../lib/cn'
 import { useStickyState } from '../lib/useStickyState'
 
 const OPEN_STATES = ['1', '0'] as const
@@ -46,12 +47,24 @@ type Props = {
    */
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /**
+   * Class for the `<section>` itself — in practice the grid span.
+   *
+   * A fold placed in a `CardGrid` cell is half a row wide, and anything inside
+   * it that lays out in columns (a `MasonryGrid`, an `lg:grid-cols-2`) has a
+   * container query that will not fire at that width. Measured on Stats: the
+   * habit analytics masonry sat in a **580px** cell, resolved to one column,
+   * and stacked 1,240px of content painting 8% of the page. The fold has to be
+   * able to say it wants the whole row.
+   */
+  className?: string
   children: ReactNode
 }
 
 export function CollapsibleSection({
   title,
   subtitle,
+  className,
   icon,
   color = 'overlay1',
   variant = 'card',
@@ -87,7 +100,7 @@ export function CollapsibleSection({
 
   if (variant === 'quiet') {
     return (
-      <section className="space-y-5">
+      <section className={cn('space-y-5', className)}>
         {/* Heading wraps button — the WAI-ARIA accordion pattern. The title is
             styled as a section heading in both variants, so it has to *be* one:
             without this the whole group is invisible to a screen reader's
@@ -118,7 +131,7 @@ export function CollapsibleSection({
   }
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className={cn('flex flex-col gap-5', className)}>
       <h2>
       <button
         type="button"

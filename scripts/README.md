@@ -10,6 +10,7 @@
 | Check nothing is visually clipped | `npm run clipped` | `clipped-text.mjs` |
 | Check design-token discipline | `npm run design` | `check-design-system.mjs` |
 | See how tall / folded every page is | `node scripts/page-census.mjs` | `page-census.mjs` |
+| See what every size / leading / measure **actually renders at** | `npm run type-census` | `type-census.mjs` |
 | Check the palette is legible and single-sourced (**a gate**) | `npm run contrast` | `check-contrast.mjs` |
 | Regenerate the icon set | `npm run icons` | `build-icons.mjs` |
 | Regenerate doc screenshots | `npm run shots` | `capture-screenshots.mjs` |

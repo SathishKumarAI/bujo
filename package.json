@@ -21,7 +21,9 @@
     "tauri:dev": "tauri dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "tsc -b && vitest run && eslint . && vite build"
+    "type-census": "node scripts/type-census.mjs",
+    "verify": "tsc -b && vitest run && eslint . && vite build",
+    "columns": "node scripts/column-audit.mjs"
   },
   "dependencies": {
     "@fontsource-variable/caveat": "^5.3.0",

@@ -1,4 +1,4 @@
-import { Plus } from '@/components/icons'
+import { Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Button } from '../ui/button'
 import { AccountMenu } from './AccountMenu'
@@ -58,12 +58,14 @@ export function TopBar({
   gates,
   onNavigate,
   onQuickAdd,
+  onTalk,
   onCommand,
 }: {
   view: ViewId
   gates: SectionGates
   onNavigate: (id: ViewId) => void
   onQuickAdd: () => void
+  onTalk: () => void
   onCommand: () => void
 }) {
   const chrome = VIEW_CHROME[view]
@@ -97,6 +99,15 @@ export function TopBar({
                 decorative icon — announced as "button", on every screen, on
                 every phone. The label has to live on the element rather than in
                 the span, since the span is what disappears. */}
+            {/* The assistant sits beside Quick add because it is the same job
+                said out loud — capture — and the two belong together rather
+                than one of them being a page. Icon-only at every width: the
+                cluster is already five controls at 390px, and "Talk" as a word
+                buys nothing the microphone does not say. */}
+            <Button variant="secondary" size="icon-sm" onClick={onTalk} aria-label="Talk to your journal" title="Talk to your journal">
+              <Icon as={Microphone} size="sm" />
+            </Button>
+
             <Button variant="primary" size="sm" onClick={onQuickAdd} aria-label="Quick add" className="gap-1.5">
               <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
             </Button>
