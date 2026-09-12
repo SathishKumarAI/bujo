@@ -8,6 +8,7 @@ import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { useSpeechInput } from '../lib/speech'
 import { hush, say } from '../lib/voice/speak'
 import { answer, CONFIRM_BELOW, understand, type VoiceIntent } from '../lib/voice/intent'
+import { askModel } from '../lib/voice/model'
 import { ofArray, plan } from '../lib/ingest/plan'
 import { validateRecords } from '../lib/ingest/validate'
 import { notify } from '../lib/notify'
@@ -39,7 +40,11 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
   const [intent, setIntent] = useState<VoiceIntent | null>(null)
   const [typed, setTyped] = useState('')
   const [saving, setSaving] = useState(false)
+  const [asking, setAsking] = useState(false)
+  /** True when the proposal on screen came from the model, not from the rules. */
+  const [fromModel, setFromModel] = useState(false)
   const spokenFor = useRef<string | null>(null)
+  const modelOn = data.settings.voiceModel?.enabled === true
 
   const ctx = {
     exercises: [...new Set([...EXERCISE_LIBRARY, ...data.workouts.flatMap((w) => (w.setRows ?? []).map((s) => s.exercise)).filter(Boolean)])],
@@ -47,10 +52,49 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
     unit: data.settings.weightUnit,
   }
 
-  const { listening, start, stop, supported, locality } = useSpeechInput((text) => {
+  /**
+   * One sentence in, one proposal out — used by both the microphone and the
+   * text box, so they cannot drift apart.
+   *
+   * The model is asked **only** when the rules fell through to "keep it as a
+   * note", which is the one case where there is nothing to lose: a sentence the
+   * app already understands never waits on a model, and a model that is off,
+   * slow or absent leaves exactly the note that would have been kept anyway.
+   */
+  async function read(text: string) {
     setHeard(text)
-    setIntent(understand(text, ctx, date))
-  })
+    setFromModel(false)
+    const guess = understand(text, ctx, date)
+    const unrecognised = guess.records.length === 1 && guess.records[0].kind === 'entry' && !guess.ask
+    if (!modelOn || !unrecognised) { setIntent(guess); return }
+
+    setIntent({ ...guess, say: 'Let me think about that…' })
+    setAsking(true)
+    try {
+      const r = await askModel(text, date, data.settings.voiceModel)
+      if (r.records.length === 0) {
+        // Every failure lands in the same place the rules already were — but it
+        // has to SAY so. A refused model answer used to render as the plain
+        // note, which is indistinguishable from the model never having run:
+        // "kettlebell swings" came back as an activity that does not exist, was
+        // rejected by the validator, and the panel showed nothing about it.
+        const why = r.error ?? (r.rejected[0] ? `the model's answer did not fit — ${r.rejected[0].reason}` : null)
+        setIntent({ ...guess, say: why ? `${why}. I'll keep it as a note.` : guess.say })
+        return
+      }
+      setFromModel(true)
+      setIntent({
+        ...guess,
+        records: r.records,
+        confidence: 0.5, // never a one-tap save: the model guesses, and it shows
+        say: `The model read that as ${r.records.map((x) => x.kind).join(' and ')}. Save it?`,
+      })
+    } finally {
+      setAsking(false)
+    }
+  }
+
+  const { listening, start, stop, supported, locality } = useSpeechInput((text) => { void read(text) })
 
   // Speak the proposal once per proposal. Keyed on the transcript rather than
   // on the object, because `understand` returns a fresh object each render pass
@@ -78,6 +122,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
     setHeard('')
     setIntent(null)
     setTyped('')
+    setFromModel(false)
     spokenFor.current = null
     onClose()
   }
@@ -89,8 +134,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
   function readTyped() {
     const text = typed.trim()
     if (!text) return
-    setHeard(text)
-    setIntent(understand(text, ctx, date))
+    void read(text)
   }
 
   async function save() {
@@ -188,7 +232,12 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
               className="rounded-card border p-3"
               style={{ borderColor: cat(unsure ? 'peach' : 'green'), background: cat(unsure ? 'peach' : 'green') + '14' }}
             >
-              <p className="text-label text-fg-2">{unsure ? 'I am not sure about this' : 'I understood'}</p>
+              <p className="text-label text-fg-2">
+                {asking ? 'Asking the model on this machine…'
+                  : fromModel ? 'The model read this — check it before saving'
+                  : unsure ? 'I am not sure about this'
+                  : 'I understood'}
+              </p>
               <p className="text-body text-fg-1">{intent.say}</p>
               {intent.records.length > 0 && (
                 <ul className="mt-2 space-y-0.5 text-label text-fg-2">
@@ -228,7 +277,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
               )}
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button variant="primary" size="sm" onClick={save} disabled={saving || intent.records.length === 0}>
+                <Button variant="primary" size="sm" onClick={save} disabled={saving || asking || intent.records.length === 0}>
                   <Icon as={CheckCircle} size="sm" /> {saving ? 'Saving…' : 'Save it'}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => { setIntent(null); setHeard(''); spokenFor.current = null }}>
