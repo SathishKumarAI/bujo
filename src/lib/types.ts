@@ -108,6 +108,15 @@ export interface DailyMetric {
   fastBreak?: 'food' | 'drink'
   /** Auto-logged weather snapshot for the day (opt-in). */
   weather?: Weather
+  /**
+   * Device-measured, and **written by no UI in this app** — they arrive only
+   * through an import (`lib/ingest/`). That is why the ingest planner updates
+   * them without asking: a conflict needs a human value to defend, and nobody
+   * can type these.
+   */
+  steps?: number
+  restingHR?: number // bpm
+  activeKcal?: number // active energy, kcal
   // Nutrition diary (wger-style, lightweight).
   calories?: number
   protein?: number // grams
@@ -165,6 +174,15 @@ export interface Workout {
   durationMin?: number
   /** Canonical kilometres. Convert at the form boundary with `lib/units.ts`. */
   distanceKm?: number
+  /**
+   * Provenance key for an imported row: `"<source code>:<instant or day>"`,
+   * e.g. `ah:2026-09-01T07:12:00-05:00`. Present only on imported workouts.
+   *
+   * Its only job is to make a re-import of the same export update this row
+   * instead of appending a second one — appending twice is the one failure an
+   * append collection cannot dedupe its way out of. See `lib/ingest/envelope.ts`.
+   */
+  src?: string
   /** Strength sets: each is "exercise xReps @ weight". Free-form lines (legacy + display). */
   sets: string[]
   /** Structured strength sets (preferred for analytics; `sets` kept for back-compat). */
