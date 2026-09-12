@@ -539,7 +539,7 @@ export function Pickleball() {
               <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
             </div>
             <p className="text-label text-fg-2">{drill.how}</p>
-            <p className="mt-2 text-caption text-fg-2">New focus each day, log a session below after you drill it.</p>
+            <p className="mt-2 text-label text-fg-2">New focus each day, log a session below after you drill it.</p>
           </div>
           {/* Warm-up checklist */}
           <div className="rounded-none border border-line bg-ink-0 p-3">

@@ -25,7 +25,7 @@ export function Field({
   return (
     <label className="block">
       <span className="block text-body font-medium text-fg-1">{label}</span>
-      {hint && <span className="mt-0.5 mb-2 block text-label leading-snug text-fg-2">{hint}</span>}
+      {hint && <span className="mt-0.5 mb-2 block text-label text-fg-2">{hint}</span>}
       <span className={hint ? 'block' : 'mt-2 block'}>{children}</span>
     </label>
   )
