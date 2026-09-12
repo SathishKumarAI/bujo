@@ -196,11 +196,17 @@ export function Card({
                       <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" className="max-w-xs text-body leading-snug text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
+                  <PopoverContent align="start" className="max-w-xs text-body text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
                 </Popover>
               )}
             </div>
-            {subtitle && <p className="mt-1 hidden text-body leading-snug text-fg-2 sm:block">{subtitle}</p>}
+            {/* No `leading-snug`. A subtitle is a sentence and it wraps — Gym's
+                "Search wger's library, tap a card to view it, then add to your
+                session" measured 15px on a 20.63px line, a ratio of **1.38**,
+                on every card in the app whose subtitle runs past one line. The
+                body token's own 1.55 is the readable figure; tightening leading
+                is for titles, which do not wrap into paragraphs. */}
+            {subtitle && <p className="mt-1 hidden text-body text-fg-2 sm:block">{subtitle}</p>}
           </div>
           {/* `max-w-full` + `flex-wrap`, because `shrink-0` alone lets this
               cluster size to its content past the width of the page. Trackers

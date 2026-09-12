@@ -73,7 +73,7 @@ export function Cycle() {
           className="flex w-full items-center gap-3 border-b border-line px-2 py-1.5 text-left text-label hover:bg-ink-2"
           style={isSel ? { background: cat('mauve') + '22' } : isPeriod ? { background: cat('red') + '22' } : undefined}
         >
-          <span className={`w-6 num ${isToday ? 'font-semibold text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
+          <span className={`w-6 num ${isToday ? 'font-medium text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
           <span className="num w-16 text-fg-1">{c?.temp != null ? `${c.temp}°` : ''}</span>
           <span className="flex items-center gap-1">
             {FLAGS.filter((f) => (c?.flags ?? []).includes(f.id)).map((f) => (
