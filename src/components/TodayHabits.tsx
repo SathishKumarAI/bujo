@@ -127,11 +127,23 @@ export function TodayHabits({
   }
 
   // ── checklist · the Evening surface. Closing the day is a walk down a list,
-  //    so it reads as one: a row per habit, state on the left, full width.
+  //    so it reads as one: a row per habit, state on the left.
+  //
+  //    **Two columns once there is room for them.** One column of ten habits is
+  //    ~560px of a 900px-wide card, and the point of this surface is to see the
+  //    whole day at once and close it — scrolling to find the last habit is the
+  //    opposite of that. Below `sm` it stays a single column, because a 44px
+  //    check row in half of a 390px screen is a cramped target and a wrapped
+  //    label.
+  //
+  //    `divide-y` cannot survive the split: it draws a rule on every child but
+  //    the first, which in two columns means the top of the second column
+  //    silently loses its rule while some row mid-list gains one. Each row
+  //    carries its own bottom rule instead, and the grid's last row drops it.
   if (variant === 'checklist') {
     return (
       <Card band title="Close out your habits" hideInfo>
-        <ul className="divide-y divide-line">
+        <ul className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 sm:gap-x-6">
           {habits.map((h) => {
             const on = log.includes(h.id)
             // For an AVOID habit, ticked means you slipped — not that you did
@@ -144,7 +156,7 @@ export function TodayHabits({
             const slipped = h.avoid && on
             const cleared = !h.avoid && on
             return (
-              <li key={h.id}>
+              <li key={h.id} className="border-b border-line last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
                 {/* The row *is* the checkbox: one control per line, announced
                     as "checkbox, checked" rather than as a pressed toggle
                     button, and a 44px target that is the whole row instead of

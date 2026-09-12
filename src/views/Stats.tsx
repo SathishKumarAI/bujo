@@ -222,7 +222,11 @@ export function Stats() {
         </Card>
       </Section>
 
-      {/* 3) Sleep & mood correlations — collapsed. */}
+      {/* 3) Sleep & mood correlations — collapsed.
+             `SPAN_2` on this and the three folds below: each lays its content
+             out in columns, and a fold in a grid cell is 580px wide, which is
+             under every one of those breakpoints. They stacked instead —
+             measured at 1,240px of page painting 8% of its width. */}
       <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus" defaultOpen={false} stickyKey="stats.sleepmood">
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
@@ -281,7 +285,7 @@ export function Stats() {
              mood read-backs that came over from Insights (BUJO-281). They went
              *into* this fold rather than beside it: Stats already had six, and
              a drawer relocated intact is not a drawer removed. */}
-      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" defaultOpen={false} stickyKey="stats.moodviews">
+      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" defaultOpen={false} stickyKey="stats.moodviews" className={SPAN_2}>
       {moodView === 'calendar' ? (
       <Card band
         enlargeable={false}
@@ -406,7 +410,7 @@ export function Stats() {
       {/* 7) Habits — check-in times, plus the three habit read-backs from
              Insights (BUJO-281). Same rule as Mood views: into the existing
              fold, not beside it. */}
-      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" defaultOpen={false} stickyKey="stats.habits">
+      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" defaultOpen={false} stickyKey="stats.habits" className={SPAN_2}>
         <CheckinTimesCard />
         <HabitAnalytics />
       </Section>
