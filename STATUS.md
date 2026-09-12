@@ -1,101 +1,75 @@
 # STATUS
 
-**Stopped:** 2026-09-11, on `feat/pace-time-left` (off `main`). Two commits,
-both verified: `npm run verify` green — **963 tests across 78 files**, tsc,
-eslint (the same two pre-existing `react-hooks/exhaustive-deps` warnings in
-`App.tsx`, zero errors) and the build.
+**Stopped:** 2026-09-12, on `refactor/layered-depth-tokens` (off `main`). Four
+commits, all verified together at the end: `npm run verify` green — **1020
+tests across 80 files**, tsc, eslint (one pre-existing
+`react-hooks/exhaustive-deps` warning in `App.tsx`, zero errors), build — plus
+all four visual gates: `contrast`, `design` (304 files), `a11y` (**0
+serious/critical** across 5 themes x 24 views), `clipped` (0 across 24 views at
+1440 and 390) and `smoke` (25/25).
 
 ## What this branch did
 
-1. **Stats · "Time left"** (`lib/pace.ts` + `components/stats/PaceCard.tsx`).
-   Days still available this month and this year, the week of the year, and
-   the pace the journal has been kept at. Zone 1 gains a fourth fact,
-   `left · this month`. Measured on the demo journal at 1440 and 390 on
-   2026-09-11: September 20 of 30, 2026 112 of 365, week 37 of 53, phone
-   `scrollWidth` 390 (no sideways scroll).
-2. **The sample-data banner can be dismissed**, and the dismissal sticks
-   (`bujo.ui.explore.banner`). It had no × and no timer, so it sat over every
-   view for as long as the demo was loaded.
+**Phase 1 of a five-phase redesign.** The brief was "the UI looks like a 1990s
+website"; the cause was already written down in `src/styles/tokens.css`. A past
+"Modernist" pass set all three radius tokens to `0rem`, removed every fill, and
+left a 1px hairline as the only way anything was bounded.
+
+`PRODUCT.md` (product truth) and `DESIGN.md` (the visual world, "Layered
+Depth") are new at the repo root. **Read `DESIGN.md` before touching any of
+this** — it carries the four rules and the phase table.
+
+1. **Elevation was upside down.** `--card` aliased `--color-mantle`, which sits
+   *below* `--color-base` in all three dark themes. Cards sank into the page.
+2. **Depth is `--shadow-raise/lift/float`** — one decision, five sets of
+   ingredients. `.card-3d` and four per-theme overrides collapsed into it.
+3. **Radius 0/0/0 -> 10px/16px/full**, and 242 hard-coded `rounded-none` call
+   sites swept back onto the three tokens.
+4. **Controls get a fill**; 63 grey-outlined, page-coloured boxes became real
+   surfaces. Habit chips now say hue-is-identity, fill-is-state.
 
 ## Next action
 
-Open the PR against `main`. Then, unchanged from the last session:
+Open the PR against `main`, then **Phase 2: the shell** (header, nav, page
+frame). Unchanged from before this branch:
 
 - **Mindset (3.29 screens, 0 folds) and Focus (3.08 screens, 0 folds)** are
-  flat stacks with nothing collapsible. This is page-contract work, not a
-  bug — use the `page-contract` skill rather than adding folds by reflex.
-- **COD-137** sync-effect consolidation — still the only two eslint warnings.
-- **Two components named `Section`.** `components/pickleball/Section` is a
-  local near-duplicate of `CollapsibleSection`: same name, same
-  open-by-default, **no `stickyKey`**, so its folds do not remember. Deciding
-  whether to consolidate is a real change; do not merge them by name alone.
+  flat stacks. Use the `page-contract` skill, not folds by reflex.
+- **COD-137** sync-effect consolidation — still the only eslint warning.
+- **Two components named `Section`** — `components/pickleball/Section` is a
+  near-duplicate of `CollapsibleSection` with no `stickyKey`. Do not merge them
+  by name alone.
 
 ## Decisions that will surprise you later
 
-- **`?demo=1` does not turn on the explore banner.** It seeds the sample
-  journal but never sets `settings.explore`, which only the Welcome screen's
-  "Explore the demo →" button does. A browser check of anything guest-related
-  driven by `?demo=1` measures a state no user is ever in — the banner
-  reported absent twice before I noticed, and an absent banner looks exactly
-  like a fixed one.
-- **`pace()` returns `null`, never 0, for a rate with no finished days**, and
-  clamps the projection to `[logged, total]`. Both ends are load-bearing:
-  today counts in the numerator and not the denominator, so logging every day
-  through the 11th projects a **33-day September** without the upper clamp.
-
-- **`resolveIncoming` defaults to keep-local** (`ask = () => false`), not to
-  the old native confirm. It only applies where a caller passes nothing
-  (tests, no DOM). Keeping local stalls adoption until the next change; the
-  other default silently clobbers unsynced work, and a stall is recoverable.
-- **Stats' six analytics sections are closed by default now, and that was
-  always the stated intent** — the header comment said "six collapsed
-  analytics groups". `stickyKey` persists a reader's choice, verified across
-  a reload. Do not reopen them without re-measuring: it costs 620ms of script
-  and 900 DOM nodes on every visit.
-- **`Statement` rewrites its children** when given a string, binding a spaced
-  en/em dash to the preceding word. It is written `' $1 '`, the escape,
-  deliberately — the first draft pasted a literal NBSP, which reads as an
-  ordinary space in the source and gets deleted as a no-op.
-- **Pickleball's Charts fold does not persist.** Its `Section` has no
-  `stickyKey` to give. Noted at the call site.
-
-## Traps hit this session
-
-- **A pipe eats the exit code.** `npx tsc -b | tail; echo $?` reports
-  *tail's* status — it printed a cheerful `0` over a real `tsc` failure and I
-  believed it for two commits. Use `cmd; echo $?` or `${PIPESTATUS[0]}`.
-- **A JSX comment cannot sit between attributes.** `{/* … */}` inside a tag's
-  attribute list is a parse error (TS1005). Put it above the element. Cost me
-  two failed builds, in two different files.
-- **Three docs overstated or misstated their own subject.**
-  `UIUX-CRAFT-BACKLOG.md` said the toast layer was unbuilt when
-  `lib/notify.ts`, `Toasts.tsx` and the shell mount had all shipped — I would
-  have rebuilt all three if I had not grepped first. `ARCHITECTURE.md` said
-  "no backend" and "localStorage, not IndexedDB", both false. `uml.mdx` drew
-  a component that does not exist. **Grep before trusting a doc in this repo.**
-- **A gate's own parser can be wrong.** The new fold gate used
-  `/<Section\b[^>]*>/`, which stops at the first `>` — and Monthly has one
-  inside `subtitle={<>month pulse</>}`, so every attribute after it was
-  invisible and it reported an already-fixed section as broken. It counts
-  brace depth now. Prove a new gate red *and* green before trusting it.
-- **A tall page is not necessarily a slow one, and vice versa.** Insights
-  looked worth optimising and is 141 DOM nodes. Measure before choosing a
-  target: `node scripts/page-census.mjs` (it defaults to 5199, the dev
-  server) and Chrome's `Performance.getMetrics` — and call
-  `Performance.enable` *before* navigating, or every timing reads zero.
-- **The Chrome extension and chrome-devtools MCP were both unavailable.**
-  Playwright is present but deliberately not a dependency; drive it from a
-  script whose `createRequire` points at this repo's `package.json`, or the
-  import fails outside the tree.
-- **Two gates need the first-run gates dismissed.** `?demo=1` seeds, but a
-  tour overlay and "This device only" both intercept clicks. Dismiss both,
-  then assert the seed landed — 90 entries — before believing any measurement.
-
-## The one thing worth remembering
-
-Every bug this session was **invisible to a fully green toolchain**. `tsc -b`,
-eslint, vitest and `vite build` are all perfectly happy with `alert()`, with a
-comment that contradicts its own props, with a field showing a third of what
-was typed into it, and with a scrollport ten pixels wide. Four gates were
-added or armed, and **every one of them was green on a real bug before it was
-armed**. When something here looks fine, ask what would have had to fail.
+- **`washStyle()` solves for TWO grounds now**, not one. Its default was
+  `base`, which was only ever conservative while the card was *darker* than the
+  page — i.e. only while the elevation bug was in place. The moment cards lifted,
+  twenty axe violations appeared, every one a wash pill and none of them new
+  markup. Which ground is harder flips with the theme's polarity, so it solves
+  for `base` and `surface0` and keeps whichever demands more. **Pass the actual
+  surface when you know it.**
+- **`colors.test.ts` asserted that grid against `base` alone**, so it stayed
+  green through all twenty. It asserts both grounds now. A per-theme colour
+  constant tuned against one surface is a latent failure the moment that surface
+  moves — two of the four `--danger-text` values this branch re-solved were
+  *already* failing on `main`, at 4.50 and 4.41, with no gate pointed at them.
+- **Three `rounded-none` survive on purpose.** The Trackers month grid is a data
+  matrix (a 10px radius on a 14px cell is a dot), and two are variant-prefixed
+  Radix rules that square the *inner seams* of a joined segment group. Do not
+  sweep them.
+- **A three-line context window is enough to misclassify.** The radius
+  classifier claimed Goals' progress bar as a `<Button>` because a real Button
+  sat three lines above it, and claimed a modal sheet as a control for the same
+  reason. Both were caught by reading the buckets before applying. If you re-run
+  that sweep, read the classification, do not trust the counts.
+- **`--edge-light` is `transparent` in latte and dawn** and that is deliberate:
+  a 1px white highlight on white paper is nothing, and their hairline border
+  already separates. Do not "fix" it by giving them one.
+- **Demo data is persisted, not regenerated** — re-seed via Settings -> Data ->
+  Load demo data after editing `src/lib/demo.ts`.
+- **`npm run shots` captures the onboarding modal over every view.** Every
+  screenshot in `docs/screenshots/` from the last refresh is a shot of the
+  first-run tour with the app blurred behind it. The script clicks past the
+  storage gate but never dismisses the tour; set `bujo:onboarded` to `'1'`
+  first. Filed, not fixed here.
