@@ -21,6 +21,7 @@
     "tauri:dev": "tauri dev",
     "test": "vitest run",
     "test:watch": "vitest",
+    "type-census": "node scripts/type-census.mjs",
     "verify": "tsc -b && vitest run && eslint . && vite build"
   },
   "dependencies": {

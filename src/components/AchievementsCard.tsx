@@ -48,7 +48,11 @@ export function AchievementsCard({ className }: { className?: string } = {}) {
               </span>
               <div className="min-w-0">
                 <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
-                <p className="line-clamp-2 text-micro leading-snug text-fg-2">{a.desc}</p>
+                {/* `label` is a name and stays tight; `desc` is a sentence. It was
+                    `text-micro` — 10px, the step tokens.css reserves for data
+                    chrome and says explicitly is "never for prose" — five steps
+                    under the label above it. */}
+                <p className="line-clamp-2 text-label text-fg-2">{a.desc}</p>
               </div>
             </li>
           )
