@@ -1,5 +1,112 @@
 # Worklog
 
+## 2026-09-11 (night) — Three PRs, and a gate that was wrong about its own app (#208–#210)
+
+**Summary:** Four asks in one session — "show me how many days are left", "the
+sample-data banner is always there", "audit every page's typography for
+readability", "sync my Apple Fitness data". Every one of them was answered by
+measuring the running app rather than by reading its source, and in two cases
+**the measuring tool was the thing that turned out to be wrong**.
+
+**What shipped:**
+
+- **#208 · Time left.** Stats reads the journal backwards; every card on it is
+  about time already spent. The one figure that can still be changed — how many
+  days have not happened yet — appeared nowhere in the app. `lib/pace.ts` gives
+  the month and the year as three proportions of one bar (logged, gone with
+  nothing logged, still available), plus the week of the year. Today counts as
+  **available**, not spent.
+
+  Two things the tests pin. `rate` and `projected` return **null**, not 0,
+  before a full day has passed — on the 1st, "no data yet" and "you logged
+  nothing" are different claims and a zero reads as the second, which is the
+  trap `monthlyCompletion` shipped with. And the projection is clamped at both
+  ends: `rate` counts today in the numerator and not the denominator, so
+  logging every day through the 11th gave 1.1/day and projected a **33-day
+  September**.
+
+  Same PR: the "exploring sample data" banner can be dismissed, and the
+  dismissal sticks. It had no × and no timer, so it sat over every view for as
+  long as the demo data was loaded — an ad, not a nudge. Stored per device in
+  `bujo.ui.*` rather than in `settings`, which syncs and carries an undo stack.
+
+- **#209 · The typography audit.** `scripts/type-census.mjs` (`npm run
+  type-census`) walks 25 views at 1280 and 390 and reads `getComputedStyle` on
+  every element that paints text of its own — 9,428 nodes. It exists because
+  Tailwind v4's scale is reset to `initial` here, so a stale `text-sm` emits
+  **nothing** and the element silently inherits, with tsc, eslint, vitest, the
+  build and the design gate all green over it.
+
+  What it found: `.prose-doc` capped the line at `72ch` and delivered **93
+  characters** — `ch` is the width of the digit "0", which in Instrument Sans is
+  half again as wide as the letters around it, so Help ran 78–103 characters per
+  line. Every card subtitle in the app sat at **1.38** leading (`leading-snug`
+  on a sentence). Achievement descriptions rendered at **10px**, the step
+  `tokens.css` says in as many words is "never for prose", five steps under the
+  label above them. After: none for off-scale, tiny prose, tight leading, long
+  measure, weight sprawl or family sprawl; measure max 103 → **89**.
+
+- **#210 · The import pipeline.** One envelope for every importer, so Apple
+  Health's export and a payload Claude produced go through the same validation,
+  the same dedupe rule and the same preview. Ships **no UI and no caller**:
+  `plan()` is a pure function of (records, journal), holds no store reference
+  and cannot dispatch, so nothing writes until the whole candidate journal
+  exists. That is the entire safety argument, and it is testable with a literal
+  object. 29 tests, including one that plans the same records twice and asserts
+  the second pass changes nothing.
+
+**The two gates that were wrong about their own app:**
+
+1. **`type-census`, first draft, reported SVG chart text as the smallest text in
+   the app.** `PlateStack`'s `fontSize={8}` paints **20–24px** tall, because a
+   viewBox scales it. It also flagged phone form fields at 16px, which
+   `index.css` sets deliberately so iOS does not zoom the page on focus. Three
+   of its six finding categories were noise on the first run; the fix went into
+   the gate, not the app, because a gate whose red is arguable is a gate people
+   stop reading — the lesson `clipped-text.mjs` already paid for with its
+   52-cosmetic-hit draft.
+2. **It measured the Account page as zero text nodes.** Signed out, Account
+   replaces the whole shell — there is no `<main>` — so a walk scoped to
+   `#main` read nothing and reported a clean page it had never looked at. Same
+   family as the empty-journal and closed-fold traps, and it is worth writing
+   down that **the script written to stop people quoting unmeasured numbers is
+   the one that quoted one.**
+
+**Traps worth carrying:**
+
+- **`?demo=1` does not turn on the guest chrome.** It seeds the sample journal
+  but never sets `settings.explore`, which only Welcome's "Explore the demo →"
+  button does. Two browser checks of the sample-data banner reported it absent
+  before that landed — and an absent banner looks exactly like a fixed one.
+- **`ch` is not a character.** It is the advance width of "0". A rule that says
+  72 characters can deliver 93.
+- **A literal `Z` timestamp in a test is a timezone bug waiting for CI.**
+  `2026-09-01T07:12:00Z` is 23:12 on August 31 west of UTC-8, so an assertion
+  about its local day passes here and fails there. The ingest tests build their
+  instants in the runner's own zone.
+
+**Research, written before any parser (`docs/import/`):** Apple's `export.xml`
+is **not** de-duplicated — the Health *app* de-dupes at display time — so an
+iPhone and a Watch both writing `StepCount` make a naive daily sum roughly
+double. Sleep segments overlap by design (`InBed` is an envelope around
+`Core`/`Deep`/`REM`; summing a night gives ~14 hours), and pre-watchOS-9 history
+has only `InBed`, so dropping it unconditionally imports zero sleep before
+~2022. Compression is ~20:1 — one measured export is 5.5 MB zipped against 109
+MB of XML and 446,670 records, which puts a 60 MB pick past the size a JS string
+can be.
+
+**Found, not fixed — needs its own branch:** `BodyMetric.weight` and
+`WorkoutSet.weight` have **no canonical unit**. `settings.weightUnit` is written
+in Settings, read in Gym, and converted nowhere, so toggling kg↔lb reinterprets
+all history in place — 180 lb becomes 180 kg. Same class as the v2 `distanceKm`
+bug that `migrateWorkoutsToV3` exists to clean up, still live. Recorded in
+`docs/import/ingest-architecture.md` §11; the local Plane instance was down
+(`localhost:8080` refused) so it could not be filed.
+
+**Gates, this session:** `verify` 982 tests / 77 files (from 953 / 76 at the
+start), `a11y` no serious or critical, `clipped` clean at 1440 and 390, `smoke`
+25/25, `contrast` passed, `type-census` all categories empty.
+
 ## 2026-09-11 — Four PRs, and four gates that were green on real bugs (#203–#206)
 
 **Summary:** User asks to improve every page, add features, make it "wow",
