@@ -7,6 +7,7 @@ saved. The design notes live in `docs/voice/`; this is the map.
 |---|---|
 | What a spoken sentence means — matchers, the follow-up question | `intent.ts` |
 | The assistant speaking back | `speak.ts` |
+| The local model fallback, and the localhost rule | `model.ts` |
 | Both | `intent.test.ts` |
 | Dictation itself (Web Speech API) | `../speech.ts` |
 | The dialog you talk to | `../../components/VoiceAgent.tsx` |
@@ -41,30 +42,30 @@ Rules, each of which is load-bearing:
   offline, costs nothing, and gives the same answer twice. An LLM is a
   *fallback* for sentences the grammar misses — see the seam below.
 
-## The LLM seam, unbuilt on purpose
+## The local model, and what keeps it honest
 
-`understand()` ends in a lossless fallback: what it cannot parse becomes a note.
-That fallback is where a model plugs in — it would take the same transcript and
-return the same `ImportRecord[]`, competing with nothing and replacing nothing:
+Built, off by default, and a **fallback rather than a path**: it is asked only
+when the grammar has fallen through to "keep it as a note", so a sentence the
+app already understands never waits for a model, and switching it off removes a
+capability instead of breaking the feature. Settings → Reminders → Local model.
 
-```ts
-// sketch, not shipped
-const records = await askLocalModel(transcript, { schema: IMPORT_RECORD_SCHEMA })
-// …then the identical validate → plan → confirm path.
+```
+understand()  → note fallback?  → askModel()  → validateRecords() → the same preview
 ```
 
-Two things make that safe rather than exciting: the model's output is untrusted
-input like any other file, and it still cannot write — it proposes. Keep it that
-way. The model choice, and whether it is worth the download at all, is
-`docs/voice/landscape.md`'s question.
+| Rule | Why |
+|---|---|
+| **Localhost only**, refused not warned | A URL field in an app holding health data is an exfiltration primitive. One paste and every sentence goes to someone else's server |
+| **Every schema field nullable** | Measured: with required fields, "log oatmeal and eggs for breakfast" came back `games: 2, score: 1, kcal: 250, protein: 18`. Nullable: null everywhere |
+| **Enums, not descriptions** | `activity` was a free string listing the keys in its `description`. "three rounds of kettlebell swings" came back as `activity: "kettlebell swings"`, was rejected, and the refusal looked like the model never ran. Constrained, the same sentence returns `strength` |
+| **Output is untrusted input** | It goes through `validateRecords` like a file off disk. A fabricated `mood: 99` is rejected by range, not clamped |
+| **Marked as a guess in the UI** | `llama3.1:8b` read "I played two games and scored 68" as `gamesWon: 2` — "played" as "won". Worth showing, not worth trusting silently |
+| **`"null"` is not null** | The same model answers the four-character string under this schema. Every value is normalised before it is believed |
 
-**When you build it, make every field of that schema nullable.** This was
-measured on this machine, not inferred: the same model and the same sentence,
-with only the schema changed. "log oatmeal and eggs for breakfast" under an
-all-**required** schema came back `games: 2, score: 1, kcal: 250, protein: 18`
-— four fabricated numbers, every one of them plausible, none of them said. The
-identical prompt under an all-**nullable** schema returned `null` everywhere.
-A required field is an instruction to produce a value, and a model that has no
-value will invent one rather than fail; the journal then holds a calorie count
-nobody ate. Nullable everywhere, and drop to the note fallback — a note is
-never wrong.
+Measured on this machine (RTX 5070 Ti, `llama3.1:8b`): **637ms** warm for one
+sentence, ~5s on the first call while the model loads. The timeout is 20s and
+every failure — no server, slow, prose instead of JSON, an answer the validator
+refuses — lands on the same note the grammar would have kept, and says why.
+
+Whether a model *specific to this app* is worth building is a separate question,
+answered in `docs/voice/purpose-built-model.md`.

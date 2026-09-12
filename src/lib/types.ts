@@ -442,6 +442,12 @@ export interface Settings {
   fontScale?: number
   tempUnit: TempUnit
   /**
+   * The local model the Talk panel falls back to for sentences its grammar does
+   * not know. Off unless switched on, and `endpoint` is refused unless it is on
+   * this machine — see `lib/voice/model.ts`.
+   */
+  voiceModel?: { enabled?: boolean; endpoint?: string; model?: string }
+  /**
    * Speak the assistant's replies aloud. Default on, `false` to mute.
    *
    * Optional rather than required so an existing journal needs no migration —
