@@ -1,11 +1,36 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
-import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
-import { claimOwner, isForeignOwner } from './storage'
+import { externalizeImages } from './imageStore'
 import type { JournalData } from './types'
 
-// Optional Supabase backend: real login (guest/anonymous + email) and per-user
-// storage. Disabled (null client) until VITE_SUPABASE_URL/ANON_KEY are set, so
-// the local-first app works exactly as before with no backend.
+/**
+ * What is left of the Supabase backend: **a read path for a retired feature.**
+ *
+ * bujo had accounts — email/password and Google, across three copies of the
+ * same form — and they were removed on 2026-09-11. `docs/AUTH.md` records why:
+ * an email address is a liability with no matching benefit in a local-first
+ * app, the passphrase in `bujocloud.ts` already syncs across devices without
+ * anyone learning who you are, and the login screen was the first thing a new
+ * user saw on a product that had explicitly chosen not to be that.
+ *
+ * This file keeps exactly three functions, for exactly one purpose: someone
+ * whose session token is still in `localStorage` has a journal row that is
+ * otherwise now unreachable, and `lib/legacyAccount.ts` offers to bring it
+ * across, once, before signing them out. Nothing else imports this.
+ *
+ * **Delete this file, and its dependency, once that migration has had long
+ * enough to run.** Keeping a write path for a feature that no longer exists is
+ * how a system ends up with two sources of truth; this one is read-and-close
+ * only, which is why it is safe to leave for now and not safe to leave
+ * forever. Anyone already signed out before the change cannot be helped from
+ * inside the app — that is documented rather than pretended away.
+ *
+ * Everything that used to live here — `signInGuest`, `signUpEmail`,
+ * `signInEmail`, `signInGoogle`, `resetPassword`, `updatePassword`,
+ * `onPasswordRecovery`, `onAuthChange`, `subscribeJournal`, `pushJournal`,
+ * `providerEnabled` — was deleted in the same change as its last caller, not
+ * left behind commented out. An export nobody imports is not a build error,
+ * which is exactly how a dead module survives a green pipeline.
+ */
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
@@ -14,172 +39,31 @@ export const supabase: SupabaseClient | null =
 
 export const supabaseEnabled = () => supabase != null
 
-/**
- * Whether an OAuth provider is actually enabled on the Supabase project. The
- * `/auth/v1/settings` endpoint is public (anon key). Used to hide a sign-in
- * button when its provider isn't configured, so users don't get redirected to
- * a raw "provider is not enabled" error page.
- */
-// One probe per provider per page load. React StrictMode double-invokes effects,
-// so this fired `/auth/v1/settings` twice on every boot — two requests, and two
-// identical failures in the console when the project is unreachable.
-const probeCache = new Map<string, Promise<boolean>>()
-
-export function providerEnabled(provider: string): Promise<boolean> {
-  const hit = probeCache.get(provider)
-  if (hit) return hit
-  const run = probeProvider(provider)
-  probeCache.set(provider, run)
-  return run
-}
-
-async function probeProvider(provider: string): Promise<boolean> {
-  if (!URL || !ANON) return false
-  try {
-    const r = await fetch(`${URL}/auth/v1/settings`, { headers: { apikey: ANON } })
-    if (!r.ok) return false
-    const j = await r.json()
-    return !!j?.external?.[provider]
-  } catch {
-    return false
-  }
-}
-
-function client(): SupabaseClient {
-  if (!supabase) throw new Error('Cloud account is not configured.')
-  return supabase
-}
-
-/** Sign in as an anonymous guest (no email) — the default "just start" path. */
-export async function signInGuest(): Promise<User | null> {
-  const { data, error } = await client().auth.signInAnonymously()
-  if (error) throw error
-  return data.user
-}
-
-/** Upgrade a guest (or create an account) with email + password. */
-export async function signUpEmail(email: string, password: string): Promise<void> {
-  const sb = client()
-  // If already a guest, attach the email to keep their data (account linking).
-  const { data: sess } = await sb.auth.getSession()
-  if (sess.session?.user?.is_anonymous) {
-    const { error } = await sb.auth.updateUser({ email, password })
-    if (error) throw error
-    return
-  }
-  const { error } = await sb.auth.signUp({ email, password })
-  if (error) throw error
-}
-
-export async function signInEmail(email: string, password: string): Promise<void> {
-  const { error } = await client().auth.signInWithPassword({ email, password })
-  if (error) throw error
-}
-
-/**
- * Sign in / sign up with Google (OAuth redirect, returns to the app origin).
- * If the current session is an anonymous guest, links Google to the *same* user
- * so their explore-session id is preserved; otherwise a normal OAuth sign-in.
- */
-export async function signInGoogle(): Promise<void> {
-  const sb = client()
-  const redirectTo = window.location.origin
-  const { data: sess } = await sb.auth.getSession()
-  if (sess.session?.user?.is_anonymous) {
-    const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo } })
-    if (error) throw error
-    return
-  }
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
-  if (error) throw error
-}
-
-export async function signOut(): Promise<void> {
-  await client().auth.signOut()
-}
-
-/** Email a password-reset link (lands back on the app with a recovery session). */
-export async function resetPassword(email: string): Promise<void> {
-  const { error } = await client().auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
-  if (error) throw error
-}
-
-/** Set a new password (used after a recovery link, or to change it). */
-export async function updatePassword(password: string): Promise<void> {
-  const { error } = await client().auth.updateUser({ password })
-  if (error) throw error
-}
-
-/** Fire `cb` when the user arrives via a password-recovery link. */
-export function onPasswordRecovery(cb: () => void): () => void {
-  if (!supabase) return () => {}
-  const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') cb() })
-  return () => data.subscription.unsubscribe()
-}
-
-/**
- * Subscribe to session presence. `cb` receives true when ANY session exists —
- * a real account OR an anonymous guest (guests chose to explore, so they get
- * full app access; only the truly signed-out state is gated). Fires once with
- * the current state, then on every change. No-op when unconfigured.
- */
-export function onAuthChange(cb: (hasSession: boolean) => void): () => void {
-  if (!supabase) { cb(false); return () => {} }
-  currentUser().then((u) => cb(!!u))
-  const { data } = supabase.auth.onAuthStateChange((_e, session) => cb(!!session?.user))
-  return () => data.subscription.unsubscribe()
-}
-
+/** The signed-in user, or null when there is no session (or no backend). */
 export async function currentUser(): Promise<User | null> {
   if (!supabase) return null
   const { data } = await supabase.auth.getUser()
   return data.user
 }
 
-/** Load this user's journal row, or null if none saved yet. */
+/**
+ * Load this user's journal row, or null if none was ever saved.
+ *
+ * Throws on a real failure rather than returning null, so the migration can
+ * tell "there was nothing there" from "we could not reach it" — the second one
+ * must be retried, and treating it as the first would silently drop a journal.
+ */
 export async function pullJournal(): Promise<JournalData | null> {
-  const sb = client()
-  const { data: { user } } = await sb.auth.getUser()
+  if (!supabase) return null
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data, error } = await sb.from('journals').select('data').eq('user_id', user.id).maybeSingle()
+  const { data, error } = await supabase.from('journals').select('data').eq('user_id', user.id).maybeSingle()
   if (error) throw error
   if (!data?.data) return null
   return externalizeImages(data.data as JournalData)
 }
 
-/** Live-subscribe to this user's journal row; calls `onRemote` on every change
- *  pushed from another device/session. Returns an unsubscribe function. */
-export async function subscribeJournal(onRemote: (data: JournalData) => void): Promise<() => void> {
-  const sb = supabase
-  if (!sb) return () => {}
-  const { data: { user } } = await sb.auth.getUser()
-  if (!user) return () => {}
-  const channel = sb
-    .channel(`journal:${user.id}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'journals', filter: `user_id=eq.${user.id}` },
-      (payload) => { const row = payload.new as { data?: JournalData }; if (row?.data) void externalizeImages(row.data).then(onRemote) })
-    .subscribe()
-  return () => { sb.removeChannel(channel) }
-}
-
-/** Upsert this user's journal row (RLS restricts it to their own id). */
-export async function pushJournal(journal: JournalData): Promise<void> {
-  const sb = client()
-  const { data: { user } } = await sb.auth.getUser()
-  if (!user) throw new Error('Not signed in.')
-  // COD-135: the local journal is a different account's (sign-out never wipes
-  // it, so a shared device can still hold one). Never push it into this
-  // account's row — loud failure here, not a silent cross-account merge.
-  if (isForeignOwner(user.id)) {
-    throw new Error('This device has another account’s journal saved locally. Sign in as that account to sync it, or replace it with this account’s cloud copy first.')
-  }
-  // Inline photos so their bytes actually travel, within the budget the request
-  // body allows; over it the journal still syncs without them. See
-  // `inlineImagesWithinBudget` for why all-or-nothing rather than partial.
-  const { payload, skipped } = await inlineImagesWithinBudget(journal)
-  const { error } = await sb.from('journals').upsert({ user_id: user.id, data: payload, updated_at: new Date().toISOString() })
-  if (error) throw error
-  notePhotosSkipped(skipped)
-  // The push succeeded, so local now IS this account's canonical copy.
-  claimOwner(user.id)
+/** End the session. There is no way to start a new one. */
+export async function signOut(): Promise<void> {
+  await supabase?.auth.signOut()
 }

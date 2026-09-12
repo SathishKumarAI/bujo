@@ -39,7 +39,7 @@ export function FutureAndMemories({ future, memories }: { future: Entry[]; memor
           <h2 className="font-display text-heading font-medium text-fg-1">Memories</h2>
           <p className="mt-1 mb-3 text-label text-fg-2">Every ▲ bullet, newest first.</p>
           {memories.length === 0 ? (
-            <p className="text-label text-fg-3">Mark a bullet with ▲ (or capture with “^ …”) to start the reel.</p>
+            <p className="text-label text-pretty text-fg-3">Mark a bullet with ▲ (or capture with “^ …”) to start the reel.</p>
           ) : (
             <ul className="border-t border-line">
               {memories.map((e) => (

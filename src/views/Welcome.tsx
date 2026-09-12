@@ -1,4 +1,4 @@
-import { Check, CloudCheck, FolderOpen, HardDrive, ShieldCheck, SignIn, UserCircle } from '@/components/icons'
+import { Check, CloudCheck, FolderOpen, HardDrive, ShieldCheck } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -9,8 +9,6 @@ import { cat } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
-import { supabaseEnabled } from '../lib/supabase'
-import { useAuthForm } from '../lib/useAuthForm'
 import { useConfirm } from '../components/ConfirmDialog'
 
 /**
@@ -50,20 +48,6 @@ export function Welcome() {
     }
   }
 
-  // ── Account onboarding (when Supabase is configured) ──
-  // All auth logic (incl. Google availability probe and the confirm-before-
-  // replace guard on login) lives in useAuthForm; this view owns the markup.
-  const [showLogin, setShowLogin] = useState(false)
-  const auth = useAuthForm({
-    confirmReplace: () => confirm({
-      title: 'Load your account data onto this device?',
-      description: 'This replaces what is currently on this device with the copy stored in your account.',
-      confirmLabel: 'Load account copy', destructive: true,
-    }),
-    onDone: () => setSettings({ storageMode: 'local' }),
-  })
-  const { email, setEmail, pw, setPw, err, googleOk } = auth
-  const notice = auth.msg
 
   return (
     <div className="aurora grid min-h-screen place-items-center p-6">
@@ -73,44 +57,10 @@ export function Welcome() {
             <span className="font-display text-display font-medium tracking-tight text-fg-1">bujo</span>
             <span className="text-title text-mauve">✦</span>
           </div>
-          <p className="rise text-fg-2" style={{ animationDelay: '90ms' }}>A private bullet journal. Sign in to sync across your devices, or keep everything on this one.</p>
+          <p className="rise text-fg-2" style={{ animationDelay: '90ms' }}>A private bullet journal. It lives on this device. Choose where it should be kept — you can change this in Settings later.</p>
         </div>
 
-        {/* Account · recommended when configured: guest now, or log in to sync. */}
-        {supabaseEnabled() && (
-          <div className="rise mb-5 rounded-none border border-line bg-ink-1/80 p-5 backdrop-blur" style={{ animationDelay: '120ms' }}>
-            <div className="mb-3 flex items-center gap-2">
-              <Icon as={UserCircle} size="lg" style={{ color: cat('mauve') }} />
-              <h2 className="font-display text-title text-fg-1">Sync with an account</h2>
-            </div>
-            {!showLogin ? (
-              <div className="flex flex-wrap items-center gap-3">
-                {googleOk && (
-                  <Button onClick={auth.google} disabled={auth.busy} variant="primary" className="press-3d gap-2">{auth.busy ? 'Starting…' : 'Continue with Google'}</Button>
-                )}
-                {googleOk ? (
-                  <button onClick={() => { setShowLogin(true); auth.setErr('') }} className="inline-flex items-center gap-1.5 text-body text-mauve hover:underline"><Icon as={SignIn} size="sm" /> Use email</button>
-                ) : (
-                  <Button onClick={() => { setShowLogin(true); auth.setErr('') }} variant="primary" className="press-3d gap-1.5"><Icon as={SignIn} size="sm" /> Sign in with email</Button>
-                )}
-                <span className="text-label text-fg-2">Signing in creates your journal and keeps it in sync across devices.</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1" />
-                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password (min 6)" className="w-full rounded-none border border-input bg-background px-3 py-2 text-body text-fg-1" />
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button onClick={() => auth.submit('login')} disabled={auth.busy} variant="primary" className="press-3d">Log in</Button>
-                  <Button onClick={() => auth.submit('signup')} disabled={auth.busy} variant="secondary" className="text-fg-1">Sign up</Button>
-                  <button onClick={auth.forgot} disabled={auth.busy} className="ml-auto text-label text-fg-2 hover:text-fg-1">Forgot password?</button>
-                  <button onClick={() => setShowLogin(false)} className="px-2 py-2 text-body text-fg-2">Back</button>
-                </div>
-              </div>
-            )}
-            {notice && <p className="mt-2 text-label text-green">{notice}</p>}
-            {err && <p className="mt-2 text-label text-red">{err}</p>}
-          </div>
-        )}
+        
 
         <div className="grid gap-5 sm:grid-cols-2">
           {/* Own cloud · pick a folder */}
@@ -159,7 +109,7 @@ export function Welcome() {
 
         {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
         <div className="rise mt-5 rounded-none border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
-          <p className="mb-2 text-body text-fg-1">Just looking? <strong className="text-fg-1">Explore with sample data</strong> · see every feature, no account. Sign up when you’re ready to keep your own journal.</p>
+          <p className="mb-2 text-body text-fg-1">Just looking? <strong className="text-fg-1">Explore with sample data</strong> · see every feature first. Clear the samples out whenever you want to start your own.</p>
           <Button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}
             variant="secondary"

@@ -366,7 +366,18 @@ body.handwriting textarea {
 .book-inner {
   position: relative;
   z-index: 2;
-  padding: clamp(16px, 3vw, 36px);
+  /* The page margin inside the book cover. Sides and bottom keep the full
+     clamp — that inset is what makes the content read as a page rather than as
+     a flush panel.
+
+     The TOP is deliberately smaller, because it is not alone: `#main` already
+     contributes 24px above the cover. Stacked, the old uniform 36px put 60px
+     of empty padding between the header and the first band at 1440 — measured,
+     before any of the band's own 16px cell padding. The top now tops out at
+     18px, so the gap is 43px instead of 61 while the side margins are
+     untouched, and a phone (where 3vw already clamped to the 16px floor and
+     the gap was a reasonable 33px) is unchanged. */
+  padding: clamp(16px, 1.2vw, 18px) clamp(16px, 3vw, 36px) clamp(16px, 3vw, 36px);
 }
 
 /* Hover-zoom: magnify an element (photo, chart) on hover. */

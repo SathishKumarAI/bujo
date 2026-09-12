@@ -1,4 +1,5 @@
 import { MINDSET_CATEGORIES, MINDSET_LIBRARY, type MindsetPrinciple } from '../../lib/mindset'
+import { bindDashes } from '../../lib/typography'
 
 /**
  * The library: 26 principles grouped by category, one row each.
@@ -61,7 +62,7 @@ export function LibraryList({
                       <p className={`font-display text-label font-medium ${on ? 'text-brand-text' : 'text-fg-1'}`}>
                         {p.title}
                       </p>
-                      <p className="mt-0.5 max-w-[74ch] text-label text-fg-2">{p.why}</p>
+                      <p className="mt-0.5 max-w-[74ch] text-label text-pretty text-fg-2">{bindDashes(p.why)}</p>
                     </div>
                     {/* Enabled even when full, and deliberately: a disabled
                         button that says "Add" explains nothing about why. This

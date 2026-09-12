@@ -49,6 +49,8 @@ const VIEWS = [
   'pickleball', 'homeworkout', 'challenges', 'focus', 'plan', 'collections',
   'reading', 'goals', 'insights', 'stats', 'cycle', 'nofap', 'mindset',
   'coaching', 'help', 'settings',
+  // Behind the account menu, so it has no tab and was never on this list.
+  'account',
 ]
 
 function findClipped() {

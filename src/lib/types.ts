@@ -485,8 +485,44 @@ export interface Settings {
   storageMode?: 'local' | 'folder' | 'drive'
   /** Display name of the picked cloud folder. */
   folderName?: string
-  /** Exploring sample data (guest demo). Prompts to sign up to keep a real journal. */
+  /** Exploring sample data (the demo seed). The banner offers to clear it out. */
   explore?: boolean
+  /**
+   * This journal's contents came from `generateDemoData()`.
+   *
+   * Separate from `explore`, which only ever meant "the user pressed Explore on
+   * the welcome screen". `?demo=1` seeds the same sample journal and set
+   * neither flag, so a demo-seeded journal had no way to know what it was and
+   * showed no way out — which is how "Clear the demo" ended up meaning "erase
+   * everything" for those users.
+   *
+   * Cleared the moment the journal is emptied or replaced by a real import.
+   */
+  demoSeeded?: boolean
+  /**
+   * Refuse to load sample data at all: `?demo=1` is ignored and the Settings
+   * button is hidden. Off by default — the demo is how most people see the app
+   * before trusting it with anything.
+   */
+  demoDisabled?: boolean
+  /**
+   * The local account: a name and an emoji, kept in this journal and nowhere
+   * else. Set means "this device has been claimed by someone"; unset means the
+   * first-run screen still has something to ask.
+   *
+   * **This is identity, not authentication.** Nothing is verified, nothing is
+   * checked against a server, and anyone holding the device can change it in
+   * Settings. It exists so the app can say your name and so a shared export
+   * says whose journal it is — not to protect anything. The copy around it has
+   * to keep that promise; see `docs/AUTH.md`.
+   */
+  profile?: { name: string; emoji: string }
+  /**
+   * The one-time Supabase-account migration has run (`lib/legacyAccount.ts`).
+   * Set only after the offer was answered — never after a failed pull, or the
+   * retry that would have rescued the journal never happens.
+   */
+  legacyAccountChecked?: boolean
   /** GitHub Personal Access Token (gist scope) for gist storage. */
   githubToken?: string
   /** Gist id holding bujo.json. */

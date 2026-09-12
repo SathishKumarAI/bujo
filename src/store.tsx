@@ -309,10 +309,14 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   // Materialise recurring tasks/events once on mount; "?demo=1" seeds sample
   // data into an empty journal (handy for sharing a live preview).
   useEffect(() => {
-    const wantsDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
+    const askedForDemo = typeof window !== 'undefined' && window.location.search.includes('demo')
     dispatch({
       type: 'silent',
       fn: (d) => {
+        // `demoDisabled` is checked against the journal, not a module constant,
+        // so the switch in Settings takes effect on the next load of a `?demo=1`
+        // link without needing to strip the parameter from anything.
+        const wantsDemo = askedForDemo && !d.settings.demoDisabled
         const next = wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)
         if (next === d) return d
         // Materialised new recurring occurrences → stamp updatedAt so they survive
