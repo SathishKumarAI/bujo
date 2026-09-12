@@ -31,7 +31,7 @@ gap is smaller than the research suggests.
 | `src/components/CaptureBar.tsx:206` | already wires `MicButton` → appends the transcript into the capture field |
 | `src/lib/capture.ts` (312 lines) | **the hand-written grammar layer already exists**, and was built for voice: `normalizeSpoken()` maps number-words → digits, "kilos" → kg, "by" → x. Emits `{kind, confidence}` and the UI shows the target and lets you edit |
 | `src/lib/ingest/` (committed, `69adfb7` "the import pipeline, pure and without a caller") | `ImportRecord` union incl. a `PickleballRecord` with `gamesWon`/`pointsFor`, then `validate` → `plan` → confirm. **This is the confirm-before-write step, already built and already tested.** |
-| `src/lib/voice/intent.ts` (untracked, in flight in this worktree as of 2026-09-11 22:34) | `understand(transcript, ctx, today)` → `VoiceIntent { records, say, confidence }`, `CONFIRM_BELOW = 0.6`, `readDate()` for "yesterday". Emits `ImportRecord[]` **and cannot write** |
+| `src/lib/voice/intent.ts` + `components/VoiceAgent.tsx` (**shipped in `d6b8d31` while this was being written**) | `understand(transcript, ctx, today)` → `VoiceIntent { records, say, confidence }`, `CONFIRM_BELOW = 0.6`, `readDate()` for "yesterday". Emits `ImportRecord[]` **and cannot write** |
 
 So the shape is settled: **speech → text → deterministic parse → `ImportRecord[]` → validate → plan →
 human confirms → store.** The LLM question is only ever "what fills the gap when the grammar
@@ -78,8 +78,10 @@ fallback matrix.
 | Safari 14.1+ / iOS 14.5+ (`webkitSpeechRecognition`) | Sends to Apple's recognition service, with a permission prompt. Reports differ on whether an installed language pack lets it stay local — **unverified**; assume it leaves |
 | Firefox | Not shipped. Behind `media.webspeech.recognition.enable` since FF22 and never enabled for users. Mozilla's stated 2025 position: it will ship **on-device only** |
 
-**`speech.ts` sets no `processLocally` today**, so on Chrome it is the cloud path. That is the
-single highest-value one-line change in this whole document.
+**`speech.ts` sets no `processLocally`** — verified by grep across `src/lib/speech.ts` and
+`src/lib/voice/` at `d6b8d31`. So on Chrome the shipped microphone takes the **cloud path**, and
+nothing on screen says so. This stopped being a design note and became a live bug the moment
+`feat(voice)` merged. It is the single highest-value one-line change in this whole document.
 
 The on-device API surface (Chrome 139, milestone target was 135):
 
@@ -501,7 +503,7 @@ relapse/addiction streak. The blast radius of a mistake here is not a bad UX rev
 
 | Trap | Why it is specifically live in this repo | The gate |
 |---|---|---|
-| **Audio uploaded silently** | `speech.ts` sets no `processLocally`. On Chrome today, pressing the mic **sends audio to Google**, and nothing in the UI says so | Set `processLocally = true`; if `available()` is not `'available'`, either `install()` with consent or **disable the mic** and say why. Never silently downgrade to cloud |
+| **Audio uploaded silently** | **Live in `main` as of `d6b8d31`.** `speech.ts` sets no `processLocally`, so pressing the new top-bar mic on Chrome **sends journal audio to Google**, and nothing in the UI says so. The commit message says "the microphone gets no write path of its own" — true, and it is the read path that leaks | Set `processLocally = true`; if `available()` is not `'available'`, either `install()` with consent or **disable the mic** and say why. Never silently downgrade to cloud |
 | **A cloud STT default** | the same line, from the other side: the cloud path is the default *because it is the default of the API* | The fallback order must be on-device → typed, never on-device → cloud |
 | **An LLM writing into storage** | `lib/ingest/` exists and is correct; the risk is a future "quick apply" that calls a store function directly from the voice path | Keep `understand()` returning `ImportRecord[]` and nothing else. The LLM must plug in at that same seam. If a diff adds an import of `storage.ts` to anything under `lib/voice/`, that is the bug |
 | **A required-field schema** | measured above: it invented 250 kcal from a breakfast sentence | Every field nullable. This is a one-character trap (`"integer"` vs `["integer","null"]`) and nothing fails loudly |
@@ -520,8 +522,6 @@ relapse/addiction streak. The blast radius of a mistake here is not a bad UX rev
 ---
 
 ## Sources
-
-<!--AGENT:SOURCES-->
 
 **Speech**
 
@@ -580,3 +580,8 @@ relapse/addiction streak. The blast radius of a mistake here is not a bad UX rev
 - `parseCapture` outputs: temporary vitest probe against `src/lib/capture.ts`, deleted after running
 - Ollama `GET /api/tags` — installed model list and sizes
 - Ollama `POST /api/chat` with `format: <schema>`, `temperature: 0`, `think: false` — latencies and the required-vs-nullable fabrication test
+- Open Food Facts v2/v3 live responses, country product counts, and dump `Content-Length` — measured by the food research pass on 2026-09-11
+
+### Marked unverified
+
+Safari's on-device recognition claim · Moonshine latency for a 5 s clip and its current npm package name · the two conflicting quantised-decoder sizes for `whisper-tiny.en` · Chromium 444393111's status · the size of a filtered US+India OFF SQLite (50–150 MB, estimated, not built) · Search-a-licious rate limits · `@lmstudio/sdk`'s 13-month npm gap · licence/stars/dates for `LLMAIx` and `llm-document-extraction` · independent accuracy figures for the five paid photo-food APIs (none published)

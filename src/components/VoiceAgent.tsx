@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { useSpeechInput } from '../lib/speech'
-import { hush, say, speechOutSupported } from '../lib/voice/speak'
+import { hush, say } from '../lib/voice/speak'
 import { answer, CONFIRM_BELOW, understand, type VoiceIntent } from '../lib/voice/intent'
 import { ofArray, plan } from '../lib/ingest/plan'
 import { validateRecords } from '../lib/ingest/validate'
@@ -47,7 +47,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
     unit: data.settings.weightUnit,
   }
 
-  const { listening, start, stop, supported } = useSpeechInput((text) => {
+  const { listening, start, stop, supported, locality } = useSpeechInput((text) => {
     setHeard(text)
     setIntent(understand(text, ctx, date))
   })
@@ -238,10 +238,23 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
             </div>
           )}
 
+          {/* Say what actually happens to the audio.
+              "This app sends no audio anywhere" is true of the app and
+              misleading about the outcome: Chrome's default recogniser streams
+              the microphone to Google's speech service, and a private journal
+              that implies otherwise on the same screen has told a comfortable
+              half-truth. `useSpeechInput` asks the browser first and sets
+              `processLocally` where it can; this prints whichever answer came
+              back, including "I don't know". */}
           <p className="text-label text-fg-3">
-            {speechOutSupported()
-              ? 'Nothing is saved until you tap Save it. Speech is handled by your browser; this app sends no audio anywhere.'
-              : 'Nothing is saved until you tap Save it. This app sends no audio anywhere.'}
+            Nothing is saved until you tap Save it.{' '}
+            {!supported
+              ? 'Typing never leaves this device.'
+              : locality === 'on-device'
+                ? 'Your browser is transcribing on this device — the audio does not leave it.'
+                : locality === 'cloud'
+                  ? 'Your browser transcribes speech on its own servers, so the audio leaves this device. Type instead to keep it here.'
+                  : 'Your browser handles the speech, and does not say whether it does so locally; if that matters, type it instead.'}
           </p>
         </div>
       </DialogContent>

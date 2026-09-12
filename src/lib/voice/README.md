@@ -57,3 +57,14 @@ Two things make that safe rather than exciting: the model's output is untrusted
 input like any other file, and it still cannot write — it proposes. Keep it that
 way. The model choice, and whether it is worth the download at all, is
 `docs/voice/landscape.md`'s question.
+
+**When you build it, make every field of that schema nullable.** This was
+measured on this machine, not inferred: the same model and the same sentence,
+with only the schema changed. "log oatmeal and eggs for breakfast" under an
+all-**required** schema came back `games: 2, score: 1, kcal: 250, protein: 18`
+— four fabricated numbers, every one of them plausible, none of them said. The
+identical prompt under an all-**nullable** schema returned `null` everywhere.
+A required field is an instruction to produce a value, and a model that has no
+value will invent one rather than fail; the journal then holds a calorie count
+nobody ate. Nullable everywhere, and drop to the note fallback — a note is
+never wrong.
