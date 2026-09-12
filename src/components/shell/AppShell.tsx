@@ -7,6 +7,7 @@ import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
 import { ServerSync } from '../ServerSync'
 import { Toasts } from '../Toasts'
+import { VoiceAgent } from '../VoiceAgent'
 import { ShortcutHelp } from '../ShortcutHelp'
 import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
@@ -44,6 +45,7 @@ export function AppShell({
   children: ReactNode
 }) {
   const [quickOpen, setQuickOpen] = useState(false)
+  const [talkOpen, setTalkOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const { day } = useCursor()
   const isMobile = useDevice() === 'mobile'
@@ -86,6 +88,7 @@ export function AppShell({
         gates={gates}
         onNavigate={onNavigate}
         onQuickAdd={() => setQuickOpen(true)}
+        onTalk={() => setTalkOpen(true)}
         onCommand={onCommand}
       />
       {/* `overflow-x-clip`, NOT `overflow-x-hidden`. `hidden` on one axis forces
@@ -111,6 +114,7 @@ export function AppShell({
           <CaptureBar date={day} onAdded={() => setQuickOpen(false)} />
         </DialogContent>
       </Dialog>
+      <VoiceAgent open={talkOpen} onClose={() => setTalkOpen(false)} date={day} />
       <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       <MilestoneToast />
       <Toasts />

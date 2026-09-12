@@ -61,6 +61,20 @@ export interface CaptureCtx {
   habits: string[]
   /** Default weight unit; a kg/lb suffix in the text overrides it. */
   unit?: 'kg' | 'lb'
+  /**
+   * Clamp out-of-range metric values into the scale. **True by default, and
+   * false for anything that is not a person watching their own typing.**
+   *
+   * The capture bar shows what it parsed and lets you edit it before you
+   * submit, so clamping "mood 77" to 10 there is a helpful correction a human
+   * immediately sees. Down a microphone there is no such loop: dictation
+   * mis-hears numbers constantly ("seven" → "77"), and a clamp would turn a
+   * mis-hear into a confident, in-range, fabricated perfect day that nothing
+   * downstream can tell from a real one. The voice path passes `false` so the
+   * value survives to the import validator, which rejects rather than clamps —
+   * for exactly this reason. See `lib/ingest/validate.ts`.
+   */
+  clampValues?: boolean
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -248,19 +262,20 @@ function matchCardio(text: string): CardioCapture | null {
 }
 
 /** `mood 7`, `slept 8h`, `sleep 7`, `stress 3` — one or more in a line. */
-function matchMetric(text: string): MetricCapture | null {
+function matchMetric(text: string, clampValues = true): MetricCapture | null {
   const lc = text.toLowerCase()
   const mood = lc.match(/\bmood\s*(\d+(?:\.\d+)?)/)
   const sleep = lc.match(/\b(?:slept|sleep)\s*(\d+(?:\.\d+)?)\s*h?\b/)
   const stress = lc.match(/\bstress\s*(\d+(?:\.\d+)?)/)
   if (!mood && !sleep && !stress) return null
+  const keep = (n: number, lo: number, hi: number) => (clampValues ? clamp(n, lo, hi) : n)
   return {
     kind: 'metric',
     raw: text,
     confidence: 0.85,
-    mood: mood ? clamp(Number(mood[1]), 0, 10) : undefined,
-    sleep: sleep ? clamp(Number(sleep[1]), 0, 24) : undefined,
-    stress: stress ? clamp(Number(stress[1]), 0, 10) : undefined,
+    mood: mood ? keep(Number(mood[1]), 0, 10) : undefined,
+    sleep: sleep ? keep(Number(sleep[1]), 0, 24) : undefined,
+    stress: stress ? keep(Number(stress[1]), 0, 10) : undefined,
   }
 }
 
@@ -305,7 +320,7 @@ export function parseCapture(input: string, ctx: CaptureCtx): CaptureResult {
   return (
     matchGym(norm, ctx) ??
     matchCardio(norm) ??
-    matchMetric(norm) ??
+    matchMetric(norm, ctx.clampValues ?? true) ??
     matchHabit(norm, ctx.habits) ??
     matchBullet(text)
   )
