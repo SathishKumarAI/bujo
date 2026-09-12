@@ -187,14 +187,88 @@ export function onAccent(accentHex: string, target = 4.6): string {
  * would have meant threading it through, and a helper you have to refactor
  * around is a helper people write around instead.
  *
- * `bg` is the surface the chip sits on. It defaults to the page rather than the
- * card because the two differ by a step or two of luminance in every theme and
- * the page is the darker-on-light / lighter-on-dark of the pair, i.e. the
- * conservative one.
+ * `bg` is the surface the chip sits on. Passing it is always better than not;
+ * what the DEFAULT should be is the interesting part, and it changed.
+ *
+ * It used to be `base`, on the argument that the page is the conservative one
+ * of page-vs-card. That held only while the card was *darker* than the page,
+ * which it was in every dark theme — and which was itself the elevation bug the
+ * Layered Depth pass fixed. Chips now sit on `ink-2` (`surface0`) as often as
+ * on the page, and `surface0` is a rung ABOVE both, so an accent solved for
+ * `base` is solved against a ground darker than the one it lands on. Measured
+ * after the fix: twenty axe violations, every one a wash pill, none of them
+ * new markup — `#f38ba8` on `#4b3e51` at 4.3:1, which is `red@13%` over
+ * `surface0` rather than over `base`.
+ *
+ * There is no single conservative ground, because the answer flips with the
+ * theme's polarity: on a dark theme the *lighter* surface is harder for a
+ * light accent, on a light theme the *darker* one is. So solve for both and
+ * keep whichever demands more. Two `readableOn` walks instead of one, on a
+ * function that runs per chip render — cheap, and it cannot be got wrong by a
+ * call site that forgets to pass its surface.
  */
-export function washStyle(accentOrToken: string, bg = cat('base')): { background: string; color: string } {
+export function washStyle(accentOrToken: string, bg?: string): { background: string; color: string } {
   const accent = accentOrToken.startsWith('#') ? accentOrToken : cat(accentOrToken)
-  return { background: accent + '22', color: readableOn(accent, over(accent, bg, 0x22 / 255), 4.6) }
+  const alpha = 0x22 / 255
+  // Solved for BOTH plausible grounds when the call site does not say which.
+  const painted = (bg ? [bg] : [cat('base'), cat('surface0')]).map((g) => rgb(over(accent, g, alpha)))
+  const start = rgb(accent)
+  const passes = (c: [number, number, number]) => painted.every((p) => contrast(c, p) >= 4.6)
+  if (passes(start)) return { background: accent + '22', color: accent }
+  // Same walk as `readableOn`, with the pass test widened to every ground. The
+  // direction is decided by the darkest ground, so a light accent on a dark
+  // theme still walks toward white rather than splitting the difference.
+  const towardWhite = Math.min(...painted.map(relLum)) < 0.18
+  for (let step = 1; step <= 100; step++) {
+    const k = step / 100
+    const c = start.map((v) => (towardWhite ? v + (255 - v) * k : v * (1 - k))) as [number, number, number]
+    if (passes(c)) return { background: accent + '22', color: toHex(c) }
+  }
+  return { background: accent + '22', color: towardWhite ? '#ffffff' : '#000000' }
+}
+
+/**
+ * HABIT CHIP · the one place that decides what a habit chip looks like in each
+ * of its three states. DESIGN.md, "Colour discipline": **hue is identity, fill
+ * is state.**
+ *
+ * The chips used to get this backwards. Every one of them was a 1px outline in
+ * its own saturated hue at full strength, on a transparent ground — so nine
+ * habits shouted equally, an untouched chip looked exactly as urgent as a
+ * completed one, and the only difference between "clean" and "slipped" was
+ * which loud colour the outline happened to be. A row of them read as a
+ * colour-coded toolbar from 1997, which is not the information the strip
+ * exists to give.
+ *
+ * | State | Surface | Text | Border |
+ * |---|---|---|---|
+ * | `off`  | neutral, one rung up | secondary | none |
+ * | `on`   | the hue at a wash | the hue, tuned readable | none |
+ * | `slip` | the danger hue at a wash | danger, tuned readable | 1px in the hue |
+ *
+ * `slip` is the only state in the system where a border carries meaning, which
+ * is exactly why it still reads at a glance once nothing else has one. The
+ * consequence, and the point: an untouched day is grey and a completed one
+ * lights up.
+ *
+ * Text colour comes from `washStyle`, so it is measured against the wash the
+ * chip actually lands on rather than assumed — the mistake that cost this
+ * pairing AA in both light themes.
+ */
+export function habitChipStyle(
+  state: 'off' | 'on' | 'slip',
+  colorToken: string,
+  bg = cat('base'),
+): { background: string; color: string; borderColor: string } {
+  if (state === 'off') {
+    return {
+      background: cat('surface0'),
+      color: readableOn(cat('subtext0'), cat('surface0')),
+      borderColor: 'transparent',
+    }
+  }
+  const hue = state === 'slip' ? cat('red') : cat(colorToken)
+  return { ...washStyle(hue, bg), borderColor: state === 'slip' ? hue : 'transparent' }
 }
 
 /** Theme-aware recharts `<Tooltip contentStyle>`. A function (not a const) so it

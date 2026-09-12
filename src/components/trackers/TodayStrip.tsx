@@ -1,7 +1,7 @@
 import { Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { fromISODay } from '../../lib/date'
-import { cat } from '../../lib/colors'
+import { cat, habitChipStyle, over, readableOn } from '../../lib/colors'
 import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
 
@@ -48,21 +48,21 @@ export function TodayStrip({
             return (
               <span
                 key={h.id}
-                className="inline-flex items-center gap-1 rounded-none border px-1.5 py-0.5 text-label"
-                style={{ borderColor: on ? cat(h.color) : cat('surface1'), background: on ? cat(h.color) + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}
+                className="inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 text-label"
+                style={habitChipStyle(on ? 'on' : 'off', h.color)}
               >
                 <span className="pl-1">{h.emoji ?? '●'} {h.name}</span>
                 <button
                   onClick={() => onSetValue(today, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-none border border-line-strong text-fg-2 transition-colors hover:text-fg-1 disabled:opacity-30"
+                  className="grid h-5 w-5 place-items-center rounded-pill bg-ink-0/60 text-fg-2 transition-colors hover:bg-ink-0 hover:text-fg-1 disabled:opacity-30"
                 >−</button>
                 <span className="min-w-[2.5rem] text-center tabular-nums text-fg-2">{val}/{target}{type === 'timer' ? 'm' : ''}</span>
                 <button
                   onClick={() => onSetValue(today, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid h-5 w-5 place-items-center rounded-none border border-line-strong text-fg-2 transition-colors hover:text-fg-1"
+                  className="grid h-5 w-5 place-items-center rounded-pill bg-ink-0/60 text-fg-2 transition-colors hover:bg-ink-0 hover:text-fg-1"
                 >+</button>
               </span>
             )
@@ -71,17 +71,28 @@ export function TodayStrip({
             <button
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
-              className="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-label transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label transition-colors"
               title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
-              style={{
-                borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
-                background: on ? (h.avoid ? cat('red') : cat(h.color)) + '22' : 'transparent',
-                color: on ? cat('text') : cat('subtext0'),
-              }}
+              style={habitChipStyle(on ? (h.avoid ? 'slip' : 'on') : 'off', h.color)}
             >
               <span>{h.avoid ? <Icon as={Prohibit} size="sm" /> : (h.emoji ?? '●')}</span>
               {h.name}
-              {h.avoid && <span className="text-micro" style={{ color: on ? cat('red') : cat('green') }}>{on ? 'slip' : 'clean'}</span>}
+              {/* Sits ON the chip, so its background is the chip's — a wash of red
+                  when slipped, the neutral surface when clean. `readableOn`
+                  measures against that rather than assuming the page, which is
+                  the mistake that costs a 10px label AA in the light themes. */}
+              {h.avoid && (
+                <span
+                  className="text-micro"
+                  style={{
+                    color: on
+                      ? readableOn(cat('red'), over(cat('red'), cat('base'), 0x22 / 255), 4.6)
+                      : readableOn(cat('green'), cat('surface0'), 4.6),
+                  }}
+                >
+                  {on ? 'slip' : 'clean'}
+                </span>
+              )}
               {numeric && !h.avoid && <span className="text-fg-2">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
             </button>
           )

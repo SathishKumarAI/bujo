@@ -80,8 +80,8 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
             {streaks.map(({ h, streak, best }) => (
               <li key={h.id} className="col-span-3 grid grid-cols-subgrid items-center gap-x-2 text-body">
                 <span className="max-w-48 truncate text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
-                <div className="relative h-2.5 overflow-hidden rounded-none bg-ink-2">
-                  <div className="h-full rounded-none" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
+                <div className="relative h-2.5 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill" style={{ width: `${(streak / maxStreak) * 100}%`, background: cat(h.color) }} />
                   {/* All-time best marker (#290): a notch at the personal record. */}
                   {best > streak && (
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />

@@ -110,7 +110,7 @@ export function People() {
                 className="w-full border-0 bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:outline-none"
               />
             </div>
-            <Button variant="secondary" onClick={add} className="shrink-0 rounded-none">
+            <Button variant="secondary" onClick={add} className="shrink-0">
               <Icon as={UserPlus} size="sm" /> {busy ? '…' : 'Add'}
             </Button>
           </div>
@@ -211,7 +211,7 @@ export function People() {
             />
             <Button
               variant="secondary"
-              className="shrink-0 rounded-none"
+              className="shrink-0"
               onClick={() => {
                 if (!bName.trim()) return
                 addBirthday({ name: bName.trim(), month, day })

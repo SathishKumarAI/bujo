@@ -182,7 +182,7 @@ export function Trackers() {
                   disabled={habitExists(p.name)}
                   title={habitExists(p.name) ? 'Already added' : undefined}
                   onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
-                  className="rounded-none border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
+                  className="rounded-control border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
                 >
                   {p.emoji} {p.name}
                 </button>
@@ -203,7 +203,7 @@ export function Trackers() {
               {/* Named only by its options until COD-93 armed the a11y gate to
                   open folds. It sits inside a DisclosureRow, so axe had never
                   seen it — a screen reader announced "combo box" and nothing. */}
-              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} aria-label="Category for the new habit" className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} aria-label="Category for the new habit" className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               {/* The page's single primary button. */}
@@ -226,7 +226,7 @@ export function Trackers() {
           <div className="flex flex-wrap items-center justify-end gap-1.5">
             {!radial && layout === 'classic' && <Segmented value={viewMode} onChange={setViewMode} options={[{ value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />}
             {!radial && (
-              <div className="inline-flex overflow-hidden rounded-none border border-line-strong">
+              <div className="inline-flex overflow-hidden rounded-card border border-line-strong">
                 {([
                   { id: 'classic', icon: <Icon as={SquaresFour} size="sm" />, title: 'Grid' },
                   { id: 'cards', icon: <Icon as={GridFour} size="sm" />, title: 'Cards (heatmap grids)' },
@@ -249,13 +249,13 @@ export function Trackers() {
                 ))}
               </div>
             )}
-            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d rounded-none">{radial ? <Icon as={SquaresFour} size="sm" /> : <Icon as={RadioButton} size="sm" />}</Button>
-            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d rounded-none"><Icon as={FadersHorizontal} size="sm" /></Button>
+            <Button variant="secondary" onClick={() => setRadial((v) => !v)} aria-label="Toggle wheel view" title={radial ? 'Grid view' : 'Wheel view'} className="press-3d">{radial ? <Icon as={SquaresFour} size="sm" /> : <Icon as={RadioButton} size="sm" />}</Button>
+            <Button variant="secondary" onClick={() => setShowSettings((v) => !v)} aria-label="Tracker settings" title="Tracker settings" className="press-3d"><Icon as={FadersHorizontal} size="sm" /></Button>
           </div>
         }
       >
         {showSettings && (
-          <div className="mb-3 flex flex-wrap gap-4 rounded-none border border-line bg-ink-0 p-3 text-body">
+          <div className="mb-3 flex flex-wrap gap-4 rounded-card bg-ink-2 p-3 text-body">
             <Seg label="Density" options={[['comfortable', 'Comfortable'], ['compact', 'Compact']]} value={s.trackerDensity ?? 'comfortable'} onChange={(v) => setSettings({ trackerDensity: v as 'comfortable' | 'compact' })} />
             <Check label="Hide weekends" on={!!s.trackerHideWeekends} onClick={() => setSettings({ trackerHideWeekends: !s.trackerHideWeekends })} />
             <Check label="Show archived" on={!!s.trackerShowArchived} onClick={() => setSettings({ trackerShowArchived: !s.trackerShowArchived })} />
@@ -397,7 +397,7 @@ function ArchivedHabits() {
     <Card band title="Archived habits" subtitle="Out of the grid, restore any time" collapsible>
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
-          <li key={h.id} className="inline-flex items-center gap-2 rounded-none border border-line bg-ink-0 px-2.5 py-1 text-body">
+          <li key={h.id} className="inline-flex items-center gap-2 rounded-pill bg-ink-2 px-2.5 py-1 text-body">
             <span style={{ color: cat(h.color) }}>●</span>
             <span className="text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             <Button variant="ghost" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-label text-green">restore</Button>
@@ -429,8 +429,8 @@ function Seg({ label, options, value, onChange }: { label: string; options: [str
 function Check({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} className="flex items-end gap-2 text-body text-fg-1">
-      <span className={`relative h-5 w-9 rounded-none transition-colors ${on ? 'bg-mauve' : 'bg-ink-3'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-none bg-crust transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+      <span className={`relative h-5 w-9 rounded-control transition-colors ${on ? 'bg-mauve' : 'bg-ink-3'}`}>
+        <span className={`absolute top-0.5 h-4 w-4 rounded-control bg-crust transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>
       {label}
     </button>

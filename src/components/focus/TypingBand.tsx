@@ -96,7 +96,7 @@ export function TypingBand() {
                 ))}
               </select>
             </label>
-            <Button variant="secondary" onClick={log} className="w-full rounded-none">
+            <Button variant="secondary" onClick={log} className="w-full">
               Add session
             </Button>
           </div>

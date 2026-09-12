@@ -116,7 +116,7 @@ export function FocusTimer() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="rounded-none">
+          <Button variant="secondary" onClick={() => setRunning((r) => !r)} className="">
             {running ? (
               <>
                 <Icon as={Pause} size="sm" /> Pause
@@ -127,10 +127,10 @@ export function FocusTimer() {
               </>
             )}
           </Button>
-          <Button variant="secondary" onClick={skip} aria-label="Skip to next" className="rounded-none">
+          <Button variant="secondary" onClick={skip} aria-label="Skip to next" className="">
             <Icon as={ArrowLineRight} size="sm" />
           </Button>
-          <Button variant="secondary" onClick={reset} aria-label="Reset timer" className="rounded-none">
+          <Button variant="secondary" onClick={reset} aria-label="Reset timer" className="">
             <Icon as={ArrowCounterClockwise} size="sm" />
           </Button>
         </div>

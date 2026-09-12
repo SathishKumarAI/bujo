@@ -245,7 +245,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
 
       {/* Structured editor · pre-filled from the parse, tap to adjust, no typing. */}
       {draft && (
-        <div className="mt-2 rounded-card border border-line bg-ink-0 p-3">
+        <div className="mt-2 rounded-card bg-ink-2 p-3">
           <div className="flex flex-wrap items-end gap-3">
             {draft.kind === 'gym' && (
               <>

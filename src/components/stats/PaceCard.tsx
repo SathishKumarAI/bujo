@@ -58,7 +58,7 @@ function SpanRow({ label, span, fill }: { label: string; span: Span; fill: strin
       </div>
 
       <div
-        className="mt-1.5 flex h-2 w-full overflow-hidden rounded-none bg-ink-2"
+        className="mt-1.5 flex h-2 w-full overflow-hidden rounded-pill bg-ink-2"
         role="img"
         aria-label={`${label}: ${span.left} of ${span.total} days left, ${span.logged} of the ${spent} days so far logged`}
       >

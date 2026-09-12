@@ -137,7 +137,7 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="press-3d group/sec flex w-full items-center gap-3 rounded-card border border-line bg-card/60 px-4 py-3 text-left transition-colors hover:bg-card"
+        className="press-3d group/sec flex w-full items-center gap-3 rounded-card bg-ink-2/60 px-4 py-3 text-left transition-colors hover:bg-card"
       >
         {iconNode}
         <span className="min-w-0">

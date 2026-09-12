@@ -86,7 +86,7 @@ export function MoodAnalytics() {
 
 function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
   return (
-    <div className="rounded-none border border-line bg-ink-0 p-3">
+    <div className="rounded-card bg-ink-2 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
       <p className="flex items-center gap-1.5 text-fg-1">
         <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />

@@ -13,7 +13,7 @@ import { CoachCard } from '../components/CoachCard'
 import { habitTarget, habitValueOn, habitDoneOn, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/habitStats'
 import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
-import { cat } from '../lib/colors'
+import { cat, washStyle } from '../lib/colors'
 import { SURFACE_LABEL, surfaceUntouched } from '../lib/surface'
 import type { Surface } from '../lib/deepLink'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
@@ -308,19 +308,19 @@ function TodayCountHabits({ date }: { date: string }) {
                   onClick={() => setHabitValue(date, h.id, Math.max(0, val - step))}
                   disabled={val <= 0}
                   aria-label={`Decrease ${h.name}`}
-                  className="grid size-11 place-items-center rounded-none border border-line-strong text-fg-1 transition-colors hover:text-fg-1 disabled:opacity-30"
+                  className="grid size-11 place-items-center rounded-control bg-ink-2 text-fg-1 shadow-raise transition-colors hover:bg-ink-3 disabled:opacity-30"
                 >−</button>
                 <button
                   onClick={() => setHabitValue(date, h.id, val + step)}
                   aria-label={`Increase ${h.name}`}
-                  className="grid size-11 place-items-center rounded-none border text-fg-1 transition-colors"
-                  style={{ borderColor: cat(h.color), background: cat(h.color) + '22' }}
+                  className="grid size-11 place-items-center rounded-control shadow-raise transition-colors"
+                  style={washStyle(cat(h.color))}
                 >+</button>
                 {step > 1 && (
                   <button
                     onClick={() => setHabitValue(date, h.id, val + step)}
                     aria-label={`Add ${step} to ${h.name}`}
-                    className="min-h-11 rounded-none border border-line-strong px-2 text-caption text-fg-1 transition-colors hover:text-fg-1"
+                    className="min-h-11 rounded-pill border border-line-strong px-2 text-caption text-fg-1 transition-colors hover:text-fg-1"
                   >+{step}</button>
                 )}
               </div>
@@ -343,12 +343,12 @@ function AtRiskNudge({ date }: { date: string }) {
         {atRisk.map(({ habit, streak }) => (
           <li
             key={habit.id}
-            className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-label"
-            style={{ borderColor: cat('peach') + '66', background: cat('peach') + '12', color: cat('subtext1') }}
+            className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-label"
+            style={washStyle('peach')}
           >
-            <Icon as={Flame} size="sm" style={{ color: cat('peach') }} />
+            <Icon as={Flame} size="sm" />
             {habit.emoji ? `${habit.emoji} ` : ''}{habit.name}
-            <span style={{ color: cat('peach') }}>· keep your {streak}-day streak</span>
+            <span>· keep your {streak}-day streak</span>
           </li>
         ))}
       </ul>

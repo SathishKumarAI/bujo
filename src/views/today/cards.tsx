@@ -167,7 +167,7 @@ export function DayLogCard({ date, sticky = false }: { date: string; sticky?: bo
       {carryover.length > 0 && (
         <div className="mb-3 flex items-center justify-between gap-3 border-y border-line px-3 py-2 text-body">
           <span className="text-fg-1">{carryover.length} unfinished task{carryover.length === 1 ? '' : 's'} from yesterday</span>
-          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d shrink-0 rounded-none">Carry forward</Button>
+          <Button variant="secondary" onClick={() => carryover.forEach((e) => migrateEntry(e.id, date))} className="press-3d shrink-0">Carry forward</Button>
         </div>
       )}
       {dayEntries.length === 0 ? (
@@ -296,7 +296,7 @@ export function WellbeingCard({ date }: { date: string }) {
               variant="ghost"
               aria-pressed={metric?.fastBreak === kind}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === kind ? undefined : kind })}
-              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-none ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand' : ''}`}
             >
               <Icon as={glyph} size="sm" /> {label}
             </Button>

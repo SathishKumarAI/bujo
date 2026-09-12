@@ -87,7 +87,7 @@ export function LifetimeCards() {
         <Card band title="Personal records" subtitle="Your bests so far">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {records.map((r) => (
-              <div key={r.label} className="rounded-none border border-line bg-ink-0 p-3">
+              <div key={r.label} className="rounded-card bg-ink-2 p-3">
                 <p className="text-body font-medium text-fg-1">{r.value}</p>
                 <p className="text-label text-fg-2">{r.label}</p>
               </div>

@@ -12,8 +12,8 @@ export function RecoveryPortfolioCard({ portfolio }: { portfolio: Portfolio }) {
     <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={ListNumbers} size="md" className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding, ranked by current run">
       <ul className="space-y-1.5">
         {portfolio.map((p, i) => (
-          <li key={p.id} className="flex items-center gap-3 rounded-none border border-line bg-ink-0 px-3 py-2 text-body">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-none text-caption font-medium" style={i === 0 ? washStyle('mauve') : { background: cat('surface0'), color: cat('subtext0') }}>{i + 1}</span>
+          <li key={p.id} className="flex items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-control text-caption font-medium" style={i === 0 ? washStyle('mauve') : { background: cat('surface0'), color: cat('subtext0') }}>{i + 1}</span>
             <span className="min-w-0 flex-1 truncate font-medium text-fg-1">{p.name}</span>
             <span className="shrink-0 tabular-nums" style={{ color: p.resetToday ? cat('red') : cat('mauve') }}><span className="font-medium">{p.current}</span>d</span>
             <span className="hidden shrink-0 text-label text-fg-2 sm:inline">best {p.best}d</span>

@@ -20,24 +20,39 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
  */
 // eslint-disable-next-line react-refresh/only-export-components -- shared design tokens co-located with Card by design
 export const CARD = {
-  /** The card container (border, radius, background, padding, 3-D press, hover group). */
-  container: 'card-3d group/card min-w-0 rounded-card border border-line bg-card p-4 sm:rounded-card sm:p-5 lg:p-6',
   /**
-   * The Modernist band container — the same card, unboxed.
+   * The card container (radius, background, elevation, padding, hover group).
    *
-   * No radius, no fill, no border but the 2px rule that closes the section, and
-   * no horizontal padding, so its content aligns with every other band on the
-   * page. Opt-in per call site (`<Card band>`), because the redesign lands one
-   * page at a time and a half-converted page needs both looks to work.
+   * No `border` on the dark themes any more: the card is a rung above the page
+   * (`bg-card`, lifted in `index.css`) and `.card-3d` gives it an offset shadow
+   * plus a hairline of light along its top edge. A 1px grey line on top of that
+   * is a fourth boundary doing the job three already do, and it is what made a
+   * card and a table cell the same object. The two LIGHT themes still add the
+   * hairline — `:root[data-theme='latte'] .card-3d` — because near-white on
+   * white needs it.
+   */
+  container: 'card-3d group/card min-w-0 rounded-card bg-card p-4 sm:p-5 lg:p-6',
+  /**
+   * The band container — the same card, unboxed.
+   *
+   * No fill and no horizontal padding, so its content aligns with every other
+   * band on the page; a single hairline rule closes the section. Opt-in per
+   * call site (`<Card band>`), and still the right shape for a page whose
+   * sections are a vertical sequence rather than a set of objects — Stats and
+   * the page-contract views read better as bands than as a grid of boxes.
+   *
+   * The rule was 2px under the Modernist pass, where a heavy rule was the only
+   * thing doing the separating. With `container` carrying real elevation, 2px
+   * is a slab, and the two variants stop looking like the same component.
    *
    * A band is not a different component: same header, same collapse, same
    * enlarge, same accessible names. Only the chrome changes, which is the whole
    * point of `CARD` being one object.
    */
-  band: 'group/card min-w-0 border-b-2 border-line py-5 sm:py-6',
+  band: 'group/card min-w-0 border-b border-line py-5 sm:py-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
-  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-card p-6 shadow-2xl',
+  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
   modalChartHeight: '[&_[role=img]]:!h-[64vh]',
   /**
@@ -336,9 +351,9 @@ export function StatTile({
       onClick={onClick}
       title={title}
       className={cn(
-        'rounded-card border border-line bg-ink-0 text-center',
+        'rounded-card bg-ink-2 text-center',
         compact ? 'py-1.5' : 'py-3',
-        onClick && 'press-3d cursor-pointer transition-colors hover:border-line-strong',
+        onClick && 'cursor-pointer transition-colors hover:bg-ink-3',
         className,
       )}
     >
@@ -397,7 +412,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -406,7 +421,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -598,7 +613,7 @@ export function Segmented<T extends string | number>({
         const match = options.find((o) => String(o.value) === next)
         if (match) onChange(match.value)
       }}
-      className="inline-flex rounded-control border border-line p-0.5"
+      className="inline-flex rounded-control bg-ink-2 p-0.5"
     >
       {options.map((o) => {
         const selected = String(o.value) === String(value)
@@ -621,7 +636,7 @@ export function Segmented<T extends string | number>({
             // class list instead of overriding with the brand text colour.
             style={selected && !neutral ? { color: 'var(--brand-text)' } : undefined}
             className={cn(
-              'h-auto rounded-control px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium',
+              'h-auto rounded-[calc(var(--radius-control)-2px)] px-2.5 py-1 text-body text-fg-2 hover:bg-transparent hover:text-fg-1 data-[state=on]:font-medium data-[state=on]:shadow-raise',
               size === 'touch' && 'min-h-11 px-4',
               neutral ? 'data-[state=on]:bg-ink-3 data-[state=on]:text-fg-1' : 'data-[state=on]:bg-brand-wash',
             )}

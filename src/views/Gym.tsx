@@ -277,7 +277,7 @@ export function Gym() {
       {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
       {prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
-          <div className="celebrate-pop flex items-center gap-2 rounded-none border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
+          <div className="celebrate-pop flex items-center gap-2 rounded-card border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
             <AppIcon as={Trophy} size="lg" style={{ color: cat('yellow') }} />
             <p className="text-body font-medium text-fg-1">
               New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
@@ -566,7 +566,7 @@ function AnatomyCard({
           ? 'Muscles worked by this exercise'
           : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
-      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5 rounded-none"><AppIcon as={X} size="sm" /> Clear</Button>}
+      right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5"><AppIcon as={X} size="sm" /> Clear</Button>}
     >
       <div className="mb-3 space-y-2">
         <ExercisePicker
@@ -577,7 +577,7 @@ function AnatomyCard({
         />
         <div className="flex flex-wrap items-center gap-2">
           {focusEx && musclesForExercise(focusEx).length > 0 && (
-            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5 rounded-none">
+            <Button variant="secondary" onClick={() => { addRow(focusEx) }} className="press-3d inline-flex items-center gap-1.5">
               <AppIcon as={Plus} size="sm" /> Add to session
             </Button>
           )}
@@ -597,7 +597,7 @@ function AnatomyCard({
       <MuscleMap muscles={activeMuscles} />
 
       {focusEx && exerciseInfo(focusEx) && (
-        <div className="mt-3 space-y-1 rounded-none border border-line bg-ink-0 p-2.5 text-label">
+        <div className="mt-3 space-y-1 rounded-card bg-ink-2 p-2.5 text-label">
           <p className="text-fg-2"><span className="font-medium text-green">Cue:</span> {exerciseInfo(focusEx)!.cue}</p>
           <p className="text-fg-2"><span className="font-medium text-peach">Watch:</span> {exerciseInfo(focusEx)!.watch}</p>
         </div>

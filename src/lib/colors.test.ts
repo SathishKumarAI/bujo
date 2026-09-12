@@ -33,15 +33,27 @@ const composite = (fg: string, bg: string, alpha = 0x22 / 255) => {
  * point-of-use helper, which is the half a static token check cannot see.
  */
 describe('washStyle clears AA on every accent, in every theme', () => {
+  /**
+   * BOTH grounds, not just the page — this assertion checked `base` alone and
+   * therefore stayed green through the twenty axe violations the Layered Depth
+   * pass produced. Chips sit on `ink-2` (`surface0`) at least as often as on
+   * the page, and `surface0` is a rung above it in every theme, so an accent
+   * solved only for `base` is solved against a ground it does not land on.
+   *
+   * Which ground is *harder* flips with the theme's polarity, which is the
+   * reason to assert both rather than to pick one and call it conservative.
+   */
+  const GROUNDS = ['base', 'surface0']
   for (const theme of THEMES) {
     it(theme, () => {
       setActiveTheme(theme)
-      const page = cat('base')
       for (const name of ACCENTS) {
         const { background, color } = washStyle(name)
         expect(background).toBe(cat(name) + '22')
-        const painted = composite(cat(name), page)
-        expect(ratio(color, painted), `${theme}.${name} on its own wash`).toBeGreaterThanOrEqual(4.5)
+        for (const ground of GROUNDS) {
+          const painted = composite(cat(name), cat(ground))
+          expect(ratio(color, painted), `${theme}.${name} on its own wash over ${ground}`).toBeGreaterThanOrEqual(4.5)
+        }
       }
     })
   }

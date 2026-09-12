@@ -87,10 +87,34 @@
 :root {
   --background: var(--color-base);
   --foreground: var(--color-text);
-  --card: var(--color-mantle);
+  /* ELEVATION GOES UP. This aliased `--color-mantle`, which in all three dark
+     themes sits BELOW `--color-base` — mocha #141419 card on a #1a1a1f page.
+     Every card in the app therefore sank into the page instead of lifting off
+     it, and the only thing separating one from the other was a 1px line. That
+     single alias is most of why the app read as a flat 1990s document.
+
+     The light themes had it right by accident: latte's mantle is #ffffff on a
+     #f8f9fa page, dawn's is #fffdf8 on #faf3e7 — both a rung UP. They keep
+     inheriting this line unchanged; the three dark themes override it below.
+
+     Derived rather than hand-picked so a theme that retunes its base gets a
+     card that follows: the page colour lifted 5% toward its own foreground.
+     oklab, not srgb — srgb interpolation drags a mix through grey, which shows
+     worst on the two themes whose base is not neutral. */
+  --card: color-mix(in oklab, var(--color-base) 95%, var(--color-text) 5%);
   --card-foreground: var(--color-text);
-  --popover: var(--color-mantle);
+  --popover: color-mix(in oklab, var(--color-base) 92%, var(--color-text) 8%);
   --popover-foreground: var(--color-text);
+
+  /* ── Depth, per theme ─────────────────────────────────────────────────────
+     Consumed by `--shadow-raise/lift/float` in tokens.css. Dark themes get a
+     real black shadow plus a hairline of light along the top edge; the light
+     themes get a soft, tinted shadow and NO edge light, because a white line
+     on white is nothing and their hairline border already separates. */
+  --edge-light: color-mix(in srgb, var(--color-text) 9%, transparent);
+  --edge-light-hover: color-mix(in srgb, var(--color-text) 14%, transparent);
+  --shadow-ink: rgb(0 0 0 / 0.5);
+  --shadow-ink-strong: rgb(0 0 0 / 0.35);
   --primary: var(--color-mauve);
   --primary-foreground: var(--color-crust);
   --secondary: var(--color-surface0);
@@ -178,6 +202,20 @@ th {
   border-radius: 0.375rem;
 }
 
+/* The surfaces nobody draws. Text selection and the caret shipped with the
+   browser's own blue in all five themes — the two loudest pieces of chrome in
+   the app that belonged to no design system, and the ones you meet every time
+   you edit an entry. Selection is the accent at a wash rather than a solid
+   fill, so the words stay readable while they are selected (a solid accent
+   behind `--color-text` fails AA in latte and dawn). */
+::selection {
+  background: color-mix(in oklab, var(--primary) 30%, transparent);
+  color: var(--color-text);
+}
+:where(input, textarea, [contenteditable]) {
+  caret-color: var(--primary);
+}
+
 /* Thin Catppuccin scrollbars */
 * {
   scrollbar-width: thin;
@@ -245,25 +283,38 @@ th {
   }
 }
 
-/* ── 3D depth utilities ─────────────────────────────────────────────────── */
+/* ── 3D depth utilities ───────────────────────────────────────────────────
+   `.card-3d` is what makes a card a *material*: it reads one rung above the
+   page, is lit from above, and lifts when you point at it.
+
+   It used to hand-write its own three-layer shadow here and then re-hand-write
+   it four more times, once per theme. All five now resolve
+   `--shadow-raise` / `--shadow-lift`, whose ingredients (`--edge-light`,
+   `--shadow-ink`) are the per-theme part — so "what depth looks like" is one
+   decision and "how dark this theme's shadow is" is five values. The light
+   themes still add their hairline border below, because a soft shadow alone
+   does not separate white from near-white.
+
+   The 160° gradient wash is gone. It was there to fake a lit edge back when the
+   card had no elevation to speak of; with a real offset shadow and a 1px inset
+   highlight it only muddied the surface colour. */
 .card-3d {
-  background-image: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--color-surface0) 35%, transparent),
-    transparent 60%
-  );
-  box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--color-surface2) 50%, transparent) inset,
-    0 10px 22px -12px rgba(0, 0, 0, 0.55),
-    0 4px 8px -6px rgba(0, 0, 0, 0.4);
-  transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  box-shadow: var(--shadow-raise);
+  transition:
+    transform var(--dur-fast) var(--ease-rise),
+    box-shadow var(--dur-fast) var(--ease-rise);
 }
 .card-3d:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--color-surface2) 60%, transparent) inset,
-    0 18px 34px -14px rgba(0, 0, 0, 0.6),
-    0 6px 12px -6px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-lift);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-3d {
+    transition: none;
+  }
+  .card-3d:hover {
+    transform: none;
+  }
 }
 .press-3d {
   box-shadow: 0 3px 0 0 color-mix(in srgb, var(--color-crust) 80%, transparent);
@@ -330,30 +381,38 @@ body.handwriting textarea {
    spread with a center spine, stacked page edges, and a soft cover shadow. */
 .book {
   position: relative;
-  /* Square since the Modernist pass. The book metaphor is carried by the cover
-     shadow and the stacked page edges below, not by a rounded corner — and a
-     14px frame around a page of flat, square bands is the one radius left on
-     screen, which makes it read as an accident. */
-  border-radius: 0;
+  /* Square under the Modernist pass, on the argument that "a 14px frame around
+     a page of flat, square bands reads as an accident". That was true of that
+     world and is exactly backwards in this one: the bands are no longer flat or
+     square, and a hard 90° corner on the single largest element on screen is
+     now the accident.
+
+     It is a CARD radius, not its own value — this is the outermost thing you
+     read, so it takes the radius of the thing you read. The page edges in
+     `::after` follow it, or the stack would peel square corners off a rounded
+     cover. */
+  border-radius: var(--radius-card);
   background:
-    linear-gradient(var(--color-mantle), var(--color-mantle)) padding-box;
-  border: 1px solid var(--color-surface0);
-  box-shadow:
-    0 24px 60px -24px rgba(0, 0, 0, 0.7),
-    0 8px 20px -12px rgba(0, 0, 0, 0.5);
+    linear-gradient(var(--card), var(--card)) padding-box;
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-float);
 }
 /* Stacked page edges on the right + bottom (the "thickness" of the book). */
 .book::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   pointer-events: none;
+  /* Follows `--card` and `--color-line` now that the cover does. These were
+     `--color-mantle`, which stopped being the cover's colour the moment
+     elevation was turned the right way up — the stack would have painted the
+     old, darker surface beside the new one. */
   box-shadow:
-    3px 3px 0 -1px var(--color-mantle),
-    4px 4px 0 -1px var(--color-surface0),
-    7px 7px 0 -1px var(--color-mantle),
-    8px 8px 0 -1px var(--color-surface0);
+    3px 3px 0 -1px var(--card),
+    4px 4px 0 -1px var(--color-line),
+    7px 7px 0 -1px var(--card),
+    8px 8px 0 -1px var(--color-line);
 }
 /* RETIRED · the centre spine (`.book::before`), removed 2026-08-03.
    A 28px vertical crease down the middle of the spread, behind the content. It
@@ -614,6 +673,20 @@ body.handwriting textarea {
   --border: var(--border-hairline);
   --input: var(--border-hairline);
 
+  /* The light themes already had elevation the right way up — pure white paper
+     on a grey page — so they take the mantle straight rather than the derived
+     lift in `:root`, which is written for a dark ground and would walk a light
+     card DOWN toward its dark ink. */
+  --card: var(--color-mantle);
+  --popover: var(--color-mantle);
+  /* No edge light on white; the hairline border separates. Shadow is tinted
+     toward the theme's own ink — a black drop shadow on near-white reads as
+     dirt rather than as depth. */
+  --edge-light: transparent;
+  --edge-light-hover: transparent;
+  --shadow-ink: rgb(60 64 67 / 0.16);
+  --shadow-ink-strong: rgb(60 64 67 / 0.12);
+
   /* Light themes invert the problem: overlay2 (#9aa0a6) is a mid grey that
      fails badly on near-white (2.50:1). The third tier has to go *darker*, and
      the usable band between subtext0 (5.74:1) and the 4.5:1 floor is narrow —
@@ -628,24 +701,20 @@ body.handwriting textarea {
      drop it below AA. */
   --brand-text: #5733db;
   /* `#d93025` on the danger wash is 3.87:1, and 3.53:1 on hover. Darkened to
-     5.32:1 / 4.85:1 — still Google red, now legible on its own tint. */
-  --danger-text: #b2271e;
+     5.32:1 / 4.85:1 — still Google red, now legible on its own tint.
+     Re-measured across page AND card (latte's card is pure white and did not
+     move in the Layered Depth pass): the old value sat at exactly 4.50 on the
+     hover wash over white, i.e. zero headroom and rounding-dependent. This was
+     failing before the redesign and no gate was pointed at it. Worst 4.63:1. */
+  --danger-text: #ae261d;
 }
 
-/* Light mode: soft, low elevation. The dark theme's heavy black drop-shadows
-   read wrong on white, so cards get a hairline border + a faint, diffuse
-   shadow, roughly Material elevation 1, instead. */
+/* Light mode: the shadow itself now comes from `--shadow-raise` with latte's
+   own tinted `--shadow-ink` and no edge light, so only the hairline is left to
+   state here — a soft shadow alone cannot separate white paper from a
+   near-white page. */
 :root[data-theme='latte'] .card-3d {
-  background-image: none;
   border: 1px solid var(--border-hairline);
-  box-shadow:
-    0 1px 2px 0 rgba(60, 64, 67, 0.08),
-    0 1px 3px 1px rgba(60, 64, 67, 0.05);
-}
-:root[data-theme='latte'] .card-3d:hover {
-  box-shadow:
-    0 1px 3px 0 rgba(60, 64, 67, 0.12),
-    0 4px 8px 3px rgba(60, 64, 67, 0.08);
 }
 :root[data-theme='latte'] .press-3d {
   box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.12);
@@ -716,11 +785,15 @@ body.handwriting textarea {
 :root[data-theme='neon'] .bg-primary {
   box-shadow: 0 0 16px -2px color-mix(in srgb, var(--color-mauve) 65%, transparent);
 }
-:root[data-theme='neon'] .card-3d {
-  box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--color-mauve) 18%, transparent) inset,
-    0 10px 30px -16px color-mix(in srgb, var(--color-blue) 35%, transparent),
-    0 4px 10px -6px rgba(0, 0, 0, 0.6);
+/* Neon keeps its coloured bloom, but as the theme's shadow *ingredients* rather
+   than as a fourth hand-written shadow stack: the edge light picks up the
+   accent, the cast picks up the blue. `--shadow-raise` still decides the
+   geometry, so neon's cards lift by the same amount as everyone else's. */
+:root[data-theme='neon'] {
+  --edge-light: color-mix(in srgb, var(--color-mauve) 20%, transparent);
+  --edge-light-hover: color-mix(in srgb, var(--color-mauve) 32%, transparent);
+  --shadow-ink: color-mix(in srgb, var(--color-blue) 30%, rgb(0 0 0 / 0.55));
+  --shadow-ink-strong: rgb(0 0 0 / 0.6);
 }
 
 /* "VS Code" dark theme (data-theme="vscode") — Dark Modern editor neutrals tuned
@@ -764,21 +837,28 @@ body.handwriting textarea {
   /* overlay2 — 6.08:1 worst case. */
   --fg-3: var(--color-overlay2);
 
-  /* Accent-as-text. The raw keyword purple passes on the hover wash at 4.67:1,
-     but with 0.17 of headroom — one surface tweak from failing silently. A
-     step lighter holds 5.29:1 there and stays the VS Code keyword colour. */
-  --brand-text: #cd92c8;
-  /* `#f14c4c` on the danger wash is 4.28:1. Lightened to 5.29:1 / 4.87:1. */
-  --danger-text: #f46d6d;
+  /* Accent-as-text, re-solved against the LIFTED card.
+     `#cd92c8` was tuned when `--card` was `--color-mantle` (#181818, below the
+     page). Turning elevation the right way up put the card at ~#282828, which
+     lightens the wash painted on top of it and dropped this pairing to 4.31:1
+     — the "one surface tweak from failing silently" the old note predicted,
+     arriving. Solved across all four grounds now (page / card × rest / hover),
+     worst 4.63:1, still the VS Code keyword purple. */
+  --brand-text: #d19acc;
+  /* Same correction, and this one was the worst in the app at 3.67:1 on the
+     hover wash over the lifted card. Worst case 4.66:1. */
+  --danger-text: #f68d8d;
 }
-/* VS Code: flatter cards — thin border + minimal shadow, like editor panels. */
+/* VS Code stays the flattest theme on purpose — editor panels, not cards — so
+   it keeps its hairline and damps the shared shadow rather than replacing it. */
+:root[data-theme='vscode'] {
+  --edge-light: color-mix(in srgb, var(--color-text) 6%, transparent);
+  --edge-light-hover: color-mix(in srgb, var(--color-text) 9%, transparent);
+  --shadow-ink: rgb(0 0 0 / 0.42);
+  --shadow-ink-strong: rgb(0 0 0 / 0.3);
+}
 :root[data-theme='vscode'] .card-3d {
-  background-image: none;
   border: 1px solid var(--border-hairline);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-}
-:root[data-theme='vscode'] .card-3d:hover {
-  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.5);
 }
 
 /* "Dawn" warm light theme (data-theme="dawn") — cozy cream paper, warm-brown ink,
@@ -819,6 +899,15 @@ body.handwriting textarea {
   --border: var(--border-hairline);
   --input: var(--border-hairline);
 
+  /* Same as latte: cream paper is already a rung above the page, and the
+     shadow is warmed to match rather than left black. */
+  --card: var(--color-mantle);
+  --popover: var(--color-mantle);
+  --edge-light: transparent;
+  --edge-light-hover: transparent;
+  --shadow-ink: rgb(120 90 50 / 0.20);
+  --shadow-ink-strong: rgb(120 90 50 / 0.14);
+
   /* Dawn is the one theme where the third tier does not fit. Its cream surfaces
      (#faf3e7 page, #fffdf8 card) leave a band between subtext0 (5.31:1) and the
      4.5:1 floor barely one step wide — the best warm candidate, #7a6e5d, lands
@@ -831,22 +920,16 @@ body.handwriting textarea {
      own wash is 4.07:1, and 3.72:1 on hover. Darkened to hold 5.49:1 / 5.02:1
      while staying an amber rather than sliding into brown. */
   --brand-text: #964307;
-  /* `#dc2626` on the danger wash is 3.80:1, the worst in the app. 5.35:1 now. */
-  --danger-text: #b21d1d;
+  /* `#dc2626` on the danger wash is 3.80:1, the worst in the app. 5.35:1 on
+     the page — but 4.41:1 on the hover wash over dawn's cream card, which the
+     old measurement never looked at. Also pre-existing, also invisible to
+     every gate. Worst 4.61:1 now. */
+  --danger-text: #ad1c1c;
 }
-/* Dawn (light): soft, low-elevation cards like Latte — heavy dark shadows read
-   wrong on cream, so use a hairline border + faint warm shadow. */
+/* Dawn (light): the warm shadow is `--shadow-ink` in dawn's own block now; only
+   the hairline is left, for the same reason as latte. */
 :root[data-theme='dawn'] .card-3d {
-  background-image: none;
   border: 1px solid var(--border-hairline);
-  box-shadow:
-    0 1px 2px 0 rgba(120, 90, 50, 0.10),
-    0 1px 3px 1px rgba(120, 90, 50, 0.06);
-}
-:root[data-theme='dawn'] .card-3d:hover {
-  box-shadow:
-    0 1px 3px 0 rgba(120, 90, 50, 0.15),
-    0 4px 8px 3px rgba(120, 90, 50, 0.10);
 }
 :root[data-theme='dawn'] .press-3d {
   box-shadow: 0 1px 2px 0 rgba(120, 90, 50, 0.15);

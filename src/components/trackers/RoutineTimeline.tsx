@@ -72,12 +72,12 @@ export function RoutineTimeline({
                 const note = data.habitNotes?.[today]?.[h.id] ?? ''
                 const open = noting === h.id
                 return (
-                  <li key={h.id} className={`rounded-none border border-line bg-ink-0 p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
+                  <li key={h.id} className={`rounded-card bg-ink-2 p-2.5 ${dueToday ? '' : 'opacity-50'}`}>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
                         aria-label={`Mark ${h.name}`}
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-none border text-body transition-colors"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-control border text-body transition-colors"
                         style={{
                           borderColor: on ? (h.avoid ? cat('red') : cat(h.color)) : cat('surface1'),
                           background: on ? (h.avoid ? cat('red') : cat(h.color)) + '33' : 'transparent',
@@ -102,7 +102,7 @@ export function RoutineTimeline({
                         onBlur={() => setNoting(null)}
                         autoFocus={open}
                         placeholder="Jot a note for today…"
-                        className="mt-2 w-full rounded-none border border-input bg-card px-2 py-1 text-label text-foreground"
+                        className="mt-2 w-full rounded-control border border-transparent bg-ink-2 px-2 py-1 text-label text-foreground"
                       />
                     )}
                   </li>

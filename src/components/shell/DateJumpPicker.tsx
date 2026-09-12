@@ -34,7 +34,7 @@ export function DateJumpPicker({
             value={day}
             onChange={(e) => { if (e.target.value) { onPickDay(e.target.value); onClose() } }}
             aria-label="Pick a day"
-            className="mb-2 w-full rounded-control border border-input bg-background px-2 py-1.5 text-body text-fg-1"
+            className="mb-2 w-full rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
           />
         )}
         <div className="mb-2 flex items-center justify-between">

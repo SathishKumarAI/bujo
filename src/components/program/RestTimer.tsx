@@ -61,7 +61,7 @@ export function RestTimer({ seconds, exercise, onDismiss }: { seconds: number; e
     // is a pair the app has already solved against this background in all five
     // themes; a bespoke surface would have to be re-solved, and `npm run a11y`
     // cannot check it — the timer is not in the DOM until you tick something.
-    <div className="rounded-card border border-line bg-ink-0 p-3" style={over ? { borderColor: cat('green') } : undefined}>
+    <div className="rounded-card bg-ink-2 p-3" style={over ? { borderColor: cat('green') } : undefined}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-label text-fg-2">{over ? 'Rest over' : 'Resting'}</span>
         <span className="min-w-0 truncate text-label text-fg-2">{exercise}</span>

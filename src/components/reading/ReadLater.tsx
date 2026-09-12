@@ -53,7 +53,7 @@ export function ReadLater() {
           aria-label="Link title"
           className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
         />
-        <Button variant="secondary" onClick={add} className="shrink-0 rounded-none">
+        <Button variant="secondary" onClick={add} className="shrink-0">
           <Icon as={Plus} size="sm" /> Save
         </Button>
       </div>
