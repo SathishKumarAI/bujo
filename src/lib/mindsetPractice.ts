@@ -13,6 +13,7 @@
 
 import { MINDSET_CATEGORIES, MINDSET_LIBRARY } from './mindset'
 import { addDays, todayISO } from './date'
+import type { DailyMetric } from './types'
 
 /** `principleId → ISO days practised`. Matches `JournalData.mindsetPractice`. */
 export type PracticeLog = Record<string, string[]>
@@ -49,6 +50,71 @@ export function currentStreak(log: PracticeLog = {}, today = todayISO()): number
     cursor = addDays(cursor, -1)
   }
   return n
+}
+
+/** Distinct days with at least one mark — the review strip's "Days practised". */
+export function daysWithMarks(log: PracticeLog = {}, since?: string): number {
+  const days = [...marksByDay(log).keys()]
+  return since ? days.filter((d) => d >= since).length : days.length
+}
+
+export interface MoodContrast {
+  /** Mean 0–10 mood on days something was practised. `null` = nothing to average. */
+  practised: number | null
+  /** Mean 0–10 mood on the days in the window that were not. */
+  other: number | null
+  practisedDays: number
+  otherDays: number
+}
+
+/**
+ * Mood on the days you practised, against the days you did not.
+ *
+ * The one thing this page can say that a paper journal cannot, and the product
+ * promise ("charts that overlay your mood against your sleep") pointed at the
+ * data the page already owns. It is a contrast, not a claim — two means over a
+ * trailing window, with the day counts beside them so a two-day sample cannot
+ * be read as a finding.
+ *
+ * **Both sides return `null` when there is nothing to average.** CLAUDE.md
+ * records `count ? sum / count : 0` shipping in `monthlyCompletion` and
+ * `weekdayConsistency`, where it made "no data" indistinguishable from "you
+ * scored zero" and opened a trend with `0% · 0%` for months that never
+ * happened. Zero is a real mood here — the scale starts there — so the lie
+ * would be worse, not better.
+ *
+ * Only days carrying a mood count on either side: a day with no metric row is
+ * not evidence for or against, and folding it into the denominator would drag
+ * whichever side had more untouched days toward zero.
+ */
+export function moodContrast(
+  log: PracticeLog = {},
+  metrics: DailyMetric[] = [],
+  days = 90,
+  today = todayISO(),
+): MoodContrast {
+  const start = addDays(today, -(days - 1))
+  const marked = marksByDay(log)
+  let practisedSum = 0
+  let practisedN = 0
+  let otherSum = 0
+  let otherN = 0
+  for (const m of metrics) {
+    if (m.mood == null || m.date < start || m.date > today) continue
+    if (marked.has(m.date)) {
+      practisedSum += m.mood
+      practisedN++
+    } else {
+      otherSum += m.mood
+      otherN++
+    }
+  }
+  return {
+    practised: practisedN ? practisedSum / practisedN : null,
+    other: otherN ? otherSum / otherN : null,
+    practisedDays: practisedN,
+    otherDays: otherN,
+  }
 }
 
 /** Total marks for one principle — the leading band's "Active N days". */
