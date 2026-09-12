@@ -23,17 +23,21 @@
  * adapter does not have to rewrite it; an array caller wraps with `ofArray`.
  */
 import type {
-  BodyMetric, CyclePoint, DailyMetric, Entry, JournalData, Workout,
+  BodyMetric, CyclePoint, DailyMetric, Entry, JournalData, PickleballSession, Workout,
 } from '../types'
 import { uid } from '../storage'
 import type { RejectedRecord } from './validate'
 import {
   srcKey,
   type BodyRecord, type CycleRecord, type EntryRecord, type HabitRecord,
-  type ImportRecord, type ImportSource, type MetricRecord, type WorkoutRecord,
+  type ImportRecord, type ImportSource, type MetricRecord, type PickleballRecord,
+  type WorkoutRecord,
 } from './envelope'
 
 export const KG_PER_LB = 0.453_592_37
+
+/** Provenance prefix for a pickleball session — see `srcKey` for workouts. */
+const SRC_PICKLE = 'pb'
 
 /**
  * Fields no part of the UI can write, so an incoming value has no human value
@@ -112,6 +116,7 @@ export async function plan(
   next.bodyMetrics ??= []
   next.cycle ??= []
   next.entries ??= []
+  next.pickleball ??= []
   next.habitLog ??= {}
   next.habitValues ??= {}
 
@@ -122,6 +127,9 @@ export async function plan(
     next.workouts.filter((w) => w.src).map((w) => [w.src as string, w]),
   )
   const entryKeys = new Set(next.entries.map((e) => `${e.date}|${e.text}`))
+  const pickleBySrc = new Map(
+    (next.pickleball ?? []).filter((p) => p.src).map((p) => [p.src as string, p]),
+  )
   const habitById = new Map(next.habits.map((h) => [h.id, h]))
   const habitByName = new Map(next.habits.map((h) => [h.name.toLowerCase(), h]))
   let missingHabits = 0
@@ -251,6 +259,47 @@ export async function plan(
           tags: [],
           createdAt: new Date().toISOString(),
         } as Entry)
+        counts.added++
+        break
+      }
+
+      case 'pickleball': {
+        const s = r as PickleballRecord
+        // Append collection, so it needs provenance for the same reason
+        // `workouts` does. Keyed on the day plus the format: a second session
+        // the same day in the same format is the ambiguous case, and merging it
+        // into the first is better than silently logging a phantom third on the
+        // next re-import.
+        const key = `${SRC_PICKLE}:${s.date}:${s.format ?? 'doubles'}`
+        const existing = pickleBySrc.get(key)
+        const fields = {
+          format: s.format ?? 'doubles',
+          gamesWon: s.gamesWon,
+          gamesLost: s.gamesLost,
+          pointsFor: s.pointsFor,
+          pointsAgainst: s.pointsAgainst,
+          durationMin: s.durationMin,
+          partner: s.partner,
+          notes: s.notes,
+        }
+        const defined = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined))
+        if (existing) {
+          const before = JSON.stringify(existing)
+          Object.assign(existing, defined)
+          if (JSON.stringify(existing) === before) counts.unchanged++
+          else counts.updated++
+          break
+        }
+        const row = {
+          id: uid('pb'),
+          date: s.date,
+          src: key,
+          format: s.format ?? 'doubles',
+          gamesWon: s.gamesWon ?? 0,
+          gamesLost: s.gamesLost ?? 0,
+          ...defined,
+        } as PickleballSession
+        next.pickleball!.push(row)
         counts.added++
         break
       }

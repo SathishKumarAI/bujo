@@ -115,6 +115,17 @@ export type CycleRecord = { kind: 'cycle' } & RecordBase & {
   note?: string
 }
 
+export type PickleballRecord = { kind: 'pickleball' } & RecordBase & {
+  format?: 'singles' | 'doubles'
+  gamesWon?: number
+  gamesLost?: number
+  pointsFor?: number
+  pointsAgainst?: number
+  durationMin?: number
+  partner?: string
+  notes?: string
+}
+
 export type ImportRecord =
   | MetricRecord
   | WorkoutRecord
@@ -122,6 +133,7 @@ export type ImportRecord =
   | HabitRecord
   | EntryRecord
   | CycleRecord
+  | PickleballRecord
 
 export type RecordKind = ImportRecord['kind']
 
@@ -132,7 +144,7 @@ export type RecordKind = ImportRecord['kind']
  * `conflict.ts` learned this the expensive way: `ID_ARRAYS` was a hand-written
  * list against a growing type, and `typingSessions` fell out of it silently.
  */
-export const RECORD_KINDS = ['metric', 'workout', 'body', 'habit', 'entry', 'cycle'] as const
+export const RECORD_KINDS = ['metric', 'workout', 'body', 'habit', 'entry', 'cycle', 'pickleball'] as const
 
 /**
  * A workout's provenance key: `<code>:<instant or day>`.

@@ -441,6 +441,13 @@ export interface Settings {
    *  are held at their natural size via the `.fig-fixed` counter-scale. */
   fontScale?: number
   tempUnit: TempUnit
+  /**
+   * Speak the assistant's replies aloud. Default on, `false` to mute.
+   *
+   * Optional rather than required so an existing journal needs no migration —
+   * `!== false` is the read, which makes "absent" mean "on".
+   */
+  voiceReplies?: boolean
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit
   /** Distance unit for cardio — km (metric) or mi (US). */
@@ -590,6 +597,8 @@ export interface PickleballSession {
   pointsAgainst?: number
   /** Scoring used: 11/15/21 side-out, or rally-to-21. */
   scoring?: '11' | '15' | '21' | 'rally21'
+  /** Provenance key for an imported/dictated row — see `Workout.src`. */
+  src?: string
 }
 
 /** Bracket/league format for a competitive pickleball event. */

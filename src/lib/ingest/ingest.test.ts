@@ -253,6 +253,7 @@ describe('plan', () => {
       habit: { kind: 'habit', date: '2026-09-01', habit: 'h1' },
       entry: { kind: 'entry', date: '2026-09-01', text: 'x' },
       cycle: { kind: 'cycle', date: '2026-09-01', flags: ['period'] },
+      pickleball: { kind: 'pickleball', date: '2026-09-01', gamesWon: 2, pointsFor: 68 },
     }
     const journal = journalWith((j) => {
       j.habits = [{ id: 'h1', name: 'Read', category: 'wellness', color: 'mauve', startedOn: '2026-01-01' }]
