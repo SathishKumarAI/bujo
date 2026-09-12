@@ -94,10 +94,10 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
             <input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className={field} />
           </label>
           <div className="flex gap-3">
-            <Button variant="primary" onClick={save} className="flex-1 rounded-none">
+            <Button variant="primary" onClick={save} className="flex-1">
               Save
             </Button>
-            <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1 rounded-none">
+            <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">
               Cancel
             </Button>
           </div>

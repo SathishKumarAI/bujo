@@ -127,7 +127,7 @@ export function SessionLogger({
               key={s.id}
               onClick={() => setSplit(s.id)}
               aria-pressed={split === s.id}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-none px-3 py-1.5 text-body"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 py-1.5 text-body"
               style={{
                 background: split === s.id ? cat(s.color) : cat('surface0'),
                 color: split === s.id ? onAccent(cat(s.color)) : cat('subtext1'),
@@ -176,7 +176,7 @@ export function SessionLogger({
           // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
           const complete = !!(row.weight.trim() && row.reps.trim())
           return (
-            <div key={i} className={`-ml-2 rounded-none border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
+            <div key={i} className={`-ml-2 rounded-control border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
               <div className={`${ROW_GRID} items-center`}>
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
@@ -184,7 +184,7 @@ export function SessionLogger({
                   aria-label="Focus muscle map on this exercise"
                   aria-pressed={focused}
                   title="Show this exercise on the muscle map"
-                  className={`${AT.focus} ${TOUCH} grid place-items-center rounded-none disabled:opacity-30 sm:w-7`}
+                  className={`${AT.focus} ${TOUCH} grid place-items-center rounded-control disabled:opacity-30 sm:w-7`}
                   style={{ background: focused ? cat('mauve') : cat('surface0'), color: focused ? onAccent(cat('mauve')) : cat('subtext0') }}
                 >
                   <AppIcon as={Crosshair} size="sm" />
@@ -203,7 +203,7 @@ export function SessionLogger({
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} aria-label="Weight" className={`${AT.weight} h-11 py-1.5 sm:h-auto`} />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" aria-label="Reps" className={`${AT.reps} h-11 py-1.5 sm:h-auto`} />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="RPE" aria-label="RPE, effort 1 to 10" title="RPE · effort 1–10" className={`${AT.rpe} h-11 py-1.5 sm:h-auto`} />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-none text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-control text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
                 <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className={`${AT.remove} h-11 w-11 text-fg-2 hover:text-red sm:h-7 sm:w-7`}><AppIcon as={X} size="sm" /></Button>
               </div>
               {(prev || oneRM || row.exercise.trim()) && (
@@ -244,7 +244,7 @@ export function SessionLogger({
                           })
                         }
                         title={`Add ${r.weight}${unit} warm-up set`}
-                        className="rounded-none px-2 py-0.5 transition-colors hover:text-fg-1"
+                        className="rounded-pill px-2 py-0.5 transition-colors hover:text-fg-1"
                         style={washStyle('blue')}
                       >
                         {r.pct === 0 ? 'bar' : `${r.pct}%`} · {r.weight}{unit}
@@ -270,7 +270,7 @@ export function SessionLogger({
           "Add set" and "Save routine" are not why anyone opened this page. */}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button variant="primary" onClick={onFinish} className="press-3d">Finish session</Button>
-        <Button variant="secondary" onClick={() => addRow()} className="press-3d inline-flex items-center gap-1.5 rounded-none">
+        <Button variant="secondary" onClick={() => addRow()} className="press-3d inline-flex items-center gap-1.5">
           <AppIcon as={Plus} size="sm" /> Add set
         </Button>
       </div>

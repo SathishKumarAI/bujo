@@ -66,8 +66,8 @@ export function HabitAnalytics() {
           ) : (
             <>
               <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-none bg-ink-2">
-                <div className="h-full rounded-none" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-pill bg-ink-2">
+                <div className="h-full rounded-pill" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
               </div>
               <p className="mt-2 text-label text-fg-2">Recent days count more, so this tracks your momentum — not just a flat average.</p>
             </>

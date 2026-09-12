@@ -56,7 +56,7 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
             aria-label="Author"
             className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
           />
-          <Button variant="primary" onClick={add} className="shrink-0 rounded-none">
+          <Button variant="primary" onClick={add} className="shrink-0">
             <Icon as={Plus} size="sm" /> Add to shelf
           </Button>
         </div>

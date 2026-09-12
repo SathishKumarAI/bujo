@@ -43,7 +43,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div ref={trap} className="relative w-full max-w-md rounded-card border border-line bg-card p-6 shadow-2xl">
+      <div ref={trap} className="relative w-full max-w-md rounded-card bg-ink-2 p-6 shadow-2xl">
         <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-fg-2 hover:text-fg-1"><AppIcon as={X} size="md" /></button>
         <div className="mb-3 flex items-baseline gap-2">
           <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>

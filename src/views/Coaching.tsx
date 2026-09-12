@@ -105,14 +105,14 @@ export function Coaching() {
             help="Each week builds on the last. The third-shot drop (wk 6–7) is the gate to 3.5; resets (wk 8) gate 4.0. Open a week for what to do, the drills, and the goal."
           >
             {!start ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-none border border-dashed border-line-strong p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-line-strong p-4">
                 <p className="text-body text-fg-2">Commit to 12 weeks: fundamentals → dinks → third-shot drop → resets → hands → strategy → match play. Drill more than you play.</p>
                 <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
               </div>
             ) : (
               <div className="mb-3">
-                <div className="h-2.5 overflow-hidden rounded-none bg-ink-2">
-                  <div className="h-full rounded-none transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
+                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
+                  <div className="h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
                 </div>
               </div>
             )}
@@ -122,10 +122,10 @@ export function Coaching() {
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
                 return (
-                  <li key={w.week} className={`rounded-none border transition-colors ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0'}`}>
+                  <li key={w.week} className={`rounded-control border transition-colors ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0'}`}>
                     <div className="flex items-start gap-2.5 p-2.5">
                       <button onClick={() => toggleWeek(w.week)} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
-                        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-none text-caption font-medium"
+                        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-control text-caption font-medium"
                         // The untaken weeks are a surface tone, not a brand fill, so
                         // crust-on-surface1 was the failing pair — those get `text`.
                         style={
@@ -152,7 +152,7 @@ export function Coaching() {
                             {w.drills.map((d) => <li key={d} className="flex gap-1.5 text-label text-fg-2"><Icon as={Barbell} size="sm" className="mt-0.5 shrink-0 text-green" /> {d}</li>)}
                           </ul>
                         </div>
-                        <p className="inline-flex items-center gap-1.5 rounded-none bg-secondary/50 p-2 text-label" style={{ color: cat('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
+                        <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: cat('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
                       </div>
                     )}
                   </li>
@@ -180,7 +180,7 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
       help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day."
     >
       <p className="text-body text-fg-1">{slot.detail}</p>
-      <details className="mt-3 rounded-none border border-line bg-ink-0 p-3">
+      <details className="mt-3 rounded-card bg-ink-2 p-3">
         <summary className="cursor-pointer text-body font-medium text-fg-1">A 45–60 min session</summary>
         <ul className="mt-2 space-y-1">
           {SESSION_TEMPLATE.map((b) => (
@@ -193,7 +193,7 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
           lost half their letters. */}
       <div className="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7">
         {WEEKLY_TEMPLATE.map((d, i) => (
-          <div key={d.day} className={`rounded-none p-1.5 text-center text-micro ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
+          <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
             <div className="font-medium">{d.day}</div>
             <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
           </div>
@@ -236,7 +236,7 @@ function Manual() {
               {TECHNIQUES.filter((t) => t.group === group).map((t) => {
                 const open = openTech === t.name
                 return (
-                  <li key={t.name} className="rounded-none border border-line bg-ink-0">
+                  <li key={t.name} className="rounded-control bg-ink-2">
                     <button onClick={() => setOpenTech(open ? null : t.name)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${t.name}`} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
@@ -295,7 +295,7 @@ function Manual() {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
             const open = openSkill === skill
             return (
-              <div key={skill} className="rounded-none border border-line bg-ink-0">
+              <div key={skill} className="rounded-control bg-ink-2">
                 {/* `aria-expanded` was missing here and nowhere else on the page,
                     so these were the only disclosures a screen reader could not
                     tell the state of — and the reason the page census counted 32
@@ -322,7 +322,7 @@ function Manual() {
       >
         <div className="space-y-3">
           {ACADEMY_LEVELS.map((lvl) => (
-            <div key={lvl.id} className="rounded-none border border-line bg-ink-0 p-3">
+            <div key={lvl.id} className="rounded-card bg-ink-2 p-3">
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="text-body font-medium" style={{ color: cat(lvl.color) }}>{lvl.name}</span>
                 <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
@@ -343,7 +343,7 @@ function Manual() {
       >
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
-            <button key={e} onClick={() => setEquip(e)} aria-pressed={equip === e} className="rounded-none border px-2.5 py-1 text-label transition-colors"
+            <button key={e} onClick={() => setEquip(e)} aria-pressed={equip === e} className="rounded-control border px-2.5 py-1 text-label transition-colors"
               style={{ borderColor: equip === e ? cat('mauve') : cat('surface1'), background: equip === e ? cat('mauve') + '22' : 'transparent', color: equip === e ? cat('text') : cat('subtext0') }}>
               {EQUIP_LABEL[e]}
             </button>
@@ -357,11 +357,11 @@ function Manual() {
               <p className="mb-1.5 text-body font-medium text-fg-1">{phase === 'prehab' ? 'Prehab — prevention' : '🩹 Rehab — recovery (clear with a physio)'}</p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {list.map((e) => (
-                  <li key={e.name} className="rounded-none border border-line bg-ink-0 p-2.5">
+                  <li key={e.name} className="rounded-card bg-ink-2 p-2.5">
                     <div className="flex items-center gap-1.5">
                       <span className="text-body font-medium text-fg-1">{e.name}</span>
                       <Pill color="sky" size="micro">{e.target}</Pill>
-                      {e.equip !== 'none' && <span className="rounded-none bg-ink-2 px-1.5 py-0.5 text-micro text-fg-2">{e.equip}</span>}
+                      {e.equip !== 'none' && <span className="rounded-pill bg-ink-2 px-1.5 py-0.5 text-micro text-fg-2">{e.equip}</span>}
                     </div>
                     <p className="mt-0.5 text-label text-fg-2">{e.how}</p>
                   </li>
@@ -370,7 +370,7 @@ function Manual() {
             </div>
           )
         })}
-        <p className="inline-flex items-start gap-1.5 rounded-none bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
+        <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
       </CollapsibleSection>
 
       {/* Moved from the Pickleball page: reference reading, not session
@@ -400,7 +400,7 @@ function Manual() {
       >
         <ul className="grid gap-2 sm:grid-cols-2">
           {MINDSET.map((m) => (
-            <li key={m.title} className="rounded-none border border-line bg-ink-0 p-2.5">
+            <li key={m.title} className="rounded-card bg-ink-2 p-2.5">
               <p className="text-body font-medium text-fg-1">{m.title}</p>
               <p className="text-label text-fg-2">{m.why}</p>
             </li>
@@ -420,7 +420,7 @@ function Manual() {
       >
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-none border border-line bg-ink-0 p-3">
+            <li key={fm.id} className="rounded-card bg-ink-2 p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-body font-medium text-fg-1">{fm.label}</span>
                 <span className="text-micro text-fg-2">{fm.size}</span>

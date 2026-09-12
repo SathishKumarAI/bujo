@@ -89,7 +89,7 @@ export function SmartInput({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`w-full rounded-control border border-input bg-background px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+        className={`w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 pr-9 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${className}`}
       />
 
       {/* Duplicate corner badge */}

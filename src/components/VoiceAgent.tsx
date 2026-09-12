@@ -214,14 +214,14 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') readTyped() }}
                 placeholder="ran 5k in 28 minutes"
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:outline-none"
+                className="w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:outline-none"
               />
               <Button variant="secondary" onClick={readTyped} disabled={!typed.trim()}>Read it</Button>
             </div>
           </div>
 
           {heard && (
-            <div className="rounded-card border border-line bg-ink-0 p-3">
+            <div className="rounded-card bg-ink-2 p-3">
               <p className="text-label text-fg-2">You said</p>
               <p className="text-body text-fg-1">“{heard}”</p>
             </div>
@@ -262,7 +262,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
                     min={0}
                     max={intent.ask.of}
                     inputMode="numeric"
-                    className="w-20 rounded-control border border-input bg-background px-2 py-1 text-body tabular-nums text-fg-1"
+                    className="w-20 rounded-control border border-transparent bg-ink-2 px-2 py-1 text-body tabular-nums text-fg-1"
                     onKeyDown={(e) => {
                       if (e.key !== 'Enter') return
                       const n = Number((e.target as HTMLInputElement).value)

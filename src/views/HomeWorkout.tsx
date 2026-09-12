@@ -117,14 +117,14 @@ export function HomeWorkout() {
             <button
               key={m}
               onClick={() => setFilter(m)}
-              className="rounded-none border px-2.5 py-1 text-label capitalize transition-colors"
+              className="rounded-control border px-2.5 py-1 text-label capitalize transition-colors"
               style={{ borderColor: filter === m ? cat('mauve') : cat('surface1'), background: filter === m ? cat('mauve') + '22' : 'transparent', color: filter === m ? cat('text') : cat('subtext0') }}
             >{m}</button>
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {lib.map((ex) => (
-            <div key={ex.id} className="rounded-none border border-line bg-ink-0 p-3">
+            <div key={ex.id} className="rounded-card bg-ink-2 p-3">
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-body font-medium text-fg-1">{ex.name}</span>
                 <Pill tone="muted" size="micro" className="ml-auto px-2 capitalize">{ex.muscle}</Pill>

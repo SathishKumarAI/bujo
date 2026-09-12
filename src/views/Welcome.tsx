@@ -67,7 +67,7 @@ export function Welcome() {
           <button
             onClick={chooseFolder}
             disabled={!supported || busy}
-            className="card-3d rise group rounded-none border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
+            className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
             style={{ animationDelay: '180ms' }}
           >
             <Icon as={CloudCheck} size="lg" style={{ color: cat('mauve') }} />
@@ -90,7 +90,7 @@ export function Welcome() {
           {/* Local only */}
           <button
             onClick={() => setSettings({ storageMode: 'local' })}
-            className="card-3d rise group rounded-none border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
+            className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
             style={{ animationDelay: '260ms' }}
           >
             <Icon as={HardDrive} size="lg" style={{ color: cat('blue') }} />
@@ -108,7 +108,7 @@ export function Welcome() {
         </div>
 
         {/* Try & learn · seed a sample month so new users explore + learn by doing. */}
-        <div className="rise mt-5 rounded-none border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
+        <div className="rise mt-5 rounded-card border border-dashed border-line-strong p-4 text-center" style={{ animationDelay: '320ms' }}>
           <p className="mb-2 text-body text-fg-1">Just looking? <strong className="text-fg-1">Explore with sample data</strong> · see every feature first. Clear the samples out whenever you want to start your own.</p>
           <Button
             onClick={() => { replaceAll(generateDemoData()); setSettings({ storageMode: 'local', explore: true }) }}

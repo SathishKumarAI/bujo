@@ -103,7 +103,7 @@ export function Cycle() {
         )}
 
         {/* The selected day's editor — the only place controls render. */}
-        <div className="mb-3 border border-line bg-ink-0 p-3">
+        <div className="mb-3 bg-ink-2 p-3">
           <p className="mb-2 text-body font-medium text-fg-1">
             {prettyDay(sel)}
             {sel === today && <span className="ml-2 text-label font-normal text-fg-2">today</span>}
@@ -125,7 +125,7 @@ export function Cycle() {
                   key={f.id}
                   onClick={() => toggleFlag(sel, f.id)}
                   aria-pressed={on}
-                  className="rounded-none px-2 py-1 text-label"
+                  className="rounded-control px-2 py-1 text-label"
                   style={{
                     background: on ? cat(f.color) : cat('surface0'),
                     color: on ? onAccent(cat(f.color)) : cat('subtext0'),
@@ -187,7 +187,7 @@ export function Cycle() {
         >
           <div className="grid gap-3 sm:grid-cols-2">
             {CYCLE_PHASES.map((ph) => (
-              <div key={ph.id} className="rounded-none border border-line bg-ink-0 p-3">
+              <div key={ph.id} className="rounded-card bg-ink-2 p-3">
                 <div className="mb-1.5 flex items-center gap-2">
                   <span className="text-body font-medium" style={{ color: cat(ph.color) }}>{ph.name}</span>
                   <Pill color={ph.color} size="micro" className="px-2">{ph.days}</Pill>
@@ -224,7 +224,7 @@ export function Cycle() {
         >
           <ul className="grid gap-2 sm:grid-cols-2">
             {TRACKING_TIPS.map((t) => (
-              <li key={t.what} className="rounded-none border border-line bg-ink-0 p-2.5">
+              <li key={t.what} className="rounded-card bg-ink-2 p-2.5">
                 <p className="text-body font-medium text-fg-1">{t.what}</p>
                 <p className="text-label text-fg-2">{t.why}</p>
               </li>
@@ -232,7 +232,7 @@ export function Cycle() {
           </ul>
         </CollapsibleSection>
 
-        <p className="inline-flex items-start gap-1.5 rounded-none bg-red/10 p-2 text-label text-fg-2">
+        <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2">
           <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> {CYCLE_DISCLAIMER}
         </p>
       </section>

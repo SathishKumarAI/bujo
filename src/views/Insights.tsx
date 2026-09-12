@@ -70,7 +70,7 @@ export function Insights() {
                 key={k}
                 onClick={() => setKind(k)}
                 aria-pressed={kind === k}
-                className={`rounded-none px-2.5 py-0.5 text-label capitalize transition-colors ${
+                className={`rounded-pill px-2.5 py-0.5 text-label capitalize transition-colors ${
                   kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
                 }`}
               >
@@ -153,7 +153,7 @@ export function Insights() {
                 <li key={t.id}>
                   <button
                     onClick={() => nav(t.to as Parameters<typeof nav>[0])}
-                    className="w-full rounded-none border border-line bg-ink-0 px-3 py-2 text-left hover:border-mauve"
+                    className="w-full rounded-control bg-ink-2 px-3 py-2 text-left hover:border-mauve"
                   >
                     <span className="font-medium text-fg-1">{t.title}</span>
                     <span className="block text-label text-fg-2">{t.detail}</span>
@@ -203,7 +203,7 @@ export function Insights() {
               const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
               const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
               return (
-                <li key={m.key} className="rounded-none border border-line bg-ink-0 p-3">
+                <li key={m.key} className="rounded-card bg-ink-2 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-label text-fg-2">{m.label}</span>
                     <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
@@ -247,4 +247,4 @@ export function Insights() {
     />
   )
 }
-
+

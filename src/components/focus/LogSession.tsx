@@ -75,7 +75,7 @@ export function LogSession({ onLog }: { onLog: (s: Omit<DevSession, 'id'>) => vo
         </label>
         {/* The page's one primary action. `lg` because it is the button a phone
             user aims at, and the only one on this screen that must be hit. */}
-        <Button variant="primary" size="lg" onClick={log} className="w-full rounded-none">
+        <Button variant="primary" size="lg" onClick={log} className="w-full">
           Log session
         </Button>
       </div>

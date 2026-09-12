@@ -66,7 +66,7 @@ export function CustomCollections({
           />
           <Button
             variant="secondary"
-            className="shrink-0 rounded-none"
+            className="shrink-0"
             onClick={() => {
               if (!name.trim()) return
               onCreate(name.trim(), icon || '📄')
@@ -127,7 +127,7 @@ export function CustomCollections({
                         aria-label={`Add an entry to ${c.name}`}
                         className="min-w-0 flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
                       />
-                      <Button type="submit" variant="secondary" size="sm" className="shrink-0 rounded-none">
+                      <Button type="submit" variant="secondary" size="sm" className="shrink-0">
                         Add
                       </Button>
                     </form>

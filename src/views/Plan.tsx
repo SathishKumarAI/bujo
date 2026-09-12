@@ -203,12 +203,12 @@ export function Plan() {
                   names were missing entirely until this section stopped being
                   collapsed — axe never scanned inside a closed fold. */}
               <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Take vitamins" aria-label="What to repeat" className="max-w-xs" />
-              <select value={type} onChange={(e) => setType(e.target.value as BulletType)} aria-label="Bullet type" className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+              <select value={type} onChange={(e) => setType(e.target.value as BulletType)} aria-label="Bullet type" className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
                 <option value="task">task</option>
                 <option value="event">event</option>
                 <option value="note">note</option>
               </select>
-              <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} aria-label="How often" className="rounded-none border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+              <select value={freq} onChange={(e) => setFreq(e.target.value as 'daily' | 'weekly')} aria-label="How often" className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
                 <option value="daily">daily</option>
                 <option value="weekly">weekly</option>
               </select>
@@ -227,7 +227,7 @@ export function Plan() {
                     disabled={added}
                     title={added ? 'Already a rule' : `Repeat ${p.freq === 'daily' ? 'every day' : `on ${p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}`}`}
                     onClick={() => addRecurrence({ text: p.text, type: p.type, important: false, freq: p.freq, weekdays: p.weekdays, startedOn: today })}
-                    className="rounded-none border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong"
+                    className="rounded-control border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong"
                   >
                     {p.text}
                     <span className="ml-1.5 text-fg-2">{p.freq === 'daily' ? 'daily' : p.weekdays.map((d) => WEEKDAYS[d]).join(' ')}</span>
@@ -282,7 +282,7 @@ export function Plan() {
           <div>
             <h3 className="text-body font-medium text-fg-1">Import calendar (.ics)</h3>
             <p className="mt-0.5 text-label text-fg-2">Bring events from Google/Apple Calendar onto your monthly</p>
-            <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d mt-2 inline-flex items-center gap-1.5 rounded-none"><Icon as={CalendarPlus} size="sm" /> Choose .ics file</Button>
+            <Button variant="secondary" onClick={() => fileRef.current?.click()} className="press-3d mt-2 inline-flex items-center gap-1.5"><Icon as={CalendarPlus} size="sm" /> Choose .ics file</Button>
             <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
             <p className="mt-2 text-label text-fg-2" aria-live="polite">
               {icsNote ?? 'Events appear as dots on the Monthly calendar. Duplicates are skipped.'}
@@ -317,7 +317,7 @@ export function Plan() {
                 </button>
                 {agingOpen && (
                   <div className="collapse-in">
-                    <div className="mt-1.5 flex h-2 overflow-hidden rounded-none bg-ink-2">
+                    <div className="mt-1.5 flex h-2 overflow-hidden rounded-pill bg-ink-2">
                       {agingBuckets.map((b) => (
                         <div key={b.key} title={`${b.label}: ${b.n} task${b.n === 1 ? '' : 's'}`} style={{ flex: b.n, background: cat(b.color) }} />
                       ))}
@@ -347,7 +347,7 @@ export function Plan() {
                     <Button
                       variant="secondary"
                       onClick={() => overdue.forEach((e) => migrateEntry(e.id, today))}
-                      className="press-3d rounded-none"
+                      className="press-3d"
                     >
                       Move all {overdue.length} → Today
                     </Button>
@@ -391,9 +391,9 @@ export function Plan() {
                       <span className="min-w-0 flex-1 text-fg-1" title={e.text}>{e.text}</span>
                       <span className="shrink-0 text-label text-fg-2">{prettyDay(e.date)}</span>
                       <span className="flex shrink-0 items-center gap-1">
-                        <Button variant="secondary" size="sm" onClick={() => migrateEntry(e.id, today)} aria-label={`Move "${e.text}" to today`} className="press-3d rounded-none">→ Today</Button>
-                        <Button variant="secondary" size="sm" onClick={() => migrateEntry(e.id, addDays(today, 1))} aria-label={`Move "${e.text}" to tomorrow`} className="press-3d rounded-none">→ Tomorrow</Button>
-                        <Button variant="ghost" size="sm" onClick={() => dropEntry(e.id)} aria-label={`Drop "${e.text}"`} className="press-3d rounded-none text-red hover:text-red">drop</Button>
+                        <Button variant="secondary" size="sm" onClick={() => migrateEntry(e.id, today)} aria-label={`Move "${e.text}" to today`} className="press-3d">→ Today</Button>
+                        <Button variant="secondary" size="sm" onClick={() => migrateEntry(e.id, addDays(today, 1))} aria-label={`Move "${e.text}" to tomorrow`} className="press-3d">→ Tomorrow</Button>
+                        <Button variant="ghost" size="sm" onClick={() => dropEntry(e.id)} aria-label={`Drop "${e.text}"`} className="press-3d text-red hover:text-red">drop</Button>
                       </span>
                     </li>
                   ))}
@@ -420,7 +420,7 @@ export function Plan() {
                   const open = openThread === t.rootId
                   const thread = open ? entryThread(data.entries, t.current.id) : []
                   return (
-                    <li key={t.rootId} className="rounded-none border border-line bg-ink-0 px-2.5 py-1.5">
+                    <li key={t.rootId} className="rounded-card bg-ink-2 px-2.5 py-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-2">
                           <Button
@@ -435,7 +435,7 @@ export function Plan() {
                         </span>
                         <button
                           onClick={() => setOpenThread(open ? null : t.rootId)}
-                          className="shrink-0 rounded-none px-2 py-0.5 text-label font-medium"
+                          className="shrink-0 rounded-pill px-2 py-0.5 text-label font-medium"
                           // `'22'`, not `'33'`. The accents clear 4.5 against a **13%** wash of
                             // themselves (`Pill tone="wash"` is the idiom they were calibrated
                             // on). A 20% wash lifts the background further toward the text and

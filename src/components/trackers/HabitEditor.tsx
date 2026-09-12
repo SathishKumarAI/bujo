@@ -60,7 +60,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
   const skippedToday = (data.habitSkips?.[habit.id] ?? []).includes(today)
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
-      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-none border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
+      <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-card border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
           <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
@@ -149,7 +149,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
             <label className="block text-body text-fg-1">Name<Input value={habit.name} onChange={(e) => set({ name: e.target.value })} className="mt-1" /></label>
             <label className="block text-body text-fg-1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
-          <label className="flex items-center justify-between rounded-none border border-line bg-ink-0 px-3 py-2 text-body text-fg-1">
+          <label className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2 text-body text-fg-1">
             <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
@@ -159,7 +159,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
             <p className="mb-1 text-body text-fg-1">Color</p>
             <div className="flex flex-wrap gap-1.5">
               {HABIT_COLORS.map((c) => (
-                <button key={c} onClick={() => set({ color: c })} aria-label={c} className="h-6 w-6 rounded-none" style={{ background: cat(c), outline: habit.color === c ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+                <button key={c} onClick={() => set({ color: c })} aria-label={c} className="h-6 w-6 rounded-control" style={{ background: cat(c), outline: habit.color === c ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
               ))}
             </div>
           </div>
@@ -170,7 +170,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
                 Same defect as the new-habit select in Trackers.tsx; this one is
                 behind an edit mode the a11y gate does not enter, so it is fixed
                 by inspection rather than by a red run. */}
-            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} aria-label="Category" className="rounded-none border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
+            <select value={habit.category} onChange={(e) => set({ category: e.target.value as HabitCategory })} aria-label="Category" className="rounded-control border border-line-strong bg-ink-0 px-2 py-1.5 text-body text-fg-1">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -214,7 +214,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
                 <p className="mb-1 text-body text-fg-2">Recent notes</p>
                 <ul className="space-y-1">
                   {recent.map((n) => (
-                    <li key={n.day} className="rounded-none border border-line bg-ink-0 px-2.5 py-1.5 text-label">
+                    <li key={n.day} className="rounded-card bg-ink-2 px-2.5 py-1.5 text-label">
                       <span className="text-fg-2">{n.day}</span> · <span className="text-fg-1">{n.text}</span>
                     </li>
                   ))}
@@ -257,15 +257,15 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-line pt-3">
-            <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5 rounded-none" title="A planned skip won't break your streak">
+            <Button variant="secondary" onClick={() => toggleHabitSkip(habit.id, today)} className="press-3d inline-flex items-center gap-1.5" title="A planned skip won't break your streak">
               {skippedToday ? 'Un-skip today' : 'Skip today'}
             </Button>
-            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5 rounded-none"><Icon as={Archive} size="sm" /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
+            <Button variant="secondary" onClick={() => set({ archived: !habit.archived })} className="press-3d inline-flex items-center gap-1.5"><Icon as={Archive} size="sm" /> {habit.archived ? 'Unarchive' : 'Archive'}</Button>
             <Button variant="ghost" onClick={async () => { if (await confirm({
               title: `Delete “${habit.name}”?`,
               description: 'The habit and its entire tracked history are deleted. This cannot be undone.',
               confirmLabel: 'Delete habit', destructive: true,
-            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-none text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
+            })) { removeHabit(habit.id); onClose() } }} className="press-3d inline-flex items-center gap-1.5 rounded-control text-red hover:text-red"><Icon as={Trash} size="sm" /> Delete</Button>
             <Button variant="secondary" onClick={onClose} className="press-3d ml-auto">Done</Button>
           </div>
         </div>

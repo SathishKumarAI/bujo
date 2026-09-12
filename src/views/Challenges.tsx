@@ -116,7 +116,7 @@ export function Challenges() {
           >
             <ul className="space-y-2 text-body">
               {archived.map((c) => (
-                <li key={c.id} className="flex items-center justify-between rounded-none border border-line bg-background px-3 py-2">
+                <li key={c.id} className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2">
                   <span className="text-fg-1">
                     <Icon as={Trophy} size="sm" className="mr-1 inline text-fg-2" />{c.name} · {c.durationDays} days
                   </span>
@@ -215,7 +215,7 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
       }
     >
       {finished ? (
-        <p className="flex items-center gap-1.5 rounded-none border border-line bg-ink-2 px-3 py-2 text-body text-fg-1">
+        <p className="flex items-center gap-1.5 rounded-card border border-line bg-ink-2 px-3 py-2 text-body text-fg-1">
           <Icon as={Trophy} size="sm" /> {c.durationDays} days done. Archive it to close it out.
         </p>
       ) : notStarted ? (
@@ -233,7 +233,7 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
                     on from now until you change it. `min-h-11` because the
                     whole row is the target (WCAG 2.5.5) — the 20px box is the
                     mark, not the hit area. */}
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-none border border-line bg-background px-3 py-2 text-body">
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">
                   <Checkbox checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
                 </label>
@@ -360,7 +360,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
           onChange={(e) => setRules(e.target.value)}
           rows={4}
           placeholder={'Two 45-min workouts\nDrink water\nRead 10 pages'}
-          className="mt-1 w-full rounded-control border border-input bg-background px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-1 w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 placeholder:text-fg-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
       </label>
       <label className="flex cursor-pointer items-center justify-between text-body text-fg-1">

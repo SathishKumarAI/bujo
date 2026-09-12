@@ -69,7 +69,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
             <button
               key={ex.id}
               onClick={() => setSelected(ex)}
-              className="group overflow-hidden rounded-card border border-line bg-ink-0 text-left transition-colors hover:border-mauve"
+              className="group overflow-hidden rounded-card bg-ink-2 text-left transition-colors hover:border-mauve"
               title={`View ${ex.name}`}
             >
               <div className="grid h-24 place-items-center overflow-hidden bg-ink-1">
@@ -97,7 +97,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
             </header>
             <div className="grid gap-4 p-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <div className="grid place-items-center overflow-hidden rounded-card border border-line bg-ink-0 p-2">
+                <div className="grid place-items-center overflow-hidden rounded-card bg-ink-2 p-2">
                   {selected.video ? (
                     <video src={selected.video} controls playsInline muted loop className="max-h-56 w-full rounded-control object-contain" />
                   ) : selected.image ? (

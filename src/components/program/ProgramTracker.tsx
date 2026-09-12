@@ -57,7 +57,7 @@ export function ProgramTracker({ only }: { only?: string }) {
         </div>
       )}
 
-      {s.p.note && <p className="mt-3 rounded-card border border-line bg-ink-0 px-3 py-2 text-label text-fg-2">{s.p.note}</p>}
+      {s.p.note && <p className="mt-3 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">{s.p.note}</p>}
 
       <div className="mt-4 mb-2 flex items-center justify-between border-t border-line pt-3">
         <p className="text-label tracking-wide text-fg-2 uppercase">

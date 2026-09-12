@@ -185,7 +185,7 @@ export function BookRow({ book }: { book: Book }) {
                 aria-label={`Add a learning to ${book.title}`}
                 className="w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
               />
-              <Button variant="secondary" onClick={addLearning} size="sm" className="shrink-0 rounded-none">
+              <Button variant="secondary" onClick={addLearning} size="sm" className="shrink-0">
                 Add
               </Button>
             </div>
