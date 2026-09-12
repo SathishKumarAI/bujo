@@ -1,5 +1,6 @@
 import { useJournal } from '../../store'
 import { Card, Empty } from '../ui'
+import { MasonryGrid } from '../shell/CardGrid'
 import { cat } from '../../lib/colors'
 import { habitConsistencyScore, habitMonthlyDeltas, moodImpactRanking, streakLeaderboard } from '../../lib/correlations'
 
@@ -8,6 +9,14 @@ import { habitConsistencyScore, habitMonthlyDeltas, moodImpactRanking, streakLea
  * drawer, moved to Stats under BUJO-281 — a completion history is the record,
  * not a prompt about what to do next. They render inside Stats' existing
  * "Habit timing" fold rather than a new one.
+ *
+ * **Three columns, not three rows.** These were a bare fragment of full-width
+ * cards, and the column audit measured the result: 1,200px of Stats — a screen
+ * and a third — painting **11%** of its row. Each card is a short list or a
+ * single figure; none of them wants 1,180px. `MasonryGrid` is the primitive
+ * `MoodAnalytics` in the same fold already used, and its breakpoints query the
+ * container rather than the viewport, so these lay out correctly whether the
+ * fold is full-bleed or sitting in a grid cell.
  *
  * The deep-dives are anchored to the hottest build habit (top of the streak
  * leaderboard) so consistency and month-over-month always have a subject
@@ -28,7 +37,7 @@ export function HabitAnalytics() {
   if (moodImpact.length === 0 && !focusId) return null
 
   return (
-    <>
+    <MasonryGrid>
       {moodImpact.length > 0 && (
         <Card band title="Habit mood impact" subtitle="How much each habit lifts your mood">
           <ul className="space-y-2">
@@ -85,6 +94,6 @@ export function HabitAnalytics() {
           </div>
         </Card>
       )}
-    </>
+    </MasonryGrid>
   )
 }
