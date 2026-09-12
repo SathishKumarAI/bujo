@@ -2,7 +2,7 @@ import { Note, Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat, washStyle } from '../lib/colors'
+import { cat, habitChipStyle } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
@@ -63,7 +63,6 @@ export function TodayHabits({
 
   function chip(h: Habit) {
     const on = log.includes(h.id)
-    const accent = h.avoid ? cat('red') : cat(h.color)
     const hasNote = !!notes[h.id]
     const open = noteFor === h.id
     return (
@@ -78,8 +77,8 @@ export function TodayHabits({
           title={[h.avoid ? (on ? 'Slipped today' : 'Clean today') : '', h.cue].filter(Boolean).join(' · ') || undefined}
           // `min-h-11` — 44px (WCAG 2.5.5). `py-1.5` on a 15px line put these
           // at 34px, and they are the most-tapped control on a phone.
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-none border px-3 py-1.5 text-body transition-colors active:scale-95"
-          style={{ borderColor: on ? accent : cat('surface1'), ...(on ? washStyle(accent) : { background: 'transparent', color: cat('subtext1') }) }}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
+          style={habitChipStyle(on ? (h.avoid ? 'slip' : 'on') : 'off', h.color)}
         >
           {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
@@ -93,7 +92,7 @@ export function TodayHabits({
           aria-label={hasNote ? `Edit note for ${h.name}` : `Add a note for ${h.name}`}
           aria-expanded={open}
           title={hasNote ? notes[h.id] : 'Add a note'}
-          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-none opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
+          className="ml-0.5 grid size-6 shrink-0 place-items-center rounded-control opacity-45 transition-opacity hover:bg-ink-2 hover:opacity-100 focus-visible:opacity-100 group-hover/habit:opacity-100 data-[note]:opacity-100"
           data-note={hasNote || open ? '' : undefined}
           style={{ color: hasNote || open ? cat('mauve') : cat('overlay0') }}
         >

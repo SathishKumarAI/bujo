@@ -26,8 +26,11 @@ import { registerPrimary } from "@/lib/onePrimary"
  * global text-size setting. `lg` is the only one that meets the 44px touch
  * floor, so it is used for empty-state calls to action **and for the full-width
  * submit at the foot of a form** — the button a phone user actually aims at.
- * Radius is `--radius-control`. No shadows: the wash and the press scale carry
- * the whole interaction.
+ * Radius is `--radius-control`.
+ *
+ * `primary` and `secondary` carry `--shadow-raise`; `ghost` and `danger` do
+ * not, and that is the whole emphasis system. A thing with a surface is a thing
+ * you press; a thing without one is a thing you can press if you go looking.
  *
  * **`icon-sm` is 28px and cannot simply be grown to 44.** Measured across the
  * app, small icon buttons sit 0–6px apart — 338 pairs closer than 16px on
@@ -61,8 +64,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-brand-wash text-brand-text hover:bg-brand-wash-hover",
-        secondary: "border border-line-strong bg-transparent text-fg-1 hover:border-brand hover:text-fg-1",
+        primary: "bg-brand-wash text-brand-text shadow-raise hover:bg-brand-wash-hover",
+        // A FILL, not an outline. This was `border border-line-strong
+        // bg-transparent` — a hairline rectangle on the page colour, which is
+        // the single most-repeated control in the app and the one that made
+        // every screen read as a 1990s form. It now sits a rung above whatever
+        // contains it and carries the same raise as a card, so it looks like
+        // something you can press. No border: the fill separates it.
+        secondary: "bg-ink-2 text-fg-1 shadow-raise hover:bg-ink-3",
         ghost: "bg-transparent text-fg-2 hover:bg-ink-2 hover:text-fg-1",
         danger: "bg-transparent text-danger-text hover:bg-danger-wash",
       },

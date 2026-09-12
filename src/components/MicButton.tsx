@@ -17,8 +17,8 @@ export function MicButton({ onText, className = '' }: { onText: (text: string) =
       aria-label={listening ? 'Stop dictation' : 'Dictate by voice'}
       aria-pressed={listening}
       title={listening ? 'Listening… tap to stop' : 'Dictate by voice'}
-      className={`grid h-9 w-9 shrink-0 place-items-center rounded-control border transition-colors ${
-        listening ? 'animate-pulse border-red bg-red/15 text-red' : 'border-input text-fg-2 hover:text-fg-1'
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-control transition-colors ${
+        listening ? 'animate-pulse bg-red/20 text-red' : 'bg-ink-2 text-fg-2 shadow-raise hover:bg-ink-3 hover:text-fg-1'
       } ${className}`}
     >
       {listening ? <Icon as={MicrophoneSlash} size="md" /> : <Icon as={Microphone} size="md" />}
