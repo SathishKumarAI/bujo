@@ -1,26 +1,25 @@
 # STATUS
 
-**Stopped:** 2026-09-11. Four PRs — #203, #204, #205 merged; **#206 open,
-waiting on CI a11y only** (local a11y green, exit 0, "No serious or critical
-violations"; CI `verify` and `docs-guard` already pass). Test count **953**
-across 76 files, up from 939.
+**Stopped:** 2026-09-11, on `feat/pace-time-left` (off `main`). Two commits,
+both verified: `npm run verify` green — **963 tests across 78 files**, tsc,
+eslint (the same two pre-existing `react-hooks/exhaustive-deps` warnings in
+`App.tsx`, zero errors) and the build.
 
-## What this session did
+## What this branch did
 
-1. **#203 feedback layer** — 26 native `alert()` → toasts; the sync-conflict
-   `window.confirm` → `ConfirmDialog` (and `resolveIncoming` is now async);
-   an undo toast on all 25 delete actions, from one store helper.
-2. **#204 Mindset on a phone** — cue field showed 54px of a 147px note;
-   filter scrollport was 10px wide. Plus `Statement` dash binding.
-3. **#205 diagrams** — `docs/diagrams/` is the single home; the two divergent
-   UML files retired; `ARCHITECTURE.md`'s false claims fixed.
-4. **#206 folds** — eight sections across Stats, Monthly and Pickleball said
-   "collapsed" in a comment and opened on every visit.
+1. **Stats · "Time left"** (`lib/pace.ts` + `components/stats/PaceCard.tsx`).
+   Days still available this month and this year, the week of the year, and
+   the pace the journal has been kept at. Zone 1 gains a fourth fact,
+   `left · this month`. Measured on the demo journal at 1440 and 390 on
+   2026-09-11: September 20 of 30, 2026 112 of 365, week 37 of 53, phone
+   `scrollWidth` 390 (no sideways scroll).
+2. **The sample-data banner can be dismissed**, and the dismissal sticks
+   (`bujo.ui.explore.banner`). It had no × and no timer, so it sat over every
+   view for as long as the demo was loaded.
 
 ## Next action
 
-**Merge #206** once CI a11y goes green (it is the long job now — it runs
-`clipped` too). Then, in rough order of leverage:
+Open the PR against `main`. Then, unchanged from the last session:
 
 - **Mindset (3.29 screens, 0 folds) and Focus (3.08 screens, 0 folds)** are
   flat stacks with nothing collapsible. This is page-contract work, not a
@@ -32,6 +31,17 @@ across 76 files, up from 939.
   whether to consolidate is a real change; do not merge them by name alone.
 
 ## Decisions that will surprise you later
+
+- **`?demo=1` does not turn on the explore banner.** It seeds the sample
+  journal but never sets `settings.explore`, which only the Welcome screen's
+  "Explore the demo →" button does. A browser check of anything guest-related
+  driven by `?demo=1` measures a state no user is ever in — the banner
+  reported absent twice before I noticed, and an absent banner looks exactly
+  like a fixed one.
+- **`pace()` returns `null`, never 0, for a rate with no finished days**, and
+  clamps the projection to `[logged, total]`. Both ends are load-bearing:
+  today counts in the numerator and not the denominator, so logging every day
+  through the 11th projects a **33-day September** without the upper clamp.
 
 - **`resolveIncoming` defaults to keep-local** (`ask = () => false`), not to
   the old native confirm. It only applies where a caller passes nothing
