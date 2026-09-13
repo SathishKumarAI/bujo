@@ -7,7 +7,7 @@ import { Empty, Pill } from '../ui'
 import { Button } from '../ui/button'
 import { currentSlot, orderedSlots, slotMeta } from '../../lib/timeofday'
 import { slotGlyph } from '../glyphs'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { cleanStreak, habitDoneOn, habitStreak, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
 
@@ -92,7 +92,7 @@ export function RoutineTimeline({
                         {h.cue && <span className="block truncate text-caption text-fg-2">{h.cue}</span>}
                       </button>
                       {numeric && !h.avoid && <span className="shrink-0 text-label text-fg-2">{type === 'rating' ? `${val}/5` : `${val}/${target}${type === 'timer' ? 'm' : ''}`}</span>}
-                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-label" style={{ color: cat('peach') }}><Icon as={Flame} size="sm" /> {streak}</span>}
+                      {streak > 0 && <span className="inline-flex shrink-0 items-center gap-0.5 text-label" style={{ color: onRaised('peach') }}><Icon as={Flame} size="sm" /> {streak}</span>}
                       <Button variant="ghost" size="icon-sm" onClick={() => setNoting(open ? null : h.id)} aria-label={`Note for ${h.name}`} title="Jot a note" className={`shrink-0 ${note || open ? 'text-mauve' : 'text-fg-2 hover:text-fg-1'}`}><Icon as={Note} size="sm" /></Button>
                     </div>
                     {(open || note) && (
@@ -102,7 +102,7 @@ export function RoutineTimeline({
                         onBlur={() => setNoting(null)}
                         autoFocus={open}
                         placeholder="Jot a note for today…"
-                        className="mt-2 w-full rounded-control border border-transparent bg-ink-2 px-2 py-1 text-label text-foreground"
+                        className="mt-2 w-full rounded-control border border-ctl-ring bg-ink-2 px-2 py-1 text-label text-foreground"
                       />
                     )}
                   </li>

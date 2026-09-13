@@ -20,7 +20,7 @@ import { MoodAnalytics } from '../components/stats/MoodAnalytics'
 import { HabitAnalytics } from '../components/stats/HabitAnalytics'
 import { LifetimeCards } from '../components/stats/LifetimeCards'
 import { PaceCard } from '../components/stats/PaceCard'
-import { cat, rechartsTooltip, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised, rechartsTooltip } from '../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
@@ -268,7 +268,7 @@ export function Stats() {
 
         {focusSleep.r != null && (
           <Card band title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
-            <p className="text-display font-medium tabular-nums" style={{ color: cat(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
+            <p className="text-display font-medium tabular-nums" style={{ color: onRaised(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
               {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
               <span className="ml-1 text-body text-fg-2">r</span>
             </p>
@@ -376,7 +376,7 @@ export function Stats() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap justify-center gap-2 text-label">
-                {splits.map((s, i) => <span key={s.split} style={{ color: cat(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
+                {splits.map((s, i) => <span key={s.split} style={{ color: onRaised(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
               </div>
             </div>
           )}
@@ -400,7 +400,7 @@ export function Stats() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex justify-center gap-3 text-label">
-                {tasks.map((t) => <span key={t.name} style={{ color: cat(t.color) }}>● {t.name} {t.value}</span>)}
+                {tasks.map((t) => <span key={t.name} style={{ color: onRaised(t.color) }}>● {t.name} {t.value}</span>)}
               </div>
             </div>
           )}

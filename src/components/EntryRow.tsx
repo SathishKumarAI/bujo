@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { glyphFor } from '../lib/bullets'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { useJournal } from '../store'
 import type { Entry } from '../lib/types'
 
@@ -37,7 +37,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
         onClick={() => cycleStatus(entry.id)}
         aria-label={`Advance status of ${entry.text}`}
         title="Click to cycle: task → done → migrated → dropped"
-        className="mt-px w-6 shrink-0 text-center font-mono text-heading leading-6 text-fg-2 transition-colors hover:text-brand"
+        className="mt-px w-6 shrink-0 text-center font-mono text-heading leading-6 text-fg-2 transition-colors hover:text-brand-text"
         style={{ color: entry.status === 'done' ? cat('green') : undefined }}
       >
         <span key={`${entry.type}-${entry.status}`} className="glyph-set inline-block">
@@ -45,7 +45,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
         </span>
       </button>
 
-      {entry.memory && <span title="Memory" style={{ color: cat('teal') }}>▲</span>}
+      {entry.memory && <span title="Memory" style={{ color: onRaised('teal') }}>▲</span>}
 
       {editing ? (
         <input
@@ -69,14 +69,14 @@ export function EntryRow({ entry }: { entry: Entry }) {
           } ${long && !expanded ? 'line-clamp-2' : ''}`}
         >
           {entry.text}
-          {entry.recurringId && <span className="ml-1 align-middle text-label" style={{ color: cat('overlay1') }} title="Repeats, edit the rule in Plan to change every future occurrence">↻</span>}
+          {entry.recurringId && <span className="ml-1 align-middle text-label" style={{ color: onRaised('overlay1') }} title="Repeats, edit the rule in Plan to change every future occurrence">↻</span>}
           {/* Only append a tag chip for tags NOT already written in the line.
               Typing "#travel walk the rim" put the tag in the text *and* in
               `entry.tags`, so the row rendered "#travel walk the rim #travel". */}
           {entry.tags
             .filter((t) => !new RegExp(`#${t}\\b`, 'i').test(entry.text))
             .map((t) => (
-              <span key={t} className="ml-1 text-label" style={{ color: cat('sapphire') }}>
+              <span key={t} className="ml-1 text-label" style={{ color: onRaised('sapphire') }}>
                 #{t}
               </span>
             ))}

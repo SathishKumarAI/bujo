@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { PageLayout, StatBar } from '../components/page'
 import { Button } from '../components/ui/button'
-import { cat, onAccent, washStyle } from '../lib/colors'
+import { cat, onRaised, onAccent, washStyle } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO, weekDaysOf, WEEKDAYS } from '../lib/date'
 import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
@@ -313,7 +313,7 @@ export function Plan() {
                 >
                   <span className="caret-turn caret-turn-quarter inline-flex" data-open={agingOpen}><Icon as={CaretRight} size="sm" /></span>
                   <span>Aging</span>
-                  <span className="ml-auto">oldest <b style={{ color: cat(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
+                  <span className="ml-auto">oldest <b style={{ color: onRaised(aging.oldestDays > 30 ? 'red' : aging.oldestDays > 7 ? 'peach' : 'yellow') }}>{aging.oldestDays}d</b></span>
                 </button>
                 {agingOpen && (
                   <div className="collapse-in">
@@ -326,7 +326,7 @@ export function Plan() {
                       {agingBuckets.map((b) => (
                         <span key={b.key} className="inline-flex items-center gap-1">
                           <span className="inline-block h-2 w-2 rounded-pill" style={{ background: cat(b.color) }} />
-                          {b.label} <b style={{ color: cat(b.color) }}>{b.n}</b>
+                          {b.label} <b style={{ color: onRaised(b.color) }}>{b.n}</b>
                         </span>
                       ))}
                     </div>
@@ -460,7 +460,10 @@ export function Plan() {
                             <li key={h.id} className="flex items-center gap-2">
                               <span className="w-4 shrink-0 text-right">{i + 1}.</span>
                               <span className="w-24 shrink-0">{h.date ? prettyDay(h.date) : 'no date'}</span>
-                              <span style={{ color: cat(h.status === 'done' ? 'green' : h.status === 'migrated' ? 'peach' : 'subtext0') }}>
+                              {/* Measured against the raised panel this list sits on, not
+                                  against the page — `onRaised` composites the same surface
+                                  `--muted` paints. The raw accent was 4.17:1 on vscode. */}
+                              <span style={{ color: onRaised(h.status === 'done' ? 'green' : h.status === 'migrated' ? 'peach' : 'subtext0') }}>
                                 {h.status}
                               </span>
                               {i === thread.length - 1 && <span className="text-fg-2">· now</span>}

@@ -1,7 +1,7 @@
 import { CaretDown, CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
-import { cat } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 
 /**
  * A lightweight, keyboard-accessible collapsible grouping for the many
@@ -34,7 +34,7 @@ export function Section({
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-control bg-ink-2 px-4 py-3 text-left transition-colors hover:border-line-strong"
       >
-        <span className="text-fg-2" style={{ color: cat('overlay0') }}>
+        <span className="text-fg-2" style={{ color: onRaised('overlay0') }}>
           {open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}
         </span>
         {icon}

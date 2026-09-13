@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { HABIT_CATEGORIES, type Habit, type HabitCategory, type JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { DayGrid } from './ui/day-grid'
 
@@ -120,7 +120,7 @@ function ActivityRow({
             className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
           ><Icon as={DotsSixVertical} size="sm" /></span>
         )}
-        <span>{avoid ? <Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+        <span>{avoid ? <Icon as={Prohibit} size="sm" style={{ color: onRaised('red') }} /> : h.emoji ?? <span style={{ color: onRaised(h.color) }}>●</span>}</span>
         <button onClick={() => onEdit(h.id)} title={[avoid ? `${h.name} · habit to avoid` : h.name, 'tap for activity & stats'].join(' · ')} className={`truncate text-body hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
         <button onClick={() => onEdit(h.id)} aria-label={`View ${h.name} activity & stats`} title="View activity & stats" className="shrink-0 text-fg-2 hover:text-mauve"><Icon as={PersonSimpleRun} size="sm" /></button>
       </div>

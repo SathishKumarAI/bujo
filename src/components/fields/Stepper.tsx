@@ -82,7 +82,7 @@ export function Stepper({
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? undefined : clamp(Number(e.target.value)))}
           aria-label={ariaLabel ?? label}
-          className="num w-14 rounded-control border border-transparent bg-ink-2 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
+          className="num w-14 rounded-control border border-ctl-ring bg-ink-2 px-1 py-1.5 text-center text-body text-fg-1 focus:border-mauve focus:outline-none"
         />
         {suffix && <span className="text-label text-fg-2">{suffix}</span>}
         <Button

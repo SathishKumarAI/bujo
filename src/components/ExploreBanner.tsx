@@ -2,7 +2,7 @@ import { Compass, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { Button } from './ui/button'
 import { useConfirm } from './ConfirmDialog'
 import { emptyJournal } from '../lib/storage'
@@ -63,7 +63,7 @@ export function ExploreBanner() {
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-ink-1 px-4 py-2 text-body">
-      <Icon as={Compass} size="sm" style={{ color: cat('mauve') }} />
+      <Icon as={Compass} size="sm" style={{ color: onRaised('mauve') }} />
       <span className="text-fg-1">
         You’re exploring sample data. Nothing here is yours yet —{' '}
         <strong className="text-fg-1">clear it out when you want to start for real.</strong>

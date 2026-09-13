@@ -3,7 +3,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { Card } from '../ui'
 import { MasonryGrid } from '../shell/CardGrid'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { bestWorstWeekday, metricVolatility, weekdayWeekendSplit } from '../../lib/correlations'
 
 /**
@@ -30,7 +30,7 @@ export function MoodAnalytics() {
       {moodWd.best && moodWd.worst && (
         <Card band title="Best & worst day" subtitle="When your mood runs brightest">
           <div className="mb-3 flex items-center gap-2 text-body">
-            <AppIcon as={Sun} size="sm" style={{ color: cat('yellow') }} />
+            <AppIcon as={Sun} size="sm" style={{ color: onRaised('yellow') }} />
             <span className="text-fg-1">
               Brightest on <strong className="text-fg-1">{moodWd.best.label}</strong> ({moodWd.best.avg}/10),
               dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
@@ -70,7 +70,7 @@ export function MoodAnalytics() {
 
       {moodVol.band && (
         <Card band title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
-          <p className="text-display font-medium" style={{ color: cat(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
+          <p className="text-display font-medium" style={{ color: onRaised(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
             {moodVol.stability}<span className="text-heading text-fg-2">/100</span>
           </p>
           <p className="mt-1 text-body capitalize text-fg-1">
@@ -89,12 +89,12 @@ function SplitCol({ label, habit, mood, days }: { label: string; habit: number |
     <div className="rounded-card bg-ink-2 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
       <p className="flex items-center gap-1.5 text-fg-1">
-        <AppIcon as={PersonSimpleRun} size="sm" style={{ color: cat('mauve') }} />
+        <AppIcon as={PersonSimpleRun} size="sm" style={{ color: onRaised('mauve') }} />
         <strong className="tabular-nums">{habit == null ? '—' : Math.round(habit * 100) + '%'}</strong>
         <span className="text-label text-fg-2">habits</span>
       </p>
       <p className="mt-1 flex items-center gap-1.5 text-fg-1">
-        <AppIcon as={Smiley} size="sm" style={{ color: cat('green') }} />
+        <AppIcon as={Smiley} size="sm" style={{ color: onRaised('green') }} />
         <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
         <span className="text-label text-fg-2">mood</span>
       </p>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { StatTile } from './ui'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 
 /**
  * Catches the BUJO-278 failure: `color` tints `icon` and nothing else, so a
@@ -15,7 +15,7 @@ import { cat } from '../lib/colors'
 describe('StatTile', () => {
   it('tints the icon with `color`', () => {
     render(<StatTile label="Win %" value="62%" color="green" icon={<span data-testid="i">▲</span>} />)
-    expect(screen.getByTestId('i').parentElement).toHaveStyle({ color: cat('green') })
+    expect(screen.getByTestId('i').parentElement).toHaveStyle({ color: onRaised('green') })
   })
 
   it('rejects `color` without an `icon` at the type level, and drew nothing anyway', () => {

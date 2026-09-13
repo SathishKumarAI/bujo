@@ -25,7 +25,7 @@ import {
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
-import { cat, rechartsTooltip } from '../lib/colors'
+import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import {
   EXERCISE_LIBRARY, personalRecords, splitMeta, nextSplit,
@@ -278,9 +278,9 @@ export function Gym() {
       {prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
           <div className="celebrate-pop flex items-center gap-2 rounded-card border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
-            <AppIcon as={Trophy} size="lg" style={{ color: cat('yellow') }} />
+            <AppIcon as={Trophy} size="lg" style={{ color: onRaised('yellow') }} />
             <p className="text-body font-medium text-fg-1">
-              New PR · <span style={{ color: cat('yellow') }}>{prParty.exercise}</span>{' '}
+              New PR · <span style={{ color: onRaised('yellow') }}>{prParty.exercise}</span>{' '}
               {prParty.weight}{unit}×{prParty.reps} 🎉
             </p>
           </div>
@@ -297,7 +297,7 @@ export function Gym() {
                 open. Compactness comes from folding the review instead. */}
             <section>
               <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">
-                Today’s session · <span style={{ color: cat(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span> suggested
+                Today’s session · <span style={{ color: onRaised(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span> suggested
               </h2>
               <SessionLogger
                 data={data}
@@ -564,7 +564,7 @@ function AnatomyCard({
       subtitle={
         focusEx
           ? 'Muscles worked by this exercise'
-          : <span>Showing your <span style={{ color: cat(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
+          : <span>Showing your <span style={{ color: onRaised(splitMeta(split).color) }}>{focusLabel}</span> · or look one up</span>
       }
       right={focusEx && <Button variant="secondary" onClick={() => setFocusEx(null)} className="press-3d inline-flex items-center gap-1.5"><AppIcon as={X} size="sm" /> Clear</Button>}
     >
@@ -681,14 +681,14 @@ function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../l
             className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-ink-2' : 'hover:bg-ink-2/50'}`}
             title="Show this lift on the muscle map"
           >
-            <span className="inline-flex items-center gap-1.5 text-fg-1"><AppIcon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> {pr.exercise}</span>
+            <span className="inline-flex items-center gap-1.5 text-fg-1"><AppIcon as={Trophy} size="sm" style={{ color: onRaised('yellow') }} /> {pr.exercise}</span>
             {/* A weightless set (dips, pull-ups logged without added load) used
                 to print "0lb · 1RM ~0lb" — a data artifact dressed as a record.
                 Bodyweight is the honest name, and Epley of 0 is not a 1RM. */}
             <span className="text-fg-2">
               {pr.weight > 0
-                ? <span style={{ color: cat('yellow') }}>{pr.weight}{unit}</span>
-                : <span style={{ color: cat('yellow') }}>bodyweight{pr.reps > 1 ? ` ×${pr.reps}` : ''}</span>}
+                ? <span style={{ color: onRaised('yellow') }}>{pr.weight}{unit}</span>
+                : <span style={{ color: onRaised('yellow') }}>bodyweight{pr.reps > 1 ? ` ×${pr.reps}` : ''}</span>}
               {pr.weight > 0 && pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
             </span>
           </button>
@@ -711,7 +711,7 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
             return (
               <li key={r.id} className="group flex items-center justify-between">
                 <button onClick={() => onLoad(r.exercises, r.split)} className="inline-flex items-center gap-1.5 text-left text-fg-1 hover:text-fg-1" title="Load into session">
-                  <AppIcon as={Icon} size="sm" style={{ color: cat(m.color) }} /> {r.name}
+                  <AppIcon as={Icon} size="sm" style={{ color: onRaised(m.color) }} /> {r.name}
                   <span className="ml-1 text-fg-2">{r.exercises.length} exercises</span>
                 </button>
                 <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>

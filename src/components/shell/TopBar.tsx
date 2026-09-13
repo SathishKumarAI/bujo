@@ -76,7 +76,11 @@ export function TopBar({
   const collapsed = useHideOnScroll()
 
   return (
-    <header className="app-header sticky top-0 z-30 border-b border-line bg-card/80 pt-2.5 backdrop-blur">
+    // Sticky, so content genuinely passes underneath it — which is the one
+    // thing that earns a blur. `--shadow-raise` puts the bar a rung in front of
+    // whatever is sliding under it; the hairline stays because a translucent
+    // surface over arbitrary content cannot rely on colour alone to end.
+    <header className="app-header sticky top-0 z-30 border-b border-line bg-card/75 pt-2.5 shadow-raise backdrop-blur-lg">
       {/* ── Row 1 · where you can go ─────────────────────────────────────── */}
       <HeaderRail collapsed={collapsed}>
         <div className="flex items-center gap-3 px-4 pb-2">
@@ -120,8 +124,10 @@ export function TopBar({
       </HeaderRail>
 
       {/* ── Row 2 · where you are ────────────────────────────────────────── */}
-      {/* `items-stretch` so the tabs run the full height of the row and their
-          active underline lands on the header's own bottom rule. */}
+      {/* `items-stretch` keeps the tab row and the date nav the same height.
+          It used to also be load-bearing for the tabs' active *underline*,
+          which had to land exactly on the header's own bottom rule; the tabs
+          are filled pills now and carry their own `my-1` inset instead. */}
       <div className="flex items-stretch gap-3 border-t border-line px-4">
         {hasTabs ? (
           <>

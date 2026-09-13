@@ -57,9 +57,14 @@ export function BottomNav({
             aria-current={active ? 'page' : undefined}
             // 44px minimum target (WCAG 2.5.5) — `py-1.5` around a 20px icon
             // and a micro label came out at 40 on a phone.
-            className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro ${active ? 'text-primary' : 'text-fg-2'}`}
+            className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-micro transition-colors ${active ? 'text-brand-text' : 'text-fg-2'}`}
           >
-            {active && <span className="absolute top-0 h-0.5 w-8 rounded-pill bg-primary" />}
+            {/* An active indicator BEHIND the icon rather than a 2px hairline
+                pinned to the bar's top edge. At phone size that hairline was
+                8px wide and sat above a 24px glyph — the smallest mark in the
+                app carrying the most-consulted piece of state. `-z-10` keeps it
+                under the label without a stacking context of its own. */}
+            {active && <span aria-hidden className="absolute inset-x-3 inset-y-1 -z-10 rounded-control bg-brand-wash" />}
             <AppIcon as={s.icon} size="lg" active={active} />
             {s.label}
           </a>

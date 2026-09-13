@@ -92,7 +92,7 @@ export function Nutrition() {
             <select
               value={pick}
               onChange={(e) => setPick(e.target.value)}
-              className="mt-1 w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1"
+              className="mt-1 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1"
             >
               <option value="">Choose a food…</option>
               <optgroup label="Indian">

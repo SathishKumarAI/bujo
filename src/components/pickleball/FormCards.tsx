@@ -1,7 +1,7 @@
 import { Flame, Gauge, Heartbeat, Medal, Minus, PersonSimpleRun, TrendDown, TrendUp, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Pill, StatTile } from '../ui'
-import { cat, washStyle } from '../../lib/colors'
+import { cat, onRaised, washStyle } from '../../lib/colors'
 import type { RollingForm, WinRateForecast, PickleMilestone, RpeLoad } from '../../lib/pickleball'
 
 /** Recent form / momentum strip with win-streak chips (#323). */
@@ -15,7 +15,7 @@ export function RecentFormCard({ form, streaks }: { form: RollingForm; streaks: 
             return <span key={i} className="grid h-6 w-6 place-items-center rounded-control text-caption font-medium" style={washStyle(c)}>{r}</span>
           })}
         </div>
-        <span className="text-body text-fg-2"><span style={{ color: cat('green') }}>{form.wins}W</span> · <span style={{ color: cat('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: cat('green') }}>{form.winPct}%</span></span>
+        <span className="text-body text-fg-2"><span style={{ color: onRaised('green') }}>{form.wins}W</span> · <span style={{ color: onRaised('red') }}>{form.losses}L</span>{form.draws ? ` · ${form.draws}D` : ''} · <span style={{ color: onRaised('green') }}>{form.winPct}%</span></span>
         {form.momentum !== 'flat' && (
           <Pill color={form.momentum === 'up' ? 'green' : 'red'} size="caption" className="ml-auto">
             {form.momentum === 'up' ? <Icon as={TrendUp} size="sm" /> : <Icon as={TrendDown} size="sm" />}
@@ -83,7 +83,7 @@ export function SessionIntensityCard({ load }: { load: RpeLoad }) {
         <StatTile compact label="Hardest" value={load.hardest} />
         <StatTile compact label="7-day load" value={load.weekLoad} />
       </div>
-      <p className="mt-3 text-label text-fg-2">Typical effort feels <span style={{ color: cat(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
+      <p className="mt-3 text-label text-fg-2">Typical effort feels <span style={{ color: onRaised(load.label === 'very hard' ? 'red' : load.label === 'hard' ? 'peach' : load.label === 'moderate' ? 'yellow' : 'green') }}>{load.label}</span>. Load = RPE × games over the last 7 days — watch for spikes after rest. Log RPE 1–10 per session to track it.</p>
     </Card>
   )
 }

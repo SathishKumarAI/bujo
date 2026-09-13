@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 import { Card, Input, Segmented, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { Switch } from '../components/ui/switch'
 import { DEFAULT_ENDPOINT, DEFAULT_MODEL, isLocalEndpoint, listModels } from '../lib/voice/model'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
@@ -177,7 +177,7 @@ export function Settings() {
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
             aria-label="Gender"
-            className="rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+            className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
           >
             <option value="prefer-not">Prefer not to say</option>
             <option value="female">Female</option>
@@ -327,7 +327,7 @@ export function Settings() {
                 type="time"
                 value={s.reminderTime}
                 onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                className="rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+                className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
           )}
@@ -639,7 +639,7 @@ export function Settings() {
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-label">
                         <span className="text-fg-2">Days with data (coverage)</span>
-                        <span style={{ color: cat('subtext1') }}>{sum.coveragePct}%</span>
+                        <span style={{ color: onRaised('subtext1') }}>{sum.coveragePct}%</span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
                         <div className="h-full rounded-pill" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
@@ -723,11 +723,11 @@ function VoiceModelCard() {
                 value={endpoint}
                 onChange={(e) => setSettings({ voiceModel: { ...vm, endpoint: e.target.value } })}
                 placeholder={DEFAULT_ENDPOINT}
-                className="w-56 rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+                className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
             {!local && (
-              <p className="text-label" style={{ color: cat('red') }}>
+              <p className="text-label" style={{ color: onRaised('red') }}>
                 That is not this machine, so it will not be used. Only localhost and 127.0.0.1 are allowed —
                 a journal of health data does not get a field that can send it anywhere.
               </p>
@@ -737,7 +737,7 @@ function VoiceModelCard() {
                 <select
                   value={vm.model ?? DEFAULT_MODEL}
                   onChange={(e) => setSettings({ voiceModel: { ...vm, model: e.target.value } })}
-                  className="w-56 rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+                  className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
                 >
                   {models.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
@@ -745,7 +745,7 @@ function VoiceModelCard() {
                 <input
                   value={vm.model ?? DEFAULT_MODEL}
                   onChange={(e) => setSettings({ voiceModel: { ...vm, model: e.target.value } })}
-                  className="w-56 rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+                  className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
                 />
               )}
             </Row>

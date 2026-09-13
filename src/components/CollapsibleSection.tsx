@@ -2,7 +2,7 @@ import { CaretDown, CaretRight } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, type ReactNode } from 'react'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useStickyState } from '../lib/useStickyState'
 
@@ -94,7 +94,7 @@ export function CollapsibleSection({
     if (isValidElement(icon)) iconNode = icon
     else {
       const Icon = icon as IconGlyph
-      iconNode = <AppIcon as={Icon} size="md" style={{ color: cat(color) }} />
+      iconNode = <AppIcon as={Icon} size="md" style={{ color: onRaised(color) }} />
     }
   }
 

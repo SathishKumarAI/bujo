@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from './ui'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
@@ -136,7 +136,7 @@ export function DriveSync() {
                     )}
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1.5 text-label text-fg-1">
-                    <Icon as={ArrowSquareOut} size="sm" style={{ color: cat('overlay1') }} /> <span className="truncate">{f.name}</span>
+                    <Icon as={ArrowSquareOut} size="sm" style={{ color: onRaised('overlay1') }} /> <span className="truncate">{f.name}</span>
                   </div>
                 </a>
               ))}

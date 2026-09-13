@@ -1,7 +1,7 @@
 import { ArrowCounterClockwise, Pause, Play, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised } from '../lib/colors'
 import { Button } from './ui/button'
 
 const PRESETS = [60, 90, 120, 180]
@@ -73,7 +73,7 @@ export function RestTimer() {
         </Button>
       </div>
 
-      {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: cat('green') }}><Icon as={Timer} size="sm" /> Rest done · go!</span>}
+      {done && <span className="inline-flex items-center gap-1 text-body" style={{ color: onRaised('green') }}><Icon as={Timer} size="sm" /> Rest done · go!</span>}
     </div>
   )
 }

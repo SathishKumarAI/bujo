@@ -1,7 +1,7 @@
 import { useJournal } from '../../store'
 import { Card, Empty } from '../ui'
 import { MasonryGrid } from '../shell/CardGrid'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { habitConsistencyScore, habitMonthlyDeltas, moodImpactRanking, streakLeaderboard } from '../../lib/correlations'
 
 /**
@@ -65,7 +65,7 @@ export function HabitAnalytics() {
             <Empty>Not enough scheduled days yet.</Empty>
           ) : (
             <>
-              <p className="text-display font-medium" style={{ color: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
+              <p className="text-display font-medium" style={{ color: onRaised(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }}>{focusScore}<span className="text-heading text-fg-2">/100</span></p>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-pill bg-ink-2">
                 <div className="h-full rounded-pill" style={{ width: `${focusScore}%`, background: cat(focusScore >= 70 ? 'green' : focusScore >= 40 ? 'yellow' : 'peach') }} />
               </div>

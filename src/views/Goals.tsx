@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button'
 import { Stepper } from '../components/fields/Stepper'
 import { Page } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { todayISO, dayDiff, prettyDay, weekColumn } from '../lib/date'
 import { goalFraction, goalMet, goalOnPace, goalPace } from '../lib/goals'
 import { weeklyActiveMinutes } from '../lib/fitness'
@@ -230,14 +230,14 @@ export function Goals() {
           <>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-ink-2 px-3 py-2 text-body">
             <span className="inline-flex items-center gap-1.5 text-fg-1">
-              <AppIcon as={Target} size="sm" style={{ color: cat('mauve') }} /> Overall progress
+              <AppIcon as={Target} size="sm" style={{ color: onRaised('mauve') }} /> Overall progress
               <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
             </span>
             {nearly > 0 && (
               <span className="text-fg-2">{nearly} nearly there <span className="text-fg-2">(80–99%)</span></span>
             )}
             {closeToCap > 0 && (
-              <span style={{ color: cat('peach') }}>{closeToCap} close to the cap</span>
+              <span style={{ color: onRaised('peach') }}>{closeToCap} close to the cap</span>
             )}
           </div>
           </>
@@ -262,7 +262,7 @@ export function Goals() {
                       button has to take that height for it to mean anything. */}
                   <button onClick={() => navigate(g.to)} className="press-3d flex h-full w-full flex-col text-left">
                     <div className="mb-1 flex items-center gap-2 text-body">
-                      <AppIcon as={Icon} size="sm" className="shrink-0" style={{ color: cat(g.color) }} />
+                      <AppIcon as={Icon} size="sm" className="shrink-0" style={{ color: onRaised(g.color) }} />
                       <span className="min-w-0 font-medium text-fg-1">{g.label}</span>
                       {/* Wraps rather than truncating: `mt-auto` on the bar
                           already holds the baseline, so a second line here
@@ -323,7 +323,7 @@ export function Goals() {
                     </label>
                     {pace && !reached && (
                       pace.pastDue ? (
-                        <span className="inline-flex items-center gap-1" style={{ color: cat('red') }}>
+                        <span className="inline-flex items-center gap-1" style={{ color: onRaised('red') }}>
                           Past due ({prettyDay(g.due!)}) · {pace.remaining}{g.unit ? ` ${g.unit}` : ''} short
                         </span>
                       ) : (
@@ -336,7 +336,7 @@ export function Goals() {
                       )
                     )}
                     {pace && reached && g.due && (
-                      <span className="inline-flex items-center gap-1" style={{ color: cat('green') }}>Done ✓ (due {prettyDay(g.due)})</span>
+                      <span className="inline-flex items-center gap-1" style={{ color: onRaised('green') }}>Done ✓ (due {prettyDay(g.due)})</span>
                     )}
                   </div>
                 </li>

@@ -2,7 +2,7 @@ import { ArrowClockwise, Sword } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { missesFor, penaltyFor, scaleTask, TIER_META, PENALTIES, type PenaltyTier } from '../lib/penalties'
 import { Card, Pill } from './ui'
@@ -45,8 +45,8 @@ export function PenaltyCard() {
 
   return (
     <Card band
-      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: cat(meta.color) }} /> Make-up work</span>}
-      subtitle={open ? 'Yesterday left something undone · here is the catch-up.' : <span style={{ color: cat(meta.color) }}>{penalty.title}: {task}</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Sword} size="md" style={{ color: onRaised(meta.color) }} /> Make-up work</span>}
+      subtitle={open ? 'Yesterday left something undone · here is the catch-up.' : <span style={{ color: onRaised(meta.color) }}>{penalty.title}: {task}</span>}
       right={<Pill color={meta.color} className="font-medium">{meta.label}</Pill>}
       hideInfo
       collapsible
@@ -59,7 +59,7 @@ export function PenaltyCard() {
         ))}
       </ul>
       <div className="rounded-card border p-3" style={{ borderColor: cat(meta.color) + '55', background: cat(meta.color) + '11' }}>
-        <p className="font-display text-heading font-medium" style={{ color: cat(meta.color) }}>{penalty.title}</p>
+        <p className="font-display text-heading font-medium" style={{ color: onRaised(meta.color) }}>{penalty.title}</p>
         <p className="text-body text-fg-1">{task} <span className="text-label text-fg-2">{level}</span></p>
       </div>
       <div className="mt-3 flex items-center gap-3 text-label">

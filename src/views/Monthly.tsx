@@ -8,7 +8,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { QuietSection } from '../components/CollapsibleSection'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { bulletTypeBreakdown, entriesPerDay, journalingStreak, monthlyEntryCounts, parseTags, taskCompletion, weekdayActivity } from '../lib/bullets'
 import { habitDoneOn } from '../lib/stats'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
@@ -97,11 +97,11 @@ export function Monthly() {
       {/* Compact "this month" summary · a single thin bar. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-ink-2/60 px-3 py-1.5 text-label text-fg-2">
         <span className="font-medium text-fg-1">This month</span>
-        <span><b style={{ color: cat('mauve') }}>{monthEntries.length}</b> entries</span>
-        <span><b style={{ color: cat('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
-        <span><b style={{ color: cat('blue') }}>{journaledDays}</b> days</span>
-        <span>mood <b style={{ color: cat('peach') }}>{moodAvg == null ? '—' : `${moodAvg}/10`}</b></span>
-        {topTags.slice(0, 3).map(([t, n]) => <span key={t} style={{ color: cat('sapphire') }}>#{t} {n}</span>)}
+        <span><b style={{ color: onRaised('mauve') }}>{monthEntries.length}</b> entries</span>
+        <span><b style={{ color: onRaised('green') }}>{tasksDone}/{tasks.length}</b> tasks</span>
+        <span><b style={{ color: onRaised('blue') }}>{journaledDays}</b> days</span>
+        <span>mood <b style={{ color: onRaised('peach') }}>{moodAvg == null ? '—' : `${moodAvg}/10`}</b></span>
+        {topTags.slice(0, 3).map(([t, n]) => <span key={t} style={{ color: onRaised('sapphire') }}>#{t} {n}</span>)}
       </div>
 
       <Card band>
@@ -215,7 +215,7 @@ export function Monthly() {
             <div>
               <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
                 <span>Entries per day</span>
-                <span>peak <b style={{ color: cat('mauve') }}>{maxPerDay}</b></span>
+                <span>peak <b style={{ color: onRaised('mauve') }}>{maxPerDay}</b></span>
               </div>
               <div className="flex h-16 items-end gap-px" role="img" aria-label={`Entries per day across ${prettyMonth(ym)}: peak ${maxPerDay}`}>
                 {perDay.map((p) => (
@@ -238,8 +238,8 @@ export function Monthly() {
                 <div className="flex flex-wrap gap-3 text-body">
                   {TYPE_META.map((t) => (
                     <span key={t.key} className="inline-flex items-baseline gap-1">
-                      <span style={{ color: cat(t.color) }}>{t.glyph}</span>
-                      <b style={{ color: cat(t.color) }}>{t.n}</b>
+                      <span style={{ color: onRaised(t.color) }}>{t.glyph}</span>
+                      <b style={{ color: onRaised(t.color) }}>{t.n}</b>
                       <span className="text-fg-2">{t.label}</span>
                     </span>
                   ))}
@@ -248,7 +248,7 @@ export function Monthly() {
               <div>
                 <div className="mb-1 flex items-baseline justify-between text-label text-fg-2">
                   <span>Tasks done</span>
-                  <span><b style={{ color: cat('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
+                  <span><b style={{ color: onRaised('green') }}>{completion.done}/{completion.total}</b>{completion.total > 0 && ` · ${Math.round(completion.rate * 100)}%`}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
                   <div className="h-full rounded-pill" style={{ width: `${Math.round(completion.rate * 100)}%`, background: cat('green') }} />
@@ -262,7 +262,7 @@ export function Monthly() {
             <div>
               <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
                 <span>By weekday</span>
-                <span>busiest <b style={{ color: cat('sapphire') }}>{busiestWeekday.count > 0 ? busiestWeekday.label : '—'}</b></span>
+                <span>busiest <b style={{ color: onRaised('sapphire') }}>{busiestWeekday.count > 0 ? busiestWeekday.label : '—'}</b></span>
               </div>
               <div className="flex items-end gap-1.5" role="img" aria-label={`Entries by weekday this month; busiest is ${busiestWeekday.label}`}>
                 {weekdays.map((w) => (
@@ -285,13 +285,13 @@ export function Monthly() {
             <div className="flex flex-col justify-center gap-2">
               <div>
                 <div className="text-label text-fg-2">Current streak</div>
-                <div className="text-heading font-medium" style={{ color: cat(streak.current > 0 ? 'green' : 'overlay0') }}>
+                <div className="text-heading font-medium" style={{ color: onRaised(streak.current > 0 ? 'green' : 'overlay0') }}>
                   {streak.current} day{streak.current === 1 ? '' : 's'}
                 </div>
               </div>
               <div>
                 <div className="text-label text-fg-2">Longest streak</div>
-                <div className="text-heading font-medium" style={{ color: cat('mauve') }}>
+                <div className="text-heading font-medium" style={{ color: onRaised('mauve') }}>
                   {streak.longest} day{streak.longest === 1 ? '' : 's'}
                 </div>
               </div>
@@ -306,7 +306,7 @@ export function Monthly() {
           help="Each bar is one month's total entries, ending with the month you're viewing. Use it to spot busy seasons and quiet stretches across the year.">
           <div className="mb-1.5 flex items-baseline justify-between text-label text-fg-2">
             <span>Last 12 months</span>
-            <span><b style={{ color: cat('mauve') }}>{monthlyTotal}</b> entries</span>
+            <span><b style={{ color: onRaised('mauve') }}>{monthlyTotal}</b> entries</span>
           </div>
           <div className="flex items-end gap-1.5" role="img" aria-label={`Entries per month over the last 12 months, ${monthlyTotal} total`}>
             {monthlyCounts.map((m) => (

@@ -1,7 +1,7 @@
 import { TrendDown } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 import type { StalledLift } from '../../lib/fitness'
 
 /**
@@ -22,10 +22,10 @@ export function StalledLifts({ lifts, unit, setFocusEx }: { lifts: StalledLift[]
               title={`${l.exercise} stuck at ${l.top}${unit} across ${l.sessions} sessions (last ${l.lastDate})`}
             >
               <span className="inline-flex min-w-0 items-center gap-1.5 text-fg-1">
-                <Icon as={TrendDown} size="sm" style={{ color: cat('red') }} /> <span className="truncate">{l.exercise}</span>
+                <Icon as={TrendDown} size="sm" style={{ color: onRaised('red') }} /> <span className="truncate">{l.exercise}</span>
               </span>
               <span className="shrink-0 text-fg-2">
-                <span className="font-medium" style={{ color: cat('peach') }}>{l.top}{unit}</span>
+                <span className="font-medium" style={{ color: onRaised('peach') }}>{l.top}{unit}</span>
                 <span className="ml-1.5 text-micro">{l.sessions} sessions</span>
               </span>
             </button>

@@ -110,7 +110,7 @@ export function ActivityForm({
         <select
           value={activity}
           onChange={(e) => onChange({ activity: e.target.value as ActivityKey })}
-          className="mt-1 w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1"
+          className="mt-1 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1"
         >
           {activitiesForMode(mode).map(([key, a]) => (
             <option key={key} value={key}>{a.label}</option>

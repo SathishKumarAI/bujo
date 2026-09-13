@@ -1,7 +1,7 @@
 import { PiggyBank } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Input } from '../ui'
-import { cat } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 
 /**
  * Money saved (#123) · clean days × cost/day, with an editable per-day rate.
@@ -24,7 +24,7 @@ export function MoneySavedCard({
     <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={PiggyBank} size="md" className="text-green" /> Money saved</span>} subtitle="What staying clean kept in your pocket">
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-display font-medium leading-none" style={{ color: cat('green') }}>{currency}{savedMoney.toLocaleString()}</div>
+          <div className="text-display font-medium leading-none" style={{ color: onRaised('green') }}>{currency}{savedMoney.toLocaleString()}</div>
           <div className="mt-1 text-caption uppercase tracking-wide text-fg-2">saved</div>
         </div>
         <p className="flex-1 text-body text-fg-2">

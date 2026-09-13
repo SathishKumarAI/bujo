@@ -8,7 +8,7 @@ import { Button } from '../ui/button'
 import { Stepper } from '../fields/Stepper'
 import { TIME_SLOTS } from '../../lib/timeofday'
 import { slotGlyph } from '../glyphs'
-import { cat, HABIT_COLORS, onAccent } from '../../lib/colors'
+import { cat, HABIT_COLORS, onAccent, onRaised } from '../../lib/colors'
 import { habitConsistency, habitDoneOn, habitStreak, habitTarget } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
 import { bestWeekday, monthlyHabitCompletion, perfectWeeks, valueSparkline, weeklyHeatRow } from '../../lib/habitStats'
@@ -74,7 +74,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
           </div>
           <p className="text-label text-fg-2">
             Strongest on <span className="text-fg-1">{bestDow}</span>{worstDow && <> · weakest on <span className="text-fg-1">{worstDow}</span></>}. <Momentum data={data} habit={habit} today={today} />
-            {!habit.avoid && perfectWk > 0 && <> · <span style={{ color: cat('green') }}>{perfectWk}</span> perfect {perfectWk === 1 ? 'week' : 'weeks'} (12)</>}
+            {!habit.avoid && perfectWk > 0 && <> · <span style={{ color: onRaised('green') }}>{perfectWk}</span> perfect {perfectWk === 1 ? 'week' : 'weeks'} (12)</>}
           </p>
 
           {/* Last-7-day intensity strip — this week at a glance. */}
@@ -150,7 +150,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
             <label className="block text-body text-fg-1">Emoji<Input value={habit.emoji ?? ''} onChange={(e) => set({ emoji: e.target.value || undefined })} placeholder="💧" className="mt-1" /></label>
           </div>
           <label className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2 text-body text-fg-1">
-            <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
+            <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: onRaised('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
             <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
           </label>
           <label className="block text-body text-fg-1">Weekly goal <span className="text-fg-2">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
@@ -235,7 +235,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
               <label className="block text-body text-fg-1">Floor <span className="text-fg-2">(min “showed up”, optional · below the target)</span>
                 <div className="mt-1"><Stepper value={habit.floor ?? undefined} onChange={(v) => set({ floor: v && v > 0 ? v : undefined })} step={habit.type === 'timer' ? 5 : 1} min={0} aria-label="Floor threshold" /></div>
                 {habit.floor != null && habit.floor >= habitTarget(habit) && (
-                  <span className="mt-1 block text-caption" style={{ color: cat('peach') }}>Floor should be below the target ({habitTarget(habit)}) to show a “met floor” state.</span>
+                  <span className="mt-1 block text-caption" style={{ color: onRaised('peach') }}>Floor should be below the target ({habitTarget(habit)}) to show a “met floor” state.</span>
                 )}
               </label>
             </>
@@ -284,7 +284,7 @@ function Momentum({ data, habit, today }: { data: JData; habit: Habit; today: st
   const prev = week(addDays(today, -7))
   if (now === prev) return <span className="text-fg-2">→ steady</span>
   const up = now > prev
-  return <span style={{ color: cat(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
+  return <span style={{ color: onRaised(up ? 'green' : 'red') }}>{up ? '↑ improving' : '↓ slipping'} ({now} vs {prev})</span>
 }
 
 /** GitHub-style weekday-aligned completion heatmap (12 weeks or a full year). */

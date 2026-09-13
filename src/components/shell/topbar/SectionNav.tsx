@@ -41,15 +41,22 @@ export function SectionNav({
               onNavigate(target)
             }}
             aria-current={active ? 'page' : undefined}
-            // A 3px rule on the leading edge and full-strength ink — the rail's
-            // active treatment turned ninety degrees. No filled pill: a fill
-            // makes the current item a raised object, and the flat treatment is
-            // the whole point. The transparent rule on the inactive items keeps
-            // every label on the same baseline.
-            className={`inline-flex min-h-9 items-center gap-2 border-t-[3px] px-3 text-body whitespace-nowrap transition-colors ${
+            // A tonal pill. This was a 3px rule on the leading edge, defended
+            // in a comment here as "no filled pill: a fill makes the current
+            // item a raised object, and the flat treatment is the whole point"
+            // — true of the Modernist world, and exactly inverted in this one.
+            // The section you are in IS the raised object; a hairline over a
+            // label is the weakest signal available for the app's single most
+            // important piece of state, and it read as an underlined link.
+            //
+            // `--radius-control`: this is a thing you operate. Inactive items
+            // get the same box with no fill, so nothing shifts on hover and
+            // every label stays on one baseline — which is what the old
+            // transparent rule was for.
+            className={`inline-flex min-h-9 items-center gap-2 rounded-control px-3 text-body whitespace-nowrap transition-colors ${
               active
-                ? 'border-brand font-medium text-foreground'
-                : 'border-transparent text-fg-2 hover:text-fg-1'
+                ? 'bg-brand-wash font-medium text-brand-text'
+                : 'text-fg-2 hover:bg-ink-2 hover:text-fg-1'
             }`}
           >
             <Icon as={SectionIcon} size="md" active={active} className={active ? 'text-brand-text' : undefined} />

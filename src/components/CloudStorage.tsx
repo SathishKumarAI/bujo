@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Input } from './ui'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { todayISO } from '../lib/date'
 import { folderName, isSupported, loadFromFolder, pickFolder, restoreFolder, saveToFolder } from '../lib/fscloud'
@@ -98,8 +98,8 @@ export function CloudStorage() {
       {/* Folder */}
       <div className="rounded-card bg-ink-2 p-3">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-body text-fg-1"><Icon as={FolderOpen} size="sm" style={{ color: cat('mauve') }} /> Cloud-synced folder</span>
-          {s.storageMode === 'folder' && <span className="text-label" style={{ color: cat('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
+          <span className="inline-flex items-center gap-2 text-body text-fg-1"><Icon as={FolderOpen} size="sm" style={{ color: onRaised('mauve') }} /> Cloud-synced folder</span>
+          {s.storageMode === 'folder' && <span className="text-label" style={{ color: onRaised('green') }}>● {s.folderName ?? folderName() ?? 'connected'}</span>}
         </div>
         <p className="mt-1 text-label text-fg-2">Pick a folder in your Drive/Dropbox/OneDrive sync folder, auto-saves there.</p>
         {!isSupported() ? (

@@ -1,7 +1,7 @@
 import { Hourglass } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import type { timeReclaimed } from '../../lib/urge'
 
 type Reclaimed = ReturnType<typeof timeReclaimed>
@@ -25,17 +25,17 @@ export function TimeReclaimedCard({
     <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Hourglass} size="md" className="text-teal" /> Time reclaimed</span>} subtitle="Hours you’d otherwise have lost, across all your clean days">
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-display font-medium leading-none" style={{ color: cat('teal') }}>{reclaimed.hours}</div>
+          <div className="text-display font-medium leading-none" style={{ color: onRaised('teal') }}>{reclaimed.hours}</div>
           <div className="mt-1 text-caption uppercase tracking-wide text-fg-2">hours back</div>
         </div>
         <p className="flex-1 text-body text-fg-2">
-          That’s about <strong style={{ color: cat('teal') }}>{reclaimed.days} full day{reclaimed.days === 1 ? '' : 's'}</strong>{reclaimed.remHours > 0 && <> and {reclaimed.remHours}h</>} of life reclaimed across <strong>{totalClean}</strong> clean day{totalClean === 1 ? '' : 's'}.
+          That’s about <strong style={{ color: onRaised('teal') }}>{reclaimed.days} full day{reclaimed.days === 1 ? '' : 's'}</strong>{reclaimed.remHours > 0 && <> and {reclaimed.remHours}h</>} of life reclaimed across <strong>{totalClean}</strong> clean day{totalClean === 1 ? '' : 's'}.
         </p>
       </div>
       <div className="mt-3">
         <div className="flex items-center justify-between text-label text-fg-1">
           <label htmlFor="reclaim-rate">Hours/day it used to cost you</label>
-          <span className="font-medium" style={{ color: cat('teal') }}>{hoursPerDay}h</span>
+          <span className="font-medium" style={{ color: onRaised('teal') }}>{hoursPerDay}h</span>
         </div>
         <input id="reclaim-rate" type="range" min={0} max={8} step={1} value={hoursPerDay}
           onChange={(e) => onHoursPerDayChange(Number(e.target.value))}

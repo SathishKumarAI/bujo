@@ -8,7 +8,7 @@ import { VideoLink } from '../components/VideoLink'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, NumField, EmptyFrame,
 } from '../components/page'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import {
   pullupAbility, ladder, pyramid, repScheme, setLines, repsOf, bestSet,
@@ -181,7 +181,7 @@ function TrainingSetCard({
         />
       </label>
       <div className="space-y-1.5 text-body">
-        <Row label="Training set"><span style={{ color: cat('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></Row>
+        <Row label="Training set"><span style={{ color: onRaised('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></Row>
         <Row label="Ladder"><span className="num text-fg-1">{ladder(set).join(', ')}</span></Row>
         <Row label="Pyramid"><span className="num text-fg-1">{pyramid(set).join(', ')}</span></Row>
         <Row label="Daily" divide><span className="text-fg-1">{a.daily}</span></Row>
@@ -324,7 +324,7 @@ function Manual() {
         <ul className="space-y-2 text-label text-fg-2">
           {PULLUP_PRINCIPLES.map((p) => (
             <li key={p.name}>
-              <strong style={{ color: cat(p.color) }}>{p.name}:</strong> {p.body}
+              <strong style={{ color: onRaised(p.color) }}>{p.name}:</strong> {p.body}
             </li>
           ))}
         </ul>
@@ -347,7 +347,7 @@ function Manual() {
               <tr key={a.group} className="border-t border-line">
                 <th scope="row" className="py-1 pr-2 text-left font-normal text-fg-1">{a.group}</th>
                 <td className="num py-1 pr-2 text-fg-2">{a.range}</td>
-                <td className="num py-1 pr-2" style={{ color: cat('mauve') }}>{a.trainingSet}</td>
+                <td className="num py-1 pr-2" style={{ color: onRaised('mauve') }}>{a.trainingSet}</td>
                 <td className="py-1 pr-2 text-fg-2">{a.daily}</td>
                 <td className="py-1 text-fg-2">{a.weekly}</td>
               </tr>

@@ -1,5 +1,5 @@
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 
 /** Trigger patterns · most common reset reasons, ranked, plus the average gap. */
 export function TriggerPatternsCard({
@@ -27,7 +27,7 @@ export function TriggerPatternsCard({
           )
         })}
       </ul>
-      {avgGap > 0 && <p className="mt-3 text-label text-fg-2">Average <span style={{ color: cat('teal') }}>{avgGap} days</span> between resets · aim to stretch it.</p>}
+      {avgGap > 0 && <p className="mt-3 text-label text-fg-2">Average <span style={{ color: onRaised('teal') }}>{avgGap} days</span> between resets · aim to stretch it.</p>}
     </Card>
   )
 }

@@ -12,7 +12,7 @@ import { Field } from '../../components/fields/Field'
 import { Stepper } from '../../components/fields/Stepper'
 import { SegmentScale } from '../../components/fields/SegmentScale'
 import { currentStreak } from '../../lib/stats'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { promptForDay } from '../../lib/prompts'
 import { DEFAULT_FAST_TARGET, elapsedHours, fmtDuration } from '../../lib/fasting'
 
@@ -247,12 +247,12 @@ export function WellbeingCard({ date }: { date: string }) {
           ] as const).map(([label, v, color]) => (
             <div key={label} className="flex items-baseline gap-1.5">
               <dt className="text-fg-2">{label}</dt>
-              <dd className="font-mono tabular-nums" style={{ color: cat(color) }}>{v}</dd>
+              <dd className="font-mono tabular-nums" style={{ color: onRaised(color) }}>{v}</dd>
             </div>
           ))}
           <div className="flex items-baseline gap-1.5">
             <dt className="text-fg-2">Slept</dt>
-            <dd className="font-mono tabular-nums" style={{ color: cat('blue') }}>{metric?.sleep}h</dd>
+            <dd className="font-mono tabular-nums" style={{ color: onRaised('blue') }}>{metric?.sleep}h</dd>
           </div>
           {metric?.fastBreak && (
             <div className="flex items-baseline gap-1.5">
@@ -296,7 +296,7 @@ export function WellbeingCard({ date }: { date: string }) {
               variant="ghost"
               aria-pressed={metric?.fastBreak === kind}
               onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === kind ? undefined : kind })}
-              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand' : ''}`}
+              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand-text' : ''}`}
             >
               <Icon as={glyph} size="sm" /> {label}
             </Button>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { currentStreak, search, taskCompletion } from '../lib/stats'
 import { insights, weeklyDigest, digestRangeLabel, momentumIndicator } from '../lib/correlations'
 import { coachDigest } from '../lib/coach'
@@ -71,7 +71,7 @@ export function Insights() {
                 onClick={() => setKind(k)}
                 aria-pressed={kind === k}
                 className={`rounded-pill px-2.5 py-0.5 text-label capitalize transition-colors ${
-                  kind === k ? 'bg-brand-wash font-medium text-brand' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
+                  kind === k ? 'bg-brand-wash font-medium text-brand-text' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
                 }`}
               >
                 {k}{k !== 'all' ? ` (${allResults.filter((r) => r.kind === k).length})` : ''}
@@ -93,7 +93,7 @@ export function Insights() {
                       className="flex w-full gap-2 rounded px-2 py-1 text-left hover:bg-ink-2 disabled:cursor-default"
                     >
                       <span className="w-24 shrink-0 text-fg-2">{r.date ? prettyDay(r.date) : '—'}</span>
-                      <span className="w-16 shrink-0 text-label" style={{ color: cat('sapphire') }}>{r.kind}</span>
+                      <span className="w-16 shrink-0 text-label" style={{ color: onRaised('sapphire') }}>{r.kind}</span>
                       <span className="text-fg-1">{r.text}</span>
                     </button>
                   </li>
@@ -128,13 +128,13 @@ export function Insights() {
             <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-body">
               {digest.win && (
                 <p className="flex items-center gap-2">
-                  <AppIcon as={Trophy} size="sm" style={{ color: cat('green') }} />
+                  <AppIcon as={Trophy} size="sm" style={{ color: onRaised('green') }} />
                   <span className="text-fg-1">{digest.win}</span>
                 </p>
               )}
               {digest.slip && (
                 <p className="flex items-center gap-2">
-                  <AppIcon as={Warning} size="sm" style={{ color: cat('peach') }} />
+                  <AppIcon as={Warning} size="sm" style={{ color: onRaised('peach') }} />
                   <span className="text-fg-1">{digest.slip}</span>
                 </p>
               )}
@@ -144,7 +144,7 @@ export function Insights() {
 
         <Card band title="Coach digest" subtitle="What to focus on next">
           <p className="mb-3 flex items-center gap-2 text-body font-medium text-fg-1">
-            <AppIcon as={Sparkle} size="sm" style={{ color: cat('mauve') }} />
+            <AppIcon as={Sparkle} size="sm" style={{ color: onRaised('mauve') }} />
             {coach.headline}
           </p>
           {coach.tips.length > 0 && (
@@ -206,10 +206,10 @@ export function Insights() {
                 <li key={m.key} className="rounded-card bg-ink-2 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-label text-fg-2">{m.label}</span>
-                    <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
+                    <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
                   </div>
                   <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
-                  <p className="text-label" style={{ color: cat(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
+                  <p className="text-label" style={{ color: onRaised(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
                     {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
                   </p>
                 </li>

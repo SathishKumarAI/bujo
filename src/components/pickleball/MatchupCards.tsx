@@ -1,7 +1,7 @@
 import { Gauge, MapPin, Sword, Users } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Pill } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../lib/pickleball'
 
 /** Partner chemistry · win rate by doubles partner. */
@@ -13,7 +13,7 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
           <li key={p.partner}>
             <div className="mb-1 flex items-baseline justify-between text-body">
               <span className="min-w-0 truncate text-fg-1">{p.partner}</span>
-              <span className="shrink-0 text-fg-2">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: cat('green') }}>{p.winPct}%</span></span>
+              <span className="shrink-0 text-fg-2">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: onRaised('green') }}>{p.winPct}%</span></span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
               <div className="h-full rounded-pill" style={{ width: `${p.winPct}%`, background: cat('mauve') }} />
@@ -55,7 +55,7 @@ export function RivalryRecordCard({ opponents }: { opponents: OpponentRecord[] }
           <li key={o.opponent} className="flex items-center justify-between gap-2 py-2 text-body">
             <span className="min-w-0 truncate text-fg-1">vs {o.opponent} <span className="text-fg-2">· {o.sessions} {o.sessions === 1 ? 'meeting' : 'meetings'}</span></span>
             <span className="flex shrink-0 items-center gap-2">
-              <span><span style={{ color: cat('green') }}>{o.gamesWon}</span>–<span style={{ color: cat('red') }}>{o.gamesLost}</span></span>
+              <span><span style={{ color: onRaised('green') }}>{o.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{o.gamesLost}</span></span>
               <Pill color={o.diff > 0 ? 'green' : o.diff < 0 ? 'red' : 'overlay0'} size="micro" className="px-2">
                 {o.diff > 0 ? `+${o.diff}` : o.diff}
               </Pill>
@@ -77,7 +77,7 @@ export function LevelMatchupCard({ matchup }: { matchup: LevelBucket[] }) {
           <li key={m.bucket}>
             <div className="mb-1 flex justify-between text-body">
               <span className="text-fg-1">{m.label}</span>
-              <span className="text-fg-2">{m.games} games · <span style={{ color: cat('green') }}>{m.winPct}%</span></span>
+              <span className="text-fg-2">{m.games} games · <span style={{ color: onRaised('green') }}>{m.winPct}%</span></span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${m.label} win rate ${m.winPct}% over ${m.games} games`}>
               <div className="h-full rounded-pill" style={{ width: `${m.winPct}%`, background: cat(m.bucket === 'stronger' ? 'red' : m.bucket === 'weaker' ? 'green' : 'yellow') }} />
