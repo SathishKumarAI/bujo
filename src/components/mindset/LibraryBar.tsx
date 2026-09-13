@@ -1,3 +1,4 @@
+import { categoryIcon } from './categoryIcon'
 import { MagnifyingGlass } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { MINDSET_CATEGORIES } from '../../lib/mindset'
@@ -72,13 +73,15 @@ export function LibraryBar({
                 active ? 'border-brand text-fg-1' : 'border-transparent text-fg-2 hover:text-brand-text'
               }`}
             >
-              {c}
+              {c === 'All'
+                ? c
+                : <span className="inline-flex items-center gap-1.5"><Icon as={categoryIcon(c)} size="sm" className="shrink-0" />{c}</span>}
             </button>
           )
         })}
       </div>
 
-      <span className="hidden flex-none text-caption tracking-[0.1em] text-fg-3 uppercase sm:inline">
+      <span className="hidden flex-none text-caption text-fg-3 sm:inline">
         {shown} of {total} shown
       </span>
     </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoryCounts, currentStreak, daysPracticed, marksByDay, practiceData } from './mindsetPractice'
+import { categoryCounts, currentStreak, daysPracticed, daysWithMarks, marksByDay, moodContrast, practiceData } from './mindsetPractice'
 
 const T = '2026-08-16'
 
@@ -53,7 +53,7 @@ describe('daysPracticed', () => {
 describe('categoryCounts', () => {
   it('returns every category, including the ones at zero', () => {
     const rows = categoryCounts({ process: [T] })
-    expect(rows).toHaveLength(7)
+    expect(rows).toHaveLength(9)
     expect(rows.find((r) => r.name === 'Connection')).toEqual({ name: 'Connection', count: 0, share: 0 })
   })
 
@@ -74,5 +74,46 @@ describe('categoryCounts', () => {
 
   it('gives every category share 0 on an empty log rather than NaN', () => {
     expect(categoryCounts({}).every((r) => r.share === 0)).toBe(true)
+  })
+})
+
+describe('daysWithMarks', () => {
+  it('counts distinct days, not marks', () => {
+    expect(daysWithMarks({ process: [T, '2026-08-15'], breathe: [T] })).toBe(2)
+  })
+
+  it('windows from a start date when given one', () => {
+    expect(daysWithMarks({ process: [T, '2026-08-15'] }, T)).toBe(1)
+  })
+})
+
+describe('moodContrast', () => {
+  const metrics = [
+    { date: '2026-08-16', mood: 8 },
+    { date: '2026-08-15', mood: 4 },
+    { date: '2026-08-14', mood: 6 },
+  ]
+
+  it('splits mood by whether anything was practised that day', () => {
+    const c = moodContrast({ process: ['2026-08-16', '2026-08-14'] }, metrics, 90, T)
+    expect(c.practised).toBe(7) // (8 + 6) / 2
+    expect(c.other).toBe(4)
+    expect(c.practisedDays).toBe(2)
+    expect(c.otherDays).toBe(1)
+  })
+
+  it('returns null rather than 0 for a side with nothing to average', () => {
+    // The `count ? sum / count : 0` trap: mood 0 is a real answer on a 0–10
+    // scale, so zero cannot also mean "nobody has told us yet".
+    const c = moodContrast({}, metrics, 90, T)
+    expect(c.practised).toBeNull()
+    expect(c.practised).not.toBe(0)
+    expect(c.other).toBe(6)
+  })
+
+  it('ignores days outside the window and days with no mood', () => {
+    const c = moodContrast({ process: ['2026-08-16'] }, [...metrics, { date: '2026-01-01', mood: 0 }, { date: '2026-08-13' }], 3, T)
+    expect(c.practisedDays).toBe(1)
+    expect(c.otherDays).toBe(2)
   })
 })
