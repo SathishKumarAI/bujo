@@ -1,7 +1,7 @@
 import { Card } from '../components/ui'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { BULLET_LEGEND } from '../lib/bullets'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 
 export function Help() {
   return (
@@ -29,7 +29,7 @@ export function Help() {
         <ul className="grid gap-2 sm:grid-cols-2">
           {BULLET_LEGEND.map((b) => (
             <li key={b.label} className="flex items-center gap-3 rounded-card bg-ink-2 px-3 py-1.5 text-body">
-              <span className="w-5 text-center font-mono" style={{ color: cat('mauve') }}>{b.glyph}</span>
+              <span className="w-5 text-center font-mono" style={{ color: onRaised('mauve') }}>{b.glyph}</span>
               <span className="text-fg-1">{b.label}</span>
             </li>
           ))}

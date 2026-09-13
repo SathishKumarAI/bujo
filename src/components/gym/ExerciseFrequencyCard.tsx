@@ -1,7 +1,7 @@
 import { ArrowsClockwise, CalendarCheck } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import type { ExerciseFreq, TrainRestRatio } from '../../lib/fitness'
 
 /**
@@ -27,7 +27,7 @@ export function ExerciseFrequencyCard({ rows, ratio, setFocusEx }: { rows: Exerc
   return (
     <Card band title="Exercise frequency" subtitle={`Most-trained movements, last ${ratio.window} days`} defer>
       <div className="mb-3 flex items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">
-        <Icon as={CalendarCheck} size="md" style={{ color: cat('teal') }} />
+        <Icon as={CalendarCheck} size="md" style={{ color: onRaised('teal') }} />
         <span className="text-fg-1">
           <span className="font-medium text-fg-1">{ratio.trainDays}</span> train ·{' '}
           <span className="font-medium text-fg-1">{ratio.restDays}</span> rest

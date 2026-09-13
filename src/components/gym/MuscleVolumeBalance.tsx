@@ -1,5 +1,5 @@
 import { Card, Empty } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { muscleNames } from '../../lib/muscles'
 import { MUSCLE_SET_LANDMARK, type MuscleSetCount } from '../../lib/fitness'
 
@@ -39,7 +39,7 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
                   <div className="absolute inset-y-0" style={{ left: `${(min / scaleMax) * 100}%`, width: `${((max - min) / scaleMax) * 100}%`, background: cat('green') + '22' }} />
                   <div className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${Math.min(100, (c.sets / scaleMax) * 100)}%`, background: cat(color) }} />
                 </div>
-                <span className="min-w-7 text-right font-medium tabular-nums" style={{ color: cat(color) }}>{c.sets}</span>
+                <span className="min-w-7 text-right font-medium tabular-nums" style={{ color: onRaised(color) }}>{c.sets}</span>
               </li>
             )
           })}
@@ -47,9 +47,9 @@ export function MuscleVolumeBalance({ counts, setFocusEx }: { counts: MuscleSetC
       )}
       {named.length > 0 && (
         <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-micro text-fg-2">
-          <span style={{ color: cat('peach') }}>● {zoneLabel(0)}</span>
-          <span style={{ color: cat('green') }}>● {zoneLabel(min)}</span>
-          <span style={{ color: cat('red') }}>● {zoneLabel(max + 1)}</span>
+          <span style={{ color: onRaised('peach') }}>● {zoneLabel(0)}</span>
+          <span style={{ color: onRaised('green') }}>● {zoneLabel(min)}</span>
+          <span style={{ color: onRaised('red') }}>● {zoneLabel(max + 1)}</span>
         </p>
       )}
     </Card>

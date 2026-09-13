@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised } from '../lib/colors'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
@@ -103,7 +103,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
       <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close SOS" className="absolute right-4 top-4 text-fg-2 hover:text-fg-1" style={{ background: cat('surface0') }}><Icon as={X} size="lg" /></Button>
 
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 text-body" style={{ color: cat('peach') }}><Icon as={Lifebuoy} size="md" /> Ride it out · this is a wave, not a command</div>
+        <div className="inline-flex items-center gap-2 text-body" style={{ color: onRaised('peach') }}><Icon as={Lifebuoy} size="md" /> Ride it out · this is a wave, not a command</div>
         <div className="mt-1 font-mono text-display font-medium tabular-nums" style={{ color: done ? cat('green') : cat('text') }}>{mm}:{ss}</div>
         <p className="mt-1 text-label text-fg-2">{done ? 'The peak has passed. You made it.' : 'Stay until the timer ends · the urge will crest and fall.'}</p>
       </div>
@@ -115,7 +115,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
           style={{
             background: cat(phase.color) + '22',
             border: `2px solid ${cat(phase.color)}`,
-            color: cat(phase.color),
+            color: onRaised(phase.color),
             transform: `scale(${phase.scale})`,
             transition: `transform ${phase.secs}s ease-in-out`,
           }}>
@@ -128,7 +128,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
         <Input value={trigger} onChange={(e) => setTrigger(e.target.value)} placeholder="What's triggering it? (finds your plan)" aria-label="Current trigger" />
         {matched ? (
           <div className="mt-2 rounded-card p-3 text-body" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
-            <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matched.trigger}”:</span>{' '}
+            <span className="font-medium" style={{ color: onRaised('teal') }}>Your plan for “{matched.trigger}”:</span>{' '}
             <span className="text-fg-2">{matched.coping || 'name it and let it pass.'}</span>
           </div>
         ) : (
@@ -274,14 +274,14 @@ export function NoFap() {
               <p className="mt-0.5 text-label text-fg-2">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
               {relapsedToday && (
                 <div className="mt-1.5 rounded-card p-2 text-left text-label" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
-                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('red') }}><Icon as={X} size="sm" /> Reset today · and that’s okay.</span>
-                  <p className="mt-0.5 text-fg-1">You didn’t lose everything: your <strong style={{ color: cat('green') }}>{stats.totalClean} total clean days</strong> and <strong style={{ color: cat('peach') }}>{stats.best}-day best</strong> are kept. One slip is a stumble, not a restart · log the reason below and keep going.</p>
+                  <span className="inline-flex items-center gap-1 font-medium" style={{ color: onRaised('red') }}><Icon as={X} size="sm" /> Reset today · and that’s okay.</span>
+                  <p className="mt-0.5 text-fg-1">You didn’t lose everything: your <strong style={{ color: onRaised('green') }}>{stats.totalClean} total clean days</strong> and <strong style={{ color: onRaised('peach') }}>{stats.best}-day best</strong> are kept. One slip is a stumble, not a restart · log the reason below and keep going.</p>
                 </div>
               )}
               {nextBenefit ? (
                 <>
                   <p className="mt-3 text-body text-fg-2">
-                    Next: <span className="font-medium" style={{ color: cat('teal') }}>{nextBenefit.label}</span> · <span className="text-fg-2">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
+                    Next: <span className="font-medium" style={{ color: onRaised('teal') }}>{nextBenefit.label}</span> · <span className="text-fg-2">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
                   </p>
                   <div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-2">
                     <div className="h-full rounded-pill transition-[width] duration-500" style={{ width: `${stats.progressPct}%`, background: cat('teal') }} />
@@ -289,7 +289,7 @@ export function NoFap() {
                   <p className="mt-2 text-label text-fg-2 italic">“{nextBenefit.benefit}”</p>
                 </>
               ) : (
-                <p className="mt-3 text-body" style={{ color: cat('peach') }}>Every milestone cleared. You’re writing your own ladder now.</p>
+                <p className="mt-3 text-body" style={{ color: onRaised('peach') }}>Every milestone cleared. You’re writing your own ladder now.</p>
               )}
             </div>
           </div>
@@ -314,7 +314,7 @@ export function NoFap() {
           {/* Trigger-plan match · surfaced as the user types/picks a trigger (U9) */}
           {matchedPlan && (
             <div className="mt-2 rounded-card p-2 text-label" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
-              <span className="font-medium" style={{ color: cat('teal') }}>Your plan for “{matchedPlan.trigger}”:</span>{' '}
+              <span className="font-medium" style={{ color: onRaised('teal') }}>Your plan for “{matchedPlan.trigger}”:</span>{' '}
               <span className="text-fg-2">{matchedPlan.coping || 'name it and let it pass.'}</span>
             </div>
           )}
@@ -322,7 +322,7 @@ export function NoFap() {
           <div className="mt-3">
             <div className="flex items-center justify-between text-label text-fg-1">
               <label htmlFor="urge-intensity">Intensity</label>
-              <span className="font-medium" style={{ color: cat('peach') }}>{intensity}/5</span>
+              <span className="font-medium" style={{ color: onRaised('peach') }}>{intensity}/5</span>
             </div>
             <input id="urge-intensity" type="range" min={1} max={5} step={1} value={intensity}
               onChange={(e) => setIntensity(Number(e.target.value))}
@@ -359,12 +359,12 @@ export function NoFap() {
             <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><Icon as={HandFist} size="sm" /> I resisted it</Button>
           </div>
           <div className="mt-3 flex items-center justify-between text-body">
-            <span className="text-fg-1">Urges resisted: <span className="font-medium" style={{ color: cat('green') }}>{stats.urges}</span></span>
+            <span className="text-fg-1">Urges resisted: <span className="font-medium" style={{ color: onRaised('green') }}>{stats.urges}</span></span>
           </div>
           {/* Most-effective technique tally (U8) */}
           {techRank.length > 0 && (
             <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-              <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: cat('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
+              <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: onRaised('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {techRank.map((t) => (
                   <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>
@@ -375,7 +375,7 @@ export function NoFap() {
           {/* HALT pattern tally · which unmet need accompanies urges most */}
           {haltRank.length > 0 && (
             <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-              <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: cat('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
+              <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
               <div className="flex flex-wrap gap-1.5">
                 {haltRank.map((h) => (
                   <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>
@@ -387,7 +387,7 @@ export function NoFap() {
             <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto">
               {urgeLog.map((u) => (
                 <li key={u.id} className="group flex items-center gap-2 rounded-card bg-ink-2 px-2.5 py-1.5 text-body">
-                  <Icon as={HandFist} size="sm" style={{ color: cat('green') }} className="shrink-0" />
+                  <Icon as={HandFist} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
                   <span className="text-fg-1">{u.trigger || 'Urge'}</span>
                   <span className="ml-auto text-label text-fg-2">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
                   <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
@@ -402,14 +402,14 @@ export function NoFap() {
         <Card band hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
           <div className="space-y-3">
             <label className="block text-body text-fg-1">
-              Reason <span style={{ color: cat('red') }}>*</span>
+              Reason <span style={{ color: onRaised('red') }}>*</span>
               <Input value={trigger} onChange={(e) => { setTrigger(e.target.value); if (err) setErr('') }} placeholder="What led to it? (required)" className="mt-1" />
             </label>
             <label className="block text-body text-fg-1">
               Reflection
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What will you do differently next time?" rows={4} className="mt-1" />
             </label>
-            {err && <p className="text-label" style={{ color: cat('red') }}>{err}</p>}
+            {err && <p className="text-label" style={{ color: onRaised('red') }}>{err}</p>}
             <Button variant="danger" size="lg" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
             <p className="text-label text-fg-2">Records the reason today, then restarts the days-clean counter. Your best ({stats.best}d) and total ({stats.totalClean}d) are kept.</p>
           </div>
@@ -460,9 +460,9 @@ export function NoFap() {
                         <div className="flex items-baseline gap-2">
                           <span className="truncate font-medium text-fg-1">{a.name}</span>
                           <span className="text-label text-fg-2">best {st.best}d</span>
-                          {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: cat('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
+                          {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: onRaised('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
                         </div>
-                        <span className="text-body text-fg-1"><span className="font-medium" style={{ color: cat('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
+                        <span className="text-body text-fg-1"><span className="font-medium" style={{ color: onRaised('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
                       <Button variant="ghost" onClick={async () => { if (await confirm({
                         title: `Reset the ${a.name} streak?`,
@@ -517,15 +517,15 @@ export function NoFap() {
             {hasCommitment && !editingCommit ? (
               <div>
                 {commitment?.reason && (
-                  <blockquote className="border-l-2 pl-3 text-heading font-medium italic" style={{ borderColor: cat('mauve'), color: cat('text') }}>
+                  <blockquote className="border-l-2 pl-3 text-heading font-medium italic" style={{ borderColor: cat('mauve'), color: onRaised('text') }}>
                     “{commitment.reason}”
                   </blockquote>
                 )}
                 {commitment?.quitDate && (
                   <p className="mt-3 text-body text-fg-2">
                     Committed on <span className="font-medium text-fg-1">{prettyDay(commitment.quitDate)}</span>
-                    {daysSinceQuit != null && daysSinceQuit > 0 && <> · <span className="font-medium" style={{ color: cat('mauve') }}>{daysSinceQuit}</span> day{daysSinceQuit === 1 ? '' : 's'} ago</>}
-                    {daysSinceQuit === 0 && <> · <span style={{ color: cat('mauve') }}>today</span></>}
+                    {daysSinceQuit != null && daysSinceQuit > 0 && <> · <span className="font-medium" style={{ color: onRaised('mauve') }}>{daysSinceQuit}</span> day{daysSinceQuit === 1 ? '' : 's'} ago</>}
+                    {daysSinceQuit === 0 && <> · <span style={{ color: onRaised('mauve') }}>today</span></>}
                   </p>
                 )}
               </div>
@@ -611,7 +611,7 @@ export function NoFap() {
                     <CartesianGrid stroke={cat('surface0')} horizontal={false} />
                     <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
                     <YAxis type="category" dataKey="type" width={84} stroke={cat('overlay0')} fontSize={11} />
-                    <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ fill: cat('surface0') }} />
+                    <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: onRaised('text') }} cursor={{ fill: cat('surface0') }} />
                     <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                       {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
                     </Bar>
@@ -684,7 +684,7 @@ export function NoFap() {
                       style={
                         reached ? { background: cat('green'), color: onAccent(cat('green')) }
                           : isNext ? { background: cat('teal'), color: onAccent(cat('teal')) }
-                            : { background: cat('surface0'), color: cat('text') }
+                            : { background: cat('surface0'), color: onRaised('text') }
                       }>
                       {reached ? <Icon as={Check} size="sm" /> : m.day}
                     </span>
@@ -708,7 +708,7 @@ export function NoFap() {
               <ul className="space-y-2 text-body">
                 {[...s.relapses].reverse().map((r) => (
                   <li key={r.id} className="rounded-card border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
-                    <div className="flex items-center gap-1.5 font-medium" style={{ color: cat('red') }}><Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}</div>
+                    <div className="flex items-center gap-1.5 font-medium" style={{ color: onRaised('red') }}><Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}</div>
                     {r.trigger && <div className="mt-0.5 text-fg-1"><span className="text-fg-2">Reason:</span> {r.trigger}</div>}
                     {r.note && <div className="text-fg-2 italic">{r.note}</div>}
                   </li>

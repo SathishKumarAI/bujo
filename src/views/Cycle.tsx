@@ -9,7 +9,7 @@ import { monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Input, Pill } from '../components/ui'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { Page, useCursor } from '../components/shell/Page'
-import { cat, rechartsTooltip, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised, rechartsTooltip } from '../lib/colors'
 import { avgCycleLength, cycleDay, nextPeriodEstimate, phaseOf } from '../lib/cycleInsights'
 import { BBT_RULES, CYCLE_DISCLAIMER, CYCLE_PHASES, TRACKING_TIPS } from '../lib/cycleGuide'
 
@@ -189,12 +189,12 @@ export function Cycle() {
             {CYCLE_PHASES.map((ph) => (
               <div key={ph.id} className="rounded-card bg-ink-2 p-3">
                 <div className="mb-1.5 flex items-center gap-2">
-                  <span className="text-body font-medium" style={{ color: cat(ph.color) }}>{ph.name}</span>
+                  <span className="text-body font-medium" style={{ color: onRaised(ph.color) }}>{ph.name}</span>
                   <Pill color={ph.color} size="micro" className="px-2">{ph.days}</Pill>
                 </div>
                 <p className="text-label text-fg-2">{ph.what}</p>
                 <p className="mt-1 text-label text-fg-2"><span className="font-medium text-fg-1">How it can feel:</span> {ph.feel}</p>
-                <p className="mt-1 text-label text-fg-2"><span className="font-medium" style={{ color: cat('green') }}>Helps:</span> {ph.tip}</p>
+                <p className="mt-1 text-label text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Helps:</span> {ph.tip}</p>
               </div>
             ))}
           </div>

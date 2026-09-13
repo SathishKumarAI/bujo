@@ -6,7 +6,7 @@ import { Card, Empty } from '../ui'
 import { MasonryGrid } from '../shell/CardGrid'
 import { useNav } from '../shell/nav'
 import { useCursor } from '../shell/cursor'
-import { cat } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 import { labelOf } from '../../domain/activities'
 import { longestStreak } from '../../lib/stats'
 import { prettyDay, prettyMonth } from '../../lib/date'
@@ -74,7 +74,7 @@ export function LifetimeCards() {
               {months.map((ym) => (
                 <li key={ym}>
                   <button onClick={() => { setMonth(ym); nav('monthly') }} className="inline-flex w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-fg-1 hover:bg-ink-2 hover:text-fg-1">
-                    <AppIcon as={BookOpen} size="sm" style={{ color: cat('overlay1') }} /> {prettyMonth(ym)}
+                    <AppIcon as={BookOpen} size="sm" style={{ color: onRaised('overlay1') }} /> {prettyMonth(ym)}
                   </button>
                 </li>
               ))}
@@ -102,7 +102,7 @@ export function LifetimeCards() {
 function ReviewRow({ icon: Icon, color, label, value }: { icon: IconGlyph; color: string; label: string; value: number | string }) {
   return (
     <li className="flex items-center gap-2">
-      <AppIcon as={Icon} size="sm" style={{ color: cat(color) }} />
+      <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
       <strong className="text-fg-1">{value}</strong>
       <span>{label}</span>
     </li>

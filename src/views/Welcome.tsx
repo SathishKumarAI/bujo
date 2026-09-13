@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 // (the three choice cards below stay native buttons — card-shaped click targets)
 import { Button } from '../components/ui/button'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { isSupported, loadFromFolder, pickFolder, saveToFolder } from '../lib/fscloud'
@@ -70,16 +70,16 @@ export function Welcome() {
             className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve disabled:opacity-50"
             style={{ animationDelay: '180ms' }}
           >
-            <Icon as={CloudCheck} size="lg" style={{ color: cat('mauve') }} />
+            <Icon as={CloudCheck} size="lg" style={{ color: onRaised('mauve') }} />
             <h2 className="mt-3 font-display text-title text-fg-1">Use my own cloud</h2>
             <p className="mt-1 text-body text-fg-2">
               Point bujo at a folder inside your Drive / Dropbox / OneDrive sync
               folder. Your existing cloud syncs it across devices.
             </p>
             <ul className="mt-3 space-y-1 text-label text-fg-2">
-              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> No account, no sign-in</li>
-              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Works with any cloud you already use</li>
-              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Your files, your control</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> No account, no sign-in</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> Works with any cloud you already use</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> Your files, your control</li>
             </ul>
             <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-mauve">
               <Icon as={FolderOpen} size="sm" /> {busy ? 'Opening…' : 'Choose folder'}
@@ -93,15 +93,15 @@ export function Welcome() {
             className="card-3d rise group rounded-card border border-line bg-ink-1/80 p-5 text-left backdrop-blur transition-colors hover:border-mauve"
             style={{ animationDelay: '260ms' }}
           >
-            <Icon as={HardDrive} size="lg" style={{ color: cat('blue') }} />
+            <Icon as={HardDrive} size="lg" style={{ color: onRaised('blue') }} />
             <h2 className="mt-3 font-display text-title text-fg-1">This device only</h2>
             <p className="mt-1 text-body text-fg-2">
               Keep everything in this browser. Nothing leaves the device. You can
               connect a cloud folder later in Settings.
             </p>
             <ul className="mt-3 space-y-1 text-label text-fg-2">
-              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Fastest, fully offline</li>
-              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: cat('green') }} /> Export backups anytime</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> Fastest, fully offline</li>
+              <li className="flex items-center gap-1.5"><Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> Export backups anytime</li>
             </ul>
             <span className="mt-4 inline-flex items-center gap-1.5 text-body font-medium text-blue">Continue on this device →</span>
           </button>

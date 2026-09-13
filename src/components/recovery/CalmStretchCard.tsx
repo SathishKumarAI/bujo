@@ -1,7 +1,7 @@
 import { Wind } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import type { urgeQuietStretch } from '../../lib/urge'
 
@@ -13,10 +13,10 @@ export function CalmStretchCard({ quiet }: { quiet: Quiet }) {
     <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Wind} size="md" className="text-sky" /> Calm stretch</span>} subtitle="Days since your last logged urge">
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-display font-medium leading-none" style={{ color: cat('sky') }}>{quiet.days}</div>
+          <div className="text-display font-medium leading-none" style={{ color: onRaised('sky') }}>{quiet.days}</div>
           <div className="mt-1 text-caption uppercase tracking-wide text-fg-2">day{quiet.days === 1 ? '' : 's'} quiet</div>
         </div>
-        <p className="flex-1 text-body text-fg-2">No urge logged since <strong style={{ color: cat('sky') }}>{quiet.lastDate && prettyDay(quiet.lastDate)}</strong>. The cravings are getting quieter · this is the work paying off.</p>
+        <p className="flex-1 text-body text-fg-2">No urge logged since <strong style={{ color: onRaised('sky') }}>{quiet.lastDate && prettyDay(quiet.lastDate)}</strong>. The cravings are getting quieter · this is the work paying off.</p>
       </div>
     </Card>
   )

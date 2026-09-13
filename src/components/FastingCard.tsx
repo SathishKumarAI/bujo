@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useJournal } from '../store'
 import { Card } from './ui'
 import { Stepper } from './fields/Stepper'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { DEFAULT_FAST_TARGET, elapsedHours, fastHours, fmtDuration, fastingStreak, recentFasts } from '../lib/fasting'
 import { Button } from './ui/button'
@@ -45,7 +45,7 @@ export function FastingCard() {
       right={
         <div className="flex items-center gap-2">
           {streak > 0 && (
-            <span title={`${streak}-day streak hitting ${target}h`} className="inline-flex items-center gap-0.5 text-label" style={{ color: cat('peach') }}>
+            <span title={`${streak}-day streak hitting ${target}h`} className="inline-flex items-center gap-0.5 text-label" style={{ color: onRaised('peach') }}>
               <Icon as={Flame} size="sm" />{streak}
             </span>
           )}
@@ -90,7 +90,7 @@ export function FastingCard() {
               <li key={f.id} className="group flex items-center gap-2 text-body">
                 <span className="w-14 shrink-0 text-fg-2">{dayLabel(f.end)}</span>
                 <span className="w-20 shrink-0 tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{fmtDuration(h)}</span>
-                <span className="shrink-0">{hit ? <Icon as={Check} size="sm" style={{ color: cat('green') }} /> : <span className="text-fg-2">·</span>}</span>
+                <span className="shrink-0">{hit ? <Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> : <span className="text-fg-2">·</span>}</span>
                 <span className="flex-1 truncate text-label text-fg-2">{timeOf(f.start)} → {timeOf(f.end)}</span>
                 <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Icon as={X} size="sm" /></button>
               </li>

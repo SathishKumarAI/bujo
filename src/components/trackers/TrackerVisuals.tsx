@@ -2,7 +2,7 @@ import { Flame } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Empty, StatTile } from '../ui'
 import { addDays, fromISODay, prettyMonth, WEEKDAYS } from '../../lib/date'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { habitStreak, dayCompletion, weekdayConsistency, monthlyCompletion } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
 import { perfectDayStats } from '../../lib/habitStats'
@@ -87,7 +87,7 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
                     <span aria-hidden title={`best ever: ${best} days`} className="absolute top-0 h-full w-0.5" style={{ left: `calc(${(best / maxStreak) * 100}% - 1px)`, background: cat('peach'), opacity: 0.6 }} />
                   )}
                 </div>
-                <span className="inline-flex min-w-14 items-center justify-end gap-0.5 tabular-nums" style={{ color: cat('peach') }} title={`current ${streak}, best ever ${best}`}><Icon as={Flame} size="sm" />{streak}<span className="text-fg-2">/{best}</span></span>
+                <span className="inline-flex min-w-14 items-center justify-end gap-0.5 tabular-nums" style={{ color: onRaised('peach') }} title={`current ${streak}, best ever ${best}`}><Icon as={Flame} size="sm" />{streak}<span className="text-fg-2">/{best}</span></span>
               </li>
             ))}
           </ul>

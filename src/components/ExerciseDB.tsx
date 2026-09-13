@@ -2,7 +2,7 @@ import { Barbell, Plus, Video, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { searchExercises, type WgerExercise } from '../lib/wger'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { MuscleMap } from './MuscleMap'
 import { muscleNames } from '../lib/muscles'
 import { Empty, Input, Pill } from './ui'
@@ -76,7 +76,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                 {ex.image ? (
                   <img src={ex.image} alt={ex.name} loading="lazy" className="h-full w-full object-contain transition-transform group-hover:scale-105" />
                 ) : (
-                  <Icon as={Barbell} size="lg" style={{ color: cat('overlay0') }} />
+                  <Icon as={Barbell} size="lg" style={{ color: onRaised('overlay0') }} />
                 )}
               </div>
               <div className="px-2 py-1.5 text-label text-fg-1">{ex.name}</div>
@@ -103,7 +103,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                   ) : selected.image ? (
                     <img src={selected.image} alt={selected.name} className="max-h-56 w-full object-contain" />
                   ) : (
-                    <Icon as={Barbell} size="lg" style={{ color: cat('overlay0') }} />
+                    <Icon as={Barbell} size="lg" style={{ color: onRaised('overlay0') }} />
                   )}
                 </div>
                 <a

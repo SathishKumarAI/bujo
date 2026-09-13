@@ -9,7 +9,7 @@ import { Page } from '../components/shell/Page'
 import { CardGrid } from '../components/shell/CardGrid'
 import { LazyMount } from '../components/LazyMount'
 import { CalendarHeatmap } from '../components/page'
-import { cat, rechartsTooltip } from '../lib/colors'
+import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
@@ -218,7 +218,7 @@ export function Pickleball() {
               </PieChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-3 text-label">
-              {wl.map((x) => <span key={x.name} style={{ color: cat(x.color) }}>● {x.name} {x.value}</span>)}
+              {wl.map((x) => <span key={x.name} style={{ color: onRaised(x.color) }}>● {x.name} {x.value}</span>)}
             </div>
           </div>
         )}
@@ -258,7 +258,7 @@ export function Pickleball() {
               <li key={fm.format}>
                 <div className="mb-1 flex justify-between text-body">
                   <span className="capitalize text-fg-1">{fm.format}</span>
-                  <span className="text-fg-2">{fm.games} games · <span style={{ color: cat('green') }}>{fm.winPct}%</span></span>
+                  <span className="text-fg-2">{fm.games} games · <span style={{ color: onRaised('green') }}>{fm.winPct}%</span></span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
                   <div className="h-full rounded-pill" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
@@ -321,7 +321,7 @@ export function Pickleball() {
         <StatTile compact label="Day streak" value={streak} />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
-        <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: cat('green') }}>{week.winPct}%</span> won</span>
+        <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: onRaised('green') }}>{week.winPct}%</span> won</span>
         <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">
           Weekly goal
           <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
@@ -360,7 +360,7 @@ export function Pickleball() {
           <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
           <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
           <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-control border border-transparent bg-ink-2 px-2 py-2 text-body text-foreground">
+          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
             <option value="">Scoring</option>
             <option value="11">to 11</option>
             <option value="15">to 15</option>
@@ -461,7 +461,7 @@ export function Pickleball() {
                 <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-body">
                   <span className="text-fg-1">{prettyDay(p.date)}</span>
                   <span className="flex items-center gap-2">
-                    <span className="font-medium tabular-nums" style={{ color: cat('mauve') }}>{p.rating}</span>
+                    <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
                     <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
                   </span>
                 </li>
@@ -497,7 +497,7 @@ export function Pickleball() {
           <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
           <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
           <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-transparent bg-ink-2 px-2 py-2 text-body text-foreground">
+          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
             {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
           </select>
           <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
@@ -679,7 +679,7 @@ function PickleRow({ p, onSave, onDelete }: {
     <li className="group flex items-center justify-between gap-2 py-2 text-body">
       <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
-        <span style={{ color: cat('green') }}>{p.gamesWon}</span>–<span style={{ color: cat('red') }}>{p.gamesLost}</span>
+        <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
         <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
         <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
       </span>

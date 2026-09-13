@@ -3,7 +3,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { lazy, Suspense, useMemo } from 'react'
 import { Fitness } from './Fitness'
 import { useJournal } from '../store'
-import { cat, washStyle } from '../lib/colors'
+import { cat, onRaised, washStyle } from '../lib/colors'
 import { weeklyActiveMinutes, nextSplit, splitMeta } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
 import { splitGlyph } from '../components/glyphs'
@@ -50,7 +50,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
             onClick={() => setTab(id)}
             aria-pressed={tab === id}
             className={`inline-flex items-center justify-center gap-2 rounded-pill px-5 py-2 text-body font-medium transition-colors ${
-              tab === id ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:text-fg-1'
+              tab === id ? 'bg-brand-wash font-medium text-brand-text' : 'text-fg-2 hover:text-fg-1'
             }`}
           >
             <AppIcon as={Icon} size="md" active={tab === id} /> {label}
@@ -78,7 +78,7 @@ export function FitnessHub({ initialTab = 'cardio' }: { initialTab?: 'cardio' | 
               {split.label} day
             </span>
           </span>
-          <AppIcon as={ArrowRight} size="md" className="ml-auto shrink-0" style={{ color: cat(split.color) }} />
+          <AppIcon as={ArrowRight} size="md" className="ml-auto shrink-0" style={{ color: onRaised(split.color) }} />
         </button>
         )}
       </div>

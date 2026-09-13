@@ -25,7 +25,7 @@ import { Button } from '../components/ui/button'
 import { useCursor } from '../components/shell/Page'
 import { DisclosureRow, PageLayout, StatBar } from '../components/page'
 import { SmartInput } from '../components/SmartInput'
-import { cat, HABIT_COLORS, onAccent } from '../lib/colors'
+import { cat, HABIT_COLORS, onAccent, onRaised } from '../lib/colors'
 import { habitStreak, habitDoneOn } from '../lib/stats'
 import { trackerSummary } from '../lib/habitStats'
 import { rollingAverage } from '../lib/correlations'
@@ -398,7 +398,7 @@ function ArchivedHabits() {
       <ul className="flex flex-wrap gap-2">
         {archived.map((h) => (
           <li key={h.id} className="inline-flex items-center gap-2 rounded-pill bg-ink-2 px-2.5 py-1 text-body">
-            <span style={{ color: cat(h.color) }}>●</span>
+            <span style={{ color: onRaised(h.color) }}>●</span>
             <span className="text-fg-1">{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             <Button variant="ghost" onClick={() => updateHabit(h.id, { archived: false })} className="h-auto p-0 text-label text-green">restore</Button>
             <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({

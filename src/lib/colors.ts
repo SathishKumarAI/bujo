@@ -167,6 +167,61 @@ export function onAccent(accentHex: string, target = 4.6): string {
 }
 
 /**
+ * What `--muted` (`bg-ink-2`) actually paints — the rung a control or an inset
+ * panel sits on. Mirrors `index.css`: the card lifted 14% toward the
+ * foreground on the dark themes, `surface0` on the light ones, which keep
+ * their own tinted neutrals.
+ */
+export function raisedSurface(): string {
+  const card = cardSurface()
+  if (relLum(rgb(cat('base'))) > 0.4) return cat('surface0')
+  const [c, t] = [rgb(card), rgb(cat('text'))]
+  return toHex(c.map((v, i) => v * 0.86 + t[i] * 0.14))
+}
+
+/**
+ * A palette colour made legible as text ON that raised rung.
+ *
+ * The case this exists for: a label inside a `bg-ink-2` panel, written as a raw
+ * `cat('peach')` or a `text-mauve` utility because at the time the panel WAS
+ * the page colour and the accent cleared AA against it comfortably. Lifting
+ * `ink-2` off the card moved that ground — `#ce9178` went to 4.17:1 and
+ * `#c586c0` to 3.96:1 on vscode — without changing a line of the markup.
+ *
+ * Pass the token, not a hex, so a theme switch re-resolves it.
+ */
+export function onRaised(token: string, target = 4.6): string {
+  // NEUTRALS PASS THROUGH UNTOUCHED. `cat('crust')` as a label is the app's
+  // known anti-pattern — it appears as text on an accent FILL, where the
+  // background is the accent and not this rung at all. Solving it here would
+  // measure it against the wrong surface and walk a near-black to white.
+  // Ground colours are not accents; their legibility is `fg-1/2/3`'s job.
+  if (!ACCENT_TOKENS.has(token)) return cat(token)
+  const accent = cat(token)
+  // Both grounds, because which is harder flips with the theme's polarity: on
+  // a dark theme the raised rung is the lighter of the two, on a light theme
+  // the card is. A no-op whenever the accent already clears both, which is the
+  // common case — this is a correction, not a recolouring.
+  const grounds = [cardSurface(), raisedSurface()]
+  const start = rgb(accent)
+  const ok = (c: [number, number, number]) => grounds.every((g) => contrast(c, rgb(g)) >= target)
+  if (ok(start)) return accent
+  const towardWhite = Math.min(...grounds.map((g) => relLum(rgb(g)))) < 0.18
+  for (let step = 1; step <= 100; step++) {
+    const k = step / 100
+    const c = start.map((v) => (towardWhite ? v + (255 - v) * k : v * (1 - k))) as [number, number, number]
+    if (ok(c)) return toHex(c)
+  }
+  return towardWhite ? '#ffffff' : '#000000'
+}
+
+/** The fourteen hues. Everything else in the palette is a ground or a text tier. */
+const ACCENT_TOKENS = new Set([
+  'rosewater', 'flamingo', 'pink', 'mauve', 'red', 'maroon', 'peach',
+  'yellow', 'green', 'teal', 'sky', 'sapphire', 'blue', 'lavender',
+])
+
+/**
  * The accent-on-its-own-wash chip, as one inline style.
  *
  * `{ background: cat(x) + '22', color: cat(x) }` is the app's most-copied
@@ -207,24 +262,35 @@ export function onAccent(accentHex: string, target = 4.6): string {
  * function that runs per chip render — cheap, and it cannot be got wrong by a
  * call site that forgets to pass its surface.
  */
-export function washStyle(accentOrToken: string, bg?: string): { background: string; color: string } {
+export function washStyle(accentOrToken: string, bg = cardSurface()): { background: string; color: string } {
   const accent = accentOrToken.startsWith('#') ? accentOrToken : cat(accentOrToken)
-  const alpha = 0x22 / 255
-  // Solved for BOTH plausible grounds when the call site does not say which.
-  const painted = (bg ? [bg] : [cat('base'), cat('surface0')]).map((g) => rgb(over(accent, g, alpha)))
-  const start = rgb(accent)
-  const passes = (c: [number, number, number]) => painted.every((p) => contrast(c, p) >= 4.6)
-  if (passes(start)) return { background: accent + '22', color: accent }
-  // Same walk as `readableOn`, with the pass test widened to every ground. The
-  // direction is decided by the darkest ground, so a light accent on a dark
-  // theme still walks toward white rather than splitting the difference.
-  const towardWhite = Math.min(...painted.map(relLum)) < 0.18
-  for (let step = 1; step <= 100; step++) {
-    const k = step / 100
-    const c = start.map((v) => (towardWhite ? v + (255 - v) * k : v * (1 - k))) as [number, number, number]
-    if (passes(c)) return { background: accent + '22', color: toHex(c) }
-  }
-  return { background: accent + '22', color: towardWhite ? '#ffffff' : '#000000' }
+  // OPAQUE, for the same reason `--color-brand-wash` is — see the long note in
+  // `styles/tokens.css`. A translucent wash is a different colour on every
+  // surface it lands on, so the foreground solved against it is only right on
+  // the surface it was solved against; every time a surface moved, this pairing
+  // failed again somewhere new. Composited against the card once, the chip is
+  // one colour wherever it sits and there is exactly one ground to clear.
+  const painted = over(accent, bg, 0x22 / 255)
+  return { background: painted, color: readableOn(accent, painted, 4.6) }
+}
+
+/**
+ * What `--card` actually paints, for code that has to composite against it.
+ *
+ * Mirrors `index.css`: the page lifted 5% toward the foreground on the dark
+ * themes, and `--color-mantle` on the light ones, which is where their card
+ * colour already lived. srgb here against oklab there — at 5% the two differ by
+ * at most a channel step, and the error runs toward grey, i.e. toward the
+ * conservative side of a contrast test.
+ *
+ * Light themes are identified by having a page brighter than their ink rather
+ * than by a hard-coded name list, so a sixth theme needs no edit here.
+ */
+export function cardSurface(): string {
+  const base = cat('base')
+  if (relLum(rgb(base)) > 0.4) return cat('mantle')
+  const [b, t] = [rgb(base), rgb(cat('text'))]
+  return toHex(b.map((v, i) => v * 0.95 + t[i] * 0.05))
 }
 
 /**
@@ -258,7 +324,7 @@ export function washStyle(accentOrToken: string, bg?: string): { background: str
 export function habitChipStyle(
   state: 'off' | 'on' | 'slip',
   colorToken: string,
-  bg = cat('base'),
+  bg = cardSurface(),
 ): { background: string; color: string; borderColor: string } {
   if (state === 'off') {
     return {

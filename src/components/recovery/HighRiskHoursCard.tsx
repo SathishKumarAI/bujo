@@ -1,7 +1,7 @@
 import { Clock } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
-import { cat, onAccent } from '../../lib/colors'
+import { cat, onAccent, onRaised } from '../../lib/colors'
 import type { urgeHourHistogram, peakUrgeHour } from '../../lib/urge'
 
 type HourHist = ReturnType<typeof urgeHourHistogram>
@@ -36,7 +36,7 @@ export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; 
         ))}
       </div>
       <div className="mt-2 flex justify-between text-micro text-fg-2"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-      <p className="mt-1.5 text-label text-fg-2">Tallest heat at <span className="font-medium" style={{ color: cat('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
+      <p className="mt-1.5 text-label text-fg-2">Tallest heat at <span className="font-medium" style={{ color: onRaised('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
     </Card>
   )
 }

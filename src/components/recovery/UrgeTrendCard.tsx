@@ -2,7 +2,7 @@ import { PersonSimpleRun, TrendDown, TrendUp } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Card } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import type { urgeFrequencyTrend } from '../../lib/urge'
 
@@ -27,14 +27,14 @@ export function UrgeTrendCard({ urgeTrend }: { urgeTrend: Trend }) {
             <XAxis dataKey="weekStart" stroke={cat('overlay0')} fontSize={10} tickLine={false}
               tickFormatter={(d) => prettyDay(d as string).replace(/^\w+, /, '')} />
             <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
-            <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: cat('text') }} cursor={{ stroke: cat('surface1') }}
+            <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: onRaised('text') }} cursor={{ stroke: cat('surface1') }}
               labelFormatter={(d) => `Week of ${prettyDay(d as string)}`}
               formatter={(v) => [`${v} urge${v === 1 ? '' : 's'}`, 'Resisted'] as [string, string]} />
             <Area type="monotone" dataKey="count" stroke={cat('mauve')} strokeWidth={2} fill="url(#urgeTrendFill)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-1.5 text-label text-fg-2">Averaging <span className="font-medium" style={{ color: cat('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
+      <p className="mt-1.5 text-label text-fg-2">Averaging <span className="font-medium" style={{ color: onRaised('mauve') }}>{urgeTrend.avgPerWeek}/week</span>{urgeTrend.delta !== 0 && <> · {urgeTrend.delta < 0 ? 'down' : 'up'} {Math.abs(urgeTrend.delta)} vs. 8 weeks ago</>}.</p>
     </Card>
   )
 }

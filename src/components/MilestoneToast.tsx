@@ -3,7 +3,7 @@ import { useJournal } from '../store'
 import { todayISO } from '../lib/date'
 import { habitStreak, cleanStreak } from '../lib/stats'
 import { isStreakMilestone, milestoneLabel, milestoneEmoji } from '../lib/milestones'
-import { cat } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 
 interface Celebration { habit: string; streak: number }
 
@@ -51,7 +51,7 @@ export function MilestoneToast() {
           <span className="celebrate-confetti" style={{ animationDelay: '120ms' }}>{emoji}</span>
         </div>
         <p className="font-display text-title text-fg-1">{milestoneLabel(party.streak)}!</p>
-        <p className="text-body" style={{ color: cat('peach') }}>{party.habit} · keep it going</p>
+        <p className="text-body" style={{ color: onRaised('peach') }}>{party.habit} · keep it going</p>
       </div>
     </div>
   )

@@ -6,7 +6,7 @@ import { Card, Empty, Input, Pill, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { todayISO, prettyDay } from '../lib/date'
 import { HOME_EXERCISES, demoUrl, searchUrl, type HomeExercise, type Muscle } from '../lib/homeExercises'
 
@@ -131,7 +131,11 @@ export function HomeWorkout() {
               </div>
               <p className="text-label text-fg-2">{ex.how}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-red hover:underline"><Icon as={Play} size="sm" /> Watch demo</a>
+                {/* The red is a YouTube nod, not a danger state, so it keeps the hue — but
+                    it sits on a raised panel and `text-red` is the RAW palette value,
+                    which measured 4.14:1 on vscode. `onRaised` returns it untouched in
+                    the four themes where it already passes. */}
+                <a href={demoUrl(ex)} target="_blank" rel="noreferrer" style={{ color: onRaised('red') }} className="inline-flex items-center gap-1 text-label hover:underline"><Icon as={Play} size="sm" /> Watch demo</a>
                 <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-fg-2 hover:text-blue hover:underline"><Icon as={MagnifyingGlass} size="sm" /> More on YouTube</a>
                 <Button variant="secondary" size="sm" onClick={() => add(ex)} className="ml-auto text-fg-1 hover:border-mauve hover:text-fg-1"><Icon as={Plus} size="sm" /> {ex.reps}</Button>
               </div>

@@ -34,7 +34,7 @@ export function DateJumpPicker({
             value={day}
             onChange={(e) => { if (e.target.value) { onPickDay(e.target.value); onClose() } }}
             aria-label="Pick a day"
-            className="mb-2 w-full rounded-control border border-transparent bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+            className="mb-2 w-full rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
           />
         )}
         <div className="mb-2 flex items-center justify-between">
@@ -55,7 +55,7 @@ export function DateJumpPicker({
                   onClose()
                 }}
                 aria-pressed={active}
-                className={`rounded-control px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
+                className={`rounded-control px-2 py-1.5 text-label transition-colors ${active ? 'bg-brand-wash font-medium text-brand-text' : 'text-fg-2 hover:bg-secondary/60 hover:text-fg-1'}`}
               >
                 {m.slice(0, 3)}
               </button>

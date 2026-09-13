@@ -115,13 +115,40 @@
   --edge-light-hover: color-mix(in srgb, var(--color-text) 14%, transparent);
   --shadow-ink: rgb(0 0 0 / 0.5);
   --shadow-ink-strong: rgb(0 0 0 / 0.35);
+  /* The hairline around anything raised. Subtle on a dark theme, where the
+     fill and the top edge-light already separate; a real line on a light one,
+     where they cannot — see the light overrides. */
+  --ctl-ring: color-mix(in srgb, var(--color-text) 10%, transparent);
   --primary: var(--color-mauve);
   --primary-foreground: var(--color-crust);
   --secondary: var(--color-surface0);
   --secondary-foreground: var(--color-text);
-  --muted: var(--color-surface0);
+  /* ── The raised surfaces (`ink-2` / `ink-3`) ──────────────────────────────
+     These aliased `--color-surface0` and `--color-surface1`, two fixed palette
+     slots that have no relationship to the card they sit on. Measured, a
+     secondary button's fill against its own card came out:
+
+       mocha 1.24 · latte 1.11 · neon 1.01 · vscode 1.03 · dawn 1.18
+
+     Neon's control was, to three decimal places, the same colour as the card
+     it sat on. The Layered Depth pass replaced control BORDERS with control
+     FILLS, and in four of five themes there was no fill there to see — the
+     bug only hid from me because mocha, the one I was looking at, is the one
+     that happened to work.
+
+     Derived off `--card` for the same reason `--card` is derived off the page:
+     a theme that retunes its surfaces gets controls that follow, instead of a
+     palette slot that silently stops relating to anything. 14% and 24% put
+     every dark theme at 1.42-1.44 against its card.
+
+     The light themes override with far smaller steps, because a light UI's
+     control fill IS subtle — white-on-white is the correct look, and what
+     separates a button there is its hairline. That is not a return to
+     outlines: DESIGN.md's rule is that a border appears when the fill alone
+     cannot separate, and on near-white it cannot. */
+  --muted: color-mix(in oklab, var(--card) 86%, var(--color-text) 14%);
   --muted-foreground: var(--color-subtext0);
-  --accent: var(--color-surface1);
+  --accent: color-mix(in oklab, var(--card) 76%, var(--color-text) 24%);
   --accent-foreground: var(--color-text);
   --destructive: var(--color-red);
   --destructive-foreground: var(--color-crust);
@@ -679,6 +706,16 @@ body.handwriting textarea {
      card DOWN toward its dark ink. */
   --card: var(--color-mantle);
   --popover: var(--color-mantle);
+  /* A light control fill is subtle by nature — the palette slots are already
+     the right values here (latte's #f1f3f4 is the standard light control fill)
+     and they are TINTED, which the dark themes' derivation is not: mixing
+     dawn's cream toward its brown-grey ink desaturated every raised surface on
+     the page. The light themes keep their own neutrals; the hairline is what
+     makes a button a button on near-white, and `surface2` lands at 1.37
+     (latte) / 1.59 (dawn) against the card. */
+  --muted: var(--color-surface0);
+  --accent: var(--color-surface1);
+  --ctl-ring: var(--color-surface2);
   /* No edge light on white; the hairline border separates. Shadow is tinted
      toward the theme's own ink — a black drop shadow on near-white reads as
      dirt rather than as depth. */
@@ -713,9 +750,9 @@ body.handwriting textarea {
    own tinted `--shadow-ink` and no edge light, so only the hairline is left to
    state here — a soft shadow alone cannot separate white paper from a
    near-white page. */
-:root[data-theme='latte'] .card-3d {
-  border: 1px solid var(--border-hairline);
-}
+/* `.card-3d`'s hairline here is `--ctl-ring` inside `--shadow-raise` now — it
+   was stated twice, once as a border and once as a ring, and a 2px seam on a
+   white card is visible. */
 :root[data-theme='latte'] .press-3d {
   box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.12);
 }
@@ -857,8 +894,11 @@ body.handwriting textarea {
   --shadow-ink: rgb(0 0 0 / 0.42);
   --shadow-ink-strong: rgb(0 0 0 / 0.3);
 }
-:root[data-theme='vscode'] .card-3d {
-  border: 1px solid var(--border-hairline);
+/* vscode's hairline is `--ctl-ring` in `--shadow-raise` too. It keeps a
+   slightly stronger one than the other dark themes, because it is deliberately
+   the flattest theme — editor panels, not cards. */
+:root[data-theme='vscode'] {
+  --ctl-ring: color-mix(in srgb, var(--color-text) 16%, transparent);
 }
 
 /* "Dawn" warm light theme (data-theme="dawn") — cozy cream paper, warm-brown ink,
@@ -903,6 +943,16 @@ body.handwriting textarea {
      shadow is warmed to match rather than left black. */
   --card: var(--color-mantle);
   --popover: var(--color-mantle);
+  /* A light control fill is subtle by nature — the palette slots are already
+     the right values here (latte's #f1f3f4 is the standard light control fill)
+     and they are TINTED, which the dark themes' derivation is not: mixing
+     dawn's cream toward its brown-grey ink desaturated every raised surface on
+     the page. The light themes keep their own neutrals; the hairline is what
+     makes a button a button on near-white, and `surface2` lands at 1.37
+     (latte) / 1.59 (dawn) against the card. */
+  --muted: var(--color-surface0);
+  --accent: var(--color-surface1);
+  --ctl-ring: var(--color-surface2);
   --edge-light: transparent;
   --edge-light-hover: transparent;
   --shadow-ink: rgb(120 90 50 / 0.20);
@@ -928,9 +978,9 @@ body.handwriting textarea {
 }
 /* Dawn (light): the warm shadow is `--shadow-ink` in dawn's own block now; only
    the hairline is left, for the same reason as latte. */
-:root[data-theme='dawn'] .card-3d {
-  border: 1px solid var(--border-hairline);
-}
+/* `.card-3d`'s hairline here is `--ctl-ring` inside `--shadow-raise` now — it
+   was stated twice, once as a border and once as a ring, and a 2px seam on a
+   white card is visible. */
 :root[data-theme='dawn'] .press-3d {
   box-shadow: 0 1px 2px 0 rgba(120, 90, 50, 0.15);
 }

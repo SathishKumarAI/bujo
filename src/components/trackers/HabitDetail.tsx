@@ -2,7 +2,7 @@ import { FadersHorizontal, Flame, Prohibit, ShareNetwork, ShieldCheck, X } from 
 import { Icon } from '@/components/Icon'
 import { createPortal } from 'react-dom'
 import { StatTile } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import { addDays, fromISODay, todayISO, WEEKDAYS } from '../../lib/date'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity } from '../../lib/stats'
 import { longestStreakEver, habitComeback, daysSinceLastMiss } from '../../lib/streak'
@@ -111,7 +111,7 @@ export function HabitDetail({
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-heading">{avoid ? <Icon as={Prohibit} size="md" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+            <span className="text-heading">{avoid ? <Icon as={Prohibit} size="md" style={{ color: onRaised('red') }} /> : h.emoji ?? <span style={{ color: onRaised(h.color) }}>●</span>}</span>
             <h2 className="truncate font-display text-heading text-fg-1">{h.name}</h2>
             {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
@@ -138,7 +138,7 @@ export function HabitDetail({
             <div>
               <div className="mb-1 flex items-center justify-between text-label">
                 <span className="text-fg-2">Habit strength</span>
-                <span style={{ color: cat(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
+                <span style={{ color: onRaised(gradeColor) }}>{grade.score}% · grade {grade.letter}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
                 <div className="h-full rounded-pill transition-all" style={{ width: `${grade.score}%`, background: cat(gradeColor) }} />

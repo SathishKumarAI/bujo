@@ -181,7 +181,7 @@ export function KitchenSink() {
           </p>
           <p className="text-label text-fg-2">
             The label uses <span className="text-brand-text">brand-text</span>, not{' '}
-            <span className="text-brand">brand</span>: the accent as a surface and the accent
+            <span className="text-brand-text">brand</span>: the accent as a surface and the accent
             as text are not the same colour. On this wash the raw accent measures 4.39:1 in
             latte and 4.07:1 in dawn — both under AA — so those two themes darken it.
           </p>

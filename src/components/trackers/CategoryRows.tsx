@@ -18,7 +18,7 @@ import { DotsSixVertical, Flame, Prohibit, ShieldCheck } from '@/components/icon
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { fromISODay } from '../../lib/date'
-import { cat, onAccent } from '../../lib/colors'
+import { cat, onAccent, onRaised } from '../../lib/colors'
 import { habitConsistency, habitTarget, nextHabitValue } from '../../lib/stats'
 import { goalTier } from '../../lib/streak'
 import { milestoneEmoji } from '../../lib/milestones'
@@ -40,15 +40,15 @@ function RowChip({ chip: c }: { chip: HabitChip }) {
   const box = 'inline-flex shrink-0 items-center gap-0.5 text-micro'
   switch (c.kind) {
     case 'streak':
-      return <span title={`${c.days}-day streak`} className={box} style={{ color: cat('peach') }}><Icon as={Flame} size="sm" />{c.days}</span>
+      return <span title={`${c.days}-day streak`} className={box} style={{ color: onRaised('peach') }}><Icon as={Flame} size="sm" />{c.days}</span>
     case 'clean':
-      return <span title={`${c.days} ${c.days === 1 ? 'day' : 'days'} clean`} className={box} style={{ color: cat('green') }}><Icon as={ShieldCheck} size="sm" />{c.days}d clean</span>
+      return <span title={`${c.days} ${c.days === 1 ? 'day' : 'days'} clean`} className={box} style={{ color: onRaised('green') }}><Icon as={ShieldCheck} size="sm" />{c.days}d clean</span>
     case 'weekly':
       return <span title={`${c.done} of ${c.goal} this week`} className={box} style={{ color: c.done >= c.goal ? cat('green') : cat('subtext0') }}>{c.done}/{c.goal}wk</span>
     case 'comeback':
-      return <span title={`Back on track — ${c.days} days${c.count > 1 ? ` · ${c.count} comebacks` : ''}`} className={box} style={{ color: cat('green') }}>↺ {c.days}d</span>
+      return <span title={`Back on track — ${c.days} days${c.count > 1 ? ` · ${c.count} comebacks` : ''}`} className={box} style={{ color: onRaised('green') }}>↺ {c.days}d</span>
     case 'milestone':
-      return <span title={`${c.daysToGo} ${c.daysToGo === 1 ? 'day' : 'days'} to your ${c.day}-day milestone`} className={box} style={{ color: cat('peach') }}>{milestoneEmoji(c.day)}{c.day}d</span>
+      return <span title={`${c.daysToGo} ${c.daysToGo === 1 ? 'day' : 'days'} to your ${c.day}-day milestone`} className={box} style={{ color: onRaised('peach') }}>{milestoneEmoji(c.day)}{c.day}d</span>
   }
 }
 
@@ -128,8 +128,8 @@ export function CategoryRows({
                   title="Drag to reorder"
                   className="-ml-7 shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
                 ><Icon as={DotsSixVertical} size="sm" /></span>
-                {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: cat('red') }} aria-label="avoid habit" />
-                  : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: cat(h.color) }}>●</span>}
+                {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: onRaised('red') }} aria-label="avoid habit" />
+                  : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: onRaised(h.color) }}>●</span>}
                 {avoid && h.emoji && <span className="shrink-0">{h.emoji}</span>}
                 <button onClick={() => onEdit(h.id)} aria-label={`${h.name} — activity & stats`} title={[avoid ? `${h.name} · habit to avoid` : h.name, h.cue, 'tap for activity & stats'].filter(Boolean).join(' · ')} className={`max-w-[10rem] shrink-0 truncate hover:text-fg-1 hover:underline ${h.archived ? 'text-fg-2 line-through' : ''}`}>{h.name}</button>
                 {h.unit && <span className="shrink-0 text-fg-2">({h.unit})</span>}

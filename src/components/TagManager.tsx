@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { parseTags } from '../lib/bullets'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { Card, Empty } from './ui'
 
 /**
@@ -51,7 +51,7 @@ export function TagManager() {
                 <button
                   onClick={() => { setEditing(tag); setVal(tag) }}
                   className="inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-body hover:ring-1 hover:ring-mauve"
-                  style={{ background: cat('surface0'), color: cat('sapphire') }}
+                  style={{ background: cat('surface0'), color: onRaised('sapphire') }}
                   title="Click to rename / merge"
                 >
                   #{tag}<sup className="ml-0.5 text-micro text-fg-2">{n}</sup>

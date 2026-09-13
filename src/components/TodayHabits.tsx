@@ -2,7 +2,7 @@ import { Note, Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { cat, habitChipStyle } from '../lib/colors'
+import { cat, habitChipStyle, onRaised } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
@@ -80,7 +80,7 @@ export function TodayHabits({
           className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body transition-colors active:scale-95"
           style={habitChipStyle(on ? (h.avoid ? 'slip' : 'on') : 'off', h.color)}
         >
-          {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: cat(h.color) }}>●</span>}
+          {h.avoid ? <Icon as={Prohibit} size="sm" /> : h.emoji ? <span>{h.emoji}</span> : <span style={{ color: onRaised(h.color) }}>●</span>}
           {h.name}{h.avoid ? (on ? ' · slip' : ' · clean') : (on ? ' ✓' : '')}
         </button>
         {/* 24x24 minimum target (WCAG 2.5.8) — the icon stays 13px, the box
@@ -180,7 +180,7 @@ export function TodayHabits({
                       Same glyph fallback the pill row uses, so a habit with no
                       emoji is not the only one with nothing beside its name. */}
                   <span className={cleared ? 'text-fg-2 line-through' : 'text-fg-1'}>
-                    {h.emoji ? `${h.emoji} ` : <span style={{ color: cat(h.color) }}>● </span>}
+                    {h.emoji ? `${h.emoji} ` : <span style={{ color: onRaised(h.color) }}>● </span>}
                     {h.name}
                   </span>
                 </CheckRow>

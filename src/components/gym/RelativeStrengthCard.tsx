@@ -1,7 +1,7 @@
 import { Scales, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Empty, Pill } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import type { BigThreeTotal, RelativeStrength } from '../../lib/fitness'
 
 /**
@@ -31,7 +31,7 @@ export function RelativeStrengthCard({
     <Card band title="Strength standards" subtitle="Big-three total, and each lift ÷ bodyweight" defer>
       <div className="mb-3 flex items-baseline justify-between border-b border-line pb-3">
         <span className="inline-flex items-center gap-1.5 text-body text-fg-1">
-          <Icon as={Trophy} size="sm" style={{ color: cat('yellow') }} /> Big three
+          <Icon as={Trophy} size="sm" style={{ color: onRaised('yellow') }} /> Big three
         </span>
         {/* "—", not "0". Nobody has logged a squat is not the same as a squat
             of nothing — the rule `SummaryStrip` spells out. */}
@@ -54,10 +54,10 @@ export function RelativeStrengthCard({
                 title={`${r.exercise}: ${r.weight}${unit} = ${r.ratio}× bodyweight`}
               >
                 <span className="inline-flex min-w-0 items-center gap-1.5 text-fg-1">
-                  <Icon as={Scales} size="sm" style={{ color: cat('teal') }} /> <span className="truncate">{r.exercise}</span>
+                  <Icon as={Scales} size="sm" style={{ color: onRaised('teal') }} /> <span className="truncate">{r.exercise}</span>
                 </span>
                 <span className="shrink-0 text-fg-2">
-                  <span className="font-medium" style={{ color: cat('text') }}>{r.ratio}×</span>
+                  <span className="font-medium" style={{ color: onRaised('text') }}>{r.ratio}×</span>
                   <Pill color={bandColor[r.band] ?? 'overlay0'} size="micro" className="ml-1.5">{r.band}</Pill>
                 </span>
               </button>

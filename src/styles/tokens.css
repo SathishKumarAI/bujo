@@ -23,14 +23,21 @@
      ink-0 page · ink-1 card · ink-2 inset/raised · ink-3 hover */
   --color-ink-0: var(--background);
   --color-ink-1: var(--card);
+  /* Both derived off the card in `index.css` — `ink-3` aliased
+     `--color-surface1` directly, which put the hover state on a fixed palette
+     slot while the rest state moved with the theme. See the note there. */
   --color-ink-2: var(--muted);
-  --color-ink-3: var(--color-surface1);
+  --color-ink-3: var(--accent);
 
   /* ── Lines ────────────────────────────────────────────────────────────────
      Hairlines, never solid grey. `line-strong` is for a border that has to
      carry weight on its own (secondary buttons, focused inputs). */
   --color-line: var(--border);
   --color-line-strong: var(--color-surface2);
+  /* The hairline around a raised thing, as a utility, for the controls that
+     are INSET rather than raised and so get no `--shadow-raise` to carry it —
+     a text field is the case. Transparent-ish on dark, a real line on light. */
+  --color-ctl-ring: var(--ctl-ring);
 
   /* ── Foreground ───────────────────────────────────────────────────────────
      Three readable tiers. Every one clears WCAG AA (4.5:1) against BOTH the
@@ -68,14 +75,32 @@
 
      14% at rest and 20% on hover are global; a theme whose accent is too
      low-chroma to show at 14% overrides its own percentage below rather than
-     moving these. */
-  --color-brand-wash: color-mix(in oklab, var(--primary) 14%, transparent);
-  --color-brand-wash-hover: color-mix(in oklab, var(--primary) 20%, transparent);
+     moving these.
+
+     **Mixed with `--card`, not with `transparent`, and that is the fix for a
+     bug that was found three times.** A translucent wash is a different colour
+     on every surface it lands on, so the accent-as-text solved against it is
+     only correct on the surface it was solved against. Each time a surface
+     moved — cards lifting off the page, then `ink-2` lifting off the card —
+     the same pairing failed again somewhere new: 20 axe violations, then 79.
+     Solving it by walking the accent until it survived the LIGHTEST rung
+     produced `#eadbfc` and `#fad3de`: near-whites that no longer read as the
+     accent at all, which is a worse answer than the bug.
+
+     Anchoring the wash to the card instead makes it ONE colour wherever it
+     sits, so `--brand-text` has exactly two grounds to clear (rest and hover)
+     rather than one per surface. Measured across all five themes with the
+     existing text values: 4.61-5.44. Nothing had to be bleached.
+
+     The cost, accepted: a wash chip on the page reads very slightly lifted
+     rather than perfectly flush. It is a tonal chip; it should. */
+  --color-brand-wash: color-mix(in oklab, var(--primary) 14%, var(--card));
+  --color-brand-wash-hover: color-mix(in oklab, var(--primary) 20%, var(--card));
 
   /* The same treatment for destructive actions, so a danger button in a menu
      reads as the danger *variant* of the same shape, not a different system. */
-  --color-danger-wash: color-mix(in oklab, var(--destructive) 14%, transparent);
-  --color-danger-wash-hover: color-mix(in oklab, var(--destructive) 20%, transparent);
+  --color-danger-wash: color-mix(in oklab, var(--destructive) 14%, var(--card));
+  --color-danger-wash-hover: color-mix(in oklab, var(--destructive) 20%, var(--card));
   /* Destructive-as-text, for the same reason as `--color-brand-text`: the red
      that reads correctly as a *fill* is not legible as a *label* on its own
      wash. Measured, it failed in three of the five themes — latte 3.87:1,
@@ -169,10 +194,12 @@
      Shadow colour is `--shadow-ink`, also per-theme, because a black drop
      shadow on cream reads as dirt rather than as depth. */
   --shadow-raise:
+    0 0 0 1px var(--ctl-ring),
     0 1px 0 0 var(--edge-light) inset,
     0 1px 2px -1px var(--shadow-ink-strong),
     0 4px 12px -6px var(--shadow-ink);
   --shadow-lift:
+    0 0 0 1px var(--ctl-ring),
     0 1px 0 0 var(--edge-light-hover) inset,
     0 2px 4px -2px var(--shadow-ink-strong),
     0 12px 28px -10px var(--shadow-ink);

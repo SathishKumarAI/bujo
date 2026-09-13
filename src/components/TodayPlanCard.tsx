@@ -2,7 +2,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { ArrowLineUp, Barbell, CheckSquare, ListChecks, Timer, Flame } from '@/components/icons'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { todayISO, prettyDay, WEEKDAYS, addDays } from '../lib/date'
 import { dayCompletion, habitStreak } from '../lib/stats'
 import { weekCoverage } from '../lib/coverage'
@@ -96,7 +96,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
       right={<span className="text-label text-fg-2">week {weekScore}%</span>}
     >
       {atRisk.length > 0 && (
-        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: cat('peach') }}>
+        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(day, -1))}-day ${atRisk[0].name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
       )}

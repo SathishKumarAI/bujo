@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cat, setActiveTheme, washStyle, onAccent, readableOn, HABIT_COLORS } from './colors'
+import { cat, setActiveTheme, washStyle, onAccent, readableOn, cardSurface, HABIT_COLORS } from './colors'
 
 const THEMES = ['mocha', 'latte', 'neon', 'vscode', 'dawn']
 const ACCENTS = ['rosewater', 'flamingo', 'pink', 'mauve', 'red', 'maroon', 'peach', 'yellow', 'green', 'teal', 'sky', 'sapphire', 'blue', 'lavender']
@@ -34,26 +34,27 @@ const composite = (fg: string, bg: string, alpha = 0x22 / 255) => {
  */
 describe('washStyle clears AA on every accent, in every theme', () => {
   /**
-   * BOTH grounds, not just the page — this assertion checked `base` alone and
-   * therefore stayed green through the twenty axe violations the Layered Depth
-   * pass produced. Chips sit on `ink-2` (`surface0`) at least as often as on
-   * the page, and `surface0` is a rung above it in every theme, so an accent
-   * solved only for `base` is solved against a ground it does not land on.
+   * EVERY ground, not a named pair. This assertion checked `base` alone and
+   * therefore stayed green through twenty axe violations when cards lifted;
+   * widened to `['base','surface0']` it then stayed green through seventy-nine
+   * more when `ink-2` stopped being `surface0`. Both times the test named its
+   * grounds and both times the ground moved underneath it.
    *
-   * Which ground is *harder* flips with the theme's polarity, which is the
-   * reason to assert both rather than to pick one and call it conservative.
+   * It now asks `surfaces()` — the same function `washStyle` asks — so the two
+   * cannot disagree about where a chip lands. The failure mode this cannot
+   * catch is `surfaces()` itself drifting from `index.css`; that pair is
+   * called out in its own doc comment, and it is one function rather than
+   * thirty call sites.
    */
-  const GROUNDS = ['base', 'surface0']
   for (const theme of THEMES) {
     it(theme, () => {
       setActiveTheme(theme)
       for (const name of ACCENTS) {
         const { background, color } = washStyle(name)
-        expect(background).toBe(cat(name) + '22')
-        for (const ground of GROUNDS) {
-          const painted = composite(cat(name), cat(ground))
-          expect(ratio(color, painted), `${theme}.${name} on its own wash over ${ground}`).toBeGreaterThanOrEqual(4.5)
-        }
+        // The wash is opaque and card-anchored, so there is one ground, and the
+        // background it reports IS that ground — no compositing to guess at.
+        expect(background).toBe(composite(cat(name), cardSurface()))
+        expect(ratio(color, background), `${theme}.${name} on its own wash`).toBeGreaterThanOrEqual(4.5)
       }
     })
   }
@@ -61,7 +62,10 @@ describe('washStyle clears AA on every accent, in every theme', () => {
   it('takes a resolved hex as well as a token name', () => {
     setActiveTheme('latte')
     expect(washStyle('#f29900')).toEqual(washStyle('#f29900'))
-    expect(washStyle('mauve').background).toBe(cat('mauve') + '22')
+    // The background is the COMPOSITED colour now, not `accent + '22'`. A
+    // translucent wash is a different colour on every surface it lands on,
+    // which is what made the accent-as-text unsolvable; see `washStyle`.
+    expect(washStyle('mauve').background).toBe(composite(cat('mauve'), cardSurface()))
   })
 })
 

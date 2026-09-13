@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { Card } from './ui'
 import type { Habit, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, nextHabitValue } from '../lib/stats'
 
 const WEEKS = 13
@@ -64,7 +64,7 @@ function HabitGridCard({
   return (
     <Card className="!p-3">
       <div className="mb-2 flex items-center gap-2">
-        <span className="shrink-0">{avoid ? <Icon as={Prohibit} size="sm" style={{ color: cat('red') }} /> : h.emoji ?? <span style={{ color: cat(h.color) }}>●</span>}</span>
+        <span className="shrink-0">{avoid ? <Icon as={Prohibit} size="sm" style={{ color: onRaised('red') }} /> : h.emoji ?? <span style={{ color: onRaised(h.color) }}>●</span>}</span>
         <button onClick={() => onEdit(h.id)} className={`min-w-0 flex-1 truncate text-left text-body font-medium hover:underline ${h.archived ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{h.name}</button>
         <span className="inline-flex shrink-0 items-center gap-0.5 text-label tabular-nums" style={{ color: streak > 0 ? (avoid ? cat('green') : cat('peach')) : cat('overlay0') }}>
           {streak > 0 ? <>{avoid ? <Icon as={ShieldCheck} size="sm" /> : <Icon as={Flame} size="sm" />}{streak}</> : '—'}

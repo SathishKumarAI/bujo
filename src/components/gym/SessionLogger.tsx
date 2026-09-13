@@ -6,7 +6,7 @@ import { Button } from '../ui/button'
 import { ExercisePicker } from '../ExercisePicker'
 import { VideoLink } from '../VideoLink'
 import { splitGlyph } from '../glyphs'
-import { cat, onAccent, washStyle } from '../../lib/colors'
+import { cat, onAccent, onRaised, washStyle } from '../../lib/colors'
 import {
   EXERCISE_LIBRARY, PPL_PRESETS, SPLITS, epley1RM, lastSetFor, warmupRamp,
 } from '../../lib/fitness'
@@ -203,7 +203,7 @@ export function SessionLogger({
                 <Input type="number" value={row.weight} onChange={(e) => setRow(i, { weight: e.target.value })} placeholder={unit} aria-label="Weight" className={`${AT.weight} h-11 py-1.5 sm:h-auto`} />
                 <Input type="number" value={row.reps} onChange={(e) => setRow(i, { reps: e.target.value })} placeholder="reps" aria-label="Reps" className={`${AT.reps} h-11 py-1.5 sm:h-auto`} />
                 <Input type="number" value={row.rpe ?? ''} onChange={(e) => setRow(i, { rpe: e.target.value })} placeholder="RPE" aria-label="RPE, effort 1 to 10" title="RPE · effort 1–10" className={`${AT.rpe} h-11 py-1.5 sm:h-auto`} />
-                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-control text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: cat(kindMeta.color) }}>{kindMeta.label}</button>
+                <button onClick={() => setRow(i, { kind: nextKind })} title={kindMeta.title} aria-label={`Set type: ${kindMeta.title}`} className={`${AT.kind} ${TOUCH} grid place-items-center rounded-control text-label font-medium sm:w-8`} style={{ background: cat('surface0'), color: onRaised(kindMeta.color) }}>{kindMeta.label}</button>
                 <Button variant="ghost" size="icon-sm" onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))} aria-label="Remove row" className={`${AT.remove} h-11 w-11 text-fg-2 hover:text-red sm:h-7 sm:w-7`}><AppIcon as={X} size="sm" /></Button>
               </div>
               {(prev || oneRM || row.exercise.trim()) && (
@@ -218,8 +218,8 @@ export function SessionLogger({
                       <AppIcon as={ArrowCounterClockwise} size="sm" /> last: {prev.weight}{unit}×{prev.reps}
                     </button>
                   )}
-                  {oneRM && <span style={{ color: cat('mauve') }}>1RM ~{oneRM}{unit}</span>}
-                  {complete && <span className="inline-flex items-center gap-0.5" style={{ color: cat('green') }}><AppIcon as={Check} size="sm" /> logged</span>}
+                  {oneRM && <span style={{ color: onRaised('mauve') }}>1RM ~{oneRM}{unit}</span>}
+                  {complete && <span className="inline-flex items-center gap-0.5" style={{ color: onRaised('green') }}><AppIcon as={Check} size="sm" /> logged</span>}
                   {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size="sm" className="text-micro" />}
                 </div>
               )}
@@ -230,7 +230,7 @@ export function SessionLogger({
                 return (
                   <div className="mt-1 flex sm:ml-9 flex-wrap items-center gap-1.5 text-micro text-fg-2">
                     <span className="inline-flex items-center gap-1" title="Auto warm-up ramp to this working weight">
-                      <AppIcon as={Stack} size="sm" style={{ color: cat('blue') }} /> Warm-up:
+                      <AppIcon as={Stack} size="sm" style={{ color: onRaised('blue') }} /> Warm-up:
                     </span>
                     {ramp.map((r, ri) => (
                       <button
@@ -260,7 +260,7 @@ export function SessionLogger({
 
       {done.length > 0 && (
         <div className="mt-2 flex items-center gap-2 text-label">
-          <span className="inline-flex items-center gap-1 font-medium" style={{ color: cat('green') }}><AppIcon as={Check} size="sm" /> {done.length} set{done.length === 1 ? '' : 's'}</span>
+          <span className="inline-flex items-center gap-1 font-medium" style={{ color: onRaised('green') }}><AppIcon as={Check} size="sm" /> {done.length} set{done.length === 1 ? '' : 's'}</span>
           <span className="text-fg-2">·</span>
           <span className="text-fg-1">{vol.toLocaleString()}{unit} volume</span>
         </div>

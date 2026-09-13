@@ -3,7 +3,7 @@ import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { cat, onAccent, readableOn, washStyle } from '../lib/colors'
+import { cat, onAccent, onRaised, readableOn, washStyle } from '../lib/colors'
 import { cn } from '../lib/cn'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
@@ -351,7 +351,7 @@ export function StatTile({
       onClick={onClick}
       title={title}
       className={cn(
-        'rounded-card bg-ink-2 text-center',
+        'rounded-card bg-ink-2 text-center shadow-raise',
         compact ? 'py-1.5' : 'py-3',
         onClick && 'cursor-pointer transition-colors hover:bg-ink-3',
         className,
@@ -363,7 +363,7 @@ export function StatTile({
       <div
         className={cn('num flex items-center justify-center gap-1 font-medium text-fg-1', compact ? 'text-heading' : 'text-title sm:text-title')}
       >
-        {icon && <span style={{ color: cat(color) }}>{icon}</span>}
+        {icon && <span style={{ color: onRaised(color) }}>{icon}</span>}
         {value}
       </div>
       <div className={cn('text-fg-2', compact ? 'text-micro' : 'mt-0.5 text-label')}>{label}</div>
@@ -412,7 +412,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }
@@ -421,7 +421,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={`w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
+      className={`w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
     />
   )
 }

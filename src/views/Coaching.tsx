@@ -6,7 +6,7 @@ import { Card, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { PageLayout, StatBar } from '../components/page'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
@@ -131,7 +131,7 @@ export function Coaching() {
                         style={
                           isDone ? { background: cat('green'), color: onAccent(cat('green')) }
                             : isNow ? { background: cat('mauve'), color: onAccent(cat('mauve')) }
-                              : { background: cat('surface1'), color: cat('text') }
+                              : { background: cat('surface1'), color: onRaised('text') }
                         }>
                         {isDone ? <Icon as={Check} size="sm" /> : w.week}
                       </button>
@@ -152,7 +152,7 @@ export function Coaching() {
                             {w.drills.map((d) => <li key={d} className="flex gap-1.5 text-label text-fg-2"><Icon as={Barbell} size="sm" className="mt-0.5 shrink-0 text-green" /> {d}</li>)}
                           </ul>
                         </div>
-                        <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: cat('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
+                        <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: onRaised('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
                       </div>
                     )}
                   </li>
@@ -261,16 +261,16 @@ function Manual() {
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-1">How to do it</p>
                           <ol className="space-y-1">
-                            {t.how.map((step, i) => <li key={i} className="flex gap-2 text-label text-fg-2"><span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {step}</li>)}
+                            {t.how.map((step, i) => <li key={i} className="flex gap-2 text-label text-fg-2"><span className="shrink-0 font-medium" style={{ color: onRaised('mauve') }}>{i + 1}.</span> {step}</li>)}
                           </ol>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div>
-                            <p className="mb-1 text-label font-medium" style={{ color: cat('green') }}>✓ Key cues</p>
+                            <p className="mb-1 text-label font-medium" style={{ color: onRaised('green') }}>✓ Key cues</p>
                             <ul className="space-y-0.5">{t.cues.map((c) => <li key={c} className="text-label text-fg-2">{c}</li>)}</ul>
                           </div>
                           <div>
-                            <p className="mb-1 text-label font-medium" style={{ color: cat('red') }}>✗ Common mistakes</p>
+                            <p className="mb-1 text-label font-medium" style={{ color: onRaised('red') }}>✗ Common mistakes</p>
                             <ul className="space-y-0.5">{t.mistakes.map((m) => <li key={m} className="text-label text-fg-2">{m}</li>)}</ul>
                           </div>
                         </div>
@@ -324,11 +324,11 @@ function Manual() {
           {ACADEMY_LEVELS.map((lvl) => (
             <div key={lvl.id} className="rounded-card bg-ink-2 p-3">
               <div className="mb-1.5 flex items-center gap-2">
-                <span className="text-body font-medium" style={{ color: cat(lvl.color) }}>{lvl.name}</span>
+                <span className="text-body font-medium" style={{ color: onRaised(lvl.color) }}>{lvl.name}</span>
                 <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
               </div>
               <ul className="grid gap-1 sm:grid-cols-2">
-                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: cat(lvl.color) }}>•</span> {sk}</li>)}
+                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: onRaised(lvl.color) }}>•</span> {sk}</li>)}
               </ul>
             </div>
           ))}

@@ -39,7 +39,7 @@ export function LockScreen({ onUnlock }: { onUnlock: (passcode: string) => Promi
           onChange={(e) => setPasscode(e.target.value)}
           placeholder="Passcode"
           aria-label="Passcode"
-          className="mt-4 w-full rounded-control border border-transparent bg-ink-2 px-3 py-2 text-center text-body text-fg-1 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="mt-4 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-center text-body text-fg-1 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
         {error && <p className="mt-2 text-body text-red">{error}</p>}
         <Button type="submit" disabled={busy || !passcode} className="press-3d mt-4 w-full">

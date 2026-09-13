@@ -1,7 +1,7 @@
 import { CalendarBlank, CalendarCheck, Clock, Hash, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, StatTile } from '../ui'
-import { cat } from '../../lib/colors'
+import { cat, onRaised } from '../../lib/colors'
 import type { PointDiff, PickleHours, ScoringStat, PlayConsistency } from '../../lib/pickleball'
 
 type Weekday = { day: string; games: number; gamesWon: number; winPct: number }
@@ -40,7 +40,7 @@ export function PointDifferentialCard({ points }: { points: PointDiff }) {
         <StatTile compact label="Points against" value={points.pointsAgainst} />
         <StatTile compact label="Net" value={points.diff > 0 ? `+${points.diff}` : points.diff} />
       </div>
-      <p className="mt-3 text-label text-fg-2">Average margin <span style={{ color: cat(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
+      <p className="mt-3 text-label text-fg-2">Average margin <span style={{ color: onRaised(points.avgMargin >= 0 ? 'green' : 'red') }}>{points.avgMargin > 0 ? `+${points.avgMargin}` : points.avgMargin}</span> per session. Log Pts for / against to surface close-game trends beyond win %.</p>
     </Card>
   )
 }
@@ -69,7 +69,7 @@ export function ScoringPerformanceCard({ scoring }: { scoring: ScoringStat[] }) 
           <li key={sc.scoring}>
             <div className="mb-1 flex justify-between text-body">
               <span className="text-fg-1">{sc.label}</span>
-              <span className="text-fg-2">{sc.games} games · <span style={{ color: cat('green') }}>{sc.winPct}%</span></span>
+              <span className="text-fg-2">{sc.games} games · <span style={{ color: onRaised('green') }}>{sc.winPct}%</span></span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${sc.label} win rate ${sc.winPct}% over ${sc.games} games`}>
               <div className="h-full rounded-pill" style={{ width: `${sc.winPct}%`, background: cat('peach') }} />

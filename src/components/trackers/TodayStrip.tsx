@@ -1,7 +1,7 @@
 import { Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { fromISODay } from '../../lib/date'
-import { cat, habitChipStyle, over, readableOn } from '../../lib/colors'
+import { cat, habitChipStyle, readableOn } from '../../lib/colors'
 import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
 
@@ -85,9 +85,13 @@ export function TodayStrip({
                 <span
                   className="text-micro"
                   style={{
+                    // `habitChipStyle` already solved a foreground for this exact
+                    // background; ask it rather than recomputing the composite,
+                    // which is how this drifted when the chip became opaque and
+                    // card-anchored.
                     color: on
-                      ? readableOn(cat('red'), over(cat('red'), cat('base'), 0x22 / 255), 4.6)
-                      : readableOn(cat('green'), cat('surface0'), 4.6),
+                      ? habitChipStyle('slip', h.color).color
+                      : readableOn(cat('green'), habitChipStyle('off', h.color).background, 4.6),
                   }}
                 >
                   {on ? 'slip' : 'clean'}
