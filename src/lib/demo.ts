@@ -366,22 +366,45 @@ export function generateDemoData(today = todayISO()): JournalData {
   j.settings.readingGoalBooks = 12
 
   // ── Mindset: a couple of principles in focus with notes ──
+  // The cues are the one piece of demo copy a reader studies, because they are
+  // the example of what they are meant to write themselves. These were written
+  // for a pickleball court — "paddle tap after every miss", "grade myself on
+  // shot selection" — which stopped matching the library the moment it was
+  // rewritten for the desk as well as the court.
   j.mindsetFocus = [
-    { id: uid('mf'), principleId: 'short-memory', note: 'Deep breath + paddle tap after every miss. Next point only.', createdAt: addDays(today, -5) },
-    { id: uid('mf'), principleId: 'process', note: 'Grade myself on shot selection, not the scoreboard.', createdAt: addDays(today, -2) },
+    { id: uid('mf'), principleId: 'short-memory', note: 'When a run fails: write down what it ruled out, then start the next one. No re-reading the traceback twice.', createdAt: addDays(today, -5) },
+    { id: uid('mf'), principleId: 'protect-mornings', note: 'No meetings before 11. The hard thinking goes in that block, and it is the block I defend.', createdAt: addDays(today, -2) },
   ]
   // Practice marks over the same 12 weeks the practice grid draws. Three
   // principles that are no longer in focus keep their history — that is the
   // point of keying the log by principle rather than by focus row, and the
   // category-balance chart is the only place it shows.
+  // Spread across EVERY category, at deliberately uneven rates.
+  //
+  // The old seed touched five of the nine, so Category balance rendered four
+  // rows whose bar was zero-width and whose number was `0` — a chart that
+  // mostly showed the absence of data, in the one place on the page that is
+  // supposed to tell you where your attention has actually gone. A balance
+  // chart needs an imbalance to be about; it does not need empty rows to prove
+  // the categories exist.
+  //
+  // The rates are the story: heavy on the two principles in focus, a long tail
+  // on things practised earlier and dropped, and one category barely touched —
+  // which is exactly the read the chart exists to give.
   j.mindsetPractice = Object.fromEntries(
     ([
       ['short-memory', 0.55, 70],
-      ['process', 0.45, 60],
+      ['protect-mornings', 0.5, 60],
+      ['process', 0.4, 84],
       ['breathe', 0.3, 84],
       ['systems', 0.25, 84],
+      ['write-to-think', 0.24, 84],
+      ['switching-cost', 0.22, 70],
       ['self-talk', 0.18, 45],
       ['single-task', 0.15, 84],
+      ['rough-draft', 0.14, 60],
+      ['show-early', 0.12, 84],
+      ['ask-early', 0.08, 84],
     ] as const).map(([id, rate, span]) => [
       id,
       Array.from({ length: span }, (_, i) => addDays(today, -(span - 1 - i))).filter(() => rand() < rate),

@@ -42,9 +42,7 @@ export function FocusSlots({
     <Band className="py-6">
       <div className="mb-3.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="font-display text-heading font-medium text-fg-1">Focus slots</h2>
-        <Eyebrow className="tracking-[0.1em]">
-          {focus.length} of {count} in use
-        </Eyebrow>
+        <Eyebrow>{focus.length} of {count} in use</Eyebrow>
       </div>
       <BandRow wrap={false} className="items-stretch border-t-2 border-line">
         {slots.map((f, i) => {
@@ -56,10 +54,28 @@ export function FocusSlots({
               className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pr-5 pb-1 [&:not(:last-child)]:border-r"
             >
               <div className="flex items-baseline gap-2.5">
-                {/* `whitespace-nowrap`: an 87px phone column breaks "Slot 1"
-                    between the word and the number, which reads as a different
-                    label on each of the three slots. */}
-                <Eyebrow className="whitespace-nowrap text-fg-3">Slot {i + 1}</Eyebrow>
+                {/* The principle's CATEGORY, not "Slot 1".
+                    Numbering a container tells the reader something they can
+                    already count and nothing about what is in it; the category
+                    is the one fact the title below does not carry. An empty
+                    slot still needs a name, and there it is the number that is
+                    informative — it is the only thing distinguishing one empty
+                    column from the next.
+
+                    `whitespace-nowrap`: an 87px phone column otherwise breaks a
+                    two-word category across lines, which reads as a different
+                    label in each column. */}
+                <Eyebrow className="whitespace-nowrap text-fg-3">
+                  {/* The category is the useful label and it does NOT fit a
+                      phone: three slots share 390px, which leaves 45px of text
+                      per column, and "Resilience" needs 71. Truncating it would
+                      hide content to keep a nicety, so the number — which is
+                      only 36px and is the one thing that still distinguishes
+                      one column from the next — carries the phone. Measured by
+                      `npm run clipped`, which caught this on the first run. */}
+                  <span className="sm:hidden">Slot {i + 1}</span>
+                  <span className="hidden sm:inline">{f && p ? p.category : `Slot ${i + 1}`}</span>
+                </Eyebrow>
                 {f && (
                   <button
                     onClick={() => onRemove(f.id)}

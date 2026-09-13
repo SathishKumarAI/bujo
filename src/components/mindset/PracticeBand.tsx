@@ -1,3 +1,5 @@
+import { Icon } from '@/components/Icon'
+import { categoryIcon } from './categoryIcon'
 import { Band, BandCell, BandRow } from '../mod'
 import { CalendarHeatmap } from '../page'
 import { categoryCounts, practiceData, type PracticeLog } from '../../lib/mindsetPractice'
@@ -51,7 +53,7 @@ export function PracticeBand({
               was a second guess at the same width and did not agree with the
               first: 352px of labels under a 331px grid, so "This week" sat past
               its own column. */}
-          <div className="mt-2 flex justify-between text-micro tracking-[0.08em] text-fg-3 uppercase">
+          <div className="mt-2 flex justify-between text-caption text-fg-3">
             <span>26 weeks ago</span>
             <span>This week</span>
           </div>
@@ -64,8 +66,11 @@ export function PracticeBand({
             {rows.map((r) => {
               const active = activeCategories.has(r.name)
               return (
-                <div key={r.name} className="grid grid-cols-[7.5rem_1fr_1.75rem] items-center gap-3 py-1">
-                  <span className="truncate text-label text-fg-2">{r.name}</span>
+                <div key={r.name} className="grid grid-cols-[8.75rem_1fr_1.75rem] items-center gap-3 py-1">
+                  <span className="flex min-w-0 items-center gap-1.5 text-label text-fg-2">
+                    <Icon as={categoryIcon(r.name)} size="sm" className="shrink-0 text-fg-3" />
+                    <span className="truncate">{r.name}</span>
+                  </span>
                   {/* The track is drawn at every width; a category at zero shows
                       an empty track rather than nothing, which is the difference
                       between "none yet" and "chart is broken". */}

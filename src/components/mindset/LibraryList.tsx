@@ -1,3 +1,5 @@
+import { Icon } from '@/components/Icon'
+import { categoryIcon } from './categoryIcon'
 import { MINDSET_CATEGORIES, MINDSET_LIBRARY, type MindsetPrinciple } from '../../lib/mindset'
 import { bindDashes } from '../../lib/typography'
 
@@ -42,8 +44,11 @@ export function LibraryList({
         return (
           <div key={cat} className="flex flex-wrap gap-x-8 border-b border-line py-5 last:border-b-0">
             <div className="flex-none basis-36">
-              <h3 className="font-display text-body font-medium text-fg-1">{cat}</h3>
-              <p className="mt-1 text-caption tracking-[0.08em] text-fg-3 uppercase">
+              <h3 className="flex items-center gap-2 font-display text-body font-medium text-fg-1">
+                <Icon as={categoryIcon(cat)} size="sm" className="shrink-0 text-fg-3" />
+                {cat}
+              </h3>
+              <p className="mt-1 text-caption text-fg-3">
                 {items.length === total
                   ? `${total} ${total === 1 ? 'principle' : 'principles'}`
                   : `${items.length} of ${total}`}
