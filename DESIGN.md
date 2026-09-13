@@ -175,8 +175,8 @@ each one leaves the app coherent.
 | Phase | Scope | State |
 |---|---|---|
 | 0 | `PRODUCT.md`, this file | ✅ |
-| 1 | Tokens + primitives — every view restyled at once | ✅ |
-| 2 | Shell: header, nav, page frame, book | ☐ |
+| 1 | Tokens + primitives — every view restyled at once | ✅ (#216) |
+| 2 | Shell: header, nav, page frame, book | ✅ (#217, and the header rows centred in a follow-up) |
 | 3 | Today · Plan · Body · Mind · Insights | ☐ |
 | 4 | The long tail — 20 remaining views | ☐ |
 | 5 | Motion + polish pass | ☐ |

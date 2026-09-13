@@ -83,11 +83,34 @@ export function TopBar({
     <header className="app-header sticky top-0 z-30 border-b border-line bg-card/75 pt-2.5 shadow-raise backdrop-blur-lg">
       {/* ── Row 1 · where you can go ─────────────────────────────────────── */}
       <HeaderRail collapsed={collapsed}>
-        <div className="flex items-center gap-3 px-4 pb-2">
+        {/* THREE COLUMNS at `md`, and the nav is the middle one.
+            The nav used to sit immediately after the brand with the tools
+            pushed right by `ml-auto`, which left the five section names
+            starting ~120px from the left edge of a 1440px window and the tools
+            ending at the far right — so reading "where am I" and reaching "what
+            can I do" were a full screen apart, on every page load.
+
+            `1fr auto 1fr` centres the nav against the WINDOW rather than
+            against the space left over by its siblings, so the section names
+            stay put when the brand or the tool cluster changes width (Feedback
+            drops below `sm`, the streak strip is content-derived). The outer
+            columns are `minmax(0, 1fr)` so a wide tool cluster shrinks the
+            spacer instead of shoving the nav off-centre.
+
+            Flex below `md`, and that is not laziness: `SectionNav` is
+            `hidden md:flex`, so on a phone there is no middle column to centre
+            and the grid would only be two equal `1fr` halves — which caps the
+            tool cluster at half the bar and clips it, since `minmax(0,1fr)`
+            has no content floor.
+
+            Nothing moves between columns and no action changes — this is the
+            same three groups in the same order, measured from a different
+            origin. */}
+        <div className="flex items-center gap-3 px-4 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <Brand />
           <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
 
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex items-center justify-end gap-1.5 md:ml-0">
             <WeekStrip />
 
             {/* ── Content tools ───────────────────────────────────────────── */}
@@ -124,11 +147,27 @@ export function TopBar({
       </HeaderRail>
 
       {/* ── Row 2 · where you are ────────────────────────────────────────── */}
-      {/* `items-stretch` keeps the tab row and the date nav the same height.
-          It used to also be load-bearing for the tabs' active *underline*,
-          which had to land exactly on the header's own bottom rule; the tabs
-          are filled pills now and carry their own `my-1` inset instead. */}
-      <div className="flex items-stretch gap-3 border-t border-line px-4">
+      {/* Centred on the same axis as row 1, from `md` up and for the same
+          reason: the tab row is the other half of "where am I", and it was
+          starting at the left gutter while row 1's nav did too — two
+          left-aligned rows under a tool cluster pinned right.
+
+          Below `md` it stays the flex row it was. Row 1's nav is hidden there,
+          so there is no axis to share; centring one lone row against the window
+          would only pull it out of line with the page content under it.
+
+          `items-stretch` keeps the tab row and the date nav the same height. It
+          used to also be load-bearing for the tabs' active *underline*, which
+          had to land exactly on the header's own bottom rule; the tabs are
+          filled pills now and carry their own `my-1` inset instead.
+
+          The empty first column is what makes the centring true — without it
+          the tabs would centre in the space the date nav leaves over, which
+          moves as the date label changes width (a month name is wider than
+          "Sat, Sep 12"). The `sr-only` heading is absolutely positioned, so it
+          is not a grid item and does not consume the middle column. */}
+      <div className="flex items-stretch gap-3 border-t border-line px-4 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <span aria-hidden className="hidden md:block" />
         {hasTabs ? (
           <>
             {/* Still the page's heading for a screen reader and for the outline;
@@ -137,13 +176,15 @@ export function TopBar({
             <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
           </>
         ) : (
-          <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
+          <div className="flex min-w-0 flex-1 flex-col justify-center py-2 md:flex-none md:text-center">
             <h1 className="truncate font-display text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
             {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
           </div>
         )}
 
-        {chrome.dateNav && <DateNav view={view} mode={chrome.dateNav} />}
+        <div className="flex items-center justify-end">
+          {chrome.dateNav && <DateNav view={view} mode={chrome.dateNav} />}
+        </div>
       </div>
     </header>
   )
