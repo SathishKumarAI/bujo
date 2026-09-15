@@ -97,16 +97,27 @@ export function TopBar({
             columns are `minmax(0, 1fr)` so a wide tool cluster shrinks the
             spacer instead of shoving the nav off-centre.
 
-            Flex below `md`, and that is not laziness: `SectionNav` is
+            `1fr`, NOT `minmax(0,1fr)` — measured, and the difference is a
+            bug. `minmax(0,1fr)` has no content floor, so between `md` and
+            about 1100px the tool cluster was handed an equal half of the bar
+            and spilled **56px past it on every single view**: the streak
+            strip's "90d" and the feedback count sat outside the header's own
+            box. Plain `1fr` is `minmax(auto,1fr)`, which floors each outer
+            column at its content and lets the fr algorithm reclaim the rest
+            from its sibling — so the nav is exactly centred while there is
+            room for it and drifts off-centre instead of clipping when there is
+            not. A nav one degree off-centre is a worse layout; a control
+            outside its container is a broken one.
+
+            Flex below `md`, and that is not laziness either: `SectionNav` is
             `hidden md:flex`, so on a phone there is no middle column to centre
-            and the grid would only be two equal `1fr` halves — which caps the
-            tool cluster at half the bar and clips it, since `minmax(0,1fr)`
-            has no content floor.
+            and the grid degrades to two halves that indent the tab row past
+            the page gutter.
 
             Nothing moves between columns and no action changes — this is the
             same three groups in the same order, measured from a different
             origin. */}
-        <div className="flex items-center gap-3 px-4 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="flex items-center gap-3 px-4 pb-2 md:grid md:grid-cols-[1fr_auto_1fr]">
           <Brand />
           <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
 
@@ -165,8 +176,14 @@ export function TopBar({
           the tabs would centre in the space the date nav leaves over, which
           moves as the date label changes width (a month name is wider than
           "Sat, Sep 12"). The `sr-only` heading is absolutely positioned, so it
-          is not a grid item and does not consume the middle column. */}
-      <div className="flex items-stretch gap-3 border-t border-line px-4 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          is not a grid item and does not consume the middle column.
+
+          `1fr` here for the same reason as row 1, and this row is where it
+          showed worst: under `minmax(0,1fr)` the date nav was squeezed below
+          its own content and **"September 2026" was drawn straight through the
+          Cycle and Recovery tabs** at 1024–1280. Two strings on top of each
+          other, on a row whose whole job is telling you where you are. */}
+      <div className="flex items-stretch gap-3 border-t border-line px-4 md:grid md:grid-cols-[1fr_auto_1fr]">
         <span aria-hidden className="hidden md:block" />
         {hasTabs ? (
           <>
