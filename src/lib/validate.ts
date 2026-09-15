@@ -1,7 +1,8 @@
-// Lightweight, dependency-free input validation for the auth forms. Real
-// deliverability is confirmed server-side by Supabase's email-confirmation
-// link; this just catches obvious typos before a round-trip and gives the user
-// a clear, friendly message (like other apps do).
+// Lightweight, dependency-free input validation. Written for the auth forms,
+// which no longer exist — there is no server to confirm an address against any
+// more, so nothing downstream catches a typo this misses. Still used by the
+// fields that take an email-shaped string; the rule is the same, the safety net
+// behind it is gone.
 
 // Pragmatic email shape: something@something.tld, no spaces, single @.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/

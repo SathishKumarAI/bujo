@@ -1,8 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
-import { findLegacyAccount } from './lib/legacyAccount'
-import { notify } from './lib/notify'
 import { useConfirm } from './components/ConfirmDialog'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { useJournal } from './store'
@@ -64,7 +62,7 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
 }
 
 export default function App() {
-  const { data, setSettings, replaceAll } = useJournal()
+  const { data, replaceAll } = useJournal()
   // Live mirror of `data` so once-on-mount sync handlers compare against the
   // current journal (not the stale mount snapshot) for conflict resolution.
   const dataRef = useRef(data)
@@ -107,7 +105,7 @@ export default function App() {
             // local-only item this device had never synced (offline edits made
             // before the remote's newer write). `resolveIncoming` cannot prompt
             // on this branch — we already know the remote is strictly newer —
-            // so it merges silently, matching the Supabase path below.
+            // so it merges silently.
             const merged = await resolveIncoming(dataRef.current, rm, askConflictRef.current)
             if (merged) { cloudLastSync.current = JSON.stringify(merged); replaceAll(merged) }
             else cloudLastSync.current = JSON.stringify(rm)
@@ -121,38 +119,6 @@ export default function App() {
     }, 4000)
     return () => clearTimeout(id)
   }, [data])
-  // One-time rescue for a journal stranded in the retired Supabase account
-  // (docs/AUTH.md). Runs at most once per journal, asks before taking anything,
-  // and does NOT mark itself done if the pull fails — see lib/legacyAccount.
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      const found = await findLegacyAccount(!!dataRef.current.settings.legacyAccountChecked)
-      if (!found || cancelled) return
-      const take = await confirm({
-        title: `Bring your old account journal to this device?`,
-        description: `Cadence no longer has accounts. ${found.email} still has a journal stored server-side; this is the last chance to pull it across. Items on this device are kept either way.`,
-        confirmLabel: 'Bring it across',
-        cancelLabel: 'No, discard it',
-      })
-      if (cancelled) return
-      try {
-        if (take) {
-          const merged = await found.adopt(dataRef.current)
-          if (merged) replaceAll(merged)
-          notify.success('Journal brought across', 'Your old account has been signed out.')
-        } else {
-          await found.dismiss()
-        }
-        setSettings({ legacyAccountChecked: true })
-      } catch (e) {
-        // Loud, and the flag stays unset so the next launch tries again.
-        notify.error('Could not reach your old account', `${(e as Error).message}. We will ask again next time you open Cadence.`)
-      }
-    })()
-    return () => { cancelled = true }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const urlView = readDeepLink().view
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   // Back / Forward. `writeDeepLink` pushes entries now, so this is what makes

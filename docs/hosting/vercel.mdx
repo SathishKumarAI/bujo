@@ -43,8 +43,10 @@ vercel alias set <new-deploy>.vercel.app bujo-journal.vercel.app
 `scripts/ship.sh --deploy-only` does the build, the deploy and the re-alias in
 one step, which is the whole reason it exists.
 
-**`vercel build` rewrites `node_modules`, and the browser gates do not survive
-it.** `playwright` and `@axe-core/playwright` are deliberately NOT in
+**Anything that rewrites `node_modules` takes the browser gates with it** —
+`vercel build`, and equally an ordinary `npm install` or `npm uninstall`.
+Measured twice in one session: once after a deploy, once after removing a single
+dependency. `playwright` and `@axe-core/playwright` are deliberately NOT in
 `package.json` — `.github/workflows/a11y.yml` installs them with `--no-save` so
 they never reach a user's bundle — which means a local install of them is
 untracked, and the install `vercel build` runs removes it. After a deploy,

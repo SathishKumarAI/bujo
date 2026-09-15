@@ -518,9 +518,14 @@ export interface Settings {
    */
   profile?: { name: string; emoji: string }
   /**
-   * The one-time Supabase-account migration has run (`lib/legacyAccount.ts`).
-   * Set only after the offer was answered — never after a failed pull, or the
-   * retry that would have rescued the journal never happens.
+   * **Inert.** Marked the one-time rescue of a journal stranded in the retired
+   * Supabase account as done. Both the backend and the code that read this are
+   * gone — the Supabase project stopped resolving (NXDOMAIN) before the rescue
+   * was even retired, so it could never have succeeded.
+   *
+   * Kept in the type on purpose. Existing journals carry the field, and
+   * deleting a key from `JournalData` is the one-way-door schema change the
+   * house rules warn about, for a boolean nobody reads. It costs one line.
    */
   legacyAccountChecked?: boolean
   /** GitHub Personal Access Token (gist scope) for gist storage. */

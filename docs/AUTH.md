@@ -104,11 +104,28 @@ more direct call sites. It was removed, not deprecated:
 - **Two mechanisms for one job.** `bujocloud` already did cross-device sync,
   better, with less to trust.
 
-Anyone still signed in when this shipped is offered a one-time migration on next
-launch: their cloud journal is pulled, merged through the normal conflict path
-(never a silent replace), and the session signed out. It runs once, is gated on
-a settings flag so a reload cannot re-prompt, and fails loudly rather than
-silently dropping the offer.
+Anyone still signed in when this shipped was offered a one-time migration on
+next launch: their cloud journal pulled, merged through the normal conflict path
+(never a silent replace), and the session signed out.
+
+**That rescue is gone as of 2026-09-15, and it had already stopped working long
+before.** The Supabase project's hostname does not resolve —
+`ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, the same as a host that
+never existed, and `TASKS.md` recorded the same thing on 2026-08-02, *five weeks
+before accounts were even retired*. So `currentUser()` failed at DNS, the rescue
+caught that as "nothing to bring across", and every user got the same silent
+nothing whether or not they had a journal there.
+
+A carve-out for a path that cannot succeed is not a safety net; it is a hole in
+the no-accounts contract that `lib/auth.contract.test.ts` exists to defend. The
+client, the rescue and the dependency are deleted, and that test now allows
+**zero** exceptions.
+
+**If a journal existed only in that project, it was already unreachable** before
+any of this — deleting the client did not cause that, and could not have
+prevented it. `settings.legacyAccountChecked` stays in the type as an inert
+field: existing journals carry it, and removing a key from `JournalData` is a
+one-way-door schema change for no gain.
 
 ## See also
 
