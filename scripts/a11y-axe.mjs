@@ -513,6 +513,59 @@ for (const vp of VIEWPORTS) {
   }
 }
 
+/**
+ * The capture receipt · the one surface `VIEWS` structurally cannot reach.
+ *
+ * It does not exist until something is captured, so walking pages scans the
+ * page it lands on and never the bar itself — the same hole as the empty
+ * journal and the closed fold, one step further along: **a surface that only
+ * exists after an action cannot fail a gate that only navigates.** So this
+ * performs the action, asserts the bar is really there, and scans it in every
+ * theme. The contrast is the part worth having: the bar is text over `ink-1`,
+ * and `ink-1` moves per theme.
+ */
+async function scanReceipt() {
+  for (const t of THEMES) {
+    await page.goto(`${BASE}?demo=1&view=today`, { waitUntil: 'networkidle' })
+    await setTheme(t)
+    await page.getByRole('button', { name: 'Quick add' }).click()
+    await page.waitForTimeout(350)
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('Smart capture').fill('bench 80x5')
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click()
+    await page.waitForTimeout(700)
+
+    // Assert, do not assume: a receipt that stopped rendering would otherwise
+    // score a clean zero here forever.
+    const there = await page.evaluate(() => !!document.querySelector('[role="status"]'))
+    if (!there) {
+      console.error(`
+[receipt · ${t}] captured "bench 80x5" and no receipt appeared.`)
+      console.error('  Either the capture stopped routing through CaptureReceipt, or the bar stopped rendering.')
+      await browser.close()
+      process.exit(1)
+    }
+
+    const results = await new AxeBuilder({ page })
+      .include('[role="status"]')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+    const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
+    serious += bad.length
+    summary.push({ view: `receipt · ${t}`, serious: bad.length, other: 0, folds: 0 })
+    for (const v of bad) {
+      console.error(`
+[receipt · ${t}] ${v.impact}: ${v.id} — ${v.help}`)
+      console.error(`  ${v.nodes[0]?.html?.slice(0, 120)}`)
+      console.error(`    DATA ${JSON.stringify(v.nodes[0]?.any?.[0]?.data)}`)
+    }
+  }
+}
+
+await page.setViewportSize({ width: VIEWPORTS[0].width, height: VIEWPORTS[0].height })
+await scanReceipt()
+
+
 await browser.close()
 
 console.log('\nView            serious  other  folds')

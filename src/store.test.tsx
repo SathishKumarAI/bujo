@@ -1,22 +1,45 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { JournalProvider, useJournal } from './store'
 import { CaptureBar } from './components/CaptureBar'
+import { NavProvider } from './components/shell/nav'
+import { CaptureReceipt, CaptureReceiptProvider } from './components/CaptureReceipt'
+import type { ViewId } from './components/shell/viewChrome'
 
 function Probe() {
   const { data } = useJournal()
   return <div data-testid="count">{data.entries.length}</div>
 }
 
+/**
+ * `CaptureBar` writes AND moves — since it started routing a capture to the
+ * page that now holds it, it needs the nav and the receipt above it. The spy is
+ * the point rather than a prop: "saved but did not move" is the failure this
+ * whole feature exists to prevent, and it is invisible in a diff.
+ */
+function Shell({ children, navigate = () => {} }: { children: ReactNode; navigate?: (id: ViewId) => void }) {
+  return (
+    <JournalProvider>
+      <NavProvider navigate={navigate}>
+        <CaptureReceiptProvider>
+          <CaptureReceipt />
+          {children}
+        </CaptureReceiptProvider>
+      </NavProvider>
+    </JournalProvider>
+  )
+}
+
 describe('CaptureBar + store integration', () => {
   it('adds a parsed entry that persists to state', async () => {
     const user = userEvent.setup()
     render(
-      <JournalProvider>
+      <Shell>
         <CaptureBar date="2026-06-10" />
         <Probe />
-      </JournalProvider>,
+      </Shell>,
     )
     expect(screen.getByTestId('count').textContent).toBe('0')
 
@@ -29,10 +52,10 @@ describe('CaptureBar + store integration', () => {
   it('ignores empty submissions', async () => {
     const user = userEvent.setup()
     render(
-      <JournalProvider>
+      <Shell>
         <CaptureBar date="2026-06-10" />
         <Probe />
-      </JournalProvider>,
+      </Shell>,
     )
     await user.click(screen.getByRole('button', { name: 'Add' }))
     expect(screen.getByTestId('count').textContent).toBe('0')
@@ -54,10 +77,10 @@ describe('undo / redo history', () => {
   it('undoes and redoes an entry add', async () => {
     const user = userEvent.setup()
     render(
-      <JournalProvider>
+      <Shell>
         <CaptureBar date="2026-06-10" />
         <UndoProbe />
-      </JournalProvider>,
+      </Shell>,
     )
     await user.type(screen.getByLabelText('Smart capture'), 'water plants')
     await user.click(screen.getByRole('button', { name: 'Add' }))
@@ -68,5 +91,51 @@ describe('undo / redo history', () => {
 
     await user.click(screen.getByRole('button', { name: 'redo' }))
     expect(screen.getByTestId('count').textContent).toBe('1')
+  })
+})
+
+/**
+ * The capture is only half of it. A sentence typed on Today can write a workout
+ * onto Strength, and a save that does not move leaves the user reading a page
+ * where nothing changed — which is indistinguishable from a save that failed.
+ */
+describe('a capture moves the app to the page that now holds it', () => {
+  it('sends a parsed lift to Strength and a plain note to Today', async () => {
+    const user = userEvent.setup()
+    const navigate = vi.fn()
+    render(
+      <Shell navigate={navigate}>
+        <CaptureBar date="2026-06-10" />
+        <Probe />
+      </Shell>,
+    )
+
+    await user.type(screen.getByLabelText('Smart capture'), 'bench 80x5')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(navigate).toHaveBeenLastCalledWith('gym')
+
+    await user.type(screen.getByLabelText('Smart capture'), 'called mum')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(navigate).toHaveBeenLastCalledWith('today')
+  })
+
+  it('names what was written, and undoes it', async () => {
+    const user = userEvent.setup()
+    render(
+      <Shell>
+        <CaptureBar date="2026-06-10" />
+        <Probe />
+      </Shell>,
+    )
+
+    await user.type(screen.getByLabelText('Smart capture'), 'called mum')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(screen.getByTestId('count').textContent).toBe('1')
+    expect(screen.getByRole('status')).toHaveTextContent('Saved to Today')
+    expect(screen.getByRole('status')).toHaveTextContent('called mum')
+
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(screen.getByTestId('count').textContent).toBe('0')
+    expect(screen.queryByRole('status')).toBeNull()
   })
 })

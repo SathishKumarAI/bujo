@@ -11,7 +11,7 @@ import { answer, CONFIRM_BELOW, understand, type VoiceIntent } from '../lib/voic
 import { askModel } from '../lib/voice/model'
 import { ofArray, plan } from '../lib/ingest/plan'
 import { validateRecords } from '../lib/ingest/validate'
-import { notify } from '../lib/notify'
+import { useCaptureReceipt } from './CaptureReceipt'
 import { cat } from '../lib/colors'
 
 /**
@@ -36,6 +36,7 @@ import { cat } from '../lib/colors'
  */
 export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: () => void; date: string }) {
   const { data, replaceAll } = useJournal()
+  const receipt = useCaptureReceipt()
   const [heard, setHeard] = useState('')
   const [intent, setIntent] = useState<VoiceIntent | null>(null)
   const [typed, setTyped] = useState('')
@@ -157,11 +158,21 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
         ? 'You already had that.'
         : `Saved${rejected.length ? `, and skipped ${rejected.length}` : ''}.`
       say(line, { enabled: data.settings.voiceReplies !== false })
-      notify.success(line, 'Undo with ⌘Z.')
       setHeard('')
       setIntent(null)
       setTyped('')
       spokenFor.current = null
+      // Nothing new on screen means nothing to go and look at: an already-had-it
+      // save would otherwise walk the user to a page to show them a record they
+      // wrote last week.
+      if (saved > 0) {
+        // Leaves the dialog WITHOUT `close()`, which would `hush()` — the reply
+        // is mid-sentence at this point, and cutting the app off as it says
+        // "saved" to show the page it saved to is worse than either alone.
+        stop()
+        onClose()
+        receipt.fromRecords(records)
+      }
     } finally {
       setSaving(false)
     }
