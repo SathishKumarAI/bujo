@@ -27,7 +27,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PROD_ALIAS="bujo-journal.vercel.app"
-CO_AUTHOR="Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+CO_AUTHOR="Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 MSG="" VERIFY_ONLY=0 DO_VERIFY=1 DO_DEPLOY=1 DEPLOY_ONLY=0 PREVIEW=0 RUN_TESTS=1
 while [ $# -gt 0 ]; do

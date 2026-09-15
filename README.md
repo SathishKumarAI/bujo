@@ -15,9 +15,16 @@ wrote. Typing does the same thing through the same pipeline.
 > that date use the old name and are left alone: a session log is a record, not
 > a description.
 
-**▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to
-try it instantly, no account. Or run it locally and open `?demo=1` for a month
-of sample data.
+**▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”*
+to try it instantly, no account, then add `?demo=1` for a month of sample data.
+The host name still says `bujo`; that was the product's name until 2026-09-15
+and is not worth breaking links over.
+
+**Try this first:** press **Quick add**, type `bench 80x5`, press Add. Relay
+works out that a lift belongs to Strength, writes it, takes you there, and tells
+you what it wrote with an Undo. `mood 7`, `water 6` and `called mum` each land
+somewhere different. `docs/hosting/DEMO-REVIEW.md` is the short version to send
+to someone whose review you want.
 
 > Screenshots used to sit here. They are still generated on every push to `main`
 > (`.github/workflows/screenshots.yml` → `npm run shots` → `docs/screenshots/`),

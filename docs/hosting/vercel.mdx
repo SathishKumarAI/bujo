@@ -1,6 +1,6 @@
 ---
 title: Host on Vercel (current)
-description: Zero-config static + serverless hosting for bujo.
+description: Zero-config static + serverless hosting for Cadence Journal.
 ---
 
 # Vercel (current setup)
@@ -8,15 +8,59 @@ description: Zero-config static + serverless hosting for bujo.
 The project is already linked (`.vercel/project.json` → project `bujo`). Vercel detects Vite, builds `dist/`, serves the SPA, and runs `api/*` as serverless functions automatically.
 
 ## Deploy
+
+**The CLI has to be logged in, and a fresh machine is not.** `vercel whoami`
+answers `Logged out` and every deploy command then fails or silently offers a
+throwaway deployment instead of the real project. The login is a device flow —
+it opens a browser and waits — so it cannot be done by an agent or in CI:
+
+```bash
+npx vercel whoami        # expect an account name, not "Logged out"
+npx vercel login         # device flow, opens a browser
+```
+
+For CI or a non-interactive session, mint a token at
+<https://vercel.com/account/tokens> and pass `--token=$VERCEL_TOKEN` to every
+command instead of logging in.
+
+Then:
+
 ```bash
 # preview
 vercel
 # production
 vercel --prod --yes
 ```
-Git integration also auto-builds on push. **Note:** the human-facing alias `bujo-journal.vercel.app` does NOT auto-follow new prod deploys — re-point it each time:
+
+Git integration also auto-builds on push. **Note:** the human-facing alias
+`bujo-journal.vercel.app` does NOT auto-follow new prod deploys — re-point it
+each time:
+
 ```bash
 vercel alias set <new-deploy>.vercel.app bujo-journal.vercel.app
+```
+
+`scripts/ship.sh --deploy-only` does the build, the deploy and the re-alias in
+one step, which is the whole reason it exists.
+
+## Confirm what you deployed · do not skip this
+
+A deploy can succeed while the alias still points at the previous build, so
+"the command exited 0" is not evidence that anyone can see your change. The
+page states its own identity — check it:
+
+```bash
+curl -s https://bujo-journal.vercel.app/ | grep -o '<title>[^<]*</title>'
+# expect: <title>Cadence Journal — habits, training and how you actually felt</title>
+```
+
+If the title is the old one, the deploy landed and the alias did not follow.
+This is not hypothetical: the demo served `bujo — minimal bullet journal` for a
+full session of merged work, and the bundle hash was the giveaway:
+
+```bash
+curl -s https://bujo-journal.vercel.app/ | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js'
+ls dist/assets/index-*.js   # the two should match after a deploy
 ```
 
 ## What Vercel handles for you
