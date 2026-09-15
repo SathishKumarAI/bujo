@@ -1,5 +1,119 @@
 # Worklog
 
+## 2026-09-15 — The capture loop, a regression I shipped myself, and two names (#219–#226)
+
+**Summary:** One ask — "after a voice or text update, take me to the page, show
+me the change, let me undo it, behave like Jarvis" — plus a bug report that
+turned out to be mine from earlier the same day. Seven PRs. The pattern of the
+session is that **every real finding came from measuring the running page, and
+three of the first four "findings" were phantoms that measuring also killed.**
+
+**What shipped:**
+
+- **#219 · The header stops reading left-to-right.** Both nav rows became
+  `1fr auto 1fr` from `md` up, so the nav and the tab row centre on the
+  *window* rather than on the space their siblings leave over. Measured: nav
+  mid 721, tab row 720, page title 720, window mid 720.
+
+  The draft used `justify-content: center` on the tab row. That distributes
+  **negative** free space too, so an overflowing row is pushed off *both* edges
+  and `scrollLeft` cannot go below zero — Body's eleven tabs at 1440 put
+  Fitness at a negative x, **unreachable by scrolling, keyboard, anything**.
+  `npm run a11y` died on "no tab with that name inside Body", which is how it
+  was caught. Centred by auto margins on the first and last tab instead; they
+  collapse to 0 the moment free space goes negative.
+
+- **#220 · A capture takes you to the page it wrote to.** Saying "I played two
+  games and scored 68" wrote a pickleball session and left you on Today with a
+  four-second toast. `lib/captureLanding.ts` maps record kind → view (exhaustive
+  over `RecordKind`, ending in a `never`, so a new kind is a typecheck failure
+  rather than a silent landing on Today) and `CaptureReceipt` does the moving.
+  The nav lives in the provider, not the call sites: "saved but did not move" is
+  a bug that does not appear in a diff.
+
+  Body measurements land on **Strength**, not Tracking — `bodyMetrics` is
+  rendered by `views/Gym.tsx` and nowhere else. The Talk dialog closes without
+  `hush()`, because its usual close silences the speech synthesiser mid-sentence.
+
+- **#221 · The regression from #219, on every view.** Reported as text
+  overflowing in the top bar. `minmax(0,1fr)` has **no content floor**, so
+  between ~768 and ~1180px the grid handed the tool cluster a column narrower
+  than its contents — and a flex row justified to the end overflows
+  *backwards*. The streak strip was drawn to the left of its own box, across the
+  section nav: **47px of overlap at 1180, 87px at 1100, 125px at 1024**. Row 2
+  painted "September 2026" through the Cycle and Recovery tabs.
+
+  Nothing ever left the viewport. `body.scrollWidth` equalled the window at
+  every width, and both rendering gates were green, because `clipped` ran at
+  **1440 and 390 only** — at 1440 there was room, at 390 the header is a
+  different layout. **A responsive layout fails between breakpoints, not at
+  them.** The gate now runs at 1024 and has `findHeaderCollisions`; proved red
+  on the old markup and green on the new.
+
+- **#222 · The capture rings the row it wrote** and scrolls it into view for six
+  seconds. `lib/recordKeys.ts` fingerprints the journal before the write and
+  diffs after, so call sites pass nothing. A **fingerprint**, not a set of new
+  ids, because half of what a capture writes has no id and because "mood 7" on a
+  day that already has a sleep figure *updates* a row — a set difference
+  highlights nothing on the commonest capture in the app.
+
+- **#223 · Trackers.** A habit has two cells (the Today strip chip and the month
+  grid cell) and both ring from one set. A wellbeing metric has **no cell
+  anywhere** — it is a field on a date-keyed row drawn only as a line — so the
+  reading is marked on the chart with a labelled `ReferenceDot`.
+
+- **#224, #226 · Cadence Journal, and Relay.** The app was named for the method
+  it grew out of; the assistant had no name and a label describing its input.
+  User-visible copy only: the repo, the package, the `bujo:` keys and
+  `bujo.json` keep the old name, because a renamed storage key orphans every
+  journal that exists. Three gates assert the app's identity by
+  `document.title` and all three now expect "Cadence" — that assertion is what
+  proves a rename reached the built app.
+
+- **#225 · STATUS.md**, five PRs stale, re-pointed.
+
+**Three phantom classes, all of which cost a detour before anything was fixed.**
+A sweep for text-drawn-over-text across 24 views x 6 widths reported 94 overlaps
+on Coaching, plus hits on Trackers, Pickleball and Recovery. Every one was
+false:
+
+1. **A closed `<details>` still gives its children a rect.** Chrome reports real
+   geometry for content behind a shut fold. `checkVisibility()` knows.
+2. **Elements scrolled out of a scrollport still intersect in coordinate
+   space.** Clip every box to its ancestors' scrollports first.
+3. **An inline box that wraps has a bounding rect spanning both lines**, so two
+   neighbours on one line read as overlapping. `getClientRects()` gives the
+   per-line boxes, which is what is painted.
+
+After those three filters, **the header was the only real collision in the
+app** — and it was the one I had shipped that morning.
+
+**Two more measured corrections, both to work written the same session:**
+`mood 7` marked all three lines on the trend chart, because the metric key was
+per *day* and mood/stress/sleep all had values — two readings given days earlier
+presented as just-captured; keys are per field now. And the chart's
+scroll-into-view target was a `display: contents` wrapper, which **generates no
+box**: `getBoundingClientRect` 0x0, `scrollIntoView` a silent no-op, the dot
+drawn perfectly at y=1271 in a 900px window on a page that never scrolled.
+
+**Gates gained this session:** `clipped` runs at 1024 and detects header text
+over header text; `a11y` performs a capture and scans the receipt **and** the
+ringed row in five themes, asserting both are on screen before scanning
+either — a surface that only exists after an action cannot fail a gate that
+only navigates.
+
+**Final state:** `verify` 1047 tests across 83 files, tsc, eslint 0 errors (one
+pre-existing `exhaustive-deps` warning), build; `a11y` 0 serious/critical;
+`clipped` clean at 1440, 1024 and 390; `smoke` 25/25 with the new identity
+assertion; `design` 308 files; `contrast` 5 themes.
+
+**Open:** Gym has no per-workout row to ring; three alternative Trackers layouts
+are unwired; Undo does not navigate back; the command palette does not route
+through the receipt.
+
+**Environment:** Plane was unreachable all session (`localhost:8080` refused),
+so none of the seven PRs is linked to a work item.
+
 ## 2026-09-11 (night) — Three PRs, and a gate that was wrong about its own app (#208–#210)
 
 **Summary:** Four asks in one session — "show me how many days are left", "the

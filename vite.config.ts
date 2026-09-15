@@ -18,7 +18,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Cadence — journal, habits and training',
+        name: 'Cadence Journal — habits, training and how you felt',
         short_name: 'Cadence',
         description: 'A minimal, private, local-first digital bullet journal.',
         theme_color: '#1e1e2e',

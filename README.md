@@ -1,4 +1,4 @@
-# ✦ Cadence — the journal that keeps your rhythm
+# ✦ Cadence Journal — the journal that keeps your rhythm
 
 A private, local-first journal built on the
 [Bullet Journal method](https://bulletjournal.com/) by Ryder Carroll. Rapid
@@ -9,9 +9,11 @@ Say a sentence and **Relay** files it: "I played two games and scored 68" writes
 a pickleball session, opens the page that now holds it, and rings the row it
 wrote. Typing does the same thing through the same pipeline.
 
-> Named Cadence in the app; the repository, the package and the storage keys are
-> still `bujo`, deliberately — renaming a storage key orphans every journal that
-> already exists.
+> **It was called `bujo` until 2026-09-15.** The repository, the package, the
+> `bujo:` storage keys and `bujo.json` still are, deliberately — renaming a
+> storage key does not migrate a journal, it orphans one. Docs written before
+> that date use the old name and are left alone: a session log is a record, not
+> a description.
 
 **▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to
 try it instantly, no account. Or run it locally and open `?demo=1` for a month

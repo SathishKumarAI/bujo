@@ -1,4 +1,4 @@
-# bujo — pending tasks & bugs
+# Cadence — pending tasks & bugs
 
 **Generated:** 2026-08-02 · branch `feat/ui-polish` · commit `dbcdbf3`
 

@@ -1,4 +1,4 @@
-# bujo — feature guide & day-to-day use
+# Cadence — feature guide & day-to-day use
 
 A practical tour: what each feature is, **why it matters**, and **how to use it
 day to day**. Verified against the demo data (`?demo=1`) on 2026-06-18.
@@ -10,7 +10,7 @@ day to day**. Verified against the demo data (`?demo=1`) on 2026-06-18.
 
 ## The daily loop (the 2-minute habit)
 
-bujo is built around one short ritual you repeat each day:
+Cadence is built around one short ritual you repeat each day:
 
 1. **Capture** — open **Today**, type one line per thought into the capture bar.
    Bullet grammar routes it: `t` task · `e` event · `n` note · `*` important ·
@@ -104,7 +104,7 @@ daily loop — you never double-enter data.
 - **Escapes (so you're never trapped):** "explore as a guest" or "continue on
   this device without an account" both drop you straight into the journal.
 - **Significance:** a clean, focused sign-in like a real product — while keeping
-  bujo's local-first promise (you can always use it with no account).
+  Cadence's local-first promise (you can always use it with no account).
 
 ### Email validation *(new)*
 - **What:** before any sign-in/up, the email is format-checked and obvious typos
@@ -124,7 +124,7 @@ daily loop — you never double-enter data.
 
 ---
 
-## A realistic day with bujo
+## A realistic day with Cadence
 
 | Time | You do | Feature |
 |---|---|---|

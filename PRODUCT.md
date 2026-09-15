@@ -1,4 +1,4 @@
-# PRODUCT.md — what Cadence is, before any pixel is decided
+# PRODUCT.md — what Cadence Journal is, before any pixel is decided
 
 Product truth. Durable across redesigns. If a visual decision contradicts this
 file, the visual decision is wrong. Visual decisions live in `DESIGN.md`.
@@ -10,9 +10,13 @@ paper cannot do — search, streaks, charts that overlay your mood against your
 sleep, and **Relay**, which takes a spoken sentence and files it on the page
 that owns it.
 
+**Cadence Journal** in full — the title, the manifest, the README. **Cadence**
+alone in the header, because a header is a place you are already standing.
+
 The name is user-facing only. The repository, the package and every `bujo:`
 storage key keep the old one on purpose: a renamed storage key is an orphaned
-journal.
+journal. Docs written before 2026-09-15 say `bujo` and stay that way — editing
+a record to match today's name falsifies it.
 
 ## Who opens it
 
