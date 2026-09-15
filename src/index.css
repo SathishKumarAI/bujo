@@ -534,6 +534,38 @@ body.handwriting textarea {
   .rise { animation: none; }
 }
 
+/* The row a capture just wrote · `useJustCaptured` in CaptureReceipt.tsx.
+   A ring that fades, not a fill that stays: this is a POINTER at a row on a
+   page the app has just moved you to, and it has to stop. A permanent "new"
+   marker on a journal is indistinguishable from a rendering bug a week later.
+
+   `outline`, not `border` or `box-shadow`: a border would reflow the row it is
+   pointing at, and every list here is dense enough for one row growing 2px to
+   look like the wrong row moved. `outline-offset` keeps it clear of the text.
+
+   Held at full strength for the first third, because the page is still
+   settling from the navigation while it starts. */
+@keyframes just-captured {
+  0%, 30% { outline-color: var(--color-brand); background-color: var(--color-brand-wash); }
+  100% { outline-color: transparent; background-color: transparent; }
+}
+.just-captured {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+  animation: just-captured 6s var(--ease-rise) forwards;
+}
+/* Reduced motion keeps the ring and drops the fade — the mark is information,
+   the animation is decoration. It is cleared from the DOM after six seconds
+   either way, so this does not leave a permanent outline behind. */
+@media (prefers-reduced-motion: reduce) {
+  .just-captured {
+    animation: none;
+    outline-color: var(--color-brand);
+    background-color: var(--color-brand-wash);
+  }
+}
+
 /* Page-turn: views fade/slide in when switched. */
 @keyframes page-in {
   from { opacity: 0; transform: translateY(8px) scale(0.995); }

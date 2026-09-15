@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { JournalProvider, useJournal } from './store'
 import { CaptureBar } from './components/CaptureBar'
+import { EntryRow } from './components/EntryRow'
 import { NavProvider } from './components/shell/nav'
 import { CaptureReceipt, CaptureReceiptProvider } from './components/CaptureReceipt'
 import type { ViewId } from './components/shell/viewChrome'
@@ -99,6 +100,33 @@ describe('undo / redo history', () => {
  * onto Strength, and a save that does not move leaves the user reading a page
  * where nothing changed — which is indistinguishable from a save that failed.
  */
+/** The list a capture lands in, so the row it wrote can be looked for. */
+function Entries() {
+  const { data } = useJournal()
+  return <ul>{data.entries.map((e) => <EntryRow key={e.id} entry={e} />)}</ul>
+}
+
+describe('a capture marks the row it just wrote', () => {
+  it('rings the new entry, and only the new one', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <Shell>
+        <CaptureBar date="2026-06-10" />
+        <Entries />
+      </Shell>,
+    )
+
+    await user.type(screen.getByLabelText('Smart capture'), 'first note')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await user.type(screen.getByLabelText('Smart capture'), 'second note')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    const marked = container.querySelectorAll('[data-just-captured]')
+    expect(marked).toHaveLength(1)
+    expect(marked[0]).toHaveTextContent('second note')
+  })
+})
+
 describe('a capture moves the app to the page that now holds it', () => {
   it('sends a parsed lift to Strength and a plain note to Today', async () => {
     const user = userEvent.setup()

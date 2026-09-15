@@ -3,12 +3,20 @@ import { glyphFor } from '../lib/bullets'
 import { cat, onRaised } from '../lib/colors'
 import { useJournal } from '../store'
 import type { Entry } from '../lib/types'
+import { justCapturedProps, useJustCaptured } from './CaptureReceipt'
+import { ENTRY_KEY } from '../lib/recordKeys'
 
 /** Roughly two lines at the reading width — past this, an entry is a paragraph. */
 const LONG_ENTRY = 180
 
 /** A single rapid-log line: click the glyph to advance status, double-click text to edit. */
 export function EntryRow({ entry }: { entry: Entry }) {
+  // Marked here rather than at the five call sites. `EntryRow` is rendered by
+  // Today, Collections, the tag pages and the inbox band, and a capture that
+  // writes a note can land in front of any of them — one of the few places
+  // where putting the state inside the leaf is the smaller diff, not the lazier
+  // one.
+  const justNew = useJustCaptured().has(ENTRY_KEY(entry.id))
   const { cycleStatus, toggleImportant, deleteEntry, updateEntry } = useJournal()
   const dropped = entry.status === 'dropped'
   const [editing, setEditing] = useState(false)
@@ -28,7 +36,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
   }
 
   return (
-    <li className="group flex items-start gap-2 py-1">
+    <li {...justCapturedProps(justNew)} className={`group flex items-start gap-2 py-1 ${justNew ? 'just-captured' : ''}`}>
       {/* The signature column. Fixed 24px gutter so every glyph in the log sits
           on one axis no matter how the text wraps — a ragged bullet column is
           what makes a rapid log read as a list of rows instead of a page of
