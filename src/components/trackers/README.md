@@ -20,7 +20,8 @@ that draws a habit to this directory.
 | The read-first panel opened by tapping a habit | `HabitDetail.tsx` |
 | Every per-habit setting, and the modal's own stats | `HabitEditor.tsx` |
 | The folded deep-analytics group (heatmap, leaderboard, monthly, weekday, perfect days) | `TrackerVisuals.tsx` |
-| The mood/stress/sleep lines | `MetricsTrendCard.tsx` |
+| The mood/stress/sleep lines, and the dot marking a just-captured reading | `MetricsTrendCard.tsx` |
+| **Which** record a capture just wrote, and the ring on it | `src/components/CaptureReceipt.tsx`, `src/lib/recordKeys.ts` |
 | The per-category radar | `CategoryConsistencyCard.tsx` |
 | Streaks, consistency, grades, comebacks | `src/lib/stats.ts`, `habitStats.ts`, `streak.ts` |
 | The category list and its order | `HABIT_CATEGORIES` in `src/lib/types.ts` |

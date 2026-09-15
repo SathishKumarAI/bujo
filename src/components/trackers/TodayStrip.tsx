@@ -4,6 +4,8 @@ import { fromISODay } from '../../lib/date'
 import { cat, habitChipStyle, readableOn } from '../../lib/colors'
 import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
+import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
+import { HABIT_KEY } from '../../lib/recordKeys'
 
 /**
  * TODAY STRIP · zone 2's whole content: one tappable chip per habit due today.
@@ -25,6 +27,12 @@ export function TodayStrip({
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
 }) {
+  // "water 6" from the capture bar writes today's value and lands here, so this
+  // strip is where a captured habit is actually looked for. The month grid gets
+  // the same mark on the same cell — one capture, two places it is visible, and
+  // both read the one set.
+  const justCaptured = useJustCaptured()
+
   const todays = habits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
   if (todays.length === 0) return null
 
@@ -48,7 +56,8 @@ export function TodayStrip({
             return (
               <span
                 key={h.id}
-                className="inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 text-label"
+                {...justCapturedProps(justCaptured.has(HABIT_KEY(today, h.id)))}
+                className={`inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 text-label ${justCaptured.has(HABIT_KEY(today, h.id)) ? 'just-captured' : ''}`}
                 style={habitChipStyle(on ? 'on' : 'off', h.color)}
               >
                 <span className="pl-1">{h.emoji ?? '●'} {h.name}</span>
@@ -71,7 +80,8 @@ export function TodayStrip({
             <button
               key={h.id}
               onClick={() => (numeric ? onSetValue(today, h.id, next) : onToggle(today, h.id))}
-              className="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label transition-colors"
+              {...justCapturedProps(justCaptured.has(HABIT_KEY(today, h.id)))}
+              className={`inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-label transition-colors ${justCaptured.has(HABIT_KEY(today, h.id)) ? 'just-captured' : ''}`}
               title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
               style={habitChipStyle(on ? (h.avoid ? 'slip' : 'on') : 'off', h.color)}
             >

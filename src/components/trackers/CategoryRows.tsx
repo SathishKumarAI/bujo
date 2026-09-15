@@ -25,6 +25,8 @@ import { milestoneEmoji } from '../../lib/milestones'
 import { habitCellFill } from '../../lib/habitStats'
 import { habitRowChips, type HabitChip } from '../../lib/habitRowChips'
 import type { Habit, HabitCategory, JournalData } from '../../lib/types'
+import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
+import { HABIT_KEY } from '../../lib/recordKeys'
 
 /**
  * One mark beside a habit's name. `habitRowChips` decides *whether* and *which*;
@@ -72,6 +74,11 @@ export function CategoryRows({
 }) {
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  // The cell, not the row: a capture writes one habit on one day, and the row is
+  // a month of them. Marked on the `<td>` rather than the button inside it
+  // because the button carries an inline `background` that an animated
+  // `background-color` cannot win against — the cell has nothing to fight.
+  const justCaptured = useJustCaptured()
   return (
     <>
       <tr>
@@ -154,7 +161,11 @@ export function CategoryRows({
                 const atFloor = tier === 'floor'
                 const partial = fill.state === 'partial' && !atFloor
                 return (
-                  <td key={d} className="p-0.5 text-center">
+                  <td
+                    key={d}
+                    {...justCapturedProps(justCaptured.has(HABIT_KEY(d, h.id)))}
+                    className={`p-0.5 text-center ${justCaptured.has(HABIT_KEY(d, h.id)) ? 'just-captured' : ''}`}
+                  >
                     <button
                       disabled={disabled}
                       onClick={() => onSetValue(d, h.id, nextHabitValue(type, target, val))}
@@ -174,7 +185,11 @@ export function CategoryRows({
               }
               const on = (data.habitLog[d] ?? []).includes(h.id)
               return (
-                <td key={d} className="p-0.5 text-center">
+                <td
+                  key={d}
+                  {...justCapturedProps(justCaptured.has(HABIT_KEY(d, h.id)))}
+                  className={`p-0.5 text-center ${justCaptured.has(HABIT_KEY(d, h.id)) ? 'just-captured' : ''}`}
+                >
                   <button
                     disabled={disabled}
                     onClick={() => onToggle(d, h.id)}

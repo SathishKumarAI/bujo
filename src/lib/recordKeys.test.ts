@@ -17,7 +17,7 @@ describe('fingerprint', () => {
     const f = fingerprint(d)
     expect(f.has(ENTRY_KEY('e1'))).toBe(true)
     expect(f.has(WORKOUT_KEY('w1'))).toBe(true)
-    expect(f.has(METRIC_KEY(D))).toBe(true)
+    expect(f.has(METRIC_KEY(D, 'mood'))).toBe(true)
     expect(f.has(HABIT_KEY(D, 'h1'))).toBe(true)
   })
 
@@ -45,7 +45,20 @@ describe('changedKeys', () => {
   it('reports a record that already existed and changed', () => {
     const a = base(); a.metrics.push({ date: D, sleep: 8 })
     const b = base(); b.metrics.push({ date: D, sleep: 8, mood: 7 })
-    expect([...changedKeys(fingerprint(a), fingerprint(b))]).toEqual([METRIC_KEY(D)])
+    expect([...changedKeys(fingerprint(a), fingerprint(b))]).toEqual([METRIC_KEY(D, 'mood')])
+  })
+
+  /**
+   * The field, not the day. A day-level key would have marked the sleep line
+   * too — a reading the user gave days ago — which is what the trend chart
+   * actually did before these keys were split: three dots for "mood 7".
+   */
+  it('names the field that changed and not its neighbours on the same day', () => {
+    const a = base(); a.metrics.push({ date: D, sleep: 8, stress: 3 })
+    const b = base(); b.metrics.push({ date: D, sleep: 8, stress: 3, mood: 7 })
+    const changed = [...changedKeys(fingerprint(a), fingerprint(b))]
+    expect(changed).toEqual([METRIC_KEY(D, 'mood')])
+    expect(changed).not.toContain(METRIC_KEY(D, 'sleep'))
   })
 
   it('says nothing changed when nothing changed', () => {

@@ -27,7 +27,24 @@ export type RecordFingerprints = Map<string, string>
 export const ENTRY_KEY = (id: string) => `entry:${id}`
 export const WORKOUT_KEY = (id: string) => `workout:${id}`
 export const PICKLEBALL_KEY = (id: string) => `pickleball:${id}`
-export const METRIC_KEY = (date: string) => `metric:${date}`
+/**
+ * Keyed per FIELD, not per day, and that is the difference between pointing at
+ * a reading and pointing at a date.
+ *
+ * `DailyMetric` is one row carrying up to eleven numbers, so a day-level key
+ * says only "something about this day changed". Saying "mood 7" on a day that
+ * already has stress and sleep would then mark all three lines on the trend
+ * chart — three readings the user did not just give, two of them days old.
+ * Measured in a browser: three dots for a one-word capture.
+ */
+export const METRIC_KEY = (date: string, field: string) => `metric:${date}:${field}`
+
+/** The fields a capture or an import can write onto a `DailyMetric`. */
+export const METRIC_FIELDS = [
+  'mood', 'stress', 'sleep', 'energy',
+  'calories', 'protein', 'carbs', 'fat',
+  'steps', 'restingHR', 'activeKcal',
+] as const
 export const BODY_KEY = (date: string) => `body:${date}`
 export const CYCLE_KEY = (date: string) => `cycle:${date}`
 export const HABIT_KEY = (date: string, habitId: string) => `habit:${date}:${habitId}`
@@ -38,7 +55,12 @@ export function fingerprint(d: JournalData): RecordFingerprints {
   for (const e of d.entries) m.set(ENTRY_KEY(e.id), JSON.stringify(e))
   for (const w of d.workouts) m.set(WORKOUT_KEY(w.id), JSON.stringify(w))
   for (const p of d.pickleball ?? []) m.set(PICKLEBALL_KEY(p.id), JSON.stringify(p))
-  for (const row of d.metrics) m.set(METRIC_KEY(row.date), JSON.stringify(row))
+  for (const row of d.metrics) {
+    for (const f of METRIC_FIELDS) {
+      const v = (row as unknown as Record<string, unknown>)[f]
+      if (typeof v === 'number') m.set(METRIC_KEY(row.date, f), String(v))
+    }
+  }
   for (const row of d.bodyMetrics) m.set(BODY_KEY(row.date), JSON.stringify(row))
   for (const row of d.cycle) m.set(CYCLE_KEY(row.date), JSON.stringify(row))
 
