@@ -116,7 +116,7 @@ are opt-in and additive, never the source of truth.
    actions    │                              ▼  read
    (addEntry, toggleHabit, setHabitValue…)  views/ + components/
               │
-              └── optional, opt-in, additive:  supabase.ts · bujocloud.ts · fscloud.ts
+              └── optional, opt-in, additive:  bujocloud.ts · fscloud.ts
 ```
 
 `JournalData` (`src/lib/types.ts`) is the single source of truth. Everything
@@ -124,7 +124,7 @@ derived — streaks, correlations, PRs, heatmaps — is a **pure function in
 `src/lib/`** with its own unit test, not state.
 
 > ⚠️ There are several write paths, and silent divergence between them is the
-> risk this codebase watches hardest. Before touching `storage.ts`, `supabase.ts`,
+> risk this codebase watches hardest. Before touching `storage.ts`,
 > `bujocloud.ts`, `fscloud.ts` or the export paths, read `.claude/CLAUDE.md` —
 > that work has a dedicated agent for a reason.
 
@@ -168,7 +168,7 @@ bujo/
 │   ├── lib/             73   pure logic + types, unit-tested (+52 test files).
 │   │                         storage · types · date · stats · fitness ·
 │   │                         correlations · colors · deepLink · validate ·
-│   │                         supabase / bujocloud / fscloud
+│   │                         bujocloud / fscloud
 │   ├── domain/               cross-cutting vocabulary: activities, sessions
 │   ├── views/           28   one file per screen — Today, Plan, Gym, Trackers…
 │   │   └── today/            Today is big enough to be a directory

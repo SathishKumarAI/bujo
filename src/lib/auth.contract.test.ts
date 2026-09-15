@@ -13,9 +13,13 @@ import { describe, it, expect } from 'vitest'
  * So this asserts the *absence* of an auth surface, which is the only shape of
  * assertion that survives someone re-adding one in a fourth place.
  *
- * `lib/legacyAccount.ts` and `lib/supabase.ts` are the deliberate exceptions:
- * the one-time rescue for a journal stranded in the retired backend. They are
- * read-and-close only — see the header of `supabase.ts`.
+ * There are no exceptions any more. The one-time rescue for a journal
+ * stranded in the retired backend used to be one — `lib/supabase.ts` and
+ * `lib/legacyAccount.ts`, read-and-close — and both are gone: the Supabase
+ * project itself no longer resolves (NXDOMAIN, measured 2026-09-15), so the
+ * rescue answered "nothing to bring across" for everyone regardless of whether
+ * they had a journal there. A carve-out for a path that cannot succeed is a
+ * hole in this contract and nothing else.
  */
 const SOURCES = import.meta.glob('../**/*.{ts,tsx}', {
   query: '?raw',
@@ -24,14 +28,14 @@ const SOURCES = import.meta.glob('../**/*.{ts,tsx}', {
 }) as Record<string, string>
 
 /**
- * The rescue path, and this file.
+ * This file only — it names the things it forbids, so it matches itself.
  *
  * Matched on the basename: `import.meta.glob` keys are relative to *this*
- * file's directory, so `lib/supabase.ts` arrives as `./supabase.ts` and a
- * path-prefixed pattern silently matches nothing — which would have made every
- * assertion below vacuously pass instead of failing.
+ * file's directory, so a path-prefixed pattern silently matches nothing, which
+ * would make every assertion below vacuously pass instead of failing. That trap
+ * cost a real exception once; keep the basename form.
  */
-const ALLOWED = [/(^|\/)supabase\.ts$/, /(^|\/)legacyAccount\.ts$/, /auth\.contract\.test\.ts$/]
+const ALLOWED = [/auth\.contract\.test\.ts$/]
 
 const files = Object.entries(SOURCES).filter(
   ([p]) => !/\.test\.tsx?$/.test(p) || /auth\.contract/.test(p),
@@ -44,7 +48,7 @@ describe('the app has no accounts', () => {
     expect(scannable.length).toBeGreaterThan(50)
   })
 
-  it('imports no auth backend outside the one-time rescue path', () => {
+  it('imports no auth backend at all', () => {
     const offenders = scannable
       .filter(([, src]) => /from ['"].*lib\/supabase['"]|@supabase\/supabase-js/.test(src))
       .map(([p]) => p)

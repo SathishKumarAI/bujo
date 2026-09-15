@@ -1,12 +1,12 @@
 # Storage and sync
 
-Where a keystroke ends up, and which of the eight write paths can lose it.
+Where a keystroke ends up, and which of the seven write paths can lose it.
 
 bujo is local-first: the source of truth is the `JournalData` object in memory,
 and every remote is an *optional* mirror of it. That sentence is in
 `ARCHITECTURE.md` too, and on its own it is misleading — it suggests one store
 and some backups. There are two local stores with different quotas and different
-failure modes, and six remotes with four different trigger models between them.
+failure modes, and five remotes with four different trigger models between them.
 
 ## The whole picture
 
@@ -24,7 +24,6 @@ flowchart TB
   subgraph net["Optional remotes — all opt-in, none required"]
     folder[("A folder you picked<br/>File System Access")]
     blob[("Vercel Blob — /api/sync<br/>ciphertext, 4.5 MB body cap")]
-    supa[("Supabase — journals table<br/>account + RLS")]
     selfhost[("PostgREST — your server<br/>URL + bearer token")]
     gist[("GitHub gist — private")]
     drive[("Google Drive — appDataFolder")]
@@ -37,7 +36,6 @@ flowchart TB
 
   store -. "1500 ms" .-> folder
   store -. "4000 ms" .-> blob
-  store -. "4000 ms + realtime" .-> supa
   store -. "2500 ms + flush on close" .-> selfhost
   store -- "button only" --> gist
   store -- "button only" --> drive
@@ -47,7 +45,7 @@ flowchart TB
   classDef local fill:#1e1e2e,stroke:#89b4fa,color:#cdd6f4
   classDef remote fill:#181825,stroke:#a6adc8,color:#cdd6f4
   class ls,enc,idb local
-  class folder,blob,supa,selfhost,gist,drive remote
+  class folder,blob,selfhost,gist,drive remote
 ```
 
 `bujo:data` and `bujo:enc` are exclusive, not both: the persist effect writes one
@@ -61,7 +59,6 @@ or the other depending on whether a passcode is active.
 | IndexedDB | on image add | none | yes, the bytes | `lib/imageStore.ts` |
 | Picked folder | every state change | **1500 ms** | yes | `lib/fscloud.ts` |
 | Vercel Blob | every state change | **4000 ms** | **within 4.5 MB** | `lib/bujocloud.ts` |
-| Supabase | every state change | **4000 ms** | yes | `lib/supabase.ts` |
 | Self-host PostgREST | every state change | **2500 ms**, plus a keepalive flush on `pagehide` / `visibilitychange` | yes | `lib/serverSync.ts` |
 | GitHub gist | a button | — | yes | `lib/github.ts` |
 | Google Drive | a button | — | yes | `lib/gdrive.ts` |
@@ -145,17 +142,22 @@ defaults `ask` to `() => false`. That only applies where a caller passes nothing
 default silently clobbers unsynced work, and a stall is recoverable where a
 clobber is not.
 
-**A foreign owner is the one case that skips merging entirely.** `bujo:owner`
-records which account the local journal belongs to. If a *different* account
-signs in, merging would fold one person's journal into another's, so that path
-replaces outright (COD-135). Signing out never clears local data, which is why
-this check has to run on every load rather than only in the sign-in handler.
+**Historical — there are no accounts and no `bujo:owner` key in the source any
+more.** It recorded which account the local journal belonged to, so that a
+*different* account signing in replaced outright instead of folding one person's
+journal into another's (COD-135). Kept here because the hazard it guarded is
+real for any future multi-identity remote: merging is the right default exactly
+until the two sides are different people.
 
 ## The echo guard
 
-Supabase's realtime channel delivers your own write back to you. Without a
-guard, applying it re-renders, which triggers the push effect, which writes
-again — a loop with a network round-trip in it.
+**Supabase's realtime channel is gone; the guard it forced is not, and still
+matters.** Realtime delivered your own write straight back to you: applying it
+re-rendered, which triggered the push effect, which wrote again — a loop with a
+network round-trip in it. The remaining remotes pull rather than push, so they
+reach the same place more slowly (a poll returns the row you just wrote), and
+the same comparison stops it. The sequence below is the original Supabase case,
+kept because it is the clearest drawing of the loop.
 
 ```mermaid
 sequenceDiagram
