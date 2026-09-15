@@ -18,6 +18,8 @@ import { Section } from '../components/pickleball/Section'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
+import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt'
+import { PICKLEBALL_KEY } from '../lib/recordKeys'
 
 const tip = rechartsTooltip
 const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
@@ -648,6 +650,10 @@ function PickleRow({ p, onSave, onDelete }: {
 }) {
   const [editing, setEditing] = useState(false)
   const [d, setD] = useState({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' })
+  // Above the `editing` early return: a row can be captured and then opened for
+  // an edit, and a hook called only on one of those paths is a different hook
+  // order on each render.
+  const justNew = useJustCaptured().has(PICKLEBALL_KEY(p.id))
   function save() {
     onSave({
       format: d.format,
@@ -676,7 +682,7 @@ function PickleRow({ p, onSave, onDelete }: {
     )
   }
   return (
-    <li className="group flex items-center justify-between gap-2 py-2 text-body">
+    <li {...justCapturedProps(justNew)} className={`group flex items-center justify-between gap-2 py-2 text-body ${justNew ? 'just-captured' : ''}`}>
       <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>

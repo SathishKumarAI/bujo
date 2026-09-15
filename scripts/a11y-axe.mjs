@@ -531,23 +531,35 @@ async function scanReceipt() {
     await page.getByRole('button', { name: 'Quick add' }).click()
     await page.waitForTimeout(350)
     const dialog = page.getByRole('dialog')
-    await dialog.getByLabel('Smart capture').fill('bench 80x5')
+    await dialog.getByLabel('Smart capture').fill('called mum about the weekend')
     await dialog.getByRole('button', { name: 'Add', exact: true }).click()
     await page.waitForTimeout(700)
 
     // Assert, do not assume: a receipt that stopped rendering would otherwise
     // score a clean zero here forever.
-    const there = await page.evaluate(() => !!document.querySelector('[role="status"]'))
-    if (!there) {
+    //
+    // A NOTE rather than a lift, deliberately. It lands on Today, where the row
+    // it wrote is marked `data-just-captured` — so one capture puts both halves
+    // of the feature on screen and both get scanned. A lift lands on Strength,
+    // which has no per-workout row to ring.
+    const there = await page.evaluate(() => ({
+      receipt: !!document.querySelector('[role="status"]'),
+      row: !!document.querySelector('#main [data-just-captured]'),
+    }))
+    if (!there.receipt || !there.row) {
       console.error(`
-[receipt · ${t}] captured "bench 80x5" and no receipt appeared.`)
-      console.error('  Either the capture stopped routing through CaptureReceipt, or the bar stopped rendering.')
+[receipt · ${t}] captured a note; receipt ${there.receipt ? 'appeared' : 'MISSING'}, ringed row ${there.row ? 'appeared' : 'MISSING'}.`)
+      console.error('  Either the capture stopped routing through CaptureReceipt, or the bar or the ring stopped rendering.')
       await browser.close()
       process.exit(1)
     }
 
+    // Both halves. The ring puts a brand wash behind text that was solved
+    // against the card — the exact shape of every contrast bug this repo has
+    // had — and it exists for six seconds on a page no view-walking gate opens.
     const results = await new AxeBuilder({ page })
       .include('[role="status"]')
+      .include('#main [data-just-captured]')
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze()
     const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')

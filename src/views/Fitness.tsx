@@ -19,6 +19,8 @@ import { nextSplit, splitMeta, weeklyActiveMinutes } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
 import type { Workout } from '../lib/types'
 import type { ViewId } from '../components/shell/viewChrome'
+import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt'
+import { WORKOUT_KEY } from '../lib/recordKeys'
 
 /**
  * FITNESS · the reference implementation of the page contract.
@@ -52,6 +54,7 @@ import type { ViewId } from '../components/shell/viewChrome'
  */
 export function Fitness() {
   const { data, addWorkout, removeWorkout } = useJournal()
+  const justCaptured = useJustCaptured()
   // Arriving with `?activity=` (including via a retired /pullups-style link)
   // preselects that activity and takes the mode from it — never the other way
   // round, because the activity is the fact and the mode is derived from it.
@@ -196,7 +199,11 @@ export function Fitness() {
             ) : (
               <ul>
                 {shown.map((w) => (
-                  <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
+                  <li
+                    key={w.id}
+                    {...justCapturedProps(justCaptured.has(WORKOUT_KEY(w.id)))}
+                    className={`group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0 ${justCaptured.has(WORKOUT_KEY(w.id)) ? 'just-captured' : ''}`}
+                  >
                     <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
                       <span className="truncate font-medium text-fg-1">{labelOf(w.activity)}</span>
                       <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
