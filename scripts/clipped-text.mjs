@@ -198,13 +198,96 @@ function findCrushedScrollports() {
 
 
 /**
- * Both widths. This gate only ever ran at 1440 — the width at which text is
- * least likely to be clipped — and never at the one where it is most likely.
- * A pass at desktop says nothing about a phone: the columns are a third as
- * wide and the strings are identical.
+ * Two things in the header drawn on top of each other · the shell's own overflow.
+ *
+ * Separate from `findUnreachable`, and it has to be, because the failure it
+ * catches never leaves the window. When the centring grid gave the tool
+ * cluster a column narrower than its contents, the cluster did not clip and did
+ * not scroll — a flex row justified to the end overflows **backwards**, so the
+ * streak strip was drawn to the LEFT of its own box, straight across the
+ * section nav. Measured before the fix: 47px of overlap at 1180, 87px at 1100,
+ * **125px at 1024**, on every view. `document.body.scrollWidth` was exactly the
+ * window the whole time, every box was inside the viewport, and both rendering
+ * gates were green.
+ *
+ * Text over text is never a design. That makes this the rare geometric check
+ * with no judgement in it and no noise to tune away — unlike a general spill
+ * check, which reported 52 cosmetic hits the first time it was pointed at this
+ * app.
+ *
+ * Two traps this has to dodge, both of which produce confident phantoms:
+ *
+ * 1 · **A closed `<details>` still gives its children a box.** Chrome reports a
+ *     real rect for content inside a shut fold, so a naive pass "found" 94
+ *     overlaps across Coaching that no one can see. `checkVisibility` knows.
+ * 2 · **An inline box that wraps has a bounding rect covering both lines**, so
+ *     two neighbours on one line read as overlapping. `getClientRects()` gives
+ *     the per-line boxes, which is what is actually painted.
+ */
+function findHeaderCollisions() {
+  const header = document.querySelector('header')
+  if (!header) return []
+
+  const shown = (el) =>
+    el.checkVisibility?.({ checkVisibilityCSS: true, contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }) ?? true
+
+  // A tab row is a scroller by design; what sits past its edge is clipped by it
+  // rather than drawn over the neighbour. Clip every box to the scrollports
+  // above it before comparing, or the tabs scrolled out of view "collide" with
+  // the date label on the far side of the bar.
+  const clipToAncestors = (el, box) => {
+    for (let a = el.parentElement; a; a = a.parentElement) {
+      const s = getComputedStyle(a)
+      const r = a.getBoundingClientRect()
+      if (/auto|scroll|hidden|clip/.test(s.overflowX)) { box.l = Math.max(box.l, r.left); box.r = Math.min(box.r, r.right) }
+      if (/auto|scroll|hidden|clip/.test(s.overflowY)) { box.t = Math.max(box.t, r.top); box.b = Math.min(box.b, r.bottom) }
+    }
+    box.l = Math.max(box.l, 0); box.t = Math.max(box.t, 0)
+    box.r = Math.min(box.r, window.innerWidth); box.b = Math.min(box.b, window.innerHeight)
+    return box
+  }
+
+  const marks = []
+  for (const el of header.querySelectorAll('*')) {
+    if (el.children.length > 0) continue
+    const text = (el.getAttribute('aria-label') ?? el.textContent ?? '').trim()
+    if (!text || !shown(el)) continue
+    for (const line of el.getClientRects()) {
+      const box = clipToAncestors(el, { l: line.left, t: line.top, r: line.right, b: line.bottom })
+      if (box.r - box.l > 1 && box.b - box.t > 1) marks.push({ el, text: text.slice(0, 28), box })
+    }
+  }
+
+  const out = []
+  for (let i = 0; i < marks.length; i++) {
+    for (let j = i + 1; j < marks.length; j++) {
+      const a = marks[i], b = marks[j]
+      if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el)) continue
+      const x = Math.min(a.box.r, b.box.r) - Math.max(a.box.l, b.box.l)
+      const y = Math.min(a.box.b, b.box.b) - Math.max(a.box.t, b.box.t)
+      if (x > 4 && y > 4) out.push({ a: a.text, b: b.text, x: Math.round(x), y: Math.round(y) })
+    }
+  }
+  return out
+}
+
+/**
+ * Three widths, and the middle one is the lesson.
+ *
+ * This gate ran at 1440 — the width at which text is least likely to be
+ * clipped — then learned to run at 390 as well. Both passed green while the
+ * top bar's tool cluster hung **56px outside its own column on every view**
+ * between about 768 and 1100: at 1440 there was room for it, and at 390 the
+ * header is a different layout entirely (flex, not the centring grid). The bug
+ * lived in the gap between the two widths anyone had thought to measure.
+ *
+ * 1024 is not arbitrary — it is where a three-column header with a five-item
+ * nav runs out of room, and it is a laptop. **A responsive layout fails
+ * between breakpoints, not at them.**
  */
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
+  { name: 'laptop', width: 1024, height: 800 },
   { name: 'phone', width: 390, height: 844 },
 ]
 
@@ -260,6 +343,13 @@ for (const vp of VIEWPORTS) {
       console.error(`
 ${vp.name} · ${view} — ${overflowing.length} ${overflowing.length === 1 ? 'field' : 'fields'} hiding what was typed in`)
       for (const c of overflowing) console.error(`  "${c.text}"  ${c.shown}px shown of ${c.needed}px (${c.chars} chars)`)
+    }
+    const collisions = await page.evaluate(findHeaderCollisions)
+    if (collisions.length) {
+      failures += collisions.length
+      console.error(`
+${vp.name} · ${view} — ${collisions.length} ${collisions.length === 1 ? 'pair' : 'pairs'} of header text drawn on top of each other`)
+      for (const c of collisions) console.error(`  "${c.a}"  over  "${c.b}"  — ${c.x}x${c.y}px`)
     }
     const crushed = await page.evaluate(findCrushedScrollports)
     if (crushed.length) {
