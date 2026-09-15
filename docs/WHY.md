@@ -1,4 +1,4 @@
-# Why bujo — research, direction & critical thinking
+# Why Cadence — research, direction & critical thinking
 
 A candid product memo: the landscape, the taste-driven calls that shape this
 app, an honest case for why it's real (and where it isn't yet), and the open
@@ -8,10 +8,10 @@ options — including how the tracker could be redesigned.
 
 ## 1. The landscape (research)
 
-The personal-tracking space splits into camps, each with a weakness bujo can
+The personal-tracking space splits into camps, each with a weakness Cadence can
 exploit:
 
-| Camp | Examples | Strength | Weakness bujo exploits |
+| Camp | Examples | Strength | Weakness Cadence exploits |
 |---|---|---|---|
 | **Mood/wellbeing** | Daylio, Bearable, Reflectly, Stoic | Fast mood logging, charts | Single-purpose; your fitness, reading, focus live elsewhere |
 | **Habit streaks** | Streaks, Habitify, Finch, Loop | Beautiful streak loops | Just checkboxes — no journaling, no reflection, no *why* |
@@ -21,9 +21,9 @@ exploit:
 
 **The gap:** nobody owns *"one calm place for the whole self — journal + habits +
 fitness + reading + reflection — that's private by default and reads like a
-paper notebook, not a SaaS dashboard."* That's the bujo wedge.
+paper notebook, not a SaaS dashboard."* That's the Cadence wedge.
 
-## 2. The taste-direction calls (the opinions that make it bujo)
+## 2. The taste-direction calls (the opinions that make it Cadence)
 
 These are deliberate, defensible choices observed across the build — the app's
 point of view, not accidents:
@@ -110,7 +110,7 @@ The habit tracker is the heart, and it's the most worth rethinking:
   a replacement. (Locked architecture: see `docs/DECISIONS.md` before big moves.)
 
 **Recommendation:** pursue **#1 (adaptive coach)** + the **routine-timeline**
-tracker lens next — together they convert bujo from "a place to record" into "a
+tracker lens next — together they convert Cadence from "a place to record" into "a
 place that helps," which is the actual reason to choose it over Daylio or Notion.
 
 ---

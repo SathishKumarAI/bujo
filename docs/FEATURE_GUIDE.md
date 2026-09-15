@@ -1,8 +1,8 @@
-# bujo — Complete Feature Guide
+# Cadence — Complete Feature Guide
 
 A start-to-end manual of every screen, tab, category, and sub-feature, with a
 detailed explanation of each so you know exactly what it does and how to use it.
-bujo is a **local-first** bullet journal + health tracker: everything lives in
+Cadence is a **local-first** bullet journal + health tracker: everything lives in
 your browser, works offline, and never touches a server unless you opt in.
 
 > Legend used below: **What** (what it is) · **Use** (how to drive it) ·
@@ -61,7 +61,7 @@ can tap to insert. Whatever you add lands on the currently-selected day.
 ## 2. Journal group
 
 ### 2.1 Rapid-logging grammar (used everywhere you capture)
-bujo uses Ryder Carroll's one-pen bullet system. Prefix a line to choose its
+Cadence uses Ryder Carroll's one-pen bullet system. Prefix a line to choose its
 kind: `t` task, `e` event, `n` note; stack signifiers `*`/`!` important and `^`
 memory; add `#tags` inline. Example: `* t book the campsite #travel` creates an
 important task tagged *travel*. Tasks carry a status you cycle by clicking the

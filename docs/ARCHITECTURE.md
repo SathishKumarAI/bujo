@@ -1,6 +1,6 @@
 # Architecture
 
-`bujo` is a single-page React app that is **local-first**: the source of truth
+`Cadence` is a single-page React app that is **local-first**: the source of truth
 is one `JournalData` object on the device, and the app is fully usable with no
 network and no account.
 

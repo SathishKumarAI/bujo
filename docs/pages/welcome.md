@@ -12,13 +12,13 @@ other page in the product.
 
 ## What is on it (from the a11y tree, fresh profile)
 
-> bujo ✦
+> Cadence ✦
 > A private bullet journal. Sign in to sync across your devices, or keep
 > everything on this one.
 >
 > **Sync with an account** — "Sign in with email" · *Signing in creates your
 > journal and keeps it in sync across devices.*
-> **Use my own cloud** — Point bujo at a folder inside your Drive / Dropbox /
+> **Use my own cloud** — Point Cadence at a folder inside your Drive / Dropbox /
 > OneDrive sync folder … *No account, no sign-in · Works with any cloud you
 > already use · Your files, your control* · **Choose folder**
 > **This device only** — Keep everything in this browser … *Fastest, fully

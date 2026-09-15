@@ -1,8 +1,10 @@
 # STATUS
 
-**Stopped:** 2026-09-15, on `main` at `47773f6`. Five PRs merged this session:
-**#220** capture receipt, **#221** header overflow fix, **#222** the capture
-ring, **#223** Trackers wired to it, **#224** the rename.
+**Stopped:** 2026-09-15, on `main`. Seven PRs merged this session: **#219**
+centred nav, **#220** capture receipt, **#221** header overflow fix (a
+regression from #219), **#222** the capture ring, **#223** Trackers wired to
+it, **#224** the rename, **#225** this file, **#226** the full name and the
+docs.
 
 All gates green at the end: `npm run verify` — **1047 tests across 83 files**,
 tsc, eslint (one pre-existing `react-hooks/exhaustive-deps` warning in
@@ -12,11 +14,25 @@ tsc, eslint (one pre-existing `react-hooks/exhaustive-deps` warning in
 
 ## The product has names now
 
-**The app is Cadence. The capture assistant is Relay.** User-visible copy only
-— `README.md` and `PRODUCT.md` carry the reasoning. The repo, the package, the
-`bujo:` storage keys and `bujo.json` keep the old name **on purpose**: a
-renamed storage key orphans every journal that already exists, and `bujo.json`
-is the contract with folders already syncing.
+**The app is Cadence Journal. The capture assistant is Relay.**
+
+- **Cadence Journal** in full — `<title>`, the PWA manifest, README, PRODUCT.md.
+- **Cadence** alone in the header, because a header is a place you are already
+  standing.
+- **Relay** on the microphone and its dialog: "Ask Relay".
+
+User-visible copy only. The repo, the package, the `bujo:` storage keys and
+`bujo.json` keep the old name **on purpose**: a renamed storage key does not
+migrate a journal, it orphans one, and `bujo.json` is the contract with folders
+already syncing.
+
+**Docs written before 2026-09-15 say `bujo` and are left that way** — a session
+log, a dated hosting note or an archived prompt is a *record*, and editing it to
+match today's name falsifies it. Only the living docs were renamed: `README`,
+`PRODUCT.md`, `docs/WHY.md`, `docs/FEATURE_GUIDE.md`,
+`docs/features/daily-use-guide.md`, `docs/pages/welcome.md`,
+`docs/ARCHITECTURE.md`, `TASKS.md`. The "BuJo" in citations of Ryder Carroll's
+paper method is a different word and was not touched.
 
 ## What the capture loop does now
 
@@ -31,7 +47,11 @@ view.
 - `lib/recordKeys.ts` — the fingerprint diff that decides what to ring.
 - `components/CaptureReceipt.tsx` — the bar, the navigation and the ring set.
 
-## Next action
+## Next session — start here
+
+Read `docs/WORKLOG.md`'s top entry for what happened and why; this file is only
+the re-entry state. Then pick from the list below — it is ordered, and item 1
+is the one a user would notice.
 
 The capture loop's remaining gaps, in the order they are worth doing:
 
@@ -86,6 +106,18 @@ The capture loop's remaining gaps, in the order they are worth doing:
   navigates.
 - **Demo data is persisted, not regenerated** — re-seed via Settings → Data →
   Load demo data after editing `src/lib/demo.ts`.
+
+## Before you start
+
+- `npm run verify` first, so a red gate is attributable to you rather than
+  inherited. It takes about two minutes; the browser gates take ten.
+- The dev-server trap still applies: **check the port's command line before
+  believing a screenshot.** `learn/dsa_problems` holds 5173 on this machine, and
+  every gate here defaults to 4173 (`vite preview`).
+- The preview server serves `dist/`, so **rebuild before running a browser
+  gate**. A red `clipped` this session was a stale `dist/` — `verify`'s build
+  never ran because eslint failed first, and the gate faithfully reported the
+  bug from the previous commit.
 
 ## Environment
 
