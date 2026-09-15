@@ -44,6 +44,11 @@ import { CategoryConsistencyCard } from '../components/trackers/CategoryConsiste
 import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useStickyState } from '../lib/useStickyState'
+import { useJustCaptured } from '../components/CaptureReceipt'
+import { METRIC_KEY } from '../lib/recordKeys'
+
+/** The three metrics this page plots — the only ones it can point at. */
+const TREND_FIELDS = ['mood', 'stress', 'sleep'] as const
 
 const TRACKER_VIEW_MODES = ['day', 'week', 'month'] as const
 
@@ -140,6 +145,15 @@ export function Trackers() {
     addHabit({ name, category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
     setNewHabit('')
   }
+
+  // Which day in view a capture just wrote a wellbeing metric to, and WHICH of
+  // the three lines it wrote. Read off the days actually plotted rather than
+  // assuming "today": the capture carries the date cursor, and the page can be
+  // looking at a different month.
+  const justCaptured = useJustCaptured()
+  const justMetric = allDays
+    .map((d) => ({ day: Number(d.slice(8)), fields: TREND_FIELDS.filter((f) => justCaptured.has(METRIC_KEY(d, f))) }))
+    .find((x) => x.fields.length > 0)
 
   const sum = trackerSummary(data, (id, t) => habitStreak(data, id, t), today)
   const hasHabits = visibleHabits.length > 0
@@ -344,7 +358,7 @@ export function Trackers() {
           the single most useful thing on that page, for months. Zone 3 is where
           recorded things belong, so they are simply here. */}
       <div className="grid items-start gap-5 lg:grid-cols-3">
-        <MetricsTrendCard chartData={chartData} ym={ym} />
+        <MetricsTrendCard chartData={chartData} ym={ym} just={justMetric ?? null} />
         <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
       </div>
 
