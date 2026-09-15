@@ -43,6 +43,22 @@ vercel alias set <new-deploy>.vercel.app bujo-journal.vercel.app
 `scripts/ship.sh --deploy-only` does the build, the deploy and the re-alias in
 one step, which is the whole reason it exists.
 
+**`vercel build` rewrites `node_modules`, and the browser gates do not survive
+it.** `playwright` and `@axe-core/playwright` are deliberately NOT in
+`package.json` — `.github/workflows/a11y.yml` installs them with `--no-save` so
+they never reach a user's bundle — which means a local install of them is
+untracked, and the install `vercel build` runs removes it. After a deploy,
+`npm run a11y` and `npm run clipped` fail on `Cannot find package 'playwright'`,
+which reads like a broken gate rather than a missing package:
+
+```bash
+npm i -D --no-save playwright @axe-core/playwright
+npx playwright install chromium          # the browser binary too, if it was pruned
+```
+
+Do this BEFORE concluding anything about a gate that started failing right after
+a deploy.
+
 ## Confirm what you deployed · do not skip this
 
 A deploy can succeed while the alias still points at the previous build, so
