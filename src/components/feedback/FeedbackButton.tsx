@@ -111,7 +111,7 @@ export function FeedbackButton() {
               className={field}
               rows={4}
               maxLength={5000}
-              placeholder="What happened, or what would make bujo better?"
+              placeholder="What happened, or what would make Cadence better?"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />

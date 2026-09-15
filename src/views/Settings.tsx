@@ -120,7 +120,7 @@ export function Settings() {
     // Inline IndexedDB-stored photos so the backup is self-contained, then strip
     // device-/account-specific sync secrets so the file is safe to share/move.
     const full = await inlineImages(data)
-    download(`bujo-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
+    download(`cadence-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
     setSettings({ lastBackup: todayISO() })
   }
 
@@ -128,7 +128,7 @@ export function Settings() {
     // Privacy-safe share copy (BUJO-308): inline photos, strip sync secrets, then
     // redact the sensitive domains (Recovery, Cycle) and free-text entry bodies.
     const full = await inlineImages(data)
-    download(`bujo-shared-${todayISO()}.json`, exportJSON(redactSensitive(stripSyncSecrets(full))))
+    download(`cadence-shared-${todayISO()}.json`, exportJSON(redactSensitive(stripSyncSecrets(full))))
   }
 
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -420,8 +420,8 @@ export function Settings() {
         })()}
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={doExport} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export JSON</Button>
-          <Button variant="secondary" onClick={() => download(`bujo-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><Icon as={FileText} size="sm" /> Export Markdown</Button>
-          <Button variant="secondary" onClick={() => download(`bujo-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Export calendar</Button>
+          <Button variant="secondary" onClick={() => download(`cadence-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')} className="inline-flex items-center gap-1.5"><Icon as={FileText} size="sm" /> Export Markdown</Button>
+          <Button variant="secondary" onClick={() => download(`cadence-calendar-${todayISO()}.ics`, journalToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Export calendar</Button>
           <Button variant="secondary" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Import JSON</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
         </div>
@@ -435,22 +435,22 @@ export function Settings() {
         <div className="mt-3 space-y-3 border-t border-line pt-3">
           <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => download(`bujo-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
-              <Button variant="secondary" onClick={() => download(`bujo-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
-              <Button variant="secondary" onClick={() => download(`bujo-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
-              <Button variant="secondary" onClick={() => download(`bujo-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
-              <Button variant="secondary" onClick={() => download(`bujo-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
-              {(data.devSessions?.length ?? 0) > 0 && <Button variant="secondary" onClick={() => download(`bujo-focus-${todayISO()}.csv`, devSessionsCsv(data), 'text/csv')}>Focus sessions</Button>}
-              <Button variant="secondary" onClick={() => download(`bujo-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
-              <Button variant="secondary" onClick={() => download(`bujo-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
-              {s.nofapEnabled && <Button variant="secondary" onClick={() => download(`bujo-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
+              <Button variant="secondary" onClick={() => download(`cadence-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
+              <Button variant="secondary" onClick={() => download(`cadence-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
+              <Button variant="secondary" onClick={() => download(`cadence-habit-log-${todayISO()}.csv`, habitLogCsv(data), 'text/csv')}>Habit log</Button>
+              <Button variant="secondary" onClick={() => download(`cadence-metrics-${todayISO()}.csv`, metricsCsv(data), 'text/csv')}>Metrics</Button>
+              <Button variant="secondary" onClick={() => download(`cadence-workouts-${todayISO()}.csv`, workoutsCsv(data), 'text/csv')}>Workouts</Button>
+              {(data.devSessions?.length ?? 0) > 0 && <Button variant="secondary" onClick={() => download(`cadence-focus-${todayISO()}.csv`, devSessionsCsv(data), 'text/csv')}>Focus sessions</Button>}
+              <Button variant="secondary" onClick={() => download(`cadence-pickleball-${todayISO()}.csv`, pickleballCsv(data), 'text/csv')}>Pickleball</Button>
+              <Button variant="secondary" onClick={() => download(`cadence-records-${todayISO()}.csv`, personalRecordsCsv(data), 'text/csv')}>PR leaderboard</Button>
+              {s.nofapEnabled && <Button variant="secondary" onClick={() => download(`cadence-recovery-${todayISO()}.csv`, recoveryCsv(data), 'text/csv')}>Recovery</Button>}
             </div>
             {data.collections.length > 0 && (
               <div className="mt-2">
                 <p className="mb-1 text-label text-fg-2">Export one collection's entries as CSV:</p>
                 <div className="flex flex-wrap gap-2">
                   {data.collections.map((c) => (
-                    <Button key={c.id} variant="secondary" onClick={() => download(`bujo-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
+                    <Button key={c.id} variant="secondary" onClick={() => download(`cadence-collection-${c.name.replace(/[^\w-]+/g, '-').toLowerCase()}-${todayISO()}.csv`, collectionCsv(data, c.id), 'text/csv')}>
                       {c.icon} {c.name}
                     </Button>
                   ))}
@@ -465,22 +465,22 @@ export function Settings() {
           <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
             <div className="space-y-2">
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Habit reminders (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`cadence-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Habit reminders (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Adds each active habit to your calendar as a recurring reminder at {s.reminderTime || '09:00'}.</p>
               </div>
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Open tasks (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`cadence-tasks-${todayISO()}.ics`, tasksToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Open tasks (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Puts your open, dated to-dos on the calendar as all-day deadlines.</p>
               </div>
               <div>
-                <Button variant="secondary" onClick={() => download(`bujo-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Completions feed (.ics)</Button>
+                <Button variant="secondary" onClick={() => download(`cadence-completions-${todayISO()}.ics`, completionsToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Completions feed (.ics)</Button>
                 <p className="mt-1 text-label text-fg-2">Every completed habit and logged workout as an all-day “✓” event — see your wins in any external calendar.</p>
               </div>
             </div>
           </Disclosure>
           <Disclosure title="Backup integrity" subtitle="checksum & verify a file">
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`bujo-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export checksummed backup</Button>
+              <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`cadence-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export checksummed backup</Button>
               <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Verify a backup file</Button>
               <input ref={verifyRef} type="file" accept=".txt,.json,application/json,text/plain" onChange={onVerifyBackup} className="hidden" />
             </div>

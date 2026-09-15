@@ -17,7 +17,7 @@ import { VIEW_CHROME, type ViewId } from './viewChrome'
 function Brand() {
   return (
     <div className="flex shrink-0 items-baseline gap-2">
-      <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>
+      <span className="font-display text-title font-medium tracking-tight text-foreground">Cadence</span>
       {/* A 6px accent square, not the ✦ glyph it replaces. The redesign spends
           its accent on state and one mark of identity; a star reads as
           decoration, and decoration is what the flat treatment removes. */}
@@ -142,7 +142,7 @@ export function TopBar({
                 than one of them being a page. Icon-only at every width: the
                 cluster is already five controls at 390px, and "Talk" as a word
                 buys nothing the microphone does not say. */}
-            <Button variant="secondary" size="icon-sm" onClick={onTalk} aria-label="Talk to your journal" title="Talk to your journal">
+            <Button variant="secondary" size="icon-sm" onClick={onTalk} aria-label="Ask Relay" title="Ask Relay — say it, and it files it">
               <Icon as={Microphone} size="sm" />
             </Button>
 

@@ -46,7 +46,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
       <div ref={trap} className="relative w-full max-w-md rounded-card bg-ink-2 p-6 shadow-2xl">
         <button onClick={done} aria-label="Skip tour" className="absolute right-4 top-4 text-fg-2 hover:text-fg-1"><AppIcon as={X} size="md" /></button>
         <div className="mb-3 flex items-baseline gap-2">
-          <span className="font-display text-title font-medium tracking-tight text-foreground">bujo</span>
+          <span className="font-display text-title font-medium tracking-tight text-foreground">Cadence</span>
           <span className="text-primary">✦</span>
         </div>
         <div className="grid h-11 w-11 place-items-center rounded-pill bg-secondary"><AppIcon as={Icon} size="lg" className="text-primary" /></div>

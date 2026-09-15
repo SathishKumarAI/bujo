@@ -19,7 +19,7 @@
 //
 // The port was only half of it. The pass condition was "`main` or `#root`
 // contains more than five characters", which any web page in the world
-// satisfies — so the gate could not tell bujo from a stranger. See the boot
+// satisfies — so the gate could not tell this app from a stranger. See the boot
 // assertion below: identity is checked before a single view is scored.
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
@@ -126,7 +126,7 @@ try { await page.locator('button', { hasText: 'This device only' }).first().clic
 await page.waitForTimeout(1500)
 
 /**
- * Assert this is bujo before scoring anything.
+ * Assert this is Cadence before scoring anything.
  *
  * Without it the gate cannot tell which application it is looking at, and it
  * has already reported a clean sweep of a different project's pages (see the
@@ -143,9 +143,9 @@ const identity = await page.evaluate(() => ({
   title: document.title,
   main: !!document.querySelector('#main'),
 }))
-if (!identity.title.toLowerCase().startsWith('bujo') || !identity.main) {
-  console.error(`\n${BASE} is not bujo.`)
-  console.error(`  document.title = ${JSON.stringify(identity.title)} (expected to start with "bujo")`)
+if (!identity.title.toLowerCase().startsWith('cadence') || !identity.main) {
+  console.error(`\n${BASE} is not Cadence.`)
+  console.error(`  document.title = ${JSON.stringify(identity.title)} (expected to start with "Cadence")`)
   console.error(`  #main present   = ${identity.main}`)
   console.error('\nSomething else is on that port. Start `vite preview` (4173) or set BUJO_URL.')
   await browser.close()
