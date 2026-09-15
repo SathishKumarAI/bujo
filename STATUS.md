@@ -1,62 +1,95 @@
 # STATUS
 
-**Stopped:** 2026-09-13, on `refactor/centre-the-nav-bars` (off `main`). One
-commit. `npm run verify` green — **1030 tests across 81 files**, tsc, eslint
-(one pre-existing `react-hooks/exhaustive-deps` warning in `App.tsx`, zero
-errors), build — plus `clipped` (0 across 24 views at 1440 and 390), `a11y`
-(0 serious/critical across 5 themes x 24 views), `smoke` (25/25), `design`
-(305 files) and `contrast`.
+**Stopped:** 2026-09-15, on `main` at `47773f6`. Five PRs merged this session:
+**#220** capture receipt, **#221** header overflow fix, **#222** the capture
+ring, **#223** Trackers wired to it, **#224** the rename.
 
-## Where the redesign is
+All gates green at the end: `npm run verify` — **1047 tests across 83 files**,
+tsc, eslint (one pre-existing `react-hooks/exhaustive-deps` warning in
+`App.tsx`, zero errors), build — plus `a11y` (0 serious/critical), `clipped`
+(clean at 1440, **1024** and 390), `smoke` (25/25), `design` (308 files),
+`contrast` (5 themes).
 
-`DESIGN.md` carries the phase table and the four rules — **read it before
-touching any UI here.** Phases 1 (#216) and 2 (#217) are merged, plus the
-Mindset content pass (#218). **Phase 3 — Today · Plan · Body · Mind ·
-Insights — is next.**
+## The product has names now
 
-## What this branch did
+**The app is Cadence. The capture assistant is Relay.** User-visible copy only
+— `README.md` and `PRODUCT.md` carry the reasoning. The repo, the package, the
+`bujo:` storage keys and `bujo.json` keep the old name **on purpose**: a
+renamed storage key orphans every journal that already exists, and `bujo.json`
+is the contract with folders already syncing.
 
-Both header rows were left-aligned under a tool cluster pinned right, so at
-1440px the section names started ~120px in and the actions ended at 1424 —
-"where am I" and "what can I do" a full screen apart. Both rows are now
-`1fr auto 1fr` from `md` up: section nav mid **721**, tab row mid **720**,
-page title mid **720**, window mid **720**.
+## What the capture loop does now
+
+Say or type a sentence → Relay works out which page owns the record, writes it,
+**moves the app to that page**, leaves a receipt naming what was written with
+Undo, and **rings the row it wrote** for six seconds after scrolling it into
+view.
+
+- `lib/captureLanding.ts` — kind → view, exhaustive over `RecordKind` with a
+  `never` at the end, so a new kind fails the typecheck rather than landing on
+  Today.
+- `lib/recordKeys.ts` — the fingerprint diff that decides what to ring.
+- `components/CaptureReceipt.tsx` — the bar, the navigation and the ring set.
 
 ## Next action
 
-Open the PR against `main`, then start **phase 3**.
+The capture loop's remaining gaps, in the order they are worth doing:
+
+1. **Gym cannot ring anything** — it is a session builder, charts and PRs, with
+   no per-workout row. A captured lift lands there with the receipt naming it
+   and nothing to point at. Either give Gym a session list or accept it.
+2. **The three alternative Trackers layouts** (`GridCardsLayout`,
+   `ActivityLayout`, `RadialTracker`) draw their own habit cells and are not
+   wired.
+3. **Undo does not navigate back** — it removes the record and clears the bar,
+   leaving you on the page you were taken to.
+4. The command palette does not route through the receipt.
 
 ## Decisions that will surprise you later
 
-- **`justify-center` on a scrolling tab row is a navigation bug, not a style
-  choice.** It distributes *negative* free space too, so an overflowing row is
-  pushed off both edges and `scrollLeft` cannot go below zero — the leading
-  tabs become unreachable by scrolling, by keyboard, by anything. Body's eleven
-  tabs at 1440 put Fitness at a negative x and `npm run a11y` died on "no tab
-  with that name inside Body". The row is centred by **auto margins on the
-  first and last tab**, which collapse to 0 the moment free space goes
-  negative. Do not "simplify" them back to `justify-center`.
-- **The centring grid is `md`-and-up on purpose.** `SectionNav` is
-  `hidden md:flex`, so on a phone there is no middle column: the grid degrades
-  to two equal `1fr` halves, which caps the tool cluster at half the bar with
-  no content floor (`minmax(0,1fr)`) and indents the tab row 24px past the page
-  gutter. Below `md` both rows stay flex, `-ml-3` included.
-- **The `sr-only` heading in row 2 is absolutely positioned**, so it is not a
-  grid item and does not consume the middle column. If it ever stops being
-  `sr-only`, the tab row moves.
-
-## Still open, unchanged by this branch
-
-- **Mindset (3.29 screens, 0 folds) and Focus (3.08 screens, 0 folds)** are
-  flat stacks. Use the `page-contract` skill, not folds by reflex.
-- **COD-137** sync-effect consolidation — still the only eslint warning.
-- **Two components named `Section`** — `components/pickleball/Section` is a
-  near-duplicate of `CollapsibleSection` with no `stickyKey`. Do not merge them
-  by name alone.
-- **`npm run shots` captures the onboarding modal over every view.** The script
-  clicks past the storage gate but never dismisses the first-run tour; set
-  `bujo:onboarded` to `'1'` first. Filed, not fixed.
-- **Demo data is persisted, not regenerated** — re-seed via Settings -> Data ->
+- **`justify-content: center` on a scrolling row is a navigation bug.** It
+  distributes *negative* free space, so an overflowing row is pushed off BOTH
+  edges and `scrollLeft` cannot go below zero — the leading tabs become
+  unreachable by scrolling, by keyboard, by anything. The header tab row is
+  centred by **auto margins on the first and last tab**, which collapse to 0 the
+  moment free space goes negative. Do not "simplify" them back.
+- **`minmax(0,1fr)` has no content floor, and `1fr` does.** The centring grid
+  shipped with `minmax(0,1fr)` and gave the tool cluster a column narrower than
+  its contents between ~768 and ~1180px. A flex row justified to the end
+  overflows *backwards*, so the streak strip was drawn across the section nav —
+  125px of overlap at 1024, on every view, with `body.scrollWidth` equal to the
+  window the whole time. Both rendering gates were green because `clipped` ran
+  at 1440 and 390 only. **A responsive layout fails between breakpoints, not at
+  them.**
+- **Three separate things produce phantom overlaps** and all three cost a detour
+  before anything was fixed: content inside a **closed `<details>`** still has a
+  rect (94 fake hits on Coaching), elements **scrolled out of a scrollport**
+  still intersect in coordinate space, and an **inline box that wraps** has a
+  bounding rect spanning both lines. Use `checkVisibility()`, clip to
+  scrollports, and compare `getClientRects()` per line.
+- **`display: contents` generates no box.** A wrapper used to keep a grid intact
+  made `getBoundingClientRect` 0x0 and `scrollIntoView` a silent no-op — the
+  chart dot drew correctly at y=1271 in a 900px window on a page that never
+  scrolled.
+- **A metric key must be per FIELD, not per day.** `DailyMetric` is one row of
+  eleven numbers; a day-level key made "mood 7" mark mood, stress AND sleep —
+  two readings given days earlier, presented as just-captured.
+- **`useJustCaptured` tolerates a missing provider and `useCaptureReceipt` does
+  not.** Writing must be loud ("saved but did not move" is invisible); reading
+  is a decoration, and an empty set is the honest answer.
+- **Three gates assert the app's identity by `document.title`** —
+  `smoke-views.mjs`, `column-audit.mjs`, `type-census.mjs` — and all three now
+  expect "Cadence". That is what proves a rename reached the built app.
+- **`a11y` now scans two things no view-walking gate can reach**: the receipt
+  bar and the ringed row, in five themes, asserting both are on screen first. A
+  surface that only exists after an action cannot fail a gate that only
+  navigates.
+- **Demo data is persisted, not regenerated** — re-seed via Settings → Data →
   Load demo data after editing `src/lib/demo.ts`.
-- **Plane was down this session** (`localhost:8080` refused), so nothing was
-  filed or moved on the board for this branch.
+
+## Environment
+
+**Plane was unreachable all session** (`localhost:8080` refused), so none of the
+five PRs is linked to a work item. If the board matters, they need filing by
+hand: the capture loop (#220, #222, #223), the header regression (#221) and the
+rename (#224).
