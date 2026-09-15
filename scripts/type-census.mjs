@@ -74,7 +74,7 @@ const boot = await page.evaluate(() => {
   const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
   return { title: document.title, main: !!document.querySelector('#main'), entries: d.entries?.length ?? 0 }
 })
-if (!boot.title.startsWith('bujo') || !boot.main) {
+if (!boot.title.startsWith('Cadence') || !boot.main) {
   console.error(`Not bujo: title "${boot.title}", #main ${boot.main}. Is something else on ${BASE}?`)
   process.exit(1)
 }

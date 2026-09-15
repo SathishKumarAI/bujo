@@ -74,8 +74,8 @@ const boot = await page.evaluate(() => {
   const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
   return { title: document.title, entries: d.entries?.length ?? 0 }
 })
-if (!boot.title.startsWith('bujo') || boot.entries === 0) {
-  console.error(`Not measuring bujo with data — title "${boot.title}", ${boot.entries} entries.`)
+if (!boot.title.startsWith('Cadence') || boot.entries === 0) {
+  console.error(`Not measuring Cadence with data — title "${boot.title}", ${boot.entries} entries.`)
   process.exit(1)
 }
 console.log(`${boot.title} · ${boot.entries} entries · ${VIEWS.length} views at 1440\n`)

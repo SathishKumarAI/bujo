@@ -32,7 +32,7 @@ describe('ErrorBoundary', () => {
         <Boom />
       </ErrorBoundary>
     )
-    expect(screen.getByText('bujo hit a snag')).toBeTruthy()
+    expect(screen.getByText('Cadence hit a snag')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Reload the app' })).toBeTruthy()
   })
 

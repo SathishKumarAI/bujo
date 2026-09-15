@@ -131,7 +131,7 @@ export default function App() {
       if (!found || cancelled) return
       const take = await confirm({
         title: `Bring your old account journal to this device?`,
-        description: `bujo no longer has accounts. ${found.email} still has a journal stored server-side; this is the last chance to pull it across. Items on this device are kept either way.`,
+        description: `Cadence no longer has accounts. ${found.email} still has a journal stored server-side; this is the last chance to pull it across. Items on this device are kept either way.`,
         confirmLabel: 'Bring it across',
         cancelLabel: 'No, discard it',
       })
@@ -147,7 +147,7 @@ export default function App() {
         setSettings({ legacyAccountChecked: true })
       } catch (e) {
         // Loud, and the flag stays unset so the next launch tries again.
-        notify.error('Could not reach your old account', `${(e as Error).message}. We will ask again next time you open bujo.`)
+        notify.error('Could not reach your old account', `${(e as Error).message}. We will ask again next time you open Cadence.`)
       }
     })()
     return () => { cancelled = true }

@@ -20,7 +20,7 @@ export function ReminderBanner() {
   // Most-urgent nudge (streak-at-risk / challenge-day) wins over the plain one.
   const urgent = reminderMessage(data, today)
   const title = urgent?.title ?? 'Time to journal ✦'
-  const body = urgent?.body ?? "A couple of minutes for yourself · fill in today's bujo."
+  const body = urgent?.body ?? "A couple of minutes for yourself · fill in today's Cadence."
 
   // Suppress only when there's nothing to nudge: logged today AND nothing
   // urgent. Derived rather than pushed into `show` from the effect — whether

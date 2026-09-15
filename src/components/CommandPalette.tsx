@@ -102,7 +102,7 @@ export function CommandPalette({
       })),
       { id: 'paper', label: `${data.settings.paperMode ? 'Disable' : 'Enable'} paper texture`, hint: 'action', run: () => setSettings({ paperMode: !data.settings.paperMode }) },
       { id: 'hand', label: `${data.settings.handwriting ? 'Disable' : 'Enable'} handwriting font`, hint: 'action', run: () => setSettings({ handwriting: !data.settings.handwriting }) },
-      { id: 'export', label: 'Export JSON backup', hint: 'action', run: () => download(`bujo-backup-${todayISO()}.json`, exportJSON(data)) },
+      { id: 'export', label: 'Export JSON backup', hint: 'action', run: () => download(`cadence-backup-${todayISO()}.json`, exportJSON(data)) },
       { id: 'demo', label: 'Load demo data', hint: 'action', run: async () => { if (data.entries.length === 0 || await confirm({
         title: 'Replace your journal with demo data?',
         description: 'Your current entries are overwritten by about 30 days of sample data.',

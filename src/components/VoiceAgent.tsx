@@ -15,7 +15,12 @@ import { useCaptureReceipt } from './CaptureReceipt'
 import { cat } from '../lib/colors'
 
 /**
- * TALK TO YOUR JOURNAL · say it, see what it heard, save it.
+ * RELAY · say it, see what it heard, save it.
+ *
+ * Named, because it is a thing you address rather than a screen you open —
+ * and because "relay" is what it does: you say a sentence, it works out which
+ * page owns it, writes it there and takes you to the row. The old label,
+ * "Talk to your journal", described the input and not the job.
  *
  * The loop is deliberately four steps and not three: **listen → understand →
  * show → confirm**. An assistant that writes as you speak sounds better in a
@@ -184,7 +189,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
     <Dialog open={open} onOpenChange={(next) => { if (!next) close() }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Talk to your journal</DialogTitle>
+          <DialogTitle>Ask Relay</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">

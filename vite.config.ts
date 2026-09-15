@@ -18,8 +18,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'bujo — bullet journal',
-        short_name: 'bujo',
+        name: 'Cadence — journal, habits and training',
+        short_name: 'Cadence',
         description: 'A minimal, private, local-first digital bullet journal.',
         theme_color: '#1e1e2e',
         background_color: '#1e1e2e',

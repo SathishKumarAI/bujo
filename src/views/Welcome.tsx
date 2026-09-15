@@ -54,7 +54,7 @@ export function Welcome() {
       <div className="relative z-10 w-full max-w-2xl">
         <div className="mb-9 text-center">
           <div className="rise mb-3 flex items-baseline justify-center gap-2">
-            <span className="font-display text-display font-medium tracking-tight text-fg-1">bujo</span>
+            <span className="font-display text-display font-medium tracking-tight text-fg-1">Cadence</span>
             <span className="text-title text-mauve">✦</span>
           </div>
           <p className="rise text-fg-2" style={{ animationDelay: '90ms' }}>A private bullet journal. It lives on this device. Choose where it should be kept — you can change this in Settings later.</p>
@@ -73,7 +73,7 @@ export function Welcome() {
             <Icon as={CloudCheck} size="lg" style={{ color: onRaised('mauve') }} />
             <h2 className="mt-3 font-display text-title text-fg-1">Use my own cloud</h2>
             <p className="mt-1 text-body text-fg-2">
-              Point bujo at a folder inside your Drive / Dropbox / OneDrive sync
+              Point Cadence at a folder inside your Drive / Dropbox / OneDrive sync
               folder. Your existing cloud syncs it across devices.
             </p>
             <ul className="mt-3 space-y-1 text-label text-fg-2">

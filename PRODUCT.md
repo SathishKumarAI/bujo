@@ -1,13 +1,18 @@
-# PRODUCT.md — what bujo is, before any pixel is decided
+# PRODUCT.md — what Cadence is, before any pixel is decided
 
 Product truth. Durable across redesigns. If a visual decision contradicts this
 file, the visual decision is wrong. Visual decisions live in `DESIGN.md`.
 
 ## One line
 
-A private, local-first bullet journal that keeps the calm of paper and adds the
-things paper cannot do — search, streaks, and charts that overlay your mood
-against your sleep.
+A private, local-first journal that keeps the calm of paper and adds the things
+paper cannot do — search, streaks, charts that overlay your mood against your
+sleep, and **Relay**, which takes a spoken sentence and files it on the page
+that owns it.
+
+The name is user-facing only. The repository, the package and every `bujo:`
+storage key keep the old one on purpose: a renamed storage key is an orphaned
+journal.
 
 ## Who opens it
 

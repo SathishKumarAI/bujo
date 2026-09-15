@@ -1,10 +1,17 @@
-# ✦ bujo — a minimal digital bullet journal
+# ✦ Cadence — the journal that keeps your rhythm
 
-A private, local-first **bullet journal** web app built around the
-[Bullet Journal method](https://bulletjournal.com/) by Ryder Carroll, in a
-minimal one-pen style. Rapid logging, monthly spreads, habit & mood tracking,
-fitness logging, and gendered wellbeing tools — all stored **only in your
-browser**. No accounts, no server, no tracking.
+A private, local-first journal built on the
+[Bullet Journal method](https://bulletjournal.com/) by Ryder Carroll. Rapid
+logging, monthly spreads, habits, mood, training and gendered wellbeing tools —
+all stored **only in your browser**. No accounts, no server, no tracking.
+
+Say a sentence and **Relay** files it: "I played two games and scored 68" writes
+a pickleball session, opens the page that now holds it, and rings the row it
+wrote. Typing does the same thing through the same pipeline.
+
+> Named Cadence in the app; the repository, the package and the storage keys are
+> still `bujo`, deliberately — renaming a storage key orphans every journal that
+> already exists.
 
 **▶ Live demo: <https://bujo-journal.vercel.app>** — pick *“This device only”* to
 try it instantly, no account. Or run it locally and open `?demo=1` for a month

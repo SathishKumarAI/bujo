@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('bujo crashed:', error, info.componentStack)
+    console.error('Cadence crashed:', error, info.componentStack)
   }
 
   /** Raw dump — never migrated, never parsed, so a corrupt journal still downloads. */
@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = `bujo-rescue-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `cadence-rescue-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="grid min-h-screen place-items-center p-6">
         <div className="w-full max-w-md rounded-card border border-line-strong bg-ink-1 p-6 text-center">
           <div className="text-display">✦</div>
-          <h1 className="mt-2 text-heading font-medium text-fg-1">bujo hit a snag</h1>
+          <h1 className="mt-2 text-heading font-medium text-fg-1">Cadence hit a snag</h1>
           <p className="mt-1 text-body text-fg-1">
             Something in the app crashed. <strong className="text-fg-1">Your journal is safe</strong> —
             it lives in this browser, not in the screen that broke.
