@@ -14,6 +14,7 @@ import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { washStyle } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
 import { Button } from './ui/button'
+import { useCaptureReceipt } from './CaptureReceipt'
 
 // One smart capture bar: type or speak anything and it routes to the right
 // place · a gym set, a cardio session, a wellbeing metric, a habit tick, or a
@@ -85,6 +86,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
   // under the cursor while someone is mid-sentence.
   const hintIndex = Math.abs(hashDate(date)) % CAPTURE_HINTS.length
   const { data, addEntry, addWorkout, setMetric, setHabitValue, toggleHabit, setSettings } = useJournal()
+  const receipt = useCaptureReceipt()
   const [val, setVal] = useState('')
   // A frozen, hand-editable copy of the current parse (the "edit fields" panel).
   const [draft, setDraft] = useState<CaptureResult | null>(null)
@@ -164,6 +166,10 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
     setVal('')
     setDraft(null)
     onAdded?.()
+    // Typed capture routes the same way spoken capture does: "bench 80x5" from
+    // Today writes a workout onto Strength, so Strength is where the app goes.
+    // `commit` is the only writer here, and this is the only mover.
+    receipt.fromCapture(r)
   }
   function add(text: string) {
     const t = text.trim()

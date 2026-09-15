@@ -8,6 +8,7 @@ import { MilestoneToast } from '../MilestoneToast'
 import { ServerSync } from '../ServerSync'
 import { Toasts } from '../Toasts'
 import { VoiceAgent } from '../VoiceAgent'
+import { CaptureReceipt } from '../CaptureReceipt'
 import { ShortcutHelp } from '../ShortcutHelp'
 import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
 import { useCursor } from './cursor'
@@ -102,6 +103,11 @@ export function AppShell({
           instead of clamping to `--header-h`. `clip` does the same visual job
           without creating a scrollport.
           Extra bottom padding on mobile clears the fixed bottom nav. */}
+      {/* Under the header, above the page: what the last capture wrote, on the
+          page it wrote it to. Outside `main` so it is not inside whichever view
+          the capture sent us to — it belongs to the shell, like the banners. */}
+      <CaptureReceipt />
+
       <main id="main" className={`flex-1 overflow-x-clip p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}>{children}</main>
 
       {isMobile && <BottomNav view={view} gates={gates} onNavigate={onNavigate} />}

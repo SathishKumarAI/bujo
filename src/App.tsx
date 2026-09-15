@@ -25,6 +25,7 @@ import { SECTIONS, tabsOf, type SectionGates } from './components/shell/sections
 import { setPrimaryScope } from './lib/onePrimary'
 import { DeviceProvider } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
+import { CaptureReceiptProvider } from './components/CaptureReceipt'
 import type { ViewId } from './components/shell/viewChrome'
 // All non-landing views are code-split so the initial bundle only ships Today +
 // Account (the gate). Each view (and its recharts/feature-card weight) loads on
@@ -221,6 +222,7 @@ export default function App() {
     <DeviceProvider>
     <CursorProvider>
       <NavProvider navigate={setView}>
+      <CaptureReceiptProvider>
       <DeepLinkSync view={view} />
       <CommandPalette
         onNavigate={(id) => setView(id as ViewId)}
@@ -256,6 +258,7 @@ export default function App() {
           </Suspense>
         </div>
       </AppShell>
+      </CaptureReceiptProvider>
       </NavProvider>
     </CursorProvider>
     </DeviceProvider>
