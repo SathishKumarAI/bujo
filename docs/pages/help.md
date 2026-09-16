@@ -1,81 +1,62 @@
 # Help
 
-`src/views/Help.tsx` · top bar → ? · `?view=help`
+`src/views/Help.tsx` · top bar → ? → *Open the full guide* · `?view=help`
 
 ## What this page is
 
-The in-app guide: what the method is, what each screen does, and the bullet
-legend. A plain-language companion to the docs' Feature Guide.
+The in-app guide: the bullet grammar, three starting tutorials, and a searchable
+catalogue of every surface in the app — what it is, why it exists, and the first
+three things to do on it.
 
-## Measured (1440×900, demo data)
+It renders `src/lib/guide.ts`, which holds **only** `why` and `how`. The title
+and the "what it is" blurb come from `VIEW_CHROME`, the grouping from
+`SECTIONS`. `scripts/build-manual.mjs` renders the same data to
+`docs/FEATURE-REFERENCE.md` (`npm run manual`).
 
-- **1.3 screens.**
-- **One block, 1,127px.** Four `<h2>`s inside it, no navigation between them.
+## The findings this page was rebuilt to fix
 
-## The finding that matters
+The audit below is kept because the *cause* is worth remembering: the page
+carried its own copy of what each screen does.
 
-**P1 · Help is one long scroll with no way in.** A single 1,127px card
-containing the method, the top bar, every screen, and the bullet grammar. There
-is no table of contents, no search, no anchors, and no per-section collapse — in
-an app whose own `CollapsibleSection` is used on eleven other pages.
+**P1 · One long scroll with no way in.** *Fixed.* Zone 3 is a search box over
+twenty-four folded cards, grouped by nav section, with the count in zone 1. A
+search hit opens itself — a result you still have to click has only narrowed the
+same long scroll.
 
-Help is the page users arrive at with a *specific* question. It is the one page
-that most needs a way to jump, and the only reference page in the app without
-one.
+**P2 · It duplicated the ⓘ system.** *Fixed, and this was the root cause.* Each
+screen was documented three times — the card ⓘ, `VIEW_CHROME.help`, and this
+page's prose. Three copies drift, and they had: the prose named **fifteen of
+twenty-four** screens. Goals, Program, Nutrition, Coaching, Reading, Mindset,
+Stats, Pickleball and Home workout were absent from the one page a lost user
+opens, and nothing failed when they were added to the app. `guide.test.ts` now
+asserts coverage in both directions.
 
-**P2 · It duplicates the ⓘ system.** Every card in the app already carries an ⓘ
-explaining itself, and `VIEW_CHROME` holds a `help` string per view that the top
-bar's "?" shows. So each screen is documented three times: in the card ⓘ, in the
-top-bar help, and in this page's prose. Three copies drift.
+**P2 · Nothing linked out.** *Fixed.* Every feature card has an *Open <name>*
+button; every tutorial step that names a screen has *Open it*.
 
-## UX / IA
+**P2 · Prose at content width with no rhythm.** *Fixed.* The page is on the
+three-zone contract: zone 1 the counts and a backup pointer, zone 2 the
+tutorials, zone 3 the bullet grammar then the catalogue.
 
-**P2 · Nothing links out.** "What each section does" describes Today, Monthly,
-Trackers — and none of the names are links. A help page that names twenty
-screens and navigates to none of them makes the reader do the routing.
+**P3 · The bullet legend was buried.** *Fixed.* It is the first thing in zone 3,
+above the catalogue.
 
-**P3 · The page is unreachable from the sidebar.** It lives behind the top bar's
-"?", so a user who wants to read the guide has to already know where the guide
-is.
+**P3 · Unreachable from the sidebar.** *Unchanged, deliberately.* It is reached
+from the top bar "?" (which also shows the current page's blurb and
+suggestions), from the ⋯ menu, and from ⌘K. A sixth rail row for a reference
+page would cost every other page a row's worth of nav.
 
-## UI
+## How the contract bends here
 
-**P2 · Prose set at content width with no visual rhythm.** Four headings and
-long paragraphs in one card. The app has pull-quotes, stat tiles, glyph columns
-and callouts available; the page that teaches the visual language uses none of
-it.
-
-**P3 · The bullet legend is the most useful thing here** and is buried in the
-lower half rather than pinned or repeated at the top.
-
-## Copy
-
-**Genuinely good and correctly scoped.** *"This is a digital take on the Bullet
-Journal method by Ryder Carroll, in the minimal one-pen style. Everything you
-write is saved automatically in this browser only · nobody else can see it, and
-there are no accounts."* — credits the method, states the storage model and the
-privacy position in two sentences.
-
-The top-bar walkthrough is equally concrete: *"On the right: Quick add (capture
-an entry from anywhere), ⌘K (jump to any view or run a command), and the ⋯
-menu"*.
-
-**P3 · "Below is what each section does"** is a signpost that a table of
-contents would render unnecessary.
-
-## Upgrades, ranked
-
-1. **P1 · Add navigation** — collapse per section, or a sticky contents column.
-   The primitive already exists in the codebase.
-2. **P2 · Link every screen name** to that screen.
-3. **P2 · Make `VIEW_CHROME.help` the single source** and generate the
-   per-screen sections from it, so the three copies cannot drift.
-4. **P3 · Pin the bullet legend** to the top, or repeat it at both ends.
-5. **P3 · Put Help in the sidebar**, under a Review or About group.
+This page records nothing, so zone 3 is not "what you have recorded" — it is the
+reference body. Zone 2 is still the act, and the act on a guide is **start**,
+not read: the three tutorials, with the track picker above them.
 
 ## Leave alone
 
-- **The opening paragraph.** Method credit, storage model, privacy, in two
-  sentences.
-- **The top-bar walkthrough.**
-- **Plain language throughout** — no screenshots, no video, no marketing voice.
+- **The `what` text.** It is `VIEW_CHROME[view].help` and must stay that way —
+  a paraphrase here is the drift the whole module exists to prevent, and
+  `guide.test.ts` asserts the strings are identical.
+- **Two facts per feature, not five.** Collapsed, a card shows its name and one
+  sentence of *why*. That is what makes a list of twenty-four scannable.
+- **Plain language, no screenshots, no video, no marketing voice.**

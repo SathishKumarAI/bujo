@@ -12,6 +12,7 @@
     "design": "node scripts/check-design-system.mjs",
     "dev": "vite",
     "icons": "node scripts/build-icons.mjs",
+    "manual": "node scripts/build-manual.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "shots": "node scripts/capture-screenshots.mjs",

@@ -143,6 +143,13 @@ const COMPANIONS = [
   // an OAuth button, none of them ever checked. It is now the local-account
   // page, which is the moment to notice the hole rather than inherit it.
   ['Account', 'account'],
+  // The guide. Behind the top bar's "?", so no tab clicks to it and it had
+  // never been scanned — the page a user opens *because they are already
+  // stuck* was the one page with no accessibility evidence behind it. It is
+  // now a search field over twenty-four folded cards, which is to say it is
+  // mostly interactive controls, which is to say it is exactly the kind of
+  // page this gate exists for.
+  ['Help', 'help'],
 ]
 
 /**
