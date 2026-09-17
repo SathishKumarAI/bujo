@@ -31,6 +31,21 @@ to someone whose review you want.
 > and are worth a look, but a wall of images is not what a reader needs first
 > from a repo — the shape of the codebase is. That is what follows.
 
+## If you are here to *use* it, not to read the code
+
+**[`docs/MANUAL.md`](docs/MANUAL.md)** is the manual: why this exists, what it
+is, the first five minutes, the daily/weekly/monthly ritual, the bullet grammar,
+and what to do when something looks wrong.
+**[`docs/FEATURE-REFERENCE.md`](docs/FEATURE-REFERENCE.md)** is all twenty-four
+surfaces — what each is, why it exists, and the first three things to do on it.
+
+That reference is **generated** (`npm run manual`) from `src/lib/guide.ts`, which
+is also what the in-app guide renders — press **?** in the top bar → *Open the
+full guide*, where each entry has a button that takes you to the page it
+describes and a search box over the lot. One source, three readers, and a test
+that fails if a screen is added without an entry. The rest of this README is
+about the codebase.
+
 ## Why
 
 Most journaling apps lock your data behind a login and a subscription. `bujo`
@@ -214,7 +229,8 @@ on any PR that changes `src/` without touching docs or tests.
 | Added / removed / renamed a **top-level directory** | the tree above — it is the authoritative copy; `docs/ARCHITECTURE.md` points here |
 | Changed **how data is loaded, saved, migrated or synced** | the data-flow diagram above **and** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Added a **feature directory** under `src/components/` | the tree above **and** that directory's own `README.md` `change → file` table |
-| Added a **screen** | [`docs/pages/`](docs/pages/) entry, the `VIEWS` list in `scripts/a11y-axe.mjs`, and `scripts/view-ids.mjs` |
+| Added a **screen** | [`docs/pages/`](docs/pages/) entry, a `guide.ts` entry (`guide.test.ts` fails without one), `npm run manual`, the `VIEWS` list in `scripts/a11y-axe.mjs`, and `scripts/view-ids.mjs` |
+| Changed what a screen **is for** | `VIEW_CHROME[view].help` — the single source the ⓘ, the top-bar "?", the in-app guide and the feature reference all read. Then `npm run manual` |
 | Added or changed a **gate** | the gate list above and [`docs/PIPELINE.md`](docs/PIPELINE.md) |
 | Made a decision worth arguing with later | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
 | Hit a trap that cost you an hour | the trap list in [`CLAUDE.md`](CLAUDE.md) — that file is the reason the next session does not repeat it |
@@ -242,6 +258,8 @@ be cleared by the browser, **export a backup regularly** (Settings → Export).
 
 ## Docs
 
+- [`docs/MANUAL.md`](docs/MANUAL.md) — **the user manual**: why, what, the first five minutes, the ritual, backups
+- [`docs/FEATURE-REFERENCE.md`](docs/FEATURE-REFERENCE.md) — **every surface**, generated from `src/lib/guide.ts` (`npm run manual`)
 - [`docs/diagrams/`](docs/diagrams/README.md) — **architecture diagrams**: storage & sync, data model, shell & views, verification pipeline (Mermaid)
 - [`docs/engineering/`](docs/engineering/README.md) — **engineering views**: the app through 5 lenses (user · architecture · backend · data-eng · ML)
 - [`docs/WHY.md`](docs/WHY.md) — **why bujo: research, taste-direction, critical thinking & options** (incl. tracker-redesign directions)
