@@ -1,127 +1,117 @@
 # STATUS
 
-**Stopped:** 2026-09-15, on `main`. Seven PRs merged this session: **#219**
-centred nav, **#220** capture receipt, **#221** header overflow fix (a
-regression from #219), **#222** the capture ring, **#223** Trackers wired to
-it, **#224** the rename, **#225** this file, **#226** the full name and the
-docs.
+**Stopped:** 2026-09-16, on `main`, clean. Two PRs merged this session:
+**#230** the guide, the manual and the tutorials; **#231** Today's surface tabs
+moved into the header's second row. Plane items: COD-196 (done), COD-198 (done),
+**COD-197 (open, see "The one red gate" below)**.
 
-All gates green at the end: `npm run verify` — **1047 tests across 83 files**,
-tsc, eslint (one pre-existing `react-hooks/exhaustive-deps` warning in
-`App.tsx`, zero errors), build — plus `a11y` (0 serious/critical), `clipped`
-(clean at 1440, **1024** and 390), `smoke` (25/25), `design` (308 files),
-`contrast` (5 themes).
+## What shipped
 
-## The product has names now
+### #230 · one catalogue, three readers
 
-**The app is Cadence Journal. The capture assistant is Relay.**
+The in-app guide named **fifteen of the app's twenty-four screens.** Goals,
+Program, Nutrition, Coaching, Reading, Mindset, Stats, Pickleball and Home
+workout were absent from the one page a lost user opens — and nothing failed
+when they were added, because `views/Help.tsx` carried its own hand-written copy
+of what each screen does. `docs/pages/help.md` had already written down the fix.
 
-- **Cadence Journal** in full — `<title>`, the PWA manifest, README, PRODUCT.md.
-- **Cadence** alone in the header, because a header is a place you are already
-  standing.
-- **Relay** on the microphone and its dialog: "Ask Relay".
+`src/lib/guide.ts` now holds **only what nothing else records**: one sentence of
+*why* each page exists and two to four *how* steps. Title and the "what it is"
+blurb come from `VIEW_CHROME`; the grouping comes from `SECTIONS`. Three readers
+off that one source:
 
-User-visible copy only. The repo, the package, the `bujo:` storage keys and
-`bujo.json` keep the old name **on purpose**: a renamed storage key does not
-migrate a journal, it orphans one, and `bujo.json` is the contract with folders
-already syncing.
+- `views/Help.tsx` — rebuilt on the three-zone contract. Search over
+  twenty-four folded cards grouped by nav section; a hit opens itself; every
+  card has an *Open `<name>`* button.
+- `docs/FEATURE-REFERENCE.md` — **generated**, `npm run manual`. Do not edit it.
+- the top-bar "?" and every card's ⓘ, which already read `VIEW_CHROME`.
 
-**Docs written before 2026-09-15 say `bujo` and are left that way** — a session
-log, a dated hosting note or an archived prompt is a *record*, and editing it to
-match today's name falsifies it. Only the living docs were renamed: `README`,
-`PRODUCT.md`, `docs/WHY.md`, `docs/FEATURE_GUIDE.md`,
-`docs/features/daily-use-guide.md`, `docs/pages/welcome.md`,
-`docs/ARCHITECTURE.md`, `TASKS.md`. The "BuJo" in citations of Ryder Carroll's
-paper method is a different word and was not touched.
+`docs/MANUAL.md` is hand-written and is the part a program cannot generate: why
+the product exists, the first five minutes, the daily/weekly/monthly ritual,
+the bullet grammar, troubleshooting.
 
-## What the capture loop does now
+**`guide.test.ts` is the load-bearing part.** It asserts coverage in both
+directions and asserts `what` is byte-identical to `VIEW_CHROME[view].help`. Add
+a view without a guide entry and it fails by name.
 
-Say or type a sentence → Relay works out which page owns the record, writes it,
-**moves the app to that page**, leaves a receipt naming what was written with
-Undo, and **rings the row it wrote** for six seconds after scrolling it into
-view.
+### #231 · the surface tabs moved up
 
-- `lib/captureLanding.ts` — kind → view, exhaustive over `RecordKind` with a
-  `never` at the end, so a new kind fails the typecheck rather than landing on
-  Today.
-- `lib/recordKeys.ts` — the fingerprint diff that decides what to ring.
-- `components/CaptureReceipt.tsx` — the bar, the navigation and the ring set.
+Row 2 of the header holds `SectionTabs` for the fifteen views that have one, and
+centres it. Today has one tab, so that row rendered a centred "Today / Your
+daily log" — beside a date pill already stating the date, under a lit rail row
+already saying Today — while Morning / Day / Evening sat in the day masthead.
+`components/shell/topbar/SurfaceTabs.tsx` now owns them, in row 2, centred,
+neutral-toned so row 2 stays quieter than row 1's accent pill.
 
-## Next session — start here
+## The one red gate
 
-Read `docs/WORKLOG.md`'s top entry for what happened and why; this file is only
-the re-entry state. Then pick from the list below — it is ordered, and item 1
-is the one a user would notice.
+**`npm run a11y` does not complete on this machine, and does not on `main`
+either.** It aborts at `scanReceipt()` —
+`[receipt · mocha] captured a note; receipt appeared, ringed row MISSING` —
+which calls `process.exit(1)` **before** the view walk, so nothing is scanned
+and no table is printed. Filed as **COD-197** with the likely cause: the
+assertion waits a fixed 700ms and then reads `#main [data-just-captured]`, which
+is not enough on a loaded machine. It is intermittent — one run in five got
+through and printed the full table.
 
-The capture loop's remaining gaps, in the order they are worth doing:
+Verified pre-existing by stashing the branch, rebuilding `main` and re-running:
+identical failure. **Do not "fix" it by deleting the assertion.** Replace the
+fixed wait with `page.waitForSelector('#main [data-just-captured]', { timeout:
+5000 })` and keep the loud error for a real timeout.
 
-1. **Gym cannot ring anything** — it is a session builder, charts and PRs, with
-   no per-workout row. A captured lift lands there with the receipt naming it
-   and nothing to point at. Either give Gym a session list or accept it.
-2. **The three alternative Trackers layouts** (`GridCardsLayout`,
-   `ActivityLayout`, `RadialTracker`) draw their own habit cells and are not
-   wired.
-3. **Undo does not navigate back** — it removes the record and clears the bar,
-   leaving you on the page you were taken to.
-4. The command palette does not route through the receipt.
+Until then, a targeted axe pass is the workaround — and note that a workaround
+in a STATUS file is a gate that is off, which is why COD-197 exists. The shape
+that worked, run against a `vite preview` with `playwright` + `@axe-core/playwright`
+installed `--no-save`:
 
-## Decisions that will surprise you later
+- new **context** (`browser.newContext()`), not `newPage()` — `@axe-core/playwright`
+  refuses a page from the default context.
+- set `localStorage['bujo:onboarded'] = '1'` on the first load or the first-run
+  tour's modal intercepts every click and Playwright times out.
+- set the theme by rewriting `bujo:data.settings.theme` and reloading, and open
+  folds with four passes of `#main [aria-expanded="false"]:not([aria-haspopup])`,
+  exactly as the gate does.
 
-- **`justify-content: center` on a scrolling row is a navigation bug.** It
-  distributes *negative* free space, so an overflowing row is pushed off BOTH
-  edges and `scrollLeft` cannot go below zero — the leading tabs become
-  unreachable by scrolling, by keyboard, by anything. The header tab row is
-  centred by **auto margins on the first and last tab**, which collapse to 0 the
-  moment free space goes negative. Do not "simplify" them back.
-- **`minmax(0,1fr)` has no content floor, and `1fr` does.** The centring grid
-  shipped with `minmax(0,1fr)` and gave the tool cluster a column narrower than
-  its contents between ~768 and ~1180px. A flex row justified to the end
-  overflows *backwards*, so the streak strip was drawn across the section nav —
-  125px of overlap at 1024, on every view, with `body.scrollWidth` equal to the
-  window the whole time. Both rendering gates were green because `clipped` ran
-  at 1440 and 390 only. **A responsive layout fails between breakpoints, not at
-  them.**
-- **Three separate things produce phantom overlaps** and all three cost a detour
-  before anything was fixed: content inside a **closed `<details>`** still has a
-  rect (94 fake hits on Coaching), elements **scrolled out of a scrollport**
-  still intersect in coordinate space, and an **inline box that wraps** has a
-  bounding rect spanning both lines. Use `checkVisibility()`, clip to
-  scrollports, and compare `getClientRects()` per line.
-- **`display: contents` generates no box.** A wrapper used to keep a grid intact
-  made `getBoundingClientRect` 0x0 and `scrollIntoView` a silent no-op — the
-  chart dot drew correctly at y=1271 in a 900px window on a page that never
-  scrolled.
-- **A metric key must be per FIELD, not per day.** `DailyMetric` is one row of
-  eleven numbers; a day-level key made "mood 7" mark mood, stress AND sleep —
-  two readings given days earlier, presented as just-captured.
-- **`useJustCaptured` tolerates a missing provider and `useCaptureReceipt` does
-  not.** Writing must be loud ("saved but did not move" is invisible); reading
-  is a decoration, and an empty set is the honest answer.
-- **Three gates assert the app's identity by `document.title`** —
-  `smoke-views.mjs`, `column-audit.mjs`, `type-census.mjs` — and all three now
-  expect "Cadence". That is what proves a rename reached the built app.
-- **`a11y` now scans two things no view-walking gate can reach**: the receipt
-  bar and the ringed row, in five themes, asserting both are on screen first. A
-  surface that only exists after an action cannot fail a gate that only
-  navigates.
-- **Demo data is persisted, not regenerated** — re-seed via Settings → Data →
-  Load demo data after editing `src/lib/demo.ts`.
+## Gates, this session
+
+All green except the above: `tsc -b` · `vitest` **1062 tests across 84 files** ·
+`eslint` · `design` (308 files) · `contrast` (5 themes) · `smoke` 25/25 ·
+`clipped` clean at 1440, 1024 and 390 · axe on `?view=help` and on Today × 3
+surfaces, 5 themes × 2 widths, **0 serious/critical**.
+
+## Traps found this session
+
+- **`?view=help` had never been scanned by `a11y`.** It is behind the top bar's
+  "?", so no tab clicks to it and it was not in `COMPANIONS` — the page a user
+  opens *because they are already stuck* had no accessibility evidence. Adding
+  it failed immediately: `fg-2` on `ink-3` is **4.07:1**, in four themes at
+  once. Fixed by moving the ground (`ink-2` + `shadow-raise`), not the text.
+  Same pairing as COD-58, recorded in a comment in the very file that missed it.
+- **`a11y`'s `go()` locator was scoped to `main`.** Moving the surface switcher
+  into `<header>` would have made `goOrDie` report "no surface control with that
+  name on Today" — a gate reading a relocation as a deletion, beside its own
+  instruction not to answer that by deleting the entry. Widened to `header` too.
+- **A segmented control in a `min-w-0` flex child draws past its own box.** No
+  `overflow-x-auto` and at 390px "Evening" rendered *underneath* the date pill
+  with the ‹ arrow pushed off the row. `clipped` does not catch this — the box
+  is not clipped, it is overdrawn.
+- **A bash heredoc silently truncated a long file write.** `cat > file <<'EOF'`
+  with ~400 lines of content came back with a *warning* about the delimiter and
+  a file cut at line 124 — valid-looking TypeScript, mid-array. Use the editor
+  tools for anything long, and check `wc -l` when you do not.
 
 ## Before you start
 
 - `npm run verify` first, so a red gate is attributable to you rather than
-  inherited. It takes about two minutes; the browser gates take ten.
-- The dev-server trap still applies: **check the port's command line before
-  believing a screenshot.** `learn/dsa_problems` holds 5173 on this machine, and
-  every gate here defaults to 4173 (`vite preview`).
+  inherited. Browser gates need `npm i -D --no-save playwright @axe-core/playwright
+  && npx playwright install chromium` — a deploy prunes them.
+- **Check the port before believing a screenshot.** `vite preview` walks up from
+  4173; it landed on **4175** this session because two earlier gate runs were
+  still holding the lower ports. Every gate defaults to 4173, so pass
+  `BUJO_URL=` when it does not.
 - The preview server serves `dist/`, so **rebuild before running a browser
-  gate**. A red `clipped` this session was a stale `dist/` — `verify`'s build
-  never ran because eslint failed first, and the gate faithfully reported the
-  bug from the previous commit.
-
-## Environment
-
-**Plane was unreachable all session** (`localhost:8080` refused), so none of the
-five PRs is linked to a work item. If the board matters, they need filing by
-hand: the capture loop (#220, #222, #223), the header regression (#221) and the
-rename (#224).
+  gate**.
+- Demo data is persisted, not regenerated — re-seed via Settings → Data → Load
+  demo data after editing `src/lib/demo.ts`.
+- After editing `src/lib/guide.ts`, run **`npm run manual`** in the same commit.
+  `docs/FEATURE-REFERENCE.md` is generated and a stale one is worse than none.
