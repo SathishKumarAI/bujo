@@ -2,7 +2,7 @@ import { Flame } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { isFutureDay, todayISO } from '../lib/date'
-import { Card, Segmented } from '../components/ui'
+import { Card } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { FastingCard } from '../components/FastingCard'
@@ -14,8 +14,6 @@ import { habitTarget, habitValueOn, habitDoneOn, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/habitStats'
 import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
-import { SURFACE_LABEL, surfaceUntouched } from '../lib/surface'
-import type { Surface } from '../lib/deepLink'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 
 /**
@@ -37,61 +35,6 @@ import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from '
 export function Today() {
   const { data } = useJournal()
   return (data.settings.layout ?? 'focused') === 'focused' ? <TodayFocused /> : <TodayClassic />
-}
-
-const SURFACES: Surface[] = ['morning', 'day', 'evening']
-
-/**
- * THE SURFACE SWITCHER · navigation that also reports.
- *
- * Three words and nothing else was the whole control, so the row could tell you
- * where you *are* and never where you have not been. Each segment now carries a
- * dot when that surface's own record is still empty for the day
- * (`surfaceUntouched`), which is the only fact a tab row is in a position to
- * state without duplicating the cards beneath it.
- *
- * The mark is a graphic, so the state is also in the accessible name — colour
- * and shape are never the only carrier. It inherits `currentColor`, which means
- * it picks up the accent on the active segment and the muted foreground
- * elsewhere: the page's one accent, not a second one.
- *
- * A **square**, not a round dot, because `--radius-pill` is `0rem` here: radius
- * zero is one of the four rules the whole redesign is built on, and the design
- * gate rejects a full-radius utility for exactly that reason. It also happens to
- * be the right glyph — this is a bullet journal, and its marks are signifiers.
- * (The gate is a line-level regex, so it fired on this paragraph naming the
- * class as readily as on the class itself.)
- */
-function SurfaceTabs() {
-  const { data } = useJournal()
-  const { day: date, surface, setSurface } = useCursor()
-  const untouched = surfaceUntouched(data, date)
-
-  return (
-    // Navigation, not a reveal: no transition beyond the page's existing 220ms
-    // entrance. Switching surfaces is switching pages. It sits *inside* the
-    // masthead band rather than under it — a row of its own cost 68px on every
-    // surface at every width, for three words.
-    <Segmented
-      value={surface}
-      onChange={setSurface}
-      size="touch"
-      options={SURFACES.map((s) => ({
-        value: s,
-        label: (
-          <span className="inline-flex items-center gap-1.5">
-            {SURFACE_LABEL[s]}
-            {untouched[s] && (
-              <>
-                <span aria-hidden className="size-1.5 bg-current" />
-                <span className="sr-only">, nothing recorded yet</span>
-              </>
-            )}
-          </span>
-        ),
-      }))}
-    />
-  )
 }
 
 /**
@@ -164,14 +107,18 @@ function TodayFocused() {
       {/* The dateline heads the *page*, not the log card. It used to live
           inside `DayLogCard`, which only the Day surface renders — so Morning
           and Evening printed no date at all and the day cursor could be walked
-          with nothing on screen changing to say so. The surface tabs ride in
-          its band; see `DayMasthead`.
+          with nothing on screen changing to say so.
+
+          The surface tabs used to ride at the right-hand end of this band.
+          They are the header's second row now — the row that holds every other
+          view's tab row and rendered a redundant centred title here. See
+          `components/shell/topbar/SurfaceTabs.tsx`.
 
           It is a child of `Page` rather than of the grid below, so it spans
           both columns — zone 1 orients the whole page, not just the left of
           it. `Page`'s own `aside` prop cannot do that, which is why the split
           is a grid here instead. */}
-      <DayHeader date={date} right={<SurfaceTabs />} />
+      <DayHeader date={date} />
 
       <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="flex min-w-0 flex-col">{main}</div>

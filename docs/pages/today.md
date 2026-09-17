@@ -26,7 +26,10 @@ All three fit one desktop screen. Two things paid for that:
 
 - **Chrome was 180px before a word of the day** — a 112px dateline and a 68px
   tab row, a fifth of the viewport, on every surface at every width. One band
-  now, 105px, with the tabs riding in it.
+  now, 105px. The surface tabs rode in that band until they moved up into the
+  shell's Row 2, which was rendering a redundant centred title on this view —
+  see `components/shell/topbar/SurfaceTabs.tsx`. The band is the dateline
+  alone again, and no shorter for it: the tabs had been sharing its height.
 - **550px of dead gutter each side at 1920.** The focused layout had no rail:
   an 820px column centred in a 1920px window, i.e. the phone layout with more
   air. It splits at `xl` on the classic layout's rule — you write in the left
@@ -71,15 +74,22 @@ by *not* giving everything equal prominence.
 memory are three separate bordered cards, each holding a single text field. They
 are the same act — closing out the day — split into three containers.
 
-**P3 · The date is stated twice — now three times.** The top bar shows
-`Fri, Aug 28` in the date picker and `Today · Your daily log` above it; the page
-masthead then says `Friday · August 28 · today`. Hoisting the dateline out of
-the log card (so Morning and Evening are dated at all) made this worse, not
-better. **Still open**, and the shape of the fix is known: the shell's Row 2
-exists for Today only to hold the day chevrons, so moving those into the
-masthead retires the row and ~56px with it. Not done here because it is a shell
-change for one view and the saving is 6% of a phone screen — worth doing with
-the next shell pass, not on its own.
+**P3 · The date was stated three times. Two now.** The top bar showed
+`Fri, Aug 28` in the date picker *and* `Today · Your daily log` beside it, and
+the page masthead then said `Friday · August 28 · today`.
+
+The middle one is gone: Row 2 holds the surface tabs now, so the slot that was
+rendering a title nobody needed — the word "Today" was already the lit rail row
+above it and the date pill to its right — says which third of the day you are
+looking at instead.
+
+The remaining pair (date pill · masthead dateline) is **still open**, and the
+shape of the fix has changed. The earlier note said "Row 2 exists for Today
+only to hold the day chevrons, so move those into the masthead and retire the
+row"; that is no longer available, because the row now carries the tab control
+for this view as it does for every other. The move to make is the other one:
+drop the day-name line from the masthead and let the header own the date. Worth
+doing with the next shell pass.
 
 ## UI
 

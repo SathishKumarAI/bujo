@@ -347,8 +347,17 @@ async function onScreen(locator) {
 
 async function go(name) {
   // Rail rows and section tabs are links; the Today surface switcher is a
-  // Radix ToggleGroup whose items are buttons inside `main`.
-  const items = page.locator('nav a, nav button, aside a, aside button, main [data-slot="toggle-group"] button')
+  // Radix ToggleGroup whose items are buttons.
+  //
+  // `header` as well as `main`, because the surface switcher moved into the
+  // header's second row. Scoped to `main` alone this selector found nothing the
+  // moment it moved, and `goOrDie` would have reported "no surface control with
+  // that name on Today" — a gate reading a relocation as a deletion. Both are
+  // listed rather than dropping `main`: a ToggleGroup is how this app spells a
+  // mode control, and the next one may well be on a page.
+  const items = page.locator(
+    'nav a, nav button, aside a, aside button, header [data-slot="toggle-group"] button, main [data-slot="toggle-group"] button',
+  )
   // Exact match first, then the same name carrying a **status suffix**.
   //
   // `hasText` reads `textContent`, which includes visually-hidden text — so the
