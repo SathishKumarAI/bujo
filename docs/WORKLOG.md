@@ -1,5 +1,86 @@
 # Worklog
 
+## 2026-09-16 — Why, what and how, for the user this time (#230–#232)
+
+**Summary:** The ask was the product's *why / what / how* for a reader who is
+not the person who wrote it — a manual, starting tutorials, and a way to explore
+everything the app can do. The finding under it was that the app already had
+three places that answered "what does this screen do", and the one a lost user
+opens was the stale copy: **`views/Help.tsx` named fifteen of twenty-four
+screens**, and nothing failed when the other nine were added. Two PRs, plus a
+mid-session request that turned into a third.
+
+**What shipped:**
+
+- **#230 · One catalogue, three readers.** `src/lib/guide.ts` holds only what
+  nothing else records — one sentence of *why* a page exists and two to four
+  *how* steps. Title and the "what it is" blurb are read from `VIEW_CHROME`;
+  the grouping from `SECTIONS`. Three readers off that: the rebuilt guide page
+  (search over twenty-four folded cards, each with an *Open* button), the
+  generated `docs/FEATURE-REFERENCE.md` (`npm run manual`), and the top-bar "?"
+  that already read `VIEW_CHROME`.
+
+  `guide.test.ts` is the part that makes it worth having: coverage asserted in
+  both directions, and `what` asserted **byte-identical** to the chrome blurb.
+  A paraphrase there is the drift the module exists to prevent.
+
+  `docs/MANUAL.md` is hand-written and deliberately not a feature list: why the
+  product exists, the first five minutes, the daily/weekly/monthly ritual and
+  why migration is the load-bearing loop, and the honest cost of local-first —
+  nobody is backing you up.
+
+  The generator loads the TypeScript through **Vite's own SSR module runner**,
+  because the guide imports `sections.ts` which imports `@/components/icons`:
+  alias and types both have to resolve. Fifteen lines, no `vite-node`.
+
+- **#231 · Today's surface tabs moved into the header.** Asked for mid-session
+  as "move them to centre of the second top nav bar", and the reason it was
+  right is structural: row 2 is the *where you are* row, it centres
+  `SectionTabs` on the fifteen views that have one, and Today has a single tab —
+  so it rendered a centred "Today / Your daily log" beside a date pill already
+  stating the date, under a rail row already lit Today. Morning / Day / Evening,
+  which *are* Today's tabs, sat in the page masthead. Swapped.
+
+- **#232 · `STATUS.md`,** including the axe workaround that worked and why it
+  is a workaround.
+
+**What the measuring found, and the phantoms it killed:**
+
+- **`?view=help` had never been scanned by `npm run a11y`.** Behind the top
+  bar's "?", so no tab clicks to it and it was absent from `COMPANIONS` — the
+  page a user opens *because they are already stuck* had no accessibility
+  evidence at all. Adding it turned the run red the same minute: `fg-2` on
+  `ink-3` is **4.07:1**, failing in four themes at once on an 11px label. Fixed
+  by moving the ground rather than the text. The same pairing is recorded as
+  COD-58 in a comment **inside the file that missed it.**
+
+- **The gate's `go()` locator was scoped to `main`.** Moving the surface
+  switcher into `<header>` would have made it report *"no surface control with
+  that name on Today"* — a gate reading a relocation as a deletion, two lines
+  under its own instruction not to answer that by deleting the entry.
+
+- **A segmented control in a `min-w-0` flex child draws past its own box.**
+  At 390px "Evening" rendered *underneath* the date pill with the ‹ arrow pushed
+  off the row. `npm run clipped` does not catch this: the box is not clipped, it
+  is overdrawn. Then `overflow-x-auto` alone rendered the active surface as
+  "Eve", so the active segment is scrolled into view the way `SectionTabs` does.
+
+- **`npm run a11y` is red on `main`.** It aborts at its capture-receipt
+  assertion before the view walk. Checked by stashing the branch, rebuilding
+  `main` and re-running: identical. Filed **COD-197** rather than writing
+  "environmental" in a handover note — this repo's `CLAUDE.md` records what that
+  sentence costs. A targeted axe pass stood in, and the PRs say so.
+
+- **A bash heredoc silently truncated a 400-line file write.** `cat > f <<'EOF'`
+  returned a *warning* about the delimiter and left valid-looking TypeScript cut
+  at line 124, mid-array. `wc -l` caught it. Long writes go through the editor
+  tools.
+
+**Gates:** `tsc -b` · `vitest` **1062 tests across 84 files** (was 1047/83) ·
+`eslint` · `design` 308 files · `contrast` 5 themes · `smoke` 25/25 ·
+`clipped` clean at 1440, 1024, 390 · axe on `?view=help` and on Today × 3
+surfaces, each 5 themes × 2 widths, **0 serious/critical**.
+
 ## 2026-09-15 — The capture loop, a regression I shipped myself, and two names (#219–#226)
 
 **Summary:** One ask — "after a voice or text update, take me to the page, show
