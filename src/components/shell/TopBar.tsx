@@ -10,6 +10,7 @@ import { SectionNav } from './topbar/SectionNav'
 import { DateNav } from './topbar/DateNav'
 import { HelpMenu } from './topbar/HelpMenu'
 import { OverflowMenu } from './topbar/OverflowMenu'
+import { SurfaceTabs } from './topbar/SurfaceTabs'
 import { useHideOnScroll } from './useHideOnScroll'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
@@ -73,6 +74,10 @@ export function TopBar({
   // Ask the same question `SectionTabs` asks itself, so the title and the tabs
   // cannot both decide to render — or both decide not to.
   const hasTabs = !!current && tabsOf(current, gates).length > 1
+  // Today's three time-of-day surfaces ARE its tabs — one per third of the day,
+  // each a filter over the same record. They belong on this row for the same
+  // reason `SectionTabs` does; see `topbar/SurfaceTabs.tsx`.
+  const hasSurfaces = view === 'today'
   const collapsed = useHideOnScroll()
 
   return (
@@ -191,6 +196,18 @@ export function TopBar({
                 the tab marked `aria-current` is what a sighted reader sees. */}
             <h1 className="sr-only">{chrome.title}</h1>
             <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
+          </>
+        ) : hasSurfaces ? (
+          <>
+            {/* Same shape as the tab branch: the heading stays for the outline,
+                the control says which surface you are on. The visible "Today"
+                is not lost — it is the rail row above and the date stepper to
+                the right, which is two statements of it already. */}
+            <h1 className="sr-only">{chrome.title}</h1>
+            {/* It brings its own scroll container and centring, exactly as
+                `SectionTabs` does — see its note for why that row has to
+                scroll rather than wrap or shrink. */}
+            <SurfaceTabs />
           </>
         ) : (
           <div className="flex min-w-0 flex-1 flex-col justify-center py-2 md:flex-none md:text-center">

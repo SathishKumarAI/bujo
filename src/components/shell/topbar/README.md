@@ -12,8 +12,9 @@ where nav changes land.
 | ‹ date › stepper and the year-wise jump popover | `DateNav.tsx` (popover markup: `../DateJumpPicker.tsx`, its only caller) |
 | The ⓘ blurb and the data-driven suggestions | `HelpMenu.tsx` |
 | ⌘K, theme, zoom, undo/redo, paper/handwriting/book | `OverflowMenu.tsx` |
-| Row order, brand, tabs-or-title, what row 2 holds | `../TopBar.tsx` |
+| Row order, brand, tabs-or-surfaces-or-title, what row 2 holds | `../TopBar.tsx` |
 | The tab row itself | `../SectionTabs.tsx` |
+| Today's Morning / Day / Evening switcher — row 2's tab row on that one view | `SurfaceTabs.tsx` |
 | Which sections exist and which tabs they hold | `../sections.ts` |
 | A page's title, subtitle, help blurb, date cursor | `../viewChrome.ts` |
 
