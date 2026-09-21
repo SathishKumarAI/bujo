@@ -18,6 +18,7 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { QuietSection } from '../components/CollapsibleSection'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { splitGlyph } from '../components/glyphs'
 import {
   RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
@@ -426,12 +427,61 @@ export function Gym() {
               </div>
             </section>
 
-            <QuietSection title="Personal records" subtitle="Heaviest logged lift per exercise" defaultOpen={false} stickyKey="gym.prs">
+            <QuietSection title="Am I getting stronger?" subtitle="Records, big-three standards and effort trend" stickyKey="gym.progress">
+              {/* EIGHT FOLDS, ALL SHUT.
+
+                  Every `QuietSection` on this page passed `defaultOpen={false}`,
+                  so the page measured **1.2 screens as shipped against 4.7
+                  opened** — almost everything it holds was behind a bar you had
+                  to find first, and the eight bars were identical grey rows that
+                  gave no clue which one had your squat PR in it.
+
+                  Collapsed by default is right for reference; it is wrong for
+                  the answer you came back for. This group is the payoff — it
+                  opens. The two below stay shut, and their `stickyKey` means
+                  opening one is remembered.
+
+                  Eight groups are now three, merged by the question each
+                  answers rather than by the table it renders. */}
+              {/* `CardGrid`, NOT `MasonryGrid` — measured, not chosen.
+
+                  `MasonryGrid` breaks on its CONTAINER (`@3xl` = 768px) and
+                  this review zone is **722px**. It misses by 46px, so all
+                  three groups resolved to a single column and the first
+                  version of this change packed nothing at all. `CardGrid`
+                  breaks on the viewport, which is the right question when the
+                  column width is decided by the page split rather than by the
+                  card. The two charts keep the full row with `SPAN_2`; a
+                  361px column has no room for an axis. */}
+              <CardGrid>
               <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
+            
+
+              {/* One card, not two side by side. The big-three tiles were
+                  `Personal records` a second time — see COD-89. */}
+              <RelativeStrengthCard rows={relStrength} total={bigThree} unit={unit} setFocusEx={setFocusEx} />
+              {rpeSeries.length >= 2 && (
+                <Card band className={SPAN_2} title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
+                  <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+                        <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                        <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                        <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
+                        <Tooltip contentStyle={rechartsTooltip()} />
+                        <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              )}
+            
+              </CardGrid>
             </QuietSection>
 
-            <QuietSection title="Training volume" subtitle="Weekly working sets, and a focused lift's progression" defaultOpen={false} stickyKey="gym.volume">
-              <Card band title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
+            <QuietSection title="What am I neglecting?" subtitle="Volume, push/pull/legs balance, what is rested and what has stalled" defaultOpen={false} stickyKey="gym.balance">
+              <CardGrid>
+              <Card band className={SPAN_2} title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
                 <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -473,43 +523,23 @@ export function Gym() {
                 )}
               </Card>
               {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
-            </QuietSection>
+            
 
-            <QuietSection title="Movement & recovery" subtitle="Push/pull/legs balance and what is rested" defaultOpen={false} stickyKey="gym.movement">
               <div className="grid items-start gap-5 lg:grid-cols-2">
                 <MovementRadar data={categoryVolume} unit={unit} />
                 <RecoveryMap recovery={recovery} setFocusEx={setFocusEx} />
               </div>
-            </QuietSection>
+            
 
-            <QuietSection title="Frequency & alerts" subtitle="Most-trained movements, neglected muscles, stalled lifts" defaultOpen={false} stickyKey="gym.frequency">
               <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
               <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
               <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
+            
+              </CardGrid>
             </QuietSection>
 
-            <QuietSection title="Strength standards" subtitle="Big-three total, bodyweight ratios, effort trend" defaultOpen={false} stickyKey="gym.standards">
-              {/* One card, not two side by side. The big-three tiles were
-                  `Personal records` a second time — see COD-89. */}
-              <RelativeStrengthCard rows={relStrength} total={bigThree} unit={unit} setFocusEx={setFocusEx} />
-              {rpeSeries.length >= 2 && (
-                <Card band title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
-                  <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
-                        <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                        <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                        <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                        <Tooltip contentStyle={rechartsTooltip()} />
-                        <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              )}
-            </QuietSection>
-
-            <QuietSection title="Body weight" subtitle="Faint = daily, bold = 7-day average" defaultOpen={false} stickyKey="gym.bodyweight">
+            <QuietSection title="How is my body changing?" subtitle="Weight trend and dated photos" defaultOpen={false} stickyKey="gym.body">
+              <CardGrid>
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} aria-label={`Today's weight in ${unit}`} className="max-w-[200px]" />
                 <Button
@@ -536,10 +566,11 @@ export function Gym() {
                   </ResponsiveContainer>
                 </div>
               )}
-            </QuietSection>
+            
 
-            <QuietSection title="Progress photos" subtitle="Dated shots, side by side" defaultOpen={false} stickyKey="gym.photos">
               <ProgressPhotos />
+            
+              </CardGrid>
             </QuietSection>
 
             {/* "Look up & tools" lived here, at the very bottom of the review
