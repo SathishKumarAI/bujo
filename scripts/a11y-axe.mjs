@@ -184,6 +184,27 @@ const context = await browser.newContext({ viewport: VIEWPORTS[0] })
 const page = await context.newPage()
 
 /**
+ * Why a page failed, kept until something asks.
+ *
+ * The gate had no error capture at all, so when `main` came back empty the
+ * report could say the body was blank and nothing about the reason. A blank
+ * body is a boot failure — a thrown module, a chunk that 404'd, a service
+ * worker serving half a shell — and those are four different fixes.
+ *
+ * Bounded and cleared per navigation: this is for the failure in front of you,
+ * not a log.
+ */
+let pageErrors = []
+page.on('pageerror', (e) => pageErrors.push(String(e?.message ?? e).slice(0, 200)))
+page.on('console', (m) => {
+  if (m.type() === 'error') pageErrors.push(`console: ${m.text().slice(0, 200)}`)
+})
+page.on('requestfailed', (r) => {
+  const u = r.url()
+  if (/\.(js|css)(\?|$)/.test(u)) pageErrors.push(`failed ${r.failure()?.errorText ?? '?'} ${u.slice(-60)}`)
+})
+
+/**
  * THEMES · contrast is a per-theme property, and this gate only ever saw one.
  *
  * "Only mocha was checked" sat in STATUS.md as an open item for several
@@ -581,13 +602,40 @@ async function scan(label) {
    * The assertion stays, because a clean result on a blank page reads as
    * proof. It just has to be made after giving the view a chance.
    */
+  const read = async () =>
+    page.evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length).catch(() => 0)
+
   let rendered = 0
   for (let i = 0; i < 24; i++) {
-    rendered = await page
-      .evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length)
-      .catch(() => 0)
+    rendered = await read()
     if (rendered >= 40) break
     await page.waitForTimeout(500)
+  }
+
+  /**
+   * One reload, reported — not a silent retry.
+   *
+   * The diagnostic dump finally named this: not a slow view but a blank
+   * DOCUMENT. `body says: ""`, `main html: (empty)`, the right url, no dialog
+   * and no menu — the app did not boot on that navigation. Twelve seconds of
+   * polling cannot fix a boot that never happened.
+   *
+   * A reload recovers it, and killing a sixteen-minute walk over one is worse
+   * than retrying. But a silent retry would turn an intermittent boot failure
+   * into something nobody ever sees, which is how a gate starts lying — so it
+   * prints, every time, and the run still says a reload was needed.
+   */
+  if (rendered < 40) {
+    console.error(`
+[${label}] blank after 12s — reloading once. The app did not boot on this navigation.`)
+    pageErrors = []
+    await page.reload({ waitUntil: 'networkidle' }).catch(() => {})
+    for (let i = 0; i < 24; i++) {
+      rendered = await read()
+      if (rendered >= 40) break
+      await page.waitForTimeout(500)
+    }
+    if (rendered >= 40) console.error(`  recovered after the reload — ${rendered} characters. Not fatal, but not nothing.`)
   }
   if (rendered < 40) {
     console.error(`\n[${label}] rendered ${rendered} characters — the view did not load, so its result means nothing.`)
@@ -613,6 +661,7 @@ async function scan(label) {
     console.error(`  url: ${seen?.url} · dialogs: ${seen?.dialogs} · menus: ${seen?.menus}`)
     console.error(`  body says: "${seen?.bodyText}"`)
     console.error(`  main html: ${seen?.mainHtml || '(empty)'}`)
+    console.error(pageErrors.length ? `  page errors: ${pageErrors.slice(-6).join(' | ')}` : '  page errors: none captured — the app rendered nothing without throwing.')
     await browser.close()
     process.exit(1)
   }
