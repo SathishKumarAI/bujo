@@ -12,6 +12,22 @@ import { isScheduledOn } from './schedule'
 
 /** Common urge / temptation types for the quick-pick. Users can type any custom
  *  value too — anything they log appears alongside these. */
+/**
+ * Addictions people actually track, so adding one is a prompt rather than a
+ * blank field and a typo.
+ *
+ * The input accepted free text and offered nothing, which is fine for the one
+ * you already had in mind and useless for "what else should I be watching".
+ * A `datalist`, not a chip row: this is a suggestion list, and your own words
+ * still win.
+ */
+export const ADDICTION_PRESETS = [
+  'Porn', 'Masturbation', 'Alcohol', 'Nicotine', 'Vaping', 'Cannabis',
+  'Sugar', 'Junk food', 'Caffeine', 'Energy drinks', 'Doomscrolling',
+  'Social media', 'Short-form video', 'Gaming', 'Gambling', 'Online shopping',
+  'Nail biting', 'Late-night snacking', 'Binge watching', 'News',
+] as const
+
 export const URGE_PRESETS = [
   'Porn', 'Masturbation', 'Smoking', 'Vaping', 'Alcohol',
   'Junk food', 'Sugar', 'Doomscrolling', 'Gaming', 'Caffeine',

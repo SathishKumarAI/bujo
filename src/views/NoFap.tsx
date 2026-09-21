@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
+import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, ADDICTION_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
 import type { TriggerPlan } from '../lib/types'
 import { PageLayout, StatBar, SummaryStrip } from '../components/page'
@@ -16,6 +16,8 @@ import { LazyMount } from '../components/LazyMount'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
 import { notify } from '../lib/notify'
+import { ChipPick } from '../components/ui/quickpick'
+import { CardGrid } from '../components/shell/CardGrid'
 import {
   StreakVsBestCard,
   SelfEfficacyCard,
@@ -199,7 +201,7 @@ export function NoFap() {
     lastUrgeAt.current = now
     resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique, halt: halt.length ? halt : undefined })
     setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([])
-    notify.success('Logged — that one passed', 'Remove it from the list below if it was a mis-tap.')
+    notify.success('Urge logged', 'Remove it from the list below if it was a mis-tap.')
   }
   const haltRank = haltTally(data)
   const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
@@ -327,16 +329,18 @@ export function NoFap() {
 
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
-        <Card band hideInfo title="Urge surfing" subtitle="Feeling an urge? Pick what it is and mark the win, it crests and passes in minutes.">
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {URGE_PRESETS.map((u) => (
-              <button key={u} onClick={() => setUrge(u)}
-                className="rounded-control border px-2.5 py-1 text-label transition-colors"
-                style={{ borderColor: urge === u ? cat('mauve') : cat('surface1'), background: urge === u ? cat('mauve') + '22' : 'transparent', color: urge === u ? cat('text') : cat('subtext0') }}>
-                {u}
-              </button>
-            ))}
-          </div>
+        <Card band hideInfo title="Urge surfing" subtitle="Feeling an urge? Name it and log it — it crests and passes in minutes.">
+          {/* Was a hand-rolled chip row with inline border/background/colour
+              ternaries — and so were the technique and HALT rows below it,
+              three copies of the same markup differing only in accent. They
+              are one component now (`ChipPick`), which also gives them the
+              44px targets and the press feedback the copies never had. */}
+          <ChipPick
+            label="What is it?"
+            value={urge || null}
+            onChange={(u) => setUrge(String(u))}
+            options={URGE_PRESETS.map((u) => ({ value: u, label: u }))}
+          />
           <div className="flex flex-wrap items-center gap-2">
             <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge()} placeholder="…or type your own" list="urge-presets" className="min-w-[10rem] flex-1" />
             <datalist id="urge-presets">{URGE_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
@@ -359,38 +363,31 @@ export function NoFap() {
               className="mt-1 w-full accent-mauve" style={{ accentColor: cat('mauve') }} aria-label="Urge intensity, 1 to 5" />
           </div>
           {/* Technique chips (U8) */}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {TECHNIQUES.map((t) => (
-              <button key={t.id} onClick={() => setTechnique(technique === t.id ? undefined : t.id)}
-                className="rounded-control border px-2.5 py-1 text-label transition-colors"
-                style={{ borderColor: technique === t.id ? cat('teal') : cat('surface1'), background: technique === t.id ? cat('teal') + '22' : 'transparent', color: technique === t.id ? cat('text') : cat('subtext0') }}>
-                {t.label}
-              </button>
-            ))}
+          <div className="mt-3">
+            <ChipPick
+              label="What helped?"
+              tone="teal"
+              value={technique ?? null}
+              onChange={(t) => setTechnique(technique === t ? undefined : (t as typeof technique))}
+              options={TECHNIQUES.map((t) => ({ value: t.id, label: t.label }))}
+            />
           </div>
           {/* HALT quick-check · which unmet need is driving the urge? */}
-          <div className="mt-2">
-            <p className="mb-1 text-label text-fg-2">HALT check, tap any that fit</p>
-            <div className="flex flex-wrap gap-1.5">
-              {HALT_STATES.map((hs) => {
-                const on = halt.includes(hs.id)
-                return (
-                  <button key={hs.id} onClick={() => setHalt((cur) => cur.includes(hs.id) ? cur.filter((x) => x !== hs.id) : [...cur, hs.id])}
-                    aria-pressed={on}
-                    className="rounded-control border px-2.5 py-1 text-label transition-colors"
-                    style={{ borderColor: on ? cat('peach') : cat('surface1'), background: on ? cat('peach') + '22' : 'transparent', color: on ? cat('text') : cat('subtext0') }}>
-                    {hs.label}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="mt-3">
+            <ChipPick
+              label="HALT check"
+              tone="peach"
+              multi
+              hint="Tap any that fit — several can be true at once."
+              value={halt}
+              onChange={(id) => setHalt((cur) => cur.includes(id as typeof cur[number]) ? cur.filter((x) => x !== id) : [...cur, id as typeof cur[number]])}
+              options={HALT_STATES.map((h) => ({ value: h.id, label: h.label }))}
+            />
           </div>
           <div className="mt-3 flex justify-end">
-            <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><Icon as={HandFist} size="sm" /> I resisted it</Button>
+            <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><Icon as={HandFist} size="sm" /> Log this urge</Button>
           </div>
-          <div className="mt-3 flex items-center justify-between text-body">
-            <span className="text-fg-1">Urges resisted: <span className="font-medium" style={{ color: onRaised('green') }}>{stats.urges}</span></span>
-          </div>
+
           {/* Most-effective technique tally (U8) */}
           {techRank.length > 0 && (
             <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
@@ -425,7 +422,7 @@ export function NoFap() {
               ))}
             </ul>
           )}
-          {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-label text-fg-2">+ {data.nofap.urgesResisted} earlier wins (before dated logging).</p>}
+          {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-label text-fg-2">+ {data.nofap.urgesResisted} logged before dated entries existed.</p>}
         </Card>
 
         {/* Log a reset · moved up from the rail · the second primary action */}
@@ -448,10 +445,19 @@ export function NoFap() {
         </>}
         zone3={<>
         {/* Lifetime totals · the record, not the next action. */}
+        {/* **Only the negatives are counted here now.** "Urges resisted" was a
+            score, and a score invites you to protect it: the cheapest way to
+            keep a win counter climbing is to tap the win button, which is not
+            recovery. What stays is what actually happened — days clean, and
+            resets. The urge log itself is untouched and still records the
+            trigger, the intensity and the HALT check, because that is
+            diagnostic data about a hard moment rather than a trophy for it.
+            No existing data was deleted; this is what the page shows, not what
+            it stores. */}
         <SummaryStrip items={[
           { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
-          { label: 'Urges resisted', value: stats.urges, empty: stats.urges === 0 },
           { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
+          { label: 'Urges logged', value: stats.urges, empty: stats.urges === 0 },
         ]} />
 
         {/* SIGNATURE VISUAL · urges resisted against resets, week by week.
@@ -464,14 +470,15 @@ export function NoFap() {
         <section>
           {/* Ruled, like "Insights & progress" and "Deep analytics" further
               down this same column. */}
-          <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Urges resisted vs resets</h2>
+          <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Urges logged vs resets</h2>
           <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
         </section>
 
         {/* Per-addiction streaks (BUJO-199) · each tracked as its own streak + best */}
         <Card band hideInfo title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="urge-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
+            <Input value={newAddiction} onChange={(e) => setNewAddiction(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addAddiction(newAddiction); setNewAddiction('') } }} placeholder="Add an addiction (e.g. Sugar)" list="addiction-presets" aria-label="New addiction name" className="min-w-[10rem] flex-1" />
+            <datalist id="addiction-presets">{ADDICTION_PRESETS.map((a) => <option key={a} value={a} />)}</datalist>
             <Button variant="secondary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
           </div>
           {(data.nofap.addictions ?? []).length === 0 ? (
@@ -602,7 +609,16 @@ export function NoFap() {
         {/* Insights · motivational / progress cards */}
         <section>
           <h2 className="border-b border-line pb-1 text-label text-fg-2">Insights & progress <span className="text-fg-3">· Streak vs. best, self-efficacy, money & time saved</span></h2>
-          <div className="mt-2 flex flex-col gap-4">
+          {/* Was `flex-col` — six cards in one column, then seven more below
+              it in another, which is most of why this page ran to 2.8 screens.
+              `CardGrid`, not `MasonryGrid`: this page is NOT `stacked`, so
+              zone-review is ~730px of the 1,180 tier and masonry's `@3xl`
+              container query (768px) misses it by under 40px — measured, the
+              page height did not move at all. `CardGrid` breaks on the
+              viewport instead, which is the right question here because the
+              column width is fixed by the split rather than by the screen. */}
+          <div className="mt-2">
+          <CardGrid>
           <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />
           {conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />}
           {saved.saved > 0 && <StreaksSavedCard saved={saved} />}
@@ -611,7 +627,8 @@ export function NoFap() {
           )}
           <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />
           {!quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />}
-        </div>
+          </CardGrid>
+          </div>
         </section>
 
         {/* Deep analytics · trends, distributions, heatmaps, patterns.
@@ -619,10 +636,20 @@ export function NoFap() {
             visits — the data is computed above either way, but recharts
             mount+measure+draw waits until the reader actually heads down
             here (400px early, so it is there when they arrive). */}
-        <section>
-          <h2 className="border-b border-line pb-1 text-label text-fg-2">Deep analytics <span className="text-fg-3">· Trends, intensity, clean windows, high-risk hours & days, urge mix</span></h2>
+        {/* Folded, like Setup and Reference on this same page. Seven chart
+            cards that answer "what is the pattern over months" do not need to
+            be between you and the reset button every day — and this page is
+            opened in a bad moment, when the last thing it should be is long.
+            The heading still names what is inside, so nothing is hidden;
+            it is one tap, not a search. */}
+        <CollapsibleSection
+          variant="quiet" defaultOpen={false} stickyKey="recovery.analytics"
+          title="Deep analytics"
+          subtitle="Trends, intensity, clean windows, high-risk hours & days, urge mix"
+        >
           <LazyMount minHeight={600}>
-          <div className="mt-2 flex flex-col gap-4">
+          <div className="mt-2">
+          <CardGrid>
           {urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />}
           {intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />}
           {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
@@ -650,9 +677,10 @@ export function NoFap() {
               </div>
             </Card>
           )}
+          </CardGrid>
         </div>
           </LazyMount>
-        </section>
+        </CollapsibleSection>
 
         {/* ── Reference · static guides & history──────────
             Folded. 869px measured at 1440 — the coping list, the milestone
