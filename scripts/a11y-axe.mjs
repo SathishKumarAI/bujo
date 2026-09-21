@@ -323,16 +323,47 @@ async function settle() {
  */
 async function onScreen(locator) {
   const vp = page.viewportSize()
-  const n = await locator.count()
-  const offscreen = []
-  for (let i = 0; i < n; i++) {
-    const el = locator.nth(i)
-    const box = await el.boundingBox()
-    if (!box) continue // detached or display:none
-    const out = box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
-    if (out) { offscreen.push(el); continue }
-    return el
+  const outside = (box) =>
+    box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
+
+  /** One pass over the candidates: the first on screen wins; the rest are returned. */
+  async function sweep() {
+    const n = await locator.count()
+    const off = []
+    for (let i = 0; i < n; i++) {
+      const el = locator.nth(i)
+      const box = await el.boundingBox()
+      if (!box) continue // detached or display:none
+      if (outside(box)) { off.push(el); continue }
+      return { hit: el, off }
+    }
+    return { hit: null, off }
   }
+
+  let { hit, off: offscreen } = await sweep()
+  if (hit) return hit
+
+  /**
+   * Nothing on screen — so put the page back at the top and look again.
+   *
+   * **The phone's only navigation hides itself on scroll-down.** `BottomNav`
+   * and the top bar's section fold share `useHideOnScroll`, so after the gate
+   * has scrolled — opening folds, or scrolling a tab row into view — the bar it
+   * is about to look for has slid out: measured at `y 845` in an `844` viewport,
+   * one pixel below the fold, which is indistinguishable from "that destination
+   * no longer exists". That is COD-202, and it read as intermittent because it
+   * depended on how far the previous surface had been scrolled; adding Habits
+   * (the tallest) to `SURFACES` made it reliable.
+   *
+   * A user meets this every day and solves it without thinking: scroll up. So
+   * does the gate. Cheap, because it only runs once nothing was found — and it
+   * must come before `scrollIntoViewIfNeeded` below, which scrolls *down* to a
+   * tab and would re-hide the bar it just revealed.
+   */
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await settle()
+  ;({ hit, off: offscreen } = await sweep())
+  if (hit) return hit
   // Nothing on screen, but something exists. That is not automatically the
   // parked drawer: at 390px the Body tab row is 571px of tabs in a 358px row,
   // so Recovery and Cycle sit off the *right* edge and a user reaches them by
@@ -346,11 +377,14 @@ async function onScreen(locator) {
     await el.scrollIntoViewIfNeeded({ timeout: 1000 }).catch(() => {})
     const box = await el.boundingBox()
     if (!box) continue
-    const out = box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
-    if (!out) return el
+    if (!outside(box)) return el
   }
   return null
 }
+
+/** Every control `go` will click, as one selector — shared with the failure dump. */
+const NAV_SELECTOR =
+  'nav a, nav button, aside a, aside button, header [data-slot="toggle-group"] button, main [data-slot="toggle-group"] button'
 
 async function go(name) {
   // Rail rows and section tabs are links; the Today surface switcher is a
@@ -362,9 +396,24 @@ async function go(name) {
   // that name on Today" — a gate reading a relocation as a deletion. Both are
   // listed rather than dropping `main`: a ToggleGroup is how this app spells a
   // mode control, and the next one may well be on a page.
-  const items = page.locator(
-    'nav a, nav button, aside a, aside button, header [data-slot="toggle-group"] button, main [data-slot="toggle-group"] button',
-  )
+  const items = page.locator(NAV_SELECTOR)
+  /**
+   * Wait for the control to EXIST before deciding it does not.
+   *
+   * `onScreen` counts and measures immediately, so a nav that has not
+   * rendered yet is indistinguishable from a nav that no longer carries this
+   * destination — and `goOrDie` treats the second as fatal. Views are lazily
+   * imported and `setTheme` reloads between themes; `networkidle` fires when
+   * the chunk has landed, not when React has painted it.
+   *
+   * This is the difference between "the door is gone" and "I knocked too
+   * early", which is the exact question `goOrDie` claims to answer.
+   */
+  await items
+    .filter({ hasText: new RegExp(`^${name}([,·]|$)`) })
+    .first()
+    .waitFor({ state: 'attached', timeout: 8000 })
+    .catch(() => {})
   // Exact match first, then the same name carrying a **status suffix**.
   //
   // `hasText` reads `textContent`, which includes visually-hidden text — so the
@@ -391,6 +440,25 @@ async function goOrDie(name, why) {
   console.error(`\n[${name}] ${why}`)
   console.error('  Either the destination was renamed/retired, or it lost its door. Do not')
   console.error('  drop it from VIEWS to make this pass without checking which.')
+  /**
+   * Say what WAS there.
+   *
+   * "Could not reach it" with no evidence is a red that carries no
+   * information — you cannot tell a renamed tab from a timing race from a
+   * control that rendered off screen, and that three-way guess cost a whole
+   * session. The dump below answers it in the log instead.
+   */
+  const found = await page.locator(NAV_SELECTOR).allTextContents().catch(() => [])
+  const names = found.map((t) => t.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  console.error(`  url: ${page.url()} · viewport: ${viewport} · theme: ${theme}`)
+  console.error(`  ${names.length} navigable control(s): ${names.slice(0, 24).join(' | ') || '(none — the nav had not rendered)'}`)
+  const near = names.filter((t) => t.toLowerCase().includes(name.toLowerCase()))
+  if (near.length) console.error(`  close matches: ${near.join(' | ')} — the name grew a suffix the regex does not allow.`)
+  const boxes = await page.locator(NAV_SELECTOR).filter({ hasText: new RegExp(`^${name}([,·]|$)`) }).evaluateAll((els) =>
+    els.map((e) => { const b = e.getBoundingClientRect(); const st = getComputedStyle(e)
+      return `x${Math.round(b.x)} y${Math.round(b.y)} ${Math.round(b.width)}x${Math.round(b.height)} vis:${st.visibility} disp:${st.display} op:${st.opacity}` }),
+  ).catch(() => [])
+  console.error(`  viewport ${page.viewportSize()?.width}x${page.viewportSize()?.height} · boxes: ${boxes.join(' ‖ ') || '(none)'}`)
   await browser.close()
   process.exit(1)
 }
