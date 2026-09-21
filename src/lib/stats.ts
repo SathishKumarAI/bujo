@@ -1,6 +1,7 @@
 import type { Habit, HabitType, JournalData } from './types'
 import { labelOf } from '../domain/activities'
 import { addDays, dayDiff, isFutureDay, todayISO, weekDaysOf } from './date'
+import { isScheduledOn } from './schedule'
 
 // ── Habit completion (single source of truth across all layouts) ─────────────
 
@@ -207,14 +208,12 @@ export function reminderMessage(
   data: JournalData,
   today = todayISO(),
 ): { title: string; body: string } | null {
-  const dow = new Date(today + 'T00:00').getDay()
 
   // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
   let risk: { name: string; streak: number } | null = null
   for (const h of data.habits) {
     if (h.archived) continue
-    const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
-    if (!scheduled) continue
+    if (!isScheduledOn(h, today)) continue
     const doneToday = habitDoneOn(data, h, today)
     const skippedToday = (data.habitSkips?.[h.id] ?? []).includes(today)
     if (doneToday || skippedToday) continue

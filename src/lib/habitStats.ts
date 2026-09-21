@@ -2,6 +2,7 @@ import type { Habit, HabitCategory, JournalData } from './types'
 import { addDays, fromISODay, todayISO } from './date'
 import { habitDoneOn, habitTarget, habitValueOn } from './stats'
 import { dayIntensity } from './habitIntensity'
+import { isScheduledOn } from './schedule'
 
 /**
  * Per-habit completion analytics that respect a habit's scheduling. A habit is
@@ -9,12 +10,6 @@ import { dayIntensity } from './habitIntensity'
  * weekday is in its activeDays (empty/undefined activeDays = every day). Pure +
  * unit-tested; the positive counterpart of the streak/clean-streak helpers.
  */
-
-/** Is the habit scheduled on this ISO day (started + active weekday)? */
-export function isScheduledOn(h: Habit, day: string): boolean {
-  if (day < h.startedOn) return false
-  return !h.activeDays?.length || h.activeDays.includes(fromISODay(day).getDay())
-}
 
 export interface CompletionRate {
   /** Days the habit was scheduled in the window. */

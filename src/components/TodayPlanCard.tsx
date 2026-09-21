@@ -6,6 +6,7 @@ import { cat, onRaised } from '../lib/colors'
 import { todayISO, prettyDay, WEEKDAYS, addDays } from '../lib/date'
 import { dayCompletion, habitStreak } from '../lib/stats'
 import { weekCoverage } from '../lib/coverage'
+import { isScheduledOn } from '../lib/schedule'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
 
@@ -30,12 +31,10 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   const habitsLeft = cov.total - cov.done
 
   // Streaks at risk that day: scheduled, not yet done, with a ≥3-day run going.
-  const dow = new Date(day + 'T00:00').getDay()
   const log = data.habitLog[day] ?? []
   const atRisk = data.habits.filter((h) => {
     if (h.archived || (h.type ?? 'check') !== 'check') return false
-    const scheduled = !h.activeDays?.length || h.activeDays.includes(dow)
-    if (!scheduled || log.includes(h.id)) return false
+    if (!isScheduledOn(h, day) || log.includes(h.id)) return false
     return habitStreak(data, h.id, addDays(day, -1)) >= 3
   })
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= day).length

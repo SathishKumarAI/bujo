@@ -4,6 +4,7 @@
 import type { JournalData } from './types'
 import { todayISO, addDays } from './date'
 import { habitStreak } from './stats'
+import { isScheduledOn } from './schedule'
 
 export type PenaltyTier = 'light' | 'medium' | 'heavy' | 'legendary'
 
@@ -83,11 +84,11 @@ export function missesFor(data: JournalData, today = todayISO()): MissReport {
   let weight = 0
 
   // Broken habit streaks (scheduled yesterday, not done, not skipped).
-  const yDow = new Date(y + 'T00:00').getDay()
   for (const h of data.habits) {
     if (h.archived) continue
-    const scheduled = !h.activeDays?.length || h.activeDays.includes(yDow)
-    if (!scheduled) continue
+    // Was a weekday-only test, so a habit whose `startedOn` is still in the
+    // future counted as missed and earned you make-up drills for it. COD-199.
+    if (!isScheduledOn(h, y)) continue
     const done = (data.habitLog[y] ?? []).includes(h.id)
     const skip = (data.habitSkips?.[h.id] ?? []).includes(y)
     if (done || skip) continue

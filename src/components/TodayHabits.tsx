@@ -8,6 +8,7 @@ import { Card, Textarea } from './ui'
 import { Button } from './ui/button'
 import { CheckRow } from './ui/checkbox'
 import { orderedSlots, slotMeta, type TimeOfDay } from '../lib/timeofday'
+import { habitsDueOn } from '../lib/schedule'
 import { slotGlyph } from './glyphs'
 import type { Habit } from '../lib/types'
 
@@ -39,11 +40,9 @@ export function TodayHabits({
   const today = date
   const [noteFor, setNoteFor] = useState<string | null>(null)
   const notes = data.habitNotes?.[today] ?? {}
-  const now = new Date(today + 'T00:00')
-  const dow = now.getDay()
-  const habits = data.habits.filter(
-    (h) => !h.archived && (h.type ?? 'check') === 'check' && today >= h.startedOn && (!h.activeDays?.length || h.activeDays.includes(dow)),
-  )
+  // This one was already right about `startedOn` — and was still a fourth
+  // hand-written spelling of the same rule. One definition now (COD-199).
+  const habits = habitsDueOn(data, today, { checkOnly: true })
   if (habits.length === 0) return null
 
   const log = data.habitLog[today] ?? []
