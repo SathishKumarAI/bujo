@@ -184,7 +184,13 @@ export function Stepper({
             className="w-full rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-center text-body tabular-nums text-fg-1 placeholder:text-fg-3 focus-visible:border-ring focus-visible:outline-none"
           />
           {suffix && (
-            <span aria-hidden className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-label text-fg-3">{suffix}</span>
+            /* `text-fg-2`, not `fg-3`. On `bg-ink-2` the quieter step measured
+               **4.18:1 on mocha and 4.49 on latte** at 13px — under the floor
+               in four of the five themes, and `aria-hidden` does not excuse it
+               because it is still read by eyes. Caught by `npm run a11y`,
+               which is exactly the class of bug the two rendering gates
+               cannot see. */
+            <span aria-hidden className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-label text-fg-2">{suffix}</span>
           )}
         </span>
         <button
