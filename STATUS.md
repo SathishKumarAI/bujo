@@ -1,145 +1,92 @@
 # STATUS
 
-**Stopped:** 2026-09-21, on `main`, clean. Three PRs merged this session:
-**#234** Settings & Account layout + motion; **#235** one habit-scheduling
-rule; **#236** Insights absorbs Stats. Plane: COD-199, COD-200, COD-201 done.
-**COD-202 open and it is the one that matters — see "The gate is off".**
+**Stopped:** 2026-09-21, on `main`, clean, no open PRs. **Thirty commits**,
+seventeen PRs (#234–#251). Plane: COD-199, COD-200, COD-201, COD-203 done;
+**COD-202 open and still the thing that matters most.**
 
-## What shipped
+## The one that matters — COD-202, `npm run a11y`
 
-### #234 · COD-200 · Settings & Account
-
-**A text collision on a phone.** `tabsListVariants` sets
-`group-data-[orientation=horizontal]/tabs:h-9`; the call site passed a bare
-`h-auto`, and tailwind-merge does not treat those as the same utility, so both
-shipped and the variant won. Five pills wrapped to three rows at 390px inside a
-36px box and the overflow drew **on top of** the panel — "Data" over the
-"Profile" card heading, on the live build.
-
-**Neither rendering gate can see an overlap.** `clipped-text.mjs` asks whether
-an element shows less than it holds (every pill showed all its text); `a11y`
-asks whether the tree is sound (it was). Worth remembering next time something
-"cannot have regressed, the gates are green".
-
-Also: three tabs capped content at `max-w-2xl` inside the wide tier (~500px
-dead beside every control) while Sync and Data had no cap at all (a 1,160px
-passphrase field); four `Disclosure`s shipped **open** despite comments saying
-"collapsed to cut option overload"; Data's `auto-rows-fr` stretched Tags to
-match a 1,300px neighbour; "Journal summary" drew its heading twice, 40px
-apart, differing in one capital T.
-
-Measured, built bundle, full page: Appearance 1341→1076, Sync 1932→**624**,
-Data 3062→**1112**.
-
-**The motion system was landing on nothing.** `.page-enter > *` selects DIRECT
-children and sat on the page shell, which has exactly one — so every contract
-page rose as a single block and the 45ms ladder never ran once. Moved onto
-`.page-zones`, `.zone-review` and both grids in `CardGrid.tsx`. Account went
-from 1 staggered child to 4. A band's hover is now its closing hairline
-(`line` → `line-strong`), not a shadow: a shadow re-boxes the card the band
-variant exists to un-box.
-
-### #235 · COD-199 · one answer to "what is due today"
-
-`isScheduledOn` was always the definition — `day >= startedOn` AND the weekday
-is active. **Seven call sites re-typed the weekday half and dropped
-`startedOn`.** `lib/penalties.missesFor` was one of them, so a habit scheduled
-to begin next month **earned you make-up drills for missing it**.
-
-Nothing failed, because two hand-written filters that agree with *each other*
-read as correct. `Trackers.tsx` said so in a comment — "same filter TodayStrip
-applies, so the header count and the chips agree" — true of each other, false
-of the `trackerSummary` call one line above, rendered as "today done N%" sixty
-pixels higher on the same page.
-
-**A slip counted as a completion.** `habitDoneOn` is true for an *avoid* habit
-when you logged it, which means you slipped; Trackers' header ran over every
-habit, so slipping on "no doomscroll" pushed "done" **up**.
-
-`lib/schedule.ts` is a new leaf module owning `isScheduledOn` and
-`habitsDueOn`. It is below `habitStats` **because it has to be**: `habitStats`
-imports `stats`, so the moment `stats.ts` needed the rule there was nowhere
-else to put it without closing an import cycle.
-
-**Grep found thirteen matches and six were already correct.** `CategoryRows`
-names a local `scheduled` that genuinely means only the weekday half (it pairs
-it with a separate `before = d < h.startedOn`); `coverage.ts` and
-`stats.dayCompletion` spell `startedOn` on the line above the one grep matched.
-All three left alone. This is the "two things with the same name" trap in
-`CLAUDE.md`, live.
-
-`schedule.test.ts` is named for symptoms, not functions, and **was verified to
-fail on the old behaviour** — reverting `penalties.ts` alone turns exactly one
-test red.
-
-### #236 · COD-201 · Insights absorbs Stats
-
-The page called Insights rendered **zero charts**. Every plot in the app was on
-the Stats tab behind seven `defaultOpen={false}` folds. ~20 analytics surfaces,
-none reachable without already knowing where to click.
-
-One page now. Six domain chips with live counts, a search matching a card's
-*measure* as well as its title, a sort on journal results. Four new charts:
-correlation matrix, journal volume, habit consistency, task completion trend.
-
-`views/Stats.tsx` was **`git mv`d, not retyped**, and the proof is a
-rendered-output diff of the built bundle with every fold forced open: headings
-6+27→37, recharts surfaces 0+6→8, **chart `aria-label`s lost 0**, text lines
-lost 7 (all accounted for). That diff earned its keep twice — it caught a
-five-fact `StatBar`, and **`StatBar` slices to four while warning only in
-DEV**, so the fifth vanished from a production build with nothing on screen to
-say so.
-
-`?view=stats` aliases to `insights`, so bookmarks, deep links and guide buttons
-still land.
-
-## The gate is off — COD-202
-
-**`npm run a11y` aborts at the second entry of its VIEWS list**, in CI and
-locally:
+It is **intermittent, not dead**, and that is a correction to what this file
+said before. Measured this session: one run completed the whole walk and
+printed violations; the next two aborted at the second entry with
 
 ```
 [Plan] no rail row with that name — the gate could not reach it.
 ```
 
-Today (entry 1) passes first, so the harness works; it is the **Plan rail row**
-it cannot find. CI runs 35547262905 and 35547265269, ~9 minutes each, exit 1.
+having scanned **zero** views. Exit 1 either way, so a red run tells you
+nothing about whether anything was checked.
 
-**This is not the failure the old STATUS.md recorded.** COD-197 describes an
-abort inside `scanReceipt()` *before* the view walk. This one is inside it.
-Either COD-197 is intermittent and this is the next failure behind it, or there
-are two. Do not delete the entry to make it pass — the file's own error message
-says so, and its header says a page not on the list is not checked.
+**While it was working it found two serious bugs I had just shipped**, which
+is the argument for fixing it rather than living with it:
 
-**What it costs, concretely:** the new correlation matrix shipped at **1.71:1
-on vscode, 1.85 mocha, 1.88 neon, 2.95 dawn, 4.11 latte** — every number in it
-under the floor in all five themes — and was caught only because I wrote a
-throwaway five-theme probe by hand. A green a11y gate would have caught it in
-seconds. While this is red, every view's contrast ships unmeasured.
+- `role="img"` on a `<ul>` (Insights' habit-consistency card) overrides the
+  implicit `list` role and **orphans every `<li>`** — axe fails it as
+  `listitem`, and a screen reader loses "3 of 8" navigation. `role="img"` is
+  right for a canvas or an SVG plot; it is wrong on markup that genuinely *is*
+  a list.
+- `text-fg-3` on `bg-ink-2` at 13px measured **4.18:1 on mocha, 4.49 on
+  latte** — the `Stepper`'s unit suffix, under the floor in four of five
+  themes. `aria-hidden` does not excuse it: it is still read by eyes.
 
-## Traps learned this session
+Neither is visible to the other gates. `clipped-text.mjs` asks whether an
+element shows less than it holds; `smoke` asks whether the page rendered.
+**This is the only gate that can see either class of bug, and it is the one
+that cannot be relied on to run.**
 
-- **A measurement that cannot vary is not a measurement.** The first contrast
-  probe printed identical numbers for all five themes, because it wrote the
-  theme to `localStorage['bujo']` and the real key is `bujo:data`. It then
-  reported a fake **1.30:1** for latte, because it read
-  `color(srgb 0.80 0.43 0.40)` channels as 0–255. Two bugs in the instrument
-  before one in the subject. Assert the thing you changed actually changed —
-  the loop now checks `documentElement.dataset.theme` and skips the theme if it
-  did not take.
-- **`color-mix()` costs you `onAccent`.** It computes to `color(srgb …)`, which
-  the repo's colour helpers do not parse — so a fill built that way cannot ask
-  for its own readable foreground. `over()` already composites a wash and
-  returns hex; that is why `Stats`' `moodColor` returns hex, and its comment
-  says so.
-- **One foreground for N backgrounds is a decision made once and wrong most of
-  the time.** Same shape as the `cat('crust')` trap already in `CLAUDE.md`,
-  reached from a new direction.
+Next action: find what the gate clicks to reach a section and compare with
+`SECTIONS`. Navigation moved three times recently (#231 header row 2, #240 one
+corner menu, #250 the habits surface). Likely it is looking for a door that
+was removed. **Fix the gate, not the list** — its own error message says so.
 
-## Next action
+## What shipped
 
-COD-202. Open `scripts/a11y-axe.mjs`, find what it clicks to reach a section,
-and compare against `SECTIONS` — navigation moved twice recently (#231 put
-Today's surface tabs in the header's second row, and other comments refer to
-"when the sidebar was deleted"). The likely answer is that the gate is looking
-for a door that was removed. **Fix the gate, not the list.**
+Seventeen PRs. The through-line: **most of these were not new features, they
+were things the app already had that nobody could reach.**
+
+| # | What |
+|---|---|
+| 234 | Settings/Account: phone tab overlap, half the page empty, folds that never folded, motion that reached nothing |
+| 235 | One answer to "what is due today" — seven call sites had dropped `startedOn` |
+| 236 | Insights absorbs Stats: one page, a filter row, four new charts |
+| 238–239 | Voice: pickleball by duration; asks singles/doubles and who with |
+| 240 | One menu in the corner; one place owns the theme |
+| 241–243 | Tap-to-log, eight frontend bugs, and a lint rule for hover-only controls |
+| 244–246 | 3D muscle view, eleven rep shapes, per-exercise camera framing |
+| 247, 250 | Today gets every habit type, then the whole habit grid as a fourth surface |
+| 248 | Food lookup — Open Food Facts, USDA behind it, off by default |
+| 249 | Recovery: 2.8 screens → 1.8, one chip component, no score to protect |
+
+## Traps worth the next session's time
+
+- **A grep finds the spelling you thought of; a lint rule finds the pattern.**
+  The manual sweep for `opacity-0 group-hover:opacity-100` missed three sites
+  that spell `transition-opacity` *between* the two classes — one of them
+  "Delete entry". The rule added in #243 found them on its first run.
+- **Measure the instrument before believing it.** A contrast probe printed
+  identical numbers for all five themes (wrong `localStorage` key) and then a
+  fake 1.30:1 for latte (read `color(srgb 0.80 …)` as 0–255). Two bugs in the
+  tool before one in the subject.
+- **A page move is a `git mv` plus a rendered-output diff, never a retype.**
+  Done three times this session (#236, #249, #250); #250 lost zero headings,
+  text lines, buttons and chart labels. The diff also caught a **five-fact
+  `StatBar`** — it slices to four and warns only in DEV, so the fifth vanished
+  from a production build in silence.
+- **`MasonryGrid` is a container query.** On a non-`stacked` page zone-review
+  is ~730px and its `@3xl` breakpoint wants 768 — it missed by under 40px and
+  changed a page height by nothing. `CardGrid` breaks on the viewport, which
+  is the right question when the column is sized by the split.
+- **`color-mix()` costs you `onAccent`.** It computes to `color(srgb …)`,
+  which the colour helpers do not parse, so a fill built that way cannot ask
+  for its own readable foreground.
+
+## Next, in the order I would take it
+
+1. **COD-202.** Everything else ships blind until this runs.
+2. `NoFap.logUrge` still has no guard beyond a 3s double-tap window — and
+   whether an urge row should be written at all is a product call, not a code
+   one. See #249's PR body.
+3. Convert the remaining typed-number forms to `ChipPick`/`Stepper`:
+   **Pickleball has 12 free-text fields**, Focus 6, Goals 3.
+4. `focus/SessionHistory` holds a stale draft if undo or a cloud pull lands
+   while an editor is open. Narrow, written down in the file, not fixed.

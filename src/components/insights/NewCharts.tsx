@@ -205,7 +205,16 @@ export function HabitConsistencyCard() {
   if (rows.length === 0) return null
   return (
     <Card band title="Habit consistency" subtitle="Last 30 scheduled days, recent days weigh more">
-      <ul className="space-y-1.5" role="img" aria-label={`Ranked consistency over the last 30 days: ${rows.map((r) => `${r.name} ${r.score} percent`).join(', ')}`}>
+      {/* `aria-label` on the list, NOT `role="img"`.
+          `role="img"` overrides the implicit `list` role, which orphans every
+          `<li>` inside it — axe fails that as a **serious** `listitem`
+          violation, and a screen reader loses "3 of 8" navigation as well as
+          the per-row text. It is the right role for a canvas or an SVG plot
+          (the other three cards in this file keep it, on their wrapper divs),
+          and the wrong one here: this chart is genuinely a list of named
+          values, so the list is the accessible representation rather than
+          something to paper over with a summary string. */}
+      <ul className="space-y-1.5" aria-label="Habit consistency over the last 30 scheduled days, most consistent first">
         {rows.map((r) => {
           // Status colours, reserved and used as status: this is a score
           // against a threshold, not a series identity.
