@@ -12,6 +12,8 @@ import {
 } from '../../lib/fitness'
 import type { JournalData, Routine, Split } from '../../lib/types'
 import { newSetRow, type SetRow } from './setRow'
+import { DayPick } from '../ui/quickpick'
+import { addDays, todayISO } from '../../lib/date'
 
 /**
  * Zone 2 · the act. One row per set: what, how heavy, how many, how hard.
@@ -87,6 +89,7 @@ const TOUCH = 'h-11 w-full sm:h-7'
 export function SessionLogger({
   data, split, setSplit, rows, setRows, setRow, addRow, onLoadRoutine,
   focusEx, setFocusEx, recentExercises, unit, defaultBar, warmStep, onFinish,
+  date, setDate,
 }: {
   data: JournalData
   split: Split
@@ -103,6 +106,9 @@ export function SessionLogger({
   defaultBar: number
   warmStep: number
   onFinish: () => void
+  /** The day the session is filed under. Gym had no date control at all. */
+  date: string
+  setDate: (d: string) => void
 }) {
   const routines: Routine[] = data.routines
   // Live tally — sets completed and total volume, so the act reports on itself
@@ -112,6 +118,12 @@ export function SessionLogger({
 
   return (
     <>
+      {/* A session you did yesterday and are logging now. `finish()` used to
+          hardcode `todayISO()`, which made this the one workout form in the
+          app where a back-dated session was impossible. */}
+      <div className="mb-3">
+        <DayPick value={date} onChange={setDate} today={todayISO()} yesterday={addDays(todayISO(), -1)} />
+      </div>
       <div className="mb-3 flex flex-wrap gap-2">
         {SPLITS.filter((s) => s.id !== 'other').map((s) => {
           const Icon = splitGlyph(s.id)

@@ -56,7 +56,7 @@ export function BookRow({ book }: { book: Book }) {
           size="icon-sm"
           onClick={() => store.removeBook(book.id)}
           aria-label={`Remove ${book.title}`}
-          className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger-text"
+          className="shrink-0 text-fg-2 reveal hover:text-danger-text"
         >
           <Icon as={Trash} size="sm" />
         </Button>
@@ -178,7 +178,7 @@ export function BookRow({ book }: { book: Book }) {
                       size="icon-sm"
                       onClick={() => store.removeBookLearning(book.id, i)}
                       aria-label="Remove learning"
-                      className="text-fg-2 opacity-0 group-hover/l:opacity-100 focus-visible:opacity-100 hover:text-danger-text"
+                      className="text-fg-2 reveal hover:text-danger-text"
                     >
                       ×
                     </Button>

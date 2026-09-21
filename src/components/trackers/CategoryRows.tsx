@@ -133,7 +133,7 @@ export function CategoryRows({
                   onDragStart={() => setDragId(h.id)}
                   onDragEnd={() => { setDragId(null); setOverId(null) }}
                   title="Drag to reorder"
-                  className="-ml-7 shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+                  className="-ml-7 shrink-0 cursor-grab text-fg-2 reveal active:cursor-grabbing"
                 ><Icon as={DotsSixVertical} size="sm" /></span>
                 {avoid ? <Icon as={Prohibit} size="sm" className="shrink-0" style={{ color: onRaised('red') }} aria-label="avoid habit" />
                   : h.emoji ? <span className="shrink-0">{h.emoji}</span> : <span className="shrink-0" style={{ color: onRaised(h.color) }}>●</span>}

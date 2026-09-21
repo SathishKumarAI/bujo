@@ -80,6 +80,8 @@ export function Gym() {
   )
   useEffect(() => clearPendingSession(), [])
   const [routineName, setRoutineName] = useState('')
+  /** A session you did yesterday and log today. Was hardcoded to `todayISO()`. */
+  const [date, setDate] = useState(todayISO)
   // Ephemeral PR celebration after a set is saved (local state, auto-dismisses).
   const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
   // Post-finish session rollup (volume · sets · top set), shown until the next edit.
@@ -210,7 +212,7 @@ export function Gym() {
     // as reps. One row = one set, so N = 1 (set count) and M = actual reps —
     // previously N held the loop index, leaving the rep slot wrong.
     const sets = valid.map((r) => `${r.exercise.trim()} 1x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
-    if (sets.length === 0) return
+    if (sets.length === 0) { notify.info('No sets to finish', 'Add a weight and reps to at least one row.'); return }
     // Structured rows for analytics (volume / progression / previous-session).
     const structured: WorkoutSet[] = valid.map((r) => ({
       exercise: r.exercise.trim(),
@@ -233,7 +235,9 @@ export function Gym() {
       }
     }
     addWorkout({
-      date: todayISO(),
+      // Was `todayISO()`, so a session could only ever be logged on the day
+      // it happened — the one workout form in the app with no date at all.
+      date,
       activity: activityForSplit(split),
       split,
       sets,
@@ -242,6 +246,7 @@ export function Gym() {
     })
     setSummary(sessionSummary(structured))
     setRows([newSetRow()])
+    setDate(todayISO())
     if (pr) setPrParty(pr)
   }
 
@@ -315,6 +320,8 @@ export function Gym() {
                 defaultBar={defaultBar}
                 warmStep={warmStep}
                 onFinish={finish}
+                date={date}
+                setDate={setDate}
               />
               {/* The page's one disclosure, at the bottom of the form. Naming a
                   routine is done once and then never again for that routine —
@@ -714,7 +721,7 @@ function SavedRoutines({ routines, onRemove, onLoad }: { routines: Routine[]; on
                   <AppIcon as={Icon} size="sm" style={{ color: onRaised(m.color) }} /> {r.name}
                   <span className="ml-1 text-fg-2">{r.exercises.length} exercises</span>
                 </button>
-                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => onRemove(r.id)} aria-label="Delete routine" className="text-fg-2 reveal hover:text-red">×</Button>
               </li>
             )
           })}

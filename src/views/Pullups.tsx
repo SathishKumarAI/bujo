@@ -129,7 +129,7 @@ export function Pullups() {
                         size="icon-sm"
                         onClick={() => removeWorkout(w.id)}
                         aria-label={`Delete pull-up session on ${prettyDay(w.date)}`}
-                        className="text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+                        className="text-fg-2 reveal hover:text-red"
                       >×</Button>
                     </span>
                   </li>

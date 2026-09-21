@@ -171,7 +171,7 @@ export function Monthly() {
           <Input
             value={meta?.location ?? ''}
             onChange={(e) => setMonthly(ym, { location: e.target.value })}
-            placeholder="e.g. Moab, Utah 🏜️"
+            placeholder="e.g. Moab, Utah 🏜️" aria-label="Where you were this month"
           />
           {data.settings.weatherEnabled && (
             <Button variant="secondary" onClick={autoFill} className="press-3d mt-2 w-full">
@@ -185,6 +185,7 @@ export function Monthly() {
             value={meta?.goals ?? ''}
             onChange={(e) => setMonthly(ym, { goals: e.target.value })}
             placeholder={'• Finish the trail map\n• Read 2 books'}
+            aria-label="Goals for this month"
           />
         </Card>
         <Card band title="Photo of the month" subtitle="One image">
@@ -197,7 +198,7 @@ export function Monthly() {
           <Input
             value={meta?.photoCaption ?? ''}
             onChange={(e) => setMonthly(ym, { photoCaption: e.target.value })}
-            placeholder="Caption…"
+            placeholder="Caption…" aria-label="Caption for this month's photo"
           />
         </Card>
       </div>

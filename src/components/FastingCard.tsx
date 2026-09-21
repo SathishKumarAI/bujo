@@ -92,7 +92,7 @@ export function FastingCard() {
                 <span className="w-20 shrink-0 tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{fmtDuration(h)}</span>
                 <span className="shrink-0">{hit ? <Icon as={Check} size="sm" style={{ color: onRaised('green') }} /> : <span className="text-fg-2">·</span>}</span>
                 <span className="flex-1 truncate text-label text-fg-2">{timeOf(f.start)} → {timeOf(f.end)}</span>
-                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><Icon as={X} size="sm" /></button>
+                <button onClick={() => removeFast(f.id)} aria-label="Remove fast" className="shrink-0 text-fg-2 reveal hover:text-red"><Icon as={X} size="sm" /></button>
               </li>
             )
           })}

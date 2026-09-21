@@ -313,7 +313,7 @@ export function Goals() {
                   <div className="mb-1.5 flex items-center gap-2 text-body">
                     <span className="font-medium text-fg-1">{g.label}</span>
                     <span className="ml-auto tabular-nums" style={{ color: reached ? cat('green') : cat('subtext1') }}>{shown}/{g.target}{g.unit ? ` ${g.unit}` : ''}{reached ? ' ✓' : ''}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeCustomGoal(g.id)} aria-label="Remove goal" className="text-fg-2 reveal hover:text-red"><AppIcon as={Trash} size="sm" /></Button>
                   </div>
                   <div className="mb-2 h-2.5 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill transition-all" style={{ width: `${pct}%`, background: cat(reached ? 'green' : 'mauve') }} /></div>
                   <Stepper value={g.value} onChange={(v) => updateCustomGoal(g.id, { value: Math.max(0, v ?? 0) })} step={1} min={0} aria-label={`${g.label} progress`} />

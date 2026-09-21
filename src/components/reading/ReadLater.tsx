@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useJournal } from '../../store'
 import { Band, Eyebrow } from '../mod'
 import { Button } from '../ui/button'
+import { notify } from '../../lib/notify'
 
 /**
  * Saved links to read later: paste, tick off, remove.
@@ -23,7 +24,7 @@ export function ReadLater() {
 
   function add() {
     const u = url.trim()
-    if (!u) return
+    if (!u) { notify.info('Paste a link first', 'The URL is the one field this needs.'); return }
     store.addReadLink({ url: /^https?:\/\//.test(u) ? u : `https://${u}`, title: title.trim() || undefined })
     setUrl('')
     setTitle('')
@@ -88,7 +89,7 @@ export function ReadLater() {
                 size="icon-sm"
                 onClick={() => store.removeReadLink(l.id)}
                 aria-label={`Remove ${l.title || l.url}`}
-                className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger-text"
+                className="shrink-0 text-fg-2 reveal hover:text-danger-text"
               >
                 <Icon as={Trash} size="sm" />
               </Button>

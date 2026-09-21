@@ -221,7 +221,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           {templates.map((t) => (
             <span key={t} className="group inline-flex items-center gap-1 rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-1">
               <button onClick={() => setVal(t)} className="hover:text-fg-1">{t}</button>
-              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</button>
+              <button onClick={() => removeTemplate(t)} aria-label={`Forget template ${t}`} className="text-fg-2 reveal hover:text-red">×</button>
             </span>
           ))}
           {val.trim() && !templates.includes(val.trim()) && (

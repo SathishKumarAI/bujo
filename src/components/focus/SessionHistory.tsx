@@ -5,6 +5,7 @@ import { SegmentScale } from '../fields/SegmentScale'
 import { formatMinutes } from '../../lib/focus'
 import { prettyDay } from '../../lib/date'
 import type { DevSession } from '../../lib/types'
+import { notify } from '../../lib/notify'
 
 /**
  * Every logged deep-work session, newest first, editable in place.
@@ -43,21 +44,41 @@ export function SessionHistory({
   )
 }
 
+/** The editable fields of a session, read off the row as it stands right now. */
+const draftOfSession = (s: DevSession) => ({
+  durationMin: String(s.durationMin),
+  project: s.project ?? '',
+  focus: s.focus,
+  stress: s.stress,
+  notes: s.notes ?? '',
+})
+
 function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Partial<DevSession>) => void; onDelete: () => void }) {
   const [editing, setEditing] = useState(false)
-  const [d, setD] = useState({
-    durationMin: String(s.durationMin),
-    project: s.project ?? '',
-    focus: s.focus,
-    stress: s.stress,
-    notes: s.notes ?? '',
-  })
+  /**
+   * The draft is re-seeded when the editor OPENS — which the Edit button
+   * already did inline; `startEditing` is that same re-seed, named once
+   * instead of spelled out at the call site.
+   *
+   * The narrow window that remains: if undo/redo or a cloud pull replaces the
+   * journal *while an editor is open*, this draft still holds the old values
+   * and `save()` writes them back. Closing and reopening the editor is the
+   * out, and a `key={s.id}` remount driven by the row's content would be the
+   * real fix — noted rather than done, because it changes when every row in
+   * the list remounts and that is not this PR's subject.
+   */
+  const [d, setD] = useState(() => draftOfSession(s))
+
+  function startEditing() {
+    setD(draftOfSession(s))
+    setEditing(true)
+  }
 
   const field = 'w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 focus-visible:border-brand focus-visible:outline-none'
 
   function save() {
     const mins = Number(d.durationMin)
-    if (!mins || mins <= 0) return
+    if (!mins || mins <= 0) { notify.info('How long was the session?', 'Minutes has to be more than zero.'); return }
     onSave({
       durationMin: mins,
       project: d.project.trim() || undefined,
@@ -111,12 +132,9 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
       <div className="flex items-baseline gap-3">
         <span className="text-label text-fg-1">{s.project || 'Session'}</span>
         <span className="text-label text-fg-3">{prettyDay(s.date)}</span>
-        <div className="ml-auto flex items-center gap-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+        <div className="ml-auto flex items-center gap-3 reveal">
           <button
-            onClick={() => {
-              setD({ durationMin: String(s.durationMin), project: s.project ?? '', focus: s.focus, stress: s.stress, notes: s.notes ?? '' })
-              setEditing(true)
-            }}
+            onClick={startEditing}
             className="text-label text-fg-2 hover:text-brand-text"
           >
             Edit

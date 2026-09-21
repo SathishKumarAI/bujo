@@ -20,6 +20,7 @@ import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard }
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
 import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt'
 import { PICKLEBALL_KEY } from '../lib/recordKeys'
+import { notify } from '../lib/notify'
 
 const tip = rechartsTooltip
 /**
@@ -116,7 +117,7 @@ export function Pickleball() {
     // one required field is `durationMin`, and the voice path files exactly
     // that. Requiring a score here was the same bug the parser had, in the
     // form: you could not hand-log "played for 40 minutes, didn't keep score".
-    if (!f.gamesWon && !f.gamesLost && !f.durationMin) return
+    if (!f.gamesWon && !f.gamesLost && !f.durationMin) { notify.info('Nothing to log yet', 'A session needs a score or how long you played.'); return }
     addPickleball({
       date: f.date,
       format: f.format,
@@ -136,7 +137,7 @@ export function Pickleball() {
     setF(blankOf())
   }
   function logEvent() {
-    if (!ev.name.trim()) return
+    if (!ev.name.trim()) { notify.info('Name the event', 'A league or tournament needs a name to find it by.'); return }
     addPickleEvent({
       date: ev.date,
       name: ev.name.trim(),
@@ -478,7 +479,7 @@ export function Pickleball() {
                   <span className="text-fg-1">{prettyDay(p.date)}</span>
                   <span className="flex items-center gap-2">
                     <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
                   </span>
                 </li>
               ))}
@@ -536,7 +537,7 @@ export function Pickleball() {
                 <span className="flex shrink-0 items-center gap-2">
                   {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
                   {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
                 </span>
               </li>
             ))}
@@ -704,8 +705,8 @@ function PickleRow({ p, onSave, onDelete }: {
       <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
-        <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
-        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+        <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 reveal hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 reveal hover:text-red">×</Button>
       </span>
     </li>
   )

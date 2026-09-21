@@ -7,8 +7,10 @@ import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { cat, onRaised } from '../lib/colors'
-import { todayISO, prettyDay } from '../lib/date'
+import { addDays, todayISO, prettyDay } from '../lib/date'
 import { HOME_EXERCISES, demoUrl, searchUrl, type HomeExercise, type Muscle } from '../lib/homeExercises'
+import { DayPick } from '../components/ui/quickpick'
+import { notify } from '../lib/notify'
 
 const MUSCLES: (Muscle | 'all')[] = ['all', 'chest', 'shoulders', 'arms', 'back', 'core', 'glutes', 'legs', 'cardio', 'full body']
 
@@ -27,6 +29,7 @@ export function HomeWorkout() {
   const [items, setItems] = useState<SessionItem[]>([])
   const [dur, setDur] = useState('')
   const [notes, setNotes] = useState('')
+  const [date, setDate] = useState(today)
   const [openId, setOpenId] = useState<string | null>(null)
 
   const lib = filter === 'all' ? HOME_EXERCISES : HOME_EXERCISES.filter((e) => e.muscle === filter)
@@ -39,15 +42,15 @@ export function HomeWorkout() {
   function drop(id: string) { setItems((cur) => cur.filter((i) => i.id !== id)) }
 
   function logSession() {
-    if (items.length === 0) return
+    if (items.length === 0) { notify.info('Nothing in this session', 'Tap Add on an exercise first.'); return }
     addWorkout({
-      date: today,
+      date,
       activity: 'homeWorkout',
       durationMin: dur ? Number(dur) : undefined,
       sets: items.map((i) => `${i.name} ${i.reps}`),
       notes: notes.trim(),
     })
-    setItems([]); setDur(''); setNotes('')
+    setItems([]); setDur(''); setNotes(''); setDate(today)
   }
 
   return (
@@ -68,6 +71,10 @@ export function HomeWorkout() {
                 <Button variant="ghost" size="icon-sm" onClick={() => drop(i.id)} aria-label={`Remove ${i.name}`} className="text-fg-2 hover:text-red">×</Button>
               </div>
             ))}
+            {/* There was no date field at all — `logSession` hardcoded today,
+                so a session you did this morning and logged tonight was fine,
+                and one you forgot until tomorrow was unloggable. */}
+            <DayPick value={date} onChange={setDate} today={today} yesterday={addDays(today, -1)} />
             <div className="grid grid-cols-2 gap-2 pt-1">
               <Input type="number" value={dur} onChange={(e) => setDur(e.target.value)} placeholder="Minutes" aria-label="Duration minutes" />
             </div>
@@ -92,7 +99,7 @@ export function HomeWorkout() {
                       <span className="text-fg-2"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
                       <span className="caret-turn caret-turn-quarter ml-1 inline-block text-micro text-fg-2" data-open={open}>▸</span>
                     </button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label="Remove" className="shrink-0 text-fg-2 reveal hover:text-red">×</Button>
                   </div>
                   {open && (
                     <ul className="collapse-in mt-1.5 ml-1 space-y-0.5">
