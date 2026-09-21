@@ -54,6 +54,45 @@ export interface MuscleWork {
 }
 
 const RULES: { match: string[]; work: MuscleWork }[] = [
+  // ── Carries & loaded walks. Whole-body isometric: the grip and the trunk
+  //    are the work, the legs just move it. ──
+  { match: ['farmer carry', "farmer's carry", 'farmer walk', 'suitcase carry', 'loaded carry', 'sled push', 'sled drag', 'yoke'], work: { primary: [M.traps, M.abs, M.obliques], secondary: [M.quads, M.glutes, M.calves] } },
+
+  // ── Ballistic hinge. Same shape as a deadlift, driven explosively — the
+  //    glutes snap rather than grind, so they lead here and the grip works. ──
+  { match: ['kettlebell swing', 'kb swing', 'swing', 'power clean', 'hang clean', 'clean and jerk', 'clean', 'snatch', 'high pull'], work: { primary: [M.glutes, M.hamstrings], secondary: [M.traps, M.lats, M.abs, M.quads, M.shoulders] } },
+  { match: ['thruster', 'wall ball'], work: { primary: [M.quads, M.shoulders, M.glutes], secondary: [M.triceps, M.abs] } },
+  { match: ['turkish get-up', 'turkish getup', 'get-up'], work: { primary: [M.shoulders, M.abs, M.obliques], secondary: [M.quads, M.glutes, M.triceps] } },
+
+  // ── Jumps & plyometrics: triple extension, ankle-knee-hip. ──
+  { match: ['box jump', 'broad jump', 'jump squat', 'jump rope', 'skipping', 'pogo', 'bounding'], work: { primary: [M.quads, M.calves, M.glutes], secondary: [M.hamstrings, M.soleus, M.abs] } },
+  { match: ['burpee'], work: { primary: [M.quads, M.chest, M.shoulders], secondary: [M.abs, M.triceps, M.glutes] } },
+
+  // ── Hanging trunk flexion. The lats hold the hang; the abs do the lift. ──
+  { match: ['toes-to-bar', 'toes to bar', 'hanging knee raise', 'hanging leg raise', 'knees to elbows'], work: { primary: [M.abs], secondary: [M.obliques, M.lats, M.quads] } },
+
+  // ── Anti-rotation and anti-extension: the trunk's job is to NOT move. ──
+  { match: ['pallof', 'anti-rotation', 'side plank', 'bird dog', 'copenhagen'], work: { primary: [M.obliques, M.abs], secondary: [M.glutes, M.shoulders] } },
+  { match: ['superman', 'reverse hyper', 'jefferson curl'], work: { primary: [M.glutes, M.hamstrings], secondary: [M.lats, M.traps] } },
+
+  // ── Scapular & rotator work: small range, postural. ──
+  { match: ['scapular', 'scap pull', 'y raise', 'cuban press', 'scarecrow', 'external rotation', 'band pull-apart'], work: { primary: [M.traps, M.shoulders], secondary: [M.lats] } },
+
+  // ── Press variants that name no bench and would otherwise match nothing. ──
+  { match: ['floor press', 'spoto press', 'landmine press'], work: { primary: [M.chest, M.shoulders], secondary: [M.triceps] } },
+  { match: ['jm press', 'tate press'], work: { primary: [M.triceps], secondary: [M.chest] } },
+
+  // ── Isolation the generic rules miss. ──
+  { match: ['hip abduction', 'hip adduction', 'clamshell', 'monster walk'], work: { primary: [M.glutes], secondary: [M.quads] } },
+  { match: ['tibialis', 'toe raise', 'dorsiflexion'], work: { primary: [M.calves], secondary: [M.soleus] } },
+  { match: ['glute ham raise', 'ghr'], work: { primary: [M.hamstrings, M.glutes], secondary: [M.calves] } },
+  { match: ['muscle up', 'muscle-up'], work: { primary: [M.lats, M.triceps], secondary: [M.chest, M.shoulders, M.abs] } },
+
+  // ── Machine cardio: steady-state, legs. Named separately from `run` so the
+  //    upper-body ergs do not get mapped to quads alone. ──
+  { match: ['ski erg', 'battle rope', 'battle ropes'], work: { primary: [M.lats, M.shoulders], secondary: [M.abs, M.triceps] } },
+  { match: ['stair climber', 'stairmaster', 'elliptical', 'assault bike', 'air bike', 'treadmill', 'incline walk'], work: { primary: [M.quads, M.glutes], secondary: [M.calves, M.hamstrings] } },
+
   // ── Most specific first: "close grip bench" is a triceps lift, and would
   //    otherwise be caught by the generic `bench` rule below it. ──
   { match: ['close grip bench', 'close-grip bench'], work: { primary: [M.triceps], secondary: [M.chest, M.shoulders] } },
