@@ -66,9 +66,166 @@ const bottom = (t: number) => 0.3 + 0.7 * depth(t)
 /** Roughly even through the rep — a stabiliser holding position. */
 const hold = () => 0.55
 
+/**
+ * A short, sharp spike — for lifts whose point is speed, not time under load.
+ *
+ * A kettlebell swing drawn with `depth` would look like a slow hinge, which is
+ * the opposite of what a swing teaches. Effort is near zero on the backswing
+ * and near maximal for a moment at the snap.
+ */
+const snap = (t: number) => Math.pow(Math.max(0, Math.sin(Math.PI * t)), 4) * 0.9 + 0.1
+
+/** Ground contact — the brief moment of a stride when the leg is loaded. */
+const strike = (t: number) => Math.pow(Math.max(0, Math.sin(2 * Math.PI * t + 0.6)), 3)
+
+/** The counter-movement dip: down early, extended hard through the second half. */
+const dip = (t: number) => (t < 0.45 ? arc(t / 0.9) : Math.max(0, 1 - (t - 0.45) / 0.3) * arc(0.5))
+
 const PATTERNS: { match: string[]; movement: Movement }[] = [
+  // ── Running. Not `steady`: a sprint's whole character is that effort is
+  //    not even, and drawing it flat would say the opposite. One stride is
+  //    the cycle here, so `t` is a step rather than a rep. ──
   {
-    match: ['bench', 'chest press', 'push up', 'push-up', 'pushup', 'dip', 'close grip', 'incline', 'decline'],
+    match: ['run', 'sprint', 'jog', 'jogging', 'hill repeat'],
+    movement: {
+      id: 'gait',
+      label: 'Running gait',
+      cue: 'Land mid-foot under your hips, quick turnover, tall posture.',
+      pose: (t) => ({
+        ...REST,
+        hip: 0.75 * Math.sin(2 * Math.PI * t),
+        knee: 0.35 + 0.75 * Math.abs(Math.sin(2 * Math.PI * t + 0.6)),
+        shoulder: -0.7 * Math.sin(2 * Math.PI * t),
+        elbow: 1.5,
+        spine: 0.12,
+      }),
+      drive: (t) => ({ [M.quads]: 0.45 + 0.4 * strike(t), [M.calves]: 0.4 + 0.5 * strike(t), [M.glutes]: 0.4 + 0.4 * strike(t), [M.hamstrings]: 0.4 + 0.3 * strike(t), [M.soleus]: 0.35 + 0.3 * strike(t), [M.abs]: hold() }),
+    },
+  },
+  {
+    match: ['hip abduction', 'hip adduction', 'clamshell', 'monster walk', 'lateral band walk'],
+    movement: {
+      id: 'hip-abd',
+      label: 'Hip abduction',
+      cue: 'Drive the knee out against the resistance; keep the pelvis level.',
+      pose: (t) => ({ ...REST, hip: 0.1, knee: 0.55, shoulder: -0.15, spine: 0.05 * depth(t) }),
+      drive: (t) => ({ [M.glutes]: 0.3 + 0.7 * depth(t), [M.quads]: 0.25 + 0.2 * depth(t), [M.obliques]: hold() }),
+    },
+  },
+
+  // ── Explosive: effort spikes in a short window rather than tracking depth.
+  //    A swing is not a slow hinge, and drawing it as one would teach the
+  //    wrong thing about the only lift here whose *speed* is the point. ──
+  {
+    match: ['kettlebell swing', 'kb swing', 'swing', 'power clean', 'hang clean', 'clean and jerk', 'clean', 'snatch', 'high pull'],
+    movement: {
+      id: 'ballistic-hinge',
+      label: 'Ballistic hinge',
+      cue: 'Hike it back, then snap the hips through. The arms are rope, not levers.',
+      pose: (t) => ({ ...REST, spine: 0.95 * depth(t), hip: 1.05 * depth(t), knee: 0.3 * depth(t), shoulder: -0.2 - 1.5 * (1 - depth(t)), elbow: 0.15 }),
+      drive: (t) => ({ [M.glutes]: snap(t), [M.hamstrings]: snap(t) * 0.9, [M.traps]: 0.3 + 0.5 * snap(t), [M.lats]: hold(), [M.abs]: hold(), [M.quads]: 0.25 + 0.35 * snap(t) }),
+    },
+  },
+  {
+    match: ['box jump', 'broad jump', 'jump squat', 'jump rope', 'skipping', 'pogo', 'bounding', 'burpee'],
+    movement: {
+      id: 'jump',
+      label: 'Triple extension',
+      cue: 'Dip, then drive ankle–knee–hip together. Land soft, mid-foot.',
+      pose: (t) => ({ ...REST, hip: 1.1 * dip(t), knee: 1.4 * dip(t), spine: 0.3 * dip(t), shoulder: -0.3 + 1.6 * (1 - dip(t)) }),
+      drive: (t) => ({ [M.quads]: snap(t), [M.calves]: snap(t), [M.glutes]: snap(t) * 0.9, [M.soleus]: 0.3 + 0.4 * snap(t), [M.hamstrings]: 0.3 + 0.3 * snap(t), [M.abs]: hold() }),
+    },
+  },
+  {
+    match: ['thruster', 'wall ball'],
+    movement: {
+      id: 'thruster',
+      label: 'Squat to press',
+      cue: 'One movement, not two — the legs launch it and the shoulders finish it.',
+      pose: (t) => ({ ...REST, hip: 1.35 * dip(t), knee: 1.55 * dip(t), spine: 0.2 * dip(t), shoulder: -1.2 - 1.1 * (1 - dip(t)), elbow: 0.4 + 1.4 * dip(t) }),
+      drive: (t) => ({ [M.quads]: 0.35 + 0.65 * dip(t), [M.glutes]: 0.3 + 0.6 * dip(t), [M.shoulders]: lockout(t), [M.triceps]: lockout(t) * 0.8, [M.abs]: hold() }),
+    },
+  },
+
+  // ── Carries: nothing moves at the joints. The work is holding position
+  //    while walking, so effort is flat and the legs only tick over. ──
+  {
+    match: ['farmer carry', 'farmers carry', 'farmer walk', 'suitcase carry', 'loaded carry', 'sled push', 'sled drag', 'yoke'],
+    movement: {
+      id: 'carry',
+      label: 'Loaded carry',
+      cue: 'Ribs down, shoulders back, walk. The grip and the trunk are the exercise.',
+      // A gentle stride so the figure is not frozen — this is the one pattern
+      // where the limbs move and the *effort* does not.
+      pose: (t) => ({ ...REST, hip: 0.3 * Math.sin(2 * Math.PI * t), knee: 0.15 + 0.2 * Math.abs(Math.sin(2 * Math.PI * t)), shoulder: -0.08, elbow: 0.1 }),
+      drive: () => ({ [M.traps]: 0.9, [M.abs]: 0.75, [M.obliques]: 0.7, [M.quads]: 0.45, [M.glutes]: 0.4, [M.calves]: 0.35 }),
+    },
+  },
+
+  // ── Hanging trunk flexion. The lats hold the hang the whole time; the abs
+  //    do the rep. Two different jobs in one picture, which is the point. ──
+  {
+    match: ['toes-to-bar', 'toes to bar', 'hanging knee raise', 'hanging leg raise', 'knees to elbows'],
+    movement: {
+      id: 'hang-flex',
+      label: 'Hanging flexion',
+      cue: 'Hang tall, then curl the pelvis up — do not just swing the legs.',
+      pose: (t) => ({ ...REST, shoulder: -2.9, shoulderOut: 0.3, elbow: 0.1, hip: 1.7 * depth(t), knee: 0.9 * depth(t), spine: 0.35 * depth(t) }),
+      drive: (t) => ({ [M.abs]: 0.3 + 0.7 * depth(t), [M.obliques]: 0.25 + 0.4 * depth(t), [M.lats]: hold(), [M.quads]: 0.2 + 0.3 * depth(t) }),
+    },
+  },
+
+  // ── Anti-movement. Like the plank, the exercise is that nothing happens —
+  //    but asymmetric, so the obliques carry it. ──
+  {
+    match: ['pallof', 'anti-rotation', 'side plank', 'bird dog', 'copenhagen'],
+    movement: {
+      id: 'anti-rotation',
+      label: 'Anti-rotation hold',
+      cue: 'The load wants to twist you. The exercise is refusing.',
+      pose: () => ({ ...REST, shoulder: -1.5, shoulderOut: 0.2, elbow: 0.3, spine: 0.04 }),
+      drive: () => ({ [M.obliques]: 0.9, [M.abs]: 0.75, [M.glutes]: 0.45, [M.shoulders]: 0.35 }),
+    },
+  },
+  {
+    match: ['superman', 'reverse hyper', 'jefferson curl'],
+    movement: {
+      id: 'extend',
+      label: 'Trunk extension',
+      cue: 'Lift from the glutes and the back, not by cranking the neck.',
+      pose: (t) => ({ ...REST, spine: 0.5 - 0.65 * depth(t), hip: 0.4 - 0.5 * depth(t), shoulder: -1.9 }),
+      drive: (t) => ({ [M.glutes]: 0.3 + 0.7 * depth(t), [M.hamstrings]: 0.25 + 0.55 * depth(t), [M.lats]: 0.3 + 0.35 * depth(t), [M.traps]: 0.3 + 0.3 * depth(t) }),
+    },
+  },
+
+  // ── Scapular work: tiny range, and that is the teaching point. The pose
+  //    barely changes because the movement barely does. ──
+  {
+    match: ['scapular', 'scap pull', 'y raise', 'cuban press', 'scarecrow', 'external rotation', 'band pull-apart'],
+    movement: {
+      id: 'scap',
+      label: 'Scapular control',
+      cue: 'Small range on purpose — move the shoulder blades, not the arms.',
+      pose: (t) => ({ ...REST, shoulder: -1.35 - 0.2 * depth(t), shoulderOut: 0.45 + 0.25 * depth(t), elbow: 0.5 }),
+      drive: (t) => ({ [M.traps]: 0.35 + 0.6 * depth(t), [M.shoulders]: 0.3 + 0.45 * depth(t), [M.lats]: 0.25 + 0.3 * depth(t) }),
+    },
+  },
+
+  // ── Steady-state machines: a gait cycle, even effort. Listed before the
+  //    running rule so "assault bike" does not read as a sprint. ──
+  {
+    match: ['stair climber', 'stairmaster', 'elliptical', 'assault bike', 'air bike', 'treadmill', 'incline walk', 'ski erg', 'battle rope'],
+    movement: {
+      id: 'steady',
+      label: 'Steady state',
+      cue: 'Aerobic work — the number that matters is the time, not the effort per rep.',
+      pose: (t) => ({ ...REST, hip: 0.55 * Math.sin(2 * Math.PI * t), knee: 0.25 + 0.5 * Math.abs(Math.sin(2 * Math.PI * t)), shoulder: -0.45 * Math.sin(2 * Math.PI * t), elbow: 0.7 }),
+      drive: () => ({ [M.quads]: 0.6, [M.glutes]: 0.5, [M.calves]: 0.45, [M.hamstrings]: 0.4 }),
+    },
+  },
+
+  {
+    match: ['bench', 'chest press', 'push up', 'push-up', 'pushup', 'dip', 'close grip', 'incline', 'decline', 'floor press', 'spoto press', 'landmine press', 'jm press', 'tate press'],
     movement: {
       id: 'press-h',
       label: 'Horizontal press',
@@ -88,7 +245,7 @@ const PATTERNS: { match: string[]; movement: Movement }[] = [
     },
   },
   {
-    match: ['pull-up', 'pullup', 'chin-up', 'chinup', 'lat pulldown', 'pulldown', 'pull-down', 'dead hang', 'negatives'],
+    match: ['pull-up', 'pullup', 'chin-up', 'chinup', 'lat pulldown', 'pulldown', 'pull-down', 'dead hang', 'negatives', 'muscle up', 'muscle-up'],
     movement: {
       id: 'pull-v',
       label: 'Vertical pull',
@@ -118,7 +275,7 @@ const PATTERNS: { match: string[]; movement: Movement }[] = [
     },
   },
   {
-    match: ['deadlift', 'romanian', 'rdl', 'stiff leg', 'stiff-leg', 'good morning', 'hyperextension', 'back extension', 'hip thrust', 'glute bridge'],
+    match: ['deadlift', 'romanian', 'rdl', 'stiff leg', 'stiff-leg', 'good morning', 'hyperextension', 'back extension', 'hip thrust', 'glute bridge', 'glute ham raise', 'ghr'],
     movement: {
       id: 'hinge',
       label: 'Hip hinge',
