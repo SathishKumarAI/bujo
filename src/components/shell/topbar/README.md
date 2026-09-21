@@ -10,8 +10,10 @@ where nav changes land.
 | *When* it folds — the scroll rule shared with `BottomNav` | `../useHideOnScroll.ts` |
 | The five section links, active treatment, where a section click lands | `SectionNav.tsx` |
 | ‹ date › stepper and the year-wise jump popover | `DateNav.tsx` (popover markup: `../DateJumpPicker.tsx`, its only caller) |
-| The ⓘ blurb and the data-driven suggestions | `HelpMenu.tsx` |
-| Name, share, ⌘K, Settings/Help links, undo/redo, zoom | `../AccountMenu.tsx` — the one header menu |
+| The ⓘ blurb and the data-driven suggestions | `HelpMenu.tsx` — items only; they render inside the corner menu's **Help with this page** submenu, not a button of their own |
+| The suggestion count on the corner badge | `useSuggestionCount.ts` |
+| Name, share, ⌘K, Settings/Help, **page help, daily reminder, send feedback**, undo/redo, zoom | `../AccountMenu.tsx` — the one header menu, and now genuinely the only one |
+| The feedback form itself | `../../feedback/FeedbackButton.tsx` — takes optional `open`/`onOpenChange`; the menu drives it |
 | Theme, paper, handwriting, book frame, text size | `../../views/Settings.tsx` → Appearance. **Not the header.** |
 | The theme list itself — names, hints, swatches | `../../lib/themes.ts`, read by Settings and ⌘K |
 | Row order, brand, tabs-or-surfaces-or-title, what row 2 holds | `../TopBar.tsx` |
