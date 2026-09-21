@@ -4,17 +4,9 @@ import { useFocusTrap } from '../lib/useFocusTrap'
 import { exportJSON } from '../lib/storage'
 import { generateDemoData } from '../lib/demo'
 import { todayISO } from '../lib/date'
-import type { ThemeName } from '../lib/types'
+import { THEMES, themeLabel } from '../lib/themes'
 import { useConfirm } from './ConfirmDialog'
 
-const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
-  { value: 'mocha', label: 'Mocha (dark)' },
-  { value: 'vscode', label: 'VS Code (dark)' },
-  { value: 'neon', label: 'Neon (dark)' },
-  { value: 'latte', label: 'Latte (light)' },
-  { value: 'dawn', label: 'Dawn (warm light)' },
-  { value: 'system', label: 'System' },
-]
 
 export interface Command {
   id: string
@@ -97,8 +89,12 @@ export function CommandPalette({
     const actions: Command[] = [
       ...(canUndo ? [{ id: 'undo', label: 'Undo last change', hint: 'history', run: undo }] : []),
       ...(canRedo ? [{ id: 'redo', label: 'Redo', hint: 'history', run: redo }] : []),
-      ...THEME_OPTIONS.filter((t) => t.value !== data.settings.theme).map((t) => ({
-        id: `theme-${t.value}`, label: `Theme: ${t.label}`, hint: 'theme', run: () => setSettings({ theme: t.value }),
+      // The palette is an INDEX of actions, not a second control panel — it
+      // can reach anything, which is the point of ⌘K. It reads the one
+      // `THEMES` list so the names match Settings instead of inventing a third
+      // spelling ("Mocha (dark)" against "Mocha · Dark · default").
+      ...THEMES.filter((t) => t.value !== data.settings.theme).map((t) => ({
+        id: `theme-${t.value}`, label: `Theme: ${themeLabel(t)}`, hint: 'theme', run: () => setSettings({ theme: t.value }),
       })),
       { id: 'paper', label: `${data.settings.paperMode ? 'Disable' : 'Enable'} paper texture`, hint: 'action', run: () => setSettings({ paperMode: !data.settings.paperMode }) },
       { id: 'hand', label: `${data.settings.handwriting ? 'Disable' : 'Enable'} handwriting font`, hint: 'action', run: () => setSettings({ handwriting: !data.settings.handwriting }) },

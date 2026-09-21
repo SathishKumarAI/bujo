@@ -21,19 +21,11 @@ import { entriesCsv, habitsCsv, metricsCsv, workoutsCsv, parseMetricsCsv, stripS
 import { journalToICS, habitRemindersToICS, tasksToICS, completionsToICS } from '../lib/ics'
 import { inlineImages } from '../lib/imageStore'
 import { todayISO } from '../lib/date'
-import type { Gender, ThemeName } from '../lib/types'
+import type { Gender } from '../lib/types'
+import { THEMES } from '../lib/themes'
 import { useConfirm } from '../components/ConfirmDialog'
 import { CloudSyncCard } from '../components/account/CloudSyncCard'
 
-/** Selectable themes (swatch = base / surface / accent) for the Settings picker. */
-const THEMES: { value: ThemeName; label: string; hint: string; swatch: [string, string, string] }[] = [
-  { value: 'mocha', label: 'Mocha', hint: 'Dark · default', swatch: ['#1e1e2e', '#313244', '#cba6f7'] },
-  { value: 'vscode', label: 'VS Code', hint: 'Dark · editor', swatch: ['#1f1f1f', '#2a2a2e', '#c586c0'] },
-  { value: 'neon', label: 'Neon', hint: 'Dark · vivid', swatch: ['#0a0a16', '#20203c', '#c77dff'] },
-  { value: 'latte', label: 'Latte', hint: 'Light · crisp', swatch: ['#f8f9fa', '#e8eaed', '#6c4cf0'] },
-  { value: 'dawn', label: 'Dawn', hint: 'Light · warm', swatch: ['#faf3e7', '#ecdcc4', '#b45309'] },
-  { value: 'system', label: 'System', hint: 'Match OS', swatch: ['#1e1e2e', '#f8f9fa', '#89b4fa'] },
-]
 
 function download(filename: string, text: string, mime = 'application/json') {
   const blob = new Blob([text], { type: mime })

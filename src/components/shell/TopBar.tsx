@@ -9,7 +9,6 @@ import { HeaderRail } from './topbar/HeaderRail'
 import { SectionNav } from './topbar/SectionNav'
 import { DateNav } from './topbar/DateNav'
 import { HelpMenu } from './topbar/HelpMenu'
-import { OverflowMenu } from './topbar/OverflowMenu'
 import { SurfaceTabs } from './topbar/SurfaceTabs'
 import { useHideOnScroll } from './useHideOnScroll'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
@@ -155,9 +154,10 @@ export function TopBar({
               <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
             </Button>
 
-            {/* Renders nothing when no account backend is configured. */}
-            <AccountMenu onNavigate={onNavigate} />
-            <OverflowMenu onNavigate={onNavigate} onCommand={onCommand} />
+            {/* One menu. It was two — an avatar and a ⋯ — with two doors to
+                Settings, two differently-named doors to Help, and a theme
+                picker missing two of the six themes. See `AccountMenu`. */}
+            <AccountMenu onNavigate={onNavigate} onCommand={onCommand} />
           </div>
         </div>
       </HeaderRail>
