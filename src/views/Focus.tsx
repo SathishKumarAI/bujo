@@ -46,7 +46,14 @@ export function Focus() {
       <Band>
         <BandRow>
           <BandCell className="basis-[20rem]">
-            <LogSession onLog={addDevSession} />
+            <LogSession
+              onLog={addDevSession}
+              // The same two tables the breakdowns below already read, so the
+              // chips are the projects and tags you actually use, in the order
+              // you use them. "(no project)" is a bucket label, not a project.
+              recentProjects={minutesByProject(data).map((p) => p.project).filter((p) => p !== '(no project)')}
+              recentTags={topTags(data, 8).map((t) => t.tag)}
+            />
           </BandCell>
           <BandCell className="basis-[18rem]">
             <FocusTimer />
