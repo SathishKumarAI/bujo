@@ -3,8 +3,11 @@ import { SegmentScale } from '../fields/SegmentScale'
 import { Button } from '../ui/button'
 import { todayISO } from '../../lib/date'
 import type { DevSession } from '../../lib/types'
+import { notify } from '../../lib/notify'
 
-const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' }
+/** A function, not a constant: a module-load `todayISO()` makes the default
+ *  date whatever day the tab was opened. See the same fix in Pickleball. */
+const blankOf = () => ({ date: todayISO(), durationMin: '', project: '', focus: 7, stress: 3, interruptions: '', tags: '', notes: '' })
 
 /**
  * The act zone's form: log a deep-work session.
@@ -17,11 +20,13 @@ const blank = { date: todayISO(), durationMin: '', project: '', focus: 7, stress
  * dots that read "not answered yet" is a solved problem worth leaving alone.
  */
 export function LogSession({ onLog }: { onLog: (s: Omit<DevSession, 'id'>) => void }) {
-  const [f, setF] = useState(blank)
-  const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
+  const [f, setF] = useState(blankOf)
+  const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
 
   function log() {
-    if (!f.durationMin) return
+    // Focus and stress are pre-filled, so a form with a project, tags and
+    // notes LOOKS complete and used to discard silently on submit.
+    if (!f.durationMin) { notify.info('How long was the session?', 'Minutes is the one field a focus session needs.'); return }
     onLog({
       date: f.date,
       durationMin: Number(f.durationMin),
@@ -32,7 +37,7 @@ export function LogSession({ onLog }: { onLog: (s: Omit<DevSession, 'id'>) => vo
       tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
       notes: f.notes.trim() || undefined,
     })
-    setF({ ...blank })
+    setF(blankOf())
   }
 
   const field = 'w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none'

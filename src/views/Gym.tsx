@@ -21,7 +21,7 @@ import { splitGlyph } from '../components/glyphs'
 import {
   RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
   MuscleVolumeBalance, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
-  SessionLogger, type SetRow,
+  SessionLogger, newSetRow, type SetRow,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
@@ -75,8 +75,8 @@ export function Gym() {
   const [split, setSplit] = useState<Split>(handoff ? 'other' : suggested)
   const [rows, setRows] = useState<SetRow[]>(
     handoff?.length
-      ? handoff.map((exercise) => ({ exercise, weight: '', reps: '' }))
-      : [{ exercise: '', weight: '', reps: '' }],
+      ? handoff.map((exercise) => newSetRow({ exercise }))
+      : [newSetRow()],
   )
   useEffect(() => clearPendingSession(), [])
   const [routineName, setRoutineName] = useState('')
@@ -197,11 +197,11 @@ export function Gym() {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)))
   }
   function addRow(exercise = '') {
-    setRows((r) => [...r, { exercise, weight: '', reps: '' }])
+    setRows((r) => [...r, newSetRow({ exercise })])
   }
   function loadRoutine(exs: string[], s: Split) {
     setSplit(s)
-    setRows(exs.map((exercise) => ({ exercise, weight: '', reps: '' })))
+    setRows(exs.map((exercise) => newSetRow({ exercise })))
   }
 
   function finish() {
@@ -241,7 +241,7 @@ export function Gym() {
       notes: '',
     })
     setSummary(sessionSummary(structured))
-    setRows([{ exercise: '', weight: '', reps: '' }])
+    setRows([newSetRow()])
     if (pr) setPrParty(pr)
   }
 

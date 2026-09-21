@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { ArrowsClockwise, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
+import { notify } from '../lib/notify'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { useConfirm } from '../components/ConfirmDialog'
 import {
   ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
-  draftOf, emptyDraft, workoutOf, type ActivityDraft,
+  draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
 import { isActivityKey, labelOf, MODE_COPY, MODES, modeOf, modeSegments, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
@@ -139,6 +140,14 @@ export function Fitness() {
   )
 
   function submit() {
+    // Was unguarded, so an untouched form wrote an empty workout that then
+    // counted as a session you did. And the guard SAYS so: a button that
+    // silently does nothing is indistinguishable from a broken one, which is
+    // how every other failing guard in this app behaved.
+    if (draftIsEmpty(draft)) {
+      notify.info('Nothing to log yet', 'Add a duration, a distance or some sets first.')
+      return
+    }
     addWorkout(workoutOf(draft, unit))
     setDraft(emptyDraft(mode))
   }

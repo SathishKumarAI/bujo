@@ -22,8 +22,18 @@ import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt
 import { PICKLEBALL_KEY } from '../lib/recordKeys'
 
 const tip = rechartsTooltip
-const blank = { date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' }
-const evtBlank = { date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' }
+/**
+ * `blank` is a FUNCTION, not a constant.
+ *
+ * It was `const blank = { date: todayISO(), ... }` evaluated once when the
+ * module loaded — so the default date was whatever day the tab was opened.
+ * Leave the app open overnight and every session logs to yesterday, and the
+ * field resets to yesterday after each save. The correct pattern was already
+ * in this file at the DUPR form (`setDupr({ date: todayISO(), ... })`) and in
+ * `page/draft.ts`'s `emptyDraft`; only these two constants missed it.
+ */
+const blankOf = () => ({ date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' })
+const evtBlankOf = () => ({ date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' })
 
 /** Quick pre-match warm-up · done before logging a session keeps injuries down. */
 const WARMUP = [
@@ -85,10 +95,10 @@ export function Pickleball() {
     logDupr(dupr.date, r)
     setDupr({ date: todayISO(), rating: '' })
   }
-  const [f, setF] = useState(blank)
-  const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
-  const [ev, setEv] = useState(evtBlank)
-  const setE = (p: Partial<typeof evtBlank>) => setEv((c) => ({ ...c, ...p }))
+  const [f, setF] = useState(blankOf)
+  const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
+  const [ev, setEv] = useState(evtBlankOf)
+  const setE = (p: Partial<ReturnType<typeof evtBlankOf>>) => setEv((c) => ({ ...c, ...p }))
   const today = todayISO()
   // Deterministic daily rotation so the practice focus is stable for the day.
   const drill = DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % DRILLS.length]
@@ -123,7 +133,7 @@ export function Pickleball() {
       pointsAgainst: f.pointsAgainst ? Number(f.pointsAgainst) : undefined,
       scoring: f.scoring || undefined,
     })
-    setF({ ...blank })
+    setF(blankOf())
   }
   function logEvent() {
     if (!ev.name.trim()) return
@@ -139,11 +149,11 @@ export function Pickleball() {
       partner: ev.partner.trim() || undefined,
       notes: ev.notes.trim() || undefined,
     })
-    setEv({ ...evtBlank })
+    setEv(evtBlankOf())
   }
   function repeatLast() {
     const last = sessions[0]
-    if (last) setF({ ...blank, date: today, format: last.format, durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', location: last.location ?? '', level: last.level ?? '', scoring: last.scoring ?? '' })
+    if (last) setF({ ...blankOf(), date: today, format: last.format, durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', location: last.location ?? '', level: last.level ?? '', scoring: last.scoring ?? '' })
   }
 
   const wl = [{ name: 'Won', value: all.gamesWon, color: 'green' }, { name: 'Lost', value: all.gamesLost, color: 'red' }]

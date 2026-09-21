@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { cat } from '../../lib/colors'
 import { cn } from '../../lib/cn'
 
@@ -37,21 +38,35 @@ export function SegmentScale({
   hint?: string
   max?: number
 }) {
+  const reactId = useId()
   const unset = value == null
   const accent = cat(color)
   const dots = Array.from({ length: max + 1 }, (_, i) => i)
 
+  /**
+   * `aria-labelledby` is a **space-separated list of IDs**, so
+   * `id={`scale-${label}`}` was fatal for any label containing a space:
+   * "Focus / flow" resolved as three IDREFs — `scale-Focus`, `/`, `flow` —
+   * none of which exist, leaving the radiogroup with no accessible name at
+   * all. The per-dot `aria-label` saved the individual radios, not the group.
+   *
+   * `useId` also fixes the second half: Focus renders this scale from the log
+   * form AND again from a history row being edited, which minted **duplicate
+   * IDs in one document**.
+   */
+  const scaleId = `${reactId}-label`
+
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-body">
-        <span id={`scale-${label}`} className="text-fg-1">{label}</span>
+        <span id={scaleId} className="text-fg-1">{label}</span>
         <span className="rounded px-1.5 font-mono tabular-nums" style={{ color: unset ? undefined : accent }}>
           {value ?? '—'}
         </span>
       </div>
       <div
         role="radiogroup"
-        aria-labelledby={`scale-${label}`}
+        aria-labelledby={scaleId}
         className="flex w-full items-center justify-between"
       >
         {dots.map((n) => {

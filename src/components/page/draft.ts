@@ -57,6 +57,21 @@ export const workoutOf = (d: ActivityDraft, unit: DistanceUnit): Omit<Workout, '
   notes: d.notes.trim(),
 })
 
+/**
+ * Did the person actually enter anything?
+ *
+ * `Fitness.submit()` had **no guard at all** — every other log form in the app
+ * has one, and the reference implementation was the one without. Pressing "Log
+ * session" on an untouched form wrote a real workout with no duration, no
+ * distance and no sets, which then counted in the session total, in the week's
+ * count and on the activity heatmap as a day you trained.
+ *
+ * The date and the activity are excluded on purpose: both are pre-filled, so
+ * neither is evidence that a human touched the form.
+ */
+export const draftIsEmpty = (d: ActivityDraft): boolean =>
+  !d.duration.trim() && !d.distance.trim() && !d.sets.trim() && !d.calories.trim() && !d.notes.trim()
+
 /** Standard draft state for a page that needs no special behaviour. */
 export function useActivityDraft(mode: Mode) {
   const [draft, setDraft] = useState(() => emptyDraft(mode))
