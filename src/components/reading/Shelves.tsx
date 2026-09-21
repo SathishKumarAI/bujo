@@ -6,6 +6,7 @@ import { Button } from '../ui/button'
 import { BookRow } from './BookRow'
 import { shelf } from '../../lib/reading'
 import type { Book, BookStatus } from '../../lib/types'
+import { notify } from '../../lib/notify'
 
 const SHELVES: { id: BookStatus; label: string }[] = [
   { id: 'want', label: 'Want to read' },
@@ -29,7 +30,7 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
 
   function add() {
     const t = title.trim()
-    if (!t) return
+    if (!t) { notify.info('Name the book', 'A title is the one field a shelf entry needs.'); return }
     onAdd(t, author.trim() || undefined)
     setTitle('')
     setAuthor('')

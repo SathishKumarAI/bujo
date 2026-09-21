@@ -103,7 +103,7 @@ export function CustomCollections({
                       if (open) onOpen(null)
                     }}
                     aria-label={`Delete ${c.name}`}
-                    className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger-text"
+                    className="shrink-0 text-fg-2 reveal hover:text-danger-text"
                   >
                     ×
                   </button>

@@ -190,7 +190,7 @@ export function TypingBand() {
                     size="icon-sm"
                     onClick={() => removeTypingSession(s.id)}
                     aria-label={`Delete typing session on ${prettyDay(s.date)}`}
-                    className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger-text"
+                    className="ml-auto text-fg-2 reveal hover:text-danger-text"
                   >
                     ×
                   </Button>

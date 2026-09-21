@@ -1081,6 +1081,36 @@ body.handwriting textarea {
   margin: 1em 0;
 }
 
+/* ── An affordance that only appears on hover does not exist on a phone ─────
+   24 controls across 18 files were `opacity-0 group-hover:opacity-100` — every
+   Edit, Remove and × in the app. Tailwind v4 already wraps `hover:` in
+   `@media (hover: hover)`, so on a touch screen the reveal rule never fires at
+   all and those buttons are permanently invisible. They are still there, still
+   4px tall in the layout, and still the only way to undo a mistaken log.
+
+   `.reveal` inverts the default: visible unless the device can actually hover.
+   Keyboard focus and focus-within bring it back on a mouse, so tabbing to a
+   row still reaches its delete button. */
+.reveal {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .reveal {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-rise);
+  }
+  .group:hover .reveal,
+  .reveal:hover,
+  .reveal:focus-visible,
+  .reveal:focus-within,
+  .group:focus-within .reveal {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transition: none; }
+}
+
 /* ── Motion: subtle entrance + 3D hover, all reduced-motion-aware ──────────── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes bujo-rise {

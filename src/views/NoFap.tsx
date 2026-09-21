@@ -15,6 +15,7 @@ import { CollapsibleSection } from '../components/CollapsibleSection'
 import { LazyMount } from '../components/LazyMount'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useFocusTrap } from '../lib/useFocusTrap'
+import { notify } from '../lib/notify'
 import {
   StreakVsBestCard,
   SelfEfficacyCard,
@@ -167,9 +168,38 @@ export function NoFap() {
   }
   const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
 
+  /**
+   * "I resisted it" stays a ONE-TAP action, deliberately.
+   *
+   * The audit flagged this as the last unguarded save in the app, and the
+   * obvious fix — require a trigger, or a technique — is the wrong one here.
+   * Every other form in this app records something that already happened at
+   * your leisure. This one is pressed *during* an urge, which is the worst
+   * possible moment to be asked a question, and a required field would push
+   * people to not log at all. An urge resisted with no context is still an
+   * urge resisted; the context fields are a bonus, not the record.
+   *
+   * What was actually wrong was the other end: the × that removes a row was
+   * `opacity-0 group-hover:opacity-100`, and Tailwind wraps `hover:` in
+   * `@media (hover: hover)` — so on a phone the undo for a mis-tap **did not
+   * render at all**. That is fixed globally by `.reveal` in `index.css`
+   * (25 controls, 18 files, every Edit and Remove in the app).
+   *
+   * The one thing guarded here is the double-tap: two rows in the same few
+   * seconds is a fat finger, not two urges, and this button sits under a
+   * thumb. It inflates `stats.urges`, the conversion rate and the page's
+   * signature chart, none of which are worth a phantom win.
+   */
+  /** Guards the fat-finger double-tap; see `logUrge`. */
+  const lastUrgeAt = useRef(0)
+
   function logUrge() {
+    const now = Date.now()
+    if (now - lastUrgeAt.current < 3000) return
+    lastUrgeAt.current = now
     resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique, halt: halt.length ? halt : undefined })
     setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([])
+    notify.success('Logged — that one passed', 'Remove it from the list below if it was a mis-tap.')
   }
   const haltRank = haltTally(data)
   const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
@@ -390,7 +420,7 @@ export function NoFap() {
                   <Icon as={HandFist} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
                   <span className="text-fg-1">{u.trigger || 'Urge'}</span>
                   <span className="ml-auto text-label text-fg-2">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
-                  <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 reveal hover:text-red">×</Button>
                 </li>
               ))}
             </ul>
@@ -473,7 +503,7 @@ export function NoFap() {
                         title: `Stop tracking ${a.name}?`,
                         description: 'Its streak and full reset history are deleted. This cannot be undone.',
                         confirmLabel: 'Stop tracking', destructive: true,
-                      })) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                      })) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-fg-2 reveal hover:text-red">×</Button>
                     </div>
                     {/* #123 per-addiction cost/day → money saved */}
                     <div className="mt-2 flex items-center gap-2 pl-7 text-label text-fg-2">
@@ -557,7 +587,7 @@ export function NoFap() {
                     <div className="flex items-center gap-2">
                       <Pill color="mauve" size="caption">{pl.addiction}</Pill>
                       <span className="text-fg-1"><span className="text-fg-2">when</span> {pl.trigger}</span>
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-fg-2 opacity-0 group-hover:opacity-100 hover:text-red">×</Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-fg-2 reveal hover:text-red">×</Button>
                     </div>
                     {pl.coping && <p className="mt-0.5 text-label text-fg-2"><span className="text-teal">→ then</span> {pl.coping}</p>}
                   </li>

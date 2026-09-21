@@ -47,6 +47,7 @@ import { useConfirm } from '../components/ConfirmDialog'
 import { useStickyState } from '../lib/useStickyState'
 import { useJustCaptured } from '../components/CaptureReceipt'
 import { METRIC_KEY } from '../lib/recordKeys'
+import { notify } from '../lib/notify'
 
 /** The three metrics this page plots — the only ones it can point at. */
 const TREND_FIELDS = ['mood', 'stress', 'sleep'] as const
@@ -142,7 +143,7 @@ export function Trackers() {
   function add() {
     const name = newHabit.trim()
     if (!name) return
-    if (habitExists(name)) { setNewHabit(''); return } // no duplicates
+    if (habitExists(name)) { notify.info(`You already track “${name}”`, 'Find it in the grid below.'); setNewHabit(''); return }
     addHabit({ name, category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
     setNewHabit('')
   }

@@ -117,7 +117,7 @@ function ActivityRow({
             onDragStart={reorder.onDragStart}
             onDragEnd={reorder.onDragEnd}
             title="Drag to reorder"
-            className="shrink-0 cursor-grab text-fg-2 opacity-0 group-hover:opacity-100 active:cursor-grabbing"
+            className="shrink-0 cursor-grab text-fg-2 reveal active:cursor-grabbing"
           ><Icon as={DotsSixVertical} size="sm" /></span>
         )}
         <span>{avoid ? <Icon as={Prohibit} size="sm" style={{ color: onRaised('red') }} /> : h.emoji ?? <span style={{ color: onRaised(h.color) }}>●</span>}</span>

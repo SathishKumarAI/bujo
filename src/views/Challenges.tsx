@@ -12,6 +12,7 @@ import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
+import { notify } from '../lib/notify'
 import {
   CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -334,7 +335,10 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
 
   function submit() {
     const ruleList = rules.split('\n').map((r) => r.trim()).filter(Boolean)
-    if (!name.trim() || ruleList.length === 0 || !Number(duration)) return
+    if (!name.trim() || ruleList.length === 0 || !Number(duration)) {
+      notify.info('A challenge needs three things', 'A name, a number of days, and at least one rule.')
+      return
+    }
     onCreate({ name: name.trim(), durationDays: Number(duration), startDate, rules: ruleList, strict })
   }
 

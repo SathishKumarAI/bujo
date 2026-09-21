@@ -225,7 +225,7 @@ export function Fitness() {
                         size="icon-sm"
                         onClick={() => removeWorkout(w.id)}
                         aria-label={`Delete ${labelOf(w.activity)} on ${prettyDay(w.date)}`}
-                        className="text-fg-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+                        className="text-fg-2 reveal hover:text-red"
                       >×</Button>
                     </div>
                   </li>
