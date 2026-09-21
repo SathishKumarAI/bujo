@@ -84,7 +84,16 @@ function surfaceColumns(date: string, nav: ReturnType<typeof useNav>) {
       ),
     },
     evening: {
-      main: <TodayHabits date={date} variant="checklist" />,
+      // The close-out is "walk the list once", so the list has to be the whole
+      // list. The checklist renders a checkbox and therefore only holds `check`
+      // habits; the numeric ones come with it rather than living on a
+      // different surface.
+      main: (
+        <>
+          <TodayHabits date={date} variant="checklist" />
+          <TodayCountHabits date={date} />
+        </>
+      ),
       rail: <WritingCard key={date} date={date} />,
     },
   }
@@ -221,24 +230,36 @@ function TodayClassic() {
 }
 
 /**
- * Count/timer habits scheduled today, each with −/+ steppers (and a quick +step)
- * so you can log progress without leaving Today. Reuses the existing
- * setHabitValue store action; values are clamped at 0.
+ * The habits Today could not tick: the ones whose answer is a NUMBER.
+ *
+ * `TodayHabits` renders a checkbox, so it filters to `check` habits — which is
+ * correct for a checkbox and meant that count, timer and **rating** habits
+ * were not on Today at all unless you happened to be on the Day surface,
+ * where this card sat in the rail. The Evening close-out, the one screen whose
+ * whole job is "walk the list once", silently omitted them.
+ *
+ * `rating` was missing from here too, so a 1–5 habit was unreachable from
+ * Today on every surface. Included now, stepping 0–5 like the rest.
+ *
+ * Still excludes `avoid` habits: a tally is not what "did you slip" asks for,
+ * and those are ticked in the checklist above.
  */
 function TodayCountHabits({ date }: { date: string }) {
   const { data, setHabitValue } = useJournal()
   const habits = data.habits.filter(
-    (h) => !h.archived && !h.avoid && (h.type === 'count' || h.type === 'timer') && isScheduledOn(h, date),
+    (h) => !h.archived && !h.avoid && (h.type === 'count' || h.type === 'timer' || h.type === 'rating') && isScheduledOn(h, date),
   )
   if (habits.length === 0) return null
   return (
-    <Card band title="Count habits" subtitle="Tap −/+ to log your tally for today" hideInfo>
+    <Card band title="Habits with a number" subtitle="Tap −/+ to log today's tally" hideInfo>
       <ul className="space-y-2">
         {habits.map((h) => {
           const target = habitTarget(h)
           const val = habitValueOn(data, h, date)
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
+          // A rating is 1–5 and cannot be "more" than 5; a count can.
+          const ceiling = h.type === 'rating' ? 5 : Infinity
           return (
             <li key={h.id} className="flex items-center gap-3 border-t border-line py-2">
               <span className="min-w-0 flex-1 truncate text-body text-fg-1">
@@ -258,14 +279,14 @@ function TodayCountHabits({ date }: { date: string }) {
                   className="grid size-11 place-items-center rounded-control bg-ink-2 text-fg-1 shadow-raise transition-colors hover:bg-ink-3 disabled:opacity-30"
                 >−</button>
                 <button
-                  onClick={() => setHabitValue(date, h.id, val + step)}
+                  onClick={() => setHabitValue(date, h.id, Math.min(ceiling, val + step))}
                   aria-label={`Increase ${h.name}`}
                   className="grid size-11 place-items-center rounded-control shadow-raise transition-colors"
                   style={washStyle(cat(h.color))}
                 >+</button>
                 {step > 1 && (
                   <button
-                    onClick={() => setHabitValue(date, h.id, val + step)}
+                    onClick={() => setHabitValue(date, h.id, Math.min(ceiling, val + step))}
                     aria-label={`Add ${step} to ${h.name}`}
                     className="min-h-11 rounded-pill border border-line-strong px-2 text-caption text-fg-1 transition-colors hover:text-fg-1"
                   >+{step}</button>
