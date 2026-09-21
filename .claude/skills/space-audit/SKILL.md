@@ -20,14 +20,21 @@ npm run build && npm run preview     # the gate reads 4173, not the dev server
 npm run space -- <view>              # or --all
 ```
 
-Three numbers per viewport, and they are the whole diagnosis:
+Five numbers per viewport, and they are the whole diagnosis:
 
 | Column | Question | Bad |
 |---|---|---|
-| `screens` | how far must I scroll | > 3 on desktop |
+| `shipped` | screens of scroll as the user first sees it | — |
+| `open` | screens with every fold opened | > 3 on desktop |
 | `cards in N group(s)` | how much is on the page | — |
 | `columns` | how many columns the layout **actually uses** | `1` at 1440 |
 | `thin` | cards whose box is mostly air | any |
+
+**Both scroll numbers, because either alone is gameable.** Measuring only the
+opened page punishes a disclosure for existing — fold four optional fields away
+and the page is shorter for every user while the tool reports no change at all.
+Measuring only the shipped page rewards hiding content, which is the trap the
+a11y gate already documents. The gap between them is what the folds are worth.
 
 **`1 column` at desktop width is the finding.** It means every card is full
 width whatever it holds, and it is almost always a layout primitive that stacks,
@@ -55,9 +62,10 @@ reload. Deleting it fixed the layout *and* a bug.
 
 ### 3. Re-measure with the same tool, on the same fold state
 
-`npm run space` **opens every fold before measuring**, because a collapsed page
-is not a short page. A before/after taken with different fold states is not a
-comparison. To get a true baseline after you have already edited:
+`npm run space` measures once as shipped and again with every fold opened, so
+the fold state is not something you can get wrong between runs — but the
+*build* is. Measure the baseline from the built app too, not from memory. To
+get one after you have already edited:
 
 ```bash
 cp src/views/X.tsx  "$SCRATCH/X.new.tsx"
@@ -69,7 +77,24 @@ cp "$SCRATCH/X.new.tsx" src/views/X.tsx      # restore
 `git stash push -- <paths>` is the usual trick, but it **fails on a path you
 have `git rm`'d** — the pathspec no longer matches anything git knows about.
 
-### 4. Organisation is not packing
+### 4. Tap-to-log costs vertical space — budget for it
+
+Converting typed fields to `ChipPick`/`Stepper` (`ui/quickpick.tsx`) makes a
+form fewer actions and **taller**: Pickleball's log form grew the page by 0.4
+screens. Two things buy it back, in this order:
+
+1. Give the form the row it deserves. It is the primary action — `SPAN_2`, then
+   pair the chip groups two-up inside it.
+2. Put the half you fill less than half the time behind `DisclosureRow`.
+   **Not a `<details>`** — `DisclosureRow` renders `aria-expanded`, which is
+   what `npm run a11y` clicks before it scans. A `<details>` keeps those
+   controls out of the accessibility gate entirely.
+
+A chip row is only an improvement if it is fewer actions than typing. Arbitrary
+numbers with no common values (a 0–21 score) stay typed; a stepper there is
+eleven taps and chips are a list of twenty-two.
+
+### 5. Organisation is not packing
 
 The tool measures boxes, not meaning. Read a good score as "this page is
 packed", never "this page is good". Check by hand, every time:
@@ -84,12 +109,13 @@ packed", never "this page is good". Check by hand, every time:
   hints read "Recent form · forecast · milestones · intensity" directly above
   those four cards. Deleting them cost nothing and bought a phone screen.
 
-### 5. Prove it
+### 6. Prove it
 
 Every claim in the PR body is a number from the tool, both viewports:
 
-> desktop 5.0 → 4.3 screens, phone 7.5 → 7.5 (unchanged — a single column
-> cannot pack; only cutting cards would shorten it)
+> desktop 4.1 → 3.5 shipped / 5.0 → 4.7 open · phone 6.0 → 6.2 shipped
+> (unchanged-to-worse: a single column cannot pack, and tap-to-log is taller
+> than the number inputs it replaced)
 
 **Report the viewport that did not improve.** A phone stacks at one column by
 design, so most packing work is a desktop win and neutral on phone. Saying so is
