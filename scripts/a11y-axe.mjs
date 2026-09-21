@@ -269,6 +269,34 @@ async function setTheme(next) {
     localStorage.setItem('bujo:data', JSON.stringify(d))
   }, next)
   await page.reload({ waitUntil: 'networkidle' })
+  /**
+   * Wait for the theme to land before deciding it never will.
+   *
+   * This read `data-theme` the instant `networkidle` resolved — and
+   * `networkidle` fires when the last chunk has arrived, not when React has
+   * rendered with it. The attribute is written during that first render, so
+   * the check was racing it and usually won by luck.
+   *
+   * It lost on `main` twice in a row, thirteen minutes into a walk, on the
+   * fifth theme: `[dawn] theme did not apply — the root says ""`. The empty
+   * string is the tell — not the WRONG theme, which would be a real bug, but
+   * NO theme, which is a page that has not rendered yet.
+   *
+   * Exactly COD-202 one function over: the assertion is right and worth
+   * keeping, it just has to be made after giving the app a chance, or
+   * "not yet" reads as "not ever". The `catch` is deliberate — a timeout here
+   * falls through to the assertion below, which prints what it actually found.
+   */
+  await page
+    .waitForFunction(
+      (t) => {
+        const r = document.documentElement
+        return String(r.getAttribute('data-theme') ?? r.className ?? '').includes(t)
+      },
+      next,
+      { timeout: 8000 },
+    )
+    .catch(() => {})
   const applied = await page.evaluate(() => document.documentElement.getAttribute('data-theme') ?? document.documentElement.className)
   if (!String(applied).includes(next)) {
     console.error(`\n[${next}] theme did not apply — the root says "${applied}".`)
