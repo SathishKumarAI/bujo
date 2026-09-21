@@ -4,11 +4,9 @@ import { Button } from '../ui/button'
 import { AccountMenu } from './AccountMenu'
 import { SectionTabs } from './SectionTabs'
 import { WeekStrip } from './WeekStrip'
-import { FeedbackButton } from '../feedback/FeedbackButton'
 import { HeaderRail } from './topbar/HeaderRail'
 import { SectionNav } from './topbar/SectionNav'
 import { DateNav } from './topbar/DateNav'
-import { HelpMenu } from './topbar/HelpMenu'
 import { SurfaceTabs } from './topbar/SurfaceTabs'
 import { useHideOnScroll } from './useHideOnScroll'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
@@ -128,10 +126,11 @@ export function TopBar({
           <div className="ml-auto flex items-center justify-end gap-1.5 md:ml-0">
             <WeekStrip />
 
-            {/* ── Content tools ───────────────────────────────────────────── */}
-            <HelpMenu view={view} onNavigate={onNavigate} />
-            {/* Feedback is secondary — keep it off phones so the bar fits. */}
-            <span className="hidden sm:inline-flex"><FeedbackButton /></span>
+            {/* Help and Send feedback used to stand here as two more buttons.
+                They are items in the corner menu now — and feedback in
+                particular was `hidden sm:inline-flex`, so on a phone the app
+                had no way to send any. A menu item costs no bar width, which
+                is why it can exist at every size. */}
 
             {/* ── Page action, then everything else ───────────────────────── */}
             <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-line" />
@@ -157,7 +156,7 @@ export function TopBar({
             {/* One menu. It was two — an avatar and a ⋯ — with two doors to
                 Settings, two differently-named doors to Help, and a theme
                 picker missing two of the six themes. See `AccountMenu`. */}
-            <AccountMenu onNavigate={onNavigate} onCommand={onCommand} />
+            <AccountMenu view={view} onNavigate={onNavigate} onCommand={onCommand} />
           </div>
         </div>
       </HeaderRail>

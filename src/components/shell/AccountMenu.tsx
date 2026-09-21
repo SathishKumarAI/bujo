@@ -1,7 +1,14 @@
-import { ArrowCounterClockwise, Command, Gear, Minus, Plus, Question, ShareNetwork, ShieldCheck, UserCircle } from '@/components/icons'
+import { ArrowCounterClockwise, Command, Gear, Minus, Plus, Question, ShareNetwork, ShieldCheck, UserCircle, ChatCenteredDots} from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Button } from '../ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
+import {
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
+import { PageHelpItems } from './topbar/HelpMenu'
+import { useSuggestionCount } from './topbar/useSuggestionCount'
+import { FeedbackButton } from '../feedback/FeedbackButton'
+import { useState } from 'react'
 import { useJournal } from '../../store'
 import { notify } from '../../lib/notify'
 import type { ViewId } from './viewChrome'
@@ -45,17 +52,23 @@ import type { ViewId } from './viewChrome'
  * Settings.
  */
 export function AccountMenu({
+  view,
   onNavigate,
   onCommand,
 }: {
+  /** The page whose help this menu offers — the corner menu is per-page now. */
+  view: ViewId
   onNavigate: (id: ViewId) => void
   onCommand: () => void
 }) {
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const profile = data.settings.profile
   const syncing = typeof localStorage !== 'undefined' && !!localStorage.getItem('bujo:sync')
   const label = profile ? profile.name : 'No name set'
   const zoom = data.settings.zoom ?? 1
+  const suggestions = useSuggestionCount()
+  const reminderOn = !!data.settings.reminderEnabled
   const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
 
   function share() {
@@ -66,6 +79,7 @@ export function AccountMenu({
   }
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Account and app menu" title={`Account, ${label}`} className="relative">
@@ -74,7 +88,14 @@ export function AccountMenu({
           ) : (
             <Icon as={UserCircle} size="md" />
           )}
-          {!profile && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-pill bg-yellow" />}
+          {/* The count the retired `?` button carried. Without it, folding help
+              into this menu would have hidden the one thing on it that changes
+              from day to day. */}
+          {suggestions > 0 ? (
+            <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{suggestions}</span>
+          ) : (
+            !profile && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-pill bg-yellow" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
@@ -101,8 +122,41 @@ export function AccountMenu({
         <DropdownMenuItem onClick={() => onNavigate('settings')}>
           <Icon as={Gear} size="sm" className="mr-2" /> Settings
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onNavigate('help')}>
-          <Icon as={Question} size="sm" className="mr-2" /> Help &amp; guide
+        {/* ── The three controls that used to sit beside this button ─────
+            A `?` with a yellow count, a feedback button hidden below `sm`, and
+            this menu: three doors in one corner for "what is this", "who do I
+            tell" and "who am I". #240 merged the avatar and the ⋯; this
+            finishes the job. The count moved onto this trigger, because
+            folding help in here would otherwise have hidden the only thing in
+            the corner that changes from day to day. */}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Icon as={Question} size="sm" className="mr-2" /> Help with this page
+            {suggestions > 0 && (
+              <span className="ml-auto grid h-4 min-w-4 place-items-center rounded-pill bg-yellow px-1 text-micro font-medium text-crust">{suggestions}</span>
+            )}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-80">
+            <PageHelpItems view={view} onNavigate={onNavigate} />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onNavigate('help')}>
+              <Icon as={Question} size="sm" className="mr-2" /> Help &amp; guide
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {/* The reminder's ON/OFF is a decision you revisit; its TIME is a
+            setting you choose once, so that stays in Settings → Reminders
+            rather than growing a time picker inside a dropdown. */}
+        <DropdownMenuCheckboxItem
+          checked={reminderOn}
+          onCheckedChange={(c) => setSettings({ reminderEnabled: c })}
+        >
+          Daily reminder
+        </DropdownMenuCheckboxItem>
+
+        <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+          <Icon as={ChatCenteredDots} size="sm" className="mr-2" /> Send feedback
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onNavigate('account')}>
           <Icon as={ShieldCheck} size="sm" className="mr-2" /> How your data is stored
@@ -128,5 +182,10 @@ export function AccountMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    {/* Outside the menu on purpose: a dropdown unmounts its content on select,
+        and a dialog mounted inside it would be torn down in the same tick it
+        was asked to open. */}
+    <FeedbackButton open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+    </>
   )
 }
