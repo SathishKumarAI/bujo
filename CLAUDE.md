@@ -104,6 +104,7 @@ before the browser had reached it, and each read "not yet" as "not ever":
 | `go()` | `[Plan] no rail row with that name` | the nav had scrolled out of frame |
 | `scanReceipt()` | `ringed row MISSING` | Today was on the evening surface, because of the clock |
 | `setTheme()` | `[dawn] theme did not apply — the root says ""` | React had not rendered yet |
+| `scan()` | `[Settings] rendered 0 characters` | the lazily-imported view had not mounted |
 
 The last one is the cleanest example of how to read these: the root said `""`,
 not the *wrong* theme. A wrong theme is a bug worth failing on; an empty one is
@@ -117,6 +118,13 @@ Keep the assertions — they are what separates "five themes scanned" from "one
 theme scanned five times" — and put a `waitForFunction`/`waitFor` in front,
 with `.catch(() => {})` so a genuine failure still falls through to the message
 that says what was actually found.
+
+**And sweep the whole file when you find one.** Three of these were fixed one
+at a time, each after a red run; the fourth (`scan`) was sitting in plain sight
+the whole time and cost another cycle. `settle()` is not a substitute — it
+waits for animations, and a view that has not mounted has none to wait for.
+Grep for every `process.exit(1)` in the gate and ask what the line above it
+assumed.
 
 Trap (fixed, COD-202): **a browser gate that scrolls hides the navigation it is
 about to look for.** `BottomNav` and the top bar's section fold share

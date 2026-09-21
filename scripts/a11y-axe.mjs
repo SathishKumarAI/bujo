@@ -561,9 +561,58 @@ async function scan(label) {
   await settle()
   // A clean result on a blank page is worse than no gate at all: it reads as
   // proof. Assert the view actually rendered before believing its score.
-  const rendered = await page.evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length)
+  /**
+   * Wait for the view to render before deciding it did not.
+   *
+   * The FOURTH race of this shape (see the table in CLAUDE.md): views are
+   * lazily imported, so after a nav click `settle()` can return with the
+   * chunk still arriving — there are no animations to wait for when nothing
+   * has mounted yet. On a cold CI runner that lost, and `main` went red with
+   * `[Settings] rendered 0 characters`.
+   *
+   * POLLED, not a single `waitForFunction`. That was the first fix here and
+   * it did not hold: `waitForFunction` throws if the page navigates while it
+   * is waiting — "execution context was destroyed" — and the `.catch` that
+   * kept a genuine failure readable then swallowed that too, leaving the very
+   * next `evaluate` to read a blank, still-loading page. Which is exactly the
+   * `0 characters` this was meant to stop. A loop of cheap reads has no such
+   * failure mode: a destroyed context is one wasted iteration, not a verdict.
+   *
+   * The assertion stays, because a clean result on a blank page reads as
+   * proof. It just has to be made after giving the view a chance.
+   */
+  let rendered = 0
+  for (let i = 0; i < 24; i++) {
+    rendered = await page
+      .evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length)
+      .catch(() => 0)
+    if (rendered >= 40) break
+    await page.waitForTimeout(500)
+  }
   if (rendered < 40) {
     console.error(`\n[${label}] rendered ${rendered} characters — the view did not load, so its result means nothing.`)
+    /**
+     * Say what was actually on screen.
+     *
+     * "0 characters" with a 10s wait in front of it rules out the slow-chunk
+     * theory and says nothing about what replaced it — a Suspense fallback
+     * still pending, an error boundary, a nav click that opened a menu instead
+     * of navigating, or a chunk that failed to load. Each wants a different
+     * fix and the message cannot tell them apart. Same lesson as COD-202's
+     * dump: a red that carries no evidence costs a whole CI cycle per guess.
+     */
+    const seen = await page
+      .evaluate(() => ({
+        url: location.href,
+        mainHtml: (document.querySelector('main')?.innerHTML ?? '').slice(0, 200),
+        bodyText: (document.body.innerText ?? '').replace(/[\s\u00a0]+/g, ' ').trim().slice(0, 160),
+        dialogs: document.querySelectorAll('[role="dialog"]').length,
+        menus: document.querySelectorAll('[role="menu"]').length,
+      }))
+      .catch(() => null)
+    console.error(`  url: ${seen?.url} · dialogs: ${seen?.dialogs} · menus: ${seen?.menus}`)
+    console.error(`  body says: "${seen?.bodyText}"`)
+    console.error(`  main html: ${seen?.mainHtml || '(empty)'}`)
     await browser.close()
     process.exit(1)
   }
@@ -683,6 +732,15 @@ async function scanReceipt() {
     // it wrote is marked `data-just-captured` — so one capture puts both halves
     // of the feature on screen and both get scanned. A lift lands on Strength,
     // which has no per-workout row to ring.
+    // Same rule as `scan` above: wait for both halves, then assert. A fixed
+    // 700ms is a guess about a machine, and CI is a slower machine.
+    await page
+      .waitForFunction(
+        () => !!document.querySelector('[role="status"]') && !!document.querySelector('#main [data-just-captured]'),
+        null,
+        { timeout: 8000 },
+      )
+      .catch(() => {})
     const there = await page.evaluate(() => ({
       receipt: !!document.querySelector('[role="status"]'),
       row: !!document.querySelector('#main [data-just-captured]'),
