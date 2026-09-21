@@ -95,6 +95,29 @@ closed-fold traps, one level up: not "a page that is never visited cannot
 fail", but **an app that is never checked cannot fail**. When a browser gate
 passes, confirm what it was pointed at.
 
+Trap: **every browser-gate assertion needs a wait in front of it.** Three
+separate red runs in one day had one shape — the gate measured a browser state
+before the browser had reached it, and each read "not yet" as "not ever":
+
+| Where | It said | It meant |
+|---|---|---|
+| `go()` | `[Plan] no rail row with that name` | the nav had scrolled out of frame |
+| `scanReceipt()` | `ringed row MISSING` | Today was on the evening surface, because of the clock |
+| `setTheme()` | `[dawn] theme did not apply — the root says ""` | React had not rendered yet |
+
+The last one is the cleanest example of how to read these: the root said `""`,
+not the *wrong* theme. A wrong theme is a bug worth failing on; an empty one is
+a page that has not finished. **`page.reload({ waitUntil: 'networkidle' })` is
+not "the app is ready"** — it resolves when the last chunk arrives, not when
+React has rendered with it, so anything written during that first render is a
+race. It wins on a warm local machine and loses on a cold CI runner, which is
+why all three passed on a PR branch and failed on `main`.
+
+Keep the assertions — they are what separates "five themes scanned" from "one
+theme scanned five times" — and put a `waitForFunction`/`waitFor` in front,
+with `.catch(() => {})` so a genuine failure still falls through to the message
+that says what was actually found.
+
 Trap (fixed, COD-202): **a browser gate that scrolls hides the navigation it is
 about to look for.** `BottomNav` and the top bar's section fold share
 `useHideOnScroll`, so the phone's *only* navigation slides away on scroll-down —
