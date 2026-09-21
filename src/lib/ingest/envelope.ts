@@ -123,6 +123,10 @@ export type PickleballRecord = { kind: 'pickleball' } & RecordBase & {
   pointsAgainst?: number
   durationMin?: number
   partner?: string
+  /** Who you played AGAINST. `PickleballSession` has carried this since the
+   *  manual form was built; the envelope simply never did, so a spoken
+   *  "played against Ana" had nowhere to land. */
+  opponent?: string
   notes?: string
 }
 

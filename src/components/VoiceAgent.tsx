@@ -7,7 +7,7 @@ import { Button } from './ui/button'
 import { EXERCISE_LIBRARY } from '../lib/fitness'
 import { useSpeechInput } from '../lib/speech'
 import { hush, say } from '../lib/voice/speak'
-import { answer, CONFIRM_BELOW, understand, type VoiceIntent } from '../lib/voice/intent'
+import { answerQuestion, CONFIRM_BELOW, understand, type VoiceIntent } from '../lib/voice/intent'
 import { askModel } from '../lib/voice/model'
 import { ofArray, plan } from '../lib/ingest/plan'
 import { validateRecords } from '../lib/ingest/validate'
@@ -71,7 +71,7 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
     setHeard(text)
     setFromModel(false)
     const guess = understand(text, ctx, date)
-    const unrecognised = guess.records.length === 1 && guess.records[0].kind === 'entry' && !guess.ask
+    const unrecognised = guess.records.length === 1 && guess.records[0].kind === 'entry' && !guess.asks?.length
     if (!modelOn || !unrecognised) { setIntent(guess); return }
 
     setIntent({ ...guess, say: 'Let me think about that…' })
@@ -264,33 +264,69 @@ export function VoiceAgent({ open, onClose, date }: { open: boolean; onClose: ()
                   ))}
                 </ul>
               )}
-              {intent.ask && (
-                /* The one thing the sentence did not say. Asked inline rather
-                   than assumed: `PickleballSession` has no "games played", so
-                   an unanswered "two games" would otherwise be filed as two
-                   losses. Skipping is allowed — it saves what was actually
-                   said. */
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <label htmlFor="voice-ask" className="text-label text-fg-1">{intent.ask.prompt}</label>
-                  <input
-                    id="voice-ask"
-                    type="number"
-                    min={0}
-                    max={intent.ask.of}
-                    inputMode="numeric"
-                    className="w-20 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1 text-body tabular-nums text-fg-1"
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter') return
-                      const n = Number((e.target as HTMLInputElement).value)
-                      if (Number.isFinite(n)) setIntent(answer(intent, n))
-                    }}
-                    onBlur={(e) => {
-                      const n = Number(e.target.value)
-                      if (e.target.value !== '' && Number.isFinite(n)) setIntent(answer(intent, n))
-                    }}
-                  />
-                </div>
-              )}
+              {intent.asks?.[0] && (() => {
+                /* What the sentence did not say, asked inline rather than
+                   assumed. One question at a time, from the head of the queue:
+                   answering the format reveals "who did you play with?" or
+                   "who did you play against?", which are different questions
+                   and only one of them is ever right.
+
+                   Skipping is always allowed and is not the same as answering
+                   — it saves what was actually said and nothing more. The one
+                   place that still guesses is a skipped `format`, because
+                   `PickleballSession.format` is required by the type and
+                   "unknown" is not representable without a migration. That
+                   ceiling is named on the button. */
+                const q = intent.asks[0]
+                const answerWith = (v: string | number | null) => setIntent(answerQuestion(intent, v))
+                const remaining = intent.asks.length
+                return (
+                  <div className="mt-3 border-t border-line/60 pt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label htmlFor="voice-ask" className="text-label text-fg-1">{q.prompt}</label>
+                      {remaining > 1 && <span className="text-micro text-fg-3">{remaining - 1} more</span>}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {q.kind === 'choice' && q.options.map((o) => (
+                        <Button key={o} variant="secondary" size="sm" onClick={() => answerWith(o)} className="capitalize">{o}</Button>
+                      ))}
+                      {q.kind === 'text' && (
+                        <input
+                          id="voice-ask"
+                          autoFocus
+                          placeholder="a name"
+                          className="w-44 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1 text-body text-fg-1 placeholder:text-fg-3"
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter') return
+                            answerWith((e.target as HTMLInputElement).value)
+                          }}
+                        />
+                      )}
+                      {q.kind === 'number' && (
+                        <input
+                          id="voice-ask"
+                          type="number"
+                          autoFocus
+                          min={0}
+                          max={q.of}
+                          inputMode="numeric"
+                          className="w-20 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1 text-body tabular-nums text-fg-1"
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter') return
+                            const n = Number((e.target as HTMLInputElement).value)
+                            if (Number.isFinite(n)) answerWith(n)
+                          }}
+                          onBlur={(e) => {
+                            const n = Number(e.target.value)
+                            if (e.target.value !== '' && Number.isFinite(n)) answerWith(n)
+                          }}
+                        />
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => answerWith(null)} className="text-fg-2">{q.skip}</Button>
+                    </div>
+                  </div>
+                )
+              })()}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="primary" size="sm" onClick={save} disabled={saving || asking || intent.records.length === 0}>

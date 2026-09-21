@@ -280,6 +280,7 @@ export async function plan(
           pointsAgainst: s.pointsAgainst,
           durationMin: s.durationMin,
           partner: s.partner,
+          opponent: s.opponent,
           notes: s.notes,
         }
         const defined = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined))

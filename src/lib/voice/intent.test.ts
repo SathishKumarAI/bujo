@@ -3,7 +3,14 @@ import { emptyJournal } from '../storage'
 import { addDays } from '../date'
 import { ofArray, plan } from '../ingest/plan'
 import { validateRecords } from '../ingest/validate'
-import { answer, CONFIRM_BELOW, readDate, understand } from './intent'
+import { answerQuestion, CONFIRM_BELOW, readDate, understand, type VoiceIntent } from './intent'
+
+/** Walk the queue to the question about `field`, skipping whatever precedes it. */
+const until = (i: VoiceIntent, field: string): VoiceIntent => {
+  let cur = i
+  for (let n = 0; n < 5 && cur.asks?.[0] && cur.asks[0].field !== field; n++) cur = answerQuestion(cur, null)
+  return cur
+}
 
 const TODAY = '2026-09-11'
 const ctx = { exercises: ['bench press', 'squat'], habits: ['Water', 'Read'], unit: 'kg' as const }
@@ -29,7 +36,7 @@ describe('understand · the sentences this was built for', () => {
     // It repeats the number it heard inside the question, so a mis-heard "68"
     // is caught at the point of asking rather than after saving.
     expect(i.say).toMatch(/68 points/)
-    expect(i.say).toMatch(/how many did you win/i)
+    expect(i.say).toMatch(/how many .*did you win/i)
   })
 
   /**
@@ -39,21 +46,24 @@ describe('understand · the sentences this was built for', () => {
    * reported. It asks now.
    */
   it('asks for the split instead of filing two games as two losses', () => {
-    const i = hear('I played two games and scored 68')
-    expect(i.ask).toMatchObject({ field: 'gamesWon', of: 2 })
-    expect(i.say).toMatch(/how many did you win/i)
-    const answered = answer(i, 1)
-    expect(answered.ask).toBeUndefined()
+    const i = until(hear('I played two games and scored 68'), 'gamesWon')
+    expect(i.asks?.[0]).toMatchObject({ field: 'gamesWon', of: 2 })
+    expect(i.say).toMatch(/how many .*did you win/i)
+    const answered = answerQuestion(i, 1)
     expect(answered.records[0]).toMatchObject({ gamesWon: 1, gamesLost: 1, pointsFor: 68 })
+    // The split is settled; the format is still a guess, so it is asked next
+    // rather than written as "doubles" behind the user's back.
+    expect(answered.asks?.[0]).toMatchObject({ field: 'format' })
   })
 
   it('clamps an impossible answer to the games actually played', () => {
-    const i = hear('played 3 games')
-    expect(answer(i, 9).records[0]).toMatchObject({ gamesWon: 3, gamesLost: 0 })
+    const i = until(hear('played 3 games'), 'gamesWon')
+    expect(answerQuestion(i, 9).records[0]).toMatchObject({ gamesWon: 3, gamesLost: 0 })
   })
 
-  it('does not ask when the sentence already gave the split', () => {
-    expect(hear('pickleball won 3 lost 1').ask).toBeUndefined()
+  it('does not ask for a split the sentence already gave', () => {
+    const i = hear('pickleball won 3 lost 1')
+    expect(i.asks?.some((q) => q.field === 'gamesWon')).toBeFalsy()
   })
 
   /**
@@ -177,7 +187,6 @@ describe('understand · what it hands to the pipeline', () => {
  * will report when it breaks again.
  */
 describe('pickleball by duration, no score', () => {
-  const ctx = { habits: [] } as never
   const TODAY = '2026-09-21'
 
   it('"I played pickleball for 10 minutes today" is a session, not a note', () => {
@@ -221,8 +230,8 @@ describe('pickleball by duration, no score', () => {
   it('still asks for the split when a game COUNT was spoken', () => {
     // Unchanged behaviour, and the reason the guard was not simply deleted:
     // "two games" with no split is the case where asking is the honest answer.
-    const r = understand('I played two games of pickleball', ctx, TODAY)
-    expect(r.ask).toMatchObject({ field: 'gamesWon', of: 2 })
+    const r = until(understand('I played two games of pickleball', ctx, TODAY), 'gamesWon')
+    expect(r.asks?.[0]).toMatchObject({ field: 'gamesWon', of: 2 })
   })
 
   it('still refuses to guess the sport from "games" alone with no numbers', () => {
@@ -251,5 +260,93 @@ describe('pickleball by duration, no score', () => {
     // note, is the other way this could look "fixed".
     expect(next.entries).toHaveLength(0)
     expect(next.workouts).toHaveLength(0)
+  })
+})
+
+/**
+ * The follow-up questions.
+ *
+ * Reported: "why is it not asking with whom I played, is it a singles or a
+ * doubles match". It was not asking, and worse — `plan.ts` writes
+ * `s.format ?? 'doubles'`, so a session nobody described appeared in the
+ * history as "doubles 0–0". Two facts on screen, neither of them said.
+ */
+describe('asking for what the sentence did not say', () => {
+  const ctx2 = ctx
+  const T = '2026-09-21'
+  const hear2 = (said: string) => understand(said, ctx2, T)
+
+  it('asks singles or doubles rather than inventing doubles', () => {
+    const i = hear2('I played pickleball for 10 minutes today')
+    expect(i.asks?.[0]).toMatchObject({ field: 'format', kind: 'choice' })
+    expect(i.asks?.[0].prompt).toMatch(/singles or doubles/i)
+    // And it confirms what it DID hear in the same line, so the panel never
+    // opens with a bare interrogative.
+    expect(i.say).toMatch(/10 minutes/)
+  })
+
+  it('asks who you played WITH after doubles', () => {
+    const i = answerQuestion(hear2('played pickleball 30 minutes'), 'doubles')
+    expect(i.records[0]).toMatchObject({ format: 'doubles' })
+    expect(i.asks?.[0]).toMatchObject({ field: 'partner', kind: 'text' })
+    expect(i.asks?.[0].prompt).toMatch(/with/i)
+  })
+
+  it('asks who you played AGAINST after singles — not who with', () => {
+    // The whole reason the queue is built as answers arrive: only one of these
+    // two questions is ever the right one to ask.
+    const i = answerQuestion(hear2('played pickleball 30 minutes'), 'singles')
+    expect(i.records[0]).toMatchObject({ format: 'singles' })
+    expect(i.asks?.[0]).toMatchObject({ field: 'opponent', kind: 'text' })
+    expect(i.asks?.[0].prompt).toMatch(/against/i)
+  })
+
+  it('records the name and then has nothing left to ask', () => {
+    let i = hear2('played pickleball 30 minutes')
+    i = answerQuestion(i, 'doubles')
+    i = answerQuestion(i, 'Ana')
+    expect(i.records[0]).toMatchObject({ format: 'doubles', partner: 'Ana', durationMin: 30 })
+    expect(i.asks).toBeUndefined()
+    expect(i.say).toMatch(/save it/i)
+  })
+
+  it('does not ask for a format the sentence already gave', () => {
+    const i = hear2('played singles pickleball for 30 minutes')
+    expect(i.records[0]).toMatchObject({ format: 'singles' })
+    expect(i.asks?.[0]).toMatchObject({ field: 'opponent' })
+  })
+
+  it('asks nothing at all when the sentence said everything', () => {
+    const i = hear2('played doubles pickleball with Ana, won 3 lost 1')
+    expect(i.records[0]).toMatchObject({ format: 'doubles', gamesWon: 3, gamesLost: 1 })
+    expect(i.asks).toBeUndefined()
+  })
+
+  it('skipping writes nothing — "I did not say" is not "I said none"', () => {
+    let i = hear2('played pickleball 30 minutes')
+    i = answerQuestion(i, null) // skip format
+    expect((i.records[0] as { format?: string }).format).toBeUndefined()
+    expect(i.asks).toBeUndefined()
+    // Still saveable, still carrying the one fact that WAS spoken.
+    expect(i.records[0]).toMatchObject({ kind: 'pickleball', durationMin: 30 })
+  })
+
+  it('an empty name is a skip, not a blank partner', () => {
+    let i = answerQuestion(hear2('played pickleball 30 minutes'), 'doubles')
+    i = answerQuestion(i, '   ')
+    expect((i.records[0] as { partner?: string }).partner).toBeUndefined()
+    expect(i.asks).toBeUndefined()
+  })
+
+  it('raises confidence as the guesses are replaced by answers', () => {
+    const i = hear2('played pickleball 30 minutes')
+    const done = answerQuestion(answerQuestion(i, 'doubles'), 'Ana')
+    expect(done.confidence).toBeGreaterThan(i.confidence)
+    expect(done.confidence).toBeGreaterThanOrEqual(CONFIRM_BELOW)
+  })
+
+  it('asks nothing for a record that is not pickleball', () => {
+    expect(hear2('mood 7').asks).toBeUndefined()
+    expect(hear2('ran 5k in 28 minutes').asks).toBeUndefined()
   })
 })
