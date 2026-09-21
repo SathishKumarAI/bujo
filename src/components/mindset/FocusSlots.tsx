@@ -11,10 +11,26 @@ import type { MindsetFocus } from '../../lib/types'
  * Owns the slot row and everything in a slot. Does not own what happens to the
  * data — every action is a callback to the view.
  *
- * **The row never wraps.** Equal `flex-1 basis-0` children, not an `auto-fit`
- * grid: the handoff records an earlier build where the slots wrapped and left a
- * dead half-row under them. Cells get narrow on a phone, which is the correct
- * failure — three visible slots is the whole point of the section.
+ * **Three across when there is room, stacked when there is not.** Equal
+ * `flex-1 basis-0` children, never an `auto-fit` grid: an earlier build let the
+ * slots wrap and left a dead half-row under them, and that is still the failure
+ * to avoid.
+ *
+ * It used to say "cells get narrow on a phone, which is the correct failure".
+ * Measured, that is 324px split three ways: a **87px** textarea, in which the
+ * cue you actually typed breaks after a word or two and sits against the rule.
+ * Narrow was not the correct failure, it was just the one we had chosen.
+ *
+ * Stacking below `sm` is not the old bug returning — wrapping produced a ragged
+ * 2-then-1 row; one full-width column per slot produces no ragged anything.
+ *
+ * A VIEWPORT breakpoint, and the first attempt here used `@2xl/band:` instead
+ * and silently did nothing at every width: `BandRow` **is** the
+ * `@container/band`, and an element cannot query itself — the same rule
+ * `MasonryGrid` is built around. Tailwind v4 emits no CSS for a variant that
+ * cannot match and exits 0, so the page simply stayed in one column on desktop
+ * too, and only re-measuring caught it. These bands are full-bleed page rows,
+ * so the window is an honest proxy for their width.
  *
  * Slot count is `max(MINDSET_MAX_FOCUS, focus.length)`. A journal written before
  * the cap existed can hold four or five, and hiding one behind a constant would
@@ -44,14 +60,14 @@ export function FocusSlots({
         <h2 className="font-display text-heading font-medium text-fg-1">Focus slots</h2>
         <Eyebrow>{focus.length} of {count} in use</Eyebrow>
       </div>
-      <BandRow wrap={false} className="items-stretch border-t-2 border-line">
+      <BandRow wrap={false} className="flex-col sm:flex-row items-stretch border-t-2 border-line">
         {slots.map((f, i) => {
           const p = f ? principleById(f.principleId) : undefined
           const practisedToday = !!f && (practiceLog[f.principleId] ?? []).includes(today)
           return (
             <div
               key={f?.id ?? `empty-${i}`}
-              className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pr-5 pb-1 [&:not(:last-child)]:border-r"
+              className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pb-3 sm:pr-5 sm:pb-1 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 sm:[&:not(:last-child)]:border-r"
             >
               <div className="flex items-baseline gap-2.5">
                 {/* The principle's CATEGORY, not "Slot 1".
