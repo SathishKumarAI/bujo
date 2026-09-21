@@ -10,6 +10,7 @@ import { Card, Empty, Input, Pill, StatTile } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout, StatBar, SummaryStrip, DisclosureRow } from '../components/page'
 import { MuscleMap } from '../components/MuscleMap'
+import { BodyView3D } from '../components/gym/BodyView3D'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
 import { ExerciseDB } from '../components/ExerciseDB'
@@ -602,6 +603,12 @@ function AnatomyCard({
       </div>
 
       <MuscleMap muscles={activeMuscles} />
+
+      {/* The 3D view sits BESIDE the wger art, not instead of it. That art is
+          the anatomical reference; this is the one that moves and shows when
+          each muscle is doing the work. Only rendered with an exercise in
+          focus — a mannequin with nothing highlighted is decoration. */}
+      {focusEx && <BodyView3D exercise={focusEx} />}
 
       {focusEx && exerciseInfo(focusEx) && (
         <div className="mt-3 space-y-1 rounded-card bg-ink-2 p-2.5 text-label">

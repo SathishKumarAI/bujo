@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { BodyView3D } from '../components/gym/BodyView3D'
 import { Checkbox, CheckRow } from '../components/ui/checkbox'
 import { Switch } from '../components/ui/switch'
 import { Ring } from '../components/ui/ring'
@@ -530,6 +531,13 @@ export function KitchenSink() {
           <p className="text-caption text-fg-3">This page is on the read tier.</p>
         </div>
       </Card>
+
+      {/* The 3D muscle view. Here as well as in Gym because this page is the
+          design system's own surface — it renders every component in every
+          state, it is the page a visual regression shows up on first, and it
+          is scanned by `npm run a11y`. A WebGL card that only ever renders
+          behind a picker selection is a card nothing can screenshot. */}
+      <BodyView3D exercise="Tricep Extension" />
     </Page>
   )
 }
