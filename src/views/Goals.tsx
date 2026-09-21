@@ -16,6 +16,7 @@ import { finishedThisYear } from '../lib/reading'
 import { weeklyHabitCount } from '../lib/stats'
 import { PROGRAMS } from '../lib/programs'
 import type { ViewId } from '../components/shell/viewChrome'
+import { notify } from '../lib/notify'
 
 interface Goal {
   label: string
@@ -183,9 +184,14 @@ export function Goals() {
   // fraction is allowance spent, so averaging it in makes a clean week look
   // like a low score — the same inversion the headline had.
   const pacing = goals.filter((g) => !g.avoid)
+  // `null`, not 0. With only avoid-goals on the board `pacing` is empty, and
+  // the old `: 0` printed "Overall progress 0%" — "nothing to measure" shown
+  // as "you have achieved nothing", in the headline. Same shape CLAUDE.md
+  // records on `monthlyCompletion`; `Monthly.tsx` and `Cycle.tsx` already
+  // return null here and this one did not.
   const avgPct = pacing.length
     ? Math.round(pacing.reduce((a, g) => a + goalFraction(g.value, g.target), 0) / pacing.length * 100)
-    : 0
+    : null
   // 80–99% means two opposite things. On a reach goal it is "worth a final
   // push"; on a cap it is "you are about to blow it". Counted separately, and
   // labelled as what it is.
@@ -204,7 +210,7 @@ export function Goals() {
   const [form, setForm] = useState({ label: '', target: '', unit: '' })
   function add() {
     const label = form.label.trim(); const target = Number(form.target)
-    if (!label || !target || target <= 0) return
+    if (!label || !target || target <= 0) { notify.info('A goal needs a name and a target', 'The target has to be more than zero.'); return }
     addCustomGoal({ label, target, value: 0, unit: form.unit.trim() || undefined, color: 'mauve' })
     setForm({ label: '', target: '', unit: '' })
   }
@@ -229,10 +235,12 @@ export function Goals() {
         ) : (
           <>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-ink-2 px-3 py-2 text-body">
-            <span className="inline-flex items-center gap-1.5 text-fg-1">
-              <AppIcon as={Target} size="sm" style={{ color: onRaised('mauve') }} /> Overall progress
-              <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
-            </span>
+            {avgPct != null && (
+              <span className="inline-flex items-center gap-1.5 text-fg-1">
+                <AppIcon as={Target} size="sm" style={{ color: onRaised('mauve') }} /> Overall progress
+                <span className="font-medium tabular-nums text-fg-1">{avgPct}%</span>
+              </span>
+            )}
             {nearly > 0 && (
               <span className="text-fg-2">{nearly} nearly there <span className="text-fg-2">(80–99%)</span></span>
             )}

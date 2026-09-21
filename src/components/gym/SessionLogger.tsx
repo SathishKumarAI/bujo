@@ -11,6 +11,7 @@ import {
   EXERCISE_LIBRARY, PPL_PRESETS, SPLITS, epley1RM, lastSetFor, warmupRamp,
 } from '../../lib/fitness'
 import type { JournalData, Routine, Split } from '../../lib/types'
+import { newSetRow, type SetRow } from './setRow'
 
 /**
  * Zone 2 · the act. One row per set: what, how heavy, how many, how hard.
@@ -24,14 +25,6 @@ import type { JournalData, Routine, Split } from '../../lib/types'
  * routine and the muscle map all read them, and a logger that owned its rows
  * would have to hand them back up on every keystroke.
  */
-
-export interface SetRow {
-  exercise: string
-  weight: string
-  reps: string
-  rpe?: string
-  kind?: 'warmup' | 'working' | 'drop'
-}
 
 /**
  * The set-row grid, spelled once — the header and every row must agree.
@@ -176,7 +169,7 @@ export function SessionLogger({
           // Strong-style "completed set" · a filled weight+reps row reads as done (green accent).
           const complete = !!(row.weight.trim() && row.reps.trim())
           return (
-            <div key={i} className={`-ml-2 rounded-control border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
+            <div key={row.id} className={`-ml-2 rounded-control border-l-2 pl-2 transition-colors ${complete ? 'border-green bg-green/5' : 'border-transparent'}`}>
               <div className={`${ROW_GRID} items-center`}>
                 <button
                   onClick={() => setFocusEx(focused ? null : row.exercise.trim() || null)}
@@ -239,7 +232,7 @@ export function SessionLogger({
                         onClick={() =>
                           setRows((rs) => {
                             const next = [...rs]
-                            next.splice(i, 0, { exercise: row.exercise, weight: String(r.weight), reps: '', kind: 'warmup' })
+                            next.splice(i, 0, newSetRow({ exercise: row.exercise, weight: String(r.weight), kind: 'warmup' }))
                             return next
                           })
                         }

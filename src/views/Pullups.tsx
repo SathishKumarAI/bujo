@@ -1,15 +1,19 @@
 import { useMemo, useState } from 'react'
+import { ArrowCounterClockwise } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import {
-  PageLayout, StatBar, SummaryStrip, CalendarHeatmap, NumField, EmptyFrame,
+  PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
-import { dayDiff, prettyDay, todayISO } from '../lib/date'
+import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
+import type { Workout } from '../lib/types'
 import {
   pullupAbility, ladder, pyramid, repScheme, setLines, repsOf, bestSet,
   PULLUP_ABILITY, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_FORM,
@@ -93,7 +97,7 @@ export function Pullups() {
       zone2={
         <>
           <TrainingSetCard max={max} maxInput={maxInput} onMax={setMaxInput} logged={logged} />
-          <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} />
+          <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} />
         </>
       }
       zone3={
@@ -205,62 +209,121 @@ function Row({ label, children, divide = false }: { label: string; children: Rea
   )
 }
 
+/** rpe is jargon. These are the words people actually use for the same scale. */
+const EFFORT: { value: number; label: string; hint: string }[] = [
+  { value: 6, label: 'Easy', hint: 'RPE 6 — could have done many more' },
+  { value: 7.5, label: 'Moderate', hint: 'RPE 7.5 — three or four left in the tank' },
+  { value: 9, label: 'Hard', hint: 'RPE 9 — one more, maybe' },
+  { value: 10, label: 'Max', hint: 'RPE 10 — nothing left' },
+]
+
 /**
- * Zone 2 · the act. Method + top set + rounds is the whole session, because
- * that is how these workouts are actually prescribed — "three ladders to four"
- * is one sentence and six numbers, and typing the six numbers is the reason
- * nobody logs them.
+ * LOG A SESSION · one tap for the usual case, typing only when it differs.
  *
- * There is no rest field. Rest is prescribed by the method (10–20s inside a
- * ladder, 3+ min between) and `Workout` has nowhere to put it; the minutes the
- * session took is a real field and feeds the analytics, so that is asked
- * instead.
+ * It was seven controls, four of them empty number boxes — top set, rounds,
+ * duration, effort — so the most common session in the app ("the same as last
+ * time") cost four numeric keyboards on a phone. The values are not arbitrary:
+ * rounds are 2–5, effort is a four-point scale, a session is 10–30 minutes.
+ * A free-text box for a value with four likely answers is the most expensive
+ * control on the page, and it was the default for all of them.
+ *
+ * What changed, in order of how much time it saves:
+ *
+ * 1. **Repeat last** — one tap writes the previous session on today's date.
+ *    The thing people do most often had no path at all.
+ * 2. **The top set is a stepper**, pre-filled with the recommendation, so the
+ *    default case is *zero* interactions rather than "type the number already
+ *    printed above you in grey".
+ * 3. **Effort is words.** "rpe" is jargon, and an unlabelled 1–10 box is a
+ *    question most people skip — which is why it was almost always empty.
+ * 4. **Rounds and duration are chips** with a typed escape hatch.
+ * 5. **The date is Today / Yesterday**, picker behind them.
+ *
+ * The rep-scheme readout was already here and was the quietest thing on the
+ * card. It is the only element that tells you a ladder to 4 and a straight 4×4
+ * are different sessions, so it is now the loudest.
  */
 function LogSessionCard({
-  defaultTop, onSave,
+  defaultTop, onSave, last,
 }: {
   defaultTop: number
   onSave: (w: Parameters<ReturnType<typeof useJournal>['addWorkout']>[0]) => void
+  /** The previous session, for Repeat last. Absent on a fresh journal. */
+  last?: Workout
 }) {
-  const [date, setDate] = useState(todayISO())
+  const today = todayISO()
+  const [date, setDate] = useState(today)
   const [method, setMethod] = useState<PullupMethod>('straight')
-  const [top, setTop] = useState('')
-  const [rounds, setRounds] = useState('3')
-  const [duration, setDuration] = useState('')
-  const [rpe, setRpe] = useState('')
+  const [top, setTop] = useState<number | undefined>(undefined)
+  const [rounds, setRounds] = useState<number | undefined>(3)
+  const [duration, setDuration] = useState<number | undefined>(undefined)
+  const [rpe, setRpe] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
+  const [justLogged, setJustLogged] = useState<string | null>(null)
 
-  const topN = top === '' ? defaultTop : Number(top) || 0
-  const reps = repScheme(method, topN, Number(rounds) || 0)
+  const topN = top ?? defaultTop
+  const reps = repScheme(method, topN, rounds ?? 0)
   const total = reps.reduce((a, r) => a + r, 0)
   const hint = PULLUP_METHODS.find((m) => m.value === method)?.hint ?? ''
+
+  function done(msg: string) {
+    setJustLogged(msg)
+    window.setTimeout(() => setJustLogged(null), 2600)
+  }
 
   function save() {
     if (reps.length === 0) return
     onSave({
       date,
       activity: 'pullups',
-      durationMin: duration ? Number(duration) : undefined,
-      rpe: rpe ? Number(rpe) : undefined,
+      durationMin: duration,
+      rpe,
       sets: setLines(reps),
       notes: notes.trim(),
     })
-    setTop('')
-    setDuration('')
-    setRpe('')
+    // Reset what describes THIS session; keep method and rounds, which are how
+    // you train rather than what you did once.
+    setTop(undefined)
+    setDuration(undefined)
+    setRpe(undefined)
     setNotes('')
+    setDate(today)
+    done(`${total} reps in ${reps.length} sets`)
+  }
+
+  /** The previous session again, on today. The most common log, as one tap. */
+  function repeatLast() {
+    if (!last) return
+    onSave({
+      date: today,
+      activity: 'pullups',
+      durationMin: last.durationMin,
+      rpe: last.rpe,
+      sets: last.sets ?? [],
+      notes: '',
+    })
+    done(`Repeated ${repsOf(last.sets)} reps`)
   }
 
   return (
     <Card band title="Log a pull-up session" subtitle={hint}>
-      <div className="space-y-3">
-        <label className="block text-body text-fg-1">
-          Date
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="control-max mt-1" />
-        </label>
+      <div className="space-y-4">
+        {last && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={repeatLast} className="group/rep inline-flex items-center gap-1.5">
+              <Icon as={ArrowCounterClockwise} size="sm" className="transition-transform duration-300 group-hover/rep:-rotate-180" />
+              Repeat last
+            </Button>
+            <span className="min-w-0 truncate text-label text-fg-2">
+              {repsOf(last.sets)} reps · {prettyDay(last.date)}
+            </span>
+          </div>
+        )}
+
+        <DayPick value={date} onChange={setDate} today={today} yesterday={addDays(today, -1)} />
 
         <div>
-          <span className="mb-1 block text-body text-fg-1" id="pullup-method">Method</span>
+          <span className="mb-1.5 block text-body text-fg-1" id="pullup-method">Method</span>
           <div aria-labelledby="pullup-method">
             <Segmented
               value={method}
@@ -270,21 +333,88 @@ function LogSessionCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <NumField label="Top set" value={top} onChange={setTop} suffix="reps" placeholder={String(defaultTop)} />
-          <NumField label={method === 'emom' ? 'Minutes' : 'Rounds'} value={rounds} onChange={setRounds} suffix="×" />
-          <NumField label="Duration" value={duration} onChange={setDuration} suffix="min" />
-          <NumField label="Effort" value={rpe} onChange={setRpe} suffix="rpe" step="0.5" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Stepper
+            label="Top set"
+            value={top}
+            onChange={setTop}
+            min={1}
+            max={50}
+            suffix="reps"
+            placeholder={String(defaultTop)}
+            hint={top === undefined ? `Using your training set, ${defaultTop}` : undefined}
+          />
+          <ChipPick
+            label={method === 'emom' ? 'Minutes' : 'Rounds'}
+            value={rounds ?? null}
+            onChange={setRounds}
+            // Five chips plus the escape hatch is exactly one row in the
+            // act column; six wrapped the input onto a line of its own, which
+            // reads as a broken control rather than an overflow.
+            options={[2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
+            after={
+              <input
+                type="number"
+                min={1}
+                max={60}
+                inputMode="numeric"
+                aria-label={method === 'emom' ? 'Minutes, another number' : 'Rounds, another number'}
+                value={rounds !== undefined && rounds > 5 ? rounds : ''}
+                placeholder="…"
+                onChange={(e) => setRounds(e.target.value === '' ? undefined : Number(e.target.value))}
+                className="w-14 rounded-pill border border-line-strong bg-ink-2 px-2 py-1.5 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
+              />
+            }
+          />
         </div>
 
         {/* The scheme, spelled out. A ladder to 4 and a straight 4×4 both read
             as "4" in the form and are different sessions; showing the reps is
-            what makes the difference visible before it is stored. */}
-        <p className="num text-label text-fg-2" aria-live="polite">
-          {reps.length === 0
-            ? 'Set a top set and rounds to see the scheme.'
-            : `${reps.join(', ')} · ${total} reps in ${reps.length} sets`}
-        </p>
+            what makes the difference visible before it is stored. It used to be
+            grey 11px under the inputs — the one element that answers "what am I
+            about to save", set as the quietest thing on the card. */}
+        <output
+          aria-live="polite"
+          className="block rounded-card border border-brand/30 bg-brand-wash/40 px-3 py-2.5 text-center transition-colors duration-200"
+        >
+          {reps.length === 0 ? (
+            <span className="text-body text-fg-2">Pick a top set and rounds to see the scheme.</span>
+          ) : (
+            <>
+              <span className="num block text-heading font-medium text-fg-1">{reps.join(' · ')}</span>
+              <span className="text-label text-fg-2">{total} reps in {reps.length} set{reps.length === 1 ? '' : 's'}</span>
+            </>
+          )}
+        </output>
+
+        <ChipPick
+          label="Effort"
+          value={rpe ?? null}
+          onChange={setRpe}
+          options={EFFORT.map((e) => ({ value: e.value, label: e.label, hint: e.hint }))}
+          hint="Optional. How the last set felt, not the whole session."
+        />
+
+        <ChipPick
+          label="Duration"
+          value={duration ?? null}
+          onChange={setDuration}
+          options={[10, 15, 20, 30].map((n) => ({ value: n, label: `${n}m` }))}
+          hint="Optional."
+          after={
+            <input
+              type="number"
+              min={1}
+              max={300}
+              inputMode="numeric"
+              aria-label="Duration in minutes, another number"
+              value={duration !== undefined && ![10, 15, 20, 30].includes(duration) ? duration : ''}
+              placeholder="…"
+              onChange={(e) => setDuration(e.target.value === '' ? undefined : Number(e.target.value))}
+              className="w-14 rounded-pill border border-line-strong bg-ink-2 px-2 py-1.5 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
+            />
+          }
+        />
 
         <label className="block text-body text-fg-1">
           Notes
@@ -292,6 +422,13 @@ function LogSessionCard({
         </label>
 
         <Button onClick={save} disabled={reps.length === 0} className="w-full">Log session</Button>
+
+        {/* Says what was written, where the button is — the receipt bar lives at
+            the other end of the screen, and a form that empties itself with no
+            word is indistinguishable from one that lost your input. */}
+        <p aria-live="polite" className={`text-center text-label transition-opacity duration-300 ${justLogged ? 'opacity-100' : 'opacity-0'}`} style={{ color: onRaised('green') }}>
+          {justLogged ? `Logged · ${justLogged}` : ' '}
+        </p>
       </div>
     </Card>
   )

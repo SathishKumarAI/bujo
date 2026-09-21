@@ -81,7 +81,17 @@ export function BookRow({ book }: { book: Book }) {
               value={book.totalPages ?? ''}
               placeholder="pages"
               aria-label={`Total pages of ${book.title}`}
-              onChange={(e) => store.updateBook(book.id, { totalPages: Math.max(0, Number(e.target.value) || 0) || undefined })}
+              onChange={(e) => {
+                // `Number(v) || 0` then `|| undefined` collapsed THREE states
+                // into two: an empty box, a typed 0 and junk all stored
+                // `undefined`. So typing 0 into a book that had 320 pages
+                // deleted the page count, and the progress bar it feeds went
+                // with it. Empty means "not set"; a number means that number.
+                const raw = e.target.value
+                if (raw === '') return store.updateBook(book.id, { totalPages: undefined })
+                const n = Number(raw)
+                if (Number.isFinite(n)) store.updateBook(book.id, { totalPages: Math.max(0, n) })
+              }}
               className="w-16 border-0 border-b border-line bg-transparent py-0.5 text-right text-fg-1 focus-visible:border-brand focus-visible:outline-none"
             />
             <span className="num ml-auto text-brand-text">{pct}%</span>

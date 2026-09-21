@@ -9,6 +9,7 @@ import { formatMinutes } from '../../lib/focus'
 import {
   avgWpm, bestWpm, DEFAULT_TYPING_GOAL_MIN, isWeekday, typingGoalProgress, typingStreak, typingWeekMinutes, wpmTrend,
 } from '../../lib/typing'
+import { notify } from '../../lib/notify'
 
 const SOURCES = ['Monkeytype', 'keybr', 'TypingClub', '10FastFingers', 'TypeRacer', 'Other'] as const
 const SITES = [
@@ -18,7 +19,8 @@ const SITES = [
   { name: '10FastFingers', url: 'https://10fastfingers.com' },
   { name: 'TypeRacer', url: 'https://play.typeracer.com' },
 ]
-const blank = { date: todayISO(), durationMin: '', wpm: '', accuracy: '', source: 'Monkeytype' as string }
+/** A function, not a constant — see `focus/LogSession.tsx`. */
+const blankOf = () => ({ date: todayISO(), durationMin: '', wpm: '', accuracy: '', source: 'Monkeytype' as string })
 
 /**
  * Typing practice — a second tracker on the same page, because speed drills are
@@ -33,8 +35,8 @@ const blank = { date: todayISO(), durationMin: '', wpm: '', accuracy: '', source
  */
 export function TypingBand() {
   const { data, addTypingSession, removeTypingSession } = useJournal()
-  const [f, setF] = useState(blank)
-  const set = (p: Partial<typeof blank>) => setF((c) => ({ ...c, ...p }))
+  const [f, setF] = useState(blankOf)
+  const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
   const today = todayISO()
 
   const sessions = [...(data.typingSessions ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -47,7 +49,7 @@ export function TypingBand() {
   const field = 'w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none'
 
   function log() {
-    if (!f.durationMin) return
+    if (!f.durationMin) { notify.info('How long did you type for?', 'Minutes is the one field this needs.'); return }
     addTypingSession({
       date: f.date,
       durationMin: Number(f.durationMin),
@@ -55,7 +57,7 @@ export function TypingBand() {
       accuracy: f.accuracy ? Number(f.accuracy) : undefined,
       source: f.source || undefined,
     })
-    setF({ ...blank })
+    setF(blankOf())
   }
 
   return (
