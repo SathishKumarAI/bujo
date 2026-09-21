@@ -164,3 +164,77 @@ export function applyPose(rig: Rig, p: Pose) {
   rig.joints.hip.forEach((o) => { o.rotation.x = -p.hip })
   rig.joints.knee.forEach((o) => { o.rotation.x = p.knee })
 }
+
+/**
+ * Which side of the body a muscle is on — for choosing the opening camera yaw.
+ *
+ * Framing a triceps exercise from the front shows you the front of a body with
+ * nothing lit on it. The muscle is on the back; start there.
+ */
+const BACK: readonly number[] = [M.lats, M.traps, M.triceps, M.glutes, M.hamstrings, M.calves, M.soleus]
+export function isBackMuscle(id: number): boolean {
+  return BACK.includes(id)
+}
+
+/**
+ * FRAME WHAT IS WORKING · the camera shot, computed from the rep itself.
+ *
+ * A curl and a squat were both drawn at whole-body zoom, so the thing the card
+ * exists to show — one lit muscle — was a few dozen pixels in the middle of a
+ * mannequin. The obvious fix is a lookup of "arms → this distance", and it is
+ * the wrong one: it cannot know that an overhead press puts the hands a foot
+ * above the head, that a hanging leg raise starts from full extension, or that
+ * a squat drops the hips half a metre. Those are properties of the *pose over
+ * time*, not of the muscle.
+ *
+ * So this measures instead of guessing: step through the rep, union the world
+ * bounding box of the muscles actually working at each sample, and frame that.
+ * Every pattern is handled without naming any of them, including ones added
+ * later.
+ *
+ * The torso is always included at a low weight. A box drawn tightly around two
+ * triceps is a close-up of two capsules with no body around them — you cannot
+ * tell what you are looking at, which defeats the point of showing it on a
+ * figure at all.
+ */
+export function frameRep(
+  rig: Rig,
+  active: number[],
+  poseAt: (t: number) => Pose,
+  samples = 12,
+): { centre: THREE.Vector3; radius: number; yaw: number } {
+  const box = new THREE.Box3()
+  const wanted = new Set(active)
+  const subject = rig.parts.filter((p) => wanted.has(p.id))
+  // Nothing recognised — frame the whole figure rather than an empty box.
+  const meshes = subject.length ? subject.map((p) => p.mesh) : rig.parts.map((p) => p.mesh)
+
+  const tmp = new THREE.Box3()
+  for (let i = 0; i <= samples; i++) {
+    applyPose(rig, poseAt(i / samples))
+    rig.group.updateMatrixWorld(true)
+    for (const m of meshes) box.union(tmp.setFromObject(m))
+  }
+
+  // Context: the torso, so a close-up still reads as a body. Half-weighted by
+  // shrinking it toward its own centre before the union.
+  if (subject.length) {
+    rig.group.updateMatrixWorld(true)
+    const torso = new THREE.Box3().setFromObject(rig.joints.spine)
+    const c = torso.getCenter(new THREE.Vector3())
+    torso.min.lerp(c, 0.45)
+    torso.max.lerp(c, 0.45)
+    box.union(torso)
+  }
+
+  const centre = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  // Radius of a sphere that contains the box, which is what the camera has to
+  // fit regardless of which way the figure is turned — framing on height alone
+  // clips a wide shot the moment you drag it round to the side.
+  const radius = Math.max(0.22, 0.5 * Math.hypot(size.x, size.y, size.z))
+
+  const primaries = active.filter(isBackMuscle).length
+  const yaw = subject.length && primaries > active.length / 2 ? Math.PI : 0
+  return { centre, radius, yaw }
+}

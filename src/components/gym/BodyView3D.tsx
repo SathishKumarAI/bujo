@@ -4,7 +4,7 @@ import { Button } from '../ui/button'
 import { cat } from '../../lib/colors'
 import { muscleNames } from '../../lib/muscles'
 import { muscleWorkFor } from '../../lib/exerciseMuscles'
-import { activationAt, movementFor } from '../../lib/movement'
+import { activationAt, movementFor, REST } from '../../lib/movement'
 
 /**
  * MUSCLE VIEW · which muscles a lift works, on a body that performs the rep.
@@ -36,10 +36,12 @@ export function BodyView3D({ exercise }: { exercise: string }) {
   const [failed, setFailed] = useState(false)
   const [ready, setReady] = useState(false)
   const [playing, setPlaying] = useState(true)
+  const [zoom, setZoom] = useState<'work' | 'body'>('work')
   /** Phase of the rep, 0–1. Mirrored out of the render loop for the scrubber. */
   const [phase, setPhase] = useState(0)
   const api = useRef<{
     setView: (v: 'front' | 'back') => void
+    setZoom: (z: 'work' | 'body') => void
     setPhase: (t: number) => void
     setPlaying: (p: boolean) => void
     dispose: () => void
@@ -63,7 +65,7 @@ export function BodyView3D({ exercise }: { exercise: string }) {
         return
       }
       if (cancelled) return
-      const { buildBody, applyPose } = await import('./bodyMesh')
+      const { buildBody, applyPose, frameRep } = await import('./bodyMesh')
       if (cancelled) return
 
       let renderer: import('three').WebGLRenderer
@@ -86,14 +88,10 @@ export function BodyView3D({ exercise }: { exercise: string }) {
       el.appendChild(renderer.domElement)
 
       const scene = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 100)
-      // The rig is built feet-at-origin, ~1.8 tall, so the body's centre is
-      // y≈0.9 — point the camera there rather than translating the group down
-      // and looking somewhere else. Those two disagreeing is what cropped the
-      // legs out of frame in the first pass. Visible height at this distance
-      // and FOV is ~1.88, which frames a 1.8m figure with a little air.
-      camera.position.set(0, 0.92, 3.5)
-      camera.lookAt(0, 0.92, 0)
+      const FOV = 30
+      const camera = new THREE.PerspectiveCamera(FOV, W / H, 0.1, 100)
+      // Positioned below, once the rig exists — the shot depends on what the
+      // rep does, which cannot be known before the rig is built.
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.8))
       const key = new THREE.DirectionalLight(0xffffff, 1.05)
@@ -112,7 +110,38 @@ export function BodyView3D({ exercise }: { exercise: string }) {
       const rig = buildBody(base)
       scene.add(rig.group)
 
-      let yaw = 0
+      /**
+       * Frame the muscles that are working, across the whole rep.
+       *
+       * A curl and a squat were both shot at whole-body zoom, so the one lit
+       * muscle — the entire point of the card — was a few dozen pixels in the
+       * middle of a mannequin. `frameRep` walks the rep and measures, so an
+       * overhead press gets the headroom its hands need and a calf raise does
+       * not pay for headroom it will never use.
+       *
+       * Fit on the bounding SPHERE, not the height: the body turns, and a
+       * shot framed on height alone clips the moment you drag it side-on.
+       * Horizontal fit is the tighter constraint on a narrow canvas, so both
+       * are computed and the larger distance wins.
+       */
+      const shot = frameRep(rig, [...work.primary, ...work.secondary], (t) => (move ? move.pose(t) : REST))
+      const vFov = (FOV * Math.PI) / 180
+      const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (W / H))
+      const fit = (fov: number) => shot.radius / Math.sin(fov / 2)
+      // 1.12 leaves a little air rather than cropping to the skin.
+      let dist = Math.max(fit(vFov), fit(hFov)) * 1.12
+      let target = shot.centre.clone()
+      const wholeBody = new THREE.Vector3(0, 0.92, 0)
+      const wholeDist = 3.5
+      // The camera stays on +Z and the BODY turns (`rig.group.rotation.y`), so
+      // framing only has to solve for height and distance.
+      const place = () => {
+        camera.position.set(0, target.y, dist)
+        camera.lookAt(target)
+      }
+      place()
+
+      let yaw = shot.yaw
       let dragging = false
       let lastX = 0
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -144,7 +173,7 @@ export function BodyView3D({ exercise }: { exercise: string }) {
         if (auto) yaw += 0.003
         rig.group.rotation.y = yaw
 
-        applyPose(rig, move ? move.pose(t) : { shoulder: 0, shoulderOut: 0.08, elbow: 0.12, hip: 0, knee: 0.04, spine: 0 })
+        applyPose(rig, move ? move.pose(t) : REST)
 
         const act = activationAt(exercise, t)
         for (const p of rig.parts) {
@@ -168,6 +197,14 @@ export function BodyView3D({ exercise }: { exercise: string }) {
 
       api.current = {
         setView: (v) => { auto = false; yaw = v === 'front' ? 0 : Math.PI },
+        setZoom: (z) => {
+          // "Whole body" is an escape hatch, not a default: the close shot is
+          // right for the question the card answers, and occasionally you want
+          // to see where it sits on the person.
+          if (z === 'body') { target = wholeBody.clone(); dist = wholeDist }
+          else { target = shot.centre.clone(); dist = Math.max(fit(vFov), fit(hFov)) * 1.12 }
+          place()
+        },
         setPhase: (v) => { t = v; play = false },
         setPlaying: (p) => { play = p },
         dispose: () => {
@@ -229,6 +266,11 @@ export function BodyView3D({ exercise }: { exercise: string }) {
         <div className="flex flex-wrap justify-end gap-1">
           <Button variant="secondary" size="sm" onClick={() => api.current?.setView('front')}>Front</Button>
           <Button variant="secondary" size="sm" onClick={() => api.current?.setView('back')}>Back</Button>
+          {/* The close shot is the default because it answers the card's
+              question; this is for seeing where it sits on the person. */}
+          <Button variant="secondary" size="sm" onClick={() => { const next = zoom === 'work' ? 'body' : 'work'; setZoom(next); api.current?.setZoom(next) }}>
+            {zoom === 'work' ? 'Whole body' : 'Close up'}
+          </Button>
         </div>
       }
     >
