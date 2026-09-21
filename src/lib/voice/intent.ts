@@ -38,17 +38,37 @@ export interface VoiceIntent {
   /** 0–1. Under `CONFIRM_BELOW` the UI must not offer a one-tap apply. */
   confidence: number
   /**
-   * One thing the sentence did not say and the schema cannot represent without
-   * guessing. The UI asks it before saving; skipping is always allowed.
+   * What the sentence did not say and the schema cannot represent without
+   * guessing, in the order it should be asked. The UI asks the first one;
+   * answering it may reveal the next. Skipping is always allowed.
    *
-   * This exists because of a defect the browser pass caught: "I played two
-   * games" has no win/loss split, `PickleballSession` has no "games played"
-   * field, and defaulting to `0 won, 0 lost` files a two-game loss the user
-   * never reported. Asking is the only honest option — inventing a split and
-   * dropping the count are both lies, one of them flattering.
+   * It was a single hardcoded `{ field: 'gamesWon' }`, added because "I played
+   * two games" has no win/loss split and defaulting to `0 won, 0 lost` files a
+   * two-game loss the user never reported. That reasoning was right and it was
+   * applied to exactly one field — **`format` was being invented in silence the
+   * whole time.** `plan.ts` writes `s.format ?? 'doubles'`, so "I played
+   * pickleball for 10 minutes" appeared in the history as *"doubles 0–0"*: two
+   * facts on screen, neither of them said out loud.
+   *
+   * A queue rather than one field, because the honest set of questions depends
+   * on the answers — "who did you play with?" is a different question for
+   * singles than for doubles, and asking both would be an interrogation.
    */
-  ask?: { field: 'gamesWon'; of: number; prompt: string }
+  asks?: Question[]
 }
+
+/**
+ * One thing to ask, and how to render it.
+ *
+ * Three shapes, because three is what the fields need: a choice between two
+ * known values, a free-text name, and a bounded number. Deliberately not a
+ * general form schema — this is a follow-up to one spoken sentence, and the
+ * moment it grows a fourth shape it wants to be a form on the page instead.
+ */
+export type Question =
+  | { field: 'format'; kind: 'choice'; options: readonly ['singles', 'doubles']; prompt: string; skip: string }
+  | { field: 'partner' | 'opponent'; kind: 'text'; prompt: string; skip: string }
+  | { field: 'gamesWon'; kind: 'number'; of: number; prompt: string; skip: string }
 
 /**
  * Below this, the assistant asks instead of offering.
@@ -152,7 +172,29 @@ function matchPickleball(text: string, date: string): ImportRecord[] | null {
     gamesLost: gamesLost ?? (played !== undefined && gamesWon !== undefined ? Math.max(0, played - gamesWon) : undefined),
     pointsFor: num(points?.[1]),
     durationMin: readMinutes(lc),
+    ...readWho(text),
   }]
+}
+
+/**
+ * "with Ana", "against Ana and Sam" → the partner or the opponent.
+ *
+ * Read off the **original** text, not the lowercased copy, because the capital
+ * is the whole signal. "played with my friends" and "played with Ana" are the
+ * same shape to a case-insensitive matcher, and filing a partner called "my
+ * friends" is worse than asking. Dictation capitalises names, so requiring one
+ * costs the rare lowercase name a question it would have been asked anyway.
+ *
+ * The alternative — asking even when the sentence named someone — is the thing
+ * that makes an assistant feel like it was not listening.
+ */
+function readWho(text: string): { partner?: string; opponent?: string } {
+  const clean = (m: RegExpMatchArray | null) => m?.[1]?.trim().replace(/[.,!?]+$/, '')
+  const NAME = "([A-Z][\\w'-]*(?:\\s+and\\s+[A-Z][\\w'-]*)?)"
+  const against = clean(text.match(new RegExp(`\\bagainst\\s+${NAME}`)))
+  if (against) return { opponent: against }
+  const with_ = clean(text.match(new RegExp(`\\bwith\\s+${NAME}`)))
+  return with_ ? { partner: with_ } : {}
 }
 
 /**
@@ -182,24 +224,117 @@ function playedCount(text: string): number | undefined {
 }
 
 /**
- * Answer the open question, turning "2 games" into a real win/loss split.
+ * What a pickleball session did not say, in the order worth asking.
+ *
+ * Only ever asks for what is *absent*. A sentence that already named singles
+ * and a partner gets no questions at all — the point is to stop inventing
+ * facts, not to make every session a form.
+ *
+ * `format` leads because it is the one being invented: `plan.ts` writes
+ * `s.format ?? 'doubles'`, and a session that reads "doubles" when nobody said
+ * so is a fabricated fact sitting in the history list next to real ones. The
+ * partner/opponent question is not queued here — it depends on the format, so
+ * `answerQuestion` adds it once the format is known. That ordering *is* the
+ * feature: "who did you play with?" and "who did you play against?" are
+ * different questions, and asking both would be an interrogation.
+ */
+function questionsFor(r: PickleRecord, playedCount?: number): Question[] {
+  const qs: Question[] = []
+  // The split leads when a game count was spoken. It is the strongest missing
+  // fact — the user has already told us a number and we cannot use it without
+  // it — and it was the original question for that reason. Format follows,
+  // then who: least to most optional.
+  if (playedCount !== undefined && r.gamesWon === undefined && r.gamesLost === undefined) {
+    qs.push({ field: 'gamesWon', kind: 'number', of: playedCount, prompt: `How many of the ${playedCount} did you win?`, skip: 'Skip' })
+  }
+  if (!r.format) {
+    qs.push({
+      field: 'format',
+      kind: 'choice',
+      options: ['singles', 'doubles'] as const,
+      prompt: 'Singles or doubles?',
+      // Skipping keeps `plan.ts`'s existing default. A known ceiling rather
+      // than a silent one: `PickleballSession.format` is required by the type,
+      // so "unknown" is not representable without a migration.
+      skip: 'Not sure',
+    })
+  } else {
+    qs.push(...whoQuestion(r.format))
+  }
+  // Already named in the sentence — "with Ana" — so there is nothing to ask.
+  return qs.filter((q) => (q.field === 'partner' ? !r.partner : q.field === 'opponent' ? !r.opponent : true))
+}
+
+/** Doubles has a partner; singles has an opponent. One question, either way. */
+function whoQuestion(format: 'singles' | 'doubles'): Question[] {
+  return format === 'doubles'
+    ? [{ field: 'partner', kind: 'text', prompt: 'Who did you play with?', skip: 'Skip' }]
+    : [{ field: 'opponent', kind: 'text', prompt: 'Who did you play against?', skip: 'Skip' }]
+}
+
+type PickleRecord = Extract<ImportRecord, { kind: 'pickleball' }>
+
+/**
+ * Answer the question at the head of the queue.
  *
  * Pure, and returns new records — the caller replaces the intent rather than
  * mutating one, so an answered question cannot half-apply.
+ *
+ * Answering `format` **appends** the partner-or-opponent question, which is why
+ * this returns a queue rather than just shortening one. `value === null` is a
+ * skip: the question leaves without writing anything, which is the difference
+ * between "I did not say" and "I said none".
  */
-export function answer(intent: VoiceIntent, won: number): VoiceIntent {
-  if (!intent.ask) return intent
-  const of = intent.ask.of
-  const w = Math.max(0, Math.min(of, Math.round(won)))
-  const records = intent.records.map((r) =>
-    r.kind === 'pickleball' ? { ...r, gamesWon: w, gamesLost: of - w } : r)
+export function answerQuestion(intent: VoiceIntent, value: string | number | null): VoiceIntent {
+  const q = intent.asks?.[0]
+  if (!q) return intent
+  const rest = intent.asks!.slice(1)
+
+  if (value === null) {
+    const asks = rest.length ? rest : undefined
+    return { ...intent, asks, say: asks ? asks[0].prompt : describeAsk(intent) }
+  }
+
+  let patch: Partial<PickleRecord> = {}
+  let follow: Question[] = []
+  switch (q.field) {
+    case 'format': {
+      const format = value === 'singles' ? 'singles' : 'doubles'
+      patch = { format }
+      follow = whoQuestion(format)
+      break
+    }
+    case 'partner':
+    case 'opponent': {
+      const name = String(value).trim()
+      if (!name) return answerQuestion(intent, null)
+      patch = { [q.field]: name } as Partial<PickleRecord>
+      break
+    }
+    case 'gamesWon': {
+      const w = Math.max(0, Math.min(q.of, Math.round(Number(value))))
+      if (!Number.isFinite(w)) return intent
+      patch = { gamesWon: w, gamesLost: q.of - w }
+      break
+    }
+  }
+
+  const records = intent.records.map((r) => (r.kind === 'pickleball' ? { ...r, ...patch } : r))
+  const asks = [...rest, ...follow]
   return {
     ...intent,
     records,
-    ask: undefined,
-    confidence: 0.85,
-    say: `${w} won, ${of - w} lost. Save it?`,
+    asks: asks.length ? asks : undefined,
+    // Every answer raises confidence: the record is now closer to what was
+    // actually said than to what was guessed.
+    confidence: Math.max(intent.confidence, asks.length ? 0.75 : 0.85),
+    say: asks.length ? asks[0].prompt : describeAsk({ ...intent, records }),
   }
+}
+
+/** The read-back once there is nothing left to ask. */
+function describeAsk(intent: VoiceIntent): string {
+  return describe(intent.records, intent.date, todayISO())
 }
 
 /**
@@ -331,17 +466,19 @@ export function understand(transcript: string, ctx: CaptureCtx, today = todayISO
 
   const pickle = matchPickleball(text, date)
   if (pickle) {
-    const r = pickle[0] as { gamesWon?: number; gamesLost?: number; notes?: string }
+    const r = pickle[0] as PickleRecord
     const played = playedCount(text)
-    const pointsHeard = (pickle[0] as { pointsFor?: number }).pointsFor
-    const split = r.gamesWon !== undefined || r.gamesLost !== undefined
-    if (played !== undefined && !split) {
-      return {
-        transcript, date, records: pickle, confidence: 0.7,
-        ask: { field: 'gamesWon', of: played, prompt: `How many of the ${played} did you win?` },
-        say: `${played} games${pointsHeard !== undefined ? `, ${pointsHeard} points` : ''}${
-          whenWord(date, today)} — how many did you win?`,
-      }
+    const asks = questionsFor(r, played)
+    if (asks.length) {
+      // The read-back names what WAS heard before the first question, so the
+      // panel never opens with a bare interrogative — "10 minutes today —
+      // singles or doubles?" is a confirmation and a question in one line,
+      // which is how a person would say it.
+      // `describe` ends "— today. Save it?", and appending a question to that
+      // gave "— today. — Singles or doubles?": two dashes and a full stop in
+      // one spoken line. The read-back is trimmed back to the facts.
+      const heard = describe(pickle, date, today).replace(/\s*Save it\?$/, '').replace(/[.\s]+$/, '')
+      return { transcript, date, records: pickle, confidence: 0.7, asks, say: `${heard}. ${asks[0].prompt}` }
     }
     return { transcript, date, records: pickle, say: describe(pickle, date, today), confidence: 0.8 }
   }

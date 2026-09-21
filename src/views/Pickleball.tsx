@@ -102,7 +102,11 @@ export function Pickleball() {
   const [showAll, setShowAll] = useState(false)
 
   function log() {
-    if (!f.gamesWon && !f.gamesLost) return
+    // A session with a duration and no score is a real session — the sport's
+    // one required field is `durationMin`, and the voice path files exactly
+    // that. Requiring a score here was the same bug the parser had, in the
+    // form: you could not hand-log "played for 40 minutes, didn't keep score".
+    if (!f.gamesWon && !f.gamesLost && !f.durationMin) return
     addPickleball({
       date: f.date,
       format: f.format,
@@ -683,7 +687,11 @@ function PickleRow({ p, onSave, onDelete }: {
   }
   return (
     <li {...justCapturedProps(justNew)} className={`group flex items-center justify-between gap-2 py-2 text-body ${justNew ? 'just-captured' : ''}`}>
-      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+      {/* `durationMin` was stored and never rendered, so a session logged by
+          voice — where the duration is usually the ONLY fact given — showed as
+          "doubles 0–0" and looked empty. It is the sport's required field
+          (`domain/activities.ts`), so it reads before the optional ones. */}
+      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
         <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 opacity-0 group-hover:opacity-100 hover:text-mauve">Edit</Button>
