@@ -21,6 +21,11 @@ export function IndexBand({
   onOpenCollection: (id: string) => void
   onOpenTag: (tag: string) => void
 }) {
+  /** The scale every bar is drawn against — the biggest collection is full. */
+  const busiest = Math.max(0, ...collections.map((c) => c.count))
+  /** Tags get their own maximum; see the note on the tag bar. */
+  const hottestTag = Math.max(0, ...tags.slice(0, 20).map((t) => t.count))
+
   return (
     <Band>
       {/* The band is titled, so the two cells below can keep their short
@@ -40,18 +45,42 @@ export function IndexBand({
             <ul className="mt-2">
               {collections.map((c) => (
                 <li key={c.id}>
+                  {/* A fixed three-track grid, not a flex row.
+                      The count sat at the end of a `flex` line, so its left
+                      edge moved with the length of the name and the presence of
+                      the "3/7 done" note — a column of numbers that did not line
+                      up. Tracks put every row's bar and every row's total in the
+                      same place whatever the name does. */}
                   <button
                     onClick={() => onOpenCollection(c.id)}
-                    className="flex w-full items-center gap-3 border-t border-line py-2 text-left text-label hover:bg-ink-2/50"
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto_4.5rem_1.75rem] items-center gap-x-3 border-t border-line py-2 text-left text-label hover:bg-ink-2/50"
                   >
                     <span aria-hidden>{c.icon}</span>
-                    <span className="min-w-0 flex-1 truncate text-fg-1">{c.name}</span>
-                    {c.tasks > 0 && (
+                    <span className="min-w-0 truncate text-fg-1">{c.name}</span>
+                    {c.tasks > 0 ? (
                       <span className="num shrink-0 text-caption text-fg-2">
                         {c.done}/{c.tasks} done
                       </span>
+                    ) : (
+                      <span />
                     )}
-                    <span className="num w-6 shrink-0 text-right text-fg-2">{c.count}</span>
+                    {/* SIZE, not just the number.
+                        The index answered "how many are in here" with a bare
+                        numeral per row, which reads only if you compare them one
+                        at a time. One bar per row, scaled to the largest
+                        collection, answers "where is most of my stuff" without
+                        reading anything. Magnitude is a length — one hue, no
+                        axis, no legend; the number beside it stays for the exact
+                        value, so nothing is encoded by colour alone.
+                        `aria-hidden`: the count next to it already says it, and
+                        a screen reader does not want the same fact twice. */}
+                    <span aria-hidden className="h-1.5 overflow-hidden rounded-pill bg-ink-2">
+                      <span
+                        className="block h-full rounded-pill bg-brand/70"
+                        style={{ width: `${busiest > 0 ? Math.max(6, (c.count / busiest) * 100) : 0}%` }}
+                      />
+                    </span>
+                    <span className="num text-right text-fg-2">{c.count}</span>
                   </button>
                 </li>
               ))}
@@ -71,10 +100,19 @@ export function IndexBand({
                 <li key={t.tag}>
                   <button
                     onClick={() => onOpenTag(t.tag)}
-                    className="flex w-full items-center gap-3 border-t border-line py-2 text-left text-label hover:bg-ink-2/50"
+                    className="grid w-full grid-cols-[minmax(0,1fr)_4.5rem_1.75rem] items-center gap-x-3 border-t border-line py-2 text-left text-label hover:bg-ink-2/50"
                   >
-                    <span className="min-w-0 flex-1 truncate text-fg-1">#{t.tag}</span>
-                    <span className="num w-6 shrink-0 text-right text-fg-2">{t.count}</span>
+                    <span className="min-w-0 truncate text-fg-1">#{t.tag}</span>
+                    {/* Same bar, same scale rules, its own maximum — tags and
+                        collections are different populations and sharing a
+                        scale would make the smaller one look empty. */}
+                    <span aria-hidden className="h-1.5 overflow-hidden rounded-pill bg-ink-2">
+                      <span
+                        className="block h-full rounded-pill bg-teal/70"
+                        style={{ width: `${hottestTag > 0 ? Math.max(6, (t.count / hottestTag) * 100) : 0}%` }}
+                      />
+                    </span>
+                    <span className="num text-right text-fg-2">{t.count}</span>
                   </button>
                 </li>
               ))}

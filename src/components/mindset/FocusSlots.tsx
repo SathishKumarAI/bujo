@@ -104,7 +104,16 @@ export function FocusSlots({
 
               {f && p ? (
                 <>
-                  <h3 className="font-display text-body leading-snug font-medium text-balance text-fg-1">{p.title}</h3>
+                  {/* Two lines reserved, whether the title needs them or not.
+                      The slots sit side by side, so a one-line title beside a
+                      two-line one pushed that column's cue and its "Mark
+                      practised" a whole line higher than its neighbour's, and
+                      the row read as three loose lists rather than three of the
+                      same thing. Reserving the taller case costs one blank line
+                      in the short column and buys a straight edge across all of
+                      them. `2lh` is exactly two line-heights of THIS element, so
+                      it tracks the font and leading instead of guessing an em. */}
+                  <h3 className="min-h-[2lh] font-display text-body leading-snug font-medium text-balance text-fg-1">{p.title}</h3>
                   {/* Borderless but for a bottom rule: a boxed input would be the
                       only rounded object on the page and would read as a form
                       rather than as a line you write on.
@@ -127,7 +136,7 @@ export function FocusSlots({
                   <button
                     onClick={() => onTogglePractice(f.principleId)}
                     aria-pressed={practisedToday}
-                    className={`mt-1 mb-2 inline-flex items-center gap-1.5 self-start text-label ${
+                    className={`mt-auto mb-2 inline-flex items-center gap-1.5 self-start pt-1 text-label ${
                       practisedToday ? 'text-brand-text' : 'text-fg-2 hover:text-fg-1'
                     }`}
                   >
@@ -143,7 +152,7 @@ export function FocusSlots({
                   </button>
                 </>
               ) : (
-                <p className="pb-3 text-label text-fg-3">Open — pick one below</p>
+                <p className="mt-auto pb-3 text-label text-fg-3">Open — pick one below</p>
               )}
             </div>
           )
