@@ -1,117 +1,145 @@
 # STATUS
 
-**Stopped:** 2026-09-16, on `main`, clean. Two PRs merged this session:
-**#230** the guide, the manual and the tutorials; **#231** Today's surface tabs
-moved into the header's second row. Plane items: COD-196 (done), COD-198 (done),
-**COD-197 (open, see "The one red gate" below)**.
+**Stopped:** 2026-09-21, on `main`, clean. Three PRs merged this session:
+**#234** Settings & Account layout + motion; **#235** one habit-scheduling
+rule; **#236** Insights absorbs Stats. Plane: COD-199, COD-200, COD-201 done.
+**COD-202 open and it is the one that matters — see "The gate is off".**
 
 ## What shipped
 
-### #230 · one catalogue, three readers
+### #234 · COD-200 · Settings & Account
 
-The in-app guide named **fifteen of the app's twenty-four screens.** Goals,
-Program, Nutrition, Coaching, Reading, Mindset, Stats, Pickleball and Home
-workout were absent from the one page a lost user opens — and nothing failed
-when they were added, because `views/Help.tsx` carried its own hand-written copy
-of what each screen does. `docs/pages/help.md` had already written down the fix.
+**A text collision on a phone.** `tabsListVariants` sets
+`group-data-[orientation=horizontal]/tabs:h-9`; the call site passed a bare
+`h-auto`, and tailwind-merge does not treat those as the same utility, so both
+shipped and the variant won. Five pills wrapped to three rows at 390px inside a
+36px box and the overflow drew **on top of** the panel — "Data" over the
+"Profile" card heading, on the live build.
 
-`src/lib/guide.ts` now holds **only what nothing else records**: one sentence of
-*why* each page exists and two to four *how* steps. Title and the "what it is"
-blurb come from `VIEW_CHROME`; the grouping comes from `SECTIONS`. Three readers
-off that one source:
+**Neither rendering gate can see an overlap.** `clipped-text.mjs` asks whether
+an element shows less than it holds (every pill showed all its text); `a11y`
+asks whether the tree is sound (it was). Worth remembering next time something
+"cannot have regressed, the gates are green".
 
-- `views/Help.tsx` — rebuilt on the three-zone contract. Search over
-  twenty-four folded cards grouped by nav section; a hit opens itself; every
-  card has an *Open `<name>`* button.
-- `docs/FEATURE-REFERENCE.md` — **generated**, `npm run manual`. Do not edit it.
-- the top-bar "?" and every card's ⓘ, which already read `VIEW_CHROME`.
+Also: three tabs capped content at `max-w-2xl` inside the wide tier (~500px
+dead beside every control) while Sync and Data had no cap at all (a 1,160px
+passphrase field); four `Disclosure`s shipped **open** despite comments saying
+"collapsed to cut option overload"; Data's `auto-rows-fr` stretched Tags to
+match a 1,300px neighbour; "Journal summary" drew its heading twice, 40px
+apart, differing in one capital T.
 
-`docs/MANUAL.md` is hand-written and is the part a program cannot generate: why
-the product exists, the first five minutes, the daily/weekly/monthly ritual,
-the bullet grammar, troubleshooting.
+Measured, built bundle, full page: Appearance 1341→1076, Sync 1932→**624**,
+Data 3062→**1112**.
 
-**`guide.test.ts` is the load-bearing part.** It asserts coverage in both
-directions and asserts `what` is byte-identical to `VIEW_CHROME[view].help`. Add
-a view without a guide entry and it fails by name.
+**The motion system was landing on nothing.** `.page-enter > *` selects DIRECT
+children and sat on the page shell, which has exactly one — so every contract
+page rose as a single block and the 45ms ladder never ran once. Moved onto
+`.page-zones`, `.zone-review` and both grids in `CardGrid.tsx`. Account went
+from 1 staggered child to 4. A band's hover is now its closing hairline
+(`line` → `line-strong`), not a shadow: a shadow re-boxes the card the band
+variant exists to un-box.
 
-### #231 · the surface tabs moved up
+### #235 · COD-199 · one answer to "what is due today"
 
-Row 2 of the header holds `SectionTabs` for the fifteen views that have one, and
-centres it. Today has one tab, so that row rendered a centred "Today / Your
-daily log" — beside a date pill already stating the date, under a lit rail row
-already saying Today — while Morning / Day / Evening sat in the day masthead.
-`components/shell/topbar/SurfaceTabs.tsx` now owns them, in row 2, centred,
-neutral-toned so row 2 stays quieter than row 1's accent pill.
+`isScheduledOn` was always the definition — `day >= startedOn` AND the weekday
+is active. **Seven call sites re-typed the weekday half and dropped
+`startedOn`.** `lib/penalties.missesFor` was one of them, so a habit scheduled
+to begin next month **earned you make-up drills for missing it**.
 
-## The one red gate
+Nothing failed, because two hand-written filters that agree with *each other*
+read as correct. `Trackers.tsx` said so in a comment — "same filter TodayStrip
+applies, so the header count and the chips agree" — true of each other, false
+of the `trackerSummary` call one line above, rendered as "today done N%" sixty
+pixels higher on the same page.
 
-**`npm run a11y` does not complete on this machine, and does not on `main`
-either.** It aborts at `scanReceipt()` —
-`[receipt · mocha] captured a note; receipt appeared, ringed row MISSING` —
-which calls `process.exit(1)` **before** the view walk, so nothing is scanned
-and no table is printed. Filed as **COD-197** with the likely cause: the
-assertion waits a fixed 700ms and then reads `#main [data-just-captured]`, which
-is not enough on a loaded machine. It is intermittent — one run in five got
-through and printed the full table.
+**A slip counted as a completion.** `habitDoneOn` is true for an *avoid* habit
+when you logged it, which means you slipped; Trackers' header ran over every
+habit, so slipping on "no doomscroll" pushed "done" **up**.
 
-Verified pre-existing by stashing the branch, rebuilding `main` and re-running:
-identical failure. **Do not "fix" it by deleting the assertion.** Replace the
-fixed wait with `page.waitForSelector('#main [data-just-captured]', { timeout:
-5000 })` and keep the loud error for a real timeout.
+`lib/schedule.ts` is a new leaf module owning `isScheduledOn` and
+`habitsDueOn`. It is below `habitStats` **because it has to be**: `habitStats`
+imports `stats`, so the moment `stats.ts` needed the rule there was nowhere
+else to put it without closing an import cycle.
 
-Until then, a targeted axe pass is the workaround — and note that a workaround
-in a STATUS file is a gate that is off, which is why COD-197 exists. The shape
-that worked, run against a `vite preview` with `playwright` + `@axe-core/playwright`
-installed `--no-save`:
+**Grep found thirteen matches and six were already correct.** `CategoryRows`
+names a local `scheduled` that genuinely means only the weekday half (it pairs
+it with a separate `before = d < h.startedOn`); `coverage.ts` and
+`stats.dayCompletion` spell `startedOn` on the line above the one grep matched.
+All three left alone. This is the "two things with the same name" trap in
+`CLAUDE.md`, live.
 
-- new **context** (`browser.newContext()`), not `newPage()` — `@axe-core/playwright`
-  refuses a page from the default context.
-- set `localStorage['bujo:onboarded'] = '1'` on the first load or the first-run
-  tour's modal intercepts every click and Playwright times out.
-- set the theme by rewriting `bujo:data.settings.theme` and reloading, and open
-  folds with four passes of `#main [aria-expanded="false"]:not([aria-haspopup])`,
-  exactly as the gate does.
+`schedule.test.ts` is named for symptoms, not functions, and **was verified to
+fail on the old behaviour** — reverting `penalties.ts` alone turns exactly one
+test red.
 
-## Gates, this session
+### #236 · COD-201 · Insights absorbs Stats
 
-All green except the above: `tsc -b` · `vitest` **1062 tests across 84 files** ·
-`eslint` · `design` (308 files) · `contrast` (5 themes) · `smoke` 25/25 ·
-`clipped` clean at 1440, 1024 and 390 · axe on `?view=help` and on Today × 3
-surfaces, 5 themes × 2 widths, **0 serious/critical**.
+The page called Insights rendered **zero charts**. Every plot in the app was on
+the Stats tab behind seven `defaultOpen={false}` folds. ~20 analytics surfaces,
+none reachable without already knowing where to click.
 
-## Traps found this session
+One page now. Six domain chips with live counts, a search matching a card's
+*measure* as well as its title, a sort on journal results. Four new charts:
+correlation matrix, journal volume, habit consistency, task completion trend.
 
-- **`?view=help` had never been scanned by `a11y`.** It is behind the top bar's
-  "?", so no tab clicks to it and it was not in `COMPANIONS` — the page a user
-  opens *because they are already stuck* had no accessibility evidence. Adding
-  it failed immediately: `fg-2` on `ink-3` is **4.07:1**, in four themes at
-  once. Fixed by moving the ground (`ink-2` + `shadow-raise`), not the text.
-  Same pairing as COD-58, recorded in a comment in the very file that missed it.
-- **`a11y`'s `go()` locator was scoped to `main`.** Moving the surface switcher
-  into `<header>` would have made `goOrDie` report "no surface control with that
-  name on Today" — a gate reading a relocation as a deletion, beside its own
-  instruction not to answer that by deleting the entry. Widened to `header` too.
-- **A segmented control in a `min-w-0` flex child draws past its own box.** No
-  `overflow-x-auto` and at 390px "Evening" rendered *underneath* the date pill
-  with the ‹ arrow pushed off the row. `clipped` does not catch this — the box
-  is not clipped, it is overdrawn.
-- **A bash heredoc silently truncated a long file write.** `cat > file <<'EOF'`
-  with ~400 lines of content came back with a *warning* about the delimiter and
-  a file cut at line 124 — valid-looking TypeScript, mid-array. Use the editor
-  tools for anything long, and check `wc -l` when you do not.
+`views/Stats.tsx` was **`git mv`d, not retyped**, and the proof is a
+rendered-output diff of the built bundle with every fold forced open: headings
+6+27→37, recharts surfaces 0+6→8, **chart `aria-label`s lost 0**, text lines
+lost 7 (all accounted for). That diff earned its keep twice — it caught a
+five-fact `StatBar`, and **`StatBar` slices to four while warning only in
+DEV**, so the fifth vanished from a production build with nothing on screen to
+say so.
 
-## Before you start
+`?view=stats` aliases to `insights`, so bookmarks, deep links and guide buttons
+still land.
 
-- `npm run verify` first, so a red gate is attributable to you rather than
-  inherited. Browser gates need `npm i -D --no-save playwright @axe-core/playwright
-  && npx playwright install chromium` — a deploy prunes them.
-- **Check the port before believing a screenshot.** `vite preview` walks up from
-  4173; it landed on **4175** this session because two earlier gate runs were
-  still holding the lower ports. Every gate defaults to 4173, so pass
-  `BUJO_URL=` when it does not.
-- The preview server serves `dist/`, so **rebuild before running a browser
-  gate**.
-- Demo data is persisted, not regenerated — re-seed via Settings → Data → Load
-  demo data after editing `src/lib/demo.ts`.
-- After editing `src/lib/guide.ts`, run **`npm run manual`** in the same commit.
-  `docs/FEATURE-REFERENCE.md` is generated and a stale one is worse than none.
+## The gate is off — COD-202
+
+**`npm run a11y` aborts at the second entry of its VIEWS list**, in CI and
+locally:
+
+```
+[Plan] no rail row with that name — the gate could not reach it.
+```
+
+Today (entry 1) passes first, so the harness works; it is the **Plan rail row**
+it cannot find. CI runs 35547262905 and 35547265269, ~9 minutes each, exit 1.
+
+**This is not the failure the old STATUS.md recorded.** COD-197 describes an
+abort inside `scanReceipt()` *before* the view walk. This one is inside it.
+Either COD-197 is intermittent and this is the next failure behind it, or there
+are two. Do not delete the entry to make it pass — the file's own error message
+says so, and its header says a page not on the list is not checked.
+
+**What it costs, concretely:** the new correlation matrix shipped at **1.71:1
+on vscode, 1.85 mocha, 1.88 neon, 2.95 dawn, 4.11 latte** — every number in it
+under the floor in all five themes — and was caught only because I wrote a
+throwaway five-theme probe by hand. A green a11y gate would have caught it in
+seconds. While this is red, every view's contrast ships unmeasured.
+
+## Traps learned this session
+
+- **A measurement that cannot vary is not a measurement.** The first contrast
+  probe printed identical numbers for all five themes, because it wrote the
+  theme to `localStorage['bujo']` and the real key is `bujo:data`. It then
+  reported a fake **1.30:1** for latte, because it read
+  `color(srgb 0.80 0.43 0.40)` channels as 0–255. Two bugs in the instrument
+  before one in the subject. Assert the thing you changed actually changed —
+  the loop now checks `documentElement.dataset.theme` and skips the theme if it
+  did not take.
+- **`color-mix()` costs you `onAccent`.** It computes to `color(srgb …)`, which
+  the repo's colour helpers do not parse — so a fill built that way cannot ask
+  for its own readable foreground. `over()` already composites a wash and
+  returns hex; that is why `Stats`' `moodColor` returns hex, and its comment
+  says so.
+- **One foreground for N backgrounds is a decision made once and wrong most of
+  the time.** Same shape as the `cat('crust')` trap already in `CLAUDE.md`,
+  reached from a new direction.
+
+## Next action
+
+COD-202. Open `scripts/a11y-axe.mjs`, find what it clicks to reach a section,
+and compare against `SECTIONS` — navigation moved twice recently (#231 put
+Today's surface tabs in the header's second row, and other comments refer to
+"when the sidebar was deleted"). The likely answer is that the gate is looking
+for a door that was removed. **Fix the gate, not the list.**
