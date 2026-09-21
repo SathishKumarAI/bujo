@@ -5,6 +5,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, Res
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
 import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
+import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, MasonryGrid, SPAN_2 } from '../components/shell/CardGrid'
@@ -442,7 +443,7 @@ export function Pickleball() {
             tone="teal"
             value={numOrUndef(f.durationMin) ?? null}
             onChange={(v) => set({ durationMin: String(v) })}
-            options={[30, 45, 60, 90, 120].map((m) => ({ value: m, label: m >= 60 ? `${m / 60}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m` }))}
+            options={durationOptions([30, 45, 60, 90, 120])}
             after={
               <Input
                 type="number"
