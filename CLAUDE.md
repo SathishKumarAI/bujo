@@ -135,6 +135,21 @@ walk is load-bearing; and `Card` can cap its `right` slot at `max-w-full` but
 **cannot wrap a cluster whose markup it does not own** — an over-wide child just
 changes which edge it leaves by, so the call site needs `flex-wrap` itself.
 
+Trap: **`MasonryGrid` in a zone under 768px silently does nothing**, and the
+class list cannot tell you. It breaks on its *container* (`@3xl` = 768px), so a
+review zone measured at **722px** — 46px short — resolves three groups to a
+single column. Gym's first packing pass therefore packed nothing, and only the
+before/after numbers showed it: `open` moved 4.7 to 4.6. Use `CardGrid` when the
+column width is decided by the page split rather than by the card; it asks about
+the viewport. Second page this has bitten (Stats' habit masonry in a 580px cell
+was the first), which is why it is here and not only in `CardGrid.tsx`.
+
+Trap: **do not `npm run build` while `npm run a11y` is running.** `vite preview`
+serves the half-written `dist` and the gate reports `[Plan] rendered 0
+characters — the view did not load` and exits 1 — indistinguishable from a real
+regression, and it cost a confused re-run. Same family as the stale-service-
+worker trap above: the gate is honest, the bytes under it were not.
+
 Trap: **`grid-cols-N` is safe and the *implicit* track is not.** Tailwind's
 `grid-cols-2/3` expand to `repeat(n, minmax(0, 1fr))`. A grid with no
 `grid-template-columns` at all — which `CardGrid` had below 768px — gets one

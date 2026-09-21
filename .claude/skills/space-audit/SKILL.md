@@ -40,15 +40,28 @@ a11y gate already documents. The gap between them is what the folds are worth.
 width whatever it holds, and it is almost always a layout primitive that stacks,
 not a page that needs redesigning.
 
+**A number over budget is a question, not a verdict.** Of the eight bujo pages
+over three desktop screens, four are deliberately that long and two say so in
+the file, with the measurements that decided it — Coaching records that its act
+column ran 1676px against a review of 238px, so no two-column split balances it.
+Read the view before you "fix" it; overriding a measured decision is worse than
+leaving a long page alone.
+
 ### 2. Find the primitive, not the page
 
 Before editing a view, ask what lays its children out. In this repo:
 
 | Primitive | Lays out | Use for |
 |---|---|---|
-| `CardGrid` | 1 / 2 / 3 columns on **viewport** width | anything sequenced, anything needing `SPAN_2` |
-| `MasonryGrid` | balanced columns on **container** width (`@container`) | a shelf of peer analytics in no particular order |
+| `CardGrid` | 1 / 2 / 3 columns on **viewport** width | anything sequenced, anything needing `SPAN_2`, **and any zone narrower than 768px** |
+| `MasonryGrid` | balanced columns on **container** width (`@container`, `@3xl` = 768px) | a shelf of peer analytics in no particular order, in a zone you know is wide |
 | `CollapsibleSection` | **a vertical stack** — it does not lay out | grouping; wrap the children in a grid yourself |
+
+**`MasonryGrid` in a zone under 768px silently does nothing.** Gym's review zone
+is **722px** — 46px short — so three groups wrapped in it resolved to one column
+and the first version of that fix packed nothing at all. The tool caught it
+(`open` barely moved); reading the class list would not have. Measure the zone,
+or use `CardGrid`, which asks about the viewport instead.
 
 `CollapsibleSection` stacking its children is the single most common cause of a
 one-column page here. Pickleball had thirteen analytics cards in three groups,
@@ -94,7 +107,16 @@ A chip row is only an improvement if it is fewer actions than typing. Arbitrary
 numbers with no common values (a 0–21 score) stay typed; a stepper there is
 eleven taps and chips are a list of twenty-two.
 
-### 5. Organisation is not packing
+### 5. The opposite failure: everything folded shut
+
+A very low `shipped` next to a high `open` is its own bug. Gym measured **1.2
+shipped against 4.7 open** because all eight of its `QuietSection`s passed
+`defaultOpen={false}` — nearly everything the page held was behind one of eight
+identical grey bars, with nothing to say which one had your squat PR in it.
+Collapsed-by-default is right for reference and wrong for the answer someone
+came back for. Merge groups by the question each answers, and open the payoff.
+
+### 6. Organisation is not packing
 
 The tool measures boxes, not meaning. Read a good score as "this page is
 packed", never "this page is good". Check by hand, every time:
@@ -109,7 +131,7 @@ packed", never "this page is good". Check by hand, every time:
   hints read "Recent form · forecast · milestones · intensity" directly above
   those four cards. Deleting them cost nothing and bought a phone screen.
 
-### 6. Prove it
+### 7. Prove it
 
 Every claim in the PR body is a number from the tool, both viewports:
 
@@ -124,7 +146,10 @@ the difference between a measurement and a sales pitch.
 ## Gates this must not break
 
 `npm run verify`, then `npm run a11y` — layout changes move things in and out of
-the accessibility tree. Two specifics, both learned here:
+the accessibility tree. **Do not `npm run build` while the a11y gate is
+running**: the preview server serves the half-written `dist` and the gate
+reports `rendered 0 characters — the view did not load`, which reads exactly
+like a real regression. Two specifics, both learned here:
 
 - **Do not fix length by collapsing sections by default.** `npm run a11y` walks
   the rendered page, so a fold that starts shut hides its contents from the
