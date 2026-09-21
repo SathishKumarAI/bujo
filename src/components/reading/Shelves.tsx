@@ -73,7 +73,12 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
                  needs the same wrap guard: below the container width these three
                  shelves stack, and a right-hand rule on a full-width block has
                  nothing on the other side of it. See `mod/Band.tsx`. */
-              className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 [&:not(:last-child)]:border-r @max-[44rem]/band:pr-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0"
+              /* Same fix as `mindset/FocusSlots`: this had `pr-5` and no left
+                 padding, so the Reading and Finished shelves started their book
+                 titles against the rule beside them. Both sides now, flush-left
+                 for the first column, and no side padding once the shelves
+                 stack and the rules are gone. */
+              className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 pl-5 first:pl-0 last:pr-0 [&:not(:last-child)]:border-r @max-[44rem]/band:px-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0"
             >
               <div className="flex items-baseline gap-2">
                 <h3 className="font-display text-label font-medium text-fg-1">{s.label}</h3>
