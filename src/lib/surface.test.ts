@@ -31,7 +31,7 @@ describe('surfaceForHour', () => {
 
 describe('surfaceUntouched', () => {
   it('marks all three on a day with nothing on it', () => {
-    expect(surfaceUntouched(journal(), DAY)).toEqual({ morning: true, day: true, evening: true })
+    expect(surfaceUntouched(journal(), DAY)).toEqual({ morning: true, day: true, evening: true, habits: false })
   })
 
   it('clears morning on any one rating, sleep included', () => {
@@ -66,7 +66,7 @@ describe('surfaceUntouched', () => {
   it('reads only the day it was asked about', () => {
     const other = addDays(DAY, -1)
     const data = journal({ metrics: [{ date: other, mood: 7 }], entries: [entry({ date: other })] })
-    expect(surfaceUntouched(data, DAY)).toEqual({ morning: true, day: true, evening: true })
+    expect(surfaceUntouched(data, DAY)).toEqual({ morning: true, day: true, evening: true, habits: false })
   })
 
   it('marks nothing on a future day', () => {
@@ -76,6 +76,7 @@ describe('surfaceUntouched', () => {
       morning: false,
       day: false,
       evening: false,
+      habits: false,
     })
   })
 })

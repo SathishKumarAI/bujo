@@ -44,7 +44,15 @@ const SETUP: ViewId[] = ['account', 'settings']
  * "decided" from "forgotten": `help` is this page, and `kitchen-sink` is a
  * design-system review surface reachable only by typing its id.
  */
-export const UNGUIDED: ViewId[] = ['help', 'kitchen-sink']
+export const UNGUIDED: ViewId[] = [
+  'help',
+  'kitchen-sink',
+  /* A redirect, not a page: the habit grid is Today's `habits` surface now, so
+     its guidance lives in Today's entry rather than under a heading that opens
+     a forwarding component. The id survives because fifteen places link to it
+     — see `views/Trackers.tsx`. */
+  'trackers',
+]
 
 export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
   today: {
@@ -52,10 +60,12 @@ export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
     how: [
       'Type one line and press Enter. Start it with t, e or n to pick task, event or note; * makes it important, #tag files it.',
       'Click a bullet glyph to cycle its status — open, done, migrated, dropped.',
-      'Before bed, set mood, stress and sleep. Every chart in Insights and Stats is built from those three numbers.',
+      'Before bed, set mood, stress and sleep. Every chart in Insights is built from those three numbers.',
       'Write one gratitude line and one memory. That is the whole daily ritual, and it takes about a minute.',
+      'The Habits tab is the month grid: add a habit, then tap a cell to mark the day. Count habits increment toward a target instead of just toggling.',
+      'Read the consistency percentage rather than the current streak — a streak forgives nothing and teaches less.',
     ],
-    keywords: ['log', 'capture', 'diary', 'entry', 'bullet', 'rapid logging', 'gratitude', 'memory'],
+    keywords: ['log', 'capture', 'diary', 'entry', 'bullet', 'rapid logging', 'gratitude', 'memory', 'habits', 'dot grid', 'streak', 'consistency', 'tracking', 'trackers', 'water', 'stimulants'],
   },
   plan: {
     why: 'Open tasks that quietly roll forward forever are how a journal dies; migration forces exactly one decision per task.',
@@ -93,15 +103,6 @@ export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
       'Check the week against its minutes target before deciding whether today is a rest day.',
     ],
     keywords: ['workout', 'exercise', 'cardio', 'run', 'training', 'session', 'rpe'],
-  },
-  trackers: {
-    why: 'A habit you cannot see is a habit you will argue with yourself about; a grid ends the argument in one glance.',
-    how: [
-      'Add a habit, then tap a cell to mark the day. Count habits increment toward a target instead of just toggling.',
-      'Drag the grip to reorder. Open a habit for its streak and consistency detail.',
-      'Read the consistency percentage rather than the current streak — a streak forgives nothing and teaches less.',
-    ],
-    keywords: ['habits', 'dot grid', 'streak', 'consistency', 'water', 'stimulants', 'food'],
   },
   gym: {
     why: 'Sets, reps and load only mean something next to what you lifted last time — holding that comparison is the whole job of this page.',
@@ -427,7 +428,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: 'Pick two habits. Two.',
         body: 'Trackers → add habit. Two is not a soft start, it is the right number — a grid with eleven rows is a grid you stop filling in on day four.',
-        to: 'trackers',
+        to: 'trackers', // redirects to Today → Habits
       },
       {
         title: 'Anchor the log to something you already do',
@@ -436,7 +437,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         title: 'Tick the grid and rate the day, every day',
         body: 'Tap the habit cells, set mood/stress/sleep. Under a minute. Skipping the written entries is fine; skipping the three numbers is what leaves holes in every chart later.',
-        to: 'trackers',
+        to: 'trackers', // redirects to Today → Habits
       },
       {
         title: 'Log one session of whatever you train',

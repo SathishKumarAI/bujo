@@ -105,7 +105,10 @@ export const SECTIONS: Section[] = [
       // which is a fact about its output, not about what the page is for.
       //
       // Insights keeps the two surfaces that only ever look backwards.
-      { view: 'trackers', label: 'Tracking' },
+      /* `trackers` is no longer a tab here. The habit grid is Today's fourth
+         surface now — the daily tick already lived on Today while the month
+         view of the same data sat two sections away. The view id survives as a
+         redirect (`views/Trackers.tsx`) because fifteen places link to it. */
       // Strength tools was reachable only from a link inside Fitness, and only
       // while the mode happened to be `strength` — so the exercise picker, the
       // program tracker, the plate calculator, the muscle map and progress
