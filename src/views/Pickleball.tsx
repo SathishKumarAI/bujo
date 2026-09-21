@@ -4,17 +4,18 @@ import { useState } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
+import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid } from '../components/shell/CardGrid'
+import { CardGrid, MasonryGrid, SPAN_2 } from '../components/shell/CardGrid'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 import { LazyMount } from '../components/LazyMount'
-import { CalendarHeatmap } from '../components/page'
+import { CalendarHeatmap, DisclosureRow } from '../components/page'
 import { cat, onRaised, rechartsTooltip } from '../lib/colors'
-import { todayISO, prettyDay, fromISODay } from '../lib/date'
+import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
-import { Section } from '../components/pickleball/Section'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from '../components/pickleball/SignalCards'
@@ -33,6 +34,14 @@ const tip = rechartsTooltip
  * in this file at the DUPR form (`setDupr({ date: todayISO(), ... })`) and in
  * `page/draft.ts`'s `emptyDraft`; only these two constants missed it.
  */
+/**
+ * The form holds its numbers as STRINGS, because an empty field is `''` and not
+ * `0` — a distinction this file already depends on (`gamesWon: ''` must not log
+ * a 0-0 session). `Stepper` and `ChipPick` speak numbers, so this is the seam.
+ * `Number('')` is 0, which is exactly the bug, hence the explicit empty check.
+ */
+const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v))
+
 const blankOf = () => ({ date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' })
 const evtBlankOf = () => ({ date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' })
 
@@ -164,6 +173,17 @@ export function Pickleball() {
   // Read-only rivalry / chemistry / venue aggregates over logged sessions.
   const partners = partnerStats(data)
   const venues = venueStats(data)
+  /**
+   * The log form's Partner and Location chips.
+   *
+   * Same two stat tables the analytics below already use, capped at six so the
+   * chip row does not become the form. They are sorted by games played, so the
+   * person you play every week is the first chip rather than the alphabetically
+   * luckiest.
+   */
+  const recentPartners = partners.slice(0, 6).map((p) => p.partner)
+  const recentVenues = venues.slice(0, 6).map((v) => v.location)
+  const yesterday = addDays(todayISO(), -1)
   const opponents = opponentRecords(data)
   // Read-only form / streak / point / matchup / weekday signals over logged sessions.
   const form = rollingForm(data)
@@ -328,7 +348,16 @@ export function Pickleball() {
     </CardGrid>
   )
 
-  // Compact "At a glance" summary moved to bottom as requested by user (BUJO-XXX)
+  /**
+   * The record, in one box, at the TOP.
+   *
+   * It was the last card on the page, under a comment reading "moved to bottom
+   * as requested by user (BUJO-XXX)" — a placeholder ticket id, so the request
+   * it cites cannot be checked. Measured, the page is 3.7 screens on desktop
+   * and 5.4 on a phone, which makes "your record at a glance" the one card
+   * nobody arrives at. A summary is the thing you read before deciding whether
+   * to read the rest; it goes first or it does not earn its title.
+   */
   const atAGlance = (
     <Card band title="At a glance" subtitle="Your pickleball record in one compact box">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -358,32 +387,160 @@ export function Pickleball() {
 
   return (
     <Page width="wide" className="gap-0 sm:gap-0">
-      {/* Three across instead of one tall stack. This page was 4.2 screens over
-          twelve blocks, and most of them — the record, the log form, DUPR —
-          never needed the full width. */}
+      {/* Summary, then the thing you came to do, then everything that reads
+          back what you did.
+
+          The comment here used to claim "three across instead of one tall
+          stack — this page was 4.2 screens". It was still 4.1 when measured,
+          because the claim only ever applied to THIS grid: the thirteen
+          analytics cards below sat in a local `Section` that laid its children
+          out `flex-col`, so each one spanned the full 1,180px to hold about
+          180px of content. Fixed by deleting that component in favour of
+          `CollapsibleSection` + `MasonryGrid`; see the groups below. */}
+      {atAGlance}
       <CardGrid>
-        {/* ── DATA-FIRST LAYOUT: Log session and history first (primary data entities) ── */}
-        <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-body text-fg-1">Date<Input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="mt-1" /></label>
-          <div><p className="mb-1 text-body text-fg-1">Format</p><Segmented value={f.format} onChange={(v) => set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} /></div>
-          <label className="block text-body text-fg-1">Games won<Input type="number" value={f.gamesWon} onChange={(e) => set({ gamesWon: e.target.value })} placeholder="0" className="mt-1" /></label>
-          <label className="block text-body text-fg-1">Games lost<Input type="number" value={f.gamesLost} onChange={(e) => set({ gamesLost: e.target.value })} placeholder="0" className="mt-1" /></label>
-          <Input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="Minutes" aria-label="Minutes" />
-          <Input type="number" value={f.rpe} onChange={(e) => set({ rpe: e.target.value })} placeholder="RPE 1–10" aria-label="RPE" />
-          {f.format === 'doubles' && <Input value={f.partner} onChange={(e) => set({ partner: e.target.value })} placeholder="Partner (optional)" />}
-          <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" />
-          <Input value={f.location} onChange={(e) => set({ location: e.target.value })} placeholder="Location" aria-label="Location" />
-          <Input value={f.level} onChange={(e) => set({ level: e.target.value })} placeholder="Level e.g. 3.5" aria-label="Level" />
-          <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
-          <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-          <select value={f.scoring} onChange={(e) => set({ scoring: e.target.value as typeof f.scoring })} aria-label="Scoring" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
-            <option value="">Scoring</option>
-            <option value="11">to 11</option>
-            <option value="15">to 15</option>
-            <option value="21">to 21</option>
-            <option value="rally21">rally 21</option>
-          </select>
+        <Card band className={SPAN_2} title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
+        {/* TAP, DON'T TYPE.
+
+            This was fourteen controls of which twelve were free text or a bare
+            number input — the most-used form in the app asking you to type "60"
+            and "3.5" after every game. Converted to the `quickpick` primitives
+            (#241) on the same reasoning as the rest of that pass: the answer is
+            nearly always one of a handful, and a keyboard on a phone at the side
+            of a court is the worst possible input device.
+
+            Partner and Location read their chips from `partnerStats` and
+            `venueStats`, which are already computed on this page for the
+            analytics below and are **sorted by how often you play** — so the
+            chips are your actual partners and courts, in the order you use
+            them, rather than a list somebody invented. Both keep a free-text
+            field beside them for the first time and the one-off.
+
+            Points for/against stay typed on purpose: they are arbitrary numbers
+            in 0–21 with no common values, so chips would be a list of twenty-two
+            and a Stepper would be eleven taps. A control is only an improvement
+            if it is fewer actions than typing. */}
+        <div className="flex flex-col gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+          <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
+
+          <ChipPick
+            label="Format"
+            value={f.format}
+            onChange={(v) => set({ format: v })}
+            options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
+          />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Stepper label="Games won" value={numOrUndef(f.gamesWon)} onChange={(v) => set({ gamesWon: v == null ? '' : String(v) })} max={30} placeholder="0" />
+            <Stepper label="Games lost" value={numOrUndef(f.gamesLost)} onChange={(v) => set({ gamesLost: v == null ? '' : String(v) })} max={30} placeholder="0" />
+          </div>
+
+          <ChipPick
+            label="On court for"
+            tone="teal"
+            value={numOrUndef(f.durationMin) ?? null}
+            onChange={(v) => set({ durationMin: String(v) })}
+            options={[30, 45, 60, 90, 120].map((m) => ({ value: m, label: m >= 60 ? `${m / 60}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m` }))}
+            after={
+              <Input
+                type="number"
+                value={f.durationMin}
+                onChange={(e) => set({ durationMin: e.target.value })}
+                placeholder="Other"
+                aria-label="Minutes on court"
+                className="w-20 py-1"
+              />
+            }
+          />
+
+          <ChipPick
+            label="Effort (RPE)"
+            tone="peach"
+            value={numOrUndef(f.rpe) ?? null}
+            onChange={(v) => set({ rpe: String(v) })}
+            options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: n, label: String(n) }))}
+            hint="1 easy · 10 everything you had"
+          />
+
+          <div className="grid gap-3 sm:grid-cols-2">
+          {f.format === 'doubles' && (
+            <ChipPick
+              label="Partner"
+              value={f.partner || null}
+              onChange={(v) => set({ partner: f.partner === v ? '' : v })}
+              options={recentPartners.map((n) => ({ value: n, label: n }))}
+              after={
+                <Input
+                  value={f.partner}
+                  onChange={(e) => set({ partner: e.target.value })}
+                  placeholder="Someone else"
+                  aria-label="Partner"
+                  className="w-36 py-1"
+                />
+              }
+            />
+          )}
+
+          <ChipPick
+            label="Location"
+            tone="teal"
+            value={f.location || null}
+            onChange={(v) => set({ location: f.location === v ? '' : v })}
+            options={recentVenues.map((n) => ({ value: n, label: n }))}
+            after={
+              <Input
+                value={f.location}
+                onChange={(e) => set({ location: e.target.value })}
+                placeholder="Somewhere else"
+                aria-label="Location"
+                className="w-36 py-1"
+              />
+            }
+          />
+          </div>
+
+          {/* The half you fill less than half the time.
+
+              `DisclosureRow` and not a `<details>`: it renders `aria-expanded`,
+              which is what `npm run a11y` clicks to open a fold before it
+              scans. A `<details>` would keep these four controls out of the
+              accessibility gate entirely — the COD-93 trap, arriving by a new
+              route. It is also the page's only disclosure, which is that
+              component's stated rule.
+
+              Tap-to-log costs vertical space — chips are taller than the grid
+              of number inputs they replaced, and this form grew the page by
+              0.4 screens. Folding the optional half is where that comes back,
+              without putting a keyboard back in the fast path. */}
+          <DisclosureRow label="Level, scoring, points & opponents">
+            <ChipPick
+              label="Level"
+              tone="teal"
+              value={f.level || null}
+              onChange={(v) => set({ level: v })}
+              options={['2.5', '3.0', '3.5', '4.0', '4.5', '5.0'].map((l) => ({ value: l, label: l }))}
+            />
+
+            <ChipPick
+              label="Scoring"
+              tone="teal"
+              value={f.scoring || null}
+              onChange={(v) => set({ scoring: v })}
+              options={[
+                { value: '11' as const, label: 'to 11' },
+                { value: '15' as const, label: 'to 15' },
+                { value: '21' as const, label: 'to 21' },
+                { value: 'rally21' as const, label: 'rally 21' },
+              ]}
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
+              <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
+            </div>
+            <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" aria-label="Opponents" />
+          </DisclosureRow>
         </div>
         <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
         <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
@@ -400,149 +557,6 @@ export function Pickleball() {
           </ul>
         )}
         {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-body text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
-      </Card>
-
-      {/* ── Tournament prep countdown (#345) · conditional top status,
-            surfaces only when events exist; collapsed. ── */}
-      {upcoming.length > 0 && (
-        <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
-          <ul className="mb-3 space-y-2">
-            {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 rounded-card border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
-                <span className="min-w-0">
-                  <span className="text-body font-medium text-fg-1">{e.name}</span>
-                  <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                </span>
-                <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
-                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
-                </Pill>
-              </li>
-            ))}
-          </ul>
-          <details className="rounded-card bg-ink-2 p-3">
-            <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
-            <ul className="mt-2 space-y-1">
-              {PREP_CHECKLIST.map((x) => (
-                <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
-              ))}
-            </ul>
-          </details>
-        </Card>
-      )}
-
-      {/* ── DUPR rating tracker ── */}
-      <Card
-        band
-        title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>}
-        subtitle="Log your DUPR over time, watch the trend climb"
-        collapsible
-        open={duprCardOpen}
-        onOpenChange={setDuprCardOpen}
-        right={
-          <Button variant="ghost" size="icon-sm" onClick={() => { setDuprOpen((o) => !o); setDuprCardOpen(true) }} aria-expanded={duprOpen} aria-label="Log a DUPR rating">
-            <Icon as={Plus} size="sm" />
-          </Button>
-        }
-      >
-        {duprOpen && (
-          <div className="mb-3 flex flex-wrap items-end gap-2 bg-ink-2 p-3">
-            <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
-            <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-            <Button variant="ghost" size="sm" onClick={saveDupr}>Save rating</Button>
-          </div>
-        )}
-        {duprStats.points.length === 0 ? (
-          <Empty>No DUPR ratings logged yet · use + in the header to start the trend.</Empty>
-        ) : (
-          <>
-            <div className="mb-3 grid grid-cols-3 gap-2">
-              <StatTile compact label="Latest" value={duprStats.latest ?? '—'} />
-              <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
-              <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
-            </div>
-            {duprStats.points.length >= 2 && (
-              <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                    <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                    <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                    <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
-                    <Tooltip contentStyle={tip()} />
-                    <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-            <ul className="mt-3 divide-y divide-surface0">
-              {[...duprStats.points].reverse().slice(0, 8).map((p) => (
-                <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-body">
-                  <span className="text-fg-1">{prettyDay(p.date)}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </Card>
-
-      {/* ── Leagues & tournaments · secondary event logging, grouped beside the
-            DUPR tracker and collapsed. ── */}
-      <Card
-        band
-        title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>}
-        subtitle="Log competitive events, separate from casual sessions"
-        collapsible
-        open={evCardOpen}
-        onOpenChange={setEvCardOpen}
-        right={
-          <Button variant="ghost" size="icon-sm" onClick={() => { setEvOpen((o) => !o); setEvCardOpen(true) }} aria-expanded={evOpen} aria-label="Log an event">
-            <Icon as={Plus} size="sm" />
-          </Button>
-        }
-      >
-        <div className="mb-4 grid grid-cols-3 gap-2">
-          <StatTile compact label="Events" value={events.length} />
-          <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} />
-          <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
-        </div>
-        {/* log an event */}
-        {evOpen && (
-        <div className="grid gap-2 rounded-card bg-ink-2 p-3 sm:grid-cols-2">
-          <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
-          <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
-          <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-          <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
-            {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
-          </select>
-          <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
-          <Input value={ev.placement} onChange={(e) => setE({ placement: e.target.value })} placeholder="Placement e.g. Gold / 2nd of 8" aria-label="Placement" />
-          <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
-          <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
-          <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-          <div className="flex justify-end sm:col-span-2"><Button variant="ghost" size="sm" onClick={logEvent}>Save event</Button></div>
-        </div>
-        )}
-        {/* event list */}
-        {events.length > 0 && (
-          <ul className="mt-3 divide-y divide-surface0">
-            {events.map((e) => (
-              <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-body">
-                <span className="min-w-0">
-                  <span className="text-fg-1">{e.name}</span>
-                  <span className="text-fg-2"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
-                  {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                  <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </Card>
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
@@ -581,45 +595,203 @@ export function Pickleball() {
 
       </CardGrid>
 
-      {/* ── SECONDARY analytics · grouped under collapsible sections so the
-            primary logging + history UI above stays uncluttered. Each group
-            OPENS by default (`Section` defaults `defaultOpen`): a fold that
-            starts shut hides its contents from `npm run a11y`, which walks the
-            rendered page, and a signal nobody scrolls to is a signal nobody
-            reads. The header caret is there for anyone who wants it shut. ── */}
-      <Section
-        title="Form & momentum"
-        icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
-        hint="Recent form · forecast · milestones · intensity"
+      {/* ── COMPETITION & RATING ──────────────────────────────────────────
+            Three cards that had been sitting in the top grid beside "Log a
+            session", which is the one thing you open this page to do. They
+            are not that: a DUPR rating moves a few times a year, a league is
+            logged after an event, and the countdown only exists when an event
+            exists. Grouping them here leaves the top of the page as the daily
+            loop — log, review, practise — and puts the occasional work one
+            heading below it rather than interleaved with it. ── */}
+      <CollapsibleSection
+        title="Competition & rating"
+        icon={<Icon as={Medal} size="md" className="text-yellow" />}
+        variant="quiet"
+        stickyKey="pickle-competition"
       >
+        <MasonryGrid>
+        {/* ── Tournament prep countdown (#345) · conditional top status,
+              surfaces only when events exist; collapsed. ── */}
+        {upcoming.length > 0 && (
+          <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
+            <ul className="mb-3 space-y-2">
+              {upcoming.map((e) => (
+                <li key={e.id} className="flex items-center justify-between gap-2 rounded-card border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
+                  <span className="min-w-0">
+                    <span className="text-body font-medium text-fg-1">{e.name}</span>
+                    <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  </span>
+                  <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
+                    {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
+                  </Pill>
+                </li>
+              ))}
+            </ul>
+            <details className="rounded-card bg-ink-2 p-3">
+              <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
+              <ul className="mt-2 space-y-1">
+                {PREP_CHECKLIST.map((x) => (
+                  <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
+                ))}
+              </ul>
+            </details>
+          </Card>
+        )}
+        {/* ── DUPR rating tracker ── */}
+        <Card
+          band
+          title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>}
+          subtitle="Log your DUPR over time, watch the trend climb"
+          collapsible
+          open={duprCardOpen}
+          onOpenChange={setDuprCardOpen}
+          right={
+            <Button variant="ghost" size="icon-sm" onClick={() => { setDuprOpen((o) => !o); setDuprCardOpen(true) }} aria-expanded={duprOpen} aria-label="Log a DUPR rating">
+              <Icon as={Plus} size="sm" />
+            </Button>
+          }
+        >
+          {duprOpen && (
+            <div className="mb-3 flex flex-wrap items-end gap-2 bg-ink-2 p-3">
+              <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
+              <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
+              <Button variant="ghost" size="sm" onClick={saveDupr}>Save rating</Button>
+            </div>
+          )}
+          {duprStats.points.length === 0 ? (
+            <Empty>No DUPR ratings logged yet · use + in the header to start the trend.</Empty>
+          ) : (
+            <>
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                <StatTile compact label="Latest" value={duprStats.latest ?? '—'} />
+                <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
+                <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
+              </div>
+              {duprStats.points.length >= 2 && (
+                <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                      <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+                      <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
+                      <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
+                      <Tooltip contentStyle={tip()} />
+                      <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              <ul className="mt-3 divide-y divide-surface0">
+                {[...duprStats.points].reverse().slice(0, 8).map((p) => (
+                  <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-body">
+                    <span className="text-fg-1">{prettyDay(p.date)}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
+                      <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </Card>
+        {/* ── Leagues & tournaments · secondary event logging, grouped beside the
+              DUPR tracker and collapsed. ── */}
+        <Card
+          band
+          title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>}
+          subtitle="Log competitive events, separate from casual sessions"
+          collapsible
+          open={evCardOpen}
+          onOpenChange={setEvCardOpen}
+          right={
+            <Button variant="ghost" size="icon-sm" onClick={() => { setEvOpen((o) => !o); setEvCardOpen(true) }} aria-expanded={evOpen} aria-label="Log an event">
+              <Icon as={Plus} size="sm" />
+            </Button>
+          }
+        >
+          <div className="mb-4 grid grid-cols-3 gap-2">
+            <StatTile compact label="Events" value={events.length} />
+            <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} />
+            <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
+          </div>
+          {/* log an event */}
+          {evOpen && (
+          <div className="grid gap-2 rounded-card bg-ink-2 p-3 sm:grid-cols-2">
+            <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
+            <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
+            <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
+            <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
+              {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
+            </select>
+            <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
+            <Input value={ev.placement} onChange={(e) => setE({ placement: e.target.value })} placeholder="Placement e.g. Gold / 2nd of 8" aria-label="Placement" />
+            <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
+            <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
+            <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
+            <div className="flex justify-end sm:col-span-2"><Button variant="ghost" size="sm" onClick={logEvent}>Save event</Button></div>
+          </div>
+          )}
+          {/* event list */}
+          {events.length > 0 && (
+            <ul className="mt-3 divide-y divide-surface0">
+              {events.map((e) => (
+                <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-body">
+                  <span className="min-w-0">
+                    <span className="text-fg-1">{e.name}</span>
+                    <span className="text-fg-2"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
+                    {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
+                    <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        </MasonryGrid>
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="Performance"
+        icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
+        variant="quiet"
+        stickyKey="pickle-performance"
+      >
+        {/* "Form & momentum" and "Deeper signals" were two headings over one
+            question — how am I playing. Nine cards in one masonry balance into
+            even columns; four and five in separate groups could not, and each
+            group cost a heading to say something the cards already said. */}
+        <MasonryGrid>
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
         {forecast.ready && <WinRateForecastCard forecast={forecast} />}
         <MilestonesCard milestones={milestones} />
         {load.sessions > 0 && <SessionIntensityCard load={load} />}
-      </Section>
-
-      <Section
-        title="Opponents, partners & venues"
-        icon={<Icon as={Sword} size="md" className="text-red" />}
-        hint="Chemistry · courts · rivalries · level matchups"
-      >
-        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
-        {venues.length > 0 && <VenuesCard venues={venues} />}
-        {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
-        {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-      </Section>
-
-      <Section
-        title="Deeper signals"
-        icon={<Icon as={ChartBar} size="md" className="text-blue" />}
-        hint="Weekday · points · time · scoring · consistency"
-      >
+        
         {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
         {points.sessions > 0 && <PointDifferentialCard points={points} />}
         {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
         {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
         {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
-      </Section>
+        
+        </MasonryGrid>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Opponents, partners & venues"
+        icon={<Icon as={Sword} size="md" className="text-red" />}
+        variant="quiet"
+        stickyKey="pickle-matchups"
+      >
+        <MasonryGrid>
+        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
+        {venues.length > 0 && <VenuesCard venues={venues} />}
+        {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
+        {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
+        </MasonryGrid>
+      </CollapsibleSection>
+
+      
 
       {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
             section so they don't strand on mobile. ──
@@ -631,27 +803,24 @@ export function Pickleball() {
             `components/pickleball/Section` is a local near-duplicate with the
             same name and no `stickyKey`, so unlike every other fold in the app
             the choice made here does not survive a reload. ── */}
-      <Section
+      <CollapsibleSection
         title="Charts"
         icon={<Icon as={ChartBar} size="md" className="text-teal" />}
-        hint="Trends · volume · heatmap · tap ⛶ to enlarge"
+        subtitle="Trends · volume · heatmap · tap ⛶ to enlarge"
+        variant="quiet"
+        stickyKey="pickle-charts"
         defaultOpen={false}
       >
         {/* Seven recharts. The fold already defers them for anyone who keeps
             it closed; LazyMount covers the sticky-open case, where they used
             to mount on page load two screens above where they render. */}
         <LazyMount minHeight={500}>{charts}</LazyMount>
-      </Section>
+      </CollapsibleSection>
 
       {/* "Play safe" and the format playbook lived here as two more cards on
           an already 4-screen page. Both are reference reading, not session
           logging — they are in Coaching's Manual now, beside the knee-rehab
           and shot guides they belong with. */}
-      <CardGrid>
-      {/* ── At a glance compact summary card at bottom of primary column (BUJO-XXX) ── */}
-      {atAGlance}
-
-      </CardGrid>
     </Page>
   )
 }

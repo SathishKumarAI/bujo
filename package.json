@@ -13,6 +13,7 @@
     "dev": "vite",
     "icons": "node scripts/build-icons.mjs",
     "manual": "node scripts/build-manual.mjs",
+    "space": "node scripts/space-audit.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "shots": "node scripts/capture-screenshots.mjs",
