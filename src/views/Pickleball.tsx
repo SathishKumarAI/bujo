@@ -11,7 +11,7 @@ import { Page } from '../components/shell/Page'
 import { CardGrid, MasonryGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { LazyMount } from '../components/LazyMount'
-import { CalendarHeatmap, DisclosureRow } from '../components/page'
+import { CalendarHeatmap, DisclosureRow, StatBar } from '../components/page'
 import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
@@ -360,30 +360,54 @@ export function Pickleball() {
    * to read the rest; it goes first or it does not earn its title.
    */
   const atAGlance = (
-    <Card band title="At a glance" subtitle="Your pickleball record in one compact box">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatTile compact label="Sessions" value={all.sessions} />
-        <StatTile compact label="Games" value={all.games} />
-        <StatTile compact label="Win %" value={`${all.winPct}%`} color="green" icon={<Icon as={Trophy} size="sm" />} />
-        <StatTile compact label="Day streak" value={streak} />
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-body">
-        <span className="text-fg-2">This week: <span className="text-fg-1">{week.games}</span> games · <span style={{ color: onRaised('green') }}>{week.winPct}%</span> won</span>
+    <>
+      {/* ONE BAR, NOT A CARD.
+
+          This was a titled card wrapping four `StatTile`s, a "this week"
+          sentence, a goal field and a progress bar — 259px on desktop and 308px
+          on a phone to say four numbers. `StatBar` is what the rest of the app
+          uses for exactly this (thirteen views; Pickleball was never one of
+          them) and it is capped at 64px with hairline dividers.
+
+          The four facts are the four that were here. The weekly goal stays,
+          because it is the one line that changes what you do today, but as a
+          single row under the bar rather than a card section of its own. */}
+      <StatBar
+        facts={[
+          { label: 'Sessions', value: all.sessions },
+          { label: 'Games', value: all.games },
+          { label: 'Win %', value: `${all.winPct}%` },
+          { label: 'Day streak', value: streak },
+        ]}
+      />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line pb-3 text-label text-fg-2">
+        <span>
+          This week <span className="num text-fg-1">{week.games}</span> games
+          {goal > 0 && <> of <span className="num text-fg-1">{goal}</span></>}
+          {' · '}
+          <span className="num" style={{ color: onRaised('green') }}>{week.winPct}%</span> won
+          {goal > 0 && week.games >= goal && ' ✓'}
+        </span>
+        {goal > 0 && (
+          <span aria-hidden className="h-1.5 w-24 overflow-hidden rounded-pill bg-ink-2">
+            <span
+              className="block h-full rounded-pill"
+              style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }}
+            />
+          </span>
+        )}
         <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">
           Weekly goal
-          <Input type="number" value={goal || ''} onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })} placeholder="—" className="w-16 py-1 text-right" />
-          <span className="text-label text-fg-2">games</span>
+          <Input
+            type="number"
+            value={goal || ''}
+            onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="—"
+            className="w-14 py-0.5 text-right"
+          />
         </label>
       </div>
-      {goal > 0 && (
-        <div className="mt-2">
-          <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
-            <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }} />
-          </div>
-          <p className="mt-1 text-label text-fg-2">{week.games} of {goal} games this week{week.games >= goal ? ' ✓' : ''}</p>
-        </div>
-      )}
-    </Card>
+    </>
   )
 
   return (
