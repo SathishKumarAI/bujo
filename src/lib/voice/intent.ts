@@ -109,14 +109,35 @@ function matchPickleball(text: string, date: string): ImportRecord[] | null {
   const won = lc.match(new RegExp(`\\bwon\\s+${NUM}`)) ?? lc.match(new RegExp(`${NUM}\\s+wins?\\b`))
   const lost = lc.match(new RegExp(`\\blost\\s+${NUM}`)) ?? lc.match(new RegExp(`${NUM}\\s+loss(?:es)?\\b`))
   const points = lc.match(new RegExp(`\\b(?:scored?|points?|score is|score was)\\D{0,6}${NUM}`))
-  const mins = lc.match(new RegExp(`${NUM}\\s*(?:min|mins|minutes)\\b`))
   const doubles = /\bdoubles?\b|\bpartner\b/.test(lc)
   const singles = /\bsingles?\b/.test(lc)
+  /** Is the sport itself in the sentence, or are we inferring it from "games"? */
+  const named = /\bpickle\s?ball\b/.test(lc)
 
   const gamesWon = num(won?.[1])
   const gamesLost = num(lost?.[1])
   const played = num(games?.[1])
-  if (gamesWon === undefined && gamesLost === undefined && played === undefined) return null
+
+  /**
+   * **A named sport is a session, with or without a score.**
+   *
+   * This used to read `if (gamesWon === undefined && gamesLost === undefined &&
+   * played === undefined) return null` — so "I played pickleball for 10 minutes
+   * today" parsed its duration on the line above and then threw the whole
+   * sentence away, landing it as a plain note at confidence 0.3. Five of eight
+   * spoken pickleball sentences did that, including every one that reports a
+   * session the way most people actually report a session: by how long they
+   * played.
+   *
+   * `domain/activities.ts` has said which fact matters all along —
+   * `pickleball: { required: ['durationMin'], best: 'duration' }`. The score is
+   * the optional half of the record, and this guard had it backwards.
+   *
+   * It stays for the *inferred* case. "I played two games" with no sport named
+   * is already a guess that this app's one game sport is the subject, and a
+   * guess carrying no number at all is not worth filing as a session.
+   */
+  if (!named && gamesWon === undefined && gamesLost === undefined && played === undefined) return null
 
   return [{
     kind: 'pickleball',
@@ -124,12 +145,34 @@ function matchPickleball(text: string, date: string): ImportRecord[] | null {
     format: singles ? 'singles' : doubles ? 'doubles' : undefined,
     // "played two games" with no win/loss split is two games played, not two
     // won — claiming a win the user did not say is the one thing a score
-    // logger must never do.
+    // logger must never do. Absent entirely when no score was spoken: `plan.ts`
+    // writes 0–0, which reads as "played, kept no score", and `winRateSeries`
+    // skips a scoreless session rather than plotting it as a defeat.
     gamesWon: gamesWon ?? (played !== undefined && gamesLost !== undefined ? Math.max(0, played - gamesLost) : undefined),
     gamesLost: gamesLost ?? (played !== undefined && gamesWon !== undefined ? Math.max(0, played - gamesWon) : undefined),
     pointsFor: num(points?.[1]),
-    durationMin: num(mins?.[1]),
+    durationMin: readMinutes(lc),
   }]
+}
+
+/**
+ * "45 minutes", "an hour", "1.5 hours", "an hour and a half", "90 mins".
+ *
+ * Hours were not parsed at all — the old matcher looked only for
+ * `min|mins|minutes` — so "played pickleball for an hour" reached the record
+ * with `durationMin: undefined`. For a sport whose one *required* field is the
+ * duration, that is the same defect as dropping the sentence, one step further
+ * in. People say hours out loud at least as often as minutes.
+ */
+export function readMinutes(lc: string): number | undefined {
+  const half = /\band\s+a\s+half\b/.test(lc)
+  if (/\bhalf\s+an\s+hour\b/.test(lc)) return 30
+  if (/\b(?:an?|one)\s+hour\b/.test(lc)) return half ? 90 : 60
+  const hrs = lc.match(new RegExp(`${NUM}\\s*(?:h|hr|hrs|hour|hours)\\b`))
+  const n = num(hrs?.[1])
+  if (n !== undefined) return Math.round(n * 60 + (half ? 30 : 0))
+  const mins = lc.match(new RegExp(`${NUM}\\s*(?:min|mins|minute|minutes)\\b`))
+  return num(mins?.[1])
 }
 
 /** The bare "N games" count, when the sentence gives one. */

@@ -164,3 +164,92 @@ describe('understand · what it hands to the pipeline', () => {
     expect(rejected[0].reason).toMatch(/mood 77 is outside 0–10/)
   })
 })
+
+/**
+ * A spoken session that reports a DURATION and no score.
+ *
+ * The reported bug: "I played pickleball for 10 minutes today" was landing as
+ * a plain note at confidence 0.3 instead of a pickleball session. The matcher
+ * parsed the 10 minutes and then returned null because no game count was
+ * spoken, so the fact it had just extracted was thrown away with the sentence.
+ *
+ * Each case here is named for what the user said, because that is what they
+ * will report when it breaks again.
+ */
+describe('pickleball by duration, no score', () => {
+  const ctx = { habits: [] } as never
+  const TODAY = '2026-09-21'
+
+  it('"I played pickleball for 10 minutes today" is a session, not a note', () => {
+    const r = understand('I played pickleball for 10 minutes today', ctx, TODAY)
+    expect(r.records).toHaveLength(1)
+    expect(r.records[0].kind).toBe('pickleball')
+    expect(r.records[0]).toMatchObject({ date: TODAY, durationMin: 10 })
+  })
+
+  it('does not invent a win or a loss it was never told about', () => {
+    // The one thing a score logger must never do. `plan.ts` writes 0–0, which
+    // reads as "played, kept no score" — but the RECORD must stay silent.
+    const r = understand('I played pickleball for 10 minutes today', ctx, TODAY)
+    const rec = r.records[0] as { gamesWon?: number; gamesLost?: number }
+    expect(rec.gamesWon).toBeUndefined()
+    expect(rec.gamesLost).toBeUndefined()
+  })
+
+  it('"I played pickleball today" with no numbers at all is still a session', () => {
+    const r = understand('I played pickleball today', ctx, TODAY)
+    expect(r.records[0].kind).toBe('pickleball')
+  })
+
+  it('reads hours, not just minutes', () => {
+    // "for an hour" parsed to nothing before — for a sport whose one required
+    // field is the duration, that is the same bug one step further in.
+    for (const [said, min] of [
+      ['played pickleball for an hour', 60],
+      ['played pickleball for half an hour', 30],
+      ['played pickleball for an hour and a half', 90],
+      ['played pickleball for 2 hours', 120],
+      ['played pickleball for 1.5 hours', 90],
+      ['played pickleball for 45 minutes', 45],
+      ['pickleball 90 mins', 90],
+    ] as [string, number][]) {
+      const r = understand(said, ctx, TODAY)
+      expect(r.records[0], said).toMatchObject({ kind: 'pickleball', durationMin: min })
+    }
+  })
+
+  it('still asks for the split when a game COUNT was spoken', () => {
+    // Unchanged behaviour, and the reason the guard was not simply deleted:
+    // "two games" with no split is the case where asking is the honest answer.
+    const r = understand('I played two games of pickleball', ctx, TODAY)
+    expect(r.ask).toMatchObject({ field: 'gamesWon', of: 2 })
+  })
+
+  it('still refuses to guess the sport from "games" alone with no numbers', () => {
+    // "played" + no sport + no count stays a note. The guard was narrowed to
+    // the inferred case, not removed.
+    const r = understand('I played with my friends', ctx, TODAY)
+    expect(r.records[0].kind).toBe('entry')
+  })
+
+  it('keeps the score when one IS spoken alongside a duration', () => {
+    const r = understand('played pickleball 30 minutes won 2 lost 1', ctx, TODAY)
+    expect(r.records[0]).toMatchObject({ kind: 'pickleball', gamesWon: 2, gamesLost: 1, durationMin: 30 })
+  })
+
+  it('survives the validator and lands in data.pickleball with its minutes', async () => {
+    // The parser being right is not the thing the user reported. The thing they
+    // reported is where it ends up, so assert the whole path: understand →
+    // validate → plan → journal.
+    const i = understand('I played pickleball for 10 minutes today', ctx, TODAY)
+    const { records, rejected } = validateRecords(i.records as unknown[])
+    expect(rejected).toHaveLength(0)
+    const { next } = await plan(ofArray(records), emptyJournal(), { source: 'claude' })
+    expect(next.pickleball).toHaveLength(1)
+    expect(next.pickleball![0]).toMatchObject({ date: TODAY, durationMin: 10, gamesWon: 0, gamesLost: 0 })
+    // And it does not land anywhere else — a session filed twice, once as a
+    // note, is the other way this could look "fixed".
+    expect(next.entries).toHaveLength(0)
+    expect(next.workouts).toHaveLength(0)
+  })
+})
