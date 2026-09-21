@@ -50,6 +50,10 @@ describe('the five sections', () => {
   it('gives every non-preference view a section', () => {
     const exempt = new Set<ViewId>([
       'settings', 'help', 'account', 'kitchen-sink',
+      // A redirect, not a page: the habit grid is Today's `habits` surface
+      // now, and `views/Trackers.tsx` only forwards there. Fifteen places
+      // still link to the id, which is why it exists at all — see the file.
+      'trackers',
       // Reached from a companion link inside Fitness. A genuine activity: the
       // page is a bodyweight exercise library, and the session it produces is
       // a `Workout` the Fitness form already logs.

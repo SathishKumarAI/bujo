@@ -92,8 +92,16 @@ const SECTION_ALIASES: Record<string, string> = {
 }
 
 /** The three surfaces `/day` splits into. Anything else falls back to the clock. */
-export type Surface = 'morning' | 'day' | 'evening'
-const SURFACES: Surface[] = ['morning', 'day', 'evening']
+/**
+ * `habits` is the fourth surface and the only one the clock never picks.
+ *
+ * The other three are times of day; this one is the whole habit grid, moved
+ * out of `Body → Tracking`. It is a destination you choose, so
+ * `surfaceForHour` must never return it — landing on a month grid because it
+ * happens to be 3pm would be the page opening on the wrong thing.
+ */
+export type Surface = 'morning' | 'day' | 'evening' | 'habits'
+const SURFACES: Surface[] = ['morning', 'day', 'evening', 'habits']
 
 export function readDeepLink(search = typeof window === 'undefined' ? '' : window.location.search) {
   const params = new URLSearchParams(search)

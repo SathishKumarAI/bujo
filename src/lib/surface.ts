@@ -22,6 +22,7 @@ export const SURFACE_LABEL: Record<Surface, string> = {
   morning: 'Morning',
   day: 'Day',
   evening: 'Evening',
+  habits: 'Habits',
 }
 
 /**
@@ -52,12 +53,14 @@ export const SURFACE_LABEL: Record<Surface, string> = {
  * Pure, so the rule is a test rather than something you confirm by tapping.
  */
 export function surfaceUntouched(data: JournalData, date: string): Record<Surface, boolean> {
-  if (isFutureDay(date)) return { morning: false, day: false, evening: false }
+  // `habits` is never marked: it is not a time of day with one ask, it is the
+  // month grid, and it has no single record that means "you have been here".
+  if (isFutureDay(date)) return { morning: false, day: false, evening: false, habits: false }
   const metric = data.metrics.find((m) => m.date === date)
   const rated = [metric?.mood, metric?.stress, metric?.energy, metric?.sleep].some((v) => v != null)
   const logged = data.entries.some((e) => e.date === date && !e.collection)
   const written =
     (data.gratitude.find((g) => g.date === date)?.text ?? '').trim() !== '' ||
     (data.memories.find((m) => m.date === date)?.text ?? '').trim() !== ''
-  return { morning: !rated, day: !logged, evening: !written }
+  return { morning: !rated, day: !logged, evening: !written, habits: false }
 }

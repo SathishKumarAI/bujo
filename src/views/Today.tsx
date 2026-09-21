@@ -15,6 +15,7 @@ import { isScheduledOn } from '../lib/schedule'
 import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
+import { HabitsSurface } from '../components/today/HabitsSurface'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -102,6 +103,31 @@ function surfaceColumns(date: string, nav: ReturnType<typeof useNav>) {
 function TodayFocused() {
   const { day: date, surface } = useCursor()
   const nav = useNav()
+
+  /**
+   * The habits surface is its own page shape, not a column pair.
+   *
+   * It is the whole of what was `Body → Tracking`, and its centrepiece is a
+   * 31-column month grid needing ~910px. Rendered into this view's 62/38 split
+   * it would gain a horizontal scrollbar that hides the last week of the month
+   * — the surface's entire subject. So it gets `PageLayout stacked`, which is
+   * exactly what the Trackers page used before the move.
+   *
+   * The hook runs unconditionally, above the branch: it owns state, and
+   * calling it only on one surface would break the rules of hooks the moment
+   * you switched tabs.
+   */
+  if (surface === 'habits') {
+    return (
+      <>
+        <Page width="wide" className="gap-0 sm:gap-0">
+          <DayHeader date={date} />
+        </Page>
+        <HabitsSurface />
+      </>
+    )
+  }
+
   const { main, rail } = surfaceColumns(date, nav)[surface]
 
   return (

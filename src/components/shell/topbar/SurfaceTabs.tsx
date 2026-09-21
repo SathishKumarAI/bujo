@@ -5,7 +5,7 @@ import { useCursor } from '../cursor'
 import { SURFACE_LABEL, surfaceUntouched } from '../../../lib/surface'
 import type { Surface } from '../../../lib/deepLink'
 
-const SURFACES: Surface[] = ['morning', 'day', 'evening']
+const SURFACES: Surface[] = ['morning', 'day', 'evening', 'habits']
 
 /**
  * THE SURFACE SWITCHER · navigation that also reports.

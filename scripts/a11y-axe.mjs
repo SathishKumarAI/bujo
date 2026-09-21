@@ -74,7 +74,6 @@ const VIEWS = [
   ['Body', 'Challenges'],
   ['Body', 'Recovery'],
   ['Body', 'Coaching'],
-  ['Body', 'Tracking'], // was ['Insights', 'Trackers'] until it moved sections
   ['Mind', 'Mindset'],
   ['Mind', 'Reading'],
   ['Mind', 'Collections'],
@@ -95,7 +94,12 @@ const VIEWS = [
  * rendered. Scanning "Today" alone would score whichever surface the clock
  * happened to pick and call the other two clean.
  */
-const SURFACES = ['Morning', 'Day', 'Evening']
+// 'Habits' is the whole of what was `Body → Tracking` — the month grid, the
+// five layouts and the analytics fold. It moved onto Today as a fourth
+// surface, so it is scanned here rather than as a tab that no longer exists.
+// Dropping it from VIEWS without adding it here would have been the exact
+// move this file's own error message warns against.
+const SURFACES = ['Morning', 'Day', 'Evening', 'Habits']
 
 /**
  * COMPANIONS · views with no tab of their own.
