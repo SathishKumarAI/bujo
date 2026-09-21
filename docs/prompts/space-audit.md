@@ -11,10 +11,12 @@ You are working in the `bujo` repo. Audit and fix the layout of `?view=<VIEW>`.
 
 <context>
 - Run the built app, not the dev server: `npm run build && npm run preview` (4173).
-- `npm run space -- <VIEW>` prints, per viewport: screens of scroll, card count,
-  how many columns the layout **actually uses**, and any card whose box is
-  mostly air. It opens every fold first, because a collapsed page is not a
-  short page.
+- `npm run space -- <VIEW>` prints, per viewport: screens of scroll **as
+  shipped and with every fold opened**, card count, how many columns the layout
+  **actually uses**, and any card whose box is mostly air. Both scroll numbers,
+  because either alone is gameable — measuring only the opened page punishes a
+  disclosure for existing, and measuring only the shipped page rewards hiding
+  content.
 - The layout primitives are in `src/components/shell/CardGrid.tsx`:
   `CardGrid` (viewport breakpoints, supports `SPAN_2`), `MasonryGrid`
   (container query, for peer cards in no particular order). `CollapsibleSection`
@@ -47,6 +49,10 @@ You are working in the `bujo` repo. Audit and fix the layout of `?view=<VIEW>`.
 <must>
 - Report the viewport that did **not** improve. A phone lays out one column by
   design, so packing work is usually a desktop win and neutral on phone. Say so.
+- If you convert typed fields to `ChipPick`/`Stepper`, expect the form to get
+  **taller** and say by how much. Buy it back with `SPAN_2` on the primary form
+  and `DisclosureRow` (never `<details>` — it has no `aria-expanded`, so the
+  a11y gate cannot open it) around the fields filled less than half the time.
 - Keep every card. Shortening a page by deleting content is a product decision,
   not a layout one — propose it, do not do it.
 - Preserve the rendered inventory across any move: headings, text lines,
