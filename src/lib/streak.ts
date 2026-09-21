@@ -2,7 +2,7 @@ import type { Habit, JournalData, Relapse, AddictionStreak } from './types'
 import { addDays, dayDiff, fromISODay, todayISO } from './date'
 import { STREAK_MILESTONES as MILESTONE_DAYS } from './milestones'
 import { habitDoneOn, habitStreak } from './stats'
-import { isScheduledOn } from './habitStats'
+import { isScheduledOn } from './schedule'
 
 /**
  * Streak (abstinence) analytics — pure + testable. Goes beyond "days since the

@@ -2,7 +2,6 @@ import { Flame, Note, Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { fromISODay } from '../../lib/date'
 import { Empty, Pill } from '../ui'
 import { Button } from '../ui/button'
 import { currentSlot, orderedSlots, slotMeta } from '../../lib/timeofday'
@@ -10,6 +9,7 @@ import { slotGlyph } from '../glyphs'
 import { cat, onRaised } from '../../lib/colors'
 import { cleanStreak, habitDoneOn, habitStreak, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
+import { isScheduledOn } from '../../lib/schedule'
 
 /**
  * ROUTINE TIMELINE · one of the tracker's five layouts: today's habits grouped
@@ -36,7 +36,6 @@ export function RoutineTimeline({
   const [noting, setNoting] = useState<string | null>(null)
   const hour = new Date().getHours()
   const now = currentSlot(hour)
-  const dow = fromISODay(today).getDay()
 
   const sections = orderedSlots(hour)
     .map((slot) => ({ slot, list: habits.filter((h) => (h.timeOfDay ?? 'anytime') === slot) }))
@@ -50,7 +49,7 @@ export function RoutineTimeline({
     <div className="space-y-4">
       {sections.map(({ slot, list }) => {
         const meta = slotMeta(slot)
-        const scheduled = list.filter((h) => !h.activeDays?.length || h.activeDays.includes(dow))
+        const scheduled = list.filter((h) => isScheduledOn(h, today))
         const done = scheduled.filter((h) => habitDoneOn(data, h, today)).length
         return (
           <div key={slot}>
@@ -67,7 +66,7 @@ export function RoutineTimeline({
                 const val = habitValueOn(data, h, today)
                 const on = habitDoneOn(data, h, today)
                 const next = nextHabitValue(type, target, val)
-                const dueToday = !h.activeDays?.length || h.activeDays.includes(dow)
+                const dueToday = isScheduledOn(h, today)
                 const streak = h.avoid ? cleanStreak(data, h.id, today) : habitStreak(data, h.id, today)
                 const note = data.habitNotes?.[today]?.[h.id] ?? ''
                 const open = noting === h.id

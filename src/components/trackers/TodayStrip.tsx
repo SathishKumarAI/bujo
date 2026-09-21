@@ -1,8 +1,8 @@
 import { Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { fromISODay } from '../../lib/date'
 import { cat, habitChipStyle, readableOn } from '../../lib/colors'
 import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
+import { isScheduledOn } from '../../lib/schedule'
 import type { Habit, JournalData } from '../../lib/types'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
 import { HABIT_KEY } from '../../lib/recordKeys'
@@ -33,7 +33,10 @@ export function TodayStrip({
   // both read the one set.
   const justCaptured = useJustCaptured()
 
-  const todays = habits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
+  // `isScheduledOn`, not a re-typed weekday test: the inline copy that used to
+  // be here dropped the `startedOn` half, so a habit scheduled to begin next
+  // week was already offered as a chip to tick. COD-199.
+  const todays = habits.filter((h) => isScheduledOn(h, today))
   if (todays.length === 0) return null
 
   // No wrapper box and no "Today" heading: this is zone 2's whole content now,

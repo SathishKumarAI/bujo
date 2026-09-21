@@ -19,7 +19,8 @@ import { Clock, FadersHorizontal, GridFour, PersonSimpleRun, Plus, RadioButton, 
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { addDays, fromISODay, monthDays, prettyMonth, todayISO, weekColumn } from '../lib/date'
+import { habitsDueOn } from '../lib/schedule'
+import { addDays, monthDays, prettyMonth, todayISO, weekColumn } from '../lib/date'
 import { Card, Empty, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { useCursor } from '../components/shell/Page'
@@ -157,8 +158,18 @@ export function Trackers() {
 
   const sum = trackerSummary(data, (id, t) => habitStreak(data, id, t), today)
   const hasHabits = visibleHabits.length > 0
-  // Same filter TodayStrip applies, so the header count and the chips agree.
-  const todaysHabits = visibleHabits.filter((h) => !h.activeDays?.length || h.activeDays.includes(fromISODay(today).getDay()))
+  // The comment here used to say "same filter TodayStrip applies, so the header
+  // count and the chips agree". That was true of each other and false of
+  // `trackerSummary` one line above, which is rendered as "today done N%" in
+  // the stat bar directly over this card — it uses `isScheduledOn` and build
+  // habits, this used a weekday-only test over every habit. Two numbers about
+  // today, 60px apart, from two definitions.
+  //
+  // Both now come from `habitsDueOn`. `buildOnly` is the second half of the
+  // correction and the sharper one: `habitDoneOn` is true for an *avoid* habit
+  // when you LOGGED it, which means you slipped — so slipping on "no doomscroll"
+  // used to push the "done" count UP. A ratio that rewards failure.
+  const todaysHabits = habitsDueOn(data, today, { includeArchived: s.trackerShowArchived, buildOnly: true })
   const todayDone = todaysHabits.filter((h) => habitDoneOn(data, h, today)).length
 
   return (

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { bestWeekday, completionRate30, consistencyScore, habitCellFill, isScheduledOn, perfectDayStats, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from './habitStats'
+import { bestWeekday, completionRate30, consistencyScore, habitCellFill, perfectDayStats, perfectWeeks, weeklyHeatRow, monthlyHabitCompletion, valueSparkline, habitGrade, trackerSummary } from './habitStats'
+import { isScheduledOn } from './schedule'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
 
