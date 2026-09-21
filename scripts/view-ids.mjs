@@ -18,7 +18,7 @@ export const VIEW_IDS = [
   'today', 'plan', 'trackers', 'fitness', 'nutrition', 'gym', 'program',
   'pullups', 'pickleball', 'coaching', 'homeworkout', 'challenges', 'focus',
   'cycle', 'nofap', 'monthly', 'collections', 'reading', 'goals', 'mindset',
-  'insights', 'stats', 'account', 'help', 'settings',
+  'insights', 'account', 'help', 'settings',
 ]
 
 /** Not smoke-tested, and why. Keep the reason with the exemption. */

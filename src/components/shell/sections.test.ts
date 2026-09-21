@@ -27,7 +27,6 @@ describe('the five sections', () => {
     // This is what keeps Body lit on ?view=nutrition.
     expect(sectionOf('nutrition')).toBe('body')
     expect(sectionOf('gym')).toBe('body')
-    expect(sectionOf('stats')).toBe('insights')
   })
 
   it('leaves the app-preference views out of the sections', () => {

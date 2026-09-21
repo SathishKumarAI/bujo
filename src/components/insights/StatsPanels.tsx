@@ -7,33 +7,55 @@ import {
 } from 'recharts'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useJournal } from '../store'
-import { PageLayout, StatBar } from '../components/page'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
-import { Card, Empty, Segmented } from '../components/ui'
-import { Button } from '../components/ui/button'
-import { QuietSection as Section } from '../components/CollapsibleSection'
-import { Heatmap } from '../components/Heatmap'
-import { AchievementsCard } from '../components/AchievementsCard'
-import { CheckinTimesCard } from '../components/CheckinTimesCard'
-import { MoodAnalytics } from '../components/stats/MoodAnalytics'
-import { HabitAnalytics } from '../components/stats/HabitAnalytics'
-import { LifetimeCards } from '../components/stats/LifetimeCards'
-import { PaceCard } from '../components/stats/PaceCard'
-import { cat, onAccent, onRaised, rechartsTooltip } from '../lib/colors'
+import { useJournal } from '../../store'
+import { CardGrid, SPAN_2 } from '../shell/CardGrid'
+import { Card, Empty, Segmented } from '../ui'
+import { Button } from '../ui/button'
+import { QuietSection as Section } from '../CollapsibleSection'
+import { Heatmap } from '../Heatmap'
+import { AchievementsCard } from '../AchievementsCard'
+import { CheckinTimesCard } from '../CheckinTimesCard'
+import { MoodAnalytics } from '../stats/MoodAnalytics'
+import { HabitAnalytics } from '../stats/HabitAnalytics'
+import { LifetimeCards } from '../stats/LifetimeCards'
+import { PaceCard } from '../stats/PaceCard'
+import { cat, onAccent, onRaised, rechartsTooltip } from '../../lib/colors'
 import {
   buildHeatmap, moodByDay, sleepMoodScatter, taskBreakdown,
   weeklyRadar, weeklyWorkoutMinutes,
-} from '../lib/viz'
-import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../lib/date'
-import { workoutSplitCounts } from '../lib/stats'
-import { pace } from '../lib/pace'
-import { sleepDebt, focusSleepCorrelation } from '../lib/correlations'
-import { useFocusTrap } from '../lib/useFocusTrap'
+} from '../../lib/viz'
+import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../../lib/date'
+import { workoutSplitCounts } from '../../lib/stats'
+import { sleepDebt, focusSleepCorrelation } from '../../lib/correlations'
+import { useFocusTrap } from '../../lib/useFocusTrap'
 
 const tip = rechartsTooltip
 
-export function Stats() {
+/**
+ * STATS PANELS · every chart the app has, as content for Insights.
+ *
+ * This was `views/Stats.tsx`, the second tab of the Insights section. It is
+ * moved wholesale and **the card markup is not touched** — the file was
+ * `git mv`d and only its wrapper, its imports and the domain gates below
+ * changed, so a rendered-output diff can prove the move lost nothing. That
+ * check is not optional here: this repo has already lost eleven workout
+ * formats to a pass that retyped a data module instead of moving it, with
+ * `tsc`, eslint, vitest and the build all green.
+ *
+ * What DID change, deliberately:
+ *
+ * - No `PageLayout`. Insights owns the page and the three zones; this returns
+ *   zone-3 content and nothing else. `statsFacts` hands back the stat-bar
+ *   figures it used to render itself.
+ * - Every top-level block is gated on `show(id)`. The filter row on Insights
+ *   is what decides whether a domain is on screen, which is the job the seven
+ *   `defaultOpen={false}` folds were doing badly.
+ * - Those folds now open by default. A fold inside a filtered page is a second
+ *   answer to "is this on screen", and the closed one was the reason the app's
+ *   charts were effectively unreachable — `npm run a11y` could not even scan
+ *   inside them until `openFolds()` was written.
+ */
+export function StatsPanels({ show }: { show: (cardId: string) => boolean }) {
   const { data } = useJournal()
   const [ym, setYm] = useState(ymOf(todayISO()))
   const [heatWeeks, setHeatWeeks] = useState(26)
@@ -53,7 +75,6 @@ export function Stats() {
   const hasSleep = debt.some((d) => d.sleep != null)
   const peakDebt = debt.reduce((m, d) => Math.max(m, d.debt), 0)
   const focusSleep = focusSleepCorrelation(data)
-  const left = pace(data)
 
   function shift(d: number) {
     const [y, m] = ym.split('-').map(Number)
@@ -150,33 +171,9 @@ export function Stats() {
     )
   }
 
-  // Zone 1 reads the figures the radar already computes rather than averaging
-  // the same seven days a second time. Sleep is in hours; the other two are the
-  // radar's 0–10 scale, so they are labelled differently on purpose.
-  const radarAt = (axis: string) => radar.find((r) => r.axis === axis)?.value
-
   return (
-    <PageLayout
-      tier={1180}
-      /* Stacked. Every panel here is a chart and the activity heatmap spans the
-         full width by design; a 38% column would have nothing to hold. */
-      stacked
-      /* No zone 2. Stats is the one page in the cluster with nothing to do on
-         it — it is entirely a record being read back, and the contract says a
-         zone you have no content for is omitted, not filled. */
-      zone1={
-        <StatBar
-          facts={[
-            { label: 'mood · 7d', value: `${radarAt('Mood') ?? 0}/10` },
-            { label: 'sleep · 7d', value: `${radarAt('Sleep') ?? 0}h` },
-            { label: 'habits · 7d', value: `${radarAt('Habits') ?? 0}/10` },
-            /* The one fact on this page that is not a record: everything else
-               here is over, and this is what is left of the month. */
-            { label: 'left · this month', value: `${left.month.left}d` },
-          ]}
-        />
-      }
-      zone3={<>
+    <>
+
       {/* Three across. Eight blocks — the heatmap, achievements and six
           collapsed analytics groups — used to be one tall column. */}
       <CardGrid>
@@ -190,24 +187,27 @@ export function Stats() {
           column would be ~9px. Spanning two columns at 1yr puts it back to
           18.8px — the same density as 6mo, which is the point of the span.
           Same conditional, live reason. */}
+      {show('activity') && (
       <Card band className={heatWeeks === 52 ? SPAN_2 : undefined} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
         <Heatmap cols={heat} />
       </Card>
+      )}
 
       {/* Days still on the board — month, year, week — and the pace the
           journal has been kept at. Open, and above the lifetime totals: it is
           the only block here about time that has not been spent yet. */}
-      <PaceCard />
+      {show('pace') && <PaceCard />}
 
       {/* Lifetime totals, open: the year-in-review, the month index and personal
           records that came over from Insights (BUJO-281). Open rather than a
           seventh fold, and they sit here rather than below because they are
           analytics — they read the journal back at you. Achievements is not;
           it moved to the foot of the page. */}
-      <LifetimeCards />
+      {show('lifetime') && <LifetimeCards />}
 
       {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
-      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics" defaultOpen={false} stickyKey="stats.week">
+      {show('weekradar') && (
+      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics" stickyKey="stats.week">
         <Card band title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
           <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
             <ResponsiveContainer width="100%" height="100%">
@@ -221,14 +221,17 @@ export function Stats() {
           </div>
         </Card>
       </Section>
+      )}
 
-      {/* 3) Sleep & mood correlations — collapsed.
+      {/* 3) Sleep & mood correlations.
              `SPAN_2` on this and the three folds below: each lays its content
              out in columns, and a fold in a grid cell is 580px wide, which is
              under every one of those breakpoints. They stacked instead —
              measured at 1,240px of page painting 8% of its width. */}
-      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus" defaultOpen={false} stickyKey="stats.sleepmood">
+      {(show('sleepmood') || show('sleepdebt') || show('focussleep')) && (
+      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus" stickyKey="stats.sleepmood">
       <div className="grid items-start gap-5 lg:grid-cols-2">
+        {show('sleepmood') && (
         <Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
           {scatter.length < 3 ? (
             <Empty>Log a few more days to see the pattern.</Empty>
@@ -247,7 +250,9 @@ export function Stats() {
             </div>
           )}
         </Card>
+        )}
 
+        {show('sleepdebt') && (
         <Card band title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
           {!hasSleep ? (
             <Empty>Log a few nights of sleep to track your running debt.</Empty>
@@ -265,8 +270,9 @@ export function Stats() {
             </div>
           )}
         </Card>
+        )}
 
-        {focusSleep.r != null && (
+        {show('focussleep') && focusSleep.r != null && (
           <Card band title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
             <p className="text-display font-medium tabular-nums" style={{ color: onRaised(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
               {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
@@ -280,13 +286,15 @@ export function Stats() {
         )}
       </div>
       </Section>
+      )}
 
       {/* 4) Mood views — merged calendar / year-in-pixels toggle, plus the three
              mood read-backs that came over from Insights (BUJO-281). They went
              *into* this fold rather than beside it: Stats already had six, and
              a drawer relocated intact is not a drawer removed. */}
-      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" defaultOpen={false} stickyKey="stats.moodviews" className={SPAN_2}>
-      {moodView === 'calendar' ? (
+      {(show('moodcal') || show('moodanalytics')) && (
+      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" stickyKey="stats.moodviews" className={SPAN_2}>
+      {show('moodcal') && (moodView === 'calendar' ? (
       <Card band
         enlargeable={false}
         title="Mood calendar"
@@ -337,13 +345,16 @@ export function Stats() {
         }>
         {yearPixels(false)}
       </Card>
-      )}
-      <MoodAnalytics />
+      ))}
+      {show('moodanalytics') && <MoodAnalytics />}
       </Section>
+      )}
 
       {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
-      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging" defaultOpen={false} stickyKey="stats.fitness">
+      {(show('workoutmin') || show('workoutsplit')) && (
+      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging" stickyKey="stats.fitness">
       <div className="grid items-start gap-5 lg:grid-cols-2">
+        {show('workoutmin') && (
         <Card band title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
           {workout.every((w) => !w.minutes) ? (
             <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
@@ -361,7 +372,9 @@ export function Stats() {
             </div>
           )}
         </Card>
+        )}
 
+        {show('workoutsplit') && (
         <Card band title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
           {splits.length === 0 ? (
             <Empty>Log a workout to see which splits you actually train.</Empty>
@@ -381,11 +394,14 @@ export function Stats() {
             </div>
           )}
         </Card>
+        )}
       </div>
       </Section>
+      )}
 
-      {/* 6) Tasks — collapsed. */}
-      <Section title="Tasks" subtitle="where your tasks land" defaultOpen={false} stickyKey="stats.tasks">
+      {/* 6) Tasks. */}
+      {show('tasks') && (
+      <Section title="Tasks" subtitle="where your tasks land" stickyKey="stats.tasks">
         <Card band title="Task breakdown" subtitle="Where your tasks land" enlargeable>
           {tasks.length === 0 ? (
             <Empty>Add a task on Today to see how your week breaks down.</Empty>
@@ -406,14 +422,17 @@ export function Stats() {
           )}
         </Card>
       </Section>
+      )}
 
       {/* 7) Habits — check-in times, plus the three habit read-backs from
              Insights (BUJO-281). Same rule as Mood views: into the existing
              fold, not beside it. */}
-      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" defaultOpen={false} stickyKey="stats.habits" className={SPAN_2}>
-        <CheckinTimesCard />
-        <HabitAnalytics />
+      {(show('checkin') || show('habitanalytics')) && (
+      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" stickyKey="stats.habits" className={SPAN_2}>
+        {show('checkin') && <CheckinTimesCard />}
+        {show('habitanalytics') && <HabitAnalytics />}
       </Section>
+      )}
 
       {/* 8) Achievements, last. Fourteen badges used to be the second block on
              the page, ~1,050px of reward layer standing between the heatmap and
@@ -424,7 +443,7 @@ export function Stats() {
              in a two-column grid — left alone it filled the cell beside the
              Habits fold at y=2937 of 4114. Spanning the row puts it under
              everything, which is what "last" was supposed to mean. */}
-      <AchievementsCard className={SPAN_2} />
+      {show('achievements') && <AchievementsCard className={SPAN_2} />}
 
       {/* Click-to-enlarge modal · portalled to <body> so it centres on the
           viewport, not inside transformed ancestors (book mode / zoom). */}
@@ -441,7 +460,6 @@ export function Stats() {
         document.body,
       )}
       </CardGrid>
-      </>}
-    />
+    </>
   )
 }

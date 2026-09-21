@@ -30,7 +30,6 @@ import type { ViewId } from './components/shell/viewChrome'
 // first navigation behind the <Suspense> fallback below.
 const Trackers = lazy(() => import('./views/Trackers').then((m) => ({ default: m.Trackers })))
 const Cycle = lazy(() => import('./views/Cycle').then((m) => ({ default: m.Cycle })))
-const Stats = lazy(() => import('./views/Stats').then((m) => ({ default: m.Stats })))
 const Pullups = lazy(() => import('./views/Pullups').then((m) => ({ default: m.Pullups })))
 const Pickleball = lazy(() => import('./views/Pickleball').then((m) => ({ default: m.Pickleball })))
 const Monthly = lazy(() => import('./views/Monthly').then((m) => ({ default: m.Monthly })))
@@ -56,7 +55,7 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: Fitness, nutrition: Nutrition, gym: Gym, program: Program, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
-  insights: Insights, stats: Stats, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
+  insights: Insights, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
   'kitchen-sink': KitchenSink,
   settings: Settings,
 }

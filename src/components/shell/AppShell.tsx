@@ -68,7 +68,6 @@ export function AppShell({
     f: () => onNavigate('fitness'),
     c: () => onNavigate('collections'),
     i: () => onNavigate('insights'),
-    s: () => onNavigate('stats'),
     ',': () => onNavigate('settings'),
   })
 

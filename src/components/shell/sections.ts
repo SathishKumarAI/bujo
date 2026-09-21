@@ -150,8 +150,11 @@ export const SECTIONS: Section[] = [
     label: 'Insights',
     icon: Sparkle,
     tabs: [
+      /* One tab. `stats` was the second until its panels moved into Insights
+         behind the domain filter — a tab whose charts nobody found is not
+         cheaper than a fold, it is the same problem one level up. Bookmarks
+         still land, via `VIEW_ALIASES` in `lib/deepLink.ts`. */
       { view: 'insights', label: 'Insights' },
-      { view: 'stats', label: 'Stats' },
     ],
   },
 ]

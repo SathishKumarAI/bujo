@@ -223,22 +223,15 @@ export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
     keywords: ['deep work', 'coding', 'flow', 'pomodoro', 'interruptions', 'developer', 'work'],
   },
   insights: {
-    why: 'A journal you never read back is a diary, not a tool. This is the page that reads it back to you.',
+    why: 'A journal you never read back is a diary, not a tool. This is the page that reads it back to you — and some things are only visible as a shape, which is why every chart lives here too.',
     how: [
-      'Search across every entry, memory, gratitude line and workout — filter by type when the results get wide.',
+      'Pick a domain chip first — Overview, Mood & sleep, Habits, Body, Tasks, Records. It is faster than scrolling, and the count on each chip tells you what is down there.',
+      'Scan the activity heatmap before anything else. The empty weeks are the finding.',
+      'Read the correlation matrix. A weak cell is a result: "sleep does nothing for my mood" is exactly what a list of strong correlations can never tell you.',
+      'Search once for both — the box matches your entries AND the panels on this page, so "sleep debt" finds the chart and "gym" finds the entries.',
       'Run the Weekly Review once a week: migrate → review → reflect, in that order.',
-      'Use the Tag manager to rename and merge #tags before they multiply into synonyms.',
     ],
-    keywords: ['search', 'streaks', 'weekly review', 'correlation', 'tags', 'index', 'reflection'],
-  },
-  stats: {
-    why: 'Some things are only visible as a shape — a gap in a heatmap, the slope of a scatter — and no single number will show them to you.',
-    how: [
-      'Scan the activity heatmap first. The empty weeks are the finding.',
-      'Read the sleep↔mood scatter. It is the correlation most people are confidently wrong about.',
-      'Enlarge any chart with the ⛶ button when it is too dense to read inline.',
-    ],
-    keywords: ['charts', 'analytics', 'heatmap', 'scatter', 'radar', 'year in pixels', 'tag cloud'],
+    keywords: ['search', 'filter', 'sort', 'streaks', 'weekly review', 'correlation', 'charts', 'analytics', 'heatmap', 'scatter', 'radar', 'year in pixels', 'stats', 'index', 'reflection'],
   },
   homeworkout: {
     why: '“No equipment” is the most common reason a session does not happen. This removes the excuse rather than arguing with it.',
@@ -470,13 +463,13 @@ export const TUTORIALS: Tutorial[] = [
       },
       {
         title: 'Read the heatmap before anything else',
-        body: 'Stats → activity heatmap. The empty weeks are the finding. Everything else on that page is detail about the weeks that were not empty.',
-        to: 'stats',
+        body: 'Insights → filter to Habits → activity heatmap. The empty weeks are the finding. Everything else on that page is detail about the weeks that were not empty.',
+        to: 'insights',
       },
       {
         title: 'Check the sleep↔mood scatter',
-        body: 'Thirty days is roughly where this becomes readable. Most people are confidently wrong about their own answer, which is the reason to look rather than guess.',
-        to: 'stats',
+        body: 'Insights → filter to Mood & sleep. Thirty days is roughly where this becomes readable. Most people are confidently wrong about their own answer, which is the reason to look rather than guess.',
+        to: 'insights',
       },
       {
         title: 'Set the new month up',

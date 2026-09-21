@@ -166,6 +166,48 @@ export function taskBreakdown(data: JournalData): { name: string; value: number;
 
 // ── Tag frequency ────────────────────────────────────────────────────────────
 
+/**
+ * Share of a week's tasks that got closed, per week.
+ *
+ * A **rate**, not the raw counts, because the raw counts answer "how busy was
+ * I" and the question here is "am I finishing what I start" — a week with two
+ * tasks both done is a better week than one with nine tasks and four done, and
+ * a bar chart of counts says the opposite.
+ *
+ * `pct` is null for a week with no tasks at all. Not 0: a week you did not
+ * plan anything is not a week you failed everything, and the chart draws a gap
+ * rather than a crash to the floor. (`count ? sum / count : 0` is the exact
+ * shape that made Trackers' monthly trend open on a fabricated 0%.)
+ *
+ * A task counts toward the week of its `date` — when it was due — rather than
+ * when it was ticked, because that is the week it belonged to.
+ */
+export function taskCompletionByWeek(
+  data: JournalData,
+  weeks = 12,
+  today = todayISO(),
+): { week: string; pct: number | null; done: number; total: number }[] {
+  const out: { week: string; pct: number | null; done: number; total: number }[] = []
+  const end = new Date(today + 'T00:00')
+  for (let w = weeks - 1; w >= 0; w--) {
+    const start = new Date(end)
+    start.setDate(start.getDate() - end.getDay() - w * 7)
+    const stop = new Date(start)
+    stop.setDate(stop.getDate() + 7)
+    const a = start.toISOString().slice(0, 10)
+    const b = stop.toISOString().slice(0, 10)
+    const tasks = data.entries.filter((e) => e.type === 'task' && e.date && e.date >= a && e.date < b)
+    const done = tasks.filter((e) => e.status === 'done').length
+    out.push({
+      week: a.slice(5),
+      done,
+      total: tasks.length,
+      pct: tasks.length ? Math.round((done / tasks.length) * 100) : null,
+    })
+  }
+  return out
+}
+
 export function tagCounts(data: JournalData): { tag: string; count: number }[] {
   const m = new Map<string, number>()
   data.entries.forEach((e) => e.tags.forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)))
