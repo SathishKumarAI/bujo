@@ -10,6 +10,7 @@ import { Switch } from '../components/ui/switch'
 import { DEFAULT_ENDPOINT, DEFAULT_MODEL, isLocalEndpoint, listModels } from '../lib/voice/model'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
+import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { DriveSync } from '../components/DriveSync'
 import { CloudStorage } from '../components/CloudStorage'
 import { TagManager } from '../components/TagManager'
@@ -56,7 +57,10 @@ function Disclosure({ title, subtitle, defaultOpen = true, children }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
+        /* `flex-wrap`: at 390px the title and the subtitle each wrapped to two
+           lines *beside each other*, reading as two ragged columns. The
+           subtitle is a clarifier — it drops to its own line instead. */
+        className="flex w-full flex-wrap items-center gap-x-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
       >
         <span className="text-fg-2">{open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
         <span className="font-display text-heading font-medium text-fg-1">{title}</span>
@@ -158,21 +162,47 @@ export function Settings() {
           app that did. The tab bar is the first thing now. */}
       <Tabs value={tab} onValueChange={setTab}>
         {/* Horizontal pill bar — every section visible at once, wraps on narrow
-            screens. No sidebar rail, no clipped scroller. */}
-        <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-start gap-1.5 bg-transparent p-0">
+            screens. No sidebar rail, no clipped scroller.
+
+            `h-auto` alone did NOT make it wrap safely. `tabsListVariants` sets
+            `group-data-[orientation=horizontal]/tabs:h-9`, and tailwind-merge
+            does not treat a group-variant class and a bare `h-auto` as the same
+            utility — so both shipped, the variant won, and the list stayed
+            locked at 36px while its content wrapped to three rows at 390px.
+            The overflowing rows rendered *on top of* the panel below: "Data"
+            and the "Profile" card heading drew over each other, a text
+            collision on the live phone build. Neither rendering gate saw it —
+            `clipped-text.mjs` asks whether an element shows less than it holds
+            (it showed everything) and `a11y` asks whether the tree is sound (it
+            was). Overridden with the same specificity it is set at. */}
+        <TabsList className="mb-6 flex w-full flex-wrap justify-start gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto">
           <TabsTrigger value="profile" className={tabClass}><Icon as={User} size="sm" /> Profile</TabsTrigger>
           <TabsTrigger value="feel" className={tabClass}><Icon as={Palette} size="sm" /> Appearance</TabsTrigger>
           <TabsTrigger value="reminders" className={tabClass}><Icon as={Bell} size="sm" /> Reminders</TabsTrigger>
-          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> Sync &amp; privacy</TabsTrigger>
+          {/* "& privacy" is the half that wraps a five-pill row onto a third
+              line at 390px. It is a clarifier, not the name. */}
+          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> Sync<span className="hidden sm:inline">&amp; privacy</span></TabsTrigger>
           <TabsTrigger value="data" className={tabClass}><Icon as={Database} size="sm" /> Data</TabsTrigger>
         </TabsList>
 
-        <div className="min-w-0">
-        <TabsContent value="profile" className="max-w-2xl">
+        {/* `key={tab}` remounts the panel wrapper on every switch, which is
+            what replays the grids' `page-enter` stagger. A CSS animation fires
+            on mount, not on re-render, so without the key the first tab you
+            land on animates and the other four appear instantly — the tab
+            switch is the one moment on this page where motion carries meaning
+            (it says "this is a different set of things", not "the page
+            reloaded"). Reduced-motion users get the same instant swap they got
+            before: `bujo-rise` is inside a `prefers-reduced-motion:
+            no-preference` block. */}
+        <div key={tab} className="min-w-0">
+        <TabsContent value="profile">
+          <CardGrid>
       <Card band title="Profile" subtitle="Tailors the wellbeing tools shown">
         <Row label="Gender">
-          {/* `Row` renders its label as a <span>, so it names nothing. Settings
-              is not on the gate's VIEWS list either — filed as COD-94. */}
+          {/* `Row` renders its label as a <span>, so it names nothing — hence
+              the `aria-label` below. Settings IS scanned: it is in the gate's
+              COMPANIONS list (that is how COD-94 was found), and the note here
+              claiming otherwise had gone stale. */}
           <select
             value={s.gender}
             onChange={(e) => setGender(e.target.value as Gender)}
@@ -189,7 +219,14 @@ export function Settings() {
           <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
           <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
         </div>
-        <div className="mt-3 grid gap-x-6 gap-y-2 border-t border-line pt-3 sm:grid-cols-2">
+      </Card>
+
+      {/* Units were the third rule-separated block inside the Profile card and
+          are not profile at all — they are how every number in the app is
+          spelled. Their own band, so the two fill the grid's two columns
+          instead of one 672px column leaving ~500px of the wide tier empty. */}
+      <Card band title="Units & week" subtitle="How numbers and dates are spelled everywhere">
+        <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
           <Row label="Weight">
             <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
           </Row>
@@ -204,10 +241,58 @@ export function Settings() {
           </Row>
         </div>
       </Card>
+          </CardGrid>
         </TabsContent>
 
-        <TabsContent value="feel" className="max-w-2xl">
-      <Card band title="Journal feel" subtitle="Make it look & behave like real paper">
+        {/* Appearance was one card of eight rule-separated blocks — a 1,000px
+            scroll in a 672px column with half the page empty beside it. Same
+            blocks, four bands, two columns. */}
+        <TabsContent value="feel">
+          {/* Masonry, not CardGrid: Theme is ~350px and Shape & size ~250px, and
+              a grid row is as tall as its tallest cell — so the short card's
+              column held a gap until the next row began. Peer cards in no
+              particular order, which is the one case column-major reading is
+              fine. */}
+          <MasonryGrid>
+      <Card band title="Theme" subtitle="The palette, and the accent that runs through it">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {THEMES.map((t) => {
+            const active = (s.theme ?? 'mocha') === t.value
+            return (
+              <button
+                key={t.value}
+                onClick={() => setSettings({ theme: t.value })}
+                aria-pressed={active}
+                className={`flex items-center gap-2 rounded-control border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
+              >
+                <span className="flex shrink-0 overflow-hidden rounded-card border border-line" aria-hidden>
+                  {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-body text-fg-1">{t.label}</span>
+                  <span className="block text-caption text-fg-2">{t.hint}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        {/* The accent is a property of the theme, not a ninth unrelated block.
+            It used to sit six rules below the swatches it modifies, with the
+            dashboard-card toggles in between. */}
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-body text-fg-1">Accent color</p>
+          <div className="flex flex-wrap gap-2">
+            {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
+              const active = (s.accent ?? 'mauve') === c
+              return (
+                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-control transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
+              )
+            })}
+          </div>
+        </div>
+      </Card>
+
+      <Card band title="Shape & size" subtitle="How much of a day is on screen, and how big it reads">
         {/* Two shapes for Today, both maintained. Not a migration and not an
             experiment — some people want the whole day on one page, and that is
             a legitimate way to run a journal. It stopped choosing a navigation
@@ -224,39 +309,18 @@ export function Settings() {
             <b className="font-medium text-fg-1">Classic</b> · the whole day on one page.
           </p>
         </div>
-        <div className="mb-3 border-b border-line pb-3">
-          <p className="mb-2 text-body text-fg-1">Theme</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {THEMES.map((t) => {
-              const active = (s.theme ?? 'mocha') === t.value
-              return (
-                <button
-                  key={t.value}
-                  onClick={() => setSettings({ theme: t.value })}
-                  aria-pressed={active}
-                  className={`flex items-center gap-2 rounded-control border px-2.5 py-2 text-left transition-colors ${active ? 'border-primary bg-secondary/50' : 'border-line hover:border-line-strong'}`}
-                >
-                  <span className="flex shrink-0 overflow-hidden rounded-card border border-line" aria-hidden>
-                    {t.swatch.map((c, i) => <span key={i} className="h-7 w-2.5" style={{ background: c }} />)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-body text-fg-1">{t.label}</span>
-                    <span className="block text-caption text-fg-2">{t.hint}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        <div className="mb-3 border-b border-line pb-3">
+        <div>
           <p className="mb-2 text-body text-fg-1">Text size</p>
           <Segmented
             value={s.fontScale ?? 1}
             onChange={(v) => setSettings({ fontScale: v })}
             options={[{ value: 0.9, label: 'S' }, { value: 1, label: 'M' }, { value: 1.1, label: 'L' }, { value: 1.25, label: 'XL' }]}
           />
-          <p className="mt-1 text-label text-fg-2">Scales all text & controls across every screen. Charts and figures keep their natural size.</p>
+          <p className="mt-1 text-label text-fg-2">Scales all text &amp; controls across every screen. Charts and figures keep their natural size.</p>
         </div>
+      </Card>
+
+      <Card band title="Journal feel" subtitle="Make it look & behave like real paper">
         <div className="space-y-2">
           <Toggle label="Open-book frame (spine & page edges)" on={s.bookMode} onChange={(v) => setSettings({ bookMode: v })} />
           <Toggle label="Dot-grid paper texture" on={s.paperMode} onChange={(v) => setSettings({ paperMode: v })} />
@@ -273,51 +337,45 @@ export function Settings() {
           </Row>
           <p className="mt-1 text-label text-fg-2">Scales the make-up drills to a doable level.</p>
         </div>
-        <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-2 text-body text-fg-1">Today dashboard cards</p>
-          <div className="space-y-2">
-            {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Make-up work'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
-              const hidden = s.hideToday ?? []
-              return (
-                <Toggle
-                  key={key}
-                  label={label}
-                  on={!hidden.includes(key)}
-                  onChange={(v) => setSettings({ hideToday: v ? hidden.filter((k) => k !== key) : [...hidden, key] })}
-                />
-              )
-            })}
-          </div>
-        </div>
-        <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-2 text-body text-fg-1">Accent color</p>
-          <div className="flex flex-wrap gap-2">
-            {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
-              const active = (s.accent ?? 'mauve') === c
-              return (
-                <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-control transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
-              )
-            })}
-          </div>
-        </div>
-        <div className="mt-3 border-t border-line pt-3">
-          {/* SET-4: one-tap return to the default look. */}
-          <Button
-            variant="danger"
-            onClick={async () => { if (await confirm({
-              title: 'Reset appearance to defaults?',
-              description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
-              confirmLabel: 'Reset appearance', destructive: true,
-            })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults
-          </Button>
+      </Card>
+
+      <Card band title="Today dashboard cards" subtitle="What the Today page offers you unasked">
+        <div className="space-y-2">
+          {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Make-up work'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
+            const hidden = s.hideToday ?? []
+            return (
+              <Toggle
+                key={key}
+                label={label}
+                on={!hidden.includes(key)}
+                onChange={(v) => setSettings({ hideToday: v ? hidden.filter((k) => k !== key) : [...hidden, key] })}
+              />
+            )
+          })}
         </div>
       </Card>
+          </MasonryGrid>
+
+          {/* SET-4: one-tap return to the default look. Below the grid, not
+              inside one of the four bands — it resets all four, and a reset
+              button parked in the last card reads as belonging to that card. */}
+          <div className="mt-5 border-t border-line pt-4">
+            <Button
+              variant="danger"
+              onClick={async () => { if (await confirm({
+                title: 'Reset appearance to defaults?',
+                description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
+                confirmLabel: 'Reset appearance', destructive: true,
+              })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults
+            </Button>
+          </div>
         </TabsContent>
 
-        <TabsContent value="reminders" className="max-w-2xl">
+        <TabsContent value="reminders">
+          <CardGrid>
       <Card band title="Reminders & weather" subtitle="Weather is off until you turn it on">
         <div className="space-y-3">
           <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
@@ -339,22 +397,30 @@ export function Settings() {
       </Card>
 
       <VoiceModelCard />
+          </CardGrid>
         </TabsContent>
 
         <TabsContent value="sync">
-          {/* Recommended path: account + E2E cloud sync, plus at-rest passcode. */}
-          <div className="space-y-5">
+          {/* Recommended path: account + E2E cloud sync, plus at-rest passcode.
+              In a grid, not a stack: full-bleed these gave a 1,160px-wide
+              passphrase field and ~150-character paragraph lines, the widest
+              measure anywhere in the app on the page that asks for a secret. */}
+          <CardGrid>
             <CloudSyncCard />
             <PasscodeCard />
-          </div>
-          {/* Advanced · BYO-storage / self-host, collapsed to cut option overload. */}
+          </CardGrid>
+          {/* Advanced · BYO-storage / self-host, collapsed to cut option
+              overload. `Disclosure` defaults to OPEN, so this comment and the
+              three below it described an intent the page never had: every fold
+              on Settings shipped expanded, which is why Sync ran to 1,900px and
+              Data to 3,000. */}
           <div className="mt-5">
-            <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage">
-              <div className="space-y-5">
+            <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage" defaultOpen={false}>
+              <CardGrid>
                 <SelfHostCard />
                 <CloudStorage />
                 <DriveSync />
-              </div>
+              </CardGrid>
             </Disclosure>
           </div>
         </TabsContent>
@@ -398,7 +464,12 @@ export function Settings() {
               )
             })()}
           </Card>
-          <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
+          {/* `auto-rows-fr` made both rows as tall as the tallest card in them.
+              Backup & data is ~1,300px and Tags is ~90px, so Tags was stretched
+              to match and the tab carried ~1,200px of empty column — under Tags
+              and again beside Demo & reset, which sat alone in row two. The
+              shared `CardGrid` is `items-start` for exactly this reason. */}
+          <MasonryGrid>
       <Card band title="Backup & data" subtitle="Back it up regularly">
         {(() => {
           const stale = daysSinceBackup(s.lastBackup, todayISO())
@@ -433,7 +504,7 @@ export function Settings() {
         {s.lastBackup && <p className="mt-2 text-label text-fg-2">Last backup: {s.lastBackup}</p>}
         {/* SET-2: power-user exports fold away so Export/Import JSON stays the hero. */}
         <div className="mt-3 space-y-3 border-t border-line pt-3">
-          <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section">
+          <Disclosure title="Export for spreadsheets (CSV)" subtitle="one file per section" defaultOpen={false}>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => download(`cadence-entries-${todayISO()}.csv`, entriesCsv(data), 'text/csv')}>Entries</Button>
               <Button variant="secondary" onClick={() => download(`cadence-habits-${todayISO()}.csv`, habitsCsv(data), 'text/csv')}>Habits</Button>
@@ -462,7 +533,7 @@ export function Settings() {
               <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={onMetricsCsv} className="hidden" />
             </div>
           </Disclosure>
-          <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar">
+          <Disclosure title="Calendar feeds (.ics)" subtitle="habits, tasks & wins in any calendar" defaultOpen={false}>
             <div className="space-y-2">
               <div>
                 <Button variant="secondary" onClick={() => download(`cadence-habit-reminders-${todayISO()}.ics`, habitRemindersToICS(data), 'text/calendar')} className="inline-flex items-center gap-1.5"><Icon as={CalendarBlank} size="sm" /> Habit reminders (.ics)</Button>
@@ -478,7 +549,7 @@ export function Settings() {
               </div>
             </div>
           </Disclosure>
-          <Disclosure title="Backup integrity" subtitle="checksum & verify a file">
+          <Disclosure title="Backup integrity" subtitle="checksum & verify a file" defaultOpen={false}>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={async () => { const full = await inlineImages(data); download(`cadence-verified-${todayISO()}.json.txt`, withChecksum(exportJSON(stripSyncSecrets(full)))) }} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> Export checksummed backup</Button>
               <Button variant="secondary" onClick={() => verifyRef.current?.click()} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> Verify a backup file</Button>
@@ -621,15 +692,17 @@ export function Settings() {
           Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
         </p>
       </Card>
-          </div>
-          {/* Journal summary · read-only coverage analytics, collapsed at the bottom. */}
+
+          {/* Journal summary · read-only coverage analytics. It was a
+              `Disclosure` whose title and subtitle were repeated verbatim by
+              the `Card` inside it, so the page drew the same heading and the
+              same sentence twice, 40px apart, differing only in the capital T.
+              `Card` folds on its own — one heading, one caret. */}
           {(() => {
             const sum = dataSummary(data)
             if (sum.totalRecords === 0) return null
             return (
-              <section className="mt-6 space-y-5">
-                <Disclosure title="Journal summary" subtitle="the span and shape of everything you've tracked">
-                  <Card band title="Journal summary" subtitle="The span and shape of everything you've tracked">
+                  <Card band collapsible defaultCollapsed title="Journal summary" subtitle="The span and shape of everything you've tracked">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <StatTile compact label="First day" value={sum.firstDay ?? '—'} />
                       <StatTile compact label="Latest day" value={sum.lastDay ?? '—'} />
@@ -656,10 +729,9 @@ export function Settings() {
                     )}
                     <p className="mt-2 text-label text-fg-2">{sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.</p>
                   </Card>
-                </Disclosure>
-              </section>
             )
           })()}
+          </MasonryGrid>
         </TabsContent>
         </div>
       </Tabs>

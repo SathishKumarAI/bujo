@@ -36,6 +36,14 @@ import { cn } from '../../lib/cn'
  * caller that does not exist: a card wanting the full row at 2xl can say
  * `2xl:col-span-3` and be measured on it.
  *
+ * **Both grids carry `page-enter`.** The app's staggered entrance selects
+ * DIRECT children (`.page-enter > *`), and it used to sit on the page shell,
+ * which has exactly one child — so on every contract page the whole page rose
+ * as one block and the 45ms ladder never ran. A grid's children ARE the cards,
+ * so this is the element the ladder was written for. Measured before the move:
+ * `?view=account` and `?view=trackers` each reported a single direct child at
+ * `animation-delay: 0s`.
+ *
  * `items-start`, not stretch: a short card next to a tall one should stay
  * short rather than grow a pocket of empty space to match its neighbour.
  *
@@ -54,7 +62,7 @@ import { cn } from '../../lib/cn'
  */
 export function CardGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
+    <div className={cn('page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
       {children}
     </div>
   )
@@ -107,7 +115,7 @@ const MASONRY_COLUMNS =
 export function MasonryGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className="@container">
-      <div className={cn(MASONRY_COLUMNS, className)}>{children}</div>
+      <div className={cn('page-enter', MASONRY_COLUMNS, className)}>{children}</div>
     </div>
   )
 }

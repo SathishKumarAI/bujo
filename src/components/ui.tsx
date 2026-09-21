@@ -49,7 +49,13 @@ export const CARD = {
    * enlarge, same accessible names. Only the chrome changes, which is the whole
    * point of `CARD` being one object.
    */
-  band: 'group/card min-w-0 border-b border-line py-5 sm:py-6',
+  /* The hover is the RULE, not a shadow. `card-3d` lifts a boxed card toward
+     the cursor; a band has no box to lift and no elevation to add, so the
+     honest affordance is the one mark it owns — its closing hairline goes to
+     `line-strong` under the pointer. Anything else (a wash, a shadow, a
+     border on all four sides) re-boxes the card the band variant exists to
+     un-box. Pair it with the header's existing `group-hover/card` reveals. */
+  band: 'group/card min-w-0 border-b border-line py-5 transition-colors duration-200 hover:border-line-strong sm:py-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
