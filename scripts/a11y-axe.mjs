@@ -561,6 +561,21 @@ async function scan(label) {
   await settle()
   // A clean result on a blank page is worse than no gate at all: it reads as
   // proof. Assert the view actually rendered before believing its score.
+  /**
+   * Wait for the view to render before deciding it did not.
+   *
+   * The FOURTH race of this shape (see the table in CLAUDE.md): views are
+   * lazily imported, so after a nav click `settle()` can return with the
+   * chunk still arriving — there are no animations to wait for when nothing
+   * has mounted yet. On a cold CI runner that lost, and `main` went red with
+   * `[Settings] rendered 0 characters`.
+   *
+   * The assertion stays, because a clean result on a blank page reads as
+   * proof. It just has to be made after giving the view a chance.
+   */
+  await page
+    .waitForFunction(() => (document.querySelector('main')?.innerText ?? '').trim().length >= 40, null, { timeout: 10000 })
+    .catch(() => {})
   const rendered = await page.evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length)
   if (rendered < 40) {
     console.error(`\n[${label}] rendered ${rendered} characters — the view did not load, so its result means nothing.`)
@@ -683,6 +698,15 @@ async function scanReceipt() {
     // it wrote is marked `data-just-captured` — so one capture puts both halves
     // of the feature on screen and both get scanned. A lift lands on Strength,
     // which has no per-workout row to ring.
+    // Same rule as `scan` above: wait for both halves, then assert. A fixed
+    // 700ms is a guess about a machine, and CI is a slower machine.
+    await page
+      .waitForFunction(
+        () => !!document.querySelector('[role="status"]') && !!document.querySelector('#main [data-just-captured]'),
+        null,
+        { timeout: 8000 },
+      )
+      .catch(() => {})
     const there = await page.evaluate(() => ({
       receipt: !!document.querySelector('[role="status"]'),
       row: !!document.querySelector('#main [data-just-captured]'),
