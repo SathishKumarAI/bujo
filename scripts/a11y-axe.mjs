@@ -81,9 +81,12 @@ const VIEWS = [
   ['Mind', 'Focus'],
   ['Insights', null],
   // Stats was never on this list. It has therefore never been scanned, and
-  // every "0 serious" this gate has ever printed excluded it — the same failure
-  // the file's own header warns about, sitting inside the file that warns.
-  ['Insights', 'Stats'],
+  // every "0 serious" this gate ever printed excluded it — the same failure the
+  // file's own header warns about, sitting inside the file that warns. It is no
+  // longer a tab: its panels moved into Insights behind the domain filter
+  // (COD-201), so `['Insights', null]` above now reaches all of them. Removed
+  // rather than left to fail, which is the case this file's own error message
+  // names: "the destination was renamed/retired".
 ]
 
 /**

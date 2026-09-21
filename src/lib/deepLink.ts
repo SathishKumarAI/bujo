@@ -71,6 +71,11 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
 const VIEW_ALIASES: Record<string, string> = {
   'home-workout': 'homeworkout',
   body: 'fitness',
+  /* Stats was a real view until its panels moved into Insights behind the
+     domain filter. Every deep link, every guide "Open Stats" button and every
+     bookmark pointing at it still has to land somewhere, and Insights is where
+     its content went. */
+  stats: 'insights',
 }
 
 /**

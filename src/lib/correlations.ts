@@ -1,5 +1,5 @@
 import type { JournalData, Habit } from './types'
-import { habitDoneOn, currentStreak, taskCompletion, habitStreak } from './stats'
+import { habitDoneOn, currentStreak, taskCompletion, habitStreak, dayCompletion } from './stats'
 import { addDays, prettyDay, todayISO, dayDiff, ymOf, prettyMonth, WEEKDAYS } from './date'
 
 /** Live (non-archived) habit lookup by id. */
@@ -58,6 +58,88 @@ export function insights(data: JournalData): Insight[] {
     const r = pearson(xs, ys)
     if (!Number.isNaN(r) && Math.abs(r) >= 0.4) {
       out.push({ text: phrase(r), r: Math.round(r * 100) / 100, strength: Math.abs(r) >= 0.7 ? 'strong' : 'moderate' })
+    }
+  }
+  return out
+}
+
+/**
+ * Every pairwise correlation between the day-level measures, for the matrix.
+ *
+ * `insights()` above answers "tell me something I did not know" and therefore
+ * reports only |r| >= 0.4 across three hand-listed pairs. That is the right
+ * shape for a sentence and the wrong one for a picture: a matrix whose job is
+ * "show me the whole relationship space" has to include the weak cells, because
+ * **a near-zero r is a finding** — "sleep does nothing for my mood" is exactly
+ * the kind of thing a list of strong correlations can never tell you.
+ *
+ * Five measures, not three. `habits` is the day's completion ratio and `focus`
+ * the day's logged deep-work minutes, both joined on the date — so the matrix
+ * can answer cross-domain questions ("does training track with mood?") that no
+ * single page could.
+ *
+ * `r` is null, not 0, when fewer than `minPairs` days have BOTH measures.
+ * Returning 0 there would draw a confident grey cell meaning "no relationship"
+ * for what is actually "not enough data" — the same `count ? sum / count : 0`
+ * mistake that made Trackers' monthly trend open on a fabricated 0%.
+ */
+export type MatrixKey = 'mood' | 'stress' | 'sleep' | 'habits' | 'focus'
+
+export const MATRIX_KEYS: MatrixKey[] = ['mood', 'stress', 'sleep', 'habits', 'focus']
+
+export const MATRIX_LABEL: Record<MatrixKey, string> = {
+  mood: 'Mood',
+  stress: 'Stress',
+  sleep: 'Sleep',
+  habits: 'Habits',
+  focus: 'Focus',
+}
+
+export interface MatrixCell {
+  a: MatrixKey
+  b: MatrixKey
+  /** Pearson r, or null when the pair has too few days in common. */
+  r: number | null
+  /** Days where both measures were recorded. */
+  days: number
+}
+
+export function metricMatrix(data: JournalData, minPairs = 5): MatrixCell[] {
+  // One row per date, so every pair is joined on the same key.
+  const byDate = new Map<string, Partial<Record<MatrixKey, number>>>()
+  const put = (date: string, key: MatrixKey, value: number) => {
+    const row = byDate.get(date) ?? {}
+    row[key] = value
+    byDate.set(date, row)
+  }
+  for (const m of data.metrics) {
+    if (m.mood != null) put(m.date, 'mood', m.mood)
+    if (m.stress != null) put(m.date, 'stress', m.stress)
+    if (m.sleep != null) put(m.date, 'sleep', m.sleep)
+  }
+  for (const date of Object.keys(data.habitLog ?? {})) {
+    const c = dayCompletion(data, date)
+    if (c.ratio != null) put(date, 'habits', Math.round(c.ratio * 100))
+  }
+  for (const s of data.devSessions ?? []) {
+    const row = byDate.get(s.date) ?? {}
+    row.focus = (row.focus ?? 0) + s.durationMin
+    byDate.set(s.date, row)
+  }
+
+  const rows = [...byDate.values()]
+  const out: MatrixCell[] = []
+  for (const a of MATRIX_KEYS) {
+    for (const b of MATRIX_KEYS) {
+      if (a === b) { out.push({ a, b, r: 1, days: rows.filter((x) => x[a] != null).length }); continue }
+      const xs: number[] = []
+      const ys: number[] = []
+      for (const row of rows) {
+        if (row[a] != null && row[b] != null) { xs.push(row[a] as number); ys.push(row[b] as number) }
+      }
+      if (xs.length < minPairs) { out.push({ a, b, r: null, days: xs.length }); continue }
+      const r = pearson(xs, ys)
+      out.push({ a, b, r: Number.isNaN(r) ? null : Math.round(r * 100) / 100, days: xs.length })
     }
   }
   return out
