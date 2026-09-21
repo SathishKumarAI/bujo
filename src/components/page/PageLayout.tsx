@@ -106,8 +106,20 @@ export function PageLayout({
   const panel = tier === 1180 && !stacked && split && !sticky
 
   return (
-    <div className={cn('page-shell page-enter mx-auto w-full', tier === 820 ? 'max-w-read' : 'max-w-wide', className)}>
-      <div className={cn('page-zones', (tier === 820 || stacked) && 'page-zones-single')}>
+    // `page-enter` used to sit here, on the shell. `.page-enter > *` selects
+    // DIRECT children, and this shell has exactly one — `.page-zones` — so the
+    // app's staggered entrance animated every contract page as a single block
+    // and the 45ms-per-child ladder below it was dead code on every one of
+    // them. Measured on the built bundle: `?view=account` and `?view=trackers`
+    // each reported one direct child with `animation-delay: 0s`, against
+    // `?view=today` (which renders a header plus a grid, so it is the only
+    // page that ever got two steps).
+    //
+    // Moved down one level, to the element whose children are the three zones,
+    // and again onto the review column, whose children are the cards. That is
+    // where the ladder was always aimed.
+    <div className={cn('page-shell mx-auto w-full', tier === 820 ? 'max-w-read' : 'max-w-wide', className)}>
+      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
           // When the act column FITS the viewport it is sticky, as before.
@@ -132,7 +144,7 @@ export function PageLayout({
             {zone2}
           </div>
         )}
-        {zone3 && <div className="zone-review flex min-w-0 flex-col gap-4">{zone3}</div>}
+        {zone3 && <div className="zone-review page-enter flex min-w-0 flex-col gap-4">{zone3}</div>}
       </div>
     </div>
   )

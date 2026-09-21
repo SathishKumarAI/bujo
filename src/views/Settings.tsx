@@ -185,7 +185,16 @@ export function Settings() {
           <TabsTrigger value="data" className={tabClass}><Icon as={Database} size="sm" /> Data</TabsTrigger>
         </TabsList>
 
-        <div className="min-w-0">
+        {/* `key={tab}` remounts the panel wrapper on every switch, which is
+            what replays the grids' `page-enter` stagger. A CSS animation fires
+            on mount, not on re-render, so without the key the first tab you
+            land on animates and the other four appear instantly — the tab
+            switch is the one moment on this page where motion carries meaning
+            (it says "this is a different set of things", not "the page
+            reloaded"). Reduced-motion users get the same instant swap they got
+            before: `bujo-rise` is inside a `prefers-reduced-motion:
+            no-preference` block. */}
+        <div key={tab} className="min-w-0">
         <TabsContent value="profile">
           <CardGrid>
       <Card band title="Profile" subtitle="Tailors the wellbeing tools shown">
