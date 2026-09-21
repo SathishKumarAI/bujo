@@ -537,7 +537,13 @@ export function KitchenSink() {
           state, it is the page a visual regression shows up on first, and it
           is scanned by `npm run a11y`. A WebGL card that only ever renders
           behind a picker selection is a card nothing can screenshot. */}
-      <BodyView3D exercise="Tricep Extension" />
+      {/* Two, not one: the camera frames what is working, so an arm lift and a
+          leg lift should get visibly different shots. Side by side, a framing
+          regression is obvious here — which is what this page is for. Not
+          four: each is its own WebGL context and browsers cap those. */}
+      {(['Bicep Curl', 'Squat'] as const).map((e) => (
+        <BodyView3D key={e} exercise={e} />
+      ))}
     </Page>
   )
 }

@@ -49,7 +49,9 @@ export interface Movement {
   drive: (t: number) => Record<number, number>
 }
 
-const REST: Pose = { shoulder: 0, shoulderOut: 0.08, elbow: 0.12, hip: 0, knee: 0.04, spine: 0 }
+/** The pose a figure stands in when no pattern applies. Exported so the view
+ *  and the camera framing use the same one as the patterns do. */
+export const REST: Pose = { shoulder: 0, shoulderOut: 0.08, elbow: 0.12, hip: 0, knee: 0.04, spine: 0 }
 
 /** Smooth 0→1→0 over the rep: slow at the ends, quick through the middle. */
 const arc = (t: number) => (1 - Math.cos(2 * Math.PI * t)) / 2
