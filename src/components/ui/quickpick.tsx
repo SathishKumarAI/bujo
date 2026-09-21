@@ -21,6 +21,15 @@ import { cn } from '../../lib/cn'
  * legitimate zero becomes a default elsewhere in this codebase.
  */
 
+/** Selected-chip styling per tone. Tailwind needs whole class names, so these
+ *  are spelled out rather than built from a template. */
+const ON_TONE = {
+  brand: 'border-brand bg-brand-wash font-medium text-brand-text',
+  teal: 'border-teal bg-teal/15 font-medium text-teal',
+  peach: 'border-peach bg-peach/15 font-medium text-peach',
+} as const
+const HOVER_TONE = { brand: 'hover:border-brand/60', teal: 'hover:border-teal/60', peach: 'hover:border-peach/60' } as const
+
 /**
  * A row of preset values, plus whatever else the caller wants on the end.
  *
@@ -35,11 +44,22 @@ export function ChipPick<T extends string | number>({
   hint,
   after,
   className,
+  tone = 'brand',
+  multi = false,
 }: {
   /** Rendered as a real `<legend>`, so the group is named for a screen reader. */
   label: string
-  value: T | null | undefined
+  /** One value, or the selected set when `multi`. */
+  value: T | null | undefined | readonly T[]
   onChange: (v: T) => void
+  /**
+   * Several answers can be true at once — a HALT check is hungry AND tired,
+   * not one of them. `aria-pressed` already says "toggle", so the only thing
+   * that changes is which chips read as on.
+   */
+  multi?: boolean
+  /** A non-brand accent, for groups that are not the page's primary choice. */
+  tone?: 'brand' | 'teal' | 'peach'
   options: { value: T; label: ReactNode; hint?: string }[]
   /** One line under the row — what the choice means, not what to do. */
   hint?: ReactNode
@@ -52,7 +72,7 @@ export function ChipPick<T extends string | number>({
       <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
       <div className="flex flex-wrap items-center gap-1.5">
         {options.map((o) => {
-          const on = value === o.value
+          const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
           return (
             <button
               // `type="button"` is load-bearing: a bare <button> inside a form
@@ -68,9 +88,7 @@ export function ChipPick<T extends string | number>({
                 // control accepting the tap on a touch screen, where there is
                 // no hover to tell you anything.
                 'active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100',
-                on
-                  ? 'border-brand bg-brand-wash font-medium text-brand-text'
-                  : 'border-line-strong bg-ink-2 text-fg-2 hover:border-brand/60 hover:text-fg-1',
+                on ? ON_TONE[tone] : `border-line-strong bg-ink-2 text-fg-2 hover:text-fg-1 ${HOVER_TONE[tone]}`,
               )}
             >
               {o.label}
