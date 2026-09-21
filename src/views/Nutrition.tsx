@@ -6,6 +6,7 @@ import { Input } from '../components/ui'
 import { EmptyFrame, NumField, PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
 import { cat } from '../lib/colors'
+import { FoodSearch } from '../components/nutrition/FoodSearch'
 
 /**
  * NUTRITION · promoted from an accordion on Fitness to a page of its own.
@@ -107,6 +108,9 @@ export function Nutrition() {
               </optgroup>
             </select>
           </label>
+
+          {/* Renders nothing until food lookup is switched on in Settings. */}
+          <FoodSearch onAdd={addFood} />
 
           {/* Two jobs under one heading, now labelled and ordered as two.
               The select and this button ADD a food's macros to the day. The four

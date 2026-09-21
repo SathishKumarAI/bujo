@@ -550,6 +550,16 @@ export interface Settings {
   reminderTime: string // "HH:MM"
   /** Auto-log weather + location (makes opt-in network calls). */
   weatherEnabled: boolean
+  /**
+   * Look food up in Open Food Facts / USDA. **Off by default**, like the
+   * weather: this app makes no network calls until you turn one on, and that
+   * promise is printed on screen in Settings. Results are cached in
+   * `localStorage` (not the journal) so it works offline after the first hit.
+   */
+  foodLookup?: boolean
+  /** Optional USDA FoodData Central key. Blank uses the shared, heavily
+   *  rate-limited `DEMO_KEY`. */
+  usdaKey?: string
   /** Show a rotating reflection prompt on the Today page. */
   reflectionPrompts: boolean
   /** Content zoom level for charts/calendars/spreads (0.7–1.5). */
