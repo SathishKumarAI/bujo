@@ -31,11 +31,29 @@ export default defineConfig({
       workbox: {
         // Cache the app shell + Google Fonts for offline use.
         globPatterns: ['**/*.{js,css,html,svg}'],
+        // three.js is 737KB raw — a third of the whole precache — and it is
+        // used by exactly one card (the 3D muscle view in Gym). Precaching it
+        // charges every user that download on install to serve the minority
+        // who open it, which is the opposite of the reason it was made a lazy
+        // chunk in the first place: the precache went 2667 → 3426 KiB the
+        // moment it was added.
+        //
+        // Excluded from precache and cached at runtime instead, so the first
+        // visit to the card fetches it once and every visit after that works
+        // offline. Before that first fetch the card degrades to its muscle
+        // list, which is the answer anyway — the body is how you find it on
+        // yourself, not the information.
+        globIgnores: ['**/three.module-*.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: 'CacheFirst',
             options: { cacheName: 'google-fonts', expiration: { maxEntries: 20 } },
+          },
+          {
+            urlPattern: /\/assets\/three\.module-.*\.js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'three', expiration: { maxEntries: 2 } },
           },
         ],
       },
