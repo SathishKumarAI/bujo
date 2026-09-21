@@ -617,7 +617,29 @@ for (const vp of VIEWPORTS) {
  */
 async function scanReceipt() {
   for (const t of THEMES) {
-    await page.goto(`${BASE}?demo=1&view=today`, { waitUntil: 'networkidle' })
+    /**
+     * `surface=day`, pinned — NOT whatever the clock picks.
+     *
+     * This walked to a bare `?view=today`, so the surface came from
+     * `surfaceForHour(new Date().getHours())`: morning before 11, day until
+     * 18, evening after. The ringed row is written into the **rapid log**,
+     * which only the day surface renders — measured, all three:
+     *
+     * | surface | receipt | ringed row |
+     * |---|---|---|
+     * | day     | yes | **yes** |
+     * | evening | yes | no |
+     * | morning | yes | no |
+     *
+     * So the gate could only pass between 11:00 and 18:00 local. It went red
+     * in CI at **18:09 UTC** on the very PR that repaired the walk — before
+     * that fix it aborted at `[Plan]` and never reached this check, so a
+     * clock-dependent assertion sat here unnoticed.
+     *
+     * A gate whose result depends on what time you run it is worse than no
+     * gate: it teaches you to re-run until it is green.
+     */
+    await page.goto(`${BASE}?demo=1&view=today&surface=day`, { waitUntil: 'networkidle' })
     await setTheme(t)
     await page.getByRole('button', { name: 'Quick add' }).click()
     await page.waitForTimeout(350)
