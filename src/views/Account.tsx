@@ -1,4 +1,5 @@
 import { useJournal } from '../store'
+import { Card } from '../components/ui'
 import { PageLayout } from '../components/page/PageLayout'
 import { StatBar } from '../components/page/StatBar'
 import { CardGrid } from '../components/shell/CardGrid'
@@ -60,18 +61,24 @@ export function Account() {
 
           {/* The passcode is the only control here that restricts access, and
               it lives in Settings. Saying so is load-bearing: the profile above
-              looks like the thing that protects the journal and does not. */}
-          <section className="min-w-0 border-b-2 border-line py-5 sm:py-6">
-            <h2 className="font-display text-heading font-medium text-fg-1">Locking this journal</h2>
-            <p className="mt-2 text-body text-fg-2">
-              A name is not a lock. To encrypt the journal at rest on this device, set a passcode in{' '}
+              looks like the thing that protects the journal and does not.
+
+              A `Card band`, not the hand-rolled `<section>` this used to be:
+              its three siblings in this grid are all `Card band`, and a
+              re-typed copy of a primitive's markup is a copy that drifts. It
+              already had — `py-5 sm:py-6` against the card's own padding, and
+              a bare `<h2>` where `Card` names the heading for the fold and the
+              screen reader. */}
+          <Card band title="Locking this journal" subtitle="A name is not a lock" hideInfo>
+            <p className="text-body text-fg-2">
+              To encrypt the journal at rest on this device, set a passcode in{' '}
               <button className="text-brand-text hover:underline" onClick={() => nav('settings')}>
                 Settings → Sync &amp; privacy
               </button>
               . Like the sync passphrase, it cannot be recovered if you lose it — that is the cost of
               the key never leaving your device.
             </p>
-          </section>
+          </Card>
         </CardGrid>
       }
     />
