@@ -95,6 +95,28 @@ closed-fold traps, one level up: not "a page that is never visited cannot
 fail", but **an app that is never checked cannot fail**. When a browser gate
 passes, confirm what it was pointed at.
 
+Trap (fixed, COD-202): **a browser gate that scrolls hides the navigation it is
+about to look for.** `BottomNav` and the top bar's section fold share
+`useHideOnScroll`, so the phone's *only* navigation slides away on scroll-down —
+and `a11y-axe.mjs` scrolls constantly, opening folds and pulling tab rows into
+view. `onScreen` then measured the bar at **y 845 in an 844px viewport**:
+present, labelled, one pixel below the fold, and therefore identical by the only
+predicate that separates the real bar from the parked off-canvas drawer.
+`goOrDie` called that a retired destination and killed the run having scanned
+**zero** views. It read as intermittent because it depended on how far the
+previous surface had been scrolled; adding Habits — the tallest — to `SURFACES`
+made it reliable, which is why a long-fragile gate looked newly dead. `onScreen`
+now scrolls back to the top before concluding anything is gone, *before* the
+`scrollIntoViewIfNeeded` recovery below it, which scrolls down to a tab and
+would re-hide what it just revealed.
+
+The half worth copying: **a gate's failure message must say what it did find.**
+"Could not reach it" cost two wrong hypotheses, each tested with a browser probe
+— the header folding on scroll, and `openFolds` opening a modal — before the
+dump (url, viewport, theme, every navigable control, near-matches, their boxes)
+named the cause on the next run's first line. A red that carries no evidence is
+only marginally better than a gate that is off.
+
 Trap: **a control can be hidden without being clipped, and neither rendering
 gate sees it.** `scripts/clipped-text.mjs` asks whether an element shows less
 than it holds (`scrollWidth > clientWidth`); `npm run a11y` asks whether the

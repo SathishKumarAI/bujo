@@ -87,15 +87,30 @@ export function CorrelationMatrixCard() {
         <Empty>Log mood, sleep and stress across a couple of weeks to fill this in.</Empty>
       ) : (
         <>
-          <div
-            className="overflow-x-auto"
-            role="img"
-            aria-label={`Correlation matrix across ${MATRIX_KEYS.map((k) => MATRIX_LABEL[k]).join(', ')}. ${cells
-              .filter((c) => c.a !== c.b && c.r != null)
-              .map((c) => `${MATRIX_LABEL[c.a]} and ${MATRIX_LABEL[c.b]}, r ${c.r}`)
-              .join('; ')}`}
-          >
+          {/* `role="img"` used to sit on this scroller with the whole matrix
+              flattened into its label. Two bugs, one element — the pair the
+              a11y gate caught the moment it could complete a walk again:
+
+              1. It **hid the table**. This is a real `<table>` with `scope`
+                 headers, so a screen reader can already say "Sleep, Stress,
+                 r 0.41" while moving cell by cell; `role="img"` overrode that
+                 with one unnavigable sentence. Same mistake as `role="img"` on
+                 the `<ul>` two cards up — right for a canvas or an SVG plot,
+                 wrong on markup that already *is* the structure.
+              2. It was **not reachable by keyboard**. At 390px the matrix is
+                 wider than the column, and a scroll container with no tab stop
+                 cannot be panned without a mouse.
+
+              So: the scroller is a focusable labelled region, and the summary
+              lives in a `<caption>` where a table's summary belongs. */}
+          <div className="overflow-x-auto" tabIndex={0} role="group" aria-label="Correlation matrix">
             <table className="w-full min-w-[360px] border-separate border-spacing-[2px] text-label">
+              <caption className="sr-only">
+                {`Correlation matrix across ${MATRIX_KEYS.map((k) => MATRIX_LABEL[k]).join(', ')}. ${cells
+                  .filter((c) => c.a !== c.b && c.r != null)
+                  .map((c) => `${MATRIX_LABEL[c.a]} and ${MATRIX_LABEL[c.b]}, r ${c.r}`)
+                  .join('; ')}`}
+              </caption>
               <thead>
                 <tr>
                   <th className="w-14" />
