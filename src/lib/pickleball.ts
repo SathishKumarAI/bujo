@@ -29,14 +29,29 @@ export function pickleTotals(data: JournalData, days?: number, today = todayISO(
   }
 }
 
-/** Win % per session over time (oldest → newest), for the trend line. */
+/**
+ * Win % per session over time (oldest → newest), for the trend line.
+ *
+ * **A session with no games played is left out, not plotted as 0%.** The old
+ * `g ? gamesWon / g : 0` is the exact shape this repo's CLAUDE.md warns about
+ * on `monthlyCompletion` — it makes "no data" indistinguishable from "you lost
+ * every game", and it does it in a trend line, where a dot at the floor reads
+ * as a defeat that never happened.
+ *
+ * It mattered the moment the voice parser started filing duration-only
+ * sessions ("played pickleball for 10 minutes"), which is the honest record of
+ * a session where nobody kept score — and which lands as 0–0 via `plan.ts`.
+ * Before that change nothing could produce a 0–0 session, so the branch was
+ * dead code that looked harmless.
+ *
+ * Dropped rather than returned as null: this feeds a line chart, and a session
+ * with no score has no win rate to place on that axis at all.
+ */
 export function winRateSeries(data: JournalData): { date: string; winPct: number }[] {
   return [...sessions(data)]
+    .filter((s) => s.gamesWon + s.gamesLost > 0)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .map((s) => {
-      const g = s.gamesWon + s.gamesLost
-      return { date: s.date.slice(5), winPct: g ? Math.round((s.gamesWon / g) * 100) : 0 }
-    })
+    .map((s) => ({ date: s.date.slice(5), winPct: Math.round((s.gamesWon / (s.gamesWon + s.gamesLost)) * 100) }))
 }
 
 /** Games played per week for the last `weeks` (oldest → newest). */

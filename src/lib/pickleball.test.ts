@@ -425,3 +425,28 @@ describe('playConsistency', () => {
 })
 
 import { weeklyActiveMinutes } from './fitness'
+
+describe('winRateSeries with a scoreless session', () => {
+  // A duration-only session — what "I played pickleball for 10 minutes" files,
+  // and what `plan.ts` writes as 0–0. Nothing could produce one until the voice
+  // parser started accepting a named sport without a score, which is what made
+  // the old `g ? ... : 0` branch live.
+  const scoreless: PickleballSession = { id: 'x', date: '2026-06-03', format: 'doubles', gamesWon: 0, gamesLost: 0, durationMin: 10 }
+
+  it('leaves it out rather than plotting it as a 0% defeat', () => {
+    const d = { ...emptyJournal(), pickleball: [s('2026-06-01', 3, 1), scoreless, s('2026-06-05', 2, 2)] }
+    const series = winRateSeries(d)
+    expect(series.map((p) => p.winPct)).toEqual([75, 50])
+    expect(series.some((p) => p.winPct === 0)).toBe(false)
+  })
+
+  it('still plots a real 0% — losing every game is not the same as no data', () => {
+    const d = { ...emptyJournal(), pickleball: [s('2026-06-01', 0, 3)] }
+    expect(winRateSeries(d)).toEqual([{ date: '06-01', winPct: 0 }])
+  })
+
+  it('does not count its games in the totals, but does count its minutes', () => {
+    const d = { ...emptyJournal(), pickleball: [s('2026-06-01', 3, 1), scoreless] }
+    expect(pickleTotals(d)).toMatchObject({ sessions: 2, games: 4, winPct: 75, minutes: 10 })
+  })
+})
