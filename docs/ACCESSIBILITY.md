@@ -51,7 +51,7 @@ important an `!`, dropped a strikethrough.
 | Recurring-rule form controls unnamed (**critical**) | Neither `<select>` in Plan's rule form had an accessible name. Fixed with `aria-label` on all three controls — visible labels would break the row's "Take vitamins · task · daily" sentence |
 | Activity grids conveyed data by colour alone | `DayGrid` was a `<div role="img">` with one summary label and per-cell `title` — `title` is not a reliable accessible name and is skipped entirely on touch. It is now a `<table>` with weekday row headers, week-start column headers and a visually-hidden per-cell label carrying the actual value. Headers are `sr-only`: the visual is a heatmap, not a spreadsheet. Fixes Stats and Trackers too, which share the primitive |
 | `crust` foreground on neutral chips (**two sites**) | A colour picked as the light-on-dark half of a saturated fill was set unconditionally, so the neutral state of the chip was dark-on-dark: Coaching's week numbers and Recovery's milestone ladder — in both cases the numbers you are counting towards. Each now pairs a foreground with its own background. ~~Every other `cat('crust')` in the app already branches correctly (`complete ? crust : overlay0`), which is why only these two failed.~~ **That last sentence was wrong, and wrong in an instructive way — see below** |
-| Automated axe-core checks | The `a11y` job runs `scripts/a11y-axe.mjs` on every PR — 5 themes on desktop, 2 on phone, plus Today's three time-of-day surfaces and the companion views |
+| Automated axe-core checks | The `a11y` job runs `scripts/a11y-axe.mjs` on every PR — 5 themes on desktop, 2 on phone, plus Today's four surfaces (three times of day and the habit grid) and the companion views — **194 rows** a run |
 | **The gate was grading an empty app** (**16 violations**) | `scripts/a11y-axe.mjs` seeded `{ settings }` and nothing else, so every card behind a `{rows.length > 0 && …}` guard — most of this app's analytics — was absent from the DOM and could not fail. It now loads `?demo=1` and **asserts the seed landed**. Arming it turned one green run into **16 serious `color-contrast` violations** across Challenges, Plan, Trackers, Stats and Strength, in four of five themes. All fixed; see the three colour rules below |
 
 **Rule for new overlays:** if it is a `fixed inset-0` div rather than a Radix
@@ -76,22 +76,69 @@ Full pattern and inventory: `docs/COLLAPSE-PATTERN.md`.
 > many are still shut, because single-select disclosures cannot all be open at
 > once: read its result as "clean for what could be opened".
 
-## The three ways this gate has lied
+## The four ways this gate has lied
 
 Each was found the same way — by making the gate look somewhere it had not been
 looking — and each one produced real, shipped violations. They are listed
 together because the shape repeats: **a clean report is a claim about what was
-scanned, never about the app.**
+scanned, never about the app.** The fourth is the one that breaks that sentence,
+because it is not a clean report at all.
 
 | # | It could not see… | What it hid |
 |---|---|---|
 | 1 | **inside a closed fold** | a **critical** `select-name` in Plan's Setup, for months |
 | 2 | **a page not on its `VIEWS` list** | Recovery, excluded on the belief it was behind an opt-in — `nofapEnabled` defaults to **true**, and adding it immediately failed on contrast |
 | 3 | **a card that had no data to render** | **16** serious `color-contrast` violations, because the gate seeded an empty journal and most analytics is behind a `{rows.length > 0 && …}` guard |
+| 4 | **its own navigation, once it had scrolled** | everything. It aborted at the second view having scanned **zero**, and exited 1 — so three sessions of red said nothing about whether anything was checked |
 
 The seed is now **asserted**, not assumed: if demo data fails to load, the gate
 exits 1 and says so. A gate that silently reverts to an empty journal prints the
 same reassuring zero it printed for its whole existence.
+
+### The fourth one, COD-202 — a red that carried no information
+
+`BottomNav` and the top bar's section fold share `useHideOnScroll`, so the
+phone's **only** navigation slides away on scroll-down. The gate scrolls
+constantly — `openFolds()` on every page, `scrollIntoViewIfNeeded` on every tab
+row — so by the time it looked for the next section, it measured the bar at
+**y 845 in an 844px viewport**. Present, labelled, one pixel below the fold, and
+by the only predicate that separates the real bar from the parked off-canvas
+drawer, *off screen*. `goOrDie` called that a retired destination and killed the
+run.
+
+It read as intermittent because it depended on how far the previous surface had
+been scrolled; adding Habits — the tallest — to `SURFACES` made it reliable,
+which is why a long-fragile gate looked newly dead.
+
+Two things fixed it, and the second is the one to copy into the next gate:
+
+- `onScreen` scrolls back to the top before concluding a destination is gone,
+  which is what a user does without thinking. It runs only where nothing was
+  found, and **before** the `scrollIntoViewIfNeeded` recovery below it — that
+  one scrolls *down* to a tab and would re-hide the bar it just revealed.
+- **`goOrDie` now prints what it did find**: url, viewport, theme, every
+  navigable control, near-matches and their boxes. Two hypotheses had already
+  been tested and disproven against a message that said only "could not reach
+  it"; the dump named the cause on the next run's first line.
+
+The lesson is not about scrolling. **A gate's red must say what it saw.** The
+other three lies here were silent greens, which is the famous failure; this one
+was a loud red that was equally uninformative, and it cost more time than any of
+them. Same reasoning applies to a crash that swallows the summary table —
+**COD-208**, open: the exception escapes and the per-view rows never print, so a
+reader cannot tell whether it checked nothing or everything.
+
+**Rule for `role="img"`.** It *replaces* the subtree's semantics, so it belongs
+on a canvas or an SVG plot and nowhere else. This app has now shipped it twice
+on markup that already was the structure it described: on a `<ul>`, orphaning
+every `<li>` (axe: `listitem`), and on the correlation matrix's scroll container,
+overriding a real `<table>` whose `scope` headers could already say "Sleep,
+Stress, r 0.41" cell by cell. In both cases the label was a good summary and the
+mistake was making it the *only* thing announced — a `<caption>` or an adjacent
+`sr-only` paragraph supplements the structure instead of replacing it. A second
+trap rides with it: a `role="img"` wrapper is often also an `overflow-x-auto`
+scroller, and a scroll container with no tab stop cannot be panned by keyboard
+(axe: `scrollable-region-focusable`, serious).
 
 ## Colour rules, each learned from a shipped failure
 

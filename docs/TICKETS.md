@@ -755,3 +755,26 @@ Two further reasons, both worth writing down rather than rediscovering:
 | ID | Title | Status |
 |---|---|---|
 | BUJO-283 | If Today is ever converted, do **both** layouts in one change, and use `StatBar`'s `mode`/`segments` for the surface toggle — that is the Fitness pattern and the surface toggle is already exactly it | 🔜 |
+
+### Epic FIT-IA — progress log, appended 2026-09-21
+
+**Body › Tracking no longer exists.** BUJO-250 moved Trackers *into* Body and
+labelled it "Tracking" (#129, ✅ above). #250 moved it again: the habit grid is
+now **Today's fourth surface**, and `views/Trackers.tsx` is a redirect. Both
+entries stay as written — this log is appended, not overwritten — but a reader
+looking for current navigation should read `SECTIONS`, not this table.
+
+| ID | Outcome |
+|---|---|
+| BUJO-273 | ⛔ Moot — the habit table now renders on Today's Habits surface and was rebuilt there. Re-file against the new surface if the left column still wraps |
+| BUJO-274 | ⛔ Moot, same move |
+| BUJO-275 | ⛔ Moot, same move |
+| BUJO-276 | ⛔ Moot, same move. Related and still live: `StatBar` **slices to four facts and warns only in DEV**, so a fifth vanishes from a production build in silence |
+| BUJO-277 | ✅ Fixed better than filed. Rather than adding `program` and `nutrition` to the hand-written list, `smoke-views.mjs` now imports `VIEW_IDS` from `scripts/view-ids.mjs`, the same registry `viewChrome.test.ts` checks against — so a new view cannot fall off the smoke list at all. A hand-written id list resolved against another source is the exact shape that had already dropped a phone tab (see `BottomNav`'s retired `PRIMARY`) |
+
+**New, from the same session:** the a11y gate aborted at its second view having
+scanned zero, for three sessions — it scrolled the phone's only navigation out
+of frame and read that as a deleted destination (**COD-202**, fixed in #252;
+194 rows, exit 0). Its sibling is open as **COD-208**: a crash inside `scan()`
+escapes and the summary table never prints, so a reader cannot tell whether it
+checked nothing or everything.

@@ -4,7 +4,7 @@
 > The same text is the in-app guide (`?` → Open the full guide, or `?view=help`),
 > where every entry has a button that takes you to the page it describes.
 
-24 features, in the order the navigation puts them.
+22 features, in the order the navigation puts them.
 
 ## Contents
 
@@ -12,11 +12,11 @@
 
 **Plan** — [Week](#week) · [Month](#month) · [Goals](#goals)
 
-**Body** — [Fitness](#fitness) · [Tracking](#tracking) · [Strength](#strength) · [Program](#program) · [Pickleball](#pickleball) · [Pull-ups](#pull-ups) · [Coaching](#coaching) · [Nutrition](#nutrition) · [Challenges](#challenges) · [Recovery](#recovery) · [Cycle](#cycle) · [Home Workout](#home-workout)
+**Body** — [Fitness](#fitness) · [Strength](#strength) · [Program](#program) · [Pickleball](#pickleball) · [Pull-ups](#pull-ups) · [Coaching](#coaching) · [Nutrition](#nutrition) · [Challenges](#challenges) · [Recovery](#recovery) · [Cycle](#cycle) · [Home Workout](#home-workout)
 
 **Mind** — [Mindset](#mindset) · [Reading](#reading) · [Collections](#collections) · [Focus](#focus)
 
-**Insights** — [Insights](#insights) · [Stats](#stats)
+**Insights** — [Insights](#insights)
 
 **Your journal** — [Account](#account) · [Settings](#settings)
 
@@ -34,8 +34,10 @@
 
 1. Type one line and press Enter. Start it with t, e or n to pick task, event or note; * makes it important, #tag files it.
 2. Click a bullet glyph to cycle its status — open, done, migrated, dropped.
-3. Before bed, set mood, stress and sleep. Every chart in Insights and Stats is built from those three numbers.
+3. Before bed, set mood, stress and sleep. Every chart in Insights is built from those three numbers.
 4. Write one gratitude line and one memory. That is the whole daily ritual, and it takes about a minute.
+5. The Habits tab is the month grid: add a habit, then tap a cell to mark the day. Count habits increment toward a target instead of just toggling.
+6. Read the consistency percentage rather than the current streak — a streak forgives nothing and teaches less.
 
 ## Plan
 
@@ -99,21 +101,6 @@
 1. Pick the mode first. Cardio asks for duration and distance; strength asks for sets. The facts and the copy follow it.
 2. Log the session while you are still warm. A session reconstructed at night is a session of guesses.
 3. Check the week against its minutes target before deciding whether today is a rest day.
-
-### Tracking
-
-*Page title: Trackers.* 
-`?view=trackers`
-
-**What it is.** A habit dot-grid · tap a cell to mark a day (count habits increment toward a target). Drag the grip to reorder, open a habit for its streak/consistency detail. Below are charts: completion heatmap, streak board, weekday consistency, monthly trend.
-
-**Why it exists.** A habit you cannot see is a habit you will argue with yourself about; a grid ends the argument in one glance.
-
-**How to use it.**
-
-1. Add a habit, then tap a cell to mark the day. Count habits increment toward a target instead of just toggling.
-2. Drag the grip to reorder. Open a habit for its streak and consistency detail.
-3. Read the consistency percentage rather than the current streak — a streak forgives nothing and teaches less.
 
 ### Strength
 
@@ -325,27 +312,15 @@
 
 **What it is.** Reflection hub: streaks, task completion, correlation patterns, a month index, and full-text search (filter by type). The Weekly Review walks you through migrate → review → reflect; the Tag manager renames/merges #tags.
 
-**Why it exists.** A journal you never read back is a diary, not a tool. This is the page that reads it back to you.
+**Why it exists.** A journal you never read back is a diary, not a tool. This is the page that reads it back to you — and some things are only visible as a shape, which is why every chart lives here too.
 
 **How to use it.**
 
-1. Search across every entry, memory, gratitude line and workout — filter by type when the results get wide.
-2. Run the Weekly Review once a week: migrate → review → reflect, in that order.
-3. Use the Tag manager to rename and merge #tags before they multiply into synonyms.
-
-### Stats
-
-`?view=stats`
-
-**What it is.** Your analytics wall: activity heatmap, weekly radar, sleep↔mood scatter, workout bars, task donut, mood calendar, mood-by-weekday, workout-split, year-in-pixels, and a tag cloud.
-
-**Why it exists.** Some things are only visible as a shape — a gap in a heatmap, the slope of a scatter — and no single number will show them to you.
-
-**How to use it.**
-
-1. Scan the activity heatmap first. The empty weeks are the finding.
-2. Read the sleep↔mood scatter. It is the correlation most people are confidently wrong about.
-3. Enlarge any chart with the ⛶ button when it is too dense to read inline.
+1. Pick a domain chip first — Overview, Mood & sleep, Habits, Body, Tasks, Records. It is faster than scrolling, and the count on each chip tells you what is down there.
+2. Scan the activity heatmap before anything else. The empty weeks are the finding.
+3. Read the correlation matrix. A weak cell is a result: "sleep does nothing for my mood" is exactly what a list of strong correlations can never tell you.
+4. Search once for both — the box matches your entries AND the panels on this page, so "sleep debt" finds the chart and "gym" finds the entries.
+5. Run the Weekly Review once a week: migrate → review → reflect, in that order.
 
 ## Your journal
 
@@ -411,7 +386,7 @@ A daily loop that survives a bad day, and two habits you can actually see. · **
 The migration ritual, the charts that finally have enough data, and a backup you trust. · **twenty minutes at month end**
 
 1. **Migrate, and drop things on purpose** — Plan → work the overdue list. Move each task to today or tomorrow, or drop it. Dropping is not failure: a task carried for five weeks was never going to happen, and was costing you attention every time you read past it. *(`?view=plan`)*
-2. **Read the heatmap before anything else** — Stats → activity heatmap. The empty weeks are the finding. Everything else on that page is detail about the weeks that were not empty. *(`?view=stats`)*
-3. **Check the sleep↔mood scatter** — Thirty days is roughly where this becomes readable. Most people are confidently wrong about their own answer, which is the reason to look rather than guess. *(`?view=stats`)*
+2. **Read the heatmap before anything else** — Insights → filter to Habits → activity heatmap. The empty weeks are the finding. Everything else on that page is detail about the weeks that were not empty. *(`?view=insights`)*
+3. **Check the sleep↔mood scatter** — Insights → filter to Mood & sleep. Thirty days is roughly where this becomes readable. Most people are confidently wrong about their own answer, which is the reason to look rather than guess. *(`?view=insights`)*
 4. **Set the new month up** — Monthly → record where you are, what you want from the month, and the photo. Two minutes, and it is what makes the month findable a year from now. *(`?view=monthly`)*
 5. **Export again, and keep the file** — Settings → Export JSON, and Export Markdown if you want it readable in Obsidian or Logseq. A monthly export is the entire backup strategy, and it is yours to run — no server is holding a copy. *(`?view=settings`)*

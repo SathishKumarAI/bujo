@@ -1,5 +1,135 @@
 # Worklog
 
+## 2026-09-21 — Nineteen PRs, and the gate that could not report (#234–#252)
+
+**Summary:** A long session driven by page-by-page asks — redesign Account and
+Settings, are Trackers and Today's evening surface the same thing, make voice
+understand "I played pickleball for 10 minutes", build a 3D body that shows the
+muscle doing the work, move Tracking into Today, redesign Recovery. The
+through-line under almost all of it: **most of these were not new features, they
+were things the app already had that nobody could reach** — a control that only
+appeared on hover, a tab clipped off a phone, a data module the view had stopped
+importing, a chart hidden behind a fold. The session ends on **COD-202**, which
+is the same sentence one level up: the gate built to find unreachable things had
+itself become unable to report.
+
+**What shipped:**
+
+- **#234 · Settings & Account** (COD-200). Phone tab overlap, half the page
+  empty, folds that never folded, motion that reached nothing. `.page-enter > *`
+  selects **direct children only** — a zone wrapper meant every card inside it
+  animated as one block, or not at all.
+
+- **#235 · One answer to "what is due today".** `src/lib/schedule.ts` now owns
+  `isScheduledOn` and `habitsDueOn`; **seven call sites had dropped
+  `startedOn`**, so a habit created today counted its whole history as missed.
+  The module sits below `habitStats` because `habitStats` imports `stats`, and
+  `stats` importing back would be a cycle.
+
+- **#236 · Insights absorbs Stats** (COD-201). One page, a filter row, four new
+  charts. A `git mv` plus a rendered-output diff, not a retype — the technique
+  that ran three times this session and lost nothing each time.
+
+- **#238–#239 · Voice.** "Played pickleball for 10 minutes" is a session, not a
+  note; and rather than inventing singles/doubles and opponents, it now asks.
+
+- **#240 · One menu in the corner.** Username, Share, Settings and the ⋯ menu
+  were four controls answering one question. Themes now live in Settings only.
+
+- **#241–#243 · Tap instead of type.** `ui/quickpick.tsx` (`ChipPick`,
+  `Stepper`, `DayPick`), eight frontend bugs found while doing it, and a lint
+  rule for the biggest one: **Tailwind v4 wraps `hover:` in
+  `@media (hover: hover)`**, so every `opacity-0 group-hover:opacity-100`
+  control — including *Delete entry* — was permanently invisible on a phone.
+
+- **#244–#246 · The 3D body.** `bodyMesh.ts` rigs a procedural figure,
+  `movement.ts` holds 21 rep archetypes as `pose(t)`/`drive(t)`, and `frameRep()`
+  measures the bounding box **across the whole rep** to place the camera. Lazy
+  three.js chunk plus `globIgnores`/`runtimeCaching`, because workbox precaches
+  `**/*.js` and had quietly put the whole of three.js in the install payload
+  (2667 → 3426 KiB, back to 2706).
+
+- **#247, #250 · Today takes the habits.** The close-out shows every habit type,
+  then the whole habit grid becomes Today's **fourth surface**. `views/Trackers`
+  is now a redirect.
+
+- **#248 · Food lookup.** Open Food Facts with USDA behind it, per-100g scaling,
+  a 300-entry localStorage cache, off by default.
+
+- **#249 · Recovery.** 2.8 screens down to 1.8, one chip component, and no score
+  to protect — only the negative events are written.
+
+- **#251 · Two serious violations the gate caught**, in the one run that
+  completed: `role="img"` on a `<ul>`, and `text-fg-3` on `bg-ink-2` at 4.18:1.
+
+- **#252 · COD-202, the gate itself.** See below.
+
+**COD-202 — the gate scrolled its own navigation out of frame.**
+
+`npm run a11y` aborted at the second view having scanned **zero**, so three
+sessions of red said nothing about whether anything had been checked.
+
+`BottomNav` and the top bar's section fold share `useHideOnScroll`, so the
+phone's **only** navigation slides away on scroll-down — and the gate scrolls
+constantly, opening folds and pulling tab rows into view. It then measured the
+bar at **y 845 in an 844px viewport**: present, labelled, one pixel below the
+fold, and by the only predicate separating the real bar from the parked
+off-canvas drawer, off screen. `goOrDie` called that a retired destination.
+
+It read as intermittent because it depended on how far the previous surface had
+been scrolled. Adding Habits — the tallest — to `SURFACES` in #250 made it
+reliable, which is why a long-fragile gate looked *newly* dead.
+
+`onScreen` now scrolls back to the top before concluding anything is gone, and
+`goOrDie` prints what it **did** find — url, viewport, theme, every navigable
+control, near-matches, boxes. That second half is the part worth reusing: two
+hypotheses had already been probed and disproven against a message that said
+only "could not reach it", and the dump named the cause on the next run's first
+line. Result: **194 rows, exit 0**, twice.
+
+The repaired gate immediately earned itself. Insights' correlation matrix had
+`role="img"` on its scroll container, overriding a real `<table>` whose `scope`
+headers could already say "Sleep, Stress, r 0.41" cell by cell — and that same
+div was a scroll region with no tab stop, unpannable by keyboard at 390px.
+
+**Process learned:**
+
+- **A gate's red must say what it saw.** Three previously-recorded ways this gate
+  lied were silent greens, which is the famous failure. COD-202 was a loud red
+  that was equally uninformative, and it cost more than any of them. Filed
+  **COD-208** for its sibling: a crash that swallows the summary table cannot
+  tell you whether it checked nothing or everything.
+- **A generated doc with no gate is a stale doc.** `docs/FEATURE-REFERENCE.md`
+  says "Generated — do not edit", and nothing regenerated it: it still described
+  **Tracking** and **Stats**, both retired pages (#250, #236). Regenerating took
+  one command and dropped it 24 → 22 features. Worth a CI check
+  (`npm run manual && git diff --exit-code`) next time someone is in there.
+- **A grep finds the spelling you thought of; a lint rule finds the pattern.**
+  The manual sweep for `opacity-0 group-hover:opacity-100` missed three sites
+  that spell `transition-opacity` *between* the two classes. The rule found them
+  on its first run.
+- **Measure the instrument before believing it.** A contrast probe printed
+  identical numbers for all five themes (wrong `localStorage` key) and then a
+  fake 1.30:1 for latte (read `color(srgb 0.80 …)` channels as 0–255). Two bugs
+  in the tool before one in the subject.
+- **`role="img"` replaces a subtree's semantics.** Shipped twice this session on
+  markup that already *was* the structure. The summary belongs in a `<caption>`
+  or an adjacent `sr-only` line, supplementing the cells rather than replacing
+  them.
+- **`git stash` proves nothing** when checking that a new test fails against old
+  code — it stashes the test too. `git stash push -- <source files only>`.
+- Duplicated an existing helper once (`musclesForExercise` already existed in
+  `lib/fitness`), caught on review and renamed. The ladder's second rung is
+  *look before you write*, and it was skipped.
+
+**Open:** COD-208 (a11y crash swallows the summary); `NoFap.logUrge` has no
+guard beyond a 3s double-tap window, and whether an urge row should be written
+at all is a product call; Pickleball still has 12 free-text number fields;
+`focus/SessionHistory` holds a stale draft if undo or a cloud pull lands while an
+editor is open. Also worth a product look: the phone's *only* navigation is the
+thing that hides on scroll — it fooled a gate written specifically to find
+unreachable controls.
+
 ## 2026-09-16 — Why, what and how, for the user this time (#230–#232)
 
 **Summary:** The ask was the product's *why / what / how* for a reader who is
