@@ -67,7 +67,15 @@ export function FocusSlots({
           return (
             <div
               key={f?.id ?? `empty-${i}`}
-              className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pb-3 sm:pr-5 sm:pb-1 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 sm:[&:not(:last-child)]:border-r"
+              /* Padding on BOTH sides of the rule, per `BandCell`'s convention.
+                 This carried `pr-5` and no left padding at all, so slots two and
+                 three began their text hard against the divider they sit behind
+                 — measured, cell edge and first glyph both at x=524 and x=917.
+                 `first:pl-0` keeps the leftmost column flush with the page's
+                 text column, which is what makes the grid read; the stacked
+                 case drops side padding entirely because there is no rule left
+                 to clear. */
+              className="flex min-w-0 flex-1 basis-0 flex-col gap-2 border-line pt-3 pb-3 sm:pr-5 sm:pb-1 sm:pl-5 sm:first:pl-0 sm:last:pr-0 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 sm:[&:not(:last-child)]:border-r"
             >
               <div className="flex items-baseline gap-2.5">
                 {/* The principle's CATEGORY, not "Slot 1".
