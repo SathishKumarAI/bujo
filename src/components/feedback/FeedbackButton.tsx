@@ -29,9 +29,28 @@ const field = 'w-full rounded-card border border-line bg-ink-2 px-3 py-2 text-bo
  * the token server-side). Self-contained: own trigger, own submit lifecycle —
  * no global toast/provider dependency.
  */
-export function FeedbackButton() {
+/**
+ * Send feedback.
+ *
+ * `open`/`onOpenChange` are optional: pass them and the component is a bare
+ * dialog someone else opens — which is how it reaches the corner menu, where
+ * it lives now. Pass neither and it keeps its own button, as it did when it
+ * stood in the header. Controlled mode hides the trigger, because a menu item
+ * and a button are two doors to one dialog and this app has been trimming
+ * exactly that (see `AccountMenu`).
+ */
+export function FeedbackButton({
+  open: openProp,
+  onOpenChange,
+}: {
+  open?: boolean
+  onOpenChange?: (o: boolean) => void
+} = {}) {
   const { data } = useJournal()
-  const [open, setOpen] = useState(false)
+  const [ownOpen, setOwnOpen] = useState(false)
+  const controlled = openProp !== undefined
+  const open = controlled ? openProp : ownOpen
+  const setOpen = (o: boolean) => (controlled ? onOpenChange?.(o) : setOwnOpen(o))
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('idea')
   const [message, setMessage] = useState('')
   const [contact, setContact] = useState('')
@@ -64,11 +83,13 @@ export function FeedbackButton() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
-      <DialogTrigger asChild>
+{!controlled && (
+            <DialogTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Send feedback" title="Send feedback">
           <Icon as={ChatCenteredDots} size="md" />
         </Button>
       </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         {status.kind === 'sent' ? (
           <>

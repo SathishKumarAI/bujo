@@ -49,13 +49,30 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  blocking = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /**
+   * Whether the backdrop swallows clicks meant for the page behind it.
+   *
+   * True for every dialog someone OPENED — they asked for it, and the page
+   * waiting is the point. False for one that opens ON ITS OWN, where the
+   * backdrop should dim without taking the page hostage: `modal={false}` on
+   * the root is not enough, because this overlay is our markup rather than
+   * Radix's, and `fixed inset-0` eats every click whatever the root says.
+   * Measured before it was added — a self-opening dialog reported
+   * "blocked by dialog" against a button two hundred pixels away from it.
+   *
+   * It matters beyond politeness: the browser gates drive real clicks and
+   * cannot dismiss a dialog they did not open, so a blocking surprise dialog
+   * is how `npm run a11y` starts failing on a page nobody touched.
+   */
+  blocking?: boolean
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay className={blocking ? undefined : 'pointer-events-none'} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

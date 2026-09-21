@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useJournal } from '../store'
 import { Page } from '../components/shell/Page'
 import { LeadingPrinciple } from '../components/mindset/LeadingPrinciple'
+import { PrincipleSpotlight } from '../components/mindset/PrincipleSpotlight'
 import { FocusSlots } from '../components/mindset/FocusSlots'
 import { PracticeBand } from '../components/mindset/PracticeBand'
 import { LibraryBar } from '../components/mindset/LibraryBar'
@@ -65,6 +66,17 @@ export function Mindset() {
     // override — the breakpoint one survives and reopens a 20px gap at ≥640px,
     // where the whole point of the bands is that the 2px rules do the dividing.
     <Page width="wide" className="gap-0 sm:gap-0">
+      {/* Opens once a day on top of the page it belongs to, rather than
+          replacing it — see the component for why it is deliberately not a
+          modal dialog. */}
+      <PrincipleSpotlight
+        principle={focus[0] ? principleById(focus[0].principleId) : undefined}
+        cue={focus[0]?.note}
+        today={today}
+        practisedToday={!!focus[0] && (log[focus[0].principleId] ?? []).includes(today)}
+        onPractise={() => focus[0] && toggleMindsetPractice(focus[0].principleId, today)}
+      />
+
       <LeadingPrinciple
         principle={focus[0] ? principleById(focus[0].principleId) : undefined}
         daysPracticed={focus[0] ? daysPracticed(log, focus[0].principleId) : 0}
