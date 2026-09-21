@@ -42,7 +42,7 @@ export function ImageUpload({
       {value ? (
         <div className="group relative overflow-hidden rounded-card border border-line">
           <img src={value} alt="" className="max-h-64 w-full rounded-card object-cover" />
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="reveal absolute top-2 right-2 flex gap-1">
             <button
               onClick={() => ref.current?.click()}
               aria-label="Replace photo"

@@ -126,7 +126,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
         <button
           onClick={() => deleteEntry(entry.id)} // the store raises the undo toast
           aria-label="Delete entry"
-          className="text-fg-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-red"
+          className="reveal text-fg-2 hover:text-red"
         >
           ×
         </button>

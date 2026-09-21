@@ -97,7 +97,7 @@ export function ProgressPhotos() {
               <button
                 onClick={() => removePhoto(p.id, p.photo)}
                 aria-label="Remove photo"
-                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-control bg-crust/85 text-fg-1 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red"
+                className="reveal absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-control bg-crust/85 text-fg-1 hover:text-red"
               >
                 <Icon as={X} size="sm" />
               </button>
