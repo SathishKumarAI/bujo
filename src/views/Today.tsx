@@ -16,7 +16,7 @@ import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
-import { MasonryGrid } from '../components/shell/CardGrid'
+import { CardGrid } from '../components/shell/CardGrid'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -149,18 +149,19 @@ function TodayFocused() {
 
       {lead}
 
-      {/* `MasonryGrid`, and the container query is checked rather than
-          assumed: this zone is the full page width (1,180px at `wide`), so its
-          `@3xl` (768px) fires and it gives two balanced columns. A `CardGrid`
-          here would align rows to the tallest card in each, which is how a
-          555px ratings card next to a 211px habit card leaves a 344px hole.
-          Masonry has no rows to align.
+      {/* `CardGrid`, and this flipped once on measurement.
+          With thirteen cards a `MasonryGrid` packed tighter (2,453px against
+          2,540px) and was the right call. Moving the five habit charts to
+          Insights left five cards of very unequal height, and CSS multi-column
+          cannot split an atomic 831px card: it put that one alone in a column
+          and the rest in the other, leaving a **620px hole**. Rows cannot do
+          that — they align, which wastes a little inside a row and nothing at
+          the end of one.
 
-          Its column-major order is the right order by accident and then on
-          purpose: the first half of the list fills the left column, so capture
-          (habits, ratings, writing) sits left and review (fasting, plan,
-          status) sits right. */}
-      <MasonryGrid className="mt-4 sm:mt-5">{rest}</MasonryGrid>
+          Measured on `?day=2026-09-22`: page 2,282 → 2,081px, biggest gap 620
+          → 131px. The right primitive depends on what is in it, so re-measure
+          when the card set changes rather than inheriting this choice. */}
+      <CardGrid className="mt-4 sm:mt-5">{rest}</CardGrid>
 
       {/* VISUALISATIONS, under everything that asks for input.
           Full width rather than in a column: its centrepiece is a 31-column
