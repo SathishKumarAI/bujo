@@ -36,7 +36,7 @@ import { ActivityLayout } from '../ActivityLayout'
 import { GridCardsLayout } from '../GridCardsLayout'
 import { HabitDetail } from '../trackers/HabitDetail'
 import { HabitEditor } from '../trackers/HabitEditor'
-import { TodayStrip } from '../trackers/TodayStrip'
+import { HabitRows } from '../trackers/HabitRows'
 import { RoutineTimeline } from '../trackers/RoutineTimeline'
 import { CategoryRows } from '../trackers/CategoryRows'
 import { TrackerVisuals } from '../trackers/TrackerVisuals'
@@ -224,7 +224,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
           subtitle="tap to mark the day"
           right={todaysHabits.length ? <span className="text-label text-fg-2">{todayDone}/{todaysHabits.length} done</span> : undefined}
         >
-          <TodayStrip habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
+          <HabitRows habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
           <DisclosureRow label="Add a habit">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <span className="text-label text-fg-2">Quick add:</span>
@@ -266,6 +266,42 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
       
       ) : undefined}
       zone3={slot === 'review' ? (<>
+
+      {/* Trends are no longer behind a fold. They were inside a section that
+          happened to default open, which is a fold you have not noticed yet —
+          and the same accordion pattern that hid Fitness's training calendar,
+          the single most useful thing on that page, for months. Zone 3 is where
+          recorded things belong, so they are simply here. */}
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        <MetricsTrendCard chartData={chartData} ym={ym} just={justMetric ?? null} />
+        <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
+      </div>
+
+      {/* The one *region* fold. `CollapsibleSection` rather than a second
+          `DisclosureRow`: the codebase distinguishes them deliberately — a
+          disclosure is a quiet row for optional form fields, a section folds a
+          whole titled region with card chrome. Zone 2 spends the page's single
+          DisclosureRow on "Add a habit". */}
+      {/* Folded by default, and the fold is remembered. `CollapsibleSection`'s
+          `defaultOpen` prop is documented "Deep-analytics groups default to
+          collapsed" and then defaults to `true`, so this section — five cards
+          and roughly 900px of them — opened on every visit despite being the
+          fifth thing on the page. The component default is left alone: it is
+          shared, and flipping it would silently close folds across the app.
+          `stickyKey` means a reader who wants these open only says so once,
+          the same bargain the Day/Week/Month control already makes.
+
+          Note for the next person: `npm run a11y` walks the rendered page, so
+          nothing in here is scanned while it is shut. It was re-run with the
+          section expanded for this change — keep doing that. */}
+      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns" defaultOpen={false} stickyKey="trackers.deepAnalytics">
+        {/* THE MONTH GRID, moved rather than deleted.
+            It listed every habit name a second time, directly under the rows
+            that already name them — the duplication reported on
+            `?day=2026-09-22` (Caffeine twice, Water 2L three times). But it is
+            the only way to backfill a Tuesday you missed, so deleting it would
+            trade a cosmetic complaint for a real loss. Folded, the page names
+            each habit once by default and the month is one click away. */}
       <Card band
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)}, tap a cell to mark the day`}
@@ -390,35 +426,6 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
         )}
 
       </Card>
-
-      {/* Trends are no longer behind a fold. They were inside a section that
-          happened to default open, which is a fold you have not noticed yet —
-          and the same accordion pattern that hid Fitness's training calendar,
-          the single most useful thing on that page, for months. Zone 3 is where
-          recorded things belong, so they are simply here. */}
-      <div className="grid items-start gap-5 lg:grid-cols-3">
-        <MetricsTrendCard chartData={chartData} ym={ym} just={justMetric ?? null} />
-        <CategoryConsistencyCard categories={CATEGORIES} habits={visibleHabits} data={data} />
-      </div>
-
-      {/* The one *region* fold. `CollapsibleSection` rather than a second
-          `DisclosureRow`: the codebase distinguishes them deliberately — a
-          disclosure is a quiet row for optional form fields, a section folds a
-          whole titled region with card chrome. Zone 2 spends the page's single
-          DisclosureRow on "Add a habit". */}
-      {/* Folded by default, and the fold is remembered. `CollapsibleSection`'s
-          `defaultOpen` prop is documented "Deep-analytics groups default to
-          collapsed" and then defaults to `true`, so this section — five cards
-          and roughly 900px of them — opened on every visit despite being the
-          fifth thing on the page. The component default is left alone: it is
-          shared, and flipping it would silently close folds across the app.
-          `stickyKey` means a reader who wants these open only says so once,
-          the same bargain the Day/Week/Month control already makes.
-
-          Note for the next person: `npm run a11y` walks the rendered page, so
-          nothing in here is scanned while it is shut. It was re-run with the
-          section expanded for this change — keep doing that. */}
-      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns" defaultOpen={false} stickyKey="trackers.deepAnalytics">
         <TrackerVisuals data={data} today={today} />
         <ArchivedHabits />
       </CollapsibleSection>
