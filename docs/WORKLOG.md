@@ -1,5 +1,79 @@
 # Worklog
 
+## 2026-09-21 (later) — One day on one page, and four gate races (#252–#260)
+
+**Summary:** Nine more PRs. The first four fixed the accessibility gate and
+then used it; the last five redesigned what it was looking at. The through-line
+is the same one the earlier entry found, one level up: **the things that were
+wrong had all been written down already** — in a comment, in a workaround, or
+in a measurement somebody took and then worked around rather than fixed.
+
+**What shipped:**
+
+- **#252 · COD-202.** `npm run a11y` aborted at the second view having scanned
+  zero. `BottomNav` shares `useHideOnScroll` with the header, so the phone's
+  only navigation slides away on scroll-down — and the gate scrolls constantly.
+  It measured the bar at **y 845 in an 844px viewport**: one pixel below the
+  fold, indistinguishable from a destination that no longer exists.
+
+- **#253 · `npm run space`.** Screens of scroll as shipped AND with every fold
+  open, cards, columns actually used, cards that are mostly air. Two numbers
+  because either alone is gameable. Fixed Pickleball (a local `Section` that
+  laid thirteen analytics cards out `flex-col`, each spanning 1,180px to hold
+  180px) and Gym (**eight folds, every one `defaultOpen={false}`** — 1.2 screens
+  shipped against 4.7 opened).
+
+- **#254 · Focus** logs by tapping, with your own projects and tags as chips,
+  read from tables the page already computed.
+
+- **#255–#257 · Mindset, Collections, the corner.** Slots 87px wide on a phone;
+  a spotlight that opens the day's principle once a day without trapping the
+  page; three corner controls became one menu (**phones had no way to send
+  feedback at all**); and text that sat against the divider rule in every column
+  but the first, because two files hand-rolled `BandCell` and copied half its
+  padding.
+
+- **#258–#259 · The gate again.** See below.
+
+- **#260 · Today is one page.** Four surfaces, habits captured in **four**
+  places, "Habits with a number" rendered verbatim on two of them. 2.7 screens
+  shipped against roughly 5.7 across four tab visits.
+
+**Four gate races, one shape.** `go()`, `scanReceipt()`, `setTheme()` and
+`scan()` each read a browser state before waiting for it, and each read "not
+yet" as "not ever". All four passed on a warm local machine and failed on a
+cold CI runner, which is why each looked newly broken. The receipt one is the
+sharpest: it navigated to a bare `?view=today`, so the surface came from
+`surfaceForHour(new Date().getHours())` — **the gate could only pass between
+11:00 and 18:00**, and CI ran at 18:09 UTC.
+
+**Process learned, and this is the entry's real content:**
+
+- **When a gate's red is wrong, add evidence to the failure, not another
+  hypothesis.** COD-202 taught this in the morning. I wrote it into `CLAUDE.md`,
+  then spent three more cycles guessing at the `[Settings] rendered 0
+  characters` failure before adding the dump that answered it in one run. The
+  gate had **no error capture at all** — no `pageerror`, no console, no failed
+  requests — which is exactly what made three rounds of guessing possible.
+- **A single `waitForFunction` is not a wait.** It throws when the page
+  navigates mid-wait, and the `.catch` protecting the diagnostic path swallows
+  it — so the fix produced the very `0 characters` it was added to prevent.
+  Poll instead.
+- **Read the comment before overriding the decision.** Twice today the existing
+  code had already measured the thing I was about to "fix": Coaching's stacked
+  layout (act column 1676px against a review of 238px) and Plan's weekday bars
+  (rescaling an 8-point spread to full height would lie). Both were right.
+- **Screenshot it.** The rating-scale redesign saved nothing on its first pass —
+  577 → 574px — and the picture showed why: segments stretched to ~70px across
+  an 800px column. Capping the width is what paid.
+- **A number over budget is a question.** Four of the eight pages over three
+  desktop screens are deliberately that long.
+
+**Open:** COD-211 (the blank boot, instrumented not fixed), COD-208 (a crash in
+`scan()` still escapes before the summary prints), `pullups` and `nofap`
+unexamined, `insights` at 11.9 phone screens needing cards cut rather than
+packed.
+
 ## 2026-09-21 — Nineteen PRs, and the gate that could not report (#234–#252)
 
 **Summary:** A long session driven by page-by-page asks — redesign Account and

@@ -1,96 +1,81 @@
 # STATUS
 
-**Stopped:** 2026-09-21, on `refactor/pickleball-space` (stacked on
-`fix/a11y-gate-hide-on-scroll`, PR #252). COD-202 closed; `npm run a11y` green
-at 194 rows. New: `npm run space`, a measured answer to "this page feels empty".
+**Stopped:** 2026-09-21, on `main`, clean, nothing open. **Nine PRs merged
+this stretch (#252–#260)**, and `main`'s a11y workflow is green on two
+consecutive runs after three red merges.
 
-## `npm run space` — the layout audit
+## Where the app is
 
-`npm run space -- <view> | --all` prints, per viewport: screens of scroll **as
-shipped and with every fold opened**, card count and groups, how many columns
-the layout *actually uses*, and any card whose box is mostly air.
+Today is **one page**. It was four surfaces behind a tab row — morning, day,
+evening, habits — and the split was paid for in duplication the code had
+already stopped fighting: habits were captured in **four** places, and
+`surfaceUntouched` declines to count them at all because "they render on Day
+*and* Evening". The order is now capture → review → visualisations, which is
+what the page is for: **capture used to be a tab away**, so at 7am writing a
+line began with choosing a surface.
 
-Both scroll numbers, because either alone is gameable. Measure only the opened
-page and a disclosure looks worthless — fold four optional fields away and the
-page is shorter for every user while the tool reports no change. Measure only
-the shipped page and hiding content scores well, which is the trap `a11y`
-already documents.
+`npm run space -- <view> | --all` measures any page: screens of scroll as
+shipped AND with every fold open, cards, how many columns the layout actually
+uses, and cards whose box is mostly air. Two scroll numbers because either
+alone is gameable — measuring only the opened page punishes a disclosure for
+existing; measuring only the shipped page rewards hiding content.
 
-### The eight pages over three desktop screens
+## The one thing that is instrumented, not fixed
 
-Two were real layout bugs and are fixed. **The rest are mostly deliberate, and
-the audit's value was telling them apart** — a number over budget is a question,
-not a verdict.
+**An intermittent blank boot on `?view=settings` in CI.** The document renders
+nothing — `body says: ""`, right url, no dialogs — and it never reproduced
+locally. Filed as **COD-211**.
 
-| View | desktop shipped · open | Verdict |
-|---|---|---|
-| `help` | 4.3 · 10.8 | **By design.** A catalogue of 24 features in 7 groups; 4.3 is what you actually meet |
-| `coaching` | 2.2 · 7.4 | **By design, and measured.** The file documents why it is `stacked`: act column 1676px against a review of 238px, and "no allocation of two columns balances one tall thing and two short ones" |
-| `insights` | 6.8 · 6.8 | **Large, not broken.** 31 cards over 4 columns since it absorbed Stats (#236). Shortening it is a product call |
-| `pullups` | 1.9 · 5.6 | Not looked at. Already 3 columns, so this is volume |
-| `mindset` | 4.8 · 4.8 | **By design.** Full-width bands divided by 2px rules, then a searchable principle library — the length *is* the library, and it has search and filter |
-| `nofap` | 1.8 · 4.7 | Not looked at. 3 columns already |
-| `pickleball` | 4.1 · 5.0 → **3.5 · 4.7** | Fixed |
-| `gym` | 1.2 · 4.7 → **1.9 · 3.7** | Fixed |
+Three fixes treated it as a timing race and each held locally and died on CI.
+Two theories were measured and disproven: the lazy chunk is not slow (8x CPU
+throttle: `main` goes 12 → 319 characters in ~500ms) and the missing `?demo=1`
+on the companions URL renders fine (319–31,655 characters).
 
-### Pickleball — a component that stacked
+The gate now captures `pageerror`, console errors and failed JS/CSS requests
+and prints them at the point of failure, and reloads once **loudly**. It had no
+error capture at all, which is exactly why three rounds of guessing were
+possible. The next occurrence names its own cause.
 
-`components/pickleball/Section` laid its children out `flex-col`, so thirteen
-analytics cards each spanned 1,180px to hold about 180px. It was also a
-near-duplicate of `CollapsibleSection` (the view's own comment said so) without
-`stickyKey`, so its fold state did not survive a reload. Deleting it was the
-layout fix and the bug fix at once.
+## Traps earned today, all in CLAUDE.md
 
-Then: "At a glance" moved from the **last** card to the first; Competition &
-rating gathered the occasional logging out of the daily loop; two groups
-answering one question became one; three subtitles that listed the cards
-underneath them went.
-
-The log form is now tap-to-log — `ChipPick`/`Stepper`, with Partner and Location
-chips read from `partnerStats`/`venueStats` **sorted by how often you play**, so
-they are your real partners and courts. Verified end to end: a session logs with
-**zero keystrokes**. It cost 0.4 screens, bought back with `SPAN_2` and a
-`DisclosureRow` around the half you fill less than half the time.
-
-### Gym — eight folds, every one shut
-
-Every `QuietSection` passed `defaultOpen={false}`, so the page measured **1.2
-screens shipped against 4.7 opened**: nearly everything was behind one of eight
-identical grey bars, with no clue which held your squat PR. Eight groups are now
-three, merged by the question each answers, and the payoff group opens.
-
-**The first attempt packed nothing**, and the tool caught it. `MasonryGrid`
-breaks on its *container* (`@3xl` = 768px) and Gym's review zone is **722px** —
-46px short, so all three groups resolved to one column. `CardGrid` breaks on the
-viewport, which is the right question when the column width is decided by the
-page split. This is the second page that trap has bitten; it is in `CLAUDE.md`.
+- **Every browser-gate assertion needs a wait in front of it.** Four in one day:
+  navigation (COD-202), a receipt check that could only pass between 11:00 and
+  18:00, the theme attribute, and the view render. Each read "not yet" as "not
+  ever", each passed on a warm machine and failed on a cold runner.
+  `waitUntil: 'networkidle'` is not "the app is ready".
+- **`waitForFunction` dies with the execution context.** It throws when the page
+  navigates mid-wait, and a `.catch` that protects the diagnostic path swallows
+  it. Poll instead — a destroyed context is then one wasted iteration, not a
+  verdict.
+- **Do not `npm run build` while `npm run a11y` runs.** The preview server
+  serves the half-written `dist` and the gate reports a view that "did not
+  load".
+- **`MasonryGrid` in a zone under 768px silently does nothing** — it queries its
+  container (`@3xl`), and Gym's review zone is 722px. Second page it has bitten.
+- **An element cannot query itself.** `@2xl/band:` on `BandRow`, which IS the
+  `@container/band`, emitted no CSS and collapsed desktop to one column with
+  nothing failing.
+- **A number over budget is a question, not a verdict.** Four of the eight pages
+  over three screens are deliberately that long and two say so in the file with
+  the measurements that decided it.
 
 ## Next, in the order I would take it
 
-1. `pullups` (5.6) and `nofap` (4.7) are unexamined — run `npm run space` and
-   the `space-audit` skill on them.
-2. `insights` at 6.8 desktop / **11.9 phone** is the largest page in the app.
-   Shortening it means cutting cards, which is a product decision.
-3. `NoFap.logUrge` still has no guard beyond a 3s double-tap window.
-4. Focus has 6 typed-number fields, Goals 3 — the `quickpick` conversion that
-   Pickleball just had.
-5. **COD-208**: a crash inside the a11y gate's `scan()` escapes and the summary
-   table never prints, so a reader cannot tell whether it checked nothing or
-   everything.
+1. **COD-211** — the blank boot. The diagnostics are in; the next red run should
+   name the cause rather than cost another three cycles.
+2. **COD-208** — a crash inside the gate's `scan()` still escapes before the
+   summary table prints, so that red cannot say how much was checked.
+3. `pullups` (5.6 open) and `nofap` (4.7) are unexamined. Both are collapsed
+   reference content at 1.9 and 1.8 shipped, so they may be working as intended
+   — run `npm run space` and the `space-audit` skill before touching them.
+4. `insights` is 6.8 desktop / **11.9 phone**, the largest page in the app.
+   Shortening it means cutting cards: a product decision.
+5. `NoFap.logUrge` still has no guard beyond a 3s double-tap window.
+6. Two `Stepper` components exist (`fields/` and `ui/quickpick`), and two
+   disclosure primitives. Worth one consolidation pass.
 
-## Traps worth the next session's time
+## Numbers worth not misreading
 
-- **Do not run `npm run build` while `npm run a11y` is running.** The preview
-  server serves the half-written `dist` and the gate reports
-  `[Plan] rendered 0 characters — the view did not load`, which looks exactly
-  like a real regression. Cost one confused re-run this session.
-- **A number over budget is a question, not a verdict.** Four of the eight pages
-  over three screens are deliberately that long, and two of them say so in the
-  file with the measurements that decided it. Read the view before "fixing" it.
-- **`git stash push -- <path>` fails on a path you have `git rm`'d** — the
-  pathspec matches nothing git knows about. Copy the file aside and
-  `git checkout HEAD --` instead.
-- **A generated doc with no gate is a stale doc.** `docs/FEATURE-REFERENCE.md`
-  still described Tracking and Stats, both retired. `npm run manual &&
-  git diff --exit-code` in CI would close it.
-- **`MasonryGrid` is a container query**, and 722 < 768. Twice now.
+`npm run a11y` reports **166 rows, down from 194**. That is the four-surface
+walk collapsing into one scan per theme and viewport — same coverage, fewer
+pages. It is not lost checks.
