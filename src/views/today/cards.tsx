@@ -10,6 +10,7 @@ import { EntryRow } from '../../components/EntryRow'
 import { ImageUpload } from '../../components/ImageUpload'
 import { Field } from '../../components/fields/Field'
 import { Stepper } from '../../components/fields/Stepper'
+import { ChipPick } from '../../components/ui/quickpick'
 import { SegmentScale } from '../../components/fields/SegmentScale'
 import { currentStreak } from '../../lib/stats'
 import { cat, onRaised } from '../../lib/colors'
@@ -271,18 +272,29 @@ export function WellbeingCard({ date }: { date: string }) {
         <SegmentScale label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
         <SegmentScale label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
         <SegmentScale label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />
-        <div>
-          <p className="mb-1 text-body text-fg-1">Hours slept</p>
-          <Stepper
-            value={metric?.sleep}
-            onChange={(v) => setMetric(date, { sleep: v })}
-            step={0.5}
-            min={0}
-            max={24}
-            suffix="h"
-            aria-label="Hours slept"
-          />
-        </div>
+        {/* TAP, DON'T TYPE — the same rule the rest of the day's capture now
+            follows. A night's sleep is one of about six numbers; a stepper
+            asked for up to sixteen taps to say "seven and a half". The chips
+            cover the common answers in one, and the stepper stays beside them
+            for the 4am night and the half hours. */}
+        <ChipPick
+          label="Hours slept"
+          tone="teal"
+          value={metric?.sleep ?? null}
+          onChange={(v) => setMetric(date, { sleep: v })}
+          options={[5, 6, 7, 8, 9].map((h) => ({ value: h, label: `${h}h` }))}
+          after={
+            <Stepper
+              value={metric?.sleep}
+              onChange={(v) => setMetric(date, { sleep: v })}
+              step={0.5}
+              min={0}
+              max={24}
+              suffix="h"
+              aria-label="Hours slept, any value"
+            />
+          }
+        />
       </div>
       <div className="mt-4 border-t border-line pt-3">
         <p className="mb-2 text-body text-fg-1">What broke your fast</p>

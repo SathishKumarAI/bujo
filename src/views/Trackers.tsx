@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 
 /**
@@ -18,14 +17,14 @@ import { useNav } from '../components/shell/nav'
  * is a lot of churn to avoid one redirect — and every one of them would still
  * be pointing at the same content.
  *
- * So: land on Today, on the habits surface, and leave the links alone.
+ * So: land on Today and leave the links alone. It used to also select the
+ * habits surface; Today is one page now and the habit grid is on it, so there
+ * is no surface to choose.
  */
 export function Trackers() {
   const nav = useNav()
-  const { setSurface } = useCursor()
   useEffect(() => {
-    setSurface('habits')
     nav('today')
-  }, [nav, setSurface])
+  }, [nav])
   return null
 }

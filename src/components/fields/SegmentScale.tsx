@@ -56,18 +56,35 @@ export function SegmentScale({
    */
   const scaleId = `${reactId}-label`
 
+  /**
+   * The hint carries both end-anchors in one string ("0 low · 10 great"), and
+   * a line of its own under every scale. Split, it becomes the two words at
+   * the ends of the track where they belong — which is one fewer text line per
+   * scale, and three fewer in the wellbeing card. Anything that does not split
+   * cleanly in two is left exactly as it was, below the track.
+   */
+  const parts = hint?.split('·').map((t) => t.trim().replace(/^\d+\s*/, '')) ?? []
+  const anchors = parts.length === 2 ? parts : null
+
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-body">
-        <span id={scaleId} className="text-fg-1">{label}</span>
-        <span className="rounded px-1.5 font-mono tabular-nums" style={{ color: unset ? undefined : accent }}>
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span id={scaleId} className="text-body text-fg-1">{label}</span>
+        {/* The value is the thing you are setting, so it is the biggest thing
+            in the row rather than a footnote beside the label. Unset stays a
+            quiet em dash — the null state this control exists to tell the
+            truth about. */}
+        <span
+          className="num text-title leading-none tabular-nums transition-colors"
+          style={{ color: unset ? cat('overlay0') : accent }}
+        >
           {value ?? '—'}
         </span>
       </div>
       <div
         role="radiogroup"
         aria-labelledby={scaleId}
-        className="flex w-full items-center justify-between"
+        className="flex w-full items-center gap-[2px]"
       >
         {dots.map((n) => {
           const on = !unset && n <= value
@@ -94,26 +111,44 @@ export function SegmentScale({
               }}
               onClick={() => onChange(n)}
               className={cn(
-                'grid min-h-11 flex-1 place-items-center rounded-control',
+                'group/seg grid min-h-11 flex-1 place-items-center rounded-[3px]',
                 'focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none',
               )}
             >
+              {/* ONE TRACK, NOT ELEVEN DOTS.
+                  Twelve-pixel dots adrift in 44px targets read as scattered
+                  punctuation rather than a scale, and the filled run — the
+                  thing the control is actually saying — was a dotted line you
+                  had to count. Segments that nearly touch make the run a solid
+                  bar you read at a glance, while the 44px target above them is
+                  untouched: the box does the tapping, this does the looking.
+                  The picked segment stands taller so an eight still reads as
+                  "eight", not "somewhere up there". */}
               <span
                 aria-hidden
-                className="block size-3 rounded-pill border transition-colors"
+                className={cn(
+                  'block w-full rounded-[3px] transition-all duration-150',
+                  exact ? 'h-3.5' : 'h-2',
+                  'group-hover/seg:h-3.5 motion-reduce:transition-none',
+                )}
                 style={{
-                  borderColor: on ? accent : cat('surface1'),
-                  background: on ? accent : 'transparent',
-                  // The dot you actually picked is the wide one, so a filled
-                  // run of eight still says "eight", not "somewhere up there".
-                  boxShadow: exact ? `0 0 0 3px ${accent}33` : undefined,
+                  background: on ? accent : cat('surface1'),
+                  opacity: on ? (exact ? 1 : 0.85) : 1,
+                  boxShadow: exact ? `0 0 0 2px ${accent}33` : undefined,
                 }}
               />
             </button>
           )
         })}
       </div>
-      {hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>}
+      {anchors ? (
+        <div className="mt-1 flex justify-between text-micro text-fg-3">
+          <span>{anchors[0]}</span>
+          <span>{anchors[1]}</span>
+        </div>
+      ) : (
+        hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>
+      )}
     </div>
   )
 }

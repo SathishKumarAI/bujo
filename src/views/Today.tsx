@@ -53,82 +53,81 @@ export function Today() {
  * the end of Day's rail and not the end of Day's main: on a phone it has to
  * land last, and it is read-only status, which is rail material anyway.
  */
-function surfaceColumns(date: string, nav: ReturnType<typeof useNav>) {
+/**
+ * ONE DAY, ONE PAGE — capture first, then what it adds up to.
+ *
+ * This was four surfaces behind a tab row: morning, day, evening and habits.
+ * The split had a real argument, written in this file for a year — at 7am you
+ * want to rate your sleep, at 10pm the capture box is the only thing that
+ * matters — and it was paid for in duplication the code had already stopped
+ * fighting:
+ *
+ * | Rendered | morning | day | evening | habits |
+ * |---|---|---|---|---|
+ * | `TodayHabits` | — | as a row | as a checklist | — |
+ * | `TodayCountHabits` | — | in the rail | in the main column | — |
+ * | the habit grid | — | — | — | the whole page |
+ *
+ * Habits were on three of the four, and "Habits with a number" rendered
+ * verbatim on two. `surfaceUntouched` declines to count habits at all for that
+ * exact reason — *"they render on Day and Evening, so attributing them to
+ * either would clear the other tab's marker"* — which is a workaround for the
+ * duplication, not a design.
+ *
+ * And the split cost the one thing this page exists for. **Capture was a tab
+ * away**: at 7am the rapid log was not on screen, so writing a line began with
+ * deciding which surface it lived on. A page you scroll costs a scroll; a page
+ * you tab costs a decision.
+ *
+ * One page now, in the order the day is used:
+ *
+ * 1. **Orient** — the dateline, nothing else asking for attention.
+ * 2. **Capture** — the log, the habits, the ratings, the writing. Everything
+ *    that takes input sits above everything that reports.
+ * 3. **Review** — what is planned, what is at risk, where you stand.
+ *
+ * Habits appear ONCE. The checklist variant won because it is the only one
+ * that shows every habit with its state — the old Day row and the old Evening
+ * checklist were each doing half of that.
+ */
+function todayColumns(date: string, nav: ReturnType<typeof useNav>) {
   return {
-    morning: {
-      // Four taps and it is done: rate the day, say what broke the fast, start
-      // the clock, then read what is already planned.
-      main: <WellbeingCard key={date} date={date} />,
-      rail: (
-        <>
-          {!isFutureDay(date) && <FastingCard />}
-          <TodayPlanCard date={date} />
-        </>
-      ),
-    },
-    day: {
-      // The rapid log and the row you tick against it. Everything that merely
-      // *reports* moves to the rail, because this surface exists so that
-      // writing a line is the only thing asking for attention.
-      main: (
-        <>
-          <DayLogCard date={date} sticky />
-          <TodayHabits date={date} variant="row" />
-        </>
-      ),
-      rail: (
-        <>
-          <TodayCountHabits date={date} />
-          <AtRiskNudge date={date} />
-          <StatusStrip date={date} onNavigate={nav} />
-        </>
-      ),
-    },
-    evening: {
-      // The close-out is "walk the list once", so the list has to be the whole
-      // list. The checklist renders a checkbox and therefore only holds `check`
-      // habits; the numeric ones come with it rather than living on a
-      // different surface.
-      main: (
-        <>
-          <TodayHabits date={date} variant="checklist" />
-          <TodayCountHabits date={date} />
-        </>
-      ),
-      rail: <WritingCard key={date} date={date} />,
-    },
+    // ── CAPTURE ─────────────────────────────────────────────────────────
+    // Ordered by how often a day needs them rather than by the clock. The log
+    // is first because it is what you open this page at 3pm to do.
+    main: (
+      <>
+        <DayLogCard date={date} sticky />
+        {/* ONE habit control, not three.
+            `TodayStrip` (inside this card) is the only one that takes BOTH
+            check and count habits, with steppers — so it does the work the old
+            Day row, the old Evening checklist and `TodayCountHabits` were
+            splitting between them. `TodayHabits` stays in the codebase for the
+            classic layout, which still groups by time of day. */}
+        <HabitsSurface slot="capture" />
+        <WellbeingCard key={date} date={date} />
+        <WritingCard key={`w-${date}`} date={date} />
+      </>
+    ),
+    // ── REVIEW ──────────────────────────────────────────────────────────
+    // Everything that reports rather than asks. Fasting leads it: starting the
+    // clock is one tap, and reading it is the rest of the day.
+    rail: (
+      <>
+        {!isFutureDay(date) && <FastingCard />}
+        <TodayPlanCard date={date} />
+        <AtRiskNudge date={date} />
+        <StatusStrip date={date} onNavigate={nav} />
+      </>
+    ),
   }
 }
 
 function TodayFocused() {
-  const { day: date, surface } = useCursor()
+  const { day: date } = useCursor()
   const nav = useNav()
 
-  /**
-   * The habits surface is its own page shape, not a column pair.
-   *
-   * It is the whole of what was `Body → Tracking`, and its centrepiece is a
-   * 31-column month grid needing ~910px. Rendered into this view's 62/38 split
-   * it would gain a horizontal scrollbar that hides the last week of the month
-   * — the surface's entire subject. So it gets `PageLayout stacked`, which is
-   * exactly what the Trackers page used before the move.
-   *
-   * The hook runs unconditionally, above the branch: it owns state, and
-   * calling it only on one surface would break the rules of hooks the moment
-   * you switched tabs.
-   */
-  if (surface === 'habits') {
-    return (
-      <>
-        <Page width="wide" className="gap-0 sm:gap-0">
-          <DayHeader date={date} />
-        </Page>
-        <HabitsSurface />
-      </>
-    )
-  }
-
-  const { main, rail } = surfaceColumns(date, nav)[surface]
+  const { main, rail } = todayColumns(date, nav)
 
   return (
     // `wide`, not `read`: with a rail beside it the reading column still lands
@@ -159,6 +158,14 @@ function TodayFocused() {
         <div className="flex min-w-0 flex-col">{main}</div>
         <aside className="flex flex-col">{rail}</aside>
       </div>
+
+      {/* VISUALISATIONS, under everything that asks for input.
+          Full width rather than in a column: its centrepiece is a 31-column
+          month grid wanting ~910px, and the 62/38 split would give it ~730 and
+          a horizontal scrollbar over the last week of the month — the part you
+          most want to see. This is why the habits surface was a separate page
+          shape; below the split it gets the width without the separation. */}
+      <HabitsSurface slot="review" />
     </Page>
   )
 }
