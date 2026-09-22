@@ -103,7 +103,7 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
  * handing three zones back to a caller that immediately passes them to
  * `PageLayout` was indirection with no reader.
  */
-export function HabitsSurface() {
+export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   const { data, toggleHabit, setHabitValue, addHabit, setSettings, updateHabit } = useJournal()
 
   /** Drag-reorder within a category: rewrite `order` to the new sequence. */
@@ -199,10 +199,16 @@ export function HabitsSurface() {
 
   return (
     <>
+    {/* ONE COMPONENT, TWO SLOTS.
+
+        Today places the capture card in its act column and this review block
+        full-width below it, so the habit grid keeps the ~910px it needs while
+        the thing you tap sits with the rest of the day's input. Two instances
+        render disjoint halves; neither draws the other's chrome. */}
     <PageLayout
       tier={1180}
       stacked
-      zone1={hasHabits ? (
+      zone1={slot === 'review' ? (hasHabits ? (
         <StatBar
           facts={[
             { label: 'today done', value: `${sum.todayPct}%` },
@@ -210,8 +216,9 @@ export function HabitsSurface() {
             { label: 'avg consistency', value: `${sum.avgConsistency}%` },
           ]}
         />
-      ) : undefined}
-      zone2={
+      ) : undefined) : undefined}
+      zone2={slot === 'capture' ? (
+
         <Card band
           title="Today"
           subtitle="tap to mark the day"
@@ -256,8 +263,9 @@ export function HabitsSurface() {
             </div>
           </DisclosureRow>
         </Card>
-      }
-      zone3={<>
+      
+      ) : undefined}
+      zone3={slot === 'review' ? (<>
       <Card band
         title="Habit & intake tracker"
         subtitle={`${prettyMonth(ym)}, tap a cell to mark the day`}
@@ -414,7 +422,7 @@ export function HabitsSurface() {
         <TrackerVisuals data={data} today={today} />
         <ArchivedHabits />
       </CollapsibleSection>
-      </>}
+      </>) : undefined}
     />
 
     {/* Overlays, not page content — siblings of the zones rather than inside

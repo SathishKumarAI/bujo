@@ -99,7 +99,6 @@ const VIEWS = [
 // surface, so it is scanned here rather than as a tab that no longer exists.
 // Dropping it from VIEWS without adding it here would have been the exact
 // move this file's own error message warns against.
-const SURFACES = ['Morning', 'Day', 'Evening', 'Habits']
 
 /**
  * COMPANIONS · views with no tab of their own.
@@ -701,13 +700,12 @@ for (const vp of VIEWPORTS) {
       const label = tab ? `${section} · ${tab}` : section
       await scan(label)
 
-      // Today is three screens behind one name.
-      if (section === 'Today') {
-        for (const s of SURFACES) {
-          await goOrDie(s, 'no surface control with that name on Today.')
-          await scan(`Today · ${s}`)
-        }
-      }
+      // Today used to be four screens behind one name — morning, day, evening
+      // and habits, each a tab this loop clicked and scanned. They are one page
+      // now, so the single `scan` above covers what four passes used to, and
+      // there is no surface control left to click. The fold-opening inside
+      // `scan` is what reaches the deep-analytics section that used to be the
+      // habits surface's own.
     }
 
     // Companion views, reached by URL because they have no tab to click.
