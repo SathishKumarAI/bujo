@@ -16,6 +16,7 @@ import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
+import { MasonryGrid } from '../components/shell/CardGrid'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -90,43 +91,28 @@ export function Today() {
  * that shows every habit with its state — the old Day row and the old Evening
  * checklist were each doing half of that.
  */
-function todayColumns(date: string, nav: ReturnType<typeof useNav>) {
+function todayCards(date: string, nav: ReturnType<typeof useNav>) {
   return {
-    // ── CAPTURE ─────────────────────────────────────────────────────────
-    // Ordered by how often a day needs them rather than by the clock. The log
-    // is first because it is what you open this page at 3pm to do.
-    main: (
-      <>
-        <DayLogCard date={date} sticky />
-        {/* ONE habit control, not three.
-            `TodayStrip` (inside this card) is the only one that takes BOTH
-            check and count habits, with steppers — so it does the work the old
-            Day row, the old Evening checklist and `TodayCountHabits` were
-            splitting between them. `TodayHabits` stays in the codebase for the
-            classic layout, which still groups by time of day. */}
-        <HabitsSurface slot="capture" />
-        <WellbeingCard key={date} date={date} />
-        <WritingCard key={`w-${date}`} date={date} />
-      </>
-    ),
-    // ── REVIEW ──────────────────────────────────────────────────────────
-    // Everything that reports rather than asks. Fasting leads it: starting the
-    // clock is one tap, and reading it is the rest of the day.
-    rail: (
-      <>
-        {!isFutureDay(date) && <FastingCard />}
-        {/* `AtRiskNudge` used to sit between these two and said the same thing
-            `TodayPlanCard` says at the top of itself — "Your 6-day Water 2L
-            streak is at risk" immediately above "Keep your streaks · Water 2L
-            · keep your 6-day streak". One fact, two cards, stacked, which is
-            the same duplication the four surfaces were built on. The plan
-            card's banner wins: it is higher, it carries the tap that fixes the
-            thing, and the habit strip it sends you to is now on this page
-            rather than a tab away. */}
-        <TodayPlanCard date={date} />
-        <StatusStrip date={date} onNavigate={nav} />
-      </>
-    ),
+    // The log is the page's one primary action and the widest thing on it, so
+    // it spans the row rather than sharing it.
+    lead: <DayLogCard date={date} sticky />,
+    // Everything else PACKS. It used to be hand-assigned to a fixed 62/38
+    // split, and the split does not know what is in it: on a future day
+    // `FastingCard` is hidden, leaving **1,025px of empty rail** against a
+    // 1,406px main column — measured — and 595px of it even on today. Two
+    // columns that fill themselves cannot strand a column, because nothing is
+    // promised to either one.
+    //
+    // Capture still leads: the grid fills left-to-right, so habits and the
+    // ratings land above the plan and the status strip.
+    rest: [
+      <HabitsSurface key="habits" slot="capture" />,
+      <WellbeingCard key={`w-${date}`} date={date} />,
+      <WritingCard key={`x-${date}`} date={date} />,
+      ...(isFutureDay(date) ? [] : [<FastingCard key="fast" />]),
+      <TodayPlanCard key="plan" date={date} />,
+      <StatusStrip key="status" date={date} onNavigate={nav} />,
+    ],
   }
 }
 
@@ -134,7 +120,7 @@ function TodayFocused() {
   const { day: date } = useCursor()
   const nav = useNav()
 
-  const { main, rail } = todayColumns(date, nav)
+  const { lead, rest } = todayCards(date, nav)
 
   return (
     // `wide`, not `read`: with a rail beside it the reading column still lands
@@ -161,10 +147,20 @@ function TodayFocused() {
           is a grid here instead. */}
       <DayHeader date={date} />
 
-      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="flex min-w-0 flex-col">{main}</div>
-        <aside className="flex flex-col">{rail}</aside>
-      </div>
+      {lead}
+
+      {/* `MasonryGrid`, and the container query is checked rather than
+          assumed: this zone is the full page width (1,180px at `wide`), so its
+          `@3xl` (768px) fires and it gives two balanced columns. A `CardGrid`
+          here would align rows to the tallest card in each, which is how a
+          555px ratings card next to a 211px habit card leaves a 344px hole.
+          Masonry has no rows to align.
+
+          Its column-major order is the right order by accident and then on
+          purpose: the first half of the list fills the left column, so capture
+          (habits, ratings, writing) sits left and review (fasting, plan,
+          status) sits right. */}
+      <MasonryGrid className="mt-4 sm:mt-5">{rest}</MasonryGrid>
 
       {/* VISUALISATIONS, under everything that asks for input.
           Full width rather than in a column: its centrepiece is a 31-column
