@@ -115,8 +115,15 @@ function todayColumns(date: string, nav: ReturnType<typeof useNav>) {
     rail: (
       <>
         {!isFutureDay(date) && <FastingCard />}
+        {/* `AtRiskNudge` used to sit between these two and said the same thing
+            `TodayPlanCard` says at the top of itself — "Your 6-day Water 2L
+            streak is at risk" immediately above "Keep your streaks · Water 2L
+            · keep your 6-day streak". One fact, two cards, stacked, which is
+            the same duplication the four surfaces were built on. The plan
+            card's banner wins: it is higher, it carries the tap that fixes the
+            thing, and the habit strip it sends you to is now on this page
+            rather than a tab away. */}
         <TodayPlanCard date={date} />
-        <AtRiskNudge date={date} />
         <StatusStrip date={date} onNavigate={nav} />
       </>
     ),
