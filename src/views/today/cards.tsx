@@ -268,7 +268,7 @@ export function WellbeingCard({ date }: { date: string }) {
 
   return (
     <Card band title="How is today going?" hideInfo>
-      <div className="space-y-4">
+      <div className="space-y-3">
         <SegmentScale label="Mood" value={metric?.mood} onChange={(v) => setMetric(date, { mood: v })} color="green" hint="0 low · 10 great" />
         <SegmentScale label="Stress" value={metric?.stress} onChange={(v) => setMetric(date, { stress: v })} color="red" hint="0 calm · 10 high" />
         <SegmentScale label="Energy" value={metric?.energy} onChange={(v) => setMetric(date, { energy: v })} color="peach" hint="0 drained · 10 energized" />

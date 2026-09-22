@@ -68,14 +68,21 @@ export function SegmentScale({
 
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+      {/* The scale is capped, not stretched.
+          Full-column width put each of the eleven segments at ~70px and threw
+          the two anchor words 800px apart, which reads as a stretched bar
+          rather than a rating. Capped, the segments are chunky, the run is
+          legible at a glance and the anchors sit close enough to read as a
+          pair. */}
+      <div className="max-w-[26rem]">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
         <span id={scaleId} className="text-body text-fg-1">{label}</span>
         {/* The value is the thing you are setting, so it is the biggest thing
             in the row rather than a footnote beside the label. Unset stays a
             quiet em dash — the null state this control exists to tell the
             truth about. */}
         <span
-          className="num text-title leading-none tabular-nums transition-colors"
+          className="num text-heading leading-none tabular-nums transition-colors"
           style={{ color: unset ? cat('overlay0') : accent }}
         >
           {value ?? '—'}
@@ -149,6 +156,7 @@ export function SegmentScale({
       ) : (
         hint && <p className="mt-0.5 text-label text-fg-2">{hint}</p>
       )}
+      </div>
     </div>
   )
 }
