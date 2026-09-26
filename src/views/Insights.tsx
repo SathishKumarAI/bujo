@@ -2,6 +2,8 @@ import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning, X
 import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
+import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
+import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat, onRaised } from '../lib/colors'
@@ -14,7 +16,7 @@ import { PageLayout, StatBar } from '../components/page'
 import { MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
-import { prettyDay } from '../lib/date'
+import { prettyDay, todayISO} from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
 import { StatsPanels } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
@@ -348,6 +350,25 @@ export function Insights() {
       {/* Every chart the app has. This was the Stats tab; the markup is
           unchanged and each block is gated on the same filter. */}
       <StatsPanels show={show} />
+
+      {/* HABIT ANALYTICS, migrated from Today.
+          These five — completion heatmap, streak leaderboard, monthly trend,
+          best weekdays, perfect days — sat in a fold on the capture page,
+          where they were both out of place and overlapping what this page
+          already says (Activity, Month over month, Best & worst day). Moved
+          rather than deleted: the overlap with Insights' own cards is real and
+          wants a consolidation pass of its own, and deleting a chart on the
+          suspicion that a different chart covers it is how a feature goes
+          quiet. Today keeps the month grid, which is a backfill tool, not a
+          chart. */}
+      <CollapsibleSection
+        title="Habits"
+        subtitle="heatmap, streaks, trend & perfect days"
+        defaultOpen={false}
+        stickyKey="insights.habits"
+      >
+        <TrackerVisuals data={data} today={todayISO()} />
+      </CollapsibleSection>
 
       <p className="text-label text-fg-2">
         Task migration &amp; aging live in{' '}

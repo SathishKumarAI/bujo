@@ -39,7 +39,6 @@ import { HabitEditor } from '../trackers/HabitEditor'
 import { HabitRows } from '../trackers/HabitRows'
 import { RoutineTimeline } from '../trackers/RoutineTimeline'
 import { CategoryRows } from '../trackers/CategoryRows'
-import { TrackerVisuals } from '../trackers/TrackerVisuals'
 import { MetricsTrendCard } from '../trackers/MetricsTrendCard'
 import { CategoryConsistencyCard } from '../trackers/CategoryConsistencyCard'
 import { QuietSection as CollapsibleSection } from '../CollapsibleSection'
@@ -294,7 +293,14 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
           Note for the next person: `npm run a11y` walks the rendered page, so
           nothing in here is scanned while it is shut. It was re-run with the
           section expanded for this change — keep doing that. */}
-      <CollapsibleSection title="Deep analytics" subtitle="heatmaps, streaks & breakdowns" defaultOpen={false} stickyKey="trackers.deepAnalytics">
+      {/* MANAGEMENT, not analytics.
+          The five habit charts that were here — completion heatmap, streak
+          leaderboard, monthly trend, best weekdays, perfect days — moved to
+          Insights, which is the analytics page and already carried overlapping
+          versions of three of them. What is left is the pair you come here to
+          USE: the month grid, which is the only way to mark a day you missed,
+          and the archive. Today is for capture and for fixing the record. */}
+      <CollapsibleSection title="Month & archive" subtitle="backfill a missed day, and habits you have retired" defaultOpen={false} stickyKey="trackers.deepAnalytics">
         {/* THE MONTH GRID, moved rather than deleted.
             It listed every habit name a second time, directly under the rows
             that already name them — the duplication reported on
@@ -426,7 +432,6 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
         )}
 
       </Card>
-        <TrackerVisuals data={data} today={today} />
         <ArchivedHabits />
       </CollapsibleSection>
       </>) : undefined}

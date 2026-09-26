@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowsClockwise, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
@@ -11,7 +11,7 @@ import {
   ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
-import { isActivityKey, labelOf, MODE_COPY, MODES, modeOf, modeSegments, type Mode } from '../domain/activities'
+import { isActivityKey, labelOf, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
 import { useNav } from '../components/shell/nav'
 import { bestOf, sessionsInMode, totalTime } from '../domain/sessions'
@@ -31,9 +31,17 @@ import { WORKOUT_KEY } from '../lib/recordKeys'
  * Zone 3  review — the session list, then the analytics under it.
  *
  * Every fact in zone 1 re-reads on mode change: cardio shows minutes against
- * the weekly minutes target, strength shows sessions completed and the next
- * split day. A mode switch that only moved a highlight was the bug this whole
- * pass exists to remove.
+ * the weekly minutes target, sport counts games. A mode switch that only moved
+ * a highlight was the bug this whole pass exists to remove.
+ *
+ * **Two modes, not three.** `strength` was a segment here and is a Body tab —
+ * the same record, logged twice, and the one logged here could not hold what
+ * the Strength page's own logger produces (per-set rows, a split, PR detection,
+ * a rest timer). `LOGGABLE_MODES` in the registry is the list this page offers;
+ * `MODES` is still every shape a `Workout` can have, which is why the edit
+ * dialog below opens a push day with its sets field intact and why a
+ * `?activity=pullups` link redirects to Strength rather than landing on a
+ * toggle that cannot represent it.
  *
  * What used to be here and is gone:
  *
@@ -59,8 +67,15 @@ export function Fitness() {
   // Arriving with `?activity=` (including via a retired /pullups-style link)
   // preselects that activity and takes the mode from it — never the other way
   // round, because the activity is the fact and the mode is derived from it.
+  const nav = useNav()
   const linked = readDeepLink().activity
-  const initialActivity = linked && isActivityKey(linked) ? linked : null
+  // A strength activity arriving by link belongs on the Strength tab, which is
+  // where strength is logged now — landing here would drop the reader on a page
+  // whose toggle cannot even represent the mode the link asked for.
+  const linkedKey = linked && isActivityKey(linked) ? linked : null
+  const strengthLink = linkedKey != null && modeOf(linkedKey) === 'strength'
+  useEffect(() => { if (strengthLink) nav('gym') }, [strengthLink, nav])
+  const initialActivity = strengthLink ? null : linkedKey
   // `useStickyState` reads localStorage FIRST, so passing the linked mode as its
   // default did nothing once a mode had ever been chosen: arriving on
   // `?view=fitness&activity=run` left the toggle on the stored `sport` while the
@@ -68,7 +83,7 @@ export function Fitness() {
   // own option list, which a browser renders as the *first* option — the form
   // said "Pickleball", carried `run`, and would have logged one as the other.
   // The link wins until the user picks a mode by hand, which clears it.
-  const [stickyMode, setStickyMode] = useStickyState<Mode>('fitness.mode', 'cardio', MODES)
+  const [stickyMode, setStickyMode] = useStickyState<Mode>('fitness.mode', 'cardio', LOGGABLE_MODES)
   const [linkMode, setLinkMode] = useState<Mode | null>(initialActivity ? modeOf(initialActivity) : null)
   const mode = linkMode ?? stickyMode
   const [draft, setDraft] = useState<ActivityDraft>(() => {
