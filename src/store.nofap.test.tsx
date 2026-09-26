@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider, useJournal } from './store'
+import { todayISO } from './lib/date'
 
 /**
  * WHAT A RELAPSE MUST NOT COST YOU.
@@ -22,10 +23,18 @@ import { JournalProvider, useJournal } from './store'
  * asserting on a hand-built object: every field is put there by the writer that
  * owns it, which is the only way to be sure the assertion covers what the app
  * actually stores.
+ *
+ * The day log (`logLapseDay`) is pinned in the same file because it is the
+ * second writer of `nofap.relapses` and the only one that *edits* a row rather
+ * than pushing one. Its quantity lives on `Relapse.count`, so it adds no field
+ * to `Streak` and nothing new for the spread above to drop — but the count still
+ * has to survive a later relapse, which is asserted below.
  */
 function NofapProbe() {
-  const { data, logRelapse, resistUrge, addTriggerPlan, addAddiction, setStreakCost, setCommitment } = useJournal()
+  const { data, logRelapse, resistUrge, addTriggerPlan, addAddiction, setStreakCost, setCommitment, logLapseDay } = useJournal()
   const s = data.nofap
+  const today = todayISO()
+  const ad = (s.addictions ?? [])[0]
   return (
     <div>
       <button onClick={() => resistUrge({ trigger: 'boredom', intensity: 3 })}>resist</button>
@@ -34,6 +43,9 @@ function NofapProbe() {
       <button onClick={() => setStreakCost(7)}>cost</button>
       <button onClick={() => setCommitment({ quitDate: '2026-01-01', reason: 'sleep' })}>commit</button>
       <button onClick={() => logRelapse({ date: '2026-06-10', trigger: 'stress', note: 'late night' })}>relapse</button>
+      <button onClick={() => logLapseDay(null)}>tap</button>
+      <button onClick={() => logLapseDay(null, -1)}>untap</button>
+      <button onClick={() => logLapseDay(ad?.id ?? null)}>tap addiction</button>
 
       <div data-testid="urges">{(s.urgeLog ?? []).length}</div>
       <div data-testid="plans">{(s.plans ?? []).length}</div>
@@ -42,11 +54,31 @@ function NofapProbe() {
       <div data-testid="commitment">{s.commitment?.reason ?? ''}</div>
       <div data-testid="relapses">{s.relapses.length}</div>
       <div data-testid="startedOn">{s.startedOn}</div>
+      <div data-testid="count">{String(s.relapses.find((r) => r.date === today)?.count ?? 0)}</div>
+      <div data-testid="ad-resets">{ad?.relapses.length ?? 0}</div>
+      <div data-testid="ad-count">{String(ad?.relapses.find((r) => r.date === today)?.count ?? 0)}</div>
     </div>
   )
 }
 
 const read = (id: string) => screen.getByTestId(id).textContent
+
+/**
+ * `JournalProvider` hydrates from `localStorage`, so without this a tap in one
+ * test is still on the streak in the next — and the second test would read a
+ * count it never logged and pass for the wrong reason.
+ */
+beforeEach(() => localStorage.clear())
+
+function mount() {
+  const user = userEvent.setup()
+  render(
+    <JournalProvider>
+      <NofapProbe />
+    </JournalProvider>,
+  )
+  return { user }
+}
 
 describe('logRelapse', () => {
   it('resets the streak without deleting everything else on it', async () => {
@@ -81,5 +113,56 @@ describe('logRelapse', () => {
     expect(read('addictions')).toBe('Smoking')
     expect(read('cost')).toBe('7')
     expect(read('commitment')).toBe('sleep')
+  })
+
+  it('keeps a day count already logged on another day', async () => {
+    // The quantity rides on a `Relapse` row, so it survives only because the
+    // spread keeps `relapses`. Same class of loss, one level in.
+    const { user } = mount()
+    await user.click(screen.getByText('tap'))
+    await user.click(screen.getByText('tap'))
+    expect(read('count')).toBe('2')
+
+    await user.click(screen.getByText('relapse'))
+
+    expect(read('relapses')).toBe('2')
+    expect(read('count')).toBe('2')
+  })
+})
+
+describe('logLapseDay', () => {
+  it('counts ten taps as one lapse day of ten, not ten resets', async () => {
+    const { user } = mount()
+    for (let i = 0; i < 10; i++) await user.click(screen.getByText('tap'))
+    expect(read('relapses')).toBe('1')
+    expect(read('count')).toBe('10')
+    expect(read('startedOn')).toBe(todayISO())
+  })
+
+  it('walks an over-tap back to one and no further', async () => {
+    const { user } = mount()
+    for (let i = 0; i < 3; i++) await user.click(screen.getByText('tap'))
+    expect(read('count')).toBe('3')
+    for (let i = 0; i < 3; i++) await user.click(screen.getByText('untap'))
+    expect(read('count')).toBe('1')
+    expect(read('relapses')).toBe('1')
+  })
+
+  it('cannot start a lapse day with a minus tap on a clean day', async () => {
+    const { user } = mount()
+    const started = read('startedOn')
+    await user.click(screen.getByText('untap'))
+    expect(read('relapses')).toBe('0')
+    expect(read('startedOn')).toBe(started)
+  })
+
+  it('logs against the addiction it was handed, leaving the primary streak clean', async () => {
+    const { user } = mount()
+    await user.click(screen.getByText('addiction'))
+    await user.click(screen.getByText('tap addiction'))
+    await user.click(screen.getByText('tap addiction'))
+    expect(read('ad-resets')).toBe('1')
+    expect(read('ad-count')).toBe('2')
+    expect(read('relapses')).toBe('0')
   })
 })

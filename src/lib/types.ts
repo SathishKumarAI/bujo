@@ -364,6 +364,28 @@ export interface Relapse {
   date: string // ISO day
   trigger: string // what led to it (optional)
   note: string // reflection
+  /**
+   * How many times it happened that day — 10 cigarettes, 2 relapses. Absent
+   * means "once, unquantified": that is every row written before this field
+   * existed, and every row the reset form still writes.
+   *
+   * **Why the quantity lives here and not on a new `LapseDay` type.** A day on
+   * which the thing happened is already a `Relapse` in this model — it carries
+   * the date, the trigger and the reflection, `startedOn` is set from it, and
+   * `relapseWeekdayPattern` already de-duplicates by date because one day *is*
+   * one event. A parallel day-log would be a second record of the same fact,
+   * a second write path, and a reconciliation question nobody wants to answer
+   * ("ten cigarettes logged but no reset — is the streak alive?").
+   *
+   * The invariant that makes it work: **one relapse row per streak per day.**
+   * Ten cigarettes is one lapse day of quantity ten, not ten streak resets, so
+   * `logLapseDay` increments this number on the existing row instead of pushing
+   * another — the streak resets once, on the first tap of the day. `count` is
+   * therefore occurrences, and the row is the day.
+   *
+   * No migration: `count ?? 1` reads every journal already written.
+   */
+  count?: number
 }
 
 /** A resisted-urge win — logged with when and (optionally) what it was. */

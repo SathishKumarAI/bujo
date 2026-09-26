@@ -1,6 +1,6 @@
 import type { Entry, Habit, JournalData, WorkoutSet } from './types'
 import { seedJournal, uid } from './storage'
-import { addDays, todayISO, ymOf } from './date'
+import { addDays, fromISODay, todayISO, ymOf } from './date'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -248,6 +248,18 @@ export function generateDemoData(today = todayISO()): JournalData {
   j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
 
   // ── Streak (abstinence) demo: a 16-day live run with prior resets + urges ──
+  /**
+   * Sundays, anchored to the run date.
+   *
+   * The quantified day log's headline reading is "Sundays average ten", and a
+   * weekday pattern seeded at fixed day-offsets from `today` lands on a
+   * different weekday every day of the week — so the demo would show a peak on
+   * whichever weekday the gate happened to run, and the one thing the card
+   * claims would be a coincidence. Anchoring to the most recent Sunday makes it
+   * true on every run.
+   */
+  const lastSunday = addDays(today, -fromISODay(today).getDay())
+  const sunday = (n: number) => addDays(lastSunday, -7 * n)
   j.nofap = {
     startedOn: addDays(today, -16),
     best: 24,
@@ -261,10 +273,53 @@ export function generateDemoData(today = todayISO()): JournalData {
       { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },
       { id: uid('tp'), addiction: 'Doomscrolling', trigger: 'in bed at night', coping: 'Phone charges in another room; read instead' },
     ],
+    // `count` on two of the three: a lapse day can carry a quantity, and a row
+    // without one still reads as "once". Both branches of `count ?? 1` are
+    // therefore on screen, which is the only way the gates see either.
     relapses: [
-      { id: uid('r'), date: addDays(today, -58), trigger: 'Stress', note: 'Rough day at work — defaulted to the old pattern.' },
+      { id: uid('r'), date: addDays(today, -58), trigger: 'Stress', note: 'Rough day at work — defaulted to the old pattern.', count: 3 },
       { id: uid('r'), date: addDays(today, -40), trigger: 'Boredom', note: 'Late night, nothing to do.' },
-      { id: uid('r'), date: addDays(today, -16), trigger: 'Stress', note: 'Need an if-then plan for stressful evenings.' },
+      { id: uid('r'), date: addDays(today, -16), trigger: 'Stress', note: 'Need an if-then plan for stressful evenings.', count: 2 },
+    ],
+    /**
+     * Two tracked addictions, and the seed had **none** — so
+     * "Per-addiction streaks" rendered its empty state on every gate run, and
+     * `addictionStats`, the per-addiction cost field and now the day log had
+     * never been rendered with data by anything. Same shape as the unseeded
+     * `data.cycle` in CLAUDE.md, one level down.
+     *
+     * Nicotine carries counts (and a falling trend, heaviest on Sundays);
+     * Doomscrolling deliberately does not, so `hasLapseQuantity` has a false
+     * case on the page and the "how many" card has to justify its own presence.
+     */
+    addictions: [
+      {
+        id: uid('ad'), name: 'Nicotine', startedOn: today, best: 11, costPerDay: 9,
+        // Eight weeks of Sundays, because the trend card's window is eight
+        // weeks: seeded over six it read **rising** for a sequence that falls
+        // 14 → 8, since the two empty leading buckets dragged the first half's
+        // average below the second's. A trend seeded shorter than the window it
+        // is read through tells the opposite story, confidently.
+        relapses: [
+          { id: uid('r'), date: sunday(7), trigger: 'Drinks out', note: '', count: 18 },
+          { id: uid('r'), date: sunday(6), trigger: 'Drinks out', note: '', count: 16 },
+          { id: uid('r'), date: sunday(5), trigger: 'Drinks out', note: '', count: 14 },
+          { id: uid('r'), date: sunday(4), trigger: 'Drinks out', note: '', count: 12 },
+          { id: uid('r'), date: addDays(sunday(4), 3), trigger: 'Work stress', note: '', count: 4 },
+          { id: uid('r'), date: sunday(3), trigger: 'Drinks out', note: '', count: 11 },
+          { id: uid('r'), date: sunday(2), trigger: 'Family lunch', note: '', count: 9 },
+          { id: uid('r'), date: addDays(sunday(2), 2), trigger: 'After a meal', note: '', count: 3 },
+          { id: uid('r'), date: sunday(1), trigger: 'Family lunch', note: '', count: 8 },
+          { id: uid('r'), date: today, trigger: 'After a meal', note: '', count: 4 },
+        ],
+      },
+      {
+        id: uid('ad'), name: 'Doomscrolling', startedOn: addDays(today, -4), best: 9,
+        relapses: [
+          { id: uid('r'), date: addDays(today, -19), trigger: 'In bed', note: '' },
+          { id: uid('r'), date: addDays(today, -4), trigger: 'In bed', note: '' },
+        ],
+      },
     ],
   }
 
