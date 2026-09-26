@@ -222,6 +222,25 @@ const VIEWPORTS = [
  *
  * `BUJO_THEMES=mocha` narrows it while iterating.
  */
+/**
+ * How long a navigation may take before the worker gives up.
+ *
+ * Playwright's default is 30s, and that was the one number in this file NOT
+ * chosen for a sharded run — every `waitFor` here is already 15s *because*
+ * several pages render at once, and the `goto` in front of them kept the
+ * library default. On a 2-vCPU CI runner with four contexts competing, that
+ * default was exceeded on Cycle (the heaviest view, and heavier again since
+ * #286 and #288), the worker died, and 8 of 12 shards never ran.
+ *
+ * Raising this is **not** loosening an assertion, and the difference matters:
+ * a navigation timeout is the gate failing to reach the page, not a verdict
+ * about the page. Every assertion downstream is untouched, and a genuine
+ * failure still falls through to the message that says what was found. The
+ * real fix for starvation is fewer workers, which is what CI pins — this is
+ * the headroom that stops a slow first paint being reported as a dead browser.
+ */
+const NAV_TIMEOUT = Number(process.env.BUJO_A11Y_NAV_TIMEOUT ?? 60000)
+
 const THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 
 /**
@@ -775,7 +794,7 @@ async function scanReceipt(w, t) {
    * A gate whose result depends on what time you run it is worse than no
    * gate: it teaches you to re-run until it is green.
    */
-  await w.page.goto(`${BASE}?demo=1&view=today&surface=day`, { waitUntil: 'networkidle' })
+  await w.page.goto(`${BASE}?demo=1&view=today&surface=day`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
   await setTheme(w, t)
   await w.page.getByRole('button', { name: 'Quick add' }).click()
   await w.page.waitForTimeout(350)
@@ -903,7 +922,7 @@ async function makeWorker(id) {
    * reassuring zero — and with several contexts there are now several journals
    * that could each be empty.
    */
-  await page.goto(`${BASE}?demo=1`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}?demo=1`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
   await page.waitForTimeout(1200)
   const seeded = await page.evaluate(() => {
     const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
@@ -969,7 +988,7 @@ async function runUnit(w, unit) {
   // navigation, so these are scanned under the theme of the current pass.
   for (const [label, view] of COMPANIONS) {
     w.at = label
-    await w.page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle' })
+    await w.page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
     // The alias table used to bounce these to Fitness. If that ever comes
     // back, the URL will silently be a different page and `scan` would
     // happily grade Fitness under this label — so check where we landed.

@@ -59,7 +59,22 @@ jobs:
         run: npx vite preview --port 4173 &
       - name: Wait for preview
         run: npx wait-on http://localhost:4173 --timeout 60000
+      # WORKERS ARE PINNED, and the default is deliberately not trusted here.
+      # `scripts/a11y-axe.mjs` defaults to `min(4, availableParallelism())`,
+      # which is right on a 16-core desktop and wrong on a CI runner: four
+      # Chromium contexts starve each other, `page.goto` on the heaviest view
+      # exceeded its 30s default, and the worker died. The gate then did exactly
+      # what it should — named the shard, printed a partial table and refused to
+      # call it a pass ("89 of 166 scan(s) completed across 3 of 12 shard(s)") —
+      # so this was a real red, not a flake, and it stood on `main` from #285.
+      #
+      # Two workers rather than one because coverage is identical either way and
+      # the serial walk is ~8 minutes against ~3. If this goes red again, the
+      # next step is `BUJO_A11Y_WORKERS: 1`, not a longer timeout: a gate that
+      # needs its clock loosened twice is measuring the runner, not the app.
       - name: axe-core
+        env:
+          BUJO_A11Y_WORKERS: 2
         run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
       # Smoke has never run in CI — it was local-only, which is how it managed
       # to sit on a wrong default port (5173, Vite's dev default, i.e. whichever
