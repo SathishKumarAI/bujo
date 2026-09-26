@@ -441,6 +441,15 @@ export interface WinRateForecast {
   slope: number
   /** Projected win% `ahead` sessions out, clamped 0–100 (null when not ready). */
   projected: number | null
+  /**
+   * True when the straight line ran outside 0–100 and the clamp caught it.
+   *
+   * The clamp is honest arithmetic and reads as a promise: a 71% current rate
+   * with four climbing sessions projects **100%** five sessions out, and a tile
+   * saying "Projected 100%" is a guarantee nobody made. The caller needs to
+   * know the number is a wall the fit hit, not a level the fit found.
+   */
+  clamped: boolean
   /** 'up' | 'down' | 'flat' read of the slope. */
   direction: 'up' | 'down' | 'flat'
   /** Rating-readiness label from the projected/current win%. */
@@ -461,7 +470,7 @@ export function winRateForecast(data: JournalData, ahead = 5): WinRateForecast {
   const current = pickleTotals(data).winPct
   const n = ys.length
   if (n < 4) {
-    return { ready: false, current, slope: 0, projected: null, direction: 'flat', readiness: current >= 60 ? 'ready' : current >= 45 ? 'consolidating' : 'building' }
+    return { ready: false, current, slope: 0, projected: null, clamped: false, direction: 'flat', readiness: current >= 60 ? 'ready' : current >= 45 ? 'consolidating' : 'building' }
   }
   // Least-squares slope/intercept over x = 0..n-1.
   const meanX = (n - 1) / 2
@@ -475,7 +484,7 @@ export function winRateForecast(data: JournalData, ahead = 5): WinRateForecast {
   const direction = slope > 0.5 ? 'up' : slope < -0.5 ? 'down' : 'flat'
   const gauge = Math.max(projected, current)
   const readiness = gauge >= 60 ? 'ready' : gauge >= 45 ? 'consolidating' : 'building'
-  return { ready: true, current, slope: Math.round(slope * 10) / 10, projected, direction, readiness }
+  return { ready: true, current, slope: Math.round(slope * 10) / 10, projected, clamped: raw > 100 || raw < 0, direction, readiness }
 }
 
 export interface RpeLoad {

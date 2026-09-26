@@ -58,9 +58,16 @@ export function LastSessionCard({ session, split, unit, onLoad }: {
         <Empty>Finish a {label.toLowerCase()} session and it shows up here next time.</Empty>
       ) : (
         <ul className="space-y-1 text-body">
+          {/* `flex-wrap`, and the name deliberately WITHOUT `min-w-0`: the set
+              strip is `shrink-0` and five sets of "62.5kg×5" is 250px, so in
+              the 341px act column the name was the only thing that could give
+              and it gave everything — "Deadlift" rendered 35px of the 55px it
+              needs, "Barbell Row" 72 of 80. A flex item with `min-w-0` shrinks
+              to nothing instead of wrapping the line, so removing it is what
+              makes the wrap fire. */}
           {session.lifts.map((l) => (
-            <li key={l.exercise} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1 last:border-b-0">
-              <span className="min-w-0 truncate text-fg-1">{l.exercise}</span>
+            <li key={l.exercise} className="flex flex-wrap items-baseline justify-between gap-x-3 border-b border-line/60 py-1 last:border-b-0">
+              <span className="max-w-full truncate text-fg-1">{l.exercise}</span>
               {/* Every set, not just the top one: "60×8, 65×6, 65×5" is the
                   shape of the session, and whether the last set held is the
                   thing that decides today's load. An unloaded lift prints its

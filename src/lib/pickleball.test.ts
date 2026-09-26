@@ -279,6 +279,28 @@ describe('winRateForecast', () => {
     const f = winRateForecast(d)
     expect(f.direction).toBe('down')
     expect(f.projected).toBe(0)
+    expect(f.clamped).toBe(true)
+  })
+
+  // `projected` alone cannot tell "the fit landed on 100" from "the fit ran past
+  // 100 and the clamp caught it", and the UI prints a different label for each.
+  // Both directions, because a flag that is always true is not a flag.
+  it('flags a clamped projection and leaves an in-range one unflagged', () => {
+    const d = emptyJournal()
+    d.pickleball = [
+      s('2026-06-01', 0, 4), s('2026-06-02', 1, 3),
+      s('2026-06-03', 3, 1), s('2026-06-04', 4, 0),
+    ]
+    expect(winRateForecast(d).clamped).toBe(true)
+
+    const flat = emptyJournal()
+    flat.pickleball = [
+      s('2026-06-01', 2, 2), s('2026-06-02', 2, 2),
+      s('2026-06-03', 2, 2), s('2026-06-04', 2, 2),
+    ]
+    const f = winRateForecast(flat)
+    expect(f.projected).toBe(50)
+    expect(f.clamped).toBe(false)
   })
 })
 

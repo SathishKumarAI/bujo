@@ -47,7 +47,16 @@ export function SymptomPattern({ pattern }: {
         role="group"
         aria-label="Symptom pattern by cycle day — scrolls sideways"
       >
-        <table className="w-full min-w-[22rem] table-fixed border-separate border-spacing-[1px]">
+        {/* The minimum width is computed from the cycle length, not written as a
+            class: at `min-w-[22rem]` the 30 day columns divided the 352px into
+            8px each, and a two-digit label needs 12 — so "10", "15", "20", "25"
+            and "30" were all clipped on a phone while the single-digit "5" was
+            fine. `table-fixed` sizes columns from the header row and ignores a
+            `min-width` on a cell, so the floor has to be on the table. */}
+        <table
+          className="w-full table-fixed border-separate border-spacing-[1px]"
+          style={{ minWidth: `${96 + width * 15}px` }}
+        >
           <caption className="sr-only">
             How often each flag fell on each cycle day, across {cycles} completed cycles
           </caption>
