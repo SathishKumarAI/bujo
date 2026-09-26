@@ -183,7 +183,7 @@ export function JournalVolumeCard() {
   if (total === 0) return null
   const best = weeks.reduce((m, w) => Math.max(m, w.entries), 0)
   return (
-    <Card band title="Journal volume" subtitle={`Entries per week, last 12 weeks · ${total} in total`}>
+    <Card enlargeable band title="Journal volume" subtitle={`Entries per week, last 12 weeks · ${total} in total`}>
       <div className="h-48" role="img" aria-label={`Bar chart of journal entries written per week over the last 12 weeks, peaking at ${best} in a week`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={weeks} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
@@ -257,7 +257,7 @@ export function TaskTrendCard() {
   if (real.length < 2) return null
   const latest = real[real.length - 1]
   return (
-    <Card band title="Task completion trend" subtitle={`Share of that week's tasks closed · latest ${latest.pct}%`}>
+    <Card enlargeable band title="Task completion trend" subtitle={`Share of that week's tasks closed · latest ${latest.pct}%`}>
       <div className="h-48" role="img" aria-label={`Line chart of the percentage of tasks completed per week over the last 12 weeks, most recently ${latest.pct} percent`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={weeks} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
