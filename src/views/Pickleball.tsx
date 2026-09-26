@@ -802,6 +802,36 @@ export function Pickleball() {
         </MasonryGrid>
       </CollapsibleSection>
 
+      {/* ── Trends & volume · the seven charts. ──
+
+            **They were behind `defaultOpen={false}`, at the very bottom.**
+            So the page a reader actually got was fourteen cards of three or
+            four stat tiles each and not a single chart — reported as "this
+            page looks more of empty", which is exactly what a wall of tiles
+            with no shape looks like. The same fold had already been wrong
+            twice: an earlier comment claimed it was collapsed when it was not,
+            and was then made true rather than questioned.
+
+            Open, and moved up to sit directly under Performance, because
+            these charts and those cards answer the same question — how am I
+            playing — and the numbers are the summary of the pictures. The
+            CLAUDE.md trap this is an instance of: the training calendar spent
+            a release behind a "Cardio analytics" accordion, which is how the
+            most useful thing on that page went unseen.
+
+            `LazyMount` stays: it defers the seven recharts until the section
+            scrolls near, which is what makes rendering them by default
+            affordable. ── */}
+      <CollapsibleSection
+        title="Trends & volume"
+        icon={<Icon as={ChartBar} size="md" className="text-teal" />}
+        subtitle="Win rate over time, games per week & month, where the habit sits"
+        variant="quiet"
+        stickyKey="pickle-charts"
+      >
+        <LazyMount minHeight={500}>{charts}</LazyMount>
+      </CollapsibleSection>
+
       <CollapsibleSection
         title="Opponents, partners & venues"
         icon={<Icon as={Sword} size="md" className="text-red" />}
@@ -816,31 +846,6 @@ export function Pickleball() {
         </MasonryGrid>
       </CollapsibleSection>
 
-      
-
-      {/* ── Charts · the seven ex-rail visualizations, grouped into one collapsed
-            section so they don't strand on mobile. ──
-
-            It was not collapsed. The inner comment below already assumed it was
-            ("the fold already defers them for anyone who keeps it closed"), but
-            nothing passed `defaultOpen={false}` and this Section — like the
-            shared one — defaults to OPEN. Note it is *not* `CollapsibleSection`:
-            `components/pickleball/Section` is a local near-duplicate with the
-            same name and no `stickyKey`, so unlike every other fold in the app
-            the choice made here does not survive a reload. ── */}
-      <CollapsibleSection
-        title="Charts"
-        icon={<Icon as={ChartBar} size="md" className="text-teal" />}
-        subtitle="Trends · volume · heatmap · tap ⛶ to enlarge"
-        variant="quiet"
-        stickyKey="pickle-charts"
-        defaultOpen={false}
-      >
-        {/* Seven recharts. The fold already defers them for anyone who keeps
-            it closed; LazyMount covers the sticky-open case, where they used
-            to mount on page load two screens above where they render. */}
-        <LazyMount minHeight={500}>{charts}</LazyMount>
-      </CollapsibleSection>
 
       {/* "Play safe" and the format playbook lived here as two more cards on
           an already 4-screen page. Both are reference reading, not session

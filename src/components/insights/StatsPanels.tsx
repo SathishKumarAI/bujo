@@ -5,13 +5,12 @@ import {
   Radar, RadarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
   XAxis, YAxis, ZAxis,
 } from 'recharts'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useJournal } from '../../store'
-import { CardGrid, SPAN_2 } from '../shell/CardGrid'
+import { SPAN_2 } from '../shell/CardGrid'
 import { Card, Empty, Segmented } from '../ui'
 import { Button } from '../ui/button'
-import { QuietSection as Section } from '../CollapsibleSection'
 import { Heatmap } from '../Heatmap'
 import { AchievementsCard } from '../AchievementsCard'
 import { CheckinTimesCard } from '../CheckinTimesCard'
@@ -32,30 +31,40 @@ import { useFocusTrap } from '../../lib/useFocusTrap'
 const tip = rechartsTooltip
 
 /**
- * STATS PANELS · every chart the app has, as content for Insights.
+ * EVERY CHART THE APP HAS, as a map from card id to the node that draws it.
  *
- * This was `views/Stats.tsx`, the second tab of the Insights section. It is
- * moved wholesale and **the card markup is not touched** — the file was
- * `git mv`d and only its wrapper, its imports and the domain gates below
- * changed, so a rendered-output diff can prove the move lost nothing. That
- * check is not optional here: this repo has already lost eleven workout
- * formats to a pass that retyped a data module instead of moving it, with
- * `tsc`, eslint, vitest and the build all green.
+ * This was `views/Stats.tsx`, then `StatsPanels`, and it rendered its own
+ * layout: a `CardGrid` holding six `QuietSection` folds titled "This week",
+ * "Sleep & mood", "Mood views", "Fitness stats", "Tasks" and "Habits". The
+ * registry in `lib/insightsFilter.ts` names six **domains** — overview, mood,
+ * habits, body, tasks, records — and the page's chip row filters by those. So
+ * the page had two competing vocabularies for the same twenty-three cards, and
+ * under one of them eight cards belonged to no group at all. Two different
+ * groups were even both titled "Habits", one here and one in `views/Insights`.
  *
- * What DID change, deliberately:
+ * It returns nodes now and lays nothing out. `Insights` groups them by the
+ * registry's domain, so there is exactly one vocabulary and the headings and
+ * the chips are the same six words.
  *
- * - No `PageLayout`. Insights owns the page and the three zones; this returns
- *   zone-3 content and nothing else. `statsFacts` hands back the stat-bar
- *   figures it used to render itself.
- * - Every top-level block is gated on `show(id)`. The filter row on Insights
- *   is what decides whether a domain is on screen, which is the job the seven
- *   `defaultOpen={false}` folds were doing badly.
- * - Those folds now open by default. A fold inside a filtered page is a second
- *   answer to "is this on screen", and the closed one was the reason the app's
- *   charts were effectively unreachable — `npm run a11y` could not even scan
- *   inside them until `openFolds()` was written.
+ * **The card bodies are not touched.** Each one was sliced out of the old file
+ * verbatim and the rendered text of the whole page was diffed before and
+ * after. That check is not optional here: this repo has already lost eleven
+ * workout formats to a pass that retyped a data module instead of moving it,
+ * with `tsc`, eslint, vitest and the build all green.
+ *
+ * A hook rather than fifteen components because the cards share one closure —
+ * the month cursor, the heatmap range, the mood/year toggle, the enlarge
+ * modal and a dozen derivations. Splitting them would mean lifting all of that
+ * into props or recomputing it fifteen times.
  */
-export function StatsPanels({ show }: { show: (cardId: string) => boolean }) {
+/** The chart nodes, keyed by the card id in `lib/insightsFilter.ts`. */
+export interface StatsCards {
+  cards: Record<string, ReactNode>
+  /** The enlarge modal, rendered once by the page rather than per card. */
+  modal: ReactNode
+}
+
+export function useStatsCards(): StatsCards {
   const { data } = useJournal()
   const [ym, setYm] = useState(ymOf(todayISO()))
   const [heatWeeks, setHeatWeeks] = useState(26)
@@ -171,295 +180,197 @@ export function StatsPanels({ show }: { show: (cardId: string) => boolean }) {
     )
   }
 
-  return (
-    <>
 
-      {/* Three across. Eight blocks — the heatmap, achievements and six
-          collapsed analytics groups — used to be one tall column. */}
-      <CardGrid>
-      {/* The card still sizes to the range, but for the opposite reason now,
-          and the old one is worth keeping written down because it inverted.
-          The grid used to have a fixed 11px cell, so the range set its WIDTH —
-          202 / 384 / 748px at 1440 — and pinning the card to the full row left
-          978 / 796 / 432px of dead card (BUJO-280). The grid is `fluid` since
-          #169: it always fills its card, so the range now sets the CELL SIZE
-          instead. Measured at 1440: 3mo 35.5px, 6mo 17.6px, and 1yr in one
-          column would be ~9px. Spanning two columns at 1yr puts it back to
-          18.8px — the same density as 6mo, which is the point of the span.
-          Same conditional, live reason. */}
-      {show('activity') && (
-      <Card band className={heatWeeks === 52 ? SPAN_2 : undefined} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
-        <Heatmap cols={heat} />
-      </Card>
-      )}
-
-      {/* Days still on the board — month, year, week — and the pace the
-          journal has been kept at. Open, and above the lifetime totals: it is
-          the only block here about time that has not been spent yet. */}
-      {show('pace') && <PaceCard />}
-
-      {/* Lifetime totals, open: the year-in-review, the month index and personal
-          records that came over from Insights (BUJO-281). Open rather than a
-          seventh fold, and they sit here rather than below because they are
-          analytics — they read the journal back at you. Achievements is not;
-          it moved to the foot of the page. */}
-      {show('lifetime') && <LifetimeCards />}
-
-      {/* 2) This week — overlaps Trackers metrics; collapsed, link out. */}
-      {show('weekradar') && (
-      <Section title="This week" subtitle="7-day averages, see Trackers for live metrics" stickyKey="stats.week">
-        <Card band title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
-          <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radar} outerRadius="72%">
-                <PolarGrid stroke={cat('surface1')} />
-                <PolarAngleAxis dataKey="axis" tick={{ fill: cat('subtext0'), fontSize: 12 }} />
-                <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
-                <Tooltip contentStyle={tip()} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </Section>
-      )}
-
-      {/* 3) Sleep & mood correlations.
-             `SPAN_2` on this and the three folds below: each lays its content
-             out in columns, and a fold in a grid cell is 580px wide, which is
-             under every one of those breakpoints. They stacked instead —
-             measured at 1,240px of page painting 8% of its width. */}
-      {(show('sleepmood') || show('sleepdebt') || show('focussleep')) && (
-      <Section title="Sleep & mood" subtitle="sleep vs mood, debt & focus" stickyKey="stats.sleepmood">
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        {show('sleepmood') && (
-        <Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
-          {scatter.length < 3 ? (
-            <Empty>Log a few more days to see the pattern.</Empty>
-          ) : (
-            <div className="h-64" role="img" aria-label={`Scatter plot of sleep hours versus mood for ${scatter.length} days, showing their correlation`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 8, right: 8, bottom: 4, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} />
-                  <XAxis type="number" dataKey="sleep" name="sleep" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis type="number" dataKey="mood" name="mood" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                  <ZAxis range={[40, 40]} />
-                  <Tooltip contentStyle={tip()} cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter data={scatter} fill={cat('sky')} />
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+  const cards: StatsCards['cards'] = {
+    activity: (<Card band className={heatWeeks === 52 ? SPAN_2 : undefined} title="Activity" subtitle="Every day you showed up" enlargeable right={<Segmented value={heatWeeks} onChange={setHeatWeeks} options={[{ value: 13, label: '3mo' }, { value: 26, label: '6mo' }, { value: 52, label: '1yr' }]} />}>
+  <Heatmap cols={heat} />
+</Card>),
+    pace: <PaceCard />,
+    lifetime: <LifetimeCards />,
+    weekradar: (<Card band title="This week at a glance" subtitle="7-day averages, 0–10" enlargeable>
+  <div className="h-64" role="img" aria-label="Radar chart of this week's 7-day averages across mood, stress, sleep and habits, each on a 0 to 10 scale">
+    <ResponsiveContainer width="100%" height="100%">
+      <RadarChart data={radar} outerRadius="72%">
+        <PolarGrid stroke={cat('surface1')} />
+        <PolarAngleAxis dataKey="axis" tick={{ fill: cat('subtext0'), fontSize: 12 }} />
+        <Radar dataKey="value" stroke={cat('mauve')} fill={cat('mauve')} fillOpacity={0.35} />
+        <Tooltip contentStyle={tip()} />
+      </RadarChart>
+    </ResponsiveContainer>
+  </div>
+</Card>),
+    sleepmood: (<Card band title="Sleep vs mood" subtitle="Each dot is a day, see the trend" enlargeable>
+  {scatter.length < 3 ? (
+    <Empty>Log a few more days to see the pattern.</Empty>
+  ) : (
+    <div className="h-64" role="img" aria-label={`Scatter plot of sleep hours versus mood for ${scatter.length} days, showing their correlation`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 8, right: 8, bottom: 4, left: -20 }}>
+          <CartesianGrid stroke={cat('surface0')} />
+          <XAxis type="number" dataKey="sleep" name="sleep" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
+          <YAxis type="number" dataKey="mood" name="mood" domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
+          <ZAxis range={[40, 40]} />
+          <Tooltip contentStyle={tip()} cursor={{ strokeDasharray: '3 3' }} />
+          <Scatter data={scatter} fill={cat('sky')} />
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</Card>),
+    sleepdebt: (<Card band title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
+  {!hasSleep ? (
+    <Empty>Log a few nights of sleep to track your running debt.</Empty>
+  ) : (
+    <div className="h-56" role="img" aria-label={`Area chart of cumulative sleep debt in hours over the last 14 days, versus an 8-hour target${peakDebt > 0 ? `, peaking at ${peakDebt} hours` : ''}`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={debt} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+          <CartesianGrid stroke={cat('surface0')} vertical={false} />
+          <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} stroke={cat('overlay0')} fontSize={11} />
+          <YAxis stroke={cat('overlay0')} fontSize={11} />
+          <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}h`, 'debt'] as [string, string]} />
+          <Area type="monotone" dataKey="debt" stroke={cat('peach')} fill={cat('peach')} fillOpacity={0.25} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</Card>),
+    focussleep: focusSleep.r != null ? (<Card band title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
+  <p className="text-display font-medium tabular-nums" style={{ color: onRaised(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
+    {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
+    <span className="ml-1 text-body text-fg-2">r</span>
+  </p>
+  <p className="mt-2 text-body text-fg-1">{focusSleep.note}</p>
+  <p className="mt-2 text-label text-fg-2">
+    Pearson correlation: +1 means more sleep always tracks with sharper focus, 0 means no link.
+  </p>
+</Card>) : null,
+    moodcal: (moodView === 'calendar' ? (
+<Card band
+  enlargeable={false}
+  title="Mood calendar"
+  subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
+  right={
+    /* Five controls do not fit a 390px row, and `Card` can only cap the
+       width of the slot — it cannot wrap a cluster whose markup it does
+       not own. Without `flex-wrap` here this one overflowed *left*, to
+       x=-38. Same fix as the Trackers toolbar. */
+    <div className="flex flex-wrap justify-end gap-1">
+      <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
+      <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d">←</Button>
+      <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d">This month</Button>
+      <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d">→</Button>
+      <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d"><Icon as={ArrowsOut} size="sm" /></Button>
+    </div>
+  }
+>
+  {(() => {
+    const rated = monthDays(ym).map((d) => moods.get(d)).filter((m): m is number => m != null)
+    const avg = rated.length ? Math.round((rated.reduce((a, b) => a + b, 0) / rated.length) * 10) / 10 : null
+    let best: string | null = null
+    for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
+    return (
+      <p className="mb-3 text-body text-fg-2">
+        {prettyMonth(ym)} ·{' '}
+        {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
+          <>avg mood <span className="font-medium" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
         )}
-
-        {show('sleepdebt') && (
-        <Card band title="Sleep debt" subtitle={`Running deficit vs. 8h · last 14 days${peakDebt > 0 ? ` · peaked ${peakDebt}h` : ''}`} enlargeable>
-          {!hasSleep ? (
-            <Empty>Log a few nights of sleep to track your running debt.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label={`Area chart of cumulative sleep debt in hours over the last 14 days, versus an 8-hour target${peakDebt > 0 ? `, peaking at ${peakDebt} hours` : ''}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={debt} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                  <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}h`, 'debt'] as [string, string]} />
-                  <Area type="monotone" dataKey="debt" stroke={cat('peach')} fill={cat('peach')} fillOpacity={0.25} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-        )}
-
-        {show('focussleep') && focusSleep.r != null && (
-          <Card band title="Focus vs sleep" subtitle={`Deep-work quality against the night before, ${focusSleep.days} paired days`}>
-            <p className="text-display font-medium tabular-nums" style={{ color: onRaised(Math.abs(focusSleep.r) >= 0.5 ? 'mauve' : 'subtext0') }}>
-              {focusSleep.r > 0 ? '+' : ''}{focusSleep.r}
-              <span className="ml-1 text-body text-fg-2">r</span>
-            </p>
-            <p className="mt-2 text-body text-fg-1">{focusSleep.note}</p>
-            <p className="mt-2 text-label text-fg-2">
-              Pearson correlation: +1 means more sleep always tracks with sharper focus, 0 means no link.
-            </p>
-          </Card>
-        )}
+      </p>
+    )
+  })()}
+  {moodCalGrid(false)}
+  {/* Legend */}
+  <div className="mt-3 flex items-center justify-center gap-2 text-micro text-fg-2">
+    <span>low</span>
+    {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
+    <span>great</span>
+  </div>
+</Card>
+) : (
+<Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
+  right={
+    <div className="flex flex-wrap justify-end gap-1">
+      <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
+      <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d"><Icon as={ArrowsOut} size="sm" /></Button>
+    </div>
+  }>
+  {yearPixels(false)}
+</Card>
+)),
+    moodanalytics: <MoodAnalytics />,
+    workoutmin: (<Card band title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
+  {workout.every((w) => !w.minutes) ? (
+    <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
+  ) : (
+    <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+          <CartesianGrid stroke={cat('surface0')} vertical={false} />
+          <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
+          <YAxis stroke={cat('overlay0')} fontSize={11} />
+          <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
+          <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</Card>),
+    workoutsplit: (<Card band title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
+  {splits.length === 0 ? (
+    <Empty>Log a workout to see which splits you actually train.</Empty>
+  ) : (
+    <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+            {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
+          </Pie>
+          <Tooltip contentStyle={tip()} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex flex-wrap justify-center gap-2 text-label">
+        {splits.map((s, i) => <span key={s.split} style={{ color: onRaised(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
       </div>
-      </Section>
-      )}
-
-      {/* 4) Mood views — merged calendar / year-in-pixels toggle, plus the three
-             mood read-backs that came over from Insights (BUJO-281). They went
-             *into* this fold rather than beside it: Stats already had six, and
-             a drawer relocated intact is not a drawer removed. */}
-      {(show('moodcal') || show('moodanalytics')) && (
-      <Section title="Mood views" subtitle="calendar, year-in-pixels, weekday & stability" stickyKey="stats.moodviews" className={SPAN_2}>
-      {show('moodcal') && (moodView === 'calendar' ? (
-      <Card band
-        enlargeable={false}
-        title="Mood calendar"
-        subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
-        right={
-          /* Five controls do not fit a 390px row, and `Card` can only cap the
-             width of the slot — it cannot wrap a cluster whose markup it does
-             not own. Without `flex-wrap` here this one overflowed *left*, to
-             x=-38. Same fix as the Trackers toolbar. */
-          <div className="flex flex-wrap justify-end gap-1">
-            <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d">←</Button>
-            <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d">This month</Button>
-            <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d">→</Button>
-            <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d"><Icon as={ArrowsOut} size="sm" /></Button>
-          </div>
-        }
-      >
-        {(() => {
-          const rated = monthDays(ym).map((d) => moods.get(d)).filter((m): m is number => m != null)
-          const avg = rated.length ? Math.round((rated.reduce((a, b) => a + b, 0) / rated.length) * 10) / 10 : null
-          let best: string | null = null
-          for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
-          return (
-            <p className="mb-3 text-body text-fg-2">
-              {prettyMonth(ym)} ·{' '}
-              {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
-                <>avg mood <span className="font-medium" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
-              )}
-            </p>
-          )
-        })()}
-        {moodCalGrid(false)}
-        {/* Legend */}
-        <div className="mt-3 flex items-center justify-center gap-2 text-micro text-fg-2">
-          <span>low</span>
-          {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
-          <span>great</span>
-        </div>
-      </Card>
-      ) : (
-      <Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
-        right={
-          <div className="flex flex-wrap justify-end gap-1">
-            <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-            <Button variant="secondary" onClick={() => setEnlarged('year')} aria-label="Enlarge year in pixels" title="Enlarge" className="press-3d"><Icon as={ArrowsOut} size="sm" /></Button>
-          </div>
-        }>
-        {yearPixels(false)}
-      </Card>
-      ))}
-      {show('moodanalytics') && <MoodAnalytics />}
-      </Section>
-      )}
-
-      {/* 5) Fitness stats — overlaps Fitness 'This week'; collapsed, link out. */}
-      {(show('workoutmin') || show('workoutsplit')) && (
-      <Section title="Fitness stats" subtitle="workout minutes & split, see Fitness for live logging" stickyKey="stats.fitness">
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        {show('workoutmin') && (
-        <Card band title="Workout minutes" subtitle="Per week, last 8 weeks" enlargeable>
-          {workout.every((w) => !w.minutes) ? (
-            <Empty>No workout minutes logged yet · log a session to see your weekly trend.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label="Bar chart of total workout minutes per week over the last 8 weeks">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={workout} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                  <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                  <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
-                  <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-        )}
-
-        {show('workoutsplit') && (
-        <Card band title="Workout split" subtitle="Distribution of your logged sessions" enlargeable>
-          {splits.length === 0 ? (
-            <Empty>Log a workout to see which splits you actually train.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label={`Donut chart of workouts by type: ${splits.map((s) => `${s.count} ${s.split}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={splits} dataKey="count" nameKey="split" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                    {splits.map((s, i) => <Cell key={s.split} fill={cat(SPLIT_COLORS[i % SPLIT_COLORS.length])} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tip()} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex flex-wrap justify-center gap-2 text-label">
-                {splits.map((s, i) => <span key={s.split} style={{ color: onRaised(SPLIT_COLORS[i % SPLIT_COLORS.length]) }}>● {s.split} {s.count}</span>)}
-              </div>
-            </div>
-          )}
-        </Card>
-        )}
+    </div>
+  )}
+</Card>),
+    tasks: (<Card band title="Task breakdown" subtitle="Where your tasks land" enlargeable>
+  {tasks.length === 0 ? (
+    <Empty>Add a task on Today to see how your week breaks down.</Empty>
+  ) : (
+    <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
+            {tasks.map((t) => <Cell key={t.name} fill={cat(t.color)} />)}
+          </Pie>
+          <Tooltip contentStyle={tip()} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex justify-center gap-3 text-label">
+        {tasks.map((t) => <span key={t.name} style={{ color: onRaised(t.color) }}>● {t.name} {t.value}</span>)}
       </div>
-      </Section>
-      )}
+    </div>
+  )}
+</Card>),
+    checkin: <CheckinTimesCard />,
+    habitanalytics: <HabitAnalytics />,
+    achievements: <AchievementsCard className={SPAN_2} />,
+  }
 
-      {/* 6) Tasks. */}
-      {show('tasks') && (
-      <Section title="Tasks" subtitle="where your tasks land" stickyKey="stats.tasks">
-        <Card band title="Task breakdown" subtitle="Where your tasks land" enlargeable>
-          {tasks.length === 0 ? (
-            <Empty>Add a task on Today to see how your week breaks down.</Empty>
-          ) : (
-            <div className="h-56" role="img" aria-label={`Donut chart of task outcomes: ${tasks.map((t) => `${t.value} ${t.name}`).join(', ')}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={tasks} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                    {tasks.map((t) => <Cell key={t.name} fill={cat(t.color)} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tip()} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-3 text-label">
-                {tasks.map((t) => <span key={t.name} style={{ color: onRaised(t.color) }}>● {t.name} {t.value}</span>)}
-              </div>
-            </div>
-          )}
-        </Card>
-      </Section>
-      )}
+  /* Click-to-enlarge modal · portalled to <body> so it centres on the
+     viewport, not inside transformed ancestors (book mode / zoom). */
+  const modal = enlarged ? createPortal(
+<div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
+  <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-card bg-ink-2 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="mb-4 flex items-center justify-between">
+      <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
+      <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><Icon as={X} size="lg" /></Button>
+    </div>
+    {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
+  </div>
+</div>,
+    document.body,
+  ) : null
 
-      {/* 7) Habits — check-in times, plus the three habit read-backs from
-             Insights (BUJO-281). Same rule as Mood views: into the existing
-             fold, not beside it. */}
-      {(show('checkin') || show('habitanalytics')) && (
-      <Section title="Habits" subtitle="check-in times, mood impact, consistency & trend" stickyKey="stats.habits" className={SPAN_2}>
-        {show('checkin') && <CheckinTimesCard />}
-        {show('habitanalytics') && <HabitAnalytics />}
-      </Section>
-      )}
-
-      {/* 8) Achievements, last. Fourteen badges used to be the second block on
-             the page, ~1,050px of reward layer standing between the heatmap and
-             the first chart (measured at 1440 with demo data). It is the one
-             thing here that is not analysis, so it reads last rather than
-             first. Kept open — it is a wall of badges, and a fold would only
-             hide what it is for. `SPAN_2` because DOM-last is not visually last
-             in a two-column grid — left alone it filled the cell beside the
-             Habits fold at y=2937 of 4114. Spanning the row puts it under
-             everything, which is what "last" was supposed to mean. */}
-      {show('achievements') && <AchievementsCard className={SPAN_2} />}
-
-      {/* Click-to-enlarge modal · portalled to <body> so it centres on the
-          viewport, not inside transformed ancestors (book mode / zoom). */}
-      {enlarged && createPortal(
-        <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-          <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-card bg-ink-2 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
-              <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><Icon as={X} size="lg" /></Button>
-            </div>
-            {enlarged === 'mood' ? moodCalGrid(true) : yearPixels(true)}
-          </div>
-        </div>,
-        document.body,
-      )}
-      </CardGrid>
-    </>
-  )
+  return { cards, modal }
 }

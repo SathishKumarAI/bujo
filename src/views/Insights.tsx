@@ -2,7 +2,6 @@ import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning, X
 import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { QuietSection as CollapsibleSection } from '../components/CollapsibleSection'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
@@ -18,9 +17,9 @@ import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, todayISO} from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
-import { StatsPanels } from '../components/insights/StatsPanels'
+import { useStatsCards } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
-import { CARDS, DOMAINS, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
+import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
 
 /**
  * INSIGHTS · one page, everything on it, and a row of controls that decides
@@ -90,9 +89,120 @@ export function Insights() {
     })
   }
 
+  /**
+   * Every card on this page, by the id the registry knows it under.
+   *
+   * Half of them come from `useStatsCards` (one hook, one shared closure —
+   * the month cursor, the heatmap range, the enlarge modal) and half are
+   * built here. A card whose data cannot support it yields `null` rather than
+   * an empty box; the renderer below skips those, so an absent card never
+   * leaves a heading over nothing.
+   */
+  const stats = useStatsCards()
+  const all: Record<string, React.ReactNode> = {
+    ...stats.cards,
+    digest: (<Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
+  <ul className="space-y-1.5 text-body">
+    {digest.lines.map((l) => (
+      <li key={l.label} className="flex items-center justify-between gap-2">
+        <span className="text-fg-2">{l.label}</span>
+        <strong className="text-fg-1">{l.value}</strong>
+      </li>
+    ))}
+  </ul>
+  {(digest.win || digest.slip) && (
+    <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-body">
+      {digest.win && (
+        <p className="flex items-center gap-2">
+          <AppIcon as={Trophy} size="sm" style={{ color: onRaised('green') }} />
+          <span className="text-fg-1">{digest.win}</span>
+        </p>
+      )}
+      {digest.slip && (
+        <p className="flex items-center gap-2">
+          <AppIcon as={Warning} size="sm" style={{ color: onRaised('peach') }} />
+          <span className="text-fg-1">{digest.slip}</span>
+        </p>
+      )}
+    </div>
+  )}
+</Card>),
+    coach: (<Card band title="Coach digest" subtitle="What to focus on next">
+  <p className="mb-3 flex items-center gap-2 text-body font-medium text-fg-1">
+    <AppIcon as={Sparkle} size="sm" style={{ color: onRaised('mauve') }} />
+    {coach.headline}
+  </p>
+  {coach.tips.length > 0 && (
+    <ul className="space-y-2 text-body">
+      {coach.tips.map((t) => (
+        <li key={t.id}>
+          <button
+            onClick={() => nav(t.to as Parameters<typeof nav>[0])}
+            className="w-full rounded-control bg-ink-2 px-3 py-2 text-left hover:border-mauve"
+          >
+            <span className="font-medium text-fg-1">{t.title}</span>
+            <span className="block text-label text-fg-2">{t.detail}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )}
+  {coach.insight && (
+    <p className="mt-3 border-t border-line pt-3 text-body text-fg-1">
+      <span className="mr-1.5 rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: coach.insight.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
+        r={coach.insight.r}
+      </span>
+      {coach.insight.text}
+    </p>
+  )}
+</Card>),
+    patterns: found.length > 0 ? (<Card band title="Patterns" subtitle="What your data is telling you">
+  <ul className="space-y-2">
+    {found.map((ins, i) => (
+      <li key={i} className="flex items-center gap-2 text-body">
+        <span className="rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: ins.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
+          r={ins.r} · {ins.strength}
+        </span>
+        <span className="text-fg-1">{ins.text}</span>
+      </li>
+    ))}
+  </ul>
+</Card>) : null,
+    matrix: <CorrelationMatrixCard />,
+    momentum: momentum.length > 0 ? (<Card band title="Momentum" subtitle="Where each metric is trending vs. the week before">
+  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    {momentum.map((m) => {
+      // Stress is inverted: a drop is good. Everything else: up is good.
+      const good = m.key === 'stress' ? m.dir === 'down' : m.dir === 'up'
+      const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
+      const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
+      return (
+        <li key={m.key} className="rounded-card bg-ink-2 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-label text-fg-2">{m.label}</span>
+            <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
+          </div>
+          <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
+          <p className="text-label" style={{ color: onRaised(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
+            {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
+          </p>
+        </li>
+      )
+    })}
+  </ul>
+</Card>) : null,
+    entryvolume: <JournalVolumeCard />,
+    consistency: <HabitConsistencyCard />,
+    taskstrend: <TaskTrendCard />,
+    habitgrids: <TrackerVisuals data={data} today={todayISO()} />,
+  }
+
   return (
     <PageLayout
-      tier={1180}
+      /* The dashboard tier. Twenty-three analytics cards in a masonry whose
+         third column needs a 1280px container — at 1180 this page drew two
+         columns on a 1440 screen with ~260px unused beside it. */
+      tier={1440}
       /* Stacked: zone 3 is a full-width grid of read-backs. There is no narrow
          form here to justify the 62/38 split. */
       stacked
@@ -231,152 +341,55 @@ export function Insights() {
         )}
       </Card>
       </>}
-      zone3={<>
-      {visible.size === 0 ? (
-        <Empty>
-          Nothing matches “{q}” on this page. Clear the query, or pick a different domain above.
-        </Empty>
-      ) : (
-      <>
-      <MasonryGrid>
-        {show('digest') && (
-        <Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
-          <ul className="space-y-1.5 text-body">
-            {digest.lines.map((l) => (
-              <li key={l.label} className="flex items-center justify-between gap-2">
-                <span className="text-fg-2">{l.label}</span>
-                <strong className="text-fg-1">{l.value}</strong>
-              </li>
-            ))}
-          </ul>
-          {(digest.win || digest.slip) && (
-            <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-body">
-              {digest.win && (
-                <p className="flex items-center gap-2">
-                  <AppIcon as={Trophy} size="sm" style={{ color: onRaised('green') }} />
-                  <span className="text-fg-1">{digest.win}</span>
-                </p>
-              )}
-              {digest.slip && (
-                <p className="flex items-center gap-2">
-                  <AppIcon as={Warning} size="sm" style={{ color: onRaised('peach') }} />
-                  <span className="text-fg-1">{digest.slip}</span>
-                </p>
-              )}
-            </div>
-          )}
-        </Card>
-        )}
+      zone3={
+        <>
+          {/* ZONE 3 · the six domains the registry names, in its order, one
+              heading each.
 
-        {show('coach') && (
-        <Card band title="Coach digest" subtitle="What to focus on next">
-          <p className="mb-3 flex items-center gap-2 text-body font-medium text-fg-1">
-            <AppIcon as={Sparkle} size="sm" style={{ color: onRaised('mauve') }} />
-            {coach.headline}
+              It was nine groups under four mechanisms: a bare `MasonryGrid`
+              with no heading at all (eight cards), three loose cards inside
+              `StatsPanels`' own grid, six `QuietSection` folds titled from a
+              different vocabulary ("This week", "Sleep & mood", "Mood views",
+              "Fitness stats", "Tasks", "Habits"), and a seventh
+              `CollapsibleSection` in this file **also titled "Habits"**. The
+              chip row above offered six domain names that appeared nowhere in
+              any of it. Measured: seven screens of masonry with the useful
+              charts scattered through it.
+
+              Now the chips and the headings are the same six words, and every
+              card is under exactly one of them — enforced by the test in
+              `insightsFilter.test.ts`, which asserts the rendered map and the
+              registry hold the same ids. That test did not exist; the
+              registry's docstring claimed it did. */}
+          {visible.size === 0 ? (
+            <Empty>
+              Nothing matches “{q}” on this page. Clear the query, or pick a different domain above.
+            </Empty>
+          ) : (
+            DOMAINS.map((d) => {
+              const ids = CARDS.filter((c) => c.domain === d && show(c.id) && all[c.id])
+              if (ids.length === 0) return null
+              return (
+                <section key={d} data-domain={d} className="mb-6 last:mb-0">
+                  <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+                    <h2 className="font-display text-heading font-medium text-fg-1">{DOMAIN_LABEL[d]}</h2>
+                    <p className="text-label text-fg-2">{DOMAIN_BLURB[d]}</p>
+                    <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
+                  </div>
+                  <MasonryGrid>
+                    {ids.map((c) => <div key={c.id} data-card={c.id}>{all[c.id]}</div>)}
+                  </MasonryGrid>
+                </section>
+              )
+            })
+          )}
+          {stats.modal}
+          <p className="text-label text-fg-2">
+            Task migration &amp; aging live in{' '}
+            <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
           </p>
-          {coach.tips.length > 0 && (
-            <ul className="space-y-2 text-body">
-              {coach.tips.map((t) => (
-                <li key={t.id}>
-                  <button
-                    onClick={() => nav(t.to as Parameters<typeof nav>[0])}
-                    className="w-full rounded-control bg-ink-2 px-3 py-2 text-left hover:border-mauve"
-                  >
-                    <span className="font-medium text-fg-1">{t.title}</span>
-                    <span className="block text-label text-fg-2">{t.detail}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {coach.insight && (
-            <p className="mt-3 border-t border-line pt-3 text-body text-fg-1">
-              <span className="mr-1.5 rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: coach.insight.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
-                r={coach.insight.r}
-              </span>
-              {coach.insight.text}
-            </p>
-          )}
-        </Card>
-        )}
-
-        {show('patterns') && found.length > 0 && (
-          <Card band title="Patterns" subtitle="What your data is telling you">
-            <ul className="space-y-2">
-              {found.map((ins, i) => (
-                <li key={i} className="flex items-center gap-2 text-body">
-                  <span className="rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: ins.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
-                    r={ins.r} · {ins.strength}
-                  </span>
-                  <span className="text-fg-1">{ins.text}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
-        {show('matrix') && <CorrelationMatrixCard />}
-
-        {show('momentum') && momentum.length > 0 && (
-          <Card band title="Momentum" subtitle="Where each metric is trending vs. the week before">
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {momentum.map((m) => {
-                // Stress is inverted: a drop is good. Everything else: up is good.
-                const good = m.key === 'stress' ? m.dir === 'down' : m.dir === 'up'
-                const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
-                const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
-                return (
-                  <li key={m.key} className="rounded-card bg-ink-2 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-label text-fg-2">{m.label}</span>
-                      <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
-                    </div>
-                    <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
-                    <p className="text-label" style={{ color: onRaised(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
-                      {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
-                    </p>
-                  </li>
-                )
-              })}
-            </ul>
-          </Card>
-        )}
-
-        {show('entryvolume') && <JournalVolumeCard />}
-        {show('consistency') && <HabitConsistencyCard />}
-        {show('taskstrend') && <TaskTrendCard />}
-      </MasonryGrid>
-
-      {/* Every chart the app has. This was the Stats tab; the markup is
-          unchanged and each block is gated on the same filter. */}
-      <StatsPanels show={show} />
-
-      {/* HABIT ANALYTICS, migrated from Today.
-          These five — completion heatmap, streak leaderboard, monthly trend,
-          best weekdays, perfect days — sat in a fold on the capture page,
-          where they were both out of place and overlapping what this page
-          already says (Activity, Month over month, Best & worst day). Moved
-          rather than deleted: the overlap with Insights' own cards is real and
-          wants a consolidation pass of its own, and deleting a chart on the
-          suspicion that a different chart covers it is how a feature goes
-          quiet. Today keeps the month grid, which is a backfill tool, not a
-          chart. */}
-      <CollapsibleSection
-        title="Habits"
-        subtitle="heatmap, streaks, trend & perfect days"
-        defaultOpen={false}
-        stickyKey="insights.habits"
-      >
-        <TrackerVisuals data={data} today={todayISO()} />
-      </CollapsibleSection>
-
-      <p className="text-label text-fg-2">
-        Task migration &amp; aging live in{' '}
-        <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
-      </p>
-      </>
-      )}
-      </>}
+        </>
+      }
     />
   )
 }

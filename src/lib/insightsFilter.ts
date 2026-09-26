@@ -27,6 +27,24 @@ import type { JournalData } from './types'
 export const DOMAINS = ['overview', 'mood', 'habits', 'body', 'tasks', 'records'] as const
 export type Domain = (typeof DOMAINS)[number]
 
+/**
+ * One line per domain, shown under its heading in zone 3.
+ *
+ * The chips were the page's whole information architecture and they were
+ * opt-in: with nothing selected — the default — you got all twenty-three
+ * cards in one undifferentiated masonry, and the six words in the chip row
+ * appeared nowhere else on the page. These are the same six words used as
+ * section headings, so the filter and the layout finally agree.
+ */
+export const DOMAIN_BLURB: Record<Domain, string> = {
+  overview: 'What changed this week, and what to do next',
+  mood: 'How you have felt, and what moves it',
+  habits: 'Whether the streak is holding, and when you actually check in',
+  body: 'How much you trained, and on what',
+  tasks: 'Where your tasks end up',
+  records: 'Lifetime totals, pace and badges',
+}
+
 export const DOMAIN_LABEL: Record<Domain, string> = {
   overview: 'Overview',
   mood: 'Mood & sleep',
@@ -42,11 +60,17 @@ export const DOMAIN_LABEL: Record<Domain, string> = {
  * usually the *measure* ("sleep debt", "r", "streak") rather than the heading
  * someone chose for it.
  *
- * Kept as data rather than as a prop on each card so the count is countable:
- * a test asserts every id here is rendered and every rendered id is here, which
- * is the assertion that would have caught a card silently dropping out of a
- * move. `views/Pullups.tsx` lost eleven workout formats to exactly that, with
- * every gate green.
+ * Kept as data rather than as a prop on each card so the count is countable.
+ *
+ * **`views/Insights.test.tsx` asserts every id here is rendered and every
+ * rendered id is here.** This docstring claimed that test existed for two
+ * releases and it did not — the only test in this file checked the registry
+ * against itself, which cannot see the page. In that gap `TrackerVisuals`
+ * shipped five habit grids with no id and no gate: unfilterable,
+ * unsearchable, uncounted. It is `habitgrids` below now, and the test reads
+ * `data-card` off the rendered DOM so a card dropped in a move fails rather
+ * than vanishing. `views/Pullups.tsx` lost eleven workout formats to exactly
+ * that, with every gate green.
  */
 export interface CardMeta {
   id: string
@@ -74,6 +98,13 @@ export const CARDS: CardMeta[] = [
   { id: 'checkin', title: 'Check-in times', domain: 'habits', words: 'check in time of day habit when hour' },
   { id: 'habitanalytics', title: 'Habit analytics', domain: 'habits', words: 'habit consistency trend mood impact completion' },
   { id: 'consistency', title: 'Habit consistency', domain: 'habits', words: 'habit consistency 30 day rate bar ranking' },
+  /* `TrackerVisuals` — the five grids that came over from Today. It had **no
+     id and no `show()` gate**, so it rendered whatever the chips said and was
+     invisible to this registry and to the test below. Registered rather than
+     deleted: its overlap with `activity` and `habitanalytics` is real and
+     wants a consolidation pass, and deleting a chart on the suspicion that
+     another covers it is how a feature goes quiet. */
+  { id: 'habitgrids', title: 'Habit grids', domain: 'habits', words: 'habit heatmap streak leaderboard perfect days monthly trend weekday grid' },
 
   { id: 'workoutmin', title: 'Workout minutes', domain: 'body', words: 'workout minutes week training volume bar' },
   { id: 'workoutsplit', title: 'Workout split', domain: 'body', words: 'workout split type distribution donut push pull legs' },

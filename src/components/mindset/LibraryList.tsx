@@ -12,14 +12,30 @@ import { bindDashes } from '../../lib/typography'
  * and these two had been wrong by twenty for long enough that both copies
  * agreed with each other and with nothing else.
  *
- * Owns the grouped list and the add/remove control on a row. Filtering is done
- * by the view and handed here already filtered — this component never decides
- * what is visible, so the count in the utility bar and the rows on screen
- * cannot disagree.
+ * ## Each principle is a tile, not a row of text
  *
- * A category with nothing left after filtering is dropped rather than rendered
- * as an empty block; a search that matches nothing at all gets one line, not
- * seven empty headings.
+ * It was a hairline-separated list: a bold line, a grey line, and an `Add`
+ * button floating at the far right of the same row. At two columns that put
+ * about twelve unbounded text blocks on screen with nothing but 1px rules
+ * between them, and the control sat closer to the *next* principle's text
+ * than to its own. Reported as "plain text scattered on the page", which is
+ * accurate — there was no object boundary anywhere in it.
+ *
+ * A tile draws the boundary, and it lets the control belong to the thing it
+ * acts on. Everything else about the block is unchanged: same grouping, same
+ * counts, same copy.
+ *
+ * **Neutral on purpose.** Nine categories is nine hues if you let it be, and
+ * the contract spends the accent on exactly one thing per page — here, the
+ * principles you have actually chosen. An in-focus tile is the only coloured
+ * thing in the library, which is what makes it findable in a wall of
+ * forty-six.
+ *
+ * Filtering is done by the view and handed here already filtered — this
+ * component never decides what is visible, so the count in the utility bar
+ * and the tiles on screen cannot disagree. A category with nothing left after
+ * filtering is dropped rather than rendered as an empty block; a search that
+ * matches nothing at all gets one line, not nine empty headings.
  */
 export function LibraryList({
   principles,
@@ -30,7 +46,7 @@ export function LibraryList({
   /** Already filtered by search + category. */
   principles: MindsetPrinciple[]
   focusedIds: Set<string>
-  /** All focus slots are taken — inactive rows read as unavailable. */
+  /** All focus slots are taken — inactive tiles read as unavailable. */
   full: boolean
   onToggle: (principleId: string) => void
 }) {
@@ -61,47 +77,50 @@ export function LibraryList({
               </p>
             </div>
 
-            {/* Two columns from `md` up. Forty-six rows in one column is a
-                ~3,200px wall that is 72% of this page, on a tier 1,180px
-                wide where each row was using half of it — the space audit
-                reported `1 column ⚠` and 4.8 shipped screens. Paired rows
-                wrap their descriptions to two or three lines instead of one,
-                so the saving is real but smaller than half; measured below.
-
-                `content-start` matters: a grid row is as tall as its tallest
-                cell, and without it a two-line description stretches its
-                one-line neighbour's hover target to match. */}
-            <ul className="min-w-0 flex-1 basis-[26rem] md:grid md:auto-rows-min md:grid-cols-2 md:content-start md:gap-x-8">
+            {/* Two columns from `md` up. Forty-six tiles in one column is a
+                wall on a tier 1,180px wide where each was using half of it.
+                `auto-rows-min` + `content-start`: a grid row is as tall as its
+                tallest cell, and a three-line tile should not stretch its
+                two-line neighbour. */}
+            <ul className="min-w-0 flex-1 basis-[26rem] grid gap-3 md:grid-cols-2 md:auto-rows-min md:content-start">
               {items.map((p) => {
                 const on = focusedIds.has(p.id)
                 return (
-                  <li
-                    key={p.id}
-                    className="grid grid-cols-[1fr_auto] items-start gap-4 border-t border-line py-2.5 hover:bg-ink-2/50"
-                  >
-                    <div className="min-w-0">
-                      <p className={`font-display text-label font-medium ${on ? 'text-brand-text' : 'text-fg-1'}`}>
-                        {p.title}
-                      </p>
-                      <p className="mt-0.5 max-w-[74ch] text-label text-pretty text-fg-2">{bindDashes(p.why)}</p>
-                    </div>
-                    {/* Enabled even when full, and deliberately: a disabled
-                        button that says "Add" explains nothing about why. This
-                        one keeps its accessible name and the view's toast says
-                        what the cap is. */}
+                  <li key={p.id}>
+                    {/* The whole tile is the control. A 44px-plus target that
+                        is the object itself beats a 60px button beside it —
+                        and the old `Add` button sat at the far right of a
+                        full-width row, nearer the next principle's text than
+                        its own. `aria-pressed` carries the state that the
+                        wash and the pill show. */}
                     <button
                       onClick={() => onToggle(p.id)}
                       aria-pressed={on}
                       aria-label={on ? `Remove ${p.title} from your focus` : `Add ${p.title} to your focus`}
-                      className={`self-center border px-2.5 py-1 text-label ${
+                      className={`flex h-full w-full flex-col rounded-card border p-3 text-left transition-colors ${
                         on
-                          ? 'border-brand bg-brand-wash text-brand-text'
-                          : full
-                            ? 'border-line text-fg-3 hover:border-brand hover:text-brand-text'
-                            : 'border-line text-fg-1 hover:border-brand hover:text-brand-text'
+                          ? 'border-brand bg-brand-wash'
+                          : 'border-line bg-ink-2 hover:border-line-strong'
                       }`}
                     >
-                      {on ? 'In focus' : 'Add'}
+                      <span className="flex items-start justify-between gap-3">
+                        <span className={`font-display text-label font-medium ${on ? 'text-brand-text' : 'text-fg-1'}`}>
+                          {p.title}
+                        </span>
+                        <span
+                          aria-hidden
+                          className={`mt-0.5 shrink-0 rounded-pill border px-2 py-0.5 text-micro ${
+                            on
+                              ? 'border-brand text-brand-text'
+                              : full
+                                ? 'border-line text-fg-3'
+                                : 'border-line text-fg-2'
+                          }`}
+                        >
+                          {on ? 'In focus' : 'Add'}
+                        </span>
+                      </span>
+                      <span className="mt-1 text-label text-pretty text-fg-2">{bindDashes(p.why)}</span>
                     </button>
                   </li>
                 )

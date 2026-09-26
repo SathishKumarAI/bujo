@@ -16,6 +16,29 @@ import { cn } from '../../lib/cn'
  * The 820 tier stays single column at every width; its gutters are the point.
  * Only the 1180 tier splits, and it splits on a CONTAINER query (see
  * `styles/layout.css`) so collapsing the sidebar cannot flip the layout.
+ *
+ * **The 1440 tier is for a dashboard**, and it exists because this shell was
+ * capping contract pages at 1180px forever while the older `shell/Page` it
+ * replaced already widened to 84rem at `2xl`. Insights is 23 analytics cards
+ * in a `MasonryGrid`, whose third column needs a **1280px container**
+ * (`@7xl`) — so on a 1440 screen it sat at 1180 and drew two columns with
+ * ~260px of page unused beside it, while a legacy page on the same screen used
+ * the room. Same cap, one step earlier than `Page` uses it (`xl`, not `2xl`),
+ * because 1280 is exactly where the third column becomes available and holding
+ * it back to 1536 wastes the widths in between.
+ *
+ * It is not the default. A form and a list read worse at 1344px than at 1180,
+ * which is the whole reason for a tier system.
+ */
+const TIER_WIDTH: Record<820 | 1180 | 1440, string> = {
+  820: 'max-w-read',
+  1180: 'max-w-wide',
+  1440: 'max-w-wide xl:max-w-[84rem]',
+}
+
+/**
+ * The three-zone page shell. Pages hand over content per zone and never lay
+ * themselves out.
  */
 export function PageLayout({
   tier = 1180,
@@ -25,7 +48,7 @@ export function PageLayout({
   zone3,
   className = '',
 }: {
-  tier?: 820 | 1180
+  tier?: 820 | 1180 | 1440
   /**
    * Keep the wide container but do **not** split it into columns.
    *
@@ -118,7 +141,7 @@ export function PageLayout({
     // Moved down one level, to the element whose children are the three zones,
     // and again onto the review column, whose children are the cards. That is
     // where the ladder was always aimed.
-    <div className={cn('page-shell mx-auto w-full', tier === 820 ? 'max-w-read' : 'max-w-wide', className)}>
+    <div className={cn('page-shell mx-auto w-full', TIER_WIDTH[tier], className)}>
       <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
