@@ -9,6 +9,7 @@ import { addDays, prettyDay, todayISO, dayDiff } from '../lib/date'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { streakStats, addictionStats, STREAK_MILESTONES, URGE_PRESETS, ADDICTION_PRESETS, urgesByType, haltTally, HALT_STATES, moneySaved, type HaltState } from '../lib/streak'
 import { techniqueRanking, matchPlanForTrigger, streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
+import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend } from '../lib/lapse'
 import type { TriggerPlan } from '../lib/types'
 import { PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { CollapsibleSection } from '../components/CollapsibleSection'
@@ -31,6 +32,9 @@ import {
   HighRiskHoursCard,
   RiskiestDaysCard,
   TriggerPatternsCard,
+  DayTallyCard,
+  LapseCountCard,
+  type DayTallyRow,
 } from '../components/recovery'
 
 const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }[] = [
@@ -146,7 +150,7 @@ function SosOverlay({ plans, onClose }: { plans: TriggerPlan[]; onClose: () => v
 
 export function NoFap() {
   const confirm = useConfirm()
-  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction, setStreakCost, setAddictionCost, setCommitment } = useJournal()
+  const { data, logRelapse, resistUrge, removeUrge, addTriggerPlan, removeTriggerPlan, addAddiction, removeAddiction, relapseAddiction, logLapseDay, setStreakCost, setAddictionCost, setCommitment } = useJournal()
   const currency = data.settings.currencySymbol || '$'
   const [newAddiction, setNewAddiction] = useState('')
   const [trigger, setTrigger] = useState('')
@@ -238,6 +242,28 @@ export function NoFap() {
   const approachCopy = APPROACH_COPY[approach.tier]
   // #123 money saved · clean days × the primary streak's cost/day
   const savedMoney = moneySaved(stats.totalClean, s.costPerDay)
+  // Day log · one tally row per tracked thing, "how many times today".
+  const addictions = s.addictions ?? []
+  const tallyRows: DayTallyRow[] = [
+    { id: null, name: 'Main streak', count: lapseCountOn(s.relapses, today) },
+    ...addictions.map((a) => ({ id: a.id, name: a.name, count: lapseCountOn(a.relapses, today) })),
+  ]
+  /**
+   * Only the streaks where a quantity was actually recorded get a "how many"
+   * card. A streak whose every lapse day is a bare `count ?? 1` would draw
+   * seven bars of 1 — a picture of the default value, not of anything the user
+   * did — and `hasLapseQuantity` is the one gate that keeps it off the page.
+   * `flatMap` rather than `filter`, so `peak` narrows instead of being asserted.
+   */
+  const countedStreaks = [
+    { name: 'Main streak', relapses: s.relapses },
+    ...addictions.map((a) => ({ name: a.name, relapses: a.relapses })),
+  ].flatMap((t) => {
+    const peak = hasLapseQuantity(t.relapses) ? peakLapseWeekday(t.relapses) : undefined
+    return peak
+      ? [{ name: t.name, peak, byWeekday: lapseByWeekday(t.relapses), trend: lapseTrend(t.relapses, 8, today) }]
+      : []
+  })
   // #316 commitment contract · quit date + personal reason, shown prominently
   const commitment = s.commitment
   const hasCommitment = !!(commitment?.quitDate || commitment?.reason)
@@ -326,6 +352,13 @@ export function NoFap() {
             </div>
           </div>
         </Card>
+
+        {/* Day log · "it happened today", with a number on it.
+            Directly under the ring because it is the act this page was missing:
+            the quantity-blind version of it already existed three screens down
+            as the per-addiction `Reset` button, in zone 3 behind the signature
+            chart, which is not where you press anything on a bad day. */}
+        <DayTallyCard rows={tallyRows} onStep={logLapseDay} />
 
         {/* Urge surfing · pick what it was, log the win with date + time.
             Promoted above analytics: the primary "cope & log" action. */}
@@ -494,7 +527,13 @@ export function NoFap() {
                     <div className="flex items-center gap-3">
                       <Icon as={Flame} size="md" style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2">
+                        {/* `flex-wrap`, found by the clip gate the moment the
+                            demo seed first put an addiction on this page: three
+                            items shared one 54px line on a phone and the name
+                            lost, showing "Nicotin". The row has always been
+                            able to do this; nothing had ever rendered it with
+                            data. */}
+                        <div className="flex flex-wrap items-baseline gap-x-2">
                           <span className="truncate font-medium text-fg-1">{a.name}</span>
                           <span className="text-label text-fg-2">best {st.best}d</span>
                           {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: onRaised('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
@@ -655,6 +694,13 @@ export function NoFap() {
           {rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />}
           {peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />}
           {peakWeekday && <RiskiestDaysCard weekdayPattern={weekdayPattern} peakWeekday={peakWeekday} />}
+          {/* "How many", beside "how often" · same weekday chart, different
+              question, so they read as one pair rather than two variants. In
+              this fold on purpose: it is a months-long pattern, like every
+              other card here, and the day's own number is already in zone 2. */}
+          {countedStreaks.map((t) => (
+            <LapseCountCard key={t.name} name={t.name} byWeekday={t.byWeekday} peak={t.peak} trend={t.trend} />
+          ))}
           {/* Trigger patterns · aggregated relapse triggers */}
           {stats.topTriggers.length > 0 && (
             <TriggerPatternsCard topTriggers={stats.topTriggers} relapseCount={stats.relapseCount} avgGap={stats.avgGap} />
@@ -766,7 +812,10 @@ export function NoFap() {
               <ul className="space-y-2 text-body">
                 {[...s.relapses].reverse().map((r) => (
                   <li key={r.id} className="rounded-card border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
-                    <div className="flex items-center gap-1.5 font-medium" style={{ color: onRaised('red') }}><Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}</div>
+                    {/* `count` shown only when it says something: a bare row
+                        means "once", and "×1" on every line before this field
+                        existed would be a number the user never entered. */}
+                    <div className="flex items-center gap-1.5 font-medium" style={{ color: onRaised('red') }}><Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}{(r.count ?? 1) > 1 && <span className="text-fg-2">· ×{r.count}</span>}</div>
                     {r.trigger && <div className="mt-0.5 text-fg-1"><span className="text-fg-2">Reason:</span> {r.trigger}</div>}
                     {r.note && <div className="text-fg-2 italic">{r.note}</div>}
                   </li>
