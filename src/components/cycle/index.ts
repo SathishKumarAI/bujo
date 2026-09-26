@@ -3,8 +3,12 @@
  * reads the store, which is what keeps `lib/cycleInsights.ts` the only place
  * the arithmetic happens.
  */
-export { FLAGS, FLAG_COLOR, type Flag } from './flags'
+export { FLAGS, FLAG_COLOR, FLAG_MEANS, type Flag } from './flags'
 export { CycleWheel } from './CycleWheel'
+export { FlagLegend } from './FlagLegend'
+export { FertileWindow } from './FertileWindow'
+export { DriveByPhase } from './DriveByPhase'
+export { PhaseNutrition } from './PhaseNutrition'
 export { CycleHistoryChart } from './CycleHistoryChart'
 export { SymptomPattern } from './SymptomPattern'
 export { BbtChart, type BbtPoint } from './BbtChart'

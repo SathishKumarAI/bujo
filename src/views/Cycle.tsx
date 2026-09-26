@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Flower, NotePencil, ShieldWarning, Thermometer } from '@/components/icons'
+import { CalendarBlank, Flower, ForkKnife, NotePencil, ShieldWarning, Thermometer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
@@ -9,14 +9,17 @@ import { CollapsibleSection } from '../components/CollapsibleSection'
 import { PageLayout, SummaryStrip } from '../components/page'
 import { CardGrid } from '../components/shell/CardGrid'
 import { useCursor } from '../components/shell/Page'
+import { useDevice } from '../components/shell/device'
 import { onRaised } from '../lib/colors'
 import {
   avgCycleLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
-  flagPatternByDay, nextPeriodEstimate, periodStarts, phaseBands, phaseOf,
+  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
+  phaseBands, phaseOf,
 } from '../lib/cycleInsights'
 import { BBT_RULES, CYCLE_DISCLAIMER, CYCLE_PHASES, TRACKING_TIPS } from '../lib/cycleGuide'
 import {
-  BbtChart, CycleHistoryChart, CycleWheel, DayEditor, MonthList, SymptomPattern,
+  BbtChart, CycleHistoryChart, CycleWheel, DayEditor, DriveByPhase, FertileWindow,
+  FlagLegend, MonthList, PhaseNutrition, SymptomPattern,
   type BbtPoint,
 } from '../components/cycle'
 
@@ -54,6 +57,7 @@ import {
 export function Cycle() {
   const { data, setCycle } = useJournal()
   const { month: ym } = useCursor()
+  const isPhone = useDevice() === 'mobile'
   const unit = data.settings.tempUnit
   const days = monthDays(ym)
   const today = todayISO()
@@ -74,6 +78,8 @@ export function Cycle() {
   const history = useMemo(() => cycleHistory(log, today), [log, today])
   const bands = useMemo(() => phaseBands(length), [length])
   const pattern = useMemo(() => flagPatternByDay(log, today), [log, today])
+  const drive = useMemo(() => driveByPhase(log, today, length), [log, today, length])
+  const peak = useMemo(() => drivePeak(drive), [drive])
 
   // Cycle day for any date, for the month list's second column.
   const cycleDayOf = useMemo(() => {
@@ -166,24 +172,64 @@ export function Cycle() {
         </div>
       }
       zone2={
-        <Card band title="Log a day" subtitle="Tap a day, set a temperature, flag what happened" hideInfo>
+        <Card band title="Log a day" subtitle="Tap a day, set a temperature, flag what happened, rate the drive" hideInfo>
           <DayEditor
             date={sel}
             entry={selEntry}
             unit={unit}
             onTemp={(temp) => setCycle(sel, { temp })}
             onToggleFlag={(f) => toggleFlag(sel, f)}
+            onDrive={(drive) => setCycle(sel, { drive })}
           />
-          <div className="mt-3">
-            <MonthList
-              days={days}
-              entries={log}
-              selected={sel}
-              today={today}
-              cycleDayOf={cycleDayOf}
-              onSelect={setSelected}
-            />
-          </div>
+
+          {/* The legend belongs to the act, not to the review: it decodes the
+              chips six pixels above it, and the dead column beside a form is
+              exactly where PAGE-SHAPE says to put the thing you need while
+              doing the thing. Not folded — the report was that the colours are
+              undecipherable, and a closed fold is the same page. */}
+          <FlagLegend />
+
+          {/* COD-230 · the month list is 956px of a 3,703px phone page — two
+              15-row columns that stack below `sm`, because the rows cannot be
+              made narrower: 24 + 40 + 56px of columns plus gaps and five dots
+              is ~227px of min-content against 167px of available column at
+              390. So it folds on a phone instead, closed, with the day editor
+              (which is what you opened the page to use) left in the open.
+              Measured: 4.1 → 3.0 screens shipped, open unchanged at 6.3 before
+              the new content, and the desktop page does not fold at all
+              because there is nothing to win there — the column is dead space
+              either way. `useDevice` rather than a CSS-hidden second copy: two
+              copies of a thirty-row list is how the two come to disagree. */}
+          {isPhone ? (
+            <div className="mt-3">
+              <CollapsibleSection
+                variant="quiet" defaultOpen={false} stickyKey="cycle.month"
+                icon={CalendarBlank} color="mauve"
+                title={prettyMonth(ym)}
+                subtitle="Every day, its temperature and its cycle day"
+              >
+                <MonthList
+                  days={days}
+                  entries={log}
+                  selected={sel}
+                  today={today}
+                  cycleDayOf={cycleDayOf}
+                  onSelect={setSelected}
+                />
+              </CollapsibleSection>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <MonthList
+                days={days}
+                entries={log}
+                selected={sel}
+                today={today}
+                cycleDayOf={cycleDayOf}
+                onSelect={setSelected}
+              />
+            </div>
+          )}
         </Card>
       }
       zone3={
@@ -197,16 +243,32 @@ export function Cycle() {
           <CardGrid>
             <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
               <CycleWheel day={day} length={length ?? 28} bands={bands} />
+              {/* Was four lines; the second half explained where ovulation is
+                  placed and why, which is now the fertile-window card's whole
+                  subject two cards down. Two cards saying the same thing is
+                  how they come to say different things. */}
               <p className="mt-3 text-label text-fg-2">
                 Widths come from your own average ({length ?? 28} days). The luteal half is the
                 stable one — about fourteen days — so a longer cycle is almost always a longer
-                first half, which is why ovulation is placed back from the <em>next</em> period
-                rather than forward from the last.
+                first half.
               </p>
             </Card>
 
             <Card band title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
               <CycleHistoryChart history={history} average={length} />
+            </Card>
+
+            {/* Not in the guide fold, and that is the whole point: "what is
+                ovulation and how do I tell it from the phases either side" was
+                the question, so the answer is on the page. The wheel says where
+                you are; this says what the narrow green band actually is and
+                why two different signals point at it from opposite sides. */}
+            <Card band title="Ovulation & the fertile window" subtitle="One day, two signals, and a window wider than both" hideInfo>
+              <FertileWindow bands={bands} length={length ?? 28} />
+            </Card>
+
+            <Card band title="Drive by phase" subtitle="Your own answer to the textbook claim" hideInfo>
+              <DriveByPhase rows={drive} peak={peak} />
             </Card>
           </CardGrid>
 
@@ -247,6 +309,23 @@ export function Cycle() {
                 ))}
               </div>
               <p className="mt-3 text-label text-fg-2">Day ranges assume the textbook 28 days — 21–35 is a normal range, and the wheel above uses your logged average once two periods anchor it.</p>
+            </CollapsibleSection>
+
+            {/* Food is a fold, and the conservative call of the two: it is
+                long-form reading matter that a returning reader has already
+                read, which is the one thing PAGE-SHAPE says a fold is for, and
+                it sits beside the three folds that were already here. The
+                alternative — its own visible zone-3 card — would have put ~700px
+                of prose on a page that is already the longest thing in the app
+                on a phone. The legend and the ovulation diagram are the parts
+                that answer a question at a glance, and those are not folded. */}
+            <CollapsibleSection
+              variant="quiet" defaultOpen={false} stickyKey="cycle.food"
+              icon={ForkKnife} color="peach"
+              title="Cravings & food, phase by phase"
+              subtitle="What the cravings tend to be, what is worth eating, and who says so"
+            >
+              <PhaseNutrition />
             </CollapsibleSection>
 
             <CollapsibleSection
