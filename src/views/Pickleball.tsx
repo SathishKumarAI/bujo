@@ -663,7 +663,7 @@ export function Pickleball() {
           </Card>
         )}
         {/* ── DUPR rating tracker ── */}
-        <Card
+        <Card enlargeable
           band
           title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>}
           subtitle="Log your DUPR over time, watch the trend climb"

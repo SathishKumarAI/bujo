@@ -42,9 +42,9 @@ export function MetricsTrendCard({ chartData, ym, just = null }: {
   const dots = just == null ? [] : just.fields.map((key) => ({ key, colour: cat(SERIES[key]) }))
 
   return (
-    <Card band title="Mood. Stress. Sleep" subtitle={`${prettyMonth(ym)}, faint = daily, bold = 7-day avg`} className="lg:col-span-2">
+    <Card enlargeable band title="Mood. Stress. Sleep" subtitle={`${prettyMonth(ym)}, faint = daily, bold = 7-day avg`} className="lg:col-span-2">
       {/* The scroll-into-view target, on the plot itself and NOT on a wrapper
-          around the card. The first attempt wrapped `<Card>` in a
+          around the card. The first attempt wrapped `<Card enlargeable>` in a
           `display: contents` div to keep the grid intact — and `display:
           contents` generates no box, so `getBoundingClientRect` is 0x0 and
           `scrollIntoView` silently does nothing. Measured: the dot drawn

@@ -156,6 +156,61 @@ signature of a table that has been split, and it had survived two previous
 de-duplication passes on the same page because each round merged the pair in
 front of it rather than asking what the rows were.
 
+## When a page has more than ~4 groups, the groups become a rail
+
+Headings give a page structure. They do not make it shorter — Insights with
+six headings was still **6.3 screens at 1600px and 13.5 on a phone**, and
+scroll was the only way to reach anything.
+
+Past about four groups, turn the group names into navigation: a sticky rail
+beside the pane, one group shown at a time. Insights went to **1.8 screens
+desktop, 3.1 phone**, same twenty-four cards, reached in a click.
+
+It also spends the gutter. Ten pages in this app sit at 1180px on a 1600px
+screen; a rail is 176px of that doing work.
+
+Rules the Insights rail is holding up:
+
+- **Default to the first group, never to "All".** Landing on everything is
+  landing on the page you just replaced. Keep All — a search has to cross
+  groups, and someone who wants the wall should be able to have it.
+- **A query overrides the rail.** Searching for a card whose group you do not
+  remember is the whole reason search exists; intersecting it with the
+  selected row silently returns nothing. There is a test for this.
+- **Counts are live, and a zero row is disabled, not hidden.** A rail whose
+  rows move as you type is a rail you cannot aim at.
+- **Sticky under `--header-h`**, which `useHeaderHeight` publishes from a
+  ResizeObserver — the header grows by the notch and wraps at narrow widths,
+  so a constant is wrong exactly where it hurts.
+- **Below the breakpoint it is the horizontal chip row it replaced.** Same
+  component, same state, same counts. A separate phone implementation is how
+  the two come to disagree.
+
+Two mechanical traps, both of which this repo already documents and both of
+which the first draft hit anyway:
+
+- **An element cannot query itself.** `@container/page` and
+  `@4xl/page:grid-cols-…` on one div means the grid never fires, while the
+  rail (a child) matches — a full-width vertical list stacked above the pane.
+  Container on the outer div, grid on the inner one.
+- **Spell out the phone column.** With no base `grid-template-columns` the
+  grid gets one implicit `auto` track sized to its widest item's min-content;
+  the seven-chip rail made that 426px inside a 390px viewport and the page
+  scrolled sideways. The rail's own `overflow-x-auto` cannot save it — the
+  track overflows, not the item.
+
+## Every chart can be enlarged
+
+`Card` has had a complete enlarge for a long time — ⛶ button, focus trap,
+portal modal, revealed on card hover. It was opt-in, and **14 of 28 chart
+cards never passed it**, so more than half the app's charts could only be
+read at whatever size their grid cell happened to be.
+
+It is on for every chart card now. Two things that were missing from the
+machinery itself: **Escape did not close it** (`useFocusTrap` mentioned
+Escape in a comment and never listened), and the affordance is worth keeping
+hover-revealed at `opacity-70` so it does not compete with the card's title.
+
 ## What to measure, and with what
 
 | Question | Command |

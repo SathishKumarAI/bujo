@@ -270,8 +270,20 @@ export function Card({
           zoom, page-in animation) which would otherwise make `position:fixed`
           relative to the card, not the screen · so the modal must escape them
           to truly centre on the viewport. */}
+      {/* Escape closes it. `useFocusTrap` mentions Escape in a comment and
+          never listened for it, so the enlarge modal could only be dismissed
+          by clicking the backdrop or finding the × — which is a keyboard trap
+          in everything but name, and this dialog is about to appear on
+          fourteen more cards. Bound on the panel rather than the document so
+          two stacked dialogs cannot both close on one press. */}
       {large && createPortal(
-        <div className={CARD.modalBackdrop} onClick={() => setLarge(false)} role="dialog" aria-modal="true">
+        <div
+          className={CARD.modalBackdrop}
+          onClick={() => setLarge(false)}
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setLarge(false) } }}
+          role="dialog"
+          aria-modal="true"
+        >
           <div ref={modalTrap} className={CARD.modalPanel} onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="min-w-0">

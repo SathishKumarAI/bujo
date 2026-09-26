@@ -1,4 +1,4 @@
-import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning, X } from '@/components/icons'
+import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -17,6 +17,7 @@ import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, todayISO} from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
+import { DomainRail } from '../components/insights/DomainRail'
 import { useStatsCards } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
 import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
@@ -55,9 +56,12 @@ export function Insights() {
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('all')
   const [sort, setSort] = useState<Sort>('newest')
-  /* Empty means "all". A chip row where deselecting the last one blanks the
-     page teaches people not to touch it. */
-  const [active, setActive] = useState<Set<Domain>>(new Set())
+  /* One domain at a time, `null` for All — the rail is single-select.
+     It was a multi-select chip row whose empty state meant "all", which is
+     the right shape for chips and the wrong one for navigation: a rail you
+     can put into a state that shows everything AND a state that shows
+     nothing has two meanings for one control. */
+  const [active, setActive] = useState<Domain | null>(DOMAINS[0])
 
   const streak = currentStreak(data)
   const tasks = taskCompletion(data)
@@ -76,17 +80,17 @@ export function Insights() {
   const radarAt = (axis: string) => radar.find((r) => r.axis === axis)?.value
   const left = pace(data)
 
-  const visible = visibleCards(active, q)
+  /* A query crosses domains. Searching for "sleep debt" while the rail sits
+     on Records must not return nothing — the search is how you find a card
+     whose domain you do not remember, which is the whole reason it exists. */
+  const searching = q.trim().length > 0
+  const visible = visibleCards(searching || !active ? new Set<Domain>() : new Set([active]), q)
   const show = (id: string) => visible.has(id)
-  const filtering = active.size > 0 || q.trim().length > 0
+  const filtering = searching
 
-  function toggle(d: Domain) {
-    setActive((prev) => {
-      const next = new Set(prev)
-      if (next.has(d)) next.delete(d)
-      else next.add(d)
-      return next
-    })
+  /** Cards a domain would show under the current query — the rail's counts. */
+  function countOf(d: Domain) {
+    return CARDS.filter((c) => c.domain === d && visibleCards(new Set([d]), q).has(c.id) && all[c.id]).length
   }
 
   /**
@@ -246,40 +250,10 @@ export function Insights() {
           />
         </div>
 
-        {/* The domain row. Every card on the page belongs to exactly one of
-            these, and the counts are the point: a chip that says 6 tells you
-            what is down there, which is the thing seven closed folds never
-            did. Selection state takes the accent WASH, not the accent fill —
-            same rule as Segmented and the result chips below. */}
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          {DOMAINS.map((d) => {
-            const on = active.has(d)
-            const n = CARDS.filter((c) => c.domain === d && visible.has(c.id)).length
-            return (
-              <button
-                key={d}
-                onClick={() => toggle(d)}
-                aria-pressed={on}
-                className={`rounded-pill px-2.5 py-1 text-label transition-colors ${
-                  on ? 'bg-brand-wash font-medium text-brand-text' : 'bg-ink-2 text-fg-2 hover:text-fg-1'
-                }`}
-              >
-                {DOMAIN_LABEL[d]} <span className="tabular-nums opacity-70">{n}</span>
-              </button>
-            )
-          })}
-          {filtering && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setActive(new Set()); setQ(''); setKind('all') }}
-              className="inline-flex h-auto items-center gap-1 px-2 py-1 text-label"
-            >
-              <AppIcon as={X} size="sm" /> Clear
-            </Button>
-          )}
-        </div>
-
+        {/* The domain chips are gone from here. Domain selection is the rail
+            beside zone 3 now — it was a filter, and a filter that decides
+            which of six subjects you are looking at is navigation. Search
+            stays in zone 2, because searching IS an act. */}
         {filtering && (
           <p className="mt-2 text-label text-fg-2">
             Showing <strong className="text-fg-1">{visible.size}</strong> of {CARDS.length} panels
@@ -361,9 +335,38 @@ export function Insights() {
               `insightsFilter.test.ts`, which asserts the rendered map and the
               registry hold the same ids. That test did not exist; the
               registry's docstring claimed it did. */}
+          {/* @container/page — the rail folds to a chip row on its OWN width,
+              not the window's. Declared on this wrapper rather than on the
+              rail, because an element cannot query itself (that one collapsed
+              a desktop grid to one column with nothing failing). */}
+          {/* Two divs, and the split is load-bearing. An element cannot query
+              itself, so `@container/page` and `@4xl/page:grid-cols-…` on one
+              div means the grid never fires — the rail read the container
+              (it is a child, so it matched) and went vertical while its
+              parent stayed a single column, stacking a full-width list of
+              six domains above the pane. The comment warning about this was
+              already written two lines down. */}
+          <div className="@container/page">
+          {/* `grid-cols-[minmax(0,1fr)]` spelled out for the phone. With no
+              base template the grid gets ONE implicit `auto` track sized to
+              its widest item's min-content — the rail is a seven-chip row, so
+              the track came out 426px inside a 390px viewport and the whole
+              page scrolled sideways (body scrollWidth 491). The rail's own
+              `overflow-x-auto` cannot save it: the track overflows, not the
+              item. Same trap `CardGrid` carries a paragraph about. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+          <DomainRail
+            value={active}
+            onChange={(d) => { setActive(d); setQ('') }}
+            countOf={countOf}
+            total={CARDS.filter((c) => visibleCards(new Set<Domain>(), q).has(c.id) && all[c.id]).length}
+            filtering={filtering}
+            onClear={() => { setQ(''); setKind('all') }}
+          />
+          <div className="min-w-0">
           {visible.size === 0 ? (
             <Empty>
-              Nothing matches “{q}” on this page. Clear the query, or pick a different domain above.
+              Nothing matches “{q}” on this page. Clear the query, or pick a different domain in the rail.
             </Empty>
           ) : (
             DOMAINS.map((d) => {
@@ -383,6 +386,9 @@ export function Insights() {
               )
             })
           )}
+          </div>
+          </div>
+          </div>
           {stats.modal}
           <p className="text-label text-fg-2">
             Task migration &amp; aging live in{' '}
