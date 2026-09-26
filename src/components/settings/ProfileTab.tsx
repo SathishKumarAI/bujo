@@ -5,11 +5,23 @@ import { Row, Toggle } from './shared'
 import type { Gender } from '../../lib/types'
 
 /**
- * Who this journal is for, and how its numbers are spelled.
+ * Who this journal is for, when it nudges, and how its numbers are spelled.
  *
  * Two cards, not one: units are not a profile fact — they are how every figure
  * in the app reads — and as a third rule-separated block inside Profile they
  * left ~500px of the wide tier empty beside a 672px column.
+ *
+ * The daily reminder arrived here when the Reminders tab was retired. It was
+ * the only thing on that tab that does NOT reach outside this device — an in-app
+ * banner and one browser notification, no push server — while its three
+ * neighbours (weather, food lookup, the local model) all do and belong with
+ * cloud sync under one "what does this app talk to" question.
+ *
+ * It is a block inside this card and not a third card, measured: on its own it
+ * was a 324×95 band at **44% fill** on the phone, the only card the space audit
+ * flagged as thin on this whole view — one switch cannot pay for a card's
+ * padding. Which is the opposite conclusion to the units note above, and for
+ * the opposite reason: units are four controls that fill a band, this is one.
  */
 export function ProfileTab() {
   const { data, setSettings } = useJournal()
@@ -26,7 +38,7 @@ export function ProfileTab() {
 
   return (
           <CardGrid>
-      <Card band title="Profile" subtitle="Tailors the wellbeing tools shown">
+      <Card band title="Profile" subtitle="Who this journal is for, and when it nudges you">
         <Row label="Gender">
           {/* `Row` renders its label as a <span>, so it names nothing — hence
               the `aria-label` below. Settings IS scanned: it is in the gate's
@@ -47,6 +59,31 @@ export function ProfileTab() {
         <div className="mt-3 space-y-2 border-t border-line pt-3">
           <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
           <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
+        </div>
+        {/* Moved verbatim from the retired Reminders tab. The switch is also in
+            the account menu, because whether you want the nudge is a decision
+            you revisit; the time is one you set once, which is why it is only
+            here. An in-app banner plus one browser notification a day — there
+            is no push server, so this reaches nothing outside the device, which
+            is why it did not travel with weather and the food lookup. */}
+        <div className="mt-3 space-y-2 border-t border-line pt-3">
+          <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
+          {s.reminderEnabled && (
+            <Row label="Remind me at">
+              {/* `Row` renders its label as a <span>, which names nothing — and
+                  this field only exists once the toggle above is on, a branch
+                  the demo seed never takes (`reminderEnabled: false`), so no
+                  rendering gate had ever seen it. Same shape as the yellow that
+                  sat at 2.02:1 behind a count the seed never produced. */}
+              <input
+                type="time"
+                value={s.reminderTime}
+                onChange={(e) => setSettings({ reminderTime: e.target.value })}
+                aria-label="Reminder time"
+                className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
+              />
+            </Row>
+          )}
         </div>
       </Card>
 
@@ -70,6 +107,7 @@ export function ProfileTab() {
           </Row>
         </div>
       </Card>
+
           </CardGrid>
   )
 }

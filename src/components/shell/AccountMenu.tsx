@@ -146,7 +146,7 @@ export function AccountMenu({
         </DropdownMenuSub>
 
         {/* The reminder's ON/OFF is a decision you revisit; its TIME is a
-            setting you choose once, so that stays in Settings → Reminders
+            setting you choose once, so that stays in Settings → Profile
             rather than growing a time picker inside a dropdown. */}
         <DropdownMenuCheckboxItem
           checked={reminderOn}

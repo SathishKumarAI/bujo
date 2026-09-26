@@ -47,11 +47,17 @@ export function VoiceModelCard() {
 
         {vm.enabled && (
           <div className="space-y-3 border-t border-line pt-3">
+            {/* `Row`'s label is a <span>, so it names nothing — and all three
+                fields below it only exist once the toggle above is on, which the
+                demo seed never does (`voiceModel` is unset, so `enabled` is
+                false). No rendering gate had ever seen them: axe walks what is
+                on the page. Same family as the fold and the empty journal. */}
             <Row label="Server">
               <input
                 value={endpoint}
                 onChange={(e) => setSettings({ voiceModel: { ...vm, endpoint: e.target.value } })}
                 placeholder={DEFAULT_ENDPOINT}
+                aria-label="Model server URL"
                 className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
               />
             </Row>
@@ -66,6 +72,7 @@ export function VoiceModelCard() {
                 <select
                   value={vm.model ?? DEFAULT_MODEL}
                   onChange={(e) => setSettings({ voiceModel: { ...vm, model: e.target.value } })}
+                  aria-label="Model"
                   className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
                 >
                   {models.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -74,6 +81,7 @@ export function VoiceModelCard() {
                 <input
                   value={vm.model ?? DEFAULT_MODEL}
                   onChange={(e) => setSettings({ voiceModel: { ...vm, model: e.target.value } })}
+                  aria-label="Model"
                   className="w-56 rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
                 />
               )}
