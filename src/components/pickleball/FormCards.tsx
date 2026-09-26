@@ -40,7 +40,13 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={TrendUp} size="md" className="text-green" /> Win-rate forecast</span>} subtitle="Projected from your session win-% trend">
       <div className="grid grid-cols-3 gap-2">
         <StatTile compact label="Current win %" value={`${forecast.current}%`} />
-        <StatTile compact label="Projected" value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <Icon as={TrendUp} size="sm" /> : forecast.direction === 'down' ? <Icon as={TrendDown} size="sm" /> : <Icon as={Minus} size="sm" />} />
+        {/* "Projected", not "If the trend holds", was a promise: the fit is a
+            straight line through every session's win%, and on the demo journal a
+            71% current rate printed **100% Projected** because the line ran past
+            100 and the clamp caught it. The maths is honest; the label was not.
+            `forecast.clamped` says so out loud rather than leaving the reader to
+            wonder why the number stopped at a round 100. */}
+        <StatTile compact label={forecast.clamped ? 'Trend ceiling' : 'If trend holds'} value={forecast.projected != null ? `${forecast.projected}%` : '—'} color={forecast.direction === 'up' ? 'green' : forecast.direction === 'down' ? 'red' : 'overlay0'} icon={forecast.direction === 'up' ? <Icon as={TrendUp} size="sm" /> : forecast.direction === 'down' ? <Icon as={TrendDown} size="sm" /> : <Icon as={Minus} size="sm" />} />
         <StatTile compact label="Per-session" value={`${forecast.slope > 0 ? '+' : ''}${forecast.slope}`} />
       </div>
       <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
@@ -49,6 +55,12 @@ export function WinRateForecastCard({ forecast }: { forecast: WinRateForecast })
         </Pill>
         <p className="text-label text-fg-2">{forecast.readiness === 'ready' ? 'You’re winning enough to test a higher level.' : forecast.readiness === 'consolidating' ? 'Holding ~50% — keep grooving consistency.' : 'Stack wins; aim to nudge your trend upward.'}</p>
       </div>
+      {forecast.clamped && (
+        <p className="mt-2 text-caption text-fg-2">
+          The straight-line trend runs {forecast.direction === 'down' ? 'below 0%' : 'past 100%'} five sessions out, so it is
+          capped here. Read it as direction, not as a number you will hit.
+        </p>
+      )}
     </Card>
   )
 }
