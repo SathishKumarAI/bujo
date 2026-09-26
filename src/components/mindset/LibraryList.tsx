@@ -4,7 +4,13 @@ import { MINDSET_CATEGORIES, MINDSET_LIBRARY, type MindsetPrinciple } from '../.
 import { bindDashes } from '../../lib/typography'
 
 /**
- * The library: 26 principles grouped by category, one row each.
+ * The library — every principle in `MINDSET_LIBRARY`, grouped by category.
+ *
+ * The count is deliberately not written down here. Two docstrings said "26
+ * principles" while the library held 46 and the utility bar rendered "46 of
+ * 46 shown" on screen — a number in a comment has nothing keeping it true,
+ * and these two had been wrong by twenty for long enough that both copies
+ * agreed with each other and with nothing else.
  *
  * Owns the grouped list and the add/remove control on a row. Filtering is done
  * by the view and handed here already filtered — this component never decides
@@ -55,7 +61,17 @@ export function LibraryList({
               </p>
             </div>
 
-            <ul className="min-w-0 flex-1 basis-[26rem]">
+            {/* Two columns from `md` up. Forty-six rows in one column is a
+                ~3,200px wall that is 72% of this page, on a tier 1,180px
+                wide where each row was using half of it — the space audit
+                reported `1 column ⚠` and 4.8 shipped screens. Paired rows
+                wrap their descriptions to two or three lines instead of one,
+                so the saving is real but smaller than half; measured below.
+
+                `content-start` matters: a grid row is as tall as its tallest
+                cell, and without it a two-line description stretches its
+                one-line neighbour's hover target to match. */}
+            <ul className="min-w-0 flex-1 basis-[26rem] md:grid md:auto-rows-min md:grid-cols-2 md:content-start md:gap-x-8">
               {items.map((p) => {
                 const on = focusedIds.has(p.id)
                 return (

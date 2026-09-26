@@ -23,7 +23,9 @@ import { todayISO } from '../lib/date'
  * The page reads top to bottom as one argument: what you are leading with →
  * what you are working on → how it is going → what else there is. That order
  * is the redesign; the previous version opened with a card of cards and put the
- * whole 26-principle library in one uninterrupted wall below it.
+ * whole library in one uninterrupted wall below it. (It said "26-principle"
+ * here and in `LibraryList`, and the library holds 46 — a count typed into a
+ * comment has nothing keeping it true.)
  */
 export function Mindset() {
   const { data, addMindsetFocus, setMindsetNote, removeMindsetFocus, toggleMindsetPractice } = useJournal()
