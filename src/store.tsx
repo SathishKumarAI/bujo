@@ -34,6 +34,7 @@ import { encryptString, decryptString } from './lib/crypto'
 import { LockScreen } from './components/LockScreen'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
+import { bumpLapseDay } from './lib/lapse'
 import { setActiveTheme } from './lib/colors'
 import { generateRecurring } from './lib/recurrence'
 import { generateDemoData } from './lib/demo'
@@ -178,6 +179,12 @@ interface Store {
   logRelapse: (r: Omit<Relapse, 'id'>) => void
   resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[] }) => void
   removeUrge: (id: string) => void
+  /**
+   * One-tap "it happened today" with a count. `null` targets the primary
+   * streak, otherwise an `AddictionStreak` id. `step` may be -1 to walk back an
+   * over-tap; see `bumpLapseDay` for the one-row-per-day invariant.
+   */
+  logLapseDay: (addictionId: string | null, step?: number) => void
   addTriggerPlan: (p: Omit<import('./lib/types').TriggerPlan, 'id'>) => void
   removeTriggerPlan: (id: string) => void
   // per-addiction streaks (BUJO-199)
@@ -722,6 +729,31 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               relapses: [...d.nofap.relapses, relapse],
             },
           }
+        }),
+
+      /**
+       * One-tap "it happened today", with a quantity — `null` for the primary
+       * streak, an addiction id for one of the tracked ones.
+       *
+       * All of the invariant lives in `bumpLapseDay`: one row per streak per
+       * day, the streak reset once on the first tap, `count` incremented after
+       * that. No coalesce key, so ⌘Z steps back one tap at a time — which is
+       * the undo a fat-finger on a counter actually wants.
+       */
+      logLapseDay: (addictionId, step = 1) =>
+        patch((d) => {
+          const date = todayISO()
+          const bump = <T extends { startedOn: string; best: number; relapses: Relapse[] }>(s: T) =>
+            bumpLapseDay(s, date, step, () => uid('r'))
+          return addictionId == null
+            ? { ...d, nofap: bump(d.nofap) }
+            : {
+              ...d,
+              nofap: {
+                ...d.nofap,
+                addictions: (d.nofap.addictions ?? []).map((a) => (a.id === addictionId ? bump(a) : a)),
+              },
+            }
         }),
 
       resistUrge: (entry) =>
