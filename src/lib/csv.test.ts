@@ -259,6 +259,37 @@ describe('dataSummary', () => {
     expect(s.counts).toContainEqual({ label: 'Entries', count: 2 })
     expect(s.totalRecords).toBe(3)
   })
+
+  /**
+   * Settings drew "Habits" twice on the Data tab: a StatTile counting
+   * `!archived` and a count pill counting every row, about 2,000px apart. In
+   * the demo seed nothing is archived, so both said 11 and the disagreement
+   * was invisible — archive one and the same page contradicts itself with no
+   * way to tell which number was meant. One definition now, and archived is
+   * its own row rather than hiding inside another word's total.
+   */
+  it('counts active habits under Habits, and archived separately', () => {
+    const d = emptyJournal()
+    const habit = (id: string, name: string, archived?: boolean) =>
+      ({ id, name, category: 'wellness' as const, color: 'mauve', startedOn: '2026-06-01', archived })
+    d.habits = [habit('a', 'Read'), habit('b', 'Run'), habit('c', 'Old', true)]
+    const s = dataSummary(d)
+    expect(s.counts).toContainEqual({ label: 'Habits', count: 2 })
+    expect(s.counts).toContainEqual({ label: 'Archived habits', count: 1 })
+    // Neither is double-counted into the other.
+    expect(s.totalRecords).toBe(3)
+  })
+
+  it('reports photos and bytes, so the card computes nothing itself', () => {
+    const d = emptyJournal()
+    d.memories = [
+      { date: '2026-06-01', text: 'with', photo: 'data:image/png;base64,AA' },
+      { date: '2026-06-02', text: 'without' },
+    ]
+    const s = dataSummary(d)
+    expect(s.photos).toBe(1)
+    expect(s.bytes).toBe(JSON.stringify(d).length)
+  })
 })
 
 describe('checksum / verifyChecksum', () => {
