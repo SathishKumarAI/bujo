@@ -105,10 +105,19 @@ function Button({
   variant = "secondary",
   size = "md",
   asChild = false,
+  primaryScope,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /**
+     * Which budget a `primary` counts against. Omit on a page — it charges the
+     * current view, which is what "one primary per screen" means. Pass
+     * `SHELL_SCOPE` for chrome that mounts on every view: the header's Quick add
+     * is a primary and used to occupy one arbitrary page's budget for the life of
+     * the app. Ignored for every other variant.
+     */
+    primaryScope?: string
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
@@ -116,8 +125,8 @@ function Button({
   // No-op (and tree-shaken) in production.
   React.useEffect(() => {
     if (variant !== "primary") return
-    return registerPrimary()
-  }, [variant])
+    return registerPrimary(primaryScope)
+  }, [variant, primaryScope])
 
   return (
     <Comp

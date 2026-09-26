@@ -1,5 +1,6 @@
 import { Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { Button } from '../ui/button'
 import { AccountMenu } from './AccountMenu'
 import { SectionTabs } from './SectionTabs'
@@ -147,7 +148,11 @@ export function TopBar({
               <Icon as={Microphone} size="sm" />
             </Button>
 
-            <Button variant="primary" size="sm" onClick={onQuickAdd} aria-label="Quick add" className="gap-1.5">
+            {/* `primaryScope`: this button mounts once and lives on every view,
+                so without it the dev one-primary guard charges it to whichever
+                page happened to load first — and then warns on any page with a
+                primary of its own. See `lib/onePrimary.ts`. */}
+            <Button variant="primary" primaryScope={SHELL_SCOPE} size="sm" onClick={onQuickAdd} aria-label="Quick add" className="gap-1.5">
               <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
             </Button>
 
