@@ -22,7 +22,7 @@ export interface DayTallyRow {
  * button, in zone 3 behind the signature chart), and something you press on a
  * bad day cannot live below a fold.
  *
- * **One primary-shaped control per row, and no confirm.** The first tap of the
+ * **One tap, and no confirm.** The first tap of the
  * day resets that streak, which is normally worth a dialog, but a counter you
  * have to confirm ten times is a counter nobody uses — and the consequence is
  * already on screen twice, in the row's own readout and in the orient bar's
@@ -33,6 +33,15 @@ export interface DayTallyRow {
  * edge and pass both the clip and the a11y gate while being unpressable. The
  * minus is rendered only when there is something to subtract rather than
  * disabled, so there is no dead target on a clean day.
+ *
+ * Every button here is `secondary` — this page's one accent-filled thing is the
+ * streak ring, and `variant="primary"` would put a second loud control beside
+ * it for an action that is a record, not a goal.
+ *
+ * Colour goes in `style`, size in `className`: a custom `text-<size>` and a
+ * custom `text-<colour>` land in the same tailwind-merge group and the later one
+ * silently wins, which is what had been eating `text-label` on the Reset button
+ * one card over.
  */
 export function DayTallyCard({ rows, onStep }: {
   rows: DayTallyRow[]
