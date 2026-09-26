@@ -1,7 +1,7 @@
 # STATUS
 
-**Stopped:** 2026-09-25, on `main`, clean. **Nine PRs merged (#263–#271)** in
-one stretch, each squash-merged with `npm run verify` and `npm run a11y` green.
+**Stopped:** 2026-09-26, on `main`, clean. **Thirteen PRs merged (#263–#275)**,
+each squash-merged with `npm run verify` and `npm run a11y` green.
 
 ## What this stretch was
 
@@ -100,29 +100,50 @@ front of them.
 0. **`shell/TopBar`'s Quick add is `variant="primary"`** and mounts on every
    view, so it eats every page's budget and the dev-only `[one-primary]` guard
    warns on any page with one of its own. Verified by driving the app: Gym
-   warns, Fitness (whose submit is not a primary) does not. The guard is
-   correct and its scope is wrong — shell chrome should not count against a
-   page. Touches every page, so it was filed rather than folded into #272.
-1. **Insights on a phone is 13.5 screens.** The six domain headings are right
-   on desktop and expensive in one column. Either the blurb drops below `sm`,
-   or the domains become a real segmented view rather than a filter.
-2. **`habitgrids` overlaps `activity` and `habitanalytics`.** Registered
-   rather than deleted in #270 so the overlap is visible; it wants a
-   consolidation pass now that all three are under one heading.
-3. **Cycle on a phone is 4.2 screens**, ~950px of which is a 30-row month list
-   (the two-column split is `sm:`). Either it splits at 390 or it folds.
-4. **Pickleball's win-rate forecast prints "100% projected"** from a 60%
-   current rate. The maths is a clamped linear extrapolation and its test
-   pins the clamp, so it is honest and reads as a promise. Copy problem.
-5. **Focus wastes ~700px of its right column** — a 200px timer ring opposite
-   a long form. The space audit says `1 column ⚠` for this page, which is a
-   **false read**: it is a custom two-column layout the audit does not
-   recognise. Do not chase that warning.
-6. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
-7. Still open from before: **COD-211** blank boot on `?view=settings` in CI
-   (never reproduced locally this session); **COD-208**, a crash in the gate's
-   `scan()` escaping before the summary prints; `pullups` and `nofap`
-   unexamined.
+   warns, Fitness does not. The guard is right and its scope is wrong. Touches
+   every page, so it is filed rather than folded into a page PR.
+1. **`npm run clipped` is red on main** — 9 findings: gym ×4, cycle ×5.
+   Byte-identical before and after this stretch, so all pre-existing. Note
+   COD-95 claims the gym clipping was fixed, so it regressed or these are
+   different elements.
+2. **`focus` (3.6 screens) and `mindset` (4.2)** are the two long pages the
+   rail cannot help: measured **zero disclosure groups and zero cards** — flat
+   prose, nothing to group. They need an IA decision, not a layout primitive.
+3. **Recovery** — two open tickets and the measurements agree: COD-61 (2106px
+   dead act column) and COD-49 (orient bar repeats the hero). 3 groups, 17
+   cards, 1.7 shipped / 4.7 open.
+4. **`habitgrids` overlaps `activity` and `habitanalytics`** — registered
+   rather than deleted in #270 so the overlap is visible; wants a
+   consolidation pass now all three are under one heading.
+5. **Cycle on a phone is 4.2 screens**, ~950px a 30-row month list (the split
+   is `sm:`). Either it splits at 390 or it folds.
+6. **Pickleball's win-rate forecast prints "100% projected"** from a 71%
+   current rate — a clamped extrapolation reading as a promise. Copy.
+7. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
+8. **Five Plane items sit "In Review" with no open PR** — COD-12, 13, 19, 20,
+   21. At least three look already done. The board needs reconciling.
+9. Still open on the board: **COD-211** blank boot on `?view=settings` in CI;
+   **COD-208** a11y crash with no partial summary; **COD-197** says a11y fails
+   on main and it has been green every run this stretch — likely stale.
+
+## The rail rollout, and what it measured
+
+Five pages now share `components/page/SectionRail.tsx`. The method is written
+down in **`docs/PAGE-WORKFLOW.md`**; the shapes are in `docs/PAGE-SHAPE.md`.
+
+| Page | before | after |
+|---|---|---|
+| insights | 6.3 desktop / 13.5 phone | **1.8 / 3.1** |
+| help | 4.5 shipped / 10.9 open | **1.3 / 1.6** |
+| pickleball | 4.3, 17 folds | **3.0, 8 folds** |
+| pullups | 2.1 shipped / 5.7 open | **2.2 / 2.2**, 7 folds → 1 |
+| coaching | 2,091px shut / 12.9 open | one chapter, no 12.9 state |
+
+**Two redesigns were measured and thrown away**, and that is the more useful
+half: widening the ten narrow pages to `tier={1440}` changed height on 8 of 10
+by **zero**, and `stacked` on the seven with the most dead space cost +469 to
++1346px. The dead column beside a short act is the price of a layout that is
+already cheaper than the alternative. Full numbers in `PAGE-SHAPE.md`.
 
 ## Traps earned, all in CLAUDE.md or `docs/PAGE-SHAPE.md`
 
