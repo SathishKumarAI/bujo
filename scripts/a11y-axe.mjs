@@ -945,9 +945,15 @@ async function runUnit(w, unit) {
 
   await setTheme(w, unit.theme)
   for (const [section, tab] of VIEWS) {
+    const label = tab ? `${section} · ${tab}` : section
+    // Named BEFORE the navigation, not after. `w.at` is what a crash dump
+    // reports, and setting it only inside `scan` made it name the *previous*
+    // view — the injected-crash test said "died at Plan · Goals" while the url
+    // on the very next line said `view=fitness`. A failure message that points
+    // at the wrong page is the evidence problem COD-202 cost a session to.
+    w.at = label
     await goOrDie(w, section, 'no rail row with that name — the gate could not reach it.')
     if (tab) await goOrDie(w, tab, `no tab with that name inside ${section}.`)
-    const label = tab ? `${section} · ${tab}` : section
     await scan(w, label)
 
     // Today used to be four screens behind one name — morning, day, evening
