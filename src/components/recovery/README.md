@@ -7,7 +7,7 @@ order the JSX happens to be in — and `views/NoFap.test.tsx` asserts the render
 `data-card` set equals that registry in both directions.
 
 The view was **929 lines**. `CLAUDE.md` puts the ceiling at 500 and the target
-near 300; it is 332 now, and everything that left is below.
+near 300; it is **358** now, and everything that left is below.
 
 | Change | File |
 |---|---|
