@@ -25,7 +25,7 @@ import { migrate } from '../../lib/storage'
  */
 export function CloudSyncCard() {
   const confirm = useConfirm()
-  const { data, replaceAll } = useJournal()
+  const { data, replaceAll, encrypted } = useJournal()
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
@@ -53,9 +53,46 @@ export function CloudSyncCard() {
   }
 
   const [auto, setAuto] = useState(() => !!localStorage.getItem('bujo:sync'))
-  function toggleAuto(on: boolean) {
+
+  /**
+   * Auto-sync has to keep the passphrase to run unattended, and it keeps it in
+   * **plaintext** at `bujo:sync` — there is nowhere else to put a secret a
+   * background task needs while nobody is watching.
+   *
+   * That is a fair trade on an unlocked journal and a **false promise on a
+   * locked one.** `docs/AUTH.md` calls the passcode "the only control here
+   * that actually restricts access", and with both switched on the measured
+   * localStorage is:
+   *
+   *   bujo:enc   {"v":1,"salt":"R6+Ar…  103,399 chars of ciphertext
+   *   bujo:sync  correct-horse-battery
+   *
+   * The lock works exactly as documented — `bujo:data` is gone. It just does
+   * not matter, because the key to the cloud copy of the same journal is
+   * sitting beside it in the clear: read that string, call `pullCloud` with
+   * it, and the passcode was never in the way.
+   *
+   * Not silently fixed, because the fix is a product decision: encrypting
+   * `bujo:sync` under the passcode key would mean auto-sync cannot run while
+   * the journal is locked, which is most of the time and is arguably the
+   * point. So the choice is surfaced where it is made, once, in words — and
+   * left on screen while both are on, because a warning you clicked past a
+   * month ago is not a warning.
+   */
+  async function toggleAuto(on: boolean) {
     if (on) {
       if (pass.length < 6) { setMsg('Enter a passphrase first, then enable auto-sync.'); return }
+      if (encrypted && !await confirm({
+        title: 'Auto-sync stores this passphrase unencrypted',
+        description:
+          'This journal has a passcode, so it is encrypted on this device. Auto-sync has to keep the '
+          + 'passphrase in readable browser storage to run on its own — and anyone who can read that '
+          + 'can fetch the cloud copy of this journal without the passcode. Push and Pull by hand do '
+          + 'not store anything.',
+        confirmLabel: 'Turn on auto-sync anyway',
+        cancelLabel: 'Keep syncing by hand',
+        destructive: true,
+      })) return
       localStorage.setItem('bujo:sync', pass); setAuto(true); push()
     } else { localStorage.removeItem('bujo:sync'); setAuto(false); setMsg('Auto-sync off.') }
   }
@@ -71,6 +108,12 @@ export function CloudSyncCard() {
         <span>Auto-sync on this device <span className="text-label text-fg-2">(pull on open · push on change)</span></span>
         <Switch checked={auto} onCheckedChange={toggleAuto} />
       </label>
+      {auto && encrypted && (
+        <p className="mt-2 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
+          Auto-sync keeps this passphrase in readable browser storage, so it can fetch the cloud copy
+          of this journal without the passcode. Switch it off to sync by hand instead.
+        </p>
+      )}
       {msg && <p className="mt-2 text-label text-fg-1">{msg}</p>}
       <p className="mt-2 text-label text-fg-2">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
     </Card>
