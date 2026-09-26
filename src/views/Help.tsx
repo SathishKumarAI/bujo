@@ -5,6 +5,7 @@ import { Card, Empty, Input, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout } from '../components/page/PageLayout'
 import { StatBar } from '../components/page/StatBar'
+import { SectionRail } from '../components/page/SectionRail'
 import { useNav } from '../components/shell/nav'
 import { BULLET_LEGEND } from '../lib/bullets'
 import { onRaised } from '../lib/colors'
@@ -32,12 +33,30 @@ export function Help() {
   const [track, setTrack] = useState(TUTORIALS[0].id)
 
   const results = useMemo(() => searchGuide(query), [query])
-  const groups = useMemo(() => guideByGroup(results), [results])
   const searching = query.trim().length > 0
+  /* Every group, with its live count — the rail's rows. Computed from the
+     search results, so a query renumbers the rail rather than emptying it. */
+  const allGroups = useMemo(() => guideByGroup(results), [results])
+  /* One group at a time, `null` for All. Defaults to the first — landing on
+     all twenty-five features is the 10.9-screen page this replaces. */
+  const [group, setGroup] = useState<string | null>(guideByGroup()[0]?.id ?? null)
+  /* A query crosses groups. Searching "backup" while the rail sits on Body
+     must find it — the whole reason the search exists is to reach a feature
+     whose section you do not remember. Same rule as Insights. */
+  const groups = useMemo(
+    () => (searching || !group ? allGroups : allGroups.filter((g) => g.id === group)),
+    [allGroups, group, searching],
+  )
   const tutorial = TUTORIALS.find((t) => t.id === track) ?? TUTORIALS[0]
 
   return (
     <PageLayout
+      /* Stays split at 1180, and that is a measured choice against the
+         obvious alternative. `stacked` + `tier={1440}` gives the rail a real
+         vertical column (container 1344 instead of 722) and costs **0.7
+         screens**: 1.3 shipped becomes 2.0. At 1.3 screens there is no
+         scrolling left for a vertical rail to save, so the horizontal chip
+         row is the cheaper shape — it filters exactly the same way. */
       tier={1180}
       zone1={
         <StatBar
@@ -87,22 +106,45 @@ export function Help() {
                 Nothing in the guide matches “{query}”
               </Empty>
             ) : (
-              <div className="space-y-5">
-                {groups.map((g) => (
-                  <section key={g.id} aria-label={g.label}>
-                    <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
-                      {g.label} · {g.cards.length}
-                    </h3>
-                    <div className="space-y-2">
-                      {g.cards.map((c) => (
-                        // Remounted when the search turns on or off so a hit
-                        // opens itself: a result you still have to click is a
-                        // search that has only narrowed the same long scroll.
-                        <Feature key={`${c.view}-${searching}`} card={c} open={searching} onGo={nav} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
+              /* A RAIL, NOT A WALL.
+
+                 Twenty-five features, every one a fold, all on the page at
+                 once: measured **4.5 screens shipped and 10.9 with the folds
+                 open** — the longest page in the app, on the page a stuck
+                 user opens. Six groups already existed as `<h3>`s inside it,
+                 which is a table of contents pretending to be a heading.
+
+                 Container on the outer div, grid on the inner (an element
+                 cannot query itself), and the phone column spelled out (an
+                 implicit `auto` track sizes to the chip row and scrolls the
+                 page sideways). Both in docs/PAGE-SHAPE.md. */
+              <div className="@container/page">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+                <SectionRail
+                  label="Guide sections"
+                  groups={allGroups.map((g) => ({ id: g.id, label: g.label, count: g.cards.length }))}
+                  value={searching ? null : group}
+                  onChange={(id) => { setGroup(id); setQuery('') }}
+                  allCount={results.length}
+                />
+                <div className="min-w-0 space-y-5">
+                  {groups.map((g) => (
+                    <section key={g.id} data-guide-group={g.id} aria-label={g.label}>
+                      <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
+                        {g.label} · {g.cards.length}
+                      </h3>
+                      <div className="space-y-2">
+                        {g.cards.map((c) => (
+                          // Remounted when the search turns on or off so a hit
+                          // opens itself: a result you still have to click is a
+                          // search that has only narrowed the same long scroll.
+                          <Feature key={`${c.view}-${searching}`} card={c} open={searching} onGo={nav} />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </div>
               </div>
             )}
           </Card>
