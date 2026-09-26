@@ -713,3 +713,37 @@ export function playConsistency(data: JournalData, weeks = 8, today = todayISO()
     daysSinceLast: last ? Math.max(0, dayDiff(last, today)) : null,
   }
 }
+
+/**
+ * Saved values for a free-text field, **last used first, then most used**.
+ *
+ * The log form offered venues ordered by `venueStats` — games played,
+ * descending — so the court you played at once last night sorted below one
+ * you stopped going to in June. Recency is the stronger signal for "what am
+ * I about to type": you usually play where you last played.
+ *
+ * Frequency still breaks the tie past the most recent few, which is what
+ * makes the list stable rather than reshuffling after every session. Blank
+ * values are dropped, and comparison is trimmed but the original casing is
+ * kept — "Riverside" and "riverside " are one entry that displays the way it
+ * was first written.
+ */
+export function recentThenFrequent(
+  values: (string | undefined)[],
+  /** How many of the leading slots go to pure recency. */
+  recentSlots = 3,
+): string[] {
+  const seen: string[] = []
+  const freq = new Map<string, number>()
+  const display = new Map<string, string>()
+  for (const raw of values) {
+    const v = raw?.trim()
+    if (!v) continue
+    const key = v.toLowerCase()
+    if (!display.has(key)) { display.set(key, v); seen.push(key) }
+    freq.set(key, (freq.get(key) ?? 0) + 1)
+  }
+  const recent = seen.slice(0, recentSlots)
+  const rest = seen.slice(recentSlots).sort((a, b) => (freq.get(b)! - freq.get(a)!) || (a < b ? -1 : 1))
+  return [...recent, ...rest].map((k) => display.get(k)!)
+}

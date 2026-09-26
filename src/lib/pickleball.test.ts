@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -448,5 +448,36 @@ describe('winRateSeries with a scoreless session', () => {
   it('does not count its games in the totals, but does count its minutes', () => {
     const d = { ...emptyJournal(), pickleball: [s('2026-06-01', 3, 1), scoreless] }
     expect(pickleTotals(d)).toMatchObject({ sessions: 2, games: 4, winPct: 75, minutes: 10 })
+  })
+})
+
+describe('recentThenFrequent', () => {
+  it('is empty for no values, and drops blanks', () => {
+    expect(recentThenFrequent([])).toEqual([])
+    expect(recentThenFrequent([undefined, '', '   '])).toEqual([])
+  })
+
+  it('puts the most recent first, even when it is the rarest', () => {
+    // Newest-first input. "Pier" was played once, last night; "Riverside"
+    // eleven times but not since June. Recency is the stronger signal for
+    // "what am I about to type".
+    const v = ['Pier', ...Array(11).fill('Riverside')]
+    expect(recentThenFrequent(v)[0]).toBe('Pier')
+  })
+
+  it('orders everything past the recent slots by how often it was used', () => {
+    const v = ['A', 'B', 'C', 'D', 'E', 'E', 'E', 'D', 'D']
+    // A B C keep their recency slots; then D (3) before E (3)… tie broken
+    // alphabetically so the list does not reshuffle between renders.
+    expect(recentThenFrequent(v, 3)).toEqual(['A', 'B', 'C', 'D', 'E'])
+  })
+
+  it('folds case and whitespace but keeps the first spelling', () => {
+    expect(recentThenFrequent(['Riverside', 'riverside ', ' RIVERSIDE'])).toEqual(['Riverside'])
+  })
+
+  it('is stable — the same input gives the same order', () => {
+    const v = ['A', 'B', 'C', 'D', 'E', 'D', 'E']
+    expect(recentThenFrequent(v)).toEqual(recentThenFrequent(v))
   })
 })

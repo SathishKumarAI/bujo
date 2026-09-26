@@ -426,22 +426,26 @@ export function ChartCard({
   )
 }
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className={`w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
-    />
-  )
+/**
+ * `cn`, not a template string — and that is a bug fix, not tidying.
+ *
+ * Both of these carry `w-full` in their base. Concatenating the caller's
+ * `className` onto it ships **both** width utilities and lets CSS source
+ * order decide, which `w-full` wins. So every call site that passed a width
+ * was silently ignored: Pickleball asked for `w-20` on its minutes field and
+ * measured **889px**, taking a whole row under the chip group it was meant to
+ * sit inside. Nine more call sites across seven files were doing the same.
+ *
+ * `cn` is tailwind-merge — it drops the earlier utility of a conflicting
+ * pair, so the caller wins, which is what a `className` prop means
+ * everywhere else in this codebase.
+ */
+export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={cn('w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none', className)} />
 }
 
-export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      className={`w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none ${props.className ?? ''}`}
-    />
-  )
+export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={cn('w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1 transition-colors placeholder:text-fg-2 hover:bg-ink-3 focus-visible:border-ring focus-visible:bg-ink-2 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none', className)} />
 }
 
 /** A 0–10 slider with a colored value chip. */
