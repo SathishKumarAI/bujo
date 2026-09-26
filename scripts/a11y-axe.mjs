@@ -27,8 +27,39 @@
  * of `nav button` alone silently stopped navigating anywhere — every view would
  * have been scored as Today, and the render-length assert below would not have
  * noticed, because Today renders plenty of text.
+ *
+ * ── CONCURRENCY ───────────────────────────────────────────────────────────────
+ *
+ * This ran on one page, strictly serial, and took **8m07s** for ~166 scans. That
+ * is long enough that people stop running it before a commit, and this file's own
+ * trap list is mostly about what happens when a gate stops being run.
+ *
+ * The shard is the `viewport · theme` pair — `UNITS` below — because a theme
+ * already needs its own reload and the themes are independent of each other.
+ * Each worker owns a browser **context** (so its own localStorage, its own demo
+ * seed, its own theme) and pulls units off one queue. Nothing is dropped: the
+ * same themes, views, viewports and receipt scans, the same fold-opening, the
+ * same assertions.
+ *
+ *   BUJO_A11Y_WORKERS=1   reproduces the old serial walk exactly — reach for it
+ *                         when a failure smells like a race, because a loaded
+ *                         machine makes every wait in here tighter, not looser.
+ *   BUJO_THEMES=mocha     narrows the sweep while iterating.
+ *
+ * Two consequences worth knowing:
+ *
+ * 1. **Output is buffered per unit and flushed in `UNITS` order**, not in the
+ *    order work finishes. A summary table whose row order changes run to run is
+ *    one nobody can diff, and a red scrolling past between two other workers'
+ *    green is one nobody can read.
+ * 2. **A failure no longer kills the process where it happens.** It aborts the
+ *    queue, lets the in-flight workers finish, and then prints the partial
+ *    table, what did not run, and the evidence — COD-208 was this gate dying on
+ *    a bare "Target crashed" with no summary and no idea which view it was on.
+ *    A partial result is printed as a partial result and still exits 1.
  */
 import { createRequire } from 'node:module'
+import os from 'node:os'
 
 const require = createRequire(import.meta.url)
 let chromium, AxeBuilder
@@ -176,33 +207,6 @@ const VIEWPORTS = [
   { name: 'phone', width: 390, height: 844 },
 ]
 
-const browser = await chromium.launch()
-// An explicit context, not `browser.newPage()`: @axe-core/playwright refuses a
-// page created straight off the browser ("Please use browser.newContext()").
-const context = await browser.newContext({ viewport: VIEWPORTS[0] })
-const page = await context.newPage()
-
-/**
- * Why a page failed, kept until something asks.
- *
- * The gate had no error capture at all, so when `main` came back empty the
- * report could say the body was blank and nothing about the reason. A blank
- * body is a boot failure — a thrown module, a chunk that 404'd, a service
- * worker serving half a shell — and those are four different fixes.
- *
- * Bounded and cleared per navigation: this is for the failure in front of you,
- * not a log.
- */
-let pageErrors = []
-page.on('pageerror', (e) => pageErrors.push(String(e?.message ?? e).slice(0, 200)))
-page.on('console', (m) => {
-  if (m.type() === 'error') pageErrors.push(`console: ${m.text().slice(0, 200)}`)
-})
-page.on('requestfailed', (r) => {
-  const u = r.url()
-  if (/\.(js|css)(\?|$)/.test(u)) pageErrors.push(`failed ${r.failure()?.errorText ?? '?'} ${u.slice(-60)}`)
-})
-
 /**
  * THEMES · contrast is a per-theme property, and this gate only ever saw one.
  *
@@ -235,60 +239,107 @@ const THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split
  */
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')
 
-// Skip the first-run gate: pick local storage so the app boots into the shell.
-await page.addInitScript(() => {
-  localStorage.setItem('bujo:onboarded', '1')
-  const existing = localStorage.getItem('bujo:data')
-  if (!existing) {
-    localStorage.setItem('bujo:data', JSON.stringify({ settings: { storageMode: 'local', theme: 'mocha' } }))
-  }
-})
+/**
+ * How many pages scan at once.
+ *
+ * Clamped to 4 on purpose, not to the core count. This is a browser gate, not a
+ * compiler: past a handful of pages they starve each other's render loop, and
+ * every timing assertion in this file — the theme attribute, the nav row, the
+ * 40-character render floor — gets *tighter* when the machine is loaded, which
+ * is exactly how the four red runs in CLAUDE.md's table happened. 16 cores buy
+ * nothing here beyond the point where Chromium is the bottleneck.
+ *
+ * `BUJO_A11Y_WORKERS=1` is the serial walk, byte for byte. Use it to get a
+ * clean reading when a failure looks like a race.
+ */
+const WORKERS = (() => {
+  const asked = Number(process.env.BUJO_A11Y_WORKERS)
+  if (Number.isFinite(asked) && asked >= 1) return Math.floor(asked)
+  return Math.max(1, Math.min(4, os.availableParallelism?.() ?? os.cpus().length))
+})()
 
 /**
- * Seed the demo journal before scanning anything.
+ * The work list, in the order the serial walk produced it.
  *
- * Until COD-28 this gate ran against an **empty** journal, so every card behind
- * a `{rows.length > 0 && …}` guard — which is most of the analytics in the app —
- * was absent from the DOM and could not fail. `HighRiskHoursCard` carried a
- * 2.57:1 contrast failure through every green run this file ever printed.
- *
- * `?demo=1` seeds only when `entries.length === 0` (`store.tsx`), writes to
- * localStorage and therefore survives the reloads `setTheme` does, so one load
- * here is enough for the whole sweep.
+ * One entry per shard: a `viewport · theme` pair that scans every view and
+ * companion, or a single receipt capture. Built once and never reordered, so
+ * the summary table reads the same whatever order the workers finish in.
  */
-await page.goto(`${BASE}?demo=1`, { waitUntil: 'networkidle' })
-await page.waitForTimeout(1200)
+const UNITS = [
+  ...VIEWPORTS.flatMap((vp) =>
+    (vp.name === 'phone' ? PHONE_THEMES : THEMES).map((theme) => ({
+      kind: 'views',
+      vp,
+      theme,
+      label: `${vp.name} · ${theme}`,
+      scans: VIEWS.length + COMPANIONS.length,
+    })),
+  ),
+  // The receipt pass is desktop-only and always was — see `scanReceipt`.
+  ...THEMES.map((theme) => ({
+    kind: 'receipt',
+    vp: VIEWPORTS[0],
+    theme,
+    label: `receipt · ${theme}`,
+    scans: 1,
+  })),
+]
+const TOTAL_SCANS = UNITS.reduce((n, u) => n + u.scans, 0)
 
-// Assert it actually landed. A gate that silently reverts to an empty journal
-// is the bug being fixed, and it would report the same reassuring zero.
-const seeded = await page.evaluate(() => {
-  const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
-  return { entries: d.entries?.length ?? 0, metrics: d.metrics?.length ?? 0 }
-})
-if (seeded.entries === 0) {
-  console.error('\nDemo data did not seed — the journal is empty.')
-  console.error('Every "0 serious" below would mean "0 serious for empty pages".')
-  process.exit(1)
+/**
+ * A failure that must stop the gate, carrying the evidence with it.
+ *
+ * Every one of these was a `process.exit(1)` from inside the walk. That is fine
+ * when there is one page; with several in flight it throws away the other
+ * workers' results and prints no table at all, which is COD-208. So they throw,
+ * the worker records which unit and which view it died on, and the run prints a
+ * table marked partial.
+ *
+ * The message lines are the ones the old `console.error` calls wrote, unchanged
+ * — "a gate's failure message must say what it did find" is the whole point.
+ */
+class GateError extends Error {
+  constructor(lines) {
+    super(lines[0])
+    this.lines = lines
+  }
 }
-console.log(`Seeded demo journal: ${seeded.entries} entries, ${seeded.metrics} metrics.`)
+const fail = (...lines) => {
+  throw new GateError(lines.flat())
+}
 
-let serious = 0
-const summary = []
-let theme = THEMES[0]
-let viewport = VIEWPORTS[0].name
+const browser = await chromium.launch()
 
 /**
  * Switch theme through the store the app actually reads, then assert the
  * attribute the stylesheets key on actually changed. Writing localStorage and
  * hoping is how you scan mocha five times and report five clean themes.
  */
-async function setTheme(next) {
-  await page.evaluate((t) => {
+async function setTheme(w, next) {
+  await w.page.evaluate((t) => {
     const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
     d.settings = { ...(d.settings ?? {}), storageMode: 'local', theme: t }
     localStorage.setItem('bujo:data', JSON.stringify(d))
+    /**
+     * Start every shard from the same folds · `bujo.ui.*` is sticky.
+     *
+     * `CollapsibleSection` persists its open state through `useStickyState`, so
+     * in the old single-page walk the folds `openFolds` clicked open under
+     * **mocha** were still open under latte, neon, vscode and dawn — the content
+     * was scanned either way, but the fold column counted clicks, so the first
+     * theme reported 2 and the rest reported 0 for the same page. Sharded across
+     * contexts that number would instead depend on which worker happened to pick
+     * up which theme, which is worse: a count nobody can compare.
+     *
+     * So clear it. Every shard then meets the page in its authored state, which
+     * is what the first theme of the old walk measured, and the column means the
+     * same thing on all 166 rows. Only fold state lives under this prefix in
+     * practice — nothing in this gate clicks the sticky tab controls — so this
+     * changes what is *counted*, not what is scanned.
+     */
+    for (const k of Object.keys(localStorage)) if (k.startsWith('bujo.ui.')) localStorage.removeItem(k)
   }, next)
-  await page.reload({ waitUntil: 'networkidle' })
+  await w.page.reload({ waitUntil: 'networkidle' })
   /**
    * Wait for the theme to land before deciding it never will.
    *
@@ -306,25 +357,29 @@ async function setTheme(next) {
    * keeping, it just has to be made after giving the app a chance, or
    * "not yet" reads as "not ever". The `catch` is deliberate — a timeout here
    * falls through to the assertion below, which prints what it actually found.
+   *
+   * The timeout is generous *because* several pages now render at once: a
+   * loaded machine is slower to first paint, and this wait is the one place
+   * that difference shows up as a verdict.
    */
-  await page
+  await w.page
     .waitForFunction(
       (t) => {
         const r = document.documentElement
         return String(r.getAttribute('data-theme') ?? r.className ?? '').includes(t)
       },
       next,
-      { timeout: 8000 },
+      { timeout: 15000 },
     )
     .catch(() => {})
-  const applied = await page.evaluate(() => document.documentElement.getAttribute('data-theme') ?? document.documentElement.className)
+  const applied = await w.page.evaluate(() => document.documentElement.getAttribute('data-theme') ?? document.documentElement.className)
   if (!String(applied).includes(next)) {
-    console.error(`\n[${next}] theme did not apply — the root says "${applied}".`)
-    console.error('  Every result for this theme would actually be the previous one.')
-    await browser.close()
-    process.exit(1)
+    fail(
+      `\n[${next}] theme did not apply — the root says "${applied}".`,
+      '  Every result for this theme would actually be the previous one.',
+    )
   }
-  theme = next
+  w.theme = next
 }
 
 /**
@@ -346,13 +401,13 @@ async function setTheme(next) {
  * The same artefact can hide a real failure just as easily as invent one, which
  * is the worse direction. Wait for the animations, not for a guess about them.
  */
-async function settle() {
-  await page.waitForFunction(
+async function settle(w) {
+  await w.page.waitForFunction(
     () => document.getAnimations().every((a) => a.playState === 'finished' || a.playState === 'idle'),
     null,
     { timeout: 5000 },
   ).catch(() => {}) // an infinite/looping animation must not hang the gate
-  await page.waitForTimeout(120)
+  await w.page.waitForTimeout(120)
 }
 
 /**
@@ -369,8 +424,8 @@ async function settle() {
  * copies is where they are, so that is what this tests — the failure message
  * said `element is outside of the viewport`, and that is the predicate.
  */
-async function onScreen(locator) {
-  const vp = page.viewportSize()
+async function onScreen(w, locator) {
+  const vp = w.page.viewportSize()
   const outside = (box) =>
     box.x + box.width <= 0 || box.x >= vp.width || box.y + box.height <= 0 || box.y >= vp.height
 
@@ -408,8 +463,8 @@ async function onScreen(locator) {
    * must come before `scrollIntoViewIfNeeded` below, which scrolls *down* to a
    * tab and would re-hide the bar it just revealed.
    */
-  await page.evaluate(() => window.scrollTo(0, 0))
-  await settle()
+  await w.page.evaluate(() => window.scrollTo(0, 0))
+  await settle(w)
   ;({ hit, off: offscreen } = await sweep())
   if (hit) return hit
   // Nothing on screen, but something exists. That is not automatically the
@@ -434,7 +489,7 @@ async function onScreen(locator) {
 const NAV_SELECTOR =
   'nav a, nav button, aside a, aside button, header [data-slot="toggle-group"] button, main [data-slot="toggle-group"] button'
 
-async function go(name) {
+async function go(w, name) {
   // Rail rows and section tabs are links; the Today surface switcher is a
   // Radix ToggleGroup whose items are buttons.
   //
@@ -444,7 +499,7 @@ async function go(name) {
   // that name on Today" — a gate reading a relocation as a deletion. Both are
   // listed rather than dropping `main`: a ToggleGroup is how this app spells a
   // mode control, and the next one may well be on a page.
-  const items = page.locator(NAV_SELECTOR)
+  const items = w.page.locator(NAV_SELECTOR)
   /**
    * Wait for the control to EXIST before deciding it does not.
    *
@@ -460,7 +515,7 @@ async function go(name) {
   await items
     .filter({ hasText: new RegExp(`^${name}([,·]|$)`) })
     .first()
-    .waitFor({ state: 'attached', timeout: 8000 })
+    .waitFor({ state: 'attached', timeout: 15000 })
     .catch(() => {})
   // Exact match first, then the same name carrying a **status suffix**.
   //
@@ -473,21 +528,21 @@ async function go(name) {
   // prefix cannot swap places. The suffix must begin with a comma or a middot,
   // which is the convention for state appended to an accessible name here.
   const target =
-    (await onScreen(items.filter({ hasText: new RegExp(`^${name}$`) }))) ??
-    (await onScreen(items.filter({ hasText: new RegExp(`^${name}[,·]`) })))
+    (await onScreen(w, items.filter({ hasText: new RegExp(`^${name}$`) }))) ??
+    (await onScreen(w, items.filter({ hasText: new RegExp(`^${name}[,·]`) })))
   if (!target) return false
   await target.click()
-  await page.waitForTimeout(300)
-  await settle()
+  await w.page.waitForTimeout(300)
+  await settle(w)
   return true
 }
 
 /** Fail loudly rather than scanning whatever page happened to still be up. */
-async function goOrDie(name, why) {
-  if (await go(name)) return
-  console.error(`\n[${name}] ${why}`)
-  console.error('  Either the destination was renamed/retired, or it lost its door. Do not')
-  console.error('  drop it from VIEWS to make this pass without checking which.')
+async function goOrDie(w, name, why) {
+  if (await go(w, name)) return
+  const lines = [`\n[${name}] ${why}`,
+    '  Either the destination was renamed/retired, or it lost its door. Do not',
+    '  drop it from VIEWS to make this pass without checking which.']
   /**
    * Say what WAS there.
    *
@@ -496,19 +551,18 @@ async function goOrDie(name, why) {
    * control that rendered off screen, and that three-way guess cost a whole
    * session. The dump below answers it in the log instead.
    */
-  const found = await page.locator(NAV_SELECTOR).allTextContents().catch(() => [])
+  const found = await w.page.locator(NAV_SELECTOR).allTextContents().catch(() => [])
   const names = found.map((t) => t.replace(/\s+/g, ' ').trim()).filter(Boolean)
-  console.error(`  url: ${page.url()} · viewport: ${viewport} · theme: ${theme}`)
-  console.error(`  ${names.length} navigable control(s): ${names.slice(0, 24).join(' | ') || '(none — the nav had not rendered)'}`)
+  lines.push(`  url: ${w.page.url()} · viewport: ${w.viewport} · theme: ${w.theme}`)
+  lines.push(`  ${names.length} navigable control(s): ${names.slice(0, 24).join(' | ') || '(none — the nav had not rendered)'}`)
   const near = names.filter((t) => t.toLowerCase().includes(name.toLowerCase()))
-  if (near.length) console.error(`  close matches: ${near.join(' | ')} — the name grew a suffix the regex does not allow.`)
-  const boxes = await page.locator(NAV_SELECTOR).filter({ hasText: new RegExp(`^${name}([,·]|$)`) }).evaluateAll((els) =>
+  if (near.length) lines.push(`  close matches: ${near.join(' | ')} — the name grew a suffix the regex does not allow.`)
+  const boxes = await w.page.locator(NAV_SELECTOR).filter({ hasText: new RegExp(`^${name}([,·]|$)`) }).evaluateAll((els) =>
     els.map((e) => { const b = e.getBoundingClientRect(); const st = getComputedStyle(e)
       return `x${Math.round(b.x)} y${Math.round(b.y)} ${Math.round(b.width)}x${Math.round(b.height)} vis:${st.visibility} disp:${st.display} op:${st.opacity}` }),
   ).catch(() => [])
-  console.error(`  viewport ${page.viewportSize()?.width}x${page.viewportSize()?.height} · boxes: ${boxes.join(' ‖ ') || '(none)'}`)
-  await browser.close()
-  process.exit(1)
+  lines.push(`  viewport ${w.page.viewportSize()?.width}x${w.page.viewportSize()?.height} · boxes: ${boxes.join(' ‖ ') || '(none)'}`)
+  fail(lines)
 }
 
 /**
@@ -538,10 +592,10 @@ async function goOrDie(name, why) {
  * settles to zero on them — which is why this is bounded by passes and does not
  * assert everything opened.
  */
-async function openFolds() {
+async function openFolds(w) {
   let opened = 0
   for (let pass = 0; pass < 4; pass++) {
-    const n = await page.evaluate(() => {
+    const n = await w.page.evaluate(() => {
       // `:not([aria-haspopup])` — a fold reveals page content; a popup covers
       // it. `ExercisePicker` is a combobox and there is one per set row, so
       // without this the gym page would open 35 of them at once, each laying
@@ -554,7 +608,7 @@ async function openFolds() {
     })
     if (n === 0) break
     opened += n
-    await settle()
+    await settle(w)
   }
   return opened
 }
@@ -568,17 +622,18 @@ async function openFolds() {
  * because lazy content can carry folds (Pickleball) and folds can carry
  * lazy content.
  */
-async function revealLazy() {
+async function revealLazy(w) {
   // An explicit event, not a scroll walk: scrolling to the bottom and back
   // left the hide-on-scroll header in a state that intercepted this script's
   // own tab clicks. LazyMount listens for this and mounts immediately.
-  await page.evaluate(() => window.dispatchEvent(new Event('bujo:reveal-lazy')))
-  await settle()
+  await w.page.evaluate(() => window.dispatchEvent(new Event('bujo:reveal-lazy')))
+  await settle(w)
 }
 
 /** Scan whatever is on screen, under a label. */
-async function scan(label) {
-  await settle()
+async function scan(w, label) {
+  w.at = label
+  await settle(w)
   // A clean result on a blank page is worse than no gate at all: it reads as
   // proof. Assert the view actually rendered before believing its score.
   /**
@@ -602,13 +657,13 @@ async function scan(label) {
    * proof. It just has to be made after giving the view a chance.
    */
   const read = async () =>
-    page.evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length).catch(() => 0)
+    w.page.evaluate(() => (document.querySelector('main')?.innerText ?? '').trim().length).catch(() => 0)
 
   let rendered = 0
   for (let i = 0; i < 24; i++) {
     rendered = await read()
     if (rendered >= 40) break
-    await page.waitForTimeout(500)
+    await w.page.waitForTimeout(500)
   }
 
   /**
@@ -625,19 +680,19 @@ async function scan(label) {
    * prints, every time, and the run still says a reload was needed.
    */
   if (rendered < 40) {
-    console.error(`
-[${label}] blank after 12s — reloading once. The app did not boot on this navigation.`)
-    pageErrors = []
-    await page.reload({ waitUntil: 'networkidle' }).catch(() => {})
+    w.err(`
+[${w.viewport} · ${w.theme} · ${label}] blank after 12s — reloading once. The app did not boot on this navigation.`)
+    w.pageErrors = []
+    await w.page.reload({ waitUntil: 'networkidle' }).catch(() => {})
     for (let i = 0; i < 24; i++) {
       rendered = await read()
       if (rendered >= 40) break
-      await page.waitForTimeout(500)
+      await w.page.waitForTimeout(500)
     }
-    if (rendered >= 40) console.error(`  recovered after the reload — ${rendered} characters. Not fatal, but not nothing.`)
+    if (rendered >= 40) w.err(`  recovered after the reload — ${rendered} characters. Not fatal, but not nothing.`)
   }
   if (rendered < 40) {
-    console.error(`\n[${label}] rendered ${rendered} characters — the view did not load, so its result means nothing.`)
+    const lines = [`\n[${label}] rendered ${rendered} characters — the view did not load, so its result means nothing.`]
     /**
      * Say what was actually on screen.
      *
@@ -648,7 +703,7 @@ async function scan(label) {
      * fix and the message cannot tell them apart. Same lesson as COD-202's
      * dump: a red that carries no evidence costs a whole CI cycle per guess.
      */
-    const seen = await page
+    const seen = await w.page
       .evaluate(() => ({
         url: location.href,
         mainHtml: (document.querySelector('main')?.innerHTML ?? '').slice(0, 200),
@@ -657,74 +712,28 @@ async function scan(label) {
         menus: document.querySelectorAll('[role="menu"]').length,
       }))
       .catch(() => null)
-    console.error(`  url: ${seen?.url} · dialogs: ${seen?.dialogs} · menus: ${seen?.menus}`)
-    console.error(`  body says: "${seen?.bodyText}"`)
-    console.error(`  main html: ${seen?.mainHtml || '(empty)'}`)
-    console.error(pageErrors.length ? `  page errors: ${pageErrors.slice(-6).join(' | ')}` : '  page errors: none captured — the app rendered nothing without throwing.')
-    await browser.close()
-    process.exit(1)
+    lines.push(`  url: ${seen?.url} · dialogs: ${seen?.dialogs} · menus: ${seen?.menus}`)
+    lines.push(`  body says: "${seen?.bodyText}"`)
+    lines.push(`  main html: ${seen?.mainHtml || '(empty)'}`)
+    lines.push(w.pageErrors.length ? `  page errors: ${w.pageErrors.slice(-6).join(' | ')}` : '  page errors: none captured — the app rendered nothing without throwing.')
+    fail(lines)
   }
-  let folds = await openFolds()
-  await revealLazy()
-  folds += await openFolds()
-  const results = await new AxeBuilder({ page })
+  let folds = await openFolds(w)
+  await revealLazy(w)
+  folds += await openFolds(w)
+  const results = await new AxeBuilder({ page: w.page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
 
   const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
   const meh = results.violations.filter((v) => v.impact === 'moderate' || v.impact === 'minor')
-  serious += bad.length
-  summary.push({ view: `${viewport} · ${theme} · ${label}`, serious: bad.length, other: meh.length, folds })
+  w.rows.push({ view: `${w.viewport} · ${w.theme} · ${label}`, serious: bad.length, other: meh.length, folds })
 
   for (const v of bad) {
-    console.error(`\n[${viewport} · ${theme} · ${label}] ${v.impact}: ${v.id} — ${v.help}`)
-    console.error(`  ${v.helpUrl}`)
-    for (const node of v.nodes.slice(0, 3)) console.error(`  ${node.html.slice(0, 120)}
+    w.err(`\n[${w.viewport} · ${w.theme} · ${label}] ${v.impact}: ${v.id} — ${v.help}`)
+    w.err(`  ${v.helpUrl}`)
+    for (const node of v.nodes.slice(0, 3)) w.err(`  ${node.html.slice(0, 120)}
     DATA ${JSON.stringify(node.any?.[0]?.data)}`)
-  }
-}
-
-for (const vp of VIEWPORTS) {
-  viewport = vp.name
-  await page.setViewportSize({ width: vp.width, height: vp.height })
-  // Reload rather than trusting a resize. The shell reads its breakpoint on
-  // mount as well as through media queries, and a bottom tab bar that only
-  // appears after a re-render is a bar this gate would scan the absence of.
-  await page.reload({ waitUntil: 'networkidle' })
-  const themes = vp.name === 'phone' ? PHONE_THEMES : THEMES
-  for (const t of themes) {
-    await setTheme(t)
-    for (const [section, tab] of VIEWS) {
-      await goOrDie(section, 'no rail row with that name — the gate could not reach it.')
-      if (tab) await goOrDie(tab, `no tab with that name inside ${section}.`)
-      const label = tab ? `${section} · ${tab}` : section
-      await scan(label)
-
-      // Today used to be four screens behind one name — morning, day, evening
-      // and habits, each a tab this loop clicked and scanned. They are one page
-      // now, so the single `scan` above covers what four passes used to, and
-      // there is no surface control left to click. The fold-opening inside
-      // `scan` is what reaches the deep-analytics section that used to be the
-      // habits surface's own.
-    }
-
-    // Companion views, reached by URL because they have no tab to click.
-    // `setTheme` persists to the journal in localStorage, which survives the
-    // navigation, so these are scanned under the theme of the current pass.
-    for (const [label, view] of COMPANIONS) {
-      await page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle' })
-      // The alias table used to bounce these to Fitness. If that ever comes
-      // back, the URL will silently be a different page and `scan` would
-      // happily grade Fitness under this label — so check where we landed.
-      const landed = await page.evaluate(() => new URLSearchParams(location.search).get('view'))
-      if (landed !== view) {
-        console.error(`\n[${label}] asked for ?view=${view} and landed on ?view=${landed}.`)
-        console.error('  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
-        await browser.close()
-        process.exit(1)
-      }
-      await scan(label)
-    }
   }
 }
 
@@ -738,97 +747,338 @@ for (const vp of VIEWPORTS) {
  * performs the action, asserts the bar is really there, and scans it in every
  * theme. The contrast is the part worth having: the bar is text over `ink-1`,
  * and `ink-1` moves per theme.
+ *
+ * One theme per unit now, so the five receipt captures run alongside the view
+ * sweeps instead of after them. Nothing about the capture changed.
  */
-async function scanReceipt() {
-  for (const t of THEMES) {
-    /**
-     * `surface=day`, pinned — NOT whatever the clock picks.
-     *
-     * This walked to a bare `?view=today`, so the surface came from
-     * `surfaceForHour(new Date().getHours())`: morning before 11, day until
-     * 18, evening after. The ringed row is written into the **rapid log**,
-     * which only the day surface renders — measured, all three:
-     *
-     * | surface | receipt | ringed row |
-     * |---|---|---|
-     * | day     | yes | **yes** |
-     * | evening | yes | no |
-     * | morning | yes | no |
-     *
-     * So the gate could only pass between 11:00 and 18:00 local. It went red
-     * in CI at **18:09 UTC** on the very PR that repaired the walk — before
-     * that fix it aborted at `[Plan]` and never reached this check, so a
-     * clock-dependent assertion sat here unnoticed.
-     *
-     * A gate whose result depends on what time you run it is worse than no
-     * gate: it teaches you to re-run until it is green.
-     */
-    await page.goto(`${BASE}?demo=1&view=today&surface=day`, { waitUntil: 'networkidle' })
-    await setTheme(t)
-    await page.getByRole('button', { name: 'Quick add' }).click()
-    await page.waitForTimeout(350)
-    const dialog = page.getByRole('dialog')
-    await dialog.getByLabel('Smart capture').fill('called mum about the weekend')
-    await dialog.getByRole('button', { name: 'Add', exact: true }).click()
-    await page.waitForTimeout(700)
+async function scanReceipt(w, t) {
+  w.at = `receipt · ${t}`
+  /**
+   * `surface=day`, pinned — NOT whatever the clock picks.
+   *
+   * This walked to a bare `?view=today`, so the surface came from
+   * `surfaceForHour(new Date().getHours())`: morning before 11, day until
+   * 18, evening after. The ringed row is written into the **rapid log**,
+   * which only the day surface renders — measured, all three:
+   *
+   * | surface | receipt | ringed row |
+   * |---|---|---|
+   * | day     | yes | **yes** |
+   * | evening | yes | no |
+   * | morning | yes | no |
+   *
+   * So the gate could only pass between 11:00 and 18:00 local. It went red
+   * in CI at **18:09 UTC** on the very PR that repaired the walk — before
+   * that fix it aborted at `[Plan]` and never reached this check, so a
+   * clock-dependent assertion sat here unnoticed.
+   *
+   * A gate whose result depends on what time you run it is worse than no
+   * gate: it teaches you to re-run until it is green.
+   */
+  await w.page.goto(`${BASE}?demo=1&view=today&surface=day`, { waitUntil: 'networkidle' })
+  await setTheme(w, t)
+  await w.page.getByRole('button', { name: 'Quick add' }).click()
+  await w.page.waitForTimeout(350)
+  const dialog = w.page.getByRole('dialog')
+  await dialog.getByLabel('Smart capture').fill('called mum about the weekend')
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click()
+  await w.page.waitForTimeout(700)
 
-    // Assert, do not assume: a receipt that stopped rendering would otherwise
-    // score a clean zero here forever.
-    //
-    // A NOTE rather than a lift, deliberately. It lands on Today, where the row
-    // it wrote is marked `data-just-captured` — so one capture puts both halves
-    // of the feature on screen and both get scanned. A lift lands on Strength,
-    // which has no per-workout row to ring.
-    // Same rule as `scan` above: wait for both halves, then assert. A fixed
-    // 700ms is a guess about a machine, and CI is a slower machine.
-    await page
-      .waitForFunction(
-        () => !!document.querySelector('[role="status"]') && !!document.querySelector('#main [data-just-captured]'),
-        null,
-        { timeout: 8000 },
-      )
-      .catch(() => {})
-    const there = await page.evaluate(() => ({
-      receipt: !!document.querySelector('[role="status"]'),
-      row: !!document.querySelector('#main [data-just-captured]'),
-    }))
-    if (!there.receipt || !there.row) {
-      console.error(`
-[receipt · ${t}] captured a note; receipt ${there.receipt ? 'appeared' : 'MISSING'}, ringed row ${there.row ? 'appeared' : 'MISSING'}.`)
-      console.error('  Either the capture stopped routing through CaptureReceipt, or the bar or the ring stopped rendering.')
-      await browser.close()
-      process.exit(1)
-    }
+  // Assert, do not assume: a receipt that stopped rendering would otherwise
+  // score a clean zero here forever.
+  //
+  // A NOTE rather than a lift, deliberately. It lands on Today, where the row
+  // it wrote is marked `data-just-captured` — so one capture puts both halves
+  // of the feature on screen and both get scanned. A lift lands on Strength,
+  // which has no per-workout row to ring.
+  // Same rule as `scan` above: wait for both halves, then assert. A fixed
+  // 700ms is a guess about a machine, and CI is a slower machine.
+  await w.page
+    .waitForFunction(
+      () => !!document.querySelector('[role="status"]') && !!document.querySelector('#main [data-just-captured]'),
+      null,
+      { timeout: 15000 },
+    )
+    .catch(() => {})
+  const there = await w.page.evaluate(() => ({
+    receipt: !!document.querySelector('[role="status"]'),
+    row: !!document.querySelector('#main [data-just-captured]'),
+  }))
+  if (!there.receipt || !there.row) {
+    fail(`
+[receipt · ${t}] captured a note; receipt ${there.receipt ? 'appeared' : 'MISSING'}, ringed row ${there.row ? 'appeared' : 'MISSING'}.`,
+      '  Either the capture stopped routing through CaptureReceipt, or the bar or the ring stopped rendering.')
+  }
 
-    // Both halves. The ring puts a brand wash behind text that was solved
-    // against the card — the exact shape of every contrast bug this repo has
-    // had — and it exists for six seconds on a page no view-walking gate opens.
-    const results = await new AxeBuilder({ page })
-      .include('[role="status"]')
-      .include('#main [data-just-captured]')
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .analyze()
-    const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
-    serious += bad.length
-    summary.push({ view: `receipt · ${t}`, serious: bad.length, other: 0, folds: 0 })
-    for (const v of bad) {
-      console.error(`
+  // Both halves. The ring puts a brand wash behind text that was solved
+  // against the card — the exact shape of every contrast bug this repo has
+  // had — and it exists for six seconds on a page no view-walking gate opens.
+  const results = await new AxeBuilder({ page: w.page })
+    .include('[role="status"]')
+    .include('#main [data-just-captured]')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze()
+  const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
+  w.rows.push({ view: `receipt · ${t}`, serious: bad.length, other: 0, folds: 0 })
+  for (const v of bad) {
+    w.err(`
 [receipt · ${t}] ${v.impact}: ${v.id} — ${v.help}`)
-      console.error(`  ${v.nodes[0]?.html?.slice(0, 120)}`)
-      console.error(`    DATA ${JSON.stringify(v.nodes[0]?.any?.[0]?.data)}`)
-    }
+    w.err(`  ${v.nodes[0]?.html?.slice(0, 120)}`)
+    w.err(`    DATA ${JSON.stringify(v.nodes[0]?.any?.[0]?.data)}`)
   }
 }
 
-await page.setViewportSize({ width: VIEWPORTS[0].width, height: VIEWPORTS[0].height })
-await scanReceipt()
+/**
+ * One worker: its own context, its own localStorage, its own demo seed.
+ *
+ * A context rather than just a page, for two reasons. @axe-core/playwright
+ * refuses a page created straight off the browser ("Please use
+ * browser.newContext()"), and localStorage is per-context — which is what makes
+ * the workers independent at all, since the theme and the whole journal live
+ * there. The cost is one demo seed per worker instead of one per run, which is
+ * a couple of seconds and buys the isolation.
+ */
+async function makeWorker(id) {
+  const context = await browser.newContext({ viewport: VIEWPORTS[0] })
+  const page = await context.newPage()
+  const w = {
+    id,
+    page,
+    context,
+    theme: null,
+    viewport: VIEWPORTS[0].name,
+    at: '(nothing yet)',
+    size: VIEWPORTS[0].name,
+    pageErrors: [],
+    out: [],
+    rows: [],
+  }
+  // Everything a unit prints is a finding or a warning, so it all goes to
+  // stderr — buffered here and flushed in `UNITS` order by `flushReady`.
+  w.err = (text) => w.out.push(text)
 
+  /**
+   * Why a page failed, kept until something asks.
+   *
+   * The gate had no error capture at all, so when `main` came back empty the
+   * report could say the body was blank and nothing about the reason. A blank
+   * body is a boot failure — a thrown module, a chunk that 404'd, a service
+   * worker serving half a shell — and those are four different fixes.
+   *
+   * Bounded and cleared per navigation: this is for the failure in front of you,
+   * not a log.
+   */
+  page.on('pageerror', (e) => w.pageErrors.push(String(e?.message ?? e).slice(0, 200)))
+  page.on('console', (m) => {
+    if (m.type() === 'error') w.pageErrors.push(`console: ${m.text().slice(0, 200)}`)
+  })
+  page.on('requestfailed', (r) => {
+    const u = r.url()
+    if (/\.(js|css)(\?|$)/.test(u)) w.pageErrors.push(`failed ${r.failure()?.errorText ?? '?'} ${u.slice(-60)}`)
+  })
 
+  // Skip the first-run gate: pick local storage so the app boots into the shell.
+  await page.addInitScript(() => {
+    localStorage.setItem('bujo:onboarded', '1')
+    const existing = localStorage.getItem('bujo:data')
+    if (!existing) {
+      localStorage.setItem('bujo:data', JSON.stringify({ settings: { storageMode: 'local', theme: 'mocha' } }))
+    }
+  })
+
+  /**
+   * Seed the demo journal before scanning anything.
+   *
+   * Until COD-28 this gate ran against an **empty** journal, so every card behind
+   * a `{rows.length > 0 && …}` guard — which is most of the analytics in the app —
+   * was absent from the DOM and could not fail. `HighRiskHoursCard` carried a
+   * 2.57:1 contrast failure through every green run this file ever printed.
+   *
+   * `?demo=1` seeds only when `entries.length === 0` (`store.tsx`), writes to
+   * localStorage and therefore survives the reloads `setTheme` does, so one load
+   * per context is enough for every unit that context runs.
+   *
+   * Asserted per worker, not once per run. A gate that silently reverts to an
+   * empty journal is the bug being fixed, and it would report the same
+   * reassuring zero — and with several contexts there are now several journals
+   * that could each be empty.
+   */
+  await page.goto(`${BASE}?demo=1`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(1200)
+  const seeded = await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('bujo:data') ?? '{}')
+    return { entries: d.entries?.length ?? 0, metrics: d.metrics?.length ?? 0 }
+  })
+  if (seeded.entries === 0) {
+    console.error(`\n[worker ${id}] demo data did not seed — the journal is empty.`)
+    console.error('Every "0 serious" below would mean "0 serious for empty pages".')
+    await browser.close()
+    process.exit(1)
+  }
+  // Not printed here: the workers boot in parallel, so the caller prints these
+  // in id order rather than in whatever order the seeds landed.
+  w.seedLine = `Seeded demo journal (worker ${id}): ${seeded.entries} entries, ${seeded.metrics} metrics.`
+  return w
+}
+
+/** Everything one shard does. The body of the old double loop, verbatim. */
+async function runUnit(w, unit) {
+  if (w.size !== unit.vp.name) {
+    // Reload rather than trusting a resize. The shell reads its breakpoint on
+    // mount as well as through media queries, and a bottom tab bar that only
+    // appears after a re-render is a bar this gate would scan the absence of.
+    // `setTheme` and `scanReceipt` both navigate immediately after this, which
+    // is the remount — so there is no separate reload here.
+    await w.page.setViewportSize({ width: unit.vp.width, height: unit.vp.height })
+    w.size = unit.vp.name
+  }
+  w.viewport = unit.vp.name
+  // Set before the navigation, not after: it is what the failure messages name,
+  // and a worker that dies mid-`setTheme` would otherwise report the theme of
+  // the *previous* shard.
+  w.theme = unit.theme
+
+  if (unit.kind === 'receipt') {
+    await scanReceipt(w, unit.theme)
+    return
+  }
+
+  await setTheme(w, unit.theme)
+  for (const [section, tab] of VIEWS) {
+    await goOrDie(w, section, 'no rail row with that name — the gate could not reach it.')
+    if (tab) await goOrDie(w, tab, `no tab with that name inside ${section}.`)
+    const label = tab ? `${section} · ${tab}` : section
+    await scan(w, label)
+
+    // Today used to be four screens behind one name — morning, day, evening
+    // and habits, each a tab this loop clicked and scanned. They are one page
+    // now, so the single `scan` above covers what four passes used to, and
+    // there is no surface control left to click. The fold-opening inside
+    // `scan` is what reaches the deep-analytics section that used to be the
+    // habits surface's own.
+  }
+
+  // Companion views, reached by URL because they have no tab to click.
+  // `setTheme` persists to the journal in localStorage, which survives the
+  // navigation, so these are scanned under the theme of the current pass.
+  for (const [label, view] of COMPANIONS) {
+    w.at = label
+    await w.page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle' })
+    // The alias table used to bounce these to Fitness. If that ever comes
+    // back, the URL will silently be a different page and `scan` would
+    // happily grade Fitness under this label — so check where we landed.
+    const landed = await w.page.evaluate(() => new URLSearchParams(location.search).get('view'))
+    if (landed !== view) {
+      fail(`\n[${label}] asked for ?view=${view} and landed on ?view=${landed}.`,
+        '  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
+    }
+    await scan(w, label)
+  }
+}
+
+// ── The queue ────────────────────────────────────────────────────────────────
+
+let cursor = 0
+let flushed = 0
+/** The unit whose failure stopped the run, if any. */
+let aborted = null
+
+/**
+ * Print finished units in `UNITS` order.
+ *
+ * Workers interleave, so the alternative is a log where a red from one theme
+ * lands between two greens from another and a summary whose row order changes
+ * run to run. Both are undiffable, which is the same disease as a gate nobody
+ * runs. `final` lets the last pass step over units that never started.
+ */
+function flushReady(final = false) {
+  while (flushed < UNITS.length) {
+    const u = UNITS[flushed]
+    if (!u.done && !u.failed) {
+      if (!final) break
+      u.skipped = true
+      flushed++
+      continue
+    }
+    for (const text of u.out) console.error(text)
+    if (u.failed) for (const line of u.failed) console.error(line)
+    flushed++
+  }
+}
+
+async function drain(w) {
+  while (cursor < UNITS.length && !aborted) {
+    const unit = UNITS[cursor++]
+    unit.out = []
+    unit.rows = []
+    w.out = unit.out
+    w.rows = unit.rows
+    w.pageErrors = []
+    unit.started = true
+    try {
+      await runUnit(w, unit)
+      unit.done = true
+    } catch (e) {
+      unit.failed = await describeDeath(w, unit, e)
+      aborted ??= unit
+    }
+    flushReady()
+  }
+}
+
+/**
+ * What a dead worker leaves behind.
+ *
+ * A `GateError` already carries its evidence — those messages are the ones the
+ * old `process.exit(1)` calls printed. Anything else is a crash, and the crash
+ * this gate actually has is `Target crashed` (COD-208), which said nothing at
+ * all: not the theme, not the viewport, not the view it was on. So say all
+ * three, plus whatever the page can still be asked.
+ */
+async function describeDeath(w, unit, e) {
+  if (e instanceof GateError) return [...e.lines, `  shard: ${unit.label} · at: ${w.at}`]
+  const lines = [
+    `\n[${unit.label}] the worker died at "${w.at}": ${e?.message ?? e}`,
+    '  Not a violation — the browser or the page went away. The table above is partial.',
+  ]
+  const seen = await w.page
+    .evaluate(() => ({
+      url: location.href,
+      bodyText: (document.body.innerText ?? '').replace(/[\s\u00a0]+/g, ' ').trim().slice(0, 160),
+    }))
+    .catch(() => null)
+  lines.push(`  url: ${seen?.url ?? '(the page could not be read — it is gone)'} · viewport: ${w.viewport} · theme: ${w.theme}`)
+  lines.push(`  body says: "${seen?.bodyText ?? '(unreadable)'}"`)
+  lines.push(`  page errors: ${w.pageErrors.slice(-6).join(' | ') || 'none captured'}`)
+  lines.push(`  stack: ${String(e?.stack ?? '').split('\n').slice(1, 3).map((l) => l.trim()).join(' ⏎ ')}`)
+  return lines
+}
+
+// ── Run ──────────────────────────────────────────────────────────────────────
+
+console.log(`${UNITS.length} shard(s), ${TOTAL_SCANS} scan(s), ${WORKERS} worker(s) — BUJO_A11Y_WORKERS=1 for the serial walk.`)
+const workers = await Promise.all(
+  Array.from({ length: Math.min(WORKERS, UNITS.length) }, (_, i) => makeWorker(i)),
+)
+for (const w of workers) console.log(w.seedLine)
+await Promise.all(workers.map((w) => drain(w)))
+flushReady(true)
 await browser.close()
 
-console.log('\nView            serious  other  folds')
-for (const s of summary) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)} ${String(s.folds).padStart(6)}`)
+const rows = UNITS.flatMap((u) => u.rows ?? [])
+const serious = rows.reduce((n, r) => n + r.serious, 0)
+const skipped = UNITS.filter((u) => u.skipped)
 
+console.log('\nView            serious  other  folds')
+for (const s of rows) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)} ${String(s.folds).padStart(6)}`)
+console.log(`\n${rows.length} of ${TOTAL_SCANS} scan(s) completed across ${UNITS.filter((u) => u.done).length} of ${UNITS.length} shard(s).`)
+
+if (aborted) {
+  console.error(`\nThe gate stopped: [${aborted.label}] failed, and ${skipped.length} shard(s) never ran.`)
+  if (skipped.length) console.error(`  not run: ${skipped.map((u) => u.label).join(', ')}`)
+  console.error('  This is a PARTIAL result. It is not a pass, whatever the table says.')
+  process.exit(1)
+}
 if (serious > 0) {
   console.error(`\n${serious} serious/critical accessibility violation(s).`)
   process.exit(1)
