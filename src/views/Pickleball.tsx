@@ -8,13 +8,13 @@ import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid, MasonryGrid, SPAN_2 } from '../components/shell/CardGrid'
+import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
 import { LazyMount } from '../components/LazyMount'
 import { useStickyState } from '../lib/useStickyState'
 import { CalendarHeatmap, DisclosureRow, StatBar, SectionRail } from '../components/page'
 import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import type { PickleballFormat } from '../lib/types'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
@@ -138,7 +138,6 @@ export function Pickleball() {
   const trend = winRateSeries(data)
   const weeks = weeklyGames(data, 8, today)
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
-  const [showAll, setShowAll] = useState(false)
 
   function log() {
     // A session with a duration and no score is a real session — the sport's
@@ -200,8 +199,26 @@ export function Pickleball() {
    * person you play every week is the first chip rather than the alphabetically
    * luckiest.
    */
-  const recentPartners = partners.slice(0, 6).map((p) => p.partner)
-  const recentVenues = venues.slice(0, 6).map((v) => v.location)
+  /* Ordered by **last used, then most used** — not by games played, which
+     is what `partnerStats`/`venueStats` sort by and which put the court you
+     played at last night below one you stopped going to in June. Recency is
+     the stronger signal for what you are about to type.
+
+     `sessions` and not the stats arrays: `recentThenFrequent` reads its
+     input in order, and `partnerStats`/`venueStats` have already collapsed
+     and re-sorted it, so the recency is gone by then. `sessions` is sorted
+     newest-first where it is built above.
+
+     No `useMemo`: it is one pass over a list of sessions, and `sessions` is
+     a fresh array every render, so a memo keyed on it would recompute every
+     time anyway while costing a dependency to keep honest. */
+  const allPartners = recentThenFrequent(sessions.map((x) => x.partner))
+  const allVenues = recentThenFrequent(sessions.map((x) => x.location))
+  /* Chips are the fast path and stay capped — a chip row that grows without
+     limit stops being a row. Everything else is reachable from the field's
+     own dropdown below, which is why the cap is safe now and was not before. */
+  const recentPartners = allPartners.slice(0, 4)
+  const recentVenues = allVenues.slice(0, 4)
   const yesterday = addDays(todayISO(), -1)
   const opponents = opponentRecords(data)
   // Read-only form / streak / point / matchup / weekday signals over logged sessions.
@@ -449,8 +466,25 @@ export function Pickleball() {
           180px of content. Fixed by deleting that component in favour of
           `CollapsibleSection` + `MasonryGrid`; see the groups below. */}
       {atAGlance}
-      <CardGrid>
-        <Card band className={SPAN_2} title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
+      {/* THE ACT, AND THE TWO CARDS THAT BELONG BESIDE IT.
+
+          This was a `CardGrid`: "Log a session" spanning two of three
+          columns with History in the third, and "Practice today" wherever
+          it landed. A grid row is as tall as its tallest cell, so the short
+          History card left a pocket — measured at 1600, History ended at
+          y=573 and Practice began at y=944 in the *other* column, about
+          370px of nothing under a card that had finished.
+
+          An explicit two-column split instead: the form on the left, the two
+          things you read while filling it stacked on the right. No row to
+          be the tallest cell of, so no pocket at any width, and the reading
+          order is the one the page means.
+
+          `items-start` so the right column does not stretch to the form's
+          height, and `minmax(0,1fr)` on both because a bare `1fr` floors at
+          min-content and the form's chip rows are wide. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
         {/* TAP, DON'T TYPE.
 
             This was fourteen controls of which twelve were free text or a bare
@@ -523,13 +557,24 @@ export function Pickleball() {
               onChange={(v) => set({ partner: f.partner === v ? '' : v })}
               options={recentPartners.map((n) => ({ value: n, label: n }))}
               after={
-                <Input
-                  value={f.partner}
-                  onChange={(e) => set({ partner: e.target.value })}
-                  placeholder="Someone else"
-                  aria-label="Partner"
-                  className="w-36 py-1"
-                />
+                /* `list=` — a real dropdown of every partner you have logged,
+                   on a field you can still type anything into. That is the
+                   whole ask: stop retyping the same four names, without
+                   losing the ability to enter a new one. A `<select>` would
+                   have taken the second half away. */
+                <>
+                  <Input
+                    value={f.partner}
+                    onChange={(e) => set({ partner: e.target.value })}
+                    placeholder="Someone else"
+                    aria-label="Partner"
+                    list="pb-partners"
+                    className="w-36 py-1"
+                  />
+                  <datalist id="pb-partners">
+                    {allPartners.map((n) => <option key={n} value={n} />)}
+                  </datalist>
+                </>
               }
             />
           )}
@@ -541,13 +586,19 @@ export function Pickleball() {
             onChange={(v) => set({ location: f.location === v ? '' : v })}
             options={recentVenues.map((n) => ({ value: n, label: n }))}
             after={
-              <Input
-                value={f.location}
-                onChange={(e) => set({ location: e.target.value })}
-                placeholder="Somewhere else"
-                aria-label="Location"
-                className="w-36 py-1"
-              />
+              <>
+                <Input
+                  value={f.location}
+                  onChange={(e) => set({ location: e.target.value })}
+                  placeholder="Somewhere else"
+                  aria-label="Location"
+                  list="pb-venues"
+                  className="w-36 py-1"
+                />
+                <datalist id="pb-venues">
+                  {allVenues.map((n) => <option key={n} value={n} />)}
+                </datalist>
+              </>
             }
           />
           </div>
@@ -597,17 +648,46 @@ export function Pickleball() {
         <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
       </Card>
 
+      <div className="flex flex-col gap-4 sm:gap-5">
       <Card band title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
+        {/* FIVE ROWS, AND THE REST SCROLLS.
+
+            It was eight rows and a "Show all 23" button, so the card was
+            either 8 rows tall or 23 — and at 23 it pushed everything under
+            it down a screen and a half. A history is a thing you glance at
+            and occasionally dig through; neither of those wants a button
+            that changes the page's height.
+
+            `max-h` on the list with the rows all present: five are visible,
+            the rest are one flick away, and the card is the same height
+            whichever you are doing. 5 × 45px measured, plus a few pixels so
+            the sixth row is half-visible — a clean bottom edge reads as the
+            end of the list, which is the thing that made the old button
+            necessary.
+
+            `tabIndex` and a name because it scrolls: a scrollable region
+            that cannot be focused is unreachable by keyboard, and
+            `npm run a11y` fails it as a serious `scrollable-region-focusable`
+            (it caught exactly this on the Cycle symptom table). */}
         {sessions.length === 0 ? (
           <Empty>Log a session above to start your record.</Empty>
         ) : (
-          <ul className="divide-y divide-surface0">
-            {(showAll ? sessions : sessions.slice(0, 8)).map((p) => (
-              <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
-            ))}
-          </ul>
+          <div
+            className={sessions.length > 5 ? 'max-h-[15rem] overflow-y-auto pr-1' : undefined}
+            tabIndex={sessions.length > 5 ? 0 : undefined}
+            role={sessions.length > 5 ? 'group' : undefined}
+            aria-label={sessions.length > 5 ? `All ${sessions.length} sessions, scrollable` : undefined}
+          >
+            <ul className="divide-y divide-surface0">
+              {sessions.map((p) => (
+                <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
+              ))}
+            </ul>
+          </div>
         )}
-        {sessions.length > 8 && <button onClick={() => setShowAll((v) => !v)} className="mt-2 text-body text-mauve hover:underline">{showAll ? 'Show less' : `Show all ${sessions.length}`}</button>}
+        {sessions.length > 5 && (
+          <p className="mt-2 text-label text-fg-2">Showing 5 of {sessions.length} · scroll for the rest</p>
+        )}
       </Card>
 
       {/* ── Improve · rotating practice focus + warm-up; reference content folded
@@ -643,8 +723,8 @@ export function Pickleball() {
           ))}
         </div>
       </Card>
-
-      </CardGrid>
+      </div>
+      </div>
 
       {/* ── COMPETITION & RATING ──────────────────────────────────────────
             Three cards that had been sitting in the top grid beside "Log a
