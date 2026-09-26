@@ -314,6 +314,29 @@ way: the copy was retyped rather than reused. **When a view stops importing a
 data module, that is the finding.** Assert the counts in a test
 (`lib/pullups.test.ts`), because nothing else will.
 
+Trap (open, COD-232): **a tab shell holds one panel in the DOM, and both
+rendering gates grade the one it opens on.** `npm run space -- settings` reports
+`0.9 shipped / 0.9 open · 2 cards` for a four-tab view; that is the Profile tab,
+and every space number ever quoted for Settings measured a fraction of it.
+`npm run a11y` has the same hole from the other end — it reaches Settings by URL
+and scans whatever mounted, so the passcode form, the cloud passphrase, every
+export button and the erase-everything dialog have never been seen by axe at any
+theme or viewport. `openFolds` reaches inside a closed fold; nothing reaches
+inside an unselected tab. Driven per tab with a throwaway probe, Settings was
+**2.7 screens of content over five tabs, three of them under half a screen** —
+the "empty, and there is width going spare" report that no gate could see, since
+the `space` budget only flags 3+ screens and every card cleared the 45% fill
+floor. Probed across five desktop themes, the unscanned tabs are clean as they
+ship, so arming this is free; the ticket carries the implementation notes,
+including that `space-audit.mjs` never sets `bujo:onboarded` and so cannot click
+anything while the onboarding modal is up. Corollary already fixed: **four
+controls behind default-off toggles had never been rendered by any gate** — the
+reminder time and the local model's three fields, all inside a `Row` whose label
+is a `<span>` that names nothing, and with the toggles forced on that was one
+**critical** `label` violation at every theme. Same family as latte's yellow at
+2.02:1 behind a branch the seed never took: when a gate walks the DOM, ask what
+is not in it.
+
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.

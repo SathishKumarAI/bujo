@@ -4,11 +4,11 @@
  */
 export { ProfileTab } from './ProfileTab'
 export { AppearanceTab } from './AppearanceTab'
-export { RemindersTab } from './RemindersTab'
 export { SyncTab } from './SyncTab'
 export { DataTab } from './DataTab'
 export { PasscodeCard } from './PasscodeCard'
 export { SelfHostCard } from './SelfHostCard'
 export { VoiceModelCard } from './VoiceModelCard'
+export { ConnectionsCard } from './ConnectionsCard'
 export { Row, Toggle, Disclosure } from './shared'
 export { download } from './download'
