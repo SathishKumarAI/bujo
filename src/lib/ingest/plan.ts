@@ -86,6 +86,8 @@ export interface PlanOptions {
   takeTheirs?: boolean
   /** The unit `BodyMetric.weight` is stored in for this journal. See the note on `weightKg`. */
   weightUnit?: 'kg' | 'lb'
+  /** The unit `CyclePoint.temp` is stored in for this journal. Same ambiguity as `weightUnit`. */
+  tempUnit?: 'F' | 'C'
 }
 
 /** One-line adapter so an array caller can use the streaming signature. */
@@ -102,6 +104,7 @@ export async function plan(
 ): Promise<ImportPlan> {
   const source = opts.source ?? 'claude'
   const weightUnit = opts.weightUnit ?? 'kg'
+  const tempUnit = opts.tempUnit ?? 'F'
   const counts: ImportCounts = { added: 0, updated: 0, unchanged: 0, conflicts: 0, rejected: 0 }
   const conflicts: ImportConflict[] = []
   const notes: string[] = []
@@ -217,6 +220,19 @@ export async function plan(
         if (changed) counts.added++
         else if ((c.flags?.length ?? 0) > 0) counts.unchanged++
         if (c.note) setField(row as unknown as Record<string, unknown>, 'note', c.note, 'cycle', c.date)
+        if (typeof c.tempC === 'number') {
+          // The envelope is Celsius; `CyclePoint.temp` is whatever unit the
+          // user has selected, because it carries none of its own. Same
+          // workaround as `weightKg` above, for the same reason.
+          //
+          // Two decimals in both units: a basal chart is read for a shift of
+          // ~0.2 °C / 0.4 °F, so one decimal throws away a third of the signal.
+          // NOT machine-only — a basal temperature is typed in by hand every
+          // morning, so a hand-entered reading wins and the import reports it
+          // as a conflict. That is the whole point of the default.
+          const stored = tempUnit === 'F' ? round(c.tempC * 9 / 5 + 32, 2) : round(c.tempC, 2)
+          setField(row as unknown as Record<string, unknown>, 'temp', stored, 'cycle', c.date)
+        }
         break
       }
 
