@@ -356,6 +356,20 @@ surfaces. Do not argue a page is unreachable from the code's shape — Recovery 
 excluded on the belief it was behind an opt-in, but `nofapEnabled` defaults to
 true, and adding it immediately failed on a contrast bug.
 
+Trap (open, COD-237): **replacing folds with a `SectionRail` makes the a11y gate
+cover less, and the fold column reads it as an improvement.** `openFolds()` finds
+content by `[aria-expanded="false"]`; a rail is a nav of single-select buttons and
+has no `aria-expanded` at all, so the gate scans whichever group the page opens on
+and never sees the others. Recovery's fold column went **3 → 0** in the same
+commit that made twenty panels reachable — the gate used to open three folds and
+scan all of them, and now scans the six in `progress`. Six pages are in this state
+(Insights, Coaching, Pickleball, Pull-ups, Help, Recovery). Same shape as COD-232's
+tab shell, one mechanism over, and the same answer: **drive it per group with a
+throwaway probe and say what you measured.** Recovery's four groups were probed at
+five desktop and two phone themes — 28 scans, 0 serious or critical — so arming it
+there is free; that is not known for the other five. A rail is still the right
+instrument; what is not allowed is letting the fold count read as coverage.
+
 Trap (retired): `BottomNav`'s `PRIMARY` list used to be silently filtered
 against the sidebar items, so retiring a nav id dropped its phone tab with no
 error — collapsing the Body cluster left the bar at three. There is no list any

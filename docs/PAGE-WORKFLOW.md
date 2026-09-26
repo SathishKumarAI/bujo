@@ -71,15 +71,23 @@ went 6.3 → 1.8 screens because five of six groups stopped rendering.
 
 **And the order is what makes Insights' `tier={1440}` + `stacked` look like a
 win.** It is the same page shape those two experiments failed on; what changed
-first was that only one group renders. Re-tested on Cycle *after* its rail
-landed, stacking still loses: **1.0 → 1.9 screens shipped, page height
-1,087 → 1,819px (+732)** — `max(act, review)` becoming `act + review`, with
-Cycle's 760px act column the whole cost. It buys a vertical rail and 545px
-cards against 351px ones, and that is not worth 0.9 of a screen on a page whose
-review zone is now shorter than its form. Insights has no such act column
-(23 analytics cards, a search box), which is why the same two flags are right
-there and wrong here. **Measure the rail first, the width second, and never
-assume the second result transfers.**
+first was that only one group renders. Re-tested on **two** pages after their
+rails landed, and stacking loses on both:
+
+| After the rail | shipped | page height | rail | cards | act zone |
+|---|---|---|---|---|---|
+| `cycle` 1180 split | **1.0** | 1,087px | chips | 351px | 760px |
+| `cycle` 1440 stacked | 1.9 | 1,819px (+732) | vertical | 545px | — |
+| `nofap` 1180 split | **1.7** | 1,181px | chips | 350px | 1,296px |
+| `nofap` 1440 stacked | 3.3 | 2,399px (+1,218) | vertical, 176px | 545px | — |
+
+Both buy a vertical rail and 545px cards against ~350px ones, and both pay
+`max(act, review)` becoming `act + review` — the act column is the whole cost,
+and Recovery's is 1,296px (a ring, a day tally and two forms) against Cycle's
+760px, which is why it loses by more. Insights has no such act column
+(23 analytics cards and a 291px search box), which is why the same two flags are
+right there and wrong on both of these. **Measure the rail first, the width
+second, and never assume the second result transfers.**
 
 ---
 
@@ -94,7 +102,12 @@ pickleball 4.3 → 3.0, folds 17 → 8
 pullups    open 5.7 → 2.2, folds 7 → 1
 coaching   the 12.9-screen open state stops existing
 cycle      2.5/4.8 → 1.0/1.0 desktop, 4.4/10.6 → 2.3/3.5 phone, folds 4 → 0
+nofap      1.9/4.8 → 1.7/1.7 desktop, 4.8/8.2 → 4.7/4.7 phone, folds 3 → 0
 ```
+
+Read the pairs, not the left-hand numbers: on both of the last two the win is
+**`open` collapsing onto `shipped`** — there is nothing left on the page to open —
+and `shipped` barely moves or falls slightly. A rail is not a compression trick.
 
 Rules, all learned the hard way:
 

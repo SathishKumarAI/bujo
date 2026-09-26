@@ -274,10 +274,23 @@ export function generateDemoData(today = todayISO()): JournalData {
     startedOn: addDays(today, -16),
     best: 24,
     urgesResisted: 5,
+    /**
+     * `intensity` on every row, and it was missing from all three.
+     *
+     * `intensityStats` skips any urge with no rating, so `rated` was **0** and
+     * `UrgeIntensityCard` — gated on `rated > 0` — had never been rendered with
+     * data by anything: not the a11y gate, not the clip gate, not a screenshot.
+     * The field is written by the urge form on every real log; only the seed
+     * omitted it. Same shape as the unseeded `data.cycle` in CLAUDE.md: a card
+     * that never renders cannot fail.
+     *
+     * Three different levels, so the distribution has a shape and a mode rather
+     * than one bar three high.
+     */
     urgeLog: [
-      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling' },
-      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking' },
-      { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn' },
+      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2 },
+      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4 },
+      { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn', intensity: 3 },
     ],
     plans: [
       { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },

@@ -80,7 +80,7 @@ Measured on `main`, desktop 1440, after this stretch:
 | `trackers` | 3.1 | 3.6 ⚠ | 9 cards in 1 group, 5.0 on a phone |
 | `today` | 2.5 | 3.6 ⚠ | the capture page; be careful |
 | `cycle` | 2.5 | 4.8 ⚠ | **COD-230, deliberately still open** — see below |
-| `nofap` | 1.9 | 4.8 ⚠ | 17 cards in 3 groups; shipped is fine, the open state is a fold-wall |
+| ~~`nofap`~~ | ~~1.9~~ **1.7** | ~~4.8 ⚠~~ **1.7** | **Done** — a `SectionRail` over four registry groups replaced three shut folds. `open` now *equals* `shipped`: nothing left on the page to open. Phone 4.8 / 8.2 → 4.7 / 4.7. COD-61. |
 | `gym` | 1.7 | 3.4 ⚠ | 5 groups already open, no gap to close |
 
 **COD-230 stays open and the work on it is already done once.** #286 folded
