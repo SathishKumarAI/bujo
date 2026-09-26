@@ -34,7 +34,17 @@ Rules that keep this honest:
   journal does not have is refused, not created.
 - **The machine never beats the human** — except on `steps`, `restingHR` and
   `activeKcal`, which no UI can write, so there is no human value to defend.
+  A basal temperature is *not* in that set: it is typed in by hand every
+  morning, so an Apple Health reading that disagrees is a conflict.
 
-Not here yet, by design: any UI (branch 2), the Apple adapter and streaming
-(branch 5, blocked on `docs/import/apple-health-research.md`). `plan()` already
-takes an `AsyncIterable` so branch 5 does not rewrite it.
+## Who feeds this
+
+| Caller | Where | Notes |
+|---|---|---|
+| Voice / text capture | `components/VoiceAgent.tsx` | Emits records directly, `source: 'claude'` |
+| Apple Health `export.zip` | `lib/health/` → `components/settings/AppleHealthCard.tsx` | Streams an 800 MB `export.xml` through the `AsyncIterable` `plan()` has always taken. `source: 'apple-health'` |
+
+Still not here, by design: the metrics-CSV importer (`BackupCard.tsx`
+`onMetricsCsv`) and the `.ics` importer both still write straight to the store,
+N undo steps and no validation — increments 3 and 7 of
+`docs/import/ingest-architecture.md` §9.
