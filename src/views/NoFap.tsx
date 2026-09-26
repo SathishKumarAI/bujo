@@ -542,11 +542,22 @@ export function NoFap() {
                         </div>
                         <span className="text-body text-fg-1"><span className="font-medium" style={{ color: onRaised('mauve') }}>{st.current}</span> day{st.current === 1 ? '' : 's'} clean{st.relapseCount ? ` · ${st.relapseCount} reset${st.relapseCount === 1 ? '' : 's'}` : ''}</span>
                       </div>
+                      {/* `text-red` on `bg-ink-2` measured **4.14:1** on vscode
+                          — a serious axe failure that had never fired, because
+                          until the demo seeded an addiction this button did not
+                          render. `onRaised('red')` lifts the accent against
+                          both grounds to 4.6, the way the rest of this file
+                          already does it.
+                          `text-label` came off with it and nothing moved:
+                          tailwind-merge puts a custom font-size and a custom
+                          text-colour in the same group, so `text-red` had been
+                          swallowing it and the button rendered at body size all
+                          along (axe reported 15px, not 11px). */}
                       <Button variant="ghost" onClick={async () => { if (await confirm({
                         title: `Reset the ${a.name} streak?`,
                         description: 'Your current streak goes back to zero. Your total clean days and best streak are kept.',
                         confirmLabel: 'Reset streak', destructive: true,
-                      })) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0 text-label text-red hover:text-red">Reset</Button>
+                      })) relapseAddiction(a.id, { date: today, trigger: '', note: '' }) }} className="h-auto shrink-0 p-0" style={{ color: onRaised('red') }}>Reset</Button>
                       <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({
                         title: `Stop tracking ${a.name}?`,
                         description: 'Its streak and full reset history are deleted. This cannot be undone.',
