@@ -1,167 +1,139 @@
 # STATUS
 
-**Stopped:** 2026-09-26, on `main`, clean. **Thirteen PRs merged (#263–#275)**,
-each squash-merged with `npm run verify` and `npm run a11y` green.
+**Stopped:** 2026-09-26, on `main`, clean. **Nine PRs merged (#278–#286)**, each
+squash-merged with its gates read rather than assumed.
 
 ## What this stretch was
 
-Two requests. First: spin the UI up, find bugs, kill the duplication in
-Settings and in Fitness/Strength, give Cycle real context and visualisations.
-Then: Insights, Mindset and Pickleball "look empty / scattered / like plain
-text", use the width, reorganise the categories.
+Two requests. First: work the `docs/NEXT-SESSION.md` queue and fix whatever bugs
+turned up on the way. Then, mid-run: make the two gendered pages carry their own
+domain knowledge, stop the app speaking in abbreviations nobody can expand, use
+the width in Settings, import the data an iPhone already holds — and run it with
+agents, planned up front.
 
-Every item below was measured in the running app before it was called a
-problem. None of the three "empty" pages had a rendering bug.
+The plan is `docs/sessions/2026-09-26-platform-pass/PLAN.md`, written before any
+of it, with the measured baseline it started from.
 
 | # | What | The finding |
 |---|---|---|
-| 263 | Strength had two front doors | The Fitness mode toggle **and** the Strength tab both logged a `Workout`. `views/FitnessHub.tsx` was 142 lines of dead code nothing imported. |
-| 264 | Settings counted the journal twice | Two cards, 3,000px apart, four identical numbers — and **"Habits" meant two different things**. `Settings.tsx` 969 → 86 lines. |
-| 265 | Cycle had nothing to show | **The demo seed never wrote `data.cycle`**, so the gate could not fail on any of it. Four visualisations added. |
-| 266 | A stray `undefined/` directory | My mistake in #265. |
-| 267 | Mindset's library was a 3,200px wall | 46 principles in one column. Two docstrings said "26". |
-| 268 | Auto-sync hands over a locked journal | `bujo:enc` holds ciphertext, `bujo:sync` holds the passphrase **in plaintext beside it**. |
-| 269 | Handover | — |
-| 270 | Insights was nine groups under six names | See below. Plus a new `tier={1440}` on `PageLayout`. |
-| 271 | Pickleball's charts, Mindset's tiles, `docs/PAGE-SHAPE.md` | **All seven Pickleball charts were behind `defaultOpen={false}`.** |
+| 278 | `npm run clipped` was red on `main` | 9 findings, byte-identical across the whole previous stretch. Gym's rows lost the exercise name to a `shrink-0` set strip; `min-w-0` was also why the row never wrapped. Cycle's `table-fixed` gave each of 31 columns 8px against a 12px label. |
+| 279 | The app spoke in abbreviations | `src/data/glossary.json`, 20 terms, 10 with credited links. One file read by both the inline ⓘ and Help's list, so they cannot disagree. |
+| 280 | The `[one-primary]` guard blamed the wrong page | The header's Quick add registers once, under whichever view loaded first, and sits in that view's budget forever. "Gym warns, Fitness does not" was load order, not a fact about Gym. |
+| 281 | **Data loss** | `logRelapse` rebuilt `nofap` from three fields with no spread, deleting six. See below. |
+| 282 | Settings' 0.9 screens was a lie by omission | The space audit walks the DOM and a tab shell holds one panel at a time. Per tab: 2.7 screens over five tabs, three under half a screen. |
+| 283 | Recovery could log a lapse but not how much | `Relapse.count?`, one row per streak per day. Ten cigarettes is one lapse day of ten, not ten streak resets. |
+| 284 | The a11y gate took 8m07s, so it stopped being run | Sharded by theme. **2m48s**, same 166 scans. |
+| 285 | Apple Health was typed in by hand | A streamed zip/XML reader with no new dependency. 817MB of XML at a **116.7MB peak heap**. |
+| 286 | Cycle could not explain itself | A drive counter read back by phase, a legend built from the one hue map, an ovulation diagram, and per-phase food with five credited sources. |
 
-## The four worth re-reading
+## The five worth re-reading
 
-**`lib/demo.ts` seeded every domain except `data.cycle`.** `npm run a11y`
-visits that page at five themes and two viewports on every run and could not
-fail on any of it. Seeding four cycles turned the first green run **red**.
-The trap is in CLAUDE.md: when you add a domain to `types.ts`, seed it in the
-same change.
+**`logRelapse` deleted the rest of the streak, and nothing could catch it.**
+One missing `...d.nofap` took `urgeLog`, `urgesResisted`, `plans`,
+`addictions`, `costPerDay` and `commitment` with every relapse — every resisted
+urge ever logged, every if-then trigger plan, every independently-tracked
+addiction with its own personal best, the money figure and the quit-date
+contract. All six are **optional** on `Streak`, so dropping them is not a type
+error; the page then re-renders with empty lists, which is indistinguishable
+from "you have not logged any yet"; and it fires only on the one action a user
+takes immediately after relapsing. All ten other writers of `nofap` spread
+correctly, including the newer per-addiction twin — which is exactly why the
+original path was never revisited. `store.nofap.test.tsx` was run against the
+unfixed reducer to prove it fails there.
 
-**The passcode lock does not survive auto-sync, and `docs/AUTH.md` said it
-did.** Measured with both on: `bujo:enc` is 103,399 characters of ciphertext
-and `bujo:sync` is the passphrase in the clear. Not silently fixed —
-encrypting it means auto-sync cannot run while locked, which is a product
-decision. Surfaced at the switch and documented instead.
+**A gate cannot grade a tab it never opens.** Settings measured 0.9 shipped /
+0.9 open for its whole existence, and that was the Profile tab, five times over.
+The per-tab numbers are what the "empty, and width going spare" report was
+about, and no gate could see them. **It still reports 0.9 on `main`** — COD-232
+is open for the gate half.
 
-**Insights offered six domain names and rendered nine groups** under four
-mechanisms, two of them sharing a title, with eight of twenty-three cards
-under no heading. Nothing failed; the page was just unreadable. Zone 3 is
-`DOMAINS.map(...)` now, and a test asserts the rendered `data-card` set
-equals the registry in both directions. The regroup also exposed
-`TrackerVisuals`: five habit grids with no card id and no filter gate, so the
-chips could not filter it, the search could not find it and no count included
-it. And **the test the registry's docstring claimed existed did not** — the
-only one there checked the registry against itself.
+**An unseeded field is a subject the gates silently do not check, and it kept
+being true.** `demo.ts` had no `addictions` at all, so a whole card of Recovery
+had never been rendered by anything; seeding two turned `clipped` red on
+"Nicotine" truncated to "Nicotin" and `a11y` red on a **4.14:1** Reset button.
+Separately, three device-only metric fields (`steps`, `restingHR`,
+`activeKcal`) had been on `DailyMetric` since the ingest pipeline landed with
+the seed writing none of them — and `energy` was missing from *both* sides of
+the CSV round-trip, a field the app writes and the export dropped.
 
-**Every Pickleball chart was behind one closed fold, last on the page.** What
-a reader got was fourteen cards of stat tiles and not one chart. The same
-fold had already been wrong twice: a comment claimed it was collapsed when it
-was not, and that was resolved by making the comment true.
+**The fold-count column was never comparable between themes.**
+`CollapsibleSection` persists its open state, so themes 2–5 of the serial a11y
+walk found mocha's folds already open and counted 0 clicks where mocha counted
+2. Coverage never differed — the content was open either way — but the number
+was wrong, and sharding would have made it depend on which worker got the
+shard.
+
+**Two of my own measurements were wrong, and both were caught by the rules in
+this file.** A script written to sweep `store.tsx` for other missing spreads
+reported **zero against the file containing the bug**; it was discarded and all
+ten writers read by hand. And a browser probe written to check a *claimed*
+critical a11y violation reported "none" on five tabs because its tab click
+matched the same control every time — it scanned one tab five times. Adding the
+precondition ("assert the fields are actually in the DOM") is what exposed it.
+A gate that is green on a known defect is worse than no gate, and that applies
+to the throwaway probe as much as to the committed one.
 
 ## Numbers, before → after
 
 ```
-space   insights  desktop 6.8 → 6.1 shipped · 2 columns → 3 · container 1180 → 1318
-                  phone   12.0 → 13.5 shipped, but 13.4 → 13.5 OPEN
-        mindset   desktop 4.8 → 3.8 (two columns) → 4.2 (tiles)
-        pickleball desktop 3.5 → 3.9 shipped, 4.5 → 4.5 OPEN
-        cycle     desktop 1.6 → 1.9 shipped, 1 column ⚠ → 3 columns
-tests   1149 → 1167 in 91 files
-a11y    166 rows, no serious or critical, at 5 themes × 2 viewports
+gates   clipped   9 findings → 0, across 24 views at 1440, 1024 and 390px
+        a11y      8m06.956s → 2m48.648s · 166 scans either way · 4 workers
+        tests     1181 → 1287 in 96 files
+        contrast  passed · 5 themes, 14 accents, both palettes agree
+
+space   settings  per tab: 2.7 screens over 5 tabs → 4 tabs, Sync 504 → 790px
+        nofap     desktop 1.8 → 1.9 shipped / 4.7 → 4.8 open
+                  phone   4.2 → 4.8 shipped / 7.7 → 8.2 open
+        cycle     desktop 1.9 → 2.5 shipped / 2.8 → 4.8 open
+                  phone   4.1 → 4.4 shipped / 6.3 → 10.6 open
+        help      desktop 1.1 → 1.2 shipped / 1.5 → 2.5 open
+
+health  817.9MB XML streamed · 116.7MB peak heap · −4.5MB retained after gc
+        3,317 records reached the planner — bounded by days, not samples
 ```
 
-**Read the shipped/open pairs together.** Where shipped rose and open did not,
-nothing grew — a fold was opened, and the page now shows what it holds. That
-is true of Insights' phone number and both of Pickleball's.
+**Read the pairs honestly: three pages got longer and that was the point.**
+Cycle's open number nearly doubled because a ~1,400px sourced document, a
+legend, a diagram and a drive card arrived on a page that had none of them.
+Nothing was hidden behind a new closed fold to flatter the shipped figure —
+which is the only reason the numbers are worth printing.
 
-## The Gym pass (#272)
+## Where the agents were used, and what it cost
 
-Reported as stretched and scattered; both were measured, and there was a
-correctness bug under them.
+Five parallel agents, each in its own git worktree on its own preview port,
+each handed its area's traps up front. **All five were killed mid-flight by a
+session rate limit** and resumed from their transcripts; one had lost its
+worktree and was restarted from scratch.
 
-`parseSet` matched the N in "Squat 5x5 @ 100kg" and **never captured it**, so
-every caller counting sets from a legacy line counted one per *line*. On the
-demo journal: "Sets this week" **9 against a true 39**, weekly volume
-**3,083lb against 14,025lb**, and the page's signature visual — hard sets
-against a 10–20 landmark — put every muscle at 1–5. Three tests asserted the
-wrong behaviour, and `lib/pullups.ts` already knew: it writes one line per set
-to dodge this, with a comment saying so. A local workaround that left every
-other caller undercounting.
+Two things that would have gone wrong without the isolation, and are worth
+keeping as the pattern:
 
-It only surfaced because the demo started writing `setRows` beside the
-strings, and the same journal produced two answers.
+- **Two agents were editing `scripts/` at once** because I scoped it badly. One
+  was told to revert and report its finding instead; `scripts/` had a single
+  owner from then on.
+- **Two branches were cut from different points and both added fields to
+  `demo.ts`, `demo.test.ts` and `types.ts`.** Both needed a rebase before
+  merging, and `git diff main <branch>` was actively misleading about it — it
+  showed the whole Settings restructure being reverted. `git diff $(git
+  merge-base …) <branch>` is what a squash actually applies. Check that one,
+  not the other.
 
-Layout, measured at 1440 before: act column 442 × 604, review 722 × 1500,
-**442 × 896px of dead page**, one bar track 606px for a value of 1–5. The
-review was 46px under `MasonryGrid`'s 768px step, which the file documented
-working around with `CardGrid`. `tier={1440}` fixes the cause; `LiftTable`
-merges two cards that listed the same lifts (third round of that here);
-`LastSessionCard` fills the act column with what a lifter reads with a bar in
-front of them.
+## Environment, on the way out
 
-## Next, in the order I would take it
+- **Five agent worktrees are still under `.claude/worktrees/`**, each holding
+  its now-merged branch, which is why `gh pr merge --delete-branch` could not
+  delete the local branches. One of them, `agent-afa93cdc840c582e9`, is **not a
+  git worktree at all** — a dead agent left a 770MB plain checkout plus
+  `node_modules` there, and git resolves its working tree to the repo root.
+  Nothing has been deleted; it needs a decision.
+- Preview/dev servers were left on 4173, 5199 and 5300, all from this worktree.
+  Confirm what a port serves by its `<title>`, not by it answering 200.
+- `docs/life-schedule-v3-final.html` is untracked and predates this session.
 
-**The full queue, with the reasoning, is `docs/NEXT-SESSION.md`.** This list
-is the short form for someone re-entering; that file is what to work from.
+## Next
 
-
-0. **`shell/TopBar`'s Quick add is `variant="primary"`** and mounts on every
-   view, so it eats every page's budget and the dev-only `[one-primary]` guard
-   warns on any page with one of its own. Verified by driving the app: Gym
-   warns, Fitness does not. The guard is right and its scope is wrong. Touches
-   every page, so it is filed rather than folded into a page PR.
-1. **`npm run clipped` is red on main** — 9 findings: gym ×4, cycle ×5.
-   Byte-identical before and after this stretch, so all pre-existing. Note
-   COD-95 claims the gym clipping was fixed, so it regressed or these are
-   different elements.
-2. **`focus` (3.6 screens) and `mindset` (4.2)** are the two long pages the
-   rail cannot help: measured **zero disclosure groups and zero cards** — flat
-   prose, nothing to group. They need an IA decision, not a layout primitive.
-3. **Recovery** — two open tickets and the measurements agree: COD-61 (2106px
-   dead act column) and COD-49 (orient bar repeats the hero). 3 groups, 17
-   cards, 1.7 shipped / 4.7 open.
-4. **`habitgrids` overlaps `activity` and `habitanalytics`** — registered
-   rather than deleted in #270 so the overlap is visible; wants a
-   consolidation pass now all three are under one heading.
-5. **Cycle on a phone is 4.2 screens**, ~950px a 30-row month list (the split
-   is `sm:`). Either it splits at 390 or it folds.
-6. **Pickleball's win-rate forecast prints "100% projected"** from a 71%
-   current rate — a clamped extrapolation reading as a promise. Copy.
-7. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
-8. **Five Plane items sit "In Review" with no open PR** — COD-12, 13, 19, 20,
-   21. At least three look already done. The board needs reconciling.
-9. Still open on the board: **COD-211** blank boot on `?view=settings` in CI;
-   **COD-208** a11y crash with no partial summary; **COD-197** says a11y fails
-   on main and it has been green every run this stretch — likely stale.
-
-## The rail rollout, and what it measured
-
-Five pages now share `components/page/SectionRail.tsx`. The method is written
-down in **`docs/PAGE-WORKFLOW.md`**; the shapes are in `docs/PAGE-SHAPE.md`.
-
-| Page | before | after |
-|---|---|---|
-| insights | 6.3 desktop / 13.5 phone | **1.8 / 3.1** |
-| help | 4.5 shipped / 10.9 open | **1.3 / 1.6** |
-| pickleball | 4.3, 17 folds | **3.0, 8 folds** |
-| pullups | 2.1 shipped / 5.7 open | **2.2 / 2.2**, 7 folds → 1 |
-| coaching | 2,091px shut / 12.9 open | one chapter, no 12.9 state |
-
-**Two redesigns were measured and thrown away**, and that is the more useful
-half: widening the ten narrow pages to `tier={1440}` changed height on 8 of 10
-by **zero**, and `stacked` on the seven with the most dead space cost +469 to
-+1346px. The dead column beside a short act is the price of a layout that is
-already cheaper than the alternative. Full numbers in `PAGE-SHAPE.md`.
-
-## Traps earned, all in CLAUDE.md or `docs/PAGE-SHAPE.md`
-
-- **An unseeded domain is a subject the gates do not check.** One level below
-  the empty-journal trap.
-- **A count in a comment has nothing keeping it true.** Two Mindset docstrings
-  said 26 while the library held 46 and the bar rendered "46 of 46" thirty
-  pixels above the list.
-- **A render diff is the gate on an extraction.** Settings' five tabs and the
-  whole of Insights were captured with every fold open before and after. On
-  Insights the only lines that disappeared were the nine old group headings —
-  which is how you know 700 lines of card markup moved intact.
-- **A page that offers names must use those names as its structure.** When
-  they disagree the report comes back as "scattered", and nothing fails.
-- **`git add -A` is not a staging strategy.** It swept a stray `undefined/`
-  directory into #265 and an unrelated untracked `docs/*.html` into #270's
-  first attempt. Stage explicit paths.
+`docs/NEXT-SESSION.md`, rewritten. The short version: **`mindset` is 8.8
+screens on a phone** and is now the worst page in the app by a wide margin;
+Settings' gate blindness (COD-232) is open with the cheap half of the fix
+identified; and the sync cluster (COD-136/137/139) is still untouched and still
+the only data-integrity work left on the board.
