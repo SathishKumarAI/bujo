@@ -28,3 +28,20 @@ through the callbacks it is handed.
   Nothing decorative.
 - Filtering happens in the view, so the bar's count and the rows on screen are
   computed from the same array and cannot disagree.
+
+## The library is tiles, and they are neutral
+
+`LibraryList` was a hairline-separated list of title-plus-description rows
+with an `Add` button at the far right of each. At two columns that put about
+twelve unbounded text blocks on screen with nothing but 1px rules between
+them, and the control sat nearer the *next* principle's text than its own.
+
+Each principle is a tile now and **the whole tile is the button** — a target
+that is the object itself, rather than a 60px control beside it. Cost,
+measured: 3.8 → 4.2 shipped screens at 1440, which is the padding.
+
+**Do not give the categories hues.** Nine categories is nine colours if you
+let it be, and the page contract spends the accent on one thing: the
+principles actually in focus. That is what makes them findable in a wall of
+forty-six, and a rainbow of category colours would take it away. See
+`docs/PAGE-SHAPE.md`.
