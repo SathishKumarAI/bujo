@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio, lastSessionOfSplit, workoutVolume } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
-import type { JournalData, Workout } from './types'
+import type { JournalData, Split, Workout, WorkoutSet } from './types'
 
 const workout = (p: Partial<Workout>): Workout => ({
   id: p.id ?? 'w1', date: p.date ?? '2026-06-10', activity: 'strength',
@@ -11,11 +11,24 @@ const workout = (p: Partial<Workout>): Workout => ({
 })
 
 describe('parseSet', () => {
-  it('parses exercise + reps + weight from a set line', () => {
-    expect(parseSet('Bench Press 5x5 @ 60kg')).toEqual({ exercise: 'Bench Press', reps: 5, weight: 60 })
+  // The `sets` field is new, and its absence was a real bug rather than an
+  // omission: the regex matched the N in "5x5" and did not capture it, so
+  // every caller that counted counted one per LINE. These three assertions
+  // encoded that — which is why nothing failed while the muscle-balance card
+  // told anyone with a legacy journal they were training a fifth of what
+  // they were.
+  it('parses exercise + sets + reps + weight from a set line', () => {
+    expect(parseSet('Bench Press 5x5 @ 60kg')).toEqual({ exercise: 'Bench Press', sets: 5, reps: 5, weight: 60 })
   })
   it('tolerates the × glyph and decimals', () => {
-    expect(parseSet('Squat 3×8 @ 82.5kg')).toEqual({ exercise: 'Squat', reps: 8, weight: 82.5 })
+    expect(parseSet('Squat 3×8 @ 82.5kg')).toEqual({ exercise: 'Squat', sets: 3, reps: 8, weight: 82.5 })
+  })
+  it('keeps sets and reps apart when they differ', () => {
+    // "3x8" is three sets of eight, not eight sets of three. Reading them
+    // the wrong way round is the failure this field exists to prevent.
+    const p = parseSet('Romanian Deadlift 3x8 @ 60kg')!
+    expect(p.sets).toBe(3)
+    expect(p.reps).toBe(8)
   })
   it('returns null for non-set text', () => {
     expect(parseSet('felt strong today')).toBeNull()
@@ -341,7 +354,17 @@ describe('weeklySetsPerMuscle (#158 muscle volume balance)', () => {
     const d = emptyJournal()
     d.workouts = [{ id: '1', date: '2026-06-11', activity: 'push', sets: ['Bench Press 5x5 @ 60kg'], notes: '' }]
     const counts = weeklySetsPerMuscle(d, '2026-06-11')
-    expect(counts.find((c) => c.muscle === 4)?.sets).toBe(1)
+    // FIVE, not one. "Bench Press 5x5" is five hard sets, and this card is
+    // calibrated against a 10–20 set landmark — counting the line once put
+    // every muscle in the "below 10" band for every legacy journal.
+    expect(counts.find((c) => c.muscle === 4)?.sets).toBe(5)
+  })
+
+  it('counts legacy volume by sets too, not once per line', () => {
+    const d = emptyJournal()
+    d.workouts = [{ id: '1', date: '2026-06-11', activity: 'push', sets: ['Bench Press 5x5 @ 60kg'], notes: '' }]
+    // 5 sets × 5 reps × 60 = 1500, not 300.
+    expect(workoutVolume(d.workouts[0])).toBe(1500)
   })
 })
 
@@ -673,5 +696,53 @@ describe('exerciseFrequency / trainRestRatio (#102 / #474)', () => {
     ]
     const r = trainRestRatio(d, '2026-06-22', 7)
     expect(r).toEqual({ trainDays: 2, restDays: 5, window: 7, ratio: 0.29 })
+  })
+})
+
+describe('lastSessionOfSplit', () => {
+  const w = (date: string, split: Split, rows: WorkoutSet[]): Workout => ({
+    id: date, date, activity: 'strength', split, sets: [], notes: '', setRows: rows,
+  })
+
+  it('is null when the split has never been logged', () => {
+    expect(lastSessionOfSplit({ ...emptyJournal(), workouts: [] }, 'pull')).toBeNull()
+  })
+
+  it('takes the most recent session of that split, not the most recent session', () => {
+    const d = emptyJournal()
+    d.workouts = [
+      w('2026-06-01', 'pull', [{ exercise: 'Row', weight: 60, reps: 8, kind: 'working' }]),
+      w('2026-06-03', 'pull', [{ exercise: 'Row', weight: 70, reps: 8, kind: 'working' }]),
+      w('2026-06-05', 'push', [{ exercise: 'Bench', weight: 80, reps: 5, kind: 'working' }]),
+    ]
+    const r = lastSessionOfSplit(d, 'pull')!
+    expect(r.date).toBe('2026-06-03')
+    expect(r.lifts[0].topWeight).toBe(70)
+  })
+
+  it('groups sets by exercise and drops warm-ups', () => {
+    // A warm-up counted as a working set makes a light day look heavy, and the
+    // top weight is the number someone loads a bar against.
+    const d = emptyJournal()
+    d.workouts = [w('2026-06-01', 'push', [
+      { exercise: 'Bench', weight: 20, reps: 10, kind: 'warmup' },
+      { exercise: 'Bench', weight: 60, reps: 8, kind: 'working' },
+      { exercise: 'Bench', weight: 65, reps: 6, kind: 'working' },
+      { exercise: 'Dip', reps: 10, kind: 'working' },
+    ])]
+    const r = lastSessionOfSplit(d, 'push')!
+    expect(r.lifts.map((l) => l.exercise)).toEqual(['Bench', 'Dip'])
+    expect(r.lifts[0].sets).toHaveLength(2)
+    expect(r.lifts[0].topWeight).toBe(65)
+    // An unloaded lift is 0, not undefined — the card prints reps for it.
+    expect(r.lifts[1].topWeight).toBe(0)
+  })
+
+  it('ignores sessions that only carry legacy set strings', () => {
+    // `parseSet` cannot recover reliable per-set structure, and inventing a
+    // weight to put in front of someone about to load a bar is not acceptable.
+    const d = emptyJournal()
+    d.workouts = [{ id: '1', date: '2026-06-01', activity: 'strength', split: 'pull', sets: ['Row 3x8 @ 60kg'], notes: '' }]
+    expect(lastSessionOfSplit(d, 'pull')).toBeNull()
   })
 })

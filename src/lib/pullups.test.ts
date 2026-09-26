@@ -43,15 +43,20 @@ describe('stored set lines', () => {
   })
 
   it('writes one line per set, so downstream set counts are not lies', () => {
-    // `parseSet` reads the reps and drops the leading set count, so a grouped
-    // "Pull-up 5x3" would count once everywhere in `lib/fitness.ts`.
+    // This was a WORKAROUND for a bug in `parseSet`, and the bug is fixed:
+    // the parser dropped the leading set count, so a grouped "Pull-up 5x3"
+    // counted once everywhere in `lib/fitness.ts`. This module knew and
+    // dodged it locally; every other caller kept undercounting for as long
+    // as the note sat here. One line per set is still the right thing to
+    // write — it is unambiguous and carries each set's own reps — so the
+    // behaviour stays.
     const lines = setLines(repScheme('straight', 3, 5))
     expect(lines).toHaveLength(5)
     expect(lines[0]).toBe('Pull-up 1x3 @ 0kg')
   })
 
   it('parses with the shared strength parser, not a private format', () => {
-    expect(parseSet(setLines([7])[0])).toEqual({ exercise: 'Pull-up', reps: 7, weight: 0 })
+    expect(parseSet(setLines([7])[0])).toEqual({ exercise: 'Pull-up', sets: 1, reps: 7, weight: 0 })
   })
 
   it('ignores a free-typed line that is not a pull-up set', () => {
