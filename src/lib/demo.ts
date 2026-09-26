@@ -411,6 +411,66 @@ export function generateDemoData(today = todayISO()): JournalData {
     ]),
   )
 
+  // ── Cycle · four cycles of neutral log, because there were none ──────────
+  //
+  // `data.cycle` was the one domain the seed never touched, so the Cycle page
+  // had never been seen with data by anything: the whole orientation block is
+  // `{day != null && phase && …}`, the chart drew a bare grid, and the month
+  // list rendered thirty empty rows. `npm run a11y` visits the page and could
+  // not fail on any of it — the same shape as the empty-journal trap in
+  // CLAUDE.md, one domain deep: a card that never renders cannot fail.
+  //
+  // Four cycles, not one, because the page's arithmetic needs gaps: a single
+  // period start gives `avgCycleLength` nothing to average and
+  // `nextPeriodEstimate` returns null, which is a correct answer to a question
+  // the demo should not be asking. Lengths are 29/27/30/28 so the average is a
+  // real average and the history chart has variance to draw.
+  //
+  // The temperatures are the part worth getting right. A basal chart is read
+  // for its **biphasic shift** — roughly 97.3°F in the follicular half, a rise
+  // of ~0.6°F after ovulation, holding through the luteal phase — so a flat
+  // line with noise would look like data while teaching the chart to say
+  // nothing. Noise is ±0.12°F, below the shift and above the resolution, and
+  // some days are simply missing, because every real chart has gaps.
+  const CYCLE_LENGTHS = [29, 27, 30, 28]
+  const PERIOD_DAYS = 5
+  {
+    // Walk back from today so the newest cycle is in progress, which is the
+    // state the page's "cycle day N" block exists to describe — and land it
+    // on day 20, past the ~day-15 ovulation, so the running cycle actually
+    // *shows* the biphasic shift and `coverline` has something to find.
+    // Anchored at day 13 the chart was a flat follicular line with a 97.2–97.4
+    // axis: honest, and a demo of nothing.
+    let start = addDays(today, -19)
+    const starts: string[] = []
+    for (const len of CYCLE_LENGTHS) {
+      starts.unshift(start)
+      start = addDays(start, -len)
+    }
+    starts.forEach((cycleStart, ci) => {
+      const len = ci < CYCLE_LENGTHS.length - 1 ? CYCLE_LENGTHS[ci + 1] : 28
+      const ovulation = len - 14
+      for (let d = 0; d < len; d++) {
+        const date = addDays(cycleStart, d)
+        if (date > today) break
+        const day = d + 1
+        const flags: string[] = []
+        if (day <= PERIOD_DAYS) flags.push('period')
+        if (day === PERIOD_DAYS + 1 && rand() > 0.5) flags.push('spotting')
+        if (day >= ovulation - 1 && day <= ovulation + 1) flags.push('ovulation')
+        if (day >= len - 4) flags.push('pms')
+        if (day <= 2 && rand() > 0.35) flags.push('cramps')
+        // Biphasic: low before ovulation, ~0.6°F higher after it.
+        const base = day > ovulation ? 97.9 : 97.3
+        const temp = Math.round((base + (rand() - 0.5) * 0.24) * 100) / 100
+        // Two or three missed mornings per cycle — a chart with no gaps is a
+        // chart nobody actually kept.
+        if (rand() > 0.09) j.cycle.push({ date, temp, flags })
+        else if (flags.length) j.cycle.push({ date, flags })
+      }
+    })
+  }
+
   // Demo links skip the first-run storage gate.
   j.settings.storageMode = 'local'
   // Marked here rather than at the three call sites (the welcome screen, the
