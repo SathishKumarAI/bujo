@@ -553,10 +553,21 @@ export function generateDemoData(today = todayISO()): JournalData {
         // Biphasic: low before ovulation, ~0.6°F higher after it.
         const base = day > ovulation ? 97.9 : 97.3
         const temp = Math.round((base + (rand() - 0.5) * 0.24) * 100) / 100
+        // Drive, 1–5, rated on most days but not all. It rises toward
+        // ovulation and dips while bleeding, because a seed where the number is
+        // uniform noise renders a card with four identical bars and no peak —
+        // which is a demo of the arithmetic working, not of the card. About one
+        // day in six is left unrated on purpose: `driveByPhase` must keep
+        // "unrated" distinguishable from a 1, and a seed with no gaps never
+        // exercises that branch.
+        const near = Math.abs(day - ovulation)
+        const driveBase = day <= PERIOD_DAYS ? 2 : near <= 2 ? 4.5 : near <= 5 ? 3.6 : 3
+        const drive = Math.min(5, Math.max(1, Math.round(driveBase + (rand() - 0.5) * 1.4)))
+        const rated = rand() > 0.16 ? { drive } : {}
         // Two or three missed mornings per cycle — a chart with no gaps is a
         // chart nobody actually kept.
-        if (rand() > 0.09) j.cycle.push({ date, temp, flags })
-        else if (flags.length) j.cycle.push({ date, flags })
+        if (rand() > 0.09) j.cycle.push({ date, temp, flags, ...rated })
+        else if (flags.length) j.cycle.push({ date, flags, ...rated })
       }
     })
   }
