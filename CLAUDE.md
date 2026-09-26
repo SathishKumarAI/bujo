@@ -238,6 +238,16 @@ gate that silently reverts to an empty journal prints the same reassuring zero.
 Sibling of the `VIEWS`-list trap below: "a page that is never visited cannot
 fail" became "a card that never renders cannot fail".
 
+**And it runs one domain deeper than the seed goes.** `lib/demo.ts` wrote
+every domain *except* `data.cycle`, so the Cycle page — which the gate visits
+on every run, at five themes and two viewports — had never been rendered with
+data by anything. Its whole orientation block is `{day != null && phase && …}`,
+its chart drew a bare grid over thirty empty rows, and none of it could fail.
+Seeding four cycles turned the first green run red on a **serious**
+`scrollable-region-focusable`. When you add a domain to `types.ts`, add it to
+the seed in the same change: an unseeded domain is a whole subject the gates
+are silently not checking.
+
 Trap: **`cat('crust')` is not a foreground.** It is the light-on-*saturated*
 half of a pair, and it is near-white in the light themes — so `crust` on any
 fill is correct in Mocha and wrong in Latte and Dawn. **Use `onAccent(fill)`**,
