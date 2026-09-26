@@ -1,25 +1,28 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, Flower, ForkKnife, NotePencil, ShieldWarning, Thermometer } from '@/components/icons'
+import { CalendarBlank, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { PageLayout, SummaryStrip } from '../components/page'
-import { CardGrid } from '../components/shell/CardGrid'
+import { PageLayout, SectionRail, SummaryStrip } from '../components/page'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
-import { onRaised } from '../lib/colors'
+import { useStickyState } from '../lib/useStickyState'
 import {
   avgCycleLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
-import { BBT_RULES, CYCLE_DISCLAIMER, CYCLE_PHASES, TRACKING_TIPS } from '../lib/cycleGuide'
+import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
 import {
-  BbtChart, CycleHistoryChart, CycleWheel, DayEditor, DriveByPhase, FertileWindow,
-  FlagLegend, MonthList, PhaseNutrition, SymptomPattern,
+  CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
+} from '../lib/cycleCards'
+import {
+  BbtChart, BbtRulesCard, CycleHistoryChart, CycleWheel, DayEditor, DriveByPhase, FertileWindow,
+  FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard, SymptomPattern,
   type BbtPoint,
 } from '../components/cycle'
 
@@ -43,15 +46,28 @@ import {
  * Zone 1 · cycle day, phase, next period, personal average — the four facts.
  * Zone 2 · the day editor (temperature, flags, drive), the legend that decodes
  *          the flag colours, and the month — the only things that write.
- * Zone 3 · the wheel, the cycle-by-cycle chart, the ovulation timeline, drive
- *          by phase, the symptom pattern, the temperature chart, then the guide.
+ * Zone 3 · **a rail over four groups** — This cycle, Fertility, Patterns,
+ *          Guide — one group on screen at a time. `lib/cycleCards.ts` is the
+ *          registry and `Cycle.test.tsx` binds it to what renders.
+ *
+ * **The four folds are gone, and that is this pass.** Zone 3 shipped as an
+ * unlabelled grid of four cards, two loose ones, and a "Guide" shelf of four
+ * `CollapsibleSection`s that all shipped **closed** — so `page-census` read
+ * `cycle folds 4 · open 0` against the modernised Insights' `folds 0`, and
+ * `space-audit` read **4.4 screens shipped / 10.6 open** on a phone. That
+ * 6.2-screen gap is content on the page that is not on the page, and COD-230
+ * is open on it. Four fold titles became four rail rows: the same move #270
+ * made on Insights and Coaching made on its manual, and the only lever that
+ * has worked here — taking content off the page rather than reflowing it.
+ * The `stickyKey`s went with the folds; the rail remembers the group instead
+ * (`bujo.ui.cycle.group`), which is what Coaching's chapter rail does.
  *
  * **The legend is in zone 2 and not in the guide**, because "which colour is
- * which" is asked while pressing the chips, and a fold would answer it on a page
- * you have to open first. The food guide, which is reading matter, is a fold.
- * `FertileWindow` is the one graphic that is not about *your* log: it explains
- * what the narrow green band is and why two signals point at it from opposite
- * sides in time, which a ring cannot show and a paragraph cannot hold.
+ * which" is asked while pressing the chips, and a rail row would answer it on a
+ * group you have to select first. `FertileWindow` is the one graphic that is not
+ * about *your* log: it explains what the narrow green band is and why two
+ * signals point at it from opposite sides in time, which a ring cannot show and
+ * a paragraph cannot hold.
  *
  * Everything in zone 3 is keyed to the **cycle**, not the calendar month, and
  * that is the substantive change: a month boundary cuts a cycle at an
@@ -72,6 +88,11 @@ export function Cycle() {
   const log = data.cycle
 
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]))
+  /* Which zone-3 group is on screen. Sticky, because the four folds it replaces
+     each had a `stickyKey` and losing that is a regression dressed as a
+     redesign — `allowed` is the registry, so a renamed group cannot resurrect
+     from a stale localStorage key. */
+  const [group, setGroup] = useStickyState<CycleGroup>('cycle.group', DEFAULT_GROUP, CYCLE_GROUPS)
   const sel = days.includes(selected) ? selected : days[0]
   const selEntry = log.find((x) => x.date === sel)
 
@@ -139,6 +160,84 @@ export function Cycle() {
     const cur = log.find((c) => c.date === date)?.flags ?? []
     setCycle(date, { flags: cur.includes(flag) ? cur.filter((f) => f !== flag) : [...cur, flag] })
   }
+
+  /**
+   * Zone 3's ten cards, by the id `lib/cycleCards.ts` knows each under. A record
+   * because the rail renders one group and the rest must not be in the DOM, and
+   * because `Cycle.test.tsx` reads the rendered `data-card` set back against the
+   * registry in both directions.
+   *
+   * Which cards take the full row is the registry's `wide` flag, applied to the
+   * `data-card` wrapper below — the wrapper is the grid item, so `SPAN_2` on the
+   * `Card` inside it does nothing at all. Measured before that was understood:
+   * the temperature chart and the symptom grid both rendered 351px wide in a
+   * 722px zone, having asked for the row.
+   */
+  const cards: Record<string, React.ReactNode> = {
+    wheel: (
+      <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
+        <CycleWheel day={day} length={length ?? 28} bands={bands} />
+        {/* Two lines, not four: where ovulation is placed and why is the
+            fertile-window card's whole subject, one row down. */}
+        <p className="mt-3 text-label text-fg-2">
+          Widths come from your own average ({length ?? 28} days). The luteal half is the
+          stable one — about fourteen days — so a longer cycle is almost always a longer
+          first half.
+        </p>
+      </Card>
+    ),
+
+    length: (
+      <Card band title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
+        <CycleHistoryChart history={history} average={length} />
+      </Card>
+    ),
+
+    /* Not in the guide group, and that is the whole point: "what is ovulation
+       and how do I tell it from the phases either side" was the question, so
+       the answer is on the page. The wheel says where you are; this says what
+       the narrow green band actually is and why two different signals point at
+       it from opposite sides. */
+    fertile: (
+      <Card band title="Ovulation & the fertile window" subtitle="One day, two signals, and a window wider than both" hideInfo>
+        <FertileWindow bands={bands} length={length ?? 28} />
+      </Card>
+    ),
+
+    /* The title says the words; the ⓘ says what a *basal* temperature is and
+       why a reading taken after you are up is not one. That distinction is the
+       difference between a chart with a visible shift and a chart of noise. */
+    bbt: (
+      <Card band title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo>
+        <BbtChart points={bbt} unit={unit} label={bbtLabel} />
+      </Card>
+    ),
+
+    symptoms: (
+      <Card band title="Symptom pattern" subtitle="Which cycle day each flag tends to land on" hideInfo>
+        <SymptomPattern pattern={pattern} />
+      </Card>
+    ),
+
+    drive: (
+      <Card band title="Drive by phase" subtitle="Your own answer to the textbook claim" hideInfo>
+        <DriveByPhase rows={drive} peak={peak} />
+      </Card>
+    ),
+
+    /* ── Guide · the same shelf the training pages keep. Static reference from
+       lib/cycleGuide; titles, bodies and widths all in cycle/Guide.tsx. ── */
+    phases: <PhasesCard />,
+    food: <FoodCard />,
+    bbtrules: <BbtRulesCard />,
+    logging: <LoggingCard />,
+  }
+
+  /** What the selected group renders, and what the rail counts. Same predicate
+   *  for both, so a card that yields nothing can never leave a heading over an
+   *  empty grid or a rail row promising a card that is not there. */
+  const idsIn = (g: CycleGroup) => CYCLE_CARDS.filter((c) => c.group === g && cards[c.id])
+  const shown = idsIn(group)
 
   return (
     <PageLayout
@@ -248,129 +347,57 @@ export function Cycle() {
             { label: 'Temp shift', value: shift != null ? `seen · ${shift}°` : 'not yet', empty: shift == null },
           ]} />
 
-          <CardGrid>
-            <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
-              <CycleWheel day={day} length={length ?? 28} bands={bands} />
-              {/* Was four lines; the second half explained where ovulation is
-                  placed and why, which is now the fertile-window card's whole
-                  subject two cards down. Two cards saying the same thing is
-                  how they come to say different things. */}
-              <p className="mt-3 text-label text-fg-2">
-                Widths come from your own average ({length ?? 28} days). The luteal half is the
-                stable one — about fourteen days — so a longer cycle is almost always a longer
-                first half.
-              </p>
-            </Card>
-
-            <Card band title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
-              <CycleHistoryChart history={history} average={length} />
-            </Card>
-
-            {/* Not in the guide fold, and that is the whole point: "what is
-                ovulation and how do I tell it from the phases either side" was
-                the question, so the answer is on the page. The wheel says where
-                you are; this says what the narrow green band actually is and
-                why two different signals point at it from opposite sides. */}
-            <Card band title="Ovulation & the fertile window" subtitle="One day, two signals, and a window wider than both" hideInfo>
-              <FertileWindow bands={bands} length={length ?? 28} />
-            </Card>
-
-            <Card band title="Drive by phase" subtitle="Your own answer to the textbook claim" hideInfo>
-              <DriveByPhase rows={drive} peak={peak} />
-            </Card>
-          </CardGrid>
-
-          {/* The title says the words; the ⓘ says what a *basal* temperature is
-              and why a reading taken after you are up is not one. That distinction
-              is the difference between a chart with a visible shift and a chart of
-              noise, and it was nowhere on the page. */}
-          <Card band title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo className="mt-4">
-            <BbtChart points={bbt} unit={unit} label={bbtLabel} />
-          </Card>
-
-          <Card band title="Symptom pattern" subtitle="Which cycle day each flag tends to land on" hideInfo className="mt-4">
-            <SymptomPattern pattern={pattern} />
-          </Card>
-
-          {/* ── Guide · the same shelf the training pages keep. Static
-              reference (lib/cycleGuide, counts pinned by its test). ── */}
-          <section className="mt-4 flex flex-col gap-3">
-            <h2 className="text-label text-fg-2">Guide</h2>
-
-            <CollapsibleSection
-              variant="quiet" defaultOpen={false} stickyKey="cycle.phases"
-              icon={Flower} color="mauve"
-              title="The four phases"
-              subtitle="What each one is, how it can feel, what helps"
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                {CYCLE_PHASES.map((ph) => (
-                  <div key={ph.id} className="rounded-card bg-ink-2 p-3">
-                    <div className="mb-1.5 flex items-center gap-2">
-                      <span className="text-body font-medium" style={{ color: onRaised(ph.color) }}>{ph.name}</span>
-                      <Pill color={ph.color} size="micro" className="px-2">{ph.days}</Pill>
-                    </div>
-                    <p className="text-label text-fg-2">{ph.what}</p>
-                    <p className="mt-1 text-label text-fg-2"><span className="font-medium text-fg-1">How it can feel:</span> {ph.feel}</p>
-                    <p className="mt-1 text-label text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Helps:</span> {ph.tip}</p>
+          {/* `@container/page` on the OUTER div and the grid on the inner one:
+              an element cannot query itself, so putting both on one div means
+              the two-column rail layout never fires. And the phone column is
+              spelled out because a grid with no `grid-template-columns` gets a
+              single implicit `auto` track sized to its widest item’s
+              min-content — a chip row makes that wider than the viewport and
+              scrolls the whole page sideways. Both traps are in
+              docs/PAGE-SHAPE.md and both were hit on the first call site. */}
+          <div className="@container/page mt-4">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+              {/* No "All" row: the four groups do not overlap and there is no
+                  search on this page to cross them, so All could only offer the
+                  10.6-screen phone page this replaces. Coaching’s rail omits
+                  it for the same reason. */}
+              <SectionRail
+                label="Cycle sections"
+                groups={CYCLE_GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: idsIn(g).length }))}
+                value={group}
+                onChange={(id) => setGroup((id as CycleGroup | null) ?? DEFAULT_GROUP)}
+              />
+              <div className="min-w-0">
+                <section data-domain={group}>
+                  <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+                    <h2 className="font-display text-heading font-medium text-fg-1">{GROUP_LABEL[group]}</h2>
+                    <p className="text-label text-fg-2">{GROUP_BLURB[group]}</p>
+                    <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
                   </div>
-                ))}
+                  {/* Two columns is the ceiling here, and it is a correction
+                      rather than a preference. `CardGrid` asks the *viewport*,
+                      so at 1600 its `2xl:grid-cols-3` fired inside this 722px
+                      split column and resolved to three tracks of **227px** —
+                      the "cards a third of the size" half of the report. Two
+                      tracks of 350 is what 1440 already did. `MasonryGrid` is
+                      not the answer either: it breaks on its container at
+                      768px, so at 722 it would silently draw one column. */}
+                  <CardGrid className="2xl:grid-cols-2">
+                    {shown.map((c) => (
+                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>{cards[c.id]}</div>
+                    ))}
+                  </CardGrid>
+                </section>
               </div>
-              <p className="mt-3 text-label text-fg-2">Day ranges assume the textbook 28 days — 21–35 is a normal range, and the wheel above uses your logged average once two periods anchor it.</p>
-            </CollapsibleSection>
+            </div>
+          </div>
 
-            {/* Food is a fold, and the conservative call of the two: it is
-                long-form reading matter that a returning reader has already
-                read, which is the one thing PAGE-SHAPE says a fold is for, and
-                it sits beside the three folds that were already here. The
-                alternative — its own visible zone-3 card — would have put ~700px
-                of prose on a page that is already the longest thing in the app
-                on a phone. The legend and the ovulation diagram are the parts
-                that answer a question at a glance, and those are not folded. */}
-            <CollapsibleSection
-              variant="quiet" defaultOpen={false} stickyKey="cycle.food"
-              icon={ForkKnife} color="peach"
-              title="Cravings & food, phase by phase"
-              subtitle="What the cravings tend to be, what is worth eating, and who says so"
-            >
-              <PhaseNutrition />
-            </CollapsibleSection>
-
-            <CollapsibleSection
-              variant="quiet" defaultOpen={false} stickyKey="cycle.bbt"
-              icon={Thermometer} color="maroon"
-              title="Basal temperature, done right"
-              subtitle="Five rules that make the chart readable"
-            >
-              <ol className="space-y-1.5">
-                {BBT_RULES.map((r, i) => (
-                  <li key={i} className="flex gap-2 text-label text-fg-2">
-                    <span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {r}
-                  </li>
-                ))}
-              </ol>
-            </CollapsibleSection>
-
-            <CollapsibleSection
-              variant="quiet" defaultOpen={false} stickyKey="cycle.logging"
-              icon={NotePencil} color="teal"
-              title="What to log & why"
-              subtitle="The flags above, and what each one buys you"
-            >
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {TRACKING_TIPS.map((t) => (
-                  <li key={t.what} className="rounded-card bg-ink-2 p-2.5">
-                    <p className="text-body font-medium text-fg-1">{t.what}</p>
-                    <p className="text-label text-fg-2">{t.why}</p>
-                  </li>
-                ))}
-              </ul>
-            </CollapsibleSection>
-
-            <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2">
-              <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> {CYCLE_DISCLAIMER}
-            </p>
-          </section>
+          {/* Outside the rail, and deliberately: a medical disclaimer behind a
+              row you have to select is a disclaimer most readers never meet. It
+              was always visible under the guide shelf and it stays that way. */}
+          <p className="mt-4 inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2">
+            <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> {CYCLE_DISCLAIMER}
+          </p>
         </>
       }
     />

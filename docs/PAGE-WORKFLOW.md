@@ -69,6 +69,18 @@ review clears the 768px masonry step and nothing packs into it.
 **The lever is removing content from the page, not reflowing it.** Insights
 went 6.3 → 1.8 screens because five of six groups stopped rendering.
 
+**And the order is what makes Insights' `tier={1440}` + `stacked` look like a
+win.** It is the same page shape those two experiments failed on; what changed
+first was that only one group renders. Re-tested on Cycle *after* its rail
+landed, stacking still loses: **1.0 → 1.9 screens shipped, page height
+1,087 → 1,819px (+732)** — `max(act, review)` becoming `act + review`, with
+Cycle's 760px act column the whole cost. It buys a vertical rail and 545px
+cards against 351px ones, and that is not worth 0.9 of a screen on a page whose
+review zone is now shorter than its form. Insights has no such act column
+(23 analytics cards, a search box), which is why the same two flags are right
+there and wrong here. **Measure the rail first, the width second, and never
+assume the second result transfers.**
+
 ---
 
 ## 2 · The rail, when it is the answer
@@ -81,6 +93,7 @@ help       4.5 → 1.3 shipped, 10.9 → 1.6 open
 pickleball 4.3 → 3.0, folds 17 → 8
 pullups    open 5.7 → 2.2, folds 7 → 1
 coaching   the 12.9-screen open state stops existing
+cycle      2.5/4.8 → 1.0/1.0 desktop, 4.4/10.6 → 2.3/3.5 phone, folds 4 → 0
 ```
 
 Rules, all learned the hard way:
@@ -114,6 +127,18 @@ grid gets one implicit `auto` track sized to its widest item's min-content —
 the seven-chip rail made that **426px inside a 390px viewport** and scrolled
 the whole page sideways. The rail's own `overflow-x-auto` cannot save it: the
 track overflows, not the item.
+
+### `CardGrid` asks the viewport, and a split page's column does not care
+
+At `tier={1180}` the review zone is 722px wide whatever the screen does, so
+`CardGrid`'s `2xl:grid-cols-3` fires on a 1600px *window* and cuts that 722px
+into three **227px** tracks. Cycle shipped that way — the "cards a third of the
+size" half of a report about it — and `className="2xl:grid-cols-2"` at the call
+site put it back to two tracks of 350 with the page height unchanged
+(1,088 → 1,088px). `MasonryGrid` is not the alternative: it breaks on its
+*container* at 768px, so at 722 it silently draws one column. Grid columns are
+the mirror of the `tier`/`stacked` question above — ask which box decides the
+width before choosing which query answers it.
 
 ### A chip row is often the right answer on a split page
 
