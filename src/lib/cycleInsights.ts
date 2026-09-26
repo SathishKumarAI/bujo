@@ -190,6 +190,80 @@ export function flagPatternByDay(
     })
 }
 
+/** One phase's average drive rating, and how many rated days it rests on. */
+export interface DrivePhase extends PhaseEstimate {
+  /** Mean of the 1–5 ratings logged in this phase, or `null` if none were. */
+  avg: number | null
+  /** Rated days behind `avg`. Zero when `avg` is null; never the other way. */
+  days: number
+}
+
+/**
+ * Average sex-drive rating per phase, across every day the log rates.
+ *
+ * The textbook claim is that libido rises around ovulation. Checking that
+ * against yourself instead of against a textbook is the entire reason to write a
+ * number down every day, so the rating exists to be folded along the cycle —
+ * a column of 1–5s nobody reads back is dead weight.
+ *
+ * `avg` is `null`, never `0`, for a phase with no ratings: "you have not rated a
+ * luteal day yet" and "your luteal drive is rock bottom" are opposite readings
+ * and `count ? sum / count : 0` prints the same thing for both. Two functions in
+ * this repo shipped that bug and opened a trend card with `0% · 0%` for months
+ * that had not happened.
+ *
+ * Days are placed by `phaseOf`, so this inherits the same personal cycle length
+ * the wheel and the pill use, and days before the first logged period start are
+ * skipped — there is no cycle day to put them on.
+ */
+export function driveByPhase(
+  entries: CyclePoint[],
+  today: string,
+  length: number | null,
+): DrivePhase[] {
+  const starts = periodStarts(entries).filter((d) => d <= today)
+  const sum = new Map<string, { total: number; days: number }>()
+  for (const e of entries) {
+    if (e.drive == null || e.date > today) continue
+    const start = [...starts].reverse().find((s) => s <= e.date)
+    if (!start) continue
+    const day = dayDiff(start, e.date) + 1
+    // Past a plausible cycle this is a gap in the log, not day 74.
+    if (day > 60) continue
+    const { id } = phaseOf(day, length)
+    const at = sum.get(id) ?? { total: 0, days: 0 }
+    sum.set(id, { total: at.total + e.drive, days: at.days + 1 })
+  }
+  // One row per phase in cycle order, whether or not it has data: a missing row
+  // reads as "no such phase", and the gap is itself the thing to notice.
+  return phaseBands(length).map((b) => {
+    const at = sum.get(b.id)
+    return {
+      id: b.id,
+      label: b.label,
+      color: b.color,
+      avg: at ? Math.round((at.total / at.days) * 10) / 10 : null,
+      days: at?.days ?? 0,
+    }
+  })
+}
+
+/**
+ * The phase where drive is highest, or `null` when the comparison cannot be
+ * made yet.
+ *
+ * Needs two phases with ratings — one is not a peak, it is the only bar on the
+ * chart — and it refuses a tie, because "it peaks in the follicular phase (and
+ * equally in the luteal one)" is not a finding. Deliberately says nothing about
+ * *why*; the page compares it to the textbook claim and leaves it there.
+ */
+export function drivePeak(rows: DrivePhase[]): DrivePhase | null {
+  const rated = rows.filter((r) => r.avg != null)
+  if (rated.length < 2) return null
+  const sorted = [...rated].sort((a, b) => b.avg! - a.avg!)
+  return sorted[0].avg === sorted[1].avg ? null : sorted[0]
+}
+
 /**
  * The follicular-phase **coverline**: the highest of the six temperatures
  * before the first sustained rise, which is what a thermal shift is read

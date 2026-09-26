@@ -6,8 +6,12 @@ renders it. None of them reads the store, which is what keeps
 
 | Change | File |
 |---|---|
-| A flag, or the colour it keeps everywhere | `flags.ts` |
+| A flag, its colour, or what the mark means | `flags.ts` |
+| The swatch-and-meaning list under the chips | `FlagLegend.tsx` |
 | The ring, phase arcs, the "you are here" marker | `CycleWheel.tsx` |
+| The ovulation / fertile-window timeline | `FertileWindow.tsx` |
+| Drive averages per phase | `DriveByPhase.tsx` |
+| Cravings, food and its sources | `PhaseNutrition.tsx` + `../../lib/cycleGuide.ts` |
 | Cycle-length bars, the normal band, the average line | `CycleHistoryChart.tsx` |
 | Temperature, coverline, period/ovulation shading | `BbtChart.tsx` |
 | Which cycle day each flag lands on | `SymptomPattern.tsx` |
@@ -28,8 +32,16 @@ logged, every function returns `null` when the log cannot answer, and the
 phase and next-period values are labelled estimates at every call site. The
 coverline is explicitly retrospective: it says a rise *already happened*.
 
-**One flag, one hue, everywhere.** `FLAG_COLOR` is the single map. Four
-surfaces read it now, and a second copy is a copy that drifts.
+**One flag, one hue, everywhere.** `FLAG_COLOR` is the single map. Five
+surfaces read it now — the legend included — and a second copy is a copy that
+drifts. A hand-written legend would have been exactly that copy, which is why
+`FlagLegend` maps over `FLAGS` and never lists them.
+
+**Three places say something about a flag, and each says a different thing.**
+`FLAG_MEANS` (here) says what the mark records; `TRACKING_TIPS` in
+`lib/cycleGuide.ts` says why keeping it is worth the tap; `data/glossary.json`
+defines the *term* for the two that are abbreviations. Adding a fourth
+description of `pms` is how the app comes to disagree with itself.
 
 **`phaseBands` derives from `phaseOf`, day by day.** It does not re-derive the
 boundaries — ovulation is placed relative to the *next* period, and doing that

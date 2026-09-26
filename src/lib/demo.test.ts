@@ -69,6 +69,30 @@ describe('demo data marks itself', () => {
     const values = csv.split(NL).slice(1).map((l) => l.split(',')[stepsCol]).filter((v) => v !== '')
     expect(values.length).toBeGreaterThan(20)
   })
+
+  /**
+   * The cycle log carries the *fields the page reads*, not just rows.
+   *
+   * `data.cycle` was the one domain the seed never wrote, so a page the a11y
+   * gate opens at five themes and two viewports could not fail on any of it.
+   * Adding a field to `CyclePoint` re-opens that hole one field wide: an
+   * unseeded `drive` means the drive card renders its empty state on every gate
+   * run and the card that has the content is never checked.
+   */
+  it('rates drive on most cycle days, and leaves some unrated', () => {
+    const cycle = generateDemoData().cycle
+    expect(cycle.length).toBeGreaterThan(50)
+    const rated = cycle.filter((c) => c.drive != null)
+    const unrated = cycle.filter((c) => c.drive == null)
+    expect(rated.length).toBeGreaterThan(40)
+    // Both branches, because "unrated" must stay distinguishable from a 1 and
+    // a seed that rates every day never exercises the null path.
+    expect(unrated.length).toBeGreaterThan(0)
+    for (const c of rated) {
+      expect(c.drive).toBeGreaterThanOrEqual(1)
+      expect(c.drive).toBeLessThanOrEqual(5)
+    }
+  })
 })
 
 /**

@@ -218,6 +218,14 @@ export interface CyclePoint {
   temp?: number // °F or °C, user's choice
   note?: string
   flags: string[] // free tags e.g. "period", "spotting"
+  /**
+   * Sex drive that day, 1 (none) to 5 (high). Optional and additive: every
+   * journal written before this existed stays valid, and an unrated day must
+   * stay distinguishable from a day rated 1 — `driveByPhase` averages only the
+   * days that carry a number and returns `null` for a phase with none, which is
+   * the `count ? sum / count : 0` trap this app has already shipped twice.
+   */
+  drive?: number
 }
 
 /** Where a book sits on the reading shelf. */
