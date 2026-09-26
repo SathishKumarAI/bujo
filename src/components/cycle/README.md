@@ -6,6 +6,9 @@ renders it. None of them reads the store, which is what keeps
 
 | Change | File |
 |---|---|
+| Which rail group a zone-3 card sits in, or its order | `../../lib/cycleCards.ts` |
+| A guide card's title, subtitle or width | `Guide.tsx` |
+| The phase list, the temperature rules, the logging tips | `../../lib/cycleGuide.ts` |
 | A flag, its colour, or what the mark means | `flags.ts` |
 | The swatch-and-meaning list under the chips | `FlagLegend.tsx` |
 | The ring, phase arcs, the "you are here" marker | `CycleWheel.tsx` |
@@ -20,6 +23,22 @@ renders it. None of them reads the store, which is what keeps
 | Any number any of them shows | `../../lib/cycleInsights.ts` |
 
 ## Rules
+
+**Zone 3 is a rail over four groups, not a stack with folds in it.**
+`../../lib/cycleCards.ts` is the registry — group, label, blurb, one row per
+card — and `views/Cycle.tsx` renders exactly one group, each card wrapped in
+`data-card` inside a `data-domain` section. `views/Cycle.test.tsx` asserts the
+rendered set equals the registry **in both directions**, so a card that no group
+reaches fails a test rather than quietly leaving the page. Adding a card means a
+registry row and an entry in the view's `cards` record; there is no third place.
+
+**A guide card owns its own title.** `Guide.tsx` holds the four reference cards
+whole — heading, subtitle, width, body — because their words are part of the
+content. The view decides only which group they are in. They read
+`../../lib/cycleGuide.ts` and hold no content of their own, and
+`cycleGuide.test.ts` pins the counts so a shrunken guide fails something: this
+repo has lost eleven workout formats to a pass that retyped a data module
+instead of reading it, with every gate green.
 
 **Everything in zone 3 is keyed to the cycle, not the calendar month.** A
 month boundary cuts a cycle at an arbitrary point, so the temperature chart —
