@@ -1,3 +1,4 @@
+import { useStickyState } from '../lib/useStickyState'
 import { useMemo, useState } from 'react'
 import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
@@ -5,11 +6,10 @@ import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
-import { CollapsibleSection } from '../components/CollapsibleSection'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import {
-  PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame,
+  PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
@@ -433,18 +433,65 @@ function LogSessionCard({
     </Card>
   )
 }
-
 /**
- * Zone 3 · the guide, every section collapsed. Six folds rather than six cards:
- * this is what you read once and come back to twice, and it should not push
- * the history and the calendar off the screen every day in between.
+ * Zone 3 · the manual, as six chapters behind a rail.
+ *
+ * It was six `CollapsibleSection`s, every one shipping closed, so arriving
+ * showed six grey titles and reading anything meant opening one and closing
+ * it again. Measured: **2.1 screens shut and 5.7 with every fold open** —
+ * 3.6 screens of content reachable only by hunting.
+ *
+ * The docstring above them argued the folds were right because "this is what
+ * you read once and come back to twice, and it should not push the history
+ * and the calendar off the screen every day in between". That reasoning is
+ * sound and the fold is the wrong instrument for it: six peers, each a
+ * chapter, is a table of contents. A rail keeps exactly the property the
+ * folds were protecting — one chapter of height, never six — and adds the
+ * one they could not, which is seeing what the other five are without
+ * opening them.
+ *
+ * Same `SectionRail` as Insights, Coaching and Pickleball. No "All" row: the
+ * chapters do not overlap, and all six at once is the 5.7-screen page this
+ * replaces. Sticky, because each fold was.
  */
-function Manual() {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-label text-fg-2">Manual</h2>
+const PU_CHAPTERS = [
+  { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
+  { id: 'principles', label: 'Principles', blurb: 'How the program is meant to be run' },
+  { id: 'ability', label: 'Ability ladder', blurb: 'Max → training set → volume' },
+  { id: 'formats', label: 'Workout formats', blurb: `${PULLUP_WORKOUTS.length} session structures` },
+  { id: 'progressions', label: 'Progressions', blurb: 'Building toward a first strict rep' },
+  { id: 'equipment', label: 'Equipment', blurb: 'Bar heights and what is worth buying' }
+] as const
 
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.form" title="Form" subtitle="Set-up & execution">
+function Manual() {
+  const [chapter, setChapter] = useStickyState<string>(
+    /* Form first: it is the chapter that changes what the next rep looks
+       like, and the one a beginner is wrong about. */
+    'pullups.chapter', 'form', PU_CHAPTERS.map((c) => c.id),
+  )
+  const current = PU_CHAPTERS.find((c) => c.id === chapter) ?? PU_CHAPTERS[0]
+
+  return (
+    <section>
+      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
+      {/* Container on the outer div, grid on the inner: an element cannot
+          query itself. Phone column spelled out, or the chip row's
+          min-content sizes the only implicit track and the page scrolls
+          sideways. Both in docs/PAGE-SHAPE.md. */}
+      <div className="@container/page">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+        <SectionRail
+          label="Pull-up manual chapters"
+          groups={PU_CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
+          value={chapter}
+          onChange={(id: string | null) => setChapter(id ?? 'form')}
+        />
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+            <h3 className="font-display text-heading font-medium text-fg-1">{current.label}</h3>
+            <p className="text-label text-fg-2">{current.blurb}</p>
+          </div>
+          {chapter === 'form' && (<>
         <div className="space-y-3">
           {PULLUP_FORM.map((f) => (
             <div key={f.phase}>
@@ -455,9 +502,8 @@ function Manual() {
             </div>
           ))}
         </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.principles" title="Principles" subtitle="How the program is meant to be run">
+          </>)}
+          {chapter === 'principles' && (<>
         <ul className="space-y-2 text-label text-fg-2">
           {PULLUP_PRINCIPLES.map((p) => (
             <li key={p.name}>
@@ -465,9 +511,8 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
-
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.ability" title="Ability ladder" subtitle="Max → training set → volume">
+          </>)}
+          {chapter === 'ability' && (<>
         <table className="w-full text-left text-label">
           <caption className="sr-only">Ability group by max strict pull-ups, with the training set and daily and weekly volume targets for each.</caption>
           <thead>
@@ -491,9 +536,8 @@ function Manual() {
             ))}
           </tbody>
         </table>
-      </CollapsibleSection>
-
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.formats" title="Workout formats" subtitle={`${PULLUP_WORKOUTS.length} session structures`}>
+          </>)}
+          {chapter === 'formats' && (<>
         <ul className="space-y-2 text-label text-fg-2">
           {PULLUP_WORKOUTS.map((w) => (
             <li key={w.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
@@ -506,9 +550,8 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
-
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.progressions" title="Progressions" subtitle="Building toward a first strict rep">
+          </>)}
+          {chapter === 'progressions' && (<>
         <ul className="space-y-2 text-label text-fg-2">
           {PULLUP_PROGRESSIONS.map((p) => (
             <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
@@ -521,9 +564,8 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
-
-      <CollapsibleSection variant="quiet" defaultOpen={false} stickyKey="pullups.equipment" title="Equipment" subtitle="Bar heights and what is worth buying">
+          </>)}
+          {chapter === 'equipment' && (<>
         <ul className="space-y-2 text-label text-fg-2">
           {PULLUP_EQUIPMENT.map((e) => (
             <li key={e.item} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
@@ -537,7 +579,10 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
+          </>)}
+        </div>
+      </div>
+      </div>
     </section>
   )
 }
