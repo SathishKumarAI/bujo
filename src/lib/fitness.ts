@@ -131,10 +131,21 @@ export interface PR {
  * Parse a set line like "Bench 5x5 @ 60kg" into { exercise, reps, weight }.
  * Tolerant of `x`/`×`, optional unit, and extra spacing.
  */
-export function parseSet(line: string): { exercise: string; reps: number; weight: number } | null {
-  const m = line.match(/^(.+?)\s+\d+\s*[x×]\s*(\d+)\s*@\s*([\d.]+)/i)
+export function parseSet(line: string): { exercise: string; sets: number; reps: number; weight: number } | null {
+  const m = line.match(/^(.+?)\s+(\d+)\s*[x×]\s*(\d+)\s*@\s*([\d.]+)/i)
   if (!m) return null
-  return { exercise: m[1].trim(), reps: Number(m[2]), weight: Number(m[3]) }
+  // `sets` — the N in "5x5" — used to be matched and **thrown away**: the
+  // regex had `\d+` uncaptured, so every caller that counted got one per
+  // LINE, which is one per exercise. Measured on the demo journal the day it
+  // was found: "Sets this week" read 9 against a true 39, and weekly volume
+  // 3,083lb against 14,025lb. The page's signature visual is hard sets
+  // against a 10–20 landmark, so every muscle sat at 1–5 and the card told
+  // anyone with a legacy journal they were massively under-training.
+  //
+  // Nothing failed, because one-per-line is a plausible number. It only
+  // showed when the demo started writing `setRows` — the structured path —
+  // beside the strings and the same journal produced two answers.
+  return { exercise: m[1].trim(), sets: Math.max(1, Number(m[2])), reps: Number(m[3]), weight: Number(m[4]) }
 }
 
 /** Personal records: heaviest logged weight per exercise across all workouts. */
@@ -315,7 +326,7 @@ export function exerciseProgression(data: JournalData, exercise: string): { date
 /** Working-set volume for a whole workout (uses structured rows, else parses strings). */
 export function workoutVolume(w: import('./types').Workout): number {
   if (w.setRows?.length) return sessionVolume(w.setRows)
-  return w.sets.reduce((a, line) => { const p = parseSet(line); return a + (p ? p.weight * p.reps : 0) }, 0)
+  return w.sets.reduce((a, line) => { const p = parseSet(line); return a + (p ? p.sets * p.weight * p.reps : 0) }, 0)
 }
 
 /** Weekly training volume for the last `weeks` (oldest→newest, whole numbers). */
@@ -368,8 +379,8 @@ export interface MuscleSetCount {
 export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days = 7): MuscleSetCount[] {
   const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
   const counts = new Map<number, number>()
-  const add = (exercise: string) => {
-    for (const id of musclesForExercise(exercise)) counts.set(id, (counts.get(id) ?? 0) + 1)
+  const add = (exercise: string, n = 1) => {
+    for (const id of musclesForExercise(exercise)) counts.set(id, (counts.get(id) ?? 0) + n)
   }
   for (const w of data.workouts) {
     if (!inWindow(w.date)) continue
@@ -377,7 +388,7 @@ export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days 
     if (rows.length) {
       for (const r of rows) if (r.kind !== 'warmup' && r.exercise.trim()) add(r.exercise)
     } else {
-      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise) }
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.sets) }
     }
   }
   return [...counts.entries()]
@@ -738,7 +749,7 @@ export function volumeByCategory(data: JournalData, today = todayISO(), days = 7
         add(r.exercise, (r.weight ?? 0) * (r.reps ?? 0))
       }
     } else {
-      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.weight * p.reps) }
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.sets * p.weight * p.reps) }
     }
   }
   return order.map((category) => ({ category, volume: Math.round(totals.get(category) ?? 0) }))
@@ -878,4 +889,55 @@ export function trainRestRatio(data: JournalData, today = todayISO(), days = 28)
     window,
     ratio: Math.round((trainDays / window) * 100) / 100,
   }
+}
+
+/** One exercise from a past session, collapsed to its working sets. */
+export interface LastSessionLift {
+  exercise: string
+  /** Working sets only — warm-ups are not what you load against. */
+  sets: { weight?: number; reps?: number }[]
+  /** Heaviest working set, for the one-line summary. */
+  topWeight: number
+}
+
+export interface LastSessionOfSplit {
+  date: string
+  lifts: LastSessionLift[]
+}
+
+/**
+ * What you did the last time you trained this split.
+ *
+ * The single most-used number in a gym is "what did I lift last time", and
+ * this page had no answer to it: the logger opened empty, the PR table gives
+ * an all-time best rather than last Tuesday, and the progression chart is
+ * per-exercise and four folds down. So loading the bar meant remembering, or
+ * leaving the app.
+ *
+ * Working sets only. A warm-up is not what you load against, and including
+ * them would make the top set of a light session look heavy.
+ *
+ * Reads `setRows` and falls back to nothing rather than parsing the legacy
+ * `sets` strings: those carry no reliable per-set structure (see the note on
+ * `parseSet`), and inventing a weight to put in front of someone about to
+ * load a bar is the one place in this app where a guess is dangerous.
+ * Returns `null` when the split has never been logged.
+ */
+export function lastSessionOfSplit(data: JournalData, split: Split): LastSessionOfSplit | null {
+  const w = [...data.workouts]
+    .filter((x) => x.split === split && (x.setRows?.length ?? 0) > 0)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+  if (!w) return null
+  const byExercise = new Map<string, LastSessionLift>()
+  for (const r of w.setRows ?? []) {
+    if (r.kind === 'warmup') continue
+    const name = r.exercise.trim()
+    if (!name) continue
+    const row = byExercise.get(name) ?? { exercise: name, sets: [], topWeight: 0 }
+    row.sets.push({ weight: r.weight, reps: r.reps })
+    row.topWeight = Math.max(row.topWeight, r.weight ?? 0)
+    byExercise.set(name, row)
+  }
+  const lifts = [...byExercise.values()]
+  return lifts.length ? { date: w.date, lifts } : null
 }

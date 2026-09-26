@@ -118,6 +118,44 @@ contract spends the accent on one thing per page; in the library that is the
 principles you have actually chosen, which is what makes them findable in a
 wall of forty-six.
 
+## A short act beside a long review is dead page
+
+The 62/38 split assumes the two columns are comparable. When the act is a
+form and the review is the rest of the page, the difference is empty:
+
+```
+Gym at 1440, before
+  act     442 × 604     the logger and a rest timer
+  review  722 × 1500    everything else
+  dead    442 × 896     27% of the page below the orient bar
+```
+
+Two fixes, and the order matters. **Widen first**: the review was 46px under
+`MasonryGrid`'s 768px container step, so every group in it silently resolved
+to one column — the page had already worked around that by reaching for
+`CardGrid`, which is a patch on a symptom. `tier={1440}` took the review to
+807px and the cause went away.
+
+**Then fill the column with something that belongs to the act.** Not a
+read-back moved up to plug a hole — the thing a person needs while doing the
+thing. On Gym that is what you lifted last time you trained this split, which
+you read with a bar in front of you. The fix for dead space is the thing that
+should have been there.
+
+## Two cards listing the same rows are one table
+
+Gym shipped `Personal records` and `Strength standards` side by side. Eight of
+nine lift names appeared **twice on the same horizontal band, 360px apart**.
+They were never two subjects: one column was `weight`, the other was
+`weight ÷ bodyweight`.
+
+The tell is that the reading you actually want is impossible. "My deadlift is
+125lb, which is 1.6× bodyweight, which is Advanced" cannot be done when the
+halves are in different cards with different row orders. That is the
+signature of a table that has been split, and it had survived two previous
+de-duplication passes on the same page because each round merged the pair in
+front of it rather than asking what the rows were.
+
 ## What to measure, and with what
 
 | Question | Command |

@@ -1,4 +1,4 @@
-import type { Entry, Habit, JournalData } from './types'
+import type { Entry, Habit, JournalData, WorkoutSet } from './types'
 import { seedJournal, uid } from './storage'
 import { addDays, todayISO, ymOf } from './date'
 
@@ -187,10 +187,35 @@ export function generateDemoData(today = todayISO()): JournalData {
     // entry of each weight array. Getting this the wrong way round produces a
     // journal that deloads every week and looks plausible on the page.
     const s = PPL_SESSIONS - 1 - Math.floor(i / 3)
+    // BOTH shapes, and the structured one is the point.
+    //
+    // The seed wrote only the legacy `sets` strings ("Squat 5x5 @ 100kg"),
+    // which is not what the app has written for a long time — `Gym.finish`
+    // produces `setRows`. So every `setRows` path in the analytics ran on its
+    // string-parsing fallback in the demo and the primary path was exercised
+    // by no gate at all, and `lastSessionOfSplit` — which refuses to guess a
+    // weight from a legacy string — rendered empty for everybody.
+    //
+    // Same shape as the unseeded `data.cycle` finding one pass earlier: a
+    // demo that produces an older shape than the app writes is a demo that
+    // tests the wrong branch. `sets` stays because real journals still hold
+    // it and the fallback must keep working.
+    const setRows: WorkoutSet[] = w.lifts.flatMap((l) => {
+      const [count, reps] = l.scheme.split('x').map(Number)
+      return Array.from({ length: count }, (_, k) => ({
+        exercise: l.name,
+        weight: l.weights[s],
+        // The last set of a straight-sets block is where reps fall off, which
+        // is the shape the "did the last set hold" read is looking for.
+        reps: k === count - 1 && rand() > 0.5 ? Math.max(1, reps - 1) : reps,
+        kind: 'working' as const,
+      }))
+    })
     j.workouts.push({
       id: uid('w'), date: day, activity: w.split, split: w.split,
       durationMin: 55 + Math.floor(rand() * 20),
       sets: w.lifts.map((l) => `${l.name} ${l.scheme} @ ${l.weights[s]}kg`),
+      setRows,
       rpe: 7 + Math.floor(rand() * 3), notes: '',
     })
   }

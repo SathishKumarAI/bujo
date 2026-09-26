@@ -22,7 +22,7 @@ import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { splitGlyph } from '../components/glyphs'
 import {
   RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
-  MuscleVolumeBalance, RelativeStrengthCard, NeglectedMuscles, StalledLifts,
+  MuscleVolumeBalance, LiftTable, LastSessionCard, NeglectedMuscles, StalledLifts,
   SessionLogger, newSetRow, type SetRow,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
@@ -34,7 +34,7 @@ import {
   musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, parseSet,
   weeklyVolumeSeries, exerciseProgression, isNewPR, sessionSummary,
   weeklySetsPerMuscle, e1rmProgression,
-  bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts,
+  bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts, lastSessionOfSplit,
   repPRs, volumeByCategory, muscleRecovery, exerciseFrequency, trainRestRatio,
 } from '../lib/fitness'
 import { Barbell as BarbellViz } from '../components/PlateStack'
@@ -108,6 +108,9 @@ export function Gym() {
   }, [data.workouts])
 
   const volumeSeries = useMemo(() => weeklyVolumeSeries(data), [data])
+  // Recomputed on every split change, which is the point: picking "Legs"
+  // should immediately show what last leg day looked like.
+  const lastOfSplit = useMemo(() => lastSessionOfSplit(data, split), [data, split])
 
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
@@ -159,7 +162,11 @@ export function Gym() {
       const structured = w.setRows ?? []
       sets += structured.length
         ? structured.filter((r) => r.kind !== 'warmup' && r.exercise.trim()).length
-        : w.sets.length
+        // `w.sets.length` counts LINES, and a line is "Squat 5x5 @ 100kg" —
+        // five sets. This fact sat beside a muscle-balance chart calibrated
+        // in hard sets that counted the same thing the same wrong way, so
+        // the two agreed with each other and with nothing else.
+        : w.sets.reduce((n, line) => n + (parseSet(line)?.sets ?? 1), 0)
     }
     return { lastSession: last, setsThisWeek: sets }
   }, [data.workouts])
@@ -295,7 +302,15 @@ export function Gym() {
       )}
 
       <PageLayout
-        tier={1180}
+        /* The dashboard tier, and it fixes a documented workaround rather
+           than adding a new one. At 1180 the review column measures **722px**
+           — 46px under `MasonryGrid`'s `@3xl` container step — so every group
+           in it resolved to a single column, and the note below records
+           reaching for `CardGrid` because of it. At 1440 the column clears
+           768 and the packing works as designed. It also halves the dead
+           space beside the act column, which was measured at 442 × 896px:
+           the logger is 604px tall and the review is 1,500. */
+        tier={1440}
         zone1={<StatBar facts={facts} />}
         zone2={
           <>
@@ -343,6 +358,17 @@ export function Gym() {
                 </DisclosureRow>
               </div>
             </section>
+
+            {/* What you lifted last time you trained this split — read with a
+                bar in front of you, between choosing the split and typing the
+                first weight, so it is part of the act and not a read-back.
+                It also fills the hole: the act column measured 585px against
+                a 1,365px review, leaving ~495 × 780px of empty page beside
+                the form. The fix for dead space is the thing that should have
+                been there. */}
+            <div className="mt-4">
+              <LastSessionCard session={lastOfSplit} split={split} unit={unit} onLoad={loadRoutine} />
+            </div>
 
             {/* Between-sets countdown. Zone 2 because it is used *during* the
                 act — in the rail it landed ~4,700px down a phone, under every
@@ -454,12 +480,21 @@ export function Gym() {
                   card. The two charts keep the full row with `SPAN_2`; a
                   361px column has no room for an axis. */}
               <CardGrid>
-              <PersonalRecords prs={prs} focusEx={focusEx} setFocusEx={setFocusEx} unit={unit} />
-            
-
-              {/* One card, not two side by side. The big-three tiles were
-                  `Personal records` a second time — see COD-89. */}
-              <RelativeStrengthCard rows={relStrength} total={bigThree} unit={unit} setFocusEx={setFocusEx} />
+              {/* ONE card, not two. `Personal records` and `Strength
+                  standards` stood side by side listing the same lifts —
+                  measured on the rendered page, eight of nine names appeared
+                  twice on the same horizontal band, 360px apart. Third round
+                  of this on this page; see `LiftTable` for why they were
+                  never two subjects. */}
+              <LiftTable
+                className={SPAN_2}
+                prs={prs}
+                relative={relStrength}
+                total={bigThree}
+                unit={unit}
+                focusEx={focusEx}
+                setFocusEx={setFocusEx}
+              />
               {rpeSeries.length >= 2 && (
                 <Card band className={SPAN_2} title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
                   <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
@@ -712,34 +747,6 @@ function PlateCalculator({ unit }: { unit: string }) {
         </>
       )}
     </Card>
-  )
-}
-
-function PersonalRecords({ prs, focusEx, setFocusEx, unit }: { prs: import('../lib/fitness').PR[]; focusEx: string | null; setFocusEx: (e: string | null) => void; unit: string }) {
-  if (prs.length === 0) return <Empty>Log sets like “Bench 5x5 @ 60kg” to track PRs.</Empty>
-  return (
-    <ul className="space-y-1 text-body">
-      {prs.map((pr) => (
-        <li key={pr.exercise}>
-          <button
-            onClick={() => setFocusEx(focusEx === pr.exercise ? null : pr.exercise)}
-            className={`flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left ${focusEx === pr.exercise ? 'bg-ink-2' : 'hover:bg-ink-2/50'}`}
-            title="Show this lift on the muscle map"
-          >
-            <span className="inline-flex items-center gap-1.5 text-fg-1"><AppIcon as={Trophy} size="sm" style={{ color: onRaised('yellow') }} /> {pr.exercise}</span>
-            {/* A weightless set (dips, pull-ups logged without added load) used
-                to print "0lb · 1RM ~0lb" — a data artifact dressed as a record.
-                Bodyweight is the honest name, and Epley of 0 is not a 1RM. */}
-            <span className="text-fg-2">
-              {pr.weight > 0
-                ? <span style={{ color: onRaised('yellow') }}>{pr.weight}{unit}</span>
-                : <span style={{ color: onRaised('yellow') }}>bodyweight{pr.reps > 1 ? ` ×${pr.reps}` : ''}</span>}
-              {pr.weight > 0 && pr.reps > 1 && <span className="ml-1" title="estimated 1-rep max">· 1RM ~{epley1RM(pr.weight, pr.reps)}{unit}</span>}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
   )
 }
 

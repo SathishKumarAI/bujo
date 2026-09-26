@@ -70,8 +70,39 @@ a11y    166 rows, no serious or critical, at 5 themes × 2 viewports
 nothing grew — a fold was opened, and the page now shows what it holds. That
 is true of Insights' phone number and both of Pickleball's.
 
+## The Gym pass (#272)
+
+Reported as stretched and scattered; both were measured, and there was a
+correctness bug under them.
+
+`parseSet` matched the N in "Squat 5x5 @ 100kg" and **never captured it**, so
+every caller counting sets from a legacy line counted one per *line*. On the
+demo journal: "Sets this week" **9 against a true 39**, weekly volume
+**3,083lb against 14,025lb**, and the page's signature visual — hard sets
+against a 10–20 landmark — put every muscle at 1–5. Three tests asserted the
+wrong behaviour, and `lib/pullups.ts` already knew: it writes one line per set
+to dodge this, with a comment saying so. A local workaround that left every
+other caller undercounting.
+
+It only surfaced because the demo started writing `setRows` beside the
+strings, and the same journal produced two answers.
+
+Layout, measured at 1440 before: act column 442 × 604, review 722 × 1500,
+**442 × 896px of dead page**, one bar track 606px for a value of 1–5. The
+review was 46px under `MasonryGrid`'s 768px step, which the file documented
+working around with `CardGrid`. `tier={1440}` fixes the cause; `LiftTable`
+merges two cards that listed the same lifts (third round of that here);
+`LastSessionCard` fills the act column with what a lifter reads with a bar in
+front of them.
+
 ## Next, in the order I would take it
 
+0. **`shell/TopBar`'s Quick add is `variant="primary"`** and mounts on every
+   view, so it eats every page's budget and the dev-only `[one-primary]` guard
+   warns on any page with one of its own. Verified by driving the app: Gym
+   warns, Fitness (whose submit is not a primary) does not. The guard is
+   correct and its scope is wrong — shell chrome should not count against a
+   page. Touches every page, so it was filed rather than folded into #272.
 1. **Insights on a phone is 13.5 screens.** The six domain headings are right
    on desktop and expensive in one column. Either the blurb drops below `sm`,
    or the domains become a real segmented view rather than a filter.
