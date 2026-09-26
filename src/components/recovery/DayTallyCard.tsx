@@ -38,11 +38,11 @@ export function DayTallyCard({ rows, onStep }: {
   rows: DayTallyRow[]
   onStep: (id: string | null, step: number) => void
 }) {
-  const lapsed = rows.filter((r) => r.count > 0)
+  const anyLogged = rows.some((r) => r.count > 0)
   return (
     <Card band hideInfo
       title="Did it happen today?"
-      subtitle="One tap logs the day · tap again for each time it happened, so ten cigarettes is one day of ten rather than ten resets."
+      subtitle="One tap logs the day · tap again for each time it happened."
     >
       <ul className="space-y-2">
         {rows.map((r) => (
@@ -74,11 +74,14 @@ export function DayTallyCard({ rows, onStep }: {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-label text-fg-2">
-        {lapsed.length === 0
-          ? 'Nothing logged today. A tap here is a record, not a verdict — the count is what makes “Sundays are worse” visible.'
-          : `Logged today: ${lapsed.map((r) => `${r.name} ×${r.count}`).join(' · ')}. The first tap of a day restarts that counter; ⌘Z undoes a mis-tap.`}
-      </p>
+      {/* One line, and only when there is something to say. The page is
+          already a fold-wall; prose explaining a counter is not worth the
+          0.1 screens it costs on a phone. */}
+      {anyLogged && (
+        <p className="mt-2 text-label text-fg-2">
+          The first tap of a day restarts that counter · ⌘Z undoes a mis-tap.
+        </p>
+      )}
     </Card>
   )
 }
