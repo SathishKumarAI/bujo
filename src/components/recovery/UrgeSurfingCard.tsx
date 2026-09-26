@@ -20,6 +20,8 @@ const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }
 const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
   surf: 'Surf it', delay: 'Delay 10 min', halt: 'HALT check', 'reach-out': 'Reach out',
 }
+/** Intensity 1–5 on the app's severity ramp. Index is `intensity - 1`. */
+const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
 
 /**
  * Urge surfing · pick what it was, log the win with date + time.
@@ -38,6 +40,25 @@ const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
  * asked a question, and a required field would push people to not log at all. An
  * urge resisted with no context is still an urge resisted; the context fields
  * are a bonus, not the record.
+ *
+ * **…and the layout said the opposite of that paragraph.** The submit sat at
+ * the FOOT of the card, under ten trigger chips, an intensity slider, four
+ * technique chips and four HALT chips. Measured at 1440 on `?demo=1`: the act
+ * column is its own 760px scrollport and "Log this urge" sat **1130px** inside
+ * it — 370px past the panel's bottom edge, behind a nested scroll most people
+ * never find. On a 390px phone it was at **y 1613 in an 844px viewport**, 1.9
+ * screens down. The one act this page most wants to be frequent was the one
+ * act you had to go looking for.
+ *
+ * So the button moves to the top and the optional fields follow it. This is
+ * not a form with a misplaced submit — it is a button with optional
+ * annotations, which is what the paragraph above always said it was. Nothing
+ * is hidden and no field changed; the read-back (tallies, history) stays
+ * below, where reference content belongs.
+ *
+ * It is also this page's **one primary**. Recovery had none — `DayTallyCard`
+ * reasoned that no act outranked another, and on a page whose product ranking
+ * puts capture first, one does.
  *
  * What was actually wrong was the other end: the × that removes a row was
  * `opacity-0 group-hover:opacity-100`, and Tailwind wraps `hover:` in
@@ -76,7 +97,14 @@ export function UrgeSurfingCard() {
   }
 
   return (
-    <Card band hideInfo title="Urge surfing" subtitle="Feeling an urge? Name it and log it — it crests and passes in minutes.">
+    <Card hideInfo title="Urge surfing" subtitle="Feeling an urge? Name it and log it — it crests and passes in minutes.">
+      {/* THE ACT, FIRST · see the docstring. Full width and `lg` (44px) because
+          this is the control a thumb aims at mid-urge, and `primary` because
+          it is the page's one loud thing to do. */}
+      <Button variant="primary" size="lg" onClick={logUrge}
+        className="mb-4 w-full gap-2">
+        <Icon as={HandFist} size="md" /> Log this urge
+      </Button>
       {/* Was a hand-rolled chip row with inline border/background/colour
           ternaries — and so were the technique and HALT rows below it,
           three copies of the same markup differing only in accent. They
@@ -102,15 +130,24 @@ export function UrgeSurfingCard() {
           <span className="text-fg-2">{matchedPlan.coping || 'name it and let it pass.'}</span>
         </div>
       )}
-      {/* Intensity 1–5 (U8) */}
+      {/* Intensity 1–5 (U8)
+          The slider climbs through the same green→red ramp the rest of the app
+          uses for severity, so the control itself says how bad this is instead
+          of leaving it to a "3/5" the eye skips. `accentColor` drives the
+          filled track, the thumb and the readout from ONE value — no second
+          copy of the scale to fall out of step, and `onRaised` keeps the
+          readout legible on a card in all five themes rather than painting the
+          raw hue as text.
+          `h-11`: a bare range input is ~20px tall, which is a COD-96 hit — the
+          box around it does the work, the thumb still centres. */}
       <div className="mt-3">
         <div className="flex items-center justify-between text-label text-fg-1">
           <label htmlFor="urge-intensity">Intensity</label>
-          <span className="font-medium" style={{ color: onRaised('peach') }}>{intensity}/5</span>
+          <span className="num font-medium" style={{ color: onRaised(INTENSITY_HUE[intensity - 1]) }}>{intensity}/5</span>
         </div>
         <input id="urge-intensity" type="range" min={1} max={5} step={1} value={intensity}
           onChange={(e) => setIntensity(Number(e.target.value))}
-          className="mt-1 w-full accent-mauve" style={{ accentColor: cat('mauve') }} aria-label="Urge intensity, 1 to 5" />
+          className="h-11 w-full" style={{ accentColor: cat(INTENSITY_HUE[intensity - 1]) }} aria-label="Urge intensity, 1 to 5" />
       </div>
       {/* Technique chips (U8) */}
       <div className="mt-3">
@@ -134,10 +171,6 @@ export function UrgeSurfingCard() {
           options={HALT_STATES.map((h) => ({ value: h.id, label: h.label }))}
         />
       </div>
-      <div className="mt-3 flex justify-end">
-        <Button variant="secondary" onClick={logUrge} className="inline-flex items-center gap-1.5"><Icon as={HandFist} size="sm" /> Log this urge</Button>
-      </div>
-
       {/* Most-effective technique tally (U8) */}
       {techRank.length > 0 && (
         <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">

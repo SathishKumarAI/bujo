@@ -27,10 +27,16 @@ export function StreakRingCard({ stats, relapsedToday, startedOn }: {
   const next = stats.next
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
   return (
-    <Card band hideInfo className="glow-mauve">
-      <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative grid h-40 w-40 shrink-0 place-items-center">
-          <svg width="160" height="160" viewBox="0 0 128 128" className="-rotate-90">
+    <Card hideInfo className="glow-mauve">
+      {/* 128px on a phone, 160 from `sm`. The ring stacks above its text there,
+          so every pixel of it is a pixel of scroll in front of the act below —
+          and the act below is the one this page most wants to be frequent. 32px
+          of hero buys 32px of headroom for "Log this urge" above the fold, at a
+          size that is still the largest thing on the screen. The SVG fills its
+          box rather than carrying a second copy of the number. */}
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+        <div className="relative grid h-32 w-32 shrink-0 place-items-center sm:h-40 sm:w-40">
+          <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
             <circle cx="64" cy="64" r={R} fill="none" stroke={cat('surface0')} strokeWidth="9" />
             <circle cx="64" cy="64" r={R} fill="none" stroke={ringColor} strokeWidth="9" strokeLinecap="round"
               strokeDasharray={C} strokeDashoffset={C - (C * stats.progressPct) / 100}

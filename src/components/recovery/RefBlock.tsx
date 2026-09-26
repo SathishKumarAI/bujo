@@ -10,7 +10,18 @@ import type { ReactNode } from 'react'
  *
  * The five cards that remain on this page do own actions (urge surfing, the
  * reset form, per-addiction streaks, the commitment contract, trigger plans),
- * so Recovery stays over the two-raised-card cap on purpose. The contract
+ * so Recovery stays over the two-raised-card cap on purpose.
+ *
+ * **And until now they were not raised either.** All four zone-2 cards passed
+ * `band`, which is the *unboxed* variant — no fill, no radius, no elevation,
+ * one hairline. So the whole act column, which is nothing but controls, was
+ * drawn with the chrome reserved for things you read, and `DESIGN.md`'s one
+ * sentence ("things you can operate are made of material; things you read are
+ * not") was inverted on the only column where every item is operable. They are
+ * boxed now; zone 3 keeps `band`, which is where the reading is. That line —
+ * act is material, review is not — is the rule, not a per-card preference.
+ *
+ * The contract
  * anticipates exactly one page in a cluster whose subject really is a
  * collection of separately-actionable objects, and an abstinence tracker is
  * that page. Dissolving a real object into a section to hit a number would cost
