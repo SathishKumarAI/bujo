@@ -330,8 +330,19 @@ export function NoFap() {
                       <p className="text-label text-fg-2">{GROUP_BLURB[g]}</p>
                       <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
                     </div>
-                    <CardGrid>
-                      {ids.map((c) => <div key={c.id} data-card={c.id}>{all[c.id]}</div>)}
+                    {/* Two columns is the ceiling here, and it is a correction
+                        rather than a preference — the same one #288 made on
+                        Cycle. `CardGrid` asks the *viewport*, so at 1600 its
+                        `2xl:grid-cols-3` fires inside this 722px split column
+                        and resolves to three tracks of **227px**: literally the
+                        "cards a third of the size" half of the report this pass
+                        answers. Two tracks of 350 is what 1440 already gives.
+                        `MasonryGrid` is not the alternative — it breaks on its
+                        *container* at 768px, so at 722 it silently draws one
+                        column. `min-w-0` per cell so a wide chart cannot drag
+                        the shared track. */}
+                    <CardGrid className="2xl:grid-cols-2">
+                      {ids.map((c) => <div key={c.id} data-card={c.id} className="min-w-0">{all[c.id]}</div>)}
                     </CardGrid>
                   </section>
                 )
