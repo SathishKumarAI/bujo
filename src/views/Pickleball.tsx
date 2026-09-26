@@ -9,9 +9,9 @@ import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
 import { CardGrid, MasonryGrid, SPAN_2 } from '../components/shell/CardGrid'
-import { CollapsibleSection } from '../components/CollapsibleSection'
 import { LazyMount } from '../components/LazyMount'
-import { CalendarHeatmap, DisclosureRow, StatBar } from '../components/page'
+import { useStickyState } from '../lib/useStickyState'
+import { CalendarHeatmap, DisclosureRow, StatBar, SectionRail } from '../components/page'
 import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency } from '../lib/pickleball'
@@ -82,6 +82,24 @@ const RESOURCES = [
   { name: 'USA Pickleball · official rules & how-to', url: 'https://usapickleball.org' },
   { name: 'The Dink · drills, strategy & news', url: 'https://www.thedinkpickleball.com' },
 ]
+
+/**
+ * The four questions this page's record answers, as a rail.
+ *
+ * They were four `CollapsibleSection`s rendering at once — 3.9 screens of
+ * fourteen stat cards and seven charts. Four peers, each a different
+ * question about the same sport, is a table of contents.
+ *
+ * Order is how often you reach for them after logging a session, which is
+ * what the page above this is for. Competition last: events and DUPR are a
+ * monthly concern, not a post-session one.
+ */
+const PB_GROUPS = [
+  { id: 'competition', label: 'Competition & rating', blurb: 'Events, DUPR rating and league results, separate from casual play', icon: Medal, color: 'yellow' },
+  { id: 'performance', label: 'Performance', blurb: 'Form, streaks, effort and how regularly you get on court', icon: PersonSimpleRun, color: 'sky' },
+  { id: 'trends', label: 'Trends & volume', blurb: 'Win rate over time, games per week & month, where the habit sits', icon: ChartBar, color: 'teal' },
+  { id: 'matchups', label: 'Opponents, partners & venues', blurb: 'Who you win with, who you lose to, and where', icon: Sword, color: 'red' }
+] as const
 
 export function Pickleball() {
   const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings, logDupr, removeDupr } = useJournal()
@@ -216,6 +234,14 @@ export function Pickleball() {
   // that is a month calendar, not a heatmap. Twenty-six lands at 18.4px, which
   // is the density the grid is drawn for. 3mo is still one click away.
   const [heatWeeks, setHeatWeeks] = useState(26)
+  /* Sticky, because the four folds each were — losing that would be a
+     regression dressed as a redesign. Defaults to Performance: it is the
+     read you want straight after logging a session, which is what the act
+     above this is for. */
+  const [group, setGroup] = useStickyState<string>(
+    'pickleball.group', 'performance', PB_GROUPS.map((g) => g.id),
+  )
+  const currentGroup = PB_GROUPS.find((g) => g.id === group) ?? PB_GROUPS[1]
   const heat = [...byDay].map(([date, value]) => ({ date, value }))
 
   // ── Leagues & tournaments ──
@@ -628,12 +654,42 @@ export function Pickleball() {
             exists. Grouping them here leaves the top of the page as the daily
             loop — log, review, practise — and puts the occasional work one
             heading below it rather than interleaved with it. ── */}
-      <CollapsibleSection
-        title="Competition & rating"
-        icon={<Icon as={Medal} size="md" className="text-yellow" />}
-        variant="quiet"
-        stickyKey="pickle-competition"
-      >
+      {/* ── The review, as four groups behind a rail. ──
+
+          They were four `CollapsibleSection`s. Three shipped open and one —
+          every chart on the page — shipped shut, which is the fix in #271;
+          the folds themselves are what was left over. A fold is right for
+          one aside inside a page about something else. Four peers, each
+          answering a different question about the same sport, is a table of
+          contents, and this page is 3.9 screens because all of them render
+          at once.
+
+          Same `SectionRail` as Insights and Coaching's manual. No "All" row:
+          the four do not overlap, and "all of them" is the page this
+          replaces. ── */}
+      <section className="mt-2">
+        <h2 className="mb-3 text-label text-fg-2">The record</h2>
+        {/* Container on the outer div, grid on the inner: an element cannot
+            query itself. Phone column spelled out, or the chip row's
+            min-content sizes the only implicit track and the page scrolls
+            sideways. Both in docs/PAGE-SHAPE.md. */}
+        <div className="@container/page">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[13rem_minmax(0,1fr)]">
+          <SectionRail
+            label="Pickleball record"
+            groups={PB_GROUPS.map((g) => ({ id: g.id, label: g.label }))}
+            value={group}
+            onChange={(id: string | null) => setGroup(id ?? 'performance')}
+          />
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+              <h3 className="flex items-center gap-2 font-display text-heading font-medium text-fg-1">
+                <Icon as={currentGroup.icon} size="md" style={{ color: onRaised(currentGroup.color) }} />
+                {currentGroup.label}
+              </h3>
+              <p className="text-label text-fg-2">{currentGroup.blurb}</p>
+            </div>
+            {group === 'competition' && (<>
         <MasonryGrid>
         {/* ── Tournament prep countdown (#345) · conditional top status,
               surfaces only when events exist; collapsed. ── */}
@@ -776,13 +832,8 @@ export function Pickleball() {
           )}
         </Card>
         </MasonryGrid>
-      </CollapsibleSection>
-      <CollapsibleSection
-        title="Performance"
-        icon={<Icon as={PersonSimpleRun} size="md" className="text-sky" />}
-        variant="quiet"
-        stickyKey="pickle-performance"
-      >
+            </>)}
+            {group === 'performance' && (<>
         {/* "Form & momentum" and "Deeper signals" were two headings over one
             question — how am I playing. Nine cards in one masonry balance into
             even columns; four and five in separate groups could not, and each
@@ -800,52 +851,22 @@ export function Pickleball() {
         {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
         
         </MasonryGrid>
-      </CollapsibleSection>
-
-      {/* ── Trends & volume · the seven charts. ──
-
-            **They were behind `defaultOpen={false}`, at the very bottom.**
-            So the page a reader actually got was fourteen cards of three or
-            four stat tiles each and not a single chart — reported as "this
-            page looks more of empty", which is exactly what a wall of tiles
-            with no shape looks like. The same fold had already been wrong
-            twice: an earlier comment claimed it was collapsed when it was not,
-            and was then made true rather than questioned.
-
-            Open, and moved up to sit directly under Performance, because
-            these charts and those cards answer the same question — how am I
-            playing — and the numbers are the summary of the pictures. The
-            CLAUDE.md trap this is an instance of: the training calendar spent
-            a release behind a "Cardio analytics" accordion, which is how the
-            most useful thing on that page went unseen.
-
-            `LazyMount` stays: it defers the seven recharts until the section
-            scrolls near, which is what makes rendering them by default
-            affordable. ── */}
-      <CollapsibleSection
-        title="Trends & volume"
-        icon={<Icon as={ChartBar} size="md" className="text-teal" />}
-        subtitle="Win rate over time, games per week & month, where the habit sits"
-        variant="quiet"
-        stickyKey="pickle-charts"
-      >
+            </>)}
+            {group === 'trends' && (<>
         <LazyMount minHeight={500}>{charts}</LazyMount>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="Opponents, partners & venues"
-        icon={<Icon as={Sword} size="md" className="text-red" />}
-        variant="quiet"
-        stickyKey="pickle-matchups"
-      >
+            </>)}
+            {group === 'matchups' && (<>
         <MasonryGrid>
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
         {venues.length > 0 && <VenuesCard venues={venues} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
         </MasonryGrid>
-      </CollapsibleSection>
-
+            </>)}
+          </div>
+        </div>
+        </div>
+      </section>
 
       {/* "Play safe" and the format playbook lived here as two more cards on
           an already 4-screen page. Both are reference reading, not session
