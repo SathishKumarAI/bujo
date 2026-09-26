@@ -1,86 +1,111 @@
 # STATUS
 
-**Stopped:** 2026-09-25, on `main`, clean. **Five PRs merged (#263–#268)**,
-all squash-merged with `npm run verify` + `npm run a11y` green on each.
+**Stopped:** 2026-09-25, on `main`, clean. **Nine PRs merged (#263–#271)** in
+one stretch, each squash-merged with `npm run verify` and `npm run a11y` green.
 
 ## What this stretch was
 
-One request: spin the UI up, find bugs, kill duplication in Settings and in
-Fitness/Strength, give the Cycle page real context and visualisations, and
-modularise as it goes. Every item below was measured in the running app before
-it was called a problem.
+Two requests. First: spin the UI up, find bugs, kill the duplication in
+Settings and in Fitness/Strength, give Cycle real context and visualisations.
+Then: Insights, Mindset and Pickleball "look empty / scattered / like plain
+text", use the width, reorganise the categories.
+
+Every item below was measured in the running app before it was called a
+problem. None of the three "empty" pages had a rendering bug.
 
 | # | What | The finding |
 |---|---|---|
-| 263 | Strength had two front doors | The Fitness mode toggle **and** the Strength tab both logged a `Workout`, forty pixels apart. `views/FitnessHub.tsx` was 142 lines of **dead code** nothing imported. |
-| 264 | Settings counted the journal twice | Two cards, 3,000px apart, four identical numbers — and **"Habits" meant two different things** (`!archived` vs all). `Settings.tsx` 969 → 86 lines. |
+| 263 | Strength had two front doors | The Fitness mode toggle **and** the Strength tab both logged a `Workout`. `views/FitnessHub.tsx` was 142 lines of dead code nothing imported. |
+| 264 | Settings counted the journal twice | Two cards, 3,000px apart, four identical numbers — and **"Habits" meant two different things**. `Settings.tsx` 969 → 86 lines. |
 | 265 | Cycle had nothing to show | **The demo seed never wrote `data.cycle`**, so the gate could not fail on any of it. Four visualisations added. |
-| 266 | A stray `undefined/` directory | My own mistake in #265; a probe script wrote to an unset env var and `git add -A` swept it in. |
-| 267 | Mindset's library was a 3,200px wall | 46 principles in one column on a 1,180px tier. Two docstrings said "26". |
-| 268 | Auto-sync hands over a locked journal | `bujo:enc` holds ciphertext while `bujo:sync` holds the passphrase **in plaintext beside it**. |
+| 266 | A stray `undefined/` directory | My mistake in #265. |
+| 267 | Mindset's library was a 3,200px wall | 46 principles in one column. Two docstrings said "26". |
+| 268 | Auto-sync hands over a locked journal | `bujo:enc` holds ciphertext, `bujo:sync` holds the passphrase **in plaintext beside it**. |
+| 269 | Handover | — |
+| 270 | Insights was nine groups under six names | See below. Plus a new `tier={1440}` on `PageLayout`. |
+| 271 | Pickleball's charts, Mindset's tiles, `docs/PAGE-SHAPE.md` | **All seven Pickleball charts were behind `defaultOpen={false}`.** |
 
-## The two worth re-reading
+## The four worth re-reading
 
-**`lib/demo.ts` seeded every domain except `data.cycle`.** The Cycle page's
-whole orientation block is `{day != null && phase && …}`, so it was absent from
-the DOM; `npm run a11y` visits that page at five themes and two viewports on
-every run and could not fail on any of it. Seeding four cycles turned the first
-green run **red** on a serious `scrollable-region-focusable`. The trap is in
-CLAUDE.md now: **when you add a domain to `types.ts`, seed it in the same
-change** — an unseeded domain is a whole subject the gates silently skip.
+**`lib/demo.ts` seeded every domain except `data.cycle`.** `npm run a11y`
+visits that page at five themes and two viewports on every run and could not
+fail on any of it. Seeding four cycles turned the first green run **red**.
+The trap is in CLAUDE.md: when you add a domain to `types.ts`, seed it in the
+same change.
 
 **The passcode lock does not survive auto-sync, and `docs/AUTH.md` said it
-did.** Measured, both switched on:
+did.** Measured with both on: `bujo:enc` is 103,399 characters of ciphertext
+and `bujo:sync` is the passphrase in the clear. Not silently fixed —
+encrypting it means auto-sync cannot run while locked, which is a product
+decision. Surfaced at the switch and documented instead.
 
-```
-bujo:enc    {"v":1,"salt":"R6+Ar…      103,399 chars of ciphertext
-bujo:sync   correct-horse-battery
-```
+**Insights offered six domain names and rendered nine groups** under four
+mechanisms, two of them sharing a title, with eight of twenty-three cards
+under no heading. Nothing failed; the page was just unreadable. Zone 3 is
+`DOMAINS.map(...)` now, and a test asserts the rendered `data-card` set
+equals the registry in both directions. The regroup also exposed
+`TrackerVisuals`: five habit grids with no card id and no filter gate, so the
+chips could not filter it, the search could not find it and no count included
+it. And **the test the registry's docstring claimed existed did not** — the
+only one there checked the registry against itself.
 
-The lock works exactly as documented. It just does not matter. Not silently
-fixed — encrypting `bujo:sync` under the passcode key means auto-sync cannot
-run while locked, which is a product decision. The trade-off is surfaced at the
-switch and documented instead.
+**Every Pickleball chart was behind one closed fold, last on the page.** What
+a reader got was fourteen cards of stat tiles and not one chart. The same
+fold had already been wrong twice: a comment claimed it was collapsed when it
+was not, and that was resolved by making the comment true.
 
 ## Numbers, before → after
 
 ```
-space   mindset   desktop 4.8 → 3.8 shipped
+space   insights  desktop 6.8 → 6.1 shipped · 2 columns → 3 · container 1180 → 1318
+                  phone   12.0 → 13.5 shipped, but 13.4 → 13.5 OPEN
+        mindset   desktop 4.8 → 3.8 (two columns) → 4.2 (tiles)
+        pickleball desktop 3.5 → 3.9 shipped, 4.5 → 4.5 OPEN
         cycle     desktop 1.6 → 1.9 shipped, 1 column ⚠ → 3 columns
-                  phone   2.5 → 4.2 shipped   ← the real cost, four charts stacked
-tests   1149 → 1164 in 90 files
-a11y    166 rows, no serious or critical
+tests   1149 → 1167 in 91 files
+a11y    166 rows, no serious or critical, at 5 themes × 2 viewports
 ```
 
-Cycle's desktop page gained four visualisations for **0.3 screens**, because
-the wide tier was being spent on one column.
+**Read the shipped/open pairs together.** Where shipped rose and open did not,
+nothing grew — a fold was opened, and the page now shows what it holds. That
+is true of Insights' phone number and both of Pickleball's.
 
 ## Next, in the order I would take it
 
-1. **`insights` is 6.8 desktop / 12.0 phone**, still the largest page. Unchanged
-   from the last handover and still a product decision: shortening it means
-   cutting cards.
-2. **Cycle on a phone is 4.2 screens**, and ~950px of that is the month list —
-   30 rows in one column, because the two-column split is `sm:`. Either it
-   splits at 390 (tight: the row is day / cycle-day / temp / dots) or it folds.
-3. **Focus wastes ~700px of its right column.** The timer card holds a 200px
-   ring opposite a long form. The space audit reports `1 column ⚠` for this
-   page, which is a **false read** — it is a custom two-column layout the audit
-   does not recognise, so do not chase that warning.
-4. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
-5. Still open from the last stretch: **COD-211** blank boot on `?view=settings`
-   in CI — the diagnostics are in and it never reproduced locally this session;
-   **COD-208**, a crash in the gate's `scan()` escaping before the summary
-   prints; `pullups` (5.6 open) and `nofap` (4.7) unexamined.
+1. **Insights on a phone is 13.5 screens.** The six domain headings are right
+   on desktop and expensive in one column. Either the blurb drops below `sm`,
+   or the domains become a real segmented view rather than a filter.
+2. **`habitgrids` overlaps `activity` and `habitanalytics`.** Registered
+   rather than deleted in #270 so the overlap is visible; it wants a
+   consolidation pass now that all three are under one heading.
+3. **Cycle on a phone is 4.2 screens**, ~950px of which is a 30-row month list
+   (the two-column split is `sm:`). Either it splits at 390 or it folds.
+4. **Pickleball's win-rate forecast prints "100% projected"** from a 60%
+   current rate. The maths is a clamped linear extrapolation and its test
+   pins the clamp, so it is honest and reads as a promise. Copy problem.
+5. **Focus wastes ~700px of its right column** — a 200px timer ring opposite
+   a long form. The space audit says `1 column ⚠` for this page, which is a
+   **false read**: it is a custom two-column layout the audit does not
+   recognise. Do not chase that warning.
+6. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
+7. Still open from before: **COD-211** blank boot on `?view=settings` in CI
+   (never reproduced locally this session); **COD-208**, a crash in the gate's
+   `scan()` escaping before the summary prints; `pullups` and `nofap`
+   unexamined.
 
-## Traps earned, all in CLAUDE.md
+## Traps earned, all in CLAUDE.md or `docs/PAGE-SHAPE.md`
 
 - **An unseeded domain is a subject the gates do not check.** One level below
-  the empty-journal trap: not "a card that never renders cannot fail" but "a
-  domain the seed never writes cannot fail".
+  the empty-journal trap.
 - **A count in a comment has nothing keeping it true.** Two Mindset docstrings
   said 26 while the library held 46 and the bar rendered "46 of 46" thirty
-  pixels above the list. They agreed with each other and with nothing else.
-- **A render diff is the gate on an extraction.** Settings' five tabs were
-  captured with every fold open before and after; four came back
-  byte-identical, which is the only way to move 900 lines and know it.
+  pixels above the list.
+- **A render diff is the gate on an extraction.** Settings' five tabs and the
+  whole of Insights were captured with every fold open before and after. On
+  Insights the only lines that disappeared were the nine old group headings —
+  which is how you know 700 lines of card markup moved intact.
+- **A page that offers names must use those names as its structure.** When
+  they disagree the report comes back as "scattered", and nothing fails.
+- **`git add -A` is not a staging strategy.** It swept a stray `undefined/`
+  directory into #265 and an unrelated untracked `docs/*.html` into #270's
+  first attempt. Stage explicit paths.
