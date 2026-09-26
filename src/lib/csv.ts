@@ -217,6 +217,11 @@ export interface DataSummary {
   counts: { label: string; count: number }[]
   /** Total records summed across all domains. */
   totalRecords: number
+  /** Photos, wherever they live: progress shots plus photo-bearing memories. */
+  photos: number
+  /** Size of the journal JSON, the figure the ~5 MB localStorage budget applies
+   *  to. Photos are in IndexedDB and contribute nothing to it. */
+  bytes: number
 }
 
 /** Collect every ISO "YYYY-MM-DD" day from the journal's dated records. */
@@ -239,8 +244,10 @@ function collectDays(data: JournalData): Set<string> {
 /**
  * Whole-journal summary stats (read-only, pure): the tracked date range, how many
  * of those days actually have data ("coverage"), and a per-domain record count.
- * Powers a "Journal at a glance" card in Settings so users can see the shape and
- * span of everything they've captured without changing any stored data.
+ * Powers the single "Your data" card in Settings. It used to power only the
+ * folded half of it while a second card counted four of the same domains by
+ * hand, 2,000px higher on the same tab — and one of those four counted habits
+ * differently. This is now the only place those numbers are computed.
  */
 export function dataSummary(data: JournalData): DataSummary {
   const days = collectDays(data)
@@ -257,7 +264,13 @@ export function dataSummary(data: JournalData): DataSummary {
   const coveragePct = spanDays > 0 ? Math.min(100, Math.round((activeDays / spanDays) * 100)) : 0
   const raw: { label: string; count: number }[] = [
     { label: 'Entries', count: data.entries.length },
-    { label: 'Habits', count: data.habits.length },
+    // Active habits, NOT `data.habits.length`. Settings drew both numbers
+    // under the word "Habits" on the same tab — a StatTile filtering
+    // `!archived` and a count pill that did not — so archiving a habit made
+    // the page disagree with itself. One definition, and archived gets its
+    // own row below rather than hiding inside another word's total.
+    { label: 'Habits', count: data.habits.filter((h) => !h.archived).length },
+    { label: 'Archived habits', count: data.habits.filter((h) => h.archived).length },
     { label: 'Metrics', count: data.metrics.length },
     { label: 'Workouts', count: data.workouts.length },
     { label: 'Focus sessions', count: (data.devSessions ?? []).length },
@@ -269,7 +282,9 @@ export function dataSummary(data: JournalData): DataSummary {
   ]
   const counts = raw.filter((r) => r.count > 0).sort((a, b) => b.count - a.count)
   const totalRecords = raw.reduce((s, r) => s + r.count, 0)
-  return { firstDay, lastDay, spanDays, activeDays, coveragePct, counts, totalRecords }
+  const photos = (data.progressPhotos?.length ?? 0) + data.memories.filter((m) => m.photo).length
+  const bytes = JSON.stringify(data).length
+  return { firstDay, lastDay, spanDays, activeDays, coveragePct, counts, totalRecords, photos, bytes }
 }
 
 // ── Backup integrity checksum (BUJO-246) ──────────────────────────────────────
