@@ -3,7 +3,8 @@ import type { CyclePoint } from './types'
 import { addDays } from './date'
 import {
   avgCycleLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
-  flagPatternByDay, nextPeriodEstimate, periodStarts, phaseBands, phaseOf,
+  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
+  phaseBands, phaseOf,
 } from './cycleInsights'
 
 const p = (date: string, flags: string[] = ['period']): CyclePoint => ({ date, flags })
@@ -201,5 +202,70 @@ describe('coverline', () => {
       { day: 8, temp: 97.9 }, { day: 9 }, { day: 10, temp: 98.0 }, { day: 11, temp: 97.95 },
     ]
     expect(coverline(t)).toBe(97.4)
+  })
+})
+
+describe('driveByPhase folds the rating along the cycle', () => {
+  // One 28-day cycle starting 2026-01-01, so cycle day N is 2026-01-0N.
+  const day = (n: number) => addDays('2026-01-01', n - 1)
+  const rate = (n: number, drive: number): CyclePoint =>
+    ({ date: day(n), flags: n <= 5 ? ['period'] : [], drive })
+
+  it('returns null — not zero — for a phase with no ratings', () => {
+    const rows = driveByPhase([p('2026-01-01'), rate(2, 4)], '2026-01-28', 28)
+    const menstrual = rows.find((r) => r.id === 'menstrual')!
+    // Assert presence FIRST: `expect(null).toBeGreaterThanOrEqual(0)` coerces
+    // and passes, so a test shaped that way proves nothing about the value.
+    expect(menstrual.avg).not.toBeNull()
+    expect(menstrual.avg).toBe(4)
+    const luteal = rows.find((r) => r.id === 'luteal')!
+    expect(luteal.avg).toBeNull()
+    expect(luteal.days).toBe(0)
+  })
+
+  it('averages only the rated days, and reports how many there were', () => {
+    // Days 7 and 9 are follicular in a 28-day cycle (ovulation lands on day 14).
+    const rows = driveByPhase(
+      [p('2026-01-01'), rate(7, 2), rate(9, 5), { date: day(8), flags: [] }],
+      '2026-01-28', 28,
+    )
+    const foll = rows.find((r) => r.id === 'follicular')!
+    expect(foll.avg).toBe(3.5)
+    expect(foll.days).toBe(2)
+  })
+
+  it('skips a rated day with no cycle day to put it on', () => {
+    const rows = driveByPhase(
+      [{ date: '2025-12-20', flags: [], drive: 5 }, p('2026-01-01')],
+      '2026-01-28', 28,
+    )
+    expect(rows.every((r) => r.avg === null)).toBe(true)
+  })
+
+  it('covers all four phases in cycle order, rated or not', () => {
+    const rows = driveByPhase([p('2026-01-01')], '2026-01-28', 28)
+    expect(rows.map((r) => r.id)).toEqual(['menstrual', 'follicular', 'ovulation', 'luteal'])
+  })
+})
+
+describe('drivePeak refuses to name a peak it cannot see', () => {
+  const rows = (avgs: (number | null)[]) =>
+    (['menstrual', 'follicular', 'ovulation', 'luteal'] as const).map((id, i) => ({
+      id, label: id, color: 'red',
+      avg: avgs[i], days: avgs[i] == null ? 0 : 3,
+    }))
+
+  it('is null with only one rated phase — one bar is not a peak', () => {
+    expect(drivePeak(rows([null, 4, null, null]))).toBeNull()
+  })
+
+  it('is null on a tie, because a tie is not a finding', () => {
+    expect(drivePeak(rows([null, 4, 4, null]))).toBeNull()
+  })
+
+  it('names the highest once two phases can be compared', () => {
+    const peak = drivePeak(rows([2, 3, 4.5, 3]))
+    expect(peak).not.toBeNull()
+    expect(peak!.id).toBe('ovulation')
   })
 })
