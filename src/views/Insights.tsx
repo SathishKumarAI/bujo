@@ -178,7 +178,13 @@ export function Insights() {
       // Stress is inverted: a drop is good. Everything else: up is good.
       const good = m.key === 'stress' ? m.dir === 'down' : m.dir === 'up'
       const Icon = m.dir === 'up' ? TrendUp : m.dir === 'down' ? TrendDown : Minus
-      const color = m.dir === 'flat' ? 'overlay0' : good ? 'green' : 'red'
+      // `subtext0`, never `overlay0`, on the neutral branch. `onRaised` passes
+      // neutrals through untouched on purpose ("ground colours are not
+      // accents"), so `overlay0` arrives raw and measured **2.41:1** in mocha,
+      // 2.07 in neon — the exact partner mistake CLAUDE.md names. It only
+      // renders when a metric goes flat, so a seed that produced no flat metric
+      // kept it invisible: a branch the seed never takes cannot fail.
+      const color = m.dir === 'flat' ? 'subtext0' : good ? 'green' : 'red'
       return (
         <li key={m.key} className="rounded-card bg-ink-2 p-3">
           <div className="flex items-center justify-between">

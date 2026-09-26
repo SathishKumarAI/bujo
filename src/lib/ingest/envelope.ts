@@ -113,6 +113,20 @@ export type EntryRecord = { kind: 'entry' } & RecordBase & {
 export type CycleRecord = { kind: 'cycle' } & RecordBase & {
   flags?: string[]
   note?: string
+  /**
+   * Basal body temperature in **degrees Celsius, always** — converted to
+   * `settings.tempUnit` by the planner.
+   *
+   * Canonical in the envelope for the same reason `weightKg` is: `CyclePoint
+   * .temp` carries no unit of its own ("°F or °C, user's choice"), so a bare
+   * `temp` here would be a number whose meaning depends on a setting the
+   * producer cannot see. Health exports °F or °C depending on the phone's
+   * locale, which makes this the field most likely to arrive in the other one.
+   *
+   * The range check in `validate.ts` is the backstop: 30–45 rejects an
+   * unconverted Fahrenheit reading (97.8) rather than plotting it.
+   */
+  tempC?: number
 }
 
 export type PickleballRecord = { kind: 'pickleball' } & RecordBase & {

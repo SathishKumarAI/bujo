@@ -33,10 +33,26 @@ export function habitsCsv(data: JournalData): string {
   return toCsv(['date', 'habit', 'category'], rows)
 }
 
+/**
+ * Every number a `DailyMetric` carries, as columns. **The export and the parser
+ * below share this list**, so a field that can be written can always be got
+ * back out again.
+ *
+ * `energy`, `steps`, `restingHR` and `activeKcal` were missing from both. That
+ * is worse than a gap in a report: `steps`, `restingHR` and `activeKcal` have
+ * **no reader anywhere in the app**, so with no column here they were data you
+ * could put in and never get out — readable only by the code that wrote them.
+ * A field with no reader and no export is a hostage. Appended rather than
+ * inserted, so an older exported CSV still parses (the reader indexes by header
+ * name) and a spreadsheet keyed on column order does not shift.
+ */
+const METRIC_COLS = ['mood', 'stress', 'sleep', 'energy', 'calories', 'protein', 'carbs', 'fat', 'steps', 'restingHR', 'activeKcal'] as const
+
 export function metricsCsv(data: JournalData): string {
   return toCsv(
-    ['date', 'mood', 'stress', 'sleep', 'calories', 'protein', 'carbs', 'fat'],
-    [...data.metrics].sort((a, b) => (a.date < b.date ? -1 : 1)).map((m) => [m.date, m.mood, m.stress, m.sleep, m.calories, m.protein, m.carbs, m.fat]),
+    ['date', ...METRIC_COLS],
+    [...data.metrics].sort((a, b) => (a.date < b.date ? -1 : 1))
+      .map((m) => [m.date, ...METRIC_COLS.map((c) => m[c])]),
   )
 }
 
@@ -47,7 +63,7 @@ export function parseMetricsCsv(text: string): { date: string; patch: Record<str
   const header = lines[0].split(',').map((h) => h.trim())
   const di = header.indexOf('date')
   if (di < 0) return []
-  const numCols = ['mood', 'stress', 'sleep', 'calories', 'protein', 'carbs', 'fat']
+  const numCols = METRIC_COLS
   const out: { date: string; patch: Record<string, number> }[] = []
   for (const line of lines.slice(1)) {
     const cells = line.split(',')

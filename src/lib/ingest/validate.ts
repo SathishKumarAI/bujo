@@ -36,6 +36,12 @@ export const RANGES: Record<string, [number, number]> = {
   rpe: [1, 10],
   bodyFat: [1, 70], // under 1 is a 0–1 fraction bug; over 70 is not survivable
   weightKg: [20, 400], // catches a pound value pasted into a kilogram field
+  // Celsius, and the bound IS the unit check: an unconverted Fahrenheit basal
+  // reading is ~97.8, which is rejected rather than plotted as a fever that
+  // never happened. 30–45 covers hypothermia to untreatable, so nothing real
+  // is refused. Apple exports °F or °C depending on the phone's locale, which
+  // makes this the field most likely to arrive in the wrong one.
+  tempC: [30, 45],
   steps: [0, 200_000],
   restingHR: [25, 150],
   calories: [0, 20_000],

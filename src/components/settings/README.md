@@ -15,6 +15,7 @@ panels. Everything else is here, one file per thing.
 | PostgREST self-host fields | `SelfHostCard.tsx` |
 | The record counts, coverage, storage bar | `YourDataCard.tsx` |
 | Any export or import — JSON, Markdown, CSV, `.ics`, checksum | `BackupCard.tsx` |
+| Importing an Apple Health `export.zip` | `AppleHealthCard.tsx` |
 | Demo data, erase, back to start screen | `DemoResetCard.tsx` |
 | `Row`, `Toggle`, `Disclosure` | `shared.tsx` |
 | Handing the browser a file | `download.ts` |
