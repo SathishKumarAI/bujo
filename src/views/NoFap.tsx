@@ -256,12 +256,14 @@ export function NoFap() {
    * `flatMap` rather than `filter`, so `peak` narrows instead of being asserted.
    */
   const countedStreaks = [
-    { name: 'Main streak', relapses: s.relapses },
-    ...addictions.map((a) => ({ name: a.name, relapses: a.relapses })),
+    // Keyed by id, not name: nothing stops an addiction being called "Main
+    // streak", and two cards under one React key is a silent render bug.
+    { key: 'primary', name: 'Main streak', relapses: s.relapses },
+    ...addictions.map((a) => ({ key: a.id, name: a.name, relapses: a.relapses })),
   ].flatMap((t) => {
     const peak = hasLapseQuantity(t.relapses) ? peakLapseWeekday(t.relapses) : undefined
     return peak
-      ? [{ name: t.name, peak, byWeekday: lapseByWeekday(t.relapses), trend: lapseTrend(t.relapses, 8, today) }]
+      ? [{ key: t.key, name: t.name, peak, byWeekday: lapseByWeekday(t.relapses), trend: lapseTrend(t.relapses, 8, today) }]
       : []
   })
   // #316 commitment contract · quit date + personal reason, shown prominently
@@ -699,7 +701,7 @@ export function NoFap() {
               this fold on purpose: it is a months-long pattern, like every
               other card here, and the day's own number is already in zone 2. */}
           {countedStreaks.map((t) => (
-            <LapseCountCard key={t.name} name={t.name} byWeekday={t.byWeekday} peak={t.peak} trend={t.trend} />
+            <LapseCountCard key={t.key} name={t.name} byWeekday={t.byWeekday} peak={t.peak} trend={t.trend} />
           ))}
           {/* Trigger patterns · aggregated relapse triggers */}
           {stats.topTriggers.length > 0 && (
