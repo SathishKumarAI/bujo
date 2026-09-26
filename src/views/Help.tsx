@@ -10,6 +10,7 @@ import { useNav } from '../components/shell/nav'
 import { BULLET_LEGEND } from '../lib/bullets'
 import { onRaised } from '../lib/colors'
 import { GUIDE, TUTORIALS, guideByGroup, searchGuide, type GuideCard, type Tutorial } from '../lib/guide'
+import { glossaryByDomain, GLOSSARY } from '../lib/glossary'
 
 /**
  * GUIDE · the page a stuck user opens.
@@ -76,6 +77,7 @@ export function Help() {
       zone3={
         <div className="space-y-4">
           <Bullets />
+          <Glossary />
           <Card
             band
             title="Every feature"
@@ -289,6 +291,94 @@ function Bullets() {
         <p className="mt-1 text-fg-2">
           So <code>* t book the campsite #travel</code> logs an important task tagged travel.
         </p>
+      </div>
+    </Card>
+  )
+}
+
+/**
+ * THE ABBREVIATIONS · the whole list, in the one place that is meant to be read.
+ *
+ * The inline ⓘ marker (`components/Abbr.tsx`) answers "what does this word on
+ * this chip mean" at the moment it is asked. This answers the other question —
+ * "what does this app expect me to already know" — which is the one someone
+ * being *shown* the app asks, and it cannot be answered by twenty tooltips
+ * scattered across nine screens.
+ *
+ * Both read `src/data/glossary.json`. Nothing here is written down twice; the
+ * page and the tooltip cannot disagree about what a word means. Collapsed by
+ * default because Help measured 1.1 shipped / 1.5 open and the whole point of
+ * last stretch's rail was to stop that number climbing — a reference list is
+ * exactly the thing a fold is for.
+ */
+function Glossary() {
+  const all = glossaryByDomain()
+  /* One domain at a time, `null` for All — the same rail the feature catalogue
+     above uses, for the same measured reason. Twenty definitions in one column
+     took Help's open height from 1.5 to **3.3 desktop screens and 6.8 on a
+     phone**; five peer groups is exactly the shape `docs/PAGE-WORKFLOW.md` says
+     to put on a rail. Defaults to Cycle because that is the domain that produced
+     the request — landing on all twenty is landing on the wall. */
+  const [domain, setDomain] = useState<string | null>(all[0]?.domain ?? null)
+  const groups = domain ? all.filter((g) => g.domain === domain) : all
+  return (
+    <Card
+      band
+      collapsible
+      defaultCollapsed
+      title="The abbreviations"
+      subtitle={`${GLOSSARY.length} shorthand terms the app uses, spelled out`}
+      hideInfo
+    >
+      {/* Container outside, grid inside — an element cannot query itself — and
+          the phone column spelled out, because an implicit `auto` track sizes to
+          the rail's widest chip and scrolls the page sideways. Both in
+          docs/PAGE-SHAPE.md. */}
+      <div className="@container/page">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+        <SectionRail
+          label="Glossary domains"
+          groups={all.map((g) => ({ id: g.domain, label: g.label, count: g.terms.length }))}
+          value={domain}
+          onChange={setDomain}
+          allCount={GLOSSARY.length}
+        />
+      <div className="min-w-0 space-y-4">
+        {groups.map((g) => (
+          <section key={g.domain} aria-label={g.label}>
+            <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
+              {g.label} · {g.terms.length}
+            </h3>
+            {/* A definition list, because that is what this is: `dt`/`dd` gives a
+                screen reader the term-to-meaning relationship that a two-column
+                grid of `div`s only implies. The grid is spelled out at both
+                widths — an implicit track would size to the longest definition
+                and drag its sibling column with it. */}
+            <dl className="grid grid-cols-[minmax(0,1fr)] gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+              {g.terms.map((t) => (
+                <div key={t.term} className="contents">
+                  <dt className="text-body font-medium text-fg-1">
+                    {t.term}
+                    <span className="ml-2 font-normal text-fg-2">{t.expansion}</span>
+                  </dt>
+                  <dd className="mb-2 text-label text-fg-2 sm:mb-0">
+                    {t.long}
+                    {t.source && (
+                      <>
+                        {' '}
+                        <a href={t.source.url} target="_blank" rel="noreferrer" className="underline hover:text-fg-1">
+                          {t.source.label}
+                        </a>
+                      </>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
+      </div>
       </div>
     </Card>
   )

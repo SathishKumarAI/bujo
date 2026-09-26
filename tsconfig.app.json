@@ -13,6 +13,9 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
+    /* `src/data/glossary.json` is imported by `lib/glossary.ts`. Vite resolves a
+       JSON import natively; TypeScript needs telling. */
+    "resolveJsonModule": true,
     "noEmit": true,
     "jsx": "react-jsx",
 

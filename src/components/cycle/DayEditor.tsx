@@ -2,6 +2,7 @@ import { Input } from '../ui'
 import { cat, onAccent } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
+import { glossaryTerm } from '../../lib/glossary'
 import { FLAGS, FLAG_COLOR } from './flags'
 
 /**
@@ -44,14 +45,26 @@ export function DayEditor({ date, entry, unit, onTemp, onToggleFlag }: {
           aria-label={`Basal temperature on ${prettyDay(date)} (°${unit})`}
           className="w-24 py-1"
         />
+        {/* The chip cannot carry an ⓘ: it is already a button, and a button
+            inside a button is invalid markup and unusable with a keyboard. So the
+            expansion rides on the chip's own accessible name instead — "pms"
+            announces as "PMS — Premenstrual syndrome" — and the full definition
+            lives one tap away in the phase legend and in Help's glossary. All
+            three read `src/data/glossary.json`; none of them holds its own copy.
+            A flag with no glossary entry keeps its bare name rather than
+            inventing one. */}
         {FLAGS.map((f) => {
           const on = flags.includes(f)
           const fill = cat(FLAG_COLOR[f])
+          const meaning = glossaryTerm(f)
+          const name = meaning ? `${meaning.term} — ${meaning.expansion}` : f
           return (
             <button
               key={f}
               onClick={() => onToggleFlag(f)}
               aria-pressed={on}
+              aria-label={name}
+              title={name}
               className="rounded-control px-2 py-1 text-label"
               style={{
                 background: on ? fill : cat('surface0'),
