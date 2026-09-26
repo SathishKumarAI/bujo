@@ -705,6 +705,18 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           return {
             ...d,
             nofap: {
+              // `...d.nofap` first, and it is load-bearing. Without it this
+              // builds a fresh Streak from three fields and silently drops the
+              // other six: `urgeLog`, `urgesResisted`, `plans`, `addictions`,
+              // `costPerDay` and `commitment`. Relapsing wiped every resisted
+              // urge ever logged, every if-then trigger plan, every
+              // independently-tracked addiction with its own streak and best,
+              // and the quit-date contract — at the exact moment a user is
+              // least able to afford losing them. Every other writer in this
+              // file spreads; `resistUrge` directly below is the pattern.
+              //
+              // A relapse resets THIS streak. It is not a factory reset.
+              ...d.nofap,
               startedOn: r.date,
               best: Math.max(d.nofap.best, len),
               relapses: [...d.nofap.relapses, relapse],
