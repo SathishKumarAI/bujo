@@ -41,9 +41,17 @@ import {
  * shift, which is what made the rest of this pass checkable.
  *
  * Zone 1 · cycle day, phase, next period, personal average — the four facts.
- * Zone 2 · the day editor and the month, which is the only thing that writes.
- * Zone 3 · the wheel, the cycle-by-cycle chart, the symptom pattern, the
- *          temperature chart, then the guide.
+ * Zone 2 · the day editor (temperature, flags, drive), the legend that decodes
+ *          the flag colours, and the month — the only things that write.
+ * Zone 3 · the wheel, the cycle-by-cycle chart, the ovulation timeline, drive
+ *          by phase, the symptom pattern, the temperature chart, then the guide.
+ *
+ * **The legend is in zone 2 and not in the guide**, because "which colour is
+ * which" is asked while pressing the chips, and a fold would answer it on a page
+ * you have to open first. The food guide, which is reading matter, is a fold.
+ * `FertileWindow` is the one graphic that is not about *your* log: it explains
+ * what the narrow green band is and why two signals point at it from opposite
+ * sides in time, which a ring cannot show and a paragraph cannot hold.
  *
  * Everything in zone 3 is keyed to the **cycle**, not the calendar month, and
  * that is the substantive change: a month boundary cuts a cycle at an
