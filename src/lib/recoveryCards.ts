@@ -87,6 +87,16 @@ export interface CardMeta {
   title: string
   group: Group
   words: string
+  /**
+   * Take the whole row of `CardGrid` instead of one column.
+   *
+   * A panel that is a *set* of peers rather than one reading — the seven coping
+   * techniques — packs across the row and reads badly stacked in a 350px
+   * column. Data, not a class on the JSX, for the same reason the groups are:
+   * the renderer in `views/NoFap.tsx` stays a map over this list, and nothing
+   * about how a panel is laid out depends on where its element happens to sit.
+   */
+  wide?: boolean
 }
 
 export const CARDS: CardMeta[] = [
@@ -119,7 +129,7 @@ export const CARDS: CardMeta[] = [
   { id: 'commitment', title: 'My commitment', group: 'plan', words: 'commitment contract quit date reason why promise' },
   { id: 'triggerplans', title: 'Trigger plans', group: 'plan', words: 'trigger plan if then coping response when i will' },
 
-  { id: 'techniques', title: 'Beat the urge', group: 'reference', words: 'technique surf delay halt play forward remove cue reach out coping' },
+  { id: 'techniques', title: 'Beat the urge', group: 'reference', words: 'technique surf delay halt play forward remove cue reach out coping', wide: true },
   { id: 'ladder', title: 'Recovery ladder', group: 'reference', words: 'ladder milestone benefit days clears next 7 14 30 90' },
   { id: 'resets', title: 'Reset history', group: 'reference', words: 'reset history relapse log reason reflection past' },
 ]
