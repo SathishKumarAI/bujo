@@ -1,81 +1,86 @@
 # STATUS
 
-**Stopped:** 2026-09-21, on `main`, clean, nothing open. **Nine PRs merged
-this stretch (#252–#260)**, and `main`'s a11y workflow is green on two
-consecutive runs after three red merges.
+**Stopped:** 2026-09-25, on `main`, clean. **Five PRs merged (#263–#268)**,
+all squash-merged with `npm run verify` + `npm run a11y` green on each.
 
-## Where the app is
+## What this stretch was
 
-Today is **one page**. It was four surfaces behind a tab row — morning, day,
-evening, habits — and the split was paid for in duplication the code had
-already stopped fighting: habits were captured in **four** places, and
-`surfaceUntouched` declines to count them at all because "they render on Day
-*and* Evening". The order is now capture → review → visualisations, which is
-what the page is for: **capture used to be a tab away**, so at 7am writing a
-line began with choosing a surface.
+One request: spin the UI up, find bugs, kill duplication in Settings and in
+Fitness/Strength, give the Cycle page real context and visualisations, and
+modularise as it goes. Every item below was measured in the running app before
+it was called a problem.
 
-`npm run space -- <view> | --all` measures any page: screens of scroll as
-shipped AND with every fold open, cards, how many columns the layout actually
-uses, and cards whose box is mostly air. Two scroll numbers because either
-alone is gameable — measuring only the opened page punishes a disclosure for
-existing; measuring only the shipped page rewards hiding content.
+| # | What | The finding |
+|---|---|---|
+| 263 | Strength had two front doors | The Fitness mode toggle **and** the Strength tab both logged a `Workout`, forty pixels apart. `views/FitnessHub.tsx` was 142 lines of **dead code** nothing imported. |
+| 264 | Settings counted the journal twice | Two cards, 3,000px apart, four identical numbers — and **"Habits" meant two different things** (`!archived` vs all). `Settings.tsx` 969 → 86 lines. |
+| 265 | Cycle had nothing to show | **The demo seed never wrote `data.cycle`**, so the gate could not fail on any of it. Four visualisations added. |
+| 266 | A stray `undefined/` directory | My own mistake in #265; a probe script wrote to an unset env var and `git add -A` swept it in. |
+| 267 | Mindset's library was a 3,200px wall | 46 principles in one column on a 1,180px tier. Two docstrings said "26". |
+| 268 | Auto-sync hands over a locked journal | `bujo:enc` holds ciphertext while `bujo:sync` holds the passphrase **in plaintext beside it**. |
 
-## The one thing that is instrumented, not fixed
+## The two worth re-reading
 
-**An intermittent blank boot on `?view=settings` in CI.** The document renders
-nothing — `body says: ""`, right url, no dialogs — and it never reproduced
-locally. Filed as **COD-211**.
+**`lib/demo.ts` seeded every domain except `data.cycle`.** The Cycle page's
+whole orientation block is `{day != null && phase && …}`, so it was absent from
+the DOM; `npm run a11y` visits that page at five themes and two viewports on
+every run and could not fail on any of it. Seeding four cycles turned the first
+green run **red** on a serious `scrollable-region-focusable`. The trap is in
+CLAUDE.md now: **when you add a domain to `types.ts`, seed it in the same
+change** — an unseeded domain is a whole subject the gates silently skip.
 
-Three fixes treated it as a timing race and each held locally and died on CI.
-Two theories were measured and disproven: the lazy chunk is not slow (8x CPU
-throttle: `main` goes 12 → 319 characters in ~500ms) and the missing `?demo=1`
-on the companions URL renders fine (319–31,655 characters).
+**The passcode lock does not survive auto-sync, and `docs/AUTH.md` said it
+did.** Measured, both switched on:
 
-The gate now captures `pageerror`, console errors and failed JS/CSS requests
-and prints them at the point of failure, and reloads once **loudly**. It had no
-error capture at all, which is exactly why three rounds of guessing were
-possible. The next occurrence names its own cause.
+```
+bujo:enc    {"v":1,"salt":"R6+Ar…      103,399 chars of ciphertext
+bujo:sync   correct-horse-battery
+```
 
-## Traps earned today, all in CLAUDE.md
+The lock works exactly as documented. It just does not matter. Not silently
+fixed — encrypting `bujo:sync` under the passcode key means auto-sync cannot
+run while locked, which is a product decision. The trade-off is surfaced at the
+switch and documented instead.
 
-- **Every browser-gate assertion needs a wait in front of it.** Four in one day:
-  navigation (COD-202), a receipt check that could only pass between 11:00 and
-  18:00, the theme attribute, and the view render. Each read "not yet" as "not
-  ever", each passed on a warm machine and failed on a cold runner.
-  `waitUntil: 'networkidle'` is not "the app is ready".
-- **`waitForFunction` dies with the execution context.** It throws when the page
-  navigates mid-wait, and a `.catch` that protects the diagnostic path swallows
-  it. Poll instead — a destroyed context is then one wasted iteration, not a
-  verdict.
-- **Do not `npm run build` while `npm run a11y` runs.** The preview server
-  serves the half-written `dist` and the gate reports a view that "did not
-  load".
-- **`MasonryGrid` in a zone under 768px silently does nothing** — it queries its
-  container (`@3xl`), and Gym's review zone is 722px. Second page it has bitten.
-- **An element cannot query itself.** `@2xl/band:` on `BandRow`, which IS the
-  `@container/band`, emitted no CSS and collapsed desktop to one column with
-  nothing failing.
-- **A number over budget is a question, not a verdict.** Four of the eight pages
-  over three screens are deliberately that long and two say so in the file with
-  the measurements that decided it.
+## Numbers, before → after
+
+```
+space   mindset   desktop 4.8 → 3.8 shipped
+        cycle     desktop 1.6 → 1.9 shipped, 1 column ⚠ → 3 columns
+                  phone   2.5 → 4.2 shipped   ← the real cost, four charts stacked
+tests   1149 → 1164 in 90 files
+a11y    166 rows, no serious or critical
+```
+
+Cycle's desktop page gained four visualisations for **0.3 screens**, because
+the wide tier was being spent on one column.
 
 ## Next, in the order I would take it
 
-1. **COD-211** — the blank boot. The diagnostics are in; the next red run should
-   name the cause rather than cost another three cycles.
-2. **COD-208** — a crash inside the gate's `scan()` still escapes before the
-   summary table prints, so that red cannot say how much was checked.
-3. `pullups` (5.6 open) and `nofap` (4.7) are unexamined. Both are collapsed
-   reference content at 1.9 and 1.8 shipped, so they may be working as intended
-   — run `npm run space` and the `space-audit` skill before touching them.
-4. `insights` is 6.8 desktop / **11.9 phone**, the largest page in the app.
-   Shortening it means cutting cards: a product decision.
-5. `NoFap.logUrge` still has no guard beyond a 3s double-tap window.
-6. Two `Stepper` components exist (`fields/` and `ui/quickpick`), and two
-   disclosure primitives. Worth one consolidation pass.
+1. **`insights` is 6.8 desktop / 12.0 phone**, still the largest page. Unchanged
+   from the last handover and still a product decision: shortening it means
+   cutting cards.
+2. **Cycle on a phone is 4.2 screens**, and ~950px of that is the month list —
+   30 rows in one column, because the two-column split is `sm:`. Either it
+   splits at 390 (tight: the row is day / cycle-day / temp / dots) or it folds.
+3. **Focus wastes ~700px of its right column.** The timer card holds a 200px
+   ring opposite a long form. The space audit reports `1 column ⚠` for this
+   page, which is a **false read** — it is a custom two-column layout the audit
+   does not recognise, so do not chase that warning.
+4. `encrypted` + `bujo:sync`: the real fix (#268 shipped the honest warning).
+5. Still open from the last stretch: **COD-211** blank boot on `?view=settings`
+   in CI — the diagnostics are in and it never reproduced locally this session;
+   **COD-208**, a crash in the gate's `scan()` escaping before the summary
+   prints; `pullups` (5.6 open) and `nofap` (4.7) unexamined.
 
-## Numbers worth not misreading
+## Traps earned, all in CLAUDE.md
 
-`npm run a11y` reports **166 rows, down from 194**. That is the four-surface
-walk collapsing into one scan per theme and viewport — same coverage, fewer
-pages. It is not lost checks.
+- **An unseeded domain is a subject the gates do not check.** One level below
+  the empty-journal trap: not "a card that never renders cannot fail" but "a
+  domain the seed never writes cannot fail".
+- **A count in a comment has nothing keeping it true.** Two Mindset docstrings
+  said 26 while the library held 46 and the bar rendered "46 of 46" thirty
+  pixels above the list. They agreed with each other and with nothing else.
+- **A render diff is the gate on an extraction.** Settings' five tabs were
+  captured with every fold open before and after; four came back
+  byte-identical, which is the only way to move 900 lines and know it.
