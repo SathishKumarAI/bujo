@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { CollapsibleSection } from '../components/CollapsibleSection'
-import { PageLayout, StatBar } from '../components/page'
+import { PageLayout, SectionRail, StatBar } from '../components/page'
+import { useStickyState } from '../lib/useStickyState'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
@@ -202,15 +202,34 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
     </Card>
   )
 }
-
 /**
- * Zone 3 · the manual. Five folds, all closed, same shape as `Pullups`.
+ * Zone 3 · the manual, as seven chapters behind a rail.
  *
- * These were five open `Card collapsible`s in a grid. Open is the wrong default
- * for reference on a page whose act is a twelve-week program: the rule this
- * directory states is that what the app learned about you outranks what the app
- * can tell everybody, and none of this is about you.
+ * It was seven `CollapsibleSection`s, all shipping closed — so arriving here
+ * showed seven grey titles and reading anything meant opening one, scrolling,
+ * and closing it again. Measured: **2,091px shut and 12.9 screens with every
+ * fold open on a phone**, for a reference manual whose chapters you read one
+ * at a time by definition.
+ *
+ * A fold is the right primitive for one aside inside a page about something
+ * else. Seven peers, each a chapter, is a table of contents — so the titles
+ * become the navigation and the chapter body renders plainly, with no caret
+ * and nothing to open. The `stickyKey`s are gone with the folds; the rail
+ * remembers the chapter instead.
+ *
+ * Same `SectionRail` as Insights. No "All" row: the chapters do not overlap
+ * and nobody wants all seven at once — that is the page this replaces.
  */
+const CHAPTERS = [
+  { id: 'shots', color: 'mauve', label: 'How to play every shot', blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
+  { id: 'drills', color: 'green', label: 'Drill library', blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
+  { id: 'ladder', color: 'sky', label: 'Skill ladder', blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
+  { id: 'rehab', color: 'red', label: 'Knee rehab & prehab', blurb: "ACL / MCL · prevent and recover, with or without equipment", icon: Heartbeat },
+  { id: 'playsafe', color: 'green', label: 'Play safe', blurb: "Physio & trainer notes · injury-prevention basics for the court", icon: ShieldPlus },
+  { id: 'mental', color: 'peach', label: 'Mental game', blurb: "The mindset that wins close games", icon: Brain },
+  { id: 'formats', color: 'blue', label: 'Format playbook', blurb: "How each league & tournament format works", icon: Medal }
+] as const
+
 function Manual() {
   const drillSkills = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
   const [openSkill, setOpenSkill] = useState<string | null>(drillSkills[0])
@@ -218,17 +237,42 @@ function Manual() {
   const [equip, setEquip] = useState<RehabEquip | 'all'>('all')
   const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
   const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
+  /* Sticky so the chapter survives a reload — the seven folds each did, and
+     losing that would be a regression dressed as a redesign. */
+  const [chapter, setChapter] = useStickyState<string>(
+    /* Drills, not the first chapter. The rail always shows something, so the
+       default is a real choice — and `shots` is the longest chapter (2,921px
+       against `playsafe`'s 2,119px), which makes the biggest one the landing
+       page. Drills is what you open beside a twelve-week program: "pick 1–2
+       a session" is the sentence next to the act above it. */
+    'coaching.chapter', 'drills', CHAPTERS.map((c) => c.id),
+  )
+  const current = CHAPTERS.find((c) => c.id === chapter) ?? CHAPTERS[0]
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-label text-fg-2">Manual</h2>
-
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.shots"
-        icon={BookOpen} color="mauve"
-        title="How to play every shot"
-        subtitle={`${TECHNIQUES.length} shots · how-to, cues & common mistakes`}
-      >
+    <section>
+      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
+      {/* Container on the outer div, grid on the inner: an element cannot
+          query itself. Phone column spelled out, or the chip row's
+          min-content sizes the only implicit track and the page scrolls
+          sideways. Both documented in docs/PAGE-SHAPE.md. */}
+      <div className="@container/page">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+        <SectionRail
+          label="Manual chapters"
+          groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
+          value={chapter}
+          onChange={(id) => setChapter(id ?? 'drills')}
+        />
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+            <h3 className="flex items-center gap-2 font-display text-heading font-medium text-fg-1">
+              <Icon as={current.icon} size="md" style={{ color: onRaised(current.color) }} />
+              {current.label}
+            </h3>
+            <p className="text-label text-fg-2">{current.blurb}</p>
+          </div>
+          {chapter === 'shots' && (<>
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
             <p className="mb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
@@ -282,14 +326,8 @@ function Manual() {
             </ul>
           </div>
         ))}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.drills"
-        icon={Barbell} color="green"
-        title="Drill library"
-        subtitle={`${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`}
-      >
+          </>)}
+          {chapter === 'drills' && (<>
         <div className="space-y-2">
           {drillSkills.map((skill) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
@@ -312,14 +350,8 @@ function Manual() {
             )
           })}
         </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.ladder"
-        icon={ListChecks} color="sky"
-        title="Skill ladder"
-        subtitle="2.0 → 4.5+ · what to master at each level, in order"
-      >
+          </>)}
+          {chapter === 'ladder' && (<>
         <div className="space-y-3">
           {ACADEMY_LEVELS.map((lvl) => (
             <div key={lvl.id} className="rounded-card bg-ink-2 p-3">
@@ -333,14 +365,8 @@ function Manual() {
             </div>
           ))}
         </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.rehab"
-        icon={Heartbeat} color="red"
-        title="Knee rehab & prehab"
-        subtitle="ACL / MCL · prevent and recover, with or without equipment"
-      >
+          </>)}
+          {chapter === 'rehab' && (<>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {(['all', 'none', 'band', 'weights'] as const).map((e) => (
             <button key={e} onClick={() => setEquip(e)} aria-pressed={equip === e} className="rounded-control border px-2.5 py-1 text-label transition-colors"
@@ -371,17 +397,8 @@ function Manual() {
           )
         })}
         <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-      </CollapsibleSection>
-
-      {/* Moved from the Pickleball page: reference reading, not session
-          logging, and it sat there as the tenth card on a four-screen page.
-          Beside Knee rehab because both are the injury shelf. */}
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.playsafe"
-        icon={ShieldPlus} color="green"
-        title="Play safe"
-        subtitle="Physio & trainer notes · injury-prevention basics for the court"
-      >
+          </>)}
+          {chapter === 'playsafe' && (<>
         <ul className="space-y-2">
           {TIPS.map((x) => (
             <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
@@ -390,14 +407,8 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.mental"
-        icon={Brain} color="peach"
-        title="Mental game"
-        subtitle="The mindset that wins close games"
-      >
+          </>)}
+          {chapter === 'mental' && (<>
         <ul className="grid gap-2 sm:grid-cols-2">
           {MINDSET.map((m) => (
             <li key={m.title} className="rounded-card bg-ink-2 p-2.5">
@@ -406,18 +417,8 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
-
-      {/* Moved from the Pickleball page with Play safe above. How each league
-          and tournament format works — read before an event, not while
-          logging one. The event form's format select still lives on
-          Pickleball; PICKLE_FORMATS feeds both. */}
-      <CollapsibleSection
-        variant="quiet" defaultOpen={false} stickyKey="coaching.formats"
-        icon={Medal} color="blue"
-        title="Format playbook"
-        subtitle="How each league & tournament format works"
-      >
+          </>)}
+          {chapter === 'formats' && (<>
         <ul className="grid gap-3 sm:grid-cols-2">
           {PICKLE_FORMATS.map((fm) => (
             <li key={fm.id} className="rounded-card bg-ink-2 p-3">
@@ -429,7 +430,10 @@ function Manual() {
             </li>
           ))}
         </ul>
-      </CollapsibleSection>
+          </>)}
+        </div>
+      </div>
+      </div>
     </section>
   )
 }
