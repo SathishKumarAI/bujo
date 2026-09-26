@@ -16,6 +16,23 @@ describe('cycle guide holds what the page promises', () => {
     }
   })
 
+  it('carries food guidance for every phase, and credits a real source for it', () => {
+    for (const p of CYCLE_PHASES) {
+      expect(p.cravings.length).toBeGreaterThan(40)
+      expect(p.eat.length).toBeGreaterThan(40)
+      // A dietary claim with no credit is the thing this field exists to stop.
+      expect(p.sources.length).toBeGreaterThan(0)
+      for (const s of p.sources) {
+        expect(s.url).toMatch(/^https:\/\//)
+        expect(s.label.length).toBeGreaterThan(4)
+      }
+    }
+    // Five links across four phases: the luteal pair is deliberate (NHS for the
+    // meal pattern, OWH for calcium and what to ease off), so a drop to four
+    // means a source was lost rather than a phase merged.
+    expect(CYCLE_PHASES.flatMap((p) => p.sources)).toHaveLength(5)
+  })
+
   it('keeps the temperature rules and logging tips populated', () => {
     expect(BBT_RULES.length).toBe(5)
     expect(TRACKING_TIPS.length).toBe(4)
