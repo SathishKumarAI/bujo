@@ -3,6 +3,7 @@ import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
 import { hasLapseQuantity, lapseCountOn, lapseTrend, peakLapseWeekday } from './lapse'
 import { todayISO } from './date'
+import { metricsCsv } from './csv'
 
 /**
  * The demo journal has to be able to say that it is the demo journal.
@@ -35,6 +36,38 @@ describe('demo data marks itself', () => {
     const d = generateDemoData()
     expect(d.entries.length).toBeGreaterThan(50)
     expect(d.habits.length).toBeGreaterThan(0)
+  })
+
+  /**
+   * `steps`, `restingHR` and `activeKcal` are device-only fields — an Apple
+   * Health import or a voice capture writes them and no form can. They had been
+   * on `DailyMetric` since the ingest pipeline landed and the seed wrote none of
+   * them, so nothing in the app had ever been rendered or exported with one
+   * present. Asserted here because that is the documented trap: a field the seed
+   * skips is a field every browser gate silently does not check.
+   */
+  it('seeds the device-only metrics, not just the ones a form can write', () => {
+    const d = generateDemoData()
+    for (const field of ['steps', 'restingHR', 'activeKcal'] as const) {
+      const withField = d.metrics.filter((m) => m[field] != null)
+      // `not.toBeNull()` style first: `expect(undefined).toBeGreaterThan(0)`
+      // would coerce and the assertion would pass on an unseeded field.
+      expect(withField.length, `no metric row carries ${field}`).toBeGreaterThan(20)
+      expect(withField.every((m) => Number.isFinite(m[field]))).toBe(true)
+    }
+  })
+
+  it('can export every seeded metric field back out again', () => {
+    // The other half of the same finding: those three fields had no reader AND
+    // no CSV column, so they were data you could put in and never get out.
+    const NL = String.fromCharCode(10)
+    const csv = metricsCsv(generateDemoData())
+    const header = csv.split(NL)[0]
+    for (const col of ['steps', 'restingHR', 'activeKcal']) expect(header).toContain(col)
+    // A column of nothing but empty cells would satisfy the header check.
+    const stepsCol = header.split(',').indexOf('steps')
+    const values = csv.split(NL).slice(1).map((l) => l.split(',')[stepsCol]).filter((v) => v !== '')
+    expect(values.length).toBeGreaterThan(20)
   })
 })
 

@@ -58,6 +58,16 @@ export function generateDemoData(today = todayISO()): JournalData {
       protein: 110 + Math.floor(rand() * 60),
       carbs: 150 + Math.floor(rand() * 120),
       fat: 50 + Math.floor(rand() * 40),
+      // The three fields only a device can fill — an Apple Health import, or a
+      // voice capture. They have been on `DailyMetric` since the ingest
+      // pipeline landed and the seed never wrote one, so nothing in the app had
+      // ever been rendered or exported with them present. Same shape as the
+      // unseeded `data.cycle` finding: a field the seed skips is a field the
+      // gates silently do not check. Correlated with sleep on purpose, because a
+      // flat random walk makes a trend chart look broken.
+      steps: 4_000 + Math.floor(rand() * 9_000),
+      restingHR: Math.round(70 - sleep * 1.5 + rand() * 6),
+      activeKcal: 250 + Math.floor(rand() * 550),
     })
 
     // 1–3 entries/day.

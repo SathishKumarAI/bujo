@@ -3,6 +3,7 @@ import { TagManager } from '../TagManager'
 import { YourDataCard } from './YourDataCard'
 import { BackupCard } from './BackupCard'
 import { DemoResetCard } from './DemoResetCard'
+import { AppleHealthCard } from './AppleHealthCard'
 
 /**
  * What is here, how to get it out, and how to destroy it — in that order.
@@ -27,6 +28,7 @@ export function DataTab() {
             was the one thing on that page you could *change* something with, and
             it sat behind a fold at the bottom of six. Between export and the
             danger zone is where data you edit in bulk belongs. */}
+        <AppleHealthCard />
         <TagManager />
         <DemoResetCard />
       </MasonryGrid>
