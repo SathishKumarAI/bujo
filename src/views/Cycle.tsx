@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
+import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { PageLayout, SummaryStrip } from '../components/page'
 import { CardGrid } from '../components/shell/CardGrid'
@@ -209,7 +210,11 @@ export function Cycle() {
             </Card>
           </CardGrid>
 
-          <Card band title="Basal temperature" subtitle="Read for the shift, not the number" hideInfo className="mt-4">
+          {/* The title says the words; the ⓘ says what a *basal* temperature is
+              and why a reading taken after you are up is not one. That distinction
+              is the difference between a chart with a visible shift and a chart of
+              noise, and it was nowhere on the page. */}
+          <Card band title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo className="mt-4">
             <BbtChart points={bbt} unit={unit} label={bbtLabel} />
           </Card>
 
