@@ -87,6 +87,24 @@ export const OPTIONAL_FIELDS = ['calories', 'rpe', 'notes'] as const
 export const MODES: Mode[] = ['cardio', 'strength', 'sport']
 
 /**
+ * The modes the **Fitness page** offers as a toggle — which is not all of them.
+ *
+ * `strength` is a shape a `Workout` can have (a legacy row, a Gym session, a
+ * pull-up set all derive it), so it stays in `MODES` and every derivation still
+ * handles it. What it is not is a thing you log *here*: Strength is its own
+ * Body tab, forty pixels above this toggle, and it holds the set logger, the
+ * rest timer, PRs, the muscle map and twelve analytics. The Fitness segment
+ * offered a duration-and-sets textarea for the same record — two front doors
+ * to one room, and the smaller one silently wrote sessions the Strength page's
+ * own logger would never have produced.
+ *
+ * So the door is deleted, not the mode. `modeSegments()` reads this list;
+ * `modeOf()`, `activitiesForMode()` and the edit dialog still read `MODES`,
+ * which is why a push day logged last year still opens with its sets field.
+ */
+export const LOGGABLE_MODES: Mode[] = ['cardio', 'sport']
+
+/**
  * Everything that changes with the mode, in one place.
  *
  * The contract requires the copy and the orientation facts to follow the mode —
@@ -131,9 +149,9 @@ export const MODE_COPY: Record<Mode, ModeCopy> = {
   },
 }
 
-/** The mode segments for a StatBar, in registry order. */
+/** The mode segments for a StatBar, in registry order. Loggable modes only. */
 export const modeSegments = (): { value: Mode; label: string }[] =>
-  MODES.map((m) => ({ value: m, label: MODE_COPY[m].label }))
+  LOGGABLE_MODES.map((m) => ({ value: m, label: MODE_COPY[m].label }))
 
 const KEYS = Object.keys(ACTIVITIES) as ActivityKey[]
 

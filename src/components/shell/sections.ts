@@ -114,6 +114,13 @@ export const SECTIONS: Section[] = [
       // program tracker, the plate calculator, the muscle map and progress
       // photos were all behind a conditional. A whole workshop should not need
       // a mode to be set before it has a door.
+      //
+      // And once it had one, Fitness kept its `strength` segment: the same
+      // `Workout` with two loggers, the lesser one unable to hold a set row, a
+      // split, a PR or a rest timer. The segment is gone (`LOGGABLE_MODES` in
+      // the activity registry); this tab is where strength is logged. A
+      // `?activity=pullups` link now redirects here rather than landing on a
+      // toggle that cannot represent the mode it asked for.
       { view: 'gym', label: 'Strength' },
       // The 12-week hypertrophy block, by the same test that made Pickleball a
       // tab. It was one line inside Strength's "Program & progress" fold, so a

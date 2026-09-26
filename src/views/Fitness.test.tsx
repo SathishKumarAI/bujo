@@ -6,6 +6,7 @@ import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
 import { COMPANION, Fitness } from './Fitness'
 import { SECTIONS } from '../components/shell/sections'
+import { LOGGABLE_MODES, MODES, modeSegments } from '../domain/activities'
 
 /**
  * The deep-linked activity has to beat the stored mode.
@@ -61,7 +62,8 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
     expect(activitySelect().value).toBe('run')
 
     // Radix `ToggleGroup type="single"` renders radios, not buttons.
-    await user.click(screen.getByRole('radio', { name: 'Strength' }))
+    // Sport, not Strength: Strength is a Body tab now and not a segment here.
+    await user.click(screen.getByRole('radio', { name: 'Sport' }))
 
     const select = activitySelect()
     expect(select.value).not.toBe('run')
@@ -102,5 +104,54 @@ describe('Fitness companion links', () => {
     const tabs = SECTIONS.flatMap((s) => s.tabs).map((t) => t.view)
     const tabbed = Object.values(COMPANION).map((c) => c.view).filter((v) => tabs.includes(v))
     expect(tabbed).toEqual([])
+  })
+})
+
+/**
+ * One front door per record shape.
+ *
+ * Strength was a segment on this page AND a Body tab, so the same `Workout`
+ * had two loggers — and the one here could not hold a set row, a split, a PR
+ * or a rest timer, which is the half nothing failed on. The invariant is not
+ * "there are two segments": it is that **every mode this page offers has no
+ * page of its own**, so promoting a mode to a tab fails here rather than
+ * quietly doubling the door. Sibling of the companion-link test above.
+ */
+describe('Fitness mode segments', () => {
+  it('offers no mode that already has its own Body tab', () => {
+    const tabbed: Partial<Record<string, string>> = { strength: 'gym' }
+    const doubled = modeSegments().map((seg) => seg.value).filter((m) => tabbed[m])
+    expect(doubled).toEqual([])
+  })
+
+  it('keeps every mode in the registry, so old sessions still derive one', () => {
+    // Deleting the segment must not delete the shape: `modeOf('push')` is still
+    // `strength`, which is what makes the edit dialog render a sets field.
+    expect(MODES).toContain('strength')
+    expect(LOGGABLE_MODES).not.toContain('strength')
+  })
+})
+
+describe('Fitness · a strength deep link', () => {
+  afterEach(() => {
+    localStorage.clear()
+    window.history.replaceState({}, '', '/')
+  })
+
+  it('redirects to Strength instead of landing on a toggle that cannot hold it', () => {
+    const seen: string[] = []
+    window.history.replaceState({}, '', '/?view=fitness&activity=pullups')
+    render(
+      <NavProvider navigate={(v) => seen.push(v)}>
+        <ConfirmProvider>
+          <JournalProvider>
+            <Fitness />
+          </JournalProvider>
+        </ConfirmProvider>
+      </NavProvider>,
+    )
+    expect(seen).toContain('gym')
+    // And it does not silently preselect a strength activity on the way out.
+    expect([...activitySelect().options].map((o) => o.value)).toContain(activitySelect().value)
   })
 })
