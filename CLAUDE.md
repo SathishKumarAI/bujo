@@ -16,6 +16,54 @@ happens to be checked out.
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
 
+## Running the browser gates
+
+`npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a
+real Chromium over real pages. They are **minutes, not seconds**, and no amount
+of tuning changes that — `a11y` alone is 166 scans, each a navigation, a fold
+pass and an axe run. So:
+
+**Start them in the background and keep working.** Do not sit and watch one.
+The wrong reflex is to block on a gate and then, next time, skip it — which is
+how every "a gate nobody runs" entry in this file started.
+
+```
+npx vite build                                   # never while a gate is running
+npx vite preview --port 4173 --strictPort &
+BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs   # background this
+```
+
+**Always set `BUJO_URL`.** Every script here reads it (`space-audit.mjs` also
+still accepts its old `BASE_URL`). The default port belongs to whichever preview
+server started first on this machine, which is how `npm run smoke` spent three
+PRs grading a different application — see the trap below.
+
+Narrowing knobs, for the loop where you are fixing one thing:
+
+| Knob | Does |
+|---|---|
+| `BUJO_THEMES=mocha` | one theme instead of five — roughly a fifth of the run |
+| `BUJO_PHONE_THEMES=mocha` | one phone theme instead of two |
+| `BUJO_A11Y_WORKERS=n` | pages scanning at once; `1` is the old serial walk |
+
+`a11y` shards on the `viewport · theme` pair and runs **4 pages at once** by
+default (`min(4, os.availableParallelism())`) — clamped to 4 rather than to the
+core count because Chromium, not the CPU, is the bottleneck, and because every
+timing assertion in that file gets *tighter* on a loaded machine. Measured on
+this machine against the same preview server, at `95d79af`:
+
+| | wall clock |
+|---|---|
+| serial, before (COD-224) | **507s** (`475s · 486s` before the glossary fold landed) |
+| 4 workers, after | **183s · 186s · 168s** |
+| `BUJO_A11Y_WORKERS=1` | **478s** — and a table byte-identical to the 4-worker one |
+
+Same 166 rows in the same order, same verdict on every one. Reach for
+`BUJO_A11Y_WORKERS=1` when a failure smells like a race rather than a
+violation: four busy pages make every wait in that file tighter, and the table
+in the "every browser-gate assertion needs a wait in front of it" trap below is
+what that looks like when it goes wrong.
+
 Trap: **`npx tsc --noEmit` typechecks nothing here** — the root `tsconfig.json`
 is solution-style (`"files": []` + project references), so it has no root files
 and always exits 0. Always use `npx tsc -b`.
@@ -39,6 +87,18 @@ panel at a time, so those groups get one representative panel, not all of them;
 the fold count in the summary column oscillates there rather than settling.
 Scoped to `#main` on purpose — the shell header's four `aria-expanded` menu
 buttons are not page content.
+
+And **the fold count it prints was never comparable between themes.**
+`CollapsibleSection` persists its open state through `useStickyState` under
+`bujo.ui.*`, so in the old single-page walk the folds `openFolds` clicked open
+under **mocha** were still open under latte, neon, vscode and dawn: nothing left
+to click, so the column read `0` where mocha read `2` for the same page. The
+content was scanned either way — the number was wrong, not the coverage — but
+sharded across browser contexts it would instead have depended on which worker
+happened to pick up which theme. `setTheme` now clears `bujo.ui.*`, so every
+shard meets the page in its authored state and the column means the same thing
+on all 166 rows. Separate from the single-open-accordion ceiling above, which is
+expected and stays.
 
 Trap: **`vite preview` serves a stale bundle through its service worker.** A
 screenshot can show pre-change markup against a freshly built `dist/`. Before

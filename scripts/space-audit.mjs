@@ -30,7 +30,18 @@
  */
 import { chromium } from 'playwright'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:4173'
+/**
+ * `BUJO_URL` first — this script was the one holdout on `BASE_URL`.
+ *
+ * Every other script in this directory reads `BUJO_URL`, so a run that exported
+ * it once and then invoked several gates pointed this one at the default port
+ * instead: a different worktree's preview server, or another project's dev
+ * server entirely. That is the `npm run smoke` disaster in miniature (CLAUDE.md
+ * — three PRs quoted a pass from **a different application**), and the tell is
+ * the same: a browser gate whose target is decided by something other than what
+ * you set. `BASE_URL` still works so nothing that already exports it breaks.
+ */
+const BASE = process.env.BUJO_URL ?? process.env.BASE_URL ?? 'http://localhost:4173'
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'phone', width: 390, height: 844 },
