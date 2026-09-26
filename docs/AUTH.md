@@ -67,12 +67,42 @@ authenticate to *that service*, never to bujo. See
 
 ## Passcode lock
 
-The only control here that actually restricts access. PBKDF2 → AES-GCM over the
-whole journal at rest, so `localStorage` holds ciphertext (`bujo:enc`) instead of
-plaintext (`bujo:data`). Web Crypto, entirely local, nothing transmitted.
+The only control here that restricts access to the journal on this device.
+PBKDF2 → AES-GCM over the whole journal at rest, so `localStorage` holds
+ciphertext (`bujo:enc`) instead of plaintext (`bujo:data`). Web Crypto,
+entirely local, nothing transmitted.
 
 Same rule as the passphrase: **no recovery.** It is the honest cost of the key
 never leaving your device.
+
+### Auto-sync defeats it, and this page used to say otherwise
+
+Auto-sync has to keep the sync passphrase to run unattended, and it keeps it
+**in plaintext** at `bujo:sync`. With both switched on, the actual contents of
+`localStorage` — measured, not reasoned about:
+
+```
+bujo:enc    {"v":1,"salt":"R6+Ar…      103,399 characters of ciphertext
+bujo:sync   correct-horse-battery
+```
+
+The lock is doing exactly what this section describes: `bujo:data` is gone.
+It just does not matter. The key to the cloud copy of the same journal is
+sitting beside it in the clear, so anyone who can read that storage calls
+`pullCloud` with it and has the journal in cleartext — the passcode was never
+in the way. This section previously called the passcode "the only control that
+actually restricts access" with no qualifier, which was a promise the code did
+not keep.
+
+It is not silently fixed, because the fix is a product decision. Encrypting
+`bujo:sync` under the passcode key would mean auto-sync cannot run while the
+journal is locked — which is most of the time, and is arguably the whole point
+of a background sync. So the trade-off is surfaced where it is made:
+`CloudSyncCard` asks before turning auto-sync on over an encrypted journal, and
+keeps a warning on screen for as long as both are on.
+
+**Push and Pull by hand store nothing.** They are the combination that keeps
+the passcode meaningful.
 
 ## Words this app does not use, and why
 
@@ -86,6 +116,7 @@ banned on purpose:
 | "Your account" for the passphrase | `bujocloud` has no accounts. Two people with one passphrase are not two users. |
 | "Forgot passphrase?" | There is no reset path and there will not be one. Say it cannot be recovered. |
 | "Backed up" for sync state | One overwritten blob is not a backup. Say "synced". |
+| "The passcode protects your journal" with auto-sync on | It protects the copy on this device. `bujo:sync` hands over the cloud copy. Qualify it or do not say it. |
 
 ## Why accounts were removed (2026-09-11)
 
