@@ -1,5 +1,140 @@
 # Worklog
 
+## How the session documents work
+
+Three files, three different jobs, and keeping them apart is what stops any
+of them rotting. Written down because the split is not obvious and the last
+two sessions each found a doc that had drifted from the code.
+
+| File | Job | Written when |
+|---|---|---|
+| **`WORKLOG.md`** (this) | The permanent record. One dated entry per session: what shipped, what it measured, what it learned. Append only — never edit an old entry to match what is true now. | At the end of a session |
+| **`STATUS.md`** | Re-entry context, and only that. Where it stopped, the next action, the traps waiting. Rewritten wholesale every time, because a stale STATUS is worse than none. | When you **stop**, not when you start |
+| **`NEXT-SESSION.md`** | The queue for the session that has not happened. What to do, in order, with the measurement that justifies each. Deleted or rewritten once picked up. | When you stop, if you know what is next |
+
+Rules the three share:
+
+- **A number or it did not happen.** "Shorter" is not a finding; "6.3 → 1.8
+  screens" is. Quote the command that produced it.
+- **Record what you got wrong**, including the approach you measured and threw
+  away. Two redesigns died this stretch and that is the most useful paragraph
+  in the entry — it stops the next session spending the same afternoon.
+- **When a change invalidates a doc, fix the doc in the same commit.** A stale
+  map costs more than no map.
+- `docs/` holds the reasoning; a comment holds the reasons that fit in three
+  lines; the commit body holds what was measured.
+
+---
+
+## 2026-09-25/26 — One layout idea, and the two that measured as nothing (#263–#276)
+
+**Summary:** Fourteen PRs. The first six were duplication — the same record
+logged twice, the same journal counted twice, the same lifts listed twice.
+The last eight were one idea: **a page past about four peer groups should turn
+those group names into navigation instead of stacking them.** Five pages moved
+onto one `SectionRail` and the app's longest screens collapsed.
+
+The through-line is narrower than last time and worth stating plainly: **this
+app had exactly one layout idea — stack cards, scroll — and a width tier it
+never used.** Every "this page is a mess" report traced back to that, and the
+two obvious fixes for it both measured as no-ops.
+
+**What shipped:**
+
+- **#263 · Strength had two front doors.** The Fitness mode toggle *and* the
+  Strength tab both logged a `Workout`, forty pixels apart. The smaller one
+  could not hold a set row, a split, a PR or a rest timer. Also deleted
+  `views/FitnessHub.tsx`: **142 lines nothing imported**, green on every gate,
+  because an unimported module is not an error.
+
+- **#264 · Settings counted the journal twice.** Two cards, 3,000px apart, four
+  identical numbers — and **"Habits" meant two different things** (`!archived`
+  versus every row), agreeing only because nothing in the demo is archived.
+  `views/Settings.tsx` 969 → 86 lines.
+
+- **#265 · Cycle had never been seen with data.** `lib/demo.ts` seeded every
+  domain *except* `data.cycle`, so a page `npm run a11y` visits ten times a run
+  could not fail on any of it. Seeding four cycles turned the next green run
+  **red**. Four visualisations added: a wheel, cycle-length history, a symptom
+  pattern folded along the cycle boundary, and the BBT chart re-axed to cycle
+  day with a coverline.
+
+- **#267 · Mindset's library** was 46 principles in one column on a 1,180px
+  tier. Two docstrings said "26" while the page rendered "46 of 46" thirty
+  pixels away.
+
+- **#268 · The passcode lock does not survive auto-sync, and the docs said it
+  did.** Measured with both on: `bujo:enc` holds 103,399 characters of
+  ciphertext and `bujo:sync` holds the passphrase beside it in the clear. Not
+  silently fixed — encrypting it means auto-sync cannot run while locked, which
+  is a product decision. Surfaced at the switch instead.
+
+- **#270 · Insights offered six domain names and rendered nine groups** under
+  four mechanisms, two sharing a title, with eight of twenty-three cards under
+  no heading. It also exposed `TrackerVisuals`: five habit grids with **no card
+  id and no filter gate**, and the registry test that would have caught it
+  *did not exist* despite a docstring claiming it for two releases.
+
+- **#271 · The set count was a fifth of the truth.** `parseSet` matched the N
+  in "Squat 5x5" and **never captured it**, so every legacy line counted as one
+  set. "Sets this week" read **9 against a true 39**; weekly volume 3,083lb
+  against 14,025lb; the 10–20 hard-set landmark put every muscle at 1–5. Three
+  tests asserted the wrong behaviour, and `lib/pullups.ts` already knew — it
+  writes one line per set to dodge exactly this, with a comment saying so.
+
+- **#272–#274, #276 · The rail.** Insights, Coaching, Pickleball, Help,
+  Pull-ups.
+
+- **#275 · `Input` ignored its own `className`.** Template-string
+  concatenation, so the component's `w-full` beat the caller's `w-20` and
+  **ten fields across the app were stretched** — one asked for 80px and
+  rendered 889. Plus: Escape never closed the enlarge modal, and `enlargeable`
+  was opt-in on 14 of 28 chart cards.
+
+**The rail, measured:**
+
+| page | before | after |
+|---|---|---|
+| insights | 6.3 desktop / 13.5 phone | **1.8 / 3.1** |
+| help | 4.5 shipped / 10.9 open | **1.3 / 1.6** |
+| pickleball | 4.3, 17 folds | **3.0, 8 folds** |
+| pullups | 2.1 shipped / 5.7 open | **2.2 / 2.2**, 7 folds → 1 |
+| coaching | 2,091px shut / 12.9 open | one chapter; no 12.9 state |
+
+**What was measured and thrown away**, which is the half worth keeping:
+
+- **Widening the ten narrow pages to `tier={1440}`** changed page height on
+  **8 of 10 by zero**, and made the dead column *worse* — a wider act column
+  means the same vertical gap covers more area.
+- **`stacked` on the seven pages with the most dead space** cost +469, +641,
+  +1224 and +1346px. It turns `max(act, review)` into `act + review`.
+
+So the dead column beside a short act is the **price** of a layout that is
+already cheaper than the alternative, and the lever is *removing content from
+the page, not reflowing it*. Insights went 6.3 → 1.8 because five of six
+groups stopped rendering.
+
+**Gates and method:**
+
+- A restructure is proven by a **rendered content diff** — walk every group,
+  open every fold, union the text, diff. On Insights the only lines that
+  disappeared were the nine old headings.
+- A pure move is proven better by a **source diff**. Pull-ups' six chapter
+  bodies were extracted from `HEAD` and the working tree and compared line by
+  line: 10, 7, 23, 12, 12, 13 — all identical. The browser probe kept timing
+  out on that page; the source check took a second and proved more.
+- **Read a diff before believing it.** Coaching's showed four missing lines
+  that were a *swap* — a single-open accordion shows one panel in either
+  snapshot. Always check the reverse direction.
+
+**New docs:** `docs/PAGE-SHAPE.md` (the zones, the tiers, the grouping rule)
+and `docs/PAGE-WORKFLOW.md` (the method, in the order that matters).
+
+**Mistakes worth recording:** `git add -A` twice swept in files that were not
+mine — a stray `undefined/` directory from a probe script with an unset env
+var, and an unrelated untracked `docs/*.html` of the user's. Stage explicit
+paths.
+
 ## 2026-09-21 (later) — One day on one page, and four gate races (#252–#260)
 
 **Summary:** Nine more PRs. The first four fixed the accessibility gate and

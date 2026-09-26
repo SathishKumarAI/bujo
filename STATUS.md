@@ -97,6 +97,10 @@ front of them.
 
 ## Next, in the order I would take it
 
+**The full queue, with the reasoning, is `docs/NEXT-SESSION.md`.** This list
+is the short form for someone re-entering; that file is what to work from.
+
+
 0. **`shell/TopBar`'s Quick add is `variant="primary"`** and mounts on every
    view, so it eats every page's budget and the dev-only `[one-primary]` guard
    warns on any page with one of its own. Verified by driving the app: Gym
