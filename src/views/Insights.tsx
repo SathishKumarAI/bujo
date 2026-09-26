@@ -11,13 +11,12 @@ import { insights, weeklyDigest, digestRangeLabel, momentumIndicator } from '../
 import { weeklyRadar } from '../lib/viz'
 import { pace } from '../lib/pace'
 import { coachDigest } from '../lib/coach'
-import { PageLayout, StatBar } from '../components/page'
+import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { MasonryGrid } from '../components/shell/CardGrid'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, todayISO} from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
-import { DomainRail } from '../components/insights/DomainRail'
 import { useStatsCards } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
 import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
@@ -355,11 +354,12 @@ export function Insights() {
               `overflow-x-auto` cannot save it: the track overflows, not the
               item. Same trap `CardGrid` carries a paragraph about. */}
           <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
-          <DomainRail
+          <SectionRail
+            label="Insight domains"
+            groups={DOMAINS.map((d) => ({ id: d, label: DOMAIN_LABEL[d], count: countOf(d) }))}
             value={active}
-            onChange={(d) => { setActive(d); setQ('') }}
-            countOf={countOf}
-            total={CARDS.filter((c) => visibleCards(new Set<Domain>(), q).has(c.id) && all[c.id]).length}
+            onChange={(d) => { setActive(d as Domain | null); setQ('') }}
+            allCount={CARDS.filter((c) => visibleCards(new Set<Domain>(), q).has(c.id) && all[c.id]).length}
             filtering={filtering}
             onClear={() => { setQ(''); setKind('all') }}
           />

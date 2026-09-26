@@ -211,6 +211,45 @@ machinery itself: **Escape did not close it** (`useFocusTrap` mentioned
 Escape in a comment and never listened), and the affordance is worth keeping
 hover-revealed at `opacity-70` so it does not compete with the card's title.
 
+## What does NOT fix an empty gutter
+
+Ten pages sit at 1180px on a 1600px screen. Two obvious fixes were tried and
+both were measured and thrown away — recorded here so nobody spends the
+afternoon again.
+
+**Widening the tier does nothing.** All ten flipped to `tier={1440}`:
+
+```
+                  page height          dead column
+plan       1902 → 1902  (no change)    356k → 407k  (worse)
+program    1029 → 1029  (no change)     94k → 107k  (worse)
+challenges  945 →  945  (no change)     96k → 110k  (worse)
+```
+
+The review clears `MasonryGrid`'s 768px step (722 → 823) and **nothing packs
+into it**, because this content is single-column lists and `CardGrid`s that
+were already at two columns and need a 1536px *viewport* for a third. Height
+changed on 8 of 10 pages by zero, and the dead column got worse because the
+act column is wider so the same vertical gap covers more area.
+
+**Stacking is much worse.** The same pages with `stacked`:
+
+```
+plan       1902 → 2371   +469
+cycle      1864 → 2505   +641
+nofap      1563 → 2787  +1224
+pullups    1847 → 3193  +1346
+```
+
+Obvious in hindsight: stacking turns `max(act, review)` into `act + review`.
+The dead column beside a short act is the *price* of a layout that is already
+shorter than the alternative — it is not free, and it is not the biggest
+lever.
+
+**The lever is removing content from the page, not reflowing it.** That is
+why the rail works and the width does not: Insights went 6.3 → 1.8 screens
+because five of six groups stopped rendering, not because anything got wider.
+
 ## What to measure, and with what
 
 | Question | Command |
