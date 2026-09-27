@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { emptyJournal } from './storage'
 import type { DevSession } from './types'
-import { weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes, minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday } from './focus'
+import {
+  weeklyCodingMinutes, focusStreak, avgWeighted, dailyCodingMinutes, topTags, projectedWeeklyMinutes,
+  minutesByWeekday, longestSession, minutesByProject, interruptionsTrend, deepWorkHeatmap, focusByWeekday,
+  weeklyVolume, focusByDuration, qualityByTag, interruptionCost, focusFindings, cumulativeHours, focusInsight,
+} from './focus'
 
 function withSessions(ss: DevSession[]) {
   const d = emptyJournal()
@@ -133,5 +137,191 @@ describe('focus helpers', () => {
     expect(by[4]).toEqual({ day: 4, label: 'Thu', avg: 7, count: 2 })
     expect(by[1]).toEqual({ day: 1, label: 'Mon', avg: 9, count: 1 })
     expect(by[0]).toEqual({ day: 0, label: 'Sun', avg: 0, count: 0 })
+  })
+})
+
+/**
+ * The derivations added for the Focus rail.
+ *
+ * Every one of them can return `null`, and `expect(null).toBeGreaterThanOrEqual(0)`
+ * **coerces and passes** — the twice-documented trap in CLAUDE.md. So every
+ * numeric assertion below is preceded by `not.toBeNull()`, and the empty cases
+ * assert `toBeNull()` rather than `toBe(0)`.
+ */
+/**
+ * Two exports that had a reader and no test. `cumulativeHours` feeds the
+ * all-time line and `focusInsight` the page's one sentence about stress; both
+ * shipped uncovered, which is how a chart comes to plot a subtly wrong series
+ * with every gate green. Found by auditing which `lib/focus.ts` exports anything
+ * reads — see the PR body.
+ */
+describe('focus · previously untested exports', () => {
+  it('runs cumulative hours over logged days only, ascending', () => {
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 90 }),
+      S({ date: '2026-06-09', durationMin: 30 }),
+      S({ date: '2026-06-09', durationMin: 30 }),
+    ])
+    // Two logged days, not the three calendar days between them: the series is
+    // keyed on days that exist in the log.
+    expect(cumulativeHours(d)).toEqual([
+      { date: '2026-06-09', hours: 1 },
+      { date: '2026-06-11', hours: 2.5 },
+    ])
+    expect(cumulativeHours(withSessions([]))).toEqual([])
+  })
+
+  it('withholds the stress insight until the correlation is worth stating', () => {
+    // |r| < 0.4 is null, not a hedged sentence.
+    expect(focusInsight(withSessions([S({ focus: 7, stress: 3 })]))).toBeNull()
+    const rising = withSessions([
+      S({ date: '2026-06-01', focus: 2, stress: 2 }),
+      S({ date: '2026-06-02', focus: 5, stress: 5 }),
+      S({ date: '2026-06-03', focus: 8, stress: 8 }),
+    ])
+    expect(focusInsight(rising)).toContain('higher stress')
+    const falling = withSessions([
+      S({ date: '2026-06-01', focus: 2, stress: 8 }),
+      S({ date: '2026-06-02', focus: 5, stress: 5 }),
+      S({ date: '2026-06-03', focus: 8, stress: 2 }),
+    ])
+    expect(focusInsight(falling)).toContain('lower stress')
+  })
+})
+
+describe('focus · rolling weekly volume', () => {
+  it('buckets minutes into rolling 7-day weeks ending today', () => {
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 60 }), // this week
+      S({ date: '2026-06-05', durationMin: 90 }), // 6 days back → still week 2 of 2
+      S({ date: '2026-06-04', durationMin: 30 }), // 7 days back → previous bucket
+    ])
+    const v = weeklyVolume(d, '2026-06-11', 2)
+    expect(v.length).toBe(2)
+    expect(v[1]).toMatchObject({ start: '2026-06-05', end: '2026-06-11', min: 150 })
+    expect(v[0]).toMatchObject({ start: '2026-05-29', end: '2026-06-04', min: 30 })
+  })
+
+  it('reports 0 for a week with nothing logged — a week off is a measurement', () => {
+    // Deliberately NOT null: unlike an average, a sum over an empty week has a
+    // true answer, and a gap in a bar chart of volume reads as a gap in the log.
+    const v = weeklyVolume(withSessions([]), '2026-06-11', 3)
+    expect(v.map((w) => w.min)).toEqual([0, 0, 0])
+  })
+})
+
+describe('focus · focus by session length', () => {
+  it('bands sessions by duration and means the focus inside each band', () => {
+    const d = withSessions([
+      S({ durationMin: 20, focus: 4 }),
+      S({ durationMin: 75, focus: 8 }),
+      S({ durationMin: 80, focus: 9 }),
+      S({ durationMin: 200, focus: 6 }),
+    ])
+    const bands = focusByDuration(d)
+    expect(bands.map((b) => b.label)).toEqual(['under 30m', '30–60m', '60–90m', '90–120m', '2h+'])
+    const b60 = bands[2]
+    expect(b60.avg).not.toBeNull()
+    expect(b60.avg).toBe(8.5) // plain mean of 8 and 9, not duration-weighted
+    expect(b60.count).toBe(2)
+    expect(b60.minutes).toBe(155)
+    expect(bands[4].avg).toBe(6)
+  })
+
+  it('returns null — never 0 — for a band nobody has worked in', () => {
+    const bands = focusByDuration(withSessions([S({ durationMin: 60, focus: 7 })]))
+    expect(bands[1].count).toBe(0)
+    expect(bands[1].avg).toBeNull()
+    expect(bands[1].avg).not.toBe(0)
+  })
+
+  it('puts a boundary duration in the upper band', () => {
+    // 60 is `60–90m`, not `30–60m`: the bands are [from, to).
+    const bands = focusByDuration(withSessions([S({ durationMin: 60, focus: 7 })]))
+    expect(bands[1].count).toBe(0)
+    expect(bands[2].count).toBe(1)
+  })
+})
+
+describe('focus · quality by tag', () => {
+  it('weights focus by duration and keeps the minutes sort', () => {
+    const d = withSessions([
+      S({ durationMin: 180, focus: 4, tags: ['work'] }),
+      S({ durationMin: 60, focus: 9, tags: ['rust'] }),
+      S({ durationMin: 60, focus: 7, tags: ['rust'] }),
+    ])
+    const rows = qualityByTag(d)
+    expect(rows.map((r) => r.tag)).toEqual(['work', 'rust']) // by minutes, like topTags
+    expect(rows[0].avg).not.toBeNull()
+    expect(rows[0].avg).toBe(4)
+    expect(rows[1].avg).toBe(8) // (9*60 + 7*60) / 120
+    expect(rows[1].count).toBe(2)
+  })
+
+  it('returns null, not 0, for a tag with no minutes to weight by', () => {
+    const rows = qualityByTag(withSessions([S({ durationMin: 0, focus: 9, tags: ['ghost'] })]))
+    expect(rows[0].tag).toBe('ghost')
+    expect(rows[0].avg).toBeNull()
+  })
+})
+
+describe('focus · what an interruption costs', () => {
+  it('compares clean sessions against interrupted ones', () => {
+    const d = withSessions([
+      S({ focus: 9, interruptions: 0 }),
+      S({ focus: 9, interruptions: 0 }),
+      S({ focus: 5, interruptions: 3 }),
+      S({ focus: 7, interruptions: 1 }),
+    ])
+    const c = interruptionCost(d)!
+    expect(c).not.toBeNull()
+    expect(c.clean).toBe(9)
+    expect(c.noisy).toBe(6)
+    expect(c.gap).toBe(3)
+    expect(c.cleanCount).toBe(2)
+    expect(c.noisyCount).toBe(2)
+  })
+
+  it('is null when either side has fewer than two sessions', () => {
+    // One-against-one is noise wearing a decimal point.
+    const thin = withSessions([S({ focus: 9, interruptions: 0 }), S({ focus: 4, interruptions: 2 })])
+    expect(interruptionCost(thin)).toBeNull()
+    // …and null when nobody logged the field at all, rather than a 0 gap.
+    expect(interruptionCost(withSessions([S({}), S({}), S({}), S({})]))).toBeNull()
+  })
+})
+
+describe('focus · findings', () => {
+  it('says nothing at all on an empty journal', () => {
+    // A findings list padded with "not enough data" is a list nobody reads.
+    expect(focusFindings(withSessions([]), '2026-06-11')).toEqual([])
+  })
+
+  it('names the best duration band and what interruptions cost', () => {
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 75, focus: 9, interruptions: 0 }),
+      S({ date: '2026-06-10', durationMin: 80, focus: 9, interruptions: 0 }),
+      S({ date: '2026-06-09', durationMin: 200, focus: 5, interruptions: 3 }),
+      S({ date: '2026-06-08', durationMin: 190, focus: 5, interruptions: 2 }),
+    ])
+    const ids = focusFindings(d, '2026-06-11').map((f) => f.id)
+    expect(ids).toContain('duration')
+    expect(ids).toContain('interruptions')
+    expect(ids).toContain('longest')
+    const dur = focusFindings(d, '2026-06-11').find((f) => f.id === 'duration')!
+    expect(dur.text).toContain('60–90m')
+    const int = focusFindings(d, '2026-06-11').find((f) => f.id === 'interruptions')!
+    expect(int.text).toContain('Uninterrupted sessions score 4 higher')
+  })
+
+  it('has a stable id per finding, so nothing renders twice', () => {
+    const d = withSessions([
+      S({ date: '2026-06-11', durationMin: 75, focus: 9, interruptions: 0, tags: ['rust'] }),
+      S({ date: '2026-06-10', durationMin: 80, focus: 8, interruptions: 0, tags: ['rust'] }),
+      S({ date: '2026-06-09', durationMin: 200, focus: 5, interruptions: 3, tags: ['work'] }),
+      S({ date: '2026-06-08', durationMin: 190, focus: 4, interruptions: 2, tags: ['work'] }),
+    ])
+    const ids = focusFindings(d, '2026-06-11').map((f) => f.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })

@@ -368,19 +368,73 @@ export function generateDemoData(today = todayISO()): JournalData {
     ],
   }
 
-  // ── Developer focus sessions (Focus view) ──
+  /* ── Developer focus sessions (Focus view) ──
+     **Nineteen days became twelve weeks, and that is a bug fix rather than more
+     data for its own sake.** The page reads `deepWorkHeatmap(data, today, 26)`
+     — 182 cells — and the seed lit up ten of them, so the signature visual on
+     the page had never been seen with more than three sparse columns. Same for
+     `weeklyVolume` (12 rolling weeks against 3 with anything in them) and
+     `focusByDuration`, whose `60 + rand()*180` could never produce a session
+     under 30 or between 30 and 60 minutes: **two of five bands were structurally
+     unreachable**, which is the "a branch the seed never takes cannot fail"
+     trap aimed at a chart axis instead of a colour.
+
+     So durations now come from a spread that covers every band, and the focus
+     score is correlated with the block length and anti-correlated with
+     interruptions — because the findings on this page are *about* those
+     relationships, and a seed of independent uniforms makes every one of them
+     report "no pattern" no matter how the maths is written. A demo that cannot
+     exhibit the finding cannot test the finding. */
   const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
   const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]
-  for (let i = 0; i <= 18; i += 2) {
-    if (rand() > 0.3) {
-      const li = Math.floor(rand() * langs.length)
-      j.devSessions = j.devSessions ?? []
-      j.devSessions.push({
-        id: uid('dv'), date: addDays(today, -i), durationMin: 60 + Math.floor(rand() * 180),
-        project: projects[li], focus: 5 + Math.floor(rand() * 5), stress: 2 + Math.floor(rand() * 5),
-        interruptions: Math.floor(rand() * 4), tags: langs[li], notes: '',
-      })
-    }
+  /* Every band `focusByDuration` declares, so none of the five is dead. */
+  const blocks = [20, 25, 45, 50, 75, 90, 110, 150, 180]
+  j.devSessions = []
+  for (let i = 0; i <= 83; i++) {
+    const date = addDays(today, -i)
+    const wd = new Date(date + 'T00:00').getDay()
+    // Weekends are thinner, which is what makes `minutesByWeekday` and the
+    // weekday finding say something rather than draw seven equal bars.
+    if (rand() > (wd === 0 || wd === 6 ? 0.75 : 0.35)) continue
+    const li = Math.floor(rand() * langs.length)
+    const durationMin = blocks[Math.floor(rand() * blocks.length)]
+    const interruptions = Math.floor(rand() * 4)
+    // Longer blocks run deeper, interruptions cost about a point each. Clamped
+    // to the 0–10 the type promises.
+    const focus = Math.max(1, Math.min(10, Math.round(4 + durationMin / 45 - interruptions * 0.9 + rand())))
+    j.devSessions.push({
+      id: uid('dv'), date, durationMin,
+      project: projects[li], focus, stress: Math.max(0, Math.min(10, Math.round(2 + interruptions + rand() * 2))),
+      interruptions, tags: langs[li], notes: '',
+    })
+  }
+
+  /* ── Typing practice (Focus view) ──
+     **This domain was never seeded at all.** `data.typingSessions` was written
+     by nothing, so the whole Typing subject — best/avg WPM, the weekday goal
+     bar, the 14-day WPM line and the recent-drills list — had never been
+     rendered with data by any gate, at any theme or viewport. `page-census`
+     reported `focus · charts 0` on a page holding a Recharts `LineChart`,
+     because that chart is behind `wpmCount >= 2` and the count was always zero.
+     Exactly the `data.cycle` hole in CLAUDE.md, one domain over.
+
+     Weekdays only, with WPM drifting up, so `typingStreak` and the goal bar
+     have a real answer and the trend line has a direction. */
+  j.typingSessions = []
+  const sources = ['Monkeytype', 'keybr', 'TypingClub', '10FastFingers']
+  for (let i = 41; i >= 0; i--) {
+    const date = addDays(today, -i)
+    const wd = new Date(date + 'T00:00').getDay()
+    if (wd === 0 || wd === 6) continue
+    if (rand() > 0.8) continue // the occasional skipped day, so the streak is earned
+    j.typingSessions.push({
+      id: uid('ty'), date,
+      durationMin: [10, 15, 20, 25, 30][Math.floor(rand() * 5)],
+      // 62 → ~78 wpm over six weeks, plus day-to-day noise.
+      wpm: Math.round(78 - (i / 42) * 16 + (rand() - 0.5) * 6),
+      accuracy: Math.round(94 + rand() * 5),
+      source: sources[Math.floor(rand() * sources.length)],
+    })
   }
 
   // ── An active 75-day challenge with a week of check-ins ──
