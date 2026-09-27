@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   lapseDays, lapseTotal, lapseCountOn, hasLapseQuantity,
-  lapseByWeekday, peakLapseWeekday, lapseTrend, bumpLapseDay,
+  lapseByWeekday, peakLapseWeekday, lapseTrend, bumpLapseDay, lapseProfile,
 } from './lapse'
 import type { Relapse } from './types'
 
@@ -197,5 +197,63 @@ describe('lapseTrend', () => {
     expect(t.weeks).toHaveLength(4)
     expect(t.total).toBe(0)
     expect(t.direction).toBe('flat')
+  })
+})
+
+describe('lapseProfile', () => {
+  /**
+   * The whole reason this returns `null`: a tracked addiction with nothing
+   * logged is not an addiction you indulged zero times. Asserted `toBeNull`
+   * FIRST, because `expect(null).toBeGreaterThanOrEqual(0)` coerces and passes —
+   * the trap `CLAUDE.md` records against `weekdayConsistency`, which would have
+   * gone on passing whatever that function returned.
+   */
+  it('reports null rather than zero for an addiction with no lapse logged', () => {
+    const p = lapseProfile('Sugar', [], '2026-06-28')
+    expect(p.total).toBeNull()
+    expect(p.perDay).toBeNull()
+    expect(p.days).toBe(0)
+    expect(p.peak).toBeUndefined()
+    expect(p.quantified).toBe(false)
+    // Still drawable: the calendar renders its frame at zero data on purpose.
+    expect(p.heat).toEqual([])
+    expect(p.trend.weeks).toHaveLength(8)
+  })
+
+  it('counts occurrences, not days, and says which it is', () => {
+    const p = lapseProfile('Nicotine', [lapse('2026-06-21', 10), lapse('2026-06-22', 4)], '2026-06-28')
+    expect(p.total).toBe(14)
+    expect(p.days).toBe(2)
+    expect(p.perDay).toBe(7)
+    expect(p.quantified).toBe(true)
+  })
+
+  /**
+   * An unquantified history is the `count ?? 1` default on every row, so `total`
+   * equals `days` and the panel must not claim it counted anything. `quantified`
+   * is the flag that stops "2 times" being printed over two bare lapse days.
+   */
+  it('flags an unquantified history so the panel says days, not times', () => {
+    const p = lapseProfile('Doomscrolling', [lapse('2026-06-21'), lapse('2026-06-24')], '2026-06-28')
+    expect(p.quantified).toBe(false)
+    expect(p.total).toBe(2)
+    expect(p.days).toBe(2)
+    expect(p.perDay).toBe(1)
+  })
+
+  it('names the heaviest weekday and keeps all seven for the quiet ones', () => {
+    // 2026-06-21 and -06-14 are Sundays; -06-22 a Monday.
+    const p = lapseProfile('Nicotine', [lapse('2026-06-21', 9), lapse('2026-06-14', 11), lapse('2026-06-22', 2)], '2026-06-28')
+    expect(p.peak?.label).toBe('Sun')
+    expect(p.peak?.avg).toBe(10)
+    expect(p.byWeekday).toHaveLength(7)
+    // A weekday with no lapse day is null, never 0 — see lapseByWeekday.
+    expect(p.byWeekday.find((w) => w.label === 'Tue')?.avg).toBeNull()
+  })
+
+  /** The calendar takes `{date, value}`, de-duplicated and summed by `lapseDays`. */
+  it('shapes the heat rows for the calendar, summing a doubled date', () => {
+    const p = lapseProfile('Nicotine', [lapse('2026-06-21', 3), lapse('2026-06-21', 4)], '2026-06-28')
+    expect(p.heat).toEqual([{ date: '2026-06-21', value: 7 }])
   })
 })
