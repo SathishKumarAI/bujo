@@ -8,6 +8,7 @@ import { CursorProvider } from '../components/shell/cursor'
 import { NoFap } from './NoFap'
 import { CARDS, GROUPS, GROUP_LABEL, DEFAULT_GROUP } from '../lib/recoveryCards'
 import { generateDemoData } from '../lib/demo'
+import { TECHNIQUES } from '../components/recovery/TechniquesBlock'
 
 /**
  * The registry and the page must hold the same panels.
@@ -144,5 +145,41 @@ describe('Recovery · the registry is the page', () => {
     const rail = screen.getByRole('navigation', { name: 'Recovery groups' })
     const labels = [...rail.querySelectorAll('button')].map((b) => (b.getAttribute('aria-label') || '').split(' — ')[0])
     expect(labels).toEqual(GROUPS.map((g) => GROUP_LABEL[g]))
+  })
+
+  /**
+   * The seven coping techniques moved from seven hand-typed `<li>`s to a
+   * `TECHNIQUES` array and a `map()`. `views/Pullups.tsx` lost eleven workout
+   * formats to a pass of exactly that shape with `tsc`, eslint, vitest and the
+   * build all green — an inlined list that renders a plausible-looking subset
+   * fails nothing, and the tiles look right whether there are four of them or
+   * seven. So the count and the terms are asserted, not the look.
+   */
+  it('renders all seven coping techniques in the reference group', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.reference))
+    const tiles = container.querySelectorAll('[data-card="techniques"] ol > li')
+    expect(TECHNIQUES).toHaveLength(7)
+    expect(tiles).toHaveLength(TECHNIQUES.length)
+    expect([...tiles].map((li) => li.textContent?.split(' · ')[0])).toEqual(TECHNIQUES.map((t) => t.term))
+  })
+
+  /**
+   * Zone 2's whole point, and the report this pass answers: "why do I need to
+   * scroll to the end to log a resisted urge?". The submit is the FIRST control
+   * in the urge card now, before its four optional field groups — asserted on
+   * DOM order because the y-offset that proves it lives in the browser gates,
+   * and a jsdom height is meaningless.
+   */
+  it('puts the urge submit before the fields it annotates', () => {
+    const { container } = mount()
+    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    const controls = [...card.querySelectorAll('button, fieldset, input')]
+    const submit = controls.findIndex((el) => /log this urge/i.test(el.textContent || ''))
+    const firstField = controls.findIndex((el) => el.tagName === 'FIELDSET')
+    expect(submit).toBeGreaterThanOrEqual(0)
+    expect(firstField).toBeGreaterThanOrEqual(0)
+    expect(submit).toBeLessThan(firstField)
   })
 })

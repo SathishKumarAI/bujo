@@ -34,9 +34,11 @@ export interface DayTallyRow {
  * minus is rendered only when there is something to subtract rather than
  * disabled, so there is no dead target on a clean day.
  *
- * Every button here is `secondary` — this page's one accent-filled thing is the
- * streak ring, and `variant="primary"` would put a second loud control beside
- * it for an action that is a record, not a goal.
+ * Every button here is `secondary`, and now for a second reason: the page's one
+ * `primary` is "Log this urge" one card up. It was none at all before, on the
+ * reasoning that no act here outranked another — but `PRODUCT.md` ranks capture
+ * first and riding out an urge is the capture that happens many times a day,
+ * while a lapse tally is rare. A record is not a goal, and these stay quiet.
  *
  * Colour goes in `style`, size in `className`: a custom `text-<size>` and a
  * custom `text-<colour>` land in the same tailwind-merge group and the later one
@@ -49,7 +51,7 @@ export function DayTallyCard({ rows, onStep }: {
 }) {
   const anyLogged = rows.some((r) => r.count > 0)
   return (
-    <Card band hideInfo
+    <Card hideInfo
       title="Did it happen today?"
       subtitle="One tap logs the day · tap again for each time it happened."
     >

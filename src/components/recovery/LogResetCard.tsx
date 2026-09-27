@@ -26,7 +26,7 @@ export function LogResetCard({ best, totalClean }: { best: number; totalClean: n
   }
 
   return (
-    <Card band hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
+    <Card hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
       <div className="space-y-3">
         <label className="block text-body text-fg-1">
           Reason <span style={{ color: onRaised('red') }}>*</span>

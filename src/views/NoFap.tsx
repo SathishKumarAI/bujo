@@ -10,7 +10,8 @@ import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseW
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend } from '../lib/lapse'
 import { PageLayout, SectionRail, StatBar, SummaryStrip } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
-import { CardGrid } from '../components/shell/CardGrid'
+import { cn } from '../lib/cn'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { CARDS, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP, visibleCards, type Group } from '../lib/recoveryCards'
 import {
   StreakRingCard,
@@ -232,14 +233,29 @@ export function NoFap() {
         zone2={<>
         <StreakRingCard stats={stats} relapsedToday={relapsedToday} startedOn={s.startedOn} />
 
+        {/* ZONE 2 IS ORDERED BY HOW OFTEN THE ACT HAPPENS, not by how bad it is.
+            `PRODUCT.md` ranks capture as the product, and on this page the
+            frequent capture is "I felt an urge and rode it out" — many times a
+            day during a streak. A lapse tally and a reset are rare by
+            definition. Urge surfing was third, and its submit sat under its own
+            four field groups, so the most-repeated act on the page was the one
+            furthest from the top: **y 1613 in an 844px phone viewport**, and
+            1130px inside a 760px scrollport at 1440.
+
+            The cost, stated: `DayTallyCard` moves down by the height of the
+            urge card. It is one tap either way and it is still the second thing
+            in the column; the alternative — keeping the tally first and
+            accepting that the frequent act needs a scroll — is the arrangement
+            the report was about. */}
+        <UrgeSurfingCard />
+
         {/* Day log · "it happened today", with a number on it.
-            Directly under the ring because it is the act this page was missing:
-            the quantity-blind version of it already existed three screens down
-            as the per-addiction `Reset` button, in zone 3 behind the signature
-            chart, which is not where you press anything on a bad day. */}
+            Second, not third: the quantity-blind version of it used to live
+            three screens down as the per-addiction `Reset` button, in zone 3
+            behind the signature chart, which is not where you press anything on
+            a bad day. */}
         <DayTallyCard rows={tallyRows} onStep={logLapseDay} />
 
-        <UrgeSurfingCard />
         <LogResetCard best={stats.best} totalClean={stats.totalClean} />
         </>}
         zone3={<>
@@ -342,7 +358,7 @@ export function NoFap() {
                         column. `min-w-0` per cell so a wide chart cannot drag
                         the shared track. */}
                     <CardGrid className="2xl:grid-cols-2">
-                      {ids.map((c) => <div key={c.id} data-card={c.id} className="min-w-0">{all[c.id]}</div>)}
+                      {ids.map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{all[c.id]}</div>)}
                     </CardGrid>
                   </section>
                 )
