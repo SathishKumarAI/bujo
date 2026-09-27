@@ -11,6 +11,8 @@ import { ImageUpload } from '../../components/ImageUpload'
 import { Field } from '../../components/fields/Field'
 import { Stepper } from '../../components/fields/Stepper'
 import { ChipPick } from '../../components/ui/quickpick'
+import { MOOD_REASONS, MOOD_REASON_LABEL } from '../../lib/moodPatterns'
+import type { MoodReason } from '../../lib/types'
 import { SegmentScale } from '../../components/fields/SegmentScale'
 import { currentStreak } from '../../lib/stats'
 import { cat, onRaised } from '../../lib/colors'
@@ -224,6 +226,20 @@ export function WellbeingCard({ date }: { date: string }) {
   const metric = data.metrics.find((m) => m.date === date)
   const answered = [metric?.mood, metric?.stress, metric?.energy, metric?.sleep].filter((v) => v != null).length
   const complete = answered === 4
+  /* WHY the mood moved, which the model could not represent at all: `mood` was
+     a bare 0–10 and nothing recorded what shifted it, so "why is my mood
+     changing" was not badly answered — it was unanswerable. Deliberately NOT
+     part of `answered`: the day is complete at four ratings whether or not
+     anyone explains them, and making an optional field gate the collapse would
+     hand someone the same four empty boxes at 10am for skipping it. */
+  const reasons = metric?.moodReasons ?? []
+  const toggleReason = (r: MoodReason) => {
+    const next = reasons.includes(r) ? reasons.filter((x) => x !== r) : [...reasons, r]
+    // `undefined`, not `[]` — an empty array would persist in every journal as
+    // a field that has been answered with nothing, which is a different fact
+    // from "not asked" and the one every reader here treats as absent.
+    setMetric(date, { moodReasons: next.length ? next : undefined })
+  }
   // Reset-on-day-change is a `key={date}` at the call site, not an effect —
   // editing yesterday must not leave tomorrow's summary expanded, and a
   // setState-in-effect to do that costs a second render every day change.
@@ -261,6 +277,19 @@ export function WellbeingCard({ date }: { date: string }) {
               <dd className="text-fg-1">{metric.fastBreak}</dd>
             </div>
           )}
+          {/* The reason belongs in the read-back, not only in the form. A field
+              you can fill and never see again reads as a survey. */}
+          {(reasons.length > 0 || metric?.moodReasonNote) && (
+            <div className="flex w-full flex-wrap items-baseline gap-x-1.5 gap-y-1">
+              <dt className="text-fg-2">Because</dt>
+              <dd className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-fg-1">
+                {reasons.map((r) => MOOD_REASON_LABEL[r]).join(' · ')}
+                {metric?.moodReasonNote && (
+                  <span className="text-fg-2">{reasons.length > 0 && '· '}{metric.moodReasonNote}</span>
+                )}
+              </dd>
+            </div>
+          )}
         </dl>
       </Card>
     )
@@ -294,6 +323,34 @@ export function WellbeingCard({ date }: { date: string }) {
               aria-label="Hours slept, any value"
             />
           }
+        />
+      </div>
+      {/* WHAT SHAPED THE DAY · the field that makes "why is my mood changing"
+          answerable at all.
+          `multi`, because several are true at once — a bad night AND a deadline
+          — and `tone="peach"` rather than brand: this records a condition, it is
+          not the screen's primary action, and the three scales above it already
+          carry the accent. The free-text box is a real escape hatch rather than
+          a decoration: nine conditions cannot cover a real life, and a closed
+          taxonomy that blocks the true answer gets the nearest wrong one
+          instead, which is worse than no answer. Read back by
+          `moodReasonImpact` on Insights → Mood. */}
+      <div className="mt-4 border-t border-line pt-3">
+        <ChipPick
+          label="What shaped today"
+          tone="peach"
+          multi
+          value={reasons}
+          onChange={toggleReason}
+          options={MOOD_REASONS.map((r) => ({ value: r, label: MOOD_REASON_LABEL[r] }))}
+          hint="Optional. Tick anything that moved the day — it is what the mood charts read."
+        />
+        <Input
+          value={metric?.moodReasonNote ?? ''}
+          onChange={(e) => setMetric(date, { moodReasonNote: e.target.value || undefined })}
+          placeholder="Something else? (optional)"
+          aria-label="Another reason today went the way it did"
+          className="mt-2"
         />
       </div>
       <div className="mt-4 border-t border-line pt-3">
