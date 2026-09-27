@@ -286,8 +286,30 @@ export function generateDemoData(today = todayISO()): JournalData {
      *
      * Three different levels, so the distribution has a shape and a mode rather
      * than one bar three high.
+     *
+     * **Three of the five carry the label of a tracked addiction, and two do
+     * not — deliberately.** `urgesLabelled` is the only join between an urge and
+     * an addiction this model has (`UrgeWin` has an `at` timestamp and no
+     * addiction field, COD-251), so the per-addiction hour clock on
+     * `AddictionBreakdownCard` needs both of its branches on screen or neither
+     * can fail:
+     *
+     * - **Doomscrolling** gets three, clustered at 10–11 PM, so that card draws
+     *   a real clock with a real peak. Two of them at hour 23, because with one
+     *   urge per hour the peak is a tie broken by "earliest" and the card would
+     *   claim 9 PM over three equal hours.
+     * - **Nicotine** gets none, because the urge preset is `Smoking` and the
+     *   addiction preset is `Nicotine` — the exact mismatch the two lists ship
+     *   with. So that card renders the "no urge carries this label" branch,
+     *   which is the honest reading and is what a real journal will look like
+     *   until the capture side is fixed.
+     *
+     * That also makes the coverage line a real fraction (3 of 5) rather than
+     * 100%, which is the number the card exists to print.
      */
     urgeLog: [
+      { id: uid('u'), date: addDays(today, -6), at: `${addDays(today, -6)}T23:05:00`, trigger: 'Doomscrolling', intensity: 4 },
+      { id: uid('u'), date: addDays(today, -3), at: `${addDays(today, -3)}T23:40:00`, trigger: 'Doomscrolling', intensity: 5 },
       { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2 },
       { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4 },
       { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn', intensity: 3 },
