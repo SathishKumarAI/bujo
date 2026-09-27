@@ -38,7 +38,7 @@ export type Domain = (typeof DOMAINS)[number]
  */
 export const DOMAIN_BLURB: Record<Domain, string> = {
   overview: 'What changed this week, and what to do next',
-  mood: 'How you have felt, and what moves it',
+  mood: 'How you have felt, what moves it, and how it sits against a lapse',
   habits: 'Whether the streak is holding, and when you actually check in',
   body: 'How much you trained, and on what',
   tasks: 'Where your tasks end up',
@@ -87,8 +87,22 @@ export const CARDS: CardMeta[] = [
   { id: 'momentum', title: 'Momentum', domain: 'overview', words: 'momentum trend direction vs last week delta' },
   { id: 'entryvolume', title: 'Journal volume', domain: 'overview', words: 'entries per week volume writing cadence bar' },
 
-  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily' },
+  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily heatmap lapse relapse ring' },
   { id: 'moodanalytics', title: 'Mood analytics', domain: 'mood', words: 'mood weekday stability best worst variance' },
+  /* The four mood/recovery panels (COD-252) live in `mood` rather than in a
+     seventh `recovery` domain. Two reasons and one of them is measured: the
+     domain's blurb already reads "How you have felt, and what moves it", which
+     is the question these answer; and a rail row is navigation, so adding one
+     changes the page's information architecture for every reader in order to
+     re-file four cards. The conservative option, and the one that leaves the
+     rail's six words intact. The alternative — a `recovery` domain pulling
+     these plus the lapse-ringed calendar out of `mood` — is the right call if
+     the count here keeps growing; at ten it is still the second-largest domain
+     rather than the largest. */
+  { id: 'moodreasons', title: 'What moved your mood', domain: 'mood', words: 'why reason cause mood lonely argument stress deadline money illness slept badly exercised good news no plans context' },
+  { id: 'moodswing', title: 'Level & swing', domain: 'mood', words: 'mood swing swinging volatility variance spread range steady weekly band deviation' },
+  { id: 'lapselag', title: 'The week around a lapse', domain: 'mood', words: 'lapse relapse mood before after lag nofap addiction recovery trigger urge week around' },
+  { id: 'moodrisk', title: 'Urges by mood band', domain: 'mood', words: 'urge intensity mood band low bright lapse rate risk addiction recovery halt' },
   { id: 'sleepmood', title: 'Sleep vs mood', domain: 'mood', words: 'sleep mood scatter correlation dots' },
   { id: 'sleepdebt', title: 'Sleep debt', domain: 'mood', words: 'sleep debt deficit hours 8h running' },
   { id: 'focussleep', title: 'Focus vs sleep', domain: 'mood', words: 'focus deep work sleep correlation r' },

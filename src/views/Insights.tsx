@@ -19,6 +19,7 @@ import { prettyDay, todayISO} from '../lib/date'
 import { WeeklyReview } from '../components/WeeklyReview'
 import { useStatsCards } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
+import { LapseLagCard, MoodBandRiskCard, MoodReasonsCard, MoodSwingCard } from '../components/insights/MoodPatterns'
 import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
 
 /**
@@ -200,6 +201,15 @@ export function Insights() {
     })}
   </ul>
 </Card>) : null,
+    /* The four mood/recovery panels. Each one renders its own empty state
+       rather than yielding `null`, because "not enough logged yet" is the
+       answer a reader needs on this subject — a card that vanishes below its
+       floor teaches nobody that a floor exists, and the floors here are the
+       thing keeping six events from reading as a finding. */
+    moodreasons: <MoodReasonsCard />,
+    moodswing: <MoodSwingCard />,
+    lapselag: <LapseLagCard />,
+    moodrisk: <MoodBandRiskCard />,
     entryvolume: <JournalVolumeCard />,
     consistency: <HabitConsistencyCard />,
     taskstrend: <TaskTrendCard />,
