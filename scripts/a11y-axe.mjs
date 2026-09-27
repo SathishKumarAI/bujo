@@ -114,9 +114,17 @@ const VIEWS = [
   // every "0 serious" this gate ever printed excluded it — the same failure the
   // file's own header warns about, sitting inside the file that warns. It is no
   // longer a tab: its panels moved into Insights behind the domain filter
-  // (COD-201), so `['Insights', null]` above now reaches all of them. Removed
+  // (COD-201). Removed
   // rather than left to fail, which is the case this file's own error message
   // names: "the destination was renamed/retired".
+  //
+  // This line used to end "…so `['Insights', null]` above now reaches all of
+  // them". **It did not.** That was true of the multi-select chip row whose empty
+  // state meant "all", and stopped being true the moment the rail replaced it
+  // with a single-select that opens on `overview` — after which this entry
+  // reached 6 of 27 panels and said so nowhere. `scanInsightsAll` below is the
+  // fix; the sentence is corrected rather than deleted, because a stale claim
+  // inside a gate is how the hole stayed invisible for its whole life.
 ]
 
 /**
@@ -585,6 +593,71 @@ async function goOrDie(w, name, why) {
 }
 
 /**
+ * INSIGHTS' DOMAIN RAIL · the gate was seeing one sixth of the page · COD-237.
+ *
+ * `VIEWS` reaches Insights by clicking its rail row, which lands on the rail's
+ * **first** domain — `overview`, six cards — and the other five domains are not
+ * in the DOM at all. So every "0 serious" this gate printed for Insights covered
+ * 6 of its 27 panels. The comment in `VIEWS` even claimed the opposite
+ * ("`['Insights', null]` above now reaches all of them"), which was true of the
+ * chip row it replaced and stopped being true the moment the rail became
+ * single-select. Exactly the shape this file's own header warns about, one level
+ * in: not a page that is never visited, a **page whose other five sixths are
+ * never rendered**.
+ *
+ * The fix is the rail's own **All** row rather than a loop over six domain
+ * names. One extra scan per theme and viewport instead of five, it puts all
+ * twenty-seven cards in the DOM simultaneously so the coverage is strictly
+ * better than per-domain passes, and — the part that matters for a gate — there
+ * is no hand-written list of domains here to fall out of step with
+ * `lib/insightsFilter.ts`. A hard-coded id list resolving against another
+ * source is the mistake `BottomNav`'s retired `PRIMARY` array is kept in
+ * CLAUDE.md as a warning against.
+ *
+ * Clicked through the DOM, not Playwright: at 390 the rail is a horizontal
+ * scroller and the All row can sit outside the viewport, which a Playwright
+ * click waits for and a `HTMLElement.click()` does not care about. React's
+ * handler is attached at the root, so the synthetic event fires either way.
+ *
+ * Both assertions have a wait in front of them, because "not yet" and "not
+ * ever" are the same measurement without one — four separate red runs in this
+ * repo have had that single cause.
+ */
+async function scanInsightsAll(w) {
+  const sel = 'nav[aria-label="Insight domains"] button[aria-label^="All — "]';
+  await w.page.locator(sel).first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {})
+  const clicked = await w.page.evaluate((s) => {
+    const b = document.querySelector(s)
+    if (!b) return false
+    b.click()
+    return true
+  }, sel)
+  if (!clicked) {
+    const rows = await w.page.locator('nav[aria-label="Insight domains"] button').evaluateAll(
+      (els) => els.map((e) => e.getAttribute('aria-label') ?? e.textContent?.trim()),
+    ).catch(() => [])
+    fail(`\n[Insights] the domain rail has no "All" row, so five of six domains cannot be scanned.`,
+      `  url: ${w.page.url()} · viewport: ${w.viewport} · theme: ${w.theme}`,
+      `  ${rows.length} rail row(s): ${rows.join(' | ') || '(none — the rail had not rendered)'}`,
+      '  SectionRail hides All when `allCount` is omitted. If that was deliberate,',
+      '  this pass has to loop the domains instead — do not delete it.')
+  }
+  // It has to have actually crossed a domain boundary. One `[data-domain]`
+  // section means the click landed on a single group and every card outside it
+  // is still absent — the hole this pass exists to close, reported clean.
+  await w.page.waitForFunction(
+    () => document.querySelectorAll('#main [data-domain]').length >= 2, null, { timeout: 15000 },
+  ).catch(() => {})
+  const groups = await w.page.evaluate(() => document.querySelectorAll('#main [data-domain]').length)
+  if (groups < 2) {
+    fail(`\n[Insights] All is selected and only ${groups} domain section(s) rendered.`,
+      `  url: ${w.page.url()} · viewport: ${w.viewport} · theme: ${w.theme}`,
+      '  Scanning this would grade one domain and print it as the whole page.')
+  }
+  await scan(w, 'Insights · all domains')
+}
+
+/**
  * Open every disclosure inside `#main` before scanning · COD-93.
  *
  * axe walks the *rendered* page, so anything behind a closed fold is simply not
@@ -1008,6 +1081,15 @@ async function runUnit(w, unit) {
     // `scan` is what reaches the deep-analytics section that used to be the
     // habits surface's own.
   }
+
+  // Insights again, with its domain rail on All — see `scanInsightsAll`. The
+  // loop above left us on Insights (it is the last entry in VIEWS), but this
+  // navigates explicitly rather than inheriting that ordering: a gate that
+  // depends on the position of a row in a list is one reorder away from
+  // scanning the wrong page under this label.
+  w.at = 'Insights · all domains'
+  await goOrDie(w, 'Insights', 'no rail row with that name — the gate could not reach it.')
+  await scanInsightsAll(w)
 
   // Companion views, reached by URL because they have no tab to click.
   // `setTheme` persists to the journal in localStorage, which survives the
