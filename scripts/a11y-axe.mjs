@@ -740,6 +740,32 @@ async function scan(w, label) {
   let folds = await openFolds(w)
   await revealLazy(w)
   folds += await openFolds(w)
+  /**
+   * SETTLE AGAIN, and this is not belt-and-braces.
+   *
+   * `settle()` runs at the top of this function — and then the two lines above
+   * click every fold and mount every `LazyMount`, each of which starts a fresh
+   * `page-enter` fade. So axe measured a page whose animations the gate had
+   * itself just restarted, and read colour from a **mid-fade blend**.
+   *
+   * It produces a phantom `color-contrast` that is arithmetically perfect and
+   * describes no token in the app. Measured here: `#7c8195 on #1a1a1f = 4.48`
+   * against a 4.5 floor, on Insights and Help, in all five themes. `#7c8195` is
+   * exactly `fg-2` (`#a6adc8`) at 70% over `ink-0` — the settled pairing is
+   * **7.79**, and no palette contains `#7c8195`.
+   *
+   * It cost three separate investigations in one day before it was fixed here:
+   * two agents hit it and worked around it in their own throwaway probes, and
+   * one of them changed a colour token and reverted it. It only became visible
+   * on every run once `SectionRail` gained an opaque background — while the
+   * rail was transparent axe could not resolve a background behind those chips
+   * at all, so the blend had nothing to fail against. Making a defect
+   * detectable is not causing it.
+   *
+   * This is the fifth entry in CLAUDE.md's wait-before-assert table, and the
+   * first where the gate's own actions were what it failed to wait for.
+   */
+  await settle(w)
   const results = await new AxeBuilder({ page: w.page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
