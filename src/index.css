@@ -1066,6 +1066,43 @@ body.handwriting textarea {
 .prose-doc ul > li { list-style: disc; }
 .prose-doc ol > li { list-style: decimal; }
 .prose-doc a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 2px; }
+
+/* AND THE SAME AFFORDANCE OUTSIDE PROSE, because until now there was none.
+   `.prose-doc a` was the only anchor rule in the app, so an inline link
+   anywhere else inherited its parent's colour with no underline: a credited
+   source rendered as body text that happens to be clickable. Measured across
+   seven views: **9 inline anchors outside `.prose-doc`, and every one of them
+   was underlined only because its call site had remembered
+   `className="underline"`.** A rule each author must re-type is a rule that
+   gets forgotten, and the one that forgot it was a source citation — the exact
+   thing this repo requires be credited and reachable.
+
+   In `@layer base` on purpose. An unlayered rule would BEAT Tailwind's
+   utilities (`@layer utilities` loses to unlayered CSS), which is the trap
+   `styles/layout.css` already records: an unlayered `.zone-act input` rule beat
+   `.hidden` and resurrected a hidden file input as raw chrome. Here that would
+   mean a deliberately-styled link could not override its own colour. Layered,
+   the call site always wins and this is only the floor.
+
+   Safe to make global, measured rather than assumed: of those anchors, **0 are
+   button- or card-shaped** — nothing in the app uses an `<a>` as a styled
+   block that an underline would disfigure. */
+@layer base {
+  /* A bare `a`, with NO `:not()` guard, and that is the point of the layer.
+     The first draft carried `:not([class*='text-'])` to avoid overriding a
+     deliberately-coloured link — which is redundant (a utility in
+     `@layer utilities` already beats this) and wrong: it also matched
+     `hover:text-fg-1`, so the glossary's source links, whose only `text-`
+     class is a HOVER colour, kept inheriting body colour and stayed
+     indistinguishable. Measured: they read `rgb(166,173,200)` on a parent of
+     `rgb(166,173,200)` with the guard, and blue without it. Let the cascade do
+     the work the cascade is for. */
+  a {
+    color: var(--color-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
 .prose-doc code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.875em;

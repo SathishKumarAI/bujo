@@ -78,7 +78,21 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
     <nav
       aria-label={label}
       className="
-        sticky top-[calc(var(--header-h,4rem)+0.75rem)] self-start
+        /* A sticky element with no ground is a transparent one, and the page
+           scrolls visibly THROUGH it. Measured on `?view=nofap` at scrollY 700:
+           `position: sticky` with `background-color: rgba(0,0,0,0)` and
+           `z-index: auto`, 730x36, with a `<section>` of page content painting
+           in the same pixels. Neither rendering gate can see it — nothing is
+           clipped, so `clipped-text` is quiet, and the accessibility tree is
+           sound, so axe is right to be. Two legible elements sharing pixels is
+           the one geometric defect with no judgement in it.
+
+           `bg-ink-0` is the page rung, which is what the rail sits on; `z-10`
+           puts it above content without competing with the header (`z-30`) or a
+           popover. Both are needed — a background with `z-index: auto` still
+           loses to a positioned sibling. Affects all seven rail pages, since
+           this component is shared. */
+        sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0
         -mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-2
         @4xl/page:mx-0 @4xl/page:flex-col @4xl/page:gap-0.5 @4xl/page:overflow-visible @4xl/page:px-0 @4xl/page:pb-0
       "
@@ -111,7 +125,25 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
             `}
           >
             <span>{r.label}</span>
-            {r.count != null && <span className="num ml-1.5 opacity-70 @4xl/page:ml-0">{r.count}</span>}
+            {/* No `opacity-70`. It computed `fg-2` down to `#7c8195` on `ink-0`
+                = **4.48:1** against a 4.5 floor, on every rail page, in all five
+                themes — and the count is content, not decoration: the workflow's
+                own rule is that a rail's counts are live because "a rail whose
+                rows move as you type cannot be aimed at".
+
+                It had always been below the floor and nothing could see it:
+                while this rail was transparent, axe had no resolvable
+                background behind the chips and skipped the pairing entirely.
+                Giving the rail a ground (the fix above) is what made a real,
+                pre-existing failure detectable — the gate was blind, not happy.
+                `check-contrast` cannot catch this class either, because a
+                faded token is not a token (COD-244's neighbour).
+
+                **Opacity on text is how you get a colour no gate can check.**
+                The hierarchy the fade was reaching for is carried by state
+                instead: the selected row is `text-brand-text` on a wash, the
+                rest are `fg-2`, and the count is already set apart by `num`. */}
+            {r.count != null && <span className="num ml-1.5 @4xl/page:ml-0">{r.count}</span>}
           </button>
         )
       })}
