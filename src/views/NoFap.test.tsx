@@ -172,6 +172,51 @@ describe('Recovery · the registry is the page', () => {
    * DOM order because the y-offset that proves it lives in the browser gates,
    * and a jsdom height is meaningless.
    */
+  /**
+   * One card per tracked addiction under one registry id, the same shape as
+   * `lapsecounts`. The count is the user's data, so the registry cannot assert
+   * it — this can, and must: the seed has two addictions and a pass that
+   * rendered only the first would leave the registry, the rail count and the
+   * page all agreeing while half the answer was missing. That is the
+   * `views/Pullups.tsx` failure exactly (eleven workout formats lost with every
+   * gate green).
+   */
+  it('gives every tracked addiction its own breakdown card', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const names = (generateDemoData().nofap.addictions ?? []).map((a) => a.name)
+    expect(names.length).toBeGreaterThan(1)
+    const panel = container.querySelector('[data-card="addictionbreakdown"]')!
+    const titles = [...panel.querySelectorAll('h2, h3')].map((h) => h.textContent?.trim())
+    for (const n of names) expect(titles.some((t) => t === n)).toBe(true)
+  })
+
+  /**
+   * The three questions, each named on the card, because "how much / on what
+   * days / at what times" is the request and a card that answers two of them
+   * silently looks like a card that answered all three. The hour heading is
+   * asserted even on the addiction with no matching urge — its branch is a
+   * sentence saying why, not a missing section.
+   */
+  it('names all three questions on every breakdown card', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const panel = container.querySelector('[data-card="addictionbreakdown"]')!
+    const cards = [...panel.querySelectorAll('section')].filter((s) => s.querySelector('h3'))
+    expect(cards.length).toBeGreaterThan(0)
+    for (const q of ['On what days', 'At what times']) {
+      expect(panel.textContent).toContain(q)
+    }
+    // Both hour branches ship from one seed: a real clock for the addiction
+    // whose label matches an urge, and the reason for the one whose does not.
+    expect(panel.textContent).toContain('cluster at')
+    expect(panel.textContent).toContain('so there is no clock to draw')
+    // And the denominator, which is the whole point of printing it.
+    expect(panel.textContent).toMatch(/\d+ of \d+ logged urges carry a label/)
+  })
+
   it('puts the urge submit before the fields it annotates', () => {
     const { container } = mount()
     const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!

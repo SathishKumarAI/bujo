@@ -30,9 +30,12 @@ near 300; it is **358** now, and everything that left is below.
 | Urges per week | `UrgeTrendCard.tsx` |
 | The 1–5 intensity distribution | `UrgeIntensityCard.tsx` |
 | Clean weeks | `CleanRollupCard.tsx` |
-| Urges by hour of day | `HighRiskHoursCard.tsx` |
+| Urges by hour of day, pooled | `HighRiskHoursCard.tsx` |
+| The 24-hour clock grid itself — its alpha ramp and cell-text contrast | `HourStrip.tsx` |
 | Resets by weekday | `RiskiestDaysCard.tsx` |
 | **How many** per weekday, and its trend sentence | `LapseCountCard.tsx` |
+| **One addiction's own** how-much / which-days / which-times | `AddictionBreakdownCard.tsx` |
+| What a per-addiction panel can honestly claim about *time* | `AddictionBreakdownCard.tsx` docstring, `../../lib/urge.ts` (`urgesLabelled`) |
 | Top reset triggers and the gap between resets | `TriggerPatternsCard.tsx` |
 | Urges by addiction, and the ten-accent bar palette | `UrgeMixCard.tsx` |
 | The quit-date contract and the personal "why" | `CommitmentCard.tsx` |
@@ -86,6 +89,18 @@ two-raised-card cap on purpose: the urge form, the reset form, per-addiction
 streaks, the commitment contract and the trigger plans are five separately
 actionable objects, and an abstinence tracker is the one page in the cluster
 whose subject really is a collection of those.
+
+**A lapse has a date and no time, and an urge has no addiction.** Both are facts
+about `types.ts`, and between them they decide what the per-addiction panel is
+allowed to say. `Relapse` carries no timestamp, so "at what time did I lapse" is
+not answerable from this record and is not synthesised. `UrgeWin` carries `at`
+but no addiction reference — only free-text `trigger` — so the per-addiction
+clock is a **name join** (`urgesLabelled`), it can legitimately match nothing,
+and `AddictionBreakdownCard` prints its own coverage on every render. The preset
+lists do not agree with each other (`ADDICTION_PRESETS` has "Nicotine",
+`URGE_PRESETS` has "Smoking"), which is exactly the zero-match case, and the
+demo seed reproduces it so both branches are on screen for every gate. Fixing
+either honestly means capturing the field — COD-251, not a chart.
 
 **Four components read the store; the rest take derived data.**
 `AddictionStreaksCard`, `CommitmentCard`, `TriggerPlansCard`, `UrgeSurfingCard`

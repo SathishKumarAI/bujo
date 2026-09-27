@@ -6,8 +6,8 @@ import { Empty, Input } from '../components/ui'
 import { cat, onAccent } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
-import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch } from '../lib/urge'
-import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend } from '../lib/lapse'
+import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
+import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
 import { PageLayout, SectionRail, StatBar, SummaryStrip } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { cn } from '../lib/cn'
@@ -31,6 +31,7 @@ import {
   TriggerPatternsCard,
   DayTallyCard,
   LapseCountCard,
+  AddictionBreakdownCard,
   UrgeMixCard,
   AddictionStreaksCard,
   CommitmentCard,
@@ -135,6 +136,32 @@ export function NoFap() {
   })
 
   /**
+   * "How much · on what days · at what times", per tracked addiction.
+   *
+   * One row per entry in `s.addictions` — NOT the primary streak, which has no
+   * name for the urge log to match and is already what every pooled card on
+   * this page measures. The three questions were each answered pooled before
+   * this, or not at all, and a pooled weekday peak is the average of two
+   * different problems.
+   *
+   * The clock is the **urge** log filtered by label, because `Relapse` has a
+   * date and no time — `urgesLabelled` is the only join `types.ts` offers and
+   * `coverage` is the denominator the card prints. See COD-251.
+   */
+  const urgeLog = s.urgeLog ?? []
+  const labelCoverage = urgeLabelCoverage(urgeLog, addictions.map((a) => a.name))
+  const breakdowns = addictions.map((a) => {
+    const mine = urgesLabelled(urgeLog, a.name)
+    return {
+      key: a.id,
+      profile: lapseProfile(a.name, a.relapses, today),
+      hourHist: urgeHourHistogram(mine),
+      peakHour: peakUrgeHour(mine),
+      urges: mine.length,
+    }
+  })
+
+  /**
    * Every panel in zone 3, by the id the registry knows it under.
    *
    * A panel whose data cannot support it is `false` here rather than an empty
@@ -164,6 +191,15 @@ export function NoFap() {
     lapsecounts: countedStreaks.length > 0 && (
       <>{countedStreaks.map((t) => (
         <LapseCountCard key={t.key} name={t.name} byWeekday={t.byWeekday} peak={t.peak} trend={t.trend} />
+      ))}</>
+    ),
+    /* Each tracked addiction on its own, answering all three questions. Gated
+       on there being one: with no separate addiction the page's pooled cards
+       already are the per-addiction view, and a heading over nothing is the
+       failure mode of grouping. */
+    addictionbreakdown: breakdowns.length > 0 && (
+      <>{breakdowns.map((b) => (
+        <AddictionBreakdownCard key={b.key} profile={b.profile} hourHist={b.hourHist} peakHour={b.peakHour} urges={b.urges} coverage={labelCoverage} />
       ))}</>
     ),
     triggers: stats.topTriggers.length > 0 && (

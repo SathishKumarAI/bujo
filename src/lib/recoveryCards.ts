@@ -123,6 +123,20 @@ export const CARDS: CardMeta[] = [
      not the registry's. A per-streak id would make the registry disagree with
      the page the moment somebody adds an addiction. */
   { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', words: 'how many count quantity weekday average lapse times per day' },
+  /* Per-addiction "how much · on what days · at what times", one card per
+     tracked addiction under one id — the same shape as `lapsecounts` above and
+     for the same reason: how many addictions there are is the user's data, not
+     the registry's.
+
+     `wide`, and it is a legibility decision rather than a preference. The panel
+     holds a 12-week calendar beside a 24-hour clock; in one 350px column of a
+     722px pane those stack to ~560px of chart in a single file, and the
+     calendar's 13 columns land at 25px cells with the clock repeating the same
+     narrow measure underneath. Across the row the two sit side by side at
+     ~340px each, which is what the `@md` container query inside the card is
+     waiting for. On a phone `wide` costs nothing — there is one column either
+     way. */
+  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate' , wide: true },
   { id: 'triggers', title: 'Trigger patterns', group: 'patterns', words: 'trigger reason cause pattern top gap between resets' },
   { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', words: 'urges by type addiction mix what you resist most bar' },
 
