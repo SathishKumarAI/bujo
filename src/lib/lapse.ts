@@ -216,3 +216,73 @@ export function lapseTrend(
     direction: diff < -0.25 ? 'down' : diff > 0.25 ? 'up' : 'flat',
   }
 }
+
+/**
+ * Everything one tracked addiction's lapse history can say about itself — the
+ * two of the user's three questions ("how much", "on what days") that this
+ * record can answer.
+ *
+ * **Why one composed reading rather than six calls in the view.** Every field
+ * below comes from an existing function in this file — `lapseDays`,
+ * `hasLapseQuantity`'s test, `peakLapseWeekday`, `lapseByWeekday`, `lapseTrend`.
+ * The per-addiction panel needs all of them for every addiction, and
+ * `views/NoFap.tsx` is already at 374 lines against a 500 ceiling deriving the
+ * pooled numbers. So this composes and adds no arithmetic of its own: the card
+ * takes one prop and the maths stays in `lib/`, which is the rule in
+ * `components/recovery/README.md`.
+ *
+ * **The hour histogram is deliberately NOT in here.** `Relapse` carries a date
+ * and no time, so there is no hour-of-day reading for a lapse at all. The clock
+ * on that panel is built from the *urge* log — a different record, with a
+ * different denominator and a soft name join (`urgesLabelled` in `urge.ts`).
+ * Folding it in would make one object look like one measurement and bury the
+ * panel's whole honesty problem inside a type.
+ *
+ * `total` and `perDay` are `null`, never 0, when nothing is logged. This repo
+ * has shipped `count ? sum / count : 0` twice, and both times a total failure
+ * that never happened rendered as a real zero.
+ */
+export interface LapseProfile {
+  name: string
+  /** Occurrences summed across every lapse day — **null when none is logged.** */
+  total: number | null
+  /** Days on which it happened at all (10 cigarettes on one day is 1 day). */
+  days: number
+  /** Occurrences per lapse day, 1dp — **null when `days` is 0.** */
+  perDay: number | null
+  /**
+   * Whether a quantity was ever really recorded. When false, `total` is a count
+   * of days each wearing the `count ?? 1` default, so the panel says "days"
+   * instead of implying it counted cigarettes.
+   */
+  quantified: boolean
+  /** Heaviest weekday by average occurrences — undefined when nothing logged. */
+  peak: LapseWeekday | undefined
+  /** All seven, so the panel can name the clear days as well as the peak. */
+  byWeekday: LapseWeekday[]
+  /** Occurrences per week over the last 8 weeks. */
+  trend: LapseTrend
+  /** One row per lapse day, shaped as `CalendarHeatmap` wants it. */
+  heat: { date: string; value: number }[]
+}
+
+/** Compose one addiction's lapse readings. Pure; no arithmetic of its own. */
+export function lapseProfile(
+  name: string,
+  relapses: Relapse[] = [],
+  today = todayISO(),
+): LapseProfile {
+  const days = lapseDays(relapses)
+  const total = days.reduce((s, d) => s + d.count, 0)
+  return {
+    name,
+    total: days.length > 0 ? total : null,
+    days: days.length,
+    perDay: days.length > 0 ? Math.round((total / days.length) * 10) / 10 : null,
+    quantified: days.some((d) => d.count > 1),
+    peak: peakLapseWeekday(relapses),
+    byWeekday: lapseByWeekday(relapses),
+    trend: lapseTrend(relapses, 8, today),
+    heat: days.map((d) => ({ date: d.date, value: d.count })),
+  }
+}

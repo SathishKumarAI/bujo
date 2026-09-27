@@ -6,6 +6,7 @@ import {
   urgeConversion, paceToRecord,
   urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup,
   timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch,
+  urgesLabelled, urgeLabelCoverage,
 } from './urge'
 import type { UrgeWin, TriggerPlan, Relapse } from './types'
 
@@ -489,5 +490,58 @@ describe('urgeQuietStretch', () => {
   it('reports empty when there is no log', () => {
     expect(urgeQuietStretch([], today)).toEqual({ days: 0, empty: true })
     expect(urgeQuietStretch(undefined, today)).toEqual({ days: 0, empty: true })
+  })
+})
+
+describe('urgesLabelled · the only urge→addiction link the model has', () => {
+  const log: UrgeWin[] = [
+    { id: '1', date: '2026-06-01', trigger: 'Doomscrolling' },
+    { id: '2', date: '2026-06-02', trigger: ' doomscrolling ' },
+    { id: '3', date: '2026-06-03', trigger: 'Smoking' },
+    { id: '4', date: '2026-06-04' },
+  ]
+
+  it('matches the label case- and whitespace-insensitively', () => {
+    expect(urgesLabelled(log, 'Doomscrolling').map((u) => u.id)).toEqual(['1', '2'])
+  })
+
+  /**
+   * The finding this whole panel is honest about: `ADDICTION_PRESETS` offers
+   * "Nicotine" and `URGE_PRESETS` offers "Smoking", so tracking the first while
+   * tapping the second attributes nothing. A loose substring rule would paper
+   * over it here and cross-hit elsewhere, so the match stays exact and the UI
+   * prints the coverage instead.
+   */
+  it('does not guess that Smoking means Nicotine', () => {
+    expect(urgesLabelled(log, 'Nicotine')).toEqual([])
+  })
+
+  it('ignores untagged urges and an empty name', () => {
+    expect(urgesLabelled(log, '')).toEqual([])
+    expect(urgesLabelled(log, '   ')).toEqual([])
+    expect(urgesLabelled(undefined, 'Smoking')).toEqual([])
+  })
+})
+
+describe('urgeLabelCoverage', () => {
+  const log: UrgeWin[] = [
+    { id: '1', date: '2026-06-01', trigger: 'Doomscrolling' },
+    { id: '2', date: '2026-06-02', trigger: 'Smoking' },
+    { id: '3', date: '2026-06-03', trigger: 'Porn' },
+    { id: '4', date: '2026-06-04' },
+  ]
+
+  /** A clock built from one of four urges must not look like one built from four. */
+  it('reports the matched count against the whole log, not against itself', () => {
+    expect(urgeLabelCoverage(log, ['Nicotine', 'Doomscrolling'])).toEqual({ matched: 1, total: 4 })
+  })
+
+  it('counts nothing when no tracked name is logged, and still reports the total', () => {
+    expect(urgeLabelCoverage(log, ['Sugar'])).toEqual({ matched: 0, total: 4 })
+    expect(urgeLabelCoverage(log, [])).toEqual({ matched: 0, total: 4 })
+  })
+
+  it('survives an empty log', () => {
+    expect(urgeLabelCoverage([], ['Sugar'])).toEqual({ matched: 0, total: 0 })
   })
 })

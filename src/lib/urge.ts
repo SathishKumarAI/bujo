@@ -191,6 +191,59 @@ export function peakUrgeHour(urgeLog: UrgeWin[] = []): PeakHour | undefined {
   return { hour: best.hour, count: best.count, label: hourLabel(best.hour) }
 }
 
+/**
+ * The urges whose label names this addiction — the ONLY link between an urge and
+ * a tracked addiction that this data model has.
+ *
+ * **`UrgeWin` has no addiction field.** It carries `trigger`, free text, filled
+ * from `URGE_PRESETS` chips or typed. `urgesByType` in `lib/streak.ts` already
+ * buckets on that string, which is why the card reading it is titled "Urges by
+ * addiction" while nothing in `types.ts` joins the two. So a per-addiction
+ * hour-of-day clock is a **name join**, and every caller has to be honest about
+ * it: pair this with `urgeLabelCoverage` and print the denominator.
+ *
+ * Exact (case-insensitive, trimmed) match, deliberately **not** the loose
+ * both-ways-substring rule `matchPlanForTrigger` uses. That one matches trigger
+ * *phrases* ("stress" ↔ "stress at work"), where a near-miss is a helpful
+ * suggestion. Here a near-miss silently attributes one addiction's urges to
+ * another, and the preset lists contain pairs a loose rule would cross-hit.
+ *
+ * The two preset lists are not the same list, which is the finding worth
+ * recording: `ADDICTION_PRESETS` offers "Nicotine" while `URGE_PRESETS` offers
+ * "Smoking", so a user who tracks the first and taps the second gets **zero**
+ * attribution and the panel must say so rather than draw an empty clock. The
+ * real fix is an `addiction` id on `UrgeWin`, written at capture time — COD-251.
+ */
+export function urgesLabelled(urgeLog: UrgeWin[] = [], name: string): UrgeWin[] {
+  const key = (name ?? '').trim().toLowerCase()
+  if (!key) return []
+  return (urgeLog ?? []).filter((u) => (u?.trigger ?? '').trim().toLowerCase() === key)
+}
+
+/** How many logged urges carry a label matching one of the tracked names. */
+export interface UrgeCoverage {
+  /** Urges whose label names one of `names`. */
+  matched: number
+  /** Urges in the log at all — the denominator the panel prints. */
+  total: number
+}
+
+/**
+ * The share of the urge log that any per-addiction clock can see.
+ *
+ * Without this number a clock built from three of twelve urges looks like a
+ * clock built from twelve, and the reader draws a conclusion from a quarter of
+ * their own data. Pure.
+ */
+export function urgeLabelCoverage(urgeLog: UrgeWin[] = [], names: string[] = []): UrgeCoverage {
+  const keys = new Set(names.map((n) => (n ?? '').trim().toLowerCase()).filter(Boolean))
+  const log = (urgeLog ?? []).filter(Boolean)
+  return {
+    matched: log.filter((u) => keys.has((u.trigger ?? '').trim().toLowerCase())).length,
+    total: log.length,
+  }
+}
+
 // ── #263 Day-of-week relapse pattern ─────────────────────────────────────────
 
 /** One weekday bucket of the relapse-by-weekday pattern. */

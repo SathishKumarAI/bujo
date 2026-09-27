@@ -172,6 +172,72 @@ describe('Recovery · the registry is the page', () => {
    * DOM order because the y-offset that proves it lives in the browser gates,
    * and a jsdom height is meaningless.
    */
+  /**
+   * One card per tracked addiction under one registry id, the same shape as
+   * `lapsecounts`. The count is the user's data, so the registry cannot assert
+   * it — this can, and must: the seed has two addictions and a pass that
+   * rendered only the first would leave the registry, the rail count and the
+   * page all agreeing while half the answer was missing. That is the
+   * `views/Pullups.tsx` failure exactly (eleven workout formats lost with every
+   * gate green).
+   */
+  it('gives every tracked addiction its own breakdown card', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const names = (generateDemoData().nofap.addictions ?? []).map((a) => a.name)
+    expect(names.length).toBeGreaterThan(1)
+    const panel = container.querySelector('[data-card="addictionbreakdown"]')!
+    const titles = [...panel.querySelectorAll('h2, h3')].map((h) => h.textContent?.trim())
+    for (const n of names) expect(titles.some((t) => t === n)).toBe(true)
+  })
+
+  /**
+   * The three questions, each named on the card, because "how much / on what
+   * days / at what times" is the request and a card that answers two of them
+   * silently looks like a card that answered all three. The hour heading is
+   * asserted even on the addiction with no matching urge — its branch is a
+   * sentence saying why, not a missing section.
+   */
+  it('names all three questions on every breakdown card', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const panel = container.querySelector('[data-card="addictionbreakdown"]')!
+    const cards = [...panel.querySelectorAll('section')].filter((s) => s.querySelector('h3'))
+    expect(cards.length).toBeGreaterThan(0)
+    for (const q of ['On what days', 'At what times']) {
+      expect(panel.textContent).toContain(q)
+    }
+    // Both hour branches ship from one seed: a real clock for the addiction
+    // whose label matches an urge, and the reason for the one whose does not.
+    expect(panel.textContent).toContain('cluster at')
+    expect(panel.textContent).toContain('so there is no clock to draw')
+    // And the denominator, which is the whole point of printing it.
+    expect(panel.textContent).toMatch(/\d+ of \d+ logged urges carry a label/)
+  })
+
+  /**
+   * `lapseTrend` splits an 8-week window in half against a ±0.25/week deadband,
+   * so **two** lapses in eight weeks is enough to print "rising" — a confident
+   * sentence about noise, and exactly what the seeded Doomscrolling streak did
+   * before the guard. Both sides ship from one seed: Nicotine has ~99
+   * occurrences and gets a direction, Doomscrolling has two and does not.
+   */
+  it('declines to call a trend off two events, and still calls a real one', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const cards = [...container.querySelectorAll('[data-card="addictionbreakdown"] > section')]
+    const text = (name: string) => cards.find((c) => c.querySelector('h2')?.textContent?.trim() === name)!.textContent!
+    expect(text('Doomscrolling')).toContain('too few to call a trend')
+    expect(text('Nicotine')).toMatch(/falling|rising|holding/)
+    expect(text('Nicotine')).not.toContain('too few to call')
+    // And an unquantified streak must not print its day count twice.
+    expect(text('Doomscrolling')).not.toContain('Days affected')
+    expect(text('Doomscrolling')).toContain('Lapse days')
+  })
+
   it('puts the urge submit before the fields it annotates', () => {
     const { container } = mount()
     const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!

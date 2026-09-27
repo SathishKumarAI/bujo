@@ -123,6 +123,28 @@ export const CARDS: CardMeta[] = [
      not the registry's. A per-streak id would make the registry disagree with
      the page the moment somebody adds an addiction. */
   { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', words: 'how many count quantity weekday average lapse times per day' },
+  /* Per-addiction "how much · on what days · at what times", one card per
+     tracked addiction under one id — the same shape as `lapsecounts` above and
+     for the same reason: how many addictions there are is the user's data, not
+     the registry's.
+
+     **`wide` is the CHEAPER option here, and only a measurement says so.** The
+     intuition is the other way round — a full row must cost more than a column —
+     and it is wrong because the renderer wraps a whole panel in ONE
+     `data-card` div, so N cards under one id share one grid cell whatever its
+     width. Measured on `?demo=1` at 1440, patterns group:
+
+     | | panel height | group |
+     |---|---|---|
+     | un-wide, one 351px cell | two cards stacked, each 658/702px = **1380px** | 2.5 → 4.0 screens |
+     | `wide`, one 723px cell | the card's `@md` fires, each 474px = **968px** | 2.5 → 3.6 screens |
+
+     Giving the card 723px lets its own container query put the 12-week calendar
+     beside the 24-hour clock at 351px each, and that horizontal pairing is what
+     buys the 412px back. A phone is unaffected: one column either way, and the
+     card is legible there (24px calendar cells, `document.body.scrollWidth` 390,
+     no overflow). */
+  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate', wide: true },
   { id: 'triggers', title: 'Trigger patterns', group: 'patterns', words: 'trigger reason cause pattern top gap between resets' },
   { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', words: 'urges by type addiction mix what you resist most bar' },
 
