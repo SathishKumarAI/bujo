@@ -355,7 +355,7 @@ export function Insights() {
               rail, because an element cannot query itself (that one collapsed
               a desktop grid to one column with nothing failing). */}
           {/* Two divs, and the split is load-bearing. An element cannot query
-              itself, so `@container/page` and `@4xl/page:grid-cols-…` on one
+              itself, so `@container/page` and `@2xl/page:grid-cols-…` on one
               div means the grid never fires — the rail read the container
               (it is a child, so it matched) and went vertical while its
               parent stayed a single column, stacking a full-width list of
@@ -369,7 +369,7 @@ export function Insights() {
               page scrolled sideways (body scrollWidth 491). The rail's own
               `overflow-x-auto` cannot save it: the track overflows, not the
               item. Same trap `CardGrid` carries a paragraph about. */}
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
           <SectionRail
             label="Insight domains"
             groups={DOMAINS.map((d) => ({ id: d, label: DOMAIN_LABEL[d], count: countOf(d) }))}

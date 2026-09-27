@@ -53,11 +53,15 @@ export function Help() {
   return (
     <PageLayout
       /* Stays split at 1180, and that is a measured choice against the
-         obvious alternative. `stacked` + `tier={1440}` gives the rail a real
-         vertical column (container 1344 instead of 722) and costs **0.7
-         screens**: 1.3 shipped becomes 2.0. At 1.3 screens there is no
-         scrolling left for a vertical rail to save, so the horizontal chip
-         row is the cheaper shape — it filters exactly the same way. */
+         obvious alternative. `stacked` + `tier={1440}` gives the rail a wider
+         container (1344 instead of 722) and costs **0.7 screens**: 1.3 shipped
+         becomes 2.0. At 1.3 screens there is no scrolling left for a wider
+         page to save.
+         Note what that trade is NOT any more: it used to also decide whether
+         the rail was vertical at all, because `SectionRail` switched at `@4xl`
+         (896px) and 722 is under it. The switch is `@2xl` (672px) now, so the
+         rail is a column here at the split width too — the 0.7 screens buy
+         page width, not rail orientation. */
       tier={1180}
       zone1={
         <StatBar
@@ -121,7 +125,7 @@ export function Help() {
                  implicit `auto` track sizes to the chip row and scrolls the
                  page sideways). Both in docs/PAGE-SHAPE.md. */
               <div className="@container/page">
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
                 <SectionRail
                   label="Guide sections"
                   groups={allGroups.map((g) => ({ id: g.id, label: g.label, count: g.cards.length }))}
@@ -335,7 +339,7 @@ function Glossary() {
           the rail's widest chip and scrolls the page sideways. Both in
           docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
         <SectionRail
           label="Glossary domains"
           groups={all.map((g) => ({ id: g.domain, label: g.label, count: g.terms.length }))}

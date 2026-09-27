@@ -356,7 +356,7 @@ export function Cycle() {
               scrolls the whole page sideways. Both traps are in
               docs/PAGE-SHAPE.md and both were hit on the first call site. */}
           <div className="@container/page mt-4">
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
               {/* No "All" row: the four groups do not overlap and there is no
                   search on this page to cross them, so All could only offer the
                   10.6-screen phone page this replaces. Coaching’s rail omits

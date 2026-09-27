@@ -182,15 +182,24 @@ Rules the Insights rail is holding up:
 - **Sticky under `--header-h`**, which `useHeaderHeight` publishes from a
   ResizeObserver — the header grows by the notch and wraps at narrow widths,
   so a constant is wrong exactly where it hurts.
-- **Below the breakpoint it is the horizontal chip row it replaced.** Same
-  component, same state, same counts. A separate phone implementation is how
-  the two come to disagree.
+- **Below `@2xl` (672px container) it is the horizontal chip row it replaced.**
+  Same component, same state, same counts. A separate phone implementation is
+  how the two come to disagree.
+
+  **Pick that number against the container, not the viewport — it was `@4xl`
+  (896px) and that made most rail pages ship the phone shape on a desktop.**
+  A rail placed in the review column of a 1180 split gets a **722px**
+  container, so at a 1440 viewport `cycle`, `focus`, `help`, `nofap` and
+  `pullups` all computed `flex-direction: row`; only the three `stacked`
+  pages (coaching 1180, insights 1318, pickleball 1180) cleared 896. Nothing
+  failed, because a chip row is a legal rendering of the same component —
+  which is why this is written down rather than left to the gates.
 
 Two mechanical traps, both of which this repo already documents and both of
 which the first draft hit anyway:
 
 - **An element cannot query itself.** `@container/page` and
-  `@4xl/page:grid-cols-…` on one div means the grid never fires, while the
+  `@2xl/page:grid-cols-…` on one div means the grid never fires, while the
   rail (a child) matches — a full-width vertical list stacked above the pane.
   Container on the outer div, grid on the inner one.
 - **Spell out the phone column.** With no base `grid-template-columns` the
