@@ -10,7 +10,7 @@ renders it. None of them reads the store, which is what keeps
 | A guide card's title, subtitle or width | `Guide.tsx` |
 | The phase list, the temperature rules, the logging tips | `../../lib/cycleGuide.ts` |
 | A flag, its colour, or what the mark means | `flags.ts` |
-| The swatch-and-meaning list under the chips | `FlagLegend.tsx` |
+| The hue key under the chips, and whether the meanings fold | `FlagLegend.tsx` |
 | The ring, phase arcs, the "you are here" marker | `CycleWheel.tsx` |
 | The ovulation / fertile-window timeline | `FertileWindow.tsx` |
 | Drive averages per phase | `DriveByPhase.tsx` |
@@ -54,7 +54,18 @@ coverline is explicitly retrospective: it says a rise *already happened*.
 **One flag, one hue, everywhere.** `FLAG_COLOR` is the single map. Five
 surfaces read it now — the legend included — and a second copy is a copy that
 drifts. A hand-written legend would have been exactly that copy, which is why
-`FlagLegend` maps over `FLAGS` and never lists them.
+`FlagLegend` maps over `FLAGS` and never lists them, and why
+`views/Cycle.test.tsx` asserts each rendered definition is **character-identical**
+to `FLAG_MEANS` rather than merely containing the word: a paraphrase passes a
+substring check, and the words not being this component's own is its contract.
+
+**The hue key never folds; the sentences may.** `FlagLegend` is a disclosure
+whose *closed* state is still the five coloured names — the report it exists to
+answer was "unable to see which colour represents what", and hiding the key
+would reproduce it. Default open and sticky under `bujo.ui.cycle.legend`. It is
+a `<div>`, not a `<section>`: `space-audit` counts a card as a leaf `<section>`
+over 120×60, so a `section` here made the day-editor card read as a group of two
+cards on every row of that table.
 
 **Three places say something about a flag, and each says a different thing.**
 `FLAG_MEANS` (here) says what the mark records; `TRACKING_TIPS` in
