@@ -56,6 +56,16 @@ export const TECHNIQUES: { term: string; how: ReactNode }[] = [
  * aware, and the same one every other card on the page uses. Nothing is
  * revealed by it, which is why it is safe on a phone that has no hover at all:
  * all seven tiles show everything they hold at every width.
+ *
+ * **`npm run a11y` cannot see this panel** (COD-237). The gate reaches hidden
+ * content through `[aria-expanded="false"]`; Recovery's zone 3 is a
+ * `SectionRail`, whose rows are single-select nav buttons with no
+ * `aria-expanded` at all, so the gate scans the group the page opens on
+ * (`progress`) and never the other three. This one is in `reference`. It was
+ * therefore probed per group, at five desktop themes and two phone ones — 28
+ * scans, 0 serious or critical — and the probe needed a wait for the
+ * `page-enter` animation in front of it, or axe measures the *blended*
+ * mid-fade colour and reports `text-fg-1` at 2.53:1 on every theme.
  */
 export function TechniquesBlock({ plans, next, daysToNext }: {
   plans: TriggerPlan[]
@@ -71,6 +81,16 @@ export function TechniquesBlock({ plans, next, daysToNext }: {
         <ol className="grid grid-cols-[minmax(0,1fr)] gap-2 @md/tech:grid-cols-2 @4xl/tech:grid-cols-3">
           {TECHNIQUES.map((t) => (
             <li key={t.term} className="card-3d rounded-card bg-card p-3 text-body text-fg-1">
+              {/* `text-teal` stays, and it was checked rather than assumed.
+                  The tile moves these terms off the page ground onto the CARD
+                  rung, and `npm run contrast` measures accents against
+                  mantle/base/surface0 — `--card` is a `color-mix()` and is none
+                  of the three, so no gate covers this pairing. Measured on the
+                  rendered page: **6.24:1 on latte, 6.43 on dawn**, and a
+                  per-group axe probe is clean on all five (see the note below
+                  on why `npm run a11y` cannot be). `onRaised('teal')` was tried
+                  and returns the raw token in every theme, so it would have
+                  been an inline style buying nothing. */}
               <span className="font-medium text-teal">{t.term}</span> · {t.how}
             </li>
           ))}
