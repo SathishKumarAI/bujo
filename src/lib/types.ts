@@ -97,10 +97,58 @@ export interface Habit {
   cue?: string
 }
 
+/**
+ * WHY A MOOD MOVED · the conditions a person can tick on the day's check-in.
+ *
+ * Nine, chosen to be the things that actually show up in a journal rather than
+ * a clinical taxonomy: three physical/relational drags (`slept-badly`,
+ * `illness`, `lonely`), three social or financial (`argument`, `money`,
+ * `no-plans`), one work (`work-stress`), and **two that push a day up**
+ * (`good-news`, `exercised`). The upward ones matter as much as the downward:
+ * a list of only bad reasons produces a chart in which every bar points the
+ * same way and nothing can be compared against anything.
+ *
+ * The list is closed so the days are countable; `moodReasonNote` is the escape
+ * hatch so a closed list never blocks a real answer. The ordered list and the
+ * labels live in `lib/moodPatterns.ts` — the union is here because
+ * `DailyMetric` must not import from a module that reads it.
+ */
+export type MoodReason =
+  | 'slept-badly'
+  | 'argument'
+  | 'work-stress'
+  | 'money'
+  | 'illness'
+  | 'good-news'
+  | 'lonely'
+  | 'exercised'
+  | 'no-plans'
+
 /** Per-day 0–10 wellbeing metrics for the line chart. */
 export interface DailyMetric {
   date: string // ISO day, primary key
   mood?: number // 0 bad … 10 great
+  /**
+   * What the person says moved the mood that day. Several can be true at once
+   * — a bad night AND a deadline — so it is a set, not one choice.
+   *
+   * **Optional, additive, no migration**, the same discipline as
+   * `Relapse.count`: absent means "not asked", which is every day written
+   * before this field existed and every day someone rates a mood without
+   * ticking anything. Nothing reads it as a default — `moodReasonImpact`
+   * counts a day into a reason's average only when that reason is present, so
+   * an untagged day is excluded from every reason rather than silently
+   * becoming evidence that no reason applied.
+   *
+   * It lives on the metric rather than in a new record because the mood it
+   * explains is a field of `DailyMetric` and the day is already the key: a
+   * parallel `MoodContext` row would be a second write path for the same day
+   * and a reconciliation question nobody wants ("a reason logged but no mood —
+   * so what moved?").
+   */
+  moodReasons?: MoodReason[]
+  /** Free text for a reason the nine do not cover. Never parsed, only read. */
+  moodReasonNote?: string
   stress?: number // 0 low … 10 high
   sleep?: number // hours, 0–10+
   energy?: number // 0 drained … 10 energized (Bearable-style)

@@ -104,6 +104,38 @@ describe('Insights · the registry is the page', () => {
    * not remember is the whole reason the search exists, so it must not be
    * silently intersected with whichever rail row happens to be selected.
    */
+  /**
+   * The four mood/recovery panels, both directions, by name.
+   *
+   * The union test above already fails if one goes missing — but it fails with
+   * "an id is in the registry and not on the page", which is the same message
+   * for all twenty-seven cards. These four are the ones whose *content* is
+   * gated on an observation floor, so each has a live branch that renders an
+   * empty state and a live branch that renders a chart. A card that silently
+   * fell to its empty state on the demo journal would still satisfy the union;
+   * this asserts the demo reaches the drawn branch, which is what
+   * `lib/demoMood.test.ts` seeds for and what the a11y gate needs in order to
+   * see any of this markup at all.
+   */
+  it('renders all four mood-pattern panels with data, not with their empty states', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(DOMAIN_LABEL.mood))
+    for (const id of ['moodreasons', 'moodswing', 'lapselag', 'moodrisk']) {
+      const card = container.querySelector(`[data-card="${id}"]`)
+      expect(card, `${id} is not on the page`).not.toBeNull()
+    }
+    // The three phrases each floor prints when it has nothing. Their presence
+    // means the seed stopped covering a card, which is exactly how a chart goes
+    // quiet with every gate green.
+    const text = container.querySelector('[data-domain="mood"]')!.textContent!
+    expect(text).not.toContain('This needs four lapse days')
+    expect(text).not.toContain('Tick what shaped a day')
+    expect(text).not.toContain('this needs three weeks')
+    // And the join's headline is a real comparison, with both counts in it.
+    expect(text).toMatch(/lapse days logged, mood\s*averaged/)
+  })
+
   it('searches across domains regardless of the selected rail row', async () => {
     const user = userEvent.setup()
     const { container } = mount()

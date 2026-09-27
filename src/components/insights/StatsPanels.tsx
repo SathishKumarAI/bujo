@@ -26,6 +26,7 @@ import {
 import { monthDays, prettyMonth, todayISO, ymOf, fromISODay, WEEKDAYS, MONTHS } from '../../lib/date'
 import { workoutSplitCounts } from '../../lib/stats'
 import { sleepDebt, focusSleepCorrelation } from '../../lib/correlations'
+import { lapseDays } from '../../lib/moodPatterns'
 import { useFocusTrap } from '../../lib/useFocusTrap'
 
 const tip = rechartsTooltip
@@ -119,6 +120,35 @@ export function useStatsCards(): StatsCards {
   // Hand-rolled modal (not Radix): trap Tab inside it and restore focus on close.
   const enlargedTrap = useFocusTrap<HTMLDivElement>(enlarged !== null)
 
+  /**
+   * LAPSE DAYS, RINGED ON THE MOOD GRIDS.
+   *
+   * The ask this answers is "show me how the mood swings and how it is affecting
+   * the addiction", and the mood grids were already the app's best
+   * pattern-finding surface — ninety squares you can read at a glance — with the
+   * lapse log living on an entirely different page. Two variables, one grid: the
+   * **fill** is the mood, the **ring** is a lapse. You can see whether the rings
+   * land in the dark patches, which is the whole question, and no new card had to
+   * be invented to ask it.
+   *
+   * The ring rather than a second colour, deliberately: hue on these cells is
+   * already spent on the mood scale, and a lapse day drawn in a tenth hue would
+   * be competing with the very thing it is meant to annotate. A shape is a
+   * separate channel — and it is the one DESIGN.md already reserves for exactly
+   * this ("a 1px border in the hue is the only place a border carries meaning",
+   * the habit-slip idiom). Drawn as an `inset` box-shadow so it costs no layout,
+   * and coloured by `onAccent(fill)` so it is legible on a mood-2 red, a mood-9
+   * green and the empty surface, in all five themes — a fixed ring colour cannot
+   * be, because the fill under it is a fixed 55% lightness while the themes are
+   * not.
+   *
+   * It is never the only carrier: every ringed cell says "lapse logged" in its
+   * `title` and its screen-reader text too.
+   */
+  const lapses = lapseDays(data)
+  const ringFor = (date: string, fill: string, width = 1.5) =>
+    lapses.has(date) ? { boxShadow: `inset 0 0 0 ${width}px ${onAccent(fill)}` } : undefined
+
   // Mood-calendar grid; `large` scales the cells up for the enlarge modal.
   const moodCalGrid = (large = false) => (
     <div className={large ? 'mx-auto max-w-xl' : 'mx-auto max-w-xs'}>
@@ -127,7 +157,7 @@ export function useStatsCards(): StatsCards {
       </div>
       <div className={`grid grid-cols-7 ${large ? 'gap-1.5' : 'gap-0.5'}`}>
         {monthDays(ym).map((d, i) => (
-          <div key={d} title={moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}
+          <div key={d} title={`${moods.has(d) ? `${d}: mood ${moods.get(d)}/10` : `${d}: no mood logged`}${lapses.has(d) ? ' · lapse logged' : ''}`}
             className={`grid aspect-square cursor-default place-items-center rounded transition-transform duration-150 hover:scale-[1.18] ${large ? 'text-heading' : 'text-micro'}`}
             // Two different backgrounds, so two different rules.
             //
@@ -143,8 +173,11 @@ export function useStatsCards(): StatsCards {
             // and a mood-4 day measured **2.04:1** on latte. The swatch is a
             // fixed 55% lightness in every theme, so no single neutral works —
             // `onAccent` picks per fill and per theme, which is what it is for.
-            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? onAccent(moodColor(moods.get(d))) : cat('subtext0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined }}>
+            style={{ background: moodColor(moods.get(d)), color: moods.has(d) ? onAccent(moodColor(moods.get(d))) : cat('subtext0'), gridColumnStart: i === 0 ? fromISODay(d).getDay() + 1 : undefined, ...ringFor(d, moodColor(moods.get(d)), large ? 2 : 1.5) }}>
             {Number(d.slice(8))}
+            {/* Never colour — or a ring — alone. The grid is a field of divs
+                rather than a table, so this is what a screen reader reaches. */}
+            {lapses.has(d) && <span className="sr-only"> lapse logged</span>}
           </div>
         ))}
       </div>
@@ -158,7 +191,7 @@ export function useStatsCards(): StatsCards {
     if (moodOn.size === 0) return <Empty>Log mood through the year to fill this in.</Empty>
     const sq = large ? 'h-4 w-4' : 'h-2.5 w-2.5'
     return (
-      <div className="overflow-x-auto" role="img" aria-label={`Year-in-pixels grid of daily mood for ${year}`}>
+      <div className="overflow-x-auto" role="img" aria-label={`Year-in-pixels grid of daily mood for ${year}. Days with a logged lapse are outlined; there ${lapses.size === 1 ? 'is 1' : `are ${lapses.size}`} in the journal.`}>
         <div className={large ? 'min-w-[720px]' : 'min-w-[520px]'}>
           {Array.from({ length: 12 }, (_, mi) => {
             const mm = String(mi + 1).padStart(2, '0')
@@ -169,7 +202,7 @@ export function useStatsCards(): StatsCards {
                   {Array.from({ length: 31 }, (_, di) => {
                     const date = `${year}-${mm}-${String(di + 1).padStart(2, '0')}`
                     const v = moodOn.get(date)
-                    return <span key={di} className={`${sq} rounded-[2px] transition-transform duration-150 hover:scale-[1.6]`} title={v != null ? `${date}: ${v}/10` : date} style={{ background: moodColor(v) }} />
+                    return <span key={di} className={`${sq} rounded-[2px] transition-transform duration-150 hover:scale-[1.6]`} title={`${v != null ? `${date}: ${v}/10` : date}${lapses.has(date) ? ' · lapse logged' : ''}`} style={{ background: moodColor(v), ...ringFor(date, moodColor(v), large ? 2 : 1.5) }} />
                   })}
                 </div>
               </div>
@@ -248,7 +281,7 @@ export function useStatsCards(): StatsCards {
 <Card band
   enlargeable={false}
   title="Mood calendar"
-  subtitle="Each day tinted by your mood (0–10), tap ⛶ to enlarge"
+  subtitle={`Each day tinted by your mood (0–10)${lapses.size > 0 ? ' · a ring marks a logged lapse' : ''}, tap ⛶ to enlarge`}
   right={
     /* Five controls do not fit a 390px row, and `Card` can only cap the
        width of the slot — it cannot wrap a cluster whose markup it does
@@ -278,15 +311,22 @@ export function useStatsCards(): StatsCards {
     )
   })()}
   {moodCalGrid(false)}
-  {/* Legend */}
-  <div className="mt-3 flex items-center justify-center gap-2 text-micro text-fg-2">
+  {/* The scale key — colour here IS the value — plus the ring, which is a
+      second variable on the same cells and therefore needs saying. */}
+  <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-micro text-fg-2">
     <span>low</span>
     {[0, 2, 4, 6, 8, 10].map((m) => <span key={m} className="h-3 w-5 rounded-sm" style={{ background: moodColor(m) }} />)}
     <span>great</span>
+    {lapses.size > 0 && (
+      <span className="flex items-center gap-1.5">
+        <span aria-hidden className="ml-1 h-3 w-5 rounded-sm" style={{ background: moodColor(4), boxShadow: `inset 0 0 0 1.5px ${onAccent(moodColor(4))}` }} />
+        lapse logged
+      </span>
+    )}
   </div>
 </Card>
 ) : (
-<Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood`} enlargeable={false}
+<Card band title="Year in pixels" subtitle={`${ym.slice(0, 4)}, one square per day, tinted by mood${lapses.size > 0 ? ' · outlined where a lapse was logged' : ''}`} enlargeable={false}
   right={
     <div className="flex flex-wrap justify-end gap-1">
       <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />

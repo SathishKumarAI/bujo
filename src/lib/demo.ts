@@ -1,6 +1,7 @@
-import type { Entry, Habit, JournalData, WorkoutSet } from './types'
+import type { Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
 import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
+import { lapseDays } from './moodPatterns'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -14,6 +15,46 @@ function rng(seed: number) {
 }
 
 const clamp = (n: number, lo = 0, hi = 10) => Math.max(lo, Math.min(hi, Math.round(n)))
+
+/**
+ * WHY the day went the way it did, derived from the numbers the day already has.
+ *
+ * `DailyMetric.moodReasons` is optional and additive, so a seed that skipped it
+ * would leave `moodReasonImpact` — and the whole "why is my mood changing"
+ * answer — rendering its empty state on every gate run. The repo has paid for
+ * that shape three times (`data.cycle`, `addictions`, `UrgeWin.intensity`), so
+ * this is seeded on purpose and with a *shape* rather than at random:
+ *
+ * - `slept-badly` follows the night that was actually short, so the card's
+ *   delta agrees with the sleep→mood correlation the matrix already shows. A
+ *   demo where the two disagree teaches the reader to distrust both.
+ * - the drags attach to low-mood days and the lifts to high-mood ones, which is
+ *   the point of having **two upward reasons**: a seed of nine bad conditions
+ *   draws nine negative bars and the reader cannot tell a heavy one from a light
+ *   one.
+ * - `no-plans` is a weekend thing and `illness` is rare, so the row order in
+ *   the card is not all one hue of cause.
+ *
+ * Roughly a third of days come back empty, which is load-bearing:
+ * `moodReasonImpact` needs untagged days as the comparison group and returns
+ * `[]` when every rated day carries a reason. A seed that tagged all 90 days
+ * would show an empty card while looking thoroughly seeded.
+ */
+function moodReasonsFor(sleep: number, mood: number, date: string, r: number): MoodReason[] {
+  const out: MoodReason[] = []
+  if (sleep < 6) out.push('slept-badly')
+  if (mood <= 4) out.push(r < 0.4 ? 'work-stress' : r < 0.7 ? 'lonely' : 'argument')
+  if (mood >= 8) out.push(r < 0.55 ? 'exercised' : 'good-news')
+  const weekend = [0, 6].includes(fromISODay(date).getDay())
+  if (weekend && r > 0.55) out.push('no-plans')
+  // `mood <= 6` on this branch is not decoration. Without it `money` and
+  // `illness` attached to days at random, and the first seeded run had **Money
+  // worry at +1.3** — the demo asserting that a money worry lifts the mood by a
+  // point. A demo that contradicts itself teaches the reader to discount the
+  // card, and the card is the one claiming to say why a mood moved.
+  if (r > 0.92 && mood <= 6) out.push(r > 0.97 ? 'illness' : 'money')
+  return out
+}
 
 const TASKS = [
   'Find something red for game day', 'Get camp new food', 'Water the plants',
@@ -35,13 +76,40 @@ export function generateDemoData(today = todayISO()): JournalData {
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
-  // so the activity + cards heatmap grids look full (the wellbeing/charts data
-  // still spans the recent 30 days below).
+  // so the activity + cards heatmap grids look full.
   const HIST_DAYS = 90
   j.habits.forEach((h) => { h.startedOn = addDays(today, -(HIST_DAYS - 1)) })
   for (let i = HIST_DAYS - 1; i >= 30; i--) {
     const d = addDays(today, -i)
     j.habitLog[d] = j.habits.filter(() => rand() > 0.4).map((h) => h.id)
+    /**
+     * WELLBEING ACROSS THE WHOLE HISTORY, not just the recent thirty days.
+     *
+     * The habit grids got 90 days and the metrics got 30, so two thirds of the
+     * lived-in history had no mood at all. Everything that reads mood over a
+     * long window was therefore reading mostly nothing: the mood calendar drew
+     * one month out of twelve, `moodSwingByWeek`'s twelve buckets had four with
+     * data, and — the one that matters here — **the primary streak's three
+     * relapses sit at −58, −40 and −16 days, so two of the three had no mood
+     * within a week of them and the mood↔lapse join could not be drawn at all**.
+     * Nothing failed; the charts just quietly described a month.
+     *
+     * Same trap as the unseeded `data.cycle` and the unseeded `addictions`
+     * before it, one axis over: not a field the seed skipped, a *span* it
+     * skipped. These rows carry only the four hand-typed wellbeing fields — the
+     * nutrition and device figures stay on the recent thirty days, because those
+     * arrive from an import and a year of them is not what a demo is claiming.
+     */
+    const hSleep = clamp(5 + rand() * 4)
+    const hMood = clamp(hSleep - 1 + (rand() * 3 - 1.5))
+    const hReasons = moodReasonsFor(hSleep, hMood, d, rand())
+    j.metrics.push({
+      date: d,
+      sleep: hSleep,
+      stress: clamp(10 - hSleep + (rand() * 3 - 1.5)),
+      mood: hMood,
+      ...(hReasons.length ? { moodReasons: hReasons } : {}),
+    })
   }
 
   for (let i = 29; i >= 0; i--) {
@@ -51,8 +119,14 @@ export function generateDemoData(today = todayISO()): JournalData {
     const sleep = clamp(5 + rand() * 4) // 5–9
     const stress = clamp(10 - sleep + (rand() * 3 - 1.5))
     const mood = clamp(sleep - 1 + (rand() * 3 - 1.5))
+    const moodReasons = moodReasonsFor(sleep, mood, date, rand())
     j.metrics.push({
       date, sleep, stress, mood,
+      ...(moodReasons.length ? { moodReasons } : {}),
+      /* The free-text escape hatch, on one day. It is the branch the nine chips
+         cannot cover, and a seed that only ever writes the closed taxonomy
+         leaves the read-back's `moodReasonNote` line unrendered by every gate. */
+      ...(i === 3 ? { moodReasonNote: 'Dentist, and the landlord called' } : {}),
       fastBreak: rand() > 0.5 ? 'food' : 'drink',
       calories: 1800 + Math.floor(rand() * 700),
       protein: 110 + Math.floor(rand() * 60),
@@ -257,6 +331,33 @@ export function generateDemoData(today = todayISO()): JournalData {
   ]
   j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
 
+  /**
+   * A REAL SLUMP, because the generator could not produce one.
+   *
+   * Mood is `clamp(sleep − 1 + (rand()×3 − 1.5))` over `sleep ∈ 5…9`, so its
+   * arithmetic floor is **3** and 90 days of it produced exactly **two** days at
+   * or below 3. `moodBandRisk`'s Low band (0–3) therefore held 2 days at a
+   * **100% lapse rate** — the most alarming number on the page, standing on two
+   * observations, and the card's own "not enough yet" guard suppressing the one
+   * band a reader would look at first. A guard that fires on every run is
+   * indistinguishable from a chart that does not work.
+   *
+   * So: a three-day slump and two scattered bad days, written over whatever the
+   * generator produced. Everyone has a handful of 1s and 2s in three months; a
+   * demo whose worst day is a 3 is the unrealistic one. The slump is
+   * deliberately NOT placed on a lapse day — the lag chart must show a shape
+   * the data really has, not one this block drew by hand.
+   */
+  const SLUMP: [number, number][] = [[-62, 2], [-61, 1], [-60, 2], [-44, 3], [-13, 2]]
+  for (const [offset, mood] of SLUMP) {
+    const day = addDays(today, offset)
+    const m = j.metrics.find((x) => x.date === day)
+    if (!m) continue
+    m.mood = mood
+    m.stress = clamp(10 - mood + 1)
+    m.moodReasons = offset === -44 ? ['illness'] : ['slept-badly', 'work-stress']
+  }
+
   // ── Streak (abstinence) demo: a 16-day live run with prior resets + urges ──
   /**
    * Sundays, anchored to the run date.
@@ -307,9 +408,31 @@ export function generateDemoData(today = todayISO()): JournalData {
      * That also makes the coverage line a real fraction (3 of 5) rather than
      * 100%, which is the number the card exists to print.
      */
+    /**
+     * …and the log spanned **two days out of ninety**, which is the other half
+     * of the same problem. Anything that joins an urge to the day it happened
+     * on — `moodBandRisk`, which asks whether an urge is rated more intense on
+     * a low day — had at most two days of mood to join to, so two of its three
+     * bands reported `intensity: null` and the column the card exists for was
+     * blank however much else was seeded. Spread across eight weeks now, with
+     * the intensities leaning up on the low-mood days rather than assigned at
+     * random: a seed with no relationship in it makes a working chart look
+     * broken, which is indistinguishable from a broken one.
+     */
     urgeLog: [
       { id: uid('u'), date: addDays(today, -6), at: `${addDays(today, -6)}T23:05:00`, trigger: 'Doomscrolling', intensity: 4 },
       { id: uid('u'), date: addDays(today, -3), at: `${addDays(today, -3)}T23:40:00`, trigger: 'Doomscrolling', intensity: 5 },
+      /* Two of these sit on the slump days seeded above (−61, −13) on purpose:
+         `moodBandRisk`'s Low row had **zero** urges and therefore a dash in the
+         intensity column — the single cell the card exists to fill. Put there by
+         hand, like the Nicotine trend and the Sunday peak, because a demo has to
+         contain the pattern it claims to reveal. */
+      { id: uid('u'), date: addDays(today, -61), at: `${addDays(today, -61)}T23:40:00`, trigger: 'Alone in the evening', intensity: 5, halt: ['lonely', 'tired'], technique: 'delay' },
+      { id: uid('u'), date: addDays(today, -41), at: `${addDays(today, -41)}T21:15:00`, trigger: 'Work stress', intensity: 4, halt: ['tired'], technique: 'surf' },
+      { id: uid('u'), date: addDays(today, -33), at: `${addDays(today, -33)}T13:20:00`, trigger: 'Boredom', intensity: 2, technique: 'delay' },
+      { id: uid('u'), date: addDays(today, -24), at: `${addDays(today, -24)}T22:50:00`, trigger: 'Doomscrolling', intensity: 4, halt: ['tired'], technique: 'halt' },
+      { id: uid('u'), date: addDays(today, -13), at: `${addDays(today, -13)}T20:05:00`, trigger: 'Argument at home', intensity: 5, halt: ['angry', 'lonely'], technique: 'reach-out' },
+      { id: uid('u'), date: addDays(today, -9), at: `${addDays(today, -9)}T11:45:00`, trigger: 'After a meal', intensity: 1, technique: 'surf' },
       { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2 },
       { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4 },
       { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn', intensity: 3 },
@@ -385,6 +508,50 @@ export function generateDemoData(today = todayISO()): JournalData {
      relationships, and a seed of independent uniforms makes every one of them
      report "no pattern" no matter how the maths is written. A demo that cannot
      exhibit the finding cannot test the finding. */
+  /**
+   * THE MOOD↔LAPSE RELATIONSHIP, SEEDED ON PURPOSE.
+   *
+   * This has to run *after* `j.nofap`, because it reads the lapse days out of it.
+   *
+   * Without it the demo's flagship chart — mood at day −3…+3 around a lapse —
+   * showed whatever the PRNG happened to line up. Measured on two different run
+   * dates: a **5.1 against 5.7** gap on one and a **5.6 against 5.8** gap on
+   * the next, because the primary streak's relapses sit at fixed day offsets
+   * while the per-addiction ones are anchored to Sundays, so the whole geometry
+   * re-shuffles with the weekday the demo is loaded on. A flagship chart whose
+   * finding depends on the calendar is indistinguishable from one that does not
+   * work — the same reason `sunday(n)` exists twenty lines above, and the same
+   * reason the Nicotine counts are hand-written into a falling sequence rather
+   * than rolled.
+   *
+   * So: **−2 on the lapse day, −1 on the day before.** A shape, not a cliff. It
+   * gives the lag curve the reading it exists to make legible ("mood sagged into
+   * it and bottomed on the day") while leaving days +1…+3 at the journal's own
+   * level, so the *other* reading — the drop coming after — is visibly not what
+   * this data says. Both halves matter: a demo that dips symmetrically teaches
+   * nothing, because the whole point of the chart is that the two sides mean
+   * different things.
+   *
+   * An upward reason is stripped from a dipped day, because "exercised" on a
+   * mood-3 lapse day is the demo contradicting itself — the failure mode the
+   * `mood <= 6` guard in `moodReasonsFor` exists for.
+   *
+   * This is a demo containing the pattern it claims to reveal. It is not a claim
+   * that the pattern is in anyone's real journal, and the cards say so on screen:
+   * every one states its n and none of them uses a causal verb.
+   */
+  for (const day of lapseDays(j)) {
+    for (const [offset, drop] of [[0, 2], [-1, 1]] as const) {
+      const m = j.metrics.find((x) => x.date === addDays(day, offset))
+      if (!m || m.mood == null) continue
+      m.mood = clamp(m.mood - drop)
+      if (m.stress != null) m.stress = clamp(m.stress + drop)
+      const kept = (m.moodReasons ?? []).filter((r) => r !== 'exercised' && r !== 'good-news')
+      m.moodReasons = kept.length ? kept : ['work-stress']
+    }
+  }
+
+  // ── Developer focus sessions (Focus view) ──
   const projects = ['bujo', 'pickleball-vision', 'work', 'side-project']
   const langs = [['typescript', 'react'], ['python'], ['typescript'], ['go', 'rust']]
   /* Every band `focusByDuration` declares, so none of the five is dead. */

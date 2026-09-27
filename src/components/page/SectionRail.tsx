@@ -125,24 +125,24 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
             `}
           >
             <span>{r.label}</span>
-            {/* No `opacity-70`. It computed `fg-2` down to `#7c8195` on `ink-0`
-                = **4.48:1** against a 4.5 floor, on every rail page, in all five
-                themes — and the count is content, not decoration: the workflow's
-                own rule is that a rail's counts are live because "a rail whose
-                rows move as you type cannot be aimed at".
-
-                It had always been below the floor and nothing could see it:
-                while this rail was transparent, axe had no resolvable
-                background behind the chips and skipped the pairing entirely.
-                Giving the rail a ground (the fix above) is what made a real,
-                pre-existing failure detectable — the gate was blind, not happy.
-                `check-contrast` cannot catch this class either, because a
-                faded token is not a token (COD-244's neighbour).
-
-                **Opacity on text is how you get a colour no gate can check.**
-                The hierarchy the fade was reaching for is carried by state
-                instead: the selected row is `text-brand-text` on a wash, the
-                rest are `fg-2`, and the count is already set apart by `num`. */}
+            {/* No `opacity-70`.
+                It was there to keep the count quieter than the label, and it is
+                the wrong tool: the count is information — it is in the row's
+                accessible name — and 70% of a foreground that was solved to
+                exactly 4.6 lands under the floor by construction. Measured on
+                the SELECTED row, where the text is `brand-text` on
+                `brand-wash` and there is no headroom at all: **3.82 mocha ·
+                3.40 latte · 3.55 neon · 3.45 vscode · 3.08 dawn**, five out of
+                five under 4.5. Unselected rows were 4.48 — under it too, by
+                two hundredths.
+                The hierarchy it was buying is already carried by `.num`: the
+                count is tabular mono against the label's sans, which is a
+                stronger separation than a fade and costs no contrast.
+                Invisible until now because the gate only ever scanned Insights
+                with its FIRST domain selected, so five sixths of the page and
+                every other rail state went unrendered — see `scanInsightsAll`
+                in `scripts/a11y-axe.mjs`. Arming that pass turned a green run
+                red on this line, which is what it was for. */}
             {r.count != null && <span className="num ml-1.5 @4xl/page:ml-0">{r.count}</span>}
           </button>
         )
