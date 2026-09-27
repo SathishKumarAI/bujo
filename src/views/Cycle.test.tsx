@@ -7,6 +7,7 @@ import { NavProvider } from '../components/shell/nav'
 import { CursorProvider } from '../components/shell/cursor'
 import { Cycle } from './Cycle'
 import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL } from '../lib/cycleCards'
+import { FLAGS, FLAG_MEANS } from '../components/cycle'
 import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
 import { generateDemoData } from '../lib/demo'
 
@@ -87,6 +88,36 @@ describe('Cycle · the registry is the review zone', () => {
     const groups = container.querySelectorAll('[data-domain]')
     expect(groups).toHaveLength(1)
     expect(groups[0].getAttribute('data-domain')).toBe(DEFAULT_GROUP)
+  })
+
+  /**
+   * The legend is five hues, five words and five sentences, and all three come
+   * from `components/cycle/flags.ts`. The failure this catches is the one
+   * `views/Pullups.tsx` already shipped: a pass that *retypes* a data module
+   * instead of reading it, with `tsc -b`, eslint and the build all green
+   * because an export nobody imports is not an error. Assert the rendered
+   * definition is character-identical to `FLAG_MEANS` rather than that it
+   * merely contains the word — a paraphrase would pass a substring check and
+   * this component's whole contract is that the words are not its own.
+   */
+  it('decodes every flag, with the meaning exactly as `flags.ts` writes it', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    const rows = [...container.querySelectorAll('#cycle-flag-meanings > div')]
+    expect(rows).toHaveLength(FLAGS.length)
+    for (const [i, f] of FLAGS.entries()) {
+      expect(rows[i].querySelector('dt')!.textContent!.trim()).toBe(f)
+      expect(rows[i].querySelector('dd')!.textContent!.trim()).toBe(FLAG_MEANS[f])
+    }
+    // Folded, the hue→word key survives and only the sentences go. That is the
+    // whole reason the fold is allowed: the report was that the colours were
+    // undecipherable, and hiding the key would reproduce it.
+    const toggle = screen.getByRole('button', { name: /flag colours/i })
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
+    expect(keys.map((li) => li.textContent!.trim())).toEqual([...FLAGS])
+    expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
   })
 
   it('keeps the medical disclaimer visible in every group', async () => {
