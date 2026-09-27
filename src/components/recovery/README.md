@@ -15,7 +15,7 @@ near 300; it is **358** now, and everything that left is below.
 | The group someone lands on | `../../lib/recoveryCards.ts` (`DEFAULT_GROUP`) |
 | Zone layout, the rail, the panel filter, which numbers get derived | `../../views/NoFap.tsx` |
 | The hero ring, the milestone bar, the "reset today" note | `StreakRingCard.tsx` |
-| The urge form — chips, intensity, technique, HALT, the log list | `UrgeSurfingCard.tsx` |
+| The urge form — the submit, chips, intensity, technique, HALT, the log list | `UrgeSurfingCard.tsx` |
 | The reset form | `LogResetCard.tsx` |
 | "How many times today", per tracked thing | `DayTallyCard.tsx` |
 | The in-crisis overlay: timer, breathing pacer, plan lookup | `SosOverlay.tsx` |
@@ -37,7 +37,9 @@ near 300; it is **358** now, and everything that left is below.
 | Urges by addiction, and the ten-accent bar palette | `UrgeMixCard.tsx` |
 | The quit-date contract and the personal "why" | `CommitmentCard.tsx` |
 | If-then trigger plans | `TriggerPlansCard.tsx` |
-| The coping technique list | `TechniquesBlock.tsx` |
+| The coping technique wording, and their tile grid | `TechniquesBlock.tsx` (`TECHNIQUES`) |
+| Which panel takes the whole `CardGrid` row | `../../lib/recoveryCards.ts` (`wide`) |
+| The order of the four acts in zone 2 | `../../views/NoFap.tsx` |
 | The milestone ladder | `LadderBlock.tsx` |
 | The reset log | `ResetHistoryBlock.tsx` |
 | A heading-and-hairline section instead of a card | `RefBlock.tsx` |
@@ -56,6 +58,26 @@ gated (`conversion.total > 0 && <SelfEfficacyCard …>`), the renderer skips
 falsy ones, and the rail's count is computed over the same gate — so a group
 heading never stands over nothing and a rail row never promises a panel that is
 not there.
+
+**Zone 2 is ordered by how often the act happens.** Ring, urge surfing, day
+tally, reset. `PRODUCT.md` ranks capture as the product, and the frequent
+capture here is riding out an urge — many times a day during a streak, against
+a lapse tally and a reset that are rare by definition. Urge surfing used to be
+third with its submit under its own four field groups, which put the
+most-repeated act on the page **1130px inside a 760px scrollport** at 1440 and
+at **y 1613 in an 844px viewport** on a phone. Reordering costs the day tally
+its second-from-top spot, and that is the trade: it is one tap either way.
+
+**The submit leads the urge card; the fields follow it.** Every field in that
+card is optional on purpose (see its docstring), so it is not a form with a
+submit — it is a button with optional annotations, and drawing it the other way
+round is what buried it. It is also the page's one `primary`.
+
+**Zone 2 is material; zone 3 is not.** The four act cards are real boxed
+`Card`s — fill, radius, `--shadow-raise`, a hover lift. They all used to pass
+`band`, the unboxed variant, so the one column where every item is a control
+wore the chrome `DESIGN.md` reserves for text. Zone 3 keeps `band`. Act is
+material, review is not; that line is the rule, not a per-card taste.
 
 **Cards own actions; blocks do not.** A raised `Card` says *this thing has its
 own state and its own actions*. The three `RefBlock`s — techniques, ladder, reset
