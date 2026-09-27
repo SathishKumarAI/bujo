@@ -1,174 +1,190 @@
 # Next session
 
-Written 2026-09-26 at the end of the #278–#286 stretch, replacing the queue that
-stretch worked through. Read `docs/PAGE-WORKFLOW.md` first for any page work —
-it is the method these tasks assume, and the order in it is what saves time.
+Written 2026-09-27 at the end of the #287–#298 stretch, replacing the queue that
+stretch worked through. Read `docs/PAGE-WORKFLOW.md` first for any page work.
 
-**The job in one line: three pages are now over budget on a phone, and one gate
-still cannot see the view it is pointed at.**
+**The job in one line: one page is twice as long as any other, and four gates
+measure less than their output implies.**
 
 ---
 
-## 1 · `mindset` is 8.8 screens on a phone — the worst page in the app
+## 1 · `mindset` is 8.8 screens on a phone, and now has no excuse
 
-Measured on `main` after this stretch:
+```
+mindset   desktop 4.2 / 4.2 ⚠   phone 8.8 / 8.8   3 cards · 0 groups · 0 folds
+```
 
-| | shipped | open | cards | groups |
-|---|---|---|---|---|
-| desktop 1440 | 4.2 | 4.2 ⚠ | 3 | **0** |
-| phone 390 | **8.8** | **8.8** | 3 | **0** |
+**More than twice the next-longest page.** `open == shipped`, so nothing is
+hidden — it is flat length. It has been carried for four stretches as "needs a
+decision, not a primitive", because a rail had no rows to make.
 
-Nothing folds, nothing groups, and it is nearly nine screens on the device it is
-most likely to be read on. Note the shape: **zero disclosure groups and three
-cards**, so this is not a fold-wall and the rail is not the obvious answer.
+**That is no longer true, and the reason is precedent rather than opinion.** Its
+library is already tiled and grouped by **nine categories**; #279 put a rail over
+five glossary groups on Help with real numbers, and #288/#289/#296 took Cycle,
+Recovery and Focus through the same treatment with a measured win each time
+(4.4 → 2.4 phone, 4.8 → 5.0 with content *added*, 5.7 → 3.7). **The nine
+categories are the rail; the bands above it stay.**
 
-`docs/NEXT-SESSION.md` carried this page for two stretches as "needs a decision,
-not a primitive", and that is still true — but the decision got smaller since it
-was written. The library is already tiled and grouped by nine categories, and PR
-#279 put a `SectionRail` on Help's glossary over exactly five such groups with a
-measured before/after (open 3.3 → 2.5 desktop, 6.8 → 5.1 phone). **The nine
-categories are the rail; the bands above it stay.** That is a concrete proposal
-rather than an invented grouping, so it no longer needs asking about first —
-but measure it, and if the rail does not move the phone number, say so and stop.
+Measure it, and if the rail does not move the phone number, say so and stop — the
+lever here has always been removing content from the page rather than reflowing
+it.
 
-## 2 · Settings' gate blindness — COD-232, and the cheap half is identified
+## 2 · COD-232 has a second head, and it is on seven pages
 
-`npm run space -- settings` still reports **0.9 shipped / 0.9 open** on `main`,
-and that is the Profile tab measured five times. Both rendering gates only ever
-grade the first tab of a tab shell.
+`space-audit` walks the rendered DOM, and a rail shows **one group at a time**. So
+every space number quoted for a rail page is that one group:
 
-Two halves, and the cheaper one is not the one in the ticket title:
+| page | the page reports | measured on another group |
+|---|---|---|
+| nofap | 1.7 / 1.7 desktop | `patterns` **3.6** desktop, **7.5** phone |
+| insights | 1.7 / 1.7 desktop | `mood` **2.65** desktop, **5.12** phone |
 
-- **Seed the default-off switches.** `reminderEnabled: true` in `src/lib/demo.ts`
-  makes that whole branch render for every gate on every run, and it is
-  local-only so it triggers no network. It is what hid a real `label` violation
-  through the gate's entire existence. **`weatherEnabled` and `foodLookup` need
-  more thought** — both reach outside the device, and a gate that makes live
-  requests is a different problem. This was held back only because three
-  branches were editing `demo.ts` at once; nothing is in flight now.
-- **Walk the tabs.** The larger half. `aria-selected` must be asserted after the
-  click and **polled** via `page.evaluate` — reading it once through
-  `locator.evaluate` was measured failing while the same run's own dump printed
-  `selected:true` three lines lower. Without that assertion the walk scans one
-  tab N times and reports it clean, which is how this was nearly dismissed as
-  overstated.
+Seven pages now use `SectionRail`. The original COD-232 is the same failure for a
+tab shell — Settings still reports 0.9, which is its Profile tab five times.
+**One fix covers both: walk the groups.** The assertion that makes it work is
+recorded there — poll `aria-selected` via `page.evaluate` after the click, because
+reading it once through `locator.evaluate` was measured failing while the same
+run's own dump printed `selected:true`.
 
-Two more from the same report, both still true: `space-audit.mjs` never sets
-`bujo:onboarded`, so it measures under the onboarding modal and cannot click
-anything; and `NAV_SELECTOR` in `a11y-axe.mjs` does not match
-`main [role="tab"]`.
+Related and cheap: **`a11y` scans one group per rail page** (COD-237). Two agents
+armed it for their own page with a throwaway probe (28 and 60 extra scans, all
+clean), and #298 armed Insights permanently — taking the gate 166 → 173 scans and
+finding **7 serious on the first run**. **Arm the other five rail pages**; those
+probes are the template.
 
-## 3 · COD-235 — the a11y gate passes for a theme that does not exist
+While in there: the summary now prints **"173 of 166 scan(s)"**, because the
+planned total does not count the armed rail scans. Cosmetic, but a gate whose own
+arithmetic reads wrong is one people learn to skim.
 
-`setTheme` asserts a theme applied by reading `data-theme` back, and the app
-writes that attribute verbatim. So `BUJO_THEMES=mocha,bogus` scans 23 views as
-"bogus" and reports them clean. Pre-existing, and the serial script did it too.
+## 3 · The fold-walls still standing
 
-Same family as everything else on this list: **the assertion checks that the
-gate did something, not that the app did.** Assert a resolved token instead — a
-`--color-*` value that differs between themes — so a theme with no stylesheet
-fails instead of passing.
+```
+view          folds   desktop shipped/open   phone shipped/open
+coaching        20      2.4 / 2.4              3.3 / 3.2
+pickleball       8      2.3 / 2.3              4.8 / 5.2
+gym              5      1.9 / 3.4 ⚠            3.2 / 7.2
+plan             4      2.0 / 2.0              3.4 / 3.4
+today            3      2.6 / 3.6 ⚠            4.3 / 5.9
+trackers         3      3.3 / 3.6 ⚠            5.3 / 6.0
+```
 
-## 4 · The pages still over three desktop screens
+**Coaching's 20 is a misleading number** — eighteen are a single-open accordion
+(`Expand week 2…12`, `Expand <drill>`), and its open state is only 2.4 screens, so
+there is no gap to close. The question there is whether a 12-week accordion is the
+right shape, not whether it wants a rail.
 
-Measured on `main`, desktop 1440, after this stretch:
+**`pickleball` is the real candidate**: 8 folds, and `views/Pickleball.tsx` is
+**1013 lines** — the shape `NoFap.tsx` was in at 929 before #289 took it to 332.
+One pass buys both. `gym` next, on its 1.9 → 3.4 desktop gap.
 
-| view | shipped | open | what the numbers say |
-|---|---|---|---|
-| `mindset` | 4.2 | 4.2 ⚠ | item 1 above |
-| ~~`focus`~~ | ~~3.5~~ **1.3** | ~~3.5 ⚠~~ **1.3** | **Done** — COD-253. The grouping is named in `lib/focusCards.ts`: six rail rows over thirteen cards, `depth` being the one that did not exist before. The three jobs are the three zones — timer + log form in the act column (which `layout.css` puts on the **right**), analytics behind the rail. Phone 5.7 → 3.7. `open` equals `shipped`: nothing left to open. Columns 1 ⚠ → 3. |
-| `trackers` | 3.1 | 3.6 ⚠ | 9 cards in 1 group, 5.0 on a phone |
-| `today` | 2.5 | 3.6 ⚠ | the capture page; be careful |
-| `cycle` | 2.5 | 4.8 ⚠ | **COD-230, deliberately still open** — see below |
-| ~~`nofap`~~ | ~~1.9~~ **1.7** | ~~4.8 ⚠~~ **1.7** | **Done** — a `SectionRail` over four registry groups replaced three shut folds. `open` now *equals* `shipped`: nothing left on the page to open. Phone 4.8 / 8.2 → 4.7 / 4.7. COD-61. |
-| `gym` | 1.7 | 3.4 ⚠ | 5 groups already open, no gap to close |
+## 4 · Two capture gaps that bound the analytics — COD-251
 
-**COD-230 stays open and the work on it is already done once.** #286 folded
-Cycle's phone month list for **−956px** (without it, shipped would be 5.5
-instead of 4.4), and splitting at 390 was measured **impossible** rather than
-argued away: a row's min-content is ~227px against 167px available. 4.4 is still
-not under 3. The remaining lever is removing content from the page, which is the
-one that has worked every time in this repo — not a wider tier and not stacking,
-both measured worse on ten and seven pages respectively.
+Both named rather than faked in #295, and both are now the ceiling on what
+Recovery can show:
+
+- **`Relapse` has a date and no time**, so there is no hour-of-day reading for a
+  lapse. Only urges have one (`UrgeWin.at`).
+- **`UrgeWin` has no addiction field** — it carries free text, so a per-addiction
+  clock is a *name join*, and **`ADDICTION_PRESETS` offers "Nicotine" while
+  `URGE_PRESETS` offers "Smoking"**: the two shipped vocabularies do not match, so
+  a default user gets zero attribution. The card prints its coverage fraction
+  (`3 of 5`) and names the missing label rather than drawing an empty grid.
+
+The fix is capture-side and small: an `addiction` id on `UrgeWin` written at
+capture time, and a time on a lapse. **Reconciling the two preset lists is the
+cheapest half and should go first** — it makes a chart that already shipped start
+working.
+
+## 5 · The scenario taxonomy — designed, not built
+
+#295's agent designed it and deliberately did not build it, because it adds a
+field no journal has any of yet. The design and its sources are in that PR's
+handback and are worth following rather than redoing:
+
+`UrgeWin.scenario?: string[]`, optional, no migration, free-text `trigger` kept.
+A `lib/scenarios.ts` keyed by normalised addiction name with a generic fallback.
+**HALT is not merged into it** — NIAAA's *Rethinking Drinking* splits triggers into
+*external* cues (people, places, times) and *internal* ones (thoughts, emotions);
+HALT is the internal axis and a scenario the external, and the pair is worth more
+than either. A fourth `ChipPick multi` shown **only once "What is it?" is
+answered** (ten addictions × eight scenarios is eighty chips on a 5-screen page).
+Single-hue `peach`, never categorical — COD-116. Under ~5 tagged urges, print
+counts and suppress the percentage.
 
 ---
 
 ## Carried over, ranked
 
-1. **The sync cluster — COD-136 / 137 / 139, untouched for several stretches and
-   the only data-integrity work left on the board.** Self-host keys its row on
-   `deviceId` so two devices never converge; the pull-then-push dance is written
-   four times with four debounce values; Drive forgets its token on every
-   reload. #281 is the argument for doing these: a silent, unrecoverable delete
-   shipped green through `tsc`, eslint, vitest and the build, and the sync paths
-   are where the next one lives.
+1. **The sync cluster — COD-136 / 137 / 139, the only data-integrity work on the
+   board.** Self-host keys its row on `deviceId` so two devices never converge;
+   the pull-then-push dance is written four times with four debounce values; Drive
+   forgets its token on every reload. The argument for doing them is #281: a
+   silent, unrecoverable delete shipped green through every gate, and the sync
+   paths are where the next one lives.
 2. **COD-228 — `bujo:sync` holds the passphrase in plaintext beside the
-   ciphertext it unlocks.** Needs a product answer before any code: encrypting it
-   means auto-sync cannot run while the journal is locked. Both readings of what
-   the passcode is for are written up in the ticket.
-3. **COD-229 — `habitgrids` overlaps `activity` and `habitanalytics`.** Three
-   registry entries over one subject, now all under one heading. Diff the
-   rendered output of all three before deciding any pair is a duplicate.
-4. **COD-233 — `src/lib/validate.ts` is dead code whose own header says it is
-   still used.** Nothing imports it but its 16-assertion test;
-   `src/lib/ingest/validate.ts` is a different live module, which is how a grep
-   hides it. It is also the honest answer to the "new email" ask: there is no
-   email flow in the app, by design.
-5. **`steps`, `restingHR` and `activeKcal` have no reader anywhere.** Apple
-   Health now writes them and CSV now exports them, but nothing in the app
-   displays them — `captureLanding.ts` names them in a receipt string and that is
-   all. Deliberately not built in #285.
-6. **A size-token gate, from a claim that turned out to be bounded.** tailwind-
-   merge puts a custom font-size and a custom text-colour in one group, so the
-   later wins — but **only where `cn()` runs**; plain JSX is never merged. A grep
-   says 815 call sites; measured in the DOM across 24 views, the real count of
-   elements whose declared size token is not the size they render is **2**, both
-   a deliberate `sm:text-display` override. So the follow-up is that one-line DOM
-   check as a gate against a currently clean baseline, **not** a sweep of 815
-   innocent call sites.
-7. **CSV drops things the app stores.** `drive` and every other cycle field are
-   excluded from the CSV export by design, and a lapse day's `count` leaves as
-   one undifferentiated reset. The whole-journal JSON export (`storage.ts:263`)
-   is lossless, so this is a gap in the human-readable export rather than a data
-   risk — decide whether that is intended and write it down either way.
-8. **CI has no measurement behind the sharded a11y gate.** It will pick up 4
-   workers on a 4-vCPU runner. Pin `BUJO_A11Y_WORKERS` in `a11y.yml` if it turns
-   out to need it — and note the workers make every timing assertion in that file
-   tighter, which is the failure mode the wait-before-assert table in `CLAUDE.md`
-   is about.
+   ciphertext.** Needs a product answer first: encrypting it means auto-sync
+   cannot run while locked. Both readings are in the ticket.
+3. **COD-244 — `check-contrast` never measures against `--card`**, because
+   `--card` is a `color-mix()` with no literal to read, and that is the ground
+   most text in this app sits on. The baseline is clean, so this arms a green gate
+   rather than opening a queue. **It also cannot catch a faded token at all** (see
+   #297) — opacity on text is outside its reach by construction.
+4. **COD-240 — `SectionRail`'s phone chips are 27–28px** across 39 buttons on
+   seven pages. One primitive, one fix; COD-96's 44px floor is the standard.
+5. **COD-247 / COD-248**, from the width pass. `NoFap.tsx` and `Cycle.tsx` pin the
+   review grid to 2 columns (2 × 585 at 2560 where 3 × 383 fits) and it is **not a
+   one-line delete** — on Recovery that pin is what makes #292's full-row panel
+   work. Today's capture input stretches to ~1400px at 2560, because the 380px
+   control cap is scoped to `.zone-act` and Today is not on that shell.
+6. **COD-257 — `DailyMetric.energy` is written by the check-in and never by the
+   seed**, so Insights' Momentum card ships a three-tile row nothing has rendered
+   with data. The `data.cycle` trap again.
+7. **COD-245 — 20 files past the 500-line ceiling**, 36 more between 300 and 500,
+   and 7 directories over four files with no change→file README (`src/lib` has 158
+   files and no map — the cheapest item on this list). Ranked in the ticket by
+   what a split actually buys; **not** a list of twenty refactors.
+8. **COD-116** — NoFap's 10-colour urge palette collapses (sky/sapphire dE 5.7 in
+   latte). Live now that charts colour by addiction.
+9. **COD-233 — `src/lib/validate.ts` is dead code whose own header says
+   otherwise.** Also the honest answer to the "new email" ask: there is no email
+   flow in this app, by design.
 
-## Environment, before you start
+## Before you start
 
 ```
 npm run dev -- --port 5300 --strictPort     the UI
 npm run build && npm run preview            what the gates drive (:4173)
 npm run space -- --all                      where the pages actually stand
-npm run a11y                                now 2m48s, not 8m07s
+npm run a11y                                2m48s at 4 workers, not 8m07s
 ```
 
-**Start the browser gates in the background** — `CLAUDE.md` has a section on it
-now. Do not run `vite build` while one is driving your preview server: it serves
-a half-written `dist` and the gate reports a phantom regression.
+**Start the browser gates in the background** — `CLAUDE.md` has a section on it.
+Never `vite build` while one is driving your preview server.
 
-**Five agent worktrees are still under `.claude/worktrees/`**, each holding a
-now-merged branch, which is why those local branches could not be deleted on
-merge. One of them, `agent-afa93cdc840c582e9`, is **not a git worktree** — a
-dead agent left a 770MB plain checkout plus `node_modules` there and git
-resolves its working tree to the repo root. Nothing was deleted; it needs a
-decision.
+**Confirm a preview port by its asset hash, not its `<title>`.** Every worktree
+serves an identical title; one agent found 4195 serving a different worktree's
+bundle. Compare the served `assets/index-*.js` against your own `dist/index.html`.
 
-Servers were left on 4173, 5199 and 5300, all from the main worktree. Confirm
-what a port serves by its `<title>`, not by it answering 200.
+**Nine agent worktrees remain under `.claude/worktrees/`**, each holding a merged
+branch — which is why those local branches could not be deleted on merge. One,
+`agent-afa93cdc840c582e9`, is **not a git worktree**: a dead agent left a 770MB
+plain checkout plus `node_modules`, and git resolves its working tree to the repo
+root. Nothing was deleted; it needs a decision. Servers were left on 4173 and
+several of 4181–4198.
 
 ## If you are running agents again
 
-The pattern that worked, and it is in `docs/sessions/2026-09-26-platform-pass/PLAN.md`:
-one worktree each, one preview port each, the area's traps in the prompt, and
-**no agent merges its own work.** Two corrections learned the hard way:
+The pattern worked — twelve PRs, and the single most valuable finding of the run
+came from an agent auditing an unrelated page. Four corrections, all learned here:
 
-- **Give `scripts/` a single owner.** Two agents editing the gates at once cost a
-  revert.
-- **Expect to rebase.** Branches cut from different points both added fields to
-  `demo.ts` and `types.ts`. And `git diff main <branch>` will lie to you about
-  what a squash-merge applies — it showed a whole merged PR being reverted. Use
+- **Give `scripts/` a single owner.** Two agents edited the gates at once and one
+  had to revert.
+- **`git diff main <branch>` lies about what a squash-merge applies** — it showed
+  a whole merged PR being reverted. Use
   `git diff $(git merge-base main <branch>) <branch>`.
+- **Nominate a `STATUS.md` owner, or it rots.** Four agents in a row declined to
+  write it because others held branches, and it sat describing an unmerged PR for
+  a day. Restraint from everyone is not a policy.
+- **Brief them with the area's traps, not just the task.** That is what turned an
+  unrelated Recovery audit into the data-loss fix, and what let two agents
+  recognise the `page-enter` phantom instead of changing a colour token.

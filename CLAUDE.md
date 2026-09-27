@@ -268,6 +268,81 @@ Mood/Stress/Sleep line chart and its category radar both read as bare grids at
 DOM, or take an **element** screenshot at native size, before calling one
 broken. A downscaled page shot cannot support that claim in either direction.
 
+Trap: **`opacity` on text produces a colour no gate can check.** `SectionRail`'s
+count badge was `opacity-70` on `fg-2`, which computes to **3.08–3.82:1** on the
+selected row across the five themes — five of five under 4.5, for the whole life
+of the component. Neither gate could see it and both were right to be quiet:
+`check-contrast` reads token *values*, and a faded token is not a token; axe needs
+a resolvable background, and the rail was **transparent**, so there was nothing
+behind those chips to fail against. Giving the rail a ground (below) turned a
+silent failure into a red one — the gate was **blind, not happy**. State a
+quieter colour as a token; never reach for opacity to make text recede.
+
+Trap: **a transparent sticky element is one the page scrolls through, and no gate
+sees it.** `SectionRail` shipped `position: sticky` with
+`background-color: rgba(0,0,0,0)` and `z-index: auto` on all seven adopters, so
+content painted in the same pixels as the chip row. Nothing is clipped, so
+`clipped-text` is quiet; the accessibility tree is sound, so axe is quiet. **Text
+over text is never a design** — it is the rare geometric defect with no judgement
+in it, and it needs *both* a background and a `z-index` (a background with
+`z-index: auto` still loses to a positioned sibling). Three separate passes
+reported it independently: a defect in a shared primitive gets found once per
+adopter, not once.
+
+Trap: **a style rule each author must retype is one that gets forgotten.**
+`.prose-doc a` was the only anchor rule in the app, so an inline link anywhere
+else inherited its parent's colour with no underline. Measured across seven views:
+nine inline anchors outside `.prose-doc`, **every one underlined only because its
+call site remembered `className="underline"`** — and the one that forgot was a
+source citation, the thing this repo requires be credited and reachable. The fix
+belongs in `@layer base`, not unlayered: an unlayered rule **beats** Tailwind's
+utilities (that is the `.zone-act input` vs `.hidden` trap one section down), so a
+deliberately-styled link could no longer override itself. And do not guard it with
+`:not([class*='text-'])` — that also matches `hover:text-…`, which left the
+glossary's own source links inheriting body colour.
+
+Trap: **`space-audit` and `a11y` measure only the group a rail opens on.** A
+`SectionRail` renders one group at a time, so every space number quoted for a rail
+page is *that group*: Recovery reports 1.7 screens while its `patterns` group is
+**3.6 desktop / 7.5 phone**, and Insights reports 1.7 while its `mood` domain is
+**2.65 / 5.12**. `a11y` reached **6 of 28** Insights panels while a comment in
+`VIEWS` claimed otherwise; arming it went green → **7 serious** → green. This is
+the Settings tab-shell blindness (COD-232) in a second shape, now across seven
+pages — and a rail row has no `aria-expanded`, so `openFolds` cannot find it. When
+you put a page on a rail, **arm both gates for its groups in the same change**, or
+the page's numbers describe a fraction of it.
+
+Trap: **the a11y gate restarts animations and then measures them.** `settle()`
+runs at the top of `scan`, and *then* `openFolds` and `revealLazy` click every
+fold and mount every `LazyMount` — each starting a fresh `page-enter` fade. So axe
+read colour from a **mid-fade blend** and reported an arithmetically perfect
+failure describing no token in the app: `#7c8195 on #1a1a1f = 4.48`, which is
+`fg-2` at 70% over `ink-0` when the settled pairing is **7.79**. It cost three
+separate investigations in one day — two agents worked around it in their own
+probes and one changed a colour token and reverted it. Fixed with a second
+`await settle(w)` immediately before `AxeBuilder`. Fifth entry in the
+wait-before-assert table above, and the first where the gate's **own actions** were
+what it failed to wait for. Note the corollary: that arithmetic also fits a real
+faded token, so do not assume the fade — adding the settle and seeing the number
+*survive* is what distinguishes them.
+
+Trap: **two preset vocabularies that do not match each other.**
+`ADDICTION_PRESETS` offers "Nicotine" and `URGE_PRESETS` offers "Smoking", and
+`UrgeWin` has no addiction field — it carries free text — so any per-addiction
+join over urges is a *name* join that, for a default user, matches **nothing**.
+The card that needs it prints its coverage fraction (`3 of 5`) and names the
+missing label rather than drawing an empty grid, because an empty grid reads as
+"no urges at any hour" (a measurement) when the truth is "nothing is labelled
+this" (a gap in the record). Reconciling the two lists is cheaper than the schema
+change and makes a shipped chart start working. COD-251.
+
+Trap: **a preview port cannot be identified by its `<title>`.** Every worktree in
+this repo serves an identical title, so the check that was written down here as
+the way to confirm what a port is serving does not work across worktrees — one
+agent measured a whole run against a different worktree's bundle. Compare the
+served `assets/index-*.js` against your own `dist/index.html`. Same family as the
+smoke gate that spent three PRs pointed at another application, one level down.
+
 Trap: **there are two disclosure implementations and only one puts text in its
 toggle.** `CollapsibleSection` renders its title inside the button;
 `Card collapsible` renders a caret glyph and nothing else, so its name lives
