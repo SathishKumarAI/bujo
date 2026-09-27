@@ -70,9 +70,14 @@ export function LogSession({
 
   return (
     <>
-      <h2 className="font-display text-heading font-medium text-fg-1">Log a session</h2>
-      <p className="mt-1 mb-4 text-label text-fg-2">Coding or deep-work time, however you spent it.</p>
-
+      {/* No `<h2>` and no subtitle here. This is a zone-2 `Card`'s body now, and
+          the card owns both — leaving them rendered the title and the strapline
+          TWICE, serif over serif, which is what a page screenshot showed and no
+          gate could: a duplicated heading is valid markup, sound in the
+          accessibility tree, and inside every box it is measured in. The same
+          strip was applied to `SessionHistory` and `TypingBand`; this file was
+          missed because its heading sits inside the returned fragment rather
+          than in a `Band` wrapper that had to go. */}
       <div className="grid max-w-[26rem] gap-4">
         {/* TAP, DON'T TYPE — the same conversion Pickleball's log form had.
 

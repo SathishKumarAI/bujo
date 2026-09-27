@@ -124,8 +124,13 @@ export function FocusTimer() {
           <p className="num font-display text-display font-medium text-fg-1">
             {pad(Math.floor(shown / 60))}:{pad(shown % 60)}
           </p>
-          <p className="mt-1 text-label capitalize text-fg-2" aria-live="polite">
-            {mode}
+          {/* `capitalize` scoped to the mode word, NOT to the paragraph. On the
+              paragraph it also title-cased the screen-reader sentence, which the
+              rendered-content diff caught as ", 0 Blocks Done Today" — a class
+              meant for one word reaching text it was never aimed at, and
+              invisible to every gate because `sr-only` text is not drawn. */}
+          <p className="mt-1 text-label text-fg-2" aria-live="polite">
+            <span className="capitalize">{mode}</span>
             <span className="sr-only">
               , {blocks} {blocks === 1 ? 'block' : 'blocks'} done today
             </span>
