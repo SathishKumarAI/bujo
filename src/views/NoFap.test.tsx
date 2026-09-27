@@ -217,6 +217,27 @@ describe('Recovery · the registry is the page', () => {
     expect(panel.textContent).toMatch(/\d+ of \d+ logged urges carry a label/)
   })
 
+  /**
+   * `lapseTrend` splits an 8-week window in half against a ±0.25/week deadband,
+   * so **two** lapses in eight weeks is enough to print "rising" — a confident
+   * sentence about noise, and exactly what the seeded Doomscrolling streak did
+   * before the guard. Both sides ship from one seed: Nicotine has ~99
+   * occurrences and gets a direction, Doomscrolling has two and does not.
+   */
+  it('declines to call a trend off two events, and still calls a real one', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.patterns))
+    const cards = [...container.querySelectorAll('[data-card="addictionbreakdown"] > section')]
+    const text = (name: string) => cards.find((c) => c.querySelector('h2')?.textContent?.trim() === name)!.textContent!
+    expect(text('Doomscrolling')).toContain('too few to call a trend')
+    expect(text('Nicotine')).toMatch(/falling|rising|holding/)
+    expect(text('Nicotine')).not.toContain('too few to call')
+    // And an unquantified streak must not print its day count twice.
+    expect(text('Doomscrolling')).not.toContain('Days affected')
+    expect(text('Doomscrolling')).toContain('Lapse days')
+  })
+
   it('puts the urge submit before the fields it annotates', () => {
     const { container } = mount()
     const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!

@@ -82,9 +82,17 @@ export function AddictionBreakdownCard({
 }) {
   const { name, total, days, perDay, quantified, peak, trend } = profile
   const dir = DIRECTION[trend.direction]
-  // "times" only when a quantity was really recorded; otherwise every row wears
-  // the `count ?? 1` default and `total` is a count of days wearing a 1.
-  const unit = quantified ? 'times' : 'days'
+  /**
+   * Whether the trend is allowed to use a direction word at all.
+   *
+   * `lapseTrend` splits an 8-week window in half and calls anything past a
+   * ±0.25/week deadband. Two lapses in eight weeks clears that — Doomscrolling
+   * in the demo seed reads "rising" off **two events**, which is a confident
+   * sentence about noise. Four is the smallest window that puts something on
+   * both sides of the split, so under it the card prints the rate and declines
+   * to name a direction. The rate itself is still a fact and still shown.
+   */
+  const called = trend.total >= 4
 
   return (
     <Card enlargeable band hideInfo
@@ -92,17 +100,31 @@ export function AddictionBreakdownCard({
       subtitle={
         total == null
           ? 'Nothing logged yet · the grids below fill in as you log'
-          : `${total} ${unit} over ${days} day${days === 1 ? '' : 's'}${peak ? ` · heaviest on ${peak.label}s` : ''} · ${dir.word}`
+          // "times" only when a quantity was really recorded. Otherwise every
+          // row wears the `count ?? 1` default, `total` IS `days`, and "2 times
+          // over 2 days" is the same number said twice in a tone that implies
+          // it counted something.
+          : `${quantified ? `${total} times over ${days} day${days === 1 ? '' : 's'}` : `${days} lapse day${days === 1 ? '' : 's'}`}`
+            + `${peak ? ` · heaviest on ${peak.label}s` : ''}`
+            + `${called ? ` · ${dir.word}` : ' · too few to call a trend'}`
       }
     >
       {/* HOW MUCH · the first of the three questions.
           `—` rather than 0 where nothing is logged: `lapseProfile` returns null
-          for exactly this, and a zero here would claim a day you were clean on
-          a day that was never observed. */}
-      <div className="grid grid-cols-3 gap-2">
+          for exactly this, and a zero here would claim a clean day on a day
+          that was never observed.
+          Two tiles, not three, for an unquantified streak — `total` equals
+          `days` there, and "2 lapse days" beside "2 days affected" reads as a
+          bug rather than as two readings. */}
+      <div className={quantified ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2'}>
         <StatTile compact label={quantified ? 'Times' : 'Lapse days'} value={total ?? '—'} color="red" icon={<Icon as={Hash} size="sm" />} />
-        <StatTile compact label={quantified ? 'Per lapse day' : 'Days affected'} value={quantified ? (perDay ?? '—') : days} />
-        <StatTile compact label="Per week, 8wk" value={trend.avgPerWeek} color={dir.tone} icon={<Icon as={dir.icon} size="sm" />} />
+        {quantified && <StatTile compact label="Per lapse day" value={perDay ?? '—'} />}
+        {called
+          ? <StatTile compact label="Per week, 8wk" value={trend.avgPerWeek} color={dir.tone} icon={<Icon as={dir.icon} size="sm" />} />
+          /* No icon, so no colour: `StatTile`'s own rule is that a figure is
+             `fg-1` unless its colour is computed from its value, and an
+             uncalled direction has not computed one. */
+          : <StatTile compact label="Per week, 8wk" value={trend.avgPerWeek} />}
       </div>
 
       {/* `@container` on the wrapper, `@md` on the grid: an element cannot query
@@ -161,15 +183,24 @@ export function AddictionBreakdownCard({
                 Tap or type that exact word in <span className="font-medium text-fg-1">Urge surfing → What is it?</span> and this fills in.
               </p>
             )}
-            {/* The denominator, on every render. `count ?? 1` has a partner
-                mistake: a chart drawn from a subset that does not say so. */}
+            {/* The denominator, on every render — the empty branch included.
+                `count ?? 1` has a partner mistake: a chart drawn from a subset
+                that does not say it is one. One paragraph, not two: this card is
+                the longest on the page and a second `text-label` block per card
+                cost ~40px a phone screen for a line break. */}
             <p className="mt-1.5 text-label text-fg-3">
-              A lapse records the day, not the time — this clock is your <em>urges</em>, and{' '}
-              <span className="num">{coverage.matched}</span> of <span className="num">{coverage.total}</span> logged urge{coverage.total === 1 ? '' : 's'} carry a label matching a tracked addiction.
-            </p>
-            <p className="mt-1 text-label text-fg-3">
-              Knowing which situations and times set off a craving is what lets you plan for one.{' '}
-              <a href="https://www.nhs.uk/better-health/quit-smoking/staying-smoke-free/understand-your-smoking-triggers-and-cravings/" target="_blank" rel="noreferrer">NHS · Understand your triggers and cravings</a>
+              A lapse records the day, not the time, so this clock is your <em>urges</em> — <span className="num">{coverage.matched}</span> of{' '}
+              <span className="num">{coverage.total}</span> logged urge{coverage.total === 1 ? '' : 's'} carry a label matching a tracked addiction.
+              Knowing which times set off a craving is what lets you plan for one ·{' '}
+              {/* `text-blue underline`, because an unstyled `<a>` here is
+                  **invisible as a link**: `src/index.css` styles anchors only
+                  under `.prose-doc`, so outside it a link inherits its
+                  paragraph's colour and gets no decoration — measured
+                  `rgb(147,153,178)` on `rgb(147,153,178)`, `text-decoration:
+                  none`. Nothing marks it, not even colour. The underline is the
+                  non-colour affordance; the blue matches the one link idiom the
+                  app does have. */}
+              <a className="text-blue underline underline-offset-2" href="https://www.nhs.uk/better-health/quit-smoking/staying-smoke-free/understand-your-smoking-triggers-and-cravings/" target="_blank" rel="noreferrer">NHS</a>
             </p>
           </section>
         </div>
