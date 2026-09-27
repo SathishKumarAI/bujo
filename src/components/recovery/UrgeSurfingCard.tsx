@@ -115,14 +115,23 @@ export function UrgeSurfingCard() {
         value={urge || null}
         onChange={(u) => setUrge(String(u))}
         options={URGE_PRESETS.map((u) => ({ value: u, label: u }))}
+        /* `after`, not a row of its own beneath the chips. `ChipPick` documents
+           this slot as "a typed escape hatch … on the end of the row", and the
+           input was instead a full-width field stranded under a wrapped chip
+           row — the reader met ten chips, then a lone box, then Intensity, with
+           nothing saying the box belonged to the chips. Inline it is the
+           eleventh option, which is what it is. */
+        after={
+          <>
+            <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge()} placeholder="…or type your own" list="urge-presets" className="w-[11rem]" />
+            {/* `TriggerPlansCard` in zone 3 lists against this same id. An `id`
+                reference across two zones is the kind of link a file split
+                breaks silently, so it is written down at both ends. */}
+            <datalist id="urge-presets">{URGE_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
+          </>
+        }
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge()} placeholder="…or type your own" list="urge-presets" className="min-w-[10rem] flex-1" />
-        {/* `TriggerPlansCard` in zone 3 lists against this same id. An `id`
-            reference across two zones is the kind of link a file split breaks
-            silently, so it is written down at both ends. */}
-        <datalist id="urge-presets">{URGE_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
-      </div>
+
       {/* Trigger-plan match · surfaced as the user types/picks a trigger (U9) */}
       {matchedPlan && (
         <div className="mt-2 rounded-card p-2 text-label" style={{ background: cat('teal') + '14', border: `1px solid ${cat('teal')}44` }}>
@@ -140,7 +149,20 @@ export function UrgeSurfingCard() {
           raw hue as text.
           `h-11`: a bare range input is ~20px tall, which is a COD-96 hit — the
           box around it does the work, the thumb still centres. */}
-      <div className="mt-3">
+      {/* `control-max` on the WRAPPER, not just the slider.
+
+          Measured at 1440 before this: the range ended at x=1272 (the 380px
+          `.zone-act` control cap catches `input[type=range]` like any other
+          input) while this header was a plain flex row spanning the whole card
+          and right-aligning "3/5" at x=1286 — **14px past the slider it
+          labels**. A readout that does not end where its control ends reads as
+          a mistake, and it was invisible at 390 where the column is narrower
+          than the cap and everything lines up by accident.
+
+          `.control-max` is the existing opt-in for "cap me like a control"
+          (`styles/layout.css`), so one class puts the header and the slider on
+          one width instead of hard-coding 380 twice. */}
+      <div className="control-max mt-3">
         <div className="flex items-center justify-between text-label text-fg-1">
           <label htmlFor="urge-intensity">Intensity</label>
           <span className="num font-medium" style={{ color: onRaised(INTENSITY_HUE[intensity - 1]) }}>{intensity}/5</span>
