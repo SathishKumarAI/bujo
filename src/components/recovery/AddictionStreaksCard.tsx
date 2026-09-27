@@ -53,7 +53,17 @@ export function AddictionStreaksCard() {
                         able to do this; nothing had ever rendered it with
                         data. */}
                     <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="truncate font-medium text-fg-1">{a.name}</span>
+                      {/* `break-words`, not `truncate`. `truncate` carries
+                          `whitespace-nowrap`, so a one-word name cannot wrap
+                          AND cannot shrink — it just overflows, ellipsis or
+                          not, and `scrollWidth > clientWidth` stays true, so
+                          the clip gate is right to fail it. Surfaced when the
+                          section rail went vertical at the 1180 split
+                          (`SectionRail`, `@4xl` → `@2xl`): the review pane
+                          went 722 → 514px and this card's grid cell 347 →
+                          247, leaving the name 101px to hold the 103px
+                          "Doomscrolling". */}
+                      <span className="min-w-0 break-words font-medium text-fg-1">{a.name}</span>
                       <span className="text-label text-fg-2">best {st.best}d</span>
                       {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: onRaised('green') }}>{currency}{aSaved.toLocaleString()} saved</span>}
                     </div>
