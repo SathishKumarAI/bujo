@@ -4,6 +4,8 @@ import { emptyJournal } from './storage'
 import { hasLapseQuantity, lapseCountOn, lapseTrend, peakLapseWeekday } from './lapse'
 import { todayISO } from './date'
 import { metricsCsv } from './csv'
+import { deepWorkHeatmap, focusByDuration, focusFindings, interruptionCost, weeklyVolume } from './focus'
+import { avgWpm, bestWpm, wpmTrend } from './typing'
 
 /**
  * The demo journal has to be able to say that it is the demo journal.
@@ -143,5 +145,72 @@ describe('demo seeds the recovery day log', () => {
     // the card's one claim ("Sundays average ten") a coincidence of the clock.
     const nic = (generateDemoData().nofap.addictions ?? []).find((a) => a.name === 'Nicotine')!
     expect(peakLapseWeekday(nic.relapses)?.label).toBe('Sun')
+  })
+})
+
+/**
+ * The Focus page's two domains, and what each chart needs before it can fail.
+ *
+ * Both holes here are the `data.cycle` hole in CLAUDE.md. `typingSessions` was
+ * written by **nothing**, so the whole Typing subject had never been rendered
+ * with data at any theme or viewport — `page-census` said `focus · charts 0` on
+ * a page that holds a Recharts `LineChart`, because that chart is gated on
+ * `wpmCount >= 2` and the count was always zero. And `devSessions` covered
+ * nineteen days against a 26-week heatmap, while its `60 + rand()*180` duration
+ * made two of the five bands `focusByDuration` declares **structurally
+ * unreachable** — "a branch the seed never takes cannot fail", aimed at a chart
+ * axis instead of a colour.
+ *
+ * Asserted rather than eyeballed, because the symptom of either regressing is a
+ * page that looks plausible and a gate that stays green.
+ */
+describe('demo · the Focus page has something to plot', () => {
+  const d = generateDemoData()
+  const today = todayISO()
+
+  it('spans the heatmap window, not a fortnight of it', () => {
+    const { cells, max } = deepWorkHeatmap(d, today, 26)
+    expect(max).toBeGreaterThan(0)
+    // A quarter of 182 cells lit is a grid with a shape; ten is three columns.
+    expect(cells.filter((c) => c.level > 0).length).toBeGreaterThan(30)
+  })
+
+  it('reaches every session-length band, so none of the five is dead', () => {
+    const bands = focusByDuration(d)
+    expect(bands.every((b) => b.count > 0)).toBe(true)
+    for (const b of bands) {
+      // `not.toBeNull()` first: `expect(null).toBeGreaterThan(0)` coerces.
+      expect(b.avg).not.toBeNull()
+      expect(b.avg).toBeGreaterThan(0)
+    }
+  })
+
+  it('fills every rolling week the volume chart draws', () => {
+    expect(weeklyVolume(d, today, 12).every((w) => w.min > 0)).toBe(true)
+  })
+
+  it('exhibits the findings the page claims to make', () => {
+    // A seed of independent uniforms makes every relationship report "no
+    // pattern" however the maths is written, so the seed correlates focus with
+    // block length and against interruptions on purpose.
+    const cost = interruptionCost(d)
+    expect(cost).not.toBeNull()
+    expect(cost!.gap).toBeGreaterThan(0)
+    const ids = focusFindings(d, today).map((f) => f.id)
+    expect(ids).toContain('duration')
+    expect(ids).toContain('interruptions')
+  })
+
+  it('seeds typing practice at all, with enough WPM readings to draw the trend', () => {
+    const ts = d.typingSessions ?? []
+    expect(ts.length).toBeGreaterThan(15)
+    // The chart's own gate: `wpmCount >= 2`, and a 14-day window with points.
+    expect(ts.filter((s) => s.wpm != null).length).toBeGreaterThan(15)
+    expect(wpmTrend(d, 14, today).filter((p) => p.has).length).toBeGreaterThanOrEqual(2)
+    expect(bestWpm(d)).toBeGreaterThan(0)
+    expect(avgWpm(d)).toBeGreaterThan(0)
+    // Weekdays only — the goal bar's "bonus today" branch is the weekend case
+    // and must stay reachable rather than be papered over with weekend drills.
+    expect(ts.every((s) => { const wd = new Date(s.date + 'T00:00').getDay(); return wd !== 0 && wd !== 6 })).toBe(true)
   })
 })

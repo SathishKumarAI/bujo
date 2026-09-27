@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
-import { Band, BandCell, BandRow, Eyebrow } from '../mod'
 import { Button } from '../ui/button'
 import { cat, rechartsTooltip } from '../../lib/colors'
 import { prettyDay, todayISO } from '../../lib/date'
@@ -22,31 +21,38 @@ const SITES = [
 /** A function, not a constant — see `focus/LogSession.tsx`. */
 const blankOf = () => ({ date: todayISO(), durationMin: '', wpm: '', accuracy: '', source: 'Monkeytype' as string })
 
+const field = 'w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none'
+
 /**
- * Typing practice — a second tracker on the same page, because speed drills are
- * deep-work practice and nobody wants a whole tab for them.
+ * TYPING PRACTICE · two cards under one rail row, from what was one band.
  *
- * Owns its own form, stats, trend and history. It talks to the store directly:
- * nothing else on the page reads or writes typing sessions, so routing six
- * callbacks through the view would only add indirection.
+ * Speed drills are deep-work practice and nobody wants a whole tab for them, so
+ * they share this page. What changed is that they no longer share its *scroll*:
+ * both halves are zone-3 cards in the `typing` group, and the split is the one
+ * the band already had — its two `BandCell`s, which is why this is a move rather
+ * than a rewrite.
  *
- * It used to be a collapsed accordion holding a card holding a two-column grid.
- * Same content, one band.
+ * **This whole subject had never been rendered with data.** `lib/demo.ts` wrote
+ * every domain except `typingSessions`, so best/avg WPM read "—", the goal bar
+ * sat at 0%, the drills list said "No typing sessions yet" and the Recharts
+ * trend — gated on `wpmCount >= 2` — was absent from the DOM at every theme and
+ * viewport the gates visit. `page-census` reported `focus · charts 0` for a page
+ * that holds a `LineChart`, which is the tell nobody read. Seeded now, and
+ * `lib/demo.test.ts` asserts the chart's own gate is satisfied.
+ *
+ * Both halves talk to the store directly: nothing else on the page reads or
+ * writes typing sessions, so routing six callbacks through the view would only
+ * add indirection.
  */
-export function TypingBand() {
-  const { data, addTypingSession, removeTypingSession } = useJournal()
+export function TypingDrill() {
+  const { data, addTypingSession } = useJournal()
   const [f, setF] = useState(blankOf)
   const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
   const today = todayISO()
 
-  const sessions = [...(data.typingSessions ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
   const goalMin = data.settings.typingGoalMin ?? DEFAULT_TYPING_GOAL_MIN
   const goal = typingGoalProgress(data, today, goalMin)
   const weekday = isWeekday(today)
-  const trend = wpmTrend(data, 14, today).filter((d) => d.has)
-  const wpmCount = (data.typingSessions ?? []).filter((s) => s.wpm != null).length
-
-  const field = 'w-full border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none'
 
   function log() {
     if (!f.durationMin) { notify.info('How long did you type for?', 'Minutes is the one field this needs.'); return }
@@ -61,145 +67,161 @@ export function TypingBand() {
   }
 
   return (
-    <Band>
-      <BandRow>
-        <BandCell className="basis-[20rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Typing practice</h2>
-          <p className="mt-1 mb-4 text-label text-fg-2">Speed and accuracy drills.</p>
+    <>
+      <div className="grid gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <label className="text-label text-fg-2">
+            Date
+            <input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className={field} />
+          </label>
+          <label className="text-label text-fg-2">
+            Minutes
+            <input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="20" className={field} />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="text-label text-fg-2">
+            WPM
+            <input type="number" value={f.wpm} onChange={(e) => set({ wpm: e.target.value })} placeholder="75" className={field} />
+          </label>
+          <label className="text-label text-fg-2">
+            Accuracy %
+            <input type="number" value={f.accuracy} onChange={(e) => set({ accuracy: e.target.value })} placeholder="96" className={field} />
+          </label>
+        </div>
+        <label className="text-label text-fg-2">
+          Source
+          <select value={f.source} onChange={(e) => set({ source: e.target.value })} className={field}>
+            {SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* `secondary`, not `primary`. The page is allowed one accent-filled
+            action and it belongs to "Log session" in zone 2; a second one here
+            would mean neither reads as the thing to do. */}
+        <Button variant="secondary" onClick={log} className="w-full">
+          Add session
+        </Button>
+      </div>
 
-          <div className="grid max-w-[24rem] gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <label className="text-label text-fg-2">
-                Date
-                <input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className={field} />
-              </label>
-              <label className="text-label text-fg-2">
-                Minutes
-                <input type="number" value={f.durationMin} onChange={(e) => set({ durationMin: e.target.value })} placeholder="20" className={field} />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="text-label text-fg-2">
-                WPM
-                <input type="number" value={f.wpm} onChange={(e) => set({ wpm: e.target.value })} placeholder="75" className={field} />
-              </label>
-              <label className="text-label text-fg-2">
-                Accuracy %
-                <input type="number" value={f.accuracy} onChange={(e) => set({ accuracy: e.target.value })} placeholder="96" className={field} />
-              </label>
-            </div>
-            <label className="text-label text-fg-2">
-              Source
-              <select value={f.source} onChange={(e) => set({ source: e.target.value })} className={field}>
-                {SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button variant="secondary" onClick={log} className="w-full">
-              Add session
-            </Button>
-          </div>
+      <div className="mt-5 border-t border-line pt-4">
+        <div className="flex items-baseline justify-between text-label">
+          <span className="text-fg-1">
+            {weekday ? 'Today’s goal' : 'Bonus today'} · {formatMinutes(goal.minutes)} / {formatMinutes(goal.goalMin)}
+          </span>
+          <span className={goal.met ? 'text-brand-text' : 'text-fg-2'}>
+            {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}
+          </span>
+        </div>
+        <div className="mt-2 h-2.5 rounded-pill bg-ink-2">
+          <div className={`h-full rounded-pill ${goal.met ? 'bg-brand' : 'bg-fg-1'}`} style={{ width: `${goal.pct}%` }} />
+        </div>
+        {!weekday && (
+          <p className="mt-2 text-caption text-fg-3">
+            Weekends are off-schedule — practice counts as bonus and will not break the streak.
+          </p>
+        )}
+      </div>
+    </>
+  )
+}
 
-          <div className="mt-5 max-w-[24rem] border-t border-line pt-4">
-            <div className="flex items-baseline justify-between text-label">
-              <span className="text-fg-1">
-                {weekday ? 'Today’s goal' : 'Bonus today'} · {formatMinutes(goal.minutes)} / {formatMinutes(goal.goalMin)}
-              </span>
-              <span className={goal.met ? 'text-brand-text' : 'text-fg-2'}>
-                {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}
-              </span>
-            </div>
-            <div className="mt-2 h-2.5 bg-ink-2">
-              <div className={`h-full ${goal.met ? 'bg-brand' : 'bg-fg-1'}`} style={{ width: `${goal.pct}%` }} />
-            </div>
-            {!weekday && (
-              <p className="mt-2 text-caption text-fg-3">
-                Weekends are off-schedule — practice counts as bonus and will not break the streak.
-              </p>
-            )}
-          </div>
-        </BandCell>
+/** The read-back half: four figures, the WPM trend, where to practise, recent runs. */
+export function TypingStats() {
+  const { data, removeTypingSession } = useJournal()
+  const today = todayISO()
+  const sessions = [...(data.typingSessions ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const trend = wpmTrend(data, 14, today).filter((d) => d.has)
+  const wpmCount = (data.typingSessions ?? []).filter((s) => s.wpm != null).length
 
-        <BandCell className="basis-[22rem]">
-          <dl className="flex flex-wrap gap-x-8 gap-y-3 text-label">
-            <div>
-              <dt className="text-fg-2">Best WPM</dt>
-              <dd className="num font-display text-heading text-fg-1">{bestWpm(data) || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-fg-2">Avg WPM</dt>
-              <dd className="num font-display text-heading text-fg-1">{avgWpm(data) || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-fg-2">This week</dt>
-              <dd className="num font-display text-heading text-fg-1">{formatMinutes(typingWeekMinutes(data, today))}</dd>
-            </div>
-            <div>
-              <dt className="text-fg-2">Streak</dt>
-              <dd className="num font-display text-heading text-fg-1">{typingStreak(data, today)}</dd>
-            </div>
-          </dl>
+  return (
+    <>
+      <dl className="flex flex-wrap gap-x-8 gap-y-3 text-label">
+        <div>
+          <dt className="text-fg-2">Best WPM</dt>
+          <dd className="num font-display text-heading text-fg-1">{bestWpm(data) || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-fg-2">Avg WPM</dt>
+          <dd className="num font-display text-heading text-fg-1">{avgWpm(data) || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-fg-2">This week</dt>
+          <dd className="num font-display text-heading text-fg-1">{formatMinutes(typingWeekMinutes(data, today))}</dd>
+        </div>
+        <div>
+          <dt className="text-fg-2">Streak</dt>
+          <dd className="num font-display text-heading text-fg-1">{typingStreak(data, today)}</dd>
+        </div>
+      </dl>
 
-          {wpmCount >= 2 && trend.length >= 1 && (
-            <div
-              className="mt-4 h-32"
-              role="img"
-              aria-label={`Best WPM per practised day: ${trend.map((d) => `${d.date} ${d.wpm}`).join(', ')}`}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                  <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                  <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                  <Tooltip contentStyle={rechartsTooltip()} />
-                  <Line type="monotone" dataKey="wpm" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+      {wpmCount >= 2 && trend.length >= 1 && (
+        <div
+          className="mt-4 h-32"
+          role="img"
+          aria-label={`Best WPM per practised day: ${trend.map((d) => `${d.date} ${d.wpm}`).join(', ')}`}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
+              {/* `subtext0`, never `overlay0`, for an axis label. `overlay0`
+                  measures 2.57:1 and these tick labels are 11px — the partner
+                  mistake CLAUDE.md names beside `cat('crust')`. It was on both
+                  axes here, and `npm run contrast` cannot see a Recharts tick. */}
+              <XAxis dataKey="date" stroke={cat('subtext0')} fontSize={11} />
+              <YAxis domain={['auto', 'auto']} stroke={cat('subtext0')} fontSize={11} />
+              <Tooltip contentStyle={rechartsTooltip()} />
+              <Line type="monotone" dataKey="wpm" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
-          <div className="mt-5">
-            <Eyebrow>Practice at</Eyebrow>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-label">
-              {SITES.map((s) => (
-                <a key={s.name} href={s.url} target="_blank" rel="noreferrer noopener" className="text-fg-2 hover:text-brand-text">
-                  {s.name}
-                </a>
-              ))}
-            </div>
-          </div>
+      <div className="mt-5">
+        <h3 className="text-label font-medium text-fg-1">Practice at</h3>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-label">
+          {SITES.map((s) => (
+            <a key={s.name} href={s.url} target="_blank" rel="noreferrer noopener" className="text-fg-2 hover:text-brand-text">
+              {s.name}
+            </a>
+          ))}
+        </div>
+      </div>
 
-          {sessions.length === 0 ? (
-            <p className="mt-5 text-label text-fg-3">No typing sessions yet — log a quick drill.</p>
-          ) : (
-            <ul className="mt-5">
-              {/* Twelve most recent. The full history lives in the sessions band
-                  below for deep work; typing drills are a check, not a log. */}
-              {sessions.slice(0, 12).map((s) => (
-                <li key={s.id} className="group flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line py-2 text-label">
-                  <span className="text-fg-1">{s.source || 'Typing'}</span>
-                  <span className="text-fg-3">{prettyDay(s.date)}</span>
-                  <span className="num text-fg-2">{formatMinutes(s.durationMin)}</span>
-                  {s.wpm != null && <span className="num text-fg-2">{s.wpm} wpm</span>}
-                  {s.accuracy != null && <span className="num text-fg-2">{s.accuracy}% acc</span>}
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removeTypingSession(s.id)}
-                    aria-label={`Delete typing session on ${prettyDay(s.date)}`}
-                    className="ml-auto text-fg-2 reveal hover:text-danger-text"
-                  >
-                    ×
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </BandCell>
-      </BandRow>
-    </Band>
+      {sessions.length === 0 ? (
+        <p className="mt-5 text-label text-fg-3">No typing sessions yet — log a quick drill.</p>
+      ) : (
+        <ul className="mt-5">
+          {/* Twelve most recent. The full history lives in the `log` rail row for
+              deep work; typing drills are a check, not a log. */}
+          {sessions.slice(0, 12).map((s) => (
+            <li key={s.id} className="group flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line py-2 text-label">
+              <span className="text-fg-1">{s.source || 'Typing'}</span>
+              {/* `fg-3` stays `fg-3`. All three foreground tiers are verified AA
+                  against the page AND the card surface in every theme
+                  (`styles/tokens.css`), so this is a real de-emphasis tier and
+                  not a contrast risk to "fix" — swapping it to `fg-2` on the way
+                  into a card would flatten the row's hierarchy for nothing. */}
+              <span className="text-fg-3">{prettyDay(s.date)}</span>
+              <span className="num text-fg-2">{formatMinutes(s.durationMin)}</span>
+              {s.wpm != null && <span className="num text-fg-2">{s.wpm} wpm</span>}
+              {s.accuracy != null && <span className="num text-fg-2">{s.accuracy}% acc</span>}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => removeTypingSession(s.id)}
+                aria-label={`Delete typing session on ${prettyDay(s.date)}`}
+                className="reveal ml-auto text-fg-2 hover:text-danger-text"
+              >
+                ×
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   )
 }

@@ -76,7 +76,7 @@ Measured on `main`, desktop 1440, after this stretch:
 | view | shipped | open | what the numbers say |
 |---|---|---|---|
 | `mindset` | 4.2 | 4.2 ⚠ | item 1 above |
-| `focus` | 3.5 | 3.5 ⚠ | 6 cards, **0 groups**, 5.7 on a phone. Same shape as mindset: the timer, the log form and the analytics are three jobs sharing one scroll, and the analytics half is the rail candidate. Still needs the grouping named. |
+| ~~`focus`~~ | ~~3.5~~ **1.3** | ~~3.5 ⚠~~ **1.3** | **Done** — COD-253. The grouping is named in `lib/focusCards.ts`: six rail rows over thirteen cards, `depth` being the one that did not exist before. The three jobs are the three zones — timer + log form in the act column (which `layout.css` puts on the **right**), analytics behind the rail. Phone 5.7 → 3.7. `open` equals `shipped`: nothing left to open. Columns 1 ⚠ → 3. |
 | `trackers` | 3.1 | 3.6 ⚠ | 9 cards in 1 group, 5.0 on a phone |
 | `today` | 2.5 | 3.6 ⚠ | the capture page; be careful |
 | `cycle` | 2.5 | 4.8 ⚠ | **COD-230, deliberately still open** — see below |
