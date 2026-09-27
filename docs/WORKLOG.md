@@ -26,6 +26,93 @@ Rules the three share:
 
 ---
 
+## 2026-09-27 — Finishing the rail, filling a 4K screen, and four gates that were blind rather than happy (#287–#298)
+
+**Summary:** Twelve PRs. The request that started it was one sentence — *Insights
+got a modernisation pass, Cycle and Recovery were missed, and the code is not
+nice* — and it was right, measurably: `page-census` said Insights had **0 folds**
+while Cycle had 4 and Recovery 3, all shut, and `views/NoFap.tsx` was **929
+lines** against this repo's 500 ceiling. Both pages took the Insights treatment
+(registry + `SectionRail` + a contract test), Focus followed, and the app learned
+to use a monitor bigger than 1440.
+
+The through-line is not the layout work. It is that **four separate gates were
+reporting green on defects they structurally could not see**, and every one of
+them went red the moment something else was fixed:
+
+- `SectionRail`'s count badge had been **3.08–3.82:1** on the selected row across
+  five themes for the component's whole life. `check-contrast` cannot see it
+  because a faded token is not a token; axe could not see it because the rail was
+  transparent, so there was no resolvable background to fail against. Giving the
+  rail a ground made a real failure detectable.
+- `space-audit` measures **only the group a rail opens on**. Recovery's `patterns`
+  group grew +1.5 phone screens and no gate reaches it. Seven pages now have this
+  shape — COD-232's tab-shell blindness in a second form.
+- `a11y` reached **6 of 28** Insights panels while a comment claimed otherwise.
+  Arming it went green → 7 serious → green.
+- `a11y` also restarted its own animations: `settle()` runs at the top of `scan`,
+  then `openFolds` and `revealLazy` click and mount, and axe measured the fade.
+  Fifth entry in the wait-before-assert table, and the first where the gate's own
+  actions were what it failed to wait for.
+
+**Measured, before → after:**
+
+```
+cycle    desktop 2.5/4.8 → 1.0/1.0   phone 4.4/10.6 → 2.4/3.6   folds 4 → 0
+nofap    desktop 1.9/4.8 → 1.7/1.7   phone 4.8/8.2  → 5.0/5.0   folds 3 → 0
+focus    desktop 3.5/3.5 → 1.4/1.4   phone 5.7/5.7  → 3.7/3.7   929→332 lines (nofap)
+width    unused screen 2560 54% → 25% · 3840 69% → 50% · 1440 unchanged by identity
+a11y     8m07s → 2m48s · CI pinned to 2 workers · 166 → 173 scans
+tests    1181 → 1378 in 101 files
+```
+
+**The width question, settled for the fourth time and worth not reopening.**
+`tier={1440}` + `stacked` was re-tested *after* each rail landed and lost every
+time — Cycle **+732px**, Recovery **1.7 → 3.3 screens** — because `max(act,
+review)` becomes `act + review` and the act column pays for it. Insights can
+stack because its act is a 291px search box. The rail generalises; the width does
+not. What *did* work is a **fluid cap that is a floor rather than a ceiling**, with
+1440 unchanged *by identity*: the gutter constant is exactly what a 1180 shell
+leaves at that width, so `space --all` diffs to zero lines across 24 views.
+
+**Two capture gaps are now the limit on the analytics, and both were named rather
+than faked.** `Relapse` has a date and no time, so a lapse has no hour-of-day
+reading. `UrgeWin` has a timestamp and no addiction field, so a per-addiction
+clock is a name join — and `ADDICTION_PRESETS` says "Nicotine" while
+`URGE_PRESETS` says "Smoking", so the shipped vocabularies do not match. The card
+prints its coverage fraction rather than an empty grid. COD-251.
+
+**What went wrong on my side, since that is the useful half.** I attributed a
+4.48:1 to a `page-enter` fade — the arithmetic fits, `#7c8195` is `fg-2` at 70%
+over `ink-0`, and that fade had already caused three phantom investigations that
+day. It was a stable `opacity-70` badge. Adding a `settle()` did not clear it,
+which is what proved the colour stable; the settle is kept because it is correct
+on its own terms, not because it fixed this.
+
+Worse, **two throwaway probes of mine reported confidently and were wrong**: one
+swept for label/control overshoot and returned 14 hits of which twelve were
+noise (it compared each control against the previous *section*, not its own label
+row), and one checked five Settings tabs and found nothing because its tab click
+matched the same control every time — **it scanned one tab five times.** Adding
+the precondition I had been demanding of every agent is what exposed it. A probe
+written to check a gate is not exempt from being checked.
+
+And an instruction I gave repeatedly that was wrong: **confirm a preview port by
+its `<title>`.** Every worktree serves an identical title; one agent found 4195
+serving a different worktree's bundle. Compare the served `assets/index-*.js`
+against your own `dist/index.html`.
+
+**Process note.** This ran as up to five parallel agents in their own worktrees,
+twice interrupted by session limits and resumed from transcript. Two things cost
+real time and are now written into `NEXT-SESSION.md`: `scripts/` needs a single
+owner (two agents edited the gates at once and one had to revert), and
+`git diff main <branch>` **lies about what a squash-merge applies** — it showed a
+whole merged PR being reverted. Use `git diff $(git merge-base main <branch>)
+<branch>`. The most valuable finding of the run — a silent data-loss bug in
+`logRelapse` (#281, previous stretch's numbering) — came from an agent auditing
+an unrelated page, which is the argument for briefing them with the traps rather
+than the task alone.
+
 ## 2026-09-25/26 — One layout idea, and the two that measured as nothing (#263–#276)
 
 **Summary:** Fourteen PRs. The first six were duplication — the same record

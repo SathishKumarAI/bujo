@@ -1204,7 +1204,12 @@ const skipped = UNITS.filter((u) => u.skipped)
 
 console.log('\nView            serious  other  folds')
 for (const s of rows) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).padStart(5)} ${String(s.other).padStart(6)} ${String(s.folds).padStart(6)}`)
-console.log(`\n${rows.length} of ${TOTAL_SCANS} scan(s) completed across ${UNITS.filter((u) => u.done).length} of ${UNITS.length} shard(s).`)
+/* `Math.max`, because `TOTAL_SCANS` counts the PLANNED views while the
+   rail-domain scans armed for Insights are extra — so a complete run printed
+   "173 of 166", arithmetic nobody reads as success. The planned figure is still
+   the denominator when a shard dies (the partial-summary path needs it); it
+   just cannot be smaller than what actually ran. */
+console.log(`\n${rows.length} of ${Math.max(TOTAL_SCANS, rows.length)} scan(s) completed across ${UNITS.filter((u) => u.done).length} of ${UNITS.length} shard(s).`)
 
 if (aborted) {
   console.error(`\nThe gate stopped: [${aborted.label}] failed, and ${skipped.length} shard(s) never ran.`)
