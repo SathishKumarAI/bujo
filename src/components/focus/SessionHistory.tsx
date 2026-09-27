@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Band, Eyebrow } from '../mod'
 import { Button } from '../ui/button'
 import { SegmentScale } from '../fields/SegmentScale'
 import { formatMinutes } from '../../lib/focus'
@@ -13,6 +12,13 @@ import { notify } from '../../lib/notify'
  * Editing matters more than it looks: deleting and re-logging a mistyped
  * duration also re-dates the session and skews the duration-weighted focus
  * average, so a mistake used to cost two numbers rather than one.
+ *
+ * **The `Band` wrapper and the `<h2>` are gone from this file, not deleted from
+ * the page.** This is the `log` row of the zone-3 rail now, so the heading, the
+ * count and the surface belong to the `Card` that `lib/focusCards.ts` places it
+ * in — a component that draws its own section heading inside a card is the
+ * "card inside a card" mistake in header form, and it is what made every one of
+ * the six old bands impossible to place anywhere but a flat vertical stack.
  */
 export function SessionHistory({
   sessions,
@@ -23,24 +29,15 @@ export function SessionHistory({
   onSave: (id: string, patch: Partial<DevSession>) => void
   onDelete: (id: string) => void
 }) {
+  if (sessions.length === 0) {
+    return <p className="text-label text-fg-2">No sessions yet. Log your first block with the form beside this one.</p>
+  }
   return (
-    <Band className="border-b-0 py-6">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">History</h2>
-        <Eyebrow className="tracking-[0.1em]">
-          {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
-        </Eyebrow>
-      </div>
-      {sessions.length === 0 ? (
-        <p className="mt-3 text-label text-fg-2">No sessions yet. Log your first block above.</p>
-      ) : (
-        <ul className="mt-3">
-          {sessions.map((s) => (
-            <SessionRow key={s.id} s={s} onSave={(p) => onSave(s.id, p)} onDelete={() => onDelete(s.id)} />
-          ))}
-        </ul>
-      )}
-    </Band>
+    <ul>
+      {sessions.map((s) => (
+        <SessionRow key={s.id} s={s} onSave={(p) => onSave(s.id, p)} onDelete={() => onDelete(s.id)} />
+      ))}
+    </ul>
   )
 }
 
@@ -132,17 +129,20 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
       <div className="flex items-baseline gap-3">
         <span className="text-label text-fg-1">{s.project || 'Session'}</span>
         <span className="text-label text-fg-3">{prettyDay(s.date)}</span>
-        <div className="ml-auto flex items-center gap-3 reveal">
+        {/* `-my-2.5` cancels the row's own `py-2.5`, so a 44px hit target
+            (COD-96) does not make a long list 17% taller. The controls were a
+            bare "Edit" and a bare "×" whose targets were the glyphs. */}
+        <div className="reveal -my-2.5 ml-auto flex items-center gap-1">
           <button
             onClick={startEditing}
-            className="text-label text-fg-2 hover:text-brand-text"
+            className="min-h-11 rounded-control px-2 text-label text-fg-2 hover:bg-ink-2 hover:text-brand-text"
           >
             Edit
           </button>
           <button
             onClick={onDelete}
             aria-label={`Delete session on ${prettyDay(s.date)}`}
-            className="text-label text-fg-2 hover:text-danger-text"
+            className="min-h-11 rounded-control px-2.5 text-label text-fg-2 hover:bg-ink-2 hover:text-danger-text"
           >
             ×
           </button>
