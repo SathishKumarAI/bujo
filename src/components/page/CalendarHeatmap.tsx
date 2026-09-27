@@ -31,6 +31,7 @@ export function CalendarHeatmap({
   today = todayISO(),
   size,
   fluid = false,
+  color = 'mauve',
 }: {
   weeks?: number
   data: HeatDatum[]
@@ -48,6 +49,19 @@ export function CalendarHeatmap({
    *  Use it wherever the grid has a column to itself; `size` cannot be right at
    *  both a 708px review column and a 358px phone, and this needs no number. */
   fluid?: boolean
+  /**
+   * Palette name for filled cells. `mauve` (the app's accent) is right while a
+   * filled cell means *you showed up* — every caller before Recovery.
+   *
+   * It is wrong when a filled cell means the opposite. Recovery's per-addiction
+   * calendar fills a day because the thing happened, so it draws `red` — the
+   * hue `RiskiestDaysCard` and `LapseCountCard` already use for a lapse on this
+   * page. A mauve grid there would read as a record of good days.
+   *
+   * One hue with a four-step intensity ramp either way: sequential, never
+   * categorical. Nothing here colours a series by which addiction it is.
+   */
+  color?: string
 }) {
   const days = useMemo<DayCell[]>(() => {
     const byDate = new Map<string, number>()
@@ -104,7 +118,7 @@ export function CalendarHeatmap({
         size={size}
         fluid={fluid}
         months
-        color="mauve"
+        color={color}
         label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${weeks} weeks`}
       />
     </div>
