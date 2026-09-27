@@ -17,6 +17,55 @@
   container-type: inline-size;
 }
 
+/* ── Shell width ─────────────────────────────────────────────────────────────
+   One class, used by `page/PageLayout.tsx` (the contract tiers) and
+   `shell/Page.tsx` (the legacy two-tier shell). Unlike the `.page-*` and
+   `.zone-*` classes above, this one is deliberately shared: both shells were
+   capping with the same literals (`max-w-wide`, `84rem`) and drifting apart was
+   the only thing that could come of keeping two copies.
+
+   The floor is a custom property rather than a second class because the two
+   shells raise it at different breakpoints — the contract's dashboard tier at
+   `xl`, `Page`'s wide tier at `2xl` — and `max-width` is one property, so two
+   competing classes would be a cascade argument. `xl:[--shell-floor:84rem]` at
+   the call site keeps that decision where it belongs and leaves one expression
+   here.
+
+   **A tier cap is a floor now, not a ceiling.** It used to be both, so the app
+   stopped growing at 1180px (1344 on the dashboard tier) no matter how much
+   screen it was given. Measured on the shipped build, `?demo=1`, six views:
+
+     viewport  shell  unused        viewport  shell  unused
+       1440    1180    260 (18%)      2560    1180   1380 (54%)
+       1920    1180    740 (39%)      3840    1180   2660 (69%)
+
+   More than half a 2560 monitor was empty, and over two thirds of a 4K one.
+
+   Why `max(floor, min(ceiling, 100vw - gutter))` and not another breakpoint:
+
+   1. **It is continuous, and that is what keeps 1440 untouched.** The gutter is
+      260px *because* that is what a 1180 shell leaves at 1440 — so the fluid
+      term is exactly 1180 at 1440 and smaller below it, where `max()` pins the
+      floor and nothing changes. A breakpoint (`2xl:max-w-[125rem]`) would jump
+      the shell from 1180 to ~1478 at one pixel of resize.
+   2. **`max()` is what makes it safe under the zoom setting.** Settings' zoom
+      scales the whole view, and viewport units inside a zoomed subtree resolve
+      against the *divided* viewport — at zoom 1.25 on a 1440 screen
+      `100vw - 260px` computes 892, which would have made the shell NARROWER
+      than it is today. The floor absorbs that: `max(1180px, 892px)` is 1180,
+      and `w-full` then caps it to whatever the zoomed wrapper actually offers,
+      exactly as before.
+
+   Widening is not the whole answer and was never meant to be — see
+   `docs/PAGE-WORKFLOW.md`, where flipping ten pages to `tier={1440}` *on a 1440
+   screen* moved eight page heights by zero. That experiment asked what a page
+   should do with room it did not have. This asks what it should do with room it
+   does: past 1440 the growth goes to the review column and to card columns (the
+   act cap and `CardGrid`'s wide steps), never to a longer line of prose. */
+.shell-fluid {
+  max-width: max(var(--shell-floor, var(--container-wide)), min(var(--container-max), 100vw - var(--shell-gutter)));
+}
+
 .page-zones {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -86,6 +135,25 @@
   .page-zones:not(.page-zones-single) .zone-act[data-sticky='true'] {
     position: sticky;
     top: calc(var(--header-h, 3.5rem) + 1rem);
+  }
+
+  /* Past this the act column STOPS growing and the review takes the rest.
+     38% of a 2000px shell is a 754px column holding a form whose every control
+     is capped at 380px by the rule below — that is not a column, it is 374px of
+     slack beside one. The review is the zone that can spend width: it is a
+     grid, and a grid turns width into columns.
+
+     32rem (512px) and 1365px are one decision, not two. 1365 is the container
+     width at which 38% *is* 512px ((1365 − 16px gap) × 0.38 = 512.6), so the
+     switch is continuous to within a pixel — no jump while resizing. And it
+     cannot fire on any width that is already settled: the widest container
+     reachable at a 1440 viewport is the dashboard tier's 1344px, 21px short.
+     Measured after: act 450 → 450 at 1440 (untouched), 450 → 512 at 2560 while
+     the review goes 722 → 1472. */
+  @container (min-width: 1365px) {
+    .page-zones:not(.page-zones-single) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
+    }
   }
 
   /* The act column, when it has outgrown the viewport. It used to fall back

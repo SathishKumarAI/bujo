@@ -102,8 +102,39 @@ export function CardGrid({ children, className }: { children: ReactNode; classNa
  * the same component gives one column at 446px and three at full width without
  * any call site knowing where it has been placed.
  */
+/**
+ * A fourth column past a 1600px container, and a note on the third.
+ *
+ * `@7xl` (1280px) was written for the 1440 tier's 1344px shell — which, minus
+ * the section rail's 176px and the 32px gap, hands the masonry **1136px**. So
+ * the third column never appeared: measured on the shipped build, Insights drew
+ * two columns at 1440, at 1920, at 2560 *and* at 3840. It arrives now only
+ * because the shell grows (`shell-fluid`), which is worth stating because the
+ * class list has said `@7xl:columns-3` for months and looked like it worked.
+ *
+ * 1600 for the fourth: at that container width a column is ~390px, which is
+ * what two columns get on the 820 tier and enough for a chart axis. Below it,
+ * four columns would be under 340px and the axis labels start colliding.
+ *
+ * A **container** query, not `2xl:`, so this cannot reach a masonry that merely
+ * happens to be on a wide screen — the mistake this component's own docstring
+ * records (446px sections splitting into two 213px columns at 1440).
+ *
+ * All four steps are spelled as arbitrary widths, including the two that have
+ * named equivalents (`@3xl` is 48rem, `@7xl` is 80rem). Measured, not assumed:
+ * with the third step named and the fourth arbitrary, Tailwind emitted the
+ * arbitrary rule FIRST, so three columns won at every width and the fourth
+ * never appeared — Insights drew three columns at 3840 with the fourth step
+ * sitting in the class list doing nothing. Mixing named and arbitrary variants
+ * of one family sorts by neither number nor source order; one spelling sorts by
+ * value. Read the emitted CSS, not the class list.
+ *
+ * And do not write a class name into a comment here: Tailwind scans this file as
+ * text, so the retired spelling of the fourth step kept generating a live rule
+ * from the sentence explaining why it was wrong.
+ */
 const MASONRY_COLUMNS =
-  'columns-1 gap-4 sm:gap-5 @3xl:columns-2 @7xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid sm:[&>*]:mb-5'
+  'columns-1 gap-4 sm:gap-5 @min-[48rem]:columns-2 @min-[80rem]:columns-3 @min-[100rem]:columns-4 [&>*]:mb-4 [&>*]:break-inside-avoid sm:[&>*]:mb-5'
 
 /**
  * The container query needs a wrapper: an element cannot be its own

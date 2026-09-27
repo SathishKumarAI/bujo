@@ -29,11 +29,27 @@ import { cn } from '../../lib/cn'
  *
  * It is not the default. A form and a list read worse at 1344px than at 1180,
  * which is the whole reason for a tier system.
+ *
+ * **A tier number is a floor, not a ceiling.** `shell-fluid`
+ * (`styles/layout.css`) holds the tier's width until the screen has more than
+ * 1440px to give, then grows to `--container-max` while keeping a 260px gutter.
+ * Nothing at or below 1440 moves — the gutter is 260 precisely because that is
+ * what a 1180 shell leaves at 1440, so the fluid term is continuous there. The
+ * growth goes to the review column (the act stops at 32rem) and to card
+ * columns, never to a longer line of prose: `820` therefore never grows.
+ *
+ * The 1440 tier's own reason for existing was only half true until now, and the
+ * measurement is worth recording. Insights' `MasonryGrid` needs a **1280px
+ * container** for its third column, and on a 1344px shell the rail takes 176px
+ * and the gap 32 — leaving **1136px**. So the third column did not appear at
+ * 1440, or at 1920, or at 3840; the tier bought a wider *page* and two columns
+ * either way. It arrives at a 1920 viewport now (container 1452) and a fourth
+ * at 2560.
  */
 const TIER_WIDTH: Record<820 | 1180 | 1440, string> = {
   820: 'max-w-read',
-  1180: 'max-w-wide',
-  1440: 'max-w-wide xl:max-w-[84rem]',
+  1180: 'shell-fluid',
+  1440: 'shell-fluid xl:[--shell-floor:84rem]',
 }
 
 /**

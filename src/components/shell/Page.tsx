@@ -43,8 +43,14 @@ export function Page({
           // The `wide` tier grows past 1536px for the same reason the aside
           // variant does: at 1,180px a three-column CardGrid gives 380px per
           // column, which is under what a chart axis needs. At 1,344px it is
-          // ~435px. `read` never grows — a longer measure does not help prose.
-          width === 'wide' ? 'max-w-wide 2xl:max-w-[84rem]' : 'max-w-read',
+          // ~435px. `read` never grows — a longer measure does not help prose,
+          // which is the whole distinction the two tiers exist to draw.
+          //
+          // `shell-fluid` keeps going past 1344 rather than stopping there: the
+          // 1344 cap left 576px of a 1920 screen and 2,496px of a 4K one unused
+          // on Today and Settings. It is a floor from `2xl` up and the growth is
+          // continuous at 1440 — see `styles/layout.css`.
+          width === 'wide' ? 'shell-fluid 2xl:[--shell-floor:84rem]' : 'max-w-read',
           className,
         )}
       >
@@ -57,9 +63,17 @@ export function Page({
     // rail was only 352px wide and half-empty. Past 1536px the container grows
     // to 1344px and the rail to 26rem: the extra width goes to the rail, not to
     // the reading column, which stays near its comfortable measure.
+    //
+    // Past 1604 it keeps going (`shell-fluid`), and here the rail is fixed so
+    // every pixel lands in the left column — at the 2000px ceiling that is
+    // 1,564px. Grown anyway, and deliberately: this variant and the single-column
+    // one above are the same page on different days (Today renders the rail only
+    // on today), and a page that is 1,344px wide on Thursday and 1,926px wide on
+    // Friday is worse than either. The left column holds cards, not paragraphs —
+    // `max-w-read` is what caps a measure, and this variant has never used it.
     <div
       className={cn(
-        'mx-auto grid w-full max-w-wide items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:max-w-[84rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]',
+        'mx-auto grid w-full items-start gap-4 shell-fluid sm:gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:[--shell-floor:84rem]',
         className,
       )}
     >

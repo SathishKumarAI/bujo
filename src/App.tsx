@@ -207,7 +207,12 @@ export default function App() {
         onNavigate={setView}
         onCommand={() => setPaletteOpen(true)}
       >
-        <div className="mx-auto max-w-[1600px]" style={{ zoom }}>
+        {/* The outer ceiling every view sits inside, including the handful that
+            carry no cap of their own. It was a second, lower number (1600px)
+            than the page shells' own, so a shell allowed to grow past it would
+            have stopped here with nothing in the class list to explain why.
+            One token, read in both places. */}
+        <div className="mx-auto max-w-[var(--container-max)]" style={{ zoom }}>
           <Suspense fallback={<SkeletonView />}>
             {book ? (
               <div className="book">

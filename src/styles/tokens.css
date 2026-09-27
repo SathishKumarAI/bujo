@@ -213,6 +213,26 @@
      premium. Same rhythm and tokens, different max. */
   --container-read: 820px;
   --container-wide: 1180px;
+
+  /* The app's one ceiling. Every page cap is a *floor* that grows toward this
+     (`.shell-wide` / `.shell-dash` in `styles/layout.css`), and `App.tsx`'s
+     outer wrapper reads the same value, so there is a single number to argue
+     about instead of two that can disagree.
+
+     2000px, not "as wide as the screen". Measured on the shipped build: a
+     1180px shell leaves 1,380px unused on a 2560 monitor (54%) and 2,660px on
+     a 4K one (69%) — the screen is genuinely being wasted. But the orient bar
+     spans the shell, and four facts strung across 2,560px stop being a bar; a
+     card grid past ~2,000px is eye travel, not density. 2000 is where another
+     full column of cards still fits and nothing has to be read across the
+     whole monitor. */
+  --container-max: 2000px;
+
+  /* How much room the shell leaves beside itself once it is allowed to grow.
+     260px is not a taste call: it is exactly what a 1180px shell leaves at
+     1440, so the fluid caps below are *continuous* there — the 1440 layout is
+     byte-identical and every pixel past it becomes content. */
+  --shell-gutter: 260px;
 }
 
 /* Height of the sticky app header, for anything that has to sit clear of it
