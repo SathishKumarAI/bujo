@@ -1,6 +1,6 @@
 import { Star } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { Band, BandCell, BandRow } from '../mod'
+import { Card } from '../ui'
 import { finishedByMonth, ratingDistribution, yearInBooks } from '../../lib/reading'
 import type { Book } from '../../lib/types'
 
@@ -15,7 +15,16 @@ import type { Book } from '../../lib/types'
  * either, so it went unscanned for as long as it existed. The redesign has no
  * folds — content that is not worth showing is not worth keeping.
  */
-export function ReadingReview({
+/**
+ * Two cards, not two `BandCell`s.
+ *
+ * They were a row because the Modernist grid wanted a row. "How many per
+ * month" and "what the year added up to" are two questions, and under a rail
+ * they are two cards in one group that the grid packs at whatever width it
+ * has — which also ends the pair of hand-tuned `basis-[24rem]` / `basis-[20rem]`
+ * guesses that decided their split.
+ */
+export function FinishedByMonthCard({
   books,
   today,
   streak,
@@ -31,16 +40,9 @@ export function ReadingReview({
 }) {
   const byMonth = finishedByMonth(books, today)
   const maxMonth = Math.max(1, ...byMonth.map((m) => m.count))
-  const wrapped = yearInBooks(books, today)
-  const dist = ratingDistribution(books)
-  const rated = dist.reduce((a, r) => a + r.count, 0)
-
   return (
-    <Band>
-      <BandRow>
-        <BandCell className="basis-[24rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Finished by month · {today.slice(0, 4)}</h2>
-          <p className="mt-1 mb-4 text-label text-fg-2">One bar per month, this calendar year.</p>
+      <Card band title={`Finished by month · ${today.slice(0, 4)}`} subtitle="One bar per month, this calendar year">
+          
           {/* `items-stretch`, not `items-end`: cross-axis `end` collapses each
               column to its label and leaves the flex-1 track at 0px — the bug
               that made six charts in this app render flat and look deliberate. */}
@@ -78,9 +80,16 @@ export function ReadingReview({
               <dd className="num text-fg-1">{pagesRead.toLocaleString()}</dd>
             </div>
           </dl>
-        </BandCell>
+      </Card>
+  )
+}
 
-        <BandCell className="basis-[20rem]">
+export function YearInBooksCard({ books, today }: { books: Book[]; today: string }) {
+  const wrapped = yearInBooks(books, today)
+  const dist = ratingDistribution(books)
+  const rated = dist.reduce((a, r) => a + r.count, 0)
+  return (
+      <Card band>
           {wrapped ? (
             <>
               <h2 className="font-display text-heading font-medium text-fg-1">{wrapped.year} in books</h2>
@@ -114,7 +123,10 @@ export function ReadingReview({
 
               {rated > 0 && (
                 <div className="mt-4 border-t border-line pt-3">
-                  <p className="mb-2 text-caption tracking-[0.08em] text-fg-3 uppercase">Rating distribution · {rated} rated</p>
+                  {/* Sentence case at the caption step. The uppercase + 0.08em
+                      tracking here was the same 2015-dashboard label `mod/Eyebrow`
+                      retired, re-typed by hand at a call site. */}
+                  <p className="mb-2 text-caption text-fg-3">Rating distribution · {rated} rated</p>
                   {[...dist].reverse().map((r) => (
                     <div key={r.stars} className="grid grid-cols-[3rem_1fr_1.5rem] items-center gap-3 py-1 text-label">
                       <span className="flex items-center gap-0.5 text-fg-2">
@@ -138,8 +150,6 @@ export function ReadingReview({
               </p>
             </>
           )}
-        </BandCell>
-      </BandRow>
-    </Band>
+      </Card>
   )
 }
