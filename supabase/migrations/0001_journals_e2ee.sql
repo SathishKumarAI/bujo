@@ -14,8 +14,12 @@
 -- i.e. the journal in **readable plaintext**, server-side. That was the
 -- retired accounts era, and it is the one thing this design will not do. The
 -- column is now `ciphertext text` and the server cannot read a word of it.
--- Kept as a rename rather than a new file so `git log --follow` shows that
--- this is the same object changing shape, not a second schema appearing.
+-- Moved rather than re-created so the history records one object changing shape
+-- rather than two schemas appearing. Note, because the commit message claimed
+-- otherwise and it was wrong: `git log --follow` does NOT cross this rename at
+-- git's default similarity threshold — 24 lines became 143 and almost none of
+-- them survived. Use `git log --oneline -M10% --stat` and look for the
+-- `docs/supabase.sql` deletion in the same commit, or read that commit's body.
 --
 -- Nobody is migrating off the old column: the project that held it stopped
 -- resolving (NXDOMAIN, measured 2026-09-15) long before this was written, so
