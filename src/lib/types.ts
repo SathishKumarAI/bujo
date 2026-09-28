@@ -563,6 +563,16 @@ export interface Settings {
   storageMode?: 'local' | 'folder' | 'drive'
   /** Display name of the picked cloud folder. */
   folderName?: string
+  /**
+   * The one auto-sync target allowed to push — see `lib/syncTarget.ts` (F-7).
+   *
+   * Unset on every journal written before this field existed, and that is fine:
+   * `activeSyncTarget()` derives an answer by precedence, so an upgrade needs
+   * no migration and changes nobody's live target. What it *does* change is
+   * that the other configured targets stop auto-pushing. They are **paused,
+   * not deleted** — manual Push/Pull still reach them, and the UI names them.
+   */
+  syncTarget?: import('./syncTarget').SyncTarget
   /** Exploring sample data (the demo seed). The banner offers to clear it out. */
   explore?: boolean
   /**
