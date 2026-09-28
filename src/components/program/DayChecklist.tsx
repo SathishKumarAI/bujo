@@ -47,7 +47,11 @@ export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name:
                     s.toggleEx(i)
                     if (!checked) onCheck?.(e.name, e.qty)
                   }}
-                  className="accent-green"
+                  // A native checkbox with no size renders 13x13 on a phone
+                  // — 169px2 for the primary interaction of the whole page.
+                  // `size-6` is 24px, WCAG 2.5.8's floor exactly, and the
+                  // native tick scales with the box.
+                  className="accent-green size-6 shrink-0"
                   aria-label={`Did ${e.name}`}
                 />
                 <span className={`min-w-0 flex-1 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>

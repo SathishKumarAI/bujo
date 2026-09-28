@@ -151,7 +151,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
           </div>
           <label className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2 text-body text-fg-1">
             <span className="inline-flex items-center gap-1.5"><Icon as={Prohibit} size="sm" style={{ color: onRaised('red') }} /> Habit to avoid <span className="text-fg-2">(quit · a logged day counts as a slip)</span></span>
-            <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red" aria-label="Habit to avoid" />
+            <input type="checkbox" checked={!!habit.avoid} onChange={(e) => set({ avoid: e.target.checked || undefined })} className="accent-red size-6 shrink-0" aria-label="Habit to avoid" />
           </label>
           <label className="block text-body text-fg-1">Weekly goal <span className="text-fg-2">(times/week, optional)</span><div className="mt-1"><Stepper value={habit.weeklyGoal ?? undefined} onChange={(v) => set({ weeklyGoal: v })} step={1} min={0} aria-label="Weekly goal" /></div></label>
 

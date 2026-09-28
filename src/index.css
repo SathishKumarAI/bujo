@@ -1142,6 +1142,34 @@ body.handwriting textarea {
 .reveal {
   opacity: 1;
 }
+
+/* …and on a touch screen a revealed control also needs a BOX, not just an
+   opacity. Most `.reveal` call sites are a bare `×` or `✎` glyph with no
+   padding, so making them visible made them *visible* and left them untappable:
+   measured at 390x844, `EntryRow`'s delete is **8x23** and `People`'s remove is
+   **7x19** — a 184px² and a 133px² target for the only way to undo a mistaken
+   log. Nothing flags it. `clipped-text` asks whether an element shows less than
+   it holds (a `×` shows all of itself) and axe asks whether the tree is sound
+   (it is focusable and named).
+
+   36px rather than 44: these sit in a row beside another small control —
+   `EntryRow`'s `!` priority toggle is 24x24 immediately to the left — and the
+   44px floor would overlap it, which is the exact failure `.touch-target`'s
+   note above is bounded by. 36 clears WCAG 2.5.8's 24px AA floor with room and
+   takes the smallest control in the app from 184px² to 1296px², seven times the
+   area, without moving the tap onto its neighbour.
+
+   Scoped to `button` and `a` on purpose: `.reveal` is also on `LazyMount` and
+   `TypingBand`, which are containers and must not gain a minimum size. */
+@media (hover: none) {
+  :is(button, a).reveal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--h-control);
+    min-height: var(--h-control);
+  }
+}
 @media (hover: hover) and (pointer: fine) {
   .reveal {
     opacity: 0;

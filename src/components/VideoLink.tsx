@@ -39,7 +39,7 @@ export function VideoLink({
       // quieter problem: a screen reader listing twenty links all called "Watch
       // demo" cannot be used to pick one.
       aria-label={`Watch a form demo for ${name}`}
-      className={cn('inline-flex items-center gap-1 text-label text-red hover:underline', className)}
+      className={cn('inline-flex min-h-6 min-w-6 items-center justify-center gap-1 text-label text-red hover:underline', className)}
       onClick={(e) => e.stopPropagation()}
     >
       <Icon as={Play} size={size} /> {label}
