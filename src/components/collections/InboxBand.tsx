@@ -1,4 +1,4 @@
-import { Band, Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { EntryRow } from '../EntryRow'
 import type { Entry } from '../../lib/types'
 
@@ -9,24 +9,23 @@ import type { Entry } from '../../lib/types'
  * journal uses everywhere else, deliberately: an entry should not look like a
  * different kind of object depending on which page you found it on.
  */
-export function InboxBand({ entries }: { entries: Entry[] }) {
+export function InboxCard({ entries }: { entries: Entry[] }) {
   return (
-    <Band className="py-6">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">Inbox</h2>
-        <Eyebrow className="tracking-[0.1em]">
-          {entries.length} dateless {entries.length === 1 ? 'item' : 'items'}
-        </Eyebrow>
-      </div>
+    /* The count moved into the card's subtitle and lost its
+       `tracking-[0.1em]`. `mod/Eyebrow` retired the letter-spaced micro label
+       as "the house style of a 2015 analytics dashboard"; four call sites in
+       this cluster had typed the tracking back in by hand. A style rule each
+       author must retype is one that gets forgotten. */
+    <Card band title="Inbox" subtitle={`${entries.length} dateless ${entries.length === 1 ? 'item' : 'items'}`}>
       {entries.length === 0 ? (
-        <p className="mt-3 text-label text-fg-2">Nothing dateless waiting. Rapid-captured items with no day land here.</p>
+        <p className="text-label text-fg-2">Nothing dateless waiting. Rapid-captured items with no day land here.</p>
       ) : (
-        <ul className="mt-3 border-t border-line">
+        <ul>
           {entries.map((e) => (
             <EntryRow key={e.id} entry={e} />
           ))}
         </ul>
       )}
-    </Band>
+    </Card>
   )
 }

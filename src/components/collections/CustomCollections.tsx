@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Band, Eyebrow } from '../mod'
+import { Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { EntryRow } from '../EntryRow'
 import { collectionProgress } from '../../lib/bullets'
@@ -15,7 +16,7 @@ import type { Collection, Entry } from '../../lib/types'
  * pill wrap gave every collection a different width and no alignment, so
  * scanning twelve of them meant reading twelve shapes.
  */
-export function CustomCollections({
+export function CollectionsCard({
   collections,
   entries,
   openId,
@@ -42,9 +43,11 @@ export function CustomCollections({
   return (
     // Measured header clearance, not a literal — see the note on the same class
     // in `TagPages.tsx`.
-    <Band id="bujo-collections" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
+    /* No `id` and no `scroll-mt` any more. Those existed so the Index could
+       `scrollIntoView` this band; the Index selects this rail row now, which
+       is a jump that cannot land on a hidden section. */
+    <Card band title="Collections" subtitle="Your own pages — lists, logs, anything">
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Collections</h2>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <input
             value={icon}
@@ -162,6 +165,6 @@ export function CustomCollections({
           })}
         </ul>
       )}
-    </Band>
+    </Card>
   )
 }

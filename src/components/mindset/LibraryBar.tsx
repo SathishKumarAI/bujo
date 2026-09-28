@@ -46,7 +46,7 @@ export function LibraryBar({
   total: number
 }) {
   return (
-    <div className="sticky top-[var(--header-h)] z-20 flex flex-nowrap items-center gap-4 border-b-2 border-line bg-ink-0 py-2">
+    <div className="sticky top-[var(--header-h)] z-20 flex flex-nowrap items-center gap-4 border-b border-line bg-card py-2">
       <div className="flex flex-none basis-32 items-center gap-2 border-b border-line sm:basis-44">
         <Icon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-3" />
         {/* Placeholder is "Search", not "Search principles": the box is 128px

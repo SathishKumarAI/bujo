@@ -208,3 +208,12 @@ string:
 
 The cost was ≤0.3 screens on the worst page, and four pages *gained* a phone
 column.
+
+**`components/mod/Band` is deleted** (#305). It was the other half of the
+Modernist pass — the page-level container to `CARD.band`'s section-level one —
+and it survived phases 3/4 because it lived on three views that were not on the
+page contract at all: Mindset, Reading and Collections, which rendered a single
+column on a 1440 screen. Those are #303, #304 and #305; with the last of them
+the anti-reference world is gone from the app rather than merely unused.
+`Eyebrow` and `Statement` stay: they are type, and type survived the change of
+world.
