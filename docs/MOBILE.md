@@ -208,8 +208,16 @@ At 390 × 844, with the demo banner dismissed:
 | **total** | **~267** | **32%** |
 
 The +16px of header is the price of the three 44px controls and is stated rather
-than hidden. Every view got ~0.03 screens longer; across the 18 views the probe
-walks, **73.52 → 74.08 screens**.
+than hidden. `phone-probe` measures it as ~0.03 screens per view — across its 18
+views, **73.52 → 74.08**.
+
+`npm run space` disagrees, and the disagreement is instructive rather than
+worrying: it reports every phone page **flat or 0.1 shorter** (trackers 5.3 →
+5.2, pullups 3.9 → 3.8, mindset 8.8 → 8.7, reading 3.9 → 3.8 open). The two
+instruments are measuring different DOMs — the probe opens every fold and fires
+every `LazyMount` before it measures, `space-audit` reports shipped and open
+separately and navigates by URL. Neither shows a regression worth a decimal
+place; quote whichever one you also quoted before, and never mix them.
 
 ### 9 · No horizontal overflow
 
@@ -266,13 +274,13 @@ exited **silently with no table**. An empty gate output is never a pass.)
 
 | Left alone | Why |
 |---|---|
-| Quick add's **position** in the top-right corner | It is 44 × 44 now, but it is still in the hardest corner for a right thumb on an 844px screen. Moving capture into the thumb zone is a shell redesign with a real product argument behind it, not a touch-target fix. Worth a ticket. |
+| Quick add's **position** in the top-right corner | It is 44 × 44 now, but it is still in the hardest corner for a right thumb on an 844px screen — 6 of 16 shell controls sit above y281. Moving capture into the thumb zone is a shell redesign with a product argument already on the record (`BottomNav`: "no centre FAB. Capture lives in the top bar's Quick add"), not a touch-target fix. **COD-259.** |
 | `Card`'s ⓘ / ⛶ / ⌄ at **24 × 24** | Already a deliberate, documented decision that clears WCAG 2.5.8's AA floor exactly (`ui.tsx`, `CARD.headerButton`). Three of them sit adjacent in a card header; 44 each would be 132px against a truncating title. |
 | The **16 × 16 habit grid cells** and the 11-step mood scale | `PRODUCT.md`: density is a feature. The scale physically cannot be 44 wide at 390. |
 | `icon-sm` (28px) in dense clusters | 52 pairs closer than 16px on Today alone. Growing them moves taps onto neighbours. |
 | The **six long views** (Mindset 8.8 screens, …) | A page-shape job, not a mobile one. See above. |
 | `layout.css`'s `max-height: calc(100vh - …)` | Behind a `@container (min-width: 1365px)` query — no phone ever reaches it. |
-| **Search having no on-screen door** | From Today at scroll 0 there is no visible search control; it is ⌘K, or four taps through the account menu (12 items deep). That is an information-architecture decision, not a sizing one. Reported, not fixed. |
+| **Search having no on-screen door** | From Today at scroll 0, scanning every visible control for /search\|find\|command/ returns **zero**; it is ⌘K — not a door on a phone — or four taps through a twelve-item account menu. Information architecture, not sizing. **COD-260.** |
 
 ## Taps, measured
 
@@ -284,4 +292,6 @@ exited **silently with no table**. An empty gate output is never a pass.)
 Capture is two taps and that is as good as it gets. Retrieval is the asymmetry:
 the product's own ranking puts "capture" first and reading back further down,
 but four taps behind a twelve-item menu is further down than the ranking asks
-for.
+for. Filed as **COD-260**, with **COD-259** beside it — they are the same
+question (what the phone's reachable chrome is allowed to hold) and answering
+them apart is how a shell ends up with two opinions.
