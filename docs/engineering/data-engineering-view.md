@@ -28,7 +28,7 @@ time-series partitions; everything else is an entity array.
   optional field/collection needs no migration code**. Old exports load cleanly.
 - A relational mirror of the model exists for self-host:
   [`../data-engineering/schema.sql`](../data-engineering/schema.sql) and
-  [`../supabase.sql`](../supabase.sql).
+  [`../../supabase/migrations/0001_journals_e2ee.sql`](../../supabase/migrations/0001_journals_e2ee.sql).
 
 ## Pipelines (ETL, all in-browser + pure)
 - **Ingest:** capture bar → `parseQuickCapture` / smart `lib/capture.ts` →

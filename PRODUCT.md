@@ -54,8 +54,13 @@ entry from someone who has typed nothing yet.
 
 Constraints, not preferences. A redesign preserves all of these.
 
-- **Local-first, no account.** Data lives in the browser. Nothing about the UI
-  may imply a server exists or that work is being uploaded.
+- **Local-first. The account is optional and learns nothing.** Data lives in
+  the browser and `localStorage['bujo:data']` is canonical. An account (added
+  2026-09-27) names a row to sync ciphertext into; it is never where the
+  journal lives, and the card that offers it **renders nothing** on a build
+  with no Supabase configured. Nothing about the UI may imply a server exists
+  when it does not, or that anything readable is being uploaded — because
+  nothing readable ever is. See `docs/AUTH.md`.
 - **Offline.** It is a PWA. It opens on a plane. No design element may depend on
   a network fetch — fonts included, which is why they are self-hosted.
 - **Five themes, and they all ship.** mocha · latte · neon · vscode · dawn. A

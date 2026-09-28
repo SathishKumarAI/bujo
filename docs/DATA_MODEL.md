@@ -192,7 +192,9 @@ Cloud → **Account**.
   to keep their data + gain recovery.
 - Storage: one row per user in `public.journals` (`user_id` PK, `data` jsonb),
   **row-level security** scopes every read/write to `auth.uid()` (schema in
-  `docs/supabase.sql`). Auto-sync: pull on load, push on change (`App.tsx`).
+  `supabase/migrations/0001_journals_e2ee.sql`, which now holds
+  **ciphertext**, not `data jsonb` — this bullet describes the retired 2026-09-11
+  shape). Auto-sync: pull on load, push on change (`App.tsx`).
 - Config: `lib/supabase.ts`; client is **null/disabled** unless
   `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set, so the local-first app
   is unaffected when unconfigured. Project: `ueahhgqxshfvkjgcwtnh` (anon key is

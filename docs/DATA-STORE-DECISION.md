@@ -37,7 +37,8 @@ to the app's runtime.
 > |---|---|
 > | **Fixed** (PR #125) | F-2, F-3, F-4, F-5, F-6 (partly), F-9, F-10 |
 > | **Fixed, bounded** (PR #126) | **F-1 · photos never sync.** They now travel with every push *within a size budget*; over it the journal still syncs and the UI says "Synced without photos". The unbounded answer (blob-per-photo) is still the right end state for heavy photo users — see F-1 in §8 |
-> | **Still open, by choice** | F-7 (four writers, four debounce windows), F-8 (`bujo:sync` passphrase in plaintext) — see §9 |
+> | **Fixed** (2026-09-27, `feat/supabase-auth`) | **F-7 · four writers.** `lib/syncTarget.ts` makes auto-sync targets mutually exclusive — one live, the rest paused and named on screen. **F-8 · the plaintext passphrase.** `lib/syncKey.ts` replaces `bujo:sync` with a non-extractable `CryptoKey` in IndexedDB plus a non-secret locator. Neither is *solved* in the sense of removing all risk — see §8 |
+> | **Still open, by choice** | Nothing from the original list. F-1 remains bounded |
 > | **Not built** | Step 7, the SQLite exporter. Deliberate: it was gated on F-1 → F-4, and F-1 is not done |
 >
 > `tsc -b` 0 · **764 tests pass** (757 → 764, 7 new) · eslint 0 errors, 2
@@ -50,6 +51,12 @@ to the app's runtime.
 Count first. **Eleven places accept journal bytes; four of them auto-write the
 same blob concurrently.**
 
+> **Updated 2026-09-27.** Twelve now — a Supabase row was added back, as a
+> cache holding ciphertext. And **none of them auto-write concurrently any
+> more**: `activeSyncTarget()` permits exactly one. The audit-time table below
+> is left as written (it is the evidence), with the new row and the changed
+> ones marked.
+
 ### Auto-writing (all can be enabled simultaneously)
 
 | Path | Writes | Format | Trigger | Conflict rule | Failure visible? |
@@ -60,6 +67,19 @@ same blob concurrently.**
 | `lib/fscloud.ts` → folder `bujo.json` | whole journal | JSON, pretty | 1500 ms debounce (`App.tsx:216`) | pull-first; **remote newer ⇒ raw `replaceAll(rm)`, no union, no prompt** | **No.** `catch { }` |
 | `lib/supabase.ts` → `journals` row | whole journal | JSONB | 4000 ms debounce (`App.tsx:137`) + realtime subscribe | pull-first; remote newer ⇒ `resolveIncoming` **union** ✔ | **No.** `catch { }` |
 | `lib/serverSync.ts` → PostgREST `/journals` | whole journal | JSON, row keyed by `deviceId()` | 2500 ms debounce + `pagehide` flush (`ServerSync.tsx:44`) | **none in the push path** — blind upsert | **No.** returns `false`, caller `void`s it |
+| **NEW 2026-09-27** · `lib/supacloud.ts` → Supabase `journals` row | whole journal | **E2E-encrypted `text`**; row keyed by `auth.uid()` | 4000 ms debounce (`SupabaseSync.tsx`) | pull-first; remote newer ⇒ `resolveIncoming` **union** ✔ | Partly — errors reach `SyncIndicator`; the debounced push swallows a retry |
+
+> **The "all can be enabled simultaneously" heading above is no longer true.**
+> `activeSyncTarget(settings, env)` picks one; the rest are paused, named on
+> screen, and still reachable by hand. The four debounce windows still differ
+> (1500 / 2500 / 4000 / 4000 ms) and that no longer matters, because only one
+> of them is ever armed. That is F-7, and it was fixed by the rule §9 named —
+> mutual exclusion — not by deleting a path.
+>
+> Note what the Supabase row is **not**: the retired 2026-09-11 version of this
+> path stored `data jsonb` — the journal, readable, server-side. The new one
+> stores ciphertext in a `text` column, deliberately not `jsonb`, so nothing
+> can index or query it and no future reader can mistake it for readable.
 
 ### Manual / one-way
 
@@ -71,12 +91,19 @@ same blob concurrently.**
 | `lib/fscloud.ts` → IndexedDB `bujo-fs` | directory handle | on folder pick | not journal data |
 | Downloads (`Settings.tsx`) | JSON / redacted JSON / checksummed JSON / Markdown / ICS / 9× CSV | button | one-way, no write-back |
 | Other `localStorage` keys | `bujo:sync` (**the sync passphrase, plaintext**), `bujo:device-id`, `bujo.ui.*`, Supabase auth session | various | `bujo:sync` is a live credential sitting beside the data it unlocks |
+| **CHANGED 2026-09-27** · `bujo:sync` retired | — | — | Replaced by a non-extractable `CryptoKey` in **IndexedDB `bujo-keys`** plus `bujo:sync-code`, the blob locator. The locator is not a secret from the server; it is the path every request already sends. `sb-<ref>-auth-token` (the Supabase session) is new and grants access to ciphertext only |
 | Service worker (`vite-plugin-pwa`) | app shell only | build | no journal data |
 
 **The shape of the problem:** the canonical store is fine. The *periphery* is
 four concurrent writers with three different conflict rules, four different
 debounce windows (1500 / 2500 / 4000 / 4000 ms), and near-zero failure
 visibility.
+
+> **Two thirds of that is now closed.** All five paths route conflicts through
+> `resolveIncoming` (PR #125), and only one auto-pushes at a time (2026-09-27).
+> **Failure visibility is still the weak half** and is the honest remaining
+> gap: the folder path still `catch { }`es, and a debounced push that fails
+> silently retries on the next change with nothing on screen in between.
 
 ---
 
@@ -464,19 +491,75 @@ device B's row. The self-host path is a **per-device backup labelled as sync**.
 *Detected by:* signing two devices into the same self-host URL and observing
 they never converge.
 
-**F-7 · Four writers, four debounce windows.**
+**F-7 · FIXED · Four writers, four debounce windows.**
 Folder 1500 ms, server 2500 ms, blob 4000 ms, Supabase 4000 ms — all can be
 enabled at once, all pushing the same object, each with its own echo-guard
 string. Two of them can adopt different remotes in the same second.
 *Detected by:* nothing. Prevented by making sync targets mutually exclusive.
 
-**F-8 · The sync passphrase sits in plaintext beside the data.**
+> **Fixed by the rule §9 named, not by deleting a path.**
+> `lib/syncTarget.ts` derives one live target; every sync effect gates on it.
+> `settings.syncTarget` is the answer when set, and each place a target is
+> switched on sets it. A journal written before the field exists is answered by
+> precedence — folder, self-host, blob, account — which was chosen so that
+> **adding the account demotes nobody on upgrade**, and so that an existing
+> user's live target does not change. `syncTarget.test.ts` pins both.
+>
+> **It has a visible cost and hiding it would have been the worse bug.** Someone
+> running folder *and* blob today gets one of them paused, and a folder that
+> quietly stops updating is a stale backup they trust a year later. So
+> `SyncTargetNotice` names the live target and every paused one, on screen, for
+> as long as it is true — and nothing is deleted: a paused target keeps what it
+> holds and Push/Pull by hand still reach it.
+>
+> **The failure mode that remains:** a user assumes a paused target is current.
+> Detected by reading the notice; not detectable by any gate, because "a file on
+> disk is older than it looks" is not a property the app can observe.
+
+**F-8 · FIXED (bounded) · The sync passphrase sits in plaintext beside the data.**
 `localStorage["bujo:sync"]` is the key to the E2E blob, stored unencrypted in
 the same origin as the journal. It stays out of exports only incidentally — it
 is a bare `localStorage` key, not a `settings` field, so `SYNC_SECRET_KEYS`
 (which strips six *settings* keys) never sees it and does not protect it. Any
 XSS reads both the ciphertext location and the key that opens it.
 *Detected by:* review only.
+
+> **Fixed by removing the passphrase from disk, not by encrypting it.**
+> `lib/syncKey.ts` stores the **PBKDF2 base key** as a `CryptoKey` in IndexedDB
+> `bujo-keys`. WebCrypto requires PBKDF2 keys to be `extractable: false`, so
+> `exportKey` on it always rejects — asserted in `syncKey.test.ts`, because the
+> whole fix rests on that one property. Beside it sits `bujo:sync-code`, the
+> blob locator, which is not a secret from the server: it is the path every
+> request already sends.
+>
+> **Why not the three alternatives.** *Derive on unlock and hold in memory*
+> only works for journals that have a passcode, and there is no unlock event
+> for the majority that do not — it would mean prompting on every page load,
+> which is not unattended sync. *WebAuthn/passkey-wrapped* needs the PRF
+> extension (patchy support) and a user gesture per unlock, which has the same
+> problem one layer down. *Encrypting `bujo:sync` under the passcode key* is
+> what the old docstring proposed and it is circular: the process that needs
+> the key while nobody is watching would need the passcode while nobody is
+> watching.
+>
+> **The one thing that made it possible without changing the blob format:**
+> `encryptString` mints a fresh random salt per blob, so a cached *AES* key is
+> useless. The PBKDF2 **base** key is salt-independent, derives the AES key for
+> any salt, and is the thing WebCrypto refuses to export. Nothing about the
+> stored ciphertext changed; every blob written before this still opens.
+>
+> **Bounded, and the UI says so.** Script on this origin can still call
+> `crypto.subtle.decrypt` with the stored key. A browser cannot keep a secret
+> from someone holding the unlocked device. What changed is that the secret
+> cannot *leave*: a copied profile, a `localStorage` dump or an exfiltrating
+> script now yields an encrypted blob instead of a journal.
+>
+> **And it takes something away, announced once by a toast.** Before, a user
+> who forgot their passphrase could read it back out of devtools. After the
+> migration they cannot. The journal is never at risk — it is canonical locally
+> — but the cloud copy is unreachable from a *new* device without it. The
+> migration verifies the replacement reads back before deleting the original,
+> so a crash mid-way leaves both and the next load finishes.
 
 **F-10 · FIXED · `putImage` minted colliding ids, so a batch of photos ate
 itself.** Found while fixing F-1, and caused *by* fixing F-1. Ids were
@@ -506,7 +589,10 @@ backups exist for — but one line would reduce it.
 | Splitting `JournalData` into per-collection keys or files | Never for the canonical store — it trades one atomic write for 28 torn ones |
 | Normalising the schema in the app | The in-memory joins are all daily and all fast. Normalisation belongs in the derived SQLite, where it costs nothing |
 | Delta / op-log sync | Whole-blob push is 2.35 MB at ten years. Revisit if the owner syncs over metered mobile data, or if the blob passes ~10 MB |
-| Deleting any sync path | They work and they are cheap. Making them **mutually exclusive** solves F-7 without removing anyone's setup |
+| Deleting any sync path | They work and they are cheap. Making them **mutually exclusive** solves F-7 without removing anyone's setup — **done 2026-09-27**, `lib/syncTarget.ts` |
+| Making Supabase (or any server) canonical | Kills offline-first. The row is a cache holding ciphertext and is rebuildable by pushing the local journal at it. Nothing would change this |
+| A password, or any account recovery path | A reset means the server holds something that can decrypt the journal. Sign-in is a one-time email link with nothing to store, leak or reset. Would change only if the product stopped being end-to-end encrypted, i.e. never |
+| Padding the ciphertext to hide its length | The row's byte length leaks roughly how much someone journals. Real, and listed in `AUTH.md`. Fixed-size padding costs bandwidth on every push to hide a number `updated_at` already hints at. Revisit if a threat model ever includes the server operator as an adversary who cares about volume |
 | Automatic scheduled export | A PWA cannot write to disk unattended without the folder permission, which needs a user gesture after every reload. The weekly nudge is the honest version. Revisit if the app is packaged with Tauri (`src-tauri/` exists), where a real scheduled file write is possible |
 | Encrypting backups at rest by default | The passcode path (`bujo:enc`) already covers the device. An encrypted backup the owner cannot open in ten years is worse than a plaintext one they can. Revisit if backups leave the owner's control |
 | Memoising Insights/Stats | Real, and worth a ticket, but it is a render bug and not a storage decision. Filed here so it is not silently left |

@@ -6,9 +6,15 @@ assume the threat model of a privacy app, not a todo list.
 
 ## TL;DR
 
+> **Stale — describes the accounts design retired on 2026-09-11.** The version that
+> shipped on 2026-09-27 stores **ciphertext in a `text` column**, not `data jsonb`;
+> there is no guest sign-in and no password. Current: `docs/AUTH.md` and
+> `supabase/migrations/0001_journals_e2ee.sql`. Left as the record of what was.
+
+
 Most of the hard security is **already in place** — keep it, don't rebuild it:
 
-- Supabase **Row-Level Security** scopes every row to `auth.uid()` (`docs/supabase.sql`).
+- Supabase **Row-Level Security** scopes every row to `auth.uid()` (`supabase/migrations/0001_journals_e2ee.sql`).
   A user can only ever read/write their own `journals` row. This is the core control.
 - **Anonymous guest** sessions already exist (`signInGuest` → `signInAnonymously`).
 - **Local client-side encryption** already exists (`src/lib/crypto.ts`: PBKDF2 →

@@ -26,6 +26,77 @@ Rules the three share:
 
 ---
 
+## 2026-09-27 — Accounts that cannot read the journal, and the two silent-loss bugs that had to go first (`feat/supabase-auth`)
+
+**Summary:** Supabase Auth is back as **identity only**. The server holds an
+email, a uuid and a column of AES-GCM bytes; the key is derived in the browser
+from a passphrase it never receives. `localStorage['bujo:data']` stays canonical
+and the Supabase row is a cache like every other sync target. The branch is
+**not merged and no PR was opened** — handed back for integration.
+
+Two of the three open findings in `DATA-STORE-DECISION.md` §8 were closed on the
+way, because adding a fifth writer on top of them would have compounded both.
+
+| | Before | After |
+|---|---|---|
+| **F-7** four auto-writers, four debounce windows | all can be live at once, two can adopt different remotes in the same second | `lib/syncTarget.ts` — **exactly one** live, the rest paused and named on screen |
+| **F-8** `bujo:sync` = the passphrase, plaintext | any storage read yields the journal in cleartext | `lib/syncKey.ts` — non-extractable `CryptoKey` in IndexedDB + a non-secret locator. A storage read yields ciphertext |
+
+**Measured.** `tsc -b` 0 · **1415 tests** (1378 → 1415, 37 new across 4 files) ·
+eslint 0 errors, 1 pre-existing warning (same effect, same rule, verified by
+building the stash) · `vite build` green · `smoke` **24/24 views OK** ·
+precache **2852.11 → 2860.63 KiB**, i.e. the 215 KiB Supabase SDK costs an
+install **nothing** because it is excluded from precache and behind a dynamic
+`import()` that only runs when `VITE_SUPABASE_*` are set.
+
+**What made F-8 solvable without touching the blob format.** `encryptString`
+mints a fresh random salt per blob, so caching the derived *AES* key is useless
+— which is why "hold the key in memory" looked like it needed a format change.
+The **PBKDF2 base key** is salt-independent, derives the AES key for any salt,
+and WebCrypto *requires* it to be `extractable: false`, so `exportKey` on it
+always rejects. Store that instead of the passphrase and nothing about the
+stored ciphertext changes: every blob written before this still opens, asserted
+in `syncKey.test.ts`.
+
+**What it takes away, and says so.** After the one-way migration the passphrase
+is gone from the device — someone who forgot it could previously read it back
+out of devtools. A toast announces it once. The journal is never at risk (it is
+canonical locally); the cloud copy becomes unreachable from a *new* device
+without the passphrase. The migration verifies the replacement reads back
+before deleting the original, so a crash mid-way leaves both and the next load
+finishes.
+
+**What I got wrong on the way**, all three in the contract test that exists to
+stop people getting this wrong:
+
+- **Grepped a string, not a use.** "No file may mention `bujo:sync`" named six
+  innocent files — `bujo:sync` is *also* the `CustomEvent` name `SyncIndicator`
+  listens for, and two of the six only mention the key in a comment saying it is
+  gone. Matched on `localStorage.getItem('bujo:sync')` instead. Same family as
+  the `help=` sweep that missed every card rendering its ⓘ from `subtitle`.
+- **A multiline regex matched the wrong line.** `[^;]*` matches newlines, so the
+  "does anything import the SDK at runtime" check walked from an unrelated
+  `import { useState }` on one line to the `@supabase` specifier on the next and
+  reported both type-only importers as runtime ones. `[^
+]*`.
+- **The SDK chunk had no name to exclude from the precache.** Rollup named it
+  `dist-<hash>.js` after `@supabase/supabase-js/dist/module` — a name no
+  `globIgnores` would ever contain, and one that would silently stop matching on
+  an upgrade. Named explicitly in `vite.config.ts`.
+
+And one found while running the gates, worth its own line: **`npm run smoke` and
+`npm run a11y` exit 0 when Playwright is missing**, printing install
+instructions. A gate that returns success having scanned nothing is the exact
+shape `CLAUDE.md` warns about two sections up, and the first smoke run here
+"passed" that way. Also: `npm i --no-save A` then `npm i --no-save B` **removes
+A** — npm re-resolves from `package.json` each time. Install them in one command.
+
+**Not verified, and it cannot be from here:** the RLS policy. No Supabase
+credentials were available. The attack procedure is written at the bottom of
+`supabase/migrations/0001_journals_e2ee.sql`, and step 4 — signed in as B, try
+to `upsert` over A's `user_id` — is the one that matters, because a policy that
+filters `select` while permitting a cross-user `update` passes a casual test and
+loses someone's journal.
 ## 2026-09-27 (later) — The rail was never vertical on five of eight pages, and the bands are the superseded design world still shipping (#300, #301)
 
 Two PRs, and a finding at the end that reframes the rest of the request.
