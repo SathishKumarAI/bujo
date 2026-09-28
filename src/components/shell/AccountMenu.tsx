@@ -82,7 +82,7 @@ export function AccountMenu({
     <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Account and app menu" title={`Account, ${label}`} className="relative">
+        <Button variant="ghost" size="icon-sm" aria-label="Account and app menu" title={`Account, ${label}`} className="touch-target relative">
           {profile ? (
             <span aria-hidden className="text-base leading-none">{profile.emoji}</span>
           ) : (

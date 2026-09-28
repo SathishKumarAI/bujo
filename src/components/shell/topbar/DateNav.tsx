@@ -33,6 +33,7 @@ export function DateNav({ view, mode }: { view: ViewId; mode: 'day' | 'month' })
       <Button
         variant="ghost"
         size="icon-sm"
+        className="touch-target"
         aria-label="Previous"
         {...(mode === 'day' ? { asChild: true } : { onClick: () => setMonth(shiftMonth(month, -1)) })}
       >
@@ -54,6 +55,7 @@ export function DateNav({ view, mode }: { view: ViewId; mode: 'day' | 'month' })
       <Button
         variant="secondary"
         size="sm"
+        className="touch-target"
         aria-haspopup="dialog"
         aria-expanded={pickerOpen}
         title="Jump to month / year"
@@ -64,6 +66,7 @@ export function DateNav({ view, mode }: { view: ViewId; mode: 'day' | 'month' })
       <Button
         variant="ghost"
         size="icon-sm"
+        className="touch-target"
         aria-label="Next"
         {...(mode === 'day' ? { asChild: true } : { onClick: () => setMonth(shiftMonth(month, 1)) })}
       >

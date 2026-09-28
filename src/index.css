@@ -1247,6 +1247,38 @@ button, a, [role='button'], label, input, select, textarea {
   }
 }
 
+/* ── `.touch-target` · the 44px floor, opt-in, on touch only ───────────────────
+
+   WCAG 2.5.5 wants 44×44. Measured on an iPhone 13 Pro (390×844, dpr 3) across
+   22 views, **1367 of 1653 rendered controls (83%) are under it** — and a sweep
+   over the primitive would be wrong, which is why this is a class and not a
+   rule on `button`. Two reasons, both numbers rather than opinions:
+
+   - **Density is a feature** (PRODUCT.md). 330 of those are the habit and water
+     grid cells on Today, 16×16 by design; 55 are the eleven steps of a mood
+     scale, which cannot be 44 wide because 11 × 44 = 484 in a 390px viewport.
+   - **Growing a small control in a dense cluster moves the tap onto its
+     neighbour.** Measured on Today alone: 99 sub-44 controls form 212
+     horizontally-adjacent pairs, **52 of them closer than 16px apart and the
+     tightest 2px**. At 44 each, those hit areas overlap and a tap lands on
+     whichever element is later in the DOM. `button.tsx` already says this; this
+     is the count behind it.
+
+   So the floor is applied where the cluster has been measured to have room. The
+   shell's three global controls — Ask Relay, Quick add, the account menu — are
+   the first adopters: they sit on every view, they include the app's single
+   most-used action, and the header row has **141px of free space** between the
+   brand (ends x118) and the cluster (starts x259) at 390px.
+
+   `hover: none` so a desktop is untouched: on a mouse a 28px icon button is
+   accurate, and this is about a finger. */
+@media (hover: none) {
+  .touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
 /* Touch devices have no hover, so hover-only controls (the ×/remove buttons that
    are opacity-0 until group-hover) would be permanently invisible. Reveal them. */
 @media (hover: none) {

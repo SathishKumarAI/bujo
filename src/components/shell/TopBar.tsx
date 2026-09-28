@@ -144,7 +144,7 @@ export function TopBar({
                 than one of them being a page. Icon-only at every width: the
                 cluster is already five controls at 390px, and "Talk" as a word
                 buys nothing the microphone does not say. */}
-            <Button variant="secondary" size="icon-sm" onClick={onTalk} aria-label="Ask Relay" title="Ask Relay — say it, and it files it">
+            <Button variant="secondary" size="icon-sm" className="touch-target" onClick={onTalk} aria-label="Ask Relay" title="Ask Relay — say it, and it files it">
               <Icon as={Microphone} size="sm" />
             </Button>
 
@@ -152,7 +152,7 @@ export function TopBar({
                 so without it the dev one-primary guard charges it to whichever
                 page happened to load first — and then warns on any page with a
                 primary of its own. See `lib/onePrimary.ts`. */}
-            <Button variant="primary" primaryScope={SHELL_SCOPE} size="sm" onClick={onQuickAdd} aria-label="Quick add" className="gap-1.5">
+            <Button variant="primary" primaryScope={SHELL_SCOPE} size="sm" onClick={onQuickAdd} aria-label="Quick add" className="touch-target gap-1.5">
               <Icon as={Plus} size="sm" /> <span className="hidden sm:inline">Quick add</span>
             </Button>
 
