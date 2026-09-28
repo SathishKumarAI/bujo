@@ -3,6 +3,10 @@ import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
 import { useConfirm } from './components/ConfirmDialog'
 import { pushCloud, pullCloud } from './lib/bujocloud'
+import { loadSync, hasSync, migrateLegacySync, type SyncSecret } from './lib/syncKey'
+import { activeSyncTarget } from './lib/syncTarget'
+import { useAccount } from './lib/useAccount'
+import { notify } from './lib/notify'
 import { useJournal } from './store'
 import { Today } from './views/Today'
 import { Account } from './views/Account'
@@ -77,26 +81,53 @@ export default function App() {
   const askConflictRef = useRef(askConflict)
   useEffect(() => { askConflictRef.current = askConflict }, [askConflict])
   const syncReady = useRef(false)
-  // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
+  // Which single target is allowed to auto-push (F-7). The account half needs
+  // `useAccount`, which no-ops entirely when no Supabase is configured.
+  const { user: account } = useAccount()
+  const syncEnv = { blob: hasSync(), supabase: !!account && hasSync() }
+  const target = activeSyncTarget(data.settings, syncEnv)
+  // F-8, once on load, one-way and idempotent: move `bujo:sync` out of
+  // plaintext into a non-extractable key. Announced, because after it the
+  // passphrase cannot be read back off this device.
+  const [blobSecret, setBlobSecret] = useState<SyncSecret | null>(null)
+  const [secretLoaded, setSecretLoaded] = useState(false)
   useEffect(() => {
-    const pass = localStorage.getItem('bujo:sync')
-    if (!pass) { syncReady.current = true; return }
-    pullCloud(pass)
+    void (async () => {
+      if (await migrateLegacySync() === 'migrated') {
+        notify.info(
+          'Auto-sync now stores a key, not your passphrase',
+          'It can no longer be read out of this browser. Make sure your passphrase is written down — you need it to reach this journal from a new device.',
+        )
+      }
+      setBlobSecret(await loadSync())
+      setSecretLoaded(true)
+    })()
+  }, [])
+  // Cloud auto-sync (opt-in): pull once, then push (debounced) on change.
+  // Keyed on `target` rather than on mount, because `useAccount` resolves
+  // asynchronously — deciding the live target during the first render would
+  // read "no account" for every user who has one.
+  const pulledBlob = useRef(false)
+  useEffect(() => {
+    if (!secretLoaded) return
+    if (target !== 'blob' || !blobSecret || pulledBlob.current) { syncReady.current = true; return }
+    pulledBlob.current = true
+    pullCloud(blobSecret)
       .then(async (remote) => { if (remote) { const next = await resolveIncoming(dataRef.current, migrate(remote), askConflictRef.current); if (next) replaceAll(next) } })
       .catch(() => {})
       .finally(() => { syncReady.current = true })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [secretLoaded, target, blobSecret]) // eslint-disable-line react-hooks/exhaustive-deps
   const cloudLastSync = useRef('')
   useEffect(() => {
-    const pass = localStorage.getItem('bujo:sync')
-    if (!pass || !syncReady.current) return
+    const secret = blobSecret
+    if (!secret || target !== 'blob' || !syncReady.current) return
     const snapshot = JSON.stringify(data)
     if (snapshot === cloudLastSync.current) return // echo-guard: we just applied a remote change
     const id = setTimeout(async () => {
       try {
         // Guard against clobbering a newer remote (two devices, same passphrase):
         // pull first; if the remote copy is newer, ADOPT it instead of overwriting.
-        const remote = await pullCloud(pass)
+        const remote = await pullCloud(secret)
         if (remote) {
           const rm = migrate(remote)
           if (rm.updatedAt && (!dataRef.current.updatedAt || rm.updatedAt > dataRef.current.updatedAt)) {
@@ -113,11 +144,11 @@ export default function App() {
         }
         // Local is newer (or nothing remote) → safe to push.
         cloudLastSync.current = JSON.stringify(dataRef.current)
-        await pushCloud(pass, dataRef.current)
+        await pushCloud(secret, dataRef.current)
       } catch { /* offline — try again on the next change */ }
     }, 4000)
     return () => clearTimeout(id)
-  }, [data])
+  }, [data, target, blobSecret])
   const urlView = readDeepLink().view
   const [view, setView] = useState<ViewId>((urlView && urlView in VIEWS ? urlView : 'today') as ViewId)
   // Back / Forward. `writeDeepLink` pushes entries now, so this is what makes
@@ -155,7 +186,9 @@ export default function App() {
   // same folder can't be silently overwritten with an older copy.
   const folderLastSync = useRef('')
   useEffect(() => {
-    if (mode !== 'folder' || !hasFolder()) return
+    // `target !== 'folder'` means another path owns the push right now (F-7).
+    // The folder keeps whatever it already holds; it is paused, not dropped.
+    if (mode !== 'folder' || target !== 'folder' || !hasFolder()) return
     const snapshot = JSON.stringify(data)
     if (snapshot === folderLastSync.current) return
     const id = setTimeout(async () => {
@@ -177,7 +210,7 @@ export default function App() {
       } catch { /* permission revoked / offline */ }
     }, 1500)
     return () => clearTimeout(id)
-  }, [data, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, mode, target]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // First run → show the login/welcome gate.
   if (!mode) return <Welcome />

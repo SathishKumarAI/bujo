@@ -31,7 +31,10 @@ docs/pdf/
 # Personal per-machine Claude Code settings (not the shared project config)
 .claude/settings.local.json
 .vercel
+# Every env file is a secret EXCEPT the placeholder template, which has to be
+# committed for anyone to know which variables exist.
 .env*
+!.env.example
 
 # BUJO-193 self-host API TLS certs (do not commit)
 docker/certs/

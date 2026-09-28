@@ -10,6 +10,7 @@ import { useSuggestionCount } from './topbar/useSuggestionCount'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { useState } from 'react'
 import { useJournal } from '../../store'
+import { hasSync } from '../../lib/syncKey'
 import { notify } from '../../lib/notify'
 import type { ViewId } from './viewChrome'
 
@@ -64,7 +65,7 @@ export function AccountMenu({
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const profile = data.settings.profile
-  const syncing = typeof localStorage !== 'undefined' && !!localStorage.getItem('bujo:sync')
+  const syncing = hasSync()
   const label = profile ? profile.name : 'No name set'
   const zoom = data.settings.zoom ?? 1
   const suggestions = useSuggestionCount()

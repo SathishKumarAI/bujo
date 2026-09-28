@@ -6,6 +6,7 @@ import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
 import { ServerSync } from '../ServerSync'
+import { SupabaseSync } from '../SupabaseSync'
 import { Toasts } from '../Toasts'
 import { VoiceAgent } from '../VoiceAgent'
 import { CaptureReceipt } from '../CaptureReceipt'
@@ -124,6 +125,7 @@ export function AppShell({
       <MilestoneToast />
       <Toasts />
       <ServerSync />
+      <SupabaseSync />
     </div>
     </TooltipProvider>
   )

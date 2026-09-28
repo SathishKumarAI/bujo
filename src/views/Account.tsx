@@ -5,8 +5,10 @@ import { StatBar } from '../components/page/StatBar'
 import { CardGrid } from '../components/shell/CardGrid'
 import { LocalAccountCard } from '../components/account/LocalAccountCard'
 import { CloudSyncCard } from '../components/account/CloudSyncCard'
+import { AccountCard } from '../components/account/AccountCard'
 import { ProjectLinks } from '../components/account/ProjectLinks'
 import { useNav } from '../components/shell/nav'
+import { hasSync } from '../lib/syncKey'
 
 /**
  * Account — who this journal belongs to, and how (or whether) it travels.
@@ -35,7 +37,7 @@ export function Account() {
   const { data } = useJournal()
   const nav = useNav()
   const profile = data.settings.profile
-  const syncing = typeof localStorage !== 'undefined' && !!localStorage.getItem('bujo:sync')
+  const syncing = hasSync()
 
   return (
     <PageLayout
@@ -56,6 +58,7 @@ export function Account() {
       zone3={
         <CardGrid>
           <LocalAccountCard />
+          <AccountCard />
           <CloudSyncCard />
           <ProjectLinks />
 

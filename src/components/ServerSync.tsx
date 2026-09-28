@@ -4,6 +4,9 @@ import { pushJournalToServer, pullJournalFromServer, serverConfigured } from '..
 import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
 import { useConfirm } from './ConfirmDialog'
 import { migrate } from '../lib/storage'
+import { activeSyncTarget } from '../lib/syncTarget'
+import { hasSync } from '../lib/syncKey'
+import { useAccount } from '../lib/useAccount'
 
 /**
  * Self-host sync glue (Settings → self-host). When a URL + token are configured:
@@ -23,8 +26,13 @@ export function ServerSync() {
     () => confirm({ ...CONFLICT_PROMPT, destructive: true }),
     [confirm],
   )
-  const url = data.settings.selfHostUrl
-  const token = data.settings.selfHostToken
+  // One auto-sync target at a time (F-7). When another path owns the push,
+  // `url`/`token` read as unset here and every effect below no-ops — the
+  // server keeps whatever it holds, and manual use is unaffected.
+  const { user } = useAccount()
+  const live = activeSyncTarget(data.settings, { blob: hasSync(), supabase: !!user && hasSync() }) === 'selfhost'
+  const url = live ? data.settings.selfHostUrl : undefined
+  const token = live ? data.settings.selfHostToken : undefined
   const latest = useRef(data)
   useEffect(() => { latest.current = data }) // keep the ref fresh for the close-flush + pull-merge
 

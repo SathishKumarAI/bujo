@@ -43,7 +43,15 @@ export default defineConfig({
         // offline. Before that first fetch the card degrades to its muscle
         // list, which is the answer anyway — the body is how you find it on
         // yourself, not the information.
-        globIgnores: ['**/three.module-*.js'],
+        //
+        // The Supabase SDK is excluded for the same reason and a sharper one:
+        // it is behind a dynamic `import()` that only runs when
+        // `VITE_SUPABASE_*` are set, so on a build with no project configured
+        // — which is the default, and the local-first case — nothing ever
+        // fetches it. Precaching it charged **every** install 214 KiB for a
+        // feature that is off. Measured: precache 3070.40 → 2860.63 KiB.
+        // It needs the network to be useful anyway, so runtime-cached below.
+        globIgnores: ['**/three.module-*.js', '**/supabase-*.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
@@ -54,6 +62,11 @@ export default defineConfig({
             urlPattern: /\/assets\/three\.module-.*\.js$/,
             handler: 'CacheFirst',
             options: { cacheName: 'three', expiration: { maxEntries: 2 } },
+          },
+          {
+            urlPattern: /\/assets\/supabase-.*\.js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'supabase', expiration: { maxEntries: 2 } },
           },
         ],
       },
@@ -75,6 +88,14 @@ export default defineConfig({
           // invalidating the app bundle on every release.
           if (/src[\\/]components[\\/]icon-paths/.test(id)) {
             return 'icons'
+          }
+          // Named, so the service-worker globIgnore below can find it. Left to
+          // itself rollup names this chunk after the entry file's directory —
+          // `dist-<hash>.js`, from `@supabase/supabase-js/dist/module` — which
+          // matches nothing you would think to write and would silently stop
+          // matching on an upgrade that moved the file.
+          if (/node_modules[\\/]@supabase[\\/]/.test(id)) {
+            return 'supabase'
           }
         },
       },
