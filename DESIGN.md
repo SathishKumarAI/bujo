@@ -177,10 +177,34 @@ each one leaves the app coherent.
 | 0 | `PRODUCT.md`, this file | ✅ |
 | 1 | Tokens + primitives — every view restyled at once | ✅ (#216) |
 | 2 | Shell: header, nav, page frame, book | ✅ (#217, and the header rows centred in a follow-up) |
-| 3 | Today · Plan · Body · Mind · Insights | ☐ |
-| 4 | The long tail — 20 remaining views | ☐ |
+| 3 | Today · Plan · Body · Mind · Insights | ✅ (#302 — via the primitive, see below) |
+| 4 | The long tail — 20 remaining views | ✅ (#302, same change) |
 | 5 | Motion + polish pass | ☐ |
 
 Phase 1 is deliberately token-and-primitive only. Nothing under `views/` is
 touched, so the diff that changes all 28 screens stays reviewable and any
 regression is one file away.
+
+**Phases 3 and 4 landed the same way, and that is the finding.** They sat
+unchecked for long enough that the superseded world became the app: measured
+across 18 views on the running build, **69 bands on screen against 5 elevated
+cards** — ninety-three percent of every surface, including every review zone on
+every contract page, while the card this document is written around had almost
+no call sites. They did not need 28 view diffs. `CARD.band` was still the
+Modernist container — no fill, no radius, one hairline — so the phase was one
+string in `components/ui.tsx`, with two checks that made it safe to be one
+string:
+
+- **No band was nested inside a card** (a probe over those 18 views counted
+  zero), so giving bands material could not produce the card-in-card this
+  document refuses.
+- **`npm run a11y` went 0 → 19 serious and back to 0.** All nineteen were
+  pre-existing and invisible: axe needs a resolvable background to composite
+  against, and an unfilled band gives it none, so those pairings were being
+  *skipped* rather than passed. Computed against both grounds, every one failed
+  on the page ground too, several worse. Fixing them added `onWash()` to
+  `lib/colors.ts` — the accent-on-wash idiom had no solver, and `onRaised`
+  cannot serve as one because a wash is not a ground.
+
+The cost was ≤0.3 screens on the worst page, and four pages *gained* a phone
+column.
