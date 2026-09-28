@@ -35,7 +35,16 @@ export function AchievementsCard({ className }: { className?: string } = {}) {
           return (
             <li
               key={a.id}
-              className={`flex items-start gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
+              /* No `opacity-50`. Fading the whole tile produced a colour no
+                 gate could check and no token names: `overlay0` at 50% over
+                 the card measured **1.78:1** on mocha. `CLAUDE.md` has this
+                 exact rule — "state a quieter colour as a token; never reach
+                 for opacity to make text recede" — and it was invisible here
+                 for the same reason as the rest of this change: an unfilled
+                 band gives axe no ground to composite the fade against.
+                 Locked is already said three other ways: the padlock (with an
+                 accessible name), the neutral border, and no fill. */
+              className="flex items-start gap-2 rounded-card border p-2.5 transition-colors"
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
               <span
@@ -47,7 +56,10 @@ export function AchievementsCard({ className }: { className?: string } = {}) {
                 {got ? a.emoji : <Icon as={Lock} size="sm" className="text-fg-2" />}
               </span>
               <div className="min-w-0">
-                <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
+                {/* `fg-2`, not `overlay0`. `overlay0` is a UI grey for rules
+                    and placeholders — as text it is the 2.57:1 mistake this
+                    repo has already documented. */}
+                <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : 'var(--color-fg-2)' }}>{a.label}</p>
                 {/* `label` is a name and stays tight; `desc` is a sentence. It was
                     `text-micro` — 10px, the step tokens.css reserves for data
                     chrome and says explicitly is "never for prose" — five steps

@@ -39,7 +39,12 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
           style={isSel ? { background: cat('mauve') + '22' } : isPeriod ? { background: cat('red') + '22' } : undefined}
         >
           <span className={`w-6 num ${isToday ? 'font-medium text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
-          <span className="num w-10 text-fg-3" title={cd != null ? `Cycle day ${cd}` : undefined}>
+          {/* `fg-2`, not `fg-3`. This row takes a `'22'` wash when it is
+              selected or a period day, and the quietest foreground in the
+              scale does not survive a tinted ground: measured **4.04** on
+              latte's red wash. `fg-3` is calibrated against the page, and
+              this element is never on the page when it matters. */}
+          <span className="num w-10 text-fg-2" title={cd != null ? `Cycle day ${cd}` : undefined}>
             {cd != null ? `d${cd}` : ''}
           </span>
           <span className="num w-14 text-fg-1">{c?.temp != null ? `${c.temp}°` : ''}</span>
