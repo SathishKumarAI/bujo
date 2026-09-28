@@ -100,7 +100,7 @@ export function HabitDetail({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[8svh]" onClick={onClose}>
       <div
         ref={trap}
         className="card-3d w-full max-w-2xl overflow-hidden rounded-card border border-line-strong bg-ink-1"

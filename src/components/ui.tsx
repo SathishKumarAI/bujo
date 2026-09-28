@@ -80,11 +80,22 @@ export const CARD = {
    * keeping; the flatness never was.
    */
   band: 'card-3d group/card min-w-0 rounded-card bg-card p-4 sm:p-5 lg:p-6',
-  /** Enlarge-modal backdrop + panel (with entrance motion). */
+  /**
+   * Enlarge-modal backdrop + panel (with entrance motion).
+   *
+   * `svh`, not `vh`, and not `dvh`. On iOS `100vh` is the viewport with the
+   * toolbars *hidden* — 844px on an iPhone 13 Pro — so a `92vh` panel is 776px
+   * tall inside a band you can only see ~745px of, and its last rows (which is
+   * where a modal keeps its buttons) sit under Chrome's bottom toolbar. `svh`
+   * is the smallest viewport, so the panel fits whatever the toolbars are
+   * doing. `dvh` would fit too and then **resize while you type**, because the
+   * soft keyboard changes it — correct for the page's own min-height, wrong for
+   * a box floating over it.
+   */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
-  modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
+  modalPanel: 'modal-panel-in relative max-h-[92svh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
   /** Force chart plot areas (role="img") tall in the enlarge modal. */
-  modalChartHeight: '[&_[role=img]]:!h-[64vh]',
+  modalChartHeight: '[&_[role=img]]:!h-[64svh]',
   /**
    * The ⓘ / ⛶ / chevron in a card header. All three were bare icons — 14, 15
    * and 18px — so their hit targets were the glyphs themselves, under the

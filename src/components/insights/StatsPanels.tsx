@@ -411,7 +411,7 @@ export function useStatsCards(): StatsCards {
      viewport, not inside transformed ancestors (book mode / zoom). */
   const modal = enlarged ? createPortal(
 <div className="modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm" onClick={() => setEnlarged(null)} role="dialog" aria-modal="true">
-  <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-card bg-ink-2 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+  <div ref={enlargedTrap} className="modal-panel-in relative max-h-[90svh] w-full max-w-4xl overflow-auto rounded-card bg-ink-2 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
     <div className="mb-4 flex items-center justify-between">
       <h3 className="font-display text-heading text-foreground">{enlarged === 'mood' ? `Mood calendar · ${prettyMonth(ym)}` : `Year in pixels · ${ym.slice(0, 4)}`}</h3>
       <Button variant="ghost" size="icon-sm" onClick={() => setEnlarged(null)} aria-label="Close" className="text-fg-2 hover:text-foreground"><Icon as={X} size="lg" /></Button>

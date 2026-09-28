@@ -195,7 +195,18 @@ html,
 body,
 #root {
   margin: 0;
+  /* `100vh` is the LARGE viewport on iOS — the height the page would have if
+     the browser's toolbars were hidden — so on an iPhone 13 Pro in Chrome it
+     resolves to 844px while the band you can actually see is ~745px. Measured:
+     every page carried 99px of forced scroll, even Settings at 0.9 screens,
+     which is also enough to trigger `useHideOnScroll` and slide the bottom nav
+     away on a page with nothing to scroll.
+     `100dvh` is the *current* viewport, so it shrinks with the toolbars and the
+     page ends where the page ends. `vh` stays as the fallback for anything that
+     does not know `dvh`; the second declaration simply wins where it is
+     understood. */
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-base);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -1213,13 +1224,26 @@ button, a, [role='button'], label, input, select, textarea {
   touch-action: manipulation;
 }
 
-/* iOS auto-zooms a form field on focus when its text is < 16px. Force 16px on
-   phones so focusing an input never triggers that jarring page zoom. */
-@media (max-width: 640px) {
+/* iOS auto-zooms a form field on focus when its text is < 16px.
+
+   This was keyed on `max-width: 640px`, which is a guess at "a phone" and gets
+   it wrong in the one orientation people fill a form in: an iPhone 13 Pro in
+   landscape is **844px** wide, so the guard did not apply and — measured at
+   844×390 — 5 of 5 rendered fields sat at 15px and every focus zoomed the page.
+   The condition is not the width, it is the input method, so ask about that.
+   `hover: none` and `pointer: coarse` together are a touch device at any
+   rotation, and they are already how this file asks the same question above.
+
+   `max()` rather than a flat `16px`: a hard px size is the one thing PRODUCT.md
+   forbids for type, because it silently opts every input out of the global
+   text-size setting. `max(16px, var(--text-body))` keeps the zoom guard — the
+   zoom triggers on the *computed* px, which can never fall under 16 here — and
+   still scales up for the reader who turned the text size up. */
+@media (hover: none) and (pointer: coarse) {
   input:not([type='checkbox']):not([type='radio']),
   textarea,
   select {
-    font-size: 16px;
+    font-size: max(16px, var(--text-body));
   }
 }
 

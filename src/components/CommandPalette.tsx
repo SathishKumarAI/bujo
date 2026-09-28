@@ -114,7 +114,7 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[12vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-crust/60 p-4 pt-[12svh]"
       onClick={() => setOpen(false)}
     >
       <div

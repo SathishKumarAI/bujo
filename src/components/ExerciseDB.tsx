@@ -89,7 +89,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
       </p>
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[8vh]" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[8svh]" onClick={() => setSelected(null)}>
           <div ref={trap} className="card-3d w-full max-w-lg overflow-hidden rounded-card border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={selected.name}>
             <header className="flex items-center justify-between border-b border-line px-4 py-3">
               <h3 className="font-display text-heading text-fg-1">{selected.name}</h3>
