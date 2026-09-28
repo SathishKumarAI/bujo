@@ -1,4 +1,5 @@
-import { Band, BandCell, BandRow, Eyebrow } from '../mod'
+import { Eyebrow } from '../mod'
+import { Card } from '../ui'
 
 /**
  * The Index — a bullet journal's table of contents, and this page's orient zone.
@@ -10,7 +11,7 @@ import { Band, BandCell, BandRow, Eyebrow } from '../mod'
  * until something existed to put in it, which meant a new journal gave no clue
  * that collections or tags were a thing at all.
  */
-export function IndexBand({
+export function IndexCard({
   collections,
   tags,
   onOpenCollection,
@@ -27,17 +28,23 @@ export function IndexBand({
   const hottestTag = Math.max(0, ...tags.slice(0, 20).map((t) => t.count))
 
   return (
-    <Band>
+    /* One card with a two-column grid, not a band with two `BandCell`s.
+       The cells were the Modernist row; a grid that collapses on its own
+       container is what this actually wanted, and it stops the two halves
+       depending on a pair of hand-picked `basis-[20rem]` guesses. */
+    /* No card title. This card is alone in its rail group and the group's
+       heading already states the name and the blurb — rendering both put the
+       same two lines on screen twice, one under the other. A card earns a
+       title when it sits beside siblings that need telling apart; a card that
+       IS the section takes the section's heading. */
+    <Card band>
       {/* The band is titled, so the two cells below can keep their short
           eyebrows without "Collections" appearing twice on the page with two
           different meanings — here it is a jump list, further down it is the
           list itself. */}
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-5">
-        <h2 className="font-display text-heading font-medium text-fg-1">Index</h2>
-        <Eyebrow className="tracking-[0.1em]">The journal's table of contents</Eyebrow>
-      </div>
-      <BandRow>
-        <BandCell className="basis-[20rem] pt-4">
+      <div className="@container/idx">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-5 @2xl/idx:grid-cols-2">
+        <div>
           <Eyebrow>Collections</Eyebrow>
           {collections.length === 0 ? (
             <p className="mt-3 text-label text-fg-2">None yet — create one below to group related entries.</p>
@@ -86,9 +93,9 @@ export function IndexBand({
               ))}
             </ul>
           )}
-        </BandCell>
+        </div>
 
-        <BandCell className="basis-[20rem] pt-4">
+        <div>
           <Eyebrow>Tag pages</Eyebrow>
           {tags.length === 0 ? (
             <p className="mt-3 text-label text-fg-2">None yet — tag an entry with #something and it files itself here.</p>
@@ -121,8 +128,9 @@ export function IndexBand({
           {tags.length > 20 && (
             <p className="mt-2 text-caption text-fg-3">Showing the 20 most-used of {tags.length} tags.</p>
           )}
-        </BandCell>
-      </BandRow>
-    </Band>
+        </div>
+        </div>
+      </div>
+    </Card>
   )
 }

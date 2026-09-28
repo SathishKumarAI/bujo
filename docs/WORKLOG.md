@@ -26,6 +26,137 @@ Rules the three share:
 
 ---
 
+## 2026-09-27 (later) — The rail was never vertical on five of eight pages, and the bands are the superseded design world still shipping (#300, #301)
+
+Two PRs, and a finding at the end that reframes the rest of the request.
+
+| # | What | The finding |
+|---|---|---|
+| 300 | `SectionRail` went vertical at `@4xl` | Five of eight rail pages shipped the **phone chip row on a desktop** |
+| 301 | Gym was five folds, four shut | 1.7 / **3.4** → **1.1 / 1.1** desktop · 3.2 / **7.2** → 2.5 / 2.6 phone · folds 5 → 1 |
+
+### #300 · a container breakpoint chosen against the wrong container
+
+`SectionRail` renders a column above a breakpoint and a horizontal chip row
+below it, and the breakpoint was `@4xl/page` — **896px**. It queries the rail's
+own container, and that container is **722px** on every page whose rail sits in
+the review column of a 1180 split. Measured at a 1440 viewport with the demo
+seed:
+
+| column | row |
+|---|---|
+| coaching 1180 · insights 1318 · pickleball 1180 | **cycle · focus · help · nofap · pullups — all 722** |
+
+Only the three `stacked` pages ever cleared 896. So five of the eight rail
+pages had never rendered a rail on a desktop, for the whole life of the
+component, and **nothing failed** — a chip row is a legal rendering of the same
+component. `@2xl` (672px) is the first container step below 722. After: all
+eight `column` at 1440, phone and 768 tablet unchanged, cost **≤0.2 screens**
+and phone numbers byte-identical on all five.
+
+Two comments asserted the old behaviour and were corrected rather than left:
+`Help` called the horizontal row "the cheaper shape" and `NoFap` credited
+`stacked` with making the rail vertical. Both were true only because of the
+threshold.
+
+It also exposed a real defect one column down. `AddictionStreaksCard` gave the
+name span `truncate`, whose `whitespace-nowrap` means a one-word name can
+neither wrap nor shrink — it overflows, ellipsis or not, so `scrollWidth >
+clientWidth` stays true. The narrower pane (722 → 514, grid cell 347 → 247)
+left 101px for the 103px "Doomscrolling". `clipped` was run on `main` first to
+confirm the failure was mine and not inherited.
+
+### #301 · Gym, and the shape of a request arriving in six messages
+
+Gym was already on the contract; what it had was **five `QuietSection` folds,
+four shut**. Eight rail rows now: This week 2 · Strength 2 · Balance 5 · Body 2
+· Anatomy 1 · Plate calculator 1 · Saved routines 1 · Exercise database 1.
+
+Two structural changes rather than a reflow:
+
+- **`progression` is a card that did not exist.** The focused lift's
+  heaviest-set and estimated-1RM charts rendered *inside* the weekly-volume
+  card behind `focusEx &&`, under a heading about the week's total load. Two
+  questions in one box, and the second is the whole of `strength`.
+- **The four tools are four rows.** They were one fold in zone 2. One combined
+  `tools` row was tried first and was the fold again in a thinner disguise —
+  reaching the plate calculator still meant scrolling past an anatomy diagram.
+  The rest timer deliberately did **not** come with them, with a test in both
+  directions: it runs between sets, and a countdown you must select a rail row
+  to see is the defect this file already records fixing once.
+
+The rest timer moved to the **top** of the act column and lost its ring. A
+progress ring is an accent appearance even in neutral and that one encoded
+nothing the digits did not; four accent-filled presets were four accent
+controls on a page whose one accent is `Finish session`. 32px mono countdown, a
+full-width track that fills rather than empties, `+30s`. `aria-live` is **off**
+on the countdown — a value changing every second under an assertive region
+reads the timer aloud sixty times a minute — with a separate `sr-only`
+assertive region for the end only.
+
+New shared primitives: `MicroBars` / `MicroPips` behind optional
+`StatFact.viz` and `SummaryItem.viz`. **Four of Gym's seven figures get one;
+three deliberately do not** — "Train next" is a decision and "Personal records"
+is a lifetime total, and a series drawn for those is the chart-with-nothing-to-
+show this repo's design notes name directly.
+
+### What the gates caught that reading would not have
+
+- **`sm:flex-nowrap` on the six split chips failed `clipped` at laptop 1024.**
+  The chips measured 556px in a 505px act column at 1440 and drew as two rows;
+  tightening the desktop metrics brought them to 448px. Forcing the single line
+  as well pushed "Full body" to **1012–1106px in a 1024px page** — off-screen,
+  unreachable, a mode you could not select. `flex-wrap` is load-bearing. Make
+  it *fit*; do not force it.
+- **Stretching a spark to its container let the bucket count decide the
+  reading.** Fourteen pips drew as a sparkline and three stalled lifts drew as a
+  400px red banner across zone 1 — "alarm" where the figure said "3". A spark's
+  width is its number of buckets.
+- **The typed group union caught a stale test reference** the instant `tools`
+  split into four. First edit, and the registry had already paid for itself.
+- **A test asserted `textContent` where the name lives in `aria-label`.** The
+  rest timer's `<h2>` became `aria-label` on the section and
+  `toContain('Rest timer')` went red. The component was right; the test was
+  measuring the wrong thing. Same family as the page-census sweep that reported
+  14 folds on a 32-fold page.
+
+**COD-237 measured around, not fixed.** `npm run a11y` scans whichever group a
+rail opens on, so seven of Gym's eight rows had never been seen by axe. A
+throwaway probe drove all eight at five desktop and two phone themes — **56
+scans, 0 serious or critical** — before the page was called clean. The gate
+change is still open.
+
+### The finding that reframes the rest of the request
+
+The ask was "modernise all the bands". The bands are not a taste problem.
+
+`DESIGN.md` opens by declaring the **Modernist** pass (radius 0, hairline
+rules, no fills) *anti-reference* — "kept in the git history and nowhere else".
+`components/mod/Band.tsx` opens by declaring that it owns "the structural rules
+of the Modernist redesign (2px between sections, 1px between cells, zero
+radius, no surface fill)". It is the superseded visual world, still shipping,
+in **16 components** across Mindset, Reading, Collections and one Focus band.
+
+`DESIGN.md`'s own rollout table says so too: **Phase 3 (Today · Plan · Body ·
+Mind · Insights) and Phase 4 (the long tail) are both unchecked.** Phases 0–2
+landed — tokens, primitives, shell — and the views were never followed through.
+
+So the three remaining pages are not merely off the page contract, they are on
+a design world the repo has already written down as wrong:
+
+| page | shell | desktop shipped / open | phone | cols @1440 |
+|---|---|---|---|---|
+| mindset | legacy `Page` + bands | **4.2 / 4.2** | **8.8 / 8.8** | **1** |
+| reading | legacy `Page` + bands | 1.7 / 1.9 | 3.1 / 3.9 | **1** |
+| collections | legacy `Page` + bands | 1.4 / 1.5 | 2.4 / 2.5 | **1** |
+
+Mindset at 8.8 phone screens is the worst page measured in this repo. One
+column on a 1440 screen means every subject is reached by scrolling past every
+other one. **Next session: finish DESIGN.md phase 3/4 for these three, one PR
+each, rail + contract + real surfaces, retiring `mod/Band` as the last step.**
+
+---
+
 ## 2026-09-27 — Finishing the rail, filling a 4K screen, and four gates that were blind rather than happy (#287–#298)
 
 **Summary:** Twelve PRs. The request that started it was one sentence — *Insights

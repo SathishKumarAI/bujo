@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { cn } from '../../lib/cn'
+import { washStyle } from '../../lib/colors'
 
 /**
  * TAP INSTEAD OF TYPE · the two controls a logging form actually wants.
@@ -23,11 +24,35 @@ import { cn } from '../../lib/cn'
 
 /** Selected-chip styling per tone. Tailwind needs whole class names, so these
  *  are spelled out rather than built from a template. */
+/**
+ * The selected tone.
+ *
+ * `brand` uses the app's **solved pair** — `bg-brand-wash` with
+ * `text-brand-text`, two tokens calculated together so the text clears the
+ * wash in all five themes. `teal` and `peach` copied that line's *shape*
+ * without its safety: `bg-teal/15` with `text-teal` is the raw accent as text
+ * on a 15% wash of itself, which is an assumption, not a solution. Measured,
+ * vscode's peach came out at **4.38** — under the floor, on a control that
+ * ships on Today.
+ *
+ * There are no `--color-peach-text` tokens to reach for, so the other two
+ * tones are solved at runtime by `washStyle`, which composites the wash
+ * against the card once and returns a foreground already lifted to 4.6
+ * against exactly that ground. Same answer as the brand tokens, computed
+ * instead of authored.
+ *
+ * Why it was invisible: a wash on a flat, unfilled section gives axe no
+ * background to composite against, so the rule was skipped rather than
+ * failed. Filling the sections turned it red.
+ */
 const ON_TONE = {
   brand: 'border-brand bg-brand-wash font-medium text-brand-text',
-  teal: 'border-teal bg-teal/15 font-medium text-teal',
-  peach: 'border-peach bg-peach/15 font-medium text-peach',
+  teal: 'border-teal font-medium',
+  peach: 'border-peach font-medium',
 } as const
+/** Runtime-solved wash for the tones with no authored token pair. */
+const onToneStyle = (tone: keyof typeof ON_TONE) =>
+  tone === 'brand' ? undefined : washStyle(tone)
 const HOVER_TONE = { brand: 'hover:border-brand/60', teal: 'hover:border-teal/60', peach: 'hover:border-peach/60' } as const
 
 /**
@@ -82,6 +107,7 @@ export function ChipPick<T extends string | number>({
               onClick={() => onChange(o.value)}
               aria-pressed={on}
               title={o.hint}
+              style={on ? onToneStyle(tone) : undefined}
               className={cn(
                 'rounded-pill border px-3 py-1.5 text-label transition-all duration-150',
                 // The press is the feedback. `active:scale-95` reads as the

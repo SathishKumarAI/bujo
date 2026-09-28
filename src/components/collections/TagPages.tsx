@@ -1,4 +1,5 @@
-import { Band, Eyebrow } from '../mod'
+import { Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { EntryRow } from '../EntryRow'
 import type { Entry } from '../../lib/types'
 
@@ -12,7 +13,7 @@ import type { Entry } from '../../lib/types'
  * row does: a journal with thirty tags would otherwise push the list itself off
  * the first screen.
  */
-export function TagPages({
+export function TagPagesCard({
   tags,
   openTag,
   onOpen,
@@ -29,17 +30,12 @@ export function TagPages({
   // under it — and the header now folds on scroll, so no constant can be right.
   // See `shell/useHeaderHeight`.
   return (
-    <Band id="bujo-tags" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">Tag pages</h2>
-        <Eyebrow className="tracking-[0.1em]">{tags.length} in this journal</Eyebrow>
-      </div>
-
+    <Card band subtitle={`${tags.length} in this journal`}>
       {tags.length === 0 ? (
-        <p className="mt-3 text-label text-fg-2">No tags yet. Add a #tag to any entry and its page builds itself.</p>
+        <p className="text-label text-fg-2">No tags yet. Add a #tag to any entry and its page builds itself.</p>
       ) : (
         <>
-          <div className="mt-3 flex items-center gap-4 overflow-x-auto border-b-2 border-line pb-2 whitespace-nowrap [scrollbar-width:thin]">
+          <div className="flex items-center gap-4 overflow-x-auto border-b border-line pb-2 whitespace-nowrap [scrollbar-width:thin]">
             {tags.map(({ tag, entries }) => {
               const active = openTag === tag
               return (
@@ -73,6 +69,6 @@ export function TagPages({
           )}
         </>
       )}
-    </Band>
+    </Card>
   )
 }

@@ -2,7 +2,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { ArrowLineUp, Barbell, CheckSquare, ListChecks, Timer, Flame } from '@/components/icons'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
-import { cat, onRaised } from '../lib/colors'
+import { cat, onWash } from '../lib/colors'
 import { todayISO, prettyDay, WEEKDAYS, addDays } from '../lib/date'
 import { dayCompletion, habitStreak } from '../lib/stats'
 import { weekCoverage } from '../lib/coverage'
@@ -95,7 +95,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
       right={<span className="text-label text-fg-2">week {weekScore}%</span>}
     >
       {atRisk.length > 0 && (
-        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
+        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onWash('peach', 0x14 / 255) }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(day, -1))}-day ${atRisk[0].name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
       )}
@@ -107,7 +107,20 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
               key={c.label}
               onClick={() => navigate(c.to)}
               className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body"
-              style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22'), color: c.done ? cat('overlay1') : cat(c.color) }}
+              /* `onWash`, not `cat` and not `onRaised`. The accent-on-wash
+                 idiom clears 4.5 in most themes and latte's brand does not:
+                 measured **4.42** on every chip on the app's home screen.
+                 `onRaised` cannot fix it — it solves against the card and
+                 raised grounds, and a wash is neither, so it returns the
+                 accent untouched. The alpha passed here is the alpha painted
+                 below; they must not drift apart.
+                 The done branch was `cat('overlay1')`, the same mistake one
+                 shade quieter — a UI grey, not a solved foreground. */
+              style={{
+                borderColor: cat(c.color) + '55',
+                background: cat(c.color) + (c.done ? '14' : '22'),
+                color: c.done ? 'var(--color-fg-2)' : onWash(c.color, 0x22 / 255),
+              }}
             >
               <AppIcon as={Icon} size="sm" /> {c.label}{c.done ? ' ✓' : ''}
             </button>

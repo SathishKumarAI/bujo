@@ -1,6 +1,6 @@
 import { Check } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { Band, BandRow, Eyebrow } from '../mod'
+import { Eyebrow } from '../mod'
 import { principleById, MINDSET_MAX_FOCUS } from '../../lib/mindset'
 import type { MindsetFocus } from '../../lib/types'
 
@@ -55,12 +55,16 @@ export function FocusSlots({
   const slots = Array.from({ length: count }, (_, i) => focus[i])
 
   return (
-    <Band className="py-6">
+    /* A section, not a `mod/Band`. The 2px rule that used to close this block
+       belonged to the design world `DESIGN.md` calls anti-reference; the act
+       card around it closes it now. `BandRow` went with it — it was a named
+       container for a wrap rule this row never used (`wrap={false}`). */
+    <section>
       <div className="mb-3.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="font-display text-heading font-medium text-fg-1">Focus slots</h2>
         <Eyebrow>{focus.length} of {count} in use</Eyebrow>
       </div>
-      <BandRow wrap={false} className="flex-col sm:flex-row items-stretch border-t-2 border-line">
+      <div className="flex flex-col items-stretch border-t border-line sm:flex-row">
         {slots.map((f, i) => {
           const p = f ? principleById(f.principleId) : undefined
           const practisedToday = !!f && (practiceLog[f.principleId] ?? []).includes(today)
@@ -165,7 +169,7 @@ export function FocusSlots({
             </div>
           )
         })}
-      </BandRow>
-    </Band>
+      </div>
+    </section>
   )
 }

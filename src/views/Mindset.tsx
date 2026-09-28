@@ -1,36 +1,74 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useJournal } from '../store'
-import { Page } from '../components/shell/Page'
+import { PageLayout, SectionRail, StatBar, MicroPips } from '../components/page'
+import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { LeadingPrinciple } from '../components/mindset/LeadingPrinciple'
 import { PrincipleSpotlight } from '../components/mindset/PrincipleSpotlight'
 import { FocusSlots } from '../components/mindset/FocusSlots'
-import { PracticeBand } from '../components/mindset/PracticeBand'
+import { StreakCard, PracticeHeatmapCard, CategoryBalanceCard } from '../components/mindset/PracticeCards'
 import { LibraryBar } from '../components/mindset/LibraryBar'
 import { LibraryList } from '../components/mindset/LibraryList'
+import { Card } from '../components/ui'
 import { MINDSET_LIBRARY, MINDSET_MAX_FOCUS, principleById } from '../lib/mindset'
-import { daysPracticed } from '../lib/mindsetPractice'
-import { todayISO } from '../lib/date'
+import { currentStreak, daysPracticed, practiceData } from '../lib/mindsetPractice'
+import {
+  MINDSET_CARDS, MINDSET_DEFAULT_GROUP, MINDSET_GROUPS, MINDSET_GROUP_BLURB,
+  MINDSET_GROUP_LABEL, type MindsetGroup,
+} from '../lib/mindsetCards'
+import { addDays, todayISO } from '../lib/date'
 
 /**
- * Mindset — pick a few principles to actively practise, record a personal cue
- * for each, see how consistently you have practised, and browse the library.
+ * MINDSET · pick a few principles to actively practise, mark today, and find
+ * the next one.
  *
- * This view composes and decides; it does not lay anything out. The bands are
- * in `components/mindset/`, the structural primitives they are built from in
- * `components/mod/`, and the chart arithmetic in `lib/mindsetPractice.ts`.
+ * This was the worst page in the app on the only number that measures the
+ * problem: `space-audit` read **4.2 screens shipped / 4.2 open** at 1440 and
+ * **8.8 / 8.8** on a phone, `page-census` read `0 folds · 0 charts · 1 column`
+ * at 1440. Nothing was hidden — there was nothing to hide behind. Six bands in
+ * a fixed vertical order in a single column on a 1440 screen, with the
+ * library's forty-six principles at the bottom of all of it, so every subject
+ * was reached by scrolling past every other one.
  *
- * The page reads top to bottom as one argument: what you are leading with →
- * what you are working on → how it is going → what else there is. That order
- * is the redesign; the previous version opened with a card of cards and put the
- * whole library in one uninterrupted wall below it. (It said "26-principle"
- * here and in `LibraryList`, and the library holds 46 — a count typed into a
- * comment has nothing keeping it true.)
+ * Two changes, and they are the same change:
+ *
+ * 1. **Onto the page contract**, so the page has zones and the wide layout
+ *    splits instead of stacking. The act is "mark today"; the review is the
+ *    record and the catalogue.
+ * 2. **Off `components/mod/Band`**, which owned "2px between sections, 1px
+ *    between cells, zero radius, no surface fill" — a faithful statement of
+ *    the design world `DESIGN.md` declares anti-reference in its first
+ *    sentence.
+ *
+ * ## The slot table
+ *
+ * | Zone | Holds |
+ * |---|---|
+ * | 1 · orient | In focus · practised today · current run · library size |
+ * | 2 · act | The leading principle, and the three focus slots you mark |
+ * | 3 · review | A rail over `practice`, `balance`, `library` |
+ *
+ * **`tier={1180}` and split, not `stacked`.** The measurement that settles it
+ * is in `docs/PAGE-WORKFLOW.md` and has now been re-run on four pages: a page
+ * with a real act column pays for `stacked` twice over, because `max(act,
+ * review)` becomes `act + review`. This act column is a statement card plus
+ * three slots with textareas — not Insights' 291px search box.
+ *
+ * **What was deleted:** nothing. `PracticeBand` was *split* — its calendar and
+ * its category chart were two `BandCell`s sharing a row because the Modernist
+ * grid wanted a row, and they answer two different questions, so they are two
+ * cards in two groups now (`components/mindset/PracticeCards.tsx`).
+ *
+ * **What was added:** `StreakCard`. `lib/mindsetPractice.ts` has exported
+ * `currentStreak` and `daysWithMarks` for as long as this page has existed and
+ * nothing on screen read either — the page drew a 26-week grid and left you to
+ * count. See `lib/mindsetCards.ts`.
  */
 export function Mindset() {
   const { data, addMindsetFocus, setMindsetNote, removeMindsetFocus, toggleMindsetPractice } = useJournal()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
+  const [group, setGroup] = useState<MindsetGroup>(MINDSET_DEFAULT_GROUP)
 
   const today = todayISO()
   const focus = useMemo(() => data.mindsetFocus ?? [], [data.mindsetFocus])
@@ -62,12 +100,47 @@ export function Mindset() {
     addMindsetFocus(principleId)
   }
 
+  // ── Zone 1 · the four facts ───────────────────────────────────────────────
+  const marked = practiceData(log)
+  const practisedToday = focus.filter((f) => (log[f.principleId] ?? []).includes(today)).length
+  const streak = currentStreak(log, today)
+  /* Fourteen days, for the fact that has a shape. The other three are states
+     and totals, and a series drawn for those is the chart-with-nothing-to-show
+     this repo's design notes name directly. */
+  const strip = Array.from({ length: 14 }, (_, i) => {
+    const date = addDays(today, -(13 - i))
+    return { on: (marked.find((d) => d.date === date)?.value ?? 0) > 0, date }
+  })
+
+  // ── Zone 3 · the review zone, one group at a time ─────────────────────────
+  const cards: Record<string, ReactNode> = {
+    streak: <StreakCard log={log} />,
+    heatmap: <PracticeHeatmapCard log={log} today={today} />,
+    categories: <CategoryBalanceCard log={log} focusedIds={focusedIds} />,
+    library: (
+      <Card band title="The library" subtitle={`${MINDSET_LIBRARY.length} principles · tap one to put it in a focus slot`}>
+        {/* The bar keeps its own search and its nine category filters, and
+            they deliberately did NOT become rail rows. The rail chooses which
+            subject you are looking at; a category chooses which principles are
+            listed inside one of them. Two axes in one nav is the IA failure
+            the page contract names directly. */}
+        <LibraryBar
+          query={query}
+          onQuery={setQuery}
+          filter={filter}
+          onFilter={setFilter}
+          shown={visible.length}
+          total={MINDSET_LIBRARY.length}
+        />
+        <LibraryList principles={visible} focusedIds={focusedIds} full={full} onToggle={toggleFocus} />
+      </Card>
+    ),
+  }
+  const shownIn = (g: MindsetGroup) => MINDSET_CARDS.filter((c) => c.group === g && cards[c.id])
+  const shown = shownIn(group)
+
   return (
-    // `sm:gap-0` as well as `gap-0`: `Page`'s own `sm:gap-5` is a *responsive*
-    // class, and tailwind-merge only drops the base `gap-4` against a base
-    // override — the breakpoint one survives and reopens a 20px gap at ≥640px,
-    // where the whole point of the bands is that the 2px rules do the dividing.
-    <Page width="wide" className="gap-0 sm:gap-0">
+    <>
       {/* Opens once a day on top of the page it belongs to, rather than
           replacing it — see the component for why it is deliberately not a
           modal dialog. */}
@@ -79,32 +152,93 @@ export function Mindset() {
         onPractise={() => focus[0] && toggleMindsetPractice(focus[0].principleId, today)}
       />
 
-      <LeadingPrinciple
-        principle={focus[0] ? principleById(focus[0].principleId) : undefined}
-        daysPracticed={focus[0] ? daysPracticed(log, focus[0].principleId) : 0}
+      <PageLayout
+        tier={1180}
+        zone1={
+          <StatBar
+            facts={[
+              { label: 'In focus', value: `${focus.length} of ${MINDSET_MAX_FOCUS}` },
+              { label: 'Practised today', value: focus.length ? `${practisedToday} of ${focus.length}` : '—' },
+              {
+                label: 'Current run',
+                value: streak ? `${streak}d` : '—',
+                viz: (
+                  <MicroPips
+                    pips={strip}
+                    label={`Last 14 days: practised on ${strip.filter((d) => d.on).length} of them`}
+                  />
+                ),
+              },
+              { label: 'Library', value: MINDSET_LIBRARY.length },
+            ]}
+          />
+        }
+        zone2={
+          <>
+            <LeadingPrinciple
+              principle={focus[0] ? principleById(focus[0].principleId) : undefined}
+              daysPracticed={focus[0] ? daysPracticed(log, focus[0].principleId) : 0}
+            />
+            <div className="mt-4">
+              <Card band title="Today's practice" subtitle="Mark each principle you actually used">
+                <FocusSlots
+                  focus={focus}
+                  practiceLog={log}
+                  today={today}
+                  onNote={setMindsetNote}
+                  onRemove={removeMindsetFocus}
+                  onTogglePractice={toggleMindsetPractice}
+                />
+              </Card>
+            </div>
+          </>
+        }
+        zone3={
+          <>
+            {/* `@container/page` on the OUTER div and the grid on the inner
+                one: an element cannot query itself, so putting both on one div
+                means the two-column rail layout never fires. And the phone
+                column is spelled out because a grid with no
+                `grid-template-columns` gets a single implicit `auto` track
+                sized to its widest item's min-content — a chip row makes that
+                wider than the viewport and scrolls the whole page sideways.
+                Both traps are in docs/PAGE-SHAPE.md. */}
+            <div className="@container/page">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+                {/* No "All" row: the three groups do not overlap and there is
+                    no page-wide search to cross them, so All could only offer
+                    the 8.8-screen phone page this replaces. */}
+                <SectionRail
+                  label="Mindset sections"
+                  groups={MINDSET_GROUPS.map((g) => ({ id: g, label: MINDSET_GROUP_LABEL[g], count: shownIn(g).length }))}
+                  value={group}
+                  onChange={(id) => setGroup((id as MindsetGroup | null) ?? MINDSET_DEFAULT_GROUP)}
+                />
+                <div className="min-w-0">
+                  <section data-domain={group}>
+                    <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+                      <h2 className="font-display text-heading font-medium text-fg-1">{MINDSET_GROUP_LABEL[group]}</h2>
+                      <p className="text-label text-fg-2">{MINDSET_GROUP_BLURB[group]}</p>
+                      <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
+                    </div>
+                    {/* Two columns is the ceiling: `CardGrid` asks the
+                        *viewport*, so at 1600 its `2xl:grid-cols-3` would fire
+                        inside this split column and resolve to three tracks
+                        too narrow for a 26-week calendar. */}
+                    <CardGrid className="2xl:grid-cols-2">
+                      {shown.map((c) => (
+                        <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>
+                          {cards[c.id]}
+                        </div>
+                      ))}
+                    </CardGrid>
+                  </section>
+                </div>
+              </div>
+            </div>
+          </>
+        }
       />
-
-      <FocusSlots
-        focus={focus}
-        practiceLog={log}
-        today={today}
-        onNote={setMindsetNote}
-        onRemove={removeMindsetFocus}
-        onTogglePractice={toggleMindsetPractice}
-      />
-
-      <PracticeBand log={log} focusedIds={focusedIds} today={today} />
-
-      <LibraryBar
-        query={query}
-        onQuery={setQuery}
-        filter={filter}
-        onFilter={setFilter}
-        shown={visible.length}
-        total={MINDSET_LIBRARY.length}
-      />
-
-      <LibraryList principles={visible} focusedIds={focusedIds} full={full} onToggle={toggleFocus} />
-    </Page>
+    </>
   )
 }

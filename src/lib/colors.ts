@@ -138,6 +138,55 @@ export function readableOn(accentHex: string, bgHex: string, target = 4.5): stri
   return towardWhite ? '#ffffff' : '#000000'
 }
 
+/**
+ * An accent as text **on a wash of itself** — the app's most-used chip idiom,
+ * solved instead of assumed.
+ *
+ * `CLAUDE.md` records the idiom as "the accents clear 4.5 as text on a 13%
+ * wash of themselves", with a warning that `'33'` breaks it. Both halves are
+ * true and the first is not true *everywhere*: latte's brand on its own `'22'`
+ * wash measures **4.42** — under the floor by eight hundredths, on every chip
+ * on the app's home screen, for as long as those chips have existed.
+ *
+ * `onRaised` cannot fix it and returns the accent untouched. It solves against
+ * `cardSurface()` and `raisedSurface()`, and a *wash* is neither: it is the
+ * accent composited over one of them, so it sits much closer to the text than
+ * either ground does. An accent that clears both grounds can still fail its
+ * own wash, which is exactly the latte case.
+ *
+ * Why this was invisible until now: a wash painted on a flat, unfilled band
+ * has no resolvable background for axe to composite against, so the rule was
+ * skipped rather than failed. Giving sections real material turned a silent
+ * failure into a red one — the same "blind, not happy" shape this repo has
+ * now found four times.
+ *
+ * `alpha` is the wash's hex suffix as a fraction: `'22'` is 0x22/255 ≈ 0.133.
+ * Pass the same value the call site paints with, or the answer describes a
+ * background nobody renders.
+ */
+export function onWash(token: string, alpha = 0x22 / 255, target = 4.5): string {
+  if (!ACCENT_TOKENS.has(token)) return cat(token)
+  const accent = cat(token)
+  const start = rgb(accent)
+  // The wash over each ground. Which is harder flips with the theme's
+  // polarity, the same reason `onRaised` checks both.
+  const washes = [cardSurface(), raisedSurface()].map((g) => {
+    const gr = rgb(g)
+    return start.map((v, i) => v * alpha + gr[i] * (1 - alpha)) as [number, number, number]
+  })
+  const ok = (c: [number, number, number]) => washes.every((w) => contrast(c, w) >= target)
+  if (ok(start)) return accent
+  // Away from the wash, which is a tint of the accent over the ground — so the
+  // direction is the ground's polarity, as above.
+  const towardWhite = Math.min(...washes.map((w) => relLum(w))) < 0.18
+  for (let step = 1; step <= 100; step++) {
+    const k = step / 100
+    const c = start.map((v) => (towardWhite ? v + (255 - v) * k : v * (1 - k))) as [number, number, number]
+    if (ok(c)) return toHex(c)
+  }
+  return towardWhite ? '#ffffff' : '#000000'
+}
+
 /** Composite `hex` at `alpha` over `bgHex` — what a wash actually paints. */
 export function over(hex: string, bgHex: string, alpha: number): string {
   const [f, b] = [rgb(hex), rgb(bgHex)]

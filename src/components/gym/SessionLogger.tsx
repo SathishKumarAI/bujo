@@ -124,7 +124,23 @@ export function SessionLogger({
       <div className="mb-3">
         <DayPick value={date} onChange={setDate} today={todayISO()} yesterday={addDays(todayISO(), -1)} />
       </div>
-      <div className="mb-3 flex flex-wrap gap-2">
+      {/* One line on a desktop, by fitting rather than by forcing.
+
+          The six chips measured **556px inside a 505px act column** at 1440,
+          so they drew as two rows — a mode selector that reads as two groups
+          of controls when it is one. The desktop metrics are tightened
+          (`sm:px-2.5 sm:gap-1 sm:text-label`, and `min-h-11` dropped because
+          the 44px floor is a *touch* rule a pointer does not need) and that
+          alone brings the row to **448px**, which fits.
+
+          `flex-wrap` stays, and that is the load-bearing part. The first
+          attempt added `sm:flex-nowrap` to guarantee the single line, and the
+          clipped gate failed it at **laptop 1024**, where the act column is
+          narrower: "Full body" spanned 1012–1106px in a 1024px page —
+          off-screen, unreachable, and a mode you cannot select. `flex-wrap`
+          is the safety net for exactly the widths this row was not measured
+          at. One line where it fits; two where it does not. */}
+      <div className="mb-3 flex flex-wrap gap-2 sm:gap-1.5">
         {SPLITS.filter((s) => s.id !== 'other').map((s) => {
           const Icon = splitGlyph(s.id)
           return (
@@ -132,7 +148,7 @@ export function SessionLogger({
               key={s.id}
               onClick={() => setSplit(s.id)}
               aria-pressed={split === s.id}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 py-1.5 text-body"
+              className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-pill px-3 py-1.5 text-body sm:min-h-0 sm:gap-1 sm:px-2.5 sm:py-1.5 sm:text-label"
               style={{
                 background: split === s.id ? cat(s.color) : cat('surface0'),
                 color: split === s.id ? onAccent(cat(s.color)) : cat('subtext1'),

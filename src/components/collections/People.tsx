@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
 import { notify } from '../../lib/notify'
-import { Band, BandCell, BandRow } from '../mod'
+import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { fetchGithubProfile } from '../../lib/enrich'
 import { MONTHS } from '../../lib/date'
@@ -18,7 +18,7 @@ import { MONTHS } from '../../lib/date'
  * username and the official API returns that person's public profile. No
  * scraping, no people-search, nothing fetched unless you ask.
  */
-export function People() {
+export function PeopleCard() {
   const { data, addFriend, updateFriend, removeFriend, addBirthday, removeBirthday } = useJournal()
   const friends = [...(data.friends ?? [])].sort((a, b) => a.name.localeCompare(b.name))
 
@@ -86,10 +86,16 @@ export function People() {
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
   return (
-    <Band className="border-b-0">
-      <BandRow>
-        <BandCell className="basis-[24rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Friends</h2>
+    /* No card title. This card is alone in its rail group and the group's
+       heading already states the name and the blurb — rendering both put the
+       same two lines on screen twice, one under the other. A card earns a
+       title when it sits beside siblings that need telling apart; a card that
+       IS the section takes the section's heading. */
+    <Card band>
+      <div className="@container/ppl">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-5 @2xl/ppl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div>
+          <h3 className="font-display text-body font-medium text-fg-1">Friends</h3>
           <p className="mt-1 mb-3 text-label text-pretty text-fg-2">Manual contacts, with an optional public GitHub pull.</p>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -174,10 +180,10 @@ export function People() {
               })}
             </ul>
           )}
-        </BandCell>
+        </div>
 
-        <BandCell className="basis-[18rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Birthdays</h2>
+        <div>
+          <h3 className="font-display text-body font-medium text-fg-1">Birthdays</h3>
           <p className="mt-1 mb-3 text-label text-fg-2">Friends' dates and anyone else you add.</p>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -247,8 +253,9 @@ export function People() {
               ))}
             </ul>
           )}
-        </BandCell>
-      </BandRow>
-    </Band>
+        </div>
+        </div>
+      </div>
+    </Card>
   )
 }

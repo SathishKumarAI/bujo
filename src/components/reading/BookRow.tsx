@@ -48,8 +48,17 @@ export function BookRow({ book }: { book: Book }) {
     <li className="group border-t border-line py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-display text-label font-medium text-fg-1">{book.title}</p>
-          {book.author && <p className="truncate text-label text-fg-2">{book.author}</p>}
+          {/* `break-words`, not `truncate`. `truncate` carries
+              `whitespace-nowrap`, so a long title can neither wrap NOR shrink
+              — it overflows, ellipsis or not, and `scrollWidth >
+              clientWidth` stays true. Surfaced when the three shelves became
+              three cards instead of three columns of one band: the column
+              narrowed and "The Pragmatic Programmer" had 159px to hold the
+              172px it needs. Second time this exact class has been found in
+              this stretch (see `AddictionStreaksCard`), and both times the
+              element was a NAME — the one string a reader is scanning for. */}
+          <p className="break-words font-display text-label font-medium text-fg-1">{book.title}</p>
+          {book.author && <p className="break-words text-label text-fg-2">{book.author}</p>}
         </div>
         <Button
           variant="ghost"

@@ -257,7 +257,7 @@ function Manual() {
           min-content sizes the only implicit track and the page scrolls
           sideways. Both documented in docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[12rem_minmax(0,1fr)]">
         <SectionRail
           label="Manual chapters"
           groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
