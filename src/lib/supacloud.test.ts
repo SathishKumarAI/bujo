@@ -1,8 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import {
-  supabaseConfigured, getSupabase, currentAccount, signOutAccount, onAccountChange,
-  buildRow, JOURNALS_TABLE,
-} from './supacloud'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+/* Only the env-independent exports are imported statically. The four the
+   first block exercises are re-imported inside it, after the env is stubbed. */
+import { buildRow, JOURNALS_TABLE } from './supacloud'
 import { decryptString, importPassphrase } from './crypto'
 import { emptyJournal } from './storage'
 
@@ -11,9 +10,21 @@ import { emptyJournal } from './storage'
  *
  * 1. **With no Supabase configured the app is unchanged.** This is not a
  *    nicety — bujo is local-first, and a build with no backend must behave
- *    exactly as it did before this module existed. The vitest environment sets
- *    no `VITE_SUPABASE_*`, so every test in the first block runs against the
- *    real unconfigured path rather than a mock of it.
+ *    exactly as it did before this module existed.
+ *
+ *    The first block **stubs the environment** rather than relying on it being
+ *    empty. It used to say "the vitest environment sets no `VITE_SUPABASE_*`",
+ *    which is an assumption about an untracked file, not a check: vitest loads
+ *    `.env`, so on any machine that actually has a project configured — a
+ *    developer's, or anyone who followed `docs/AUTH.md` — both of these went
+ *    red against correct code. It passed in CI only because CI has no `.env`.
+ *    A test whose result depends on a file that is not in the repository is
+ *    measuring the machine, not the code.
+ *
+ *    `URL` and `ANON` are module-level constants read at import time, so
+ *    `vi.stubEnv` alone is not enough — the module has to be re-imported after
+ *    the stub, which is what `vi.resetModules()` and the dynamic `import()`
+ *    below are for.
  *
  * 2. **Nothing key-derived reaches the server.** `buildRow` is the only place
  *    that shapes an outgoing row, so asserting on its output covers the push
@@ -21,21 +32,32 @@ import { emptyJournal } from './storage'
  *    serialised payload for the passphrase and for the journal's own words.
  */
 describe('with no Supabase configured', () => {
-  it('reports itself unconfigured', () => {
-    expect(supabaseConfigured()).toBe(false)
+  /** Re-imported per test, because the module reads the env once at import. */
+  const unconfigured = () => import('./supacloud')
+
+  beforeEach(() => {
+    vi.resetModules()
+    vi.stubEnv('VITE_SUPABASE_URL', '')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', '')
+  })
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('reports itself unconfigured', async () => {
+    expect((await unconfigured()).supabaseConfigured()).toBe(false)
   })
 
   it('never constructs a client, so the SDK is never even fetched', async () => {
-    expect(await getSupabase()).toBeNull()
+    expect(await (await unconfigured()).getSupabase()).toBeNull()
   })
 
   it('answers "no account" instead of throwing', async () => {
-    expect(await currentAccount()).toBeNull()
+    expect(await (await unconfigured()).currentAccount()).toBeNull()
   })
 
   it('signing out and subscribing are harmless no-ops', async () => {
-    await expect(signOutAccount()).resolves.toBeUndefined()
-    const off = await onAccountChange(() => { throw new Error('must never fire') })
+    const m = await unconfigured()
+    await expect(m.signOutAccount()).resolves.toBeUndefined()
+    const off = await m.onAccountChange(() => { throw new Error('must never fire') })
     expect(() => off()).not.toThrow()
   })
 })
