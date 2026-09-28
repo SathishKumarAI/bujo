@@ -31,9 +31,19 @@ import { X } from '@/components/icons'
  *   notch on a phone and wraps at narrow widths. A constant is wrong by
  *   exactly the notch, on the devices where a mis-parked element is hardest
  *   to recover from.
- * - **Below `@4xl` it is a horizontal chip row**, because the page has no
- *   side to put it on. Same component, same state, same counts — a second
+ * - **Below `@2xl` (672px) it is a horizontal chip row**, because the page has
+ *   no side to put it on. Same component, same state, same counts — a second
  *   implementation for phones is how the two come to disagree.
+ *
+ *   The threshold was `@4xl` (896px) and that quietly meant *most rail pages
+ *   never got a rail*. Measured at a 1440 viewport with the demo seed, the
+ *   `@container/page` around this nav is **722px** on every page whose rail
+ *   sits in the review column of a 1180 split — cycle, focus, help, nofap and
+ *   pullups all rendered `flex-direction: row`, i.e. the phone shape, on a
+ *   desktop with 1440px of screen. Only the three `stacked` pages (coaching
+ *   1180, insights 1318, pickleball 1180) cleared 896. 672 is the first
+ *   container step below 722, so the split pages get the column and a phone
+ *   (container ~358 at 390px) keeps the chip row.
  *
  * Two mechanical traps, both of which this repo already documents and both of
  * which the first call site hit anyway. The caller must put `@container/page`
@@ -94,7 +104,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
            this component is shared. */
         sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0
         -mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-2
-        @4xl/page:mx-0 @4xl/page:flex-col @4xl/page:gap-0.5 @4xl/page:overflow-visible @4xl/page:px-0 @4xl/page:pb-0
+        @2xl/page:mx-0 @2xl/page:flex-col @2xl/page:gap-0.5 @2xl/page:overflow-visible @2xl/page:px-0 @2xl/page:pb-0
       "
     >
       {rows.map((r) => {
@@ -115,8 +125,8 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
             aria-label={r.count == null ? r.label : `${r.label} — ${r.count} ${r.count === 1 ? 'panel' : 'panels'}`}
             className={`
               shrink-0 snap-start whitespace-nowrap rounded-pill px-2.5 py-1 text-label transition-colors
-              @4xl/page:flex @4xl/page:w-full @4xl/page:items-baseline @4xl/page:justify-between
-              @4xl/page:gap-3 @4xl/page:rounded-control @4xl/page:px-2.5 @4xl/page:py-1.5
+              @2xl/page:flex @2xl/page:w-full @2xl/page:items-baseline @2xl/page:justify-between
+              @2xl/page:gap-3 @2xl/page:rounded-control @2xl/page:px-2.5 @2xl/page:py-1.5
               ${on
                 ? 'bg-brand-wash font-medium text-brand-text'
                 : empty
@@ -143,7 +153,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
                 every other rail state went unrendered — see `scanInsightsAll`
                 in `scripts/a11y-axe.mjs`. Arming that pass turned a green run
                 red on this line, which is what it was for. */}
-            {r.count != null && <span className="num ml-1.5 @4xl/page:ml-0">{r.count}</span>}
+            {r.count != null && <span className="num ml-1.5 @2xl/page:ml-0">{r.count}</span>}
           </button>
         )
       })}
@@ -154,8 +164,8 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
           className="
             inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-pill px-2.5 py-1
             text-label text-fg-2 hover:text-fg-1
-            @4xl/page:mt-2 @4xl/page:w-full @4xl/page:justify-start @4xl/page:border-t
-            @4xl/page:border-line @4xl/page:pt-2.5
+            @2xl/page:mt-2 @2xl/page:w-full @2xl/page:justify-start @2xl/page:border-t
+            @2xl/page:border-line @2xl/page:pt-2.5
           "
         >
           <Icon as={X} size="sm" /> Clear filters

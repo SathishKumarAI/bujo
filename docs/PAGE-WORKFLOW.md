@@ -128,11 +128,11 @@ Rules, all learned the hard way:
 
 ```tsx
 {/* WRONG — an element cannot query itself: the grid never fires */}
-<div className="@container/page grid @4xl/page:grid-cols-[11rem_1fr]">
+<div className="@container/page grid @2xl/page:grid-cols-[11rem_1fr]">
 
 {/* RIGHT — container outside, grid inside */}
 <div className="@container/page">
-  <div className="grid grid-cols-[minmax(0,1fr)] @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+  <div className="grid grid-cols-[minmax(0,1fr)] @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
 ```
 
 `grid-cols-[minmax(0,1fr)]` is not decoration. Without a base template the

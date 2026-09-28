@@ -49,13 +49,37 @@ export const CARD = {
    * enlarge, same accessible names. Only the chrome changes, which is the whole
    * point of `CARD` being one object.
    */
-  /* The hover is the RULE, not a shadow. `card-3d` lifts a boxed card toward
-     the cursor; a band has no box to lift and no elevation to add, so the
-     honest affordance is the one mark it owns — its closing hairline goes to
-     `line-strong` under the pointer. Anything else (a wash, a shadow, a
-     border on all four sides) re-boxes the card the band variant exists to
-     un-box. Pair it with the header's existing `group-hover/card` reveals. */
-  band: 'group/card min-w-0 border-b border-line py-5 transition-colors duration-200 hover:border-line-strong sm:py-6',
+  /**
+   * A band is a card now, and the paragraph this replaces was the argument for
+   * the design world `DESIGN.md` calls **anti-reference**.
+   *
+   * It read: no fill, no horizontal padding, a single hairline closing the
+   * section, and a hover that moves the rule rather than lifting anything —
+   * "anything else re-boxes the card the band variant exists to un-box." That
+   * is a faithful statement of the Modernist pass, and `DESIGN.md` supersedes
+   * it in its first sentence: *radius 0, hairline rules, no fills* is kept "in
+   * the git history and nowhere else", and its four rules replace *a 2px rule
+   * closes a section* with **elevation closes a section**.
+   *
+   * The rollout stalled. Phases 0–2 landed — tokens, primitives, shell — and
+   * phases 3 and 4, which are the views, are still unchecked. Measured on the
+   * running app across 18 views: **69 bands on screen against 5 elevated
+   * cards**. Ninety-three percent of every surface in this app was the
+   * superseded world, including every review zone on every contract page, and
+   * the card `DESIGN.md` was written around had almost no call sites.
+   *
+   * So this is finishing a rollout, not a restyle. One string, 182 call sites,
+   * and the safety check that makes it a one-liner: a band inside a card would
+   * be the card-in-card `DESIGN.md` refuses, and the same probe counted
+   * **zero** of them across those 18 views.
+   *
+   * What `band` still means, and why the prop survives: it is not only chrome.
+   * The title stays at `heading` instead of growing to `title` (a page of six
+   * sections should not have six competing headlines), and a band never draws
+   * the ⓘ. Those are the section-versus-object distinction, and they are worth
+   * keeping; the flatness never was.
+   */
+  band: 'card-3d group/card min-w-0 rounded-card bg-card p-4 sm:p-5 lg:p-6',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',

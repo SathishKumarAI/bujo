@@ -301,11 +301,21 @@ export function useStatsCards(): StatsCards {
     const avg = rated.length ? Math.round((rated.reduce((a, b) => a + b, 0) / rated.length) * 10) / 10 : null
     let best: string | null = null
     for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
+    /* The average was painted with `moodColor(avg)`, and `moodColor` is a
+       FILL — calibrated for the calendar cells below, where it is a background
+       with a solved foreground on top. As text it measured **1.92:1** on latte
+       (its mid-scale olive on the card) and 1.82 against the page ground, so
+       it failed
+       either way; it had simply never had a resolvable background for axe to
+       judge it against, which is what the flat band denied it. The colour also
+       carried nothing here — the number is right beside it, and the scale key
+       under the grid is what explains the hues. `fg-1` states the value; the
+       calendar keeps the colour. */
     return (
       <p className="mb-3 text-body text-fg-2">
         {prettyMonth(ym)} ·{' '}
         {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
-          <>avg mood <span className="font-medium" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
+          <>avg mood <span className="font-medium text-fg-1">{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
         )}
       </p>
     )

@@ -1,4 +1,5 @@
-import { Band, BandCell, BandRow, Eyebrow, Statement } from '../mod'
+import { Statement } from '../mod'
+import { Card } from '../ui'
 import type { MindsetPrinciple } from '../../lib/mindset'
 
 /**
@@ -35,42 +36,39 @@ export function LeadingPrinciple({
   daysPracticed: number
 }) {
   return (
-    <Band>
-      <BandRow>
-        <BandCell className="basis-[20rem] pt-4">
-          <Eyebrow>Leading principle</Eyebrow>
-          <Statement as="h2" className={principle ? 'mt-3' : 'mt-3 text-fg-3'}>
-            {principle ? principle.title : 'Nothing in focus yet'}
-          </Statement>
-        </BandCell>
-        <BandCell className="basis-[26rem] pt-4">
-          {principle ? (
-            <>
-              {/* `text-balance`, not `text-pretty`: at a 46ch measure this ran
-                  65 characters on line one and left "and move on." — twelve
-                  characters — alone on line two, directly under the page's
-                  loudest line. `text-pretty` did not move it (Chrome only
-                  rescues a last line that is a single short word); balance
-                  splits the two lines evenly, which is what a two-line
-                  paragraph wants. Measured, not assumed. */}
-              <p className="mt-3 max-w-[46ch] text-body text-balance text-fg-2">{principle.why}</p>
-              <div className="mt-5 flex flex-wrap gap-x-7 gap-y-1 border-t border-line pt-3.5 text-label text-fg-2">
-                <span>{principle.category}</span>
-                {/* "Practised 0 days" is a real answer, not a gap: it says the
-                    principle is chosen but not yet practised, which is exactly
-                    the state the practice grid below exists to change. */}
-                <span className="whitespace-nowrap">
-                  Practised {daysPracticed} {daysPracticed === 1 ? 'day' : 'days'}
-                </span>
-              </div>
-            </>
-          ) : (
-            <p className="mt-3 max-w-[46ch] text-body text-pretty text-fg-2">
-              Pick a principle from the library below. The first one you add leads here.
-            </p>
-          )}
-        </BandCell>
-      </BandRow>
-    </Band>
+    /* A card, not a `mod/Band` split into two `BandCell`s.
+
+       The cell split existed to stop the statement using 34% of a full-bleed
+       band with two thirds of nothing beside it — a real measurement, and a
+       real fix for a page that was one full-width column. In the act column of
+       a split layout the problem does not arise: the column is ~505px, which
+       is the measure this statement wanted all along. So the two cells become
+       one card and the width argument retires with the band it was about. */
+    <Card band title="Leading principle">
+      <Statement as="p" className={principle ? '' : 'text-fg-3'}>
+        {principle ? principle.title : 'Nothing in focus yet'}
+      </Statement>
+      {principle ? (
+        <>
+          {/* `text-balance`, not `text-pretty`: at this measure the paragraph
+              left "and move on." alone on line two, directly under the page's
+              loudest line. Balance splits two lines evenly. Measured. */}
+          <p className="mt-3 max-w-[46ch] text-body text-balance text-fg-2">{principle.why}</p>
+          <div className="mt-4 flex flex-wrap gap-x-7 gap-y-1 border-t border-line pt-3 text-label text-fg-2">
+            <span>{principle.category}</span>
+            {/* "Practised 0 days" is a real answer, not a gap: it says the
+                principle is chosen but not yet practised, which is exactly the
+                state the practice grid exists to change. */}
+            <span className="whitespace-nowrap">
+              Practised {daysPracticed} {daysPracticed === 1 ? 'day' : 'days'}
+            </span>
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 max-w-[46ch] text-body text-pretty text-fg-2">
+          Pick a principle in the Library below. The first one you add leads here.
+        </p>
+      )}
+    </Card>
   )
 }

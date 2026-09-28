@@ -240,9 +240,9 @@ export function NoFap() {
       <PageLayout
         /* **1180 and split, measured against Insights' 1440 + `stacked`.**
            The obvious reading of "make it look like Insights" is to copy its
-           tier, and with the rail in place the wide stacked layout does deliver
-           the width: the rail goes vertical (176px + a 1110px pane), the cards
-           go 350px → 545px, the summary strip 235 → 434. It also takes the page
+           tier, and the wide stacked layout does deliver the width: 176px of
+           rail beside a 1110px pane instead of a 514px one, the cards go 350px
+           → 545px, the summary strip 235 → 434. It also takes the page
            from **1.7 screens to 3.3** (1181px → 2399px), because `stacked`
            turns `max(act, review)` into `act + review` and this page's act zone
            is **1296px** — a ring, a day tally and two forms. Insights can stack
@@ -252,7 +252,13 @@ export function NoFap() {
            zone, and `docs/PAGE-WORKFLOW.md`'s "stacking does not work" entry
            survives the rail. The cost is that zone 3 is 722px, under
            `MasonryGrid`'s `@3xl` container step — which is exactly why the pane
-           below uses `CardGrid`. */
+           below uses `CardGrid`.
+
+           What stacking no longer buys is the rail's *orientation*. It read
+           that way because `SectionRail` switched at `@4xl` (896px) and 722 is
+           under it, so the only way to see a column here was to widen the
+           whole page; the switch is `@2xl` (672px) now and the rail is a
+           column at 722 too. */
         tier={1180}
         zone1={
           <StatBar facts={[
@@ -338,12 +344,12 @@ export function NoFap() {
             No "All" row: the four groups do not overlap, and "all of them" is
             the page this replaces. The filter below is how you cross them. */}
         {/* Two divs, and the split is load-bearing: an element cannot query
-            itself, so `@container/page` and `@4xl/page:grid-cols-…` on one div
+            itself, so `@container/page` and `@2xl/page:grid-cols-…` on one div
             means the grid never fires. Phone column spelled out, or the chip
             row's min-content sizes the only implicit track and the page scrolls
             sideways. Both in docs/PAGE-SHAPE.md. */}
         <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[11rem_minmax(0,1fr)]">
           <SectionRail
             label="Recovery groups"
             groups={GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: countOf(g) }))}

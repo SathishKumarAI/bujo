@@ -20,6 +20,15 @@ export interface StatFact {
    * knows.
    */
   prose?: boolean
+  /**
+   * A picture of the same fact — a `MicroBars` or `MicroPips`.
+   *
+   * Optional, and it should stay optional: a fact with no series has no
+   * honest picture, and drawing one anyway is the "chart with nothing to
+   * show" this app's design notes call out by name. Pass it where a real
+   * series exists and leave it off where one does not.
+   */
+  viz?: ReactNode
 }
 
 /**
@@ -57,7 +66,12 @@ export function StatBar<T extends string>({
   return (
     // The 64px cap is a desktop rule. Below `sm` the facts are two rows, so
     // capping the height there just clips the second one.
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-2 sm:max-h-16 sm:flex-nowrap">
+    /* `sm:max-h-16` was the contract's 64px cap and it is now a floor as well
+       as a ceiling: a fact carrying a `viz` is label + figure + a 24px strip,
+       which is 78px. Capping it at 64 clipped the strip off every fact that
+       had one. The cap exists so zone 1 cannot grow into a stats card, so it
+       is raised by exactly the height of one strip rather than removed. */
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-2 sm:max-h-[5.5rem] sm:flex-nowrap">
       {segments && mode !== undefined && onModeChange && (
         <Segmented tone="neutral" value={mode} onChange={onModeChange} options={segments} />
       )}
@@ -95,6 +109,13 @@ function Fact({ fact, first }: { fact: StatFact; first: boolean }) {
         the column is real, and truncating it is the safer failure.
       */}
       <span className={`block text-body font-medium text-fg-1 ${fact.prose ? '' : 'num truncate'}`}>{fact.value}</span>
+      {/* Under the figure, not beside it: the bar is capped at 64px on a
+          desktop and a picture that competes for the row's width is a picture
+          that shortens the fact it illustrates. `hidden sm:block` because
+          below `sm` the facts are a two-column grid with no vertical room to
+          spare — the phone gets the number, which is the part that matters
+          when there is one screen of width to spend. */}
+      {fact.viz && <span className="mt-0.5 hidden sm:block">{fact.viz}</span>}
     </>
   )
   // The divider is a left border on every fact but the first, so the bar never

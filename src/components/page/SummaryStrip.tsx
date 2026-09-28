@@ -8,6 +8,13 @@ export interface SummaryItem {
   /** No data yet. Renders "—", never "0". */
   empty?: boolean
   suffix?: string
+  /**
+   * A picture of the same figure — a `MicroBars` or `MicroPips`.
+   *
+   * Optional for the same reason as `StatFact.viz`: a total with no series
+   * behind it has no honest picture.
+   */
+  viz?: ReactNode
 }
 
 /**
@@ -37,6 +44,9 @@ export function SummaryStrip({ items }: { items: [SummaryItem, SummaryItem, Summ
             )}
           </div>
           <div className="mt-0.5 text-micro text-fg-2">{it.label}</div>
+          {/* Below the label, so the three tiles' figures stay on one
+              baseline whether or not a given tile has a series. */}
+          {it.viz && <div className="mt-1.5">{it.viz}</div>}
         </div>
       ))}
     </div>

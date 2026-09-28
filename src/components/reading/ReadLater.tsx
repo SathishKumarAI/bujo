@@ -2,7 +2,7 @@ import { ArrowSquareOut, Check, Plus, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { Band, Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { notify } from '../../lib/notify'
 
@@ -13,7 +13,7 @@ import { notify } from '../../lib/notify'
  * else on the page touches, so threading six callbacks through the view would
  * buy nothing. Unread first, then newest.
  */
-export function ReadLater() {
+export function ReadLaterCard() {
   const store = useJournal()
   const { data } = store
   const links = [...(data.readLinks ?? [])].sort(
@@ -31,12 +31,7 @@ export function ReadLater() {
   }
 
   return (
-    <Band className="border-b-0 py-6">
-      <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h2 className="font-display text-heading font-medium text-fg-1">Read later</h2>
-        <Eyebrow className="tracking-[0.1em]">{links.filter((l) => !l.done).length} to read</Eyebrow>
-      </div>
-
+    <Card band title="Read later" subtitle={`${links.filter((l) => !l.done).length} to read`}>
       <div className="mb-2 flex flex-wrap items-center gap-3">
         <input
           value={url}
@@ -97,6 +92,6 @@ export function ReadLater() {
           ))}
         </ul>
       )}
-    </Band>
+    </Card>
   )
 }

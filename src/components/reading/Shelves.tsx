@@ -1,18 +1,12 @@
 import { Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Band, BandRow, Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { BookRow } from './BookRow'
-import { shelf } from '../../lib/reading'
-import type { Book, BookStatus } from '../../lib/types'
+import type { Book } from '../../lib/types'
 import { notify } from '../../lib/notify'
 
-const SHELVES: { id: BookStatus; label: string }[] = [
-  { id: 'want', label: 'Want to read' },
-  { id: 'reading', label: 'Reading now' },
-  { id: 'finished', label: 'Finished' },
-]
 
 /**
  * The act zone: add a book, and the three shelves side by side.
@@ -24,7 +18,16 @@ const SHELVES: { id: BookStatus; label: string }[] = [
  * phone would be unreadable. The slots rule is about fixed-size cells; this is
  * about lists.
  */
-export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string, author?: string) => void }) {
+/**
+ * ADD A BOOK · the act.
+ *
+ * Split out of `Shelves`, which was a `mod/Band` holding the add form *and*
+ * three shelf lists — the form because it had to go somewhere, the lists
+ * because the Modernist grid wanted a row of `BandCell`s. They are two
+ * different jobs and now two different zones: adding is an act, a shelf is a
+ * read-back.
+ */
+export function AddBookCard({ onAdd }: { onAdd: (title: string, author?: string) => void }) {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
 
@@ -37,66 +40,51 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
   }
 
   return (
-    <Band className="py-6">
-      <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Shelves</h2>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && add()}
-            placeholder="Book title"
-            aria-label="Book title"
-            className="min-w-[10rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
-          />
-          <input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && add()}
-            placeholder="Author (optional)"
-            aria-label="Author"
-            className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
-          />
-          <Button variant="primary" onClick={add} className="shrink-0">
-            <Icon as={Plus} size="sm" /> Add to shelf
-          </Button>
-        </div>
+    <Card band title="Add a book" subtitle="It lands on Want to read — move it when you start">
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && add()}
+          placeholder="Book title"
+          aria-label="Book title"
+          className="min-w-[10rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+        />
+        <input
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && add()}
+          placeholder="Author (optional)"
+          aria-label="Author"
+          className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+        />
+        <Button variant="primary" onClick={add} className="shrink-0 press-3d">
+          <Icon as={Plus} size="sm" /> Add to shelf
+        </Button>
       </div>
+    </Card>
+  )
+}
 
-      <BandRow className="items-stretch border-t-2 border-line">
-        {SHELVES.map((s) => {
-          const list = shelf(books, s.id)
-          return (
-            <div
-              key={s.id}
-              /* Hand-rolled rather than `BandCell` (this cell has no `py`), so it
-                 needs the same wrap guard: below the container width these three
-                 shelves stack, and a right-hand rule on a full-width block has
-                 nothing on the other side of it. See `mod/Band.tsx`. */
-              /* Same fix as `mindset/FocusSlots`: this had `pr-5` and no left
-                 padding, so the Reading and Finished shelves started their book
-                 titles against the rule beside them. Both sides now, flush-left
-                 for the first column, and no side padding once the shelves
-                 stack and the rules are gone. */
-              className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 pl-5 first:pl-0 last:pr-0 [&:not(:last-child)]:border-r @max-[44rem]/band:px-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0"
-            >
-              <div className="flex items-baseline gap-2">
-                <h3 className="font-display text-label font-medium text-fg-1">{s.label}</h3>
-                <Eyebrow className="num">{list.length}</Eyebrow>
-              </div>
-              {list.length === 0 ? (
-                <p className="py-4 text-label text-fg-3">Nothing here yet.</p>
-              ) : (
-                <ul className="mt-2">
-                  {list.map((b) => (
-                    <BookRow key={b.id} book={b} />
-                  ))}
-                </ul>
-              )}
-            </div>
-          )
-        })}
-      </BandRow>
-    </Band>
+/**
+ * ONE SHELF · a card, not a third of a row.
+ *
+ * The three shelves were `BandCell`s sharing a row, which is the grid
+ * deciding the layout rather than the content. A shelf is a list with its own
+ * count and its own emptiness; three in one box share a heading they do not
+ * share a subject with, and an empty one leaves a third of a card blank
+ * instead of saying so.
+ */
+export function ShelfCard({ label, books }: { label: string; books: Book[] }) {
+  return (
+    <Card band title={label} subtitle={`${books.length} ${books.length === 1 ? 'book' : 'books'}`}>
+      {books.length === 0 ? (
+        <p className="py-2 text-label text-fg-2">Nothing on this shelf yet.</p>
+      ) : (
+        <ul>
+          {books.map((b) => <BookRow key={b.id} book={b} />)}
+        </ul>
+      )}
+    </Card>
   )
 }

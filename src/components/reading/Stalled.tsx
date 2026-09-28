@@ -1,4 +1,4 @@
-import { Band, Eyebrow } from '../mod'
+import { Card } from '../ui'
 import { progressPct } from '../../lib/reading'
 import type { Book } from '../../lib/types'
 
@@ -10,24 +10,29 @@ import type { Book } from '../../lib/types'
  * nothing is stalled, which is the one case where an empty frame would be
  * worse than absence: an always-present "Stalled (0)" trains you to ignore it.
  */
-export function Stalled({ items }: { items: { book: Book; idleDays: number }[] }) {
-  if (items.length === 0) return null
-
+export function StalledCard({ items }: { items: { book: Book; idleDays: number }[] }) {
   return (
-    <Band className="py-5">
-      <div className="flex items-baseline gap-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Stalled</h2>
-        <Eyebrow className="tracking-[0.1em]">{items.length} not moving</Eyebrow>
-      </div>
-      <ul className="mt-3">
-        {items.map(({ book, idleDays }) => (
-          <li key={book.id} className="flex items-center gap-4 border-t border-line py-2 text-label">
-            <span className="min-w-0 flex-1 truncate text-fg-1">{book.title}</span>
-            <span className="num shrink-0 text-fg-2">{progressPct(book)}%</span>
-            <span className="num shrink-0 text-fg-2">idle {idleDays}d</span>
-          </li>
-        ))}
-      </ul>
-    </Band>
+    /* It used to `return null` when nothing was stalled, which is the one
+       thing a rail cannot tolerate: a card that renders nothing makes its rail
+       row's count a lie, and a group of one disappears entirely, leaving a
+       heading over an empty grid. The contract says it anyway — a visual that
+       vanishes until it has data is invisible to exactly the people who have
+       not started. "Nothing stalled" is also the best news on this page and
+       worth printing. */
+    <Card band title="Stalled" subtitle={items.length ? `${items.length} not moving` : 'Started, and not moving'}>
+      {items.length === 0 ? (
+        <p className="py-2 text-label text-fg-2">Nothing stalled — every started book has moved in the last fortnight.</p>
+      ) : (
+        <ul>
+          {items.map(({ book, idleDays }) => (
+            <li key={book.id} className="flex items-center gap-4 border-t border-line py-2 text-label first:border-t-0">
+              <span className="min-w-0 flex-1 truncate text-fg-1">{book.title}</span>
+              <span className="num shrink-0 text-fg-2">{progressPct(book)}%</span>
+              <span className="num shrink-0 text-fg-2">idle {idleDays}d</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   )
 }
