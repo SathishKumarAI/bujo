@@ -32,7 +32,12 @@ export function IndexCard({
        The cells were the Modernist row; a grid that collapses on its own
        container is what this actually wanted, and it stops the two halves
        depending on a pair of hand-picked `basis-[20rem]` guesses. */
-    <Card band title="Index" subtitle="The journal's table of contents">
+    /* No card title. This card is alone in its rail group and the group's
+       heading already states the name and the blurb — rendering both put the
+       same two lines on screen twice, one under the other. A card earns a
+       title when it sits beside siblings that need telling apart; a card that
+       IS the section takes the section's heading. */
+    <Card band>
       {/* The band is titled, so the two cells below can keep their short
           eyebrows without "Collections" appearing twice on the page with two
           different meanings — here it is a jump list, further down it is the

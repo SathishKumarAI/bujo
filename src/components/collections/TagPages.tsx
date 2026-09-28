@@ -30,7 +30,7 @@ export function TagPagesCard({
   // under it — and the header now folds on scroll, so no constant can be right.
   // See `shell/useHeaderHeight`.
   return (
-    <Card band title="Tag pages" subtitle={`${tags.length} in this journal`}>
+    <Card band subtitle={`${tags.length} in this journal`}>
       {tags.length === 0 ? (
         <p className="text-label text-fg-2">No tags yet. Add a #tag to any entry and its page builds itself.</p>
       ) : (

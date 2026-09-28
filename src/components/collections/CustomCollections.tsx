@@ -46,7 +46,12 @@ export function CollectionsCard({
     /* No `id` and no `scroll-mt` any more. Those existed so the Index could
        `scrollIntoView` this band; the Index selects this rail row now, which
        is a jump that cannot land on a hidden section. */
-    <Card band title="Collections" subtitle="Your own pages — lists, logs, anything">
+    /* No card title. This card is alone in its rail group and the group's
+       heading already states the name and the blurb — rendering both put the
+       same two lines on screen twice, one under the other. A card earns a
+       title when it sits beside siblings that need telling apart; a card that
+       IS the section takes the section's heading. */
+    <Card band>
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <input

@@ -16,7 +16,7 @@ export function InboxCard({ entries }: { entries: Entry[] }) {
        as "the house style of a 2015 analytics dashboard"; four call sites in
        this cluster had typed the tracking back in by hand. A style rule each
        author must retype is one that gets forgotten. */
-    <Card band title="Inbox" subtitle={`${entries.length} dateless ${entries.length === 1 ? 'item' : 'items'}`}>
+    <Card band subtitle={`${entries.length} dateless ${entries.length === 1 ? 'item' : 'items'}`}>
       {entries.length === 0 ? (
         <p className="text-label text-fg-2">Nothing dateless waiting. Rapid-captured items with no day land here.</p>
       ) : (
