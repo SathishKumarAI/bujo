@@ -59,7 +59,17 @@ export type HabitCategory = 'stimulant' | 'food' | 'movement' | 'wellness' | 'cu
  */
 export const HABIT_CATEGORIES: HabitCategory[] = ['stimulant', 'food', 'movement', 'wellness', 'custom']
 /** check = a yes/no dot; count = a number toward a daily target. */
-export type HabitType = 'check' | 'count' | 'timer' | 'rating'
+/**
+ * How a day's value is recorded and judged.
+ *
+ * `limit` is the only one that reads its target as a CEILING — "at most 2 cups"
+ * rather than "at least 8 glasses" — and the only one for which an unrecorded
+ * day is not a silent success. See `habitDoneOn`.
+ *
+ * Distinct from `Habit.avoid`, which is binary abstinence (a logged day is a
+ * slip); a limit habit is a quantity you are allowed some of.
+ */
+export type HabitType = 'check' | 'count' | 'timer' | 'rating' | 'limit'
 
 /** A trackable habit / stimulant / food shown in the dot-grid. */
 export interface Habit {
@@ -72,7 +82,9 @@ export interface Habit {
   startedOn: string
   // ── customisation (all optional, additive) ──
   type?: HabitType // default 'check'
-  target?: number // daily goal for count habits (e.g. 8 glasses)
+  /** Daily goal for count/timer habits (e.g. 8 glasses). For `type: 'limit'`
+   *  this is the CEILING instead — the most you may have and still win the day. */
+  target?: number
   /** Minimum "showed up" threshold for count/timer habits (< target). A day that
    *  meets the floor but not the target reads as "met floor", a partial win. */
   floor?: number

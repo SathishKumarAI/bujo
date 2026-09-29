@@ -22,7 +22,56 @@ export function habitDoneOn(data: JournalData, h: Habit, day: string): boolean {
   const type = h.type ?? 'check'
   const v = habitValueOn(data, h, day)
   if (type === 'check' || type === 'rating') return v > 0
+  // A limit habit reads its target as a ceiling, so `v <= target` would make
+  // every UNTOUCHED day a win — `habitValueOn` returns 0 for a day nobody
+  // recorded, and 0 is under every limit. That is the whole history before the
+  // app was installed, plus every day the user simply forgot, counted as
+  // willpower. Require the day to have been recorded; `limitStatus` is the
+  // three-state version callers render.
+  if (type === 'limit') return habitRecordedOn(data, h, day) && v <= habitTarget(h)
   return v >= habitTarget(h)
+}
+
+/**
+ * Whether a numeric day was actually written, as opposed to reading 0 because
+ * nothing is there. Only meaningful for the numeric types — a `check` habit has
+ * no "recorded 0" state, so absence and zero are the same fact for it.
+ */
+export function habitRecordedOn(data: JournalData, h: Habit, day: string): boolean {
+  if ((h.type ?? 'check') === 'check') return (data.habitLog[day] ?? []).includes(h.id)
+  return data.habitValues?.[day]?.[h.id] != null
+}
+
+/**
+ * A limit habit's day in three states, because "under" and "no record" are
+ * different claims and collapsing them is how a streak gets invented. Returns
+ * null for any other habit type so a caller cannot silently apply limit
+ * semantics to a target habit.
+ */
+export function limitStatus(
+  data: JournalData,
+  h: Habit,
+  day: string,
+): 'under' | 'over' | 'unlogged' | null {
+  if ((h.type ?? 'check') !== 'limit') return null
+  if (!habitRecordedOn(data, h, day)) return 'unlogged'
+  return habitValueOn(data, h, day) <= habitTarget(h) ? 'under' : 'over'
+}
+
+/**
+ * Habit types whose day is a number the user steps up and down, rather than a
+ * single done/not-done tap. Written once because the union was retyped inline
+ * at nine call sites before `limit` existed, and a tenth would have been missed.
+ */
+export function isNumericHabit(h: Habit): boolean {
+  const t = h.type ?? 'check'
+  return t === 'count' || t === 'timer' || t === 'rating' || t === 'limit'
+}
+
+/** Numeric habits the user drives with a −/+ stepper (rating has its own scale). */
+export function isSteppableHabit(h: Habit): boolean {
+  const t = h.type ?? 'check'
+  return t === 'count' || t === 'timer' || t === 'limit'
 }
 
 /**
@@ -55,8 +104,14 @@ function habitById(data: JournalData, habitId: string): Habit | undefined {
  * ≥20 min, else by 1) and clamps to the target so a non-divisible target is
  * still reachable; once at the target, the next tap wraps back to 0. Single
  * source of truth for TodayStrip, the classic grid, and the activity view.
+ *
+ * `limit` inverts the clamp — see below.
  */
 export function nextHabitValue(type: HabitType, target: number, current: number): number {
+  // A limit is a ceiling you CAN exceed — clamping at the target would make it
+  // impossible to record the slip the card exists to show. So it steps one past
+  // the limit (that is the "3 of 2 cups max" state) and the next tap resets.
+  if (type === 'limit') return current > target ? 0 : current + 1
   if (current >= target) return 0
   const step = type === 'timer' ? (target >= 20 ? 5 : 1) : 1
   return Math.min(current + step, target)
