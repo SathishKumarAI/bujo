@@ -10,7 +10,7 @@ import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
 import { TodayHabits } from '../components/TodayHabits'
 import { CoachCard } from '../components/CoachCard'
-import { habitTarget, habitValueOn, habitDoneOn, onThisDay } from '../lib/stats'
+import { habitTarget, habitValueOn, habitDoneOn, isNumericHabit, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/schedule'
 import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
@@ -284,7 +284,7 @@ function TodayClassic() {
 function TodayCountHabits({ date }: { date: string }) {
   const { data, setHabitValue } = useJournal()
   const habits = data.habits.filter(
-    (h) => !h.archived && !h.avoid && (h.type === 'count' || h.type === 'timer' || h.type === 'rating') && isScheduledOn(h, date),
+    (h) => !h.archived && !h.avoid && isNumericHabit(h) && isScheduledOn(h, date),
   )
   if (habits.length === 0) return null
   return (
@@ -296,6 +296,7 @@ function TodayCountHabits({ date }: { date: string }) {
           const met = habitDoneOn(data, h, date)
           const step = h.type === 'timer' ? (target >= 20 ? 5 : 1) : 1
           // A rating is 1–5 and cannot be "more" than 5; a count can.
+          // A limit can be exceeded — that is the state the card exists to show.
           const ceiling = h.type === 'rating' ? 5 : Infinity
           return (
             <li key={h.id} className="flex items-center gap-3 border-t border-line py-2">
@@ -304,7 +305,7 @@ function TodayCountHabits({ date }: { date: string }) {
                 {h.unit && <span className="text-fg-2"> ({h.unit})</span>}
               </span>
               <span className="text-label tabular-nums" style={{ color: met ? cat('green') : cat('overlay1') }}>
-                {val}/{target}{h.type === 'timer' ? 'm' : ''}{met ? ' ✓' : ''}
+                {val}/{target}{h.type === 'timer' ? 'm' : h.type === 'limit' ? ' max' : ''}{met ? ' ✓' : ''}
               </span>
               {/* 44px targets (WCAG 2.5.5): the glyph stays small, the box
                   around it does the work. These were 28px. */}

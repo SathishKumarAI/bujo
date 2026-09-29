@@ -352,7 +352,12 @@ export function valueSparkline(
     const day = addDays(today, -i)
     const value = isScheduledOn(habit, day) ? habitValueOn(data, habit, day) : 0
     let norm: number
-    if (value <= 0) norm = 0
+    // A limit habit is judged FIRST, before the `value <= 0` shortcut, and on
+    // done-ness rather than magnitude. `value / target` would draw the spark
+    // taller the worse the day, and `value <= 0` would read a recorded zero —
+    // a perfect day under any limit — as nothing at all.
+    if (type === 'limit') norm = habitDoneOn(data, habit, day) ? 1 : 0
+    else if (value <= 0) norm = 0
     else if (type === 'rating') norm = Math.min(1, value / 5)
     else if (type === 'check') norm = 1
     else norm = Math.min(1, target > 0 ? value / target : 1)

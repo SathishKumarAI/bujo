@@ -2,6 +2,7 @@
 // the caller downloads it. Kept dependency-free and defensive about commas/quotes.
 import type { JournalData } from './types'
 import { labelOf } from '../domain/activities'
+import { habitDoneOn } from './stats'
 import { personalRecords, cardioPBs, epley1RM } from './fitness'
 
 function esc(v: unknown): string {
@@ -106,12 +107,12 @@ export function habitLogCsv(data: JournalData): string {
       const checked = (data.habitLog[date] ?? []).includes(h.id)
       const value = values[date]?.[h.id]
       const target = h.target ?? ''
-      // For count habits, "done" means meeting the target (or any value if no target);
-      // for check habits it's simply being logged that day.
-      const done =
-        h.type === 'count'
-          ? value != null && (h.target == null ? value > 0 : value >= h.target)
-          : checked
+      // `habitDoneOn` rather than a second opinion: it is what the app itself
+      // means by done, per type, and this branch had already drifted — every
+      // type but `count` fell through to habitLog membership, which is always
+      // false for a numeric habit, so timer, rating and limit days all exported
+      // as not-done however good they were.
+      const done = habitDoneOn(data, h, date)
       rows.push([date, h.name, h.category, value ?? (checked ? 1 : ''), target, done ? 'yes' : ''])
     }
   }
