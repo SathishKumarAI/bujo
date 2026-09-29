@@ -326,6 +326,20 @@ what it failed to wait for. Note the corollary: that arithmetic also fits a real
 faded token, so do not assume the fade — adding the settle and seeing the number
 *survive* is what distinguishes them.
 
+Trap: **setting `data-theme` on the root does not re-theme an inline style.**
+The CSS variables repaint immediately, so the *background* under an element
+changes; but `cat()` and `onRaised()` resolve from `src/lib/colors.ts` at render
+time, so any `style={{ color: … }}` keeps the value React last wrote. Measure a
+contrast pair that way and you get the **new ground against the old
+foreground** — a probe here reported latte's over-limit warning at **1.68:1**
+when it is **5.81**, wrong by 3.5x and wrong in the alarming direction. Sixth
+entry in the wait-before-assert table, and a close relative of the mid-fade
+blend above: both produce an arithmetically perfect failure describing a pairing
+that exists nowhere in the app. Switch themes the way the app does — write
+`settings.theme` and reload — and measure after the reload. The tell is that the
+foreground is *identical across every theme you probe* while only the background
+moves.
+
 Trap: **two preset vocabularies that do not match each other.**
 `ADDICTION_PRESETS` offers "Nicotine" and `URGE_PRESETS` offers "Smoking", and
 `UrgeWin` has no addiction field — it carries free text — so any per-addiction

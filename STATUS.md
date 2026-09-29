@@ -1,154 +1,114 @@
 # STATUS
 
-**Stopped:** 2026-09-27, on `main` at `34f7a1d`, clean. **Twelve PRs merged
-(#287–#298)**, every one verified by re-running its gates here rather than by
-reading its handback.
+**Stopped:** 2026-09-29, on `main` at `678aa43`, clean apart from the untracked
+`docs/life-schedule-v3-final.html` that predates this session. **One PR merged
+(#307).** COD-262 Done, COD-261 filed.
 
-The file this replaces was a *branch* handover for PR #293 that opened with
-"Nothing is merged and nothing is half-applied". #293 merged some hours later,
-and four agents in a row then declined to touch this file because three of them
-held branches at once. That is how the most-read doc in the repo ends up being
-the one sentence that is no longer true — the same shape as the "environmental,
-not a regression" note in `CLAUDE.md`. **A shared handover with several branches
-in flight needs an owner, not everyone's restraint.**
+The file this replaces was the 2026-09-27 twelve-PR handover. Its six
+"worth re-reading" lessons are all still true and all still live in `CLAUDE.md`,
+which is where they belong — this file is where the *work* stopped, not the
+permanent trap ledger.
 
 ## What this stretch was
 
-Two requests, then a run of small precise ones. First: *Insights got a
-modernisation pass and Cycle and Recovery were missed — and the code is not
-nice.* Then, read off the rendered pages: the act column is a dump, the legend is
-a hash log, "3/5" is not aligned, no addiction has visualisations, Focus needs
-restructuring, and **it must work from an iPhone to a 4K monitor**.
+A prompt review that turned into a feature. The ask was to improve a pasted
+"redesign the Today screen" prompt; reading it against the actual repo found it
+asserting five things that are not true here (hardcoded hex against a five-theme
+palette written in two files, the wrong font variables, a `Trends`/`Archive` nav
+that does not exist, a bottom tab bar that already exists, and an invented
+`check / count / limit` habit taxonomy). The last of those was the interesting
+one: the taxonomy was invented, but **the gap it described was real**.
 
-| # | What | The finding |
-|---|---|---|
-| 288 | Cycle had four shut folds | 2.5 / 4.8 → **1.0 / 1.0** desktop · 4.4 / 10.6 → 2.4 / 3.6 phone · folds 4 → 0 |
-| 289 | Recovery was a 929-line view | **929 → 332 lines** · folds 3 → 0 · `open` now equals `shipped` on both viewports |
-| 290 | **`a11y` CI had been red since #285** | My own merge. Four workers starved the runner; one dead worker discarded 8 of 12 shards |
-| 291 | The flag legend was a run of prose | The hue moved onto the word; two columns once the container has room |
-| 292 | The log button sat 805px past the fold | And 1130px down a *nested* scrollport at 1440, which no screenshot can show |
-| 293 | The app drew 1180px of a 4K screen | Unused 69% → 50% at 3840 · 54% → **25%** at 2560 · **1440 unchanged by identity** |
-| 294 | "3/5" ended 14px past its own slider | `input[type=range]` is an input, so the 380px cap caught it; its label row was uncapped |
-| 295 | No addiction had its own numbers | How much / which days / which times — and one of the three cannot be answered |
-| 296 | Focus was 3.5 flat screens, zero groups | 3.5 → **1.4** desktop · 5.7 → 3.7 phone · two seed holes underneath |
-| 297 | A transparent sticky rail, and links with no affordance | Plus a 4.48:1 that fixing the first one exposed |
-| 298 | Mood was a number with no "why" | The week around a lapse: **−1 3.9 → 0 3.4 → +1 5.8** against a 5.2 baseline |
+## The one thing worth re-reading
 
-## The six worth re-reading
+**A limit habit's hard problem is the unlogged day, not the comparison.**
+Flipping `count`'s comparison gives you `v <= target`, which looks right and is
+catastrophic: `habitValueOn` returns 0 for a day nobody recorded, and 0 is under
+every limit, so every day before the app was installed and every day you forgot
+scores as willpower. A limit day therefore has **three** states — under / over /
+not logged — and only a logged-under day counts. This is the same family as
+`count ? sum / count : 0` making "no data" indistinguishable from "you scored
+zero", already in `CLAUDE.md`; it is now the second time that shape has cost a
+design decision here.
 
-**The rail generalises; the width does not — measured four times now.**
-`tier={1440}` + `stacked` was re-tested *after* each rail landed and lost every
-time: Cycle **+732px**, Recovery **1.7 → 3.3 screens**. Insights can stack
-because its act zone is a 291px search box; Cycle's is a 760px day editor and
-Recovery's is 1296px. `max(act, review)` becomes `act + review`, and the act
-column is the whole bill. The paragraph is in `docs/PAGE-WORKFLOW.md` — **do not
-run this experiment a fifth time.**
+The cheap part was finding the chokepoint. `habitDoneOn` is called by
+`habitStreak`, and therefore by at-risk, weekly goals, comeback and
+longest-ever — **one branch there** and every streak in the app went
+limit-aware, with no per-caller patching and no change at all to the seven-dot
+history row.
 
-**A tier cap is a floor, not a ceiling.** #293 is one fluid expression, and 1440
-is unchanged *by identity* rather than by promise: `--shell-gutter: 260px` is
-exactly what a 1180 shell leaves at 1440, so the fluid term equals the floor
-there. `space --all` diffs to **zero lines** across 24 views — the crux claim,
-verified here rather than taken. The ~1926px ceiling is deliberate, because a
-2600px row of cards is unreadable, which is why 3840 is still half empty on
-purpose.
+## Two things the change surfaced
 
-**Opacity on text is how you get a colour no gate can check.** `SectionRail`'s
-count badge was `opacity-70` on `fg-2`: **3.82 / 3.40 / 3.55 / 3.45 / 3.08**
-across the five themes on the selected row — five of five under 4.5, for as long
-as the component has existed. `check-contrast` cannot see it because a faded
-token is not a token; axe could not see it because the rail was **transparent**,
-so there was no resolvable background to fail against. Giving the rail a ground
-turned a silent failure into a red one. The gate was blind, not happy.
+**The shipped `Coffee` preset was a limit wearing a target's clothes.**
+`{ type: 'count', target: 2, unit: 'cups' }` told the app that two cups was a
+goal to *reach*, so a 2-cup day scored as a win and a 4-cup day scored as a win
+with room to spare. Nothing could have caught this: a goal and a ceiling are
+both `target: 2`, and the type system had no way to tell them apart until this
+PR gave it one.
 
-**`space-audit` measures the group the rail opens on, and nothing else.** Every
-space number quoted for a rail page is that one group. Recovery's `patterns`
-group is +1.5 phone screens after #295 and no gate reaches it; Insights' `mood`
-domain is 2.65 screens at 1440 while the page reports 1.7. This is COD-232's
-tab-shell blindness in a second shape, and it now covers **seven** pages.
+**Nine call sites had each retyped the same union.** `type === 'count' || type
+=== 'timer' || type === 'rating'` meaning "numeric", written out nine times, so
+adding a fifth member to `HabitType` meant nine chances to silently drop it.
+They now call `isNumericHabit` / `isSteppableHabit`. Same shape as the retired
+`BottomNav` `PRIMARY` list trap, one layer down.
 
-**Three agents independently found the same two bugs**, which is the useful
-signal here: the transparent sticky rail and the faded count badge were each
-reported by two or three separate passes, on different pages. A defect in a
-shared primitive gets found once per adopter, not once.
+## The trap this session added
 
-**Two capture gaps are now the limit on the analytics**, both named rather than
-faked. `Relapse` has a date and **no time**, so there is no hour-of-day reading
-for a lapse. `UrgeWin` has a timestamp but **no addiction field** — it carries
-free text, so a per-addiction clock is a name join, and `ADDICTION_PRESETS`
-offers "Nicotine" while `URGE_PRESETS` offers "Smoking", so the default
-vocabularies do not match each other. The card prints its coverage fraction and
-names the missing label instead of drawing an empty grid. **COD-251.**
+**Switching `data-theme` without forcing a re-render measures the previous
+theme's colour.** A probe here reported latte at **1.68:1** and was wrong by
+3.5x — the CSS variables repainted the background, but React never re-ran, so
+the inline `style={{ color: onRaised('peach') }}` was still holding mocha's hex
+against latte's ground. The real number is **5.81**. Now written into
+`CLAUDE.md`'s wait-before-assert table, because it produces an arithmetically
+perfect failure describing a pairing that does not exist — exactly the shape
+that cost three separate investigations in the mid-fade-blend case.
 
-## Numbers, before → after
+Set the theme the way the app does (`settings.theme`, then reload) and measure
+after the reload.
+
+## Numbers
 
 ```
-folds     insights 0 · cycle 4 → 0 · nofap 3 → 0
-          still standing: coaching 20 · pickleball 8 · gym 5 · plan 4 · today 3
+tests     1389 pass / 102 files          (+11 over main, all in habitLimit.test.ts)
+a11y      173 of 173 scans · 12 of 12 shards · 0 serious, 0 critical
+clipped   clean at 1440 · 1024 · 390 across 24 views
+contrast  5 themes · 14 accents · both palettes agree
 
-space     cycle    desktop 2.5/4.8 → 1.0/1.0   phone 4.4/10.6 → 2.4/3.6
-          nofap    desktop 1.9/4.8 → 1.7/1.7   phone 4.8/8.2  → 5.0/5.0
-          focus    desktop 3.5/3.5 → 1.4/1.4   phone 5.7/5.7  → 3.7/3.7
-          mindset  desktop 4.2/4.2 unchanged   phone 8.8/8.8  ← worst in the app
+over-limit warning, per theme, measured on real re-renders:
+          mocha 9.79 · latte 5.81 · neon 11.54 · vscode 7.36 · dawn 5.98
 
-width     unused screen  1440 18% (unchanged) · 1920 39% → 14%
-                         2560 54% → 25% · 3840 69% → 50%
-          review column  722 → 1132 at 1920 → 1398 at 2560
-          insights masonry 2 → 3 at 1920 → 4 at 2560, height 1653 → 1326
-
-gates     a11y     8m07s → 2m48s at 4 workers · CI pinned to 2 · 166 → 173 scans
-          tests    1181 → 1378 in 101 files
-          clipped  0 across 24 views at 1440, 1024 and 390px
-          contrast 5 themes, 14 accents, both palettes agree
+demo seed, 90 days of the new type:
+          52 under · 17 over · 21 left unrecorded on purpose
 ```
 
-**`nofap` phone went 4.8 → 5.0 and that is honest** — #295 added content that was
-asked for. `today` and `trackers` rose for the same reason (a new mood field, a
-3× larger metric seed). Nothing was hidden behind a new fold to flatter a number.
-
-## What I got wrong, recorded because it cost time
-
-**I attributed a 4.48:1 to the wrong cause, publicly.** `#7c8195` is exactly
-`fg-2` at 70% over `ink-0`, which fits both "a faded badge" and "axe read a
-`page-enter` fade mid-animation" — and the fade had already produced three
-phantom investigations that day, so I picked the familiar story. Adding a
-`settle()` before axe did not clear it, which is what proved the colour stable.
-The settle fix is kept because it is correct on its own terms — `openFolds` and
-`revealLazy` restart animations *after* the existing settle — not because it
-fixed this.
-
-**Two throwaway probes of mine reported confidently and were wrong.** One swept
-for label/control overshoot and returned 14 hits across six views; twelve were
-noise, because it compared each control against the previous *section* rather
-than its own label row. Another checked a claimed critical a11y violation across
-five Settings tabs and found none — because its tab click matched the same
-control every time, so it scanned **one tab five times**. Adding the precondition
-I had been demanding of every agent ("assert the thing is actually in the DOM")
-is what exposed it. **A probe written to check a gate is not exempt from being
-checked.**
-
-**I told agents to confirm a preview port by its `<title>`, and that is wrong
-here** — every worktree serves an identical title, and one agent found 4195
-serving a different worktree's bundle. Compare the served `assets/index-*.js`
-against your own `dist/index.html`.
+The a11y summary now reads **"173 of 173"**; the previous handover recorded it
+printing "173 of 166", so that arithmetic was fixed on `main` in the meantime.
 
 ## Environment, on the way out
 
-- **Nine agent worktrees under `.claude/worktrees/`**, each holding a merged
-  branch, which is why `gh pr merge --delete-branch` could not remove the local
-  ones. One, `agent-afa93cdc840c582e9`, is **not a git worktree at all** — a dead
-  agent left a 770MB plain checkout plus `node_modules`, and git resolves its
-  working tree to the repo root. Nothing has been deleted; it needs a decision.
-- Preview servers were left on 4173 and several of 4181–4198. Confirm what one
-  serves by its **asset hash**, not its title.
-- `docs/life-schedule-v3-final.html` is untracked and predates this session.
-- `a11y`'s summary now prints **"173 of 166 scan(s)"** — the planned total does
-  not count the newly-armed rail-domain scans. Cosmetic, but a gate whose own
-  arithmetic reads wrong is one people learn to skim.
+- A dev server is on **5180** (this worktree) and a preview on **4173**, both
+  still running, plus a Chrome launched with `--remote-debugging-port=9333`
+  against a throwaway profile in `%TEMP%\claude-chrome-9333`. Kill them when you
+  are done; none holds state that matters.
+- Confirm what any preview port serves by its **asset hash**, never its title —
+  every worktree here serves an identical `<title>`.
+- The nine agent worktrees under `.claude/worktrees/` noted in the previous
+  handover were not touched and still need a decision, including the 770MB plain
+  checkout at `agent-afa93cdc840c582e9` that is not a git worktree at all.
 
 ## Next
 
-`docs/NEXT-SESSION.md`, rewritten. The short version: **`mindset` is 8.8 screens
-on a phone** and is now unambiguously the worst page in the app; **COD-232 has
-grown a second head** (a rail page's space number is one group, across seven
-pages); and the sync cluster (COD-136 / 137 / 139) is still the only
-data-integrity work on the board.
+Unchanged from the previous handover, none of it addressed here: **`mindset` is
+8.8 screens on a phone** and is the worst page in the app; **COD-232** has a
+second head (a rail page's space number describes one group, across seven
+pages); the sync cluster (COD-136 / 137 / 139) is still the only data-integrity
+work on the board.
+
+Newly on the pile, both small:
+
+- **COD-261** — the clean-day ✓ on an *avoid* habit is `cat('overlay0')`,
+  measured live at **3.55:1** on mocha. The documented overlay0-as-text trap,
+  still shipping on a path this PR did not touch.
+- Limit habits render with generic numeric copy everywhere outside the habit
+  row. Insights and Trackers will describe one as though its target were a goal.
+  Nothing is wrong on screen; nothing is limit-aware either.
