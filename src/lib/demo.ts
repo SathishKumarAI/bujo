@@ -673,13 +673,21 @@ export function generateDemoData(today = todayISO()): JournalData {
   // 90-day `startedOn` and then given logs of the right SHAPE: an avoid habit
   // is mostly absent from the log (present = you slipped), and count/timer
   // habits live in `habitValues`, not `habitLog`.
+  //
+  // `limit` needs a fourth shape again, and the one that matters is ABSENCE.
+  // Its three states are under / over / not logged, and the third is the whole
+  // reason the type is not just `count` with the comparison flipped — so the
+  // seed deliberately leaves some days unrecorded rather than writing a value
+  // every day. A seed that logs every day cannot render the state the design
+  // turns on.
   const shaped: Habit[] = [
     { id: uid('habit'), name: 'Doomscrolling', category: 'wellness', color: 'red', startedOn: addDays(today, -(HIST_DAYS - 1)), avoid: true, emoji: '📱', timeOfDay: 'evening', cue: 'In bed' },
     { id: uid('habit'), name: 'Water', category: 'food', color: 'sky', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'count', target: 8, floor: 4, unit: 'glasses', timeOfDay: 'anytime' },
     { id: uid('habit'), name: 'Meditation', category: 'wellness', color: 'lavender', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'timer', target: 15, floor: 5, unit: 'min', timeOfDay: 'morning', cue: 'Before the first meeting' },
+    { id: uid('habit'), name: 'Coffee', category: 'stimulant', color: 'peach', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'limit', target: 2, unit: 'cups', emoji: '☕', timeOfDay: 'morning', cue: 'With breakfast' },
   ]
   j.habits.push(...shaped)
-  const [avoidH, countH, timerH] = shaped
+  const [avoidH, countH, timerH, limitH] = shaped
   j.habitValues ??= {}
   for (let i = HIST_DAYS - 1; i >= 0; i--) {
     const d = addDays(today, -i)
@@ -689,6 +697,9 @@ export function generateDemoData(today = todayISO()): JournalData {
     const vals = (j.habitValues[d] ??= {})
     vals[countH.id] = Math.round(3 + rand() * 6) // 3–9 glasses against a target of 8
     if (rand() > 0.35) vals[timerH.id] = Math.round(5 + rand() * 15) // 5–20 min, some days skipped
+    // Coffee against a limit of 2: mostly 0–2 (a win), sometimes 3–4 (over),
+    // and ~1 day in 6 left out entirely so the "not logged" state is reachable.
+    if (rand() > 0.17) vals[limitH.id] = rand() < 0.72 ? Math.round(rand() * 2) : 3 + Math.round(rand())
   }
 
   j.settings.fitnessGoalMin = 150
