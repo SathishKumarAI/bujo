@@ -70,7 +70,13 @@ export function phaseOf(day: number, length: number | null): PhaseEstimate {
   if (day <= 5) return { id: 'menstrual', label: 'Menstrual', color: 'red' }
   if (day >= ovulation - 1 && day <= ovulation + 1) return { id: 'ovulation', label: 'Ovulation window', color: 'green' }
   if (day < ovulation) return { id: 'follicular', label: 'Follicular', color: 'teal' }
-  return { id: 'luteal', label: 'Luteal', color: 'mauve' }
+  // `blue`, not the accent. Luteal was `mauve`, which is simultaneously the
+  // app's accent and the `pms` flag's hue — so the longest phase of the cycle
+  // was painted in the colour that is supposed to mean "this is the control you
+  // press", and in dawn it sat **8.6 dE** from the cramps dot beside it.
+  // Measured across five themes, `blue` is 42.8 dE from the nearest other phase
+  // and 25.5 from the nearest flag hue, both clear of this repo's 15 floor.
+  return { id: 'luteal', label: 'Luteal', color: 'blue' }
 }
 
 // ── Derivations the page's visualisations read ───────────────────────────────
@@ -117,6 +123,24 @@ export function cycleHistory(entries: CyclePoint[], today: string): CycleSpan[] 
 }
 
 /** Days from `today` to the estimated next period. Negative means overdue. */
+/**
+ * Mean bleeding days per **completed** cycle, rounded.
+ *
+ * Was computed inline in `views/Cycle.tsx` beside the stat strip that renders
+ * it, which made the page's headline "Avg period" number the one derivation on
+ * this page no test could reach. The cycle in progress is excluded: its period
+ * days are already counted, but including a cycle whose later days have not
+ * happened drags the mean down as a cycle ages.
+ *
+ * `null` when no cycle has completed — not 0, which reads as "your periods
+ * last no days".
+ */
+export function avgPeriodLength(history: CycleSpan[]): number | null {
+  const finished = history.filter((c) => !c.current)
+  if (finished.length === 0) return null
+  return Math.round(finished.reduce((s, c) => s + c.periodDays, 0) / finished.length)
+}
+
 export function daysUntilNextPeriod(entries: CyclePoint[], today: string): number | null {
   const next = nextPeriodEstimate(entries, today)
   return next == null ? null : dayDiff(today, next)
