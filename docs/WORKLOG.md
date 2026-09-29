@@ -26,6 +26,153 @@ Rules the three share:
 
 ---
 
+## 2026-09-29 — A prompt review that found a missing habit type, and the sweep I did not actually do (#307–#310)
+
+**Summary:** Four PRs from a request that was not a code request. The ask was to
+improve a pasted "redesign the Today screen" prompt; reading it against the repo
+found it asserting five things that are false here — hardcoded hex against a
+five-theme palette written in two files, the wrong font variables, a
+`Trends`/`Archive` nav that does not exist, a bottom tab bar that already
+exists, and an invented `check / count / limit` habit taxonomy. The taxonomy was
+invented. **The gap it described was real**, and shipping it is most of this
+entry.
+
+### The limit habit type, and the day nobody logged (#307)
+
+There was no way to say *"at most two coffees a day"*. `avoid` is binary — a
+logged day is a slip, so it cannot hold a quantity — and `count` compares the
+wrong way round, so a limit had to be faked as a target you were **rewarded for
+reaching**. The shipped `Coffee` preset was exactly that:
+`{ type: 'count', target: 2, unit: 'cups' }`, so a 2-cup day scored as a win and
+a 4-cup day scored as a win with room to spare. Nothing could have caught it: a
+goal and a ceiling are both `target: 2` until the type system can tell them
+apart.
+
+**The hard part is not the comparison.** Flipping it to `v <= target` looks
+right and is catastrophic: `habitValueOn` returns 0 for a day nobody recorded,
+and 0 is under every limit, so every day before the app was installed and every
+day you forgot scores as willpower. A limit day therefore has **three** states —
+under / over / not logged — and only a logged-under day counts. Same family as
+`count ? sum / count : 0` making "no data" indistinguishable from "you scored
+zero", which this repo had already fixed once in `monthlyCompletion`; second
+time that shape has decided a design here.
+
+The cheap part was the chokepoint. `habitDoneOn` is called by `habitStreak`, and
+therefore by at-risk, weekly goals, comeback and longest-ever, so **one branch**
+there made every streak in the app limit-aware — no per-caller patching, and not
+one line changed in the seven-dot history row.
+
+Seeded across 90 demo days as **52 under · 17 over · 21 left unrecorded on
+purpose**. A seed that writes a value every day cannot render the third state,
+and the third state is the whole reason the type exists.
+
+### The sweep I claimed and did not do (#309)
+
+#307 introduced `isNumericHabit`/`isSteppableHabit` to stop the type union being
+retyped, migrated nine call sites, and said that was all of them. **It was not.**
+The grep behind that claim was piped through `head -40` and silently truncated,
+so three sites that re-decide what a habit type means were never looked at — and
+each dropped `limit`, which is precisely the failure the helpers were introduced
+to prevent, one layer out:
+
+| Site | What it did |
+|---|---|
+| `views/Today.tsx` | Filtered to count/timer/rating, so a limit habit **never appeared on Today** in the classic layout |
+| `lib/csv.ts` | `h.type === 'count' ? … : checked` — everything else fell through to habitLog membership, always false for a numeric habit, so **timer, rating and limit days all exported as not-done** however good they were |
+| `lib/habitStats.ts` | Normalised `value / target`, so a limit habit's sparkline drew **taller the worse the day**; and `value <= 0` read a *recorded zero* — a perfect day under any limit — as nothing at all |
+
+The csv one predates #307 and affects timer and rating habits too, so it is a
+real pre-existing export bug that the new type merely walked into.
+
+Both new tests were confirmed to fail against the old code (`git stash` the two
+lib fixes, then `2 failed | 11 passed`) before being believed. **A helper only
+helps where it is called**: these three each had their own opinion about what a
+type means, which no amount of helper adoption reaches, so the test file asserts
+their behaviour directly under a describe block named for exactly that.
+
+### Today, three zones assigned by role (#310)
+
+Today was `CardGrid` auto-packing six cards, and the note it replaced argued for
+that — *"two columns that fill themselves cannot strand a column"*. True, and it
+optimises the wrong thing. **A packing grid decides placement from card height**,
+so the capture box and the check-in could land in either column on any given day
+and the page had no stable shape to learn.
+
+Three columns by role instead: 340px for what you write (capture, then one
+line), fluid for habits, 380px for what you answer (check-in, then fasting).
+DOM order is the **phone** order — capture, habits, check-in, one line, fasting —
+with the desktop columns as `col-start`/`row-start` placements over it; ordering
+the DOM by column would have put "one line" above habits on a small screen. The
+cost is accepted: on a future day `FastingCard` is absent and nothing flows up to
+fill the gap, which is the price of a shape that does not move.
+
+Everything that *reports* — the plan card and four charts — moved behind one
+`CollapsibleSection`, shut by default. Specifically **not** a `SectionRail`: a
+rail has no `aria-expanded`, so `openFolds()` cannot find it and the gate would
+quietly scan one group instead of all of them (COD-237).
+
+```
+space-audit, 1440x900, same preview, bundle hash confirmed against dist/ both times
+
+desktop   2.5 -> 1.4 screens shipped   (3.6 -> 3.4 open)
+phone     4.4 -> 2.9 screens shipped   (6.0 -> 6.3 open)
+```
+
+**The brief asked for one screen and it is not reachable** at this content
+density. The three columns measure **554 / 699 / 861px** and the check-in alone
+is **627** of that — three ten-point scales plus sleep. 880px was available by
+deleting a field, which is claiming the target rather than meeting it.
+
+The a11y number worth reading is the fold column: **Today went 3 to 5 folds** on
+every theme and both viewports, 0 serious. COD-237's failure mode is a fold count
+*dropping* when a fold is introduced, because the gate stopped reaching the
+content. Rising is the evidence that the new section is opened and scanned.
+
+### What I got wrong, measured
+
+**A probe reported latte at 1.68:1 and was wrong by 3.5x.** Switching themes by
+setting `data-theme` on the root repaints the CSS variables, so the *background*
+under an element changes — but `cat()` and `onRaised()` resolve from
+`lib/colors.ts` at render time, so an inline `style={{ color }}` keeps whatever
+React last wrote. The measurement compared the **new ground against the old
+foreground**. Real number: **5.81**. Close relative of the mid-fade-blend trap:
+both produce an arithmetically perfect failure describing a pairing that exists
+nowhere in the app, and the tell is that the foreground comes back *identical for
+every theme probed* while only the background moves. Now a trap in `CLAUDE.md`,
+sixth in the wait-before-assert table.
+
+**A move surfaced a bug in the move itself.** Relocating "what broke your fast"
+from the check-in to the fasting card looked like pure carriage until
+`FastingCard` turned out to have no `date` prop and to use `todayISO()` — so on a
+walked-back day it would have written the **wrong date's** record. The control
+had always been handed the cursor's date by the card it came from.
+
+### Kept against the brief
+
+The **sleep preset chips**. The brief said stepper only. The comment beside them
+records a measurement for *adding* them — a stepper asked up to sixteen taps to
+say "seven and a half" — so removing them would undo a measured improvement to
+satisfy a styling note.
+
+### Numbers
+
+```
+tests     1389 -> 1391 pass / 102 files     (+13 in habitLimit.test.ts)
+a11y      173 of 173 scans · 12 of 12 shards · 0 serious · 0 critical
+clipped   clean at 1440 · 1024 · 390 across 24 views
+contrast  5 themes · 14 accents · both palettes agree
+
+over-limit warning, per theme, on real re-renders:
+          mocha 9.79 · latte 5.81 · neon 11.54 · vscode 7.36 · dawn 5.98
+
+today     desktop 2.5 -> 1.4 shipped   phone 4.4 -> 2.9 shipped
+          folds 3 -> 5 (coverage up, not down)
+```
+
+**Filed, not fixed:** COD-261 — the clean-day tick on an *avoid* habit is
+`cat('overlay0')`, measured live at **3.55:1** on mocha. The documented
+overlay0-as-text trap, still shipping on a path none of these PRs touched.
+
 ## 2026-09-27 — Finishing the rail, filling a 4K screen, and four gates that were blind rather than happy (#287–#298)
 
 **Summary:** Twelve PRs. The request that started it was one sentence — *Insights

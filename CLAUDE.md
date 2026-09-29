@@ -340,6 +340,19 @@ that exists nowhere in the app. Switch themes the way the app does — write
 foreground is *identical across every theme you probe* while only the background
 moves.
 
+Trap: **a sweep piped through `head` is a sweep you did not do.** It truncates
+silently, the exit code stays 0, and the output *looks* like a complete answer —
+so "nine call sites, and that was all of them" got written into a PR body when
+the grep behind it had been cut off at 40 lines. Three more sites each carried
+their own opinion of what a habit type means, and each silently dropped the type
+that had just been added: it never rendered on Today's classic layout, the CSV
+exported every one of its days as not-done, and the sparkline drew *taller the
+worse the day*. **Count the matches before reading them** (`| wc -l`, or no pipe
+at all) whenever the result is going to be quoted as exhaustive. The helper
+introduced in that same PR could not save it, which is the general lesson:
+`isNumericHabit` only helps where it is *called*, and a call site that re-decides
+the meaning inline is invisible to every migration.
+
 Trap: **two preset vocabularies that do not match each other.**
 `ADDICTION_PRESETS` offers "Nicotine" and `URGE_PRESETS` offers "Smoking", and
 `UrgeWin` has no addiction field — it carries free text — so any per-addiction

@@ -153,6 +153,38 @@ site put it back to two tracks of 350 with the page height unchanged
 the mirror of the `tier`/`stacked` question above — ask which box decides the
 width before choosing which query answers it.
 
+### A packing grid places by height, so a page that packs has no shape to learn
+
+`CardGrid` and `MasonryGrid` both decide placement from **card height**, which is
+the right instinct when the goal is "no stranded column" and the wrong one when
+the goal is "the same thing is in the same place tomorrow". Today shipped six
+cards through `CardGrid` under a note arguing exactly the first case — *"two
+columns that fill themselves cannot strand a column, because nothing is promised
+to either one"* — and the consequence was that the capture box and the check-in
+could swap columns from one day to the next as their contents grew.
+
+Assigning columns by **role** fixed it (#310), at a cost worth stating plainly:
+
+```
+today   desktop 2.5 -> 1.4 screens shipped   phone 4.4 -> 2.9
+        columns measured 554 / 699 / 861px — the check-in alone is 627
+```
+
+On a future day the fasting card is absent and nothing flows up to fill the gap.
+That whitespace is the price of a stable page, and it is cheaper than a reader
+re-finding the primary action. **Pack when the cards are peers and the order does
+not matter; assign when the reader has to learn where something lives.**
+
+Two things that came with it, both reusable:
+
+- **DOM order is the phone order.** The desktop columns are `col-start` /
+  `row-start` placements laid over it. Ordering the DOM by column instead puts
+  the bottom of column one above the top of column two on a small screen.
+- **Spell the phone column out** (`grid-cols-1`). A grid with no
+  `grid-template-columns` gets one implicit `auto` track sized to the widest
+  item's min-content, and a grid track is shared — one wide card drags every
+  sibling off the right edge.
+
 ### A chip row is often the right answer on a split page
 
 Zone 3 on a split `tier={1180}` page is **722px** — under `@4xl`, so the rail
