@@ -8,6 +8,8 @@
  */
 import { describe, expect, it } from 'vitest'
 import { habitDoneOn, habitRecordedOn, habitStreak, limitStatus, nextHabitValue } from './stats'
+import { valueSparkline } from './habitStats'
+import { habitLogCsv } from './csv'
 import { atRiskHabits } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData } from './types'
@@ -92,5 +94,35 @@ describe('stepping a limit habit can exceed it', () => {
     expect(nextHabitValue('count', 8, 7)).toBe(8)
     expect(nextHabitValue('count', 8, 8)).toBe(0)
     expect(nextHabitValue('timer', 30, 0)).toBe(5)
+  })
+})
+
+/**
+ * THE CALL SITES THAT DO THEIR OWN THING.
+ *
+ * `isNumericHabit`/`isSteppableHabit` only help where they are called. These
+ * three each re-decided what a habit type means, and each silently dropped
+ * `limit` when it landed — the exact failure the helpers were introduced to
+ * prevent, one layer out. Asserted here because nothing else will notice.
+ */
+describe('places that judge a habit without asking habitDoneOn', () => {
+  it('exports a day under the limit as done', () => {
+    const d = withCups({ '2026-09-29': 1, '2026-09-28': 3 })
+    const csv = habitLogCsv(d)
+    const lines = csv.split(/\r?\n/)
+    const under = lines.find((l) => l.startsWith('2026-09-29,Caffeine'))
+    const over = lines.find((l) => l.startsWith('2026-09-28,Caffeine'))
+    expect(under?.endsWith('yes')).toBe(true)
+    expect(over?.endsWith('yes')).toBe(false)
+  })
+
+  it('draws the sparkline on whether the day was won, not on how big it was', () => {
+    const d = withCups({ '2026-09-29': 0, '2026-09-28': 4 })
+    const spark = valueSparkline(d, caffeine, '2026-09-29', 2)
+    const [yesterday, today] = spark
+    // A recorded 0 is a perfect day under any limit, and must not read as "nothing".
+    expect(today.norm).toBe(1)
+    // 4 against a limit of 2 is the worst day here; it must not draw tallest.
+    expect(yesterday.norm).toBe(0)
   })
 })
