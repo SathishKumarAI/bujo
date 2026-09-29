@@ -19,7 +19,7 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { fromISODay } from '../../lib/date'
 import { cat, onAccent, onRaised } from '../../lib/colors'
-import { habitConsistency, habitTarget, nextHabitValue } from '../../lib/stats'
+import { habitConsistency, habitTarget, isNumericHabit, nextHabitValue } from '../../lib/stats'
 import { goalTier } from '../../lib/streak'
 import { milestoneEmoji } from '../../lib/milestones'
 import { habitCellFill } from '../../lib/habitStats'
@@ -92,7 +92,7 @@ export function CategoryRows({
       </tr>
       {!collapsed && habits.map((h) => {
         const type = h.type ?? 'check'
-        const numeric = type === 'count' || type === 'timer' || type === 'rating'
+        const numeric = isNumericHabit(h)
         const target = habitTarget(h)
         const avoid = !!h.avoid
         const slipColor = avoid ? cat('red') : cat(h.color)

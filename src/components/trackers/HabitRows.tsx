@@ -1,7 +1,7 @@
 import { addDays } from '../../lib/date'
-import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
+import { habitDoneOn, habitTarget, habitValueOn, isNumericHabit, isSteppableHabit, limitStatus, nextHabitValue } from '../../lib/stats'
 import { isScheduledOn } from '../../lib/schedule'
-import { cat, onAccent } from '../../lib/colors'
+import { cat, onAccent, onRaised } from '../../lib/colors'
 import { HABIT_KEY } from '../../lib/recordKeys'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
 import type { Habit, JournalData } from '../../lib/types'
@@ -56,7 +56,8 @@ export function HabitRows({
     <ul className="divide-y divide-line">
       {todays.map((h) => {
         const type = h.type ?? 'check'
-        const numeric = type === 'count' || type === 'timer' || type === 'rating'
+        const numeric = isNumericHabit(h)
+        const limit = limitStatus(data, h, today)
         const target = habitTarget(h)
         const val = habitValueOn(data, h, today)
         const on = habitDoneOn(data, h, today)
@@ -98,7 +99,7 @@ export function HabitRows({
               })}
             </span>
 
-            {(type === 'count' || type === 'timer') && !h.avoid ? (
+            {isSteppableHabit(h) && !h.avoid ? (
               <span className="flex shrink-0 items-center gap-1">
                 <button
                   onClick={() => onSetValue(today, h.id, Math.max(0, val - (type === 'timer' && target >= 20 ? 5 : 1)))}
@@ -108,9 +109,12 @@ export function HabitRows({
                 >
                   −
                 </button>
-                <span className="num min-w-[3.25rem] text-center text-label tabular-nums" style={{ color: on ? accent : undefined }}>
+                {/* A limit reads "3/2 max": the ceiling is the second number
+                    either way, but over it is a warning, not a win, and not
+                    logged at all is neither. */}
+                <span className="num min-w-[3.25rem] text-center text-label tabular-nums" style={{ color: limit === 'over' ? onRaised('peach') : on ? accent : undefined }}>
                   {val}/{target}
-                  {type === 'timer' ? 'm' : ''}
+                  {type === 'timer' ? 'm' : type === 'limit' ? ' max' : ''}
                 </span>
                 <button
                   onClick={() => onSetValue(today, h.id, val + (type === 'timer' && target >= 20 ? 5 : 1))}

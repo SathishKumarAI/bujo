@@ -15,6 +15,7 @@ import { washStyle } from '../lib/colors'
 import type { DailyMetric } from '../lib/types'
 import { Button } from './ui/button'
 import { useCaptureReceipt } from './CaptureReceipt'
+import { isNumericHabit } from '../lib/stats'
 
 // One smart capture bar: type or speak anything and it routes to the right
 // place · a gym set, a cardio session, a wellbeing metric, a habit tick, or a
@@ -148,7 +149,7 @@ export function CaptureBar({ date, onAdded }: { date: string; onAdded?: () => vo
           // Numeric habits (count/timer/rating) are scored from habitValues, so
           // toggleHabit (which writes habitLog) would never register them as done.
           // Route them through setHabitValue; only plain 'check' habits toggle.
-          const numeric = h.type === 'count' || h.type === 'timer' || h.type === 'rating'
+          const numeric = isNumericHabit(h)
           if (r.value != null) setHabitValue(date, h.id, r.value)
           else if (numeric) setHabitValue(date, h.id, h.target ?? 1)
           else toggleHabit(date, h.id)

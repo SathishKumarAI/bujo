@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { HABIT_CATEGORIES, type Habit, type HabitCategory, type JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat, onAccent, onRaised } from '../lib/colors'
-import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, weeklyHabitCount, nextHabitValue } from '../lib/stats'
+import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, isSteppableHabit, weeklyHabitCount, nextHabitValue } from '../lib/stats'
 import { DayGrid } from './ui/day-grid'
 
 const CATEGORY_ORDER = HABIT_CATEGORIES
@@ -96,7 +96,7 @@ function ActivityRow({
   // matching the classic grid. Rating cells stay display-only (use the control).
   const logDay = (d: string) => {
     if (type === 'rating') return
-    if (type === 'count' || type === 'timer') onSetValue(d, h.id, nextHabitValue(type, target, habitValueOn(data, h, d)))
+    if (isSteppableHabit(h)) onSetValue(d, h.id, nextHabitValue(type, target, habitValueOn(data, h, d)))
     else onToggle(d, h.id)
   }
   const start = addDays(today, -(days - 1))
