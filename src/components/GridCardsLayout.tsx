@@ -4,7 +4,7 @@ import { Card } from './ui'
 import type { Habit, JournalData } from '../lib/types'
 import { addDays, fromISODay } from '../lib/date'
 import { cat, onRaised } from '../lib/colors'
-import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, nextHabitValue } from '../lib/stats'
+import { habitStreak, cleanStreak, habitTarget, habitValueOn, habitIntensity, isSteppableHabit, nextHabitValue } from '../lib/stats'
 
 const WEEKS = 13
 const LEVEL_OPACITY = [0, 0.4, 0.6, 0.8, 1]
@@ -57,7 +57,7 @@ function HabitGridCard({
 
   const logDay = (d: string) => {
     if (type === 'rating') return // ratings use the editor; cell is display-only
-    if (type === 'count' || type === 'timer') onSetValue(d, h.id, nextHabitValue(type, target, habitValueOn(data, h, d)))
+    if (isSteppableHabit(h)) onSetValue(d, h.id, nextHabitValue(type, target, habitValueOn(data, h, d)))
     else onToggle(d, h.id)
   }
 

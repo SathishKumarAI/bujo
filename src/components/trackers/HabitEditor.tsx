@@ -181,6 +181,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
               <Button variant={(habit.type ?? 'check') === 'check' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'check' })}>Yes / no</Button>
               <Button variant={habit.type === 'count' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'count' })}>Count</Button>
               <Button variant={habit.type === 'timer' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'timer', unit: habit.unit ?? 'min' })}>Timer</Button>
+              <Button variant={habit.type === 'limit' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'limit', target: habit.target ?? 2, floor: undefined })}>Limit</Button>
               <Button variant={habit.type === 'rating' ? 'secondary' : 'ghost'} className="press-3d" onClick={() => set({ type: 'rating' })}>Rating</Button>
             </div>
           </div>
@@ -238,6 +239,17 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
                   <span className="mt-1 block text-caption" style={{ color: onRaised('peach') }}>Floor should be below the target ({habitTarget(habit)}) to show a “met floor” state.</span>
                 )}
               </label>
+            </>
+          )}
+          {/* A limit has no floor: a floor is a minimum, and there is no minimum
+              under a ceiling. The unit field is shared with count/timer above. */}
+          {habit.type === 'limit' && (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-body text-fg-1">Daily limit <span className="text-fg-2">(at most)</span><div className="mt-1"><Stepper value={habit.target ?? undefined} onChange={(v) => set({ target: v })} step={1} min={0} aria-label="Daily limit" /></div></label>
+                <label className="block text-body text-fg-1">Unit<Input value={habit.unit ?? ''} onChange={(e) => set({ unit: e.target.value || undefined })} placeholder="cups" list="habit-units" className="mt-1" /><datalist id="habit-units">{knownUnits.map((u) => <option key={u} value={u} />)}</datalist></label>
+              </div>
+              <p className="text-label text-fg-2">A day counts as a win when you log it at or under {habitTarget(habit)}{habit.unit ? ` ${habit.unit}` : ''}. A day you never log counts as neither — it will not build a streak for you.</p>
             </>
           )}
           {habit.type === 'rating' && (

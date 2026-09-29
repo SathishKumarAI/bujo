@@ -68,7 +68,10 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
   { name: 'Mood', emoji: '😊', category: 'wellness', color: 'yellow', type: 'rating' },
   { name: 'Energy', emoji: '⚡', category: 'wellness', color: 'peach', type: 'rating' },
   { name: 'Steps', emoji: '👟', category: 'movement', color: 'sapphire', type: 'count', target: 10000, unit: 'steps' },
-  { name: 'Coffee', emoji: '☕', category: 'stimulant', color: 'rosewater', type: 'count', target: 2, unit: 'cups' },
+  // Was `count`, target 2 — which told the app that two cups was a goal to
+  // REACH, so a 2-cup day scored as a win and a 4-cup day scored as a win with
+  // room to spare. It is a ceiling, and now says so.
+  { name: 'Coffee', emoji: '☕', category: 'stimulant', color: 'rosewater', type: 'limit', target: 2, unit: 'cups' },
   { name: 'Vitamins', emoji: '💊', category: 'food', color: 'flamingo' },
   { name: 'Journal', emoji: '✍️', category: 'wellness', color: 'lavender' },
   // ── habits to avoid / quit (logging a day = a slip) ──

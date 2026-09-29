@@ -7,7 +7,7 @@ import { Button } from '../ui/button'
 import { currentSlot, orderedSlots, slotMeta } from '../../lib/timeofday'
 import { slotGlyph } from '../glyphs'
 import { cat, onRaised } from '../../lib/colors'
-import { cleanStreak, habitDoneOn, habitStreak, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
+import { cleanStreak, habitDoneOn, habitStreak, habitTarget, habitValueOn, isNumericHabit, nextHabitValue } from '../../lib/stats'
 import type { Habit, JournalData } from '../../lib/types'
 import { isScheduledOn } from '../../lib/schedule'
 
@@ -61,7 +61,7 @@ export function RoutineTimeline({
             <ul className="space-y-1.5">
               {list.map((h) => {
                 const type = h.type ?? 'check'
-                const numeric = type === 'count' || type === 'timer' || type === 'rating'
+                const numeric = isNumericHabit(h)
                 const target = habitTarget(h)
                 const val = habitValueOn(data, h, today)
                 const on = habitDoneOn(data, h, today)

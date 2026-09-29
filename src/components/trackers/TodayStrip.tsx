@@ -1,7 +1,7 @@
 import { Prohibit } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { cat, habitChipStyle, readableOn } from '../../lib/colors'
-import { habitDoneOn, habitTarget, habitValueOn, nextHabitValue } from '../../lib/stats'
+import { habitDoneOn, habitTarget, habitValueOn, isNumericHabit, isSteppableHabit, nextHabitValue } from '../../lib/stats'
 import { isScheduledOn } from '../../lib/schedule'
 import type { Habit, JournalData } from '../../lib/types'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
@@ -47,14 +47,14 @@ export function TodayStrip({
     <div className="flex flex-wrap gap-1.5">
         {todays.map((h) => {
           const type = h.type ?? 'check'
-          const numeric = type === 'count' || type === 'timer' || type === 'rating'
+          const numeric = isNumericHabit(h)
           const target = habitTarget(h)
           const val = habitValueOn(data, h, today)
           const on = habitDoneOn(data, h, today)
           const next = nextHabitValue(type, target, val)
           // Count/timer habits get explicit −/+ steppers so you can both add and
           // subtract (and overshoot the target) without cycling back to 0.
-          if ((type === 'count' || type === 'timer') && !h.avoid) {
+          if (isSteppableHabit(h) && !h.avoid) {
             const step = type === 'timer' ? (target >= 20 ? 5 : 1) : 1
             return (
               <span
