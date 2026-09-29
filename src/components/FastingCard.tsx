@@ -1,4 +1,4 @@
-import { Check, Flame, Play, Square, Timer, X } from '@/components/icons'
+import { Check, Drop, Flame, ForkKnife, Play, Square, Timer, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
 import { useJournal } from '../store'
@@ -16,8 +16,15 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString([], { month: 
  * Intermittent-fasting tracker: start/stop a fast, watch the window fill toward
  * your personal target (e.g. 16:8), and verify day-to-day from the recent log.
  */
-export function FastingCard() {
-  const { data, startFast, endFast, removeFast, setSettings } = useJournal()
+export function FastingCard({ date = todayISO() }: {
+  /** The day whose `fastBreak` this card edits. Defaults to today, but Today
+   *  can be walked backwards — without this, editing Monday's page wrote
+   *  TUESDAY's record, silently, because the control moved here from a card
+   *  that had always been handed the cursor's date. The fast timer itself is
+   *  genuinely live-only and still reads `todayISO()`. */
+  date?: string
+} = {}) {
+  const { data, startFast, endFast, removeFast, setSettings, setMetric } = useJournal()
   const target = data.settings.fastTargetHours ?? DEFAULT_FAST_TARGET
   const active = data.settings.fastActiveStart
   const fasts = data.fasts ?? []
@@ -36,6 +43,8 @@ export function FastingCard() {
   const streak = fastingStreak(fasts, target, todayISO())
   const recent = recentFasts(fasts, 5)
   const last = recent[0]
+
+  const metric = data.metrics.find((m) => m.date === date)
 
   return (
     <Card band
@@ -98,6 +107,32 @@ export function FastingCard() {
           })}
         </ul>
       )}
+      {/* WHAT BROKE THE FAST, moved here from the check-in card.
+          It was sitting under Mood / Stress / Energy / Sleep, which made the
+          check-in the tallest card on Today (627px, the column that set the
+          page height) and asked a fasting question in the middle of a wellbeing
+          one. It is the same `metrics.fastBreak` field and the same writer —
+          only the card it is asked on changed, so nothing about the record
+          moves and Insights reads it exactly as before. */}
+      <div className="mt-4 border-t border-line pt-3">
+        <p className="mb-2 text-body text-fg-1">What broke your fast</p>
+        {/* These record a choice, so the selected one gets the accent wash
+            rather than the accent fill — a filled pill here read as the
+            screen's primary action, which it never was. */}
+        <div className="flex gap-2">
+          {([['food', ForkKnife, 'Food'], ['drink', Drop, 'Drink']] as const).map(([kind, glyph, label]) => (
+            <Button
+              key={kind}
+              variant="ghost"
+              aria-pressed={metric?.fastBreak === kind}
+              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === kind ? undefined : kind })}
+              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand-text' : ''}`}
+            >
+              <Icon as={glyph} size="sm" /> {label}
+            </Button>
+          ))}
+        </div>
+      </div>
     </Card>
   )
 }

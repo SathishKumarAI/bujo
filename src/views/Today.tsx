@@ -16,7 +16,7 @@ import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
-import { CardGrid } from '../components/shell/CardGrid'
+import { CollapsibleSection } from '../components/CollapsibleSection'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -40,87 +40,44 @@ export function Today() {
 }
 
 /**
- * WHICH COLUMN EACH SURFACE'S CARDS GO IN.
+ * THE DESKTOP SHAPE · three zones, spelled out, so the day fits one screen.
  *
- * Same rule the classic layout has always used — **you write in the left
- * column; the right rail reports on what you wrote** — applied to the focused
- * layout, which never had a rail at all. Measured at 1920 it was an 820px
- * column with **550px of dead gutter on each side**, and 1.50 screens tall on
- * Morning: the desktop layout was the phone layout, centred.
+ * This was `CardGrid` auto-packing six cards, and the note it replaced argued
+ * for that: *"two columns that fill themselves cannot strand a column, because
+ * nothing is promised to either one."* True, and it optimises the wrong thing.
+ * A grid that packs decides placement from card HEIGHT, so what you get is
+ * whatever tessellates — the capture box and the check-in could land in either
+ * column on any given day, and the page had no stable shape to learn. At 1440
+ * it ran past the fold with the day's two primary actions in different places
+ * from one visit to the next.
  *
- * The rail is DOM-ordered *after* main, so a phone stacks them in exactly the
- * order these surfaces already had — that is what fixes the column split for
- * free rather than reshuffling the small screen. It is why `StatusStrip` is at
- * the end of Day's rail and not the end of Day's main: on a phone it has to
- * land last, and it is read-only status, which is rail material anyway.
+ * Three columns, assigned by ROLE instead:
+ *
+ * | Column | Holds | Why |
+ * |---|---|---|
+ * | 340px | Capture, then One line | What you write, in the order you write it |
+ * | fluid | Habits | The only thing whose width is content-driven |
+ * | 380px | Check-in, then Fasting | What you answer, then the timer |
+ *
+ * The cost is real and accepted: on a future day `FastingCard` is absent, so
+ * the right column is short and nothing flows up to fill it. That is the price
+ * of a page whose shape does not move, and it is paid in whitespace at the
+ * bottom of one column rather than in the reader re-finding the capture box.
+ *
+ * **DOM order is the phone order** — capture, habits, check-in, one line,
+ * fasting — and the desktop columns are `col-start`/`row-start` placements over
+ * it. Ordering the DOM by column instead would put "one line" above habits on a
+ * phone, which is the wrong thing second on a small screen.
+ *
+ * The phone column is spelled out (`grid-cols-1`) rather than left implicit:
+ * a grid with no `grid-template-columns` gets one implicit `auto` track sized
+ * to the widest item's min-content, and a grid track is shared, so one wide
+ * card drags every sibling off the right edge. See the trap in CLAUDE.md.
  */
-/**
- * ONE DAY, ONE PAGE — capture first, then what it adds up to.
- *
- * This was four surfaces behind a tab row: morning, day, evening and habits.
- * The split had a real argument, written in this file for a year — at 7am you
- * want to rate your sleep, at 10pm the capture box is the only thing that
- * matters — and it was paid for in duplication the code had already stopped
- * fighting:
- *
- * | Rendered | morning | day | evening | habits |
- * |---|---|---|---|---|
- * | `TodayHabits` | — | as a row | as a checklist | — |
- * | `TodayCountHabits` | — | in the rail | in the main column | — |
- * | the habit grid | — | — | — | the whole page |
- *
- * Habits were on three of the four, and "Habits with a number" rendered
- * verbatim on two. `surfaceUntouched` declines to count habits at all for that
- * exact reason — *"they render on Day and Evening, so attributing them to
- * either would clear the other tab's marker"* — which is a workaround for the
- * duplication, not a design.
- *
- * And the split cost the one thing this page exists for. **Capture was a tab
- * away**: at 7am the rapid log was not on screen, so writing a line began with
- * deciding which surface it lived on. A page you scroll costs a scroll; a page
- * you tab costs a decision.
- *
- * One page now, in the order the day is used:
- *
- * 1. **Orient** — the dateline, nothing else asking for attention.
- * 2. **Capture** — the log, the habits, the ratings, the writing. Everything
- *    that takes input sits above everything that reports.
- * 3. **Review** — what is planned, what is at risk, where you stand.
- *
- * Habits appear ONCE. The checklist variant won because it is the only one
- * that shows every habit with its state — the old Day row and the old Evening
- * checklist were each doing half of that.
- */
-function todayCards(date: string, nav: ReturnType<typeof useNav>) {
-  return {
-    // The log is the page's one primary action and the widest thing on it, so
-    // it spans the row rather than sharing it.
-    lead: <DayLogCard date={date} sticky />,
-    // Everything else PACKS. It used to be hand-assigned to a fixed 62/38
-    // split, and the split does not know what is in it: on a future day
-    // `FastingCard` is hidden, leaving **1,025px of empty rail** against a
-    // 1,406px main column — measured — and 595px of it even on today. Two
-    // columns that fill themselves cannot strand a column, because nothing is
-    // promised to either one.
-    //
-    // Capture still leads: the grid fills left-to-right, so habits and the
-    // ratings land above the plan and the status strip.
-    rest: [
-      <HabitsSurface key="habits" slot="capture" />,
-      <WellbeingCard key={`w-${date}`} date={date} />,
-      <WritingCard key={`x-${date}`} date={date} />,
-      ...(isFutureDay(date) ? [] : [<FastingCard key="fast" />]),
-      <TodayPlanCard key="plan" date={date} />,
-      <StatusStrip key="status" date={date} onNavigate={nav} />,
-    ],
-  }
-}
-
 function TodayFocused() {
   const { day: date } = useCursor()
   const nav = useNav()
-
-  const { lead, rest } = todayCards(date, nav)
+  const future = isFutureDay(date)
 
   return (
     // `wide`, not `read`: with a rail beside it the reading column still lands
@@ -134,45 +91,65 @@ function TodayFocused() {
       {/* The dateline heads the *page*, not the log card. It used to live
           inside `DayLogCard`, which only the Day surface renders — so Morning
           and Evening printed no date at all and the day cursor could be walked
-          with nothing on screen changing to say so.
-
-          The surface tabs used to ride at the right-hand end of this band.
-          They are the header's second row now — the row that holds every other
-          view's tab row and rendered a redundant centred title here. See
-          `components/shell/topbar/SurfaceTabs.tsx`.
-
-          It is a child of `Page` rather than of the grid below, so it spans
-          both columns — zone 1 orients the whole page, not just the left of
-          it. `Page`'s own `aside` prop cannot do that, which is why the split
-          is a grid here instead. */}
+          with nothing on screen to say so. It spans all three columns because
+          zone 1 orients the whole page, not the left of it. */}
       <DayHeader date={date} />
 
-      {lead}
+      <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[340px_minmax(0,1fr)_380px]">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <DayLogCard date={date} />
+        </div>
 
-      {/* `CardGrid`, and this flipped once on measurement.
-          With thirteen cards a `MasonryGrid` packed tighter (2,453px against
-          2,540px) and was the right call. Moving the five habit charts to
-          Insights left five cards of very unequal height, and CSS multi-column
-          cannot split an atomic 831px card: it put that one alone in a column
-          and the rest in the other, leaving a **620px hole**. Rows cannot do
-          that — they align, which wastes a little inside a row and nothing at
-          the end of one.
+        {/* Habits spans both rows: it is the tallest card and the one whose
+            width the month grid below actually cares about. */}
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <HabitsSurface slot="capture" />
+        </div>
 
-          Measured on `?day=2026-09-22`: page 2,282 → 2,081px, biggest gap 620
-          → 131px. The right primitive depends on what is in it, so re-measure
-          when the card set changes rather than inheriting this choice. */}
-      <CardGrid className="mt-4 sm:mt-5">{rest}</CardGrid>
+        <div className="lg:col-start-3 lg:row-start-1">
+          <WellbeingCard key={`w-${date}`} date={date} />
+        </div>
 
-      {/* VISUALISATIONS, under everything that asks for input.
-          Full width rather than in a column: its centrepiece is a 31-column
-          month grid wanting ~910px, and the 62/38 split would give it ~730 and
-          a horizontal scrollbar over the last week of the month — the part you
-          most want to see. This is why the habits surface was a separate page
-          shape; below the split it gets the width without the separation. */}
-      <HabitsSurface slot="review" />
+        <div className="lg:col-start-1 lg:row-start-2">
+          <WritingCard key={`x-${date}`} date={date} />
+        </div>
+
+        {/* A future day has no fast to run, and the column simply ends. */}
+        <div className="lg:col-start-3 lg:row-start-2">
+          {!future && <FastingCard date={date} />}
+          <StatusStrip date={date} onNavigate={nav} />
+        </div>
+      </div>
+
+      {/* EVERYTHING THAT REPORTS, behind one fold.
+          The four charts and the plan card are not capture — they are what the
+          capture adds up to, and they were the difference between a Today that
+          fits a 1440 viewport and one that does not.
+
+          `CollapsibleSection`, specifically, and not a `SectionRail`: a rail is
+          a nav of single-select buttons with no `aria-expanded`, so
+          `openFolds()` in the a11y gate cannot find it and would quietly scan
+          one group of these instead of all of them (COD-237). A section folds a
+          whole titled region and announces itself, so the gate reaches inside.
+
+          `defaultOpen={false}` with a `stickyKey`: shut on a first visit, and
+          remembered for anyone who wants it open. */}
+      <CollapsibleSection
+        title="How the day adds up"
+        subtitle="plan, trends and the month — none of it needs answering"
+        defaultOpen={false}
+        stickyKey="today.review"
+        className="mt-4 sm:mt-5"
+      >
+        <div className="flex flex-col gap-4 sm:gap-5">
+          <TodayPlanCard date={date} />
+          <HabitsSurface slot="review" />
+        </div>
+      </CollapsibleSection>
     </Page>
   )
 }
+
 
 function TodayClassic() {
   const { data } = useJournal()
@@ -211,7 +188,7 @@ function TodayClassic() {
       {!hidden.includes('plan') && <TodayPlanCard date={date} />}
       <CoachCard />
       {!hidden.includes('penalty') && <PenaltyCard />}
-      <FastingCard />
+      <FastingCard date={date} />
       <WeeklyGoalRings date={date} />
       {hasFlash && !hidden.includes('onThisDay') && (
         <Card band title="On this day" subtitle="From earlier in your journal" hideInfo collapsible>

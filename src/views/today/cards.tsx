@@ -1,4 +1,4 @@
-import { Barbell, Drop, ForkKnife, NotePencil, PencilSimple, Timer } from '@/components/icons'
+import { Barbell, NotePencil, PencilSimple, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useJournal } from '../../store'
@@ -15,6 +15,7 @@ import { MOOD_REASONS, MOOD_REASON_LABEL } from '../../lib/moodPatterns'
 import type { MoodReason } from '../../lib/types'
 import { SegmentScale } from '../../components/fields/SegmentScale'
 import { currentStreak } from '../../lib/stats'
+import { dayHabitSummary } from '../../lib/streak'
 import { cat, onRaised } from '../../lib/colors'
 import { promptForDay } from '../../lib/prompts'
 import { DEFAULT_FAST_TARGET, elapsedHours, fmtDuration } from '../../lib/fasting'
@@ -50,7 +51,7 @@ import { DEFAULT_FAST_TARGET, elapsedHours, fmtDuration } from '../../lib/fastin
  * sentence shares the second line with the page number.
  */
 export function DayMasthead({
-  date, isToday, weather, entryCount, openTasks, taskCount, right,
+  date, isToday, weather, entryCount, openTasks, taskCount, right, habits,
 }: {
   date: string
   isToday: boolean
@@ -60,6 +61,8 @@ export function DayMasthead({
   taskCount: number
   /** Controls that belong to the day rather than to a card — the surface tabs. */
   right?: ReactNode
+  /** The day's habit standing, rendered beside the page number. */
+  habits?: ReactNode
 }) {
   const d = fromISODay(date)
   const weekday = d.toLocaleDateString(undefined, { weekday: 'long' })
@@ -94,10 +97,13 @@ export function DayMasthead({
         </h2>
         {right}
       </div>
-      <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-line pt-2">
+      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-line pt-2">
         <p className="min-w-0 text-body text-fg-1">{line}</p>
-        <span className="shrink-0 font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
-          № {pageNo}
+        <span className="flex shrink-0 items-baseline gap-3">
+          {habits}
+          <span className="font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
+            № {pageNo}
+          </span>
         </span>
       </div>
     </header>
@@ -126,7 +132,43 @@ export function DayHeader({ date, right }: { date: string; right?: ReactNode }) 
       openTasks={taskCount - doneCount}
       taskCount={taskCount}
       right={right}
+      habits={<DayHabitLine date={date} />}
     />
+  )
+}
+
+/**
+ * "3 of 8 habits done · 2 streaks at risk", beside the page number.
+ *
+ * Both numbers come from `dayHabitSummary`, not from anything counted here —
+ * the habits card below renders the same ratio, and two independent counts of
+ * the same fact a few hundred pixels apart is the duplication the masthead was
+ * rewritten to stop.
+ *
+ * Renders nothing when no habit is scheduled: a journal with no habits has not
+ * failed at them, and "0 of 0 done" is a verdict on a question nobody asked.
+ * The at-risk clause is dropped at zero rather than printed as "0 at risk",
+ * which reads as a warning that resolves to nothing.
+ *
+ * `onRaised('peach')` rather than a faded token — a warning that recedes is one
+ * no contrast gate can check, and this sits on the page ground, not a card.
+ */
+function DayHabitLine({ date }: { date: string }) {
+  const { data } = useJournal()
+  const { due, done, atRisk } = dayHabitSummary(data, date)
+  if (due === 0) return null
+  return (
+    <span className="text-label tabular-nums text-fg-2">
+      {done} of {due} habits done
+      {atRisk > 0 && (
+        <>
+          {' · '}
+          <span style={{ color: onRaised('peach') }}>
+            {atRisk} streak{atRisk === 1 ? '' : 's'} at risk
+          </span>
+        </>
+      )}
+    </span>
   )
 }
 
@@ -244,6 +286,14 @@ export function WellbeingCard({ date }: { date: string }) {
   // editing yesterday must not leave tomorrow's summary expanded, and a
   // setState-in-effect to do that costs a second render every day change.
   const [editing, setEditing] = useState(false)
+  // Same `key={date}` reset as `editing` above. Opens itself when something is
+  // already recorded is WRONG here — a filled field that re-opens on every
+  // visit is the "same empty boxes at 10am" complaint in a second form.
+  const [reasonsOpen, setReasonsOpen] = useState(false)
+  const reasonSummary = [
+    ...reasons.map((r) => MOOD_REASON_LABEL[r]),
+    ...(metric?.moodReasonNote ? [metric.moodReasonNote] : []),
+  ].join(' · ')
 
   if (complete && !editing) {
     return (
@@ -335,42 +385,55 @@ export function WellbeingCard({ date }: { date: string }) {
           taxonomy that blocks the true answer gets the nearest wrong one
           instead, which is worse than no answer. Read back by
           `moodReasonImpact` on Insights → Mood. */}
+      {/* COLLAPSED BY DEFAULT, because nine chips and a text box is the tallest
+          thing in this card and it is the one optional field on it. Open, it is
+          ~150px of the check-in column; shut, it is a single line that still
+          says what has been picked, so nothing is hidden — only folded.
+
+          A real `<button>` with `aria-expanded`, not a div: `openFolds()` in the
+          a11y gate finds content by exactly that attribute, so a fold without it
+          is content the gate silently stops scanning. The summary doubles as the
+          label — the button announces "What shaped today, Work stress" rather
+          than a bare "Edit", which is the shape that makes an icon-only toggle
+          useless to a screen reader. */}
       <div className="mt-4 border-t border-line pt-3">
-        <ChipPick
-          label="What shaped today"
-          tone="peach"
-          multi
-          value={reasons}
-          onChange={toggleReason}
-          options={MOOD_REASONS.map((r) => ({ value: r, label: MOOD_REASON_LABEL[r] }))}
-          hint="Optional. Tick anything that moved the day — it is what the mood charts read."
-        />
-        <Input
-          value={metric?.moodReasonNote ?? ''}
-          onChange={(e) => setMetric(date, { moodReasonNote: e.target.value || undefined })}
-          placeholder="Something else? (optional)"
-          aria-label="Another reason today went the way it did"
-          className="mt-2"
-        />
-      </div>
-      <div className="mt-4 border-t border-line pt-3">
-        <p className="mb-2 text-body text-fg-1">What broke your fast</p>
-        {/* These record a choice, so the selected one gets the accent wash
-            rather than the accent fill — a filled pill here read as the
-            screen's primary action, which it never was. */}
-        <div className="flex gap-2">
-          {([['food', ForkKnife, 'Food'], ['drink', Drop, 'Drink']] as const).map(([kind, glyph, label]) => (
-            <Button
-              key={kind}
-              variant="ghost"
-              aria-pressed={metric?.fastBreak === kind}
-              onClick={() => setMetric(date, { fastBreak: metric?.fastBreak === kind ? undefined : kind })}
-              className={`press-3d inline-flex min-h-11 items-center gap-1.5 rounded-control ${metric?.fastBreak === kind ? 'bg-brand-wash font-medium text-brand-text' : ''}`}
-            >
-              <Icon as={glyph} size="sm" /> {label}
-            </Button>
-          ))}
-        </div>
+        <button
+          type="button"
+          aria-expanded={reasonsOpen}
+          onClick={() => setReasonsOpen((o) => !o)}
+          className="flex min-h-11 w-full items-baseline justify-between gap-3 text-left"
+        >
+          <span className="text-body text-fg-1">
+            What shaped today
+            {!reasonsOpen && reasonSummary && <span className="ml-2 text-label text-fg-2">{reasonSummary}</span>}
+          </span>
+          <span className="shrink-0 text-label text-mauve">{reasonsOpen ? 'Done' : reasonSummary ? 'Edit' : 'Add'}</span>
+        </button>
+        {reasonsOpen && (
+          <div className="collapse-in mt-3">
+            {/* The legend says something DIFFERENT from the button above it.
+                `ChipPick`'s label is a real `<legend>` naming the fieldset, so
+                suppressing it would cost the group its name — and repeating the
+                button's words verbatim would have a screen reader read "What
+                shaped today" twice in a row. */}
+            <ChipPick
+              label="Pick any that applied"
+              tone="peach"
+              multi
+              value={reasons}
+              onChange={toggleReason}
+              options={MOOD_REASONS.map((r) => ({ value: r, label: MOOD_REASON_LABEL[r] }))}
+              hint="Optional. Tick anything that moved the day — it is what the mood charts read."
+            />
+            <Input
+              value={metric?.moodReasonNote ?? ''}
+              onChange={(e) => setMetric(date, { moodReasonNote: e.target.value || undefined })}
+              placeholder="Something else? (optional)"
+              aria-label="Another reason today went the way it did"
+              className="mt-2"
+            />
+          </div>
+        )}
       </div>
     </Card>
   )

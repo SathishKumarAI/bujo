@@ -19,7 +19,7 @@ import { Clock, FadersHorizontal, GridFour, PersonSimpleRun, Plus, RadioButton, 
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { habitsDueOn } from '../../lib/schedule'
+import { dayHabitSummary } from '../../lib/streak'
 import { addDays, monthDays, prettyMonth, todayISO, weekColumn } from '../../lib/date'
 import { Card, Empty, Segmented } from '../ui'
 import { Button } from '../ui/button'
@@ -27,7 +27,7 @@ import { useCursor } from '../shell/Page'
 import { DisclosureRow, PageLayout, StatBar } from '../page'
 import { SmartInput } from '../SmartInput'
 import { cat, HABIT_COLORS, onAccent, onRaised } from '../../lib/colors'
-import { habitStreak, habitDoneOn } from '../../lib/stats'
+import { habitStreak } from '../../lib/stats'
 import { trackerSummary } from '../../lib/habitStats'
 import { rollingAverage } from '../../lib/correlations'
 import { RadialTracker } from '../RadialTracker'
@@ -196,8 +196,11 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   // correction and the sharper one: `habitDoneOn` is true for an *avoid* habit
   // when you LOGGED it, which means you slipped — so slipping on "no doomscroll"
   // used to push the "done" count UP. A ratio that rewards failure.
-  const todaysHabits = habitsDueOn(data, today, { includeArchived: s.trackerShowArchived, buildOnly: true })
-  const todayDone = todaysHabits.filter((h) => habitDoneOn(data, h, today)).length
+  //
+  // Both halves now live in `dayHabitSummary`, because Today's masthead prints
+  // the same ratio and a third independent count was exactly how the first two
+  // came to disagree.
+  const { due: dueToday, done: todayDone, pct: donePct } = dayHabitSummary(data, today, { includeArchived: s.trackerShowArchived })
 
   return (
     <>
@@ -222,10 +225,26 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
       zone2={slot === 'capture' ? (
 
         <Card band
-          title="Today"
+          title="Habits"
           subtitle="tap to mark the day"
-          right={todaysHabits.length ? <span className="text-label text-fg-2">{todayDone}/{todaysHabits.length} done</span> : undefined}
+          right={dueToday ? <span className="text-label tabular-nums text-fg-2">{todayDone} of {dueToday} done</span> : undefined}
         >
+          {/* A 4px rule, not a ring or a percentage. The ratio is already stated
+              in words beside the title; this is the same fact at a glance, and
+              it is `aria-hidden` for exactly that reason — a screen reader that
+              has just heard "3 of 8 done" does not need "38 percent" as well.
+
+              `donePct` is null when nothing is due, which is why this is a
+              `!= null` test and not a truthiness one: 0% is a real, renderable
+              answer (nothing done yet) and must still draw the empty track. */}
+          {donePct != null && (
+            <div className="mb-3 h-1 w-full overflow-hidden rounded-pill bg-ink-2" aria-hidden>
+              <div
+                className="h-full rounded-pill transition-[width] duration-300"
+                style={{ width: `${donePct}%`, background: cat('mauve') }}
+              />
+            </div>
+          )}
           <HabitRows habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
           <DisclosureRow label="Add a habit">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">

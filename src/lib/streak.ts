@@ -2,7 +2,7 @@ import type { Habit, JournalData, Relapse, AddictionStreak } from './types'
 import { addDays, dayDiff, fromISODay, todayISO } from './date'
 import { STREAK_MILESTONES as MILESTONE_DAYS } from './milestones'
 import { habitDoneOn, habitStreak } from './stats'
-import { isScheduledOn } from './schedule'
+import { habitsDueOn, isScheduledOn } from './schedule'
 
 /**
  * Streak (abstinence) analytics — pure + testable. Goes beyond "days since the
@@ -406,4 +406,49 @@ export function haltTally(data: JournalData): { state: HaltState; label: string;
     .map((s) => ({ state: s.id, label: s.label, count: counts.get(s.id) ?? 0 }))
     .filter((x) => x.count > 0)
     .sort((a, b) => b.count - a.count)
+}
+
+export interface DayHabitSummary {
+  /** Build habits scheduled on this day (avoid habits excluded — see below). */
+  due: number
+  /** How many of those are done. */
+  done: number
+  /** 0–100, and `null` when nothing is due — "no habits" is not "0% done". */
+  pct: number | null
+  /** Streaks a single missed day would break: `atRiskHabits(...).length`. */
+  atRisk: number
+}
+
+/**
+ * THE DAY'S HABIT LINE, computed once.
+ *
+ * Today's masthead, its habits card and its progress bar were each about to
+ * derive "3 of 8 done" for themselves, which is how two numbers a few hundred
+ * pixels apart start disagreeing — the duplication the masthead rewrite already
+ * removed once, coming back as arithmetic instead of as markup.
+ *
+ * `buildOnly`, because `habitDoneOn` is true for an *avoid* habit when you
+ * LOGGED it, i.e. when you slipped: counting those would let a bad day push the
+ * ratio up. Same correction `HabitsSurface` carries, now in one place.
+ *
+ * `pct` is null rather than 0 when nothing is scheduled. A journal with no
+ * habits has not failed at them, and "0%" in the masthead is a verdict on a
+ * question nobody asked — the `count ? sum / count : 0` trap, which this file
+ * already fixed once in `monthlyCompletion`.
+ */
+export function dayHabitSummary(
+  data: JournalData,
+  day = todayISO(),
+  /** Trackers' "show archived" setting, so the masthead and the habits card
+   *  cannot disagree when it is on — the failure this helper exists to stop. */
+  opts: { includeArchived?: boolean } = {},
+): DayHabitSummary {
+  const due = habitsDueOn(data, day, { buildOnly: true, includeArchived: opts.includeArchived })
+  const done = due.filter((h) => habitDoneOn(data, h, day)).length
+  return {
+    due: due.length,
+    done,
+    pct: due.length > 0 ? Math.round((done / due.length) * 100) : null,
+    atRisk: atRiskHabits(data, day).length,
+  }
 }
