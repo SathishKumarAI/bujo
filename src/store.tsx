@@ -39,6 +39,7 @@ import { setActiveTheme } from './lib/colors'
 import { generateRecurring } from './lib/recurrence'
 import { DEMO_VERSION, generateDemoData } from './lib/demo'
 import { notify } from './lib/notify'
+import { defaultUnitFor } from './lib/addictionUnits'
 
 // ── Reducer with undo/redo history ──────────────────────────────────────────
 
@@ -177,7 +178,7 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[] }) => void
+  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5; outcome?: 'resisted' | 'followed'; lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' }) => void
   removeUrge: (id: string) => void
   /**
    * One-tap "it happened today" with a count. `null` targets the primary
@@ -189,6 +190,8 @@ interface Store {
   removeTriggerPlan: (id: string) => void
   // per-addiction streaks (BUJO-199)
   addAddiction: (name: string) => void
+  /** Change what an addiction's amounts are measured in. */
+  setAddictionUnit: (id: string, unit: string) => void
   removeAddiction: (id: string) => void
   relapseAddiction: (id: string, r: Omit<Relapse, 'id'>) => void
   /** Set the per-day money cost of the primary streak (#123). */
@@ -775,6 +778,18 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               trigger: entry?.trigger?.trim() || undefined, note: entry?.note?.trim() || undefined,
               intensity: entry?.intensity, technique: entry?.technique,
               halt: entry?.halt?.length ? entry.halt : undefined,
+              // WHICH addiction, so the ledger can attribute it. Undefined
+              // stays valid: an urge logged with nothing selected counts in the
+              // totals and is reported as `unattributed` rather than dropped.
+              addictionId: entry?.addictionId || undefined,
+              stress: entry?.stress,
+              // Absent means resisted — every row written before this field
+              // existed was a win, because that is all the button did.
+              outcome: entry?.outcome === 'followed' ? 'followed' : undefined,
+              // Only meaningful alongside `lonely`; dropped otherwise so a
+              // stale pick from a previous entry cannot survive into a row
+              // that never claimed to be lonely at all.
+              lonelyKind: entry?.halt?.includes('lonely') ? entry.lonelyKind : undefined,
             }],
           },
         })),
@@ -792,8 +807,21 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         patch((d) => {
           const n = name.trim()
           if (!n || (d.nofap.addictions ?? []).some((a) => a.name.toLowerCase() === n.toLowerCase())) return d
-          return { ...d, nofap: { ...d.nofap, addictions: [...(d.nofap.addictions ?? []), { id: uid('ad'), name: n, startedOn: todayISO(), best: 0, relapses: [] }] } }
+          // A preset name brings its own unit — cigarettes for Nicotine,
+          // minutes for Doomscrolling — because counting "sessions" of
+          // scrolling measures nothing. An unrecognised name gets `times`,
+          // which is never wrong, only less specific.
+          return { ...d, nofap: { ...d.nofap, addictions: [...(d.nofap.addictions ?? []), { id: uid('ad'), name: n, startedOn: todayISO(), best: 0, relapses: [], unit: defaultUnitFor(n) }] } }
         }),
+
+      setAddictionUnit: (id, unit) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            addictions: (d.nofap.addictions ?? []).map((a) => (a.id === id ? { ...a, unit } : a)),
+          },
+        })),
 
       removeAddiction: (id) =>
         removeWithUndo('Addiction', (d) => ({ ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).filter((a) => a.id !== id) } })),

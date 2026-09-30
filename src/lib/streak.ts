@@ -28,9 +28,23 @@ export const ADDICTION_PRESETS = [
   'Nail biting', 'Late-night snacking', 'Binge watching', 'News',
 ] as const
 
-export const URGE_PRESETS = [
-  'Porn', 'Masturbation', 'Smoking', 'Vaping', 'Alcohol',
-  'Junk food', 'Sugar', 'Doomscrolling', 'Gaming', 'Caffeine',
+/**
+ * COD-251 CLOSED: this list is now a SUBSET of `ADDICTION_PRESETS`, not a
+ * second vocabulary.
+ *
+ * It used to say "Smoking" where the addiction list says "Nicotine", so a
+ * default user who tracked Nicotine and logged a Smoking urge joined nothing —
+ * every per-addiction urge view was empty and looked like "no urges at any
+ * hour" (a measurement) rather than "nothing is labelled this" (a gap).
+ *
+ * The real fix is `UrgeWin.addictionId`, which joins by id and cannot drift.
+ * This list stays because a user with no addictions configured still needs
+ * something to tap, and the test below keeps it honest.
+ */
+export const URGE_PRESETS: readonly string[] = [
+  'Porn', 'Masturbation', 'Nicotine', 'Vaping', 'Alcohol',
+  'Junk food', 'Sugar', 'Doomscrolling', 'Social media', 'Short-form video',
+  'Gaming', 'Caffeine',
 ]
 
 /**

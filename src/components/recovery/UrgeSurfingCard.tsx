@@ -7,6 +7,7 @@ import { Button } from '../ui/button'
 import { cat, onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import { URGE_PRESETS, HALT_STATES, haltTally, type HaltState } from '../../lib/streak'
+import { LONELY_KINDS } from '../../lib/recoveryFeedback'
 import { techniqueRanking, matchPlanForTrigger } from '../../lib/urge'
 import { ChipPick } from '../ui/quickpick'
 import { notify } from '../../lib/notify'
@@ -72,11 +73,14 @@ const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
  * none of which are worth a phantom win.
  */
 export function UrgeSurfingCard() {
-  const { data, resistUrge, removeUrge } = useJournal()
+  const { data, resistUrge, removeUrge, logLapseDay } = useJournal()
   const [urge, setUrge] = useState('')
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
   const [halt, setHalt] = useState<HaltState[]>([])
+  const [addictionId, setAddictionId] = useState('')
+  const [lonelyKind, setLonelyKind] = useState('')
+  const addictions = data.nofap.addictions ?? []
   /** Guards the fat-finger double-tap; see the docstring above. */
   const lastUrgeAt = useRef(0)
 
@@ -87,13 +91,48 @@ export function UrgeSurfingCard() {
   const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
   const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
 
-  function logUrge() {
+  /**
+   * ONE FORM, TWO ENDINGS.
+   *
+   * An urge has two possible outcomes and the app only recorded one of them
+   * richly: resisting wrote the intensity, the HALT states, the technique and
+   * the trigger, while giving in wrote a date and a word through a different
+   * control on a different card. So the context was discarded at exactly the
+   * moment it was most worth having — the times you gave in are the ones you
+   * want fewer of.
+   *
+   * Both buttons write the same `UrgeWin` with the same fields and differ in
+   * one: `outcome`. `followed` additionally calls `logLapseDay`, because the
+   * STREAK and the occurrence count still come from `Relapse` — one number, one
+   * source, no double counting.
+   */
+  function logUrge(outcome: 'resisted' | 'followed') {
     const now = Date.now()
     if (now - lastUrgeAt.current < 3000) return
     lastUrgeAt.current = now
-    resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique, halt: halt.length ? halt : undefined })
-    setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([])
-    notify.success('Urge logged', 'Remove it from the list below if it was a mis-tap.')
+    // Falls back to the only addiction when there is exactly one: asking
+    // "which?" of someone tracking a single thing is a question with one
+    // answer, and a required field with one option is friction.
+    const forId = addictionId || (addictions.length === 1 ? addictions[0].id : undefined)
+    resistUrge({
+      trigger: urge.trim() || undefined,
+      intensity: intensity as 1 | 2 | 3 | 4 | 5,
+      technique,
+      halt: halt.length ? halt : undefined,
+      addictionId: forId,
+      outcome,
+      lonelyKind: (lonelyKind || undefined) as 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' | undefined,
+    })
+    if (outcome === 'followed') logLapseDay(forId ?? null)
+    setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([]); setAddictionId(''); setLonelyKind('')
+    if (outcome === 'resisted') {
+      notify.success('Urge logged', 'Remove it from the list below if it was a mis-tap.')
+    } else {
+      // Not "failure", not a red toast. The whole design bet on this page is
+      // that someone who feels punished for the honest entry stops making it,
+      // and an app that only hears about good days knows nothing.
+      notify.success('Logged', 'That is data, not a verdict — it is what makes the patterns below real.')
+    }
   }
 
   return (
@@ -101,15 +140,47 @@ export function UrgeSurfingCard() {
       {/* THE ACT, FIRST · see the docstring. Full width and `lg` (44px) because
           this is the control a thumb aims at mid-urge, and `primary` because
           it is the page's one loud thing to do. */}
-      <Button variant="primary" size="lg" onClick={logUrge}
-        className="mb-4 w-full gap-2">
-        <Icon as={HandFist} size="md" /> Log this urge
-      </Button>
+      {/* TWO BUTTONS, ONE FORM. The fields above apply to whichever you press,
+          so the same moment is captured either way and the only difference is
+          how it ended.
+
+          `primary` stays on "I held" alone — the page's one loud control, and
+          the outcome worth aiming at. "I gave in" is `secondary`: reachable,
+          equally sized (44px, same row), and deliberately not styled as a
+          failure. A destructive-looking button here would be the app telling
+          someone they are bad for being honest. */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button variant="primary" size="lg" onClick={() => logUrge('resisted')} className="flex-1 gap-2">
+          <Icon as={HandFist} size="md" /> I felt it and held
+        </Button>
+        <Button variant="secondary" size="lg" onClick={() => logUrge('followed')} className="flex-1 gap-2">
+          I gave in
+        </Button>
+      </div>
+      <p className="-mt-2 mb-4 text-label text-fg-2">
+        Both count. Logging the ones you gave in is what lets the page show you what was different
+        about them.
+      </p>
       {/* Was a hand-rolled chip row with inline border/background/colour
           ternaries — and so were the technique and HALT rows below it,
           three copies of the same markup differing only in accent. They
           are one component now (`ChipPick`), which also gives them the
           44px targets and the press feedback the copies never had. */}
+      {/* WHICH ONE. Without this the ledger cannot tell a resisted cigarette
+          from a resisted scroll, and every per-addiction reading on the page is
+          a name join that matches nothing (COD-251). Sourced from the user's
+          OWN addictions, so the two vocabularies cannot drift again; the preset
+          chips below stay for anyone who has not added any yet. */}
+      {addictions.length > 0 && (
+        <ChipPick
+          label="Which one?"
+          className="mb-3"
+          value={addictionId}
+          onChange={(v) => setAddictionId(addictionId === v ? '' : String(v))}
+          options={addictions.map((a) => ({ value: a.id, label: a.name }))}
+          hint="So the win lands on the right streak."
+        />
+      )}
       <ChipPick
         label="What is it?"
         value={urge || null}
@@ -123,7 +194,7 @@ export function UrgeSurfingCard() {
            eleventh option, which is what it is. */
         after={
           <>
-            <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge()} placeholder="…or type your own" list="urge-presets" className="w-[11rem]" />
+            <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge('resisted')} placeholder="…or type your own" list="urge-presets" className="w-[11rem]" />
             {/* `TriggerPlansCard` in zone 3 lists against this same id. An `id`
                 reference across two zones is the kind of link a file split
                 breaks silently, so it is written down at both ends. */}
@@ -192,6 +263,22 @@ export function UrgeSurfingCard() {
           onChange={(id) => setHalt((cur) => cur.includes(id as typeof cur[number]) ? cur.filter((x) => x !== id) : [...cur, id as typeof cur[number]])}
           options={HALT_STATES.map((h) => ({ value: h.id, label: h.label }))}
         />
+        {/* WHICH KIND OF LONELY — only once `lonely` is ticked.
+            Progressive disclosure because it is a real question and asking it
+            of everyone would add a fifth chip row to a form used mid-urge. It
+            earns the tap by changing the advice: "arrange company" is right for
+            being alone and wrong for being unseen in a room full of people, and
+            the app cannot tell those apart without asking. */}
+        {halt.includes('lonely') && (
+          <ChipPick
+            label="What kind of lonely?"
+            className="mt-3"
+            value={lonelyKind}
+            onChange={(v) => setLonelyKind(lonelyKind === v ? '' : String(v))}
+            options={LONELY_KINDS.map((k) => ({ value: k.id, label: k.label, hint: k.why }))}
+            hint="Each one points somewhere different — that is why it asks."
+          />
+        )}
       </div>
       {/* Most-effective technique tally (U8) */}
       {techRank.length > 0 && (

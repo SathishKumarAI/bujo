@@ -83,7 +83,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 2
+export const DEMO_VERSION = 5
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -401,6 +401,19 @@ export function generateDemoData(today = todayISO()): JournalData {
    */
   const lastSunday = addDays(today, -fromISODay(today).getDay())
   const sunday = (n: number) => addDays(lastSunday, -7 * n)
+  /**
+   * The addiction ids are hoisted so `urgeLog` can point at them.
+   *
+   * Without this the seed could only give urges a free-text trigger, and the
+   * feedback ledger — which joins on `addictionId` — would show every seeded
+   * urge as "unattributed" while the rows it exists to fill read zero. A demo
+   * that cannot render the feature is the trap this file's own comments warn
+   * about, one domain over.
+   */
+  const NICOTINE_ID = uid('ad')
+  const SCROLL_ID = uid('ad')
+  const PORN_ID = uid('ad')
+
   j.nofap = {
     startedOn: addDays(today, -16),
     best: 24,
@@ -450,22 +463,37 @@ export function generateDemoData(today = todayISO()): JournalData {
      * broken, which is indistinguishable from a broken one.
      */
     urgeLog: [
-      { id: uid('u'), date: addDays(today, -6), at: `${addDays(today, -6)}T23:05:00`, trigger: 'Doomscrolling', intensity: 4 },
-      { id: uid('u'), date: addDays(today, -3), at: `${addDays(today, -3)}T23:40:00`, trigger: 'Doomscrolling', intensity: 5 },
+      { id: uid('u'), date: addDays(today, -6), at: `${addDays(today, -6)}T23:05:00`, trigger: 'Doomscrolling', intensity: 4, addictionId: SCROLL_ID },
+      { id: uid('u'), date: addDays(today, -3), at: `${addDays(today, -3)}T23:40:00`, trigger: 'Doomscrolling', intensity: 5, addictionId: SCROLL_ID },
       /* Two of these sit on the slump days seeded above (−61, −13) on purpose:
          `moodBandRisk`'s Low row had **zero** urges and therefore a dash in the
          intensity column — the single cell the card exists to fill. Put there by
          hand, like the Nicotine trend and the Sunday peak, because a demo has to
          contain the pattern it claims to reveal. */
-      { id: uid('u'), date: addDays(today, -61), at: `${addDays(today, -61)}T23:40:00`, trigger: 'Alone in the evening', intensity: 5, halt: ['lonely', 'tired'], technique: 'delay' },
-      { id: uid('u'), date: addDays(today, -41), at: `${addDays(today, -41)}T21:15:00`, trigger: 'Work stress', intensity: 4, halt: ['tired'], technique: 'surf' },
-      { id: uid('u'), date: addDays(today, -33), at: `${addDays(today, -33)}T13:20:00`, trigger: 'Boredom', intensity: 2, technique: 'delay' },
-      { id: uid('u'), date: addDays(today, -24), at: `${addDays(today, -24)}T22:50:00`, trigger: 'Doomscrolling', intensity: 4, halt: ['tired'], technique: 'halt' },
-      { id: uid('u'), date: addDays(today, -13), at: `${addDays(today, -13)}T20:05:00`, trigger: 'Argument at home', intensity: 5, halt: ['angry', 'lonely'], technique: 'reach-out' },
-      { id: uid('u'), date: addDays(today, -9), at: `${addDays(today, -9)}T11:45:00`, trigger: 'After a meal', intensity: 1, technique: 'surf' },
-      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2 },
-      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4 },
+      { id: uid('u'), date: addDays(today, -61), at: `${addDays(today, -61)}T23:40:00`, trigger: 'Alone in the evening', intensity: 5, halt: ['lonely', 'tired'], technique: 'delay', addictionId: SCROLL_ID, stress: 4 },
+      { id: uid('u'), date: addDays(today, -41), at: `${addDays(today, -41)}T21:15:00`, trigger: 'Work stress', intensity: 4, halt: ['tired'], technique: 'surf', addictionId: NICOTINE_ID, stress: 5 },
+      { id: uid('u'), date: addDays(today, -33), at: `${addDays(today, -33)}T13:20:00`, trigger: 'Boredom', intensity: 2, technique: 'delay', addictionId: SCROLL_ID },
+      { id: uid('u'), date: addDays(today, -24), at: `${addDays(today, -24)}T22:50:00`, trigger: 'Doomscrolling', intensity: 4, halt: ['tired'], technique: 'halt', addictionId: SCROLL_ID },
+      { id: uid('u'), date: addDays(today, -13), at: `${addDays(today, -13)}T20:05:00`, trigger: 'Argument at home', intensity: 5, halt: ['angry', 'lonely'], technique: 'reach-out', addictionId: SCROLL_ID, stress: 5 },
+      { id: uid('u'), date: addDays(today, -9), at: `${addDays(today, -9)}T11:45:00`, trigger: 'After a meal', intensity: 1, technique: 'surf', addictionId: NICOTINE_ID },
+      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2, addictionId: SCROLL_ID, technique: 'delay' },
+      { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4, addictionId: NICOTINE_ID, halt: ['tired'], technique: 'delay' },
       { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn', intensity: 3 },
+
+      /**
+       * URGES THAT ENDED THE OTHER WAY.
+       *
+       * `contrastOutcomes` needs at least three rows on BOTH sides before it
+       * says anything, so a seed with only wins renders an empty section and
+       * the feature reads as broken. These carry the pattern the comparison
+       * exists to find — loneliness and a stronger urge on the nights it went
+       * the other way — because a demo that contains no relationship makes a
+       * working analysis look like a broken one.
+       */
+      { id: uid('u'), date: addDays(today, -30), at: `${addDays(today, -30)}T23:55:00`, trigger: 'Alone, late', intensity: 5, halt: ['lonely', 'tired'], addictionId: SCROLL_ID, outcome: 'followed', stress: 4 },
+      { id: uid('u'), date: addDays(today, -22), at: `${addDays(today, -22)}T00:40:00`, trigger: 'Could not sleep', intensity: 5, halt: ['lonely'], addictionId: SCROLL_ID, outcome: 'followed', stress: 3 },
+      { id: uid('u'), date: addDays(today, -15), at: `${addDays(today, -15)}T23:20:00`, trigger: 'Empty evening', intensity: 4, halt: ['lonely', 'tired'], addictionId: SCROLL_ID, outcome: 'followed', stress: 4 },
+      { id: uid('u'), date: addDays(today, -7), at: `${addDays(today, -7)}T22:30:00`, trigger: 'Alone, late', intensity: 5, halt: ['lonely'], addictionId: SCROLL_ID, outcome: 'followed', stress: 5 },
     ],
     plans: [
       { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },
@@ -492,7 +520,7 @@ export function generateDemoData(today = todayISO()): JournalData {
      */
     addictions: [
       {
-        id: uid('ad'), name: 'Nicotine', startedOn: today, best: 11, costPerDay: 9,
+        id: NICOTINE_ID, name: 'Nicotine', startedOn: today, best: 11, costPerDay: 9, unit: 'cigarettes',
         // Eight weeks of Sundays, because the trend card's window is eight
         // weeks: seeded over six it read **rising** for a sequence that falls
         // 14 → 8, since the two empty leading buckets dragged the first half's
@@ -512,10 +540,30 @@ export function generateDemoData(today = todayISO()): JournalData {
         ],
       },
       {
-        id: uid('ad'), name: 'Doomscrolling', startedOn: addDays(today, -4), best: 9,
+        /**
+         * PORN · the unquantified case, deliberately.
+         *
+         * `hasLapseQuantity` gates a whole card, and a seed where every streak
+         * carries an amount never exercises its false branch — `demo.test.ts`
+         * asserts one stays bare for exactly that reason. Doomscrolling used to
+         * be it, and could not stay once its unit became minutes: a bare
+         * `count ?? 1` would have meant ONE MINUTE of scrolling, which is a
+         * default value rendered as a measurement.
+         *
+         * So the false case moves to a streak where "once, unquantified" is a
+         * truthful reading rather than an artefact.
+         */
+        id: PORN_ID, name: 'Porn', startedOn: addDays(today, -11), best: 24, unit: 'times',
         relapses: [
-          { id: uid('r'), date: addDays(today, -19), trigger: 'In bed', note: '' },
-          { id: uid('r'), date: addDays(today, -4), trigger: 'In bed', note: '' },
+          { id: uid('r'), date: addDays(today, -34), trigger: 'Alone, late', note: '' },
+          { id: uid('r'), date: addDays(today, -11), trigger: 'Could not sleep', note: '' },
+        ],
+      },
+      {
+        id: SCROLL_ID, name: 'Doomscrolling', startedOn: addDays(today, -4), best: 9, unit: 'minutes',
+        relapses: [
+          { id: uid('r'), date: addDays(today, -19), trigger: 'In bed', note: '', count: 95 },
+          { id: uid('r'), date: addDays(today, -4), trigger: 'In bed', note: '', count: 140 },
         ],
       },
     ],

@@ -101,12 +101,15 @@ describe('Recovery · the registry is the page', () => {
    * and landing on the first row for its own sake is a coin toss. Someone opens
    * Recovery to see where the streak stands.
    */
-  it('opens on one real group, and it is Progress', () => {
+  it('opens on one real group, and it is the feedback ledger', () => {
     const { container } = mount()
     const groups = [...container.querySelectorAll('[data-domain]')]
     expect(groups).toHaveLength(1)
     expect(groups[0].getAttribute('data-domain')).toBe(DEFAULT_GROUP)
-    expect(DEFAULT_GROUP).toBe('progress')
+    // Moved from `progress` deliberately: a streak counts days, the ledger
+    // counts decisions, and "did that count for me or against me" is the first
+    // question anyone has on this page.
+    expect(DEFAULT_GROUP).toBe('feedback')
   })
 
   /**
@@ -230,22 +233,43 @@ describe('Recovery · the registry is the page', () => {
     await user.click(railRow(GROUP_LABEL.patterns))
     const cards = [...container.querySelectorAll('[data-card="addictionbreakdown"] > section')]
     const text = (name: string) => cards.find((c) => c.querySelector('h2')?.textContent?.trim() === name)!.textContent!
-    expect(text('Doomscrolling')).toContain('too few to call a trend')
+    // Porn is the seed's two-event, unquantified streak — it took that role
+    // from Doomscrolling, which now measures in minutes and therefore carries
+    // real amounts. The assertion is unchanged; only its subject moved.
+    expect(text('Porn')).toContain('too few to call a trend')
     expect(text('Nicotine')).toMatch(/falling|rising|holding/)
     expect(text('Nicotine')).not.toContain('too few to call')
     // And an unquantified streak must not print its day count twice.
-    expect(text('Doomscrolling')).not.toContain('Days affected')
-    expect(text('Doomscrolling')).toContain('Lapse days')
+    expect(text('Porn')).not.toContain('Days affected')
+    expect(text('Porn')).toContain('Lapse days')
   })
 
-  it('puts the urge submit before the fields it annotates', () => {
+  it('puts the urge submits before the fields they annotate', () => {
     const { container } = mount()
     const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
     const controls = [...card.querySelectorAll('button, fieldset, input')]
-    const submit = controls.findIndex((el) => /log this urge/i.test(el.textContent || ''))
+    const held = controls.findIndex((el) => /felt it and held/i.test(el.textContent || ''))
+    const gaveIn = controls.findIndex((el) => /gave in/i.test(el.textContent || ''))
     const firstField = controls.findIndex((el) => el.tagName === 'FIELDSET')
-    expect(submit).toBeGreaterThanOrEqual(0)
+    expect(held).toBeGreaterThanOrEqual(0)
+    expect(gaveIn).toBeGreaterThanOrEqual(0)
     expect(firstField).toBeGreaterThanOrEqual(0)
-    expect(submit).toBeLessThan(firstField)
+    // The act stays above the fields it annotates — the original point of this
+    // test — and BOTH endings do, because an urge has two and the form is one.
+    expect(Math.max(held, gaveIn)).toBeLessThan(firstField)
+  })
+
+  /**
+   * The asymmetry that made "gave in" an afterthought is the thing this feature
+   * exists to remove, so it is asserted rather than trusted: both outcomes are
+   * reachable from the same card, and neither is styled as a punishment.
+   */
+  it('offers both endings from the same form', () => {
+    const { container } = mount()
+    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    const labels = [...card.querySelectorAll('button')].map((b) => (b.textContent || '').toLowerCase())
+    expect(labels.some((l) => /held/.test(l))).toBe(true)
+    expect(labels.some((l) => /gave in/.test(l))).toBe(true)
+    expect(card.textContent).toMatch(/Both count/)
   })
 })

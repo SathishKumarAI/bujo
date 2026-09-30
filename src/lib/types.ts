@@ -504,6 +504,76 @@ export interface UrgeWin {
   /** HALT self-check: which unmet needs accompanied the urge (Hungry/Angry/
    *  Lonely/Tired). Surfacing these reveals the real driver behind cravings. */
   halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]
+  /**
+   * WHICH addiction this urge was for — the field whose absence made every
+   * per-addiction question unanswerable.
+   *
+   * Without it, "I resisted porn" and "I resisted a cigarette" are the same
+   * record distinguished only by free text, so the page could count urges in
+   * total and never tell you whether YOUR PORN streak is going well. It is also
+   * the root of COD-251: joining urges to addictions by NAME failed because
+   * `ADDICTION_PRESETS` says "Nicotine" and `URGE_PRESETS` said "Smoking".
+   *
+   * Optional and additive. An urge logged before this existed has no id and is
+   * counted in the totals but not attributed — `unattributed` in the ledger
+   * says how many, rather than silently dropping them.
+   */
+  addictionId?: string
+  /**
+   * WHAT KIND OF LONELY — asked only when `halt` includes `lonely`.
+   *
+   * The split is not decoration: each kind points at a DIFFERENT action, and
+   * that is the only reason to ask. "Arrange company" is good advice for
+   * `alone` and actively wrong for `unseen`, where there were already people
+   * in the room. An app that treats all loneliness as one thing gives the same
+   * suggestion to both and is useless to at least one of them.
+   *
+   * Loosely follows Weiss's split between SOCIAL loneliness (no network) and
+   * EMOTIONAL loneliness (no close attachment), with `bored` included because
+   * understimulation is very commonly logged as loneliness and needs a
+   * completely different response.
+   *
+   * | Kind | What it is | What actually helps |
+   * |---|---|---|
+   * | `alone` | nobody around right now | arranging company, and it works |
+   * | `unseen` | people around, none of whom know you | depth with one person, not more people |
+   * | `no-one-close` | nobody you could call | building a tie over weeks; nothing tonight will fix it |
+   * | `disconnected` | adrift from everything | this one is worth saying out loud to someone |
+   * | `bored` | understimulated, read as lonely | something absorbing, not company |
+   */
+  lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored'
+  /**
+   * HOW THE URGE ENDED — the field that turns this log from a scoreboard into
+   * a record.
+   *
+   * An urge has two possible endings and the app only ever recorded one of
+   * them richly. Resisting wrote all of this: intensity, HALT, technique,
+   * trigger. Giving in wrote a date, a word and a number, through a different
+   * control on a different card — so every piece of context about the moment
+   * was discarded at exactly the moment it was most worth having.
+   *
+   * That is backwards. **The times you gave in are the ones worth
+   * understanding**, because they are the ones you want fewer of.
+   *
+   * Absent means `resisted`. Every row written before this field existed was a
+   * win — that is what the button did — so the default reads every existing
+   * journal correctly without a migration.
+   *
+   * A `followed` row does NOT feed the lapse count: the streak and the
+   * occurrence tally still come from `Relapse`, which `logLapseDay` writes in
+   * the same action. One number, one source. This row carries the *context*
+   * that `Relapse` has no room for.
+   */
+  outcome?: 'resisted' | 'followed'
+  /**
+   * Stress at the moment of the urge, 1 (calm) … 5 (overwhelming).
+   *
+   * Deliberately NOT a fifth letter in HALT: that acronym is Hungry / Angry /
+   * Lonely / Tired, it is a recognised tool people arrive already knowing, and
+   * quietly extending it would mean the app's "HALT" is not the one they were
+   * taught. Stress is its own field beside it.
+   */
+  stress?: 1 | 2 | 3 | 4 | 5
 }
 
 /** An if-then plan: a known trigger point for an addiction + how to respond. */
@@ -530,6 +600,18 @@ export interface AddictionStreak {
   /** Optional money this addiction cost per day (#123) — drives a "money saved"
    *  tile = cleanDays × costPerDay. */
   costPerDay?: number
+  /**
+   * What "how much" is measured in — see `lib/addictionUnits.ts`.
+   *
+   * `Relapse.count` is an amount in THIS unit. Absent means `times`, which is
+   * exactly what `count` has always meant, so every existing journal reads
+   * unchanged and no migration is needed.
+   *
+   * It exists because counting occurrences is the wrong measurement for half
+   * the list: three cigarettes is a fact, and three sessions of doomscrolling
+   * is twenty minutes or four hours and the page could not tell which.
+   */
+  unit?: string
 }
 
 /** Abstinence / NoFap streak tracker state. */
