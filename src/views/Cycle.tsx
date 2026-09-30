@@ -12,7 +12,7 @@ import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
 import {
-  avgCycleLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
+  avgCycleLength, avgPeriodLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
@@ -150,10 +150,10 @@ export function Cycle() {
     }
   }, [history, log, days, length, ym])
 
+  // Completed cycles only, for both stats: the one in progress has no length
+  // yet, and counting it would make "cycles logged" tick up mid-cycle.
   const finished = history.filter((c) => !c.current)
-  const periodLen = finished.length
-    ? Math.round(finished.reduce((s, c) => s + c.periodDays, 0) / finished.length)
-    : null
+  const periodLen = avgPeriodLength(history)
   const shift = coverline(bbt)
 
   function toggleFlag(date: string, flag: string) {

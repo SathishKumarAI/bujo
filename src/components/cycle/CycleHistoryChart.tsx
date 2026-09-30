@@ -67,9 +67,14 @@ export function CycleHistoryChart({ history, average, unitLabel = 'days' }: {
                 label={{ value: `avg ${average}`, position: 'right', fill: cat('subtext0'), fontSize: 10 }}
               />
             )}
+            {/* A neutral surface for an in-range cycle: a row of accent bars
+                made the chart the loudest thing on the page while saying
+                nothing the axis does not. `peach` stays on the out-of-range
+                ones, where it carries meaning — that is what the shaded 21-35
+                band is for. The accent is now on the average line alone. */}
             <Bar dataKey="length" radius={[3, 3, 0, 0]}>
               {rows.map((r, i) => (
-                <Cell key={i} fill={cat(r.outside ? 'peach' : 'mauve')} />
+                <Cell key={i} fill={cat(r.outside ? 'peach' : 'surface2')} />
               ))}
             </Bar>
           </BarChart>

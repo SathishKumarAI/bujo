@@ -85,7 +85,12 @@ export const CYCLE_PHASES: CyclePhase[] = [
     id: 'luteal',
     name: 'Luteal',
     days: 'Days 15–28',
-    color: 'mauve',
+    // Kept in step with `phaseOf` in lib/cycleInsights.ts by hand, because the
+    // phase's hue is written down in both files — the ring reads one and this
+    // card reads the other, so a change to one alone shows the same phase in
+    // two colours on the same screen. Moved off `mauve` with the ring: see the
+    // note there for the measurement.
+    color: 'blue',
     what: 'Progesterone dominates and holds temperature in its higher range. If no pregnancy starts, hormones fall and the cycle restarts.',
     feel: 'PMS lives here — bloating, breast tenderness, mood dips and cravings, usually in the last week.',
     tip: 'Sleep and steady meals blunt PMS; scale training by feel rather than forcing peak sessions.',
