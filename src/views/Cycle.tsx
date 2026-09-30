@@ -27,7 +27,7 @@ import {
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
-  CycleGoalCard, FeelingsCard, InfoTip, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
+  CycleGoalCard, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -232,6 +232,11 @@ export function Cycle() {
    */
   const cards: Record<string, React.ReactNode> = {
     data: <CycleDataCard />,
+    luteal: (
+      <Card band enlargeable title="Your luteal length" subtitle="The steady half, and the number a chart is best at" hideInfo>
+        <LutealCard lengths={analysis.lutealLengths} />
+      </Card>
+    ),
     feelings: (
       <Card
         band
@@ -288,7 +293,7 @@ export function Cycle() {
             ))}
           </ul>
         )}
-        <PatternGrid grid={grid} onAlign={setAlign} />
+        <PatternGrid grid={grid} onAlign={setAlign} avgLength={length} />
       </Card>
     ),
     moodphase: (

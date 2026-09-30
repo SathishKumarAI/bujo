@@ -54,9 +54,9 @@ export function FeelingsCard({ series }: { series: FeelingSeries[] }) {
           </caption>
           <thead>
             <tr>
-              <th scope="col" className="w-24 pb-2 text-left text-micro font-normal text-fg-2">Signal</th>
+              <th scope="col" className="w-24 pb-2 text-left text-label font-normal text-fg-2">Signal</th>
               {phases.map((p) => (
-                <th key={p.phase} scope="col" className="pb-2 text-left text-micro font-normal text-fg-2">
+                <th key={p.phase} scope="col" className="pb-2 text-left text-label font-normal text-fg-2">
                   {p.phase}
                 </th>
               ))}
@@ -124,7 +124,7 @@ function phaseHue(phase: string): string {
 
 function Meter({ value, hue, isShare }: { value: number | null; hue: string; isShare: boolean }) {
   if (value == null) {
-    return <span className="text-micro text-fg-3" aria-hidden>—</span>
+    return <span className="text-label text-fg-3" aria-hidden>—</span>
   }
   // Cravings arrive as a 0–1 share; everything else as 1–5. Both render against
   // their own full scale so the row heights mean the same thing.
@@ -134,7 +134,7 @@ function Meter({ value, hue, isShare }: { value: number | null; hue: string; isS
       <span className="h-2 min-w-16 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
         <span className="block h-full rounded-pill" style={{ width: `${pct}%`, background: cat(hue) }} />
       </span>
-      <span className="w-8 shrink-0 text-right text-micro tabular-nums text-fg-2">
+      <span className="w-10 shrink-0 text-right text-label tabular-nums text-fg-2">
         {isShare ? `${Math.round(value * 100)}%` : value.toFixed(1)}
       </span>
     </span>

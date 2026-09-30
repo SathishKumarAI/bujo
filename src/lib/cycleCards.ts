@@ -101,17 +101,21 @@ export interface CycleCardMeta {
 export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'wheel', title: 'Where you are', group: 'cycle' },
   { id: 'phasefood', title: 'This phase', group: 'cycle' },
-  { id: 'length', title: 'Cycle length', group: 'cycle' },
+  { id: 'length', title: 'Cycle length', group: 'cycle', wide: true },
 
   { id: 'feelings', title: 'Desire, mood, energy & cravings', group: 'feelings', wide: true },
   { id: 'drivephase', title: 'Drive through the cycle', group: 'feelings' },
+  // Moved out of `patterns`: it is a feelings card by subject, and it was also
+  // leaving `drivephase` alone on a two-column row with 381px of dead space
+  // beside it. Measured at 1536 before the move.
+  { id: 'moodphase', title: 'Mood & energy by phase', group: 'feelings' },
 
   { id: 'fertile', title: 'Ovulation & the fertile window', group: 'fertility' },
+  { id: 'luteal', title: 'Your luteal length', group: 'fertility' },
   { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true },
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
   { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
-  { id: 'moodphase', title: 'Mood & energy by phase', group: 'patterns' },
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },

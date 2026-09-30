@@ -178,7 +178,7 @@ export function Focus() {
     ),
 
     typingstats: (
-      <Card band title="Speed & accuracy" subtitle="Best, average, this week, and the 14-day trend" hideInfo>
+      <Card band enlargeable title="Speed & accuracy" subtitle="Best, average, this week, and the 14-day trend" hideInfo>
         <TypingStats />
       </Card>
     ),
