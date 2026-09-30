@@ -11,6 +11,7 @@ import { pullGist, pushGist, verifyToken } from '../lib/github'
 import { useConfirm } from './ConfirmDialog'
 import { notify } from '../lib/notify'
 import { Button } from './ui/button'
+import { forNetwork } from '../lib/cyclePrivacy'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
@@ -60,7 +61,9 @@ export function CloudStorage() {
     setBusy('gh')
     try {
       if (!(await verifyToken(s.githubToken))) { notify.error('Token rejected by GitHub', 'Check it has gist scope and has not expired.'); return }
-      const id = await pushGist(s.githubToken, s.githubGistId, data)
+      // A gist is a network destination like any other — withheld unless the
+      // user opted cycle data into sync. See lib/cyclePrivacy.ts.
+      const id = await pushGist(s.githubToken, s.githubGistId, forNetwork(data))
       setSettings({ githubGistId: id, lastDriveSync: todayISO() })
       notify.success('Backed up to a private GitHub gist')
     } catch (e) {

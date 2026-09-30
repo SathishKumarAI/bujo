@@ -556,6 +556,14 @@ export interface Settings {
   gender: Gender
   /** Show the neutral cycle / fertility tracker. Defaults on; hide in Settings. */
   cycleTrackerEnabled: boolean
+  /**
+   * Version of the cycle privacy disclaimer the user accepted. Absent means
+   * never shown. Bumping `CYCLE_DISCLAIMER_VERSION` re-shows it, which is the
+   * point: a changed promise needs a fresh acknowledgement.
+   */
+  cycleDisclaimerAck?: number
+  /** ISO timestamp of the last cycle backup export, for the "last backup" line. */
+  cycleLastBackup?: string
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
   /** Intermittent-fasting target window in hours (e.g. 16 for 16:8). */

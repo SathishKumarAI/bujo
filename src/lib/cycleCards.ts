@@ -101,6 +101,10 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },
   { id: 'bbtrules', title: 'Basal temperature, done right', group: 'guide' },
   { id: 'logging', title: 'What to log & why', group: 'guide' },
+  // Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
+  // `data-card` set equals this list in BOTH directions, so a card that skips
+  // the registry fails the suite rather than quietly becoming unfindable.
+  { id: 'data', title: 'Your cycle data', group: 'guide', wide: true },
 ]
 
 /**
