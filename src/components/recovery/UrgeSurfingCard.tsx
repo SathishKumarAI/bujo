@@ -77,6 +77,8 @@ export function UrgeSurfingCard() {
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
   const [halt, setHalt] = useState<HaltState[]>([])
+  const [addictionId, setAddictionId] = useState('')
+  const addictions = data.nofap.addictions ?? []
   /** Guards the fat-finger double-tap; see the docstring above. */
   const lastUrgeAt = useRef(0)
 
@@ -91,7 +93,16 @@ export function UrgeSurfingCard() {
     const now = Date.now()
     if (now - lastUrgeAt.current < 3000) return
     lastUrgeAt.current = now
-    resistUrge({ trigger: urge.trim() || undefined, intensity: intensity as 1 | 2 | 3 | 4 | 5, technique, halt: halt.length ? halt : undefined })
+    resistUrge({
+      trigger: urge.trim() || undefined,
+      intensity: intensity as 1 | 2 | 3 | 4 | 5,
+      technique,
+      halt: halt.length ? halt : undefined,
+      // Falls back to the only addiction when there is exactly one: asking
+      // "which?" of someone tracking a single thing is a question with one
+      // answer, and a required field with one option is friction.
+      addictionId: addictionId || (addictions.length === 1 ? addictions[0].id : undefined),
+    })
     setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([])
     notify.success('Urge logged', 'Remove it from the list below if it was a mis-tap.')
   }
@@ -110,6 +121,21 @@ export function UrgeSurfingCard() {
           three copies of the same markup differing only in accent. They
           are one component now (`ChipPick`), which also gives them the
           44px targets and the press feedback the copies never had. */}
+      {/* WHICH ONE. Without this the ledger cannot tell a resisted cigarette
+          from a resisted scroll, and every per-addiction reading on the page is
+          a name join that matches nothing (COD-251). Sourced from the user's
+          OWN addictions, so the two vocabularies cannot drift again; the preset
+          chips below stay for anyone who has not added any yet. */}
+      {addictions.length > 0 && (
+        <ChipPick
+          label="Which one?"
+          className="mb-3"
+          value={addictionId}
+          onChange={(v) => setAddictionId(addictionId === v ? '' : String(v))}
+          options={addictions.map((a) => ({ value: a.id, label: a.name }))}
+          hint="So the win lands on the right streak."
+        />
+      )}
       <ChipPick
         label="What is it?"
         value={urge || null}

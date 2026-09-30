@@ -100,6 +100,10 @@ export interface CardMeta {
 }
 
 export const CARDS: CardMeta[] = [
+  // FIRST in the group, deliberately. It is the card that answers "was that a
+  // win or a loss", which is the question every other card on this page assumes
+  // you have already answered for yourself.
+  { id: 'feedback', title: 'Win or loss, per thing', group: 'progress', wide: true, words: 'feedback positive negative resisted followed slipped net ratio verdict porn nicotine alcohol doomscrolling loneliness stress what to try next' },
   { id: 'streakvsbest', title: 'Streak vs best', group: 'progress', words: 'streak best record pace comeback days clean ahead behind' },
   { id: 'selfefficacy', title: 'Self-efficacy', group: 'progress', words: 'conversion resisted rate urges won confidence percent' },
   { id: 'streakssaved', title: 'Streaks saved', group: 'progress', words: 'saved streaks resisted rescue near miss' },

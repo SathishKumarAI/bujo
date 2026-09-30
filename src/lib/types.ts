@@ -504,6 +504,30 @@ export interface UrgeWin {
   /** HALT self-check: which unmet needs accompanied the urge (Hungry/Angry/
    *  Lonely/Tired). Surfacing these reveals the real driver behind cravings. */
   halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]
+  /**
+   * WHICH addiction this urge was for — the field whose absence made every
+   * per-addiction question unanswerable.
+   *
+   * Without it, "I resisted porn" and "I resisted a cigarette" are the same
+   * record distinguished only by free text, so the page could count urges in
+   * total and never tell you whether YOUR PORN streak is going well. It is also
+   * the root of COD-251: joining urges to addictions by NAME failed because
+   * `ADDICTION_PRESETS` says "Nicotine" and `URGE_PRESETS` said "Smoking".
+   *
+   * Optional and additive. An urge logged before this existed has no id and is
+   * counted in the totals but not attributed — `unattributed` in the ledger
+   * says how many, rather than silently dropping them.
+   */
+  addictionId?: string
+  /**
+   * Stress at the moment of the urge, 1 (calm) … 5 (overwhelming).
+   *
+   * Deliberately NOT a fifth letter in HALT: that acronym is Hungry / Angry /
+   * Lonely / Tired, it is a recognised tool people arrive already knowing, and
+   * quietly extending it would mean the app's "HALT" is not the one they were
+   * taught. Stress is its own field beside it.
+   */
+  stress?: 1 | 2 | 3 | 4 | 5
 }
 
 /** An if-then plan: a known trigger point for an addiction + how to respond. */

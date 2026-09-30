@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Lifebuoy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
@@ -13,8 +14,10 @@ import { useStickyState } from '../lib/useStickyState'
 import { cn } from '../lib/cn'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { CARDS, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP, visibleCards, type Group } from '../lib/recoveryCards'
+import { feedbackLedger } from '../lib/recoveryFeedback'
 import {
   StreakRingCard,
+  FeedbackLedgerCard,
   UrgeSurfingCard,
   LogResetCard,
   StreakVsBestCard,
@@ -80,6 +83,8 @@ export function NoFap() {
   const plans = s.plans ?? []
   const today = todayISO()
   const stats = streakStats(data, today)
+  /** Both sides of each addiction, signed. See lib/recoveryFeedback.ts. */
+  const ledger = useMemo(() => feedbackLedger(data), [data])
   const vsBest = streakVsBest(stats.current, stats.best)
   const comeback = comebackStatus(s.relapses, s.startedOn, today)
   const byType = urgesByType(data)
@@ -169,6 +174,7 @@ export function NoFap() {
    * heading over nothing — and the rail's count never promises one.
    */
   const all: Record<string, ReactNode> = {
+    feedback: <FeedbackLedgerCard ledger={ledger} />,
     streakvsbest: <StreakVsBestCard vsBest={vsBest} comeback={comeback} pace={pace} approachCopy={approachCopy} />,
     selfefficacy: conversion.total > 0 && <SelfEfficacyCard conversion={conversion} />,
     streakssaved: saved.saved > 0 && <StreaksSavedCard saved={saved} />,
