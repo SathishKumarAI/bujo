@@ -18,6 +18,7 @@ import {
 } from '../lib/cycleInsights'
 import { analyseCycles, detectOvulation, predict } from '../lib/ovulation'
 import { insights, moodByPhase, patternGrid, type Align, type AlignedCycle } from '../lib/cyclePatterns'
+import type { CycleGoal } from '../lib/cycleHelp'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
@@ -25,7 +26,7 @@ import {
 import {
   BbtChart, BbtRulesCard, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
-  MoodByPhase, PatternGrid, SymptomPattern, type BbtPoint,
+  CycleGoalCard, InfoTip, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -120,6 +121,7 @@ export function Cycle() {
   const nextPeriod = nextPeriodEstimate(log, today)
   const untilNext = daysUntilNextPeriod(log, today)
 
+  const goal: CycleGoal = data.settings.cycleGoal ?? 'understand'
   const detectedDay = analysis.current.day
   const history = useMemo(() => cycleHistory(log, today), [log, today])
 
@@ -224,6 +226,25 @@ export function Cycle() {
    */
   const cards: Record<string, React.ReactNode> = {
     data: <CycleDataCard />,
+    manual: (
+      <Card band title="The manual" subtitle="How to use this page, and what it can and cannot tell you" hideInfo>
+        <Manual />
+      </Card>
+    ),
+    goal: (
+      <Card band title="What you are tracking for" subtitle="Changes what leads, never what is available" hideInfo>
+        <CycleGoalCard
+          goal={goal}
+          cycles={history.filter((c) => !c.current).length}
+          onChange={(g) => setSettings({ cycleGoal: g })}
+        />
+      </Card>
+    ),
+    phasefood: (
+      <Card band title="This phase" subtitle="General wellness, not a plan" hideInfo>
+        <PhaseFoodCard phase={phase?.label ?? null} goal={goal} />
+      </Card>
+    ),
     grid: (
       <Card band title="What lands on which day" subtitle="Every cycle you have logged, folded onto one axis" hideInfo>
         {/* The insights sit ABOVE the grid: the sentence is the finding and the
@@ -351,14 +372,14 @@ export function Cycle() {
            contract's — one row, at most four facts, spanning both columns. */
         <div className="border-b border-line pb-3">
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-          <Fact label="Cycle day" value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
+          <Fact label={<>Cycle day<InfoTip tip="cycle-day" /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           {/* The pill now says HOW it knows, not just what it thinks.
               "estimate" is the calendar; "likely" means a temperature shift was
               read in this cycle; "confirmed" means a second sign agreed with it.
               A page that says "Luteal" identically whether it measured anything
               or not is a page that cannot be trusted when it did. */}
           <Fact
-            label="Phase"
+            label={<>Phase<InfoTip tip="confidence" /></>}
             value={phase
               ? (
                 <Pill color={phase.color} size="micro" className="px-2">
@@ -368,7 +389,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">—</span>}
           />
           <Fact
-            label="Next period"
+            label={<>Next period<InfoTip tip="next-period" /></>}
             value={nextPeriod
               ? (
                 <span className="text-body text-fg-1">
@@ -391,7 +412,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">needs two periods</span>}
           />
           <Fact
-            label="Your average"
+            label={<>Your average<InfoTip tip="your-average" /></>}
             value={length != null
               ? <span className="text-body text-fg-1"><span className="num font-medium">{length}</span> days</span>
               : <span className="text-body text-fg-2">—</span>}
@@ -416,7 +437,7 @@ export function Cycle() {
           {/* The optional half, folded. The fast path above is unchanged:
               temperature, five flags, drive — the ten-second habit this page
               was built around stays exactly as long. */}
-          <DayMore entry={selEntry} onPatch={(patch) => setCycle(sel, patch)} />
+          <DayMore entry={selEntry} onPatch={(patch) => setCycle(sel, patch)} fertilityFirst={goal === 'conceive'} />
 
           {/* The legend belongs to the act, not to the review: it decodes the
               chips six pixels above it, and the dead column beside a form is
@@ -534,7 +555,7 @@ export function Cycle() {
 }
 
 /** One zone-1 fact. Local because its value is a node, not a formatted string. */
-function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+function Fact({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <p className="text-caption uppercase tracking-wide text-fg-2">{label}</p>

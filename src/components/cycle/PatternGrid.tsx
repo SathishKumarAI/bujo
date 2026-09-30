@@ -48,7 +48,19 @@ export function PatternGrid({ grid, onAlign }: { grid: Grid; onAlign: (a: Align)
     <div>
       <AlignToggle align={grid.align} onAlign={onAlign} />
 
-      <div className="mt-3 overflow-x-auto">
+      {/* FOCUSABLE, because it scrolls. A keyboard user cannot reach a
+          horizontally scrolling region that is not in the tab order — the grid
+          is 30+ columns and a phone shows about eight, so without this the
+          other twenty-two are unreachable without a mouse. axe calls it
+          `scrollable-region-focusable`; the real a11y gate could not see it
+          because a SectionRail hides every group but the one the page opens on
+          (COD-237), so it was found by driving the groups with a probe. */}
+      <div
+        className="mt-3 overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label={`Pattern grid, ${grid.rows.length} signals across ${grid.offsets.length} days`}
+      >
         <table className="w-full border-collapse" style={{ minWidth: 120 + grid.offsets.length * 14 }}>
           <caption className="sr-only">
             How often each signal fell on each {grid.align === 'ovulation' ? 'day relative to ovulation' : 'cycle day'},

@@ -89,6 +89,7 @@ export interface CycleCardMeta {
  */
 export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'wheel', title: 'Where you are', group: 'cycle' },
+  { id: 'phasefood', title: 'This phase', group: 'cycle' },
   { id: 'length', title: 'Cycle length', group: 'cycle' },
 
   { id: 'fertile', title: 'Ovulation & the fertile window', group: 'fertility' },
@@ -106,6 +107,8 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
   // Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
   // `data-card` set equals this list in BOTH directions, so a card that skips
   // the registry fails the suite rather than quietly becoming unfindable.
+  { id: 'manual', title: 'The manual', group: 'guide', wide: true },
+  { id: 'goal', title: 'What you are tracking for', group: 'guide' },
   { id: 'data', title: 'Your cycle data', group: 'guide', wide: true },
 ]
 

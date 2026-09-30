@@ -596,6 +596,13 @@ export interface Settings {
   cycleDisclaimerAck?: number
   /** ISO timestamp of the last cycle backup export, for the "last backup" line. */
   cycleLastBackup?: string
+  /**
+   * What the Cycle page leads with. Changes ORDER and EMPHASIS only — every
+   * field stays available in both modes, because hiding the fertility signs
+   * from someone "just understanding her cycle" would be the app deciding what
+   * she may know about her own body.
+   */
+  cycleGoal?: 'understand' | 'conceive'
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
   /** Intermittent-fasting target window in hours (e.g. 16 for 16:8). */
