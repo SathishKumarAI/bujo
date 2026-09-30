@@ -16,6 +16,7 @@ import {
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
+import { analyseCycles, predict } from '../lib/ovulation'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
@@ -96,16 +97,34 @@ export function Cycle() {
   const sel = days.includes(selected) ? selected : days[0]
   const selEntry = log.find((x) => x.date === sel)
 
+  /**
+   * THE DETECTION ENGINE, run once for the page.
+   *
+   * Three things read it — the phase pill's confidence, the ring's ovulation
+   * window and the temperature chart — and running it three times would be
+   * three chances for them to disagree about which day the shift landed on.
+   */
+  const starts = useMemo(() => periodStarts(log), [log])
+  const analysis = useMemo(() => analyseCycles(log, starts, unit === 'C' ? 'C' : 'F'), [log, starts, unit])
+  const prediction = useMemo(
+    () => predict(analysis.cycleLengths, analysis.lastStart, analysis.lutealLengths),
+    [analysis],
+  )
+
   // Orientation, derived from the log. All null until the log can answer — a
   // fake "day 0" would be the `count ? x : 0` trap.
   const day = cycleDay(log, today)
   const length = avgCycleLength(log)
-  const phase = day != null ? phaseOf(day, length) : null
+  const phase = day != null ? phaseOf(day, length, analysis.current.day) : null
   const nextPeriod = nextPeriodEstimate(log, today)
   const untilNext = daysUntilNextPeriod(log, today)
 
   const history = useMemo(() => cycleHistory(log, today), [log, today])
-  const bands = useMemo(() => phaseBands(length), [length])
+  // The ring follows the MEASURED ovulation when the chart found one, and falls
+  // back to the calendar estimate when it did not. The legend's day ranges move
+  // with it, which is the intended Stage 4 snapshot change.
+  const detectedDay = analysis.current.day
+  const bands = useMemo(() => phaseBands(length, detectedDay), [length, detectedDay])
   const pattern = useMemo(() => flagPatternByDay(log, today), [log, today])
   const drive = useMemo(() => driveByPhase(log, today, length), [log, today, length])
   const peak = useMemo(() => drivePeak(drive), [drive])
@@ -136,7 +155,7 @@ export function Cycle() {
         bbt: Array.from({ length: span }, (_, i) => {
           const date = addDays(running.start, i)
           const c = log.find((x) => x.date === date)
-          return { day: i + 1, temp: c?.temp, flags: c?.flags ?? [] }
+          return { day: i + 1, temp: c?.temp, flags: c?.flags ?? [], disturbed: c?.tempDisturbed }
         }),
         bbtLabel: `cycle day, from ${prettyDay(running.start)}`,
       }
@@ -144,7 +163,7 @@ export function Cycle() {
     return {
       bbt: days.map((d) => {
         const c = log.find((x) => x.date === d)
-        return { day: Number(d.slice(8)), temp: c?.temp, flags: c?.flags ?? [] }
+        return { day: Number(d.slice(8)), temp: c?.temp, flags: c?.flags ?? [], disturbed: c?.tempDisturbed }
       }),
       bbtLabel: `day of ${prettyMonth(ym)}`,
     }
@@ -210,7 +229,15 @@ export function Cycle() {
        difference between a chart with a visible shift and a chart of noise. */
     bbt: (
       <Card band title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo>
-        <BbtChart points={bbt} unit={unit} label={bbtLabel} />
+        <BbtChart
+          points={bbt}
+          unit={unit}
+          label={bbtLabel}
+          ovulationDay={analysis.current.day}
+          fertileFrom={analysis.current.fertileFrom}
+          fertileTo={analysis.current.fertileTo}
+          confidence={analysis.current.confidence}
+        />
       </Card>
     ),
 
@@ -275,10 +302,19 @@ export function Cycle() {
         <div className="border-b border-line pb-3">
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
           <Fact label="Cycle day" value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
+          {/* The pill now says HOW it knows, not just what it thinks.
+              "estimate" is the calendar; "likely" means a temperature shift was
+              read in this cycle; "confirmed" means a second sign agreed with it.
+              A page that says "Luteal" identically whether it measured anything
+              or not is a page that cannot be trusted when it did. */}
           <Fact
             label="Phase"
             value={phase
-              ? <Pill color={phase.color} size="micro" className="px-2">{phase.label} · estimate</Pill>
+              ? (
+                <Pill color={phase.color} size="micro" className="px-2">
+                  {phase.label} · {analysis.current.confidence}
+                </Pill>
+              )
               : <span className="text-body text-fg-2">—</span>}
           />
           <Fact
@@ -287,11 +323,19 @@ export function Cycle() {
               ? (
                 <span className="text-body text-fg-1">
                   ~{prettyDay(nextPeriod)}
+                  {/* A RANGE, not a promise. The spread is the personal
+                      standard deviation, floored at a day and widened further
+                      when the log is irregular — narrowing a prediction the
+                      data does not support is the failure mode here. */}
+                  {prediction.spread > 0 && (
+                    <span className="ml-1 text-label text-fg-2">±{prediction.spread}d</span>
+                  )}
                   {untilNext != null && (
                     <span className="ml-1.5 text-label text-fg-2">
                       {untilNext === 0 ? 'today' : untilNext > 0 ? `in ${untilNext}d` : `${-untilNext}d late`}
                     </span>
                   )}
+                  {prediction.early && <span className="ml-1.5 text-label text-fg-2">· early estimate</span>}
                 </span>
               )
               : <span className="text-body text-fg-2">needs two periods</span>}

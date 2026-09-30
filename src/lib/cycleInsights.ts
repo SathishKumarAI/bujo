@@ -64,9 +64,14 @@ export interface PhaseEstimate {
  * the luteal phase is the stable half — with a 3-day window around it.
  * An estimate for orientation, never a fertility claim; the page says so.
  */
-export function phaseOf(day: number, length: number | null): PhaseEstimate {
+export function phaseOf(day: number, length: number | null, ovulationDay?: number | null): PhaseEstimate {
   const len = length ?? 28
-  const ovulation = len - 14
+  // A MEASURED ovulation beats the calendar every time. `len - 14` assumes a
+  // textbook luteal phase because, with no temperature shift to read, that is
+  // the only thing available — but once the chart has shown the rise, using the
+  // assumption instead of the observation is choosing to be wrong. `detectOvulation`
+  // supplies the day; this is the only line that has to change to honour it.
+  const ovulation = ovulationDay ?? len - 14
   if (day <= 5) return { id: 'menstrual', label: 'Menstrual', color: 'red' }
   if (day >= ovulation - 1 && day <= ovulation + 1) return { id: 'ovulation', label: 'Ovulation window', color: 'green' }
   if (day < ovulation) return { id: 'follicular', label: 'Follicular', color: 'teal' }
@@ -160,11 +165,11 @@ export interface PhaseBand extends PhaseEstimate {
  * and getting that arithmetic twice, in two files, is how the timeline and the
  * "you are here" pill come to disagree by a day.
  */
-export function phaseBands(length: number | null): PhaseBand[] {
+export function phaseBands(length: number | null, ovulationDay?: number | null): PhaseBand[] {
   const len = length ?? 28
   const bands: PhaseBand[] = []
   for (let day = 1; day <= len; day++) {
-    const p = phaseOf(day, len)
+    const p = phaseOf(day, len, ovulationDay)
     const last = bands[bands.length - 1]
     if (last && last.id === p.id) last.to = day
     else bands.push({ ...p, from: day, to: day })
