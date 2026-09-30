@@ -71,6 +71,20 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Build ~30 days of realistic, correlated demo data (sleep↑ → stress↓, mood↑)
  * so charts, streaks, correlations and the index all have something to show.
  */
+/**
+ * Bump when the seed gains a DOMAIN or a field a page renders.
+ *
+ * `?demo=1` only ever seeded when the journal was empty, so anyone who had
+ * opened the demo once kept that journal forever — and every field added to
+ * the seed afterwards was invisible to them. The nine cycle fields added in
+ * Stage 3 landed in a demo that nobody with an existing one could see, which
+ * reads exactly like the feature not working.
+ *
+ * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
+ * and only when the URL asks for the demo. A real journal is never touched.
+ */
+export const DEMO_VERSION = 2
+
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
   const rand = rng(42)
@@ -944,5 +958,6 @@ export function generateDemoData(today = todayISO()): JournalData {
   // caller has to remember to set is a flag that one of them will not — and
   // `?demo=1` was already that caller.
   j.settings.demoSeeded = true
+  j.settings.demoVersion = DEMO_VERSION
   return j
 }

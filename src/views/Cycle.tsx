@@ -24,8 +24,8 @@ import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
 } from '../lib/cycleCards'
 import {
-  BbtChart, BbtRulesCard, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
-  DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
+  BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
+  DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
   CycleGoalCard, InfoTip, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
@@ -328,8 +328,6 @@ export function Cycle() {
        lib/cycleGuide; titles, bodies and widths all in cycle/Guide.tsx. ── */
     phases: <PhasesCard />,
     food: <FoodCard />,
-    bbtrules: <BbtRulesCard />,
-    logging: <LoggingCard />,
   }
 
   /** What the selected group renders, and what the rail counts. Same predicate

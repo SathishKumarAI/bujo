@@ -1,4 +1,5 @@
 import { cat, onRaised } from '../../lib/colors'
+import { ChipPick } from '../ui/quickpick'
 import { quartileBuckets, type Align, type PatternGrid as Grid } from '../../lib/cyclePatterns'
 
 /**
@@ -133,23 +134,14 @@ export function PatternGrid({ grid, onAlign }: { grid: Grid; onAlign: (a: Align)
 
 function AlignToggle({ align, onAlign }: { align: Align; onAlign: (a: Align) => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-label text-fg-2">Line cycles up by</span>
-      {([['period', 'period start'], ['ovulation', 'ovulation']] as const).map(([v, label]) => (
-        <button
-          key={v}
-          type="button"
-          aria-pressed={align === v}
-          onClick={() => onAlign(v)}
-          className="min-h-11 rounded-control px-2.5 py-1 text-label"
-          style={{
-            background: align === v ? cat('surface2') : cat('surface0'),
-            color: align === v ? cat('text') : cat('subtext0'),
-          }}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <ChipPick
+      label="Line cycles up by"
+      value={align}
+      onChange={(v) => onAlign(v as Align)}
+      options={[
+        { value: 'period', label: 'period start', hint: 'Where in my cycle does this land' },
+        { value: 'ovulation', label: 'ovulation', hint: 'How long before my period does this land' },
+      ]}
+    />
   )
 }

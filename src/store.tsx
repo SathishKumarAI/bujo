@@ -37,7 +37,7 @@ import { dayDiff, todayISO } from './lib/date'
 import { bumpLapseDay } from './lib/lapse'
 import { setActiveTheme } from './lib/colors'
 import { generateRecurring } from './lib/recurrence'
-import { generateDemoData } from './lib/demo'
+import { DEMO_VERSION, generateDemoData } from './lib/demo'
 import { notify } from './lib/notify'
 
 // ── Reducer with undo/redo history ──────────────────────────────────────────
@@ -324,7 +324,16 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         // so the switch in Settings takes effect on the next load of a `?demo=1`
         // link without needing to strip the parameter from anything.
         const wantsDemo = askedForDemo && !d.settings.demoDisabled
-        const next = wantsDemo && d.entries.length === 0 ? generateDemoData() : generateRecurring(d)
+        // Re-seed a STALE DEMO as well as an empty journal. The old condition
+        // was `entries.length === 0`, so a demo journal created once was frozen
+        // at whatever the seed looked like that day — every field added to the
+        // seed afterwards was invisible, which reads as the feature being
+        // broken rather than as the demo being old. Guarded twice: the URL must
+        // ask for the demo, and the journal must already BE one.
+        const staleDemo = d.settings.demoSeeded === true && d.settings.demoVersion !== DEMO_VERSION
+        const next = wantsDemo && (d.entries.length === 0 || staleDemo)
+          ? generateDemoData()
+          : generateRecurring(d)
         if (next === d) return d
         // Materialised new recurring occurrences → stamp updatedAt so they survive
         // a sync against a stale remote (silent normally leaves the stamp alone).

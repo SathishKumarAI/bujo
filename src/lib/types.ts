@@ -603,6 +603,8 @@ export interface Settings {
    * she may know about her own body.
    */
   cycleGoal?: 'understand' | 'conceive'
+  /** Which generation of the demo seed this journal holds. See `DEMO_VERSION`. */
+  demoVersion?: number
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
   /** Intermittent-fasting target window in hours (e.g. 16 for 16:8). */

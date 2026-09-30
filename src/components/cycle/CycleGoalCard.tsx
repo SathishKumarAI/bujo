@@ -1,4 +1,4 @@
-import { cat } from '../../lib/colors'
+import { ChipPick } from '../ui/quickpick'
 import { GOAL_LABEL, type CycleGoal } from '../../lib/cycleHelp'
 
 /**
@@ -19,23 +19,14 @@ export function CycleGoalCard({ goal, onChange, cycles }: {
 }) {
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
-        {(['understand', 'conceive'] as const).map((g) => (
-          <button
-            key={g}
-            type="button"
-            aria-pressed={goal === g}
-            onClick={() => onChange(g)}
-            className="min-h-11 rounded-control px-3 py-1.5 text-label"
-            style={{
-              background: goal === g ? cat('surface2') : cat('surface0'),
-              color: goal === g ? cat('text') : cat('subtext0'),
-            }}
-          >
-            {GOAL_LABEL[g]}
-          </button>
-        ))}
-      </div>
+      {/* `ChipPick`, not a second chip implementation — it carries the pill
+          radius, the rest fill and the press feedback the rest of the app uses. */}
+      <ChipPick
+        label="This page leads with"
+        value={goal}
+        onChange={(g) => onChange(g as CycleGoal)}
+        options={(['understand', 'conceive'] as const).map((g) => ({ value: g, label: GOAL_LABEL[g] }))}
+      />
 
       <p className="mt-3 text-label text-fg-2">
         {goal === 'conceive'

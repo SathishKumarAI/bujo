@@ -87,6 +87,15 @@ export interface CycleCardMeta {
  * decision, because it moves content between subjects rather than changing how
  * it is reached.
  */
+/**
+ * `bbtrules` and `logging` were retired when the manual landed: both were
+ * reference prose already written down in `BBT_RULES` and `TRACKING_TIPS`, and
+ * the manual now renders those same modules in one readable column. Cards earn
+ * their chrome when each is a separate INSTRUMENT you read on its own — the
+ * ring, the charts, the grid. Seven cards of reference text is a card per
+ * heading. `phases` and `food` stay: both carry cited NHS/ACOG content that the
+ * manual only summarises, and a credited source has to stay reachable.
+ */
 export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'wheel', title: 'Where you are', group: 'cycle' },
   { id: 'phasefood', title: 'This phase', group: 'cycle' },
@@ -102,8 +111,6 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },
-  { id: 'bbtrules', title: 'Basal temperature, done right', group: 'guide' },
-  { id: 'logging', title: 'What to log & why', group: 'guide' },
   // Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
   // `data-card` set equals this list in BOTH directions, so a card that skips
   // the registry fails the suite rather than quietly becoming unfindable.

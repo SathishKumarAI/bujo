@@ -43,16 +43,25 @@ describe('every "Learn more" lands somewhere', () => {
     expect(new Set(MANUAL_IDS).size).toBe(MANUAL_IDS.length)
   })
 
-  it('gives every section a title and some body', () => {
+  it('gives every section a title, an intro and real points', () => {
     for (const s of CYCLE_MANUAL) {
       expect(s.title.trim().length, s.id).toBeGreaterThan(0)
-      expect(s.body.length, s.id).toBeGreaterThan(0)
+      expect(s.intro.trim().length, s.id).toBeGreaterThan(0)
+      // Points, not paragraphs: the guide is scanned, not read.
+      expect(s.points.length, s.id).toBeGreaterThan(2)
+      for (const pt of s.points) {
+        expect(pt.label.trim().length, `${s.id} point label`).toBeGreaterThan(0)
+        expect(pt.text.trim().length, `${s.id} point text`).toBeGreaterThan(0)
+      }
     }
   })
 })
 
 describe('the manual covers what the brief requires it to cover', () => {
-  const all = CYCLE_MANUAL.flatMap((s) => [...s.body, ...(s.points ?? [])]).join(' ').toLowerCase()
+  const all = CYCLE_MANUAL
+    .flatMap((s) => [s.intro, s.takeaway ?? '', ...s.points.flatMap((p) => [p.label, p.text])])
+    .join(' ')
+    .toLowerCase()
 
   it('states the clinician thresholds', () => {
     // These are the numbers someone might act on, so they are asserted rather

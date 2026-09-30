@@ -1,125 +1,152 @@
 /**
- * THE GUIDE, as a manual rather than a shelf of cards.
+ * THE GUIDE, as points rather than prose.
+ *
+ * Rewritten from paragraphs after the first version shipped as a reading
+ * column. The reason is the product's own mode: `PRODUCT.md` says **Operate** —
+ * someone opens this page to do something, on a phone, in the evening. Prose is
+ * for Read surfaces. A person checking what a disturbed reading means wants the
+ * line that answers it, not the third sentence of a paragraph.
+ *
+ * So every section is a short intro plus discrete points, and each point is one
+ * fact that stands on its own. `takeaway` is the sentence to remember if the
+ * reader reads nothing else in the card.
  *
  * Nine sections with stable ids, because the `InfoTip`s link into them — a tip
  * that says "Learn more" and lands nowhere is worse than one that does not
- * offer. `cycleHelp.more` holds these ids and a test asserts every one of them
- * resolves to a section here.
- *
- * Content, not components: this is prose with headings, so putting it in a TS
- * module keeps it greppable, testable and out of the JSX. The existing
- * `CYCLE_PHASES` cards in `cycleGuide.ts` are untouched and still render — this
- * is the reading matter around them.
+ * offer. A test asserts every `more` resolves to a section here.
  */
 
 export interface ManualSection {
   id: string
   title: string
-  /** Paragraphs. Plain, second person, short sentences. */
-  body: string[]
-  /** Optional bullet list under the body. */
-  points?: string[]
+  /** One line under the heading. What this section is for. */
+  intro: string
+  /** The content. One fact per point; each reads on its own. */
+  points: { label: string; text: string }[]
+  /** The line to remember if nothing else is read. */
+  takeaway?: string
 }
 
 export const CYCLE_MANUAL: ManualSection[] = [
   {
     id: 'getting-started',
     title: 'Getting started',
-    body: [
-      'Two things every morning: your temperature before you get up, and a tap on anything that happened. That is about ten seconds, and it is enough for everything on this page to work.',
-      'Everything else is optional. Mucus, tests, mood, cravings, symptoms — log the ones you care about and ignore the rest. Nothing here penalises a blank field; a day you did not log is treated as “not logged”, never as “no”.',
-      'The page learns from you rather than from a textbook. Your average cycle length, your luteal length, the day your PMS tends to start — all of it comes from your own entries, and all of it gets more accurate as you add cycles.',
+    intro: 'Two things a morning is enough for everything on this page to work.',
+    points: [
+      { label: 'Temperature first', text: 'Before you get up, before you talk or drink. About five seconds.' },
+      { label: 'Tap what happened', text: 'Period, spotting, cramps, PMS — the five flags cover most days.' },
+      { label: 'Everything else is optional', text: 'Mood, energy, mucus, tests, cravings. Log the ones you care about.' },
+      { label: 'A blank field costs nothing', text: 'A day you did not log reads as “not logged”, never as “no”.' },
+      { label: 'It learns from you', text: 'Your averages, your luteal length, the day your PMS starts — all from your own entries.' },
     ],
+    takeaway: 'Ten seconds a morning. The page does the rest.',
   },
   {
     id: 'taking-your-temperature',
     title: 'Taking your temperature',
-    body: [
-      'Take it as soon as you wake, before getting up, talking, or drinking. Ideally after at least three hours of sleep and at about the same time each day, with the same thermometer.',
-      'Consistency matters more than the number. The chart is read for the shift between one half of the cycle and the other, so a reading taken an hour late is worse than one that is slightly high — it moves the baseline you are comparing against.',
-      'When something could skew a reading — illness, a fever, alcohol, travel, a short night, taking it much later than usual — mark it “not reliable”. Those days are left out of ovulation detection entirely, which is better than letting one bad morning invent or erase a shift.',
-      'You can log in °F or °C. The backup file records which one your readings are in, so a restore cannot silently reinterpret them.',
+    intro: 'Consistency matters more than the number — the chart is read for the shift, not the value.',
+    points: [
+      { label: 'Same time each day', text: 'Ideally after at least three hours of sleep, before getting up.' },
+      { label: 'Same thermometer', text: 'Two devices differ by more than the shift you are looking for.' },
+      { label: 'Before anything else', text: 'Talking, drinking and standing up all move the reading.' },
+      { label: 'Mark a bad morning', text: 'Illness, fever, alcohol, travel, a short night, or taken much later than usual.' },
+      { label: 'Marked days are excluded', text: 'They are left out of ovulation detection entirely, rather than being allowed to invent or erase a shift.' },
+      { label: '°F or °C', text: 'Either. The backup file records which, so a restore cannot reinterpret your readings.' },
     ],
+    takeaway: 'A reading taken an hour late is worse than one that is slightly high.',
   },
   {
     id: 'reading-your-chart',
     title: 'Reading your chart',
-    body: [
-      'A cycle has two halves. Before ovulation your waking temperature sits low; after it, progesterone holds it about 0.3–0.5 °F (0.2–0.3 °C) higher until your next period. That two-level shape is what the chart is for.',
-      'The coverline is drawn just above your pre-shift readings. Three readings clearly above it mean the rise already happened — it is a retrospective mark, never a forecast.',
-      'The confidence beside your phase says how the page knows. “Estimated” is the calendar only. “Likely” means a temperature shift was read this cycle. “Confirmed” means the shift plus another sign — an LH test or fertile mucus — agreed with it.',
-      'The luteal phase is the stable half. For most people it is 11 to 17 days and barely moves, so a longer cycle is almost always a longer first half. That is why a prediction built from your own luteal length beats one built from a textbook 14.',
+    intro: 'A cycle has two temperature levels. The step between them is the whole point.',
+    points: [
+      { label: 'Low, then high', text: 'Before ovulation your waking temperature sits low; after it, progesterone holds it about 0.3–0.5 °F (0.2–0.3 °C) higher until your period.' },
+      { label: 'The coverline', text: 'Drawn just above your pre-shift readings. Three readings clearly above it mean the rise already happened.' },
+      { label: 'It is retrospective', text: 'A temperature chart can confirm ovulation. It cannot forecast it.' },
+      { label: 'Estimated', text: 'Calendar only — no shift has been read this cycle.' },
+      { label: 'Likely', text: 'A temperature shift was found.' },
+      { label: 'Confirmed', text: 'The shift plus another sign — an LH test or fertile mucus — agreed with it.' },
+      { label: 'The luteal half is the stable one', text: 'Usually 11–17 days and barely moves, so a longer cycle is almost always a longer first half.' },
     ],
+    takeaway: 'A prediction built from your own luteal length beats one built from a textbook 14.',
   },
   {
     id: 'fertility-signs',
     title: 'Fertility signs',
-    body: [
-      'Three signs, answering different questions. Cervical mucus changes through the cycle and turns watery, or stretchy and clear — “egg-white” — in the days before ovulation. That is the most fertile sign, and it appears before the event.',
-      'An LH test detects a hormone surge that usually happens 24–36 hours before ovulation. It predicts. The temperature shift confirms, afterwards. Neither alone is as good as both together.',
-      'The fertile window is the five days before ovulation plus ovulation day itself — wide because sperm survive up to five days while the egg survives about one. It is an estimate from your own data, and it is not contraception.',
+    intro: 'Three signs, answering different questions. Two predict; one confirms.',
+    points: [
+      { label: 'Cervical mucus', text: 'Turns watery, or stretchy and clear — “egg-white” — in the days before ovulation. The most fertile sign, and it appears before the event.' },
+      { label: 'LH test', text: 'Detects a surge that usually happens 24–36 hours before ovulation. It predicts.' },
+      { label: 'Temperature', text: 'Confirms, afterwards. Neither alone is as good as both together.' },
+      { label: 'The fertile window', text: 'The five days before ovulation plus ovulation day — wide because sperm survive up to five days and the egg about one.' },
+      { label: 'It is not contraception', text: 'An estimate from your own data, and nothing more than that.' },
     ],
   },
   {
     id: 'patterns',
     title: 'Patterns, mood and cravings',
-    body: [
-      'The pattern grid folds every cycle you have logged onto one axis. Each row is something you log; each column is a cycle day; darker means it happened more often on that day.',
-      'It needs at least three cycles. One cycle is an anecdote and two is a coincidence — a grid drawn from either invites you to see a pattern that is not there, so the page shows nothing instead and says why.',
-      'You can line cycles up by period start or by ovulation, and they answer different questions. If your cycle length varies, a symptom that always lands three days before your period smears across a week when aligned by day 1, and stacks into a single column when aligned by ovulation.',
-      'Mood and energy are shown inverted in the grid — darker means lower — so a dark band is where they dip.',
+    intro: 'Every cycle you have logged, folded onto one axis.',
+    points: [
+      { label: 'Rows and columns', text: 'Each row is something you log; each column is a cycle day. Darker means it happened more often on that day.' },
+      { label: 'Three cycles minimum', text: 'One is an anecdote and two is a coincidence, so the page shows nothing until three and says why.' },
+      { label: 'Line up by period start', text: 'The default. Answers “where in my cycle does this land”.' },
+      { label: 'Or by ovulation', text: 'Answers “how long before my period”. If your cycle length varies, this is the view where luteal symptoms stack into one column instead of smearing across a week.' },
+      { label: 'Mood and energy are inverted', text: 'Darker means lower, so a dark band is where they dip.' },
     ],
+    takeaway: 'The grid answers what a calendar cannot: not when, but what tends to happen and when.',
   },
   {
     id: 'nutrition',
     title: 'Nutrition by phase',
-    body: [
-      'General wellness information, not a diet plan and not a prescription. There are no targets here on purpose.',
-    ],
+    intro: 'General wellness information. Not a diet plan, and deliberately without targets.',
     points: [
-      'Menstrual — iron-rich foods paired with vitamin C; fluids.',
-      'Follicular — protein, vegetables, fermented foods.',
-      'Ovulation window — zinc sources, colourful produce.',
-      'Luteal — magnesium-rich foods, complex carbohydrates, steady meal timing; it helps with cravings.',
-      'Trying to conceive — folate, choline and omega-3 sources, and talk to a clinician about a prenatal vitamin.',
+      { label: 'Menstrual', text: 'Iron-rich foods paired with vitamin C; fluids.' },
+      { label: 'Follicular', text: 'Protein, vegetables, fermented foods.' },
+      { label: 'Ovulation window', text: 'Zinc sources, colourful produce.' },
+      { label: 'Luteal', text: 'Magnesium-rich foods, complex carbohydrates, steady meal timing — it helps with cravings.' },
+      { label: 'Trying to conceive', text: 'Folate, choline and omega-3 sources. Talk to a clinician about a prenatal vitamin.' },
     ],
   },
   {
     id: 'clinician',
     title: 'When to talk to a clinician',
-    body: [
-      'None of this is a diagnosis. These are the things worth raising with someone qualified, and raising one of them early costs nothing.',
-    ],
+    intro: 'None of this is a diagnosis. Raising one of these early costs nothing.',
     points: [
-      'Cycles regularly shorter than 21 days or longer than 35.',
-      'Cycle length varying by more than 7 to 9 days.',
-      'Periods lasting more than 7 days.',
-      'Soaking a pad or tampon every hour for several hours.',
-      'Bleeding between periods, or after sex.',
-      'Severe pain that stops you doing normal things.',
-      'No period for 90 days, when you are not pregnant.',
-      'Trying to conceive for 12 months without success — or 6 months if you are 35 or older.',
-      'Any bleeding after menopause.',
+      { label: 'Cycle length', text: 'Regularly shorter than 21 days or longer than 35.' },
+      { label: 'Cycle variation', text: 'Varying by more than 7 to 9 days.' },
+      { label: 'Period length', text: 'Lasting more than 7 days.' },
+      { label: 'Heavy bleeding', text: 'Soaking a pad or tampon every hour for several hours.' },
+      { label: 'Bleeding between periods', text: 'Or after sex.' },
+      { label: 'Severe pain', text: 'Pain that stops you doing normal things.' },
+      { label: 'No period for 90 days', text: 'When you are not pregnant.' },
+      { label: 'Trying to conceive', text: '12 months without success — or 6 months if you are 35 or older.' },
+      { label: 'Any bleeding after menopause', text: 'Worth a call on its own.' },
     ],
   },
   {
     id: 'privacy',
     title: 'Your data and privacy',
-    body: [
-      'Your cycle data stays on this device. It is saved only in this browser’s local storage, and it is excluded from every sync path this app has — the encrypted cloud, a self-hosted server, a GitHub gist. There is no setting that turns that off.',
-      'That also means you are responsible for it. If you clear your browser data, use private browsing, switch browsers, or lose this device, it is gone and nobody can recover it for you. Export a backup regularly and keep the file somewhere safe.',
-      'Import offers Replace or Merge, and Merge keeps what is already on this device where the dates collide. Delete all cycle data takes two steps and returns you to the welcome screen.',
-      'In a private window, storage may be unavailable entirely — the page says so rather than quietly failing to save.',
-      'And once more, because it is the thing that matters: this is not contraception, and it is not medical advice.',
+    intro: 'It stays on this device. That is a promise with a consequence attached.',
+    points: [
+      { label: 'Nothing is uploaded', text: 'Excluded from every sync path this app has — the encrypted cloud, a self-hosted server, a gist. There is no setting that turns that off.' },
+      { label: 'Nobody can recover it', text: 'Clear your browser data, use private browsing, switch browsers or lose this device and it is gone.' },
+      { label: 'Export regularly', text: 'A dated JSON file. It is the only copy that survives a cleared browser.' },
+      { label: 'Merge keeps what is here', text: 'On import, Merge wins for dates already on this device. Replace does not.' },
+      { label: 'Delete is two steps', text: 'And returns you to the welcome screen.' },
+      { label: 'Private windows', text: 'Storage may be unavailable entirely — the page says so rather than quietly failing to save.' },
     ],
+    takeaway: 'This is not contraception, and it is not medical advice.',
   },
   {
     id: 'limitations',
     title: 'Limitations',
-    body: [
-      'Predictions rely on consistent logging. A cycle with four readings cannot show a shift, and the page says “estimated” rather than guessing.',
-      'Illness, stress, travel, disrupted sleep, breastfeeding, recent hormonal contraception, PCOS, thyroid conditions and perimenopause can all make cycles and temperature patterns irregular. A chart that does not look like the textbook is common, and is not itself a problem.',
-      'Everything here describes what you recorded. It cannot see what you did not.',
+    intro: 'What this page cannot tell you, stated plainly.',
+    points: [
+      { label: 'It needs readings', text: 'A cycle with four temperatures cannot show a shift, and the page says “estimated” rather than guessing.' },
+      { label: 'Life moves the chart', text: 'Illness, stress, travel and disrupted sleep all shift waking temperature.' },
+      { label: 'So do conditions', text: 'Breastfeeding, recent hormonal contraception, PCOS, thyroid conditions and perimenopause can all make cycles and temperature patterns irregular.' },
+      { label: 'Irregular is common', text: 'A chart that does not look like the textbook is not itself a problem.' },
+      { label: 'It sees only what you recorded', text: 'It cannot see what you did not.' },
     ],
   },
 ]
