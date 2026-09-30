@@ -5,6 +5,7 @@
 import { encryptString, decryptString } from './crypto'
 import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
+import { forNetwork } from './cyclePrivacy'
 
 /** `photos-skipped` = the journal synced, but it was too big to carry its photos. */
 export type SyncState = 'syncing' | 'synced' | 'error' | 'photos-skipped'
@@ -26,7 +27,10 @@ export async function pushCloud(passphrase: string, data: JournalData): Promise<
     // Inline photos so their bytes actually travel — but only within the budget
     // Vercel's 4.5 MB body limit allows. Over it, the journal still syncs and
     // the photos stay behind, which beats the whole push failing.
-    const { payload: toSend, skipped } = await inlineImagesWithinBudget(data)
+    // Cycle data is withheld unless the user opted in — see lib/cyclePrivacy.
+    // Applied BEFORE image inlining so a withheld domain never reaches the
+    // encryptor at all, rather than being encrypted and then regretted.
+    const { payload: toSend, skipped } = await inlineImagesWithinBudget(forNetwork(data))
     const blob = await encryptString(JSON.stringify(toSend), passphrase)
     const res = await fetch('/api/sync', {
       method: 'POST',

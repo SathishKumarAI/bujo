@@ -2,6 +2,7 @@ import type { Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
 import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
+import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -840,6 +841,21 @@ export function generateDemoData(today = todayISO()): JournalData {
   }
 
   // Demo links skip the first-run storage gate.
+  /**
+   * The demo journal has already accepted the cycle disclaimer.
+   *
+   * Not a convenience — a GATE-COVERAGE decision. `a11y-axe`, `space-audit` and
+   * `clipped-text` all load `?demo=1`, and the Cycle page now renders the
+   * first-run welcome instead of itself until the acknowledgement exists. Left
+   * unseeded, all three gates would have started grading a one-card welcome
+   * screen and reporting green for a page they were no longer looking at —
+   * exactly the "an app that is never checked cannot fail" trap in CLAUDE.md,
+   * one page down.
+   *
+   * The welcome itself is covered by `CycleWelcome.test.tsx` instead, which is
+   * the right instrument for a gate that is about state rather than pixels.
+   */
+  j.settings.cycleDisclaimerAck = CYCLE_DISCLAIMER_VERSION
   j.settings.storageMode = 'local'
   // Marked here rather than at the three call sites (the welcome screen, the
   // Settings button, and the `?demo=1` boot path), because a flag that each

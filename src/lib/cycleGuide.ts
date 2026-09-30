@@ -120,5 +120,12 @@ export const TRACKING_TIPS = [
   { what: 'Cycle length itself', why: '21–35 days is a normal range, and your average beats the textbook 28. Consistent logging for 2–3 cycles is enough to see yours.' },
 ]
 
+/**
+ * Bump when the PROMISES in `CycleWelcome` change, not when a word is tidied.
+ * `settings.cycleDisclaimerAck` stores this number, so raising it re-asks — an
+ * acknowledgement of different text is not an acknowledgement of this one.
+ */
+export const CYCLE_DISCLAIMER_VERSION = 1
+
 export const CYCLE_DISCLAIMER =
   'Educational only — not medical advice, and temperature tracking is not contraception. Cycles vary; talk to a clinician about pain, heavy bleeding, or cycles consistently shorter than 21 or longer than 35 days.'

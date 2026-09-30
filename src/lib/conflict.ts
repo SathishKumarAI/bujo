@@ -1,4 +1,5 @@
 import type { JournalData } from './types'
+import { mergePulled } from './cyclePrivacy'
 
 // Collections keyed by a stable `id` — unioned by id on merge.
 //
@@ -145,9 +146,16 @@ export const CONFLICT_PROMPT = {
 
 export async function resolveIncoming(
   local: JournalData,
-  remote: JournalData,
+  remoteRaw: JournalData,
   ask: () => boolean | Promise<boolean> = () => false,
 ): Promise<JournalData | null> {
+  // THE OTHER HALF OF THE CYCLE BOUNDARY, and the one that is easy to miss.
+  // Stripping cycle data on the way OUT means a device with sync off uploads
+  // `cycle: []`. Without this, the next device to pull would read that empty
+  // array as "the log was deleted" and erase its own. Withheld is not deleted.
+  // Every pull path in the app funnels through this function, so the guard
+  // belongs here rather than at each of the five call sites.
+  const remote = mergePulled(local, remoteRaw)
   const l = local.updatedAt
   const r = remote.updatedAt
   // Local has unsynced edits newer than the cloud copy — ask before overwriting.

@@ -6,42 +6,60 @@
       "expansion": "Premenstrual syndrome",
       "domain": "cycle",
       "long": "The cluster of symptoms that shows up in the week or so before a period and clears once it starts — bloating, breast tenderness, mood dips, cravings, disturbed sleep. It sits in the luteal phase, when progesterone falls. It is common and it is not a diagnosis of anything.",
-      "source": { "label": "ACOG · Premenstrual syndrome", "url": "https://www.acog.org/womens-health/faqs/premenstrual-syndrome" }
+      "source": {
+        "label": "ACOG · Premenstrual syndrome",
+        "url": "https://www.acog.org/womens-health/faqs/premenstrual-syndrome"
+      }
     },
     {
       "term": "PMDD",
       "expansion": "Premenstrual dysphoric disorder",
       "domain": "cycle",
       "long": "The severe end of PMS, where the mood symptoms are disabling rather than annoying. Distinguished from PMS by severity and by how much it interferes with ordinary life. Worth raising with a clinician rather than tracking alone.",
-      "source": { "label": "ACOG · Premenstrual syndrome", "url": "https://www.acog.org/womens-health/faqs/premenstrual-syndrome" }
+      "source": {
+        "label": "ACOG · Premenstrual syndrome",
+        "url": "https://www.acog.org/womens-health/faqs/premenstrual-syndrome"
+      }
     },
     {
       "term": "BBT",
       "expansion": "Basal body temperature",
       "domain": "cycle",
       "long": "Your temperature at complete rest, taken first thing in the morning before getting out of bed, standing up or drinking anything. It matters because it steps up by roughly 0.3–0.5 °F (0.2–0.3 °C) just after ovulation and stays up until the next period — so the shift, not any single reading, is the signal. A reading taken after you are up is not a basal temperature.",
-      "source": { "label": "NHS · Fertility awareness", "url": "https://www.nhs.uk/contraception/methods-of-contraception/natural-family-planning/" }
+      "source": {
+        "label": "NHS · Fertility awareness",
+        "url": "https://www.nhs.uk/contraception/methods-of-contraception/natural-family-planning/"
+      }
     },
     {
       "term": "LH",
       "expansion": "Luteinising hormone",
       "domain": "cycle",
       "long": "The hormone whose surge triggers ovulation, usually 24–36 hours before the egg is released. Home ovulation tests detect this surge, which is why they predict ovulation while a temperature chart confirms it after the fact.",
-      "source": { "label": "NHS · Ovulation", "url": "https://www.nhs.uk/conditions/periods/fertility-in-the-menstrual-cycle/" }
+      "source": {
+        "label": "NHS · Ovulation",
+        "url": "https://www.nhs.uk/conditions/periods/fertility-in-the-menstrual-cycle/"
+      }
     },
     {
       "term": "CM",
       "expansion": "Cervical mucus",
       "domain": "cycle",
       "long": "Cervical fluid changes texture across the cycle: sticky or absent after a period, then wetter, and around ovulation clear and stretchy like raw egg white. That stretchy stage is the most fertile sign available without a test.",
-      "source": { "label": "NHS · Fertility awareness", "url": "https://www.nhs.uk/contraception/methods-of-contraception/natural-family-planning/" }
+      "source": {
+        "label": "NHS · Fertility awareness",
+        "url": "https://www.nhs.uk/contraception/methods-of-contraception/natural-family-planning/"
+      }
     },
     {
       "term": "LMP",
       "expansion": "Last menstrual period",
       "domain": "cycle",
       "long": "The first day of your most recent period. Cycle day 1 is counted from it, and every phase estimate on this page is counted from it — not from the start of the calendar month.",
-      "source": { "label": "NHS · Periods", "url": "https://www.nhs.uk/conditions/periods/" }
+      "source": {
+        "label": "NHS · Periods",
+        "url": "https://www.nhs.uk/conditions/periods/"
+      }
     },
     {
       "term": "TTC",
@@ -55,14 +73,20 @@
       "expansion": "Days past ovulation",
       "domain": "cycle",
       "long": "How many days since ovulation, counted forward. Useful because the luteal phase — ovulation to period — is the more consistent half of the cycle for most people, typically 12–14 days, while the first half varies.",
-      "source": { "label": "NHS · Fertility in the menstrual cycle", "url": "https://www.nhs.uk/conditions/periods/fertility-in-the-menstrual-cycle/" }
+      "source": {
+        "label": "NHS · Fertility in the menstrual cycle",
+        "url": "https://www.nhs.uk/conditions/periods/fertility-in-the-menstrual-cycle/"
+      }
     },
     {
       "term": "PCOS",
       "expansion": "Polycystic ovary syndrome",
       "domain": "cycle",
       "long": "A common hormonal condition that often makes cycles long, unpredictable or absent. If your logged cycles are consistently longer than 35 days or wildly irregular, that pattern is worth showing to a clinician — this app can show it, not explain it.",
-      "source": { "label": "NHS · PCOS", "url": "https://www.nhs.uk/conditions/polycystic-ovary-syndrome-pcos/" }
+      "source": {
+        "label": "NHS · PCOS",
+        "url": "https://www.nhs.uk/conditions/polycystic-ovary-syndrome-pcos/"
+      }
     },
     {
       "term": "HALT",
@@ -76,7 +100,10 @@
       "expansion": "Self-Management and Recovery Training",
       "domain": "recovery",
       "long": "A self-help recovery programme built on cognitive-behavioural tools rather than a twelve-step framework — the source of the trigger-plan and urge-surfing ideas this page uses.",
-      "source": { "label": "SMART Recovery", "url": "https://smartrecovery.org/" }
+      "source": {
+        "label": "SMART Recovery",
+        "url": "https://smartrecovery.org/"
+      }
     },
     {
       "term": "RPE",
@@ -118,7 +145,10 @@
       "expansion": "Dynamic Universal Pickleball Rating",
       "domain": "pickleball",
       "long": "The rating system most pickleball leagues and tournaments use, on a roughly 2.0–8.0 scale, calculated from match results rather than self-assessment. This app tracks the number you tell it; it does not compute an official rating.",
-      "source": { "label": "DUPR", "url": "https://dupr.com/" }
+      "source": {
+        "label": "DUPR",
+        "url": "https://dupr.com/"
+      }
     },
     {
       "term": "TDEE",
@@ -140,6 +170,12 @@
       "domain": "nutrition",
       "long": "Eating within a restricted window each day — 16:8 means a 16-hour fast and an 8-hour eating window. The app's fasting timer tracks the window; the window is not itself a diet.",
       "source": null
+    },
+    {
+      "term": "local-only",
+      "expansion": "Stored on this device only",
+      "domain": "cycle",
+      "long": "Your cycle data lives only in this browser, on this device. Nothing is uploaded — it is excluded from every sync path the app has, including the encrypted cloud and a self-hosted server. That also means nobody can recover it for you: export a backup regularly, because if this browser's data is cleared the log is gone."
     }
   ]
 }

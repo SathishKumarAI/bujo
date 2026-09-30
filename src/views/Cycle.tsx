@@ -16,14 +16,14 @@ import {
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
-import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
+import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
 } from '../lib/cycleCards'
 import {
-  BbtChart, BbtRulesCard, CycleHistoryChart, CycleWheel, DayEditor, DriveByPhase, FertileWindow,
-  FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard, SymptomPattern,
-  type BbtPoint,
+  BbtChart, BbtRulesCard, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
+  DayEditor, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
+  SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -79,7 +79,7 @@ import {
  * a fake zero, and nothing here predicts. See `lib/cycleInsights.ts`.
  */
 export function Cycle() {
-  const { data, setCycle } = useJournal()
+  const { data, setCycle, setSettings } = useJournal()
   const { month: ym } = useCursor()
   const isPhone = useDevice() === 'mobile'
   const unit = data.settings.tempUnit
@@ -174,6 +174,7 @@ export function Cycle() {
    * 722px zone, having asked for the row.
    */
   const cards: Record<string, React.ReactNode> = {
+    data: <CycleDataCard />,
     wheel: (
       <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
         <CycleWheel day={day} length={length ?? 28} bands={bands} />
@@ -239,6 +240,30 @@ export function Cycle() {
   const idsIn = (g: CycleGroup) => CYCLE_CARDS.filter((c) => c.group === g && cards[c.id])
   const shown = idsIn(group)
 
+  /**
+   * FIRST RUN · the welcome gates the whole page, not a corner of it.
+   *
+   * Rendered instead of the page, not above it: the promises are about data
+   * that has not been collected yet, so showing a log behind them would make
+   * the acknowledgement decorative. `PageLayout` still owns the frame — the
+   * brief's rule that no page adds its own container.
+   *
+   * The check is `!==`, not falsy: a user who accepted version 1 must see
+   * version 2 when the promises change. That is what the version is for.
+   */
+  if (data.settings.cycleDisclaimerAck !== CYCLE_DISCLAIMER_VERSION) {
+    // zone1, NOT zone2. Zone 2 is this page's act column, so the welcome
+    // first rendered in the right-hand rail beside an empty page — the only
+    // thing on screen to read, pushed into a sidebar. Zone 1 spans both
+    // columns and the component centres itself within it.
+    return (
+      <PageLayout
+        tier={1180}
+        zone1={<CycleWelcome onAccept={(v) => setSettings({ cycleDisclaimerAck: v })} />}
+      />
+    )
+  }
+
   return (
     <PageLayout
       tier={1180}
@@ -247,7 +272,8 @@ export function Cycle() {
            coloured pill, and a bar that renders every value in the mono face
            would spell "Luteal · estimate" in the typewriter. The shape is the
            contract's — one row, at most four facts, spanning both columns. */
-        <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 border-b border-line pb-3">
+        <div className="border-b border-line pb-3">
+        <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
           <Fact label="Cycle day" value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           <Fact
             label="Phase"
@@ -276,6 +302,10 @@ export function Cycle() {
               ? <span className="text-body text-fg-1"><span className="num font-medium">{length}</span> days</span>
               : <span className="text-body text-fg-2">—</span>}
           />
+        </div>
+        {/* The promise, kept in view. It was made once on a screen the user
+            saw before they had any data; this is where it stays true. */}
+        <CyclePrivacyLine />
         </div>
       }
       zone2={
