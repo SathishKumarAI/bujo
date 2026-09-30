@@ -156,3 +156,35 @@ describe('the two places a phase colour is written agree', () => {
     expect(phaseOf(20, 28).color).not.toBe('mauve')
   })
 })
+
+/**
+ * STAGE 4 · the declared change.
+ *
+ * The brief said the ovulation window would move from calendar to measured, and
+ * that only those expectations should change. They did not, in fact, need to:
+ * `phaseOf` keeps the `length - 14` calendar placement as its DEFAULT, and the
+ * measured day is an optional third argument the view supplies once the chart
+ * has found a shift. So every pinned value above is untouched, and the new
+ * behaviour is pinned here instead — which is the better outcome, since the old
+ * expectations still describe what a user with no temperature data sees.
+ */
+describe('a measured ovulation overrides the calendar placement', () => {
+  it('leaves the calendar estimate alone when nothing was detected', () => {
+    expect(phaseBands(28).find((b) => b.id === 'ovulation')).toMatchObject({ from: 13, to: 15 })
+  })
+
+  it('moves the window to the measured day when one is supplied', () => {
+    // A user who ovulates on day 11 of a 28-day cycle has a 17-day luteal
+    // phase; the textbook placement would have told her day 14 for months.
+    expect(phaseBands(28, 11).find((b) => b.id === 'ovulation')).toMatchObject({ from: 10, to: 12 })
+    expect(phaseOf(11, 28, 11).id).toBe('ovulation')
+    expect(phaseOf(14, 28, 11).id).toBe('luteal')
+  })
+
+  it('still covers every day with no gap once the window has moved', () => {
+    const bands = phaseBands(29, 11)
+    expect(bands[0].from).toBe(1)
+    expect(bands[bands.length - 1].to).toBe(29)
+    for (let i = 1; i < bands.length; i++) expect(bands[i].from).toBe(bands[i - 1].to + 1)
+  })
+})

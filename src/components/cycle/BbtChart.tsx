@@ -11,6 +11,8 @@ export interface BbtPoint {
   day: number
   temp?: number
   flags: string[]
+  /** Marked unreliable — drawn hollow, and excluded from detection upstream. */
+  disturbed?: boolean
 }
 
 /**
@@ -37,12 +39,17 @@ export interface BbtPoint {
  * temperature of zero, and the line drawn across it is the honest reading of
  * two points either side.
  */
-export function BbtChart({ points, unit, label }: {
+export function BbtChart({ points, unit, label, ovulationDay, fertileFrom, fertileTo, confidence }: {
   points: BbtPoint[]
   /** 'F' or 'C', the user's setting. */
   unit: string
   /** What the x-axis counts, for the caption and the alt text. */
   label: string
+  /** Detected ovulation, from `lib/ovulation`. Null when nothing was detected. */
+  ovulationDay?: number | null
+  fertileFrom?: number | null
+  fertileTo?: number | null
+  confidence?: 'confirmed' | 'likely' | 'estimated'
 }) {
   const withTemp = points.filter((p) => p.temp != null)
   if (withTemp.length < 2) {
@@ -90,7 +97,48 @@ export function BbtChart({ points, unit, label }: {
                 label={{ value: 'coverline', position: 'right', fill: cat('subtext0'), fontSize: 10 }}
               />
             )}
-            <Line type="monotone" dataKey="temp" stroke={cat('maroon')} dot={{ r: 2 }} connectNulls strokeWidth={2} />
+            {/* THE FERTILE WINDOW, under the line rather than over it: it is
+                context for the shape, not a mark on any one reading. */}
+            {fertileFrom != null && fertileTo != null && (
+              <ReferenceArea x1={fertileFrom} x2={fertileTo} fill={cat('green')} fillOpacity={0.08} />
+            )}
+            {/* THE DETECTED DAY. Dashed while only the temperature supports it,
+                solid once a second sign agrees — the same estimated / likely /
+                confirmed ladder the phase pill uses, drawn instead of worded. */}
+            {ovulationDay != null && (
+              <ReferenceLine
+                x={ovulationDay}
+                stroke={cat('green')}
+                strokeDasharray={confidence === 'confirmed' ? undefined : '4 3'}
+                label={{ value: 'ovulation', position: 'top', fill: cat('subtext0'), fontSize: 10 }}
+              />
+            )}
+            {/* HOLLOW for a disturbed reading. It is still plotted — hiding it
+                would make the chart look like a morning that was never taken,
+                and the user did take it; it just cannot be trusted. */}
+            <Line
+              type="monotone"
+              dataKey="temp"
+              stroke={cat('maroon')}
+              connectNulls
+              strokeWidth={2}
+              dot={(props) => {
+                const { cx, cy, payload, index } = props as { cx?: number; cy?: number; payload?: BbtPoint; index?: number }
+                if (cx == null || cy == null) return <g key={index} />
+                const hollow = payload?.disturbed
+                return (
+                  <circle
+                    key={index}
+                    cx={cx}
+                    cy={cy}
+                    r={hollow ? 3 : 2}
+                    fill={hollow ? 'none' : cat('maroon')}
+                    stroke={cat('maroon')}
+                    strokeWidth={hollow ? 1.5 : 0}
+                  />
+                )
+              }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
