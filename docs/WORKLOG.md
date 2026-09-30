@@ -26,6 +26,135 @@ Rules the three share:
 
 ---
 
+## 2026-09-30 — Two pages rebuilt around the question each was avoiding (#311–#318)
+
+**Summary:** Eight PRs across two subjects that turned out to be the same
+subject. Cycle was asked for as a staged redesign and Recovery as "do the same
+for men"; both ended up being about the same failure — **a page that records
+the data and never says what it means.** Cycle knew the temperature shift and
+said "Luteal · estimate" whether it had measured anything or not. Recovery knew
+every resisted urge and every slip and could not tell you whether watching porn
+counted for you or against you.
+
+### Cycle, in seven stages (#311–#317)
+
+The request was a staged brief: audit, defects, privacy, logging, detection,
+patterns, guide. The audit was the most valuable stage and produced three
+findings that changed the rest of it:
+
+| The brief said | The repo said |
+|---|---|
+| "the hard-coded 14–16 ovulation window" | `phaseOf` computes `length - 14 ± 1`. It *reads* 14–16 because the demo averages 29 days |
+| "the header clips under the sticky bar" | **Not reproducible.** 5 themes × 4 viewports at scroll 0: 20/20 clean, 0 overlap |
+| "import the existing quartile-bucket helper" | There isn't one. `SymptomPattern` used a linear ramp; nothing else bucketed at all |
+
+The privacy stage is the one worth re-reading. **The disclaimer was false when
+it was written.** `cycle` is a field of `JournalData` and every sync path took
+the whole object — the encrypted cloud, a GitHub gist, and a self-hosted
+PostgREST that posts in plaintext. My first cut gated the fix on a
+`settings.cycleSync` switch, which was wrong: the page promises "never
+uploaded, synced, or sent to us or anyone else", and **a promise with a toggle
+beside it is not a promise.** `forNetwork` strips unconditionally, and a test
+asserts that setting `cycleSync: true` by hand changes nothing.
+
+The other half is the one that is easy to miss: stripping on the way out means
+this device uploads `cycle: []`, and without a guard the next device to pull
+reads that as *deleted* and erases its own. Every pull funnels through
+`resolveIncoming`, so the guard is there rather than at five call sites.
+
+### Recovery, and the question it could not answer (#318)
+
+*"I watched porn — is that positive or negative feedback here?"* had no answer
+on screen, and the cause was structural: **`UrgeWin` had no addiction link**, so
+"I resisted porn" and "I resisted a cigarette" were the same record
+distinguished only by free text. That is also the root of COD-251 — joining
+urges to addictions by NAME failed because one list said "Nicotine" and the
+other said "Smoking". Both ends closed: urges join by id, and `URGE_PRESETS` is
+now a subset of `ADDICTION_PRESETS`.
+
+Then the sharper observation, which came from the user: **an urge has two
+endings and only one was recorded richly.** Resisting wrote intensity, HALT,
+technique and trigger; giving in wrote a date and a word through a different
+control on a different card. So the context was discarded at exactly the moment
+it was most worth having — the times you gave in are the ones you want fewer of.
+
+One form, two buttons, one field different (`outcome`). What it unlocks is the
+only analysis on the page that answers "how do I move away from this" with
+evidence rather than advice:
+
+> You were lonely in 100% of the times you gave in, against 20% of the times you
+> held. That is the biggest single difference in your log.
+
+### Six things that went wrong, and what each cost
+
+**A grep piped through `head` is a sweep you did not do.** #307's "nine call
+sites, and that was all of them" came from output truncated at 40 lines. Three
+more sites each re-decided what a habit type means and each dropped `limit`: it
+never rendered on Today's classic layout, the CSV exported every limit day as
+not-done, and the sparkline drew *taller the worse the day*. Fixed in #309.
+Now a trap in `CLAUDE.md`.
+
+**A seed test that passes and a browser that shows nothing are not a
+contradiction.** `cycleSeed.test.ts` asserted mood and energy were seeded and
+passed; the browser showed **100 days, 0 with mood**. `?demo=1` only seeded when
+the journal was EMPTY, so anyone who had opened the demo once kept that journal
+forever and every field added afterwards was invisible. `DEMO_VERSION` re-seeds
+a demo journal — never a real one — and it has already moved three times in one
+day, which is the point.
+
+**A ratio must compare like with like.** Once lapse amounts carried units, the
+ledger divided resisted *events* by slipped *minutes* and rendered "2% of the
+pulls you logged, you did not follow" for a month with five wins and two bad
+evenings. The shared currency is events; the amount is for saying what it cost.
+
+**A probe that switches themes without re-rendering measures the previous
+theme's colour.** Reported latte at 1.68:1 for a pairing that is 5.81 — wrong by
+3.5x and wrong in the alarming direction. The tell is that the foreground comes
+back identical for every theme probed while only the background moves.
+
+**Hand-rolling a control that already exists is how a new panel looks
+unstyled.** Three of my panels used inline `cat('surface0')` backgrounds instead
+of `ChipPick`, which already carries the pill radius, the `bg-ink-2` rest fill,
+the per-tone selected state and the press feedback. The user reported it as
+"looking very bad", and they were right. ~120 lines deleted by adopting the
+component.
+
+**And I reached for the smallest type by default.** `text-micro` appeared 13
+times against 19 `text-label` in my new cards — a ratio of 0.68 where the
+app-wide ratio is **0.17**. That is what made them read cramped.
+
+### A guard test is moved, not weakened
+
+Three tests broke when Doomscrolling gained a `minutes` unit, because the seed
+deliberately keeps one addiction *unquantified* to exercise the false branch of
+`hasLapseQuantity`. Doomscrolling could not keep that role — a bare `count ?? 1`
+under a minutes unit means **one minute of scrolling**, a default value rendered
+as a measurement. Porn took the role, which also added the addiction the user
+asked for. Three tests changed subject; none lost an assertion.
+
+### Numbers
+
+```
+tests     1389 -> 1573 pass / 112 files    (+184 across the stretch)
+a11y      173 of 173 · 12 of 12 shards · 0 serious · 0 critical
+clipped   clean at 1440 · 1024 · 390 across 24 views
+contrast  5 themes · 14 accents · both palettes agree
+
+cycle     desktop 1.4 / 1.4 screens   phone 2.9 / 5.3
+today     desktop 2.5 -> 1.4          phone 4.4 -> 2.9   folds 3 -> 5
+
+per-group axe probe (COD-237 blind spot):
+          28 scans · 4 groups x 5 themes x 2 viewports · 0 serious
+          found `scrollable-region-focusable` the real gate structurally cannot see
+```
+
+**The per-group probe is the number worth keeping.** `npm run a11y` reported
+173/173 and zero serious while everything added in Stages 5–7 sat outside that
+number, because a `SectionRail` shows one group at a time and `openFolds()` has
+no `aria-expanded` to find. Driving the four groups by hand found a real defect:
+a 30-column table in an 8-column viewport with no way for a keyboard to reach
+the other 22.
+
 ## 2026-09-29 — A prompt review that found a missing habit type, and the sweep I did not actually do (#307–#310)
 
 **Summary:** Four PRs from a request that was not a code request. The ask was to
