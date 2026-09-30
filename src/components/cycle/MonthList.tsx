@@ -1,6 +1,7 @@
 import { cat } from '../../lib/colors'
 import type { CyclePoint } from '../../lib/types'
 import { FLAGS, FLAG_COLOR } from './flags'
+import { LH_GLYPH, MUCUS_GLYPH } from './dayFields'
 
 /**
  * The month as a readable list — and now as a heatmap of where the period
@@ -43,6 +44,22 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
             {cd != null ? `d${cd}` : ''}
           </span>
           <span className="num w-14 text-fg-1">{c?.temp != null ? `${c.temp}°` : ''}</span>
+          {/* ONE extra column, not five. The row already carries date, cycle
+              day, temperature and up to five coloured dots; a column per new
+              field would make the densest thing on the page unreadable. Mucus
+              and LH share it because they are the two a chart reader actually
+              cross-references against the temperature.
+
+              Glyphs rather than colour: five hues sit to the right already, and
+              a sixth would read as a sixth flag. */}
+          <span className="num w-8 shrink-0 text-center text-fg-3" aria-hidden>
+            {c?.mucus ? MUCUS_GLYPH[c.mucus] : ''}{c?.lh ? LH_GLYPH[c.lh] : ''}
+          </span>
+          {(c?.mucus || (c?.lh && c.lh !== 'not-taken')) && (
+            <span className="sr-only">
+              {c?.mucus ? `mucus ${c.mucus}` : ''}{c?.mucus && c?.lh ? ', ' : ''}{c?.lh && c.lh !== 'not-taken' ? `LH ${c.lh}` : ''}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             {FLAGS.filter((f) => (c?.flags ?? []).includes(f)).map((f) => (
               <span key={f}>

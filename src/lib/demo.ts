@@ -1,4 +1,4 @@
-import type { Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
+import type { CyclePoint, Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
 import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
@@ -74,6 +74,21 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
   const rand = rng(42)
+  /**
+   * A SECOND, INDEPENDENT STREAM for fields added after the fact.
+   *
+   * `rand` is one deterministic sequence shared by the whole seed, so every new
+   * `rand()` call inserted anywhere shifts every value drawn after it — adding
+   * the Stage 3 cycle fields moved the demo's coverline from 97.41 to 97.42 and
+   * broke a snapshot that had nothing to do with them. That is a test teaching
+   * people to re-bless numbers they did not change, which is worse than no
+   * snapshot at all.
+   *
+   * Anything added to an existing seed block draws from here instead, so the
+   * original stream — and therefore every previously pinned number — is
+   * untouched. Same rule for the next person: new field, new stream.
+   */
+  const rand2 = rng(1337)
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
@@ -832,10 +847,77 @@ export function generateDemoData(today = todayISO()): JournalData {
         const driveBase = day <= PERIOD_DAYS ? 2 : near <= 2 ? 4.5 : near <= 5 ? 3.6 : 3
         const drive = Math.min(5, Math.max(1, Math.round(driveBase + (rand() - 0.5) * 1.4)))
         const rated = rand() > 0.16 ? { drive } : {}
+
+        /**
+         * THE OPTIONAL HALF, seeded with a SHAPE rather than with noise.
+         *
+         * Every field here is what the Patterns grid will read, so uniform
+         * random values would render a grid that is evenly grey — a demo of the
+         * arithmetic working, not of the feature. So each one is tied to where
+         * in the cycle the day falls, the way a real log would be:
+         *
+         * - mucus dries after ovulation and runs watery/egg-white just before it
+         * - LH peaks a day or two before the temperature shift
+         * - cravings and symptoms cluster in the luteal phase
+         * - mood dips premenstrually and energy dips while bleeding
+         *
+         * And each is left ABSENT on a fraction of days, because "not logged"
+         * is a distinct state that every reader of these fields has to handle —
+         * a seed with no gaps never exercises that branch.
+         */
+        const pre = ovulation - day // >0 before ovulation, <0 after
+        const luteal = day > ovulation
+        const premenstrual = day > len - 6
+
+        const mucus: CyclePoint['mucus'] = day <= PERIOD_DAYS ? undefined
+          : pre <= 1 && pre >= 0 ? 'egg-white'
+          : pre <= 3 && pre > 1 ? 'watery'
+          : pre <= 6 && pre > 3 ? 'creamy'
+          : luteal ? 'sticky' : 'dry'
+        const lh: CyclePoint['lh'] = pre === 1 ? 'peak' : pre === 2 ? 'positive' : pre <= 5 && pre >= 0 ? 'negative' : undefined
+
+        const cravings: string[] = []
+        if (premenstrual && rand2() > 0.45) cravings.push('sweet')
+        if (premenstrual && rand2() > 0.7) cravings.push('chocolate')
+        if (luteal && rand2() > 0.8) cravings.push('carbs')
+
+        const symptoms: string[] = []
+        if (premenstrual && rand2() > 0.55) symptoms.push('bloating')
+        if (premenstrual && rand2() > 0.75) symptoms.push('breast tenderness')
+        if (day <= 2 && rand2() > 0.6) symptoms.push('fatigue')
+        if (rand2() > 0.88) symptoms.push('headache')
+
+        const moodTags: string[] = []
+        if (premenstrual && rand2() > 0.6) moodTags.push('irritable')
+        if (pre <= 2 && pre >= 0 && rand2() > 0.5) moodTags.push('energetic')
+        if (day <= 2 && rand2() > 0.65) moodTags.push('low')
+
+        const moodBase = premenstrual ? 2.6 : pre <= 2 && pre >= 0 ? 4.2 : 3.4
+        const energyBase = day <= PERIOD_DAYS ? 2.4 : luteal ? 3.0 : 3.8
+        const clamp5 = (n: number) => Math.min(5, Math.max(1, Math.round(n)))
+
+        const more = {
+          ...(mucus && rand2() > 0.2 ? { mucus } : {}),
+          ...(lh && rand2() > 0.35 ? { lh } : {}),
+          ...(flags.includes('period') ? { flow: day === 1 ? 'medium' : day === 2 ? 'heavy' : 'light' } as const : {}),
+          ...(cravings.length ? { cravings } : {}),
+          ...(symptoms.length ? { symptoms } : {}),
+          ...(moodTags.length ? { moodTags } : {}),
+          ...(rand2() > 0.25 ? { mood: clamp5(moodBase + (rand2() - 0.5) * 1.6) } : {}),
+          ...(rand2() > 0.3 ? { energy: clamp5(energyBase + (rand2() - 0.5) * 1.6) } : {}),
+          // A couple of disturbed readings per cycle, so the detection engine's
+          // skip path and the chart's hollow marker both render. Was 0.97, which
+          // produced ZERO across the whole seeded range — a field seeded so
+          // rarely it never appears is a field no gate checks, which is the
+          // trap this whole block exists to avoid. `cycleSeed.test.ts` caught
+          // it, which is why that file asserts presence and not just shape.
+          ...(rand2() > 0.93 ? { tempDisturbed: true as const } : {}),
+        }
+
         // Two or three missed mornings per cycle — a chart with no gaps is a
         // chart nobody actually kept.
-        if (rand() > 0.09) j.cycle.push({ date, temp, flags, ...rated })
-        else if (flags.length) j.cycle.push({ date, flags, ...rated })
+        if (rand() > 0.09) j.cycle.push({ date, temp, flags, ...rated, ...more })
+        else if (flags.length) j.cycle.push({ date, flags, ...rated, ...more })
       }
     })
   }

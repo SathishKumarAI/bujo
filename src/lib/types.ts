@@ -286,6 +286,38 @@ export interface CyclePoint {
    * the `count ? sum / count : 0` trap this app has already shipped twice.
    */
   drive?: number
+
+  // ── Stage 3: the optional half ──────────────────────────────────────────
+  //
+  // Every field below is optional and nullable, and absent means NOT LOGGED —
+  // never "no". That distinction is the whole reason they are optional rather
+  // than defaulted: a day with no mucus recorded is not a dry day, and a cycle
+  // where nobody took an LH test is not a cycle of negative tests. Anything
+  // that averages or counts these must skip absent days rather than treat them
+  // as a zero, which is the `count ? sum / count : 0` trap this file's `drive`
+  // note already records.
+
+  /** How heavy the bleeding is. Only meaningful on a day flagged `period`. */
+  flow?: 'light' | 'medium' | 'heavy' | 'very-heavy'
+  /** Cervical mucus, dry through egg-white. The most fertile sign is egg-white. */
+  mucus?: 'dry' | 'sticky' | 'creamy' | 'watery' | 'egg-white'
+  /** Ovulation-test result. `not-taken` is stored only when explicitly chosen. */
+  lh?: 'not-taken' | 'negative' | 'positive' | 'peak'
+  intimacy?: 'none' | 'protected' | 'unprotected'
+  /** 1 (low) to 5 (high). Unrated stays undefined — see `drive`. */
+  mood?: number
+  /** 1 (drained) to 5 (energised). */
+  energy?: number
+  moodTags?: string[]
+  cravings?: string[]
+  symptoms?: string[]
+  /**
+   * The reading is unreliable — illness, fever, alcohol, travel, a short night,
+   * or taken much later than usual. Excluded from ovulation detection, which is
+   * the only reason it exists: one bad reading in the wrong place invents or
+   * erases a temperature shift.
+   */
+  tempDisturbed?: boolean
 }
 
 /** Where a book sits on the reading shelf. */

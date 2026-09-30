@@ -22,7 +22,7 @@ import {
 } from '../lib/cycleCards'
 import {
   BbtChart, BbtRulesCard, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
-  DayEditor, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
+  DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
   SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
@@ -318,6 +318,11 @@ export function Cycle() {
             onToggleFlag={(f) => toggleFlag(sel, f)}
             onDrive={(drive) => setCycle(sel, { drive })}
           />
+
+          {/* The optional half, folded. The fast path above is unchanged:
+              temperature, five flags, drive — the ten-second habit this page
+              was built around stays exactly as long. */}
+          <DayMore entry={selEntry} onPatch={(patch) => setCycle(sel, patch)} />
 
           {/* The legend belongs to the act, not to the review: it decodes the
               chips six pixels above it, and the dead column beside a form is
