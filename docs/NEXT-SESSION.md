@@ -1,23 +1,32 @@
 # Next session
 
-> **2026-09-29 — this queue was NOT worked through and is unchanged below.**
-> The #307–#310 stretch came in sideways (a prompt review that turned into a
-> habit type and then a Today layout), so every item below is still open and
-> still measured. It is rewritten when it is picked up, not when it is passed
-> over — a queue that gets reworded every session stops being a queue.
+> **2026-09-30 — FIRST: merge the open stack.** `#317` then `#318`, bottom
+> first, retargeting each child *before* its parent merges. Squash-merging the
+> bottom of a stack permanently closes the child and GitHub will not reopen one
+> whose base branch is gone. Nothing below is worth starting until that is done.
 >
-> Two things joined the pile:
+> This queue was again NOT worked through — the #311–#318 stretch was the Cycle
+> redesign and the Recovery ledger, neither of which is on it. Every item below
+> is still open and still measured. Rewritten when picked up, not when passed
+> over.
 >
-> - **COD-261** — the clean-day tick on an *avoid* habit is `cat('overlay0')`,
->   measured live at **3.55:1** on mocha. Small, and the fix is the documented
->   one (`subtext0`); worth sweeping the other three `overlay0`-as-text sites in
->   the same change.
-> - **Limit habits render with generic numeric copy outside the habit row.**
->   Insights and Trackers describe one as though its ceiling were a goal.
->   Nothing is wrong on screen; nothing is limit-aware either.
+> **Joined the pile this stretch:**
 >
-> And one number moved: **Today is now 1.4 desktop / 2.9 phone** (was 2.5 / 4.4),
-> so it is no longer near the top of any length list.
+> - **Any new card in a rail group is a11y-unchecked until driven per group.**
+>   `npm run a11y` reported 173/173 green while the whole of Cycle Stages 5–7 sat
+>   outside the number (COD-237). A throwaway probe over the four groups found a
+>   real `scrollable-region-focusable`. This is a *process* item: it will keep
+>   happening on every rail page until the gate itself can open a rail.
+> - **Limit habits still use generic numeric copy** outside the habit row —
+>   Insights and Trackers describe a ceiling as though it were a goal. Carried
+>   from 2026-09-29, untouched.
+> - **COD-261**, the `cat('overlay0')` tick at 3.55:1. Carried, untouched.
+> - **`UrgeWin.stress` is captured and never rendered.** The field ships, the
+>   logger does not ask for it yet, and `contrastOutcomes` reads it if present.
+>   Small, and it completes a comparison that already works for HALT.
+>
+> **Numbers that moved:** Today is 1.4 desktop / 2.9 phone. Cycle is 1.4 / 2.9.
+> Neither is near the top of any length list now.
 
 Written 2026-09-27 at the end of the #287–#298 stretch, replacing the queue that
 stretch worked through. Read `docs/PAGE-WORKFLOW.md` first for any page work.

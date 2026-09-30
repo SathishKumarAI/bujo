@@ -1,110 +1,99 @@
 # STATUS
 
-**Stopped:** 2026-09-29, on `main` at `a207616`, clean apart from the untracked
-`docs/life-schedule-v3-final.html` that predates this session. **Four PRs merged
-(#307–#310).** COD-262 and COD-263 Done, COD-261 filed.
+**Stopped:** 2026-09-30, on `docs/session-cycle-recovery`. **`main` is at
+`e666099`** and there is **an open stack of three PRs that must merge in
+order** — see below, this is the first thing to deal with.
+
+## The stack, bottom first
+
+```
+main
+ └── #317  feat/cycle-stage67-goals-guide   Cycle stages 6+7, design pass, feelings, charts
+      └── #318  feat/recovery-feedback       Recovery ledger, outcomes, units
+           └── (this branch)  docs/session-cycle-recovery
+```
+
+Merge **#317, then #318**, retargeting each child before its parent merges —
+squash-merging the bottom of a stack permanently closes the child, and GitHub
+will not reopen a closed PR whose base branch is gone (the trap is in
+`CLAUDE.md`; it cost two re-created PRs in an earlier stretch).
+
+`#306` is also open and is **not from this stretch** — left alone.
 
 ## What this stretch was
 
-A prompt review that became a feature and then a layout. The ask was to improve a
-pasted "redesign the Today screen" prompt; checked against the repo it asserted
-five things that are not true here — hardcoded hex against a five-theme palette
-written in two files, the wrong font variables, a `Trends`/`Archive` nav that
-does not exist, a bottom tab bar that already exists, and an invented
-`check / count / limit` habit taxonomy.
-
-The taxonomy was invented. **The gap it described was real**, so it shipped, and
-then the Today layout it was written for shipped too.
-
-| PR | What | The finding |
-|---|---|---|
-| 307 | `limit` habit type | An unrecorded day is not a win — three states, not two |
-| 308 | Handover + a trap | A theme probe that measured the previous theme's colour |
-| 309 | Three missed call sites | My own #307 sweep was a grep truncated at 40 lines |
-| 310 | Today's three zones | 2.5 → 1.4 screens desktop, 4.4 → 2.9 phone |
+Two requests that turned out to be one subject. Cycle came as a seven-stage
+brief; Recovery came as "do the same for men, for addictions". Both pages had
+the same failure: **they recorded the data and never said what it meant.**
+Cycle printed "Luteal · estimate" whether it had measured a temperature shift or
+not. Recovery knew every resisted urge and every slip and could not tell you
+whether watching porn counted for you or against you.
 
 ## The three worth re-reading
 
-**A limit habit's hard problem is the unlogged day, not the comparison.**
-Flipping `count`'s comparison gives `v <= target`, which looks right and is
-catastrophic: `habitValueOn` returns 0 for a day nobody recorded, and 0 is under
-every limit, so every day before install and every day you forgot scores as
-willpower. Three states — under / over / not logged — and only a logged-under day
-counts. Second time the `count ? sum / count : 0` shape has decided a design
-here.
+**A promise with a toggle beside it is not a promise.** The Cycle page tells the
+user their data is "never uploaded, synced, or sent to us or anyone else", and
+that was **false when written**: `cycle` is a field of `JournalData` and every
+sync path took the whole object, including a self-hosted PostgREST that posts in
+plaintext. My first fix gated it on a `settings.cycleSync` switch — wrong, for
+exactly the users who most needed the sentence to be true. `forNetwork` strips
+unconditionally and a test asserts no setting can change that.
 
-The cheap half: `habitDoneOn` is the chokepoint (`habitStreak` calls it, and so
-do at-risk, weekly goals, comeback, longest-ever), so **one branch** made every
-streak limit-aware and the seven-dot history row needed no change at all.
+Its other half: stripping on the way out means this device uploads `cycle: []`,
+and without a guard the next device to pull reads that as *deleted*. Withheld is
+not deleted. The guard is in `resolveIncoming`, where every pull funnels.
 
-**A helper only helps where it is called, and my sweep for the call sites was
-truncated.** #307 said "nine call sites, that was all of them". The grep behind
-it ended in `head -40`. Three more sites each had their own opinion about what a
-habit type means, and each dropped `limit`: it never rendered on Today's classic
-layout, the CSV exported every limit day as not-done (that one predates #307 and
-hits timer and rating habits too), and the sparkline drew **taller the worse the
-day**. Fixed in #309, with both tests confirmed to fail against the old code
-before being believed.
+**A seed test that passes and a browser that shows nothing are not a
+contradiction.** `cycleSeed.test.ts` asserted mood and energy were seeded and
+passed; the browser showed 100 days with zero. `?demo=1` only seeded an EMPTY
+journal, so a demo opened once was frozen forever and every field added
+afterwards was invisible — which reads exactly like the feature being broken.
+`DEMO_VERSION` now re-seeds a demo journal (never a real one) and has already
+moved three times in a day.
 
-**A packing grid optimises the wrong thing.** `CardGrid` places by card *height*,
-so Today's capture box and check-in could land in either column on any given day.
-Three columns assigned by role instead, with DOM order as the *phone* order and
-the desktop columns as `col-start`/`row-start` placements over it.
+**A ratio must compare like with like.** Once lapse amounts carried units, the
+recovery ledger divided resisted *events* by slipped *minutes* and rendered "2%
+of the pulls you logged, you did not follow" for a month with five wins and two
+bad evenings. `lapseDays` carries events; `lapses` carries the amount.
 
 ## Numbers
 
 ```
-tests     1391 pass / 102 files
-a11y      173 of 173 scans · 12 of 12 shards · 0 serious · 0 critical
+tests     1573 pass / 112 files
+a11y      173 of 173 · 12 of 12 shards · 0 serious · 0 critical
 clipped   clean at 1440 · 1024 · 390 across 24 views
 contrast  5 themes · 14 accents · both palettes agree
 
-today     desktop 2.5 -> 1.4 screens shipped   (3.6 -> 3.4 open)
-          phone   4.4 -> 2.9 screens shipped   (6.0 -> 6.3 open)
-          folds   3 -> 5, which is COVERAGE UP — see below
-
-over-limit warning per theme, measured on real re-renders:
-          mocha 9.79 · latte 5.81 · neon 11.54 · vscode 7.36 · dawn 5.98
+per-group axe probe · 28 scans · 0 serious
+  and it found what the real gate structurally cannot — see below
 ```
 
-**Today's fold count going 3 → 5 is the load-bearing number.** COD-237's failure
-mode is a fold count *dropping* when a fold is introduced, because the gate
-stopped reaching the content. A rise is the evidence that the new
-`CollapsibleSection` is being opened and scanned — which is why it is a section
-and not a `SectionRail`, since a rail has no `aria-expanded` for `openFolds()` to
-find.
-
-**The brief's one-screen target was not met and was not faked.** 1.4 screens.
-The three columns measure 554 / 699 / 861px and the check-in alone is 627 of
-that. 880px was available by deleting a field.
+**The per-group probe is the load-bearing number.** `npm run a11y` reported
+173/173 green while everything added in Cycle Stages 5–7 sat outside it: a
+`SectionRail` shows one group at a time and `openFolds()` has no `aria-expanded`
+to find (COD-237). Driving the four groups by hand found a real
+`scrollable-region-focusable` — a 30-column table in an 8-column viewport with
+no keyboard route to the other 22. **Any new card in a rail group is unchecked
+until someone drives it per group.**
 
 ## Traps added to CLAUDE.md this stretch
 
-- **Setting `data-theme` does not re-theme an inline style.** The CSS variables
-  repaint, so the background changes, but `cat()`/`onRaised()` resolve at render
-  time — so the measurement compares the new ground against the *old* foreground.
-  A probe here reported latte at 1.68:1 for a pairing that is 5.81. The tell is
-  that the foreground comes back identical for every theme probed.
 - **A sweep piped through `head` is a sweep you did not do.** It truncates
-  silently and the exit code is 0, so the claim "that was all of them" reads as
-  verified when it was cut off. Count the matches first.
+  silently and exits 0. "Nine call sites, and that was all of them" came from a
+  grep cut at 40 lines; three more each dropped the new habit type.
+- **Setting `data-theme` does not re-theme an inline style** — `cat()` resolves
+  at render time, so a probe that does not force a re-render measures the new
+  ground against the old foreground.
 
 ## Environment, on the way out
 
-- A dev server is on **5180** (this worktree), a preview on **4173**, and a
-  Chrome on debug port **9333** with a throwaway profile in
-  `%TEMP%\claude-chrome-9333`. Kill them freely; none holds state that matters.
-- Confirm what any preview port serves by its **asset hash**, never its title —
-  every worktree here serves an identical `<title>`.
-- The nine agent worktrees under `.claude/worktrees/` from the 2026-09-27
-  handover were not touched and still need a decision, including the 770MB plain
-  checkout at `agent-afa93cdc840c582e9` that is not a git worktree at all.
+- Dev server on **5180**, preview on **4173**, Chrome on debug port **9333**
+  with a throwaway profile in `%TEMP%\claude-chrome-9333`. Kill freely.
+- Confirm what a preview port serves by its **asset hash**, never its title.
+- The nine agent worktrees under `.claude/worktrees/` from 2026-09-27 are still
+  there and still need a decision.
 
 ## Next
 
-See `docs/NEXT-SESSION.md`. The short version: **`mindset` is 8.8 screens on a
-phone** and is the worst page in the app; **COD-232** has a second head (a rail
-page's space number describes one group, across seven pages); the sync cluster
-(COD-136 / 137 / 139) is still the only data-integrity work on the board. Newly
-on the pile: **COD-261**, and limit habits render with generic numeric copy
-everywhere outside the habit row.
+`docs/NEXT-SESSION.md`. The short version: **merge the stack first**, then
+`mindset` is still 8.8 phone screens and still the worst page in the app.

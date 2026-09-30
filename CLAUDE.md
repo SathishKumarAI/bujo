@@ -340,6 +340,48 @@ that exists nowhere in the app. Switch themes the way the app does — write
 foreground is *identical across every theme you probe* while only the background
 moves.
 
+Trap: **a seed test that passes and a browser that shows nothing are not a
+contradiction.** `cycleSeed.test.ts` asserted mood and energy were seeded, and
+passed; the running app showed **100 seeded days with zero of either**. Both were
+true: the test seeds a fresh journal, and `?demo=1` only ever seeded when
+`d.entries.length === 0`, so a demo opened once was frozen at whatever the seed
+looked like that day and every field added afterwards was invisible — which
+reads exactly like the feature being broken rather than like the demo being old.
+`DEMO_VERSION` re-seeds a journal that IS the demo (`settings.demoSeeded`), never
+a real one, and only on a URL asking for the demo. **Bump it whenever the seed
+gains a field a page renders**; it moved three times in one day and each move was
+a feature nobody could see. Sibling of the unseeded-`data.cycle` trap above: that
+one was a domain the seed skipped, this one is a domain the seed reaches and the
+*browser* never re-ran.
+
+Trap: **a ratio must compare like with like, and a unit change is how that
+breaks.** The recovery ledger divided urges resisted by lapse *amount*, which was
+fine while amounts were occurrences and became nonsense the moment an addiction
+could be measured in minutes: five resisted urges against 235 minutes of
+scrolling rendered as **"2% of the pulls you logged, you did not follow"** for
+what was a good month. Both sides of a ratio need the same currency — here
+*events*, because a 90-minute scroll is one decision that went the other way, the
+same as one cigarette is. The amount stays, for saying what it cost. Whenever a
+quantity gains a unit, grep every place it is divided by or compared against
+something else.
+
+Trap: **hand-rolling a control the app already has is how a new panel ships
+looking unstyled.** Three new panels used inline `cat('surface0')` /
+`cat('surface2')` backgrounds for their chips instead of `ChipPick`, which
+already carries the pill radius, the `bg-ink-2` rest fill, the per-tone selected
+state, `active:scale-95` and a real `<fieldset>`/`<legend>`. It was reported as
+"looking very bad", correctly, and the fix deleted ~120 lines. DESIGN.md's "fill
+defines a control" rule exists for exactly this; **reach for the component before
+the token, and the token before a hex.** Same family as the `cat('crust')`
+trap — a local decision where a shared one already exists.
+
+Trap: **reaching for the smallest type step by default.** New Cycle cards used
+`text-micro` 13 times against 19 `text-label` — a ratio of **0.68** where the
+app-wide ratio is **0.17** — and read cramped because of it. `micro` is for a
+dense numeric ruler where thirty numbers share a 400px strip, not for a legend or
+a value anyone reads. Count your own usage against the app's before believing the
+sizes are fine.
+
 Trap: **a sweep piped through `head` is a sweep you did not do.** It truncates
 silently, the exit code stays 0, and the output *looks* like a complete answer —
 so "nine call sites, and that was all of them" got written into a PR body when
