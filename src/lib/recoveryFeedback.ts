@@ -38,14 +38,26 @@
  */
 import type { AddictionStreak, JournalData, Relapse, UrgeWin } from './types'
 import { addDays, dayDiff, todayISO } from './date'
+import { formatAmount, totalMinutes, unitOf } from './addictionUnits'
 
 export interface FeedbackRow {
   addictionId: string
   name: string
   /** Urges resisted in the window. */
   resisted: number
-  /** Occurrences slipped in the window (a lapse day of count 3 is 3). */
+  /** AMOUNT slipped in the window, in this addiction's unit. */
   lapses: number
+  /**
+   * How many separate days you slipped on — the count the RATIO uses.
+   *
+   * Introduced because the ratio was silently comparing different things once
+   * units arrived: five resisted urges against 235 *minutes* of scrolling
+   * rendered as "2% of the pulls you logged, you did not follow", which is
+   * arithmetic on apples and oranges. A ratio needs both sides in the same
+   * currency, and the shared currency is EVENTS — each side is "a moment that
+   * went one way or the other". The amount stays, for saying what it cost.
+   */
+  lapseDays: number
   /** `resisted - lapses`. */
   net: number
   /**
@@ -64,6 +76,17 @@ export interface FeedbackRow {
   topTechnique: string | null
   /** Every urge logged for this addiction in the window, both outcomes. */
   urges: UrgeWin[]
+  /** The kind of loneliness most often logged here, when `lonely` leads. */
+  lonelyKind: string | null
+  /** What amounts are measured in — `times` unless the addiction says otherwise. */
+  unit: string
+  /** "14 cigarettes", "8.5 hours" — the lapse total, said properly. */
+  lapsesLabel: string
+  /**
+   * Minutes lost in the window, for duration units only. `null` for a count
+   * unit, because "0 hours of cigarettes" states a category error as a fact.
+   */
+  minutesLost: number | null
 }
 
 export interface Ledger {
@@ -120,7 +143,10 @@ export function feedbackLedger(
     const prevResisted = won.filter((u) => inPrev(u.date)).length
 
     const lapses = countOccurrences(a.relapses, inWindow)
-    const prevLapses = countOccurrences(a.relapses, inPrev)
+    // Days, not amounts — see `lapseDays`. A 90-minute scroll is one decision
+    // that went the other way, the same as one cigarette is.
+    const lapseDays = a.relapses.filter((r) => inWindow(r.date)).length
+    const prevLapseDays = a.relapses.filter((r) => inPrev(r.date)).length
 
     const last = [...a.relapses].sort((x, y) => (x.date < y.date ? 1 : -1))[0]
 
@@ -129,10 +155,11 @@ export function feedbackLedger(
       name: a.name,
       resisted,
       lapses,
-      net: resisted - lapses,
-      ratio: ratioOf(resisted, lapses),
+      lapseDays,
+      net: resisted - lapseDays,
+      ratio: ratioOf(resisted, lapseDays),
       cleanDays: last ? Math.max(0, dayDiff(last.date, today)) : null,
-      prevRatio: ratioOf(prevResisted, prevLapses),
+      prevRatio: ratioOf(prevResisted, prevLapseDays),
       // Drivers read BOTH outcomes: the states that accompany a slip are the
       // ones worth naming, and excluding them would describe only good days.
       topDriver: topOf(mine.filter((u) => inWindow(u.date)).flatMap((u) => (u.halt ?? []).map((h) => HALT_LABEL[h] ?? h))),
@@ -140,11 +167,19 @@ export function feedbackLedger(
         won.filter((u) => inWindow(u.date) && u.technique).map((u) => TECHNIQUE_LABEL[u.technique!] ?? u.technique!),
       ),
       urges: mine.filter((u) => inWindow(u.date)),
+      lonelyKind: topOf(
+        mine.filter((u) => inWindow(u.date) && u.lonelyKind).map((u) => u.lonelyKind!),
+      ),
+      unit: unitOf(a.unit).id,
+      lapsesLabel: formatAmount(lapses, a.unit),
+      minutesLost: totalMinutes(lapses, a.unit),
     }
   })
 
   const resisted = rows.reduce((s, r) => s + r.resisted, 0)
-  const lapses = rows.reduce((s, r) => s + r.lapses, 0)
+  // Totals across addictions are in DAYS too: summing 39 cigarettes and 235
+  // minutes would be a number with no unit at all.
+  const lapses = rows.reduce((s, r) => s + r.lapseDays, 0)
 
   return {
     rows: rows.sort((a, b) => (b.resisted + b.lapses) - (a.resisted + a.lapses)),
@@ -177,6 +212,51 @@ function topOf(xs: string[]): string | null {
   for (const x of xs) counts.set(x, (counts.get(x) ?? 0) + 1)
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
 }
+
+/**
+ * THE KINDS OF LONELY, and what each one actually calls for.
+ *
+ * One list, because the label, the thing it means and the step it implies are
+ * three views of one fact — and the step is the whole reason the field exists.
+ * Every `step` here is different from every other; if two of them collapsed into
+ * "reach out to someone", the split would not be earning its question.
+ */
+export const LONELY_KINDS = [
+  {
+    id: 'alone' as const,
+    label: 'Nobody around',
+    step: 'Arrange company before the hour it usually hits, not during it',
+    why: 'This is the kind that company genuinely fixes — and the only one where it does. By the time the urge is there, arranging it is already too slow.',
+  },
+  {
+    id: 'unseen' as const,
+    label: 'People around, none who know me',
+    step: 'One honest conversation with one person, rather than more company',
+    why: 'You were not short of people. More of them does not touch this — depth with one does, and it is the harder thing to schedule.',
+  },
+  {
+    id: 'no-one-close' as const,
+    label: 'Nobody I could call',
+    step: 'Pick one person and build the tie over weeks',
+    why: 'Nothing tonight fixes this, and pretending otherwise is why quick advice fails here. It is a months-long thing, and it is worth starting anyway.',
+  },
+  {
+    id: 'disconnected' as const,
+    label: 'Adrift from everything',
+    step: 'Worth saying out loud to someone — a friend, or someone qualified',
+    why: 'This one sits outside what a tracking page can help with. Logging it is useful; relying on the log to fix it is not.',
+  },
+  {
+    id: 'bored' as const,
+    label: 'Mostly just bored',
+    step: 'Something absorbing, not company',
+    why: 'Understimulation gets logged as loneliness constantly, and it needs the opposite response — company will not hold your attention, a hard task will.',
+  },
+]
+
+export const LONELY_LABEL: Record<string, string> = Object.fromEntries(
+  LONELY_KINDS.map((k) => [k.id, k.label.toLowerCase()]),
+)
 
 export type Verdict = 'strong' | 'holding' | 'slipping' | 'quiet'
 
@@ -235,10 +315,16 @@ export function nextSteps(row: FeedbackRow): NextStep[] {
   const out: NextStep[] = []
 
   if (row.topDriver === 'lonely') {
-    out.push({
-      title: 'Plan company before the window, not during it',
-      why: 'Loneliness was the most common thing you logged alongside these urges. It is the one HALT state that cannot be fixed in the moment — by the time the urge is there, arranging company is already too slow.',
-    })
+    // The KIND decides the step. Telling someone who was surrounded by people
+    // to "arrange company" is advice that misses, and it is the reason the app
+    // asks which kind rather than treating loneliness as one thing.
+    const kind = LONELY_KINDS.find((k) => k.id === row.lonelyKind)
+    out.push(kind
+      ? { title: kind.step, why: `${kind.why} You logged this as “${kind.label.toLowerCase()}” more than any other kind.` }
+      : {
+        title: 'Name what kind of lonely it is',
+        why: 'Loneliness accompanied most of these urges, but the useful move depends on which kind — being alone, being unseen in company, or having nobody to call all point somewhere different. The urge form asks when you tick it.',
+      })
   }
   if (row.topDriver === 'tired') {
     out.push({

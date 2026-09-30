@@ -520,6 +520,29 @@ export interface UrgeWin {
    */
   addictionId?: string
   /**
+   * WHAT KIND OF LONELY — asked only when `halt` includes `lonely`.
+   *
+   * The split is not decoration: each kind points at a DIFFERENT action, and
+   * that is the only reason to ask. "Arrange company" is good advice for
+   * `alone` and actively wrong for `unseen`, where there were already people
+   * in the room. An app that treats all loneliness as one thing gives the same
+   * suggestion to both and is useless to at least one of them.
+   *
+   * Loosely follows Weiss's split between SOCIAL loneliness (no network) and
+   * EMOTIONAL loneliness (no close attachment), with `bored` included because
+   * understimulation is very commonly logged as loneliness and needs a
+   * completely different response.
+   *
+   * | Kind | What it is | What actually helps |
+   * |---|---|---|
+   * | `alone` | nobody around right now | arranging company, and it works |
+   * | `unseen` | people around, none of whom know you | depth with one person, not more people |
+   * | `no-one-close` | nobody you could call | building a tie over weeks; nothing tonight will fix it |
+   * | `disconnected` | adrift from everything | this one is worth saying out loud to someone |
+   * | `bored` | understimulated, read as lonely | something absorbing, not company |
+   */
+  lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored'
+  /**
    * HOW THE URGE ENDED — the field that turns this log from a scoreboard into
    * a record.
    *
@@ -577,6 +600,18 @@ export interface AddictionStreak {
   /** Optional money this addiction cost per day (#123) — drives a "money saved"
    *  tile = cleanDays × costPerDay. */
   costPerDay?: number
+  /**
+   * What "how much" is measured in — see `lib/addictionUnits.ts`.
+   *
+   * `Relapse.count` is an amount in THIS unit. Absent means `times`, which is
+   * exactly what `count` has always meant, so every existing journal reads
+   * unchanged and no migration is needed.
+   *
+   * It exists because counting occurrences is the wrong measurement for half
+   * the list: three cigarettes is a fact, and three sessions of doomscrolling
+   * is twenty minutes or four hours and the page could not tell which.
+   */
+  unit?: string
 }
 
 /** Abstinence / NoFap streak tracker state. */

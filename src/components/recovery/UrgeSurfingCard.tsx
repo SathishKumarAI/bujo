@@ -7,6 +7,7 @@ import { Button } from '../ui/button'
 import { cat, onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import { URGE_PRESETS, HALT_STATES, haltTally, type HaltState } from '../../lib/streak'
+import { LONELY_KINDS } from '../../lib/recoveryFeedback'
 import { techniqueRanking, matchPlanForTrigger } from '../../lib/urge'
 import { ChipPick } from '../ui/quickpick'
 import { notify } from '../../lib/notify'
@@ -78,6 +79,7 @@ export function UrgeSurfingCard() {
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
   const [halt, setHalt] = useState<HaltState[]>([])
   const [addictionId, setAddictionId] = useState('')
+  const [lonelyKind, setLonelyKind] = useState('')
   const addictions = data.nofap.addictions ?? []
   /** Guards the fat-finger double-tap; see the docstring above. */
   const lastUrgeAt = useRef(0)
@@ -119,9 +121,10 @@ export function UrgeSurfingCard() {
       halt: halt.length ? halt : undefined,
       addictionId: forId,
       outcome,
+      lonelyKind: (lonelyKind || undefined) as 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' | undefined,
     })
     if (outcome === 'followed') logLapseDay(forId ?? null)
-    setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([]); setAddictionId('')
+    setUrge(''); setIntensity(3); setTechnique(undefined); setHalt([]); setAddictionId(''); setLonelyKind('')
     if (outcome === 'resisted') {
       notify.success('Urge logged', 'Remove it from the list below if it was a mis-tap.')
     } else {
@@ -260,6 +263,22 @@ export function UrgeSurfingCard() {
           onChange={(id) => setHalt((cur) => cur.includes(id as typeof cur[number]) ? cur.filter((x) => x !== id) : [...cur, id as typeof cur[number]])}
           options={HALT_STATES.map((h) => ({ value: h.id, label: h.label }))}
         />
+        {/* WHICH KIND OF LONELY — only once `lonely` is ticked.
+            Progressive disclosure because it is a real question and asking it
+            of everyone would add a fifth chip row to a form used mid-urge. It
+            earns the tap by changing the advice: "arrange company" is right for
+            being alone and wrong for being unseen in a room full of people, and
+            the app cannot tell those apart without asking. */}
+        {halt.includes('lonely') && (
+          <ChipPick
+            label="What kind of lonely?"
+            className="mt-3"
+            value={lonelyKind}
+            onChange={(v) => setLonelyKind(lonelyKind === v ? '' : String(v))}
+            options={LONELY_KINDS.map((k) => ({ value: k.id, label: k.label, hint: k.why }))}
+            hint="Each one points somewhere different — that is why it asks."
+          />
+        )}
       </div>
       {/* Most-effective technique tally (U8) */}
       {techRank.length > 0 && (

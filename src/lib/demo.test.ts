@@ -120,9 +120,20 @@ describe('demo seeds the recovery day log', () => {
   })
 
   it('leaves one addiction unquantified, so the gate on the card has a false case', () => {
+    // Was Doomscrolling, which could not stay once its unit became minutes —
+    // a bare `count ?? 1` there would have meant ONE MINUTE of scrolling, a
+    // default value rendered as a measurement. Porn carries the false case now,
+    // where "once, unquantified" is a truthful reading.
+    const porn = (generateDemoData().nofap.addictions ?? []).find((a) => a.name === 'Porn')!
+    expect(porn.relapses.length).toBeGreaterThan(0)
+    expect(hasLapseQuantity(porn.relapses)).toBe(false)
+  })
+
+  it('measures the time-based addiction in time, not in sessions', () => {
     const doom = (generateDemoData().nofap.addictions ?? []).find((a) => a.name === 'Doomscrolling')!
-    expect(doom.relapses.length).toBeGreaterThan(0)
-    expect(hasLapseQuantity(doom.relapses)).toBe(false)
+    expect(doom.unit).toBe('minutes')
+    // And with real amounts: a `count ?? 1` here would read as one minute.
+    expect(doom.relapses.every((r) => (r.count ?? 1) > 10)).toBe(true)
   })
 
   it('logs today, so the zone-2 tally shows a live count and not only "Clean today"', () => {

@@ -1,4 +1,5 @@
 import { cat, onRaised } from '../../lib/colors'
+import { formatDuration } from '../../lib/addictionUnits'
 import {
   contrastOutcomes, nextSteps, VERDICT_COPY, verdictOf, type FeedbackRow, type Ledger,
 } from '../../lib/recoveryFeedback'
@@ -81,9 +82,10 @@ function Row({ row }: { row: FeedbackRow }) {
           <span className="num font-medium" style={{ color: onRaised('green') }}>+{row.resisted}</span>
           <span className="ml-1 text-fg-2">resisted</span>
         </span>
+        {/* Said in the addiction's own unit. "−3 followed" is meaningless for
+            scrolling; "−8.5 hours" is the number that actually lands. */}
         <span className="text-label">
-          <span className="num font-medium" style={{ color: onRaised('peach') }}>−{row.lapses}</span>
-          <span className="ml-1 text-fg-2">followed</span>
+          <span className="num font-medium" style={{ color: onRaised('peach') }}>−{row.lapsesLabel}</span>
         </span>
         {row.cleanDays != null && (
           <span className="text-label text-fg-2">
@@ -108,6 +110,16 @@ function Row({ row }: { row: FeedbackRow }) {
             )}
           </p>
         </div>
+      )}
+
+      {/* WHAT IT COST, for anything measured in time. A count says how often;
+          a duration says what it took from you, and that is the number people
+          actually respond to. */}
+      {row.minutesLost != null && row.minutesLost > 0 && (
+        <p className="mt-2 text-label text-fg-2">
+          That is <span className="text-fg-1">{formatDuration(row.minutesLost)}</span> in the last 30 days
+          {' — about '}{formatDuration(row.minutesLost / 30)} a day.
+        </p>
       )}
 
       <p className="mt-2 text-label text-fg-2">{copy.line}</p>

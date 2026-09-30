@@ -35,10 +35,21 @@
  * where this rail is single-select, and two call sites is not a reason to
  * invent a third module both must agree with. Mirror, do not extract.
  */
-export const GROUPS = ['progress', 'patterns', 'plan', 'reference'] as const
+/**
+ * `feedback` leads, and it is a SECTION rather than a card in `progress`.
+ *
+ * The four groups answered "how long", "when does it happen", "what will I do"
+ * and "what is this" — and none of them answered the first question anyone
+ * actually has, which is *did that count for me or against me*. That is a
+ * different question from progress: a streak counts days, this counts
+ * decisions, and putting the ledger under "Progress" made the page's answer to
+ * its own central question the seventh card in a list about time and money.
+ */
+export const GROUPS = ['feedback', 'progress', 'patterns', 'plan', 'reference'] as const
 export type Group = (typeof GROUPS)[number]
 
 export const GROUP_LABEL: Record<Group, string> = {
+  feedback: 'Win or loss',
   progress: 'Progress',
   patterns: 'Patterns',
   plan: 'Plan',
@@ -54,6 +65,7 @@ export const GROUP_LABEL: Record<Group, string> = {
  * `plan` and `reference` keep the retired folds' own subtitles verbatim.
  */
 export const GROUP_BLURB: Record<Group, string> = {
+  feedback: 'Did that count for you or against you — and what was different about the ones you lost',
   progress: 'Where the streak stands, and what it has bought you',
   patterns: 'When urges hit, and what runs up to a reset',
   plan: 'Your commitment contract & if-then trigger plans',
@@ -68,7 +80,8 @@ export const GROUP_BLURB: Record<Group, string> = {
  * see where the streak stands; the analytics that explain *why* are one click
  * away, the way Coaching opens on Drills rather than its shot library.
  */
-export const DEFAULT_GROUP: Group = 'progress'
+// Opens on `feedback`, because it is the question the page exists to answer.
+export const DEFAULT_GROUP: Group = 'feedback'
 
 /**
  * One row per panel in zone 3. `words` is what the filter has to match to keep
@@ -103,7 +116,7 @@ export const CARDS: CardMeta[] = [
   // FIRST in the group, deliberately. It is the card that answers "was that a
   // win or a loss", which is the question every other card on this page assumes
   // you have already answered for yourself.
-  { id: 'feedback', title: 'Win or loss, per thing', group: 'progress', wide: true, words: 'feedback positive negative resisted followed slipped net ratio verdict porn nicotine alcohol doomscrolling loneliness stress what to try next' },
+  { id: 'feedback', title: 'Win or loss, per thing', group: 'feedback', wide: true, words: 'feedback positive negative resisted followed slipped net ratio verdict porn nicotine alcohol doomscrolling loneliness stress what to try next' },
   { id: 'streakvsbest', title: 'Streak vs best', group: 'progress', words: 'streak best record pace comeback days clean ahead behind' },
   { id: 'selfefficacy', title: 'Self-efficacy', group: 'progress', words: 'conversion resisted rate urges won confidence percent' },
   { id: 'streakssaved', title: 'Streaks saved', group: 'progress', words: 'saved streaks resisted rescue near miss' },

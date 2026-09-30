@@ -119,7 +119,7 @@ export function NoFap() {
   const addictions = s.addictions ?? []
   const tallyRows: DayTallyRow[] = [
     { id: null, name: 'Main streak', count: lapseCountOn(s.relapses, today) },
-    ...addictions.map((a) => ({ id: a.id, name: a.name, count: lapseCountOn(a.relapses, today) })),
+    ...addictions.map((a) => ({ id: a.id, name: a.name, count: lapseCountOn(a.relapses, today), unit: a.unit })),
   ]
   /**
    * Only the streaks where a quantity was actually recorded get a "how many"

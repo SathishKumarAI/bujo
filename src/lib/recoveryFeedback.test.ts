@@ -144,14 +144,51 @@ describe('verdicts are generous at the bottom, because people are still logging'
 })
 
 describe('next steps name the evidence they came from', () => {
-  it('suggests planning company when loneliness drove the urges', () => {
+  it('suggests planning company when the lonely kind is being ALONE', () => {
     const j = journal(
       [addiction('porn', 'Porn')],
-      [urge('porn', 1, { halt: ['lonely'] }), urge('porn', 2, { halt: ['lonely'] }), urge('porn', 3, { halt: ['tired'] })],
+      [
+        urge('porn', 1, { halt: ['lonely'], lonelyKind: 'alone' }),
+        urge('porn', 2, { halt: ['lonely'], lonelyKind: 'alone' }),
+        urge('porn', 3, { halt: ['tired'] }),
+      ],
     )
     const steps = nextSteps(feedbackLedger(j, 30, TODAY).rows[0])
     expect(steps[0].title).toMatch(/company/i)
-    expect(steps[0].why).toMatch(/loneliness/i)
+  })
+
+  /**
+   * The whole reason the kind is asked. "Arrange company" is good advice for
+   * being alone and actively wrong for being unseen in a room full of people —
+   * an app that gives the same suggestion to both is useless to one of them.
+   */
+  it('does NOT suggest company when the loneliness was being unseen in a crowd', () => {
+    const j = journal(
+      [addiction('porn', 'Porn')],
+      [
+        urge('porn', 1, { halt: ['lonely'], lonelyKind: 'unseen' }),
+        urge('porn', 2, { halt: ['lonely'], lonelyKind: 'unseen' }),
+      ],
+    )
+    const steps = nextSteps(feedbackLedger(j, 30, TODAY).rows[0])
+    expect(steps[0].title).not.toMatch(/arrange company/i)
+    expect(steps[0].title).toMatch(/one honest conversation/i)
+  })
+
+  it('tells bored from lonely, which need opposite responses', () => {
+    const j = journal(
+      [addiction('porn', 'Porn')],
+      [urge('porn', 1, { halt: ['lonely'], lonelyKind: 'bored' }), urge('porn', 2, { halt: ['lonely'], lonelyKind: 'bored' })],
+    )
+    expect(nextSteps(feedbackLedger(j, 30, TODAY).rows[0])[0].title).toMatch(/absorbing/i)
+  })
+
+  it('asks which kind when loneliness leads but no kind was recorded', () => {
+    const j = journal(
+      [addiction('porn', 'Porn')],
+      [urge('porn', 1, { halt: ['lonely'] }), urge('porn', 2, { halt: ['lonely'] })],
+    )
+    expect(nextSteps(feedbackLedger(j, 30, TODAY).rows[0])[0].title).toMatch(/what kind of lonely/i)
   })
 
   it('leads with the technique that actually worked', () => {
@@ -273,5 +310,42 @@ describe('what was different about the times you gave in', () => {
     const out = contrastOutcomes(rows)
     expect(out.length).toBeLessThanOrEqual(3)
     expect(Math.abs(out[0].gap)).toBeGreaterThanOrEqual(Math.abs(out[out.length - 1].gap))
+  })
+})
+
+describe('a ratio compares like with like', () => {
+  /**
+   * The bug this catches, which shipped for about ten minutes: once amounts
+   * carried units, the ratio divided resisted EVENTS by slipped MINUTES and
+   * rendered "2% of the pulls you logged, you did not follow" for a month with
+   * five wins and two bad evenings.
+   */
+  it('divides events by events, not events by minutes', () => {
+    const j = journal(
+      [{ ...addiction('scroll', 'Doomscrolling', [{ date: d(3), count: 95 }, { date: d(9), count: 140 }]), unit: 'minutes' }],
+      [urge('scroll', 1), urge('scroll', 2), urge('scroll', 4), urge('scroll', 5), urge('scroll', 6)],
+    )
+    const row = feedbackLedger(j, 30, TODAY).rows[0]
+    expect(row.lapses).toBe(235)      // the amount, for saying what it cost
+    expect(row.lapseDays).toBe(2)     // the events, for the ratio
+    // 5 wins against 2 slips is a good month, not a 2% catastrophe.
+    expect(row.ratio).toBeCloseTo(5 / 7)
+    expect(verdictOf(row)).toBe('holding')
+  })
+
+  it('still reports the amount in the addiction’s own unit', () => {
+    const j = journal(
+      [{ ...addiction('nic', 'Nicotine', [{ date: d(2), count: 14 }]), unit: 'cigarettes' }],
+      [urge('nic', 1)],
+    )
+    const row = feedbackLedger(j, 30, TODAY).rows[0]
+    expect(row.lapsesLabel).toBe('14 cigarettes')
+    expect(row.lapseDays).toBe(1)
+    expect(row.minutesLost).toBeNull()
+  })
+
+  it('totals time lost only for a duration unit', () => {
+    const j = journal([{ ...addiction('scroll', 'Doomscrolling', [{ date: d(2), count: 90 }]), unit: 'minutes' }])
+    expect(feedbackLedger(j, 30, TODAY).rows[0].minutesLost).toBe(90)
   })
 })

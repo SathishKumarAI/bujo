@@ -3,14 +3,17 @@ import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { onRaised } from '../../lib/colors'
+import { formatAmount, unitOf } from '../../lib/addictionUnits'
 
 /** One tracked thing and how many times it happened today. */
 export interface DayTallyRow {
   /** `null` is the primary streak; otherwise an `AddictionStreak` id. */
   id: string | null
   name: string
-  /** Occurrences today — 0 is a clean day. */
+  /** Amount today in `unit` — 0 is a clean day. */
   count: number
+  /** What the amount is measured in. Absent means `times`. */
+  unit?: string
 }
 
 /**
@@ -64,21 +67,25 @@ export function DayTallyCard({ rows, onStep }: {
                     clip gate is right that a hidden half-word is worse than a
                     second line. `break-words` covers a long single word. */}
                 <div className="text-body font-medium break-words text-fg-1">{r.name}</div>
+                {/* Said in the row's own unit: "45 minutes today" rather than
+                    "3× today", which for scrolling measures nothing. */}
                 <div className="text-label" style={{ color: onRaised(r.count > 0 ? 'red' : 'green') }}>
-                  {r.count > 0 ? `${r.count}× today` : 'Clean today'}
+                  {r.count > 0 ? `${formatAmount(r.count, r.unit)} today` : 'Clean today'}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 {r.count > 0 && (
-                  <Button variant="ghost" size="icon-lg" onClick={() => onStep(r.id, -1)}
-                    aria-label={`One fewer ${r.name} today`}>
+                  <Button variant="ghost" size="icon-lg" onClick={() => onStep(r.id, -unitOf(r.unit).step)}
+                    aria-label={`Less ${r.name} today`}>
                     <Icon as={Minus} size="md" />
                   </Button>
                 )}
-                <Button variant="secondary" size="lg" onClick={() => onStep(r.id, 1)}
-                  aria-label={r.count > 0 ? `Log one more ${r.name} today` : `Log ${r.name} today`}
+                {/* The step is the unit's, not 1: fifteen minutes for a scroll,
+                    one for a cigarette. Nobody taps + sixty times. */}
+                <Button variant="secondary" size="lg" onClick={() => onStep(r.id, unitOf(r.unit).step)}
+                  aria-label={r.count > 0 ? `Add ${formatAmount(unitOf(r.unit).step, r.unit)} to ${r.name} today` : `Log ${r.name} today`}
                   className="gap-1">
-                  <Icon as={Plus} size="sm" />{r.count > 0 ? '1 more' : 'Log today'}
+                  <Icon as={Plus} size="sm" />{r.count > 0 ? `${unitOf(r.unit).step} more` : 'Log today'}
                 </Button>
               </div>
             </div>

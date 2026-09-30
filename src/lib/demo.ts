@@ -83,7 +83,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 4
+export const DEMO_VERSION = 5
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -412,6 +412,7 @@ export function generateDemoData(today = todayISO()): JournalData {
    */
   const NICOTINE_ID = uid('ad')
   const SCROLL_ID = uid('ad')
+  const PORN_ID = uid('ad')
 
   j.nofap = {
     startedOn: addDays(today, -16),
@@ -519,7 +520,7 @@ export function generateDemoData(today = todayISO()): JournalData {
      */
     addictions: [
       {
-        id: NICOTINE_ID, name: 'Nicotine', startedOn: today, best: 11, costPerDay: 9,
+        id: NICOTINE_ID, name: 'Nicotine', startedOn: today, best: 11, costPerDay: 9, unit: 'cigarettes',
         // Eight weeks of Sundays, because the trend card's window is eight
         // weeks: seeded over six it read **rising** for a sequence that falls
         // 14 → 8, since the two empty leading buckets dragged the first half's
@@ -539,10 +540,30 @@ export function generateDemoData(today = todayISO()): JournalData {
         ],
       },
       {
-        id: SCROLL_ID, name: 'Doomscrolling', startedOn: addDays(today, -4), best: 9,
+        /**
+         * PORN · the unquantified case, deliberately.
+         *
+         * `hasLapseQuantity` gates a whole card, and a seed where every streak
+         * carries an amount never exercises its false branch — `demo.test.ts`
+         * asserts one stays bare for exactly that reason. Doomscrolling used to
+         * be it, and could not stay once its unit became minutes: a bare
+         * `count ?? 1` would have meant ONE MINUTE of scrolling, which is a
+         * default value rendered as a measurement.
+         *
+         * So the false case moves to a streak where "once, unquantified" is a
+         * truthful reading rather than an artefact.
+         */
+        id: PORN_ID, name: 'Porn', startedOn: addDays(today, -11), best: 24, unit: 'times',
         relapses: [
-          { id: uid('r'), date: addDays(today, -19), trigger: 'In bed', note: '' },
-          { id: uid('r'), date: addDays(today, -4), trigger: 'In bed', note: '' },
+          { id: uid('r'), date: addDays(today, -34), trigger: 'Alone, late', note: '' },
+          { id: uid('r'), date: addDays(today, -11), trigger: 'Could not sleep', note: '' },
+        ],
+      },
+      {
+        id: SCROLL_ID, name: 'Doomscrolling', startedOn: addDays(today, -4), best: 9, unit: 'minutes',
+        relapses: [
+          { id: uid('r'), date: addDays(today, -19), trigger: 'In bed', note: '', count: 95 },
+          { id: uid('r'), date: addDays(today, -4), trigger: 'In bed', note: '', count: 140 },
         ],
       },
     ],
