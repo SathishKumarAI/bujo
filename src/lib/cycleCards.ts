@@ -96,6 +96,8 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
   { id: 'drive', title: 'Drive by phase', group: 'patterns' },
+  { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
+  { id: 'moodphase', title: 'Mood & energy by phase', group: 'patterns' },
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },

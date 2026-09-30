@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { CalendarBlank, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
-import { addDays, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
+import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
@@ -16,7 +16,8 @@ import {
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
-import { analyseCycles, predict } from '../lib/ovulation'
+import { analyseCycles, detectOvulation, predict } from '../lib/ovulation'
+import { insights, moodByPhase, patternGrid, type Align, type AlignedCycle } from '../lib/cyclePatterns'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
@@ -24,7 +25,7 @@ import {
 import {
   BbtChart, BbtRulesCard, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, LoggingCard, MonthList, PhasesCard,
-  SymptomPattern, type BbtPoint,
+  MoodByPhase, PatternGrid, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -119,11 +120,40 @@ export function Cycle() {
   const nextPeriod = nextPeriodEstimate(log, today)
   const untilNext = daysUntilNextPeriod(log, today)
 
+  const detectedDay = analysis.current.day
   const history = useMemo(() => cycleHistory(log, today), [log, today])
+
+  /**
+   * PATTERNS · the fold that makes "does this follow my cycle" answerable.
+   *
+   * `alignedCycles` re-derives each cycle's ovulation from the same engine the
+   * ring reads, rather than storing it — a second copy of "when did she
+   * ovulate" is a second thing to keep in step.
+   */
+  const [align, setAlign] = useStickyState<Align>('cycle.align', 'period', ['period', 'ovulation'])
+  const alignedCycles = useMemo<AlignedCycle[]>(() => starts.map((start, i) => {
+    const next = starts[i + 1]
+    const slice = log.filter((e) => e.date >= start && (next ? e.date < next : true))
+    return {
+      start,
+      end: next ?? addDays(today, 1),
+      ovulation: detectOvulation(slice, unit === 'C' ? 'C' : 'F', next).date,
+    }
+  }), [log, starts, today, unit])
+  const grid = useMemo(() => patternGrid(log, alignedCycles, align), [log, alignedCycles, align])
+  const gridInsights = useMemo(() => insights(grid, length), [grid, length])
+  const phaseRows = useMemo(
+    () => moodByPhase(log, (date) => {
+      const start = [...starts].reverse().find((sx) => sx <= date)
+      if (!start) return null
+      const d = dayDiff(start, date) + 1
+      return phaseOf(d, length, detectedDay).label
+    }),
+    [log, starts, length, detectedDay],
+  )
   // The ring follows the MEASURED ovulation when the chart found one, and falls
   // back to the calendar estimate when it did not. The legend's day ranges move
   // with it, which is the intended Stage 4 snapshot change.
-  const detectedDay = analysis.current.day
   const bands = useMemo(() => phaseBands(length, detectedDay), [length, detectedDay])
   const pattern = useMemo(() => flagPatternByDay(log, today), [log, today])
   const drive = useMemo(() => driveByPhase(log, today, length), [log, today, length])
@@ -194,6 +224,26 @@ export function Cycle() {
    */
   const cards: Record<string, React.ReactNode> = {
     data: <CycleDataCard />,
+    grid: (
+      <Card band title="What lands on which day" subtitle="Every cycle you have logged, folded onto one axis" hideInfo>
+        {/* The insights sit ABOVE the grid: the sentence is the finding and the
+            grid is the evidence for it. A reader who wants only the answer gets
+            it without decoding a heatmap. */}
+        {gridInsights.length > 0 && (
+          <ul className="mb-3 space-y-1">
+            {gridInsights.map((i) => (
+              <li key={i.key} className="text-body text-fg-1">{i.text}</li>
+            ))}
+          </ul>
+        )}
+        <PatternGrid grid={grid} onAlign={setAlign} />
+      </Card>
+    ),
+    moodphase: (
+      <Card band title="Mood & energy by phase" subtitle="Whether how you feel tracks where you are" hideInfo>
+        <MoodByPhase rows={phaseRows} />
+      </Card>
+    ),
     wheel: (
       <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
         <CycleWheel day={day} length={length ?? 28} bands={bands} />
