@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { onRaised } from '../../lib/colors'
-import { formatAmount, unitOf } from '../../lib/addictionUnits'
+import { formatAmount, quickLabel, unitOf } from '../../lib/addictionUnits'
 
 /** One tracked thing and how many times it happened today. */
 export interface DayTallyRow {
@@ -73,20 +73,32 @@ export function DayTallyCard({ rows, onStep }: {
                   {r.count > 0 ? `${formatAmount(r.count, r.unit)} today` : 'Clean today'}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {r.count > 0 && (
                   <Button variant="ghost" size="icon-lg" onClick={() => onStep(r.id, -unitOf(r.unit).step)}
                     aria-label={`Less ${r.name} today`}>
                     <Icon as={Minus} size="md" />
                   </Button>
                 )}
-                {/* The step is the unit's, not 1: fifteen minutes for a scroll,
-                    one for a cigarette. Nobody taps + sixty times. */}
-                <Button variant="secondary" size="lg" onClick={() => onStep(r.id, unitOf(r.unit).step)}
-                  aria-label={r.count > 0 ? `Add ${formatAmount(unitOf(r.unit).step, r.unit)} to ${r.name} today` : `Log ${r.name} today`}
-                  className="gap-1">
-                  <Icon as={Plus} size="sm" />{r.count > 0 ? `${unitOf(r.unit).step} more` : 'Log today'}
-                </Button>
+                {/* ONE TAP PER REAL ANSWER, not one tap per unit.
+                    A single `+` meant twelve presses to log three hours of
+                    scrolling, and a control that tedious gets abandoned or
+                    guessed at — which makes the data worse than not collecting
+                    it. These are the amounts people actually report. */}
+                {unitOf(r.unit).quick.map((q) => (
+                  <Button
+                    key={q}
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => onStep(r.id, q)}
+                    aria-label={`Add ${formatAmount(q, r.unit)} to ${r.name} today`}
+                    className="min-w-11 px-2.5"
+                  >
+                    {r.count === 0 && q === unitOf(r.unit).quick[0]
+                      ? <><Icon as={Plus} size="sm" />{quickLabel(q, r.unit)}</>
+                      : quickLabel(q, r.unit)}
+                  </Button>
+                ))}
               </div>
             </div>
           </li>

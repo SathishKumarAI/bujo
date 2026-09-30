@@ -6,7 +6,7 @@
  * whether that was twenty minutes or four hours.
  */
 import { describe, expect, it } from 'vitest'
-import { defaultUnitFor, formatAmount, formatDuration, totalMinutes, UNITS, unitOf } from './addictionUnits'
+import { defaultUnitFor, formatAmount, formatDuration, quickLabel, totalMinutes, UNITS, unitOf } from './addictionUnits'
 
 describe('an unknown or absent unit is `times`, which is what count always meant', () => {
   it('falls back for absent', () => {
@@ -106,5 +106,38 @@ describe('the unit table itself', () => {
 
   it('steps minutes by more than one, because nobody taps + sixty times', () => {
     expect(unitOf('minutes').step).toBeGreaterThan(1)
+  })
+})
+
+describe('quick amounts are the answers people actually give', () => {
+  it('offers several per unit, so one tap logs a real amount', () => {
+    for (const u of UNITS) {
+      expect(u.quick.length, u.id).toBeGreaterThan(2)
+      expect(u.quick.every((q) => q > 0), u.id).toBe(true)
+    }
+  })
+
+  it('reaches a realistic evening without repeated tapping', () => {
+    // The friction this removes: three hours of scrolling was twelve taps.
+    expect(unitOf('minutes').quick).toContain(180)
+    expect(unitOf('cigarettes').quick).toContain(20)
+  })
+
+  it('keeps them ascending, so the row reads left to right', () => {
+    for (const u of UNITS) {
+      expect([...u.quick].sort((a, b) => a - b), u.id).toEqual(u.quick)
+    }
+  })
+
+  it('labels durations in the unit you would say out loud', () => {
+    expect(quickLabel(15, 'minutes')).toBe('15m')
+    expect(quickLabel(60, 'minutes')).toBe('1h')
+    expect(quickLabel(180, 'minutes')).toBe('3h')
+    expect(quickLabel(2, 'hours')).toBe('2h')
+  })
+
+  it('leaves counts bare, since the unit is stated once above the row', () => {
+    expect(quickLabel(10, 'cigarettes')).toBe('10')
+    expect(quickLabel(3, 'times')).toBe('3')
   })
 })
