@@ -46,8 +46,21 @@ export function CycleHistoryChart({ history, average, unitLabel = 'days' }: {
     periodDays: c.periodDays,
     outside: c.length < NORMAL.from || c.length > NORMAL.to,
   }))
-  // Headroom so the normal band's top edge is visible even on short cycles.
-  const max = Math.max(NORMAL.to + 2, ...rows.map((r) => r.length + 2))
+  /**
+   * THE AXIS STARTS NEAR THE DATA, NOT AT ZERO.
+   *
+   * It used to run 0 → max, which spent three quarters of the plot on lengths
+   * no cycle has: every bar reached nearly the top and the difference between a
+   * 26-day cycle and a 34-day one — the only thing this chart is for — was a few
+   * pixels of bar height. A zero baseline is right when the question is "how
+   * much"; here the question is "how much does it VARY", and the 21–35 band is
+   * the reference the eye should measure against.
+   *
+   * Floor and ceiling are pinned around that band so the shaded region stays
+   * fully visible and the scale does not jump between visits as cycles change.
+   */
+  const min = Math.min(NORMAL.from - 3, ...rows.map((r) => r.length - 2))
+  const max = Math.max(NORMAL.to + 3, ...rows.map((r) => r.length + 2))
 
   return (
     <>
@@ -57,7 +70,7 @@ export function CycleHistoryChart({ history, average, unitLabel = 'days' }: {
             <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" vertical={false} />
             <ReferenceArea y1={NORMAL.from} y2={NORMAL.to} fill={cat('green')} fillOpacity={0.08} />
             <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
-            <YAxis domain={[0, max]} stroke={cat('overlay0')} fontSize={11} />
+            <YAxis domain={[min, max]} allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
             <Tooltip contentStyle={rechartsTooltip()} formatter={(v) => [`${v} ${unitLabel}`, 'Cycle']} />
             {average != null && (
               <ReferenceLine

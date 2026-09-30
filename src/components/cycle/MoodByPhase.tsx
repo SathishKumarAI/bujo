@@ -31,7 +31,7 @@ export function MoodByPhase({ rows }: { rows: PhaseAverage[] }) {
           <li key={r.phase}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-label text-fg-1">{r.phase}</span>
-              <span className="text-micro text-fg-2">{r.days} day{r.days === 1 ? '' : 's'}</span>
+              <span className="text-label text-fg-2">{r.days} day{r.days === 1 ? '' : 's'}</span>
             </div>
             <div className="mt-1 space-y-1">
               <Bar label="Mood" value={r.mood} hue="green" />
@@ -51,7 +51,7 @@ export function MoodByPhase({ rows }: { rows: PhaseAverage[] }) {
 function Bar({ label, value, hue }: { label: string; value: number | null; hue: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-14 shrink-0 text-micro text-fg-2">{label}</span>
+      <span className="w-16 shrink-0 text-label text-fg-2">{label}</span>
       <div className="h-2 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
         {value != null && (
           // Fixed 1–5 denominator. Scaling to the observed range would turn a
@@ -59,7 +59,7 @@ function Bar({ label, value, hue }: { label: string; value: number | null; hue: 
           <div className="h-full rounded-pill" style={{ width: `${(value / 5) * 100}%`, background: cat(hue) }} />
         )}
       </div>
-      <span className="w-16 shrink-0 text-right text-micro tabular-nums" style={{ color: value == null ? cat('overlay1') : onRaised(hue) }}>
+      <span className="w-20 shrink-0 text-right text-label tabular-nums" style={{ color: value == null ? cat('overlay1') : onRaised(hue) }}>
         {value == null ? 'not rated' : value.toFixed(1)}
       </span>
     </div>

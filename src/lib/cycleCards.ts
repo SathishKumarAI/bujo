@@ -38,11 +38,12 @@
  * do not overlap and there is no query to cross them, so "All" would only
  * offer the 10.6-screen page this replaces.
  */
-export const CYCLE_GROUPS = ['cycle', 'fertility', 'patterns', 'guide'] as const
+export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'guide'] as const
 export type CycleGroup = (typeof CYCLE_GROUPS)[number]
 
 export const GROUP_LABEL: Record<CycleGroup, string> = {
   cycle: 'This cycle',
+  feelings: 'How you feel',
   fertility: 'Fertility',
   patterns: 'Patterns',
   guide: 'Guide',
@@ -52,6 +53,7 @@ export const GROUP_LABEL: Record<CycleGroup, string> = {
 export const GROUP_BLURB: Record<CycleGroup, string> = {
   cycle: 'Where you are, and how this cycle compares to the last few',
   fertility: 'The window, the two signals, and the shift that confirms it',
+  feelings: 'Desire, mood, energy and cravings against where you are',
   patterns: 'What tends to happen, and on which cycle day',
   guide: 'Phases, food, technique, and what each flag buys you',
 }
@@ -87,25 +89,41 @@ export interface CycleCardMeta {
  * decision, because it moves content between subjects rather than changing how
  * it is reached.
  */
+/**
+ * `bbtrules` and `logging` were retired when the manual landed: both were
+ * reference prose already written down in `BBT_RULES` and `TRACKING_TIPS`, and
+ * the manual now renders those same modules in one readable column. Cards earn
+ * their chrome when each is a separate INSTRUMENT you read on its own — the
+ * ring, the charts, the grid. Seven cards of reference text is a card per
+ * heading. `phases` and `food` stay: both carry cited NHS/ACOG content that the
+ * manual only summarises, and a credited source has to stay reachable.
+ */
 export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'wheel', title: 'Where you are', group: 'cycle' },
-  { id: 'length', title: 'Cycle length', group: 'cycle' },
+  { id: 'phasefood', title: 'This phase', group: 'cycle' },
+  { id: 'length', title: 'Cycle length', group: 'cycle', wide: true },
+
+  { id: 'feelings', title: 'Desire, mood, energy & cravings', group: 'feelings', wide: true },
+  { id: 'drivephase', title: 'Drive through the cycle', group: 'feelings' },
+  // Moved out of `patterns`: it is a feelings card by subject, and it was also
+  // leaving `drivephase` alone on a two-column row with 381px of dead space
+  // beside it. Measured at 1536 before the move.
+  { id: 'moodphase', title: 'Mood & energy by phase', group: 'feelings' },
 
   { id: 'fertile', title: 'Ovulation & the fertile window', group: 'fertility' },
+  { id: 'luteal', title: 'Your luteal length', group: 'fertility' },
   { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true },
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
-  { id: 'drive', title: 'Drive by phase', group: 'patterns' },
   { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
-  { id: 'moodphase', title: 'Mood & energy by phase', group: 'patterns' },
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },
-  { id: 'bbtrules', title: 'Basal temperature, done right', group: 'guide' },
-  { id: 'logging', title: 'What to log & why', group: 'guide' },
   // Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
   // `data-card` set equals this list in BOTH directions, so a card that skips
   // the registry fails the suite rather than quietly becoming unfindable.
+  { id: 'manual', title: 'The manual', group: 'guide', wide: true },
+  { id: 'goal', title: 'What you are tracking for', group: 'guide' },
   { id: 'data', title: 'Your cycle data', group: 'guide', wide: true },
 ]
 

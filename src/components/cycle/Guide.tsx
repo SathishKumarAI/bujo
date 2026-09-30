@@ -1,4 +1,4 @@
-import { BBT_RULES, CYCLE_PHASES, TRACKING_TIPS } from '../../lib/cycleGuide'
+import { CYCLE_PHASES } from '../../lib/cycleGuide'
 import { onRaised } from '../../lib/colors'
 import { Card, Pill } from '../ui'
 import { PhaseNutrition } from './PhaseNutrition'
@@ -61,33 +61,14 @@ export function FoodCard() {
   )
 }
 
-/** Five rules that make the temperature chart readable rather than noise. */
-export function BbtRulesCard() {
-  return (
-    <Card band title="Basal temperature, done right" subtitle="Five rules that make the chart readable" hideInfo>
-      <ol className="space-y-1.5">
-        {BBT_RULES.map((r, i) => (
-          <li key={i} className="flex gap-2 text-label text-fg-2">
-            <span className="shrink-0 font-medium text-mauve">{i + 1}.</span> {r}
-          </li>
-        ))}
-      </ol>
-    </Card>
-  )
-}
 
-/** What each flag buys you — the *why keep it*, not what the mark records. */
-export function LoggingCard() {
-  return (
-    <Card band title="What to log & why" subtitle="The flags above, and what each one buys you" hideInfo>
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {TRACKING_TIPS.map((t) => (
-          <li key={t.what} className="rounded-card bg-ink-2 p-2.5">
-            <p className="text-body font-medium text-fg-1">{t.what}</p>
-            <p className="text-label text-fg-2">{t.why}</p>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  )
-}
+/**
+ * `BbtRulesCard` and `LoggingCard` were retired here. The Guide group now
+ * renders `BBT_RULES` and `TRACKING_TIPS` inside the manual, in one readable
+ * column, rather than as two more cards saying the same thing — cards earn
+ * their chrome when each is a separate instrument, and reference prose is not.
+ *
+ * The DATA modules are untouched and still have a consumer. An export nobody
+ * imports is the trap that cost `views/Pullups.tsx` eleven workout formats
+ * with tsc, eslint, vitest and the build all green.
+ */
