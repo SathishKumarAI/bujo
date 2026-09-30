@@ -62,6 +62,8 @@ export interface FeedbackRow {
   topDriver: string | null
   /** The technique that worked most often for THIS addiction. */
   topTechnique: string | null
+  /** Every urge logged for this addiction in the window, both outcomes. */
+  urges: UrgeWin[]
 }
 
 export interface Ledger {
@@ -109,8 +111,13 @@ export function feedbackLedger(
 
   const rows: FeedbackRow[] = addictions.map((a) => {
     const mine = urges.filter((u) => u.addictionId === a.id)
-    const resisted = mine.filter((u) => inWindow(u.date)).length
-    const prevResisted = mine.filter((u) => inPrev(u.date)).length
+    // ONLY the urges that ended in resisting. A row whose outcome is
+    // `followed` is the same moment logged with the same context, but it is
+    // not a win — counting it as one would let logging a slip improve the
+    // score, which is the single worst bug this file could have.
+    const won = mine.filter((u) => u.outcome !== 'followed')
+    const resisted = won.filter((u) => inWindow(u.date)).length
+    const prevResisted = won.filter((u) => inPrev(u.date)).length
 
     const lapses = countOccurrences(a.relapses, inWindow)
     const prevLapses = countOccurrences(a.relapses, inPrev)
@@ -126,10 +133,13 @@ export function feedbackLedger(
       ratio: ratioOf(resisted, lapses),
       cleanDays: last ? Math.max(0, dayDiff(last.date, today)) : null,
       prevRatio: ratioOf(prevResisted, prevLapses),
+      // Drivers read BOTH outcomes: the states that accompany a slip are the
+      // ones worth naming, and excluding them would describe only good days.
       topDriver: topOf(mine.filter((u) => inWindow(u.date)).flatMap((u) => (u.halt ?? []).map((h) => HALT_LABEL[h] ?? h))),
       topTechnique: topOf(
-        mine.filter((u) => inWindow(u.date) && u.technique).map((u) => TECHNIQUE_LABEL[u.technique!] ?? u.technique!),
+        won.filter((u) => inWindow(u.date) && u.technique).map((u) => TECHNIQUE_LABEL[u.technique!] ?? u.technique!),
       ),
+      urges: mine.filter((u) => inWindow(u.date)),
     }
   })
 
@@ -145,7 +155,7 @@ export function feedbackLedger(
     // Named rather than hidden. An urge logged before `addictionId` existed is
     // still a real thing that happened, and quietly dropping it would make the
     // totals disagree with the list the user can see.
-    unattributed: urges.filter((u) => inWindow(u.date) && !u.addictionId).length,
+    unattributed: urges.filter((u) => inWindow(u.date) && !u.addictionId && u.outcome !== 'followed').length,
     windowDays,
   }
 }
@@ -264,4 +274,105 @@ export function nextSteps(row: FeedbackRow): NextStep[] {
   }
 
   return out.slice(0, 3)
+}
+
+export interface Contrast {
+  /** What differed, e.g. "lonely" or "intensity". */
+  factor: string
+  /** Share of FOLLOWED urges carrying it, 0–1. */
+  whenFollowed: number
+  /** Share of RESISTED urges carrying it. */
+  whenResisted: number
+  /** followed − resisted, so positive means "more common when you gave in". */
+  gap: number
+  /** A sentence naming the difference, in the user's terms. */
+  text: string
+}
+
+/** Both sides need this many rows before a comparison means anything. */
+export const MIN_FOR_CONTRAST = 3
+
+/**
+ * WHAT WAS DIFFERENT ABOUT THE TIMES YOU GAVE IN.
+ *
+ * This is the whole reason `outcome` exists, and it is the only analysis on the
+ * page that can answer "how do I move away from this" with evidence rather than
+ * advice. It compares the urges that ended one way against the urges that ended
+ * the other — same person, same log, same fields — so anything that shows up
+ * far more often on the `followed` side is a lever.
+ *
+ * **Both sides need `MIN_FOR_CONTRAST` rows.** A comparison against one bad
+ * night is not a finding, and this is exactly the output someone would act on.
+ *
+ * **Only gaps of 25 points or more are reported.** Below that it is the noise
+ * of a few dozen self-logged moments, and naming it would send someone
+ * rearranging their life around a coin flip.
+ */
+export function contrastOutcomes(urges: UrgeWin[]): Contrast[] {
+  const followed = urges.filter((u) => u.outcome === 'followed')
+  const resisted = urges.filter((u) => u.outcome !== 'followed')
+  if (followed.length < MIN_FOR_CONTRAST || resisted.length < MIN_FOR_CONTRAST) return []
+
+  const out: Contrast[] = []
+  const share = (xs: UrgeWin[], has: (u: UrgeWin) => boolean) => xs.filter(has).length / xs.length
+
+  for (const [state, label] of Object.entries(HALT_LABEL)) {
+    const f = share(followed, (u) => (u.halt ?? []).includes(state as 'lonely'))
+    const r = share(resisted, (u) => (u.halt ?? []).includes(state as 'lonely'))
+    if (f - r >= 0.25) {
+      out.push({
+        factor: label,
+        whenFollowed: f,
+        whenResisted: r,
+        gap: f - r,
+        text: `You were ${label} in ${pct(f)} of the times you gave in, against ${pct(r)} of the times you held. That is the biggest single difference in your log.`,
+      })
+    }
+  }
+
+  // Intensity and stress are scales, so the comparison is a mean rather than a
+  // share — reported only when the gap clears a full point on a five-point one.
+  const meanOf = (xs: UrgeWin[], pick: (u: UrgeWin) => number | undefined) => {
+    const vals = xs.map(pick).filter((v): v is number => v != null)
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+  }
+  for (const [key, label, pick] of [
+    ['intensity', 'the urge was stronger', (u: UrgeWin) => u.intensity],
+    ['stress', 'you were more stressed', (u: UrgeWin) => u.stress],
+  ] as const) {
+    const f = meanOf(followed, pick)
+    const r = meanOf(resisted, pick)
+    if (f != null && r != null && f - r >= 1) {
+      out.push({
+        factor: key,
+        whenFollowed: f / 5,
+        whenResisted: r / 5,
+        gap: (f - r) / 5,
+        text: `On the days you gave in, ${label} — ${f.toFixed(1)} out of 5, against ${r.toFixed(1)} when you held.`,
+      })
+    }
+  }
+
+  // A technique that appears on the resisted side and not the followed one is
+  // the most actionable thing here: it is something you did, not something that
+  // happened to you.
+  for (const [key, label] of Object.entries(TECHNIQUE_LABEL)) {
+    const f = share(followed, (u) => u.technique === key)
+    const r = share(resisted, (u) => u.technique === key)
+    if (r - f >= 0.25) {
+      out.push({
+        factor: label,
+        whenFollowed: f,
+        whenResisted: r,
+        gap: f - r,
+        text: `You used ${label} in ${pct(r)} of the times you held, and only ${pct(f)} of the times you did not.`,
+      })
+    }
+  }
+
+  return out.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 3)
+}
+
+function pct(share: number): string {
+  return `${Math.round(share * 100)}%`
 }

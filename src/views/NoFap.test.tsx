@@ -238,14 +238,32 @@ describe('Recovery · the registry is the page', () => {
     expect(text('Doomscrolling')).toContain('Lapse days')
   })
 
-  it('puts the urge submit before the fields it annotates', () => {
+  it('puts the urge submits before the fields they annotate', () => {
     const { container } = mount()
     const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
     const controls = [...card.querySelectorAll('button, fieldset, input')]
-    const submit = controls.findIndex((el) => /log this urge/i.test(el.textContent || ''))
+    const held = controls.findIndex((el) => /felt it and held/i.test(el.textContent || ''))
+    const gaveIn = controls.findIndex((el) => /gave in/i.test(el.textContent || ''))
     const firstField = controls.findIndex((el) => el.tagName === 'FIELDSET')
-    expect(submit).toBeGreaterThanOrEqual(0)
+    expect(held).toBeGreaterThanOrEqual(0)
+    expect(gaveIn).toBeGreaterThanOrEqual(0)
     expect(firstField).toBeGreaterThanOrEqual(0)
-    expect(submit).toBeLessThan(firstField)
+    // The act stays above the fields it annotates — the original point of this
+    // test — and BOTH endings do, because an urge has two and the form is one.
+    expect(Math.max(held, gaveIn)).toBeLessThan(firstField)
+  })
+
+  /**
+   * The asymmetry that made "gave in" an afterthought is the thing this feature
+   * exists to remove, so it is asserted rather than trusted: both outcomes are
+   * reachable from the same card, and neither is styled as a punishment.
+   */
+  it('offers both endings from the same form', () => {
+    const { container } = mount()
+    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    const labels = [...card.querySelectorAll('button')].map((b) => (b.textContent || '').toLowerCase())
+    expect(labels.some((l) => /held/.test(l))).toBe(true)
+    expect(labels.some((l) => /gave in/.test(l))).toBe(true)
+    expect(card.textContent).toMatch(/Both count/)
   })
 })

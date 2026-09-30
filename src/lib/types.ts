@@ -520,6 +520,29 @@ export interface UrgeWin {
    */
   addictionId?: string
   /**
+   * HOW THE URGE ENDED — the field that turns this log from a scoreboard into
+   * a record.
+   *
+   * An urge has two possible endings and the app only ever recorded one of
+   * them richly. Resisting wrote all of this: intensity, HALT, technique,
+   * trigger. Giving in wrote a date, a word and a number, through a different
+   * control on a different card — so every piece of context about the moment
+   * was discarded at exactly the moment it was most worth having.
+   *
+   * That is backwards. **The times you gave in are the ones worth
+   * understanding**, because they are the ones you want fewer of.
+   *
+   * Absent means `resisted`. Every row written before this field existed was a
+   * win — that is what the button did — so the default reads every existing
+   * journal correctly without a migration.
+   *
+   * A `followed` row does NOT feed the lapse count: the streak and the
+   * occurrence tally still come from `Relapse`, which `logLapseDay` writes in
+   * the same action. One number, one source. This row carries the *context*
+   * that `Relapse` has no room for.
+   */
+  outcome?: 'resisted' | 'followed'
+  /**
    * Stress at the moment of the urge, 1 (calm) … 5 (overwhelming).
    *
    * Deliberately NOT a fifth letter in HALT: that acronym is Hungry / Angry /

@@ -83,7 +83,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 3
+export const DEMO_VERSION = 4
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -475,9 +475,24 @@ export function generateDemoData(today = todayISO()): JournalData {
       { id: uid('u'), date: addDays(today, -24), at: `${addDays(today, -24)}T22:50:00`, trigger: 'Doomscrolling', intensity: 4, halt: ['tired'], technique: 'halt', addictionId: SCROLL_ID },
       { id: uid('u'), date: addDays(today, -13), at: `${addDays(today, -13)}T20:05:00`, trigger: 'Argument at home', intensity: 5, halt: ['angry', 'lonely'], technique: 'reach-out', addictionId: SCROLL_ID, stress: 5 },
       { id: uid('u'), date: addDays(today, -9), at: `${addDays(today, -9)}T11:45:00`, trigger: 'After a meal', intensity: 1, technique: 'surf', addictionId: NICOTINE_ID },
-      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2, addictionId: SCROLL_ID, halt: ['lonely'] },
+      { id: uid('u'), date: addDays(today, -1), at: `${addDays(today, -1)}T22:10:00`, trigger: 'Doomscrolling', intensity: 2, addictionId: SCROLL_ID, technique: 'delay' },
       { id: uid('u'), date: today, at: `${today}T09:30:00`, trigger: 'Smoking', intensity: 4, addictionId: NICOTINE_ID, halt: ['tired'], technique: 'delay' },
       { id: uid('u'), date: today, at: `${today}T14:05:00`, trigger: 'Porn', intensity: 3 },
+
+      /**
+       * URGES THAT ENDED THE OTHER WAY.
+       *
+       * `contrastOutcomes` needs at least three rows on BOTH sides before it
+       * says anything, so a seed with only wins renders an empty section and
+       * the feature reads as broken. These carry the pattern the comparison
+       * exists to find — loneliness and a stronger urge on the nights it went
+       * the other way — because a demo that contains no relationship makes a
+       * working analysis look like a broken one.
+       */
+      { id: uid('u'), date: addDays(today, -30), at: `${addDays(today, -30)}T23:55:00`, trigger: 'Alone, late', intensity: 5, halt: ['lonely', 'tired'], addictionId: SCROLL_ID, outcome: 'followed', stress: 4 },
+      { id: uid('u'), date: addDays(today, -22), at: `${addDays(today, -22)}T00:40:00`, trigger: 'Could not sleep', intensity: 5, halt: ['lonely'], addictionId: SCROLL_ID, outcome: 'followed', stress: 3 },
+      { id: uid('u'), date: addDays(today, -15), at: `${addDays(today, -15)}T23:20:00`, trigger: 'Empty evening', intensity: 4, halt: ['lonely', 'tired'], addictionId: SCROLL_ID, outcome: 'followed', stress: 4 },
+      { id: uid('u'), date: addDays(today, -7), at: `${addDays(today, -7)}T22:30:00`, trigger: 'Alone, late', intensity: 5, halt: ['lonely'], addictionId: SCROLL_ID, outcome: 'followed', stress: 5 },
     ],
     plans: [
       { id: uid('tp'), addiction: 'Smoking', trigger: 'after meals', coping: 'Brush teeth, chew gum, 5-min walk' },

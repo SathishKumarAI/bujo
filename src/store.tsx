@@ -177,7 +177,7 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
-  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5 }) => void
+  resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5; outcome?: 'resisted' | 'followed' }) => void
   removeUrge: (id: string) => void
   /**
    * One-tap "it happened today" with a count. `null` targets the primary
@@ -780,6 +780,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               // totals and is reported as `unattributed` rather than dropped.
               addictionId: entry?.addictionId || undefined,
               stress: entry?.stress,
+              // Absent means resisted — every row written before this field
+              // existed was a win, because that is all the button did.
+              outcome: entry?.outcome === 'followed' ? 'followed' : undefined,
             }],
           },
         })),

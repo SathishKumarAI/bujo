@@ -1,6 +1,6 @@
 import { cat, onRaised } from '../../lib/colors'
 import {
-  nextSteps, VERDICT_COPY, verdictOf, type FeedbackRow, type Ledger,
+  contrastOutcomes, nextSteps, VERDICT_COPY, verdictOf, type FeedbackRow, type Ledger,
 } from '../../lib/recoveryFeedback'
 
 /**
@@ -64,6 +64,7 @@ function Row({ row }: { row: FeedbackRow }) {
   const verdict = verdictOf(row)
   const copy = VERDICT_COPY[verdict]
   const steps = nextSteps(row)
+  const contrast = contrastOutcomes(row.urges)
   const pct = row.ratio == null ? null : Math.round(row.ratio * 100)
   const trend = row.ratio != null && row.prevRatio != null ? row.ratio - row.prevRatio : null
 
@@ -116,6 +117,21 @@ function Row({ row }: { row: FeedbackRow }) {
           {row.topDriver && <>Most often you were <span className="text-fg-1">{row.topDriver}</span>. </>}
           {row.topTechnique && <>What worked: <span className="text-fg-1">{row.topTechnique}</span>.</>}
         </p>
+      )}
+
+      {/* WHAT WAS DIFFERENT · the comparison the outcome field exists for, and
+          the only thing on this page that answers "how do I move away from it"
+          with evidence instead of advice. Same person, same log, same fields —
+          so a factor that shows up far more on the gave-in side is a lever. */}
+      {contrast.length > 0 && (
+        <div className="mt-3 border-t border-line pt-2">
+          <p className="text-label font-medium text-fg-1">What was different on the days you gave in</p>
+          <ul className="mt-1.5 space-y-1.5">
+            {contrast.map((c) => (
+              <li key={c.factor} className="text-label text-fg-2">{c.text}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {steps.length > 0 && (

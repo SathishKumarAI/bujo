@@ -6,7 +6,7 @@
  * ten-cigarette day counted as one slip, an urge attributed to the wrong thing.
  */
 import { describe, expect, it } from 'vitest'
-import { feedbackLedger, nextSteps, verdictOf, VERDICT_COPY } from './recoveryFeedback'
+import { contrastOutcomes, feedbackLedger, nextSteps, verdictOf, VERDICT_COPY } from './recoveryFeedback'
 import { emptyJournal } from './storage'
 import { addDays } from './date'
 import type { AddictionStreak, JournalData, UrgeWin } from './types'
@@ -175,5 +175,103 @@ describe('next steps name the evidence they came from', () => {
       [urge('porn', 1, { halt: ['lonely', 'tired', 'hungry', 'angry'], technique: 'surf' })],
     )
     expect(nextSteps(feedbackLedger(j, 30, TODAY).rows[0]).length).toBeLessThanOrEqual(3)
+  })
+})
+
+describe('logging a slip must never improve the score', () => {
+  const withOutcome = (n: number, outcome?: 'followed') =>
+    Array.from({ length: n }, (_, i) => urge('x', i + 1, outcome ? { outcome } : {}))
+
+  it('counts only resisted rows as wins', () => {
+    const j = journal([addiction('x', 'X')], [...withOutcome(2), ...withOutcome(3, 'followed')])
+    const row = feedbackLedger(j, 30, TODAY).rows[0]
+    // Three "gave in" rows carry context but are not victories.
+    expect(row.resisted).toBe(2)
+  })
+
+  it('does not let a followed row raise the ratio', () => {
+    const base = feedbackLedger(
+      journal([addiction('x', 'X', [{ date: d(2) }])], withOutcome(2)), 30, TODAY,
+    ).rows[0]
+    const after = feedbackLedger(
+      journal([addiction('x', 'X', [{ date: d(2) }])], [...withOutcome(2), ...withOutcome(4, 'followed')]),
+      30, TODAY,
+    ).rows[0]
+    expect(after.ratio).toBeLessThanOrEqual(base.ratio!)
+  })
+
+  it('treats a row with no outcome as resisted, so old journals still read right', () => {
+    const j = journal([addiction('x', 'X')], [{ id: 'old', date: d(1), addictionId: 'x' }])
+    expect(feedbackLedger(j, 30, TODAY).rows[0].resisted).toBe(1)
+  })
+})
+
+describe('what was different about the times you gave in', () => {
+  const urges = (spec: { outcome?: 'followed'; halt?: ('lonely' | 'tired')[]; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'delay' }[]) =>
+    spec.map((x, i) => urge('x', i + 1, x))
+
+  it('says nothing until both sides have enough rows', () => {
+    const few = urges([
+      { outcome: 'followed', halt: ['lonely'] }, { outcome: 'followed', halt: ['lonely'] },
+      { halt: [] }, { halt: [] }, { halt: [] },
+    ])
+    expect(contrastOutcomes(few)).toEqual([])
+  })
+
+  it('names loneliness when it separates the two outcomes', () => {
+    const rows = urges([
+      { outcome: 'followed', halt: ['lonely'] }, { outcome: 'followed', halt: ['lonely'] },
+      { outcome: 'followed', halt: ['lonely'] },
+      { halt: [] }, { halt: [] }, { halt: [] },
+    ])
+    const out = contrastOutcomes(rows)
+    expect(out[0].factor).toBe('lonely')
+    expect(out[0].text).toMatch(/100% of the times you gave in/)
+    expect(out[0].text).toMatch(/0% of the times you held/)
+  })
+
+  it('ignores a factor that is equally common on both sides', () => {
+    const rows = urges([
+      { outcome: 'followed', halt: ['tired'] }, { outcome: 'followed', halt: ['tired'] },
+      { outcome: 'followed', halt: ['tired'] },
+      { halt: ['tired'] }, { halt: ['tired'] }, { halt: ['tired'] },
+    ])
+    expect(contrastOutcomes(rows).find((c) => c.factor === 'tired')).toBeUndefined()
+  })
+
+  it('reports a technique that shows up on the wins and not the losses', () => {
+    const rows = urges([
+      { outcome: 'followed' }, { outcome: 'followed' }, { outcome: 'followed' },
+      { technique: 'delay' }, { technique: 'delay' }, { technique: 'delay' },
+    ])
+    expect(contrastOutcomes(rows).some((c) => /delaying it/.test(c.text))).toBe(true)
+  })
+
+  it('only reports an intensity gap of a full point or more', () => {
+    const close = urges([
+      { outcome: 'followed', intensity: 3 }, { outcome: 'followed', intensity: 3 }, { outcome: 'followed', intensity: 3 },
+      { intensity: 3 }, { intensity: 3 }, { intensity: 3 },
+    ])
+    expect(contrastOutcomes(close).find((c) => c.factor === 'intensity')).toBeUndefined()
+
+    const wide = urges([
+      { outcome: 'followed', intensity: 5 }, { outcome: 'followed', intensity: 5 }, { outcome: 'followed', intensity: 5 },
+      { intensity: 2 }, { intensity: 2 }, { intensity: 2 },
+    ])
+    expect(contrastOutcomes(wide).find((c) => c.factor === 'intensity')).toBeDefined()
+  })
+
+  it('returns at most three, strongest first', () => {
+    const rows = urges([
+      { outcome: 'followed', halt: ['lonely', 'tired'], intensity: 5 },
+      { outcome: 'followed', halt: ['lonely', 'tired'], intensity: 5 },
+      { outcome: 'followed', halt: ['lonely', 'tired'], intensity: 5 },
+      { halt: [], intensity: 1, technique: 'delay' },
+      { halt: [], intensity: 1, technique: 'delay' },
+      { halt: [], intensity: 1, technique: 'delay' },
+    ])
+    const out = contrastOutcomes(rows)
+    expect(out.length).toBeLessThanOrEqual(3)
+    expect(Math.abs(out[0].gap)).toBeGreaterThanOrEqual(Math.abs(out[out.length - 1].gap))
   })
 })
