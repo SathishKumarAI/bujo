@@ -19,6 +19,7 @@ import {
 import { analyseCycles, detectOvulation, predict } from '../lib/ovulation'
 import { insights, moodByPhase, patternGrid, type Align, type AlignedCycle } from '../lib/cyclePatterns'
 import type { CycleGoal } from '../lib/cycleHelp'
+import { feelingNotes, feelingsByPhase } from '../lib/cycleFeelings'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
   CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
@@ -26,7 +27,7 @@ import {
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
-  CycleGoalCard, InfoTip, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
+  CycleGoalCard, FeelingsCard, InfoTip, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -144,15 +145,20 @@ export function Cycle() {
   }), [log, starts, today, unit])
   const grid = useMemo(() => patternGrid(log, alignedCycles, align), [log, alignedCycles, align])
   const gridInsights = useMemo(() => insights(grid, length), [grid, length])
-  const phaseRows = useMemo(
-    () => moodByPhase(log, (date) => {
-      const start = [...starts].reverse().find((sx) => sx <= date)
-      if (!start) return null
-      const d = dayDiff(start, date) + 1
-      return phaseOf(d, length, detectedDay).label
-    }),
-    [log, starts, length, detectedDay],
+  /** Phase label for any date, shared by the feelings card and mood-by-phase. */
+  const phaseOfDate = useMemo(() => (date: string) => {
+    const start = [...starts].reverse().find((sx) => sx <= date)
+    if (!start) return null
+    return phaseOf(dayDiff(start, date) + 1, length, detectedDay).label
+  }, [starts, length, detectedDay])
+
+  const feelings = useMemo(
+    () => feelingsByPhase(log, phaseOfDate, ['Menstrual', 'Follicular', 'Ovulation window', 'Luteal']),
+    [log, phaseOfDate],
   )
+  const feelingLines = useMemo(() => feelingNotes(feelings), [feelings])
+
+  const phaseRows = useMemo(() => moodByPhase(log, phaseOfDate), [log, phaseOfDate])
   // The ring follows the MEASURED ovulation when the chart found one, and falls
   // back to the calendar estimate when it did not. The legend's day ranges move
   // with it, which is the intended Stage 4 snapshot change.
@@ -226,6 +232,31 @@ export function Cycle() {
    */
   const cards: Record<string, React.ReactNode> = {
     data: <CycleDataCard />,
+    feelings: (
+      <Card
+        band
+        enlargeable
+        title="Desire, mood, energy & cravings"
+        subtitle="Is this me, or is this my cycle?"
+        hideInfo
+      >
+        {/* The sentences lead, the grid is the evidence. Someone who wants only
+            the answer should not have to decode a matrix to get it. */}
+        {feelingLines.length > 0 && (
+          <ul className="mb-4 space-y-1">
+            {feelingLines.map((l) => (
+              <li key={l.key} className="text-body text-fg-1">{l.text}</li>
+            ))}
+          </ul>
+        )}
+        <FeelingsCard series={feelings} />
+      </Card>
+    ),
+    drivephase: (
+      <Card band enlargeable title="Drive through the cycle" subtitle="Your own answer to the textbook claim" hideInfo>
+        <DriveByPhase rows={drive} peak={peak} />
+      </Card>
+    ),
     manual: (
       <Card band title="The manual" subtitle="How to use this page, and what it can and cannot tell you" hideInfo>
         <Manual />
@@ -246,7 +277,7 @@ export function Cycle() {
       </Card>
     ),
     grid: (
-      <Card band title="What lands on which day" subtitle="Every cycle you have logged, folded onto one axis" hideInfo>
+      <Card band enlargeable title="What lands on which day" subtitle="Every cycle you have logged, folded onto one axis" hideInfo>
         {/* The insights sit ABOVE the grid: the sentence is the finding and the
             grid is the evidence for it. A reader who wants only the answer gets
             it without decoding a heatmap. */}
@@ -261,12 +292,12 @@ export function Cycle() {
       </Card>
     ),
     moodphase: (
-      <Card band title="Mood & energy by phase" subtitle="Whether how you feel tracks where you are" hideInfo>
+      <Card band enlargeable title="Mood & energy by phase" subtitle="Whether how you feel tracks where you are" hideInfo>
         <MoodByPhase rows={phaseRows} />
       </Card>
     ),
     wheel: (
-      <Card band title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
+      <Card band enlargeable title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
         <CycleWheel day={day} length={length ?? 28} bands={bands} />
         {/* Two lines, not four: where ovulation is placed and why is the
             fertile-window card's whole subject, one row down. */}
@@ -279,7 +310,7 @@ export function Cycle() {
     ),
 
     length: (
-      <Card band title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
+      <Card band enlargeable title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
         <CycleHistoryChart history={history} average={length} />
       </Card>
     ),
@@ -299,7 +330,7 @@ export function Cycle() {
        why a reading taken after you are up is not one. That distinction is the
        difference between a chart with a visible shift and a chart of noise. */
     bbt: (
-      <Card band title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo>
+      <Card band enlargeable title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo>
         <BbtChart
           points={bbt}
           unit={unit}
@@ -313,14 +344,8 @@ export function Cycle() {
     ),
 
     symptoms: (
-      <Card band title="Symptom pattern" subtitle="Which cycle day each flag tends to land on" hideInfo>
+      <Card band enlargeable title="Symptom pattern" subtitle="Which cycle day each flag tends to land on" hideInfo>
         <SymptomPattern pattern={pattern} />
-      </Card>
-    ),
-
-    drive: (
-      <Card band title="Drive by phase" subtitle="Your own answer to the textbook claim" hideInfo>
-        <DriveByPhase rows={drive} peak={peak} />
       </Card>
     ),
 

@@ -38,11 +38,12 @@
  * do not overlap and there is no query to cross them, so "All" would only
  * offer the 10.6-screen page this replaces.
  */
-export const CYCLE_GROUPS = ['cycle', 'fertility', 'patterns', 'guide'] as const
+export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'guide'] as const
 export type CycleGroup = (typeof CYCLE_GROUPS)[number]
 
 export const GROUP_LABEL: Record<CycleGroup, string> = {
   cycle: 'This cycle',
+  feelings: 'How you feel',
   fertility: 'Fertility',
   patterns: 'Patterns',
   guide: 'Guide',
@@ -52,6 +53,7 @@ export const GROUP_LABEL: Record<CycleGroup, string> = {
 export const GROUP_BLURB: Record<CycleGroup, string> = {
   cycle: 'Where you are, and how this cycle compares to the last few',
   fertility: 'The window, the two signals, and the shift that confirms it',
+  feelings: 'Desire, mood, energy and cravings against where you are',
   patterns: 'What tends to happen, and on which cycle day',
   guide: 'Phases, food, technique, and what each flag buys you',
 }
@@ -101,11 +103,13 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'phasefood', title: 'This phase', group: 'cycle' },
   { id: 'length', title: 'Cycle length', group: 'cycle' },
 
+  { id: 'feelings', title: 'Desire, mood, energy & cravings', group: 'feelings', wide: true },
+  { id: 'drivephase', title: 'Drive through the cycle', group: 'feelings' },
+
   { id: 'fertile', title: 'Ovulation & the fertile window', group: 'fertility' },
   { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true },
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
-  { id: 'drive', title: 'Drive by phase', group: 'patterns' },
   { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
   { id: 'moodphase', title: 'Mood & energy by phase', group: 'patterns' },
 
