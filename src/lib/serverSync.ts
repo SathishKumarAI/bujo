@@ -17,7 +17,7 @@
 
 import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import type { JournalData } from './types'
-import { forNetwork } from './cyclePrivacy'
+import { forEgress } from './cyclePrivacy'
 
 const DEVICE_KEY = 'bujo:device-id'
 
@@ -60,10 +60,11 @@ export async function pushJournalToServer(apiUrl: string, data: unknown, token?:
         Authorization: `Bearer ${token}`,
       },
       // No `owner` — the DB sets it from the verified token `sub`.
-      // `forNetwork` first: this path posts the journal in PLAINTEXT to a
-      // self-hosted PostgREST, so it is the one where a withheld domain matters
-      // most. See lib/cyclePrivacy.ts.
-      body: JSON.stringify({ id: deviceId(), data: forNetwork(data as JournalData), updated_at: new Date().toISOString() }),
+      // `forEgress`: this path posts the journal in PLAINTEXT to a self-hosted
+      // PostgREST, so it is the one where both halves matter most — a withheld
+      // domain, and the `selfHostToken` that would otherwise be stored in the
+      // very row it authenticates. See lib/cyclePrivacy.ts.
+      body: JSON.stringify({ id: deviceId(), data: forEgress(data as JournalData), updated_at: new Date().toISOString() }),
       keepalive: true,
     })
     return r.ok

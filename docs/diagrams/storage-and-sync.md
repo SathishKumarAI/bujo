@@ -53,17 +53,17 @@ or the other depending on whether a passcode is active.
 
 ## The write paths, and what each one costs
 
-| Target | Trigger | Debounce | Carries photos | Module |
-|---|---|---|---|---|
-| `localStorage` | every state change | none | no — ids only | `lib/storage.ts` |
-| IndexedDB | on image add | none | yes, the bytes | `lib/imageStore.ts` |
-| Picked folder | every state change | **1500 ms** | yes | `lib/fscloud.ts` |
-| Vercel Blob | every state change | **4000 ms** | **within 4.5 MB** | `lib/bujocloud.ts` |
-| Self-host PostgREST | every state change | **2500 ms**, plus a keepalive flush on `pagehide` / `visibilitychange` | yes | `lib/serverSync.ts` |
-| GitHub gist | a button | — | yes | `lib/github.ts` |
-| Google Drive | a button | — | yes | `lib/gdrive.ts` |
+| Target | Trigger | Debounce | Carries photos | Through `forEgress` | Module |
+|---|---|---|---|---|---|
+| `localStorage` | every state change | none | no — ids only | n/a — this device | `lib/storage.ts` |
+| IndexedDB | on image add | none | yes, the bytes | n/a — this device | `lib/imageStore.ts` |
+| Picked folder | every state change | **1500 ms** | yes | **no, exempt on purpose** | `lib/fscloud.ts` |
+| Vercel Blob | every state change | **4000 ms** | **within 4.5 MB** | yes | `lib/bujocloud.ts` |
+| Self-host PostgREST | every state change | **2500 ms**, plus a keepalive flush on `pagehide` / `visibilitychange` | yes | yes | `lib/serverSync.ts` |
+| GitHub gist | a button | — | yes | yes, at the call site | `lib/github.ts` |
+| Google Drive | a button | — | yes | yes, at the call site | `lib/gdrive.ts` |
 
-Two things fall out of that table that are not obvious from any one file:
+Three things fall out of that table that are not obvious from any one file:
 
 **Only the self-host path flushes on close.** The others rely on their timer
 having fired. Close a tab 3 seconds after an edit with only Blob sync on, and
@@ -77,6 +77,17 @@ push has to *inline* them first, and the Blob path is the one that cannot always
 afford to: Vercel caps a request body at 4.5 MB, so `inlineImagesWithinBudget`
 sends what fits and reports `photos-skipped` rather than failing the whole push.
 A journal that syncs cleanly can still be missing its images on the other side.
+
+**Every remote target owes the egress boundary, and the column above is the
+only list of them.** `forEgress` (`lib/cyclePrivacy.ts`) drops the cycle log and
+this device's sync secrets; the folder is exempt because a folder on this
+machine *is* this machine. The Google Drive row said "yes" to photos and nothing
+about egress for the life of this file, and the code matched the silence — Drive
+uploaded the cycle log the Cycle page promises never leaves, and no gate could
+see it (COD-265). Two of these carry the call at the call site rather than
+inside the module, because `pushGist` and `pushData` take an untyped payload.
+`lib/egress.contract.test.ts` is what keeps this column honest: adding a target
+here without wiring `forEgress` fails a test.
 
 ## Encryption, and what the server can see
 

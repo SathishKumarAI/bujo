@@ -5,6 +5,7 @@ import { useJournal } from '../store'
 import { Card, Empty, Input } from './ui'
 import { onRaised } from '../lib/colors'
 import { migrate } from '../lib/storage'
+import { forEgress, mergePulled, CYCLE_CLAUSE } from '../lib/cyclePrivacy'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
 import { useConfirm } from './ConfirmDialog'
@@ -40,7 +41,11 @@ export function DriveSync() {
   async function backup() {
     setBusy('push')
     try {
-      await pushData(data)
+      // `forEgress`, which this path went without for its whole life: Drive is
+      // a network destination like the gist and the blob, and `pushData(data)`
+      // raw uploaded the cycle log the Cycle page promises never leaves, plus
+      // this device's `googleClientId`. See lib/cyclePrivacy.ts (COD-265).
+      await pushData(forEgress(data))
       setSettings({ lastDriveSync: todayISO() })
       notify.success('Backed up to Google Drive')
     } catch (e) {
@@ -53,14 +58,16 @@ export function DriveSync() {
   async function restore() {
     if (!await confirm({
       title: 'Replace this device’s journal with the Google Drive copy?',
-      description: 'Everything currently on this device is overwritten by the copy stored in Drive.',
+      description: 'Everything currently on this device is overwritten by the copy stored in Drive.' + CYCLE_CLAUSE,
       confirmLabel: 'Replace my data', destructive: true,
     })) return
     setBusy('pull')
     try {
       const remote = await pullData()
       if (!remote) return notify.info('Nothing in Drive yet', 'Back up first, then you can restore from it.')
-      replaceAll(migrate(remote))
+      // Pairs with the `forEgress` above: once Drive stops receiving the cycle
+      // log, a raw replace from Drive starts erasing it. Both halves or neither.
+      replaceAll(mergePulled(data, migrate(remote)))
       notify.success('Restored from Google Drive')
     } catch (e) {
       notify.error('Restore did not finish', `${(e as Error).message}. This device still has its own journal.`)

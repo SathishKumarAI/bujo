@@ -4,6 +4,7 @@ import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
 import { useConfirm } from '../ConfirmDialog'
 import { migrate } from '../../lib/storage'
+import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
 import { pullJournalFromServer, pushJournalToServer, serverConfigured } from '../../lib/serverSync'
 
 /** Self-host sync: point at the Docker stack's now-SECURED PostgREST API. The
@@ -28,9 +29,9 @@ export function SelfHostCard() {
     const r = await pullJournalFromServer(s.selfHostUrl ?? '', s.selfHostToken)
     if (r && await confirm({
       title: 'Load the server copy onto this device?',
-      description: 'Everything currently on this device is replaced by the copy on your server.',
+      description: 'Everything currently on this device is replaced by the copy on your server.' + CYCLE_CLAUSE,
       confirmLabel: 'Load from server', destructive: true,
-    })) { replaceAll(migrate(r)); setMsg('Loaded from the server.') }
+    })) { replaceAll(mergePulled(data, migrate(r))); setMsg('Loaded from the server.') }
     else setMsg(r ? 'Cancelled.' : 'Nothing on the server yet (or auth failed).')
   }
 
