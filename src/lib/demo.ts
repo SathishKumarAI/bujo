@@ -3,6 +3,7 @@ import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
 import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
+import { HOME_EXERCISES } from './homeExercises'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -83,7 +84,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 5
+export const DEMO_VERSION = 6
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -353,6 +354,43 @@ export function generateDemoData(today = todayISO()): JournalData {
     }
   }
   j.settings.pickleballGoalGames = 12
+
+  /**
+   * HOME WORKOUTS, because the page that renders them had never been rendered
+   * with any.
+   *
+   * `activity: 'homeWorkout'` was a domain the seed skipped, so Home Workout's
+   * analytics strip, its 26-week calendar and its entire history list were the
+   * `{sessions.length === 0}` branch at every theme and viewport the gates
+   * visit. The exact family as the unseeded `data.cycle` this file already
+   * records: a card that never renders cannot fail, and three of this page's
+   * four zone-3 sections were in that state.
+   *
+   * Set lines are written in the same `Name reps` shape `logSession` writes, so
+   * the history read-back is exercising the real format rather than a tidier
+   * one. The movement names come from `HOME_EXERCISES` so a renamed movement
+   * cannot leave the seed pointing at nothing.
+   *
+   * `rand3` is its own stream, per the rule on `rand2` above: new field, new
+   * stream, so no previously pinned number moves.
+   */
+  const rand3 = rng(2026)
+  const HOME_PICKS = ['pushup', 'squat', 'reverselunge', 'plank', 'glutebridge', 'superman', 'bicycle', 'burpee', 'invertedrow', 'deadbug']
+    .flatMap((id) => HOME_EXERCISES.filter((e) => e.id === id))
+  for (let i = 2; i <= 70; i += 3) {
+    if (rand3() > 0.3) {
+      const n = 4 + Math.floor(rand3() * 3)
+      const picked = HOME_PICKS.filter(() => rand3() > 0.4).slice(0, n)
+      if (picked.length === 0) continue
+      j.workouts.push({
+        id: uid('w'), date: addDays(today, -i), activity: 'homeWorkout',
+        durationMin: 18 + Math.floor(rand3() * 25),
+        sets: picked.map((e) => `${e.name} ${e.reps}`),
+        rpe: 5 + Math.floor(rand3() * 4),
+        notes: rand3() > 0.6 ? 'Living-room session, no kit.' : '',
+      })
+    }
+  }
 
   // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──
   j.pickleballEvents = [
