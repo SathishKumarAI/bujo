@@ -8,6 +8,22 @@ features and UX, or as **dependencies/assets** with their own licenses.
 If you believe something here should carry additional attribution, please open
 an issue and it will be corrected.
 
+## Training guidance
+
+The Home Workout manual's numbers — sets, reps, rest, weekly volume, training
+frequency and the adult activity guidelines — and its form cues are credited
+**in the app**, on the thing they support, and listed in full under
+Body → Home workout → Manual → Sources. Thirty-one references from the ACSM,
+ODPHP/HHS, the CDC, the NHS, the American Council on Exercise, Hospital for
+Special Surgery, Harvard Health, StrongFirst and the open literature.
+
+The list lives in `src/lib/homeManual.ts`. **Every URL in it was fetched and
+returned readable content**, and `src/lib/homeManual.test.ts` refuses the hosts
+that are known to serve nothing to an anonymous reader. Nothing in that manual
+is quoted at length; the cues are written in our own words from the published
+teaching points, and the claims the sources do *not* support are named in
+`docs/features/HOME-WORKOUT.md` rather than quietly rounded up.
+
 ## Method & inspiration
 
 | Source | Link | What it inspired |
