@@ -24,10 +24,26 @@
  * | `bujocloud.pushCloud` | `POST /api/sync` | yes, client-side passphrase |
  * | `serverSync.pushJournalToServer` | self-hosted PostgREST | **no** |
  * | `github.pushGist` | a GitHub gist | no |
+ * | `gdrive.pushData` | Google Drive appDataFolder | no |
  * | `fscloud.saveToFolder` | a local folder | n/a — never leaves the device |
  *
  * All are opt-in and off by default, but a user who had enabled one was
  * uploading their cycle log without the page ever having said so.
+ *
+ * ## The Drive row was missing from that table for the life of this file
+ *
+ * And so was the guard. This table was written when there were three network
+ * destinations; `gdrive.pushData` was the fourth, `DriveSync.tsx` called it
+ * with the raw journal, and **Google Drive sync uploaded the cycle log** while
+ * the Cycle page promised it is "never uploaded, synced, or sent to us or
+ * anyone else" (COD-265).
+ *
+ * It survived an audit because the audit grepped `forNetwork` — which finds
+ * every path that remembered the rule and no path that forgot it. The same
+ * mistake as `help ?? subtitle` in `CLAUDE.md`: a sweep keyed on the mechanism
+ * cannot see the call site that never reached for it. That is why
+ * `egress.contract.test.ts` now enumerates *destinations* and asserts each one
+ * passes through {@link forEgress}, rather than counting adopters.
  *
  * ## The rule
  *
@@ -40,6 +56,7 @@
  * device, and that path is how "Export backup" keeps working.
  */
 import type { CyclePoint, JournalData } from './types'
+import { stripSyncSecrets } from './csv'
 
 /**
  * The payload to send, with the cycle log removed. Always.
@@ -59,6 +76,55 @@ export function forNetwork<T extends JournalData>(data: T): T {
   if (!data.cycle?.length) return data
   return { ...data, cycle: [] }
 }
+
+/**
+ * THE ONLY THING A NETWORK PUSH MAY SEND. Every push path calls this; nothing
+ * calls {@link forNetwork} directly any more.
+ *
+ * Two rules, one function, because four call sites each remembering two rules
+ * is precisely how the Drive leak above happened — and the second rule had been
+ * forgotten by *all four*:
+ *
+ * 1. **No cycle data.** {@link forNetwork}, for the reasons above.
+ * 2. **No sync secrets.** `stripSyncSecrets` drops `selfHostToken`,
+ *    `githubToken`, `googleClientId`, `googleEmail` and the two URLs.
+ *
+ * Rule 2 is not about cycle data, and lives here anyway: this is the egress
+ * boundary, and a second boundary beside it is a second thing to forget. All
+ * five *export* paths already stripped secrets; no *sync* path did. So a GitHub
+ * PAT was written into the gist it authenticates to, and POSTed in cleartext to
+ * a self-hosted Postgres row — and since two people sharing one sync passphrase
+ * is a supported setup (see `docs/AUTH.md`), they also shared each other's
+ * tokens.
+ *
+ * Stripping cannot break a round trip: `mergeJournals` spreads
+ * `{...loser.settings, ...winner.settings}`, so a key the winner omits keeps
+ * the loser's value and this device's own token survives pulling a payload that
+ * has none. Asserted in `cyclePrivacy.test.ts` rather than reasoned about.
+ *
+ * `fscloud.saveToFolder` is still exempt from BOTH: a folder on this machine is
+ * this device, and that path is how "Export backup" keeps working.
+ */
+export function forEgress<T extends JournalData>(data: T): T {
+  return stripSyncSecrets(forNetwork(data))
+}
+
+/**
+ * The sentence every "replace this device's journal" dialog appends.
+ *
+ * A dialog that overstates what it destroys is the same defect as one that
+ * understates it. All three network restores said "everything currently on this
+ * device is overwritten", which was true of the code and false of the intent:
+ * the cycle log is the one thing the remote copy was never allowed to hold, so
+ * "everything" quietly included a log the user could not have known was in
+ * scope.
+ *
+ * One exported string rather than three typed by hand — the three dialogs
+ * already drifted apart in wording once, and a clause each author must remember
+ * is a clause that gets forgotten.
+ */
+export const CYCLE_CLAUSE =
+  ' Your cycle log is the exception: it is never uploaded, so the copy you are loading has none and this device keeps the log it has.'
 
 /**
  * Merge a pulled journal over the local one **without letting a remote wipe the

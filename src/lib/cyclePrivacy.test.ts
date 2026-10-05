@@ -6,7 +6,8 @@
  * knowingly choose is the thing the disclaimer promises cannot happen.
  */
 import { describe, expect, it } from 'vitest'
-import { applyBackup, buildBackup, checkBackup, forNetwork, mergePulled } from './cyclePrivacy'
+import { applyBackup, buildBackup, checkBackup, forEgress, forNetwork, mergePulled } from './cyclePrivacy'
+import { mergeJournals } from './conflict'
 import { emptyJournal } from './storage'
 import type { CyclePoint, JournalData } from './types'
 
@@ -42,6 +43,64 @@ describe('nothing leaves the device unless the user opted in', () => {
     const j = journal([day('2026-09-01')]) as JournalData & { settings: Record<string, unknown> }
     j.settings.cycleSync = true
     expect(forNetwork(j).cycle).toEqual([])
+  })
+})
+
+describe('forEgress is the only door, and it carries both rules', () => {
+  /**
+   * COD-265. Four push paths each remembered the cycle rule and all four forgot
+   * the secrets rule, so a GitHub PAT was written into the gist it
+   * authenticates to. One function now carries both; these pin what it does.
+   */
+  const withSecrets = (): JournalData => {
+    const j = journal([day('2026-09-01')])
+    j.settings.githubToken = 'ghp_realtoken'
+    j.settings.selfHostToken = 'eyJhbGciOi.jwt'
+    j.settings.googleClientId = '123.apps.googleusercontent.com'
+    j.settings.googleEmail = 'someone@example.com'
+    j.settings.selfHostUrl = 'https://my-server:8443'
+    return j
+  }
+
+  it('drops the cycle log and every sync secret in one pass', () => {
+    const out = forEgress(withSecrets())
+    expect(out.cycle).toEqual([])
+    expect(out.settings.githubToken).toBeUndefined()
+    expect(out.settings.selfHostToken).toBeUndefined()
+    expect(out.settings.googleClientId).toBeUndefined()
+    expect(out.settings.googleEmail).toBeUndefined()
+    expect(out.settings.selfHostUrl).toBeUndefined()
+  })
+
+  it('does not mutate the journal it was handed', () => {
+    // The live journal still needs its own tokens — this is the payload, not
+    // the state. `forNetwork` returns the same object when there is nothing to
+    // strip, so a careless copy here would have reached into the store.
+    const j = withSecrets()
+    forEgress(j)
+    expect(j.settings.githubToken).toBe('ghp_realtoken')
+    expect(j.cycle).toHaveLength(1)
+  })
+
+  it('keeps everything that is not a secret or a cycle day', () => {
+    const j = withSecrets()
+    j.settings.theme = 'latte'
+    j.updatedAt = '2026-09-01T00:00:00.000Z'
+    const out = forEgress(j)
+    expect(out.settings.theme).toBe('latte')
+    expect(out.updatedAt).toBe('2026-09-01T00:00:00.000Z')
+  })
+
+  it('leaves THIS device its token after pulling a payload that has none', () => {
+    // The thing that would break if stripping were wrong: self-host sync pushes
+    // a journal without its own JWT, then pulls it back. `mergeJournals`
+    // spreads `{...loser.settings, ...winner.settings}`, so a key the winner
+    // omits keeps the loser's value. Asserted, not reasoned about.
+    const local = withSecrets()
+    const pulledBack = forEgress(local)
+    const merged = mergeJournals(pulledBack, local)
+    expect(merged.settings.selfHostToken).toBe('eyJhbGciOi.jwt')
+    expect(merged.settings.githubToken).toBe('ghp_realtoken')
   })
 })
 
