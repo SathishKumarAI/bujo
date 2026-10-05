@@ -1,7 +1,12 @@
 name: a11y
 
-# The browser gate: axe over every view, plus smoke. Split out of ci.yml so it
-# can be skipped on documentation-only changes.
+# The browser gates: axe over every view, plus smoke and clipped. Split out of
+# ci.yml so they can be skipped on documentation-only changes.
+#
+# STILL CALLED `a11y` even though it now runs two jobs and three gates, because
+# the workflow name is what any branch-protection rule and every historical run
+# is keyed on. Renaming it would orphan both for a tidier label. The jobs inside
+# are named for what they do (`a11y`, `render`).
 #
 # WHY ITS OWN FILE, and not an `if:` on a job inside ci.yml. `paths-ignore` is a
 # workflow-level filter in Actions - it cannot be applied to one job. The
@@ -39,8 +44,35 @@ jobs:
   # fails on serious/critical axe violations only — the moderate ones are mostly
   # colour-contrast findings on chart internals, which need the data-viz palette
   # decision rather than a blanket fix.
+  #
+  # SPLIT FROM THE OTHER TWO GATES (COD-268), and the reason is the whole point
+  # of this file. One job used to do build + Playwright install + 173 axe scans
+  # + smoke + clipped, serially. That was ~9m12s–9m41s through September and
+  # 10m58s at #321 — and then the job was **cancelled at exactly 15m03s** on
+  # #322 and again on #323, with no failing step, which Actions reports as a
+  # bare `failure`. The same 15-minute mark killed an unrelated `screenshots`
+  # job 20 minutes later, so it is a cap on the job and not an assertion in the
+  # app: driven locally against the same commit, all three gates are green
+  # (a11y 173/173 scans across 12/12 shards, no serious or critical; smoke
+  # 24/24; clipped clean at 1440/1024/390).
+  #
+  # So the gate was not failing, it was OFF — the cancel happens inside the axe
+  # step, which means smoke and clipped never ran at all on either merge. Three
+  # gates silently stopped covering anything, which is the exact shape this repo
+  # has written down twice (the smoke default port, the `CHROME_PATH`
+  # workaround). The fix is to make the work fit, not to note the workaround.
+  #
+  # Two jobs in parallel, paying one duplicated setup each (~3 min) to put axe
+  # alone in its own budget. `BUJO_A11Y_WORKERS: 1` is NOT the answer here even
+  # though the note below used to say so — serial is ~8 minutes against ~3, so
+  # it moves in the wrong direction when the problem is wall clock.
+  #
+  # `timeout-minutes` is set so the next overrun says *timeout* instead of
+  # `failure` with an empty step list. A red that carries no evidence cost an
+  # hour of archaeology here, and the run logs had already expired.
   a11y:
     runs-on: ubuntu-latest
+    timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -69,26 +101,52 @@ jobs:
       # so this was a real red, not a flake, and it stood on `main` from #285.
       #
       # Two workers rather than one because coverage is identical either way and
-      # the serial walk is ~8 minutes against ~3. If this goes red again, the
-      # next step is `BUJO_A11Y_WORKERS: 1`, not a longer timeout: a gate that
-      # needs its clock loosened twice is measuring the runner, not the app.
+      # the serial walk is ~8 minutes against ~3.
       - name: axe-core
         env:
           BUJO_A11Y_WORKERS: 2
         run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
-      # Smoke has never run in CI — it was local-only, which is how it managed
-      # to sit on a wrong default port (5173, Vite's dev default, i.e. whichever
-      # project on the machine booted first) and report a clean 25/25 against a
-      # different application. It asserts its own identity now, so it can be
-      # trusted here. Same preview server, no extra build.
+
+  # Smoke has never run in CI — it was local-only, which is how it managed to
+  # sit on a wrong default port (5173, Vite's dev default, i.e. whichever
+  # project on the machine booted first) and report a clean 25/25 against a
+  # different application. It asserts its own identity now, so it can be
+  # trusted here.
+  #
+  # Neither did `clipped`, and it had the same consequence: `npm run clipped`
+  # existed in package.json and ran in no workflow at all, so the only thing
+  # keeping it honest was someone remembering to type it. A gate nothing runs is
+  # a gate that rots — the sentence this repo already wrote about smoke. It
+  # catches what a11y structurally cannot: a control pushed off the viewport, a
+  # field showing less than was typed into it, and a scroll region squeezed too
+  # narrow to scroll in.
+  #
+  # Both are minutes-cheap (smoke ~40s, clipped ~60s) and they are here rather
+  # than in the a11y job because they were the two that got silently skipped
+  # when axe ate the clock. They share a job because together they are still
+  # faster than the setup that precedes them.
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Playwright stays out of the app tree deliberately (see scripts/*.mjs):
+      # installed here with --no-save so it never reaches a user's bundle.
+      - name: Install Playwright
+        run: |
+          npm i -D --no-save playwright @axe-core/playwright
+          npx playwright install --with-deps chromium
+      - name: Serve preview
+        run: npx vite preview --port 4173 &
+      - name: Wait for preview
+        run: npx wait-on http://localhost:4173 --timeout 60000
       - name: Smoke every view
         run: BUJO_URL=http://localhost:4173 node scripts/smoke-views.mjs
-      # Neither did this one, and it had the same consequence: `npm run clipped`
-      # existed in package.json and ran in no workflow at all, so the only thing
-      # keeping it honest was someone remembering to type it. A gate nothing
-      # runs is a gate that rots — the sentence this repo already wrote about
-      # smoke. It catches what a11y structurally cannot: a control pushed off
-      # the viewport, a field showing less than was typed into it, and a scroll
-      # region squeezed too narrow to scroll in. Same preview server.
       - name: Clipped and unreachable content
         run: BUJO_URL=http://localhost:4173 node scripts/clipped-text.mjs
