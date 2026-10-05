@@ -112,7 +112,7 @@ describe('nothing leaves except through forEgress', () => {
   it('strips inside the two push libs that own their own request', () => {
     // `bujocloud` and `serverSync` build their own fetch, so unlike the
     // transports above there is no call site to carry the rule for them.
-    for (const m of ['./bujocloud.ts', './serverSync.ts']) {
+    for (const m of ['./bujocloud.ts', './serverSync.ts', './supabase.ts']) {
       const entry = scannable.find(([p]) => p === m)
       expect(entry, `${m} is missing from the scan`).toBeDefined()
       expect(entry![1], `${m} must send forEgress(...)`).toMatch(/forEgress\(/)
@@ -121,16 +121,23 @@ describe('nothing leaves except through forEgress', () => {
 
   it('knows every lib module that carries a journal over the network', () => {
     // A completeness tripwire, not a style rule. A NEW module that types a
-    // `JournalData` and calls `fetch` is a new egress path, and it fails here
-    // until someone adds it to this list having decided what it owes the
+    // `JournalData` and sends it somewhere is a new egress path, and it fails
+    // here until someone adds it to this list having decided what it owes the
     // boundary. The two untyped transports are covered by the call-site
     // assertion above instead, which is why they are not in this set.
+    //
+    // "Sends it somewhere" was `fetch(` alone until COD-271, and that was too
+    // narrow: `supabase.ts` carries a `JournalData` to a server and never calls
+    // `fetch` itself — the SDK does. The tripwire written to catch the next
+    // egress path would have missed the very next egress path. Any client that
+    // speaks for us has to be named here.
+    const SENDS = [/fetch\(/, /@supabase\/supabase-js/]
     const carriers = scannable
       .filter(([p]) => /^\.\/[a-zA-Z]+\.ts$/.test(p))
-      .filter(([, src]) => src.includes('JournalData') && src.includes('fetch('))
+      .filter(([, src]) => src.includes('JournalData') && SENDS.some((re) => re.test(src)))
       .map(([p]) => p.replace('./', ''))
       .sort()
-    expect(carriers).toEqual(['bujocloud.ts', 'serverSync.ts'])
+    expect(carriers).toEqual(['bujocloud.ts', 'serverSync.ts', 'supabase.ts'])
   })
 })
 
