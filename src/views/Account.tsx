@@ -6,6 +6,7 @@ import { CardGrid } from '../components/shell/CardGrid'
 import { LocalAccountCard } from '../components/account/LocalAccountCard'
 import { CloudSyncCard } from '../components/account/CloudSyncCard'
 import { AccountCard } from '../components/account/AccountCard'
+import { SecurityCard } from '../components/account/SecurityCard'
 import { ProjectLinks } from '../components/account/ProjectLinks'
 import { useNav } from '../components/shell/nav'
 
@@ -62,6 +63,8 @@ export function Account() {
           <AccountCard />
           <LocalAccountCard />
           <CloudSyncCard />
+          {/* Both halves, and the second one is not optional. */}
+          <SecurityCard />
           <ProjectLinks />
 
           {/* The passcode is the only control here that restricts access, and
