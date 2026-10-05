@@ -153,8 +153,17 @@ export async function resolveIncoming(
   // Stripping cycle data on the way OUT means a device with sync off uploads
   // `cycle: []`. Without this, the next device to pull would read that empty
   // array as "the log was deleted" and erase its own. Withheld is not deleted.
-  // Every pull path in the app funnels through this function, so the guard
-  // belongs here rather than at each of the five call sites.
+  // Every AUTO pull path funnels through this function, so the guard belongs
+  // here rather than at each of those call sites.
+  //
+  // That sentence used to say "every pull path", and it was false for four of
+  // them (COD-265). The three explicit "Replace my data" buttons — cloud, gist,
+  // self-host — plus Drive's restore called `replaceAll(migrate(remote))` raw,
+  // and since every push strips the cycle log, the remote always arrives with
+  // `cycle: []`. So Settings' **Pull** erased the log on every press. Those four
+  // now call `mergePulled` directly: they are deliberate replaces, so they do
+  // not want the union, but they still need "withheld is not deleted".
+  // `egress.contract.test.ts` is what keeps this comment true.
   const remote = mergePulled(local, remoteRaw)
   const l = local.updatedAt
   const r = remote.updatedAt

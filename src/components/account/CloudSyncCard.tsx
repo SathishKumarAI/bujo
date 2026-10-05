@@ -8,6 +8,7 @@ import { Button } from '../ui/button'
 import { Switch } from '../ui/switch'
 import { pushCloud, pullCloud } from '../../lib/bujocloud'
 import { migrate } from '../../lib/storage'
+import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
 
 /**
  * One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync).
@@ -45,9 +46,18 @@ export function CloudSyncCard() {
       if (!remote) { setMsg('Nothing stored for that passphrase yet.'); return }
       if (await confirm({
         title: 'Replace this device’s data with the cloud copy?',
-        description: 'Everything currently on this device is overwritten by the encrypted copy stored in the cloud.',
+        description:
+          'Everything currently on this device is overwritten by the encrypted copy stored in the cloud.' +
+          CYCLE_CLAUSE,
         confirmLabel: 'Replace my data', destructive: true,
-      })) { replaceAll(migrate(remote)); setMsg('Pulled from cloud.') }
+      })) {
+        // `mergePulled`, not a raw replace. `pushCloud` strips the cycle log, so
+        // the blob ALWAYS holds `cycle: []` — a raw replace here erased the log
+        // every single time this button was pressed, with nothing on screen
+        // naming it and no way back (COD-265). Withheld is not deleted.
+        replaceAll(mergePulled(data, migrate(remote)))
+        setMsg('Pulled from cloud.')
+      }
     } catch (e) { setMsg(/wrong|decrypt|operation/i.test((e as Error).message) ? 'Wrong passphrase, or corrupt data.' : (e as Error).message) }
     finally { setBusy('') }
   }

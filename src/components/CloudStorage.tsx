@@ -11,7 +11,7 @@ import { pullGist, pushGist, verifyToken } from '../lib/github'
 import { useConfirm } from './ConfirmDialog'
 import { notify } from '../lib/notify'
 import { Button } from './ui/button'
-import { forNetwork } from '../lib/cyclePrivacy'
+import { forEgress, mergePulled, CYCLE_CLAUSE } from '../lib/cyclePrivacy'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
@@ -61,9 +61,10 @@ export function CloudStorage() {
     setBusy('gh')
     try {
       if (!(await verifyToken(s.githubToken))) { notify.error('Token rejected by GitHub', 'Check it has gist scope and has not expired.'); return }
-      // A gist is a network destination like any other — withheld unless the
-      // user opted cycle data into sync. See lib/cyclePrivacy.ts.
-      const id = await pushGist(s.githubToken, s.githubGistId, forNetwork(data))
+      // A gist is a network destination like any other. `forEgress` also drops
+      // `githubToken` — without it the gist carried the PAT that writes it.
+      // See lib/cyclePrivacy.ts.
+      const id = await pushGist(s.githubToken, s.githubGistId, forEgress(data))
       setSettings({ githubGistId: id, lastDriveSync: todayISO() })
       notify.success('Backed up to a private GitHub gist')
     } catch (e) {
@@ -76,14 +77,16 @@ export function CloudStorage() {
     if (!s.githubToken || !s.githubGistId) { notify.error('Nothing to restore', 'Connect and back up to GitHub first.'); return }
     if (!await confirm({
       title: 'Replace this device’s journal with the GitHub copy?',
-      description: 'Everything currently on this device is overwritten by the copy stored in your gist.',
+      description: 'Everything currently on this device is overwritten by the copy stored in your gist.' + CYCLE_CLAUSE,
       confirmLabel: 'Replace my data', destructive: true,
     })) return
     setBusy('gh')
     try {
       const remote = await pullGist(s.githubToken, s.githubGistId)
       if (!remote) { notify.error('No bujo.json in that gist'); return }
-      replaceAll(migrate(remote))
+      // `mergePulled`: the gist is pushed through `forEgress`, so it never holds
+      // a cycle log and a raw replace read that absence as a deletion.
+      replaceAll(mergePulled(data, migrate(remote)))
       notify.success('Restored from GitHub')
     } catch (e) {
       notify.error('That did not work', (e as Error).message)
