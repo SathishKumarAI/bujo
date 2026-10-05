@@ -1,9 +1,56 @@
 # Next session
 
-> **2026-09-30 — FIRST: merge the open stack.** `#317` then `#318`, bottom
-> first, retargeting each child *before* its parent merges. Squash-merging the
-> bottom of a stack permanently closes the child and GitHub will not reopen one
-> whose base branch is gone. Nothing below is worth starting until that is done.
+> **2026-10-05 — FIRST: check that #326 went green.** The browser gates were
+> split into two parallel jobs because the single job was being cancelled at
+> 15m03s on every run, which Actions reports as a bare `failure` (COD-268). If
+> `a11y` and `render` both pass on `main`, the split worked and there is nothing
+> to do. **If either hits 15m03s again, the cap is not about job duration** and
+> that is the thread to pull before trusting any browser gate — all three
+> (axe, smoke, clipped) were silently not running on #322 and #323.
+>
+> Second, and only if you touch sync: the live deploy is still serving the
+> **old** `/api/sync` handler. Verified read-only — `?code=X&versions=1` returns
+> 404 instead of `{"versions":[]}`. So #322 and #323 are merged but not live,
+> and the first production pull is what proves the `x-sync-code` header path end
+> to end. The `?code=` fallback exists to make that safe to find out.
+>
+> The 2026-09-30 note that used to head this file said "FIRST: merge the open
+> stack, #317 then #318". Both merged on 2026-09-30. Removed rather than left,
+> because an instruction that is already done reads exactly like one that is
+> not, and this file's own rule is that it gets rewritten when picked up.
+>
+> **The #320–#326 queue was NOT worked through either** — that stretch was the
+> sync audit (see `WORKLOG.md` 2026-10-05 and
+> `docs/security/sync-hardening-plan.md`). Every item below is still open and
+> still measured.
+>
+> **Joined the pile this stretch:**
+>
+> - **COD-268 — why is the CI job cap 15 minutes?** Public repo on a personal
+>   account, so Actions minutes are free and unlimited; no `timeout-minutes` was
+>   configured and `a11y` has no `concurrency` block (`screenshots` does, which
+>   explains its cancel but not a11y's). A rerun queued and never picked up a
+>   runner. #326 works around it either way; the cause is unknown.
+> - **No restore dialog has ever been rendered by any gate.** All four
+>   "Replace my data" confirms need a configured remote, so a11y, smoke and
+>   clipped all structurally miss them, and #321 changed the copy in all four.
+>   Pinned by a source assertion in `egress.contract.test.ts`, which is not the
+>   same as having seen it. Same family as COD-232's tab shell and COD-237's
+>   rails: when a gate walks the DOM, ask what is not in it.
+> - **`?code=` is still accepted by `api/sync.ts`** for bundles cached before
+>   #323. Drop that arm one release after `b0e79fa` — it is the logged-secret
+>   path the change exists to close, so leaving it forever defeats the change.
+> - **Rotating a sync passphrase does not erase the old blob**, and nothing in
+>   the UI says so. The v1 blob stays decryptable by the old passphrase forever
+>   (reasoning in `pullCloud` and plan §3). Either say it in `CloudSyncCard` or
+>   decide it does not need saying — but it is currently unsaid rather than
+>   decided.
+
+> **2026-09-30 — the stack this note used to open with is merged.** `#317` and
+> `#318` both landed on 2026-09-30; the instruction to merge them bottom-first
+> is kept only as the trap it records (squash-merging the bottom of a stack
+> permanently closes the child, and GitHub will not reopen one whose base branch
+> is gone — it is in `CLAUDE.md`).
 >
 > This queue was again NOT worked through — the #311–#318 stretch was the Cycle
 > redesign and the Recovery ledger, neither of which is on it. Every item below

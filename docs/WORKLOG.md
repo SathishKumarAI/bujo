@@ -26,6 +26,146 @@ Rules the three share:
 
 ---
 
+## 2026-10-05 — Said no to Supabase, then fixed what the question exposed (#320–#326)
+
+**Summary:** The ask was "add Supabase sign-in and sync the journal in the
+background". The answer was no — accounts were removed from this app on purpose
+on 2026-09-11, the Supabase project no longer resolves, and
+`lib/auth.contract.test.ts` fails the build on any attempt to re-add one. What
+made the session worth seven PRs is that **auditing the sync paths to answer the
+question found four of them broken**, including one that destroyed the most
+sensitive log in the app every time a button was pressed.
+
+The through-line, and the reason all of them had survived: **every one was an
+absence.** Nothing was clipped, no accessibility tree was wrong, no test failed,
+no build broke. A path that never called the guard, a step that never ran, a
+tsconfig that never included a directory. Every gate in this repo was quiet and
+every one of them was right to be quiet.
+
+### What was wrong, measured
+
+| Found | Where | Why no gate saw it |
+|---|---|---|
+| **Settings' Pull erased the cycle log, every press** | `CloudSyncCard.tsx:50` and three more | Push strips cycle, so the blob *always* holds `cycle: []`, and a raw `replaceAll(migrate(remote))` reads that as a deletion. `mergePulled` exists for exactly this and four pull sites never called it |
+| **Google Drive uploaded the cycle log** | `DriveSync.tsx:43` | `forNetwork` had 3 call sites against 4 network destinations. `cyclePrivacy.ts`'s own table was written when there were three |
+| **Sync secrets travelled in cleartext** | all four push paths | All five *export* sites called `stripSyncSecrets`; no *sync* site did. A GitHub PAT was written into the gist it authenticates to |
+| **One POST destroyed a journal permanently** | `api/sync.ts` | `allowOverwrite: true`, no history, unauthenticated by design — sound reasoning for reads, silent about writes |
+| **The path code was one unsalted SHA-256** | `bujocloud.ts` | The AES key was PBKDF2 at 150 000 rounds, so the cheapest attack on the passphrase was 150 000x cheaper than the ciphertext — and the path code is the half that leaves the device, in a query string |
+| **`api/` was typechecked by nothing** | `tsconfig.*.json` | The app project includes only `src`, the node project only `vite.config.ts`. The two handlers holding every journal in the blob store were the one part of the repo `verify` could not read |
+| **Three browser gates had silently switched off** | `.github/workflows/a11y.yml` | The job is cancelled at 15m03s, which Actions reports as a bare `failure`. The cancel lands inside the axe step, so smoke and clipped never ran at all |
+
+The cycle-log one is the one to remember. Not an edge case and not a race: press
+**Pull**, lose the log, no prompt naming it, no way back. It had shipped that way
+for the life of the boundary, with a file-level comment asserting the opposite —
+`conflict.ts` said "Every pull path in the app funnels through this function",
+and that was false for four sites. When a comment and the code disagree, find
+out which is lying; here it was the comment.
+
+### What shipped
+
+| PR | What | Ticket |
+|---|---|---|
+| #320 | The audit and the plan | — |
+| #321 | `forEgress` as the only egress door, `mergePulled` on every network restore, `CYCLE_CLAUSE` in all four dialogs, `egress.contract.test.ts` | COD-265 |
+| #322 | `/api/sync` keeps three payloads behind the live one; generic 500; `api/` into the typecheck | COD-266 |
+| #323 | PBKDF2 600 000 both sides, blob `v: 2`, derived path code, `x-sync-code` header, v1 fallback and migration | COD-267 |
+| #324, #325 | STATUS; untracking a personal page that got swept into #323 | — |
+| #326 | Browser gates split into two parallel jobs so they can finish | COD-268 |
+
+**The deliverable that outlives the patch is the contract test.** One line fixes
+Drive; `egress.contract.test.ts` fixes the next Drive. It asserts the *absence*
+of both mistakes across the whole tree — no caller of `forNetwork` but
+`forEgress`, no raw `replaceAll(migrate(` outside the two deliberately-exempt
+folder paths, every untyped transport call passing through the door, every
+network restore carrying both `mergePulled` and the dialog clause — plus a
+tripwire on its own inventory, so a new `lib` module that types a `JournalData`
+and calls `fetch` fails until someone classifies it. A type-keyed check could
+not have done this job: `gdrive.pushData` and `github.pushGist` take `unknown`,
+so the journal reaches them untyped and the call site is the only place the rule
+can live.
+
+Both halves of it were armed against the original bugs before being trusted —
+Drive's fix reverted turned 3 of 9 assertions red, and removing the v1 fallback
+turned 4 of 9 red in `bujocloud.test.ts`. A test asserting an absence that has
+never been seen to fail is a test that proves nothing.
+
+### Numbers
+
+Measured before choosing, not after. PBKDF2 (`crypto.subtle.deriveKey`, median
+of 5 on this machine):
+
+| Rounds | Median |
+|---|---|
+| 150 000 | 15.0 ms |
+| 300 000 | 30.1 ms |
+| 600 000 | 59.3 ms |
+
+Two derivations happen per sync, so the naive bump is ~120 ms per 4-second push
+cycle; memoising the path code per passphrase makes it ~59 ms once per session
+plus ~44 ms per push. Worth recording because "raise the rounds" is advice
+people repeat without checking what the hot path can afford.
+
+Browser gates, driven locally against `b0e79fa` because CI could not finish
+them: a11y **173/173 scans across 12/12 shards, no serious or critical**; smoke
+**24/24**; clipped **clean at 1440/1024/390**. `npm run verify`: **115 files,
+1624 tests, exit 0** — from 1585 tests across 113 files at the start.
+
+CI job wall clock, which is the measurement that found COD-268:
+
+| run | wall clock | verdict |
+|---|---|---|
+| Sept 30 ×5 | 9m12s – 9m41s | success |
+| #321 | 10m58s | success |
+| #322, #323 | **15m03s** | cancelled |
+| #324 screenshots | **15m02s** | cancelled |
+
+### What was got wrong, and changed
+
+- **I reported one broken pull path and there were four.** The first pass
+  grepped for the symptom the request pointed at; reading all seven pull sites
+  found three more, including the worst one. The plan doc was written after the
+  second pass, which is why it is the artifact worth trusting.
+- **The plan said to delete the legacy sync blob. It does not.** Written into §3
+  with the reasoning rather than quietly dropped: deletion would not undo the
+  exposure, because the weak code is derivable from the passphrase whether or
+  not a blob answers at it — an attacker holding a leaked v1 code can attack it
+  offline with no ciphertext at all. Against that, an unauthenticated `DELETE`
+  is strictly more destructive power than the overwrite #322 had just finished
+  making recoverable. Consequence stated in three places: the v1 blob stays
+  decryptable by the OLD passphrase forever, so rotating is not erasing.
+- **"Phases 2 and 3 cannot affect rendering, so a11y is not applicable" was
+  wrong**, and CI had said so while nobody was reading it. The gate was red on
+  both merges. It turned out not to be the app — but the claim was an inference
+  where a check was available, which is the mistake the evidence rules in
+  `CLAUDE.md` exist to prevent. Finding it also cost an hour of archaeology,
+  because the run logs had expired and the only evidence left was two identical
+  timestamps. Hence `timeout-minutes`.
+- **`git rm --cached` does keep the file, until you merge.** #325's body
+  promised the page stayed in the working tree, and that held on the branch;
+  merging the index deletion onto `main` removed the working copy. Restored
+  byte-identical from `9243f85`, now LF where it had been CRLF. The claim was
+  true about the operation and false about the workflow around it.
+- **No compare-and-swap on the blob**, and that is measured rather than
+  preferred: `PutCommandOptions` in this `@vercel/blob` exposes no `ifMatch`
+  (only `del` does), so it would mean hand-rolling the REST call.
+
+### Still not verified, and said so rather than laundered
+
+- **No restore dialog was clicked in a browser.** All four need a configured
+  remote to render, so no gate reaches them. The copy is pinned by a source
+  assertion and the behaviour by unit tests, which is not the same as having
+  seen it.
+- **Nothing ran against the real Vercel Blob store or the deployed function.**
+  `api/sync.test.ts` mocks `@vercel/blob`. Read-only probes against the live
+  deploy confirmed it is still serving the *old* handler
+  (`?code=X&versions=1` returns 404, not `{"versions":[]}`), so the new code is
+  not live yet and the first production pull is what proves `x-sync-code` end to
+  end. The `?code=` fallback is what makes that safe to find out.
+- **Why the CI cap is 15 minutes is unknown.** Public repo on a personal
+  account, so minutes are free and unlimited; no `timeout-minutes` was
+  configured and `a11y` has no `concurrency` block. A rerun queued and never
+  picked up a runner. #326's own run is the test of the split.
+
 ## 2026-09-30 — Two pages rebuilt around the question each was avoiding (#311–#318)
 
 **Summary:** Eight PRs across two subjects that turned out to be the same
