@@ -89,7 +89,12 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
           cannot wrap markup it does not own, so an over-wide child here would
           just leave by a different edge. */}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <button onClick={onToggle} aria-expanded={open} className="text-label text-fg-2 hover:text-fg-1">
+        {/* `shrink-0 whitespace-nowrap` because the caret is an inline span
+            INSIDE the button: in the flex row it shrank to 41px against a
+            43px content width, which is `clipped-text.mjs`'s own predicate —
+            a control showing less than it holds. Two pixels, caught by
+            running that check rather than by looking at it. */}
+        <button onClick={onToggle} aria-expanded={open} className="shrink-0 whitespace-nowrap text-label text-fg-2 hover:text-fg-1">
           {open ? 'Hide' : 'How to'}
           <span className="caret-turn caret-turn-quarter ml-1 inline-block text-micro" data-open={open}>▸</span>
         </button>
