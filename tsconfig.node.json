@@ -4,7 +4,7 @@
     "target": "es2023",
     "lib": ["ES2023"],
     "module": "esnext",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -20,5 +20,10 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts"]
+  /* `api/` was typechecked by NOTHING until COD-266: this project included only
+     `vite.config.ts` and the app project only `src`, so the two serverless
+     handlers — the ones holding every journal in the blob store — were the one
+     part of the repo `npm run verify` could not read. They belong here rather
+     than in the app project: node globals, no DOM, no JSX. */
+  "include": ["vite.config.ts", "api"]
 }
