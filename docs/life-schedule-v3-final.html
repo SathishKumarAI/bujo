@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job-Ready Life OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808;
+    --s1: #101010;
+    --s2: #161616;
+    --s3: #1c1c1c;
+    --border: #202020;
+    --border2: #2a2a2a;
+    --lime: #c8f135;
+    --cyan: #35c8f1;
+    --amber: #f1c135;
+    --red: #f14c35;
+    --green: #35f17a;
+    --purple: #a855f7;
+    --pink: #f135a8;
+    --text: #efefef;
+    --text2: #999;
+    --text3: #555;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,241,53,0.008) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,241,53,0.008) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .hdr {
+    margin-bottom: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+
+  .hdr-left { border-left: 3px solid var(--lime); padding-left: 22px; }
+
+  .hdr-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--lime);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .hdr h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(46px, 8.5vw, 88px);
+    line-height: 0.88;
+    letter-spacing: 0.015em;
+  }
+
+  .hdr h1 em { color: var(--lime); font-style: normal; }
+  .hdr h1 small { color: var(--cyan); font-style: normal; font-size: 0.55em; display: block; }
+
+  .hdr-sub {
+    margin-top: 14px;
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+  }
+
+  .hdr-right { text-align: right; }
+
+  .phase-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+    border: 1px solid;
+    margin-bottom: 8px;
+  }
+
+  .phase-badge.p1 { color: var(--amber); border-color: rgba(241,193,53,0.4); background: rgba(241,193,53,0.07); }
+  .phase-badge.p2 { color: var(--cyan);  border-color: rgba(53,200,241,0.4); background: rgba(53,200,241,0.07); }
+  .phase-badge.p3 { color: var(--green); border-color: rgba(53,241,122,0.4); background: rgba(53,241,122,0.07); }
+
+  /* ── DECISIONS BANNER ── */
+  .decisions {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--purple);
+    padding: 20px 22px;
+    border-radius: 2px;
+    margin-bottom: 40px;
+  }
+
+  .decisions h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--purple);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .dec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+
+  .dec-item {
+    background: var(--s2);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 2px;
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+
+  .dec-item strong {
+    color: var(--text);
+    display: block;
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .dec-item span.tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--purple);
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── STATS ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+
+  .stat {
+    background: var(--s1);
+    padding: 16px 10px;
+    text-align: center;
+  }
+
+  .stat .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px;
+    line-height: 1;
+    color: var(--lime);
+  }
+
+  .stat .lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── SECTION ── */
+  .sec { margin-bottom: 44px; }
+
+  .sec-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .sec-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .t-lime   { color: var(--lime);   border-color: rgba(200,241,53,0.3);  background: rgba(200,241,53,0.07); }
+  .t-cyan   { color: var(--cyan);   border-color: rgba(53,200,241,0.3);  background: rgba(53,200,241,0.07); }
+  .t-amber  { color: var(--amber);  border-color: rgba(241,193,53,0.3);  background: rgba(241,193,53,0.07); }
+  .t-red    { color: var(--red);    border-color: rgba(241,76,53,0.3);   background: rgba(241,76,53,0.07); }
+  .t-green  { color: var(--green);  border-color: rgba(53,241,122,0.3);  background: rgba(53,241,122,0.07); }
+  .t-purple { color: var(--purple); border-color: rgba(168,85,247,0.3);  background: rgba(168,85,247,0.07); }
+  .t-pink   { color: var(--pink);   border-color: rgba(241,53,168,0.3);  background: rgba(241,53,168,0.07); }
+
+  .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ── TIMELINE ── */
+  .tl { display: flex; flex-direction: column; gap: 2px; }
+
+  .tl-row {
+    display: grid;
+    grid-template-columns: 106px 1fr;
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .tl-row:hover { border-color: var(--border2); }
+
+  /* Left accent strips by category */
+  .tl-row.gym     { border-left: 3px solid var(--lime); }
+  .tl-row.food    { border-left: 3px solid var(--amber); }
+  .tl-row.job     { border-left: 3px solid var(--cyan); }
+  .tl-row.study   { border-left: 3px solid var(--purple); }
+  .tl-row.skills  { border-left: 3px solid var(--pink); }
+  .tl-row.steps   { border-left: 3px solid var(--green); }
+  .tl-row.rest    { border-left: 3px solid var(--text3); }
+  .tl-row.wind    { border-left: 3px solid var(--cyan); }
+  .tl-row.github  { border-left: 3px solid var(--green); }
+
+  .tl-time {
+    padding: 14px 8px;
+    background: var(--s2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .tl-time span {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text3);
+    line-height: 1.7;
+  }
+
+  .tl-body {
+    padding: 11px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .tl-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tl-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .tl-sub {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.55;
+    font-weight: 300;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    border: 1px solid;
+  }
+
+  .c-lime   { color: var(--lime);   border-color: rgba(200,241,53,0.3);  background: rgba(200,241,53,0.08); }
+  .c-cyan   { color: var(--cyan);   border-color: rgba(53,200,241,0.3);  background: rgba(53,200,241,0.08); }
+  .c-amber  { color: var(--amber);  border-color: rgba(241,193,53,0.3);  background: rgba(241,193,53,0.08); }
+  .c-red    { color: var(--red);    border-color: rgba(241,76,53,0.3);   background: rgba(241,76,53,0.08); }
+  .c-green  { color: var(--green);  border-color: rgba(53,241,122,0.3);  background: rgba(53,241,122,0.08); }
+  .c-purple { color: var(--purple); border-color: rgba(168,85,247,0.3);  background: rgba(168,85,247,0.08); }
+  .c-pink   { color: var(--pink);   border-color: rgba(241,53,168,0.3);  background: rgba(241,53,168,0.08); }
+  .c-gray   { color: var(--text3);  border-color: var(--border);         background: var(--s2); }
+
+  .steps-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .steps-bar .seg {
+    height: 4px;
+    border-radius: 2px;
+    flex: 1;
+    background: var(--border);
+  }
+
+  .steps-bar .seg.filled { background: var(--green); }
+
+  .steps-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  /* ── WEEKEND CARDS ── */
+  .wk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+  .wk-card {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 2px;
+  }
+
+  .wk-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+
+  .wk-card .wk-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .wk-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .wk-list li {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text2);
+    align-items: start;
+  }
+
+  .wk-list li .wt {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    background: var(--s2);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .wk-list li .wt.accent { color: var(--lime); border-color: rgba(200,241,53,0.25); }
+  .wk-list li .wt.job    { color: var(--cyan); border-color: rgba(53,200,241,0.25); }
+  .wk-list li .wt.cert   { color: var(--purple); border-color: rgba(168,85,247,0.25); }
+
+  /* ── WORKOUT SPLIT ── */
+  .split-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+  .split-day {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    padding: 12px 6px;
+    text-align: center;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+
+  .split-day:hover { background: var(--s2); }
+  .split-day.on  { border-color: rgba(200,241,53,0.22); }
+  .split-day.off { border-color: rgba(241,76,53,0.12); }
+
+  .split-day .dn {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .split-day.on  .dn { color: var(--lime); }
+  .split-day.off .dn { color: rgba(241,76,53,0.5); }
+
+  .split-day .da { font-size: 10px; font-weight: 500; color: var(--text); line-height: 1.4; }
+
+  /* ── 6-MONTH ROADMAP ── */
+  .roadmap { display: flex; flex-direction: column; gap: 2px; }
+
+  .rm-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .rm-phase {
+    padding: 14px 10px;
+    background: var(--s2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .rm-phase span {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    line-height: 1.7;
+    letter-spacing: 0.08em;
+  }
+
+  .rm-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rm-title { font-size: 13px; font-weight: 600; }
+  .rm-detail { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+  .rm-row.ph1 { border-left: 3px solid var(--amber); }
+  .rm-row.ph2 { border-left: 3px solid var(--cyan); }
+  .rm-row.ph3 { border-left: 3px solid var(--lime); }
+  .rm-row.ph4 { border-left: 3px solid var(--green); }
+  .rm-row.ph5 { border-left: 3px solid var(--purple); }
+  .rm-row.ph6 { border-left: 3px solid var(--pink); }
+
+  /* ── CERT TRACK ── */
+  .cert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+
+  .cert-card {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 2px;
+  }
+
+  .cert-card .cert-order {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .cert-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .cert-card .cert-when {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .cert-card p { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+  .cert-card.c1 { border-top: 2px solid var(--amber); }
+  .cert-card.c2 { border-top: 2px solid var(--cyan); }
+  .cert-card.c3 { border-top: 2px solid var(--green); }
+
+  /* ── PROS / CONS ── */
+  .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+  .pc {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 2px;
+  }
+
+  .pc.pros { border-top: 2px solid var(--green); }
+  .pc.cons { border-top: 2px solid var(--red); }
+
+  .pc h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  .pc.pros h3 { color: var(--green); }
+  .pc.cons h3 { color: var(--red); }
+
+  .pc ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+
+  .pc ul li {
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    gap: 8px;
+    line-height: 1.55;
+    align-items: flex-start;
+  }
+
+  .pc ul li .ico { flex-shrink: 0; font-size: 13px; }
+
+  /* ── SLEEP ── */
+  .sleep-bar {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan);
+    padding: 16px 20px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .sleep-bar .si { font-size: 24px; }
+  .sleep-bar h4 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.04em; color: var(--cyan); }
+  .sleep-bar p { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .sleep-time { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--cyan); text-align: right; }
+  .sleep-time small { display: block; font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+  /* ── WARNING ── */
+  .warn {
+    background: rgba(241,193,53,0.04);
+    border: 1px solid rgba(241,193,53,0.18);
+    border-left: 3px solid var(--amber);
+    padding: 14px 18px;
+    border-radius: 2px;
+  }
+
+  .warn h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    color: var(--amber);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .warn-items { display: flex; flex-direction: column; gap: 5px; }
+
+  .warn-items span {
+    font-size: 11px;
+    color: #999;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+
+  .warn-items span::before { content: '→'; color: var(--amber); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  /* ── FOOTER ── */
+  .foot {
+    margin-top: 52px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    line-height: 1.8;
+  }
+
+  .foot strong { color: var(--lime); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hdr         { animation: up 0.4s ease both; }
+  .decisions   { animation: up 0.4s 0.05s ease both; }
+  .stats       { animation: up 0.4s 0.10s ease both; }
+  .sec         { animation: up 0.4s 0.15s ease both; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 680px) {
+    .stats       { grid-template-columns: repeat(3, 1fr); }
+    .split-grid  { grid-template-columns: repeat(4, 1fr); }
+    .wk-grid     { grid-template-columns: 1fr; }
+    .cert-grid   { grid-template-columns: 1fr; }
+    .pc-grid     { grid-template-columns: 1fr; }
+    .dec-grid    { grid-template-columns: 1fr; }
+    .hdr         { grid-template-columns: 1fr; }
+    .sleep-time  { margin-left: 0; }
+    .tl-row      { grid-template-columns: 80px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-eyebrow">Job-Ready Life OS · v3 · 6-Month Blueprint</div>
+      <h1>GET<br><em>HIRED</em><br><small>+ stay elite</small></h1>
+      <div class="hdr-sub">Study · Strength · Job Search · Projects · Certs · 10k Steps · Daily</div>
+    </div>
+    <div class="hdr-right">
+      <div class="phase-badge p1">Month 1–2 · Build</div><br>
+      <div class="phase-badge p2">Month 3–4 · Apply</div><br>
+      <div class="phase-badge p3">Month 5–6 · Close</div>
+    </div>
+  </div>
+
+  <!-- DECISIONS I MADE FOR YOU -->
+  <div class="decisions">
+    <h4>🧠 Decisions Made For You — Read These</h4>
+    <div class="dec-grid">
+      <div class="dec-item">
+        <span class="tag">10k Steps → Split</span>
+        <strong>Never a separate "go walk" block</strong>
+        2k walk to/from gym · 3k post-lunch walk · 5k evening walk. Baked into transitions so it doesn't add time.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Typing Practice</span>
+        <strong>15 min after breakfast, every day</strong>
+        Use keybr.com or monkeytype. At 7 days/week you hit 85+ WPM in 90 days. Non-negotiable.
+      </div>
+      <div class="dec-item">
+        <span class="tag">GitHub Commits</span>
+        <strong>1 commit minimum, daily</strong>
+        Even if it's a README update or comment fix. Green streak = credibility to recruiters. Tied to project block.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Job Search Timing</span>
+        <strong>Moved to 9:30–11:30 AM</strong>
+        Freshest brain is post-gym. Job apps, LinkedIn, cold emails done before lunch — not as an afterthought.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Certifications</span>
+        <strong>One at a time. AWS first.</strong>
+        AWS Cloud Practitioner (Month 1–2) → AWS Solutions Architect (3–4) → ML Specialization (5–6). Done at 9:30 PM.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Study Rebalanced</span>
+        <strong>DSA 1.5h · ML 45min · Systems 30min</strong>
+        ML cut by 15 min to protect energy. Quality beats time. Sunday adds mock interviews + LinkedIn audit.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Deload Week</span>
+        <strong>Every 4th week: half everything</strong>
+        No gym. 1.5h study. Job search only. This is what makes 6 months possible — most people burn out at month 2.
+      </div>
+      <div class="dec-item">
+        <span class="tag">Personal Projects</span>
+        <strong>Saturdays only, 10 AM–1 PM</strong>
+        One project at a time until deployed. GitHub commit mandatory at end. No "half-built" repos.
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="num">75</div><div class="lbl">Min Gym</div></div>
+    <div class="stat"><div class="num">3</div><div class="lbl">Hrs Study</div></div>
+    <div class="stat"><div class="num">8</div><div class="lbl">Hrs Sleep</div></div>
+    <div class="stat"><div class="num">10k</div><div class="lbl">Steps/Day</div></div>
+    <div class="stat"><div class="num">2</div><div class="lbl">Hrs Job<br>Prep/Day</div></div>
+    <div class="stat"><div class="num">365</div><div class="lbl">GitHub<br>Commits</div></div>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-cyan">🌙 Sleep Protocol</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="sleep-bar">
+      <div class="si">🌙</div>
+      <div>
+        <h4>Non-Negotiable Foundation</h4>
+        <p>Memory consolidation, muscle repair, hormone balance — all happen only during sleep.</p>
+      </div>
+      <div class="sleep-time">
+        11:00 PM → 7:00 AM
+        <small>8 hrs · every night · no exceptions</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL WEEKDAY -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-lime">📅 Full Weekday — Mon to Fri</div>
+      <div class="sec-line"></div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--lime)"></div>Gym</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Food</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--cyan)"></div>Job Search</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Study</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--pink)"></div>Skills</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Steps / GitHub</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--text3)"></div>Rest</div>
+    </div>
+
+    <div class="tl">
+
+      <!-- WAKE -->
+      <div class="tl-row rest">
+        <div class="tl-time"><span>7:00<br>AM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🌅 Wake Up + Activate</div>
+          <div class="chips">
+            <span class="chip c-cyan">500ml water</span>
+            <span class="chip c-lime">5 min stretch</span>
+            <span class="chip c-gray">no phone yet</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WALK TO GYM = 2k STEPS -->
+      <div class="tl-row steps">
+        <div class="tl-time"><span>7:15<br>AM</span></div>
+        <div class="tl-body">
+          <div class="tl-top">
+            <div class="tl-title">🚶 Walk to Gym</div>
+          </div>
+          <div class="tl-sub">Snack on banana + peanut butter en route. This = ~2k steps.</div>
+          <div class="steps-bar">
+            <div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div>
+            <span class="steps-lbl">2k / 10k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GYM -->
+      <div class="tl-row gym">
+        <div class="tl-time"><span>7:30–<br>8:45 AM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🏋️ Gym — 75 Minutes Max</div>
+          <div class="tl-sub">Walk back home = +1k steps. Total after gym: ~3k steps.</div>
+          <div class="chips">
+            <span class="chip c-amber">20 min cardio</span>
+            <span class="chip c-lime">40 min strength</span>
+            <span class="chip c-cyan">15 min mobility</span>
+          </div>
+          <div class="steps-bar">
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg"></div><div class="seg"></div>
+            <span class="steps-lbl">3k / 10k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BREAKFAST -->
+      <div class="tl-row food">
+        <div class="tl-time"><span>9:00–<br>9:20 AM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🍳 Breakfast — Protein Recovery Meal</div>
+          <div class="tl-sub">Eggs / Greek yogurt / oats. 30–40g protein. Non-negotiable post-gym.</div>
+          <div class="chips">
+            <span class="chip c-amber">30–40g protein</span>
+            <span class="chip c-cyan">hydrate 500ml</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPING -->
+      <div class="tl-row skills">
+        <div class="tl-time"><span>9:20–<br>9:35 AM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">⌨️ Typing Practice — 15 Min</div>
+          <div class="tl-sub">monkeytype.com or keybr.com. Daily. 90 days → 85+ WPM. Brain is warm, fingers too.</div>
+          <div class="chips">
+            <span class="chip c-pink">15 min daily</span>
+            <span class="chip c-gray">monkeytype.com</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOB SEARCH -->
+      <div class="tl-row job">
+        <div class="tl-time"><span>9:35–<br>11:30 AM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">💼 Job Search Block — 2 Hours</div>
+          <div class="tl-sub">Freshest brain of the day. Rotate daily: Mon/Wed/Fri = applications. Tue/Thu = networking + cold emails.</div>
+          <div class="chips">
+            <span class="chip c-cyan">LinkedIn Easy Apply</span>
+            <span class="chip c-cyan">Cold emails</span>
+            <span class="chip c-cyan">Company research</span>
+            <span class="chip c-cyan">Resume tailoring</span>
+          </div>
+          <div class="divider"></div>
+          <div class="tl-sub" style="color:var(--text3); font-size:10px;">🎯 Target: 3–5 quality applications per day · Track in a spreadsheet</div>
+        </div>
+      </div>
+
+      <!-- POST-LUNCH WALK = 3k STEPS -->
+      <div class="tl-row food">
+        <div class="tl-time"><span>11:30 AM–<br>1:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🍱 Lunch + Post-Lunch Walk</div>
+          <div class="tl-sub">Eat a full meal. Then 20–25 min walk. No screens during food. This = +3k steps.</div>
+          <div class="chips">
+            <span class="chip c-amber">full meal</span>
+            <span class="chip c-green">25 min walk → 3k steps</span>
+          </div>
+          <div class="steps-bar">
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg"></div><div class="seg"></div>
+            <span class="steps-lbl">~6k / 10k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONAL COLLEGE -->
+      <div class="tl-row rest">
+        <div class="tl-time"><span>1:00–<br>2:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🎓 College / Light Assignments / Reset</div>
+          <div class="tl-sub">Handle college work or rest. Do NOT do hard study here — save the tank for deep work below.</div>
+          <div class="chips">
+            <span class="chip c-gray">college classes</span>
+            <span class="chip c-gray">light homework</span>
+            <span class="chip c-gray">power nap OK</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DSA -->
+      <div class="tl-row study">
+        <div class="tl-time"><span>2:00–<br>3:30 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🧠 DSA — Data Structures & Algorithms</div>
+          <div class="tl-sub">LeetCode medium/hard. One topic per week. Track problems solved in Notion.</div>
+          <div class="chips">
+            <span class="chip c-purple">1.5 hrs</span>
+            <span class="chip c-red">no phone</span>
+            <span class="chip c-purple">Pomodoro 50+10</span>
+            <span class="chip c-gray">Notion tracker</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ML -->
+      <div class="tl-row study">
+        <div class="tl-time"><span>3:30–<br>4:15 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🤖 Machine Learning</div>
+          <div class="tl-sub">45 min only. Course content or paper reading. Implement 1 thing per week in code.</div>
+          <div class="chips">
+            <span class="chip c-purple">45 min</span>
+            <span class="chip c-gray">code every day</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYSTEMS -->
+      <div class="tl-row study">
+        <div class="tl-time"><span>4:15–<br>4:45 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🏗 Systems Design / Revision</div>
+          <div class="tl-sub">Revise notes, draw diagrams, watch a short video. Don't skip this — it's interview gold.</div>
+          <div class="chips">
+            <span class="chip c-purple">30 min</span>
+            <span class="chip c-amber">consolidate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GITHUB COMMIT -->
+      <div class="tl-row github">
+        <div class="tl-time"><span>4:45–<br>5:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🟢 Daily GitHub Commit</div>
+          <div class="tl-sub">Push whatever you built or learned today. Even a README update counts. Streak = discipline signal to hiring managers.</div>
+          <div class="chips">
+            <span class="chip c-green">1 commit min</span>
+            <span class="chip c-gray">code / docs / fix</span>
+            <span class="chip c-green">maintain streak</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DINNER -->
+      <div class="tl-row food">
+        <div class="tl-time"><span>5:00–<br>6:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🍽 Dinner + Decompress</div>
+          <div class="tl-sub">You've earned it. Full meal. No work talk. 20 min walk after dinner = +2k steps.</div>
+          <div class="chips">
+            <span class="chip c-amber">full meal</span>
+            <span class="chip c-green">20 min walk → 2k steps</span>
+          </div>
+          <div class="steps-bar">
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg"></div>
+            <span class="steps-lbl">~8k / 10k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FREE TIME + EVENING WALK = 10k DONE -->
+      <div class="tl-row rest">
+        <div class="tl-time"><span>6:00–<br>9:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🎮 Free Time — Guilt-Free</div>
+          <div class="tl-sub">TV, games, social, hobbies. 20 min casual evening walk somewhere in here = 10k done ✅</div>
+          <div class="chips">
+            <span class="chip c-gray">hobbies</span>
+            <span class="chip c-gray">social</span>
+            <span class="chip c-green">evening walk → 10k ✅</span>
+          </div>
+          <div class="steps-bar">
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div><div class="seg filled"></div><div class="seg filled"></div>
+            <div class="seg filled"></div>
+            <span class="steps-lbl">10k ✅ DONE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CERT STUDY -->
+      <div class="tl-row skills">
+        <div class="tl-time"><span>9:00–<br>9:45 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">📜 Certification Study — 45 Min</div>
+          <div class="tl-sub">Light content only. Videos, flashcards, practice questions. No new heavy material. AWS CP → AWS SAA → ML Cert.</div>
+          <div class="chips">
+            <span class="chip c-pink">45 min</span>
+            <span class="chip c-gray">Anki flashcards</span>
+            <span class="chip c-gray">video only</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIND DOWN -->
+      <div class="tl-row wind">
+        <div class="tl-time"><span>9:45–<br>11:00 PM</span></div>
+        <div class="tl-body">
+          <div class="tl-title">🌙 Wind-Down — No Screens After 10 PM</div>
+          <div class="tl-sub">Journal 1 line: what you applied for, what you learned, what you'll do tomorrow. Then stretch or read fiction.</div>
+          <div class="chips">
+            <span class="chip c-cyan">no screens 10 PM+</span>
+            <span class="chip c-gray">journal</span>
+            <span class="chip c-cyan">stretch / breathe</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WEEKEND -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-amber">⚡ Weekend Plan</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="wk-grid">
+      <div class="wk-card">
+        <h3>Saturday</h3>
+        <div class="wk-sub">Build Day · Project + GitHub</div>
+        <ul class="wk-list">
+          <li><span class="wt accent">8:00 AM</span> Light workout or sports — 60 min + walk</li>
+          <li><span class="wt">9:30 AM</span> Breakfast + typing practice 15 min</li>
+          <li><span class="wt accent">10:00 AM</span> Personal project — 3 hrs focused</li>
+          <li><span class="wt job">1:00 PM</span> GitHub commit + push to production</li>
+          <li><span class="wt">1:15 PM</span> Lunch + long walk (3k steps)</li>
+          <li><span class="wt job">2:30 PM</span> Job app review / LinkedIn profile update</li>
+          <li><span class="wt cert">4:00 PM</span> Cert study — 1 hr</li>
+          <li><span class="wt">5:00 PM</span> Free time · 10k steps by evening</li>
+        </ul>
+      </div>
+      <div class="wk-card">
+        <h3>Sunday</h3>
+        <div class="wk-sub">Sim Day · Interview + Recovery</div>
+        <ul class="wk-list">
+          <li><span class="wt">8:30 AM</span> Active recovery / long walk — 45 min</li>
+          <li><span class="wt">9:30 AM</span> Breakfast + typing practice 15 min</li>
+          <li><span class="wt accent">10:00 AM</span> Mock interview — 1 hr (Pramp / peer)</li>
+          <li><span class="wt accent">11:00 AM</span> System design practice — 1 hr</li>
+          <li><span class="wt">12:00 PM</span> Lunch + walk</li>
+          <li><span class="wt accent">1:00 PM</span> DSA revision — 1 hr</li>
+          <li><span class="wt job">2:00 PM</span> LinkedIn audit + follow-up emails</li>
+          <li><span class="wt">3:00 PM</span> Full rest / social / no work</li>
+          <li><span class="wt job">7:00 PM</span> Week review — what got done? What didn't?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKOUT SPLIT -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-lime">💪 Weekly Workout Split</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="split-grid">
+      <div class="split-day on"><div class="dn">Mon</div><div class="da">Chest +<br>Triceps</div></div>
+      <div class="split-day on"><div class="dn">Tue</div><div class="da">Back +<br>Biceps</div></div>
+      <div class="split-day on"><div class="dn">Wed</div><div class="da">Cardio +<br>Core</div></div>
+      <div class="split-day on"><div class="dn">Thu</div><div class="da">Legs</div></div>
+      <div class="split-day on"><div class="dn">Fri</div><div class="da">Shoulders<br>+ Core</div></div>
+      <div class="split-day off"><div class="dn">Sat</div><div class="da">Light<br>Sports</div></div>
+      <div class="split-day off"><div class="dn">Sun</div><div class="da">Active<br>Recovery</div></div>
+    </div>
+  </div>
+
+  <!-- CERT TRACK -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-purple">📜 Certification Roadmap</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="cert-grid">
+      <div class="cert-card c1">
+        <div class="cert-order">Step 1 · Month 1–2</div>
+        <h4>AWS Cloud Practitioner</h4>
+        <div class="cert-when">~6 weeks · 45 min/day evenings</div>
+        <p>Easiest entry. Opens recruiter doors immediately. $100 exam. Study with Adrian Cantrill or freeCodeCamp on YouTube.</p>
+      </div>
+      <div class="cert-card c2">
+        <div class="cert-order">Step 2 · Month 3–4</div>
+        <h4>AWS Solutions Architect Associate</h4>
+        <div class="cert-when">~8 weeks · 45 min/day evenings</div>
+        <p>Big credibility jump. Covers system design concepts that directly help interviews. $150 exam.</p>
+      </div>
+      <div class="cert-card c3">
+        <div class="cert-order">Step 3 · Month 5–6</div>
+        <h4>DeepLearning.AI ML Specialization</h4>
+        <div class="cert-when">~6 weeks · Free on Coursera audit</div>
+        <p>Andrew Ng's course. Ties your ML study directly to a verifiable credential. Free to audit, ~$50 for cert.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6-MONTH ROADMAP -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-green">🗺 6-Month Job-Ready Roadmap</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="roadmap">
+      <div class="tl-row ph1">
+        <div class="tl-time"><span>Month<br>1</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Foundation — Build the Machine</div>
+          <div class="tl-sub">Lock in the daily schedule. Hit gym 5x. Do 3 LeetCode mediums/week. Start AWS CP cert. Start portfolio project #1. Polish LinkedIn. No job apps yet.</div>
+          <div class="chips"><span class="chip c-amber">AWS CP cert</span><span class="chip c-purple">LeetCode mediums</span><span class="chip c-green">Project #1 started</span></div>
+        </div>
+      </div>
+      <div class="tl-row ph2">
+        <div class="tl-time"><span>Month<br>2</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Build + Soft Apply</div>
+          <div class="tl-sub">Finish AWS CP. Deploy project #1. Start applying to 3–5 jobs/day (smaller companies). Begin GitHub streak. Start project #2.</div>
+          <div class="chips"><span class="chip c-cyan">3–5 apps/day</span><span class="chip c-green">Project #1 deployed</span><span class="chip c-pink">AWS CP done ✅</span></div>
+        </div>
+      </div>
+      <div class="tl-row ph3">
+        <div class="tl-time"><span>Month<br>3</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Apply Hard + Interview Prep</div>
+          <div class="tl-sub">5 applications/day. Start mock interviews weekly. Finish AWS SAA cert. LeetCode hards begin. Reach out to 5 people on LinkedIn per week.</div>
+          <div class="chips"><span class="chip c-cyan">5 apps/day</span><span class="chip c-amber">AWS SAA started</span><span class="chip c-purple">LeetCode hards</span></div>
+        </div>
+      </div>
+      <div class="tl-row ph4">
+        <div class="tl-time"><span>Month<br>4</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Interview Season</div>
+          <div class="tl-sub">Expect first interviews. Finish AWS SAA. 2 mock interviews/week. Project #2 deployed. Focus system design. Track every company in a spreadsheet.</div>
+          <div class="chips"><span class="chip c-pink">AWS SAA done ✅</span><span class="chip c-cyan">First interviews</span><span class="chip c-green">Project #2 deployed</span></div>
+        </div>
+      </div>
+      <div class="tl-row ph5">
+        <div class="tl-time"><span>Month<br>5</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Negotiate + Learn from Rejections</div>
+          <div class="tl-sub">Analyze rejection patterns. Improve weak areas. Start ML cert. Target dream companies. Ask for referrals from college network.</div>
+          <div class="chips"><span class="chip c-purple">ML cert started</span><span class="chip c-cyan">Target 3 dream cos</span><span class="chip c-amber">Referral outreach</span></div>
+        </div>
+      </div>
+      <div class="tl-row ph6">
+        <div class="tl-time"><span>Month<br>6</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Close the Offer</div>
+          <div class="tl-sub">You have 3 certs, 2 deployed projects, 120+ days GitHub streak, 600+ LeetCode problems, 500+ applications behind you. Negotiate hard. You've earned it.</div>
+          <div class="chips"><span class="chip c-green">3 certs ✅</span><span class="chip c-green">2 projects live ✅</span><span class="chip c-lime">Offer incoming 🎯</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROS AND CONS -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-green">⚖ Pros & Cons</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="pc-grid">
+      <div class="pc pros">
+        <h3>✅ Pros</h3>
+        <ul>
+          <li><span class="ico">🧠</span>Job search in the morning = freshest brain on the most important task</li>
+          <li><span class="ico">🚶</span>10k steps baked into transitions — zero extra time added to your day</li>
+          <li><span class="ico">⌨️</span>15 min typing daily compounds: 85+ WPM in 90 days without effort</li>
+          <li><span class="ico">🟢</span>Daily GitHub commit builds visible proof of discipline to every recruiter</li>
+          <li><span class="ico">📜</span>3 certs in 6 months is achievable and each one opens new interview doors</li>
+          <li><span class="ico">🔄</span>Built-in deload weeks = you won't quit. Most people crash at month 2 without this</li>
+          <li><span class="ico">🎯</span>One project at a time until deployed = no half-built repos on GitHub</li>
+          <li><span class="ico">😴</span>Sleep protected. Everything else flows from this</li>
+        </ul>
+      </div>
+      <div class="pc cons">
+        <h3>⚠ Cons</h3>
+        <ul>
+          <li><span class="ico">📦</span>Very packed — zero room for unexpected college workload spikes. Have a fallback: drop cert study first, keep job search + gym</li>
+          <li><span class="ico">💪</span>5 days lifting is high volume. Without eating enough protein and deload weeks, you'll feel it by month 2</li>
+          <li><span class="ico">📬</span>Job search takes 3–6 months minimum to see results. Stay patient in month 1 and 2</li>
+          <li><span class="ico">🤯</span>Three subjects (DSA + ML + Systems) per day can feel like too much on hard gym days. Solution: on heavy leg day, drop ML</li>
+          <li><span class="ico">🤝</span>Social life is limited to evenings only — can feel isolating. Fix: protect Saturday evenings as full social time</li>
+          <li><span class="ico">🔋</span>The schedule demands consistent sleep. One late night cascades: fix it same day, not "I'll catch up tomorrow"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING -->
+  <div class="sec">
+    <div class="sec-hdr">
+      <div class="sec-tag t-amber">⚠ Health & Recovery Reminders</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="warn">
+      <h4>If You Feel Dizzy or Drained</h4>
+      <div class="warn-items">
+        <span>Banana + peanut butter on the walk to gym — every single day, not just when dizzy</span>
+        <span>Hydrate 500ml before gym, 500ml after — set phone alarms if you forget</span>
+        <span>If energy crashes mid-week: drop cert study that night, sleep by 10 PM</span>
+        <span>Every 4th week is deload — no gym, halved study, job search only. Schedule it now</span>
+        <span>If you miss a day: skip it completely, don't double up the next day. Just resume</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <strong>3 certs · 2 live projects · 120-day GitHub streak · 600 LeetCode problems · hired.</strong><br>
+    That's the math. Show up every day and the numbers take care of themselves.
+  </div>
+
+</div>
+</body>
+</html>

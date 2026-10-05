@@ -35,8 +35,8 @@ that matters, the passcode lock is the control that actually addresses it.
 
 ```mermaid
 flowchart LR
-  pass([Your passphrase]) --> key["PBKDF2 150 000 rounds<br/>→ AES-GCM 256 key"]
-  pass --> path["SHA-256('bujo-sync:' + passphrase)<br/>→ first 40 hex chars"]
+  pass([Your passphrase]) --> key["PBKDF2 600 000 rounds<br/>random salt<br/>→ AES-GCM 256 key"]
+  pass --> path["PBKDF2 600 000 rounds<br/>fixed context salt<br/>→ 40 hex chars"]
   journal[JournalData] --> enc["encrypt in this browser"]
   key --> enc
   enc --> blob[("Vercel Blob — ciphertext only")]
@@ -46,6 +46,19 @@ flowchart LR
 One passphrase does two jobs: it derives the key, which never leaves your
 device, and it derives the *path*, which does. The server stores ciphertext at a
 location it cannot invert back into the passphrase.
+
+**Both jobs are now stretched the same amount, and that is the point.** Until
+COD-267 the key was PBKDF2 at 150 000 rounds while the path was a *single
+unsalted SHA-256* of the same passphrase — so the cheapest attack on the
+passphrase was never against the ciphertext, it was against the path code, by a
+factor of 150 000. And the path code is the half that leaves the device: it
+travelled in a query string, into serverless access logs, CDN logs, browser
+history and `Referer` headers. It is an `x-sync-code` header now.
+
+The path's salt is a fixed context string and has to be — the server must find
+the blob knowing only what the client sends, and there is no account to hang a
+per-user salt on. That is the real ceiling of a no-accounts design, written down
+rather than hidden.
 
 Four consequences, all of them worth knowing before you turn it on:
 

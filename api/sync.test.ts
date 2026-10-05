@@ -50,7 +50,12 @@ const live = `sync/${CODE}.json`
 const hist = (ms: number) => `sync/${CODE}/v${ms}.json`
 
 /** Minimal stand-in for the serverless req/res pair the handler is typed against. */
-function call(req: { method: string; query?: Record<string, string>; body?: unknown }) {
+function call(req: {
+  method: string
+  query?: Record<string, string>
+  headers?: Record<string, string>
+  body?: unknown
+}) {
   const out: { code?: number; body?: unknown } = {}
   const res = {
     status(n: number) { out.code = n; return res },
@@ -180,6 +185,44 @@ describe('what was archived can be read back', () => {
   })
 })
 
+describe('the code arrives in a header now, and in a query string for one release', () => {
+  /**
+   * COD-267. A code in a query string is a secret written into serverless
+   * access logs, CDN logs, browser history and `Referer` headers — and
+   * possession of the code is what makes the passphrase cheap to attack. The
+   * query arm stays only so a bundle cached before that release keeps syncing.
+   */
+  it('reads the code from x-sync-code', async () => {
+    seed(live)
+    const r = await call({ method: 'GET', headers: { 'x-sync-code': CODE } })
+    expect(r.code).toBe(200)
+    expect(r.body).toEqual({ payload: `payload-of:https://blob.test/${live}` })
+  })
+
+  it('still reads a legacy ?code= query', async () => {
+    seed(live)
+    expect((await call({ method: 'GET', query: { code: CODE } })).code).toBe(200)
+  })
+
+  it('prefers the header when both are present', async () => {
+    // So a proxy that keeps forwarding an old query string cannot pin a client
+    // to the legacy path once it has started sending the header.
+    seed(live)
+    const r = await call({
+      method: 'GET',
+      headers: { 'x-sync-code': CODE },
+      query: { code: 'f'.repeat(40) },
+    })
+    expect(r.body).toEqual({ payload: `payload-of:https://blob.test/${live}` })
+  })
+
+  it('accepts the header on a POST too', async () => {
+    const r = await call({ method: 'POST', headers: { 'x-sync-code': CODE }, body: { payload: 'p' } })
+    expect(r.code).toBe(200)
+    expect(calls.put).toEqual([live])
+  })
+})
+
 describe('the endpoint still refuses what it always refused', () => {
   it('rejects a code that is not hex', async () => {
     expect((await call({ method: 'GET', query: { code: 'not-hex!' } })).code).toBe(400)
@@ -191,14 +234,14 @@ describe('the endpoint still refuses what it always refused', () => {
     expect(r.code).toBe(400)
   })
 
-  it('rejects a method it does not serve', async () => {
-    // The code comes from the BODY for anything that is not a GET, so a DELETE
-    // carrying it in the query string is refused as a bad code (400) and never
-    // reaches the 405. Pre-existing and harmless — but the first draft of this
-    // test asserted 405 against a query-string code and failed, which is worth
-    // recording rather than quietly rewriting.
+  it('rejects a method it does not serve, however the code arrived', async () => {
+    // Was asymmetric before COD-267: the code came from the BODY for anything
+    // that was not a GET, so a DELETE carrying it in the query string was
+    // refused as a bad code (400) and never reached the 405. `codeFrom` reads
+    // all three sources for every method, so the two agree now.
     expect((await call({ method: 'DELETE', body: { code: CODE } })).code).toBe(405)
-    expect((await call({ method: 'DELETE', query: { code: CODE } })).code).toBe(400)
+    expect((await call({ method: 'DELETE', query: { code: CODE } })).code).toBe(405)
+    expect((await call({ method: 'DELETE', headers: { 'x-sync-code': CODE } })).code).toBe(405)
   })
 
   it('does not hand the caller the store error text', async () => {
