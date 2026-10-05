@@ -55,8 +55,13 @@ Four consequences, all of them worth knowing before you turn it on:
 - **A lost passphrase cannot be recovered.** By construction, not as an
   oversight. There is no reset, and building one would mean the server holding
   something that could decrypt your data.
-- **It is sync, not backup.** One blob per passphrase, overwritten in place. No
-  version history. Keep real backups — Settings → Data → export.
+- **It is sync, not backup.** One live blob per passphrase, overwritten in
+  place. It now keeps the **three previous payloads** (COD-266) — because the
+  endpoint is unauthenticated by design, so before that a single POST destroyed
+  a journal permanently, and "sync is not a backup" was a statement about
+  version history rather than a licence to have none. Three ten-minute-apart
+  snapshots is a recovery path, not a backup: there is no UI for it, and reading
+  one is a `curl` (see below). Keep real backups — Settings → Data → export.
 - **Photos may not travel.** Vercel caps a request body at 4.5 MB; over that the
   journal syncs and the images stay behind, reported as `photos-skipped`.
 
@@ -104,6 +109,24 @@ keeps a warning on screen for as long as both are on.
 **Push and Pull by hand store nothing.** They are the combination that keeps
 the passcode meaningful.
 
+### Recovering an earlier cloud payload
+
+There is deliberately no button for this. The history exists so a destroyed
+journal is recoverable at all, not as a feature — and a version picker over
+ciphertext is a real piece of UI that nobody has asked for. The passphrase's
+path code is what addresses the blob, so recovery is:
+
+```sh
+# what can be recovered, newest first
+curl -s 'https://<your-deploy>/api/sync?code=<path-code>&versions=1'
+# one earlier payload — the same shape the normal pull reads
+curl -s 'https://<your-deploy>/api/sync?code=<path-code>&v=<timestamp>' > old.json
+```
+
+The payload is ciphertext; decrypting it needs the passphrase, exactly as a
+normal pull does. Snapshots are taken at most every ten minutes and only three
+are kept, so this is a window of minutes-to-hours, not an archive.
+
 ## Words this app does not use, and why
 
 Copy near any of this has to keep the promise the mechanism makes. These are
@@ -115,7 +138,7 @@ banned on purpose:
 | "Secure account", "protected", "private account" | The profile secures nothing. The passcode does, and it is a separate setting. |
 | "Your account" for the passphrase | `bujocloud` has no accounts. Two people with one passphrase are not two users. |
 | "Forgot passphrase?" | There is no reset path and there will not be one. Say it cannot be recovered. |
-| "Backed up" for sync state | One overwritten blob is not a backup. Say "synced". |
+| "Backed up" for sync state | One live blob and three throwaway snapshots is not a backup. Say "synced". |
 | "The passcode protects your journal" with auto-sync on | It protects the copy on this device. `bujo:sync` hands over the cloud copy. Qualify it or do not say it. |
 
 ## Why accounts were removed (2026-09-11)
