@@ -6,6 +6,7 @@ import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
 import { ServerSync } from '../ServerSync'
+import { AccountSync } from '../AccountSync'
 import { Toasts } from '../Toasts'
 import { VoiceAgent } from '../VoiceAgent'
 import { CaptureReceipt } from '../CaptureReceipt'
@@ -124,6 +125,9 @@ export function AppShell({
       <MilestoneToast />
       <Toasts />
       <ServerSync />
+      {/* Renders nothing and does nothing unless a Supabase project is
+          configured, someone is signed in, and a passphrase exists. */}
+      <AccountSync />
     </div>
     </TooltipProvider>
   )
