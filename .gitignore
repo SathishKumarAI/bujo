@@ -45,3 +45,8 @@ docker/certs/
 
 # Git worktrees other sessions check out inside the repo (see eslint.config.js).
 .claude/worktrees/
+
+# A personal planning page that landed in docs/ and was swept into #323 by a
+# `git add -A docs`. Not project documentation — it has nothing to do with bujo.
+# Untracked rather than deleted: the file stays in the working tree.
+docs/life-schedule-v3-final.html
