@@ -1,10 +1,22 @@
 # Accounts, identity and sync
 
-**bujo has no accounts.** Not "accounts are optional" — there is no login, no
-password, no provider, and no server that knows who you are. This page says what
-each piece actually is, because the words the industry uses for these things
-(*account*, *sign in*, *secure*) all imply a check against a server, and none of
-them happens here.
+**bujo has one account, and it is not what an account usually means.** As of
+COD-271 there is a Google sign-in, and a per-account row in Supabase holding
+your journal — **as ciphertext**. The server knows who you are and cannot read
+what you wrote.
+
+That distinction is the whole page. The words the industry uses for these things
+(*account*, *sign in*, *secure*, *backed up*) all imply a server that holds your
+data and can give it back to you; here the server holds your data and **cannot**
+give it back to you without a passphrase it has never seen.
+
+> **The account is recoverable. The journal is not.** Lose the passphrase and
+> you can still sign in, your row is still there, and it is permanently
+> unreadable. Say this wherever sign-in is offered — it is the single sentence
+> most likely to be assumed the other way.
+
+Everything below still applies: the local profile, the sync passphrase and the
+passcode lock are unchanged, and the app works with no account at all.
 
 ## The three things people mean by "my account"
 
@@ -147,7 +159,8 @@ banned on purpose:
 
 | Never say | Because |
 |---|---|
-| "Sign in" / "Log in" for the profile | No credential is checked, so nothing can fail. It's a name. |
+| "Sign in" / "Log in" for the **local profile** | No credential is checked there, so nothing can fail. It's a name. Google sign-in is a real sign-in and may be called one. |
+| "Your data is safe with your account" | The account gets you to the row. Only the passphrase gets you to the journal. Say both halves. |
 | "Secure account", "protected", "private account" | The profile secures nothing. The passcode does, and it is a separate setting. |
 | "Your account" for the passphrase | `bujocloud` has no accounts. Two people with one passphrase are not two users. |
 | "Forgot passphrase?" | There is no reset path and there will not be one. Say it cannot be recovered. |

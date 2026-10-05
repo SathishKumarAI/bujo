@@ -26,12 +26,35 @@ app is served statically; each user's data syncs to *their own* Drive/gist/folde
 | 8 | **Legal** | Public hosting | Privacy policy + ToS (minimal for Path A — no server holds data). |
 | 9 | **i18n / telemetry / push** | Reach & reliability | English-only today; no crash reporting (privacy tradeoff); push needs a service worker + a signaling backend (defer). |
 
-## Explicitly NOT doing (for now)
-- **Path B** (accounts + database + sync server). It makes multi-device "just
-  work" but adds recurring cost, a security burden, and turns us into a **data
-  controller** (GDPR/ToS/privacy-policy duties). Revisit only if users demand
-  zero-config multi-device. The existing at-rest crypto is the client half if we
-  ever add E2E cloud sync.
+## Path B, revisited and partly taken (2026-10-05, COD-271)
+
+This section used to read "Explicitly NOT doing: Path B (accounts + database +
+sync server)", with one condition attached: **"revisit only if users demand
+zero-config multi-device"**. That demand arrived, directly and repeatedly, and
+the condition is the reason this is a revisit rather than a reversal.
+
+What was taken, and what was not:
+
+- **Taken:** accounts (Google sign-in) and a per-account row in Supabase, so a
+  new device signs in rather than copying a secret by hand.
+- **NOT taken:** the server holding readable data. The journal is encrypted in
+  the browser before upload; Supabase stores `{v, salt, iv, data}`. The same
+  sentence this section already contained turned out to be the plan — *"the
+  existing at-rest crypto is the client half if we ever add E2E cloud sync"* —
+  and that is exactly what it is now the client half of.
+
+The costs that argued against Path B are still real and are now owed rather
+than avoided: a recurring dependency, a security burden, and data-controller
+duties for the **account** (email, identity) even though not for the journal
+contents. The privacy policy work in the gaps table above is no longer
+"minimal — no server holds data": a server now holds ciphertext and an email
+address.
+
+The honest asymmetry, stated here because it is the thing a user gets wrong:
+**the account is recoverable and the data is not.** A password reset returns you
+to your row; only the passphrase returns you to your journal.
+
+Design, threat model and edge cases: [`security/account-sync-plan.md`](security/account-sync-plan.md).
 
 ## Next concrete steps (Path A)
 1. ✅ Storage quota meter + near-full guard (Settings).
