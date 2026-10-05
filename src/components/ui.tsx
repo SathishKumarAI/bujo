@@ -150,10 +150,25 @@ export function Card({
   // Scoped to an opt-out rather than removed globally: 42 cards outside the
   // Body cluster still rely on this, and retiring it app-wide is a decision
   // about the whole app, not about one cluster.
-  // A band never draws the ⓘ. The redesign's rule is that a label needing a "?"
-  // gets rewritten instead, and on a flat page the popover trigger is the only
-  // thing left that looks like card chrome.
-  const info = hideInfo || band ? null : (help ?? subtitle)
+  // A band draws the ⓘ **on phones only** (COD-238). The redesign's rule — a
+  // label needing a "?" gets rewritten instead, and on a flat page the popover
+  // trigger is the only thing left that looks like card chrome — is a rule
+  // about DESKTOP chrome, and it used to be enforced at every width.
+  //
+  // Combined with the subtitle being `hidden … sm:block`, that produced a
+  // defect out of two individually-correct decisions: the responsive rule
+  // depends on the ⓘ as its escape hatch ("keep the ⓘ on phones, where it is
+  // the only way to read the subtitle", below), and the contract closed it. So
+  // on a band, at 390px, the sentence explaining what the card is rendered
+  // nowhere and was reachable from nowhere — measured at **81 subtitles across
+  // 19 views** before this change. Neither rendering gate could see it: a
+  // `display:none` element is legitimately absent from the accessibility tree,
+  // and `clipped-text` asks whether an element shows less than it holds, not
+  // whether it shows nothing. `scripts/subtitle-reach.mjs` is the gate for it.
+  //
+  // The band exclusion now lives in the className below, as `sm:hidden`, so
+  // the contract still holds everywhere it was aimed.
+  const info = hideInfo ? null : (help ?? subtitle)
   // …but when the fallback is what fired, the popover says exactly what the
   // line below the title already says, so it is only worth a button where that
   // line is not drawn. The subtitle is `hidden … sm:block` (see below), which
@@ -165,6 +180,12 @@ export function Card({
   // which told you anything the card had not already said. An audit grepping
   // `help=` reported that page clean, because not one of them was passed a
   // `help` — this line generated all seventeen.
+  //
+  // `band` joins it for the reason above: a band's ⓘ exists only to reach a
+  // subtitle the phone cannot render, so it has no business on a width where
+  // that subtitle is drawn. Expressed in CSS rather than JS on purpose — the
+  // breakpoint that hides the subtitle is CSS, and a JS `matchMedia` copy of it
+  // is a second source of truth for one number.
   const infoOnlyRepeatsSubtitle = help === undefined && !!subtitle
   // The whole header folds the card, not just the caret. The caret stays a real
   // <button> — it is the accessible control and carries aria-expanded — and the
@@ -213,7 +234,7 @@ export function Card({
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={`${CARD.headerButton} ${infoOnlyRepeatsSubtitle ? 'sm:hidden' : ''}`}>
+                    <button type="button" onClick={(e) => e.stopPropagation()} aria-label={infoLabel} title={infoLabel} className={`${CARD.headerButton} ${infoOnlyRepeatsSubtitle || band ? 'sm:hidden' : ''}`}>
                       <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>
