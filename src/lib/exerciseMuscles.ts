@@ -68,6 +68,31 @@ const RULES: { match: string[]; work: MuscleWork }[] = [
   { match: ['box jump', 'broad jump', 'jump squat', 'jump rope', 'skipping', 'pogo', 'bounding'], work: { primary: [M.quads, M.calves, M.glutes], secondary: [M.hamstrings, M.soleus, M.abs] } },
   { match: ['burpee'], work: { primary: [M.quads, M.chest, M.shoulders], secondary: [M.abs, M.triceps, M.glutes] } },
 
+  // ── Home-training movements the generic rules below either missed outright
+  //    or claimed for the wrong muscle. Added when `lib/homeExercises.ts` grew
+  //    from 21 movements to 83 and `homeExercises.test.ts` asserted that every
+  //    name in it resolves here — seven resolved to nothing and two resolved
+  //    to the chest. Deliberately ABOVE the generic `push-up` / `incline` /
+  //    `squat` rules, because that is the only thing that makes a specific
+  //    rule win. ──
+  //
+  // A pike push-up is an overhead press done against the floor. The generic
+  // `push up` rule claimed it for the chest, which is the exact mistake the
+  // "most specific first" note at the top of this list exists to prevent.
+  { match: ['pike push', 'handstand push', 'handstand'], work: { primary: [M.shoulders, M.triceps], secondary: [M.traps, M.abs, M.chest] } },
+  // Same shape as `close grip bench` below: hands in means triceps.
+  { match: ['diamond push', 'close grip push', 'close-grip push'], work: { primary: [M.triceps], secondary: [M.chest, M.shoulders] } },
+  // "Kettlebell press" contains neither `shoulder press` nor `swing`, so it
+  // fell between the overhead-press rule and the ballistic-hinge one above.
+  { match: ['kettlebell press', 'kb press', 'bottoms-up press'], work: { primary: [M.shoulders], secondary: [M.triceps, M.traps, M.abs, M.obliques] } },
+  // An isometric squat. The `squat` rule cannot see it — the name has no squat in it.
+  { match: ['wall sit'], work: { primary: [M.quads], secondary: [M.glutes, M.calves] } },
+  { match: ['donkey kick', 'fire hydrant'], work: { primary: [M.glutes], secondary: [M.hamstrings, M.abs] } },
+  { match: ['jumping jack', 'star jump'], work: { primary: [M.calves, M.quads], secondary: [M.shoulders, M.glutes, M.soleus] } },
+  { match: ['skater jump', 'lateral bound'], work: { primary: [M.quads, M.glutes], secondary: [M.calves, M.obliques, M.soleus] } },
+  { match: ['high knee'], work: { primary: [M.quads, M.abs], secondary: [M.calves, M.glutes] } },
+  { match: ['bear crawl', 'crab walk'], work: { primary: [M.abs, M.shoulders], secondary: [M.quads, M.triceps, M.obliques] } },
+
   // ── Hanging trunk flexion. The lats hold the hang; the abs do the lift. ──
   { match: ['toes-to-bar', 'toes to bar', 'hanging knee raise', 'hanging leg raise', 'knees to elbows'], work: { primary: [M.abs], secondary: [M.obliques, M.lats, M.quads] } },
 
