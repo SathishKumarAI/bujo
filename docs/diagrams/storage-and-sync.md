@@ -93,14 +93,14 @@ here without wiring `forEgress` fails a test.
 
 ```mermaid
 flowchart LR
-  pass([Passphrase]) --> kdf["PBKDF2<br/>150 000 iterations, SHA-256<br/>16-byte random salt"]
+  pass([Passphrase]) --> kdf["PBKDF2<br/>600 000 iterations, SHA-256<br/>16-byte random salt"]
   kdf --> key["AES-GCM 256-bit key"]
   json["JSON.stringify(JournalData)"] --> encrypt
   key --> encrypt["AES-GCM encrypt<br/>12-byte random IV"]
-  encrypt --> blob["{ v: 1, salt, iv, data }<br/>all base64"]
+  encrypt --> blob["{ v: 2, salt, iv, data }<br/>all base64"]
 
-  pass --> hash["SHA-256('bujo-sync:' + passphrase)<br/>first 40 hex chars"]
-  hash --> path["storage path"]
+  pass --> code["PBKDF2 deriveBits<br/>600 000 iterations, SHA-256<br/>fixed salt 'bujo-sync-path:v2'<br/>160 bits → 40 hex chars"]
+  code --> path["storage path<br/>sent as x-sync-code"]
 
   blob --> upload[("Vercel Blob at that path")]
   path --> upload
@@ -110,6 +110,21 @@ The passphrase derives **two independent things**: the key, which never leaves
 the device, and the *path*, which does. The server stores ciphertext at a
 location it cannot invert back to the passphrase. There are no accounts on this
 path at all.
+
+**Both derivations cost the same now (COD-267).** The path used to be one
+unsalted `SHA-256('bujo-sync:' + passphrase)`, which made it 150 000x cheaper to
+attack than the key it shares a secret with — while being the only half that
+travels. Measured before picking the number (`deriveKey`, median of 5 on this
+machine): 150k → **15.0 ms**, 300k → **30.1 ms**, 600k → **59.3 ms**. The path
+code is memoised per passphrase in `bujocloud`, so the cost is ~59 ms once per
+session plus ~44 ms extra per push, inside a 4-second debounce.
+
+Two version numbers are load-bearing here and neither may be edited in place:
+
+| Version | Means |
+|---|---|
+| `blob.v` | the PBKDF2 round count this payload was encrypted at — `1` = 150 000, `2` = 600 000. `decryptString` reads it, so an old journal still opens and the next save rewrites it. Changing a row rather than adding one makes every existing journal undecryptable, reported as "wrong passcode". |
+| `'bujo-sync-path:v2'` | the path salt. Changing it moves every journal to a new path; `crypto.legacyCode` exists solely so the pre-COD-267 location is still findable, and `pullCloud` migrates on a hit. |
 
 Worth stating plainly, because it is the part people get wrong when reasoning
 about this design: **the passphrase is the only copy of the key.** There is no

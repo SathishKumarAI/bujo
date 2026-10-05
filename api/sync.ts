@@ -30,6 +30,7 @@ export const config = { runtime: 'nodejs' }
 interface Req {
   method?: string
   query: Record<string, string | string[]>
+  headers?: Record<string, string | string[] | undefined>
   body?: { code?: string; payload?: string }
 }
 interface Res {
@@ -40,6 +41,26 @@ interface Res {
 }
 
 const ok = (c?: string) => typeof c === 'string' && /^[a-f0-9]{16,128}$/.test(c)
+
+/**
+ * Where the code comes from, in order: the `x-sync-code` header, then the body
+ * (POST), then `?code=` (COD-267).
+ *
+ * The query string is the LEGACY read and is here only so a bundle cached
+ * before COD-267 keeps syncing. **Drop the `req.query.code` arm one release
+ * after that ships** — a code in a URL is a secret written into serverless
+ * access logs, CDN logs, browser history and `Referer` headers, which is the
+ * whole reason the header exists. Leaving the fallback forever would mean the
+ * logs keep filling with the thing the change was meant to stop.
+ */
+function codeFrom(req: Req): string | undefined {
+  const h = req.headers?.['x-sync-code']
+  const header = Array.isArray(h) ? h[0] : h
+  if (header) return header
+  if (req.method !== 'GET' && req.body?.code) return req.body.code
+  const q = req.query.code
+  return Array.isArray(q) ? q[0] : q
+}
 
 /** The live journal. */
 const livePath = (code: string) => `sync/${code}.json`
@@ -112,7 +133,7 @@ async function readAt(pathname: string): Promise<string | null> {
 
 export default async function handler(req: Req, res: Res) {
   res.setHeader('Cache-Control', 'no-store')
-  const code = (req.method === 'GET' ? req.query.code : req.body?.code) as string
+  const code = codeFrom(req) as string
   if (!ok(code)) { res.status(400).json({ error: 'invalid code' }); return }
 
   try {

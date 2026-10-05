@@ -217,17 +217,39 @@ for PBKDF2-HMAC-SHA256).
    `?code=` for one release so a cached old bundle does not break, with a comment
    naming the release that drops it.
 
-4. **Migrate, do not orphan.** A journal already in the cloud sits at its old
+4. **Migrate the read path.** A journal already in the cloud sits at its old
    SHA-256 path. `pullCloud` tries the new code, falls back to the old one; on a
-   successful old-path pull it pushes to the new path and **deletes the old blob**
-   (`del` from `@vercel/blob`, via a new `DELETE /api/sync`). Leaving it behind
-   would keep a full copy of the journal reachable from the weak derivation,
-   which is the thing this phase exists to remove.
+   successful old-path pull it re-encrypts to the new path. Without this
+   fallback, everyone who synced before the release is told "nothing stored for
+   that passphrase yet" and handed a fresh empty blob — which from the chair is
+   indistinguishable from their journal having been deleted.
+
+   **Changed during implementation: the old blob is NOT deleted.** This section
+   first said to delete it via a new `DELETE /api/sync`, on the reasoning that
+   leaving it keeps a full copy reachable from the weak derivation. That
+   reasoning does not survive contact: the weak code is derivable from the
+   passphrase *whether or not a blob answers at it*, so an attacker holding a
+   leaked v1 code can attack the passphrase offline with no ciphertext at all —
+   deletion removes a stale copy, not the exposure. Against that, an
+   unauthenticated DELETE is strictly more destructive power than the overwrite
+   §2 had just finished making recoverable. The remedy for a suspected leak is a
+   new passphrase, which is already a new code and a new blob. Consequence worth
+   stating: the v1 blob stays decryptable by the OLD passphrase forever, so
+   rotating is not erasing.
 
 Note for phase 3's own sake: the arithmetic above also fits a world where the
 path code was never leaked, and then none of it matters. The fix is cheap, the
 measurement is not available, and a secret that travels in a query string should
 be assumed logged.
+
+**Cost, measured before picking 600 000** (`crypto.subtle.deriveKey`, median of
+5 on this machine): 150k → **15.0 ms**, 300k → **30.1 ms**, 600k → **59.3 ms**.
+Linear. Two derivations happen per sync — the key and the path code — so the
+naive bump would be ~120 ms per 4-second push cycle; the path code is memoised
+per passphrase in `bujocloud`, which makes it ~59 ms once per session plus
+~44 ms extra per push, inside a debounce. Worth the number being here: "raise
+the rounds" is the kind of advice that is repeated without anyone checking
+whether the hot path can afford it.
 
 ## What is not in this plan
 
