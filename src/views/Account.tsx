@@ -5,6 +5,7 @@ import { StatBar } from '../components/page/StatBar'
 import { CardGrid } from '../components/shell/CardGrid'
 import { LocalAccountCard } from '../components/account/LocalAccountCard'
 import { CloudSyncCard } from '../components/account/CloudSyncCard'
+import { AccountCard } from '../components/account/AccountCard'
 import { ProjectLinks } from '../components/account/ProjectLinks'
 import { useNav } from '../components/shell/nav'
 
@@ -55,6 +56,10 @@ export function Account() {
       }
       zone3={
         <CardGrid>
+          {/* Renders nothing unless this build has a Supabase project, so the
+              no-account app is unchanged. First in the grid when it does
+              render: it is the thing the page is named after. */}
+          <AccountCard />
           <LocalAccountCard />
           <CloudSyncCard />
           <ProjectLinks />
