@@ -1,5 +1,5 @@
 import { useStickyState } from '../lib/useStickyState'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
@@ -262,13 +262,22 @@ function LogSessionCard({
   const [justLogged, setJustLogged] = useState<string | null>(null)
 
   const topN = top ?? defaultTop
+  const flash = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(flash.current), [])
   const reps = repScheme(method, topN, rounds ?? 0)
   const total = reps.reduce((a, r) => a + r, 0)
   const hint = PULLUP_METHODS.find((m) => m.value === method)?.hint ?? ''
 
   function done(msg: string) {
     setJustLogged(msg)
-    window.setTimeout(() => setJustLogged(null), 2600)
+    // Held and cleared, same as SmartInput's blur timer (COD-269). An unheld
+    // 2600ms timer calling setState outlives the view if you log a set and
+    // navigate away inside those 2.6 seconds — invisible in the app, because
+    // React 18 swallows the update, but in a test it fires after the
+    // environment is torn down and fails the whole run as an unhandled
+    // `window is not defined` with every test passing.
+    clearTimeout(flash.current)
+    flash.current = setTimeout(() => setJustLogged(null), 2600)
   }
 
   function save() {

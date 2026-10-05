@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { suggest, findDuplicates, type SuggestContext, type DupItem, type Suggestion } from '../lib/suggest'
 import { useConfirm } from './ConfirmDialog'
 import { Button } from './ui/button'
@@ -38,6 +38,26 @@ export function SmartInput({
 }) {
   const confirm = useConfirm()
   const inputRef = useRef<HTMLInputElement>(null)
+  /**
+   * The blur timer, so it can be cancelled.
+   *
+   * `onBlur` delays closing the suggestion list by 120ms, because a click on a
+   * suggestion blurs the input *before* the click lands — close immediately and
+   * the item is gone before it can be chosen. The delay is the feature; the
+   * fire-and-forget was the bug.
+   *
+   * Unreferenced, the callback outlived the component. In the app that is a
+   * `setState` on an unmounted node (React 18 swallows it, so nothing was ever
+   * visible); in a test it fires after the jsdom environment has been torn
+   * down, and `setOpen` reaches into a `window` that no longer exists. That
+   * surfaced as **`ReferenceError: window is not defined` as an unhandled
+   * error, with all 1624 tests passing** — vitest fails the run on an unhandled
+   * rejection, so CI went red with a green test table and no failing test to
+   * look at. It was timing-dependent, which is why it appeared on a
+   * documentation-only PR and nowhere else.
+   */
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(blurTimer.current), [])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const [dupOpen, setDupOpen] = useState(false)
@@ -85,7 +105,10 @@ export function SmartInput({
         value={value}
         onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(0) }}
         onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onBlur={() => {
+          clearTimeout(blurTimer.current) // a second blur must not stack a second timer
+          blurTimer.current = setTimeout(() => setOpen(false), 120)
+        }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
