@@ -56,7 +56,38 @@ export interface RailRow {
   count?: number
 }
 
-export function SectionRail({ label, groups, value, onChange, allLabel = 'All', allCount, filtering, onClear }: {
+/**
+ * The container width at which the chip row becomes a vertical rail.
+ *
+ * Spelled out as whole class names in both branches, because Tailwind v4 scans
+ * for literals and silently emits nothing for a class it did not see — a
+ * composed `@${n}xl/page:flex-col` would exit 0 and leave the element
+ * inheriting, which is this repo's stale-utility trap.
+ *
+ * **`2xl` exists because `4xl` can never fire inside a zone-3 column.** Zone 3
+ * at the 1180 tier measures **722px**; `@4xl` is 896px. So every rail placed in
+ * a review column renders its PHONE chip row on a desktop — survivable at six
+ * chapters, and at twelve it was a **1085px strip inside a 730px box**, with a
+ * third of the chapters reachable only by horizontally scrolling a control
+ * nothing advertises as scrollable. Opt-in rather than a new default: the rails
+ * that sit in a full-width pane are correct at `4xl` and must not move.
+ */
+const ORIENT = {
+  '4xl': {
+    nav: '@4xl/page:mx-0 @4xl/page:flex-col @4xl/page:gap-0.5 @4xl/page:overflow-visible @4xl/page:px-0 @4xl/page:pb-0',
+    row: '@4xl/page:flex @4xl/page:w-full @4xl/page:items-baseline @4xl/page:justify-between @4xl/page:gap-3 @4xl/page:rounded-control @4xl/page:px-2.5 @4xl/page:py-1.5',
+    count: '@4xl/page:ml-0',
+    clear: '@4xl/page:mt-2 @4xl/page:w-full @4xl/page:justify-start @4xl/page:border-t @4xl/page:border-line @4xl/page:pt-2.5',
+  },
+  '2xl': {
+    nav: '@2xl/page:mx-0 @2xl/page:flex-col @2xl/page:gap-0.5 @2xl/page:overflow-visible @2xl/page:px-0 @2xl/page:pb-0',
+    row: '@2xl/page:flex @2xl/page:w-full @2xl/page:items-baseline @2xl/page:justify-between @2xl/page:gap-3 @2xl/page:rounded-control @2xl/page:px-2.5 @2xl/page:py-1.5',
+    count: '@2xl/page:ml-0',
+    clear: '@2xl/page:mt-2 @2xl/page:w-full @2xl/page:justify-start @2xl/page:border-t @2xl/page:border-line @2xl/page:pt-2.5',
+  },
+} as const
+
+export function SectionRail({ label, groups, value, onChange, allLabel = 'All', allCount, filtering, onClear, railAt = '4xl' }: {
   /** Names the nav for a screen reader — "Insight domains", "Manual chapters". */
   label: string
   groups: RailRow[]
@@ -68,34 +99,50 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
   allCount?: number
   filtering?: boolean
   onClear?: () => void
+  /**
+   * Container width at which the chip row becomes a vertical rail.
+   *
+   * `'2xl'` (672px) for a rail inside a zone-3 review column, which is 722px
+   * and can therefore never reach the 896px default. **The caller's grid
+   * breakpoint must match this one** — they disagreeing is worse than either
+   * alone, because the grid gives the rail a 192px column and the rail fills it
+   * with a horizontal strip.
+   */
+  railAt?: '4xl' | '2xl'
 }) {
+  const o = ORIENT[railAt]
   const rows: { key: string; label: string; count?: number; value: string | null }[] = [
     ...(allCount == null ? [] : [{ key: 'all', label: allLabel, count: allCount, value: null }]),
     ...groups.map((g) => ({ key: g.id, label: g.label, count: g.count, value: g.id as string | null })),
   ]
 
+  /*
+    A sticky element with no ground is a transparent one, and the page scrolls
+    visibly THROUGH it. Measured on `?view=nofap` at scrollY 700:
+    `position: sticky` with `background-color: rgba(0,0,0,0)` and
+    `z-index: auto`, 730x36, with a `<section>` of page content painting in the
+    same pixels. Neither rendering gate can see it — nothing is clipped, so
+    `clipped-text` is quiet, and the accessibility tree is sound, so axe is
+    right to be. Two legible elements sharing pixels is the one geometric
+    defect with no judgement in it.
+
+    `bg-ink-0` is the page rung, which is what the rail sits on; `z-10` puts it
+    above content without competing with the header (`z-30`) or a popover. Both
+    are needed — a background with `z-index: auto` still loses to a positioned
+    sibling. Affects all seven rail pages, since this component is shared.
+
+    Lives here rather than inside the class string: the string is a template
+    literal now (it interpolates `o.nav`), and this comment is full of
+    backticks.
+  */
   return (
     <nav
       aria-label={label}
-      className="
-        /* A sticky element with no ground is a transparent one, and the page
-           scrolls visibly THROUGH it. Measured on `?view=nofap` at scrollY 700:
-           `position: sticky` with `background-color: rgba(0,0,0,0)` and
-           `z-index: auto`, 730x36, with a `<section>` of page content painting
-           in the same pixels. Neither rendering gate can see it — nothing is
-           clipped, so `clipped-text` is quiet, and the accessibility tree is
-           sound, so axe is right to be. Two legible elements sharing pixels is
-           the one geometric defect with no judgement in it.
-
-           `bg-ink-0` is the page rung, which is what the rail sits on; `z-10`
-           puts it above content without competing with the header (`z-30`) or a
-           popover. Both are needed — a background with `z-index: auto` still
-           loses to a positioned sibling. Affects all seven rail pages, since
-           this component is shared. */
+      className={`
         sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0
         -mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-2
-        @4xl/page:mx-0 @4xl/page:flex-col @4xl/page:gap-0.5 @4xl/page:overflow-visible @4xl/page:px-0 @4xl/page:pb-0
-      "
+        ${o.nav}
+      `}
     >
       {rows.map((r) => {
         const on = value === r.value
@@ -115,8 +162,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
             aria-label={r.count == null ? r.label : `${r.label} — ${r.count} ${r.count === 1 ? 'panel' : 'panels'}`}
             className={`
               shrink-0 snap-start whitespace-nowrap rounded-pill px-2.5 py-1 text-label transition-colors
-              @4xl/page:flex @4xl/page:w-full @4xl/page:items-baseline @4xl/page:justify-between
-              @4xl/page:gap-3 @4xl/page:rounded-control @4xl/page:px-2.5 @4xl/page:py-1.5
+              ${o.row}
               ${on
                 ? 'bg-brand-wash font-medium text-brand-text'
                 : empty
@@ -143,7 +189,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
                 every other rail state went unrendered — see `scanInsightsAll`
                 in `scripts/a11y-axe.mjs`. Arming that pass turned a green run
                 red on this line, which is what it was for. */}
-            {r.count != null && <span className="num ml-1.5 @4xl/page:ml-0">{r.count}</span>}
+            {r.count != null && <span className={`num ml-1.5 ${o.count}`}>{r.count}</span>}
           </button>
         )
       })}
@@ -151,12 +197,11 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
       {filtering && (
         <button
           onClick={onClear}
-          className="
+          className={`
             inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-pill px-2.5 py-1
             text-label text-fg-2 hover:text-fg-1
-            @4xl/page:mt-2 @4xl/page:w-full @4xl/page:justify-start @4xl/page:border-t
-            @4xl/page:border-line @4xl/page:pt-2.5
-          "
+            ${o.clear}
+          `}
         >
           <Icon as={X} size="sm" /> Clear filters
         </button>

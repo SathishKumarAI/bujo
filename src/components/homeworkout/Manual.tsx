@@ -54,14 +54,31 @@ export function Manual() {
       {/* Container on the outer div, grid on the inner: an element cannot query
           itself. Phone column spelled out, or the chip row's min-content sizes
           the only implicit track and the page scrolls sideways. Both traps are
-          in docs/PAGE-SHAPE.md and both have been hit here before. */}
+          in docs/PAGE-SHAPE.md and both have been hit here before.
+
+          `@2xl` (42rem = 672px), not the `@4xl` (896px) the pull-up manual
+          uses, and the difference is measured rather than preferred. **Zone 3
+          at the 1180 tier is 722px** — the same number PAGE-SHAPE records for
+          a review zone — so `@4xl` never fires there and the rail falls back
+          to its phone chip row ON DESKTOP. With six chapters that is survivable;
+          with twelve it was a **1085px strip inside a 730px box**, so a third
+          of the chapters, Sources among them, were reachable only by
+          horizontally scrolling a control nothing suggests you can scroll.
+          At 672px the vertical rail fires in a 722px column: 192px of rail and
+          a ~500px reading measure, which is the right trade for a chapter list
+          you are meant to navigate. */}
       <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[12rem_minmax(0,1fr)]">
           <SectionRail
             label="Home workout manual chapters"
             groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
             value={chapter}
             onChange={(id: string | null) => setChapter(id ?? 'push')}
+            /* MUST match the grid breakpoint above. They disagreeing is worse
+               than either alone: the grid hands the rail a 192px column and
+               the rail, still on its own 896px threshold, fills it with a
+               1085px horizontal strip. Found by measuring, not by reading. */
+            railAt="2xl"
           />
           <div className="min-w-0">
             {chapter === 'programming' ? <Programming />
