@@ -1,99 +1,99 @@
 # STATUS
 
-**Stopped:** 2026-09-30, on `docs/session-cycle-recovery`. **`main` is at
-`e666099`** and there is **an open stack of three PRs that must merge in
-order** — see below, this is the first thing to deal with.
+**Stopped:** 2026-10-05, on `main` at `b0e79fa`. **Nothing is open** — the four
+PRs from this session are merged and their branches deleted. Clean tree.
 
-## The stack, bottom first
+## What this session did
 
-```
-main
- └── #317  feat/cycle-stage67-goals-guide   Cycle stages 6+7, design pass, feelings, charts
-      └── #318  feat/recovery-feedback       Recovery ledger, outcomes, units
-           └── (this branch)  docs/session-cycle-recovery
-```
-
-Merge **#317, then #318**, retargeting each child before its parent merges —
-squash-merging the bottom of a stack permanently closes the child, and GitHub
-will not reopen a closed PR whose base branch is gone (the trap is in
-`CLAUDE.md`; it cost two re-created PRs in an earlier stretch).
-
-`#306` is also open and is **not from this stretch** — left alone.
-
-## What this stretch was
-
-Two requests that turned out to be one subject. Cycle came as a seven-stage
-brief; Recovery came as "do the same for men, for addictions". Both pages had
-the same failure: **they recorded the data and never said what it meant.**
-Cycle printed "Luteal · estimate" whether it had measured a temperature shift or
-not. Recovery knew every resisted urge and every slip and could not tell you
-whether watching porn counted for you or against you.
-
-## The three worth re-reading
-
-**A promise with a toggle beside it is not a promise.** The Cycle page tells the
-user their data is "never uploaded, synced, or sent to us or anyone else", and
-that was **false when written**: `cycle` is a field of `JournalData` and every
-sync path took the whole object, including a self-hosted PostgREST that posts in
-plaintext. My first fix gated it on a `settings.cycleSync` switch — wrong, for
-exactly the users who most needed the sentence to be true. `forNetwork` strips
-unconditionally and a test asserts no setting can change that.
-
-Its other half: stripping on the way out means this device uploads `cycle: []`,
-and without a guard the next device to pull reads that as *deleted*. Withheld is
-not deleted. The guard is in `resolveIncoming`, where every pull funnels.
-
-**A seed test that passes and a browser that shows nothing are not a
-contradiction.** `cycleSeed.test.ts` asserted mood and energy were seeded and
-passed; the browser showed 100 days with zero. `?demo=1` only seeded an EMPTY
-journal, so a demo opened once was frozen forever and every field added
-afterwards was invisible — which reads exactly like the feature being broken.
-`DEMO_VERSION` now re-seeds a demo journal (never a real one) and has already
-moved three times in a day.
-
-**A ratio must compare like with like.** Once lapse amounts carried units, the
-recovery ledger divided resisted *events* by slipped *minutes* and rendered "2%
-of the pulls you logged, you did not follow" for a month with five wins and two
-bad evenings. `lapseDays` carries events; `lapses` carries the amount.
-
-## Numbers
+A request to "add Supabase sign-in and background sync". The answer was no, with
+reasons, and the audit it prompted found three real problems that are now fixed.
 
 ```
-tests     1573 pass / 112 files
-a11y      173 of 173 · 12 of 12 shards · 0 serious · 0 critical
-clipped   clean at 1440 · 1024 · 390 across 24 views
-contrast  5 themes · 14 accents · both palettes agree
-
-per-group axe probe · 28 scans · 0 serious
-  and it found what the real gate structurally cannot — see below
+#320  docs/sync-hardening-plan      the audit + the plan            (COD-320 n/a)
+#321  fix/sync-egress-boundary      one egress door + contract test  COD-265 ✔
+#322  fix/sync-blob-recovery        /api/sync version history        COD-266 ✔
+#323  fix/sync-kdf-hardening        PBKDF2 600k + derived path code  COD-267 ✔
 ```
 
-**The per-group probe is the load-bearing number.** `npm run a11y` reported
-173/173 green while everything added in Cycle Stages 5–7 sat outside it: a
-`SectionRail` shows one group at a time and `openFolds()` has no `aria-expanded`
-to find (COD-237). Driving the four groups by hand found a real
-`scrollable-region-focusable` — a 30-column table in an 8-column viewport with
-no keyboard route to the other 22. **Any new card in a rail group is unchecked
-until someone drives it per group.**
+The plan is `docs/security/sync-hardening-plan.md` and it is still the map —
+read it before touching any sync path.
 
-## Traps added to CLAUDE.md this stretch
+## The one thing to decide next
 
-- **A sweep piped through `head` is a sweep you did not do.** It truncates
-  silently and exits 0. "Nine call sites, and that was all of them" came from a
-  grep cut at 40 lines; three more each dropped the new habit type.
-- **Setting `data-theme` does not re-theme an inline style** — `cat()` resolves
-  at render time, so a probe that does not force a re-render measures the new
-  ground against the old foreground.
+**`docs/life-schedule-v3-final.html` got committed in #323 and was not mine.**
+It was untracked in the working tree when this session started, and a
+`git add -A docs` swept it in. It is harmless but unintended. Either keep it or
+`git rm --cached docs/life-schedule-v3-final.html` and gitignore it — your call,
+which is why it is sitting here rather than already undone.
 
-## Environment, on the way out
+## What changed that a future session will trip over
 
-- Dev server on **5180**, preview on **4173**, Chrome on debug port **9333**
-  with a throwaway profile in `%TEMP%\claude-chrome-9333`. Kill freely.
-- Confirm what a preview port serves by its **asset hash**, never its title.
-- The nine agent worktrees under `.claude/worktrees/` from 2026-09-27 are still
-  there and still need a decision.
+**`forEgress` is now the only door out.** Nothing may call `forNetwork`
+directly; `src/lib/egress.contract.test.ts` fails the build if anything does,
+and it also forbids a raw `replaceAll(migrate(…))` outside the two folder-restore
+paths. If you add a sync target, wire `forEgress` and `mergePulled` or that test
+goes red — which is the point. Its key-shape trap is documented in the file:
+`import.meta.glob` keys for `src/lib` siblings are `./x.ts` with **no `lib/`
+segment**, so a pattern written `lib/x.ts` matches nothing and every assertion
+passes vacuously.
 
-## Next
+**`api/` is now typechecked.** It was in no tsconfig at all before #322 — that
+is why `api/sync.ts` hand-rolls its `Req`/`Res` interfaces. It lives in
+`tsconfig.node.json` now. Expect `tsc -b` to have opinions about serverless code
+it never read before.
 
-`docs/NEXT-SESSION.md`. The short version: **merge the stack first**, then
-`mindset` is still 8.8 phone screens and still the worst page in the app.
+**Two version numbers must never be edited in place:**
+
+| Thing | Where | If you edit it |
+|---|---|---|
+| `ROUNDS[1] = 150_000` | `src/lib/crypto.ts` | every journal already in `bujo:enc` or the sync blob becomes undecryptable, reported to the user as "wrong passcode" |
+| `'bujo-sync-path:v2'` | `src/lib/crypto.ts` | every cloud journal moves to a new path; only `legacyCode` + `pullCloud`'s fallback make the old one findable |
+
+Add a row; do not change one.
+
+**`pullCloud` writes.** On a v1-path hit it re-encrypts to the new path. That is
+deliberate and best-effort — a failed migration must not turn a successful read
+into an error — but it does mean a "pull" can POST.
+
+## Not verified, and worth knowing
+
+- **No restore dialog was clicked in a browser.** All four need a configured
+  remote to render, so no gate reaches them. The copy is pinned by a source
+  assertion (`CYCLE_CLAUSE` in the contract test) and the behaviour by unit
+  tests, which is not the same as having seen it.
+- **Nothing ran against the real Vercel Blob store or the deployed function.**
+  `api/sync.test.ts` uses `vi.mock('@vercel/blob')`. The first production POST
+  is the real test of `copy`'s option shape; it is inside the best-effort `try`,
+  so a mistake there means "no history", not "no save". Likewise the first real
+  pull is what proves the `x-sync-code` header path — the `?code=` fallback is
+  what makes that safe to find out.
+- `npm run a11y`, `clipped` and `space` were **not** run. Nothing in these four
+  PRs changes rendered page content; `smoke` was run twice (24/24, clean) for a
+  specific reason — `cyclePrivacy` now imports `csv`, and a circular import
+  there would fail only in the browser.
+
+## Open, deliberately
+
+- **COD-228** — `bujo:sync` holds the sync passphrase in plaintext, which
+  defeats the passcode lock. Disclosed on screen in `CloudSyncCard` and in
+  `AUTH.md`. A surfaced trade-off, not a hidden bug: encrypting it means
+  auto-sync cannot run while the journal is locked, which is most of the time.
+- **No compare-and-swap on `/api/sync`.** `PutCommandOptions` in this
+  `@vercel/blob` exposes no `ifMatch` (only `del` does), so it would mean
+  hand-rolling the REST call. Upgrade path is in a `ponytail:` comment.
+- **The v1 sync blob is left in place** after migration, with the reasoning in
+  `pullCloud` and in the plan §3. Rotating a passphrase is not erasing.
+- **`?code=` still accepted** by `api/sync.ts` for cached bundles. Drop that arm
+  one release after `b0e79fa` — it is the logged-secret path the change exists
+  to close.
+- **Supabase sign-in** — plan §0. If it is ever actually wanted, that section
+  names the six surfaces and the two docs that have to change first.
+
+## Environment notes
+
+- `.env.local` had dead `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` entries.
+  Removed locally; the file is gitignored, so there is no commit for it.
+- One pre-existing lint warning, unrelated: `src/App.tsx:120:6`
+  `react-hooks/exhaustive-deps`. Confirmed present on `main` before this
+  session. `npm run verify` still exits 0.
+- `npm run verify` at `b0e79fa`: **115 files, 1624 tests, exit 0.**
