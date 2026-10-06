@@ -1,4 +1,5 @@
 import { ChipPick } from '../ui/quickpick'
+import { CommitField } from '../CommitField'
 import { useStickyState } from '../../lib/useStickyState'
 import type { CyclePoint } from '../../lib/types'
 import { CHIP_FIELDS, SCALE_FIELDS, TAG_FIELDS } from './dayFields'
@@ -55,7 +56,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
               nothing to say so. */}
           <span className="text-body font-medium text-fg-1">Mood, energy &amp; symptoms</span>
           <span className="ml-2 text-label text-fg-2">
-            {isOpen ? 'tap to close' : summary(entry) || 'flow · mucus · LH · cravings'}
+            {isOpen ? 'tap to close' : summary(entry) || 'flow · mucus · LH · cravings · a note'}
           </span>
         </span>
         <span aria-hidden className="shrink-0 text-fg-2">{isOpen ? '▾' : '▸'}</span>
@@ -113,6 +114,32 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
             )
           })}
 
+          {/* IN WORDS · the escape hatch from nine closed lists.
+              `CyclePoint.note` has been in the type since the page shipped and
+              `lib/captureLanding.ts` already READS it into journal search —
+              nothing ever wrote it, so the Cycle page offered 53 tick controls
+              and no way to say a sentence. A started medication, a doctor's
+              visit, a cramp unlike the others: none of those is a chip, and a
+              closed list that cannot be escaped turns them into nothing.
+
+              Below the chips rather than above, because the chips are the fast
+              path and this is the exception; `CommitField` so a sentence is one
+              journal write and not one per character. */}
+          <label className="block border-t border-line pt-3">
+            <span className="mb-1.5 block text-label text-fg-2">
+              <span className="font-medium text-fg-1">Note</span> · anything the chips cannot say
+            </span>
+            <CommitField
+              key={entry?.date ?? 'none'}
+              rows={2}
+              value={entry?.note ?? ''}
+              onCommit={(v) => onPatch({ note: v.trim() || undefined })}
+              placeholder="Started a new pill, cramps worse than usual, doctor on Friday…"
+              label="Note for this day"
+              className="w-full"
+            />
+          </label>
+
           {/* DISTURBED · the one control here that changes a calculation. Last,
               because it is about the reading above rather than about the day,
               and worded as the reasons rather than as "disturbed", which means
@@ -154,5 +181,11 @@ function summary(entry: CyclePoint | undefined): string {
   const tags = (entry.symptoms?.length ?? 0) + (entry.cravings?.length ?? 0) + (entry.moodTags?.length ?? 0)
   if (tags) parts.push(`${tags} tag${tags === 1 ? '' : 's'}`)
   if (entry.tempDisturbed) parts.push('temp flagged')
+  // The note's PRESENCE, not its text: this line is one row in a collapsed
+  // header and a sentence would push everything else off it. Without it a
+  // written note is invisible until the fold is opened again, which is the
+  // "a chart behind a closed fold is a chart that does not exist" rule in
+  // docs/PAGE-SHAPE.md applied to a field you typed yourself.
+  if (entry.note?.trim()) parts.push('noted')
   return parts.join(' · ')
 }

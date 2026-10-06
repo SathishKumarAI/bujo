@@ -79,10 +79,11 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
   for (const [k, key] of KEYED_ARRAYS) out[k] = unionByKey(w[k], l[k], key)
   for (const k of MAPS) out[k] = fillMap(w[k], l[k])
 
-  // settings: winner wins every scalar, but four fields inside settings are
+  // settings: winner wins every scalar, but five fields inside settings are
   // actually DATA LOGS, not preferences — a whole-object take from the winner
-  // silently drops a DUPR rating or a finished program day logged on the other
-  // device. Union those four; everything else is last-write-wins as before.
+  // silently drops a DUPR rating, a finished program day, or the note saying
+  // what you drilled, logged on the other device. Union those five; everything
+  // else is last-write-wins as before.
   const ws = (w.settings ?? {}) as Dict
   const ls = (l.settings ?? {}) as Dict
   out.settings = {
@@ -91,6 +92,7 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
     programDone: unionScalars(ws.programDone, ls.programDone),
     coachingWeeksDone: unionScalars(ws.coachingWeeksDone, ls.coachingWeeksDone),
     programActuals: fillMap(ws.programActuals, ls.programActuals),
+    coachingWeekNotes: fillMap(ws.coachingWeekNotes, ls.coachingWeekNotes),
   }
   // Drop the keys we just synthesised if BOTH sides lacked them, so a merge
   // can't invent `duprLog: []` on a journal that never had one.
@@ -100,7 +102,9 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
       delete (out.settings as Dict)[k]
     }
   }
-  if (ws.programActuals == null && ls.programActuals == null) delete (out.settings as Dict).programActuals
+  for (const k of ['programActuals', 'coachingWeekNotes'] as const) {
+    if (ws[k] == null && ls[k] == null) delete (out.settings as Dict)[k]
+  }
 
   // nofap: keep the winner's scalars (startedOn/best) but union the dated logs so
   // a relapse/urge logged on the other device isn't lost.

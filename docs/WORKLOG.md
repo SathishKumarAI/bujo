@@ -26,6 +26,153 @@ Rules the three share:
 
 ---
 
+## 2026-10-06 — A tick with no room for what it was (COD-275)
+
+**Summary:** audited every page for one class of gap — *a thing the app lets
+you mark as done but not say anything about*. The user's words, about the 75
+Hard page: *"you only mention workout one, workout two. What kind of workout
+should I enter here? How can I mention the workout that I did in this
+challenge?"* Challenges itself was owned by another stream, so this went after
+the same shape everywhere else and found it twice, badly.
+
+**How it was measured.** A throwaway probe drove the built bundle at `?demo=1`,
+1440 and 390, folds opened, and per view counted tick-like controls
+(`input[type=checkbox]`, `[role=checkbox]`, `button[aria-pressed]`) against
+free-text fields (`textarea`, `input[type=text]`). Reading the types alone
+would have missed both findings — and reading prop names would have missed one
+of them completely, which is this repo's recorded failure mode.
+
+| View | ticks | text fields | |
+|---|---|---|---|
+| **cycle** | **53** | **0** | the fix below |
+| **coaching** | **0** | **0** | the fix below |
+| challenges | 5 | 0 | another stream owns it |
+| mindset | 58 | 3 | all standing cues, none per-day — COD-278 |
+| program | 25 | 7 | this is what good looks like |
+
+### What shipped
+
+**Cycle — `CyclePoint.note` was in the type, read by search, and written by
+nothing.** `lib/captureLanding.ts:105` already pulled a cycle note into journal
+search results. Grepped across `src/`, the only other match was a comment. So
+the page offered nine closed chip lists, a temperature, a 1–5 drive scale, a
+reliability checkbox — and no way to say a sentence. A started medication, a
+doctor's appointment, a cramp unlike the others: none is a chip, and the search
+that could have surfaced such a note could never contain one. The whole fix is
+a `CommitField` in `DayMore` (the optional half, not the deliberately-minimal
+fast path above it) plus `noted` in the collapsed summary. **No schema change,
+no migration.**
+
+**Coaching — twelve week toggles and no text field at all.** A week prescribes
+three to five named drills and one measurable goal ("50+ cross-court dinks;
+place 7/10 to a target") and could be recorded only as a green check. Separately
+`data.pickleball` held the sessions played in those same seven days, with score,
+partner, venue and their own notes, and nothing joined the two. Two records of
+one week. Fixed in two halves, **only one of which is a new field**:
+
+- play is joined from the record that already exists, by date derived from
+  `coachingStart` (`lib/coachingWeek.ts`, 10 tests). A session has no week
+  field and should not grow one — a stored week id orphans on a restart where a
+  derived range re-derives.
+- drills get the one new field, `settings.coachingWeekNotes`, because nothing
+  else holds them: a logged session is "doubles 6–3 with Mara" and says nothing
+  about whether the dink rally reached 50.
+
+A week with no sessions names its days and says where to log, rather than
+printing `0 sessions` — "nothing logged" is a gap in the record, not a week you
+played zero games in (same rule as COD-251).
+
+The twelve toggles also **carried no `aria-pressed`**, which is why the probe
+scored the page at zero ticks: "Mark week 6 done" announced identically whether
+or not week 6 was done. One attribute.
+
+### What it got wrong, in order
+
+The useful half. Every one of these was found by looking at output, not code.
+
+1. **The seed had never started the coaching program.** `coachingStart` and
+   `coachingWeeksDone` were both unset, so every a11y run — five themes, two
+   viewports, every merge — saw only the `!start` branch. The progress bar, the
+   done chips, the `· now` week and the open-on-first-unfinished default had
+   been rendered by nothing. Same finding as the unseeded `data.cycle`, for a
+   program whose state lives in `settings`.
+2. **The first seed numbers were chosen, then measured, then changed.** The
+   pickleball loop produces only **five** sessions, in days −10…−25. At start
+   −37 the per-week counts are `0,1,2,2,0,0,0,0,0,0,0,0`. Four weeks done made
+   the roadmap open on week 5 — an empty week, so the demo's own landing panel
+   was the empty branch. Two weeks done opens on week 3, which has two sessions
+   and a note.
+3. **Session notes were `''` on every seeded row**, so the branch that reads one
+   back could not render at all.
+4. **Picking note presence and note text from one weak rng stream collided.** At
+   `> 0.25` all five pickleball rows were noted and only **three of six**
+   strings appeared, two of them twice. The index is the loop counter now; only
+   the presence is random.
+5. **The cycle note's catch-all branch made four days claim the same thing.** Of
+   six seeded notes, **four read "Started the new iron tablets today", on four
+   separate days.** You do not start them four times. Indexing by CYCLE instead
+   then gave **six consecutive days** of one premenstrual line, because that
+   window is six days long and they all shared an index. `day % 4` is what makes
+   neighbouring days differ. Final: 5 notes of 100 days, 4 distinct, none
+   adjacent.
+6. **A new rng draw in the wrong place shifts every value after it.** The
+   session notes first drew from `randSub`, and the pickleball block runs
+   *before* the home-workout block — so it shifted every `subActivity` the seed
+   picks. `randSub`'s own docstring warns about exactly this. New field, new
+   stream (`randNote`). And the cycle note's gate is deliberately the **first**
+   operand of its `&&`, so the draw happens on every day whether or not a note
+   lands; a conditional draw consumes the stream unevenly.
+7. **The first browser probe read the wrong localStorage key** (`bujo.journal`;
+   it is `bujo:data`) and reported zero seeded notes and zero write-through. A
+   probe that is wrong is indistinguishable from a feature that is broken. The
+   verdict below is from the second run.
+8. **`npm run clipped` caught a defect in the new field itself** — the first
+   time that gate has failed on a *form control* rather than a label:
+   `phone · coaching — "What you drilled in week 3" 62px shown of 86px`. A
+   fixed `rows={2}` gave two lines to an 80-character note in a 298px column, so
+   the field was hiding the thing you had just typed into it. Fixed with
+   `field-sizing-content` and a `min-h-14` floor — native CSS, no ref, no
+   listener, and it degrades to the fixed-rows behaviour it replaces.
+
+### Verification
+
+| Gate | Result |
+|---|---|
+| `npm run verify` | exit 0 · `tsc -b` clean, **1720 tests in 122 files**, eslint 0 errors (1 pre-existing `App.tsx` warning), build clean |
+| `npm run a11y` | **173 of 173 scans, no serious or critical**, exit 0. Coaching's fold column reads 144 identically at all five themes and both viewports, so all twelve week records were opened and scanned |
+| `npm run smoke` | **24/24 views OK** |
+| `npm run clipped` | clean at 1440, 1024 and 390 — after failing on the field above |
+| `npm run design` | passed (417 files) |
+| `npm run contrast` | passed · 5 themes, 14 accents, both palettes agree |
+
+Browser-verified against this worktree's own bundle, with the served
+`assets/index-*.js` compared to `dist/index.html` before believing anything
+(the preview-port trap). Coaching: 12 ticks / 1 text field where it was 0 / 0;
+all twelve weeks opened; sessions and their notes read back; the empty branch
+dated; receipts on the closed rows; no overflow at 390. Cycle: typing and
+tabbing away writes `note` onto the selected day, and clearing it leaves **no
+empty string stored**, so "not asked" stays distinct from "answered with
+nothing".
+
+### Filed, not fixed
+
+- **COD-276** — `UrgeWin.stress` is in the type with a seven-line docstring
+  arguing for it, and `grep -rn stress src/components/recovery/` returns zero.
+  Not fixed on purpose: `UrgeSurfingCard` already asks six things of a thumb
+  reaching for it mid-urge, and a seventh scale there is likelier to stop the
+  log being written. The real decision is capture it or delete it.
+- **COD-277** — `ReadLink.note` and `Friend.notes`, both in the type, neither
+  reachable from any form. One input each.
+- **COD-278** — Mindset's "Mark practised" is a bare tick while habits have had
+  `habitNotes` (day → habitId → note) all along. Ranked below this work because
+  the practice grid is defensible as a pure consistency instrument; decide what
+  the page is for before adding a field.
+
+**The general finding worth keeping:** an optional `note` on a type is not
+evidence a note can be written. Four of them were in this codebase. The cheapest
+check is the probe above — tick controls against text fields, per view, on the
+rendered page.
+
 ## 2026-10-05 — Home Workout, and three defects the build walked into (#336)
 
 **Summary:** `lib/homeExercises.ts` was **53 lines and 5 exports** against

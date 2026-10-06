@@ -30,7 +30,11 @@ function cycleDayOf(entry: CyclePoint, starts: string[]): number | null {
 const starts = periodStarts(log)
 
 describe('every optional field is both present and absent in the seed', () => {
-  const fields = ['mucus', 'lh', 'mood', 'energy', 'flow'] as const
+  // `note` joined this list when it became writable. It had been in the type
+  // since the page shipped, READ by `lib/captureLanding.ts` into journal
+  // search, and written by nothing — so the seed could not reach it and the
+  // search could never contain one.
+  const fields = ['mucus', 'lh', 'mood', 'energy', 'flow', 'note'] as const
   for (const f of fields) {
     it(`${f} is logged on some days and not on others`, () => {
       const withIt = log.filter((e) => e[f] != null).length
@@ -105,5 +109,19 @@ describe('the seed has a cycle shape, not uniform noise', () => {
       .map((e) => cycleDayOf(e, starts)).filter((d): d is number => d != null)
     expect(days.length).toBeGreaterThan(3)
     expect(days.reduce((s, d) => s + d, 0) / days.length).toBeGreaterThan(15)
+  })
+})
+
+/**
+ * The note is a sentence, not a tag, so "present on some days" is not enough —
+ * a seed of empty strings would satisfy that and render nothing. Count the days
+ * that actually hold words, and keep it sparse: a log with a paragraph every day
+ * is not a log anyone kept, and the common case the UI must handle is no note.
+ */
+describe('the cycle day note is words, and sparse', () => {
+  it('seeds several notes with real text and leaves most days without one', () => {
+    const noted = log.filter((e) => (e.note ?? '').trim().length > 10)
+    expect(noted.length, 'no seeded day carries a note with words in it').toBeGreaterThan(2)
+    expect(noted.length / log.length, 'notes are on too many days to demo "no note"').toBeLessThan(0.3)
   })
 })

@@ -3,11 +3,14 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Pill } from '../components/ui'
+import { CommitField } from '../components/CommitField'
 import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { cat, onAccent, onRaised } from '../lib/colors'
-import { dayDiff, todayISO, WEEKDAYS } from '../lib/date'
+import { dayDiff, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
+import { coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
+import type { PickleballSession } from '../lib/types'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
@@ -43,6 +46,14 @@ import {
  * shape plus one specific instruction, which `docs/pages/README.md` calls the
  * best pattern in the product. It is now the first fact in zone 1 as well as
  * the first card in zone 2.
+ *
+ * **What the page could not record.** For its whole life this view held twelve
+ * week toggles and **no text field at all** — a probe over every view at
+ * `?demo=1` scored it 0 ticks and 0 text fields, the ticks invisible because
+ * they carried no `aria-pressed`. So a week prescribing five named drills could
+ * only be marked done, and `data.pickleball` separately held the sessions you
+ * played in those same seven days with nothing joining them. `WeekRecord`
+ * below closes both halves; `lib/coachingWeek.ts` owns the date join. COD-275.
  */
 export function Coaching() {
   const { data, setSettings } = useJournal()
@@ -52,6 +63,15 @@ export function Coaching() {
   const start = s.coachingStart && dayDiff(s.coachingStart, today) >= 0 ? s.coachingStart : undefined
   const week = start ? Math.min(ACADEMY_TOTAL_WEEKS, Math.max(1, Math.floor(dayDiff(start, today) / 7) + 1)) : 0
   const done = s.coachingWeeksDone ?? []
+  const weekNotes = s.coachingWeekNotes ?? {}
+  const sessions = data.pickleball ?? []
+  /** `''` deletes the key — see `Settings.coachingWeekNotes`. */
+  function setWeekNote(w: number, text: string) {
+    const next = { ...weekNotes }
+    if (text.trim()) next[String(w)] = text.trim()
+    else delete next[String(w)]
+    setSettings({ coachingWeekNotes: next })
+  }
   const todayDow = new Date(today + 'T00:00:00').getDay()
   const todaySlot = WEEKLY_TEMPLATE[(todayDow + 6) % 7] // Mon-first index
 
@@ -121,10 +141,21 @@ export function Coaching() {
                 const isDone = done.includes(w.week)
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
+                // The sessions that fall inside this week, joined by DATE —
+                // `PickleballSession` has no week field and should not grow
+                // one. See `lib/coachingWeek.ts`.
+                const played = start ? rowsInCoachingWeek(sessions, start, w.week) : []
+                const note = weekNotes[String(w.week)] ?? ''
                 return (
                   <li key={w.week} className={`rounded-control border transition-colors ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0'}`}>
                     <div className="flex items-start gap-2.5 p-2.5">
-                      <button onClick={() => toggleWeek(w.week)} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
+                      {/* `aria-pressed`, which these twelve toggles never carried. A bare
+                          button announces as "Mark week 6 done" whether or not week 6
+                          IS done, so the state of the page's only act was unreadable to
+                          a screen reader — and invisible to any sweep that finds toggles
+                          by `aria-pressed`, which is how a probe over every view
+                          reported this page as having zero tick controls. */}
+                      <button onClick={() => toggleWeek(w.week)} aria-pressed={isDone} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
                         className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-control text-caption font-medium"
                         // The untaken weeks are a surface tone, not a brand fill, so
                         // crust-on-surface1 was the failing pair — those get `text`.
@@ -140,6 +171,18 @@ export function Coaching() {
                         {/* Wraps rather than truncates — see the note on `t.what` below.
                             This line is the only place `w.skills` renders at all. */}
                         <span className="block text-label text-fg-2">{w.skills}</span>
+                        {/* THE RECEIPT, ON THE CLOSED ROW. Without it everything
+                            below only exists once the week is opened, and
+                            docs/PAGE-SHAPE.md's rule is that a thing behind a closed
+                            fold is a thing that does not exist — which applies with
+                            more force to text you typed yourself than to a chart. */}
+                        {(played.length > 0 || note) && (
+                          <span className="mt-0.5 block text-label" style={{ color: onRaised('green') }}>
+                            {played.length > 0 && `${played.length} session${played.length === 1 ? '' : 's'} · ${weekPlay(played).games} games`}
+                            {played.length > 0 && note && ' · '}
+                            {note && 'noted'}
+                          </span>
+                        )}
                       </button>
                       <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
                     </div>
@@ -153,6 +196,7 @@ export function Coaching() {
                           </ul>
                         </div>
                         <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: onRaised('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
+                        <WeekRecord week={w.week} start={start} played={played} note={note} onNote={setWeekNote} />
                       </div>
                     )}
                   </li>
@@ -167,6 +211,99 @@ export function Coaching() {
       }
       zone3={<Manual />}
     />
+  )
+}
+
+/**
+ * WHAT YOU ACTUALLY DID THIS WEEK — the half of a coaching week the tick could
+ * not hold.
+ *
+ * The complaint this answers, in the user's words about the sibling page: *"you
+ * only mention workout one, workout two. What kind of workout should I enter
+ * here? How can I mention the workout that I did?"* Coaching had the same shape
+ * and worse — twelve week toggles and **no text field anywhere on the view** —
+ * while the week prescribes three to five named drills and one goal.
+ *
+ * Two halves, and only one of them is a new field:
+ *
+ * 1. **Play comes from the record that already exists.** `data.pickleball` holds
+ *    every session you logged, with its score, partner, venue and its own notes.
+ *    Asking you to retype that under a coaching week would have been a second
+ *    record of the same fact — so it is joined by date and shown, not re-asked.
+ *    A week with none says *that*, naming the days, rather than drawing an empty
+ *    list: "nothing logged" is a gap in the record, not a week you played zero
+ *    games in, and the two must not render the same (CLAUDE.md, COD-251).
+ * 2. **Drills get the one new field**, `settings.coachingWeekNotes`, because no
+ *    existing record holds them: a logged session is "doubles, 6–3, with Mara"
+ *    and says nothing about whether the cross-court dink rally got to 50.
+ */
+function WeekRecord({ week, start, played, note, onNote }: {
+  week: number
+  /** Undefined until the program is started; there is no week to date then. */
+  start: string | undefined
+  played: PickleballSession[]
+  note: string
+  onNote: (week: number, text: string) => void
+}) {
+  // Before the program is started a week covers no actual days, so there is
+  // nothing to join and nothing to note *about* — the card above this already
+  // shows "Start the program" as the act.
+  if (!start) return null
+  const range = coachingWeekRange(start, week)
+  const play = weekPlay(played)
+
+  return (
+    <div className="space-y-2 border-t border-line pt-2.5">
+      <p className="text-label font-medium text-fg-2">
+        What you did · {prettyDay(range.from)} – {prettyDay(range.to)}
+      </p>
+
+      {played.length > 0 ? (
+        <>
+          <p className="num text-label text-fg-1">
+            {play.sessions} session{play.sessions === 1 ? '' : 's'} · {play.games} games, {play.won} won
+            {play.minutes > 0 && ` · ${Math.round((play.minutes / 60) * 10) / 10}h`}
+          </p>
+          <ul className="space-y-0.5">
+            {played.map((p) => (
+              <li key={p.id} className="text-label text-fg-2">
+                <span className="num text-fg-1">{prettyDay(p.date)}</span> · {p.format} {p.gamesWon}–{p.gamesLost}
+                {p.partner && ` · with ${p.partner}`}
+                {p.location && ` · ${p.location}`}
+                {/* The session's OWN note, read here rather than re-asked. */}
+                {p.notes && <span className="italic"> · “{p.notes}”</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        /* Names the days and says where to log, because "0 sessions" reads as a
+           measurement of a week you played nothing in. */
+        <p className="text-label text-fg-2">
+          No sessions logged for these days. They go on the <span className="text-fg-1">Pickleball</span> tab,
+          and land here by date.
+        </p>
+      )}
+
+      <label className="block">
+        <span className="mb-1.5 block text-label text-fg-2">
+          <span className="font-medium text-fg-1">Drills &amp; how it went</span> · which of the drills above you
+          actually ran, and what to carry into next week
+        </span>
+        {/* `key` is load-bearing: `CommitField` flushes its draft on unmount, so
+            a re-seeded component would write the previous week's text into this
+            one. One week per key. */}
+        <CommitField
+          key={week}
+          rows={2}
+          value={note}
+          onCommit={(v) => onNote(week, v)}
+          placeholder="Cross-court dink rally got to 38, not 50. Backhand dink still popping up."
+          label={`What you drilled in week ${week}`}
+          className="w-full"
+        />
+      </label>
+    </div>
   )
 }
 
