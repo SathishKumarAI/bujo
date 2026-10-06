@@ -1,10 +1,11 @@
-import type { CyclePoint, Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
+import type { CyclePoint, Entry, Habit, JournalData, LoggedFood, MoodReason, WorkoutSet } from './types'
 import { challengeRuleKey } from './recordKeys'
 import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
 import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
 import { HOME_EXERCISES } from './homeExercises'
+import { FOODS } from './foods'
 import { kindsFor } from '../domain/activities'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
@@ -86,7 +87,25 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 8
+export const DEMO_VERSION = 9
+
+/**
+ * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
+ * names and macros are the ones the app would actually have written.
+ */
+function demoFoodLog(seed: number): LoggedFood[] {
+  const picks = ['Poha', 'Chicken breast', 'Dal', 'Greek yogurt', 'Roti', 'Banana']
+  return picks
+    .slice(0, 3 + (seed % 3))
+    .map((name, k) => {
+      const f = FOODS.find((x) => x.name === name)
+      return f
+        ? { id: `demo_food_${seed}_${k}`, name: f.name, kcal: f.kcal, protein: f.protein, carbs: f.carbs, fat: f.fat }
+        : null
+    })
+    .filter((x): x is LoggedFood => x !== null)
+}
+
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -172,6 +191,12 @@ export function generateDemoData(today = todayISO()): JournalData {
       protein: 110 + Math.floor(rand() * 60),
       carbs: 150 + Math.floor(rand() * 120),
       fat: 50 + Math.floor(rand() * 40),
+      /* The receipt for what made up the day, on the most recent four. Without
+         it the "Logged today" list renders for nobody and the remove button is
+         a control no gate has ever drawn — the empty-journal trap, one field
+         over. Only four days: this is the chip path, and a seed that put a
+         receipt on all ninety would imply every day was logged that way. */
+      ...(i < 4 ? { foodLog: demoFoodLog(i) } : {}),
       // The three fields only a device can fill — an Apple Health import, or a
       // voice capture. They have been on `DailyMetric` since the ingest
       // pipeline landed and the seed never wrote one, so nothing in the app had
