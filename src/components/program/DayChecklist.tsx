@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import { cat } from '../../lib/colors'
+import { CommitField } from '../CommitField'
 import { VideoLink } from '../VideoLink'
 import type { ProgramState } from './useProgram'
 
@@ -17,6 +17,11 @@ import type { ProgramState } from './useProgram'
  * do about it is the view's business. The Program page starts the prescribed
  * rest; Pull-ups passes nothing, because its program prescribes no rest and a
  * timer counting down a number nobody wrote is worse than no timer.
+ *
+ * The actual-result field itself is `components/CommitField.tsx` now — it was
+ * `ActualField` here, and moved out when the cycle day log and the coaching
+ * roadmap needed the same blur-commit promise. Its reasoning (why not per
+ * keystroke, why the unmount flush, why `key=` is load-bearing) lives there.
  */
 export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name: string, qty: string) => void }) {
   return (
@@ -55,7 +60,7 @@ export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name:
               </span>
               <span className="num shrink-0 text-label text-fg-2">{e.qty}</span>
               <span className="num w-7 shrink-0 text-right text-label text-fg-2">×{e.sets}</span>
-              <ActualField
+              <CommitField
                 key={k}
                 value={s.actuals[k] ?? ''}
                 onCommit={(v) => s.setActual(i, v)}
@@ -66,68 +71,5 @@ export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name:
         )
       })}
     </ul>
-  )
-}
-
-/**
- * The "what I actually did" field. Local while you type, committed on blur.
- *
- * It used to write straight through to the journal on every keystroke, and the
- * store persists on every change: typing `3x10 @ 40kg` serialised the entire
- * journal to `localStorage` fourteen times, synchronously, on the main thread.
- * Undo was already safe (same-label edits coalesce in a 900ms window) — the
- * cost was the writes, not the history.
- *
- * Committing on blur alone would lose a value typed and then abandoned by
- * closing the tab, so the cleanup flushes too: switching day unmounts the row,
- * and an unmount that silently drops what you typed is exactly the data loss
- * this was meant to avoid. `key={exerciseKey}` at the call site is what makes
- * that safe — a different row is a different component, never a re-seeded one.
- */
-function ActualField({ value, onCommit, label }: { value: string; onCommit: (v: string) => void; label: string }) {
-  const [v, setV] = useState(value)
-  // What the journal holds, as far as this field knows. Compared against rather
-  // than the `value` prop so the unmount flush does not re-write a value it
-  // already committed on blur — a no-op `setSettings` still allocates a new
-  // journal and triggers another full save.
-  const saved = useRef(value)
-  // Both refs are written from event handlers and effects only — never during
-  // render, which `react-hooks/refs` rejects and React would be right to.
-  const latest = useRef(value)
-  const cb = useRef(onCommit)
-  useEffect(() => {
-    cb.current = onCommit
-  })
-
-  const commit = (next: string) => {
-    if (next === saved.current) return
-    saved.current = next
-    cb.current(next)
-  }
-
-  // Flush on unmount — see the note above.
-  useEffect(
-    () => () => {
-      if (latest.current !== saved.current) {
-        saved.current = latest.current
-        cb.current(latest.current)
-      }
-    },
-    [],
-  )
-
-  return (
-    <input
-      value={v}
-      onChange={(e) => {
-        setV(e.target.value)
-        latest.current = e.target.value
-      }}
-      onBlur={() => commit(v)}
-      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-      aria-label={label}
-      placeholder="actual"
-      className="w-24 shrink-0 rounded border border-line-strong bg-ink-0 px-2 py-0.5 text-label text-fg-1 placeholder:text-fg-2 focus:border-mauve focus:outline-none"
-    />
   )
 }
