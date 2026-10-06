@@ -3,7 +3,7 @@
 **Stopped:** 2026-10-05, after the Home Workout build. `main` at `78725b1`,
 this work on `feat/home-workout-library` (COD-272).
 
-## First thing: the browser gates need two commands nobody writes down
+## First thing: the browser gates need two commands nobody wrote down
 
 On a fresh checkout `npm run a11y`, `npm run smoke`, `npm run clipped` and
 `npm run space` all die before doing anything:
@@ -22,11 +22,27 @@ npm i -D --no-save playwright @axe-core/playwright
 npx playwright install chromium
 ```
 
-Both gates work immediately after. Nothing in `README.md`, `CLAUDE.md` or this
-file said so; CLAUDE.md's "Running the browser gates" section documents
-`BUJO_URL` and the worker knobs and not this. **COD-273.** It is CLAUDE.md's own
-"a gate with a manual incantation is one nobody types", with the incantation
-living in a YAML file two directories away.
+All four gates work immediately after, and were run for this branch:
+
+```
+173 of 173 scan(s) completed across 12 of 12 shard(s).
+No serious or critical violations.
+
+Smoke: 24/24 views OK · All views rendered clean.
+No clipped or off-screen text across 24 views at 1440px and 1024px and 390px.
+Design-system check passed (415 files).
+Palette check passed — 5 themes, 14 accents, both palettes agree.
+```
+
+CLAUDE.md now carries the two commands. **COD-273** is to stop them living only
+in CI — it is CLAUDE.md's own "a gate with a manual incantation is one nobody
+types", with the incantation in a YAML file two directories away.
+
+**The first `a11y` run was red, and that is the lesson of this branch.** One
+serious `color-contrast` on vscode: a link inheriting `@layer base`'s raw blue
+on a raised panel, 3.74:1. A hand-driven axe sweep over those same 83 tiles at
+those same five themes had already passed. **A bespoke probe is evidence; it is
+not a substitute for the gate.** General case filed as COD-274.
 
 The misdiagnosis is worth keeping: `npx --no-install playwright --version`
 answers `1.63.0` from the npx cache, so the obvious check says it is installed.
