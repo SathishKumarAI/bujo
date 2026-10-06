@@ -26,6 +26,180 @@ Rules the three share:
 
 ---
 
+## 2026-10-05 — Home Workout, and three defects the build walked into (#336)
+
+**Summary:** `lib/homeExercises.ts` was **53 lines and 5 exports** against
+`lib/pullups.ts`'s 230 and 21. The gap was not length: it could answer "what
+trains my chest" and nothing else. No equipment field, so the one question a
+*home* workout turns on — what can I train with what is in this room — could
+not be asked. No difficulty, no progression, one line of form per movement, and
+no programming at all. **21 movements → 83**, a nine-chapter written manual, 31
+fetched citations, and the page off the legacy shell onto the three-zone
+contract.
+
+The part worth keeping is not the feature. It is that **three separate defects
+in shared code were found by measuring, and two of them had been shipping for
+months behind a fold no gate reaches.**
+
+### What shipped
+
+| | before | after |
+|---|---|---|
+| movements | 21 | **83** |
+| families / equipment / difficulties | 0 / 0 / 0 | 9 / 8 / 3 |
+| manual chapters | 0 | 9 + 3 reference |
+| routines | 0 | 7 |
+| cited sources | 0 | 31 |
+| seeded demo sessions | 0 | 19 |
+| page height, 1440 shipped | 1898px · 2.11 screens | 2570px · 2.86 screens |
+| page height, 390 shipped | 4133px · 4.90 screens | 4541px · 5.38 screens |
+| `#main` rendered text @1440 | 2836 chars | 8624 chars |
+
+**+27% height on desktop for 3× the rendered text and 4× the movements**,
+because the catalogue ships collapsed and twelve manual chapters are a rail
+rather than twelve folds. Both sides measured the same way, on both branches,
+against a port whose `assets/index-*.js` hash was compared with
+`dist/index.html` — the `<title>` cannot tell two worktrees apart.
+
+### The citation ledger is the bit to copy
+
+31 sources, and **every URL was fetched and returned readable content**. The
+first draft of that list cited five PubMed abstracts, the NSCA
+position-statement index and a Mayo Clinic article — the obvious, plausible,
+correct-looking sources — and **not one of them opens**: PubMed serves a cookie
+wall with no abstract, `nsca.com` and `mayoclinic.org` answer 403, and the ACSM
+position stand is 402 on `journals.lww.com`. A citation that does not open is
+worse than no citation, because it looks checked. `homeManual.test.ts` now
+refuses those ten hosts by name.
+
+The consequence is visible in the shipped data: the famous **ACSM 2009
+rep/load/rest table** and the **"+2–10% load when you clear the target"** rule
+are *absent* from `HOME_GOALS`, despite being what every training page quotes.
+They could not be read, so they are not claimed. What is quoted instead comes
+from the open literature, and where that contradicts folklore the manual says
+so — rest is a *small* effect (ES ≈0.47 at ≤60s against ≈0.55 above, nothing
+past 90s), and the paper itself notes this is inconsistent with the NSCA's own
+30–90s figure.
+
+Two mechanisms worth reusing:
+
+- **Number citations and cue citations are separate fields, and an empty cue
+  list is a real answer the page prints.** Nothing reachable publishes cues for
+  a pike push-up, a Pallof press, a burpee or a jumping jack, so `conditioning`
+  carries none and says "standard coaching language, not a citation" instead of
+  lending a public-health guideline's authority to a form cue.
+- **"No medical claim" is a test, not an intention.** It runs a forbidden-phrase
+  list over every string in the data. Every "why" in the manual is mechanical,
+  because that is the only kind the sources give.
+
+### Three defects, and how each was found
+
+**1. `VideoLink` was 4.14:1 on vscode, in five places, for months.** `text-red`
+is the raw palette value on the raised rung. The old `views/HomeWorkout.tsx`
+*already carried the fix locally*, as an inline `onRaised('red')` with a comment
+stating that exact ratio — and `components/VideoLink.tsx` was extracted from
+that anchor **without it**. Pullups, Gym and the program checklist have been
+failing ever since, invisibly, because all three sit inside a fold or a rail
+group no rendering gate reaches. It surfaced only when the rebuilt library
+started using the shared component: 83 tiles failed at once, on 11 of 12
+chapters. *An extraction can take the markup and leave the fix behind, and the
+local comment explaining the fix is not enough to stop it.*
+
+**2. A `SectionRail` in a review column can never become a rail.** It flips at
+`@4xl/page` = 896px. **Zone 3 at the 1180 tier is 722px** — the number
+`PAGE-SHAPE.md` already records for a review zone. So every rail placed there
+has always rendered its *phone* chip row on a desktop. Survivable at six
+chapters; at twelve it measured a **1085px strip inside a 730px box**, with a
+third of the chapters — Sources among them — reachable only by horizontally
+scrolling a control that advertises no scrolling. Nothing failed: `clipped-text`
+asks whether an element shows less than it holds and a scroll container
+legitimately does, and axe sees a sound nav. New opt-in `railAt="2xl"`. The
+trap: **the caller's grid breakpoint and the rail's own must agree**, and the
+first attempt moved only the grid, which handed the rail a 192px column that it
+filled with the same strip — worse than either alone.
+
+**3. The base-layer anchor blue fails on a raised panel.** `@layer base` gives
+every `a` `var(--color-blue)`, the raw palette value; on vscode that is 3.74:1
+on `bg-ink-2`. Caught by `npm run a11y` — **after a hand-driven axe sweep over
+the same 83 tiles at the same five themes had already passed.** Filed as
+COD-274, because the base rule is correct and should stay; the fix for the
+general case is a retuned ground or an `.on-raised a` rule, not a hand-written
+colour per call site, which is the retyped rule the base layer abolished.
+
+### What was got wrong
+
+**The browser gates could not be run at all for most of this session, and the
+first diagnosis was wrong.** `npm run a11y`, `smoke`, `clipped` and `space` all
+die on `ERR_MODULE_NOT_FOUND`: `playwright` and `@axe-core/playwright` are in
+neither `dependencies` nor `devDependencies`. The first conclusion — recorded in
+STATUS and in COD-273 — was that the dependency had been *dropped*. It had not.
+Their absence is deliberate: `.github/workflows/a11y.yml` installs them per job
+with `npm i -D --no-save`. The recipe simply lived nowhere a human reads.
+
+What made the misdiagnosis easy, and will again: `npx playwright --version`
+answers `1.63.0` from the npx cache, so the obvious check says installed. That
+is the CLI, not the package the scripts import. Both commands are now in
+CLAUDE.md's "Running the browser gates" section, which documented `BUJO_URL` and
+the worker knobs and not this.
+
+**The workaround that filled the gap, and its ceiling.** A real Chrome driven
+over CDP with axe-core injected, per manual chapter: 12 chapters × five desktop
+themes + 12 at 390px, 0 violations. That is genuine evidence and it is what
+COD-237 asks for — and **it still missed the defect the real gate caught**. The
+lesson is not that the probe was badly written; it is that a bespoke probe is
+evidence and never a substitute for the gate.
+
+Two environment traps paid for twice each, both already in CLAUDE.md:
+
+- `vite preview` serves the previous bundle through its service worker after a
+  rebuild. A probe reported a just-fixed colour still failing. Compare the
+  loaded `index-*.js` against your own `dist/index.html` *every time*.
+- The DevTools `resize_page` cannot go below ~500px, so a "390px" measurement
+  taken that way is really 501px. Use `emulate`.
+
+**And a locally green change went red on push**, because `npm run design` and
+`npm run contrast` are **not** in `npm run verify` but are in CI. The design
+gate greps the source for a hardcoded colour and cannot tell a comment from a
+call site — a docstring quoting the two measured hex values failed it. The right
+trade, and now written down: run all four before pushing.
+
+### Verification
+
+```
+npm run verify                     EXIT 0 · 121 files · 1691 tests
+npm run a11y                       173/173 scans, 12/12 shards · no serious or critical
+npm run smoke                      24/24 views OK
+npm run clipped                    clean, 24 views at 1440 / 1024 / 390
+npm run design                     passed, 415 files
+npm run contrast                   passed, 5 themes, 14 accents, both palettes agree
+npm run space -- homeworkout       desktop 2.7 shipped / 9.8 open · phone 3.7 / 18.3
+```
+
+The first `a11y` run was **1 serious**; the table above is after the fix.
+
+`homeExercises.test.ts` (22 assertions) and `homeManual.test.ts` (17) exist for
+one reason: commit 531596f added "cards from the training guide" to
+`views/Pullups.tsx` by rewriting its lists inline, cutting fourteen workout
+formats to three and nine progressions to seven, with every gate green — an
+export nobody imports is not an error. All 21 original movements are asserted
+present **by id**, not counted.
+
+Arming the muscle-delegation assertion found **nine real gaps in the shared
+`lib/exerciseMuscles.ts` table**: "Pike push-ups" and "Diamond push-ups"
+resolved to the **chest** (the generic `push up` rule claimed them), and seven
+more resolved to **nothing**. Fixed there, so all ~20 callers of that module get
+it.
+
+### Filed, not fixed
+
+- **COD-273** — the browser gates' install recipe lives only in a CI workflow.
+- **COD-274** — every inline link on a raised panel inherits a blue that fails
+  4.5:1 on vscode; `npm run contrast` cannot see it because it measures accents
+  against the *card* surface.
+- The other six `SectionRail` adopters are all in zone 3 and all on the chip
+  row. Whether each one's labels overflow 722px was not measured, so none was
+  moved on a guess.
+
 ## 2026-10-05 — Said no to Supabase, then fixed what the question exposed (#320–#326)
 
 **Summary:** The ask was "add Supabase sign-in and sync the journal in the
