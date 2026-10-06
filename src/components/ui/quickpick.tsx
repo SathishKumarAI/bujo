@@ -46,6 +46,7 @@ export function ChipPick<T extends string | number>({
   className,
   tone = 'brand',
   multi = false,
+  action = false,
 }: {
   /** Rendered as a real `<legend>`, so the group is named for a screen reader. */
   label: string
@@ -58,6 +59,11 @@ export function ChipPick<T extends string | number>({
    * that changes is which chips read as on.
    */
   multi?: boolean
+  /**
+   * The row performs an action per chip instead of holding a selection — no
+   * `aria-pressed`, and `value` is ignored. Pass `null` as the value.
+   */
+  action?: boolean
   /** A non-brand accent, for groups that are not the page's primary choice. */
   tone?: 'brand' | 'teal' | 'peach'
   options: { value: T; label: ReactNode; hint?: string }[]
@@ -80,7 +86,13 @@ export function ChipPick<T extends string | number>({
               type="button"
               key={String(o.value)}
               onClick={() => onChange(o.value)}
-              aria-pressed={on}
+              // `aria-pressed` is a LIE on an action row. Nutrition's food
+              // chips each add a serving to the day and then leave nothing
+              // selected behind — a screen reader told "not pressed" about a
+              // button that has no pressed state is being told about a toggle
+              // that does not exist. `action` drops the attribute rather than
+              // reporting a state the row does not have.
+              aria-pressed={action ? undefined : on}
               title={o.hint}
               className={cn(
                 'rounded-pill border px-3 py-1.5 text-label transition-all duration-150',
