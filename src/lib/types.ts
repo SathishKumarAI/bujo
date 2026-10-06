@@ -137,6 +137,16 @@ export type MoodReason =
   | 'no-plans'
 
 /** Per-day 0–10 wellbeing metrics for the line chart. */
+/** One food as it was logged, so it can be taken back off. */
+export interface LoggedFood {
+  id: string
+  name: string
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
 export interface DailyMetric {
   date: string // ISO day, primary key
   mood?: number // 0 bad … 10 great
@@ -161,6 +171,23 @@ export interface DailyMetric {
   moodReasons?: MoodReason[]
   /** Free text for a reason the nine do not cover. Never parsed, only read. */
   moodReasonNote?: string
+  /**
+   * What was actually eaten, in the order it was logged.
+   *
+   * Before this existed, tapping a food chip folded its macros into
+   * `calories`/`protein`/`carbs`/`fat` and **threw the food away**. The totals
+   * were the only record, which made a mis-tap unfixable in principle rather
+   * than merely unsupported: you cannot remove the samosa when no samosa was
+   * ever stored, only four numbers it contributed to. Reported as "how can I
+   * undo the food I logged if I mis-clicked?" — and the honest answer was that
+   * the app could not, at any price, without this field.
+   *
+   * **Optional and additive.** Absent means "logged before this existed, or
+   * typed straight into the totals", and the totals stay authoritative so every
+   * chart, every export and every hand-entered day is unaffected. This is a
+   * receipt for the chip path, not a replacement for the numbers.
+   */
+  foodLog?: LoggedFood[]
   stress?: number // 0 low … 10 high
   sleep?: number // hours, 0–10+
   energy?: number // 0 drained … 10 energized (Bearable-style)

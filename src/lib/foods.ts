@@ -1,3 +1,4 @@
+import type { DailyMetric, LoggedFood } from './types'
 // A small offline food database for quick macro logging. Focused on American and
 // Indian staples (the two cuisines this journal's owner eats most). Values are
 // per the stated serving; pick a food and its macros are added to the day's
@@ -139,4 +140,36 @@ export function sumFoods(foods: Food[]): Macros {
     (a, f) => ({ calories: a.calories + f.kcal, protein: a.protein + f.protein, carbs: a.carbs + f.carbs, fat: a.fat + f.fat }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 },
   )
+}
+
+/**
+ * Add a food to a day, and take one back off.
+ *
+ * Here rather than inside `views/Nutrition` because the property that matters
+ * is arithmetic — removing must give back exactly what adding took — and a
+ * property trapped in a component is one no test can state. The view does the
+ * asking and the rendering; this does the sums.
+ */
+export function withFoodAdded(m: DailyMetric | undefined, food: Food, id: string): Partial<DailyMetric> {
+  return {
+    calories: (m?.calories ?? 0) + food.kcal,
+    protein: (m?.protein ?? 0) + food.protein,
+    carbs: (m?.carbs ?? 0) + food.carbs,
+    fat: (m?.fat ?? 0) + food.fat,
+    foodLog: [...(m?.foodLog ?? []), { id, name: food.name, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat }],
+  }
+}
+
+export function withFoodRemoved(m: DailyMetric | undefined, entry: LoggedFood): Partial<DailyMetric> {
+  return {
+    // Floored at zero because the totals can ALSO be typed by hand. If someone
+    // logs a chip and then lowers the total themselves, subtracting the full
+    // macro goes negative — and a negative-calorie day is a worse lie than an
+    // approximate one.
+    calories: Math.max(0, (m?.calories ?? 0) - entry.kcal),
+    protein: Math.max(0, (m?.protein ?? 0) - entry.protein),
+    carbs: Math.max(0, (m?.carbs ?? 0) - entry.carbs),
+    fat: Math.max(0, (m?.fat ?? 0) - entry.fat),
+    foodLog: (m?.foodLog ?? []).filter((f) => f.id !== entry.id),
+  }
 }

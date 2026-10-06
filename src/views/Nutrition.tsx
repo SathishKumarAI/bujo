@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
+import { uid } from '../lib/storage'
+import { useConfirm } from '../components/ConfirmDialog'
+import { X } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
 import { ChipPick } from '../components/ui/quickpick'
 import { EmptyFrame, NumField, PageLayout, SummaryStrip } from '../components/page'
-import { FOODS, KCAL_BANDS, SAMPLE_DAY, kcalBand, sumFoods, type Food } from '../lib/foods'
+import { FOODS, KCAL_BANDS, SAMPLE_DAY, kcalBand, sumFoods, withFoodAdded, withFoodRemoved, type Food } from '../lib/foods'
+import type { LoggedFood } from '../lib/types'
 import { cat, onRaised } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
 
@@ -86,6 +91,7 @@ const MACROS = [
 
 export function Nutrition() {
   const { data, setMetric } = useJournal()
+  const confirm = useConfirm()
   const today = todayISO()
   const [date, setDate] = useState(today)
 
@@ -94,14 +100,29 @@ export function Nutrition() {
   const protein = m?.protein ?? 0
   const totalG = MACROS.reduce((s, x) => s + (m?.[x.key] ?? 0), 0)
 
-  function addFood(food: Food) {
-    setMetric(date, {
-      calories: (m?.calories ?? 0) + food.kcal,
-      protein: (m?.protein ?? 0) + food.protein,
-      carbs: (m?.carbs ?? 0) + food.carbs,
-      fat: (m?.fat ?? 0) + food.fat,
-    })
+  /**
+   * A day past this is almost certainly a mis-tap rather than a meal, so the
+   * app asks instead of silently accepting it. Deliberately generous — 2.5x a
+   * 2000 kcal target. The guardrail is for "I tapped biryani eleven times",
+   * not for "I had a big day", and a threshold that fires on a genuinely large
+   * day is a threshold people learn to dismiss without reading.
+   */
+  const IMPLAUSIBLE_KCAL = 5000
+
+  async function addFood(food: Food) {
+    const next = (m?.calories ?? 0) + food.kcal
+    if (next > IMPLAUSIBLE_KCAL && !(await confirm({
+      title: `Add ${food.name} on top of ${kcal} kcal?`,
+      description: `That takes ${prettyDay(date)} to ${next} kcal. If that is right, go ahead — this only asks because repeated taps are easy to make by accident.`,
+      confirmLabel: 'Yes, add it',
+    }))) return
+    // The receipt rides along with the totals. Totals stay authoritative —
+    // `foodLog` is what makes the tap reversible, not a second source of truth.
+    setMetric(date, withFoodAdded(m, food, uid('food')))
   }
+
+  /** Take one logged food back off the day, numbers and all. */
+  const removeFood = (entry: LoggedFood) => setMetric(date, withFoodRemoved(m, entry))
 
   const recent = useMemo(() => {
     return Array.from({ length: 14 }, (_, i) => {
@@ -209,6 +230,42 @@ export function Nutrition() {
 
           {/* Renders nothing until food lookup is switched on in Settings. */}
           <FoodSearch onAdd={addFood} />
+
+          {/* WHAT YOU LOGGED, AND THE WAY BACK OUT.
+              Reported as "how can I undo the food I mis-clicked?" — and the
+              answer was that the app could not, because `addFood` folded the
+              macros into four totals and threw the food away. There was nothing
+              to remove. This list is the receipt that makes the tap reversible,
+              and it earns its space twice: it is also the only place the day
+              says WHAT it was made of rather than just how much it came to. */}
+          {(m?.foodLog?.length ?? 0) > 0 && (
+            <section>
+              <h3 className="mb-1 border-b border-line pb-1 text-label text-fg-2">
+                Logged {date === today ? 'today' : `on ${prettyDay(date)}`} · {m!.foodLog!.length}
+              </h3>
+              <ul>
+                {m!.foodLog!.map((f) => (
+                  <li key={f.id} className="flex items-center justify-between gap-2 border-b border-line py-1 last:border-b-0">
+                    <span className="min-w-0 truncate text-body text-fg-1">{f.name}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="num text-label text-fg-2">{f.kcal} kcal</span>
+                      {/* A real button with a real name. "Remove" alone would
+                          give a screen reader eleven identical controls. */}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Remove ${f.name}`}
+                        title={`Remove ${f.name}`}
+                        onClick={() => removeFood(f)}
+                      >
+                        <Icon as={X} size="sm" />
+                      </Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <p className="mt-1 border-t border-line pt-3 text-label text-fg-2">Or set the day’s totals directly</p>
 
