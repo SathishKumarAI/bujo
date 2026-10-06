@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MagnifyingGlass, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Pill } from '../ui'
+import { onRaised } from '../../lib/colors'
 import { Button } from '../ui/button'
 import { ChipPick } from '../ui/quickpick'
 import { VideoLink } from '../VideoLink'
@@ -129,7 +130,15 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
             </p>
           )}
           <p className="text-fg-2">{FAMILY_LABEL[ex.family]} · read the family manual below for the set-up and how to progress.</p>
-          <a href={searchUrl(ex)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">
+          {/* `onRaised('blue')`, not the inherited anchor colour. `@layer base`
+              gives every `a` `var(--color-blue)` — the RAW palette value — and
+              this one sits on `bg-ink-2`, the raised rung. On vscode that
+              measured **3.74:1**, found by `npm run a11y` after a hand-driven
+              axe sweep over the same tiles had already passed. Exactly the
+              `VideoLink` defect one token over, which is the tell that the base
+              anchor rule has this shape everywhere an inline link sits on a
+              raised panel. Filed; fixed here. */}
+          <a href={searchUrl(ex)} target="_blank" rel="noreferrer" style={{ color: onRaised('blue') }} className="inline-flex items-center gap-1">
             <Icon as={MagnifyingGlass} size="sm" /> More {ex.name} videos
           </a>
         </div>
