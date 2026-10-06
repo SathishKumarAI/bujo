@@ -1,5 +1,112 @@
 # STATUS
 
+**Stopped:** 2026-10-05, after the Home Workout build. `main` at `78725b1`,
+this work on `feat/home-workout-library` (COD-272).
+
+## First thing: the browser gates cannot run on this machine
+
+**`playwright` is not in `package.json`.** Not as a dependency, not as a
+devDependency, and `node_modules` does not contain it. So `npm run a11y`,
+`npm run smoke`, `npm run clipped` and `npm run space` all die before they do
+anything:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'playwright' imported from
+  …/scripts/space-audit.mjs
+```
+
+`@axe-core/playwright` is missing too. The Playwright **CLI** happens to be in
+the npx cache (1.63.0), which is why `npx playwright --version` answers and
+makes this look fine — it is not the package the scripts import.
+
+This is the "a gate nobody runs" family in CLAUDE.md one level deeper: not
+switched off, *uninstallable*. The timings written into CLAUDE.md
+(`507s` serial, `183s` at four workers) were measured on a checkout where it
+was installed, so something has dropped it since. Filed as **COD-273**; the fix
+is to declare both in `devDependencies` and run `npx playwright install
+chromium`, which is an install this session did not take on its own.
+
+**Until then, measure with the DevTools MCP against a real Chrome.** That is
+what this session did and it works:
+
+```
+npx vite build
+npx vite preview --port 4199 --strictPort &
+# launch Chrome with --remote-debugging-port=9333 --user-data-dir=<temp>
+# then inject axe-core from cdnjs and drive the page
+```
+
+Two traps that cost time doing it that way, both already in CLAUDE.md and both
+hit anyway:
+
+- **The service worker serves the previous bundle.** A rebuild plus a reload is
+  not enough; a probe reported the fixed colour still failing. Compare
+  `document.querySelector('script[src*=index-]')` against your own
+  `dist/index.html` *every time*, then unregister the worker and clear `caches`.
+- **`resize_page` cannot go below ~500px** (the Chrome window has a minimum).
+  Use `emulate` with `390x844x2,mobile,touch`, and note it survives a
+  `navigate_page` but not a `location.reload()` from inside the page.
+
+## What this session did
+
+Home Workout, from a 53-line data module and a flat three-card page to a
+feature. PR #336.
+
+```
+feat(home-workout)  83 movements, cues, chains, kit filter      COD-272
+feat(home-workout)  the manual + 31 fetched citations
+refactor            the page onto the three-zone contract
+feat(demo)          seed homeWorkout, DEMO_VERSION 5 → 6
+fix(home-workout)   How-to toggle clipped its own caret
+fix(video)          VideoLink 4.14:1 on vscode, five call sites
+fix(rail)           SectionRail cannot become a rail in zone 3
+docs                feature page + CREDITS
+```
+
+## What a future session will trip over
+
+**`lib/exerciseMuscles.ts` is the only muscle table, and Home Workout depends
+on that staying true.** `homeExercises.test.ts` asserts every one of the 83
+movements resolves there. Add a movement whose name matches no rule and the
+suite fails — the fix is a rule in *that* file, above the generic ones, not a
+field on the movement. Arming the assertion found nine real gaps, two of which
+("Pike push-ups", "Diamond push-ups") were resolving to the **chest**.
+
+**A `SectionRail` in zone 3 renders the phone chip row on a desktop** unless it
+is passed `railAt="2xl"`, because zone 3 at the 1180 tier is 722px and the
+default flip is at 896px. Six other adopters (Insights, Coaching, Pickleball,
+Pull-ups, Help, Recovery) are still on the default; whether their labels
+overflow 722px was not measured, so none of them was moved on a guess. **The
+caller's grid breakpoint must match the prop** — moving only one is worse than
+moving neither.
+
+**The a11y gate still cannot see eleven of the manual's twelve chapters**
+(COD-237: a rail has no `aria-expanded`). The fold count it prints for this
+page is not coverage. What was done instead, by hand, against a confirmed
+bundle: 12 chapters × five desktop themes + 12 chapters at 390px, 0 violations
+of any impact. Re-run that probe, or arm the gate, before trusting a green run
+on this page.
+
+**`DEMO_VERSION` is 6.** Bump it whenever the seed gains a field a page
+renders, and re-seed via Settings → Data → Load demo data; editing
+`src/lib/demo.ts` changes nothing for a journal that already exists.
+
+## Next action
+
+1. COD-273 — declare `playwright` and `@axe-core/playwright`, install Chromium,
+   and run the four gates for real. Everything else here is downstream of that.
+2. Decide whether the other six rail pages want `railAt="2xl"`. Measure the
+   chip strip's `scrollWidth` against its `clientWidth` on each; do not assume.
+
+---
+
+# Previous session (2026-10-05, #320–#327)
+
+Kept verbatim below rather than overwritten — it is another stream's handover
+and its sync-path warnings are still live. Its opening question ("did #326 go
+green?") is resolved: `main` has merged through #335.
+
+
 **Stopped:** 2026-10-05. `main` at `982b40b` plus **#326 open** — the CI split,
 which is the one thing to look at first.
 
