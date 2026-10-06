@@ -19,7 +19,6 @@ import { displayDistance } from '../lib/units'
 import { nextSplit, splitMeta, weeklyActiveMinutes } from '../lib/fitness'
 import { useStickyState } from '../lib/useStickyState'
 import type { Workout } from '../lib/types'
-import type { ViewId } from '../components/shell/viewChrome'
 import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt'
 import { WORKOUT_KEY } from '../lib/recordKeys'
 
@@ -200,7 +199,6 @@ export function Fitness() {
             </Button>
           ) : undefined}
         />
-        <CompanionTool activity={draft.activity} />
         </>
       }
       zone3={
@@ -289,38 +287,25 @@ export function Fitness() {
 }
 
 /**
- * The one contextual door out of this page — and it is now down to one entry.
+ * The contextual-door map is **gone**, and its last entry is the reason.
  *
- * This map was written when Pull-ups, Pickleball, Strength tools and Coaching
- * had been collapsed OFF the tab row and lived only behind an activity. Every
- * one of them has since been promoted back to a Body tab, so four of the five
- * links pointed at a destination whose tab was already on screen, forty pixels
- * above the page — "Strength tools · anatomy, plates, analytics ›" sat under
- * the submit button while `Strength` sat in the tab row. A second door to the
- * same room is not a shortcut, it is a thing to read and dismiss.
+ * It was written when Pull-ups, Pickleball, Strength tools and Coaching had
+ * been collapsed OFF the tab row and lived only behind an activity. Each was
+ * promoted back to a Body tab in turn, and `COMPANION` shrank to one entry:
+ * Home workout, kept because that page genuinely had no tab.
  *
- * Home workout is the one surface that really is unreachable from navigation
- * (`sections.ts` lists it in `MEMBERS` but in no section's `tabs`), so it is
- * the one that still needs a door. If it ever becomes a tab, delete this too.
+ * That entry had been dead for some time and nothing could say so. It was
+ * keyed on the activity `homeWorkout`, which is `mode: 'strength'`; when
+ * Fitness's strength segment was deleted, `LOGGABLE_MODES` dropped strength,
+ * the activity stopped being selectable, and a link conditional on selecting
+ * it stopped being renderable. The invariant test guarding this map asks
+ * whether a companion points at something already tabbed — a good question
+ * that cannot catch a companion pointing at something nobody can reach.
  *
- * Keyed by activity only. `MODE_COMPANION` existed solely for the strength and
- * sport entries and is gone with them.
+ * Home workout is a Body tab now, so the map is empty and empty is deletable.
+ * The lesson worth keeping: a link gated on state another module owns needs a
+ * test that it can still *render*, not only that it is not redundant.
  */
-// eslint-disable-next-line react-refresh/only-export-components -- exported for the invariant test below it, not for reuse
-export const COMPANION: Record<string, { view: ViewId; label: string }> = {
-  homeWorkout: { view: 'homeworkout', label: 'Bodyweight exercise library' },
-}
-
-function CompanionTool({ activity }: { activity: string }) {
-  const navigate = useNav()
-  const tool = COMPANION[activity]
-  if (!tool) return null
-  return (
-    <Button variant="ghost" onClick={() => navigate(tool.view)} className="mt-2 h-auto justify-start p-0 text-label">
-      {tool.label} ›
-    </Button>
-  )
-}
 
 /** In-place edit for a logged session, so correcting one costs no scrolling. */
 function EditDialog({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {

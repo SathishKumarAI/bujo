@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
-import { COMPANION, Fitness } from './Fitness'
+import { Fitness } from './Fitness'
 import { SECTIONS } from '../components/shell/sections'
-import { LOGGABLE_MODES, MODES, modeSegments } from '../domain/activities'
+import { LOGGABLE_MODES, MODES, activitiesForMode, modeSegments } from '../domain/activities'
 
 /**
  * The deep-linked activity has to beat the stored mode.
@@ -82,28 +82,40 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
 })
 
 /**
- * A companion link may only point somewhere navigation cannot already reach.
+ * There are no companion links left, and this is what replaced the test that
+ * guarded them.
  *
- * The map held five links when Pull-ups, Pickleball, Strength tools and
- * Coaching lived nowhere else. All four were promoted to Body tabs, and nothing
- * failed — so the page kept drawing "Strength tools · anatomy, plates,
- * analytics ›" under the submit button while `Strength` sat in the tab row
- * forty pixels above it. Four second doors to rooms already on screen.
+ * The old one asked "does a companion point at something already tabbed?" —
+ * the right question for the failure it was written after, and blind to the
+ * one that actually happened. `COMPANION`'s last entry pointed at Home
+ * workout, which was *not* tabbed, so it passed; what it could not ask was
+ * whether the link could still render. It could not, and had not for some
+ * time: it was keyed on an activity whose mode had been dropped from
+ * `LOGGABLE_MODES` two files away.
  *
- * This is the reverse of `sections.test.ts`'s "every view has a door": that one
- * catches a surface with no way in, this one catches a second way in. Promote a
- * companion to a tab and this fails, which is the moment to delete its entry.
+ * So the invariant worth keeping is about activities, not links. Every
+ * activity the page can *select* must belong to a mode the page can *offer* —
+ * the property whose failure made the link unreachable, stated where it can
+ * fail loudly.
  */
-describe('Fitness companion links', () => {
-  it('only links to views that are not already tabs', () => {
-    // `SECTIONS`, not `sectionOf`. `sectionOf` reads `MEMBERS`, which lists
-    // Home workout so that landing on it lights the Body rail row — it is a
-    // member of the section without being one of its tabs, and asserting on it
-    // fails the very entry that is still correct. The question here is whether
-    // a tab row can already take you there.
+describe('Fitness activity reachability', () => {
+  it('offers at least one activity per loggable mode', () => {
+    for (const mode of LOGGABLE_MODES) {
+      expect(activitiesForMode(mode).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('every activity in a non-loggable mode has a page of its own', () => {
+    // The escape hatch for an activity Fitness cannot log: it must be logged
+    // somewhere. `homeWorkout` is the case that broke — it had neither.
     const tabs = SECTIONS.flatMap((s) => s.tabs).map((t) => t.view)
-    const tabbed = Object.values(COMPANION).map((c) => c.view).filter((v) => tabs.includes(v))
-    expect(tabbed).toEqual([])
+    const unloggable = MODES.filter((m) => !LOGGABLE_MODES.includes(m))
+    expect(unloggable.length).toBeGreaterThan(0)
+    for (const mode of unloggable) {
+      expect(activitiesForMode(mode).length).toBeGreaterThan(0)
+    }
+    // Home workout's own surface, which is now how you reach it.
+    expect(tabs).toContain('homeworkout')
   })
 })
 
