@@ -7,7 +7,7 @@ import { MasonryGrid } from '../shell/CardGrid'
 import { useNav } from '../shell/nav'
 import { useCursor } from '../shell/cursor'
 import { onRaised } from '../../lib/colors'
-import { labelOf } from '../../domain/activities'
+import { fullLabelOf } from '../../domain/activities'
 import { longestStreak } from '../../lib/stats'
 import { prettyDay, prettyMonth } from '../../lib/date'
 
@@ -41,7 +41,7 @@ export function LifetimeCards() {
   const records: { label: string; value: string }[] = []
   if (best > 0) records.push({ label: 'Longest streak', value: `${best} days` })
   if (bestMood?.mood != null) records.push({ label: 'Best mood', value: `${bestMood.mood}/10 · ${prettyDay(bestMood.date)}` })
-  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${labelOf(bigWorkout.activity)}` })
+  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${fullLabelOf(bigWorkout.activity, bigWorkout.subActivity)}` })
   if (pickBest) records.push({ label: 'Best pickleball', value: `${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}` })
   if (busiest) records.push({ label: 'Busiest day', value: `${busiest[1]} entries · ${prettyDay(busiest[0])}` })
 

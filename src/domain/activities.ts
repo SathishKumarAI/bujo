@@ -81,6 +81,66 @@ export const ACTIVITIES = {
 
 export type ActivityKey = keyof typeof ACTIVITIES
 
+/**
+ * SUB-ACTIVITY · what kind of the thing it was.
+ *
+ * Reported as "I want to say the activity is a home workout — what kind of
+ * home workout did I do? Why is there no sub-activity?" The registry had one
+ * level: nine cardio activities, two sport, and no way to say that the run was
+ * intervals rather than an easy hour, or that HIIT meant Tabata. The record
+ * said "Yoga, 45 min" for a restorative session and a power class alike.
+ *
+ * It is not that the dimension did not exist — it existed exactly once, for
+ * lifting, as `Workout.split`, bolted on beside the activity rather than
+ * modelled. One activity had a sub-activity and the other sixteen had nothing,
+ * which is the shape this registry was written to prevent one level up.
+ *
+ * So it is a property of the activity, like `required` and `best`. A view
+ * cannot special-case which activities have kinds, because it has nowhere to
+ * put the condition — `kindsFor()` is the only way to ask.
+ *
+ * Keyed by `ActivityKey`, so a typo is a compile error rather than a chip row
+ * that silently never renders. That is deliberate: this is a hand-written list
+ * resolved against another source, the shape this repo has been bitten by
+ * repeatedly, and the type is what keeps it honest.
+ *
+ * The lists are presets, not an enum — `Workout.subActivity` is a plain string,
+ * so a journal that already holds something else keeps it, and these are what
+ * the form offers rather than what the field permits.
+ *
+ * **The field is `subActivity`, not `kind`, and that is not fussiness.** The
+ * first draft called it `kind` and the collision was immediate: `ImportRecord`
+ * and `CaptureResult` both use `kind` as their union discriminant, `WorkoutSet`
+ * uses it for warmup/working/drop, and the search index emits `kind: 'workout'`.
+ * Writing `fullLabelOf(r.activity, r.kind)` in `captureLanding.ts` TYPECHECKED
+ * and would have printed "Run · workout" on every capture receipt, because
+ * `r.kind` there is the discriminant. Five meanings of one word in one
+ * codebase is four too many.
+ *
+ * **No kinds for push/pull/legs/strength.** They carry `split`, which does the
+ * same job and feeds the strength analytics; giving them both would be two
+ * mechanisms for one question, which is how `split` became an exception in the
+ * first place.
+ */
+export const ACTIVITY_KINDS: Partial<Record<ActivityKey, readonly string[]>> = {
+  run: ['Easy', 'Tempo', 'Intervals', 'Long run', 'Treadmill', 'Race'],
+  cycle: ['Road', 'Indoor trainer', 'Mountain', 'Commute', 'Spin class'],
+  swim: ['Freestyle', 'Mixed strokes', 'Drills', 'Open water'],
+  row: ['Steady', 'Intervals', 'Time trial'],
+  walk: ['Outdoor', 'Treadmill', 'Incline', 'Rucking'],
+  hike: ['Day hike', 'Summit', 'Trail'],
+  yoga: ['Vinyasa', 'Hatha', 'Yin', 'Power', 'Restorative', 'Mobility'],
+  hiit: ['Tabata', 'EMOM', 'AMRAP', 'Circuit', 'Sprints', 'Bike intervals'],
+  // `other` is the activity you pick when none of the above fits, so it is the
+  // one that needs a kind most — without one the record says nothing at all.
+  other: ['Elliptical', 'Stair climber', 'Jump rope', 'Dance', 'Martial arts', 'Climbing', 'Sports class'],
+  pickleball: ['Singles', 'Doubles', 'Drills', 'Open play', 'Tournament'],
+  sport: ['Basketball', 'Cricket', 'Tennis', 'Badminton', 'Football', 'Soccer', 'Volleyball', 'Table tennis'],
+  homeWorkout: ['Full body', 'Upper body', 'Lower body', 'Core', 'Push', 'Pull', 'Mobility', 'HIIT circuit'],
+  pullups: ['Max reps', 'Ladder', 'Greasing the groove', 'Weighted', 'Negatives', 'Assisted'],
+}
+
+
 /** Never required by an activity · the form decides which are worth showing. */
 export const OPTIONAL_FIELDS = ['calories', 'rpe', 'notes'] as const
 
@@ -184,6 +244,24 @@ export const bestStat = (activityKey: string): BestStat =>
 /** Does this activity ask for `field`? The only sanctioned field-visibility test. */
 export const asks = (activityKey: string, field: RequiredField): boolean =>
   requiredFields(activityKey).includes(field)
+
+/** The kinds an activity offers, or an empty list. The only sanctioned test. */
+export const kindsFor = (activityKey: string): readonly string[] =>
+  (isActivityKey(activityKey) && ACTIVITY_KINDS[activityKey]) || []
+
+/** Does this activity have a sub-activity to ask about? */
+export const hasKinds = (activityKey: string): boolean => kindsFor(activityKey).length > 0
+
+/**
+ * "Run · Intervals", or just "Run". The label any list of sessions should show.
+ *
+ * Exists because the alternative is every call site writing
+ * `w.subActivity ? ... : ...` itself, and the one that forgets stores a value
+ * nobody can see — a field written and never read is the same defect as a data
+ * module nothing imports, which this repo has shipped before.
+ */
+export const fullLabelOf = (activityKey: string, kind?: string): string =>
+  kind ? `${labelOf(activityKey)} · ${kind}` : labelOf(activityKey)
 
 /**
  * Legacy free-form `activity` strings → registry keys.

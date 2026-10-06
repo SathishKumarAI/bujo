@@ -1,5 +1,5 @@
 import type { Habit, HabitType, JournalData } from './types'
-import { labelOf } from '../domain/activities'
+import { fullLabelOf } from '../domain/activities'
 import { addDays, dayDiff, isFutureDay, todayISO, weekDaysOf } from './date'
 import { isScheduledOn } from './schedule'
 
@@ -459,8 +459,13 @@ export function search(data: JournalData, q: string) {
   data.workouts.forEach((w) => {
     // Search the *label*, not the key: someone looking for "home workout" or
     // "pull-ups" is typing what the UI showed them, not `homeWorkout`.
-    const blob = `${labelOf(w.activity)} ${w.notes} ${w.sets.join(' ')}`.toLowerCase()
-    if (blob.includes(needle)) out.push({ date: w.date, kind: 'workout', text: `${labelOf(w.activity)} — ${w.notes}` })
+    //
+    // The sub-activity is in the blob for the same reason. "intervals" and
+    // "tabata" are exactly the words someone searches for, and they are now
+    // the only place that distinction is recorded — leaving `kind` out would
+    // make a field the form asks for unfindable by the search beside it.
+    const blob = `${fullLabelOf(w.activity, w.subActivity)} ${w.notes} ${w.sets.join(' ')}`.toLowerCase()
+    if (blob.includes(needle)) out.push({ date: w.date, kind: 'workout', text: `${fullLabelOf(w.activity, w.subActivity)} — ${w.notes}` })
   })
   return out.sort((a, b) => (a.date < b.date ? 1 : -1))
 }

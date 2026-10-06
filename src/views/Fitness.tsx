@@ -11,7 +11,7 @@ import {
   ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
-import { isActivityKey, labelOf, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, type Mode } from '../domain/activities'
+import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
 import { useNav } from '../components/shell/nav'
 import { bestOf, sessionsInMode, totalTime } from '../domain/sessions'
@@ -142,7 +142,7 @@ export function Fitness() {
   const facts = [
     { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
     { label: 'Next up', value: NEXT[mode], prose: true },
-    { label: 'Last session', value: last ? `${labelOf(last.activity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
+    { label: 'Last session', value: last ? `${fullLabelOf(last.activity, last.subActivity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
   ]
 
   // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────
@@ -227,7 +227,7 @@ export function Fitness() {
                     className={`group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0 ${justCaptured.has(WORKOUT_KEY(w.id)) ? 'just-captured' : ''}`}
                   >
                     <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                      <span className="truncate font-medium text-fg-1">{labelOf(w.activity)}</span>
+                      <span className="truncate font-medium text-fg-1">{fullLabelOf(w.activity, w.subActivity)}</span>
                       <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
                     </button>
                     <div className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
@@ -237,7 +237,7 @@ export function Fitness() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => removeWorkout(w.id)}
-                        aria-label={`Delete ${labelOf(w.activity)} on ${prettyDay(w.date)}`}
+                        aria-label={`Delete ${fullLabelOf(w.activity, w.subActivity)} on ${prettyDay(w.date)}`}
                         className="text-fg-2 reveal hover:text-red"
                       >×</Button>
                     </div>

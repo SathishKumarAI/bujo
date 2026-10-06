@@ -226,9 +226,28 @@ export interface Workout {
    */
   activity: ActivityKey
   /**
+   * Sub-activity — which kind of this activity it was. "Intervals" for a run,
+   * "Tabata" for HIIT, "Upper body" for a home workout.
+   *
+   * A plain string, not a union of the presets in `ACTIVITY_KINDS`. The presets
+   * are what the form offers; the field is what the journal holds, and pinning
+   * the type to today's list would make tomorrow's list a migration and make
+   * any hand-edited or imported value unrepresentable.
+   *
+   * Optional and never backfilled. A session logged before this existed has no
+   * kind, and guessing one from its duration would invent a training day that
+   * never happened — the same reason `strength` is the catch-all split rather
+   * than a guessed push/pull/legs.
+   */
+  subActivity?: string
+  /**
    * Training-split tag for gym sessions. Push/pull/legs are also activity keys
    * now; this stays because the strength analytics group by upper/lower/full
    * too, which the registry does not name as separate activities.
+   *
+   * Not merged into `kind` above: `split` is a closed set the strength
+   * analytics group by, `kind` is free text the form suggests. Collapsing them
+   * would make every split a string the analytics have to re-parse.
    */
   split?: Split
   durationMin?: number
