@@ -1,263 +1,89 @@
 # STATUS
 
-**Stopped:** 2026-10-05, after the Home Workout build. `main` at `78725b1`,
-this work on `feat/home-workout-library` (COD-272).
+**Stopped:** 2026-10-05. `main` at `0bed203`, clean tree, nothing open.
+**17 PRs merged this session** (#320–#336). `npm run verify`: 121 files, 1691
+tests, exit 0.
 
-## First thing: the browser gates need two commands nobody wrote down
+## First thing: 10 GB of worktrees, and one decision
 
-On a fresh checkout `npm run a11y`, `npm run smoke`, `npm run clipped` and
-`npm run space` all die before doing anything:
+`.claude/worktrees/` holds **17 worktrees totalling 10 GB** — one per agent
+session going back weeks, each a full second copy of the app. Not harmless
+clutter:
 
-```
-Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'playwright' imported from
-  …/scripts/space-audit.mjs
-```
+- a dev server started in one is **pinned to it**, so a tab on that port never
+  shows changes made here however hard you reload (trap already recorded);
+- `vitest` would double-count them, which is only not happening because
+  `vite.config.ts` excludes the path — a mitigation, not a fix.
 
-**`playwright` and `@axe-core/playwright` are in neither `dependencies` nor
-`devDependencies`, and that is deliberate** — `.github/workflows/a11y.yml`
-installs them per job. Run the same thing locally, once:
-
-```
-npm i -D --no-save playwright @axe-core/playwright
-npx playwright install chromium
-```
-
-All four gates work immediately after, and were run for this branch:
-
-```
-173 of 173 scan(s) completed across 12 of 12 shard(s).
-No serious or critical violations.
-
-Smoke: 24/24 views OK · All views rendered clean.
-No clipped or off-screen text across 24 views at 1440px and 1024px and 390px.
-Design-system check passed (415 files).
-Palette check passed — 5 themes, 14 accents, both palettes agree.
-```
-
-CLAUDE.md now carries the two commands. **COD-273** is to stop them living only
-in CI — it is CLAUDE.md's own "a gate with a manual incantation is one nobody
-types", with the incantation in a YAML file two directories away.
-
-**The first `a11y` run was red, and that is the lesson of this branch.** One
-serious `color-contrast` on vscode: a link inheriting `@layer base`'s raw blue
-on a raised panel, 3.74:1. A hand-driven axe sweep over those same 83 tiles at
-those same five themes had already passed. **A bespoke probe is evidence; it is
-not a substitute for the gate.** General case filed as COD-274.
-
-The misdiagnosis is worth keeping: `npx --no-install playwright --version`
-answers `1.63.0` from the npx cache, so the obvious check says it is installed.
-That is the CLI, not the package the scripts import. The first version of
-COD-273 claimed the dependency had been *dropped*; it had not.
-
-**The fallback, if you ever need it again:** build, `npx vite preview --port
-4199 --strictPort`, launch Chrome with `--remote-debugging-port=9333
---user-data-dir=<temp>`, drive it over CDP and inject axe-core from cdnjs. Two
-traps doing it that way, both already in CLAUDE.md and both hit anyway:
-
-- **The service worker serves the previous bundle.** A rebuild plus a reload is
-  not enough; a probe reported a fixed colour still failing. Compare the loaded
-  `index-*.js` against your own `dist/index.html` *every time*, then unregister
-  the worker and clear `caches`.
-- **`resize_page` cannot go below ~500px** (the Chrome window has a minimum), so
-  a "390px" measurement taken that way is really 501px. Use `emulate` with
-  `390x844x2,mobile,touch`; it survives a `navigate_page` but not a
-  `location.reload()` issued from inside the page.
+`git worktree list` names them. Pruning is a deletion, so it is **not** done
+here: run `git worktree remove` / `git worktree prune` yourself. The newest is
+`locked` and needs `--force`.
 
 ## What this session did
 
-Home Workout, from a 53-line data module and a flat three-card page to a
-feature. PR #336.
+Started as "connect this to Supabase", became five pieces of work.
 
-```
-feat(home-workout)  83 movements, cues, chains, kit filter      COD-272
-feat(home-workout)  the manual + 31 fetched citations
-refactor            the page onto the three-zone contract
-feat(demo)          seed homeWorkout, DEMO_VERSION 5 → 6
-fix(home-workout)   How-to toggle clipped its own caret
-fix(video)          VideoLink 4.14:1 on vscode, five call sites
-fix(rail)           SectionRail cannot become a rail in zone 3
-docs                feature page + CREDITS
-```
+| | |
+|---|---|
+| **Sync hardening** COD-265/266/267 | Settings' **Pull erased the cycle log on every press**; Drive **uploaded** it. Four pull paths unguarded, one egress door missing. PBKDF2 150k → 600k both sides, path code out of the query string, three recoverable blob versions |
+| **CI** COD-268/269 | Browser gates cancelled at 15m03s, so `smoke` and `clipped` **never ran at all** on two merges. Split into two jobs. A leaked `setTimeout` was failing CI with every test passing |
+| **Board P1s** COD-244/238 | Contrast gate now measures the card ground; unreachable phone subtitles 81 → 24 |
+| **Accounts** COD-271 | Google sign-in, journal encrypted client-side into Supabase, security disclosure. Five increments, all merged |
+| **Home Workout** COD-272 | 21 → 83 movements, cited manual, page on the contract. Found three defects in *shared* code |
 
-## What a future session will trip over
+Full account: `docs/WORKLOG.md`, two entries dated 2026-10-05.
 
-**`lib/exerciseMuscles.ts` is the only muscle table, and Home Workout depends
-on that staying true.** `homeExercises.test.ts` asserts every one of the 83
-movements resolves there. Add a movement whose name matches no rule and the
-suite fails — the fix is a rule in *that* file, above the generic ones, not a
-field on the movement. Arming the assertion found nine real gaps, two of which
-("Pike push-ups", "Diamond push-ups") were resolving to the **chest**.
+## The one thing blocking the account feature
 
-**A `SectionRail` in zone 3 renders the phone chip row on a desktop** unless it
-is passed `railAt="2xl"`, because zone 3 at the 1180 tier is 722px and the
-default flip is at 896px. Six other adopters (Insights, Coaching, Pickleball,
-Pull-ups, Help, Recovery) are still on the default; whether their labels
-overflow 722px was not measured, so none of them was moved on a guess. **The
-caller's grid breakpoint must match the prop** — moving only one is worse than
-moving neither.
+**Nothing has run against a real Supabase project, because there isn't one.**
+The guards are proven as logic, not behaviour. Before relying on any of it:
 
-**The a11y gate still cannot see eleven of the manual's twelve chapters**
-(COD-237: a rail has no `aria-expanded`). The fold count it prints for this
-page is not coverage. What was done instead, by hand, against a confirmed
-bundle: 12 chapters × five desktop themes + 12 chapters at 390px, 0 violations
-of any impact. Re-run that probe, or arm the gate, before trusting a green run
-on this page.
+1. Create the project, run `supabase/schema.sql`, enable the Google provider.
+2. `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` into `.env.local` and Vercel.
+3. **Sign in as a second account and confirm it cannot read the first's row.**
+   RLS is what makes this multi-tenant, and a policy nobody has tried from the
+   other side is a policy nobody has tested.
 
-**`DEMO_VERSION` is 6.** Bump it whenever the seed gains a field a page
-renders, and re-seed via Settings → Data → Load demo data; editing
-`src/lib/demo.ts` changes nothing for a journal that already exists.
+Until those env vars exist the feature is **absent** — no client constructed,
+nothing rendered — so `main` behaves exactly as it did before.
 
-**`npm run design` and `npm run contrast` are not in `npm run verify` but ARE in
-CI.** That is how a locally green change goes red on push, and it did: the
-design gate greps the source for a hardcoded colour and **cannot tell a comment
-from a call site**, so a docstring quoting the two measured hex values failed
-it. Run all four before pushing, not just `verify`.
+Design, threat model and all 14 edge cases: `docs/security/account-sync-plan.md`.
 
-## Next action
+## Traps this session added, all now in CLAUDE.md
 
-1. COD-273 — put the two install commands somewhere a human reads them, or
-   declare the packages. Everything about local gate coverage is downstream.
-2. Decide whether the other six rail pages want `railAt="2xl"`. Measure the
-   chip strip's `scrollWidth` against its `clientWidth` on each; do not assume.
-
----
-
-# Previous session (2026-10-05, #320–#327)
-
-Kept verbatim below rather than overwritten — it is another stream's handover
-and its sync-path warnings are still live. Its opening question ("did #326 go
-green?") is resolved: `main` has merged through #335.
-
-
-**Stopped:** 2026-10-05. `main` at `982b40b` plus **#326 open** — the CI split,
-which is the one thing to look at first.
-
-## First thing: did #326 go green?
-
-The browser gates were split into two parallel jobs (`a11y`, `render`) because
-the single job was being **cancelled at 15m03s on every run**, which Actions
-reports as a bare `failure`. COD-268.
-
-- **Both pass** → the split worked, merge it, nothing else to do.
-- **Either hits 15m03s again** → the cap is not about job duration, and that is
-  the thread to pull before trusting any browser gate.
-
-This matters more than it looks: the cancel lands *inside* the axe step, so
-`smoke` and `clipped` — the steps after it — never ran at all on #322 or #323.
-Three gates stopped covering anything while still reporting a colour.
-
-**Driven locally against `b0e79fa`, all three are green:**
-
-```
-173 of 173 scan(s) completed across 12 of 12 shard(s).
-No serious or critical violations.
-
-Smoke: 24/24 views OK · All views rendered clean
-
-No clipped or off-screen text across 24 views at 1440px and 1024px and 390px.
-```
-
-So the app is fine and the gate was off. Do not read the red on `main` as a
-regression.
-
-## What this session did
-
-A request to "add Supabase sign-in and background sync". The answer was no, with
-reasons recorded, and the audit it prompted found four broken sync paths.
-
-```
-#320  the audit + the plan                                       merged
-#321  one egress door + contract test              COD-265 ✔     merged
-#322  /api/sync version history                    COD-266 ✔     merged
-#323  PBKDF2 600k + derived path code              COD-267 ✔     merged
-#324  STATUS                                                     merged
-#325  untrack a stray personal page                              merged
-#326  split the browser gates                      COD-268       OPEN
-```
-
-Full account in `docs/WORKLOG.md` (2026-10-05). The map for anything sync-shaped
-is `docs/security/sync-hardening-plan.md` — read it before touching a sync path.
-
-## What changed that a future session will trip over
-
-**`forEgress` is the only door out.** Nothing may call `forNetwork` directly;
-`src/lib/egress.contract.test.ts` fails the build if anything does, and it also
-forbids a raw `replaceAll(migrate(…))` outside the two folder-restore paths. Add
-a sync target without wiring `forEgress` and `mergePulled` and that test goes
-red, which is the point. Its key-shape trap is documented in the file:
-`import.meta.glob` keys for `src/lib` siblings are `./x.ts` with **no `lib/`
-segment**, so a pattern written `lib/x.ts` matches nothing and every assertion
-passes vacuously.
-
-**`api/` is typechecked now.** It was in no tsconfig at all before #322 — which
-is why `api/sync.ts` hand-rolls its `Req`/`Res` interfaces. It lives in
-`tsconfig.node.json`. Expect `tsc -b` to have opinions about serverless code it
-never read before.
-
-**Two version constants must never be edited in place:**
-
-| Thing | Where | If you edit it |
-|---|---|---|
-| `ROUNDS[1] = 150_000` | `src/lib/crypto.ts` | every journal already in `bujo:enc` or the sync blob becomes undecryptable, reported to the user as "wrong passcode" |
-| `'bujo-sync-path:v2'` | `src/lib/crypto.ts` | every cloud journal moves to a new path; only `legacyCode` + `pullCloud`'s fallback make the old one findable |
-
-Add a row; do not change one.
-
-**`pullCloud` writes.** On a v1-path hit it re-encrypts to the new path.
-Deliberate and best-effort — a failed migration must not turn a successful read
-into an error — but it means a "pull" can POST.
-
-**The live deploy is behind `main`.** Verified read-only: `?code=X&versions=1`
-against the production endpoint returns `404`, not `{"versions":[]}`, so it is
-still serving the **old** handler. #322 and #323 are merged but not live.
-
-## Not verified, and worth knowing
-
-- **No restore dialog was clicked in a browser.** All four need a configured
-  remote to render, so no gate reaches them — and #321 changed the copy in all
-  four. Pinned by a source assertion (`CYCLE_CLAUSE` in the contract test) and
-  by unit tests, which is not the same as having seen it.
-- **Nothing ran against the real Vercel Blob store or the deployed function.**
-  `api/sync.test.ts` mocks `@vercel/blob`. The first production POST is the real
-  test of `copy`'s option shape — it sits inside the best-effort `try`, so a
-  mistake there means "no history", not "no save". The first real pull is what
-  proves the `x-sync-code` header path; the `?code=` fallback is what makes that
-  safe to find out.
-- **Why the CI cap is 15 minutes is unknown.** Public repo on a personal
-  account, so Actions minutes are free and unlimited; no `timeout-minutes` was
-  configured and `a11y` has no `concurrency` block (`screenshots` does, which
-  explains its cancel and not a11y's). A rerun queued and never picked up a
-  runner.
+- **The browser gates need two commands nobody had written down.** `playwright`
+  and `@axe-core/playwright` are in neither dependency list *on purpose* — CI
+  installs them per job. `npx playwright --version` answers from the npx cache,
+  so the obvious check lies.
+- **`npm run design` and `npm run contrast` are not in `npm run verify`** but
+  are in CI, which is how a locally green change goes red on push.
+- **An extraction can take the markup and leave the fix behind.** `VideoLink`
+  was pulled out of a call site carrying a measured contrast fix inline; five
+  call sites then failed at 4.14:1 for months, behind folds no gate reaches.
+- **A `SectionRail` in a review column can never become a rail** — it flips at
+  896px and zone 3 is 722px, so it has always shipped its phone strip on desktop.
 
 ## Open, deliberately
 
-- **COD-228** — `bujo:sync` holds the sync passphrase in plaintext, which
-  defeats the passcode lock. Disclosed on screen in `CloudSyncCard` and in
-  `AUTH.md`. A surfaced trade-off, not a hidden bug: encrypting it means
-  auto-sync cannot run while the journal is locked, which is most of the time.
-- **No compare-and-swap on `/api/sync`.** `PutCommandOptions` in this
-  `@vercel/blob` exposes no `ifMatch` (only `del` does), so it would mean
-  hand-rolling the REST call. Upgrade path is in a `ponytail:` comment.
-- **The v1 sync blob is left in place** after migration, reasoning in
-  `pullCloud` and plan §3. Rotating a passphrase is not erasing — and nothing in
-  the UI says so, which is unsaid rather than decided. On the `NEXT-SESSION`
-  pile.
+- **COD-228** — auto-sync keeps the passphrase in plaintext, defeating the
+  passcode lock. Disclosed on screen, and now in the new security card too.
+- **COD-270** — the 24 remaining unreachable subtitles are all `hideInfo` cards:
+  a per-card copy decision, not a mechanism. Gate budgeted at 24; lower it as
+  they go.
+- **COD-273/274** — the gate install recipe lived only in CI; the base-layer
+  anchor blue fails on a raised panel.
+- **No compare-and-swap on `/api/sync`** — this `@vercel/blob` exposes no
+  `ifMatch` on `put`.
 - **`?code=` still accepted** by `api/sync.ts` for bundles cached before #323.
-  Drop that arm one release after `b0e79fa`; leaving it forever defeats the
-  change.
-- **Supabase sign-in** — plan §0 names the six surfaces and two docs a reversal
-  would have to change first.
+  Drop that arm one release on; it is the logged-secret path the change closed.
 
-## Environment notes
+## Not verified
 
-- `docs/life-schedule-v3-final.html` is **untracked and back on disk**. It was
-  swept into #323 by a `git add -A docs`, untracked in #325 — and merging that
-  index deletion onto `main` removed the working copy, which #325's body had
-  promised it would not. Restored byte-identical from `9243f85` (now LF where it
-  was CRLF). Gitignored, so `git status` is clean with it present.
-- `.env.local` had dead `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` entries.
-  Removed locally; the file is gitignored, so there is no commit for it.
+- **No account restore dialog, and no sign-in round trip, has been clicked.**
+  All need a configured remote or a real project. Covered by unit and source
+  assertions, which is not the same as having seen it.
+- **The deploy is behind `main`** — a read-only probe found production still
+  serving the old `/api/sync` handler. The v1→v2 path migration in `pullCloud`
+  is what makes that safe to catch up on.
 - One pre-existing lint warning, unrelated: `src/App.tsx:120:6`
-  `react-hooks/exhaustive-deps`. Confirmed present on `main` before this
-  session. `npm run verify` still exits 0.
-- `npm run verify` at `b0e79fa`: **115 files, 1624 tests, exit 0.**
+  `react-hooks/exhaustive-deps`. Present on `main` before this session.
