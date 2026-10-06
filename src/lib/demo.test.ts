@@ -6,6 +6,7 @@ import { todayISO } from './date'
 import { metricsCsv } from './csv'
 import { deepWorkHeatmap, focusByDuration, focusFindings, interruptionCost, weeklyVolume } from './focus'
 import { avgWpm, bestWpm, wpmTrend } from './typing'
+import { coachingWeekOf, rowsInCoachingWeek } from './coachingWeek'
 
 /**
  * The demo journal has to be able to say that it is the demo journal.
@@ -223,5 +224,64 @@ describe('demo · the Focus page has something to plot', () => {
     // Weekdays only — the goal bar's "bonus today" branch is the weekend case
     // and must stay reachable rather than be papered over with weekend drills.
     expect(ts.every((s) => { const wd = new Date(s.date + 'T00:00').getDay(); return wd !== 0 && wd !== 6 })).toBe(true)
+  })
+})
+
+/**
+ * THE COACHING PROGRAM HAS TO BE STARTED IN THE SEED.
+ *
+ * `coachingStart` and `coachingWeeksDone` were both unset, so every gate that
+ * visits Coaching — five themes, two viewports, every run — saw only the
+ * `!start` branch: "Commit to 12 weeks" and twelve identical untaken rows. The
+ * progress bar, the done chips, the `· now` week, the open-on-first-unfinished
+ * default and now the per-week record had never been rendered by anything.
+ *
+ * Same finding as the unseeded `data.cycle` in CLAUDE.md, for a program whose
+ * state lives in `settings` rather than in its own domain.
+ */
+describe('demo seeds a coaching program in progress', () => {
+  const today = todayISO()
+  const d = generateDemoData(today)
+  const start = d.settings.coachingStart
+
+  it('starts the program, mid-way rather than on week 1 or past week 12', () => {
+    expect(start, 'coachingStart unset — the page renders its not-started branch').toBeTruthy()
+    const w = coachingWeekOf(start!, today)
+    expect(w).not.toBeNull()
+    expect(w!).toBeGreaterThan(1)
+    expect(w!).toBeLessThanOrEqual(12)
+  })
+
+  it('ticks some weeks and leaves others, so both chip states render', () => {
+    const done = d.settings.coachingWeeksDone ?? []
+    expect(done.length).toBeGreaterThan(0)
+    expect(done.length).toBeLessThan(12)
+  })
+
+  it('notes some weeks and not others', () => {
+    const notes = d.settings.coachingWeekNotes ?? {}
+    const keys = Object.keys(notes)
+    expect(keys.length).toBeGreaterThan(1)
+    expect(keys.length).toBeLessThan(12)
+    expect(Object.values(notes).every((v) => v.trim().length > 10)).toBe(true)
+  })
+
+  /**
+   * The join is what the week record is FOR, so both of its branches have to be
+   * reachable from the seed: a week whose days hold sessions, and a week whose
+   * days hold none. The second is the one that renders "no sessions logged for
+   * these days" rather than a zero, and a seed covering every week with play
+   * would make that branch unrenderable — the latte-yellow trap.
+   */
+  it('leaves at least one week with play and one with none', () => {
+    const counts = Array.from({ length: 12 }, (_, i) => rowsInCoachingWeek(d.pickleball ?? [], start!, i + 1).length)
+    expect(counts.filter((n) => n > 0).length, 'no coaching week has any session in it').toBeGreaterThan(0)
+    expect(counts.filter((n) => n === 0).length, 'every week has play — the empty branch cannot render').toBeGreaterThan(0)
+  })
+
+  it('gives some pickleball sessions their own notes and leaves others blank', () => {
+    const rows = d.pickleball ?? []
+    expect(rows.filter((r) => (r.notes ?? '').length > 10).length).toBeGreaterThan(1)
+    expect(rows.filter((r) => !r.notes).length).toBeGreaterThan(0)
   })
 })

@@ -69,6 +69,19 @@ const TASKS = [
 const EVENTS = ['Ecstatic dance', 'Farmers market', 'Sunset at the rim', 'Video call w/ Sam', 'Laundry day']
 const NOTES = ['Switch to lamb blend', 'Eliminate dairy', 'Try the new trail east', 'Sleep earlier']
 const GRATITUDE = ['warm coffee', 'a quiet morning', 'Baron’s laugh', 'clean water', 'the desert light', 'a good book', 'my health']
+/**
+ * Session notes for the pickleball seed. Specific and uneven on purpose: a pool
+ * of interchangeable pleasantries renders as a demo of the field existing,
+ * which is the same failure as uniform random values in the cycle block below.
+ */
+const PICKLE_NOTES = [
+  'Third shot kept floating. Drop over drive next time.',
+  'Won the dink rallies, lost both tiebreaks.',
+  'Stayed at the kitchen line all night — that was the difference.',
+  'Backhand dink popping up under pressure.',
+  'Partner covered the middle well; my resets were late.',
+  'Served deep 8/10. Returns too short.',
+]
 const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on the peaks', 'Made bread from scratch', 'Long talk under the stars']
 
 /**
@@ -87,7 +100,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 9
+export const DEMO_VERSION = 10
 
 /**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
@@ -132,6 +145,14 @@ export function generateDemoData(today = todayISO()): JournalData {
    * — moving the breakage rather than avoiding it. New field, new stream.
    */
   const randSub = rng(90210)
+  /**
+   * Fourth stream, for `PickleballSession.notes`. The first draft drew these
+   * from `randSub` and that was the exact mistake its docstring warns about:
+   * the pickleball block runs BEFORE the home-workout block, so consuming
+   * `randSub` here shifted every `subActivity` the seed picks afterwards. New
+   * field, new stream, and the rule holds for whoever adds the fifth.
+   */
+  const randNote = rng(4040)
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
@@ -390,11 +411,67 @@ export function generateDemoData(today = todayISO()): JournalData {
       j.pickleball.push({
         id: uid('pk'), date: addDays(today, -i), format: rand() > 0.3 ? 'doubles' : 'singles',
         gamesWon: won, gamesLost: lost, durationMin: 45 + Math.floor(rand() * 45),
-        partner: rand() > 0.5 ? 'Sam' : 'Mara', rpe: 5 + Math.floor(rand() * 4), notes: '',
+        partner: rand() > 0.5 ? 'Sam' : 'Mara', rpe: 5 + Math.floor(rand() * 4),
+        /*
+         * Some carry a note, some do not. The Coaching week record renders the
+         * note only when there is one, so a seed where every row has one never
+         * exercises the other branch — the latte-yellow trap in CLAUDE.md, one
+         * field over. Measured: 2 noted of the 5 seeded sessions, and both of
+         * them fall in week 3 — the week the roadmap opens on.
+         *
+         * WHICH note is picked by the loop index, not by the rng. Drawing both
+         * the presence and the index from the same weak stream collided — at
+         * `> 0.25` all five rows were noted and only **three** of the six
+         * strings appeared, two of them twice, which reads as a bug in the
+         * seed. The index is deterministic and the presence is random.
+         */
+        notes: randNote() > 0.45 ? PICKLE_NOTES[Math.floor(i / 3) % PICKLE_NOTES.length] : '',
       })
     }
   }
   j.settings.pickleballGoalGames = 12
+
+  /**
+   * THE 12-WEEK COACHING PROGRAM, STARTED — because the seed never started it.
+   *
+   * `coachingStart` and `coachingWeeksDone` were both unset, so the Coaching
+   * page's entire act was the `!start` branch: "Commit to 12 weeks" and a
+   * roadmap of twelve identical untaken rows. The progress bar, the green done
+   * chips, the `· now` week and the resume-at-first-unfinished default had
+   * never been rendered by anything — `npm run a11y` visits this page at five
+   * themes and two viewports and could not fail on any of them. The unseeded
+   * `data.cycle` finding in CLAUDE.md, applied to a settings-held program.
+   *
+   * **These three numbers were measured against the seeded sessions, not
+   * chosen.** The pickleball loop produces only **five** sessions and they fall
+   * in days −10 … −25, so the week boundaries decide which branch of the week
+   * record each row renders. At day −37 the program is in week 6 and the
+   * per-week session counts are `0,1,2,2,0,0,0,0,0,0,0,0`:
+   *
+   * - week 1 predates every seeded session → the "no sessions logged for these
+   *   days" branch renders, which a seed covering every week could not show
+   * - weeks 2–4 have play to join, with notes of their own to read back
+   *
+   * Two weeks done, not four, so the roadmap's open-on-first-unfinished default
+   * lands on **week 3** — which has two sessions and a note, rather than on an
+   * empty week. The first draft used four and opened on week 5, where the
+   * demo's own landing panel was the empty branch. Weeks 3 and 4 having play
+   * while being unticked is also the honest state: you played, you have not
+   * marked the week off yet.
+   *
+   * If the pickleball seed ever changes its dates or its count, re-measure
+   * these — `demo.test.ts` asserts both branches stay reachable but cannot know
+   * which one you land on.
+   */
+  j.settings.coachingStart = addDays(today, -37)
+  j.settings.coachingWeeksDone = [1, 2]
+  // Notes on three weeks of four, so a week with play and no note has to render
+  // too, and so does a week with neither.
+  j.settings.coachingWeekNotes = {
+    '2': 'Serve target drill: 7/10 in the back third, not 9. Return depth is the weaker half.',
+    '3': 'Return-and-rush is landing — reached the line on 8 of 10. Split-step still late.',
+    '4': 'Straight dink rally hit 25 twice. Paddle still drifting below the net on the backhand side.',
+  }
 
   /**
    * HOME WORKOUTS, because the page that renders them had never been rendered
@@ -1078,6 +1155,25 @@ export function generateDemoData(today = todayISO()): JournalData {
           // trap this whole block exists to avoid. `cycleSeed.test.ts` caught
           // it, which is why that file asserts presence and not just shape.
           ...(rand2() > 0.93 ? { tempDisturbed: true as const } : {}),
+          /**
+           * A NOTE ON A HANDFUL OF DAYS · `CyclePoint.note` is the field this
+           * seed could not reach, because until now nothing in the app wrote
+           * it — it sat in the type and was READ by `lib/captureLanding.ts`
+           * into journal search, so a day's words would have shown up in a
+           * search that could never contain any.
+           *
+           * Tied to what the day already is, like every field above it: the
+           * notes are the things a closed list cannot say, on the days you
+           * would say them. Sparse — about one day in twelve — because a log
+           * with a sentence on every day is not a log anyone kept, and because
+           * "no note" is the common case every reader has to handle.
+           */
+          ...(rand2() > 0.92
+            ? { note: day <= 2 ? 'Worst cramps of this cycle — heat pad and an early night.'
+              : premenstrual ? 'Snapped at Sam over nothing. Noting it so I see the pattern.'
+              : pre <= 1 && pre >= 0 ? 'Doctor on Friday — ask whether the shift is late this month.'
+              : 'Started the new iron tablets today.' }
+            : {}),
         }
 
         // Two or three missed mornings per cycle — a chart with no gaps is a

@@ -847,6 +847,32 @@ export interface Settings {
   coachingStart?: string
   /** Completed Coaching Academy week numbers (1–12). */
   coachingWeeksDone?: number[]
+  /**
+   * WHAT YOU ACTUALLY DID IN A COACHING WEEK · week number (as a string) → note.
+   *
+   * `coachingWeeksDone` above is a tick per week and was, for the whole life of
+   * the page, the ONLY thing Coaching could record: twelve toggles and not one
+   * text field anywhere on the view. A week prescribes three to five named
+   * drills and one goal; ticking it says you finished *something* and loses
+   * which drills you ran, what the third-shot drop actually looked like, and
+   * what to carry into next week.
+   *
+   * Only the drills needed somewhere to go — the *play* did not. `data.pickleball`
+   * already holds the sessions, with score, partner, venue and their own notes,
+   * so the page joins those by date (`lib/coachingWeek.ts`) rather than asking
+   * you to retype them. A second field for "what I played" would have been a
+   * second record of the same fact, which is the argument `Relapse.count`'s
+   * docstring makes one type up.
+   *
+   * Keyed by week rather than by day because the unit of this program is a week:
+   * the roadmap row, the tick and the goal are all per-week, and a per-day note
+   * would have no row to render in.
+   *
+   * Optional and additive, and a key is deleted rather than set to `''` when the
+   * text is cleared — an empty string would persist as "asked and answered with
+   * nothing", the same distinction `DayMore` keeps for a cleared chip.
+   */
+  coachingWeekNotes?: Record<string, string>
   /** Stats mood/year pair: side-by-side ('split', default) or full-width 'stacked'. */
   statsPairLayout?: 'split' | 'stacked'
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */
