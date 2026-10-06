@@ -51,7 +51,7 @@ export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name:
                   aria-label={`Did ${e.name}`}
                 />
                 <span className={`min-w-0 flex-1 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>
-                <VideoLink name={e.name} label="" size="sm" className="text-fg-2 hover:text-red" />
+                <VideoLink name={e.name} label="" size="sm" quiet />
               </span>
               <span className="num shrink-0 text-label text-fg-2">{e.qty}</span>
               <span className="num w-7 shrink-0 text-right text-label text-fg-2">×{e.sets}</span>

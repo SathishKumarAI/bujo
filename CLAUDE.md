@@ -27,11 +27,32 @@ pass and an axe run. So:
 The wrong reflex is to block on a gate and then, next time, skip it — which is
 how every "a gate nobody runs" entry in this file started.
 
+**First, install what they need — it is not in `package.json`.** `playwright`
+and `@axe-core/playwright` are in neither `dependencies` nor `devDependencies`
+on purpose; `.github/workflows/a11y.yml` installs them per job. On a fresh
+checkout every one of those four scripts therefore dies on
+`ERR_MODULE_NOT_FOUND` before doing anything. Once per machine:
+
+```
+npm i -D --no-save playwright @axe-core/playwright
+npx playwright install chromium
+```
+
+Do not be reassured by `npx playwright --version` — it answers `1.63.0` from the
+npx cache, which is the CLI and not the package the scripts import. COD-273 is
+to stop this living only in CI.
+
 ```
 npx vite build                                   # never while a gate is running
 npx vite preview --port 4173 --strictPort &
 BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs   # background this
 ```
+
+And note **`npm run design` and `npm run contrast` are not in `npm run verify`
+but are in CI** — which is how a locally green change goes red on push. The
+design gate greps the source for a hardcoded colour and **cannot tell a comment
+from a call site**: a docstring quoting a measured `#rrggbb` fails it, and that
+is the right trade. Run all four before pushing.
 
 **Always set `BUJO_URL`.** Every script here reads it (`space-audit.mjs` also
 still accepts its old `BASE_URL`). The default port belongs to whichever preview
