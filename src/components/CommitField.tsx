@@ -101,6 +101,21 @@ export function CommitField({
       )}
     />
   ) : (
-    <Textarea {...shared} rows={rows} className={cn('text-label', className)} />
+    /*
+     * `field-sizing-content` so the box grows to what is in it, with `rows` as
+     * the floor via `min-h-14`.
+     *
+     * A fixed `rows={2}` shipped first and `npm run clipped` failed on it:
+     * `phone · coaching — "What you drilled in week 3" 62px shown of 86px`.
+     * An 80-character note needs four lines in a 298px column and got two, so
+     * the field was hiding the thing you had just typed into it — which is
+     * exactly what that gate asks (`scrollHeight > clientHeight`) and the first
+     * time it has caught a *form field* rather than a label.
+     *
+     * Native CSS rather than a measure-and-resize effect: one declaration, no
+     * ref, no listener, and on a browser without `field-sizing` it degrades to
+     * the `min-h` floor, which is the fixed-rows behaviour it replaces.
+     */
+    <Textarea {...shared} rows={rows} className={cn('field-sizing-content min-h-14 text-label', className)} />
   )
 }
