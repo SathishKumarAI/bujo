@@ -7,7 +7,7 @@ import { Ring } from '../components/ui/ring'
 import { ChipPick } from '../components/ui/quickpick'
 import { EmptyFrame, NumField, PageLayout, SummaryStrip } from '../components/page'
 import { FOODS, KCAL_BANDS, SAMPLE_DAY, kcalBand, sumFoods, type Food } from '../lib/foods'
-import { cat } from '../lib/colors'
+import { cat, onRaised } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
 
 /**
@@ -112,9 +112,26 @@ export function Nutrition() {
 
   const logged = recent.length
   const avg = logged ? Math.round(recent.reduce((a, d) => a + d.kcal, 0) / logged) : 0
-  // Denominator for the Recent-days bars. `TARGET.calories` is the floor so a
-  // fortnight of light days does not stretch itself to look like a full one.
-  const recentScale = Math.max(TARGET.calories, ...recent.map((d) => d.kcal))
+  /**
+   * Half-width of the Recent-days bars, in calories either side of target.
+   *
+   * The bars used to run 0 → `max(target, busiest day)`, and the comment above
+   * them claimed that kept the days "distinguishable from each other". Measured
+   * on the demo fortnight it does the opposite: every day falls between 1834
+   * and 2411, so every bar renders at 76–100% of the row and fourteen of them
+   * read as alternating stripes rather than as a chart. All the variation was
+   * squeezed into the last quarter of the width because the FLOOR was zero —
+   * and zero calories is not a day anyone has, so three quarters of the bar was
+   * spent drawing a fact that is never in question.
+   *
+   * These are diverging bars now, measured from the target rather than from
+   * nothing, which is also the question the card is actually asking: over or
+   * under, and by how much. The scale is the largest deviation in the window,
+   * floored at 200 kcal so a fortnight of near-perfect days does not amplify a
+   * 12-calorie miss into a full-width bar.
+   */
+  const recentScale = Math.max(200, ...recent.map((d) => Math.abs(d.kcal - TARGET.calories)))
+  const avgOver = avg - TARGET.calories
 
   return (
     <PageLayout
@@ -241,45 +258,54 @@ export function Nutrition() {
           </section>
 
           <section>
-            <h2 className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 border-b border-line pb-1 text-label text-fg-2">
-              <span>Recent days {logged > 0 && <span className="text-fg-3">· avg {avg} kcal</span>}</span>
-              {/* The bars encode over/under in colour alone — name the code. */}
-              {logged > 0 && (
-                <span className="flex items-center gap-3 text-micro" aria-hidden="true">
-                  <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-[2px]" style={{ background: cat('green'), opacity: 0.5 }} /> under target</span>
-                  <span className="inline-flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-[2px]" style={{ background: cat('peach'), opacity: 0.5 }} /> over</span>
+            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Recent days</h2>
+            {/* The average was a `·`-separated afterthought inside the heading,
+                in the tertiary token, at label size — SMALLER and quieter than
+                every row it summarises. It is the one number on this card that
+                answers "how am I actually eating", so it is a fact now, with
+                the comparison that gives it meaning: an average is only
+                readable against the target it is near. */}
+            {logged > 0 && (
+              <p className="mb-2 flex flex-wrap items-baseline gap-x-2 text-body text-fg-2">
+                <span className="num text-title font-medium text-fg-1">{avg}</span>
+                <span>kcal a day over {logged} {logged === 1 ? 'day' : 'days'}</span>
+                <span
+                  className="num"
+                  style={{ color: onRaised(avgOver > 0 ? 'peach' : 'green') }}
+                >
+                  {avgOver === 0 ? 'on target' : `${Math.abs(avgOver)} ${avgOver > 0 ? 'over' : 'under'}`}
                 </span>
-              )}
-            </h2>
+              </p>
+            )}
             {logged === 0 ? (
               <EmptyFrame>Nothing logged in the last two weeks.</EmptyFrame>
             ) : (
-              // Fourteen rows of a date and a number, with nothing to read them
-              // against, is a table pretending to be a chart. Each row now
-              // carries a bar, using both channels rather than one:
+// Fourteen rows of a date and a number, with nothing to read them
+              // against, is a table pretending to be a chart. Each row carries
+              // a bar that grows from a centre line at the target:
               //
-              //   length — the day's calories against the busiest day *or* the
-              //            target, whichever is larger
-              //   colour — over target, or under it
+              //   side   — left of centre is under, right is over
+              //   length — how far from target, against the window's worst day
               //
-              // Scaling purely to the target was the first attempt and wasted
-              // the length: most days here run over 2000, every one of them
-              // clamped to full width, and fourteen identical bars are the same
-              // problem as fourteen identical rows. Scaling to the range keeps
-              // the days distinguishable from each other, and the colour still
-              // says which side of the target each one fell.
+              // The side is the reading, so the colour is reinforcement rather
+              // than the only channel — which is what the old legend existed to
+              // explain and why it is gone. A reader who cannot tell the two
+              // hues apart still sees which way the bar points.
               <ul>
                 {recent.map((d) => {
                   const over = d.kcal > TARGET.calories
                   return (
                     <li key={d.date} className="relative border-b border-line last:border-b-0">
+                      {/* The target line. Every bar is read against it, so it
+                          is drawn once per row rather than implied. */}
+                      <span aria-hidden className="absolute inset-y-0 left-1/2 w-px" style={{ background: cat('overlay0'), opacity: 0.5 }} />
                       <span
                         aria-hidden
-                        className="absolute inset-y-0 left-0 rounded-r-control"
+                        className={`absolute inset-y-1 ${over ? 'left-1/2 rounded-r-control' : 'right-1/2 rounded-l-control'}`}
                         style={{
-                          width: `${(d.kcal / recentScale) * 100}%`,
+                          width: `${Math.min(50, (Math.abs(d.kcal - TARGET.calories) / recentScale) * 50)}%`,
                           background: cat(over ? 'peach' : 'green'),
-                          opacity: 0.14,
+                          opacity: 0.3,
                         }}
                       />
                       <div className="relative flex items-center justify-between py-2">
