@@ -1,8 +1,9 @@
 # STATUS
 
-**Stopped:** 2026-10-05. `main` at `0bed203`, clean tree, nothing open.
-**17 PRs merged this session** (#320–#336). `npm run verify`: 121 files, 1691
-tests, exit 0.
+**Stopped:** 2026-10-06 (the session ran past midnight). `main` at `7398b3a`,
+clean tree, nothing open. **19 PRs merged** (#320–#338). `npm run verify`: 121
+files, 1702 tests, exit 0. `a11y` 173/173 with no serious or critical, `smoke`
+24/24, `clipped` clean, `design` and `contrast` both 0.
 
 ## First thing: 10 GB of worktrees, and one decision
 
@@ -30,6 +31,7 @@ Started as "connect this to Supabase", became five pieces of work.
 | **Board P1s** COD-244/238 | Contrast gate now measures the card ground; unreachable phone subtitles 81 → 24 |
 | **Accounts** COD-271 | Google sign-in, journal encrypted client-side into Supabase, security disclosure. Five increments, all merged |
 | **Home Workout** COD-272 | 21 → 83 movements, cited manual, page on the contract. Found three defects in *shared* code |
+| **Nutrition + fitness** #338 | Calorie/protein rings, 27 → 51 foods, Home Workout finally given a tab (its door had been welded shut by an unrelated change), sub-activity on 13 activities |
 
 Full account: `docs/WORKLOG.md`, two entries dated 2026-10-05.
 
@@ -48,6 +50,30 @@ Until those env vars exist the feature is **absent** — no client constructed,
 nothing rendered — so `main` behaves exactly as it did before.
 
 Design, threat model and all 14 edge cases: `docs/security/account-sync-plan.md`.
+
+## Read this before trusting an agent's "shipped"
+
+#338 was reported as shipped. It was **open**, and it had skipped the four
+browser gates. Running them found **6 serious a11y violations** — the new food
+chips' calorie number at 4.18:1 on the chip fill, on five desktop themes and
+both phone viewports. Fixed to `fg-2` (6.67:1) and merged at 0.
+
+Its own `npm run contrast` passed and was **right to**: that gate reads palette
+*tokens*, and a token is not a pairing. The two gates are not redundant, and
+this is the second time in two PRs that a hand-driven probe passed where the
+real gate failed. **A bespoke probe is evidence, never a substitute.**
+
+Three self-inflicted costs from the same stretch, all cheap to avoid next time:
+
+- **An unrelated `npm i` drops a `--no-save` package.** Installing
+  `@supabase/supabase-js` silently removed Playwright, so all four gates died
+  on `ERR_MODULE_NOT_FOUND`. One command to restore (below).
+- **Piping a gate through `tail` reports `tail`'s exit code.** The first a11y
+  run looked like exit 0 while the gate had exited 1. Same family as piping a
+  sweep through `head`.
+- **`npm run design` cannot tell a comment from a call site.** A docstring
+  quoting a measured hex fails it. Documented by #338 and walked into within
+  the hour.
 
 ## Traps this session added, all now in CLAUDE.md
 
