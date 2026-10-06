@@ -1,3 +1,4 @@
+import { challengeRuleKey } from './lib/recordKeys'
 import {
   createContext,
   useCallback,
@@ -215,6 +216,8 @@ interface Store {
   removeChallenge: (id: string) => void
   updateChallenge: (id: string, patch: Partial<Challenge>) => void
   toggleChallengeRule: (challengeId: string, day: string, ruleIndex: number) => void
+  /** Record what a rule actually was on a day. Empty string clears it. */
+  setChallengeRuleNote: (challengeId: string, day: string, ruleIndex: number, note: string) => void
   // dev sessions
   addDevSession: (s: Omit<DevSession, 'id'>) => void
   updateDevSession: (id: string, patch: Partial<DevSession>) => void
@@ -921,6 +924,19 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           byDay[day] = cur.includes(ruleIndex) ? cur.filter((i) => i !== ruleIndex) : [...cur, ruleIndex]
           if (byDay[day].length === 0) delete byDay[day]
           return { ...d, challengeLog: { ...(d.challengeLog ?? {}), [challengeId]: byDay } }
+        }),
+
+      setChallengeRuleNote: (challengeId, day, ruleIndex, note) =>
+        patch((d) => {
+          const next = { ...(d.challengeNotes ?? {}) }
+          const key = challengeRuleKey(challengeId, day, ruleIndex)
+          const text = note.trim()
+          // Delete rather than store an empty string. An empty note is the
+          // absence of a note, and keeping `""` would make every untouched
+          // rule a row in the journal and in every sync payload.
+          if (text) next[key] = text
+          else delete next[key]
+          return { ...d, challengeNotes: next }
         }),
 
       addDevSession: (s) =>

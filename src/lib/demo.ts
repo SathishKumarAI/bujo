@@ -1,4 +1,5 @@
 import type { CyclePoint, Entry, Habit, JournalData, MoodReason, WorkoutSet } from './types'
+import { challengeRuleKey } from './recordKeys'
 import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
@@ -85,7 +86,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 7
+export const DEMO_VERSION = 8
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -742,12 +743,32 @@ export function generateDemoData(today = todayISO()): JournalData {
 
   // ── An active 75-day challenge with a week of check-ins ──
   const chId = uid('ch')
-  j.challenges = [{ id: chId, name: '75 Hard', durationDays: 75, startDate: addDays(today, -8), rules: ['Workout 1', 'Workout 2', 'Diet', 'Read 10pp', 'Water 1gal'], strict: true }]
+  // The rules were 'Workout 1', 'Workout 2', 'Diet', 'Read 10pp', 'Water 1gal'
+  // — terser than the real preset in `lib/challenges.ts`, and reported as
+  // exactly the problem: "you only mention workout one, workout two — what kind
+  // of workout should I enter here?" A demo that states its rules more vaguely
+  // than the app's own preset teaches the wrong thing about the feature.
+  j.challenges = [{
+    id: chId,
+    name: '75 Hard',
+    durationDays: 75,
+    startDate: addDays(today, -8),
+    rules: ['45-min workout', '45-min workout (outdoor)', 'Follow the diet', 'Read 10 pages', 'Drink 1 gallon of water'],
+    strict: true,
+  }]
   j.challengeLog = { [chId]: {} }
+  // Seeded notes, so the "what was it?" field is not an empty box nobody knows
+  // is there. Only on the two workout rules — a note on "drink water" would be
+  // noise, and showing it everywhere would teach that every rule wants one.
+  j.challengeNotes = {}
+  const INDOOR = ['Push day · 50 min', 'Pull day · 45 min', 'Legs · 55 min', 'Home workout · Full body · 45 min']
+  const OUTDOOR = ['Run · Easy · 45 min', 'Walk · Rucking · 60 min', 'Cycle · 50 min', 'Pickleball · 90 min']
   for (let i = 8; i >= 0; i--) {
     const day = addDays(today, -i)
     const doneCount = rand() > 0.25 ? 5 : 3 // mostly full days
     j.challengeLog[chId][day] = Array.from({ length: doneCount }, (_, k) => k)
+    j.challengeNotes[challengeRuleKey(chId, day, 0)] = INDOOR[i % INDOOR.length]
+    j.challengeNotes[challengeRuleKey(chId, day, 1)] = OUTDOOR[i % OUTDOOR.length]
   }
 
   // ── Friends (Collections) ──

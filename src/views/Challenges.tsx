@@ -10,6 +10,8 @@ import { PageLayout, StatBar, SummaryStrip, EmptyFrame } from '../components/pag
 import { addDays, dayDiff, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
+import { fullLabelOf } from '../domain/activities'
+import { challengeRuleKey } from '../lib/recordKeys'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
 import { notify } from '../lib/notify'
@@ -238,12 +240,87 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
                   <Checkbox checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
                   <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
                 </label>
+                {/* A rule used to be a string and a tick, which says a day
+                    counted and nothing about what happened. 75 Hard asks for
+                    "Two 45-min workouts (1 outdoor)" — you could mark it done
+                    and never record WHICH two, or which was the outdoor one.
+                    Reported exactly that way: "what kind of workout should I
+                    enter in here?"
+
+                    Only on a ticked rule. An empty box under every unticked
+                    rule is four fields of clutter on a card whose job is a
+                    four-second daily tick, and there is nothing to describe
+                    until the thing has happened. */}
+                {ruleDone && <RuleNote challengeId={c.id} day={today} index={i} />}
               </li>
             )
           })}
         </ul>
       )}
     </Card>
+  )
+}
+
+/**
+ * What a rule actually was, on a day.
+ *
+ * Free text, with the day's logged workouts offered as one-tap fills. The fills
+ * are the point: a 45-minute workout rule and the workout you logged this
+ * morning were two records of one event with nothing joining them, and the
+ * cheapest honest join is to let the user put the session's own name in the
+ * note rather than invent a schema relation and a matching heuristic. Pressing
+ * a chip is the user asserting the link, which is the one thing a heuristic
+ * cannot do correctly.
+ *
+ * Saved on blur rather than per keystroke: this writes to the journal, and the
+ * journal is what every sync target debounces on.
+ */
+function RuleNote({ challengeId, day, index }: { challengeId: string; day: string; index: number }) {
+  const { data, setChallengeRuleNote } = useJournal()
+  const saved = data.challengeNotes?.[challengeRuleKey(challengeId, day, index)] ?? ''
+  const [text, setText] = useState(saved)
+  // The saved value is the source of truth when it changes underneath (a sync
+  // pull, another device); the local state exists only so typing is not a
+  // journal write per character.
+  const [seen, setSeen] = useState(saved)
+  if (saved !== seen) { setSeen(saved); setText(saved) }
+  const todaysWorkouts = (data.workouts ?? []).filter((w) => w.date === day)
+  return (
+    <div className="mt-1 ml-3 space-y-1">
+      <label className="block">
+        <span className="sr-only">What was it?</span>
+        <Input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={() => setChallengeRuleNote(challengeId, day, index, text)}
+          placeholder="What was it? (optional)"
+          className="text-body"
+        />
+      </label>
+      {todaysWorkouts.length > 0 && text.trim() === '' && (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-micro text-fg-2">Logged today:</span>
+          {todaysWorkouts.map((w) => {
+            // `fullLabelOf`, so the chip carries the sub-activity too — "Run ·
+            // Intervals" rather than "Run", which is exactly the detail this
+            // whole change is about not losing.
+            const label = [fullLabelOf(w.activity, w.subActivity), w.durationMin ? `${w.durationMin} min` : null]
+              .filter(Boolean)
+              .join(' · ')
+            return (
+              <button
+                key={w.id}
+                type="button"
+                onClick={() => { setText(label); setChallengeRuleNote(challengeId, day, index, label) }}
+                className="rounded-pill bg-ink-2 px-2 py-1 text-micro text-fg-1 hover:bg-ink-3 active:scale-95"
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
