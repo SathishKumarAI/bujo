@@ -3,8 +3,10 @@ import { useJournal } from '../store'
 import { addDays, prettyDay, todayISO } from '../lib/date'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
-import { EmptyFrame, NumField, PageLayout, StatBar, SummaryStrip } from '../components/page'
-import { FOODS, SAMPLE_DAY, sumFoods, type Food } from '../lib/foods'
+import { Ring } from '../components/ui/ring'
+import { ChipPick } from '../components/ui/quickpick'
+import { EmptyFrame, NumField, PageLayout, SummaryStrip } from '../components/page'
+import { FOODS, KCAL_BANDS, SAMPLE_DAY, kcalBand, sumFoods, type Food } from '../lib/foods'
 import { cat } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
 
@@ -30,6 +32,52 @@ import { FoodSearch } from '../components/nutrition/FoodSearch'
 /** A balanced default until targets are user-settable. */
 const TARGET = { calories: 2000, protein: 120, carbs: 200, fat: 60 }
 
+/**
+ * How far over target counts as over. Reported as "the page looks pale and the
+ * calories are not showing in a good way", and both halves were the same
+ * defect: the day's headline number was a text fact (`1996 / 2000`) in a flat
+ * stat row, so the page's primary quantity carried **no** visual weight and no
+ * state — 600 kcal and 2,600 kcal rendered in the same grey at the same size.
+ * The over/under colour existed only on the Recent-days rows, two zones away
+ * from the number it judges.
+ *
+ * 5% rather than a hard equality, because a target is an aim and 2,001 kcal is
+ * not a miss. Over that, the ring turns; well over (25%), it turns again — the
+ * same three-step green/yellow/peach scale the food chips and Plan use.
+ */
+const OVER_SLACK = 1.05
+const WAY_OVER = 1.25
+
+/**
+ * Calories are a **ceiling** and protein is a **floor**, so one tone function
+ * cannot serve both — and getting that backwards is the kind of bug a reader
+ * trusts: a green ring for 40 g of protein would read as "done".
+ *
+ * `calorieState` returns the tone AND the sentence together, because the first
+ * draft computed them separately and immediately disagreed with itself on
+ * screen: at 2,023 kcal the ring was green (inside the 5% slack) while the line
+ * beside it read "23 kcal over target". Two judgements of one number, six
+ * pixels apart, is worse than either one alone — the reader cannot tell which
+ * to believe, and the only honest fix is for there to be one.
+ */
+function calorieState(kcal: number, target: number): { color: string; line: string } {
+  if (kcal === 0) return { color: 'overlay0', line: 'Nothing logged yet. Pick a food below.' }
+  if (kcal > target * WAY_OVER) return { color: 'peach', line: `${kcal - target} kcal over target.` }
+  if (kcal > target * OVER_SLACK) return { color: 'yellow', line: `${kcal - target} kcal over target.` }
+  // Inside the slack. The number is still over, and saying so while the ring
+  // stays green is the point: "on target" is the verdict, the count is the
+  // detail. Hiding the count would be the other kind of dishonest.
+  if (kcal > target) return { color: 'green', line: `On target — ${kcal - target} kcal over.` }
+  return { color: 'green', line: `${target - kcal} kcal left today.` }
+}
+
+function floorTone(value: number, target: number): string {
+  if (value === 0) return 'overlay0'
+  if (value >= target) return 'green'
+  if (value >= target * 0.6) return 'yellow'
+  return 'peach'
+}
+
 const MACROS = [
   { key: 'protein' as const, label: 'Protein', color: 'red' },
   { key: 'carbs' as const, label: 'Carbs', color: 'yellow' },
@@ -40,7 +88,6 @@ export function Nutrition() {
   const { data, setMetric } = useJournal()
   const today = todayISO()
   const [date, setDate] = useState(today)
-  const [pick, setPick] = useState('')
 
   const m = data.metrics.find((x) => x.date === date)
   const kcal = m?.calories ?? 0
@@ -73,11 +120,39 @@ export function Nutrition() {
     <PageLayout
       tier={1180}
       zone1={
-        <StatBar facts={[
-          { label: 'Logging', value: date === today ? 'Today' : prettyDay(date), prose: true },
-          { label: 'Calories', value: kcal > 0 ? `${kcal} / ${TARGET.calories}` : `— / ${TARGET.calories}` },
-          { label: 'Protein', value: protein > 0 ? `${protein} / ${TARGET.protein} g` : `— / ${TARGET.protein} g` },
-        ]} />
+        // Two rings and a sentence, where this was three text facts. Calories
+        // is the number the page exists to show, so it gets the larger ring and
+        // the leading position; protein is the one target worth hitting rather
+        // than staying under, so it sits beside it at a smaller size. The
+        // remaining budget is spelled out in words underneath because "1,996 of
+        // 2,000" answers "how am I doing" and "4 left" answers "can I eat this",
+        // which is the question asked at the moment someone opens this page.
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Ring
+            value={Math.min(kcal, TARGET.calories)}
+            max={TARGET.calories}
+            display={kcal}
+            size={104}
+            stroke={9}
+            color={calorieState(kcal, TARGET.calories).color}
+            label={`of ${TARGET.calories} kcal`}
+          />
+          <Ring
+            value={Math.min(protein, TARGET.protein)}
+            max={TARGET.protein}
+            display={protein}
+            size={78}
+            stroke={7}
+            color={floorTone(protein, TARGET.protein)}
+            label={`of ${TARGET.protein} g protein`}
+          />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-body text-fg-1">
+              {date === today ? 'Today' : prettyDay(date)}
+            </p>
+            <p className="text-label text-fg-2">{calorieState(kcal, TARGET.calories).line}</p>
+          </div>
+        </div>
       }
       zone2={
         <section className="flex flex-col gap-3">
@@ -88,48 +163,35 @@ export function Nutrition() {
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
           </label>
 
-          <label className="block text-body text-fg-1">
-            Food
-            <select
-              value={pick}
-              onChange={(e) => setPick(e.target.value)}
-              className="mt-1 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1"
-            >
-              <option value="">Choose a food…</option>
-              <optgroup label="Indian">
-                {FOODS.filter((f) => f.cuisine === 'indian').map((f) => (
-                  <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
-                ))}
-              </optgroup>
-              <optgroup label="American">
-                {FOODS.filter((f) => f.cuisine === 'american').map((f) => (
-                  <option key={f.name} value={f.name}>{f.name} · {f.serving} ({f.kcal} kcal)</option>
-                ))}
-              </optgroup>
-            </select>
-          </label>
+          {/* A native <select> of forty options was the page's whole "add a
+              food" flow: open, scroll, choose, then reach for a separate
+              disabled button. Four interactions, and the kcal — the only thing
+              that distinguishes two options — sat inside the option text where
+              nothing could compare them.
+
+              `ChipPick` is the control this app already uses for a quick
+              choice, and it carries the pill radius, the rest fill, the
+              selected state and a real <fieldset>/<legend>. Picking a chip
+              commits immediately, so the Add button and its greyed-out state
+              and the paragraph explaining the greyed-out state all go away.
+
+              The calorie band is drawn *inside* the chip label as a dot, not
+              passed as ChipPick's `tone` — that prop is per-group, and a shared
+              primitive does not get a new per-option API for one call site. */}
+          <FoodPicker cuisine="indian" onAdd={addFood} />
+          <FoodPicker cuisine="american" onAdd={addFood} />
+
+          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-label text-fg-2">
+            {(Object.keys(KCAL_BANDS) as (keyof typeof KCAL_BANDS)[]).map((b) => (
+              <li key={b} className="inline-flex items-center gap-1.5">
+                <i className="inline-block h-2 w-2 rounded-pill" style={{ background: cat(KCAL_BANDS[b].color) }} />
+                {KCAL_BANDS[b].label} <span className="text-fg-3">· {KCAL_BANDS[b].hint}</span>
+              </li>
+            ))}
+          </ul>
 
           {/* Renders nothing until food lookup is switched on in Settings. */}
           <FoodSearch onAdd={addFood} />
-
-          {/* Two jobs under one heading, now labelled and ordered as two.
-              The select and this button ADD a food's macros to the day. The four
-              fields below SET the day's running totals — they read the stored
-              metric, so they show 1996 kcal rather than an empty "what did you
-              eat" form, and typing in one replaces the total rather than adding
-              to it. Same heading, opposite mental models, and the button sat
-              *below* the fields it has nothing to do with, greyed out, with
-              nothing saying why. It belongs to the select, so it sits with it. */}
-          <Button
-            variant="secondary"
-            className="press-3d w-full"
-            disabled={!pick}
-            onClick={() => {
-              const f = FOODS.find((x) => x.name === pick)
-              if (f) { addFood(f); setPick('') }
-            }}
-          >Add food</Button>
-          {!pick && <p className="text-label text-fg-2">Pick a food above and its macros are added to today.</p>}
 
           <p className="mt-1 border-t border-line pt-3 text-label text-fg-2">Or set the day’s totals directly</p>
 
@@ -156,10 +218,17 @@ export function Nutrition() {
       }
       zone3={
         <>
+          {/* Calories and protein moved up into zone 1 as rings, and leaving
+              them here too printed each number twice on one screen, 90px
+              apart — the review zone restating the orientation zone instead of
+              reviewing anything. What this strip can say that the rings cannot
+              is the *fortnight*: how many days are on the record and what they
+              average, which is the question the Recent-days list below answers
+              in detail. */}
           <SummaryStrip items={[
-            { label: 'Calories', value: kcal, empty: kcal === 0 },
-            { label: 'Protein', value: protein, suffix: ' g', empty: protein === 0 },
-            { label: 'Days logged', value: logged, empty: logged === 0 },
+            { label: 'Days logged', value: logged, suffix: ' of 14', empty: logged === 0 },
+            { label: 'Daily average', value: avg, suffix: ' kcal', empty: logged === 0 },
+            { label: 'Over target', value: recent.filter((d) => d.kcal > TARGET.calories).length, suffix: ` of ${logged}`, empty: logged === 0 },
           ]} />
 
           <section>
@@ -227,6 +296,65 @@ export function Nutrition() {
           </section>
         </>
       }
+    />
+  )
+}
+
+const CUISINE_LABEL = { indian: 'Indian', american: 'American' } as const
+
+/**
+ * One cuisine's foods as a row of action chips, each carrying its calorie
+ * weight as a dot and its number as text.
+ *
+ * Two channels, deliberately: the dot is what makes "which of these is the
+ * expensive one" answerable at a glance, and the kcal is what makes it
+ * answerable exactly. Colour alone would fail anyone who cannot separate the
+ * three hues — and the band names are spelled out in the legend beneath the
+ * rows, so the dot is never the only place a band is stated.
+ *
+ * `tone` differs per cuisine only to separate the two rows from each other; it
+ * carries no meaning about the food. The calorie meaning is the dot.
+ */
+function FoodPicker({ cuisine, onAdd }: { cuisine: Food['cuisine']; onAdd: (f: Food) => void }) {
+  const foods = FOODS.filter((f) => f.cuisine === cuisine)
+  return (
+    <ChipPick
+      label={CUISINE_LABEL[cuisine]}
+      action
+      value={null}
+      tone={cuisine === 'indian' ? 'peach' : 'teal'}
+      onChange={(name) => {
+        const f = foods.find((x) => x.name === name)
+        if (f) onAdd(f)
+      }}
+      options={foods.map((f) => ({
+        value: f.name,
+        // The serving is in the tooltip rather than the chip: forty chips each
+        // carrying "1 cup" wraps to a wall, and the serving is what you check
+        // once, not what you scan by.
+        hint: `${f.serving} · ${f.kcal} kcal · ${f.protein} g protein`,
+        label: (
+          <span className="inline-flex items-center gap-1.5">
+            <i
+              aria-hidden
+              className="inline-block h-1.5 w-1.5 shrink-0 rounded-pill"
+              style={{ background: cat(KCAL_BANDS[kcalBand(f.kcal)].color) }}
+            />
+            {f.name}
+            {/* `fg-2`, not `fg-3`. On the chip's own fill the tertiary
+                token measured 4.18:1 at 15px against that fill — axe flagged it on five
+                desktop themes and both phone themes, six shards, the moment this
+                chip row shipped. `npm run contrast` stayed green and was right
+                to: it reads palette TOKENS, and a token is not a pairing. The
+                number is secondary information, so the secondary token is also
+                the correct answer on the merits, not just the passing one. */}
+            <span className="num text-fg-2">{f.kcal}</span>
+            <span className="sr-only">
+              kcal, {KCAL_BANDS[kcalBand(f.kcal)].label.toLowerCase()}, {f.serving}. Adds to today.
+            </span>
+          </span>
+        ),
+      }))}
     />
   )
 }

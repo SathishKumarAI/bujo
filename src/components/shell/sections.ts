@@ -132,6 +132,25 @@ export const SECTIONS: Section[] = [
       { view: 'pickleball', label: 'Pickleball' },
       // Pull-ups, by the same test, applied a third time. See the note below.
       { view: 'pullups', label: 'Pull-ups' },
+      // Home workout, by the same test, applied a fourth time — and this one
+      // was not merely hard to find, it was **unreachable**. The page had no
+      // tab on purpose: it was "reachable from a link inside Fitness". That
+      // link is `COMPANION`, keyed on the *activity* `homeWorkout`, which is
+      // `mode: 'strength'` — and strength came out of `LOGGABLE_MODES` when
+      // Fitness's strength segment was deleted. So the activity could no
+      // longer be selected, so the link could never render, so the only door
+      // to a whole page was welded shut by a change two files away that had
+      // no reason to know the door existed.
+      //
+      // Measured in the browser rather than argued from the code: Fitness
+      // offers two mode segments, Cardio with nine activities and Sport with
+      // two, and "Home workout" appears in neither list. Reported as "I want
+      // to log a home workout and I'm unable to".
+      //
+      // The general shape: a destination whose only route is conditional on
+      // state that another module owns is a destination with no route. Give
+      // it a tab, like the three above it.
+      { view: 'homeworkout', label: 'Home workout' },
       { view: 'coaching', label: 'Coaching' },
       { view: 'nutrition', label: 'Nutrition' },
       // Moved out of Insights. 75 Hard and the 90-day blocks are disciplines you
@@ -171,18 +190,19 @@ export const SECTIONS: Section[] = [
 
 /**
  * Which section a view belongs to — the "section prefix" the active state
- * matches on. Includes Home workout, which is **not** a tab, so landing on it
- * still lights its rail row.
+ * matches on.
+ *
+ * Derived wholly from `SECTIONS` now. Home workout used to be bolted on here
+ * by hand, because it was a member of Body without being one of its tabs; it
+ * is a tab, so it arrives through the loop like everything else and the
+ * hand-written exception is gone. Pull-ups made the same trip earlier.
+ *
  * Views absent from this map (Settings, Help, Account, the kitchen sink) light
  * nothing, which is correct: they are not section destinations.
  */
 export const MEMBERS: Partial<Record<ViewId, SectionId>> = (() => {
   const m: Partial<Record<ViewId, SectionId>> = {}
   for (const s of SECTIONS) for (const t of s.tabs) m[t.view] = s.id
-  // Companion: reachable from a link inside Fitness, not tabbed. Listed here
-  // only so landing on it lights the right rail row. Pull-ups used to sit
-  // beside it and is a tab now, so it arrives through `SECTIONS` above.
-  m.homeworkout = 'body'
   return m
 })()
 

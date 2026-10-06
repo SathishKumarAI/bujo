@@ -4,6 +4,7 @@ import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
 import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
 import { HOME_EXERCISES } from './homeExercises'
+import { kindsFor } from '../domain/activities'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -84,7 +85,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 6
+export const DEMO_VERSION = 7
 
 export function generateDemoData(today = todayISO()): JournalData {
   const j = seedJournal()
@@ -104,6 +105,13 @@ export function generateDemoData(today = todayISO()): JournalData {
    * untouched. Same rule for the next person: new field, new stream.
    */
   const rand2 = rng(1337)
+  /**
+   * Third stream, for `Workout.subActivity`. Same rule as `rand2` above, and
+   * it earns its own rather than borrowing that one: `rand2` is already drawn
+   * from inside other blocks, so sharing it would shift *those* values instead
+   * — moving the breakage rather than avoiding it. New field, new stream.
+   */
+  const randSub = rng(90210)
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
@@ -198,8 +206,15 @@ export function generateDemoData(today = todayISO()): JournalData {
     // A few workouts.
     if (rand() > 0.7) {
       const acts = ['run', 'strength', 'yoga', 'walk', 'cycle'] as const
+      const activity = acts[Math.floor(rand() * acts.length)]
+      // Seed the sub-activity from the registry rather than a literal list, so
+      // it cannot drift from what the form offers — and leave roughly a fifth
+      // of them unset, because "not said" is a real state every reader has to
+      // render and a seed where every row is populated never exercises it.
+      const kinds = kindsFor(activity)
+      const subActivity = kinds.length && randSub() > 0.2 ? kinds[Math.floor(randSub() * kinds.length)] : undefined
       j.workouts.push({
-        id: uid('w'), date, activity: acts[Math.floor(rand() * acts.length)],
+        id: uid('w'), date, activity, subActivity,
         durationMin: 20 + Math.floor(rand() * 50), distanceKm: rand() > 0.5 ? Math.round(rand() * 10 * 10) / 10 : undefined,
         sets: [], rpe: 4 + Math.floor(rand() * 6), notes: '', calories: 150 + Math.floor(rand() * 400),
       })
@@ -382,8 +397,13 @@ export function generateDemoData(today = todayISO()): JournalData {
       const n = 4 + Math.floor(rand3() * 3)
       const picked = HOME_PICKS.filter(() => rand3() > 0.4).slice(0, n)
       if (picked.length === 0) continue
+      // `randSub`, not `rand3` — drawing from this block's own stream would
+      // shift every home-workout value after it, which is the trap the
+      // `rand2` note above exists for.
+      const hwKinds = kindsFor('homeWorkout')
       j.workouts.push({
         id: uid('w'), date: addDays(today, -i), activity: 'homeWorkout',
+        subActivity: hwKinds[Math.floor(randSub() * hwKinds.length)],
         durationMin: 18 + Math.floor(rand3() * 25),
         sets: picked.map((e) => `${e.name} ${e.reps}`),
         rpe: 5 + Math.floor(rand3() * 4),

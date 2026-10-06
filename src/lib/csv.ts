@@ -82,10 +82,20 @@ export function parseMetricsCsv(text: string): { date: string; patch: Record<str
   return out
 }
 
+/**
+ * `kind` is APPENDED, not inserted beside `activity` where it reads better.
+ *
+ * This is an export someone's spreadsheet already has a column order for.
+ * Putting the sub-activity where it belongs semantically — third, next to
+ * `split` — shifts five columns right, and every formula pointing at them
+ * silently moves with it. A new last column is the one change a consumer can
+ * ignore. Readability of the CSV loses to not breaking a file that has already
+ * left the building.
+ */
 export function workoutsCsv(data: JournalData): string {
   return toCsv(
-    ['date', 'activity', 'split', 'durationMin', 'distanceKm', 'calories', 'rpe', 'sets'],
-    [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1)).map((w) => [w.date, labelOf(w.activity), w.split ?? '', w.durationMin, w.distanceKm, w.calories, w.rpe, w.sets.join(' | ')]),
+    ['date', 'activity', 'split', 'durationMin', 'distanceKm', 'calories', 'rpe', 'sets', 'subActivity'],
+    [...data.workouts].sort((a, b) => (a.date < b.date ? -1 : 1)).map((w) => [w.date, labelOf(w.activity), w.split ?? '', w.durationMin, w.distanceKm, w.calories, w.rpe, w.sets.join(' | '), w.subActivity ?? '']),
   )
 }
 

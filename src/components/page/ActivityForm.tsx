@@ -1,7 +1,8 @@
-import { activitiesForMode, asks, labelOf, MODE_COPY, type ActivityKey, type Mode } from '../../domain/activities'
+import { activitiesForMode, asks, kindsFor, labelOf, MODE_COPY, type ActivityKey, type Mode } from '../../domain/activities'
 import { Input, Textarea } from '../ui'
 import { NumField } from './NumField'
 import { Button } from '../ui/button'
+import { ChipPick } from '../ui/quickpick'
 import { DisclosureRow } from './DisclosureRow'
 import type { ActivityDraft } from './draft'
 import type { DistanceUnit } from '../../lib/types'
@@ -96,6 +97,7 @@ export function ActivityForm({
   right?: React.ReactNode
 }) {
   const { activity } = draft
+  const kinds = kindsFor(activity)
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-2">
@@ -109,7 +111,14 @@ export function ActivityForm({
         Activity
         <select
           value={activity}
-          onChange={(e) => onChange({ activity: e.target.value as ActivityKey })}
+          // Changing the activity CLEARS the sub-activity, in the one place the
+          // activity can change. Without it, picking Run · Intervals and then
+          // switching to Yoga stores a yoga session whose sub-activity is
+          // "Intervals" — a value the new activity does not offer, that the chip
+          // row below cannot show as selected, and that nothing would ever
+          // correct. The mode switch and the deep link both go through
+          // `emptyDraft`, which starts at '', so this is the remaining door.
+          onChange={(e) => onChange({ activity: e.target.value as ActivityKey, subActivity: '' })}
           className="mt-1 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1"
         >
           {activitiesForMode(mode).map(([key, a]) => (
@@ -117,6 +126,32 @@ export function ActivityForm({
           ))}
         </select>
       </label>
+
+      {/* The sub-activity. "Yoga, 45 min" described a restorative session and a
+          power class identically; this is the field that tells them apart.
+          Rendered only when the registry names kinds for this activity, so
+          there is no condition here on an activity literal — same rule as the
+          duration/distance/sets fields below.
+
+          Pressing the selected chip clears it, like `RpeScale` above: a kind is
+          optional, and a control you cannot un-answer turns a stray tap into a
+          permanent wrong answer. */}
+      {kinds.length > 0 && (
+        <ChipPick
+          // `${label} type`, not "What kind of {label}?" — which is what this
+          // said until the rendered page was read back. `.toLowerCase()` turned
+          // HIIT into "What kind of hiit?", and no casing rule saves the
+          // sentence from "What kind of other?", because `other` is a label
+          // that cannot be a noun in that frame. Appending a word needs neither
+          // the activity's case changed nor the activity to read as a noun:
+          // "Run type", "HIIT type", "Other type", "Home workout type".
+          label={`${labelOf(activity)} type`}
+          value={draft.subActivity}
+          onChange={(k) => onChange({ subActivity: k === draft.subActivity ? '' : k })}
+          options={kinds.map((k) => ({ value: k, label: k }))}
+          hint="Optional. Tap again to clear."
+        />
+      )}
 
       <label className="block text-body text-fg-1">
         Date

@@ -267,6 +267,13 @@ const SCALES = {
   'aging · Plan overdue buckets': ['yellow', 'peach', 'pink', 'red'],
   'set kind · gym SessionLogger': ['mauve', 'blue', 'maroon'],
   'strength bands · RelativeStrengthCard': ['mauve', 'blue', 'green', 'yellow', 'overlay0'],
+  // src/lib/foods.ts KCAL_BANDS — the dot on every food chip, and the legend
+  // beneath the two rows. Three tones painted side by side in one wrapped row,
+  // so they are read against each other and not against a ground.
+  'calorie weight · Nutrition food chips': ['green', 'yellow', 'peach'],
+  // src/views/Nutrition.tsx ceilingTone/floorTone — the calorie and protein
+  // rings sit adjacent and can hold different tones at the same time.
+  'target state · Nutrition rings': ['green', 'yellow', 'peach', 'overlay0'],
 }
 
 /**

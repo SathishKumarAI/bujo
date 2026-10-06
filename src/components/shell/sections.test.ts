@@ -54,15 +54,22 @@ describe('the five sections', () => {
       // now, and `views/Trackers.tsx` only forwards there. Fifteen places
       // still link to the id, which is why it exists at all — see the file.
       'trackers',
-      // Reached from a companion link inside Fitness. A genuine activity: the
-      // page is a bodyweight exercise library, and the session it produces is
-      // a `Workout` the Fitness form already logs.
+      // `homeworkout` sat here, on the wording "reached from a companion link
+      // inside Fitness" — the THIRD page exempted on that exact sentence,
+      // after Pickleball and Pull-ups. It is a tab now, and the entry is gone.
       //
-      // `pullups` sat on this list too, on the same wording, and the wording
-      // was measuring the wrong thing — see `sections.ts`. The page held a
-      // program tracker, a calculator and a manual, so the exemption was again
-      // hiding a surface with no door. It is a tab now.
-      'homeworkout',
+      // What makes the sentence dangerous is that it is unfalsifiable by this
+      // test: the exemption asserts a route exists somewhere else, and nothing
+      // here can check that the route still renders. Home workout's did not.
+      // The link was keyed on an activity in `mode: 'strength'`, and strength
+      // left `LOGGABLE_MODES` when Fitness's strength segment was deleted — so
+      // the only door to the page closed as a side effect of a change in
+      // another file, silently, and this test went on passing because the
+      // page was on the list that says "trust me".
+      //
+      // Rule for the next entry: "reached from a link in X" is not a reason to
+      // exempt a page. Either the route is a tab, or the exemption is a bet
+      // that nothing will ever change X.
     ])
     const orphans = (Object.keys(VIEW_CHROME) as ViewId[]).filter((v) => !exempt.has(v) && !MEMBERS[v])
     expect(orphans).toEqual([])

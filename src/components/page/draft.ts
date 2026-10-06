@@ -19,6 +19,8 @@ import type { DistanceUnit, Workout } from '../../lib/types'
 export interface ActivityDraft {
   date: string
   activity: ActivityKey
+  /** Sub-activity. '' is "not said", which is a legitimate answer. */
+  subActivity: string
   duration: string
   distance: string
   sets: string
@@ -30,6 +32,7 @@ export interface ActivityDraft {
 export const emptyDraft = (mode: Mode = 'cardio'): ActivityDraft => ({
   date: todayISO(),
   activity: defaultActivityFor(mode),
+  subActivity: '',
   duration: '', distance: '', sets: '', calories: '', rpe: '', notes: '',
 })
 
@@ -37,6 +40,7 @@ export const emptyDraft = (mode: Mode = 'cardio'): ActivityDraft => ({
 export const draftOf = (w: Workout, unit: DistanceUnit): ActivityDraft => ({
   date: w.date,
   activity: w.activity,
+  subActivity: w.subActivity ?? '',
   duration: w.durationMin?.toString() ?? '',
   distance: w.distanceKm != null ? String(Math.round(fromKm(w.distanceKm, unit) * 100) / 100) : '',
   sets: w.sets.join('\n'),
@@ -49,6 +53,9 @@ export const draftOf = (w: Workout, unit: DistanceUnit): ActivityDraft => ({
 export const workoutOf = (d: ActivityDraft, unit: DistanceUnit): Omit<Workout, 'id'> => ({
   date: d.date,
   activity: d.activity,
+  // `undefined`, never ''. An empty string is a value the journal holds and
+  // every reader then has to treat as falsy-but-present; absent is absent.
+  subActivity: d.subActivity.trim() || undefined,
   durationMin: d.duration ? Number(d.duration) : undefined,
   distanceKm: d.distance ? toKm(Number(d.distance), unit) : undefined,
   calories: d.calories ? Number(d.calories) : undefined,
@@ -71,6 +78,11 @@ export const workoutOf = (d: ActivityDraft, unit: DistanceUnit): Omit<Workout, '
  */
 export const draftIsEmpty = (d: ActivityDraft): boolean =>
   !d.duration.trim() && !d.distance.trim() && !d.sets.trim() && !d.calories.trim() && !d.notes.trim()
+  // The sub-activity counts, on the same rule as the others: it is not
+  // pre-filled, so choosing one is evidence a human touched the form.
+  // The activity and date are excluded *because* they arrive filled in,
+  // and a sub-activity never does.
+  && !d.subActivity.trim()
 
 /** Standard draft state for a page that needs no special behaviour. */
 export function useActivityDraft(mode: Mode) {

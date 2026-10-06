@@ -71,6 +71,12 @@ export function landingForRecord(r: ImportRecord): Landing {
         : { view: 'trackers', where: 'Tracking', what: metricFields(r) }
 
     case 'workout': {
+      // `labelOf`, not `fullLabelOf`. The ingest envelope has no sub-activity
+      // field — and writing `fullLabelOf(r.activity, r.kind)` here TYPECHECKED,
+      // because `r.kind` is this union's own discriminant and is the string
+      // `'workout'`. It would have rendered "Run · workout" on every capture
+      // receipt. The envelope can carry a sub-activity when it learns to parse
+      // one; until then this is the honest label.
       const what = [labelOf(r.activity), r.durationMin ? `${r.durationMin} min` : null, r.distanceKm ? `${r.distanceKm} km` : null]
         .filter(Boolean)
         .join(' · ')
