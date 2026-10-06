@@ -11,8 +11,12 @@ import { cn } from '../lib/cn'
  *
  * **The colour is `onRaised('red')`, not `text-red`, and that is a measured
  * fix.** `text-red` is the RAW palette value, and on vscode it computes to
- * `#f57979 on #3c3c3c = 4.14:1` — under 4.5 as text. `views/HomeWorkout.tsx`
- * knew this and carried the fix *locally*, in a comment on its own anchor;
+ * **4.14:1** against the raised surface — under 4.5 as text. (The two hex
+ * values are deliberately not written out: `npm run design` greps the source
+ * for a hardcoded colour and cannot tell a comment from a call, so quoting the
+ * measurement verbatim fails the gate. That is the right trade — the rule is
+ * worth more than the two literals.) `views/HomeWorkout.tsx` knew this and
+ * carried the fix *locally*, in a comment on its own anchor;
  * this component was extracted from that anchor without it, so every other
  * adopter (Pullups' progressions, Gym's session logger, the program day
  * checklist) has been failing on vscode ever since, invisibly — all three sit
