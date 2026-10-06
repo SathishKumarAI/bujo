@@ -24,7 +24,7 @@ const KEYED_ARRAYS: [string, string][] = [
 // Plain `{ key: value }` maps — local-only keys are filled in on merge.
 const MAPS = [
   'habitLog', 'habitValues', 'habitTimes', 'habitNotes', 'habitSkips',
-  'challengeLog',
+  'challengeLog', 'challengeNotes',
 ] as const
 
 type Dict = Record<string, unknown>

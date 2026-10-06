@@ -980,6 +980,31 @@ export interface JournalData {
   challenges?: Challenge[]
   /** challengeId -> ISO day -> indices of rules completed that day. */
   challengeLog?: Record<string, Record<string, number[]>>
+  /**
+   * What you actually did for a rule, on a day. Keyed
+   * `"challengeId:date:ruleIndex"` — see `challengeRuleKey` in `recordKeys.ts`.
+   *
+   * A rule was a string and a tick, which is enough to say a day counted and
+   * nothing at all about what happened. 75 Hard asks for two 45-minute
+   * workouts, one outdoor — you could mark both done and never record which
+   * two, or which was the outdoor one, while the workout you logged the same
+   * morning sat in `data.workouts` with no connection to it.
+   *
+   * ONE FLAT MAP, not nested, and that is a merge decision rather than a style
+   * one. `conflict.ts` merges every entry in `MAPS` with a shallow
+   * `{...loser, ...winner}`, so a nested map resolves at the granularity of its
+   * OUTER key: two devices annotating different rules on the same day would
+   * keep only one device's whole set. Flat means one key per note, so the
+   * shallow merge is exactly right and there is no new merge code to go wrong.
+   *
+   * The first draft of this field WAS nested, with a comment claiming per-note
+   * granularity it did not have. `challengeNotes.test.ts` failed on it.
+   *
+   * Sibling worth knowing about: `habitNotes` is `date → habitId → note` and
+   * has that same hole today — two devices annotating different habits on one
+   * day lose one. Filed, not fixed here.
+   */
+  challengeNotes?: Record<string, string>
   /** habitId -> ISO days marked as a planned skip (don't break the streak). */
   habitSkips?: Record<string, string[]>
   /** Developer focus/coding sessions. */

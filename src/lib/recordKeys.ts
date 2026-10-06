@@ -88,3 +88,14 @@ export function changedKeys(before: RecordFingerprints, after: RecordFingerprint
   for (const [k, v] of after) if (before.get(k) !== v) out.add(k)
   return out
 }
+
+/**
+ * One challenge rule, on one day. `challenge:<id>:<date>:<ruleIndex>`.
+ *
+ * Flat on purpose: `conflict.ts` merges `challengeNotes` with a shallow spread,
+ * so one key per note is what makes two devices annotating different rules on
+ * the same day both keep their work. See the field's own docstring in
+ * `types.ts` for the version of this that was wrong first.
+ */
+export const challengeRuleKey = (challengeId: string, date: string, ruleIndex: number) =>
+  `${challengeId}:${date}:${ruleIndex}`
