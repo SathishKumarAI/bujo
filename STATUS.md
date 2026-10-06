@@ -3,49 +3,49 @@
 **Stopped:** 2026-10-05, after the Home Workout build. `main` at `78725b1`,
 this work on `feat/home-workout-library` (COD-272).
 
-## First thing: the browser gates cannot run on this machine
+## First thing: the browser gates need two commands nobody writes down
 
-**`playwright` is not in `package.json`.** Not as a dependency, not as a
-devDependency, and `node_modules` does not contain it. So `npm run a11y`,
-`npm run smoke`, `npm run clipped` and `npm run space` all die before they do
-anything:
+On a fresh checkout `npm run a11y`, `npm run smoke`, `npm run clipped` and
+`npm run space` all die before doing anything:
 
 ```
 Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'playwright' imported from
   …/scripts/space-audit.mjs
 ```
 
-`@axe-core/playwright` is missing too. The Playwright **CLI** happens to be in
-the npx cache (1.63.0), which is why `npx playwright --version` answers and
-makes this look fine — it is not the package the scripts import.
-
-This is the "a gate nobody runs" family in CLAUDE.md one level deeper: not
-switched off, *uninstallable*. The timings written into CLAUDE.md
-(`507s` serial, `183s` at four workers) were measured on a checkout where it
-was installed, so something has dropped it since. Filed as **COD-273**; the fix
-is to declare both in `devDependencies` and run `npx playwright install
-chromium`, which is an install this session did not take on its own.
-
-**Until then, measure with the DevTools MCP against a real Chrome.** That is
-what this session did and it works:
+**`playwright` and `@axe-core/playwright` are in neither `dependencies` nor
+`devDependencies`, and that is deliberate** — `.github/workflows/a11y.yml`
+installs them per job. Run the same thing locally, once:
 
 ```
-npx vite build
-npx vite preview --port 4199 --strictPort &
-# launch Chrome with --remote-debugging-port=9333 --user-data-dir=<temp>
-# then inject axe-core from cdnjs and drive the page
+npm i -D --no-save playwright @axe-core/playwright
+npx playwright install chromium
 ```
 
-Two traps that cost time doing it that way, both already in CLAUDE.md and both
-hit anyway:
+Both gates work immediately after. Nothing in `README.md`, `CLAUDE.md` or this
+file said so; CLAUDE.md's "Running the browser gates" section documents
+`BUJO_URL` and the worker knobs and not this. **COD-273.** It is CLAUDE.md's own
+"a gate with a manual incantation is one nobody types", with the incantation
+living in a YAML file two directories away.
+
+The misdiagnosis is worth keeping: `npx --no-install playwright --version`
+answers `1.63.0` from the npx cache, so the obvious check says it is installed.
+That is the CLI, not the package the scripts import. The first version of
+COD-273 claimed the dependency had been *dropped*; it had not.
+
+**The fallback, if you ever need it again:** build, `npx vite preview --port
+4199 --strictPort`, launch Chrome with `--remote-debugging-port=9333
+--user-data-dir=<temp>`, drive it over CDP and inject axe-core from cdnjs. Two
+traps doing it that way, both already in CLAUDE.md and both hit anyway:
 
 - **The service worker serves the previous bundle.** A rebuild plus a reload is
-  not enough; a probe reported the fixed colour still failing. Compare
-  `document.querySelector('script[src*=index-]')` against your own
-  `dist/index.html` *every time*, then unregister the worker and clear `caches`.
-- **`resize_page` cannot go below ~500px** (the Chrome window has a minimum).
-  Use `emulate` with `390x844x2,mobile,touch`, and note it survives a
-  `navigate_page` but not a `location.reload()` from inside the page.
+  not enough; a probe reported a fixed colour still failing. Compare the loaded
+  `index-*.js` against your own `dist/index.html` *every time*, then unregister
+  the worker and clear `caches`.
+- **`resize_page` cannot go below ~500px** (the Chrome window has a minimum), so
+  a "390px" measurement taken that way is really 501px. Use `emulate` with
+  `390x844x2,mobile,touch`; it survives a `navigate_page` but not a
+  `location.reload()` issued from inside the page.
 
 ## What this session did
 
@@ -91,10 +91,16 @@ on this page.
 renders, and re-seed via Settings → Data → Load demo data; editing
 `src/lib/demo.ts` changes nothing for a journal that already exists.
 
+**`npm run design` and `npm run contrast` are not in `npm run verify` but ARE in
+CI.** That is how a locally green change goes red on push, and it did: the
+design gate greps the source for a hardcoded colour and **cannot tell a comment
+from a call site**, so a docstring quoting the two measured hex values failed
+it. Run all four before pushing, not just `verify`.
+
 ## Next action
 
-1. COD-273 — declare `playwright` and `@axe-core/playwright`, install Chromium,
-   and run the four gates for real. Everything else here is downstream of that.
+1. COD-273 — put the two install commands somewhere a human reads them, or
+   declare the packages. Everything about local gate coverage is downstream.
 2. Decide whether the other six rail pages want `railAt="2xl"`. Measure the
    chip strip's `scrollWidth` against its `clientWidth` on each; do not assume.
 
