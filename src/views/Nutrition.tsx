@@ -341,7 +341,14 @@ function FoodPicker({ cuisine, onAdd }: { cuisine: Food['cuisine']; onAdd: (f: F
               style={{ background: cat(KCAL_BANDS[kcalBand(f.kcal)].color) }}
             />
             {f.name}
-            <span className="num text-fg-3">{f.kcal}</span>
+            {/* `fg-2`, not `fg-3`. On the chip's own fill the tertiary
+                token measured 4.18:1 at 15px against that fill — axe flagged it on five
+                desktop themes and both phone themes, six shards, the moment this
+                chip row shipped. `npm run contrast` stayed green and was right
+                to: it reads palette TOKENS, and a token is not a pairing. The
+                number is secondary information, so the secondary token is also
+                the correct answer on the merits, not just the passing one. */}
+            <span className="num text-fg-2">{f.kcal}</span>
             <span className="sr-only">
               kcal, {KCAL_BANDS[kcalBand(f.kcal)].label.toLowerCase()}, {f.serving}. Adds to today.
             </span>
