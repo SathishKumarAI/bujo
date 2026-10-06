@@ -235,7 +235,7 @@ export function Coaching() {
  *    games in, and the two must not render the same (CLAUDE.md, COD-251).
  * 2. **Drills get the one new field**, `settings.coachingWeekNotes`, because no
  *    existing record holds them: a logged session is "doubles, 6–3, with Mara"
- *    and says nothing about whether the cross-country dink rally got to 50.
+ *    and says nothing about whether the cross-court dink rally got to 50.
  */
 function WeekRecord({ week, start, played, note, onNote }: {
   week: number

@@ -82,6 +82,31 @@ const PICKLE_NOTES = [
   'Partner covered the middle well; my resets were late.',
   'Served deep 8/10. Returns too short.',
 ]
+/**
+ * Cycle-day notes, one per cycle per situation so nothing repeats across the
+ * four seeded cycles. Indexed by cycle number rather than drawn at random,
+ * for the reason written at the call site.
+ */
+const CYCLE_NOTES = {
+  bleeding: [
+    'Worst cramps of this cycle — heat pad and an early night.',
+    'Cramps manageable today; the ibuprofen actually helped.',
+    'Heavier than last month. Worth mentioning on Friday.',
+    'Flat all day and cancelled the evening run. No regrets.',
+  ],
+  premenstrual: [
+    'Snapped at Sam over nothing. Noting it so I can see the pattern.',
+    'Teary at an advert, three days early as usual.',
+    'Could not concentrate past lunch. Moved the deep work to Thursday.',
+    'Sore and short-tempered — same week of the cycle as last time.',
+  ],
+  shift: [
+    'Doctor on Friday — ask whether the shift is landing late this month.',
+    'Took the test two hours later than usual, so treating it as soft.',
+    'Clear shift this morning and the mucus agrees for once.',
+    'Travelling, slept badly, so this reading is probably not trustworthy.',
+  ],
+}
 const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on the peaks', 'Made bread from scratch', 'Long talk under the stars']
 
 /**
@@ -1162,17 +1187,31 @@ export function generateDemoData(today = todayISO()): JournalData {
            * into journal search, so a day's words would have shown up in a
            * search that could never contain any.
            *
-           * Tied to what the day already is, like every field above it: the
-           * notes are the things a closed list cannot say, on the days you
-           * would say them. Sparse — about one day in twelve — because a log
-           * with a sentence on every day is not a log anyone kept, and because
-           * "no note" is the common case every reader has to handle.
+           * Only days with a SHAPE get one — bleeding, premenstrual, or the
+           * temperature shift — and the wording is indexed by the CYCLE DAY,
+           * which took two measured passes to get right:
+           *
+           * 1. A catch-all branch for every other day gave six notes of which
+           *    **four read "Started the new iron tablets today"**, on four
+           *    separate days. You do not start them four times. The catch-all
+           *    is gone — a filler line on an unshaped day is worse than none.
+           * 2. Indexing by CYCLE instead then gave **six consecutive days** of
+           *    the identical premenstrual line, because the premenstrual window
+           *    is six days long and they all shared one index. `day % 4` is
+           *    what makes neighbouring days differ.
+           *
+           * Both are the same defect as the pickleball session notes above,
+           * found the same way — by looking at the seeded output rather than at
+           * the code that produced it.
+           *
+           * `rand2() > 0.6` is deliberately the FIRST operand so the draw
+           * happens on every day whether or not a note lands. A conditional
+           * draw would consume the stream unevenly and shift mucus, LH, mood,
+           * energy and `tempDisturbed` on every later day — the trap `rand2`'s
+           * own docstring is about, from the inside.
            */
-          ...(rand2() > 0.92
-            ? { note: day <= 2 ? 'Worst cramps of this cycle — heat pad and an early night.'
-              : premenstrual ? 'Snapped at Sam over nothing. Noting it so I see the pattern.'
-              : pre <= 1 && pre >= 0 ? 'Doctor on Friday — ask whether the shift is late this month.'
-              : 'Started the new iron tablets today.' }
+          ...(rand2() > 0.82 && (day <= 2 || premenstrual || pre === 1)
+            ? { note: (day <= 2 ? CYCLE_NOTES.bleeding : premenstrual ? CYCLE_NOTES.premenstrual : CYCLE_NOTES.shift)[day % 4] }
             : {}),
         }
 
