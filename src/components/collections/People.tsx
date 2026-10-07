@@ -89,7 +89,7 @@ export function People() {
     <Band className="border-b-0">
       <BandRow>
         <BandCell className="basis-[24rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Friends</h2>
+          <h2 className="text-heading font-medium text-fg-1">Friends</h2>
           <p className="mt-1 mb-3 text-label text-pretty text-fg-2">Manual contacts, with an optional public GitHub pull.</p>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -177,7 +177,7 @@ export function People() {
         </BandCell>
 
         <BandCell className="basis-[18rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Birthdays</h2>
+          <h2 className="text-heading font-medium text-fg-1">Birthdays</h2>
           <p className="mt-1 mb-3 text-label text-fg-2">Friends' dates and anyone else you add.</p>
 
           <div className="flex flex-wrap items-center gap-3">

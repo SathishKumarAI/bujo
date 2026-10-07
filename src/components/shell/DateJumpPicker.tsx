@@ -39,7 +39,7 @@ export function DateJumpPicker({
         )}
         <div className="mb-2 flex items-center justify-between">
           <button onClick={() => setYear((y) => y - 1)} aria-label="Previous year" className="rounded p-1 text-fg-2 hover:text-fg-1"><Icon as={CaretLeft} size="md" /></button>
-          <span className="font-display text-body font-medium text-fg-1 tabular-nums">{year}</span>
+          <span className="text-body font-medium text-fg-1 tabular-nums">{year}</span>
           <button onClick={() => setYear((y) => y + 1)} aria-label="Next year" className="rounded p-1 text-fg-2 hover:text-fg-1"><Icon as={CaretRight} size="md" /></button>
         </div>
         <div className="grid grid-cols-3 gap-1">

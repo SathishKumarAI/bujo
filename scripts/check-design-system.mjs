@@ -121,6 +121,35 @@ for (const file of files) {
     if (/#[0-9a-fA-F]{6}\b/.test(line) && !paletteSource && !swatchPreview && !brandMark) {
       fail('hardcoded colour — use cat() or a token', file, n, line.trim().slice(0, 90))
     }
+
+    // 7 · THE DISPLAY SERIF HAS A FLOOR, and it is `text-title`.
+    //
+    // Fraunces is this app's character and it is not going anywhere — a serif
+    // display face is the opposite of the Inter-shaped average that generated
+    // interfaces collapse to. But it was on EVERY heading: measured on a live
+    // page, 11 of 12 headings inside `#main` rendered in it, and 45 of its 76
+    // call sites sat at `text-heading` (17px).
+    //
+    // At that size, repeated a dozen times down a page, a serif stops reading
+    // as character and starts reading as an ARTICLE — the page looks like
+    // something to be read rather than something to be operated. Above it, on a
+    // page title or a 32px number, the same face is what makes this app look
+    // like itself.
+    //
+    // So: a size FLOOR, not a ban. Serif at `text-title` and above, sans below.
+    // Stated as a gate because 45 call sites each re-typing
+    // `font-display text-heading` is precisely the drift this file exists to
+    // stop.
+    // A PLAIN regex literal, not a template string. The first version built
+    // this with `new RegExp(` and a backtick template, where `\b` is the
+    // BACKSPACE character U+0008 rather than a word boundary — so it could
+    // never match, and the gate reported 'passed' on a file where the serif
+    // had been put back deliberately to test it. A gate nobody has seen fail
+    // is not a gate.
+    const serifBelowFloor = /font-display[^\"'`]*\b(?:text-heading|text-body|text-label|text-micro|text-caption)\b|\b(?:text-heading|text-body|text-label|text-micro|text-caption)\b[^\"'`]*font-display/
+    if (serifBelowFloor.test(line)) {
+      fail('display serif below its size floor — font-display is for text-title and above', file, n, line.trim().slice(0, 90))
+    }
   })
 }
 

@@ -403,7 +403,7 @@ function Manual() {
         />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-            <h3 className="flex items-center gap-2 font-display text-heading font-medium text-fg-1">
+            <h3 className="flex items-center gap-2 text-heading font-medium text-fg-1">
               <Icon as={current.icon} size="md" style={{ color: onRaised(current.color) }} />
               {current.label}
             </h3>

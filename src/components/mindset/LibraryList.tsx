@@ -66,7 +66,7 @@ export function LibraryList({
         return (
           <div key={cat} className="flex flex-wrap gap-x-8 border-b border-line py-5 last:border-b-0">
             <div className="flex-none basis-36">
-              <h3 className="flex items-center gap-2 font-display text-body font-medium text-fg-1">
+              <h3 className="flex items-center gap-2 text-body font-medium text-fg-1">
                 <Icon as={categoryIcon(cat)} size="sm" className="shrink-0 text-fg-3" />
                 {cat}
               </h3>
@@ -104,7 +104,7 @@ export function LibraryList({
                       }`}
                     >
                       <span className="flex items-start justify-between gap-3">
-                        <span className={`font-display text-label font-medium ${on ? 'text-brand-text' : 'text-fg-1'}`}>
+                        <span className={`text-label font-medium ${on ? 'text-brand-text' : 'text-fg-1'}`}>
                           {p.title}
                         </span>
                         <span

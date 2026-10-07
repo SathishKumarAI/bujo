@@ -95,7 +95,7 @@ export function Manual() {
 function Head({ title, blurb }: { title: string; blurb: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-      <h3 className="font-display text-heading font-medium text-fg-1">{title}</h3>
+      <h3 className="text-heading font-medium text-fg-1">{title}</h3>
       <p className="text-label text-fg-2">{blurb}</p>
     </div>
   )

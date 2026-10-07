@@ -272,7 +272,7 @@ export function Focus() {
               <div className="min-w-0">
                 <section data-domain={group}>
                   <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                    <h2 className="font-display text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[group]}</h2>
+                    <h2 className="text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[group]}</h2>
                     <p className="text-label text-fg-2">{FOCUS_GROUP_BLURB[group]}</p>
                     <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
                   </div>

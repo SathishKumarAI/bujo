@@ -13,7 +13,7 @@ export function InboxBand({ entries }: { entries: Entry[] }) {
   return (
     <Band className="py-6">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">Inbox</h2>
+        <h2 className="text-heading font-medium text-fg-1">Inbox</h2>
         <Eyebrow className="tracking-[0.1em]">
           {entries.length} dateless {entries.length === 1 ? 'item' : 'items'}
         </Eyebrow>

@@ -39,7 +39,7 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
   return (
     <Band className="py-6">
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Shelves</h2>
+        <h2 className="text-heading font-medium text-fg-1">Shelves</h2>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <input
             value={title}
@@ -81,7 +81,7 @@ export function Shelves({ books, onAdd }: { books: Book[]; onAdd: (title: string
               className="min-w-0 flex-1 basis-[16rem] border-line pt-3 pr-5 pl-5 first:pl-0 last:pr-0 [&:not(:last-child)]:border-r @max-[44rem]/band:px-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0"
             >
               <div className="flex items-baseline gap-2">
-                <h3 className="font-display text-label font-medium text-fg-1">{s.label}</h3>
+                <h3 className="text-label font-medium text-fg-1">{s.label}</h3>
                 <Eyebrow className="num">{list.length}</Eyebrow>
               </div>
               {list.length === 0 ? (

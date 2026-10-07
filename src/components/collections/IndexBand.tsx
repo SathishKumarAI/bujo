@@ -33,7 +33,7 @@ export function IndexBand({
           different meanings — here it is a jump list, further down it is the
           list itself. */}
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-5">
-        <h2 className="font-display text-heading font-medium text-fg-1">Index</h2>
+        <h2 className="text-heading font-medium text-fg-1">Index</h2>
         <Eyebrow className="tracking-[0.1em]">The journal's table of contents</Eyebrow>
       </div>
       <BandRow>

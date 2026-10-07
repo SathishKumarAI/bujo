@@ -57,7 +57,7 @@ export function FocusSlots({
   return (
     <Band className="py-6">
       <div className="mb-3.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">Focus slots</h2>
+        <h2 className="text-heading font-medium text-fg-1">Focus slots</h2>
         <Eyebrow>{focus.length} of {count} in use</Eyebrow>
       </div>
       <BandRow wrap={false} className="flex-col sm:flex-row items-stretch border-t-2 border-line">
@@ -121,7 +121,7 @@ export function FocusSlots({
                       in the short column and buys a straight edge across all of
                       them. `2lh` is exactly two line-heights of THIS element, so
                       it tracks the font and leading instead of guessing an em. */}
-                  <h3 className="min-h-[2lh] font-display text-body leading-snug font-medium text-balance text-fg-1">{p.title}</h3>
+                  <h3 className="min-h-[2lh] text-body leading-snug font-medium text-balance text-fg-1">{p.title}</h3>
                   {/* Borderless but for a bottom rule: a boxed input would be the
                       only rounded object on the page and would read as a form
                       rather than as a line you write on.

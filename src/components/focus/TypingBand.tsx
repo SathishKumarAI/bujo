@@ -142,19 +142,19 @@ export function TypingStats() {
       <dl className="flex flex-wrap gap-x-8 gap-y-3 text-label">
         <div>
           <dt className="text-fg-2">Best WPM</dt>
-          <dd className="num font-display text-heading text-fg-1">{bestWpm(data) || '—'}</dd>
+          <dd className="num text-heading text-fg-1">{bestWpm(data) || '—'}</dd>
         </div>
         <div>
           <dt className="text-fg-2">Avg WPM</dt>
-          <dd className="num font-display text-heading text-fg-1">{avgWpm(data) || '—'}</dd>
+          <dd className="num text-heading text-fg-1">{avgWpm(data) || '—'}</dd>
         </div>
         <div>
           <dt className="text-fg-2">This week</dt>
-          <dd className="num font-display text-heading text-fg-1">{formatMinutes(typingWeekMinutes(data, today))}</dd>
+          <dd className="num text-heading text-fg-1">{formatMinutes(typingWeekMinutes(data, today))}</dd>
         </div>
         <div>
           <dt className="text-fg-2">Streak</dt>
-          <dd className="num font-display text-heading text-fg-1">{typingStreak(data, today)}</dd>
+          <dd className="num text-heading text-fg-1">{typingStreak(data, today)}</dd>
         </div>
       </dl>
 

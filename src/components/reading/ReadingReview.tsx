@@ -39,7 +39,7 @@ export function ReadingReview({
     <Band>
       <BandRow>
         <BandCell className="basis-[24rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Finished by month · {today.slice(0, 4)}</h2>
+          <h2 className="text-heading font-medium text-fg-1">Finished by month · {today.slice(0, 4)}</h2>
           <p className="mt-1 mb-4 text-label text-fg-2">One bar per month, this calendar year.</p>
           {/* `items-stretch`, not `items-end`: cross-axis `end` collapses each
               column to its label and leaves the flex-1 track at 0px — the bug
@@ -83,23 +83,23 @@ export function ReadingReview({
         <BandCell className="basis-[20rem]">
           {wrapped ? (
             <>
-              <h2 className="font-display text-heading font-medium text-fg-1">{wrapped.year} in books</h2>
+              <h2 className="text-heading font-medium text-fg-1">{wrapped.year} in books</h2>
               <p className="mt-1 mb-4 text-label text-fg-2">Finished only — the shelf you cleared.</p>
               <dl className="flex flex-wrap gap-x-8 gap-y-3 text-label">
                 <div>
                   <dt className="text-fg-2">Books</dt>
-                  <dd className="num font-display text-heading text-fg-1">{wrapped.count}</dd>
+                  <dd className="num text-heading text-fg-1">{wrapped.count}</dd>
                 </div>
                 {/* "Pages finished", not "Pages read": the other number on this
                     page counts how far into the current book you are. Both were
                     once labelled the same and showed different figures. */}
                 <div>
                   <dt className="text-fg-2">Pages finished</dt>
-                  <dd className="num font-display text-heading text-fg-1">{wrapped.pages.toLocaleString()}</dd>
+                  <dd className="num text-heading text-fg-1">{wrapped.pages.toLocaleString()}</dd>
                 </div>
                 <div>
                   <dt className="text-fg-2">Avg rating</dt>
-                  <dd className="num font-display text-heading text-fg-1">
+                  <dd className="num text-heading text-fg-1">
                     {wrapped.avgRating ? `${wrapped.avgRating.toFixed(1)}★` : '—'}
                   </dd>
                 </div>
@@ -132,7 +132,7 @@ export function ReadingReview({
             </>
           ) : (
             <>
-              <h2 className="font-display text-heading font-medium text-fg-1">{today.slice(0, 4)} in books</h2>
+              <h2 className="text-heading font-medium text-fg-1">{today.slice(0, 4)} in books</h2>
               <p className="mt-1 text-label text-fg-2">
                 Nothing finished this year yet. The recap fills in as books reach the Finished shelf.
               </p>

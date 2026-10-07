@@ -48,7 +48,7 @@ export function BookRow({ book }: { book: Book }) {
     <li className="group border-t border-line py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-display text-label font-medium text-fg-1">{book.title}</p>
+          <p className="truncate text-label font-medium text-fg-1">{book.title}</p>
           {book.author && <p className="truncate text-label text-fg-2">{book.author}</p>}
         </div>
         <Button

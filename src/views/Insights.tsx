@@ -391,7 +391,7 @@ export function Insights() {
               return (
                 <section key={d} data-domain={d} className="mb-6 last:mb-0">
                   <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                    <h2 className="font-display text-heading font-medium text-fg-1">{DOMAIN_LABEL[d]}</h2>
+                    <h2 className="text-heading font-medium text-fg-1">{DOMAIN_LABEL[d]}</h2>
                     <p className="text-label text-fg-2">{DOMAIN_BLURB[d]}</p>
                     <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
                   </div>

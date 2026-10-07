@@ -59,7 +59,7 @@ export function PenaltyCard() {
         ))}
       </ul>
       <div className="rounded-card border p-3" style={{ borderColor: cat(meta.color) + '55', background: cat(meta.color) + '11' }}>
-        <p className="font-display text-heading font-medium" style={{ color: onRaised(meta.color) }}>{penalty.title}</p>
+        <p className="text-heading font-medium" style={{ color: onRaised(meta.color) }}>{penalty.title}</p>
         <p className="text-body text-fg-1">{task} <span className="text-label text-fg-2">{level}</span></p>
       </div>
       <div className="mt-3 flex items-center gap-3 text-label">

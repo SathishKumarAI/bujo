@@ -40,7 +40,7 @@ export function PageHelpItems({ view, onNavigate }: { view: ViewId; onNavigate: 
       {chrome.help && (
         <>
           <div className="px-2 py-1.5">
-            <p className="mb-1 font-display text-body font-medium text-foreground">{chrome.title}</p>
+            <p className="mb-1 text-body font-medium text-foreground">{chrome.title}</p>
             <p className="text-label leading-relaxed text-fg-2">{chrome.help}</p>
           </div>
           <DropdownMenuItem onClick={() => onNavigate('help')} className="text-label text-blue">Open the full guide →</DropdownMenuItem>
