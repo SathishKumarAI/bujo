@@ -181,10 +181,16 @@ function mixOklab(a, b, pct) {
  * measured a colour neither of them paints. The override list is spelled out
  * rather than derived: it is two lines of CSS, and a regex over them is a
  * second thing to keep in step with the first.
+ * UPDATED when `--card` changed (phase 4 of DESIGN-PRODUCT-PASS). The mix was
+ * `base 95% + text 5%`; it is now `base 93% + white 7%`, because mixing with
+ * the text colour bought its lift by injecting that colour's hue. If this line
+ * is not kept in step with `index.css`, this gate measures a card the app does
+ * not paint — which is the exact failure the comment above warns about, and it
+ * is silent: the table still prints and every number in it is wrong.
  */
 const CARD_IS_MANTLE = new Set(['latte', 'dawn'])
 const cardOf = (p, theme) =>
-  CARD_IS_MANTLE.has(theme) ? p.mantle : (p.base && p.text ? mixOklab(p.base, p.text, 95) : null)
+  CARD_IS_MANTLE.has(theme) ? p.mantle : (p.base ? mixOklab(p.base, '#ffffff', 93) : null)
 
 /**
  * `@theme { … }` carries mocha; `:root[data-theme='x'] { … }` carries the rest.
