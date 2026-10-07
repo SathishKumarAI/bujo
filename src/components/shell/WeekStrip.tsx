@@ -54,7 +54,11 @@ export function WeekStrip() {
           </tr>
         </tbody>
       </table>
-      <span className="font-display text-micro font-medium whitespace-nowrap text-fg-2 tabular-nums">
+      {/* Not `font-display`: a 10px streak counter in the header is the exact
+          case the size floor added in #346 exists to stop. The rule shipped red
+          on `main` — this call site predates it and nothing failed loudly,
+          because `npm run design` is in CI and not in `npm run verify`. */}
+      <span className="text-micro font-medium whitespace-nowrap text-fg-2 tabular-nums">
         {streak}d
       </span>
     </div>
