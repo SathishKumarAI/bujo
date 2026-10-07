@@ -3,10 +3,10 @@ import { ArrowLineUp, Barbell, CheckSquare, ListChecks, Timer, Flame } from '@/c
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cat, onRaised } from '../lib/colors'
-import { todayISO, prettyDay, WEEKDAYS, addDays } from '../lib/date'
-import { dayCompletion, habitStreak } from '../lib/stats'
+import { todayISO, prettyDay, WEEKDAYS } from '../lib/date'
+import { dayCompletion } from '../lib/stats'
+import { atRiskHabits } from '../lib/streak'
 import { weekCoverage } from '../lib/coverage'
-import { isScheduledOn } from '../lib/schedule'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
 
@@ -30,13 +30,24 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   const cov = dayCompletion(data, day)
   const habitsLeft = cov.total - cov.done
 
-  // Streaks at risk that day: scheduled, not yet done, with a ≥3-day run going.
-  const log = data.habitLog[day] ?? []
-  const atRisk = data.habits.filter((h) => {
-    if (h.archived || (h.type ?? 'check') !== 'check') return false
-    if (!isScheduledOn(h, day) || log.includes(h.id)) return false
-    return habitStreak(data, h.id, addDays(day, -1)) >= 3
-  })
+  // Streaks at risk that day: `atRiskHabits`, not a second opinion of it.
+  //
+  // This was four lines of inline predicate, and it had drifted from the
+  // shared one in three ways:
+  //
+  // 1. **It omitted `h.avoid`**, so a quit habit could be "at risk" — the
+  //    card printed “Your 3-day Alcohol streak is at risk · tap to keep them
+  //    alive”, which is the app asking you to drink.
+  // 2. **`log.includes(h.id)` is only a correct done-test for `check`
+  //    habits**, which is why it also had to filter the other types out. So a
+  //    count, timer or limit habit could never appear here at all.
+  //    `habitDoneOn` handles every type, so that filter goes with it.
+  // 3. It read `habitLog` directly, which `habitSkips` does not appear in.
+  //
+  // The threshold stays 3 (the shared helper returns ≥ 2) because this card
+  // says "your N-day streak" in a band at the top of Today, and two days is
+  // not yet a streak worth interrupting someone over.
+  const atRisk = atRiskHabits(data, day).filter((r) => r.streak >= 3)
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= day).length
   const workedOut = data.workouts.some((w) => w.date === day) || (data.pickleball ?? []).some((p) => p.date === day)
   const focusMin = (data.devSessions ?? []).filter((s) => s.date === day).reduce((a, s) => a + s.durationMin, 0)
@@ -96,7 +107,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
     >
       {atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
-          <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${habitStreak(data, atRisk[0].id, addDays(day, -1))}-day ${atRisk[0].name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
+          <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${atRisk[0].streak}-day ${atRisk[0].habit.name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
       )}
       <div className="flex flex-wrap gap-2">

@@ -150,6 +150,35 @@ describe('reminderMessage (R2-8 smarter notifications)', () => {
     expect(m?.title).toContain('3-day')
   })
 
+  it('never asks you to log an avoid habit — the reported bug, verbatim', () => {
+    // Reported from the running app: the banner read
+    //   "Log Alcohol today to keep your 3-day streak alive."
+    // Three days of logged Alcohol is three days of drinking, and the app was
+    // calling it a streak and asking for a fourth. For a quit habit there is
+    // no daily action to nudge: the win is doing nothing.
+    const d = emptyJournal()
+    d.habits = [{ ...habit('alcohol'), name: 'Alcohol', avoid: true }]
+    d.habitLog = { '2026-06-08': ['alcohol'], '2026-06-09': ['alcohol'], '2026-06-10': ['alcohol'] }
+    expect(reminderMessage(d, '2026-06-11')).toBeNull()
+  })
+
+  it('still warns about a build habit standing beside an avoid one', () => {
+    // The guard must skip the quit habit, not abandon the loop at it.
+    const d = emptyJournal()
+    d.habits = [
+      { ...habit('alcohol'), name: 'Alcohol', avoid: true },
+      { ...habit('read'), name: 'Read' },
+    ]
+    d.habitLog = {
+      '2026-06-08': ['alcohol', 'read'],
+      '2026-06-09': ['alcohol', 'read'],
+      '2026-06-10': ['alcohol', 'read'],
+    }
+    const m = reminderMessage(d, '2026-06-11')
+    expect(m?.body).toContain('Read')
+    expect(m?.body).not.toContain('Alcohol')
+  })
+
   it('does not warn once the habit is logged today', () => {
     const d = emptyJournal()
     d.habits = [habit('h')]
