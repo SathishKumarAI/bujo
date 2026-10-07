@@ -155,3 +155,51 @@ describe('exportMarkdown', () => {
     expect(md).toContain('- [x] do thing')
   })
 })
+
+describe('habit polarity — the seed, and the journals that predate it', () => {
+  // The bug these catch, in one sentence: the reminder banner said "Log Alcohol
+  // today to keep your 3-day streak alive", because `avoid` was never set on
+  // anything and a quit habit was therefore indistinguishable from Exercise.
+
+  it('seeds the three quit habits as quit habits', () => {
+    const byName = Object.fromEntries(seedJournal().habits.map((h) => [h.name, h]))
+    expect(byName.Caffeine.avoid).toBe(true)
+    expect(byName.Sugar.avoid).toBe(true)
+    expect(byName.Alcohol.avoid).toBe(true)
+  })
+
+  it('leaves the build habits alone — polarity is not blanket-applied', () => {
+    const byName = Object.fromEntries(seedJournal().habits.map((h) => [h.name, h]))
+    for (const n of ['Vegetables', 'Water 2L', 'Exercise', 'Vitamins', 'Read']) {
+      expect(byName[n].avoid).toBeUndefined()
+    }
+  })
+
+  it('migrates a pre-v4 journal, so an existing user is fixed too', () => {
+    // Fixing the seed fixes nobody who already has a journal, which is everybody.
+    const old = {
+      ...emptyJournal(),
+      version: 3,
+      habits: [
+        { id: 'a', name: 'Alcohol', category: 'stimulant', color: 'red', startedOn: '2026-01-01' },
+        { id: 'b', name: 'Exercise', category: 'movement', color: 'teal', startedOn: '2026-01-01' },
+      ],
+    }
+    const got = migrate(old)
+    expect(got.habits.find((h) => h.name === 'Alcohol')?.avoid).toBe(true)
+    expect(got.habits.find((h) => h.name === 'Exercise')?.avoid).toBeUndefined()
+    expect(got.version).toBe(SCHEMA_VERSION)
+  })
+
+  it('does not re-flag a habit the user already unticked after the migration ran', () => {
+    // One-shot by design: once the journal is saved at v4 the migration is not
+    // reached again, so a deliberate untick sticks. Without the version gate
+    // this would silently undo that choice on every single load.
+    const already = {
+      ...emptyJournal(),
+      version: SCHEMA_VERSION,
+      habits: [{ id: 'a', name: 'Alcohol', category: 'stimulant', color: 'red', startedOn: '2026-01-01' }],
+    }
+    expect(migrate(already).habits[0].avoid).toBeUndefined()
+  })
+})

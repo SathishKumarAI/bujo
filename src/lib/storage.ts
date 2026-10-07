@@ -76,7 +76,19 @@ export function emptyJournal(): JournalData {
   }
 }
 
-/** A journal pre-seeded with sensible starter habits, so the tracker isn't blank. */
+/**
+ * Starter habits that are things to CUT DOWN ON, not things to build.
+ *
+ * Exported because the migration below has to recognise the same names in a
+ * journal created before polarity was seeded. One list, so the seed and the
+ * migration cannot disagree about which of the starters is a quit habit —
+ * which is exactly how this bug got in: the demo was patching `avoid` onto
+ * Caffeine and Sugar as a side effect of its weekly-CAP table, Alcohol was not
+ * in that table, and so Alcohol alone stayed positive.
+ */
+export const QUIT_STARTERS = ['Caffeine', 'Sugar', 'Alcohol'] as const
+
+/** A journal pre-seeded with sensible starter habits, so the tracker isn’t blank. */
 export function seedJournal(): JournalData {
   const j = emptyJournal()
   const today = todayISO()
@@ -90,7 +102,26 @@ export function seedJournal(): JournalData {
     { name: 'Vitamins', category: 'wellness', color: 'yellow' },
     { name: 'Read', category: 'wellness', color: 'lavender' },
   ]
-  j.habits = starter.map((h) => ({ id: uid('habit'), startedOn: today, ...h }))
+  // POLARITY IS SEEDED HERE, and that is the point of the change.
+  //
+  // Three of these eight are things you want LESS of, and all eight shipped
+  // with `avoid` unset — identical, to every consumer, to Exercise and Read.
+  // `Habit.avoid` has existed the whole time and says so in its own docstring
+  // ("logging a day = a slip, success = staying clean"); nothing set it. The
+  // visible result was the reminder banner reading **"Log Alcohol today to
+  // keep your 3-day streak alive"** — the app asking you to drink, and
+  // counting the slip as the win.
+  //
+  // Polarity is a property of the habit, so it is declared on the habit. It is
+  // NOT inferred from `category`: `stimulant` happens to hold all three quit
+  // habits today, and a user adding "Creatine" there would silently acquire a
+  // polarity nobody asked for.
+  j.habits = starter.map((h) => ({
+    id: uid('habit'),
+    startedOn: today,
+    ...h,
+    ...(QUIT_STARTERS.includes(h.name as (typeof QUIT_STARTERS)[number]) ? { avoid: true } : {}),
+  }))
   return j
 }
 
@@ -126,6 +157,34 @@ function migrateWorkoutsToV3(workouts: Workout[], convertDistanceFrom?: Settings
 }
 
 /** Fill in any keys missing from an older/partial payload (forward-compatible load). */
+/**
+ * SCHEMA 4 · habit polarity.
+ *
+ * `seedJournal` never set `avoid`, so every journal created before this holds
+ * Caffeine, Sugar and Alcohol as ordinary BUILD habits — streaks counted up
+ * for logging them, and the reminder banner read "Log Alcohol today to keep
+ * your 3-day streak alive". Fixing the seed alone fixes nobody who already has
+ * a journal, which is everybody.
+ *
+ * Matched by NAME, which is the only handle there is: habit ids are random
+ * (`uid`), so a seeded Alcohol cannot be told from a hand-made one. A user who
+ * made their own "Alcohol" habit gets the same correction, which is the right
+ * outcome — if a habit is named Alcohol, a logged day is not a win.
+ *
+ * **Only where `avoid` is unset.** A habit already marked avoid is left alone,
+ * and so is one the user has set some other way. The honest limitation: the
+ * editor writes `e.target.checked || undefined`, so a DELIBERATELY unticked
+ * habit is stored as `undefined` and is indistinguishable from one that was
+ * never asked. Such a habit is re-flagged once here. That is the right trade
+ * at this moment — the current state actively tells people to drink — and it
+ * is one-shot: the journal saves at version 4 and the migration never runs
+ * again, so a second untick sticks.
+ */
+function migrateHabitPolarityToV4(habits: JournalData['habits']): JournalData['habits'] {
+  const quit = new Set<string>(QUIT_STARTERS)
+  return habits.map((h) => (quit.has(h.name) && h.avoid === undefined ? { ...h, avoid: true } : h))
+}
+
 export function migrate(raw: unknown): JournalData {
   const base = emptyJournal()
   if (!raw || typeof raw !== 'object') return base
@@ -155,6 +214,12 @@ export function migrate(raw: unknown): JournalData {
     data.workouts ?? [],
     storedVersion < 3 ? settings.distanceUnit : undefined,
   )
+  // Gated on the stored version like the distance conversion above, but for a
+  // different reason: this one IS idempotent (it only writes where `avoid` is
+  // unset), yet running it on every load would silently undo a user who later
+  // unticks "Habit to avoid" on one of these three. Gating makes it one-shot.
+  const habits =
+    storedVersion < 4 ? migrateHabitPolarityToV4(data.habits ?? []) : (data.habits ?? [])
   return {
     ...base,
     ...clean,
@@ -164,7 +229,7 @@ export function migrate(raw: unknown): JournalData {
     nofap: { ...base.nofap, ...(data.nofap ?? {}) },
     // Core collections the UI iterates — always arrays/objects, never undefined.
     entries: data.entries ?? [],
-    habits: data.habits ?? [],
+    habits,
     metrics: data.metrics ?? [],
     workouts,
     gratitude: data.gratitude ?? [],

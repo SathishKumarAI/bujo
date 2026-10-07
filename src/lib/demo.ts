@@ -960,17 +960,21 @@ export function generateDemoData(today = todayISO()): JournalData {
   //
   // Named, and one of each kind, so the page shows both a target you reach and
   // a cap you stay under.
-  const WEEKLY_GOALS: Record<string, { goal: number; avoid?: boolean }> = {
-    Caffeine: { goal: 5, avoid: true }, // at most 5 coffees a week
-    Sugar: { goal: 2, avoid: true },
-    Exercise: { goal: 4 },
-    Read: { goal: 6 },
+  // POLARITY IS NOT SET HERE ANY MORE. It used to ride along on this table as
+  // `avoid?: boolean`, which is precisely how the bug stayed hidden: Caffeine
+  // and Sugar got a weekly cap and therefore a polarity, Alcohol got neither,
+  // and the demo looked two-thirds right. A habit’s polarity is now declared
+  // in `seedJournal`, which this builds on, so all three arrive correct and
+  // this table is only about goals again.
+  const WEEKLY_GOALS: Record<string, number> = {
+    Caffeine: 5, // at most 5 coffees a week
+    Sugar: 2,
+    Exercise: 4,
+    Read: 6,
   }
   j.habits.forEach((h) => {
     const g = WEEKLY_GOALS[h.name]
-    if (!g) return
-    h.weeklyGoal = g.goal
-    if (g.avoid) h.avoid = true
+    if (g) h.weeklyGoal = g
   })
   // Assign times of day + cues so the routine-timeline lens demos well.
   const SLOT: Record<string, { t: 'morning' | 'afternoon' | 'evening' | 'anytime'; cue?: string }> = {

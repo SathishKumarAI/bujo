@@ -1096,4 +1096,4 @@ export interface JournalData {
  *     Both conversions are one-shot and gated on the stored version, so a v3
  *     journal is never re-converted. See `migrate()` in `lib/storage.ts`.
  */
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
