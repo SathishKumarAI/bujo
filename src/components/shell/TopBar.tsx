@@ -201,7 +201,7 @@ export function TopBar({
           </>
         ) : (
           <div className="flex min-w-0 flex-1 flex-col justify-center py-2 md:flex-none md:text-center">
-            <h1 className="truncate font-display text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
+            <h1 className="truncate text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
             {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
           </div>
         )}

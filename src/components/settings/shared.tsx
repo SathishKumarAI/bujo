@@ -51,7 +51,7 @@ export function Disclosure({ title, subtitle, defaultOpen = true, children }: {
         className="flex w-full flex-wrap items-center gap-x-2 rounded-control px-1 py-1 text-left hover:text-fg-1"
       >
         <span className="text-fg-2">{open ? <Icon as={CaretDown} size="md" /> : <Icon as={CaretRight} size="md" />}</span>
-        <span className="font-display text-heading font-medium text-fg-1">{title}</span>
+        <span className="text-heading font-medium text-fg-1">{title}</span>
         {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
       </button>
       {open && children}

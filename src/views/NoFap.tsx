@@ -384,7 +384,7 @@ export function NoFap() {
                      is `group`; this is the shared attribute. */
                   <section key={g} data-domain={g} className="mb-6 last:mb-0">
                     <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                      <h2 className="font-display text-heading font-medium text-fg-1">{GROUP_LABEL[g]}</h2>
+                      <h2 className="text-heading font-medium text-fg-1">{GROUP_LABEL[g]}</h2>
                       <p className="text-label text-fg-2">{GROUP_BLURB[g]}</p>
                       <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
                     </div>

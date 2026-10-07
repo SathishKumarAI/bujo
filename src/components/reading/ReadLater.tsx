@@ -33,7 +33,7 @@ export function ReadLater() {
   return (
     <Band className="border-b-0 py-6">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h2 className="font-display text-heading font-medium text-fg-1">Read later</h2>
+        <h2 className="text-heading font-medium text-fg-1">Read later</h2>
         <Eyebrow className="tracking-[0.1em]">{links.filter((l) => !l.done).length} to read</Eyebrow>
       </div>
 

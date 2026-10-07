@@ -62,7 +62,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-crust/70 p-4 pt-[10vh]" onClick={onClose}>
       <div ref={trap} className="card-3d max-h-[80vh] w-full max-w-md overflow-y-auto rounded-card border border-line-strong bg-ink-1" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Edit ${habit.name}`}>
         <header className="sticky top-0 flex items-center justify-between border-b border-line bg-ink-1 px-4 py-3">
-          <h3 className="font-display text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
+          <h3 className="text-heading text-fg-1">{habit.emoji} {habit.name}</h3>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close" className="text-fg-2 hover:text-fg-1"><Icon as={X} size="md" /></Button>
         </header>
         <div className="space-y-3 p-4">

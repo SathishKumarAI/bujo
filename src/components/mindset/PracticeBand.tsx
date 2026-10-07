@@ -34,7 +34,7 @@ export function PracticeBand({
     <Band>
       <BandRow>
         <BandCell className="basis-[26rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Practice, last 26 weeks</h2>
+          <h2 className="text-heading font-medium text-fg-1">Practice, last 26 weeks</h2>
           <p className="mt-1 mb-4 text-label text-fg-2">One mark per day you practised a principle.</p>
           {/* `size={22}` was this component's answer to a grid stranded in its
               own cell, and it was a guess at one width: measured, 12 weeks at
@@ -60,7 +60,7 @@ export function PracticeBand({
         </BandCell>
 
         <BandCell className="basis-[20rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Category balance</h2>
+          <h2 className="text-heading font-medium text-fg-1">Category balance</h2>
           <p className="mt-1 mb-4 text-label text-fg-2">Where your practice has clustered.</p>
           <div>
             {rows.map((r) => {

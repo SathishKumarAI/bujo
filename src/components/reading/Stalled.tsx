@@ -16,7 +16,7 @@ export function Stalled({ items }: { items: { book: Book; idleDays: number }[] }
   return (
     <Band className="py-5">
       <div className="flex items-baseline gap-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Stalled</h2>
+        <h2 className="text-heading font-medium text-fg-1">Stalled</h2>
         <Eyebrow className="tracking-[0.1em]">{items.length} not moving</Eyebrow>
       </div>
       <ul className="mt-3">

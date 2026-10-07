@@ -22,7 +22,7 @@ export function LearningFeed({ books }: { books: Book[] }) {
   return (
     <Band className="py-6">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h2 className="font-display text-heading font-medium text-fg-1">Learnings</h2>
+        <h2 className="text-heading font-medium text-fg-1">Learnings</h2>
         <Eyebrow className="tracking-[0.1em]">{total} across your books</Eyebrow>
         <div className="ml-auto flex items-center gap-2 border-b border-line">
           <Icon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-3" />

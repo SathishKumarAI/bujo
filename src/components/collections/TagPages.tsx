@@ -31,7 +31,7 @@ export function TagPages({
   return (
     <Band id="bujo-tags" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h2 className="font-display text-heading font-medium text-fg-1">Tag pages</h2>
+        <h2 className="text-heading font-medium text-fg-1">Tag pages</h2>
         <Eyebrow className="tracking-[0.1em]">{tags.length} in this journal</Eyebrow>
       </div>
 

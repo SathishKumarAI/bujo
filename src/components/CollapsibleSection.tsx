@@ -118,7 +118,7 @@ export function CollapsibleSection({
             <AppIcon as={CaretRight} size="md" />
           </span>
           {iconNode}
-          <span className="font-display text-heading font-medium text-fg-1">{title}</span>
+          <span className="text-heading font-medium text-fg-1">{title}</span>
           {subtitle && <span className="text-label text-fg-2">{subtitle}</span>}
           {!open && (
             <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">show</span>
@@ -141,7 +141,7 @@ export function CollapsibleSection({
       >
         {iconNode}
         <span className="min-w-0">
-          <span className="block font-display text-heading font-medium text-fg-1">{title}</span>
+          <span className="block text-heading font-medium text-fg-1">{title}</span>
           {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
         </span>
         <span className="caret-turn ml-auto inline-flex text-fg-2 transition-colors group-hover/sec:text-fg-1" data-open={open}>

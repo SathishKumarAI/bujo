@@ -230,7 +230,7 @@ export function Card({
                   attention; bands are sections of one page, and a page with six
                   22px headings has no hierarchy left for the statement at the
                   top of it. */}
-              {title && <h2 className={cn('min-w-0 font-display text-heading leading-tight font-medium text-balance text-fg-1', !band && 'sm:text-title')}>{title}</h2>}
+              {title && <h2 className={cn('min-w-0 text-heading leading-tight font-medium text-balance text-fg-1', !band && 'sm:text-title')}>{title}</h2>}
               {title && info && (
                 <Popover>
                   <PopoverTrigger asChild>

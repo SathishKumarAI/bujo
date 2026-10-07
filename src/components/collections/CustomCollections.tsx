@@ -44,7 +44,7 @@ export function CustomCollections({
     // in `TagPages.tsx`.
     <Band id="bujo-collections" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
-        <h2 className="font-display text-heading font-medium text-fg-1">Collections</h2>
+        <h2 className="text-heading font-medium text-fg-1">Collections</h2>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           <input
             value={icon}

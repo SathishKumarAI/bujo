@@ -112,7 +112,7 @@ export function HabitDetail({
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-heading">{avoid ? <Icon as={Prohibit} size="md" style={{ color: onRaised('red') }} /> : h.emoji ?? <span style={{ color: onRaised(h.color) }}>●</span>}</span>
-            <h2 className="truncate font-display text-heading text-fg-1">{h.name}</h2>
+            <h2 className="truncate text-heading text-fg-1">{h.name}</h2>
             {h.unit && <span className="text-label text-fg-2">({h.unit})</span>}
           </div>
           <div className="flex items-center gap-1">

@@ -16,7 +16,7 @@ export function FutureAndMemories({ future, memories }: { future: Entry[]; memor
     <Band>
       <BandRow>
         <BandCell className="basis-[22rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Future log</h2>
+          <h2 className="text-heading font-medium text-fg-1">Future log</h2>
           <p className="mt-1 mb-3 text-label text-fg-2">Tasks and events dated ahead of today.</p>
           {future.length === 0 ? (
             <p className="text-label text-fg-3">Nothing scheduled. Add a future-dated entry from any day.</p>
@@ -36,7 +36,7 @@ export function FutureAndMemories({ future, memories }: { future: Entry[]; memor
         </BandCell>
 
         <BandCell className="basis-[22rem]">
-          <h2 className="font-display text-heading font-medium text-fg-1">Memories</h2>
+          <h2 className="text-heading font-medium text-fg-1">Memories</h2>
           <p className="mt-1 mb-3 text-label text-fg-2">Every ▲ bullet, newest first.</p>
           {memories.length === 0 ? (
             <p className="text-label text-pretty text-fg-3">Mark a bullet with ▲ (or capture with “^ …”) to start the reel.</p>

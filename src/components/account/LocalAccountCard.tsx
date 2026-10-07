@@ -49,7 +49,7 @@ export function LocalAccountCard() {
             {profile.emoji}
           </span>
           <div className="min-w-0 grow">
-            <p className="truncate font-display text-heading text-fg-1">{profile.name}</p>
+            <p className="truncate text-heading text-fg-1">{profile.name}</p>
             <p className="text-label text-fg-2">Local account · no email, no provider</p>
           </div>
           <Button variant="secondary" onClick={() => setEditing(true)} className="press-3d">
