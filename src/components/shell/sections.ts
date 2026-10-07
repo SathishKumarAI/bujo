@@ -70,14 +70,43 @@ export interface Section {
   id: SectionId
   label: string
   icon: IconGlyph
+  /**
+   * The second key of the `g` leader chord that jumps here, e.g. `g` then `b`.
+   *
+   * Here rather than in `AppShell` because it is rendered: `SideRail` draws it
+   * on the row, which is the only reason anyone finds out the chord exists.
+   * Two copies of the mapping would let the hint and the key disagree, and a
+   * keyboard hint that lies is worse than none — so `AppShell` builds its
+   * `useLeaderKey` table from this field instead of listing the keys again.
+   */
+  jump: string
   /** Where the rail row lands. Always the first tab. */
   tabs: SectionTab[]
+}
+
+/**
+ * `g` chords that are NOT a section — destinations with no rail row, so no hint
+ * is drawn for them anywhere.
+ *
+ * Here rather than inline in `AppShell` so one file holds the whole chord
+ * table and `sections.test.ts` can assert the halves do not collide. They can:
+ * `AppShell` spreads the section keys first and these second, so a section
+ * whose `jump` matched one of these would be silently overridden — the rail
+ * would draw a hint for a key that goes somewhere else. That is the failure the
+ * test exists to catch, and it is invisible at runtime.
+ */
+export const EXTRA_JUMPS: Record<string, ViewId> = {
+  h: 'trackers',
+  f: 'fitness',
+  c: 'collections',
+  ',': 'settings',
 }
 
 export const SECTIONS: Section[] = [
   {
     id: 'today',
     label: 'Today',
+    jump: 't',
     icon: Sun,
     // One surface, no tab row: Today does its own splitting by time of day.
     tabs: [{ view: 'today', label: 'Today' }],
@@ -85,6 +114,7 @@ export const SECTIONS: Section[] = [
   {
     id: 'plan',
     label: 'Plan',
+    jump: 'p',
     icon: ArrowsClockwise,
     tabs: [
       { view: 'plan', label: 'Week' },
@@ -95,6 +125,7 @@ export const SECTIONS: Section[] = [
   {
     id: 'body',
     label: 'Body',
+    jump: 'b',
     icon: PersonSimpleRun,
     tabs: [
       { view: 'fitness', label: 'Fitness' },
@@ -166,6 +197,7 @@ export const SECTIONS: Section[] = [
   {
     id: 'mind',
     label: 'Mind',
+    jump: 'm',
     icon: Brain,
     tabs: [
       { view: 'mindset', label: 'Mindset' },
@@ -177,6 +209,7 @@ export const SECTIONS: Section[] = [
   {
     id: 'insights',
     label: 'Insights',
+    jump: 'i',
     icon: Sparkle,
     tabs: [
       /* One tab. `stats` was the second until its panels moved into Insights

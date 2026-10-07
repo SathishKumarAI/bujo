@@ -1,15 +1,23 @@
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { hrefFor } from '../../../lib/deepLink'
-import { SECTIONS, landingOf, sectionOf, type SectionGates } from '../sections'
-import type { ViewId } from '../viewChrome'
+import { Kbd } from '../Kbd'
+import { hrefFor } from '../../lib/deepLink'
+import { SECTIONS, landingOf, sectionOf, type SectionGates } from './sections'
+import type { ViewId } from './viewChrome'
 
 /**
- * The five sections, as the top bar's first row.
+ * The five sections, stacked — `SideRail`'s upper half.
  *
- * Hidden on phones, where `BottomNav` carries the same five within thumb reach.
- * Two copies of the section list on a 390px bar is one too many, and the bottom
- * one is the reachable one.
+ * It lived in `topbar/` and was `hidden … md:flex` there: the top bar's first
+ * row on desktop, absent on phones because `BottomNav` carries the same five
+ * within thumb reach. The rail took that job, so the horizontal branch was
+ * rendered by nothing and went with it, and the file moved out of a directory
+ * that no longer describes it. A `vertical` prop would have been a second
+ * layout with one caller — the dead branch this repo keeps finding.
+ *
+ * Still not rendered below `md`: the rail is `hidden md:flex`, `BottomNav` is
+ * unchanged, and two copies of the section list on a 390px screen is one too
+ * many.
  */
 export function SectionNav({
   view,
@@ -23,7 +31,7 @@ export function SectionNav({
   const current = sectionOf(view)
 
   return (
-    <nav aria-label="Sections" className="hidden min-w-0 items-center gap-0.5 md:flex">
+    <nav aria-label="Sections" className="flex min-w-0 flex-col gap-0.5">
       {SECTIONS.map((s) => {
         const SectionIcon: IconGlyph = s.icon
         const active = current === s.id
@@ -61,6 +69,29 @@ export function SectionNav({
           >
             <Icon as={SectionIcon} size="md" active={active} className={active ? 'text-brand-text' : undefined} />
             {s.label}
+            {/* The chord that already jumps here, drawn on the row that does.
+                `useLeaderKey('g', …)` has worked since the shell was built and
+                appeared in exactly one place — the shortcut cheatsheet behind
+                `?` — so in practice nobody knew the app had keyboard navigation
+                at all. A rail row is the one place a reader looks at the moment
+                they want to go somewhere, which is when the hint is worth
+                reading.
+
+                `aria-hidden` on a WRAPPER, not on `Kbd`: `Kbd` destructures
+                `children` and `className` and spreads nothing, so an
+                `aria-hidden` passed to it is dropped on the floor — it
+                typechecks, renders, and does nothing. The link is already named
+                by its label, and without this a screen-reader user hears
+                "Today g t" on every row; the chord is announced where it is
+                actionable, in the `?` cheatsheet.
+
+                `opacity`, deliberately NOT used to make it recede — this repo
+                measured 3.08:1 from exactly that move. `Kbd` carries real
+                tokens (`fg-1` on `ink-2`), and it is quiet because it is small
+                and boxed, not because it is faded. */}
+            <span aria-hidden className="ml-auto">
+              <Kbd>g {s.jump}</Kbd>
+            </span>
           </a>
         )
       })}

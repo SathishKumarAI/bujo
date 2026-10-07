@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SECTIONS, MEMBERS, landingOf, sectionOf, tabsOf } from './sections'
+import { EXTRA_JUMPS, SECTIONS, MEMBERS, landingOf, sectionOf, tabsOf } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 const ALL: SectionGatesish = { cycle: true, nofap: true }
@@ -101,6 +101,36 @@ describe('the five sections', () => {
     // this asserts no section has grown a sub-section.
     for (const s of SECTIONS) {
       for (const t of s.tabs) expect(sectionOf(t.view)).toBe(s.id)
+    }
+  })
+})
+
+describe('the `g` leader chords the rail advertises', () => {
+  // `SideRail` draws `SECTIONS[].jump` on each row, and `AppShell` builds its
+  // `useLeaderKey('g', …)` table from the same field. These assert the two can
+  // never say different things — a hint that lies is worse than no hint, and
+  // nothing at runtime would tell you.
+
+  it('gives every section a jump key, and no two the same', () => {
+    const keys = SECTIONS.map((s) => s.jump)
+    expect(keys.every((k) => k.length === 1)).toBe(true)
+    expect(new Set(keys).size).toBe(SECTIONS.length)
+  })
+
+  it('does not collide with the chords that have no rail row', () => {
+    // The real failure mode: `AppShell` spreads the section keys first and
+    // `EXTRA_JUMPS` second, so a collision would silently win and the rail
+    // would draw a hint for a key that navigates somewhere else entirely.
+    const sectionKeys = new Set(SECTIONS.map((s) => s.jump))
+    const collisions = Object.keys(EXTRA_JUMPS).filter((k) => sectionKeys.has(k))
+    expect(collisions).toEqual([])
+  })
+
+  it('lands each chord on the same view the rail row links to', () => {
+    // `AppShell` resolves a chord with `landingOf`, which is what `SectionNav`
+    // uses for the row's `href`. Pinned so they cannot drift apart.
+    for (const s of SECTIONS) {
+      expect(landingOf(s.id, ALL)).toBe(tabsOf(s.id, ALL)[0]?.view)
     }
   })
 })
