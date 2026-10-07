@@ -1102,6 +1102,31 @@ body.handwriting textarea {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
+
+  /* ...EXCEPT INSIDE NAVIGATION, which is the one place an underline is a lie.
+     A link in prose is underlined because the underline is what says "this is a
+     link". A navigation item is already unmistakably navigation: it sits in a
+     landmark, in a row of its own kind, and it carries an active state. The
+     underline there says something different — "this is a document you are
+     about to leave for" — and that is the single loudest reason this app read
+     as a website rather than a product. Measured before the change: 16 of 16
+     header navigation items underlined, against 5 of 27 header controls
+     carrying any background fill.
+
+     The tabs are real `<a href>` DELIBERATELY (the tab is in the URL, so it is
+     deep-linkable and the back button works), so they cannot escape the rule
+     above by becoming buttons, and they should not — the semantics are right.
+
+     Scoped to the landmark, not to a class, and emphatically NOT by weakening
+     the rule above with `:not()`. That exact move is recorded a few lines up as
+     a mistake: a `:not([class*='text-'])` guard also matched `hover:text-…` and
+     left the glossary's source links inheriting body colour. `header`/`nav` is
+     semantic, needs no cooperation from any call site — which is the standard
+     the comment above sets — and stays in the layer, so a link that genuinely
+     wants an underline inside a nav can still ask for one. */
+  :is(header, nav) a {
+    text-decoration: none;
+  }
 }
 .prose-doc code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
