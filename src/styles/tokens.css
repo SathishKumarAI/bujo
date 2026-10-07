@@ -176,8 +176,8 @@
      They are the reason `rounded-none` still appears in the tree at all; every
      other occurrence was a Modernist migration artifact and has been swept back
      onto these three names. */
-  --radius-control: 0.625rem; /* 10px · buttons, inputs, segments, steppers */
-  --radius-card: 1rem;        /* 16px · cards, sheets, modals, panels */
+  --radius-control: 0.375rem; /* 6px · buttons, inputs, segments, steppers */
+  --radius-card: 0.5rem;      /* 8px · cards, sheets, modals, panels */
   --radius-pill: 9999px;      /* full · chips, tags, meters, avatars */
 
   /* ── Elevation ────────────────────────────────────────────────────────────

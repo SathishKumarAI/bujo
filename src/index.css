@@ -101,7 +101,22 @@
      card that follows: the page colour lifted 5% toward its own foreground.
      oklab, not srgb — srgb interpolation drags a mix through grey, which shows
      worst on the two themes whose base is not neutral. */
-  --card: color-mix(in oklab, var(--color-base) 95%, var(--color-text) 5%);
+  /* THE CARD IS A SURFACE, and its border is a whisper. Reported as "I don't
+     like the card and the background with the card", and it measured out:
+     the card sat 3.3 L* off the page, against Linear's elevation steps of 4.5
+     and 6.1 — so the FILL was doing almost nothing and the card was being
+     defined by its outline instead. Backwards.
+
+     Mixed with `white`, not with `--color-text`. Text is #cdd6f4 here, a blue,
+     so the old mix bought its 3.3 points of lift by injecting hue: the card
+     came out at chroma 0.0114 against the page's own 0.0097. White lifts
+     without tinting. Measured after: #27272c, L* 27.5, chroma 0.0091 —
+     delta 5.5 from the page and LESS saturated than before, not more.
+
+     7% rather than 8%: the worst accent on the new ground is red at 6.42:1,
+     and `npm run contrast` measures that pairing since COD-244, so this is a
+     gated number rather than a judgement. */
+  --card: color-mix(in oklab, var(--color-base) 93%, white 7%);
   --card-foreground: var(--color-text);
   --popover: color-mix(in oklab, var(--color-base) 92%, var(--color-text) 8%);
   --popover-foreground: var(--color-text);
@@ -152,7 +167,16 @@
   --accent-foreground: var(--color-text);
   --destructive: var(--color-red);
   --destructive-foreground: var(--color-crust);
-  --border: var(--color-surface0);
+  /* A hairline, not a rung. `--color-surface0` is #313244 — 10 L* BRIGHTER
+     than the card it edges and chroma 0.0319, four times any Linear border.
+     A visibly violet line drawn around a surface that was barely there.
+
+     Low-alpha white instead, which is what Linear uses and what makes a
+     border sit correctly on whatever it happens to be over: the same token
+     works on the page, on the card, and on a raised panel without being
+     re-picked per surface. The three light themes already did this with
+     `--border-hairline`; mocha and neon were the holdouts. */
+  --border: rgb(255 255 255 / 0.08);
   --input: var(--color-surface1);
   --ring: var(--color-mauve);
   --radius: 0.75rem;
