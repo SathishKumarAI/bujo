@@ -1,115 +1,110 @@
 # STATUS
 
-**Stopped:** 2026-10-06 (the session ran past midnight). `main` at `7398b3a`,
-clean tree, nothing open. **19 PRs merged** (#320–#338). `npm run verify`: 121
-files, 1702 tests, exit 0. `a11y` 173/173 with no serious or critical, `smoke`
-24/24, `clipped` clean, `design` and `contrast` both 0.
-
-## First thing: 10 GB of worktrees, and one decision
-
-`.claude/worktrees/` holds **17 worktrees totalling 10 GB** — one per agent
-session going back weeks, each a full second copy of the app. Not harmless
-clutter:
-
-- a dev server started in one is **pinned to it**, so a tab on that port never
-  shows changes made here however hard you reload (trap already recorded);
-- `vitest` would double-count them, which is only not happening because
-  `vite.config.ts` excludes the path — a mitigation, not a fix.
-
-`git worktree list` names them. Pruning is a deletion, so it is **not** done
-here: run `git worktree remove` / `git worktree prune` yourself. The newest is
-`locked` and needs `--force`.
+**Stopped:** 2026-10-08. `main` at `fee85a7`, clean tree. **Five PRs merged this
+session** (#348–#352). `npm run verify`: 124 files, **1740 tests**, exit 0.
+`a11y` 173/173 with no serious or critical, `smoke` 24/24, `clipped` clean at
+1440/1024/390, `design` 419 files, `contrast` 5 themes — all green on `main`.
 
 ## What this session did
 
-Started as "connect this to Supabase", became five pieces of work.
+Started as "the design pass, phase 5" and became a shell rebuild plus a domain
+bug that mattered more than any of it.
 
 | | |
 |---|---|
-| **Sync hardening** COD-265/266/267 | Settings' **Pull erased the cycle log on every press**; Drive **uploaded** it. Four pull paths unguarded, one egress door missing. PBKDF2 150k → 600k both sides, path code out of the query string, three recoverable blob versions |
-| **CI** COD-268/269 | Browser gates cancelled at 15m03s, so `smoke` and `clipped` **never ran at all** on two merges. Split into two jobs. A leaked `setTimeout` was failing CI with every test passing |
-| **Board P1s** COD-244/238 | Contrast gate now measures the card ground; unreachable phone subtitles 81 → 24 |
-| **Accounts** COD-271 | Google sign-in, journal encrypted client-side into Supabase, security disclosure. Five increments, all merged |
-| **Home Workout** COD-272 | 21 → 83 movements, cited manual, page on the contract. Found three defects in *shared* code |
-| **Nutrition + fitness** #338 | Calorie/protein rings, 27 → 51 foods, Home Workout finally given a tab (its door had been welded shut by an unrelated change), sub-activity on 13 activities |
+| **The shell is a row** #348 | The rail is back, and the frame turned on its side. Chrome before content **152px → 58.8px** (17.2% → 6.7%), identical on all ten views, and **zero chrome bands crossing the window**. The header lives *inside* the content column now. |
+| **The app stopped asking you to drink** #349 | `seedJournal` set no polarity, so Caffeine, Sugar and Alcohol shipped as *build* habits. The banner read **"Log Alcohol today to keep your 3-day streak alive."** Schema 4 migrates existing journals. Four readers fixed. |
+| **Hide the rail, and latte** #350 | `⌘B`, persisted. Latte is the default theme for fresh journals. |
+| **Rail contents, bigger cards** #351 | Wordmark out of the rail, week strip into its foot. Band padding 24→28px; masonry steps 48/80/100rem → 64/96/120rem. |
+| **Mindset** #352 | Toggle moved onto the rail. Library 4.2 → 3.7 screens. Balance bars were using a *text* token as a chart fill. |
 
-Full account: `docs/WORKLOG.md`, two entries dated 2026-10-05.
+## Read this before trusting a number in a commit message
 
-## The one thing blocking the account feature
+Three of this session's findings were **my own measurements being wrong**, and
+each was caught by something other than me looking harder.
 
-**Nothing has run against a real Supabase project, because there isn't one.**
-The guards are proven as logic, not behaviour. Before relying on any of it:
+1. **I measured at my own viewport and called it the result.** Mindset's library
+   got a third column at 60rem; I measured 3550px → 3038px at the 1707px window
+   I had open and wrote it down. `npm run space` grades at **1440**, where that
+   container is **926px** — 34px under the step. The gate reported 4.2 screens,
+   *unchanged*, and it was right. **The gate disagreeing with me is the only
+   reason it was not shipped as a no-op with a confident number attached.**
+2. **A 15s wait on a regex that could no longer match.** `go()` in the a11y gate
+   waits for a destination to exist before concluding it does not. Adding an
+   `aria-hidden` keyboard hint to the rail rows changed their `textContent`, so
+   that wait timed out on *every* navigation. Local (4 workers) absorbed it; CI
+   at `BUJO_A11Y_WORKERS: 2` was cancelled at **15m17s with 0 of 166 scans**.
+   When you change what a control's name is made of, grep the gate for every
+   place that matches on its TEXT.
+3. **A clean rebase is not evidence that two changes compose.** Two branches
+   both moved `DEMO_VERSION` 10 → 11, so git saw identical text and merged
+   without a conflict. `main` was already at 11, so the second branch's seed
+   change would never have re-seeded anybody. Bumped to 12.
 
-1. Create the project, run `supabase/schema.sql`, enable the Google provider.
-2. `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` into `.env.local` and Vercel.
-3. **Sign in as a second account and confirm it cannot read the first's row.**
-   RLS is what makes this multi-tenant, and a policy nobody has tried from the
-   other side is a policy nobody has tested.
+And one from the audit: **the first full-page sweep reported every view as
+crashed.** It was not the app — the tab held an entry chunk from before a
+rebuild, so its lazy chunks 404'd into the error boundary. Nineteen phantom bugs
+if I had trusted it. Compare the served `assets/index-*.js` against
+`dist/index.html` *before* believing a sweep.
 
-Until those env vars exist the feature is **absent** — no client constructed,
-nothing rendered — so `main` behaves exactly as it did before.
+## The space audit, and what is left of it
 
-Design, threat model and all 14 edge cases: `docs/security/account-sync-plan.md`.
+Screenshotted every view and measured per-zone fill. Zone fill is **94–100%
+everywhere** — the emptiness is not in the zones. The real finding was six pages
+rendering **a single column on a 1440px desktop**:
 
-## Read this before trusting an agent's "shipped"
+| page | screens | cards | state |
+|---|---|---|---|
+| mindset | 4.2 → **3.7** | 3 | done, #352 |
+| coaching | 2.7 | 3 | open |
+| reading | 1.7 | 5 | open — same shape as mindset, should be cheap |
+| collections | 1.4 | 6 | open — one card at 41% fill |
+| challenges | 0.9 | 1 | open, low value |
+| goals | 0.9 | 2 | open, low value |
 
-#338 was reported as shipped. It was **open**, and it had skipped the four
-browser gates. Running them found **6 serious a11y violations** — the new food
-chips' calorie number at 4.18:1 on the chip fill, on five desktop themes and
-both phone viewports. Fixed to `fg-2` (6.67:1) and merged at 0.
-
-Its own `npm run contrast` passed and was **right to**: that gate reads palette
-*tokens*, and a token is not a pairing. The two gates are not redundant, and
-this is the second time in two PRs that a hand-driven probe passed where the
-real gate failed. **A bespoke probe is evidence, never a substitute.**
-
-Three self-inflicted costs from the same stretch, all cheap to avoid next time:
-
-- **An unrelated `npm i` drops a `--no-save` package.** Installing
-  `@supabase/supabase-js` silently removed Playwright, so all four gates died
-  on `ERR_MODULE_NOT_FOUND`. One command to restore (below).
-- **Piping a gate through `tail` reports `tail`'s exit code.** The first a11y
-  run looked like exit 0 while the gate had exited 1. Same family as piping a
-  sweep through `head`.
-- **`npm run design` cannot tell a comment from a call site.** A docstring
-  quoting a measured hex fails it. Documented by #338 and walked into within
-  the hour.
-
-## Traps this session added, all now in CLAUDE.md
-
-- **The browser gates need two commands nobody had written down.** `playwright`
-  and `@axe-core/playwright` are in neither dependency list *on purpose* — CI
-  installs them per job. `npx playwright --version` answers from the npx cache,
-  so the obvious check lies.
-- **`npm run design` and `npm run contrast` are not in `npm run verify`** but
-  are in CI, which is how a locally green change goes red on push.
-- **An extraction can take the markup and leave the fix behind.** `VideoLink`
-  was pulled out of a call site carrying a measured contrast fix inline; five
-  call sites then failed at 4.14:1 for months, behind folds no gate reaches.
-- **A `SectionRail` in a review column can never become a rail** — it flips at
-  896px and zone 3 is 722px, so it has always shipped its phone strip on desktop.
-
-## Open, deliberately
-
-- **COD-228** — auto-sync keeps the passphrase in plaintext, defeating the
-  passcode lock. Disclosed on screen, and now in the new security card too.
-- **COD-270** — the 24 remaining unreachable subtitles are all `hideInfo` cards:
-  a per-card copy decision, not a mechanism. Gate budgeted at 24; lower it as
-  they go.
-- **COD-273/274** — the gate install recipe lived only in CI; the base-layer
-  anchor blue fails on a raised panel.
-- **No compare-and-swap on `/api/sync`** — this `@vercel/blob` exposes no
-  `ifMatch` on `put`.
-- **`?code=` still accepted** by `api/sync.ts` for bundles cached before #323.
-  Drop that arm one release on; it is the logged-secret path the change closed.
+These are **not** a shared token fix. Each needs a decision about *which cards
+pair* — a chart beside its legend reads differently from two unrelated charts.
+Reading and collections are the next two, and they are list-shaped like mindset
+was, so the container-query treatment should transfer.
 
 ## Not verified
 
-- **No account restore dialog, and no sign-in round trip, has been clicked.**
-  All need a configured remote or a real project. Covered by unit and source
-  assertions, which is not the same as having seen it.
-- **The deploy is behind `main`** — a read-only probe found production still
-  serving the old `/api/sync` handler. The v1→v2 path migration in `pullCloud`
-  is what makes that safe to catch up on.
-- One pre-existing lint warning, unrelated: `src/App.tsx:120:6`
-  `react-hooks/exhaustive-deps`. Present on `main` before this session.
+- **The `HabitEditor` "days clean" tile has never been clicked.** Two lines, the
+  same shape as `HabitDetail`'s shipped branch, typechecked, both streak
+  functions unit-tested — but nobody has looked at it rendering. The habit grid
+  moved onto Today's surfaces and I could not reach that editor from a probe.
+- **The rail-hidden state is not gated.** Every browser gate runs with the rail
+  open. Probed by hand across five themes × both states and the toggle renders
+  identically in both, so nothing new is uncovered — but a probe is evidence,
+  never a substitute.
+- **The toggle icon is 3.47 (latte) / 3.58 (dawn)** against the header. Above
+  the 3.0 floor for a graphic, under 4.5, and exactly where the microphone
+  button beside it already sits. Not made worse; worth its own pass.
+- **Nothing has run against a real Supabase project** — unchanged from the last
+  session. The account guards are proven as logic, not behaviour. The
+  second-account RLS check is still owed.
+
+## First thing, still: 18 worktrees
+
+`git worktree list` reports **18**. This has been flagged across several
+sessions and is still not done, because pruning is a deletion and that is not
+mine to take. `git worktree remove` / `git worktree prune`; the newest is
+`locked` and needs `--force`.
+
+They are not harmless: a dev server started in one is pinned to it, so a tab on
+that port never shows changes made here however hard you reload — and
+`vite.config.ts` excluding the path from vitest is a mitigation, not a fix.
+
+## Open, deliberately
+
+- **#306** — an old PR still open, "finish the page contract and retire the
+  Modernist design world". Not touched this session; decide whether it survives
+  the shell rebuild.
+- **COD-228** — auto-sync keeps the passphrase in plaintext, defeating the
+  passcode lock. Disclosed on screen.
+- **COD-270** — 24 unreachable subtitles, all `hideInfo` cards. Gate budgeted
+  at 24; lower it as they go.
+- **COD-273/274** — the gate install recipe lived only in CI; the base-layer
+  anchor blue fails on a raised panel.
+- **`?code=` still accepted** by `api/sync.ts` for bundles cached before #323.
+- One pre-existing lint warning: `src/App.tsx:120:6` `react-hooks/exhaustive-deps`.
