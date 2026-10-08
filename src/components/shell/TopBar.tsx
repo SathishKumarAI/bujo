@@ -1,4 +1,4 @@
-import { Microphone, Plus } from '@/components/icons'
+import { MagnifyingGlass, Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { Button } from '../ui/button'
@@ -6,7 +6,6 @@ import { Brand } from './Brand'
 import { RailToggle } from './RailToggle'
 import { AccountMenu } from './AccountMenu'
 import { SectionTabs } from './SectionTabs'
-import { WeekStrip } from './WeekStrip'
 import { HeaderRail } from './topbar/HeaderRail'
 import { DateNav } from './topbar/DateNav'
 import { useHideOnScroll } from './useHideOnScroll'
@@ -151,12 +150,34 @@ export function TopBar({
           )}
 
           <div className="ml-auto flex items-center justify-end gap-1.5">
-            {/* The week strip moved to the rail’s foot — it is ambient, not
-                an action, and this row is actions. Below `md` there is no rail,
-                so it stays here. */}
-            <div className="md:hidden">
-              <WeekStrip />
-            </div>
+            {/* SEARCH, PHONE ONLY — COD-260.
+
+                On a desktop the rail’s head carries a Search row that says
+                `⌘K`. A phone has no rail, so until now the palette was four
+                taps behind a twelve-item corner menu: the one control that
+                reaches every destination in the app was the hardest thing on
+                the screen to find.
+
+                It REPLACES the week strip here rather than joining it. Row 1
+                was already five controls at 390px and the repo has the scars
+                to prove it; a sixth would have been the one that pushed the
+                cluster over. Between an ambient seven-dot streak read in
+                passing and the door to every page, the door wins on a phone.
+                Desktop keeps both — the strip at the rail’s foot, Search at
+                its head.
+
+                Icon-only, like the microphone beside it: at 390px the word
+                "Search" costs more than it says, and `aria-label` carries the
+                name that `⌘K` cannot (there is no ⌘ on a phone). */}
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={onCommand}
+              aria-label="Search and jump to anything"
+              className="md:hidden"
+            >
+              <Icon as={MagnifyingGlass} size="sm" />
+            </Button>
 
             {/* Help and Send feedback used to stand here as two more buttons.
                 They are items in the corner menu now — and feedback in
