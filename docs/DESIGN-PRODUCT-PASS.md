@@ -244,3 +244,49 @@ side of it is an opinion.
 - [Why AI design looks generic](https://superdesign.dev/blog/why-ai-design-looks-generic)
 - [How to make AI UI look less generic](https://superdesign.dev/blog/how-to-make-ai-ui-look-less-generic)
 - [Linear design tokens — palette, typography, radii](https://open-design.ai/plugins/design-system-linear-app/)
+
+
+## The page audit, 2026-10-08
+
+Screenshotted every view at 1440 and 1707 and measured per-zone fill. Recording
+it because two of the three conclusions were the opposite of what the
+screenshots suggested.
+
+**Zone fill is 94-100% on every contract page.** The emptiness people report is
+not in the zones, and no amount of re-tuning the zone split will find it.
+
+**The measured gap was six pages rendering a single column at 1440.** One of
+them mattered:
+
+| page | screens | cards | verdict |
+|---|---|---|---|
+| mindset | 4.2 -> **3.7** | 3 | fixed (#352). A list that could take columns. |
+| coaching | 2.7 | 3 | open |
+| reading | 1.74 | 5 | **not the same problem** |
+| collections | 1.4 | 6 | **not the same problem** |
+| challenges | 0.9 | 1 | not a problem |
+| goals | 0.9 | 2 | not a problem |
+
+### Reading and Collections are not tall, they are wide and underfull
+
+Measured at a 1368px shell: Reading is five bands of 232/301/412/249/218px;
+Collections is six of 260/105/144/180/121/335px. Neither has a height problem —
+Collections is 1,249px total. What they have is **bands as wide as the page
+holding a row's worth of content**: Collections' Inbox is 1368x105 at **41%
+fill**, which `space` already flags as `1 thin`.
+
+So the fix is not the container-query treatment that worked on Mindset. It is
+pairing short bands two-up — and the primitive for that already exists and is
+already used: `BandRow` + two `BandCell`s, exactly as `PracticeBand` puts
+Practice beside Category balance.
+
+**The cost is why it is not done here.** Reading's and Collections' children are
+standalone components (`NowReading`, `Shelves`, `Stalled`, ...) that each render
+their own `Card band`. Pairing them means restructuring each to render a
+`BandCell` instead, across ~11 components on two pages, for roughly
+**1.74 -> 1.2 and 1.4 -> 1.0 screens**. That is a real increment with a modest
+return, and it should be taken deliberately rather than smuggled into a session
+about the shell.
+
+`challenges` and `goals` are under one screen. A single column is the correct
+layout for them and the gate's warning is noise there.
