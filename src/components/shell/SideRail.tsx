@@ -1,7 +1,7 @@
 import { MagnifyingGlass } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Kbd } from '../Kbd'
-import { Brand } from './Brand'
+import { WeekStrip } from './WeekStrip'
 import { SectionNav } from './SectionNav'
 import { SectionTabs } from './SectionTabs'
 import type { SectionGates } from './sections'
@@ -50,7 +50,7 @@ import type { ViewId } from './viewChrome'
  * active logic. A second copy of the destination list is the exact mistake this
  * repo already paid for once, when a hand-written id list in `BottomNav` was
  * resolved against another source and silently dropped a phone tab with no
- * error. `Brand` is here for the same reason and not retyped.
+ * error.
  *
  * ── What it adds that the header never had ─────────────────────────
  *
@@ -105,16 +105,19 @@ export function SideRail({
          it a wide table squeezes the rail and the labels wrap. */
       className="sticky top-0 hidden h-screen w-52 shrink-0 flex-col gap-1 self-start overflow-y-auto border-r border-line p-3 md:flex"
     >
-      {/* The brand sits at the rail's head, not in the bar beside the page
-          title. Two reasons, and the second is the one that was reported:
-          a product shell puts identity at the top of the navigation, and
-          leaving it in the header meant the header had to span the rail to
-          hold it — which is what drew a second chrome band across the window
-          and left the rail's own first 103px empty. `TopBar` keeps its copy
-          below `md`, where there is no rail to put it in. */}
-      <div className="px-2 pt-1 pb-3">
-        <Brand />
-      </div>
+      {/* NO WORDMARK HERE.
+
+          It sat at the rail’s head for one release and was reported as "taking
+          a lot of space" — correctly: 44px of the one axis a rail is supposed
+          to be generous with, spent telling you the name of the app you are
+          already inside. Identity is a thing you need once, on first run; the
+          rail is a thing you read every time you move. `TopBar` keeps its copy
+          below `md`, where the header is the only chrome and there is nothing
+          else to anchor the top-left corner.
+
+          `Brand` stays a shared component rather than being inlined back into
+          `TopBar`: one copy of the markup, which is the whole reason it was
+          extracted. */}
 
       {/* THE COMMAND PALETTE, GIVEN A DOOR.
           Item 6 on the DESIGN-PRODUCT-PASS diagnosis list, measured: `⌘K`
@@ -153,6 +156,26 @@ export function SideRail({
           neither a divider nor the gap one would leave behind. A separator
           drawn by the parent cannot know that. */}
       <SectionTabs view={view} gates={gates} onNavigate={onNavigate} vertical />
+
+      {/* THE WEEK, AT THE FOOT OF THE RAIL.
+
+          Moved out of the top bar, where it sat between the page title and
+          Quick add as the one thing in that row that is not about this page
+          and not an action. It is ambient: seven dots and a streak count, read
+          in passing, never clicked. That is rail content, and it is what a
+          footer is for.
+
+          `mt-auto` so it sits on the floor rather than under the tabs — the
+          tab list varies from zero to twelve rows, and a strip that drifts
+          with it reads as part of the list it is not part of.
+
+          It goes WITH the rail when you hide it, and that is the right trade:
+          a streak count is losable. Quick add, the microphone and the account
+          menu stay in the header precisely because they are not — ⌘B must not
+          take away the app’s primary action. */}
+      <div className="mt-auto border-t border-line px-2 pt-3">
+        <WeekStrip />
+      </div>
     </aside>
   )
 }
