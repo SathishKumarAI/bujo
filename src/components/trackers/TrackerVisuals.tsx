@@ -26,7 +26,16 @@ export function TrackerVisuals({ data, today }: { data: JournalData; today: stri
     r == null ? cat('surface0') : r === 0 ? cat('surface1') : `color-mix(in srgb, ${cat('green')} ${Math.round(25 + r * 75)}%, ${cat('surface1')})`
 
   // Streak leaderboard (current streak per check-habit) + all-time best (#290).
+  //
+  // `avoid` habits are excluded, matching `habitLeaderboard` in
+  // `correlations.ts`, which documents the reason: their streak semantics are
+  // inverted. Ranked by `habitStreak` a quit habit is ordered by how many days
+  // IN A ROW you drank, printed in a leaderboard beside habits where a high
+  // number is the good outcome. There is no sensible way to mix the two scales
+  // in one ranking, so the quit habits keep their own clean-streak chips on
+  // the rows instead.
   const streaks = active
+    .filter((h) => !h.avoid && (h.type ?? 'check') === 'check')
     .filter((h) => (h.type ?? 'check') === 'check')
     .map((h) => ({ h, streak: habitStreak(data, h.id, today), best: longestStreakEver(data, h, today) }))
     .sort((a, b) => b.streak - a.streak || b.best - a.best)

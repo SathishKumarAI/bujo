@@ -122,6 +122,13 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   const { month: ym } = useCursor()
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
+  // Polarity for the habit about to be added. The PRESETS below have carried
+  // `avoid` all along (“Alcohol-free”, “No doomscroll”); the free-text path had
+  // no way to say it, so anything you typed yourself — “Vaping”, “Energy
+  // drinks” — arrived as a BUILD habit and started counting a streak of doing
+  // it. Default `false`, because most habits are things to build and a
+  // defaulted-wrong polarity is what this whole change is about.
+  const [avoid0, setAvoid0] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   // Tapping a habit opens its read-first activity detail (heatmap + stats);
   // "Edit" inside hands off to the settings editor.
@@ -170,8 +177,9 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
     const name = newHabit.trim()
     if (!name) return
     if (habitExists(name)) { notify.info(`You already track “${name}”`, 'Find it in the grid below.'); setNewHabit(''); return }
-    addHabit({ name, category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length] })
+    addHabit({ name, category: cat0, color: HABIT_COLORS[data.habits.length % HABIT_COLORS.length], ...(avoid0 ? { avoid: true } : {}) })
     setNewHabit('')
+    setAvoid0(false)
   }
 
   // Which day in view a capture just wrote a wellbeing metric to, and WHICH of
@@ -278,6 +286,26 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
                   seen it — a screen reader announced "combo box" and nothing. */}
               <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} aria-label="Category for the new habit" className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              {/* BUILD or CUT DOWN, asked at the moment it is decidable.
+
+                  A `<select>` and not a checkbox: "Habit to avoid" as a tick
+                  states one side and leaves the other implied, and the implied
+                  side is the one that was silently wrong for everybody. Two
+                  named options make the default visible, and the words say what
+                  happens rather than naming the flag — nobody adding "Vaping"
+                  is looking for a field called "avoid".
+
+                  The editor keeps its checkbox; this is the creation-time
+                  question, and `Habit.avoid` is still the one stored field. */}
+              <select
+                value={avoid0 ? 'cut' : 'build'}
+                onChange={(e) => setAvoid0(e.target.value === 'cut')}
+                aria-label="Is this a habit to build or to cut down on?"
+                className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1"
+              >
+                <option value="build">do more of</option>
+                <option value="cut">cut down on</option>
               </select>
               {/* The page's single primary button. */}
               <Button onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>

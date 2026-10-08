@@ -9,7 +9,7 @@ import { Stepper } from '../fields/Stepper'
 import { TIME_SLOTS } from '../../lib/timeofday'
 import { slotGlyph } from '../glyphs'
 import { cat, HABIT_COLORS, onAccent, onRaised } from '../../lib/colors'
-import { habitConsistency, habitDoneOn, habitStreak, habitTarget } from '../../lib/stats'
+import { cleanStreak, habitConsistency, habitDoneOn, habitStreak, habitTarget } from '../../lib/stats'
 import { longestStreakEver } from '../../lib/streak'
 import { bestWeekday, monthlyHabitCompletion, perfectWeeks, valueSparkline, weeklyHeatRow } from '../../lib/habitStats'
 import { dayIntensity, intensityOpacity } from '../../lib/habitIntensity'
@@ -42,7 +42,11 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
   const knownUnits = [...new Set(data.habits.map((h) => h.unit).filter((u): u is string => !!u))].sort()
   const [heatYear, setHeatYear] = useState(false)
   const today = todayISO()
-  const streak = habitStreak(data, habit.id)
+  // Polarity, the same branch `HabitDetail` one file over has always had.
+  // Unconditional `habitStreak` on a quit habit counts consecutive days you
+  // DID the thing and the tile below labelled it "day streak" — so Alcohol
+  // read as a 4-day achievement. `cleanStreak` is the counterpart.
+  const streak = habit.avoid ? cleanStreak(data, habit.id, today) : habitStreak(data, habit.id, today)
   const bestEver = longestStreakEver(data, habit, today)
   // #85: best/worst weekday by scheduled-day success rate (last 90d).
   const wd = bestWeekday(data, habit, today)
@@ -68,7 +72,7 @@ export function HabitEditor({ habit, onClose }: { habit: Habit; onClose: () => v
         <div className="space-y-3 p-4">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
-            <StatTile label="day streak" value={streak} />
+            <StatTile label={habit.avoid ? 'days clean' : 'day streak'} value={streak} />
             <StatTile label="best ever" value={bestEver} />
             <StatTile label="30-day" value={`${habitConsistency(data, habit.id, habit.startedOn, 30)}%`} />
           </div>

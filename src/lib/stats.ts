@@ -264,9 +264,22 @@ export function reminderMessage(
   today = todayISO(),
 ): { title: string; body: string } | null {
 
-  // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
   let risk: { name: string; streak: number } | null = null
+  // 1. Streak at risk — longest unfinished scheduled habit streak ≥ 3.
+  //
+  // `avoid` habits are EXCLUDED, and this is the bug this guard exists for.
+  // Without it the banner read **"Log Alcohol today to keep your 3-day streak
+  // alive"** — a notification asking you to drink, with the slip counted as
+  // the streak. For a quit habit there is no daily action to nudge: the win is
+  // doing nothing, `cleanStreak` is its streak function, and it cannot be "at
+  // risk" of anything you fail to press.
+  //
+  // `atRiskHabits` — sixty lines down THIS FILE — has had `if (h.archived ||
+  // h.avoid) continue` all along. Two functions, one concept, one file, and
+  // only one of them checked. When a predicate is spelled out twice, the
+  // second copy is where the exception gets forgotten.
   for (const h of data.habits) {
+    if (h.avoid) continue
     if (h.archived) continue
     if (!isScheduledOn(h, today)) continue
     const doneToday = habitDoneOn(data, h, today)
