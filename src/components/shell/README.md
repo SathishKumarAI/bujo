@@ -11,8 +11,10 @@ The header's individual controls live one level down in
 | Which sections exist, which tabs they hold, what a gate hides | `sections.ts` |
 | A page's title, subtitle, ⓘ help text, whether it has a date cursor | `viewChrome.ts` |
 | Page frame, `<main>`, quick-add dialog, global hotkeys | `AppShell.tsx` |
+| The desktop left rail — width, what it stacks, where it sticks | `SideRail.tsx` |
+| The five section links, active treatment, where a section click lands | `SectionNav.tsx` — the rail’s upper half |
 | The two header rows and their order | `TopBar.tsx` (+ `topbar/`) |
-| The tab row under the header, and centring the active tab | `SectionTabs.tsx` |
+| The section’s tabs — stacked in the rail, a scrolling row on a phone | `SectionTabs.tsx` |
 | The phone tab bar | `BottomNav.tsx` |
 | When either bar hides on scroll | `useHideOnScroll.ts` |
 | Publishing the header's height as `--header-h` | `useHeaderHeight.ts` |
@@ -27,10 +29,16 @@ The header's individual controls live one level down in
 
 ## Decisions worth keeping
 
-- **There is no rail.** Navigation is `TopBar`'s two rows on desktop and
-  `TopBar` + `BottomNav` on phones. Deleting the sidebar also deleted collapse,
-  auto-hide, the mobile drawer and its scrim — all of which existed only to win
-  back the space the rail was spending.
+- **The rail is back, and it replaced the nav rows rather than joining them.**
+  Desktop navigation is `SideRail` (sections + the section’s tabs, 208px,
+  always open); phones are unchanged — `TopBar`’s tab row plus `BottomNav`.
+  PR #120 deleted a 240px rail that sat *above* a top bar and a detached tab
+  row — three chrome layers answering one question — and with it the
+  collapse, auto-hide, mobile drawer and scrim that existed only to win back
+  the space the rail was spending. **None of that machinery comes back.** If
+  the rail ever needs collapsing again, that is the signal it has grown into
+  the thing #120 removed. Measured either side at 1512×950 on `?demo=1`:
+  chrome before content **152px → 103px**, 17.2% → 11.7% of the viewport.
 - **`sections.ts` is the single source of nav truth.** `MEMBERS`, `tabsOf`,
   `landingOf`, both nav bars and the command palette all derive from it. There
   is no second hand-written id list anywhere, and there should not be — the one

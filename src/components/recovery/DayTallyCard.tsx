@@ -62,7 +62,15 @@ export function DayTallyCard({ rows, onStep }: {
         {rows.map((r) => (
           <li key={r.id ?? 'primary'} className="rounded-card bg-ink-2 px-3 py-2">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <div className="min-w-0 flex-1">
+              {/* `min-w-40`, not `min-w-0`. The row is `flex-wrap`, but a
+                  `flex-1 min-w-0` column shrinks to nothing rather than forcing
+                  the wrap, so the quick-amount cluster kept its full width and
+                  crushed this column instead of moving to a second line. It
+                  only became visible when `SideRail` took 208px off `<main>`:
+                  `npm run clipped` found "4 cigarettes today" at **38px shown
+                  of 60px needed** on desktop Recovery. A floor here is what
+                  makes `flex-wrap` able to act. */}
+              <div className="min-w-40 flex-1">
                 {/* Wraps rather than truncates: the name is user text, and the
                     clip gate is right that a hidden half-word is worse than a
                     second line. `break-words` covers a long single word. */}

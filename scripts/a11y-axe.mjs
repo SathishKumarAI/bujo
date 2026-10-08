@@ -538,9 +538,22 @@ async function go(w, name) {
    *
    * This is the difference between "the door is gone" and "I knocked too
    * early", which is the exact question `goOrDie` claims to answer.
+   *
+   * **A LOOSE contains, not the anchored regex the selectors below use**, and
+   * the difference is 15 seconds per navigation. This wait only has to answer
+   * "has the nav painted yet"; it is not the thing that picks the target. When
+   * it was `^${name}([,·]|$)` it could not match a row whose `textContent`
+   * carries a trailing `aria-hidden` hint (`Todayg t`), so it burned its full
+   * `timeout` on EVERY `go()` before falling through to the arm that works.
+   * Locally that is slow; in CI, at `BUJO_A11Y_WORKERS: 2`, the job hit the
+   * 15-minute cap and was cancelled having printed nothing but the seed lines
+   * — a red that looks exactly like a hang.
+   *
+   * Being loose costs nothing: a false positive here only means the real
+   * selectors run a moment earlier, and they are the strict ones.
    */
   await items
-    .filter({ hasText: new RegExp(`^${name}([,·]|$)`) })
+    .filter({ hasText: name })
     .first()
     .waitFor({ state: 'attached', timeout: 15000 })
     .catch(() => {})
@@ -554,9 +567,29 @@ async function go(w, name) {
   // Exact-first rather than prefix-only, so two controls whose names share a
   // prefix cannot swap places. The suffix must begin with a comma or a middot,
   // which is the convention for state appended to an accessible name here.
+  //
+  // THIRD ARM: the ACCESSIBLE NAME, which is what this function has always
+  // meant and never actually asked for. `hasText` reads `textContent`, so a
+  // control whose label is followed by decorative text inside an
+  // `aria-hidden` wrapper reads as renamed. `SideRail`'s rows draw their `g`
+  // chord that way, and the gate died on all 166 scans with
+  // `[Today] no rail row with that name` and a close-match line reading
+  // "Todayg t — the name grew a suffix the regex does not allow."
+  //
+  // This is STRICTER than the two arms above, not looser: an accessible name
+  // is computed the way a screen reader computes it, so `aria-hidden` subtrees
+  // are excluded and an `aria-label` wins over the text. It is last so the
+  // existing exact/suffix behaviour is unchanged where it already matched.
+  //
+  // Intersected with `NAV_SELECTOR` via `.and()` rather than used alone: a
+  // page-wide role query would happily match a link called "Today" inside the
+  // content, and clicking that is how a gate silently scans the wrong view.
+  const byName = (role) => items.and(w.page.getByRole(role, { name, exact: true }))
   const target =
     (await onScreen(w, items.filter({ hasText: new RegExp(`^${name}$`) }))) ??
-    (await onScreen(w, items.filter({ hasText: new RegExp(`^${name}[,·]`) })))
+    (await onScreen(w, items.filter({ hasText: new RegExp(`^${name}[,·]`) }))) ??
+    (await onScreen(w, byName('link'))) ??
+    (await onScreen(w, byName('button')))
   if (!target) return false
   await target.click()
   await w.page.waitForTimeout(300)

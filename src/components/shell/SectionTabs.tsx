@@ -37,10 +37,13 @@ export function SectionTabs({
   view,
   gates,
   onNavigate,
+  vertical = false,
 }: {
   view: ViewId
   gates: SectionGates
   onNavigate: (id: ViewId) => void
+  /** Stack the tabs - the rail form. Same list, same hrefs, one source. */
+  vertical?: boolean
 }) {
   const rowRef = useRef<HTMLElement>(null)
   const activeRef = useRef<HTMLAnchorElement>(null)
@@ -103,18 +106,27 @@ export function SectionTabs({
     <nav
       ref={rowRef}
       aria-label="Section"
-      // Horizontal scroll rather than wrap: six tabs at 360px would stack into
-      // two rows and shove the page down on every phone.
-      // Centred from `md` up by AUTO MARGINS on the first and last tab, NOT by
-      // `justify-content: center` — see the tab's own className below.
+      // Two layouts, and the horizontal one is now PHONE ONLY — its sole call
+      // site is inside the top bar's `md:hidden` wrapper, because the rail
+      // carries these on desktop. Every `md:` utility that used to live here
+      // went with that: the row was centred from `md` up by auto margins on
+      // the first and last tab, and `md:ml-0 md:flex-none` undid the phone
+      // gutter alignment at the same breakpoint. Both now describe a state
+      // that renders nowhere, and Tailwind would never have told us — a stale
+      // utility emits no CSS and fails no build.
       //
-      // Below `md` the row is the flex child it was, `-ml-3` and all: that
-      // negative margin cancels the first tab's own `px-3` so its label starts
-      // on the header's 16px gutter, level with the page content beneath it.
-      // The alignment it buys is real on a phone and meaningless once the row
-      // is centred, so it is dropped at the same breakpoint the centring
-      // starts.
-      className="-ml-3 flex min-w-0 flex-1 gap-1 overflow-x-auto md:ml-0 md:flex-none"
+      // What stays is the phone row: horizontal scroll rather than wrap, since
+      // six tabs at 360px would stack into two rows and shove the page down;
+      // and `-ml-3`, which cancels the first tab's own `px-3` so its label
+      // starts on the header's 16px gutter, level with the content beneath it.
+      className={
+        vertical
+          // `border-t` here rather than in `SideRail`: the rule has to exist
+          // exactly when this list does, and this component returns null
+          // below two tabs.
+          ? 'mt-2 flex min-w-0 flex-col gap-0.5 border-t border-line pt-2'
+          : '-ml-3 flex min-w-0 flex-1 gap-1 overflow-x-auto'
+      }
     >
       {tabs.map((t) => {
         // Companion views (Strength's deeper tools, the retired activity views)
@@ -143,17 +155,20 @@ export function SectionTabs({
             // was a 2px `border-foreground` underline, which was both the
             // loudest possible rule and the same weight as the row's own
             // bottom border.
-            // `first:ml-auto last:mr-auto` is how this row is centred, and
-            // `justify-center` on the scroll container is NOT an alternative:
-            // it distributes NEGATIVE free space too, so an overflowing row is
-            // pushed off BOTH edges and `scrollLeft` cannot go below 0 — the
-            // leading tabs become unreachable by any means. Measured: with
-            // `justify-center`, Body's twelve tabs at 1440px put Fitness at a
-            // negative x and `npm run a11y` died on "no tab with that name
-            // inside Body" after `scrollIntoViewIfNeeded` failed to reach it.
-            // Auto margins resolve to 0 the moment free space is negative, so
-            // an overflowing row falls back to left-aligned and scrolls.
-            className={`my-1 inline-flex min-h-11 flex-none items-center rounded-control px-3 text-body font-medium whitespace-nowrap transition-colors md:first:ml-auto md:last:mr-auto ${
+            // The centring that used to live here (`md:first:ml-auto
+            // md:last:mr-auto`) is gone with the desktop row. Keeping the
+            // finding, because it is about `justify-center` and not about this
+            // row: `justify-center` distributes NEGATIVE free space too, so an
+            // overflowing scroll container is pushed off BOTH edges and
+            // `scrollLeft` cannot go below 0 — the leading items become
+            // unreachable by any means. Measured here: Body's twelve tabs at
+            // 1440px put Fitness at a negative x and `npm run a11y` died on
+            // "no tab with that name inside Body" after
+            // `scrollIntoViewIfNeeded` failed to reach it. Auto margins
+            // resolve to 0 the moment free space is negative; `justify-center`
+            // does not. Reach for the margins if you ever centre an
+            // overflowing row again.
+            className={`my-1 inline-flex min-h-11 flex-none items-center rounded-control px-3 text-body font-medium whitespace-nowrap transition-colors ${
               active
                 ? 'bg-ink-2 text-foreground shadow-raise'
                 : 'text-fg-2 hover:bg-ink-2 hover:text-fg-1'

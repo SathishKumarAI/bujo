@@ -2,45 +2,43 @@ import { Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { Button } from '../ui/button'
+import { Brand } from './Brand'
 import { AccountMenu } from './AccountMenu'
 import { SectionTabs } from './SectionTabs'
 import { WeekStrip } from './WeekStrip'
 import { HeaderRail } from './topbar/HeaderRail'
-import { SectionNav } from './topbar/SectionNav'
 import { DateNav } from './topbar/DateNav'
 import { useHideOnScroll } from './useHideOnScroll'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
-function Brand() {
-  return (
-    <div className="flex shrink-0 items-baseline gap-2">
-      <span className="font-display text-title font-medium tracking-tight text-foreground">Cadence</span>
-      {/* A 6px accent square, not the ✦ glyph it replaces. The redesign spends
-          its accent on state and one mark of identity; a star reads as
-          decoration, and decoration is what the flat treatment removes. */}
-      <span className="size-1.5 bg-brand" aria-hidden />
-    </div>
-  )
-}
-
 /**
- * The sticky header · and, since the rail was deleted, the app's only
- * navigation on desktop.
+ * The sticky header. **On desktop it no longer carries navigation** — `SideRail`
+ * does. On a phone it still carries the tab row, and `BottomNav` the sections.
  *
- * Two rows, because five sections holding up to seven tabs each cannot honestly
- * be one:
+ * Two rows:
  *
- * 1. **Where you can go** — brand, the five sections, the week, and the
- *    controls that are not about this page (Quick add, account, overflow).
- *    Folds away while you scroll down; see `topbar/HeaderRail`.
- * 2. **Where you are** — the section's tabs, or the page title when the section
- *    has only one surface, plus the date nav. Never folds: losing "which tab am
- *    I on" is the one thing a scrolled header must not do.
+ * 1. **Who and what** — brand, the week, and the controls that are not about
+ *    this page (Quick add, account, overflow). Folds away while you scroll
+ *    down; see `topbar/HeaderRail`.
+ * 2. **Where you are** — the page title on desktop; the section's tabs on a
+ *    phone, where the title lives behind them as an `sr-only` `h1`. Plus the
+ *    date nav. Never folds: losing "which tab am I on" is the one thing a
+ *    scrolled header must not do.
  *
- * Both rows are horizontal, both are sticky, and they share one bottom rule, so
- * the whole thing reads as a single header block rather than as the three
- * separate chrome layers it replaced (rail, top bar, detached tab row).
+ * ── The rail came back, and that is not a revert ───────────────────────────
+ *
+ * PR #120 deleted a left rail and moved its contents here, correctly: the app
+ * then had **three** chrome layers between viewport and page (a 240px rail, this
+ * bar, and a detached tab row), and the rail had grown `collapsed`,
+ * `sidebarAutoHide`, a hover reveal zone and a mobile drawer — all of it machinery
+ * for winning back space the rail itself was spending.
+ *
+ * Phase 5 adds a rail that *replaces* these two nav rows instead of sitting
+ * above them, with none of that machinery: 208px, always open, desktop only.
+ * Measured at 1512×950 on `?demo=1`, chrome before content went **152px → 103px**
+ * (17.2% → 11.7% of the viewport). The thing #120 was right about — three layers
+ * answering one question — is what this removes a layer from.
  *
  * **The breadcrumb is gone.** It said `Body / Fitness`; row 1 lights Body and
  * row 2 marks Fitness `aria-current`, so the crumb was the third statement of
@@ -82,47 +80,59 @@ export function TopBar({
     // whatever is sliding under it; the hairline stays because a translucent
     // surface over arbitrary content cannot rely on colour alone to end.
     <header className="app-header sticky top-0 z-30 border-b border-line bg-card/75 pt-2.5 shadow-raise backdrop-blur-lg">
-      {/* ── Row 1 · where you can go ─────────────────────────────────────── */}
+      {/* ── Row 1 · who, and the controls that are not about this page ───── */}
       <HeaderRail collapsed={collapsed}>
-        {/* THREE COLUMNS at `md`, and the nav is the middle one.
-            The nav used to sit immediately after the brand with the tools
-            pushed right by `ml-auto`, which left the five section names
-            starting ~120px from the left edge of a 1440px window and the tools
-            ending at the far right — so reading "where am I" and reaching "what
-            can I do" were a full screen apart, on every page load.
+        {/* ONE ROW on desktop. The brand is in the rail’s head, the page
+            title is here, and the tools are at the right edge — so the header
+            is a single band over the content column and the rail owns the
+            left edge from y=0.
 
-            `1fr auto 1fr` centres the nav against the WINDOW rather than
-            against the space left over by its siblings, so the section names
-            stay put when the brand or the tool cluster changes width (Feedback
-            drops below `sm`, the streak strip is content-derived). The outer
-            columns are `minmax(0, 1fr)` so a wide tool cluster shrinks the
-            spacer instead of shoving the nav off-centre.
+            It was two full-width rows above the rail: brand + tools, then
+            title + date nav. That drew a chrome band across the rail as well
+            as the page, left the rail’s first 103px empty, and left ~1100px
+            of the title row empty in turn — reported as the bar and the rail
+            conflicting and wasting space. Row 2 still exists **below `md`**,
+            where it carries the tab row and there is no rail to take it.
 
-            `1fr`, NOT `minmax(0,1fr)` — measured, and the difference is a
-            bug. `minmax(0,1fr)` has no content floor, so between `md` and
-            about 1100px the tool cluster was handed an equal half of the bar
-            and spilled **56px past it on every single view**: the streak
-            strip's "90d" and the feedback count sat outside the header's own
-            box. Plain `1fr` is `minmax(auto,1fr)`, which floors each outer
-            column at its content and lets the fr algorithm reclaim the rest
-            from its sibling — so the nav is exactly centred while there is
-            room for it and drifts off-centre instead of clipping when there is
-            not. A nav one degree off-centre is a worse layout; a control
-            outside its container is a broken one.
+            Worth keeping from the three-column version this replaced, because
+            it will bite whoever next centres something in this bar: the outer
+            columns were plain `1fr`, NOT `minmax(0,1fr)`, and the difference
+            was measured. `minmax(0,1fr)` has no content floor, so between `md`
+            and about 1100px the tool cluster was handed an equal half of the
+            bar and spilled **56px past it on every single view** — the streak
+            strip’s "90d" and the feedback count outside the header’s own box.
+            Plain `1fr` is `minmax(auto,1fr)`, which floors each outer column
+            at its content. */}
+        <div className="flex items-center gap-3 px-4 pb-2">
+          {/* Phone only: on desktop the rail’s head carries it. One component,
+              two placements, never both visible — see `Brand.tsx`. */}
+          <div className="md:hidden">
+            <Brand />
+          </div>
 
-            Flex below `md`, and that is not laziness either: `SectionNav` is
-            `hidden md:flex`, so on a phone there is no middle column to centre
-            and the grid degrades to two halves that indent the tab row past
-            the page gutter.
+          {/* Desktop only: the page title, at the gutter of the content
+              column it names. Below `md` the tab row in row 2 says the same
+              thing and this would be a second claim on it; there the heading
+              lives as the `sr-only` `h1` beside those tabs. Exactly one `h1`
+              is in the accessibility tree at each breakpoint — the other is
+              `display: none`, not merely invisible. */}
+          <div className="hidden min-w-0 flex-1 flex-col justify-center md:flex">
+            <h1 className="truncate text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
+            {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
+          </div>
 
-            Nothing moves between columns and no action changes — this is the
-            same three groups in the same order, measured from a different
-            origin. */}
-        <div className="flex items-center gap-3 px-4 pb-2 md:grid md:grid-cols-[1fr_auto_1fr]">
-          <Brand />
-          <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
+          {/* Desktop only. The date cursor belongs beside the title it
+              qualifies — "Fitness, this week" is one statement. Below `md` it
+              stays in row 2 beside the tab row, where it has always been and
+              where there is width for it; the two are never both rendered,
+              one of them is always `display: none`. */}
+          {chrome.dateNav && (
+            <div className="hidden shrink-0 items-center md:flex">
+              <DateNav view={view} mode={chrome.dateNav} />
+            </div>
+          )}
 
-          <div className="ml-auto flex items-center justify-end gap-1.5 md:ml-0">
+          <div className="ml-auto flex items-center justify-end gap-1.5">
             <WeekStrip />
 
             {/* Help and Send feedback used to stand here as two more buttons.
@@ -164,43 +174,37 @@ export function TopBar({
         </div>
       </HeaderRail>
 
-      {/* ── Row 2 · where you are ────────────────────────────────────────── */}
-      {/* Centred on the same axis as row 1, from `md` up and for the same
-          reason: the tab row is the other half of "where am I", and it was
-          starting at the left gutter while row 1's nav did too — two
-          left-aligned rows under a tool cluster pinned right.
+      {/* ── Row 2 · PHONE ONLY · which surface, and the date ─────────── */}
+      {/* `md:hidden` on the whole row. On desktop the rail carries the tabs
+          and row 1 carries the title and the date nav, so there is no second
+          band at all — which is the space this phase gives back.
 
-          Below `md` it stays the flex row it was. Row 1's nav is hidden there,
-          so there is no axis to share; centring one lone row against the window
-          would only pull it out of line with the page content under it.
+          Kept from when this row was centred at `md`, because it will bite
+          anyone who puts a grid back here: the columns were plain `1fr`, and
+          under `minmax(0,1fr)` the date nav was squeezed below its own
+          content and **"September 2026" was drawn straight through the Cycle
+          and Recovery tabs** at 1024–1280. Two strings on top of each other,
+          on a row whose whole job is telling you where you are.
 
-          `items-stretch` keeps the tab row and the date nav the same height. It
-          used to also be load-bearing for the tabs' active *underline*, which
-          had to land exactly on the header's own bottom rule; the tabs are
-          filled pills now and carry their own `my-1` inset instead.
-
-          The empty first column is what makes the centring true — without it
-          the tabs would centre in the space the date nav leaves over, which
-          moves as the date label changes width (a month name is wider than
-          "Sat, Sep 12"). The `sr-only` heading is absolutely positioned, so it
-          is not a grid item and does not consume the middle column.
-
-          `1fr` here for the same reason as row 1, and this row is where it
-          showed worst: under `minmax(0,1fr)` the date nav was squeezed below
-          its own content and **"September 2026" was drawn straight through the
-          Cycle and Recovery tabs** at 1024–1280. Two strings on top of each
-          other, on a row whose whole job is telling you where you are. */}
-      <div className="flex items-stretch gap-3 border-t border-line px-4 md:grid md:grid-cols-[1fr_auto_1fr]">
-        <span aria-hidden className="hidden md:block" />
+          `items-stretch` keeps the tab row and the date nav the same height.
+          It used to also be load-bearing for the tabs’ active *underline*,
+          which had to land exactly on the header’s own bottom rule; the tabs
+          are filled pills now and carry their own `my-1` inset instead. */}
+      <div className="flex items-stretch gap-3 border-t border-line px-4 md:hidden">
         {hasTabs ? (
           <>
-            {/* Still the page's heading for a screen reader and for the outline;
-                the tab marked `aria-current` is what a sighted reader sees. */}
+            {/* Still the page's heading for a screen reader and for the
+                outline; the tab marked `aria-current` is what a sighted
+                reader sees. Its desktop twin in row 1 is `display: none`
+                here, so exactly one `h1` is in the accessibility tree. */}
             <h1 className="sr-only">{chrome.title}</h1>
-            <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
+            <div className="flex min-w-0 flex-1">
+              <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
+            </div>
           </>
         ) : (
-          <div className="flex min-w-0 flex-1 flex-col justify-center py-2 md:flex-none md:text-center">
+          /* No tabs to stand in for it, so the heading is drawn. */
+          <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
             <h1 className="truncate text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
             {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
           </div>

@@ -671,13 +671,34 @@ body.handwriting textarea {
   opacity: 1;
   transition: opacity var(--dur-fast) var(--ease-rise);
 }
-.header-rail[data-collapsed='true'] { grid-template-rows: 0fr; }
-.header-rail[data-collapsed='true'] > * { opacity: 0; }
-/* Tabbing into a folded row must open it, or focus lands on a control with zero
-   height and no one can see where they are. Quick add stays keyboard-reachable
-   while scrolled — as does `n`, which opens it from anywhere. */
-.header-rail[data-collapsed='true']:focus-within { grid-template-rows: 1fr; }
-.header-rail[data-collapsed='true']:focus-within > * { opacity: 1; }
+/* THE FOLD IS A PHONE BEHAVIOUR ONLY, from `md` down.
+
+   It used to run at every width, and that was right while the header was two
+   full rows carrying the whole of desktop navigation: ~100px of chrome worth
+   winning back while you read. Since the rail took the navigation, this row is
+   a single 58.8px band holding the page title, the date cursor and Quick add —
+   so folding it on a desktop now trades the app's primary action and its
+   statement of where you are for 58 pixels, on a 900px-tall window. A
+   product's chrome is permanent; losing it mid-task is a reading-page
+   behaviour, and item 3 on the DESIGN-PRODUCT-PASS diagnosis list.
+
+   Phones keep it, unchanged: there the row is one of two, vertical really is
+   scarce, and `BottomNav` — which hides on the same rule — is the navigation
+   that matters.
+
+   Guarded in CSS rather than by not setting the attribute, so `useHideOnScroll`
+   stays one rule shared with `BottomNav` and there is no JS breakpoint to
+   disagree with the `md:` ones in the markup. */
+@media (width < 48rem) {
+  .header-rail[data-collapsed='true'] { grid-template-rows: 0fr; }
+  .header-rail[data-collapsed='true'] > * { opacity: 0; }
+  /* Tabbing into a folded row must open it, or focus lands on a control with
+     zero height and no one can see where they are. Quick add stays
+     keyboard-reachable while scrolled — as does `n`, which opens it from
+     anywhere. */
+  .header-rail[data-collapsed='true']:focus-within { grid-template-rows: 1fr; }
+  .header-rail[data-collapsed='true']:focus-within > * { opacity: 1; }
+}
 
 /* The bottom nav's half of the same rule. It used to carry a literal
    `duration-300` and no reduced-motion guard — the one motion site in the app

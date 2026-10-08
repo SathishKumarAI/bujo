@@ -98,11 +98,115 @@ Guarded rather than eyeballed: `npm run contrast` fails on any accent under
 4.5:1, and since COD-244 it measures against the **card ground** specifically -
 which is the ground every one of these changes moves.
 
-### Phase 5 · The left rail
-The structural one, last on purpose: it is the biggest diff and it benefits from
-the other four being settled. Five sections plus up to twelve sub-destinations
-move out of two horizontal rows into a persistent rail, returning ~150px of
-vertical to every page at every width.
+### Phase 5 - The left rail, and the shell becomes a row - SHIPPED
+
+The structural one, last on purpose. Five sections plus up to twelve
+sub-destinations move out of two horizontal header rows into a persistent rail
+- **and then the shell itself turns on its side**, because the rail alone was
+not the whole answer.
+
+#### Two passes, and the second was the one that mattered
+
+The first pass put the rail beside `<main>` and left the header where it was:
+two full-width rows stacked above the row holding rail and page. It measured
+well - 152px to 103px - and it was reported, correctly, as *"the top bar and
+the sidebar are conflicting and wasting space"*. Both halves of that are true
+and both are visible in the screenshot: the header band crossed the rail as
+well as the page, so the rail began **103px down with nothing in that space**,
+and the title row was ~1100px of nothing to the right of "Fitness". Two chrome
+layers, each mostly empty, each saying where you are.
+
+The second pass makes the frame a **row**: the rail from y=0 carrying the brand
+at its head, and the header *inside* the content column as a single band holding
+the page title, the date cursor and the tools.
+
+| Measured at 1512x950, `?demo=1` | before | pass 1 | **shipped** |
+|---|---|---|---|
+| chrome before content | 152px | 103px | **58.8px** |
+| ... as a share of the viewport | 17.2% | 11.7% | **6.7%** |
+| ... spread across ten views | 103-152px | 103px | **58.8px, all ten** |
+| chrome bands crossing the window | 2 | 2 | **0** |
+| underlined nav items | 16 of 16 | 0 | **0** |
+| rail top edge | - | y=103 | **y=0** |
+| header height after a 900px scroll | folds away | folds away | **58.8px, pinned** |
+| `h1` in the accessibility tree per breakpoint | 1 | 1 | **1** |
+| `document.body.scrollWidth` at a 501px viewport | = viewport | **1245** | = viewport |
+
+**That is 93px of every page back, and a band across the full window width that
+no longer exists.** The old number also *varied with the section* - Body's twelve
+tabs cost more chrome than Insights' one; the new one cannot, because the row
+they occupied is not rendered on desktop at all.
+
+Phones are untouched by design: the rail is `hidden md:flex`, so the frame is the
+single column it has always been, `TopBar`'s two rows plus `BottomNav`.
+
+#### Phase 3 came with it
+
+Once the header is one 58.8px band holding the page title, the date cursor and
+Quick add, folding it on scroll trades **the app's primary action** for 58 pixels
+of a 900px window. So the fold is now `@media (width < 48rem)` - phones keep it,
+where the row is one of two and `BottomNav` hides on the same rule. Measured:
+desktop header **58.8px before and after a 900px scroll**, rail top still 0,
+Quick add still at y=16. Phone: row 1 still folds to `0px`, row 2 (the tabs)
+still never folds.
+
+Guarded in CSS rather than by withholding the attribute, so `useHideOnScroll`
+stays one rule shared with `BottomNav` and no JS breakpoint can disagree with the
+`md:` ones in the markup.
+
+#### Not a revert of PR #120
+
+That PR deleted a 240px rail and was right to: it sat *above* the top bar and a
+detached tab row - three chrome layers - and had grown `collapsed`,
+`sidebarAutoHide`, a hover reveal zone, a mobile drawer and a scrim, all of it
+machinery for winning back space the rail itself spent. This rail **replaces**
+the nav rows and has none of that. The one control it does have is a width
+toggle, which is a different thing from auto-hide: it is a choice the reader
+makes and it persists, rather than chrome that moves on its own.
+
+#### One destination list, still
+
+`SideRail` renders `SectionNav` and `SectionTabs` - same components, same
+`SECTIONS`, same `hrefFor` targets. A second copy is the mistake `BottomNav`'s
+`PRIMARY` list already cost this repo once. `SectionNav`'s horizontal branch was
+then deleted rather than kept behind a `vertical` prop (one caller, one layout),
+and the file moved out of `topbar/`, which no longer described it. `Brand` moved
+to its own file for the same reason - the rail head and the phone bar render one
+component, never two copies of the markup.
+
+#### Four defects it created, none of which a gate could see at the time
+
+1. **`<main>` lost its width constraint.** It became a flex-row item, and a flex
+   item's `min-width: auto` resolves to *min-content* unless the box is a scroll
+   container - `overflow-x: clip` is explicitly **not** one (`hidden` would be).
+   Measured at a 501px viewport: `document.body.scrollWidth` **1245**, a
+   page-wide horizontal scrollbar on every view, with `overflow-x-clip` clipping
+   nothing because the box it clips had itself grown. One `min-w-0`.
+2. **Row 1 was a three-column grid whose middle child had just left.** With
+   `1fr auto 1fr` and two children, the tool cluster takes the `auto` column and
+   the trailing `1fr` sits empty - the week strip, Quick add and the account
+   button parked mid-bar with a third of the header blank to their right. Visible
+   on the first screenshot, invisible to every gate: nothing clipped, nothing
+   unlabelled, nothing overflowing.
+3. **Dead `md:` utilities on the tab row.** Its only call site is now inside
+   `md:hidden`, so the auto-margin centring and `md:ml-0 md:flex-none` describe a
+   state that renders nowhere. Tailwind v4 emits no CSS for a stale utility and
+   fails no build - the trap already in CLAUDE.md, met from the other side.
+4. **`npm run clipped` caught the one a gate could see.** Narrowing `<main>` by
+   208px put Recovery's `"4 cigarettes today"` at **38px shown of 60px needed**.
+   The row was already `flex-wrap`, but a `flex-1 min-w-0` text column shrinks to
+   nothing rather than forcing the wrap, so the quick-amount cluster kept its full
+   width and crushed the text instead of moving to a second line. `min-w-40` is
+   what makes `flex-wrap` able to act.
+
+Three of the four were found by looking at the rendered page while every gate was
+green, which is the point.
+
+**Found and fixed on the way, not Phase 5:** `npm run design` was **red on**
+`main` - `WeekStrip.tsx:57` put `font-display` on a 10px streak counter, the
+exact case the size floor from #346 exists to stop. It shipped because that gate
+is in CI and not in `npm run verify`.
+
 
 ## Space is a constraint on every phase, not a phase
 

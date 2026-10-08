@@ -1,14 +1,18 @@
 # `topbar/` — the header's controls
 
-One control per file, composed by `shell/TopBar.tsx`. The header is the whole of
-navigation on desktop since the rail was deleted (PR #120), so this directory is
-where nav changes land.
+One control per file, composed by `shell/TopBar.tsx`.
+
+**Navigation is no longer here on desktop.** `shell/SideRail.tsx` carries the
+five sections (`shell/SectionNav.tsx`, which used to live in this directory)
+and the section's tabs; this bar keeps the page title, the date nav and the
+controls that are not about the page. On a phone it still holds the tab row,
+and `shell/BottomNav.tsx` the sections.
 
 | Change | File |
 |---|---|
 | The fold on scroll — timing, what collapses, the focus-within reopen | `HeaderRail.tsx` + `.header-rail` in `src/index.css` |
 | *When* it folds — the scroll rule shared with `BottomNav` | `../useHideOnScroll.ts` |
-| The five section links, active treatment, where a section click lands | `SectionNav.tsx` |
+| The five section links, active treatment, where a section click lands | `../SectionNav.tsx` — **moved out of this directory**; it is the rail's upper half |
 | ‹ date › stepper and the year-wise jump popover | `DateNav.tsx` (popover markup: `../DateJumpPicker.tsx`, its only caller) |
 | The ⓘ blurb and the data-driven suggestions | `HelpMenu.tsx` — items only; they render inside the corner menu's **Help with this page** submenu, not a button of their own |
 | The suggestion count on the corner badge | `useSuggestionCount.ts` |
@@ -34,9 +38,11 @@ where nav changes land.
   into a transform.
 - **Row 2 never folds.** Losing "which tab am I on" is the one thing a scrolled
   header must not do, so only row 1 collapses.
-- **`SectionNav` is `hidden … md:flex`.** `BottomNav` carries the same five
-  sections within thumb reach on a phone; two copies on a 390px bar is one too
-  many, and the bottom one is the reachable one.
+- **This bar carries no section links at all.** They are `SideRail`’s, which
+  is itself `hidden md:flex` — `BottomNav` carries the same five within thumb
+  reach on a phone, and two copies on a 390px screen is one too many.
+  `SectionNav`’s horizontal branch went with the move rather than surviving
+  behind a `vertical` prop: one caller, one layout.
 - **`HelpMenu` returns `null`** when the view has no blurb and the journal has
   no suggestions, rather than rendering a dead button.
 - **One menu in the corner, not two.** `AccountMenu` (avatar) and
