@@ -1,8 +1,9 @@
-import { Microphone, Plus, Sidebar, SidebarSimple } from '@/components/icons'
+import { Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { Button } from '../ui/button'
 import { Brand } from './Brand'
+import { RailToggle } from './RailToggle'
 import { AccountMenu } from './AccountMenu'
 import { SectionTabs } from './SectionTabs'
 import { WeekStrip } from './WeekStrip'
@@ -109,31 +110,17 @@ export function TopBar({
             Plain `1fr` is `minmax(auto,1fr)`, which floors each outer column
             at its content. */}
         <div className="flex items-center gap-3 px-4 pb-2">
-          {/* THE RAIL TOGGLE, and it lives HERE rather than in the rail.
+          {/* The rail toggle, ONLY while the rail is away.
 
-              A control that hides its own container cannot bring it back, so
-              the one thing this button must not be is inside the thing it
-              hides. In the header it is in the same place in both states,
-              which is also what lets its icon carry the state instead of its
-              position.
+              When the rail is open it carries its own copy in its head, next
+              to Search — a control belongs on the thing it operates. This is
+              the other half: once the rail is `display: none` so is that copy,
+              and something has to be able to bring it back. Same component,
+              same label, same `aria-pressed`; `railHidden` decides which of
+              the two renders, so they cannot both appear.
 
-              Desktop only: there is no rail below `md`, so there is nothing
-              to toggle and the button would be a dead control on a phone.
-
-              `aria-pressed` rather than two different labels: it is one
-              control with a state, and a screen reader should hear it that
-              way. The label stays constant so it does not re-announce as a
-              different button each press. */}
-          <button
-            type="button"
-            onClick={onToggleRail}
-            aria-pressed={railHidden}
-            aria-label="Hide the sidebar"
-            title="Hide the sidebar · ⌘B"
-            className="hidden shrink-0 items-center rounded-control p-1.5 text-fg-2 transition-colors hover:bg-ink-2 hover:text-fg-1 md:inline-flex"
-          >
-            <Icon as={railHidden ? Sidebar : SidebarSimple} size="md" />
-          </button>
+              Desktop only — there is no rail below `md`. */}
+          {railHidden && <RailToggle hidden onToggle={onToggleRail} className="hidden md:inline-flex" />}
 
           {/* Phone only: on desktop the rail’s head carries it. One component,
               two placements, never both visible — see `Brand.tsx`. */}

@@ -74,9 +74,21 @@ export function PracticeBand({
                   {/* The track is drawn at every width; a category at zero shows
                       an empty track rather than nothing, which is the difference
                       between "none yet" and "chart is broken". */}
+                  {/* `fg-3` for the inactive bar, NOT `fg-1`. `fg-1` is the
+                      primary TEXT colour, and using it as a chart fill made the
+                      muted series the loudest thing on the page: measured on
+                      latte, `fg-1` on `ink-2` is **14.46** while the highlighted
+                      `brand` bar is **4.80**. The categories you are NOT focused
+                      on had three times the contrast of the ones you are — the
+                      chart shouting exactly what it meant to mute.
+
+                      `fg-3` measures 4.49 on the same track: level with the
+                      accent, above the 3.0 floor for a graphic, and separated
+                      from it by HUE rather than by force, which is what an
+                      accent is for. */}
                   <span className="block h-2.5 bg-ink-2">
                     <span
-                      className={`block h-full ${active ? 'bg-brand' : 'bg-fg-1'}`}
+                      className={`block h-full ${active ? 'bg-brand' : 'bg-fg-3'}`}
                       style={{ width: `${Math.round(r.share * 100)}%` }}
                     />
                   </span>
