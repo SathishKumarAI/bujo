@@ -7,8 +7,20 @@ describe('migrate', () => {
     const m = migrate({ entries: [{ id: 'x' }] })
     expect(m.version).toBeGreaterThan(0)
     expect(m.habits).toEqual([])
-    expect(m.settings.theme).toBe('mocha')
+    expect(m.settings.theme).toBe('latte')
     expect(m.nofap.relapses).toEqual([])
+  })
+
+  it('does not flip a theme somebody already chose', () => {
+    // The default moved mocha → latte. `migrate` spreads the stored `settings`
+    // OVER the defaults, so this holds by construction — but "by construction"
+    // is what every silent settings reset was also true of right up until it
+    // was not, and a theme reset is the most visible possible one.
+    expect(migrate({ settings: { theme: 'mocha' } }).settings.theme).toBe('mocha')
+    expect(migrate({ settings: { theme: 'neon' } }).settings.theme).toBe('neon')
+    // A journal that stored no theme at all is a fresh one, and gets the new
+    // default rather than the old one.
+    expect(migrate({ habits: [] }).settings.theme).toBe('latte')
   })
   it('returns a clean base for garbage input', () => {
     expect(migrate(null).entries).toEqual([])

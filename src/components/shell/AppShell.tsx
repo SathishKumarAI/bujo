@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { TooltipProvider } from '../ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { TopBar } from './TopBar'
@@ -13,6 +13,7 @@ import { VoiceAgent } from '../VoiceAgent'
 import { CaptureReceipt } from '../CaptureReceipt'
 import { ShortcutHelp } from '../ShortcutHelp'
 import { useHotkeys, useLeaderKey } from '../../lib/useHotkeys'
+import { useJournal } from '../../store'
 import { useCursor } from './cursor'
 import { useDevice } from './device'
 import { useHeaderHeight } from './useHeaderHeight'
@@ -58,13 +59,41 @@ export function AppShell({
   const [quickOpen, setQuickOpen] = useState(false)
   const [talkOpen, setTalkOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const { data, setSettings } = useJournal()
   const { day } = useCursor()
   const isMobile = useDevice() === 'mobile'
+
+  // Desktop rail visibility. `useJournal` rather than local state: the whole
+  // point is that the choice survives a reload.
+  const railHidden = !!data.settings.railHidden
+  const toggleRail = useCallback(
+    () => setSettings({ railHidden: !data.settings.railHidden }),
+    [data.settings.railHidden, setSettings],
+  )
   useHeaderHeight()
 
   // Single-key shortcuts. ⌘K (palette) and ⌘Z (undo) are chords, so they stay
   // where they are — these are the bare keys, which need the typing/dialog
   // guards that useHotkeys provides.
+  // ⌘B / Ctrl-B toggles the rail. A CHORD, so it cannot live in `useHotkeys`
+  // — that hook deliberately ignores anything with a modifier, because its
+  // keys are bare letters that must not fire while you are typing. Bound the
+  // way the palette binds ⌘K, next to it.
+  //
+  // ⌘B is the VS Code / Notion convention for exactly this control. It does
+  // not collide with the `g b` leader chord: that is a bare `g` then a bare
+  // `b`, and this is a modified `b`.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggleRail()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [toggleRail])
+
   useHotkeys({
     n: () => setQuickOpen(true),
     '?': () => setHelpOpen(true),
@@ -118,7 +147,7 @@ export function AppShell({
           Below `md` this is unchanged: the rail is `hidden md:flex`, so the
           row has one child and the header spans it exactly as before. */}
       <div className="flex min-h-screen">
-        <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} />
+        {!railHidden && <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} />}
 
         {/* `min-w-0` is load-bearing and was not needed before this row
             existed. A flex item’s `min-width: auto` resolves to its
@@ -131,6 +160,8 @@ export function AppShell({
             clipping nothing because the box it clips had itself grown. */}
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar
+            railHidden={railHidden}
+            onToggleRail={toggleRail}
             view={view}
             gates={gates}
             onNavigate={onNavigate}
