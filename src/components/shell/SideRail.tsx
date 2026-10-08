@@ -1,6 +1,9 @@
-import { MagnifyingGlass } from '@/components/icons'
+import { MagnifyingGlass, Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Kbd } from '../Kbd'
+import { Button } from '../ui/button'
+import { AccountMenu } from './AccountMenu'
+import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { RailToggle } from './RailToggle'
 import { WeekStrip } from './WeekStrip'
 import { SectionNav } from './SectionNav'
@@ -88,6 +91,8 @@ export function SideRail({
   onNavigate,
   onCommand,
   onToggleRail,
+  onQuickAdd,
+  onTalk,
 }: {
   view: ViewId
   gates: SectionGates
@@ -96,6 +101,9 @@ export function SideRail({
   onCommand: () => void
   /** Collapse the rail. Its head carries the control while it is open. */
   onToggleRail: () => void
+  /** The shell’s single primary action, now at the rail’s foot. */
+  onQuickAdd: () => void
+  onTalk: () => void
 }) {
   return (
     <aside
@@ -154,32 +162,72 @@ export function SideRail({
         <RailToggle hidden={false} onToggle={onToggleRail} />
       </div>
 
-      <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
-      {/* The rule that separates the two lists lives on `SectionTabs` itself,
-          not here, because it must exist exactly when that list does —
-          `SectionTabs` returns null below two tabs, so Today and Insights get
-          neither a divider nor the gap one would leave behind. A separator
-          drawn by the parent cannot know that. */}
-      <SectionTabs view={view} gates={gates} onNavigate={onNavigate} vertical />
+      {/* THE BODY SCROLLS; the head and foot do not.
 
-      {/* THE WEEK, AT THE FOOT OF THE RAIL.
+          `min-h-0` is the load-bearing half. A flex child will not shrink
+          below its content without it, so on Body — five sections plus twelve
+          tabs — the list would push the foot off the bottom of the rail, and
+          the foot is where Quick add now lives. The section with the most to
+          navigate is exactly the one that must not lose its primary action. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
+        {/* The rule that separates the two lists lives on `SectionTabs`
+            itself, not here, because it must exist exactly when that list
+            does — `SectionTabs` returns null below two tabs, so Today and
+            Insights get neither a divider nor the gap one would leave
+            behind. A separator drawn by the parent cannot know that. */}
+        <SectionTabs view={view} gates={gates} onNavigate={onNavigate} vertical />
+      </div>
 
-          Moved out of the top bar, where it sat between the page title and
-          Quick add as the one thing in that row that is not about this page
-          and not an action. It is ambient: seven dots and a streak count, read
-          in passing, never clicked. That is rail content, and it is what a
-          footer is for.
+      {/* THE FOOT: the acts, the week, and you.
 
-          `mt-auto` so it sits on the floor rather than under the tabs — the
-          tab list varies from zero to twelve rows, and a strip that drifts
-          with it reads as part of the list it is not part of.
+          Quick add, Ask Relay and the account menu came down from the top bar
+          when it was retired on desktop (docs/SHELL-ONE-CHROME.md). They sit
+          below the navigation because they are not navigation — you do them
+          from wherever you are.
 
-          It goes WITH the rail when you hide it, and that is the right trade:
-          a streak count is losable. Quick add, the microphone and the account
-          menu stay in the header precisely because they are not — ⌘B must not
-          take away the app’s primary action. */}
-      <div className="mt-auto border-t border-line px-2 pt-3">
-        <WeekStrip />
+          `mt-auto` pins the whole block to the floor rather than letting it
+          follow a tab list that runs from zero to twelve rows.
+
+          Quick add keeps `primaryScope={SHELL_SCOPE}`: it is the app’s single
+          primary action, mounted once and living on every view, so without
+          the scope the one-primary guard charges it to whichever page loaded
+          first and then warns on every page that has a primary of its own.
+
+          Full-width and labelled here, where the old bar had it icon-only at
+          narrow widths — a 208px column has room for the word, and "Quick
+          add" is worth more than a `+`. */}
+      <div className="mt-auto flex flex-col gap-1.5 border-t border-line pt-3">
+        <Button
+          variant="primary"
+          primaryScope={SHELL_SCOPE}
+          size="sm"
+          onClick={onQuickAdd}
+          className="w-full justify-center gap-1.5"
+        >
+          <Icon as={Plus} size="sm" /> Quick add
+        </Button>
+
+        <div className="flex items-center gap-1.5">
+          {/* The assistant is the same job said out loud — capture — so it
+              belongs beside Quick add rather than being a page. */}
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            onClick={onTalk}
+            aria-label="Ask Relay"
+            title="Ask Relay — say it, and it files it"
+          >
+            <Icon as={Microphone} size="sm" />
+          </Button>
+          {/* Ambient, not an act: seven dots and a streak, read in passing.
+              `min-w-0` so it yields to the two controls either side rather
+              than pushing them out of the column. */}
+          <div className="min-w-0 flex-1 overflow-hidden px-1">
+            <WeekStrip />
+          </div>
+          <AccountMenu view={view} onNavigate={onNavigate} onCommand={onCommand} />
+        </div>
       </div>
     </aside>
   )

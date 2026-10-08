@@ -126,7 +126,15 @@ export function PageLayout({
       //
       // The fallback matches `styles/tokens.css`, for the frame before
       // `useHeaderHeight` has published a measurement.
-      const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 56
+      // `Number.isFinite`, NOT `|| 56`. `parseFloat('0px')` is 0, which is
+      // falsy, so the old spelling silently replaced a genuine zero with 56.
+      // That was harmless only while a header always existed; with the top
+      // bar retired on desktop the variable can legitimately be 0, and
+      // pretending otherwise refuses stickiness to a column that has earned
+      // it. The fallback is for the frame BEFORE `useHeaderHeight` publishes,
+      // which is `NaN`, not zero.
+      const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h'))
+      const header = Number.isFinite(raw) ? raw : 56
       setSticky(el.scrollHeight < window.innerHeight - header - 16)
       // Mirrors layout.css's `@container (min-width: 900px)` — the shell is
       // the container, so its width is the same measurement the CSS makes.
