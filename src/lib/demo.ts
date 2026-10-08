@@ -125,7 +125,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 10
+export const DEMO_VERSION = 11
 
 /**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
@@ -836,6 +836,45 @@ export function generateDemoData(today = todayISO()): JournalData {
     j.devSessions.push({
       id: uid('dv'), date, durationMin,
       project: projects[li], focus, stress: Math.max(0, Math.min(10, Math.round(2 + interruptions + rand() * 2))),
+      interruptions, tags: langs[li], notes: '',
+    })
+  }
+
+  /* FILL ANY ROLLING WEEK THE LOOP LEFT EMPTY.
+
+     The loop above keeps ~3 days a week at random, against a threshold that
+     depends on each day's WEEKDAY — and `weeklyVolume` draws twelve ROLLING
+     7-day buckets whose boundaries move with the calendar. So whether all
+     twelve are non-empty depended on what day of the week it was:
+     `demo.test.ts`'s “fills every rolling week” went red overnight on
+     2026-10-08 with bucket 9 (Sep 18–24) empty, on a commit that had been
+     green. A chart that promises no gaps needs a seed that GUARANTEES none;
+     widening the window or re-rolling only moves the odds.
+
+     A SECOND PASS on its OWN STREAM rather than a condition inside the loop.
+     Forcing a day inside it would run that day’s four body draws where it
+     previously ran none, shifting `rand()` for everything after — which is
+     exactly the trap `randSub`'s docstring records, and it is not theoretical:
+     the first attempt did this and moved an unrelated pinned value in
+     `cycleSnapshot.test.ts` (coverline 97.41 → 97.42). The loop above is now
+     byte-identical to before this change.
+
+     `weeklyVolume` buckets day `-back*7` into bucket `back`, so one session on
+     each `i % 7 === 0` is exactly one per bucket. Only added where the bucket
+     is genuinely empty, so a seed that already covers a week is left alone. */
+  const randFill = rng(7007)
+  for (let back = 0; back < 12; back++) {
+    const end = addDays(today, -back * 7)
+    const start = addDays(end, -6)
+    if (j.devSessions.some((s) => s.date >= start && s.date <= end)) continue
+    const li = Math.floor(randFill() * langs.length)
+    const durationMin = blocks[Math.floor(randFill() * blocks.length)]
+    const interruptions = Math.floor(randFill() * 4)
+    const focus = Math.max(1, Math.min(10, Math.round(4 + durationMin / 45 - interruptions * 0.9 + randFill())))
+    j.devSessions.push({
+      id: uid('dv'), date: end, durationMin,
+      project: projects[li], focus,
+      stress: Math.max(0, Math.min(10, Math.round(2 + interruptions + randFill() * 2))),
       interruptions, tags: langs[li], notes: '',
     })
   }

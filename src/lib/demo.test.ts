@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
 import { hasLapseQuantity, lapseCountOn, lapseTrend, peakLapseWeekday } from './lapse'
@@ -199,6 +199,28 @@ describe('demo · the Focus page has something to plot', () => {
 
   it('fills every rolling week the volume chart draws', () => {
     expect(weeklyVolume(d, today, 12).every((w) => w.min > 0)).toBe(true)
+  })
+
+  it('fills them on EVERY weekday, not just the one the suite happened to run on', () => {
+    // The assertion above is the one that matters and it was a coin flip. The
+    // seed keeps ~3 days a week at random against a threshold that depends on
+    // each day's WEEKDAY, and `weeklyVolume`'s rolling boundaries move with the
+    // calendar — so the same commit was green on 2026-10-07 and red on 10-08
+    // with bucket 9 (Sep 18–24) empty. Nothing had changed but the clock.
+    //
+    // Fourteen consecutive days is two full weekday cycles, which is the whole
+    // space of alignments the old test was sampling one point of.
+    const empties: string[] = []
+    for (let k = 0; k < 14; k++) {
+      vi.setSystemTime(new Date(2026, 9, 8 + k, 12, 0, 0))
+      const seeded = generateDemoData()
+      const t = todayISO()
+      for (const w of weeklyVolume(seeded, t, 12)) {
+        if (w.min === 0) empties.push(`${t}: ${w.start}..${w.end}`)
+      }
+    }
+    vi.useRealTimers()
+    expect(empties).toEqual([])
   })
 
   it('exhibits the findings the page claims to make', () => {
