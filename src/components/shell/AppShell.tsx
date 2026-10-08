@@ -147,7 +147,7 @@ export function AppShell({
           Below `md` this is unchanged: the rail is `hidden md:flex`, so the
           row has one child and the header spans it exactly as before. */}
       <div className="flex min-h-screen">
-        {!railHidden && <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} />}
+        {!railHidden && <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} onToggleRail={toggleRail} />}
 
         {/* `min-w-0` is load-bearing and was not needed before this row
             existed. A flex item’s `min-width: auto` resolves to its

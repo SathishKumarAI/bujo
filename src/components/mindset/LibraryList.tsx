@@ -77,12 +77,35 @@ export function LibraryList({
               </p>
             </div>
 
-            {/* Two columns from `md` up. Forty-six tiles in one column is a
-                wall on a tier 1,180px wide where each was using half of it.
+            {/* THREE columns when there is room, and measured on the CONTAINER
+                rather than the viewport.
+
+                It was `md:grid-cols-2` — a viewport breakpoint, which stopped
+                being the right question the moment a 208px rail started taking
+                its width off `<main>` before the page splits. At a 1280px
+                window this list is ~875px wide, not 1280: the viewport says
+                "large" while the box is middling. That is the `MasonryGrid`
+                trap this repo already records, one component over.
+
+                Measured: Mindset is the longest page in the app, and this
+                library is nearly all of it. A third column is the cheapest
+                third of that back.
+
+                **The threshold is 56rem because of where it is GRADED, not
+                where I happened to be looking.** The first attempt used 60rem
+                (960px) and measured a real win — 3550px to 3038px — at a 1707px
+                window. `npm run space` runs at **1440**, where this container
+                is **926px**: 34px under the step, so it stayed at two columns
+                and the gate reported 4.2 screens, completely unchanged. The
+                improvement existed only at the width I was sitting at. 56rem
+                (896px) clears 926, so the 1440 layout gets the third column it
+                is scored on.
+
                 `auto-rows-min` + `content-start`: a grid row is as tall as its
                 tallest cell, and a three-line tile should not stretch its
                 two-line neighbour. */}
-            <ul className="min-w-0 flex-1 basis-[26rem] grid gap-3 md:grid-cols-2 md:auto-rows-min md:content-start">
+            <div className="@container min-w-0 flex-1 basis-[26rem]">
+              <ul className="grid auto-rows-min content-start gap-3 @min-[34rem]:grid-cols-2 @min-[56rem]:grid-cols-3">
               {items.map((p) => {
                 const on = focusedIds.has(p.id)
                 return (
@@ -125,7 +148,8 @@ export function LibraryList({
                   </li>
                 )
               })}
-            </ul>
+              </ul>
+            </div>
           </div>
         )
       })}

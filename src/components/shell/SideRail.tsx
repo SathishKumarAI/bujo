@@ -1,6 +1,7 @@
 import { MagnifyingGlass } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Kbd } from '../Kbd'
+import { RailToggle } from './RailToggle'
 import { WeekStrip } from './WeekStrip'
 import { SectionNav } from './SectionNav'
 import { SectionTabs } from './SectionTabs'
@@ -86,12 +87,15 @@ export function SideRail({
   gates,
   onNavigate,
   onCommand,
+  onToggleRail,
 }: {
   view: ViewId
   gates: SectionGates
   onNavigate: (id: ViewId) => void
   /** Opens the command palette. The rail’s search row is its only visible door. */
   onCommand: () => void
+  /** Collapse the rail. Its head carries the control while it is open. */
+  onToggleRail: () => void
 }) {
   return (
     <aside
@@ -133,21 +137,22 @@ export function SideRail({
           field, and a text box that refuses to be typed into is a worse lie
           than a button that looks like one. The borrowed box shape is the
           affordance; the caret is what it does not claim. */}
-      <button
-        type="button"
-        onClick={onCommand}
-        className="mb-2 flex min-h-9 w-full items-center gap-2 rounded-control border border-line bg-ink-2 px-2.5 text-body text-fg-2 transition-colors hover:border-line-strong hover:text-fg-1"
-      >
-        <Icon as={MagnifyingGlass} size="md" />
-        Search
-        {/* The chord, said where the thing it opens is. `aria-hidden` for the
-            same reason as the section rows: the button is already named
-            "Search", and the shortcut is announced in the `?` cheatsheet where
-            it is actionable. */}
-        <span aria-hidden className="ml-auto">
-          <Kbd>⌘K</Kbd>
-        </span>
-      </button>
+      {/* Search and the collapse control share the head row: the two things
+          you do TO the rail rather than through it. */}
+      <div className="mb-2 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onCommand}
+          className="flex min-h-9 flex-1 items-center gap-2 rounded-control border border-line bg-ink-2 px-2.5 text-body text-fg-2 transition-colors hover:border-line-strong hover:text-fg-1"
+        >
+          <Icon as={MagnifyingGlass} size="md" />
+          Search
+          <span aria-hidden className="ml-auto">
+            <Kbd>⌘K</Kbd>
+          </span>
+        </button>
+        <RailToggle hidden={false} onToggle={onToggleRail} />
+      </div>
 
       <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
       {/* The rule that separates the two lists lives on `SectionTabs` itself,
