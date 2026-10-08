@@ -1,4 +1,4 @@
-import { Microphone, Plus } from '@/components/icons'
+import { Microphone, Plus, Sidebar, SidebarSimple } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { Button } from '../ui/button'
@@ -56,6 +56,8 @@ export function TopBar({
   onQuickAdd,
   onTalk,
   onCommand,
+  railHidden,
+  onToggleRail,
 }: {
   view: ViewId
   gates: SectionGates
@@ -63,6 +65,9 @@ export function TopBar({
   onQuickAdd: () => void
   onTalk: () => void
   onCommand: () => void
+  /** Desktop only: whether `SideRail` is collapsed away right now. */
+  railHidden: boolean
+  onToggleRail: () => void
 }) {
   const chrome = VIEW_CHROME[view]
   const current = sectionOf(view)
@@ -104,6 +109,32 @@ export function TopBar({
             Plain `1fr` is `minmax(auto,1fr)`, which floors each outer column
             at its content. */}
         <div className="flex items-center gap-3 px-4 pb-2">
+          {/* THE RAIL TOGGLE, and it lives HERE rather than in the rail.
+
+              A control that hides its own container cannot bring it back, so
+              the one thing this button must not be is inside the thing it
+              hides. In the header it is in the same place in both states,
+              which is also what lets its icon carry the state instead of its
+              position.
+
+              Desktop only: there is no rail below `md`, so there is nothing
+              to toggle and the button would be a dead control on a phone.
+
+              `aria-pressed` rather than two different labels: it is one
+              control with a state, and a screen reader should hear it that
+              way. The label stays constant so it does not re-announce as a
+              different button each press. */}
+          <button
+            type="button"
+            onClick={onToggleRail}
+            aria-pressed={railHidden}
+            aria-label="Hide the sidebar"
+            title="Hide the sidebar · ⌘B"
+            className="hidden shrink-0 items-center rounded-control p-1.5 text-fg-2 transition-colors hover:bg-ink-2 hover:text-fg-1 md:inline-flex"
+          >
+            <Icon as={railHidden ? Sidebar : SidebarSimple} size="md" />
+          </button>
+
           {/* Phone only: on desktop the rail’s head carries it. One component,
               two placements, never both visible — see `Brand.tsx`. */}
           <div className="md:hidden">

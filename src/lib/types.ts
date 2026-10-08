@@ -906,6 +906,27 @@ export interface Settings {
    * key and its values are unchanged, so nobody's saved preference flips.
    */
   layout?: 'focused' | 'classic'
+
+  /**
+   * Desktop only: `SideRail` is collapsed away and `<main>` takes the width.
+   *
+   * **A choice the reader makes and that stays made** — which is what
+   * separates it from the `collapsed` / `sidebarAutoHide` / hover-reveal /
+   * drawer machinery PR #120 deleted. That lot moved the chrome ON ITS OWN,
+   * so navigation vanished at the moment a long page made it most useful. One
+   * button, one shortcut, no hover zones, nothing automatic.
+   *
+   * It is also NOT a second navigation layout. Hiding the rail renders strictly
+   * FEWER elements; it does not restore the horizontal nav #348 removed, and it
+   * must not grow into one — two nav layouts means every browser gate covers
+   * one of them and the other rots, which this repo has a dozen entries about.
+   *
+   * Safe to hide because `⌘K` reaches every destination and now SAYS so on
+   * screen, and the toggle that put it away is in the header, not in the rail
+   * that went away. Before #348 neither was true and this would have been a
+   * one-way door.
+   */
+  railHidden?: boolean
 }
 
 /** A fixed-duration discipline challenge (75 Hard, 90-day, …). */

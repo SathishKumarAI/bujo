@@ -16,7 +16,9 @@ export function uid(prefix = 'id'): string {
 
 export function defaultSettings(): Settings {
   return {
-    theme: 'mocha',
+    // Latte, not mocha. Only shapes a FRESH journal — `migrate` merges a
+    // stored `settings` over these defaults, so nobody's saved theme flips.
+    theme: 'latte',
     tempUnit: 'F',
     weightUnit: 'lb',
     distanceUnit: 'mi',
