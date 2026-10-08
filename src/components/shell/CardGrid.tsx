@@ -133,8 +133,23 @@ export function CardGrid({ children, className }: { children: ReactNode; classNa
  * text, so the retired spelling of the fourth step kept generating a live rule
  * from the sentence explaining why it was wrong.
  */
+/*
+ * EACH STEP MOVED UP ONE SIZE, because the cards were too narrow.
+ *
+ * The breakpoints were 48/80/100rem. A container at 768px therefore split into
+ * two ~370px cards — a chart, a legend and a readout inside 370px is a column,
+ * not a card. Measured on Insights at a 1489px `<main>`: a 1160px grid at two
+ * columns gives 570px, which is fine; the problem is everything BELOW that,
+ * where the old steps packed a third and fourth column in early.
+ *
+ * Now 64/96/120rem: a container has to earn each extra column. Same four steps,
+ * same single spelling (see the sorting trap below) — only the thresholds move.
+ *
+ * The gaps go up with them (4→5, 5→6). Widening the cards while leaving the
+ * gutters is how a grid starts reading as one slab.
+ */
 const MASONRY_COLUMNS =
-  'columns-1 gap-4 sm:gap-5 @min-[48rem]:columns-2 @min-[80rem]:columns-3 @min-[100rem]:columns-4 [&>*]:mb-4 [&>*]:break-inside-avoid sm:[&>*]:mb-5'
+  'columns-1 gap-5 sm:gap-6 @min-[64rem]:columns-2 @min-[96rem]:columns-3 @min-[120rem]:columns-4 [&>*]:mb-5 [&>*]:break-inside-avoid sm:[&>*]:mb-6'
 
 /**
  * The container query needs a wrapper: an element cannot be its own

@@ -164,7 +164,12 @@ export function TopBar({
           )}
 
           <div className="ml-auto flex items-center justify-end gap-1.5">
-            <WeekStrip />
+            {/* The week strip moved to the rail’s foot — it is ambient, not
+                an action, and this row is actions. Below `md` there is no rail,
+                so it stays here. */}
+            <div className="md:hidden">
+              <WeekStrip />
+            </div>
 
             {/* Help and Send feedback used to stand here as two more buttons.
                 They are items in the corner menu now — and feedback in

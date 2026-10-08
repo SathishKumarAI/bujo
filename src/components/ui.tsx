@@ -31,7 +31,11 @@ export const CARD = {
    * hairline — `:root[data-theme='latte'] .card-3d` — because near-white on
    * white needs it.
    */
-  container: 'card-3d group/card min-w-0 rounded-card bg-card p-4 sm:p-5 lg:p-6',
+  // Padding up one step at every size (4/5/6 → 5/6/7). Reported as the cards
+  // being too small; the column thresholds in `CardGrid` widen the box and
+  // this is the other half — a wider card with the old inset reads as a
+  // wider box of the same content rather than a bigger card.
+  container: 'card-3d group/card min-w-0 rounded-card bg-card p-5 sm:p-6 lg:p-7',
   /**
    * The band container — the same card, unboxed.
    *
@@ -55,7 +59,13 @@ export const CARD = {
      `line-strong` under the pointer. Anything else (a wash, a shadow, a
      border on all four sides) re-boxes the card the band variant exists to
      un-box. Pair it with the header's existing `group-hover/card` reveals. */
-  band: 'group/card min-w-0 border-b border-line py-5 transition-colors duration-200 hover:border-line-strong sm:py-6',
+  // THE VARIANT THAT ACTUALLY RENDERS: 196 of the app’s 248 `<Card>`s are
+  // `band`, so the boxed `container` padding above reaches barely a fifth of
+  // them. Measured after bumping only `container` and finding `.card-3d`
+  // returned ZERO elements on Insights, Pickleball, Gym and Monthly — the
+  // pages the report was about. A band has no box, so its size IS its
+  // vertical rhythm: 5/6 → 6/7.
+  band: 'group/card min-w-0 border-b border-line py-6 transition-colors duration-200 hover:border-line-strong sm:py-7',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
