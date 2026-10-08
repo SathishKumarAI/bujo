@@ -83,6 +83,18 @@ jobs:
       - run: npm run build
       # Playwright stays out of the app tree deliberately (see scripts/*.mjs):
       # installed here with --no-save so it never reaches a user's bundle.
+      # CACHE THE BROWSER. `playwright install` pulls ~114MB of
+      # chromium-headless-shell on every run of every job — twice per push,
+      # since `a11y` and `render` each do their own setup. It is the single
+      # largest fixed cost in this file and it buys nothing after the first
+      # time: the version is pinned by the `playwright` package resolved just
+      # above, so the key changes exactly when the browser does.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
       - name: Install Playwright
         run: |
           npm i -D --no-save playwright @axe-core/playwright
@@ -105,6 +117,31 @@ jobs:
       - name: axe-core
         env:
           BUJO_A11Y_WORKERS: 2
+          # THE THEME MATRIX IS NARROWED ON A PULL REQUEST, AND FULL ON A
+          # PUSH. 173 scans is 5 desktop themes x 24 views + 2 phone themes +
+          # 5 receipts; two desktop and one phone is 74. Roughly 43% of the
+          # scanning, on the path that runs most often.
+          #
+          # One dark and one light, not one theme: light/dark is where a
+          # rendered contrast pairing actually differs. Structural findings —
+          # a missing label, an unnamed select, a focusable scroll region —
+          # are identical on all five, and those are most of what this gate
+          # has ever caught.
+          #
+          # SAY THE RISK PLAINLY: a theme-specific contrast bug on neon,
+          # vscode or dawn can now go green on a PR and red on the push that
+          # merges it. That is a real regression in feedback time and it is
+          # the trade. Two things bound it — `npm run contrast` checks all
+          # five palettes statically on EVERY push in ci.yml, so a bad token
+          # is caught regardless; and the full matrix still runs on the merge
+          # itself, so the window is one commit, not months.
+          #
+          # Set explicitly on both arms rather than left unset: the script
+          # reads `process.env.BUJO_THEMES ?? '<default>'`, and `??` does not
+          # catch an empty string — an empty value would split to `['']` and
+          # scan a theme that does not exist.
+          BUJO_THEMES: ${{ github.event_name == 'pull_request' && 'mocha,latte' || 'mocha,latte,neon,vscode,dawn' }}
+          BUJO_PHONE_THEMES: ${{ github.event_name == 'pull_request' && 'mocha' || 'mocha,latte' }}
         run: BUJO_URL=http://localhost:4173 node scripts/a11y-axe.mjs
 
   # Smoke has never run in CI — it was local-only, which is how it managed to
@@ -138,6 +175,18 @@ jobs:
       - run: npm run build
       # Playwright stays out of the app tree deliberately (see scripts/*.mjs):
       # installed here with --no-save so it never reaches a user's bundle.
+      # CACHE THE BROWSER. `playwright install` pulls ~114MB of
+      # chromium-headless-shell on every run of every job — twice per push,
+      # since `a11y` and `render` each do their own setup. It is the single
+      # largest fixed cost in this file and it buys nothing after the first
+      # time: the version is pinned by the `playwright` package resolved just
+      # above, so the key changes exactly when the browser does.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
       - name: Install Playwright
         run: |
           npm i -D --no-save playwright @axe-core/playwright
