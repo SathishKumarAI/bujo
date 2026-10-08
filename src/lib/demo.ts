@@ -125,7 +125,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 11
+export const DEMO_VERSION = 12
 
 /**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
