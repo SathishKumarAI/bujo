@@ -538,9 +538,22 @@ async function go(w, name) {
    *
    * This is the difference between "the door is gone" and "I knocked too
    * early", which is the exact question `goOrDie` claims to answer.
+   *
+   * **A LOOSE contains, not the anchored regex the selectors below use**, and
+   * the difference is 15 seconds per navigation. This wait only has to answer
+   * "has the nav painted yet"; it is not the thing that picks the target. When
+   * it was `^${name}([,·]|$)` it could not match a row whose `textContent`
+   * carries a trailing `aria-hidden` hint (`Todayg t`), so it burned its full
+   * `timeout` on EVERY `go()` before falling through to the arm that works.
+   * Locally that is slow; in CI, at `BUJO_A11Y_WORKERS: 2`, the job hit the
+   * 15-minute cap and was cancelled having printed nothing but the seed lines
+   * — a red that looks exactly like a hang.
+   *
+   * Being loose costs nothing: a false positive here only means the real
+   * selectors run a moment earlier, and they are the strict ones.
    */
   await items
-    .filter({ hasText: new RegExp(`^${name}([,·]|$)`) })
+    .filter({ hasText: name })
     .first()
     .waitFor({ state: 'attached', timeout: 15000 })
     .catch(() => {})
