@@ -1,120 +1,103 @@
 # STATUS
 
-**Stopped:** 2026-10-09. `main` at `fe88314`, clean tree. Last PR merged:
-**#363, COD-291** — a Google sign-in now visibly changes the app. `npm run
-verify`: **129 files, 1784 tests**, exit 0. `a11y` 173/173 with no serious or
-critical, `smoke` 24/24, `clipped` clean at 1440/1024/390, `space` inside
-budget, `design` 425 files, `contrast` 5 themes — all green on `main`.
+**Stopped:** 2026-10-09, end of a long session. `main` at `fa54b56`, clean
+tree. **Fifteen PRs merged: #363–#377.**
 
-## Start here · COD-292, and it is bigger than it looks
+`npm run verify`: **137 files, 1854 tests**, exit 0. `eslint` 0 errors (one
+pre-existing `App.tsx` exhaustive-deps warning). `a11y` **187/187 across 12
+shards**, no serious or critical. `clipped` clean at 1440/1024/390. `smoke`
+23/23. `design` 433 files. `contrast` 5 themes. All green on `main`.
 
-**The account feature has never run in production.** Measured against
-`https://bujo-journal.vercel.app`, not inferred:
+---
 
-- the served `Content-Security-Policy` header has **no `supabase.co` in
-  `connect-src`**, while this repo's `vercel.json` has had it since the CSP fix
-  recorded below — and a header can only come from the deployed `vercel.json`;
-- `Last-Modified: Mon, 05 Oct 2026 22:47:23 GMT`;
-- all **50** JS chunks in the deployed `sw.js` precache manifest downloaded and
-  grepped: **0** hits for the project ref, for `supabase`, for `Continue with
-  Google`, for `account is recoverable`, or for `Google refused the sign-in`
-  (COD-290, merged as #360). `Locking this journal` *is* there — a real bujo
-  build, an old one.
+## START HERE · two things, both yours, both blocking everything above
 
-So Google sign-in, the account row, `AccountCard`, `AccountSync`, COD-290's
-failure reporting and now #363 have only ever run on a local dev or preview
-server, where `.env.local` supplies the keys.
+Everything below shipped to `main` and **none of it is live.** Production still
+serves the **27 September** build.
 
-**A redeploy fixes half of it.** The other half: `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_ANON_KEY` must be set in the **Vercel project environment**. The
-`.env.local` that Vercel CLI pulled into this tree carries only
-`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — the
-Next.js convention, which Vite does not expose to `import.meta.env`. The `VITE_`
-pair in that file was typed in by hand locally, so **it exists on this machine
-and nowhere else**. Without it a redeploy ships an Account page with no sign-in
-button at all: *absent, not broken*, which is the designed behaviour and is
-indistinguishable from the feature being missing.
+```
+! npx vercel promote bujo-bdyge3g4a-sathish-s-pickleball-cards.vercel.app
+```
 
-Worth a guard rather than a memory — a check that fails a production build with
-no `VITE_SUPABASE_URL`. "A thing that exists only on one machine" is written up
-three times in `CLAUDE.md` already.
+**1 · Promote (COD-292).** `vercel --prod` already built `main` successfully —
+`dpl_3gygHvzWEu6japMoTQHx1Nxt5Dgf`, target production, Ready. Its bundle was
+verified to contain the project ref, "Continue with Google" and "not syncing
+yet". Only the **alias** still points at the old deployment. `vercel promote`
+is blocked by this sandbox's classifier, so the one command is yours.
 
-## Which port is which, on THIS machine — measured 2026-10-09
+Correction to what this file said yesterday: the Vercel **env vars are not
+missing**. `vercel env ls` shows `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` set for Production (Secret, 118d) and Development.
+Only *Preview* lacks them, and that was left alone deliberately — preview URLs
+are shareable, and giving them the real keys lets any preview write to the real
+`journals` table.
 
-The user could not see the change and was looking at the wrong application.
-Checked with `Get-CimInstance Win32_Process` on every listening port, not
-guessed:
+**2 · The Supabase redirect allow-list (COD-293).** Authentication → URL
+Configuration. Measured by asking Supabase to honour a `redirect_to` it may
+reject and reading the `Location` back:
 
-| Port | Actually serving |
-|---|---|
-| **5173** | **`shelf/product/loan-division-emi-tracker`** — Vite's *dev* default, claimed by whichever project started first. Title: *Loan Division & Variable-Rate EMI Tracker*. |
-| 4173 | bujo `vite preview`, from this tree's `dist/` |
-| 4178 | bujo `vite preview`, from this tree's `dist/` |
-
-So **`localhost:5173` is not bujo on this machine.** That is the smoke-gate trap
-in `CLAUDE.md` happening to a human instead of a gate: a page that is not this
-app cannot show this app's sign-in button, and it looks exactly like the feature
-being broken. There is no bujo *dev* server running at all — use **4173**.
-
-And `vite preview` serves through a service worker, so after a rebuild:
-unregister it, clear `caches`, and **reload twice** (the first reload is still
-served by the worker that was controlling the page). Confirm by comparing the
-served `assets/index-*.js` against this tree's `dist/index.html` — the title
-cannot distinguish two worktrees.
-
-## COD-291 · signing in changed one card, on one page
-
-Reported as *"able to continue with Google and able to sign in, but it's not
-showing any kind of updates on my UI."* Exact.
-
-The signed-in user was `useState` inside `AccountCard`; the sync lifecycle was
-`useState` inside `AccountSync`, which renders `null`. So the two components
-that knew were the only two that could be asked, and everything else guessed
-from the local profile nickname and `localStorage['bujo:sync']` — the **other**
-sync mechanism's passphrase.
-
-| Surface | Before | After |
+| sent | came back as | |
 |---|---|---|
-| avatar trigger | `Account, No name set`, no image | `Account, Sathish Kumar`, the Google photo |
-| header menu | `No name set` · `This device only` | name · email · `Not syncing yet` |
-| Account zone 1 | `account: not set up` · `journal: this device only` | `account: Sathish Kumar` · `journal: not syncing yet` |
-| the pill | never lit for account sync | lights, from the status store |
+| `http://localhost:*` | the same URL | allowed (localhost is allowed wholesale) |
+| `https://bujo-journal.vercel.app/…` | `http://localhost:3000` | **rejected** |
+| a preview deployment URL | `http://localhost:3000` | **rejected** |
 
-Two things from it that are worth more than the pixels:
+The Site URL is `http://localhost:3000`. So **a Google sign-in from production
+can never complete** — after Google the browser is sent to a dead local
+address. Set Site URL to `https://bujo-journal.vercel.app` and add
+`https://bujo-journal.vercel.app/**`, the preview wildcard, and
+`http://localhost:4173/**` + `http://localhost:5173/**`. **Keep the localhost
+entries** — they are the only reason local sign-in works.
 
-- **COD-134 named `AccountMenu` and was fixed in `AccountCard`,** then closed
-  without a test. That is the entire reason it reopened silently.
-  `components/shell/AccountMenu.test.tsx` is the guard now.
-- **"Signed in" was claiming "synced".** `AccountSync` cannot push without a
-  sync passphrase and returned early when there was none; the card said *"your
-  journal syncs to your account"* regardless. The default state of a new account
-  — signed in, row created, nothing uploaded, nothing ever going to be — read as
-  a working sync. `lib/account.test.ts` now asserts as a **property** that no
-  phase but `synced` may claim one.
+Also worth checking: **no deployment fired for any of the fifteen merges**, so
+the GitHub→Vercel integration is not deploying. That is likely the root cause
+of production being stale, not any one build.
 
-New: `lib/authUser.ts` (the session, one `onAuthChange` per tab, via
-`useSyncExternalStore` — not a context, because one consumer is the shell header
-and another is a card inside a lazily-imported view), `lib/accountStatus.ts`
-(the phase, a persisted last-synced stamp, and the `bujo:sync` dispatch), and
-`lib/account.ts` (`identityOf`, `phaseCopy`, and the `SYNCED` / `WITHHELD` lists
-read off `forEgress`).
+---
 
-**And `npm run space` could not see any of it.** It reports `2.2 / 4.2` on the
-branch and `2.2 / 4.2` on `main` — identical, because nothing in that gate seeds
-a session, so it grades the *signed-out* Account page. Measured by probe
-instead, page height ÷ viewport:
+## What this session did
 
-| | signed out | signed in |
+Google sign-in was reported as "I can sign in but the UI never changes". That
+turned out to be **six** separate causes, found in this order. The order
+matters — each fix was real and none of them was the one that mattered.
+
+| # | Cause | Fix |
 |---|---|---|
-| 1440×900 | 2.32 | **2.59** |
-| 390×844 | 4.29 | **4.87** |
+| COD-291 | Identity was `useState` inside one card. The header, the Account bar and the sync pill could not see it. | Module stores (`authUser`, `accountStatus`, `account`) |
+| COD-293 | `redirectTo` is a *request*; Supabase silently substitutes the Site URL when the origin is not allow-listed | A stamp before the redirect, reported if the trip never returns |
+| COD-294 | The service worker served the **previous build on every first load** | Reload once on `controllerchange`, guarded |
+| COD-295 | `detectSessionInUrl` only runs if a client exists — and every component that builds one sits under `LockScreen`/`Welcome` | `initAuth()` before `createRoot` |
+| COD-296 | **The actual cause.** Google issued a code; Supabase failed to exchange it. The provider's client secret was wrong. | Dashboard — fixed by the user, sign-in now works |
+| COD-300 | The CSP blocked Drive sign-in, food lookup and the local model **in production** | Hosts added; a contract test now fails on drift |
 
-Phone Account was already 4.29 before this, so +0.58 is 13% longer, not a new
-category of problem. If it bites, fold the two data lists — but note that puts
-the *withheld* list behind a click, and that is the half a reader cannot verify
-for themselves.
+**The lesson, and it is already a memory:** COD-296 was found in sixty seconds
+by driving the real browser and reading the network panel. Five code PRs went
+in first, each fixing something real, none of them the cause. *For "login
+works, UI blank", read the redirect chain before reading the source.*
 
-## Security, as of 2026-10-09
+Then, on request:
+
+- **COD-297** — one home for account/sign-in/sync. The Account page is retired
+  into Settings; `?view=account` is a 301. Also `?view=settings&tab=…`, which
+  closed **half of COD-232**: `a11y` now scans the three Settings panels a tab
+  shell had kept out of the DOM (173 → 187 scans).
+- **COD-299** — security audit. Two real fixes: "Erase everything" left the
+  passphrase, the Supabase session and **every photo** behind; `settings.usdaKey`
+  was leaving the device unstripped. 1302 commits scanned for eight secret
+  shapes, zero hits, canary-tested first.
+- **COD-298 / COD-303 / the page header** — the rail's sub-tabs ran at a 54px
+  pitch under a 38px nav (Cycle fell off the bottom); five history lists had
+  five different rules, two silently truncating at 12; the page header was 67px
+  of stacked title and subtitle with zero controls, now 49px on one line.
+- **COD-301** — the egress tripwire's four blind spots, each closed and each
+  canary-proven.
+- **COD-302** — the coach's 29 sessions: `docs/workouts/coach-sessions.md`
+  verbatim, `lib/coachSessions.ts` typed, and loadable from Gym → Look up &
+  tools.
+
+---
+
+## Security, as of 2026-10-09 (COD-299)
 
 | | |
 |---|---|
@@ -123,12 +106,17 @@ for themselves.
 | **Key guard** | A test failing the build on a hardcoded project URL or `service_role` existed only in an agent worktree, i.e. not at all. Now in `auth.contract.test.ts`, proven to fail on a planted canary. |
 | **Secret audit** | History, not just the tree: no env file ever committed except `.env.example`; no tracked secret-shaped files; `dist/` untracked; 0 hits for `sb_secret_`, `vercel_blob_rw_`, `GOCSPX-`, private keys. All 24 `service_role` hits are prose warning against it. |
 
+| **COD-299 · erase** | **"Erase everything" did not.** It walked a hand-written list of 23 keys, so it left behind the sync passphrase, **the Supabase session** (`sb-*`, i.e. still signed in), the passcode salt, the onboarding flags, and **every photo** in the `bujo-images` IndexedDB. Now a *prefix* sweep (`bujo:`, `bujo.ui.`, `sb-`) plus both databases, returning a report of what it actually removed. A deny-list cannot be kept in step with a growing key space; an allow-list can. |
+| **COD-299 · USDA key** | `settings.usdaKey` is a user's own API key and was **not** in `SYNC_SECRET_KEYS`, so it left the device in every cloud sync and every CSV export while `lmUrl` beside it was stripped. One line, and it had been wrong since the field was added. `secretKeys.contract.test.ts` now parses the `Settings` interface for credential-shaped names, so the next such field fails the build instead of leaking. |
+| **COD-299 · what Google login stores** | Asked directly, and the answer is in `docs/AUTH.md`: one `sb-<ref>-auth-token` entry in `localStorage` holding the JWT and refresh token, written by `@supabase/supabase-js`, **no key material of our own**. The journal's encryption key is derived from the passphrase at use time and never persisted. No Google password, no OAuth client secret, and the anon key is a public identifier by design. |
+| **History** | 1302 commits scanned for eight secret shapes; **zero hits**. The scan was canary-proven first — a planted fake key was found before the real sweep was trusted. |
+
 **Still open and yours:** turn off `anonymous_users` in Supabase (anyone can
 mint a session with no email; nothing in the app uses it), and drop the
 `?code=` arm of `api/sync.ts` one release on — that is the path that put a
 secret in a query string.
 
-## What this session did
+## The session before this one, kept for history
 
 Started as "the design pass, phase 5" and became a shell rebuild plus a domain
 bug that mattered more than any of it.
@@ -145,7 +133,35 @@ bug that mattered more than any of it.
 
 ## Read this before trusting a number in a commit message
 
-Three of this session's findings were **my own measurements being wrong**, and
+Kept and added to each session, because it is the section that has paid off
+most. **Four more this time, all of them mine:**
+
+1. **`button:has-text("Load ")` is a substring match.** A browser probe checking
+   that a coach session loads clicked a *different* button whose label happened
+   to contain the phrase, and reported the feature broken. Scoped to
+   `/^Load \d+$/` it works — 4 inputs to 34, with "Bird dogs" present. The
+   second half matters more: **I was about to assert on the row count**, and the
+   count would have passed either way, because the wrong button also adds rows.
+   Assert on the value, not on the shape of the result.
+2. **A tripwire's regex literals can silently stop matching.** Two carriers
+   dropped out of `egress.contract.test.ts`'s `SENDS` assertion while the data
+   they described was unchanged. Root cause never isolated — which is the
+   finding. Patterns are now `String.raw` strings compiled with `new RegExp`,
+   and **each one is asserted against a known-positive sample**, so a pattern
+   that stops matching fails as itself rather than as a quiet zero.
+3. **Vite loads `.env.local` for vitest.** So `isConfigured()` is `true` locally
+   and `false` in CI, and my first `initAuth` test asserted `=== false` — green
+   on CI, red here. Assert the *relationship* ("a client exists iff configured,
+   never throws, is memoised"), never either answer.
+4. **An agent's list of unmapped exercises was wrong and plausible.** It named
+   seven; measuring gave **fourteen**, with only one name in common. A list that
+   arrives already-formatted is still a claim.
+
+---
+
+### From the session before
+
+Three of that session's findings were **my own measurements being wrong**, and
 each was caught by something other than me looking harder.
 
 1. **I measured at my own viewport and called it the result.** Mindset's library
@@ -217,16 +233,32 @@ was, so the container-query treatment should transfer.
   — Authentication → Users, delete every user with no email (rows cascade,
   one step), then Providers → Anonymous sign-ins → off, in that order.
 
-## First thing, still: 18 worktrees
+- **Nothing in this session has been seen in production.** Every number above
+  is a local `vite preview` build. The promote is step 1 at the top of this
+  file for that reason.
+- **Four of the nine account phases have never been on screen.** `checking`,
+  `uploading`, `locked` and `error` are unit-tested through `phaseCopy` and
+  `pill`, and the first two are sub-second by design. `signed-out`,
+  `no-passphrase`, `synced` and `demo` were looked at.
+- **The coach-session load was probed at one viewport, in one theme.** 4 inputs
+  to 34 with the right exercise names present, at 1440 · mocha. The rows are
+  plain `Card` content so nothing suggests otherwise, and `a11y` and `clipped`
+  cover the fold — but the specific act of loading was done once.
+- **`AuthReturnReport` has never fired for real.** It is unit-tested and it is
+  deliberately not time-limited, so a stamp left by a browser crash reports on
+  the next launch rather than expiring. Whether that reads as useful or as a
+  stale warning is unknown until someone's sign-in actually gets lost.
 
-`git worktree list` reports **18**. This has been flagged across several
-sessions and is still not done, because pruning is a deletion and that is not
-mine to take. `git worktree remove` / `git worktree prune`; the newest is
-`locked` and needs `--force`.
+## The 18 worktrees are gone
 
-They are not harmless: a dev server started in one is pinned to it, so a tab on
-that port never shows changes made here however hard you reload — and
-`vite.config.ts` excluding the path from vitest is a mitigation, not a fix.
+`git worktree list` reports **1** — this one. That item sat at the top of this
+file across four sessions as "not mine to delete", and it is now done. Kept as
+a heading rather than deleted so the next session does not go looking for the
+problem.
+
+The reason it mattered stays true and is in `CLAUDE.md`: a dev server is pinned
+to the worktree it was started in, and vitest discovering a second copy of the
+suite is what made the test count read 1474 for 743 tests.
 
 ## Next, in order
 
@@ -239,36 +271,26 @@ mostly did not.** Five of these existed only in a conversation.
 |---|---|---|
 | **COD-285** | Drop the `?code=` arm of `api/sync.ts` | The only one with a security consequence — a secret in a query string, i.e. in every access log. 4 refs still present. Move `docs/AUTH.md`'s recovery `curl` to the header in the same change or recovery breaks silently. |
 | **COD-286** | Type scale is 8 steps, documented as 5 | COD-283 carried two findings, the serif half shipped in #358 and the ticket was closed **taking the other half with it**. 12px x4 is a real outlier; 22 and 32 are real tokens the doc never recorded. Fix the code AND the doc, in opposite directions. |
-| **COD-287** | Let `PageHeader` scroll away | 67px back on every long page. Recommended when asked about hiding the top bar, then dropped. Not a one-word change: `LibraryBar` and `SectionRail` park against `--header-h` and must re-park at 0. |
+| ~~**COD-287**~~ | ~~Let `PageHeader` scroll away~~ | **Done in #377, by not doing it.** Asked for again directly, and hiding it was the wrong answer: `LibraryBar` and `SectionRail` park against `--header-h`, so a header that moves drags two sticky bars with it, and a nav that vanishes on scroll is the COD-202 trap that killed a whole gate run. Instead the header got *shorter* — title and subtitle on one line, **67px → 49px**, 27% back on every page, and it never moves. A control that is always there beats 49px recovered sometimes. |
 | **COD-288** | Coaching is not the band-pairing shape | A **negative** result, filed so nobody repeats the half hour. Its 2.7 screens is a 1676px act column, not wide-and-underfull bands. Needs folding, which is a content decision. |
 | **COD-289** | Two gaps the gates miss | Every browser gate runs with the rail OPEN; and the toggle icon is 3.47:1 on latte (above the 3.0 graphic floor, so not a violation — same as the mic beside it). |
 
 ### Owner-only, and genuinely blocked on an account
 
-**0. Google sign-in is broken right now, and the fix is one field.** Supabase →
-Authentication → Sign In / Providers → **Google** → re-paste the **client
-secret** from the Google Cloud credential of the same client. Evidence it is
-that field and not another: `authorize` presents
-`70992319956-…apps.googleusercontent.com` and the callback
-`https://ueahhgqxshfvkjgcwtnh.supabase.co/auth/v1/callback`, and Google issued a
-code (`4/0A…`) — which it only does after validating both. The exchange sends
-those two plus the secret and is what failed, so one variable is left. Google
-shows a secret once; add a new one on that client if it is not visible. **Do not
-paste it into a session with an assistant.** Taxonomy and the one-line probe are
-in [`docs/AUTH.md`](docs/AUTH.md#signing-in-with-google-the-setup-and-reading-a-failure).
+**0 is fixed.** The client secret was the cause and re-pasting it was the fix —
+sign-in now completes and the UI changes. That leaves:
 
-Then, in this order:
-
-1. Supabase → Authentication → **URL Configuration** → Redirect URLs must list
-   `http://localhost:4173/**` and the Vercel origin. This is the *next* failure
-   after the secret is fixed, and it looks like success — you sign in and land
-   on the Site URL with the session on the wrong origin.
+1. **Promote the deployment** and **set the redirect allow-list** — both at the
+   top of this file, because until they are done every one of this session's
+   fifteen PRs is invisible to anyone but a local build, and a production
+   sign-in cannot complete.
 2. Supabase → Authentication → **Users**: delete every user with no email —
    the anonymous ones from the RLS test. Journal rows cascade with them.
-3. Supabase → Providers → **Anonymous sign-ins → off**. In that order.
-4. Click **Continue with Google** once, to confirm the UI round trip (COD-282).
-   Only meaningful after 0 — until then it exercises the failure path, which is
-   now at least legible.
+3. Supabase → Providers → **Anonymous sign-ins → off**. In that order, because
+   turning the provider off first leaves the rows behind with no way to make
+   another.
+4. Click **Continue with Google** on the *production* URL once, after 1. Local
+   is confirmed working; production has never completed a round trip.
 
 ### Closed this session rather than carried
 
@@ -294,3 +316,32 @@ is where the real decisions would get made silently. The branch still exists;
 - **`?code=` still accepted** by `api/sync.ts` for bundles cached before #323.
 - One pre-existing lint warning: `src/App.tsx:131:6` `react-hooks/exhaustive-deps`
   (was `:120:6`; COD-290 inserted eleven lines above it — the warning did not move).
+- **COD-304 — hover-to-navigate on the sidebar.** Asked for directly; filed
+  rather than built, with five hazards written into the ticket — a 190px rail
+  means the pointer crosses up to nine rows on its way anywhere, a navigation
+  nobody asked for cannot be undone by moving the mouse back, it strands touch
+  and keyboard, `?view=` is a history entry so a sweep fills the back stack, and
+  the rail is the one control present on every view. **Prefetch on hover instead
+  of navigating** gives the speed with none of it. Recommended, not decided.
+- **Four open decisions, deliberately not guessed.** Each one is a question
+  about intent, not a missing implementation:
+  1. **Seal the Supabase session under the passcode**, the way COD-228 sealed
+     the passphrase. A locked device is still signed in. The cost is that
+     auto-sync cannot run while locked — the same honest trade COD-228 took.
+  2. **Three unbounded per-day `localStorage` key families** (`bujo:focus.*` and
+     two siblings) grow one key per day forever and are swept by prefix on
+     erase but by nothing else.
+  3. **`fscloud` writes `bujo.json` in plaintext** to a user-chosen directory,
+     while `bujocloud` encrypts. Both are "cloud sync" in the UI.
+  4. **`docker/initdb.sql` ships the default password `'bujo'`.** Local-only
+     today, and one `docker compose` away from not being.
+- **`Extension 20x5`** in coach session 27 has no muscle mapping, on purpose —
+  the coach wrote no qualifier, leg extension and triceps extension are both
+  plausible, and guessing puts a muscle on the body map that was never
+  prescribed. `coachSessions.test.ts` holds it in `NOT_A_MOVEMENT` with that
+  reason, so it is a recorded question rather than a silent gap.
+- **Loading a coach session does not pre-fill its reps and sets.** `loadRoutine`
+  makes one row per exercise name; the prescription (`4x12`, `pyramid`, `to
+  failure`) stays visible in the expanded session and is retyped by hand. Worth
+  doing, not obviously — a pre-filled target is also a target you have to clear
+  when the day goes differently.
