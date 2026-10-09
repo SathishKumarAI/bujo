@@ -255,6 +255,71 @@ and that the journal is untouched. That is not padding: the provider's own words
 app whose central warning is that a lost passphrase is a lost journal. Nothing
 was lost, and the message has to say so faster than the fear arrives.
 
+### The third silent failure: the redirect that never comes back — COD-293
+
+Two legs were already handled. The success leg renders (COD-291, below); the
+*refused exchange* leg reports (COD-290, above). This is the third, and it is
+the quietest, because **the browser never returns to this app at all.**
+
+`redirectTo` is a **request, not a guarantee.** Supabase checks it against the
+project's Redirect URLs allow-list and, when it is not on the list, **silently
+substitutes the project Site URL** — no error, no warning, nothing in any
+response to read.
+
+Measured on this project by asking Supabase to honour a `redirect_to` it is free
+to reject and reading the `Location` it answers with
+(`/auth/v1/verify?token=probe-not-a-token&type=magiclink&redirect_to=…`):
+
+| Sent | Came back as | |
+|---|---|---|
+| `http://localhost:4173/?view=account` | the same URL | allowed |
+| `http://localhost:5173/?view=account` | the same URL | allowed |
+| `https://bujo-journal.vercel.app/?view=account` | `http://localhost:3000` | **rejected** |
+| a preview deployment URL | `http://localhost:3000` | **rejected** |
+| `https://evil.example.com/` | `http://localhost:3000` | rejected, correctly |
+
+So the Site URL is `http://localhost:3000` — not a bujo port on any machine —
+and **no deployed origin is allow-listed.** A Google sign-in from production can
+therefore never complete: after Google, the browser is sent to a dead local
+address, `detectSessionInUrl` never sees a fragment, and the app the user left
+simply never runs again. Every successful sign-in anyone ever had was `:4173` or
+`:5173`, both allowed, which is exactly why this stayed invisible.
+
+**The fix is a dashboard setting**, Authentication → URL Configuration: Site URL
+`https://bujo-journal.vercel.app`, and Redirect URLs covering
+`https://bujo-journal.vercel.app/**`, the preview wildcard, and
+`http://localhost:4173/**` + `http://localhost:5173/**`. **Keep the localhost
+entries** — they are what makes local development work, and dropping them is how
+this gets rediscovered from the other side.
+
+**The code half is `lib/authReturn.ts`.** Nothing client-side can read the
+allow-list, so the app cannot pre-empt this; what it can do is remember that it
+left. A stamp is written immediately before the redirect and cleared the moment
+a session *or* an error arrives, so a stamp still present on a later load means
+the round trip was lost — and `AuthReturnReport` says so, naming the exact origin
+to allow-list, because that string is the fix.
+
+Three decisions in it are load-bearing, and all three are the same rules the
+earlier legs taught:
+
+- **It waits for `ready`.** Reporting on `!user` before the session resolves
+  fires the message at a *successful* sign-in, in the gap between mount and
+  `INITIAL_SESSION`. "Not yet" is not "not ever" — the wait-before-assert rule
+  from `CLAUDE.md`, in application code rather than in a gate.
+- **`consumeAuthError` clears the stamp.** An error *is* a resolution: the trip
+  came back, it just came back badly. Without this, COD-290's message and this
+  one both fire for one event, and two explanations are worse than either.
+- **It is not time-limited, and it reads-and-clears.** A window would have to
+  guess how long a consent screen takes, and this failure strands the user with
+  no way back — so they return by typing the URL again, much later, which is
+  precisely what a window would discard. Reading spends it, because a message
+  that reappears every load is one people learn to dismiss.
+
+The honest limit, stated in the copy itself: someone who opens Google and closes
+the tab leaves the same evidence. So the message says the sign-in did not come
+back (true either way) and that the allow-list is the *likely* cause — the most
+a client can claim without guessing.
+
 ## Where a signed-in account appears, and what "signed in" does not mean
 
 ### Three surfaces, one source — COD-291
