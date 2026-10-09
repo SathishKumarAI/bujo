@@ -12,6 +12,7 @@ The header's individual controls live one level down in
 | A page's title, subtitle, ⓘ help text, whether it has a date cursor | `viewChrome.ts` |
 | Page frame, `<main>`, quick-add dialog, global hotkeys | `AppShell.tsx` |
 | The desktop left rail — width, what it stacks, where it sticks | `SideRail.tsx` |
+| Hiding the rail by clicking its empty column or over-scrolling it | `railGestures.ts` — the thresholds; `SideRail.tsx` wires them |
 | The five section links, active treatment, where a section click lands | `SectionNav.tsx` — the rail’s upper half |
 | The two header rows and their order | `TopBar.tsx` (+ `topbar/`) |
 | The section’s tabs — stacked in the rail, a scrolling row on a phone | `SectionTabs.tsx` |
