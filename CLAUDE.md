@@ -127,6 +127,16 @@ believing what you see:
 `navigator.serviceWorker.getRegistrations().then(r => r.forEach(x => x.unregister()))`
 then clear `caches` and reload.
 
+**And reload twice.** Unregistering does not evict the worker already
+controlling the open page — it keeps control through the very navigation meant
+to replace it, so the first reload after the unregister is still served by it.
+Verified while checking COD-290: the page ran `index-DfwUZGbn.js` while `dist/`
+held `index-CMBntfQy.js`, and the fix under test looked like it had done
+nothing. **Compare the served bundle hash against your own `dist/index.html`**
+(`grep -o 'assets/index-[^"]*\.js'` on each) before believing a screenshot in
+either direction — the failure mode here is not a missed bug, it is reverting a
+change that works.
+
 Trap: **a dev server is pinned to the worktree it was started in.** This repo
 has several under `.claude/worktrees/`, each on its own branch, and a tab
 pointed at one of their ports will never show changes made here no matter how
